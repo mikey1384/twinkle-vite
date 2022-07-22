@@ -66,6 +66,10 @@
   <div id="react-view"></div>
   <div id="modal"></div>
   <div id="outer-layer"></div>
+  <script>
+    import { Buffer } from 'buffer'
+    globalThis.Buffer = Buffer
+  </script>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 
