@@ -1,6 +1,3 @@
-import { Buffer } from 'buffer';
-globalThis.Buffer = Buffer;
-
 async function loadPolyfills() {
   if (typeof window.IntersectionObserver === 'undefined') {
     await import('intersection-observer');
