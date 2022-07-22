@@ -14,6 +14,7 @@ import Attachment from '~/components/Attachment';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import AlertModal from '~/components/Modals/AlertModal';
+import { Buffer } from 'buffer';
 import { Color } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
 import {

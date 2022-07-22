@@ -1,3 +1,5 @@
+import { Buffer } from 'buffer';
+
 import {
   CHAT_ID_BASE_NUMBER,
   returnMaxRewards
