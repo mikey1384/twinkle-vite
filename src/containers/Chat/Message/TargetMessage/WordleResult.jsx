@@ -5,7 +5,7 @@ import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useWordleLabels } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
-import { unix } from 'moment';
+import moment from 'moment';
 
 WordleResult.propTypes = {
   username: PropTypes.string.isRequired,
@@ -35,7 +35,7 @@ export default function WordleResult({
     myId
   });
   const displayedTimeStamp = useMemo(
-    () => unix(timeStamp).format('lll'),
+    () => moment.unix(timeStamp).format('lll'),
     [timeStamp]
   );
 

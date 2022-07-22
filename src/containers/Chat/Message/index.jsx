@@ -30,7 +30,7 @@ import Reactions from './Reactions';
 import localize from '~/constants/localize';
 import { useInView } from 'react-intersection-observer';
 import { socket } from '~/constants/io';
-import { unix } from 'moment';
+import moment from 'moment';
 import { MessageStyle } from '../Styles';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
@@ -442,7 +442,7 @@ function Message({
   ]);
 
   const displayedTimeStamp = useMemo(
-    () => unix(timeStamp).format('lll'),
+    () => moment.unix(timeStamp).format('lll'),
     [timeStamp]
   );
 

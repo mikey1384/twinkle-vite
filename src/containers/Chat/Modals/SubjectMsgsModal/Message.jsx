@@ -6,7 +6,7 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import LongText from '~/components/Texts/LongText';
 import { MessageStyle } from '../../Styles';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { unix } from 'moment';
+import moment from 'moment';
 import { css } from '@emotion/css';
 
 Message.propTypes = {
@@ -41,7 +41,7 @@ export default function Message({
   onUsermenuShownChange
 }) {
   const displayedTime = useMemo(
-    () => unix(timeStamp).format('lll'),
+    () => moment.unix(timeStamp).format('lll'),
     [timeStamp]
   );
   return (

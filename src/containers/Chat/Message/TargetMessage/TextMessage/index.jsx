@@ -6,7 +6,7 @@ import VideoThumb from './VideoThumb';
 import FileThumb from './FileThumb';
 import Spoiler from '../../Spoiler';
 import { css } from '@emotion/css';
-import { unix } from 'moment';
+import moment from 'moment';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import {
   extractVideoIdFromTwinkleVideoUrl,
@@ -75,7 +75,7 @@ export default function TextMessage({ message }) {
   ]);
 
   const displayedTime = useMemo(
-    () => unix(message?.timeStamp).format('lll'),
+    () => moment.unix(message?.timeStamp).format('lll'),
     [message?.timeStamp]
   );
 

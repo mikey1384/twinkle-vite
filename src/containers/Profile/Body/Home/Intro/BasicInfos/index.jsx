@@ -9,7 +9,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
 import { stringIsEmpty, trimUrl } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { unix } from 'moment';
+import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 import {
   useAppContext,
@@ -105,9 +105,9 @@ export default function BasicInfos({
 
   const displayedTime = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
-      return unix(joinDate).format('MM/DD/YYYY');
+      return moment.unix(joinDate).format('MM/DD/YYYY');
     }
-    return unix(joinDate).format('LL');
+    return moment.unix(joinDate).format('LL');
   }, [joinDate]);
 
   const messageUserLabel = useMemo(() => {

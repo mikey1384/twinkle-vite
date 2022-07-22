@@ -11,7 +11,7 @@ import {
 } from '~/constants/defaultValues';
 import { MessageStyle } from '../../Styles';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { unix } from 'moment';
+import moment from 'moment';
 import { socket } from '~/constants/io';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -78,7 +78,7 @@ export default function Activity({
   }, []);
 
   const displayedTime = useMemo(
-    () => unix(timeStamp).format('lll'),
+    () => moment.unix(timeStamp).format('lll'),
     [timeStamp]
   );
 

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
-import { unix } from 'moment';
+import moment from 'moment';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
@@ -45,7 +45,7 @@ export default function SubjectItem({
   }, []);
 
   const displayedTime = useMemo(
-    () => unix(timeStamp).format('lll'),
+    () => moment.unix(timeStamp).format('lll'),
     [timeStamp]
   );
 
