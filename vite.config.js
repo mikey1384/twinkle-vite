@@ -18,6 +18,7 @@ export default defineConfig({
       ]
     }
   },
+  commonjsOptions: { include: [] },
   define: {
     global: 'window',
     'process.env': {}
