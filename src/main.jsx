@@ -5,6 +5,9 @@ async function loadPolyfills() {
 }
 loadPolyfills();
 
+import { Buffer } from 'buffer';
+globalThis.Buffer = Buffer;
+
 import './styles.css';
 import ReactDOM from 'react-dom/client';
 import ErrorBoundary from './components/ErrorBoundary';
