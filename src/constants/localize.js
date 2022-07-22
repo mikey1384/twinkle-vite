@@ -1,4 +1,4 @@
-const SELECTED_LANGUAGE = import.meta.env.VITE_APP_SELECTED_LANGUAGE || 'en';
+const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
 const languageObj = {
   acceptDraw: {
     en: 'Accept Draw',

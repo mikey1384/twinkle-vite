@@ -14,13 +14,13 @@ export const unicodeLength = (word) => {
 };
 
 export const localeAwareLowerCase = (text) => {
-  return import.meta.env.VITE_APP_LOCALE_STRING
-    ? text.toLocaleLowerCase(import.meta.env.VITE_APP_LOCALE_STRING)
+  return import.meta.env.VITE_LOCALE_STRING
+    ? text.toLocaleLowerCase(import.meta.env.VITE_LOCALE_STRING)
     : text.toLowerCase();
 };
 
 export const localeAwareUpperCase = (text) => {
-  return import.meta.env.VITE_APP_LOCALE_STRING
-    ? text.toLocaleUpperCase(import.meta.env.VITE_APP_LOCALE_STRING)
+  return import.meta.env.VITE_LOCALE_STRING
+    ? text.toLocaleUpperCase(import.meta.env.VITE_LOCALE_STRING)
     : text.toUpperCase();
 };

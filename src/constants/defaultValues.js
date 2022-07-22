@@ -21,27 +21,26 @@ export const defaultContentState = {
 };
 
 export const cloudFrontURL = `https://${
-  import.meta.env.VITE_APP_CLOUDFRONT_KEY
+  import.meta.env.VITE_CLOUDFRONT_KEY
 }.cloudfront.net`;
-export const CHAT_ID_BASE_NUMBER = import.meta.env.VITE_APP_CHAT_ID_BASE_NUMBER;
+export const CHAT_ID_BASE_NUMBER = import.meta.env.VITE_CHAT_ID_BASE_NUMBER;
 export const DEFAULT_PROFILE_THEME = 'logoBlue';
 export const DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL = 1000;
 export const FILE_UPLOAD_XP_REQUIREMENT = 0;
 export const GENERAL_CHAT_ID = 2;
 export const GENERAL_CHAT_PATH_ID =
   Number(GENERAL_CHAT_ID) + Number(CHAT_ID_BASE_NUMBER);
-export const GITHUB_APP_ID = import.meta.env.VITE_APP_GITHUB_CLIENT_ID;
+export const GITHUB_APP_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 export const LAST_ONLINE_FILTER_LABEL = localize('lastOnline2');
 export const RANKING_FILTER_LABEL = localize('ranking');
 export const MAX_PROFILE_PIC_SIZE = 10000;
 export const S3URL = `https://${
-  import.meta.env.VITE_APP_AWS_S3_BUCKET_NAME
+  import.meta.env.VITE_AWS_S3_BUCKET_NAME
 }.s3.amazonaws.com`;
-export const TURN_USERNAME = import.meta.env.VITE_APP_TURN_USERNAME;
-export const TURN_PASSWORD = import.meta.env.VITE_APP_TURN_PASSWORD;
+export const TURN_USERNAME = import.meta.env.VITE_TURN_USERNAME;
+export const TURN_PASSWORD = import.meta.env.VITE_TURN_PASSWORD;
 export const REWARD_VALUE = 200;
-export const SELECTED_LANGUAGE =
-  import.meta.env.VITE_APP_SELECTED_LANGUAGE || 'en';
+export const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
 export const mb = 1000;
 
 export const charLimit = {
