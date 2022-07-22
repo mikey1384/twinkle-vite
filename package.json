@@ -51,7 +51,8 @@
     "stacktrace-js": "^2.0.2",
     "use-context-selector": "^1.4.1",
     "util": "^0.12.4",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "vite-plugin-antdv1-momentjs-resolver": "^1.1.1"
   },
   "devDependencies": {
     "@types/react": "^18.0.15",
