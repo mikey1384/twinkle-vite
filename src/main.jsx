@@ -1,12 +1,12 @@
+import { Buffer } from 'buffer';
+globalThis.Buffer = Buffer;
+
 async function loadPolyfills() {
   if (typeof window.IntersectionObserver === 'undefined') {
     await import('intersection-observer');
   }
 }
 loadPolyfills();
-
-import { Buffer } from 'buffer';
-globalThis.Buffer = Buffer;
 
 import './styles.css';
 import ReactDOM from 'react-dom/client';
