@@ -1,0 +1,49 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "plugins": ["react", "standard", "react-hooks"],
+  "extends": ["plugin:react/recommended"],
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "globals": {
+    "alert": true,
+    "AudioContext": true,
+    "beforeEach": true,
+    "document": false,
+    "fetch": true,
+    "Image": true,
+    "spyOn": true,
+    "navigator": false,
+    "window": false,
+    "FileReader": true,
+    "localStorage": true,
+    "test": true,
+    "expect": true,
+    "File": true,
+    "FormData": true
+  },
+  "rules": {
+    "jsx-quotes": ["error", "prefer-double"],
+    "no-undef": "error",
+    "no-unused-vars": "error",
+    "quotes": [
+      "error",
+      "single",
+      { "avoidEscape": true, "allowTemplateLiterals": true }
+    ],
+    "react/function-component-definition": "off",
+    "react/no-unused-prop-types": "error",
+    "react/no-children-prop": "error",
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "error",
+    "semi": "error"
+  }
+}
