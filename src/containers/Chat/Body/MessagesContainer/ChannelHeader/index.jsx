@@ -18,7 +18,7 @@ import {
 } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useInterval } from '~/helpers/hooks';
+import { useInterval, useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import LocalContext from '../../../Context';
 import localize from '~/constants/localize';
@@ -77,6 +77,11 @@ export default function ChannelHeader({
   const { authLevel, banned, profilePicUrl, userId, username } = useKeyContext(
     (v) => v.myState
   );
+  const {
+    button: { color: buttonColor },
+    buttonHovered: { color: buttonHoverColor },
+    chatTopic: { color: chatTopicColor }
+  } = useTheme(displayedThemeColor);
   const [onEdit, setOnEdit] = useState(false);
   const [onHover, setOnHover] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -257,7 +262,7 @@ export default function ChannelHeader({
                     className={css`
                       width: 100%;
                       cursor: default;
-                      color: ${Color[displayedThemeColor]()};
+                      color: ${Color[chatTopicColor]()};
                       white-space: nowrap;
                       text-overflow: ellipsis;
                       overflow: hidden;
@@ -300,7 +305,8 @@ export default function ChannelHeader({
                 `}
               >
                 <Button
-                  color={displayedThemeColor}
+                  color={buttonColor}
+                  hoverColor={buttonHoverColor}
                   filled
                   onClick={() => {
                     onSetIsRespondingToSubject({

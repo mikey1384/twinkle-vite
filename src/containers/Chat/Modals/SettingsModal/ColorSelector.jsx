@@ -36,7 +36,10 @@ export default function ColorSelector({
       }}
     >
       {colors.map((color) => {
-        const locked = color !== 'green' && !unlocked.includes(color);
+        const locked =
+          color !== 'green' &&
+          color !== 'logoBlue' &&
+          !unlocked.includes(color);
         const cannotAfford = locked && twinkleCoins < priceTable.chatTheme;
 
         return (

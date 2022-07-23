@@ -73,7 +73,7 @@ export default function SettingsModal({
   const [editedIsClosed, setEditedIsClosed] = useState(isClosed);
   const [editedCanChangeSubject, setEditedCanChangeSubject] =
     useState(canChangeSubject);
-  const currentTheme = theme || 'green';
+  const currentTheme = theme || 'logoBlue';
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
   const [themeToPurchase, setThemeToPurchase] = useState('');
   const insufficientFunds = useMemo(
@@ -348,7 +348,11 @@ export default function SettingsModal({
   );
 
   function handleSetColor(color) {
-    if (unlockedThemes.includes(color) || color === 'green') {
+    if (
+      unlockedThemes.includes(color) ||
+      color === 'green' ||
+      color === 'logoBlue'
+    ) {
       return setSelectedTheme(color);
     }
     setThemeToPurchase(color);

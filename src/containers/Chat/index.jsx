@@ -41,7 +41,9 @@ Chat.propTypes = {
 };
 
 function Chat({ onFileUpload }) {
-  const { lastChatPath, userId } = useKeyContext((v) => v.myState);
+  const { lastChatPath, userId, profileTheme } = useKeyContext(
+    (v) => v.myState
+  );
   const {
     generalChat: { color: generalChatColor }
   } = useKeyContext((v) => v.theme);
@@ -526,12 +528,15 @@ function Chat({ onFileUpload }) {
     [pageVisible, selectedChannelId, userId]
   );
 
-  const displayedThemeColor = useMemo(
-    () =>
-      currentChannel.theme ||
-      (selectedChannelId === GENERAL_CHAT_ID ? generalChatColor : 'green'),
-    [currentChannel.theme, generalChatColor, selectedChannelId]
-  );
+  const displayedThemeColor = useMemo(() => {
+    if (currentChannel.theme) {
+      return currentChannel.theme;
+    }
+    if (selectedChannelId === GENERAL_CHAT_ID) {
+      return profileTheme;
+    }
+    return 'logoBlue';
+  }, [currentChannel.theme, generalChatColor, selectedChannelId]);
 
   return (
     <LocalContext.Provider

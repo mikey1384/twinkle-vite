@@ -735,7 +735,6 @@ function Message({
                         subjectId={subjectId}
                         thumbUrl={thumbUrl}
                         targetMessage={targetMessage}
-                        theme={currentChannel.theme}
                         userCanEditThis={userCanEditThis}
                       />
                     )}

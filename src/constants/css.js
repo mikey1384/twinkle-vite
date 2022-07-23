@@ -175,6 +175,12 @@ export function Theme(color = 'logoBlue') {
           gold: 'darkGold'
         }[color] || color
     },
+    chatTopic: {
+      color:
+        {
+          gold: 'brownOrange'
+        }[color] || color
+    },
     content: {
       color:
         {
