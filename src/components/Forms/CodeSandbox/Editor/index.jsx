@@ -72,7 +72,7 @@ export default function Editor({
     handleCompiledComponent();
     async function handleCompiledComponent() {
       if (ast) {
-        console.log(element, 'first');
+        console.log(ast, 'first');
         const element = await handleEvalCode(
           handleTransformBeforeCompilation(ast)
         );
