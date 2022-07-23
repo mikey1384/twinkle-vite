@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import XPAnalysis from './XPAnalysis';
 import ErrorBoundary from '~/components/ErrorBoundary';

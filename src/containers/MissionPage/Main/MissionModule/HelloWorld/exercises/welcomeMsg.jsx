@@ -1,4 +1,3 @@
-import React from 'react';
 import { WELCOME_MSG } from './constants';
 import {
   getAstProps,

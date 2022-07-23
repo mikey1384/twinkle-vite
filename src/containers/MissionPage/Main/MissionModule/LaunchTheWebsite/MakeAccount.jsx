@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import StepSlide from '../components/StepSlide';
 import { Color } from '~/constants/css';

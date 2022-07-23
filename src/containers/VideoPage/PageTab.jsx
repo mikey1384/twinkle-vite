@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import FilterBar from '~/components/FilterBar';
 import localize from '~/constants/localize';
 

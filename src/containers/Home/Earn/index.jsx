@@ -1,4 +1,3 @@
-import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import HighXPSubjects from './HighXPSubjects';
 import localize from '~/constants/localize';

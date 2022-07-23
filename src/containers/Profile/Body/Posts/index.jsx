@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import SideMenu from '../SideMenu';

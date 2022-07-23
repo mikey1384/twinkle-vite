@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const title = `Formatting`;
 export const instruction = (
   <>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNotiContext } from '~/contexts';
 import moment from 'moment';
 import MonthItem from './MonthItem';

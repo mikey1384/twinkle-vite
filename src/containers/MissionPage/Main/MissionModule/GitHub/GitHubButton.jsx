@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import { GITHUB_APP_ID } from '~/constants/defaultValues';
 import Button from '~/components/Button';

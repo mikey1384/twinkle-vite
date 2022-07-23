@@ -1,4 +1,3 @@
-import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
 import { css } from '@emotion/css';

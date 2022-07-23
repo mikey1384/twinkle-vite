@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import Attempts from './Attempts';
 import ErrorBoundary from '~/components/ErrorBoundary';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { ALERT_MSG } from './constants';
 import {
   getAstProps,

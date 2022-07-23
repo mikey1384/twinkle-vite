@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function getAstProps({ ast, propType }) {
   const results = [];
   for (let key in ast) {

@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import ItemPanel from './ItemPanel';
 import Icon from '~/components/Icon';

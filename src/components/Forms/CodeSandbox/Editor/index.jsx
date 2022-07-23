@@ -1,4 +1,4 @@
-import { createElement, useEffect, useMemo, useState } from 'react';
+import React, { createElement, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Preview from './Preview';
 import SimpleEditor from 'react-simple-code-editor';
