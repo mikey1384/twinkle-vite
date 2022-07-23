@@ -35,10 +35,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      plugins: [inject({ Buffer: ['buffer', 'Buffer'], process: 'process' })],
-      input: {
-        main: resolve(__dirname, 'index.html')
-      }
+      plugins: [inject({ Buffer: ['buffer', 'Buffer'], process: 'process' })]
     }
   }
 });
