@@ -219,26 +219,31 @@ export default function Editor({
   }
 
   function handleTransformBeforeCompilation(ast) {
-    traverse(ast, {
-      VariableDeclaration(path) {
-        if (path.parent.type === 'Program') {
-          path.replaceWith(path.node.declarations[0].init);
-        }
-      },
-      ImportDeclaration(path) {
-        path.remove();
-      },
-      ExportDefaultDeclaration(path) {
-        if (
-          path.node.declaration.type === 'ArrowFunctionExpression' ||
-          path.node.declaration.type === 'FunctionDeclaration'
-        ) {
-          path.replaceWith(path.node.declaration);
-        } else {
+    try {
+      traverse(ast, {
+        VariableDeclaration(path) {
+          if (path.parent.type === 'Program') {
+            path.replaceWith(path.node.declarations[0].init);
+          }
+        },
+        ImportDeclaration(path) {
           path.remove();
+        },
+        ExportDefaultDeclaration(path) {
+          if (
+            path.node.declaration.type === 'ArrowFunctionExpression' ||
+            path.node.declaration.type === 'FunctionDeclaration'
+          ) {
+            path.replaceWith(path.node.declaration);
+          } else {
+            path.remove();
+          }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.log('got here!!', error);
+      setError(error);
+    }
     return ast;
   }
 }
