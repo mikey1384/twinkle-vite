@@ -241,7 +241,7 @@ export default function Editor({
         }
       });
     } catch (error) {
-      console.log('got here!!');
+      console.log('got here!!', error);
       setError(error);
     }
     return ast;
