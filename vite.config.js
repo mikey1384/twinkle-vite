@@ -7,6 +7,9 @@ import inject from '@rollup/plugin-inject';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    port: '3000'
+  },
   optimizeDeps: {
     esbuildOptions: {
       define: {
