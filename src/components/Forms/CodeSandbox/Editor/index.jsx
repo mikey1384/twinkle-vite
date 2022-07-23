@@ -105,6 +105,7 @@ export default function Editor({
 
       function handleEvalCode(ast) {
         try {
+          console.log(transformFromAstSync, presetReact);
           const transformedCode = transformFromAstSync(ast, undefined, {
             presets: [presetReact],
             inputSourceMap: false,
