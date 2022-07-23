@@ -72,9 +72,11 @@ export default function Editor({
     handleCompiledComponent();
     async function handleCompiledComponent() {
       if (ast) {
+        console.log(element, 'first');
         const element = await handleEvalCode(
           handleTransformBeforeCompilation(ast)
         );
+        console.log(element, 'second');
         const component = handleGenerateElement(element, (error) => {
           const errorString = error.toString();
           handleSetError({
@@ -86,7 +88,6 @@ export default function Editor({
       }
 
       function handleGenerateElement(code, errorCallback) {
-        console.log('got over here', code);
         return errorBoundary(code, errorCallback);
         function errorBoundary(Element, errorCallback) {
           class ErrorBoundary extends React.Component {
@@ -95,7 +96,6 @@ export default function Editor({
               return errorCallback(error);
             }
             render() {
-              console.log(Element, 'got over here');
               return typeof Element === 'function'
                 ? createElement(Element, null)
                 : Element;
