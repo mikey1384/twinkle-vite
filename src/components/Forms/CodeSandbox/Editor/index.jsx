@@ -75,7 +75,6 @@ export default function Editor({
         const element = await handleEvalCode(
           handleTransformBeforeCompilation(ast)
         );
-        console.log(element, 'got here');
         const component = handleGenerateElement(element, (error) => {
           const errorString = error.toString();
           handleSetError({
@@ -84,9 +83,8 @@ export default function Editor({
           });
         });
         setCompiledElement(createElement(component, null));
-      } else {
-        setCompiledElement(null);
       }
+
       function handleGenerateElement(code, errorCallback) {
         return errorBoundary(code, errorCallback);
         function errorBoundary(Element, errorCallback) {
@@ -107,7 +105,6 @@ export default function Editor({
       async function handleEvalCode(ast) {
         try {
           const resultCode = await renderAst(ast);
-          console.log(resultCode, 'herrree');
           const res = new Function('React', `return ${resultCode}`);
           return Promise.resolve(res(React));
         } catch (error) {
@@ -121,7 +118,9 @@ export default function Editor({
 
   return (
     <div style={{ width: '100%', ...style }}>
-      <Preview style={{ marginBottom: '5rem' }}>{CompiledElement}</Preview>
+      {CompiledElement && (
+        <Preview style={{ marginBottom: '5rem' }}>{CompiledElement}</Preview>
+      )}
       <style
         dangerouslySetInnerHTML={{
           __html: `.npm__react-simple-code-editor__textarea { outline: none !important; }`
