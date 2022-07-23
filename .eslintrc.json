@@ -44,6 +44,7 @@
     "react/no-children-prop": "error",
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "error",
+    "react-hooks/exhaustive-deps": "warn",
     "semi": "error"
   }
 }

@@ -103,6 +103,18 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async renderAst(ast) {
+      try {
+        const {
+          data: { result }
+        } = await request.post(`${URL}/mission/renderAst`, {
+          ast
+        });
+        return Promise.resolve(result);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadGitHubData(code) {
       try {
         const {

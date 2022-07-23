@@ -1,11 +1,10 @@
-import React, { createElement, useEffect, useMemo, useState } from 'react';
+import React, { createElement, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Preview from './Preview';
 import SimpleEditor from 'react-simple-code-editor';
 import okaidia from 'prism-react-renderer/themes/okaidia';
 import Highlight, { Prism } from 'prism-react-renderer';
 import traverse from '@babel/traverse';
-import { transformFromAstSync } from '@babel/core';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
@@ -31,8 +30,10 @@ export default function Editor({
   style
 }) {
   const lintCode = useAppContext((v) => v.requestHelpers.lintCode);
+  const renderAst = useAppContext((v) => v.requestHelpers.renderAst);
   const [error, setError] = useState('');
   const [errorLineNumber, setErrorLineNumber] = useState(null);
+  const [CompiledElement, setCompiledElement] = useState(null);
 
   useEffect(() => {
     setError('');
@@ -67,23 +68,24 @@ export default function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  const CompiledElement = useMemo(
-    () => {
+  useEffect(() => {
+    handleCompiledComponent();
+    async function handleCompiledComponent() {
       if (ast) {
-        const component = handleGenerateElement(
-          handleEvalCode(handleTransformBeforeCompilation(ast)),
-          (error) => {
-            const errorString = error.toString();
-            handleSetError({
-              error: errorString,
-              lineNumber: getErrorLineNumber(errorString)
-            });
-          }
+        const element = await handleEvalCode(
+          handleTransformBeforeCompilation(ast)
         );
-        return createElement(component, null);
+        const component = handleGenerateElement(element, (error) => {
+          const errorString = error.toString();
+          handleSetError({
+            error: errorString,
+            lineNumber: getErrorLineNumber(errorString)
+          });
+        });
+        setCompiledElement(createElement(component, null));
+      } else {
+        setCompiledElement(null);
       }
-      return null;
-
       function handleGenerateElement(code, errorCallback) {
         return errorBoundary(code, errorCallback);
         function errorBoundary(Element, errorCallback) {
@@ -101,27 +103,19 @@ export default function Editor({
           return ErrorBoundary;
         }
       }
-
-      function handleEvalCode(ast) {
+      async function handleEvalCode(ast) {
         try {
-          const transformedCode = transformFromAstSync(ast, undefined, {
-            inputSourceMap: false,
-            sourceMaps: false,
-            comments: false
-          });
-          const resultCode = transformedCode ? transformedCode.code : '';
-          // eslint-disable-next-line no-new-func
+          const resultCode = await renderAst(ast);
           const res = new Function('React', `return ${resultCode}`);
-          return res(React);
+          return Promise.resolve(res(React));
         } catch (error) {
           setError(error.toString());
           return null;
         }
       }
-    },
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ast]
-  );
+  }, [ast]);
 
   return (
     <div style={{ width: '100%', ...style }}>
