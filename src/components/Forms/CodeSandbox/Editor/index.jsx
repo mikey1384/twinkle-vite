@@ -113,6 +113,7 @@ export default function Editor({
           console.log('fourth');
           return Promise.resolve(res(React));
         } catch (error) {
+          console.log(error, 'error');
           setError(error.toString());
           return null;
         }
