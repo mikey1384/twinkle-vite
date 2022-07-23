@@ -128,7 +128,7 @@ export default function LongText({
               })
         }}
         className={css`
-          > a {
+          a {
             color: ${Color[
               isStatusMsg ? statusMsgLinkColor : linkColor
             ]()}!important;
