@@ -117,6 +117,7 @@ export default function Editor({
           const res = new Function('React', `return ${resultCode}`);
           return res(React);
         } catch (error) {
+          console.log(error, 'error came there');
           setError(error.toString());
           return null;
         }
