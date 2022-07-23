@@ -105,14 +105,15 @@ export default function Editor({
 
       function handleEvalCode(ast) {
         try {
-          console.log(transformFromAstSync, presetReact);
           const transformedCode = transformFromAstSync(ast, undefined, {
             presets: [presetReact],
             inputSourceMap: false,
             sourceMaps: false,
             comments: false
           });
+          console.log(transformedCode);
           const resultCode = transformedCode ? transformedCode.code : '';
+          console.log(resultCode);
           // eslint-disable-next-line no-new-func
           const res = new Function('React', `return ${resultCode}`);
           return res(React);
