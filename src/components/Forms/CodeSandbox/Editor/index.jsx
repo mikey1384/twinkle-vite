@@ -72,11 +72,9 @@ export default function Editor({
     handleCompiledComponent();
     async function handleCompiledComponent() {
       if (ast) {
-        console.log(ast, 'first');
         const element = await handleEvalCode(
           handleTransformBeforeCompilation(ast)
         );
-        console.log(element, 'end');
         const component = handleGenerateElement(element, (error) => {
           const errorString = error.toString();
           handleSetError({
@@ -106,14 +104,10 @@ export default function Editor({
       }
       async function handleEvalCode(ast) {
         try {
-          console.log('second');
           const resultCode = await renderAst(ast);
-          console.log('third');
           const res = new Function('React', `return ${resultCode}`);
-          console.log('fourth');
           return Promise.resolve(res(React));
         } catch (error) {
-          console.log(error, 'error');
           setError(error.toString());
           return null;
         }
@@ -220,35 +214,29 @@ export default function Editor({
 
   function handleTransformBeforeCompilation(ast) {
     try {
-      console.log(traverse, 'there');
-      traverse.default(ast, {
+      const renderer =
+        typeof traverse === 'function' ? traverse : traverse.default;
+      renderer(ast, {
         VariableDeclaration(path) {
-          console.log('here1');
           if (path.parent.type === 'Program') {
-            console.log('here2');
             path.replaceWith(path.node.declarations[0].init);
           }
         },
         ImportDeclaration(path) {
-          console.log('here3');
           path.remove();
-          console.log('here4');
         },
         ExportDefaultDeclaration(path) {
           if (
             path.node.declaration.type === 'ArrowFunctionExpression' ||
             path.node.declaration.type === 'FunctionDeclaration'
           ) {
-            console.log('here5');
             path.replaceWith(path.node.declaration);
           } else {
             path.remove();
-            console.log('here6');
           }
         }
       });
     } catch (error) {
-      console.log('got here!!', error);
       setError(error);
     }
     return ast;
