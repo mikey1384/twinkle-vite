@@ -107,8 +107,8 @@ export default function Editor({
         try {
           const transformedCode = transformFromAstSync(ast, undefined, {
             presets: [presetReact],
-            inputSourceMap: false,
-            sourceMaps: false,
+            inputSourceMap: true,
+            sourceMaps: true,
             comments: false
           });
           console.log(transformedCode);
@@ -118,6 +118,7 @@ export default function Editor({
           const res = new Function('React', `return ${resultCode}`);
           return res(React);
         } catch (error) {
+          console.log(error, 'got here');
           setError(error.toString());
           return null;
         }
