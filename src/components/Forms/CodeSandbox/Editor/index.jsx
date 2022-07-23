@@ -221,7 +221,7 @@ export default function Editor({
   function handleTransformBeforeCompilation(ast) {
     try {
       console.log(traverse, 'there');
-      traverse(ast, {
+      traverse.default(ast, {
         VariableDeclaration(path) {
           console.log('here1');
           if (path.parent.type === 'Program') {
