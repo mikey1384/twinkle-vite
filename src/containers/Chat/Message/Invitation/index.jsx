@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ChannelDetail from './ChannelDetail';
 import Button from '~/components/Button';

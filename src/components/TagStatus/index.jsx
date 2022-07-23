@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import PlaylistModal from '~/components/Modals/PlaylistModal';
 import TagModal from './TagModal';

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ContentPanel from '~/components/ContentPanel';
 import InvalidPage from '~/components/InvalidPage';
 import request from 'axios';

@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useInterval } from '~/helpers/hooks';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';

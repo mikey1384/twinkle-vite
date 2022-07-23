@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import AddTutorial from './AddTutorial';
 import ViewTutorial from './ViewTutorial';

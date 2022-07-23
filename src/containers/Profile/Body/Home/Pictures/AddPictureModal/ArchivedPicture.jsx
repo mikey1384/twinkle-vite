@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';

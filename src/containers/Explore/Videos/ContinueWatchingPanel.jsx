@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';

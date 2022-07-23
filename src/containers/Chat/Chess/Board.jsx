@@ -1,4 +1,4 @@
-import React, { memo, useCallback, Fragment, useMemo } from 'react';
+import { memo, useCallback, Fragment, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Square from './Square';
 import getPiece from './helpers/piece';

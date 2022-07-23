@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import StepSlide from '../components/StepSlide';

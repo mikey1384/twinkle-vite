@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import CodeSandbox from '~/components/Forms/CodeSandbox';
 import defaultCode from './defaultCode';

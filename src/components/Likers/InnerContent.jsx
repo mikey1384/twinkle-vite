@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Color } from '~/constants/css';

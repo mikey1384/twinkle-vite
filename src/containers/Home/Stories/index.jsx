@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import InputPanel from './InputPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { stringIsEmpty, truncateText } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import localize from '~/constants/localize';

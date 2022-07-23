@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Body from './Body';

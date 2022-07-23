@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Loading from '~/components/Loading';

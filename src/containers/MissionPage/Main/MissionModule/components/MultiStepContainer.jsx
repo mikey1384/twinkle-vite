@@ -1,4 +1,4 @@
-import React, { Children, useEffect, useMemo, useRef } from 'react';
+import { Children, useEffect, useMemo, useRef } from 'react';
 import Button from '~/components/Button';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';

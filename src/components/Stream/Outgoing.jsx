@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useChatContext } from '~/contexts';
 
 export default function Outgoing() {

@@ -1,11 +1,4 @@
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Input from './Input';
 import Loading from '~/components/Loading';
 import ActivitiesContainer from './ActivitiesContainer';

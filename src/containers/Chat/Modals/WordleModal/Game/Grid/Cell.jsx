@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
 import { REVEAL_TIME_MS } from '../../constants/settings';

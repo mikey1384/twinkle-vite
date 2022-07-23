@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import InvalidPage from '~/components/InvalidPage';
 import FilterBar from '~/components/FilterBar';
 import ManagementRoutes from './ManagementRoutes';

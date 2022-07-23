@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';

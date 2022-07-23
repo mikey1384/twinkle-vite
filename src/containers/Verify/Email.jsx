@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import Link from '~/components/Link';
 import { useParams } from 'react-router-dom';

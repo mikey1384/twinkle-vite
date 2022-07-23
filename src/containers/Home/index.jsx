@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import { memo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
 import AlertModal from '~/components/Modals/AlertModal';

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import Featured from './Featured';
 import Recommended from './Recommended';
 import MadeByUsers from './MadeByUsers';

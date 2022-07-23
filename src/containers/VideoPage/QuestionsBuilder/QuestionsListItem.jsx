@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { useDrag, useDrop } from 'react-dnd';

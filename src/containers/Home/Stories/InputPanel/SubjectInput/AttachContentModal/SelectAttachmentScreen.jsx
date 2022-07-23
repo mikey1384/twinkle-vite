@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearch } from '~/helpers/hooks';
 import PropTypes from 'prop-types';
 import SearchInput from '~/components/Texts/SearchInput';

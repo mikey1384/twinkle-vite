@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ImageModal from '~/components/Modals/ImageModal';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';

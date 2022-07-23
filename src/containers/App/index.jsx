@@ -1,12 +1,5 @@
 import 'regenerator-runtime/runtime'; // for async await
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Chat from '~/containers/Chat';
 import ContentPage from '~/containers/ContentPage';
 import Explore from '~/containers/Explore';

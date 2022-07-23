@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import StatBar from './StatBar';
 import Modal from '~/components/Modal';

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import Loading from '~/components/Loading';
 import Main from './Main';
 import RightMenu from './RightMenu';

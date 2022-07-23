@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Link from '~/components/Link';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';

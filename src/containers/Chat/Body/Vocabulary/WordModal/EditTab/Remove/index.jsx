@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import PartOfSpeechBlock from './PartOfSpeechBlock';
 
@@ -20,7 +19,7 @@ export default function Remove({
   return (
     <div>
       <div>
-        {poses.map(pos => (
+        {poses.map((pos) => (
           <PartOfSpeechBlock
             key={pos}
             deletedDefIds={deletedDefIds}

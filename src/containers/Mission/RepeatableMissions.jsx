@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MissionItem from '~/components/MissionItem';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';

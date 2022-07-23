@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import RoundList from '~/components/RoundList';
 import Banner from '~/components/Banner';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Playlist from '~/components/Playlist';
 import { useParams } from 'react-router-dom';
 import { css } from '@emotion/css';

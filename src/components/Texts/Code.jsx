@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Highlight, { Prism } from 'prism-react-renderer';
 import { Color } from '~/constants/css';

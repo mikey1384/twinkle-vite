@@ -1,4 +1,4 @@
-import React, { memo, useContext, useCallback, useRef, useEffect } from 'react';
+import { memo, useContext, useCallback, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ChatInfo from './ChatInfo';
 import VocabInfo from './VocabInfo';

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import PropTypes from 'prop-types';

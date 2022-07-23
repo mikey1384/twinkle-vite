@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import PreviewErrorBoundary from './PreviewErrorBoundary';
 import { css } from '@emotion/css';

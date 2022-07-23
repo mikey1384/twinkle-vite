@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';

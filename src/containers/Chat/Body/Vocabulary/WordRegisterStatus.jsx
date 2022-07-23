@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useChatContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';

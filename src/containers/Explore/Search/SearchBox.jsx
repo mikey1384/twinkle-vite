@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import SearchInput from '~/components/Texts/SearchInput';
 import { useExploreContext, useKeyContext } from '~/contexts';

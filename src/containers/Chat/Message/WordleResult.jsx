@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useRef, useState } from 'react';
+import { useContext, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';

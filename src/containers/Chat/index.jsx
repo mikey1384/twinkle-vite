@@ -1,11 +1,4 @@
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import CreateNewChat from './Modals/CreateNewChat';
 import UserListModal from '~/components/Modals/UserListModal';

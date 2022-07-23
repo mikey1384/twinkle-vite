@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';

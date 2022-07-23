@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import LinkItem from './LinkItem';
 import { css } from '@emotion/css';
 

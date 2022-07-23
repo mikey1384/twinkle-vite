@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import DeletedContent from './DeletedContent';
 import Loading from '~/components/Loading';

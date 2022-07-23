@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import Selectable from './Selectable';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import { Color, borderRadius } from '~/constants/css';

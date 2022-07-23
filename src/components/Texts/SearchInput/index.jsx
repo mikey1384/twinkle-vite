@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Input from '../Input';

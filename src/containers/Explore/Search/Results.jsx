@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import ContentListItem from '~/components/ContentListItem';

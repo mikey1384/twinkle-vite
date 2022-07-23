@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Carousel from '~/components/Carousel';
 import Button from '~/components/Button';
 import XPVideoPlayer from '~/components/XPVideoPlayer';

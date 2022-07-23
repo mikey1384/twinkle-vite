@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import FeaturedPlaylistsPanel from './FeaturedPlaylistsPanel';
 import PlaylistsPanel from './PlaylistsPanel';

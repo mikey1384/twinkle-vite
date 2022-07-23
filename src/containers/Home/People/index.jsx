@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
 import ProfilePanel from '~/components/ProfilePanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';

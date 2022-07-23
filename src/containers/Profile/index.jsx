@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Cover from './Cover';
 import Body from './Body';
 import ErrorBoundary from '~/components/ErrorBoundary';

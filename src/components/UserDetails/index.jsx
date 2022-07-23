@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Link from '~/components/Link';
 import StatusInput from './StatusInput';

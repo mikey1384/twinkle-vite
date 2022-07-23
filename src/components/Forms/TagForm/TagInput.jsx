@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import SearchDropdown from '~/components/SearchDropdown';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';

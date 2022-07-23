@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import FilterBar from '~/components/FilterBar';

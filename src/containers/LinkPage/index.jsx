@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Embedly from '~/components/Embedly';
 import Comments from '~/components/Comments';

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import PasswordForm from './PasswordForm';
 import { useParams } from 'react-router-dom';

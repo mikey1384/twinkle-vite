@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import MyRank from '~/components/MyRank';
 import RankingsListItem from '~/components/RankingsListItem';

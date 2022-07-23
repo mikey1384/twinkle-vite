@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Members from './Members';
 import ChannelDetails from './ChannelDetails';

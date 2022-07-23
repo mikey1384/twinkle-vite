@@ -1,4 +1,4 @@
-import React, { useReducer } from 'react';
+import { useReducer } from 'react';
 import { createContext } from 'use-context-selector';
 import PropTypes from 'prop-types';
 import ManagementActions from './actions';

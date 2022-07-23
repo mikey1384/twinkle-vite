@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo, useState } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';

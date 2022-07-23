@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ProgressBar from '~/components/ProgressBar';

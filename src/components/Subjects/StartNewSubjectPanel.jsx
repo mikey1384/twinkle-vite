@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import SubjectInputForm from './SubjectInputForm';
 import Button from '~/components/Button';

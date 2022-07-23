@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import PartOfSpeechBlock from './PartOfSpeechBlock';
 import PartOfSpeechesList from './PartOfSpeechesList';
@@ -29,7 +28,7 @@ export default function Reorder({
           width: '60%'
         }}
       >
-        {poses.map(pos => (
+        {poses.map((pos) => (
           <PartOfSpeechBlock
             key={pos}
             style={{ marginBottom: '1.5rem' }}
@@ -37,7 +36,7 @@ export default function Reorder({
             deletedDefIds={deletedDefIds}
             defIds={editedDefinitionOrder[pos]}
             posObject={posObj[pos]}
-            onListItemMove={params =>
+            onListItemMove={(params) =>
               handleDefinitionsMove({
                 ...params,
                 setIds: onSetEditedDefinitionOrder,
@@ -69,7 +68,7 @@ export default function Reorder({
     const targetIndex = newIds.indexOf(targetId);
     newIds.splice(sourceIndex, 1);
     newIds.splice(targetIndex, 0, sourceId);
-    setIds(ids => ({
+    setIds((ids) => ({
       ...ids,
       [pos]: newIds
     }));

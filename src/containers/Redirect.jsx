@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import InvalidPage from '~/components/InvalidPage';
 import request from 'axios';

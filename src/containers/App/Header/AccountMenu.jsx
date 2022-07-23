@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';

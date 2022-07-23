@@ -1,10 +1,4 @@
-import React, {
-  memo,
-  useEffect,
-  useRef,
-  useState,
-  startTransition
-} from 'react';
+import { memo, useEffect, useRef, useState, startTransition } from 'react';
 import PropTypes from 'prop-types';
 import Activity from './Activity';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';

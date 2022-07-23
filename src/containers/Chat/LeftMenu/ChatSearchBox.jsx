@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import SearchInput from '~/components/Texts/SearchInput';

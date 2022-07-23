@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import KarmaStatus from './KarmaStatus';
 import ItemPanel from './ItemPanel';
 import ChangePassword from './ChangePassword';

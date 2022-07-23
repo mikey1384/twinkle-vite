@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import LongText from '~/components/Texts/LongText';
 import MissionModule from '../../MissionModule';

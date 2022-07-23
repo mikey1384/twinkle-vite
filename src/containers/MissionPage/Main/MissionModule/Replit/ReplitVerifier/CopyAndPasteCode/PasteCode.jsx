@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactPlayer from 'react-player';
 import Button from '~/components/Button';

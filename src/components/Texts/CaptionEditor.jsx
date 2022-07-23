@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';

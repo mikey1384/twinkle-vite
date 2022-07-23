@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import ColorSelector from '~/components/ColorSelector';

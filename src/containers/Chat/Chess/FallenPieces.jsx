@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Square from './Square';
 import getPiece from './helpers/piece';

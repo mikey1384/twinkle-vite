@@ -1,4 +1,3 @@
-import React from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';

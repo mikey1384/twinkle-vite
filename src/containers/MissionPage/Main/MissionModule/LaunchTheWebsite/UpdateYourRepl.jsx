@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import StepSlide from '../components/StepSlide';
 import Code from '~/components/Texts/Code';

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import XPVideoPlayer from '../../../XPVideoPlayer';

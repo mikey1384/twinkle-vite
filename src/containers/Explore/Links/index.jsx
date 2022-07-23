@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AddLinkModal from './AddLinkModal';
 import Button from '~/components/Button';
 import SectionPanel from '~/components/SectionPanel';

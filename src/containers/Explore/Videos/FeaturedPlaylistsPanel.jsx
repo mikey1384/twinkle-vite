@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import PlaylistsPanel from './PlaylistsPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';

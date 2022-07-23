@@ -1,10 +1,4 @@
-import React, {
-  memo,
-  useContext,
-  useCallback,
-  useEffect,
-  useMemo
-} from 'react';
+import { memo, useContext, useCallback, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import EditTextArea from '~/components/Texts/EditTextArea';

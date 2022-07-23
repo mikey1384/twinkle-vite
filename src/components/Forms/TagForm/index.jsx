@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useSearch } from '~/helpers/hooks';
 import PropTypes from 'prop-types';
 import TagInput from './TagInput';

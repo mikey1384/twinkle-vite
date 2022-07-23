@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import Button from '~/components/Button';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';

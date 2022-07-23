@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import PropTypes from 'prop-types';
 import { TouchBackend } from 'react-dnd-touch-backend';

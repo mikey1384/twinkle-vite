@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import YouTubeIcon from '~/assets/YoutubeIcon.svg';
 import YTVideoModal from './YTVideoModal';
