@@ -86,6 +86,7 @@ export default function Editor({
       }
 
       function handleGenerateElement(code, errorCallback) {
+        console.log('got over here', code);
         return errorBoundary(code, errorCallback);
         function errorBoundary(Element, errorCallback) {
           class ErrorBoundary extends React.Component {
@@ -94,6 +95,7 @@ export default function Editor({
               return errorCallback(error);
             }
             render() {
+              console.log(Element, 'got over here');
               return typeof Element === 'function'
                 ? createElement(Element, null)
                 : Element;
@@ -155,7 +157,9 @@ export default function Editor({
           {error}
         </p>
       )}
-      <Preview style={{ marginTop: '5rem' }}>{CompiledElement}</Preview>
+      {CompiledElement && (
+        <Preview style={{ marginTop: '5rem' }}>{CompiledElement}</Preview>
+      )}
       <style
         dangerouslySetInnerHTML={{
           __html: `.npm__react-simple-code-editor__textarea { outline: none !important; }`
