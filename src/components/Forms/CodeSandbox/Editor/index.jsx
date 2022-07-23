@@ -5,10 +5,10 @@ import SimpleEditor from 'react-simple-code-editor';
 import okaidia from 'prism-react-renderer/themes/okaidia';
 import Highlight, { Prism } from 'prism-react-renderer';
 import traverse from '@babel/traverse';
+import { transformFromAstSync } from '@babel/core';
 import presetReact from '@babel/preset-react';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
-import { transformFromAstSync } from '@babel/core';
 
 Editor.propTypes = {
   value: PropTypes.string,
