@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Embedly from '~/components/Embedly';
 import LongText from '~/components/Texts/LongText';

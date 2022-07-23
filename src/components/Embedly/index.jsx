@@ -1,4 +1,5 @@
-import React, {
+import {
+  createElement,
   memo,
   useCallback,
   useEffect,
@@ -313,7 +314,7 @@ function Embedly({
           </a>
         )}
         {!imageOnly &&
-          React.createElement(
+          createElement(
             contentType === 'chat' || directUrl ? 'a' : 'section',
             {
               style: {

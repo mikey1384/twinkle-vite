@@ -1,11 +1,4 @@
-import React, {
-  memo,
-  useCallback,
-  useState,
-  useMemo,
-  useRef,
-  useEffect
-} from 'react';
+import { memo, useCallback, useState, useMemo, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';

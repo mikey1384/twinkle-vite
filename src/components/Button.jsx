@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, mobileMaxWidth, Color } from '~/constants/css';

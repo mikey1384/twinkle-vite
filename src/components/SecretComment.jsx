@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import { borderRadius, Color, desktopMinWidth } from '~/constants/css';
 import { css } from '@emotion/css';

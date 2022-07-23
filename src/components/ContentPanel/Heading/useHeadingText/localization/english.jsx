@@ -1,4 +1,3 @@
-import React from 'react';
 import { Color } from '~/constants/css';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';

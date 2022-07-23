@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';

@@ -89,7 +89,6 @@ export function Theme(color = 'logoBlue') {
           green: 'blue',
           orange: 'pinkOrange',
           rose: 'cranberry',
-          pink: 'darkGray',
           purple: 'purple',
           black: 'darkerGray',
           red: 'magenta',

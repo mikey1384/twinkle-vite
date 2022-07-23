@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useContentState } from '~/helpers/hooks';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';

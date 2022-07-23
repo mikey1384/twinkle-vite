@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import InputForm from '~/components/Forms/InputForm';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';

@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import { useNavigate } from 'react-router-dom';

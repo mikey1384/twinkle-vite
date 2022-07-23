@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useCallback, useRef, useState } from 'react';
+import { memo, useEffect, useCallback, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import Link from '~/components/Link';

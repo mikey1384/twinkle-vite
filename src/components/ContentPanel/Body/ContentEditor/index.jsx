@@ -1,11 +1,4 @@
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useRef
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import TextEditSection from './TextEditSection';

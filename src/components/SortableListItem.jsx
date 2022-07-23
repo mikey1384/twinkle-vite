@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import PropTypes from 'prop-types';
 import ItemTypes from '~/constants/itemTypes';
 import Icon from '~/components/Icon';

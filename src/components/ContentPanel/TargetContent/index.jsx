@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useContext, useState } from 'react';
+import { useEffect, useMemo, useRef, useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import LocalContext from '../Context';
 import UsernameText from '~/components/Texts/UsernameText';

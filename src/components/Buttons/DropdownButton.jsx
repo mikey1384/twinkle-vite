@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import DropdownList from '~/components/DropdownList';
 import Icon from '~/components/Icon';

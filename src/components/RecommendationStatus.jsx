@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import UserListModal from '~/components/Modals/UserListModal';

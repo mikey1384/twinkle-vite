@@ -1,4 +1,4 @@
-import React, { memo, useContext, useMemo, useRef, useState } from 'react';
+import { memo, useContext, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../Context';

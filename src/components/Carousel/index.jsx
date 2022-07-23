@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { Children, useEffect, useRef, useState } from 'react';
 import NavButton from './NavButton';
 import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
@@ -76,7 +76,7 @@ export default function Carousel({
   const [currentSlide, setCurrentSlide] = useState(slideIndex);
   const [dragging, setDragging] = useState(false);
   const [slideWidth, setSlideWidth] = useState(0);
-  const [slideCount, setSlideCount] = useState(React.Children.count(children));
+  const [slideCount, setSlideCount] = useState(Children.count(children));
   const [touchObject, setTouchObject] = useState({});
   const FrameRef = useRef(null);
   const scrollYRef = useRef(null);
@@ -92,7 +92,7 @@ export default function Carousel({
   });
 
   useEffect(() => {
-    setSlideCount(React.Children.count(children));
+    setSlideCount(Children.count(children));
   }, [children]);
 
   return (
@@ -332,7 +332,7 @@ export default function Carousel({
   );
 
   function formatChildren({ children, slideWidth, cellSpacing }) {
-    return React.Children.map(children, (child, index) => (
+    return Children.map(children, (child, index) => (
       <li
         style={{
           display: 'inline-block',

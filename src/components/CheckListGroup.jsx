@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import { css } from '@emotion/css';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 

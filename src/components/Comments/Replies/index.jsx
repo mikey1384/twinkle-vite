@@ -1,4 +1,4 @@
-import React, { memo, useContext, useEffect, useRef, useState } from 'react';
+import { memo, useContext, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import LocalContext from '../Context';
 import Reply from './Reply';

@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useEffect } from 'react';
+import { memo, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LongText from '~/components/Texts/LongText';

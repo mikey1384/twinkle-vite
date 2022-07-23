@@ -1,4 +1,3 @@
-import React from 'react';
 import { borderRadius, Color, desktopMinWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';

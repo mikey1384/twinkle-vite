@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import FileInfo from './FileInfo';
 import ReactPlayer from 'react-player';
