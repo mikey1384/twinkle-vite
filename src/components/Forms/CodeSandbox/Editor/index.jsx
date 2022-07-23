@@ -75,6 +75,7 @@ export default function Editor({
         const element = await handleEvalCode(
           handleTransformBeforeCompilation(ast)
         );
+        console.log(element, 'got here');
         const component = handleGenerateElement(element, (error) => {
           const errorString = error.toString();
           handleSetError({
@@ -106,6 +107,7 @@ export default function Editor({
       async function handleEvalCode(ast) {
         try {
           const resultCode = await renderAst(ast);
+          console.log(resultCode, 'herrree');
           const res = new Function('React', `return ${resultCode}`);
           return Promise.resolve(res(React));
         } catch (error) {
