@@ -58,6 +58,7 @@ export default function Editor({
         const ast = onParse(code);
         onSetAst(ast);
       } catch (error) {
+        console.log(error, 'error came here');
         const errorString = error.toString();
         handleSetError({
           error: errorString,
