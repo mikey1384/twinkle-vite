@@ -58,7 +58,6 @@ export default function Editor({
         const ast = onParse(code);
         onSetAst(ast);
       } catch (error) {
-        console.log(error, 'error came here');
         const errorString = error.toString();
         handleSetError({
           error: errorString,
@@ -117,7 +116,6 @@ export default function Editor({
           const res = new Function('React', `return ${resultCode}`);
           return res(React);
         } catch (error) {
-          console.log(error, 'error came there');
           setError(error.toString());
           return null;
         }

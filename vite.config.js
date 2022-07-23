@@ -2,11 +2,10 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import { resolve } from 'path';
-import { splitVendorChunkPlugin } from 'vite';
 import inject from '@rollup/plugin-inject';
 
 export default defineConfig({
-  plugins: [react(), splitVendorChunkPlugin()],
+  plugins: [react()],
   server: {
     port: '3000'
   },
