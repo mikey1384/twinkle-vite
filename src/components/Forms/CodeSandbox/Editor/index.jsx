@@ -1,6 +1,5 @@
 import React, { createElement, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import Preview from './Preview';
 import SimpleEditor from 'react-simple-code-editor';
 import okaidia from 'prism-react-renderer/themes/okaidia';
 import Highlight, { Prism } from 'prism-react-renderer';
@@ -118,11 +117,9 @@ export default function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ast]);
 
+  console.log(CompiledElement);
   return (
     <div style={{ width: '100%', ...style }}>
-      {CompiledElement && (
-        <Preview style={{ marginBottom: '5rem' }}>{CompiledElement}</Preview>
-      )}
       <style
         dangerouslySetInnerHTML={{
           __html: `.npm__react-simple-code-editor__textarea { outline: none !important; }`
@@ -156,9 +153,6 @@ export default function Editor({
         >
           {error}
         </p>
-      )}
-      {CompiledElement && (
-        <Preview style={{ marginTop: '5rem' }}>{CompiledElement}</Preview>
       )}
       <style
         dangerouslySetInnerHTML={{
