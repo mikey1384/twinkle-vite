@@ -222,21 +222,27 @@ export default function Editor({
     try {
       traverse(ast, {
         VariableDeclaration(path) {
+          console.log('here1');
           if (path.parent.type === 'Program') {
+            console.log('here2');
             path.replaceWith(path.node.declarations[0].init);
           }
         },
         ImportDeclaration(path) {
+          console.log('here3');
           path.remove();
+          console.log('here4');
         },
         ExportDefaultDeclaration(path) {
           if (
             path.node.declaration.type === 'ArrowFunctionExpression' ||
             path.node.declaration.type === 'FunctionDeclaration'
           ) {
+            console.log('here5');
             path.replaceWith(path.node.declaration);
           } else {
             path.remove();
+            console.log('here6');
           }
         }
       });
