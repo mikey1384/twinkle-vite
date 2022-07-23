@@ -2,6 +2,7 @@ import React, { createElement, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import SimpleEditor from 'react-simple-code-editor';
 import okaidia from 'prism-react-renderer/themes/okaidia';
+import Preview from './Preview';
 import Highlight, { Prism } from 'prism-react-renderer';
 import traverse from '@babel/traverse';
 import { useAppContext } from '~/contexts';
@@ -32,7 +33,7 @@ export default function Editor({
   const renderAst = useAppContext((v) => v.requestHelpers.renderAst);
   const [error, setError] = useState('');
   const [errorLineNumber, setErrorLineNumber] = useState(null);
-  const [CompiledElement, setCompiledElement] = useState(null);
+  const [CompiledElement, setCompiledElement] = useState(<div></div>);
 
   useEffect(() => {
     setError('');
@@ -117,9 +118,9 @@ export default function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ast]);
 
-  console.log(CompiledElement);
   return (
     <div style={{ width: '100%', ...style }}>
+      <Preview style={{ marginBottom: '5rem' }}>{CompiledElement}</Preview>
       <style
         dangerouslySetInnerHTML={{
           __html: `.npm__react-simple-code-editor__textarea { outline: none !important; }`
@@ -154,6 +155,7 @@ export default function Editor({
           {error}
         </p>
       )}
+      <Preview style={{ marginTop: '5rem' }}>{CompiledElement}</Preview>
       <style
         dangerouslySetInnerHTML={{
           __html: `.npm__react-simple-code-editor__textarea { outline: none !important; }`
