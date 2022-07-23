@@ -2,10 +2,11 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import { resolve } from 'path';
+import babel from 'vite-plugin-babel';
 import inject from '@rollup/plugin-inject';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), babel()],
   server: {
     port: '3000'
   },

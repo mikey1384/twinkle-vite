@@ -107,18 +107,15 @@ export default function Editor({
         try {
           const transformedCode = transformFromAstSync(ast, undefined, {
             presets: [presetReact],
-            inputSourceMap: true,
-            sourceMaps: true,
+            inputSourceMap: false,
+            sourceMaps: false,
             comments: false
           });
-          console.log(transformedCode);
           const resultCode = transformedCode ? transformedCode.code : '';
-          console.log(resultCode);
           // eslint-disable-next-line no-new-func
           const res = new Function('React', `return ${resultCode}`);
           return res(React);
         } catch (error) {
-          console.log(error, 'got here');
           setError(error.toString());
           return null;
         }
