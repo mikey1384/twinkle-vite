@@ -35,7 +35,6 @@ export default function Editor({
   const [error, setError] = useState('');
   const [errorLineNumber, setErrorLineNumber] = useState(null);
   const [elementObj, setElementObj] = useState(null);
-  const [elementObjLoaded, setElementObjLoaded] = useState(false);
 
   useEffect(() => {
     setError('');
@@ -78,7 +77,6 @@ export default function Editor({
           handleTransformBeforeCompilation(ast)
         );
         setElementObj(result);
-        setElementObjLoaded(true);
       }
 
       async function handleEvalCode(ast) {
@@ -127,7 +125,7 @@ export default function Editor({
 
   return (
     <div style={{ width: '100%', ...style }}>
-      {elementObjLoaded ? (
+      {elementObj ? (
         <Preview style={{ marginBottom: '5rem' }}>{CompiledComponent}</Preview>
       ) : ast ? (
         <Loading />
@@ -166,7 +164,7 @@ export default function Editor({
           {error}
         </p>
       )}
-      {elementObjLoaded ? (
+      {elementObj ? (
         <Preview style={{ marginTop: '5rem' }}>{CompiledComponent}</Preview>
       ) : ast ? (
         <Loading />
