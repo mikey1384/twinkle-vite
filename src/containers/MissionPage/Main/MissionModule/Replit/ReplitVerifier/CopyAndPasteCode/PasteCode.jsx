@@ -85,14 +85,6 @@ export default function PasteCode({
       )}
       {watched && (
         <div style={{ marginTop: '5rem', width: '100%' }}>
-          <h2>
-            {`1. Patiently wait until "[ `}
-            <b style={{ color: Color.green() }}>ready</b> ] compliled
-            successfully{`" shows up in the console`}
-          </h2>
-          <h2 style={{ marginTop: '2rem' }}>
-            2. A six-digit code will show up in the top right screen
-          </h2>
           <div
             style={{
               width: '100%',
@@ -102,16 +94,6 @@ export default function PasteCode({
               flexDirection: 'column'
             }}
           >
-            <img
-              className={css`
-                margin-top: 2rem;
-                width: 80%;
-                @media (max-width: ${mobileMaxWidth}) {
-                  width: 100%;
-                }
-              `}
-              src={`${cloudFrontURL}/missions/replit/6-digit-code.png`}
-            />
             <h1 style={{ marginTop: '5rem' }}>
               Enter the six-digit code below
             </h1>
