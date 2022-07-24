@@ -1598,12 +1598,14 @@ export default function ChatReducer(state, action) {
       const newMessagesObj = {
         ...state.channelsObj[action.channelId]?.messagesObj
       };
-      for (let messageId of state.channelsObj[action.channelId]?.messageIds ||
-        []) {
-        const message = newMessagesObj[messageId];
-        if (message?.moveViewTimeStamp) {
-          continue;
-        }
+      const chessMessageIdsWithoutMoveViewTimeStamp = (
+        state.channelsObj[action.channelId]?.messageIds || []
+      ).filter(
+        (messageId) =>
+          newMessagesObj[messageId]?.isChessMsg &&
+          !newMessagesObj[messageId]?.moveViewTimeStamp
+      );
+      for (let messageId of chessMessageIdsWithoutMoveViewTimeStamp) {
         newMessagesObj[messageId].moveViewTimeStamp = Math.floor(
           Date.now() / 1000
         );

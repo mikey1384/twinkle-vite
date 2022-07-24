@@ -302,6 +302,7 @@ export default function ChessModal({
   }
 
   function handleGameOver() {
+    onUpdateLastChessMoveViewerId({ channelId, viewerId: myId });
     socket.emit('end_chess_game', {
       channel: {
         id: currentChannel.id,
