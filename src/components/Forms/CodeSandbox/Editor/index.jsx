@@ -33,7 +33,7 @@ export default function Editor({
   const renderAst = useAppContext((v) => v.requestHelpers.renderAst);
   const [error, setError] = useState('');
   const [errorLineNumber, setErrorLineNumber] = useState(null);
-  const [CompiledElement, setCompiledElement] = useState(<div></div>);
+  const [CompiledElement, setCompiledElement] = useState(null);
 
   useEffect(() => {
     setError('');
