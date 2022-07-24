@@ -104,6 +104,7 @@ function Message({
     linkDescription,
     linkTitle,
     linkUrl,
+    moveViewTimeStamp,
     numMsgs,
     rewardAmount,
     rewardReason,
@@ -296,12 +297,18 @@ function Message({
 
   const spoilerOff = useMemo(() => {
     const userMadeThisMove = chessState?.move?.by === myId;
-    const userMadeLastMove = currentChannel.lastChessMoveViewerId === myId;
-    if (userMadeThisMove || userMadeLastMove) {
+    const userIsTheLastMoveViewer =
+      currentChannel.lastChessMoveViewerId === myId;
+    if (userMadeThisMove || userIsTheLastMoveViewer || moveViewTimeStamp) {
       return true;
     }
     return false;
-  }, [chessState, currentChannel.lastChessMoveViewerId, myId]);
+  }, [
+    chessState?.move?.by,
+    currentChannel.lastChessMoveViewerId,
+    moveViewTimeStamp,
+    myId
+  ]);
 
   useEffect(() => {
     const url = fetchURLFromText(content);
@@ -459,7 +466,7 @@ function Message({
     spoilerClickedRef.current = true;
     onSetReplyTarget({ channelId: currentChannel.id, target: null });
     try {
-      setChessMoveViewTimeStamp({ channelId, message });
+      await setChessMoveViewTimeStamp({ channelId, message });
       onUpdateLastChessMoveViewerId({ channelId, viewerId: myId });
       onChessSpoilerClick(userId);
       spoilerClickedRef.current = false;

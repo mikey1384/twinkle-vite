@@ -61,6 +61,9 @@ export default function ChessModal({
   const setChessMoveViewTimeStamp = useAppContext(
     (v) => v.requestHelpers.setChessMoveViewTimeStamp
   );
+  const onUpdateLastChessMoveViewerId = useChatContext(
+    (v) => v.actions.onUpdateLastChessMoveViewerId
+  );
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
   const [initialState, setInitialState] = useState();
   const [message, setMessage] = useState();
@@ -68,7 +71,6 @@ export default function ChessModal({
   const [loaded, setLoaded] = useState(false);
   const [newChessState, setNewChessState] = useState();
   const [confirmModalShown, setConfirmModalShown] = useState(false);
-  const [spoilerOff, setSpoilerOff] = useState(false);
   const [userMadeLastMove, setUserMadeLastMove] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
@@ -95,12 +97,6 @@ export default function ChessModal({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (typeof countdownNumber === 'number') {
-      setSpoilerOff(true);
-    }
-  }, [channelId, countdownNumber]);
 
   const boardState = useMemo(
     () => (initialState ? { ...initialState } : null),
@@ -149,6 +145,25 @@ export default function ChessModal({
     return drawOffererId && drawOffererId !== myId;
   }, [drawOffererId, myId]);
 
+  const spoilerOff = useMemo(() => {
+    if (typeof countdownNumber === 'number') {
+      return true;
+    }
+    const userIsTheLastMoveViewer =
+      currentChannel.lastChessMoveViewerId === myId;
+    return (
+      (!loading.current && !initialState) ||
+      !!userMadeLastMove ||
+      userIsTheLastMoveViewer
+    );
+  }, [
+    countdownNumber,
+    currentChannel.lastChessMoveViewerId,
+    initialState,
+    myId,
+    userMadeLastMove
+  ]);
+
   return (
     <ErrorBoundary componentPath="ChessModal">
       <Modal large onHide={onHide}>
@@ -174,11 +189,7 @@ export default function ChessModal({
               opponentId={opponentId}
               opponentName={opponentName}
               senderId={uploaderId}
-              spoilerOff={
-                spoilerOff ||
-                (!loading.current && !initialState) ||
-                !!userMadeLastMove
-              }
+              spoilerOff={spoilerOff}
               onSpoilerClick={handleSpoilerClick}
             />
           </div>
@@ -275,7 +286,7 @@ export default function ChessModal({
   async function handleSpoilerClick() {
     try {
       await setChessMoveViewTimeStamp({ channelId, message });
-      setSpoilerOff(true);
+      onUpdateLastChessMoveViewerId({ channelId, viewerId: myId });
       onSpoilerClick(message.userId);
     } catch (error) {
       console.error(error);

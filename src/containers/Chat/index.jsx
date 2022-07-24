@@ -97,6 +97,9 @@ function Chat({ onFileUpload }) {
   const sendInvitationMessage = useAppContext(
     (v) => v.requestHelpers.sendInvitationMessage
   );
+  const setChessMoveViewTimeStamp = useAppContext(
+    (v) => v.requestHelpers.setChessMoveViewTimeStamp
+  );
   const startNewDMChannel = useAppContext(
     (v) => v.requestHelpers.startNewDMChannel
   );
@@ -584,6 +587,7 @@ function Chat({ onFileUpload }) {
           saveChatMessage,
           searchChatSubject,
           sendInvitationMessage,
+          setChessMoveViewTimeStamp,
           startNewDMChannel,
           updateUserXP,
           uploadChatSubject,

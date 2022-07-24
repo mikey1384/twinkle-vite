@@ -1018,6 +1018,10 @@ export default function ChatReducer(state, action) {
               ...state.channelsObj[action.message.channelId].messagesObj,
               [messageId]: { ...action.message, id: messageId }
             },
+            lastChessMoveViewerId: action.message.isChessMsg
+              ? action.message.userId
+              : state.channelsObj[action.message.channelId]
+                  .lastChessMoveViewerId,
             members: [
               ...state.channelsObj[action.message.channelId].members,
               ...action.newMembers.filter(
