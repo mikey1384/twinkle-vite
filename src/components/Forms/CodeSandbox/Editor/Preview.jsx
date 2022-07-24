@@ -1,16 +1,19 @@
 import PropTypes from 'prop-types';
 import PreviewErrorBoundary from './PreviewErrorBoundary';
+import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 
 Preview.propTypes = {
+  evaling: PropTypes.bool,
   style: PropTypes.object,
   children: PropTypes.node
 };
 
-export default function Preview({ style, children }) {
+export default function Preview({ evaling, style, children }) {
   return (
     <PreviewErrorBoundary
       style={{
+        position: 'relative',
         width: '100%',
         ...style
       }}
@@ -46,6 +49,7 @@ export default function Preview({ style, children }) {
         }
       `}
     >
+      {evaling ? <Loading style={{ position: 'absolute' }} /> : null}
       {children}
     </PreviewErrorBoundary>
   );

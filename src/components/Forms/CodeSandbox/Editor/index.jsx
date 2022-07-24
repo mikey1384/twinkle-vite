@@ -35,6 +35,7 @@ export default function Editor({
   const [error, setError] = useState('');
   const [errorLineNumber, setErrorLineNumber] = useState(null);
   const [elementObj, setElementObj] = useState(null);
+  const [evaling, setEvaling] = useState(false);
 
   useEffect(() => {
     setError('');
@@ -73,9 +74,11 @@ export default function Editor({
     handleCompiledComponent();
     async function handleCompiledComponent() {
       if (ast) {
+        setEvaling(true);
         const result = await handleEvalCode(
           handleTransformBeforeCompilation(ast)
         );
+        setEvaling(false);
         setElementObj(result);
       }
 
@@ -126,7 +129,9 @@ export default function Editor({
   return (
     <div style={{ width: '100%', ...style }}>
       {elementObj ? (
-        <Preview style={{ marginBottom: '5rem' }}>{CompiledComponent}</Preview>
+        <Preview evaling={evaling} style={{ marginBottom: '5rem' }}>
+          {CompiledComponent}
+        </Preview>
       ) : ast ? (
         <Loading />
       ) : null}
@@ -165,7 +170,9 @@ export default function Editor({
         </p>
       )}
       {elementObj ? (
-        <Preview style={{ marginTop: '5rem' }}>{CompiledComponent}</Preview>
+        <Preview evaling={evaling} style={{ marginTop: '5rem' }}>
+          {CompiledComponent}
+        </Preview>
       ) : ast ? (
         <Loading />
       ) : null}
