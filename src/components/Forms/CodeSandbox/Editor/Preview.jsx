@@ -13,6 +13,7 @@ export default function Preview({ evaling, style, children }) {
   return (
     <PreviewErrorBoundary
       style={{
+        opacity: evaling ? 0.5 : 1,
         position: 'relative',
         width: '100%',
         ...style
