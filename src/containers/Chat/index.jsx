@@ -37,9 +37,6 @@ function Chat({ onFileUpload }) {
   const { lastChatPath, userId, profileTheme } = useKeyContext(
     (v) => v.myState
   );
-  const {
-    generalChat: { color: generalChatColor }
-  } = useKeyContext((v) => v.theme);
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const userObj = useAppContext((v) => v.user.state.userObj);
@@ -529,7 +526,7 @@ function Chat({ onFileUpload }) {
       return profileTheme;
     }
     return 'logoBlue';
-  }, [currentChannel.theme, generalChatColor, selectedChannelId]);
+  }, [currentChannel.theme, profileTheme, selectedChannelId]);
 
   return (
     <LocalContext.Provider
