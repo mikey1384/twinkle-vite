@@ -1,10 +1,11 @@
-import React, { createElement, useEffect, useState } from 'react';
+import React, { useMemo, createElement, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import SimpleEditor from 'react-simple-code-editor';
 import okaidia from 'prism-react-renderer/themes/okaidia';
 import Preview from './Preview';
 import Highlight, { Prism } from 'prism-react-renderer';
 import traverse from '@babel/traverse';
+import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
@@ -33,7 +34,7 @@ export default function Editor({
   const renderAst = useAppContext((v) => v.requestHelpers.renderAst);
   const [error, setError] = useState('');
   const [errorLineNumber, setErrorLineNumber] = useState(null);
-  const [CompiledElement, setCompiledElement] = useState(null);
+  const [elementObj, setElementObj] = useState(null);
 
   useEffect(() => {
     setError('');
@@ -72,35 +73,10 @@ export default function Editor({
     handleCompiledComponent();
     async function handleCompiledComponent() {
       if (ast) {
-        const element = await handleEvalCode(
+        const result = await handleEvalCode(
           handleTransformBeforeCompilation(ast)
         );
-        const component = handleGenerateElement(element, (error) => {
-          const errorString = error.toString();
-          handleSetError({
-            error: errorString,
-            lineNumber: getErrorLineNumber(errorString)
-          });
-        });
-        setCompiledElement(createElement(component, null));
-      }
-
-      function handleGenerateElement(code, errorCallback) {
-        return errorBoundary(code, errorCallback);
-        function errorBoundary(Element, errorCallback) {
-          class ErrorBoundary extends React.Component {
-            state = { hasError: false };
-            componentDidCatch(error) {
-              return errorCallback(error);
-            }
-            render() {
-              return typeof Element === 'function'
-                ? createElement(Element, null)
-                : Element;
-            }
-          }
-          return ErrorBoundary;
-        }
+        setElementObj(result);
       }
       async function handleEvalCode(ast) {
         try {
@@ -116,9 +92,43 @@ export default function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ast]);
 
+  const CompiledComponent = useMemo(() => {
+    const component = handleGenerateComponent(elementObj, (error) => {
+      const errorString = error.toString();
+      handleSetError({
+        error: errorString,
+        lineNumber: getErrorLineNumber(errorString)
+      });
+    });
+    return createElement(component, null);
+
+    function handleGenerateComponent(code, errorCallback) {
+      return errorBoundary(code, errorCallback);
+      function errorBoundary(Element, errorCallback) {
+        class ErrorBoundary extends React.Component {
+          state = { hasError: false };
+          componentDidCatch(error) {
+            return errorCallback(error);
+          }
+          render() {
+            return typeof Element === 'function'
+              ? createElement(Element, null)
+              : Element;
+          }
+        }
+        return ErrorBoundary;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [elementObj]);
+
   return (
     <div style={{ width: '100%', ...style }}>
-      <Preview style={{ marginBottom: '5rem' }}>{CompiledElement}</Preview>
+      {elementObj ? (
+        <Preview style={{ marginBottom: '5rem' }}>{CompiledComponent}</Preview>
+      ) : (
+        <Loading />
+      )}
       <style
         dangerouslySetInnerHTML={{
           __html: `.npm__react-simple-code-editor__textarea { outline: none !important; }`
@@ -153,7 +163,11 @@ export default function Editor({
           {error}
         </p>
       )}
-      <Preview style={{ marginTop: '5rem' }}>{CompiledElement}</Preview>
+      {elementObj ? (
+        <Preview style={{ marginTop: '5rem' }}>{CompiledComponent}</Preview>
+      ) : (
+        <Loading />
+      )}
       <style
         dangerouslySetInnerHTML={{
           __html: `.npm__react-simple-code-editor__textarea { outline: none !important; }`
