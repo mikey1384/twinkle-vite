@@ -16,7 +16,7 @@ export default function CreateNewRepl({ index, innerRef, okayPressed }) {
       index={index}
       title={
         <>
-          Create a <span style={{ color: Color.orange() }}>Next.js Repl</span>{' '}
+          Create a <span style={{ color: Color.orange() }}>ReactJS Repl</span>{' '}
           after reading the{' '}
           <span style={{ color: Color.orange() }}>tutorial</span>
           <p style={{ color: Color.cranberry() }}>
@@ -34,7 +34,7 @@ export default function CreateNewRepl({ index, innerRef, okayPressed }) {
           `}
         >
           Did you create a{' '}
-          <span style={{ color: Color.orange() }}>Next.js</span> Repl?
+          <span style={{ color: Color.orange() }}>ReactJS</span> Repl?
         </h1>
       )}
     </StepSlide>

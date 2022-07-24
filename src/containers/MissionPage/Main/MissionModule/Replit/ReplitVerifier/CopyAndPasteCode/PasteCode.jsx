@@ -59,7 +59,7 @@ export default function PasteCode({
               left: 0,
               bottom: 0
             }}
-            url={`${cloudFrontURL}/missions/replit/desktop-video-instruction.mp4`}
+            url={`${cloudFrontURL}/missions/replit/desktop-video-instruction-vite.mp4`}
             controls
           />
         </div>
