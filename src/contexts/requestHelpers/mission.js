@@ -103,11 +103,11 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async renderAst(ast) {
+    async processAst(ast) {
       try {
         const {
           data: { result }
-        } = await request.post(`${URL}/mission/renderAst`, {
+        } = await request.post(`${URL}/mission/processAst`, {
           ast
         });
         return Promise.resolve(result);

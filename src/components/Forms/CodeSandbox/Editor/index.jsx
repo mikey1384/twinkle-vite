@@ -31,7 +31,7 @@ export default function Editor({
   style
 }) {
   const lintCode = useAppContext((v) => v.requestHelpers.lintCode);
-  const renderAst = useAppContext((v) => v.requestHelpers.renderAst);
+  const processAst = useAppContext((v) => v.requestHelpers.processAst);
   const [error, setError] = useState('');
   const [errorLineNumber, setErrorLineNumber] = useState(null);
   const [elementObj, setElementObj] = useState(null);
@@ -80,7 +80,7 @@ export default function Editor({
       }
       async function handleEvalCode(ast) {
         try {
-          const resultCode = await renderAst(ast);
+          const resultCode = await processAst(ast);
           const res = new Function('React', `return ${resultCode}`);
           return Promise.resolve(res(React));
         } catch (error) {
