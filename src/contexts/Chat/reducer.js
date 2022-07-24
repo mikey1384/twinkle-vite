@@ -1595,13 +1595,27 @@ export default function ChatReducer(state, action) {
           })
       };
     case 'UPDATE_LAST_CHESS_MOVE_VIEWER_ID':
+      const newMessagesObj = {
+        ...state.channelsObj[action.channelId]?.messagesObj
+      };
+      for (let messageId of state.channelsObj[action.channelId]?.messageIds ||
+        []) {
+        const message = newMessagesObj[messageId];
+        if (message?.moveViewTimeStamp) {
+          continue;
+        }
+        newMessagesObj[messageId].moveViewTimeStamp = Math.floor(
+          Date.now() / 1000
+        );
+      }
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            lastChessMoveViewerId: action.viewerId
+            lastChessMoveViewerId: action.viewerId,
+            messagesObj: newMessagesObj
           }
         }
       };
