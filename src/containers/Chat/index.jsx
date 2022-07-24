@@ -97,9 +97,6 @@ function Chat({ onFileUpload }) {
   const sendInvitationMessage = useAppContext(
     (v) => v.requestHelpers.sendInvitationMessage
   );
-  const setChessMoveViewTimeStamp = useAppContext(
-    (v) => v.requestHelpers.setChessMoveViewTimeStamp
-  );
   const startNewDMChannel = useAppContext(
     (v) => v.requestHelpers.startNewDMChannel
   );
@@ -217,8 +214,8 @@ function Chat({ onFileUpload }) {
     (v) => v.actions.onUpdateChannelPathIdHash
   );
   const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
-  const onUpdateChessMoveViewTimeStamp = useChatContext(
-    (v) => v.actions.onUpdateChessMoveViewTimeStamp
+  const onUpdateLastChessMoveViewerId = useChatContext(
+    (v) => v.actions.onUpdateLastChessMoveViewerId
   );
   const onUpdateRecentChessMessage = useChatContext(
     (v) => v.actions.onUpdateRecentChessMessage
@@ -410,7 +407,6 @@ function Chat({ onFileUpload }) {
 
   useEffect(() => {
     socket.on('chess_move_made', onNotifiedMoveMade);
-    socket.on('chess_move_viewed', onNotifyMoveViewed);
     socket.on('subject_changed', handleTopicChange);
     socket.on('member_left', handleMemberLeft);
 
@@ -431,13 +427,8 @@ function Chat({ onFileUpload }) {
       }
     }
 
-    function onNotifyMoveViewed(channelId) {
-      onUpdateChessMoveViewTimeStamp(channelId);
-    }
-
     return function cleanUp() {
       socket.removeListener('chess_move_made', onNotifiedMoveMade);
-      socket.removeListener('chess_move_viewed', onNotifyMoveViewed);
       socket.removeListener('subject_changed', handleTopicChange);
       socket.removeListener('member_left', handleMemberLeft);
     };
@@ -566,7 +557,7 @@ function Chat({ onFileUpload }) {
           onSetUserState,
           onShowIncoming,
           onSubmitMessage,
-          onUpdateChessMoveViewTimeStamp,
+          onUpdateLastChessMoveViewerId,
           onUpdateRecentChessMessage,
           onUploadChatSubject,
           onUpdateChannelPathIdHash
@@ -593,7 +584,6 @@ function Chat({ onFileUpload }) {
           saveChatMessage,
           searchChatSubject,
           sendInvitationMessage,
-          setChessMoveViewTimeStamp,
           startNewDMChannel,
           updateUserXP,
           uploadChatSubject,

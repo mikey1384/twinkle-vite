@@ -62,11 +62,7 @@ export default function ChessModal({
     (v) => v.requestHelpers.setChessMoveViewTimeStamp
   );
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
-  const onUpdateChessMoveViewTimeStamp = useChatContext(
-    (v) => v.actions.onUpdateChessMoveViewTimeStamp
-  );
   const [initialState, setInitialState] = useState();
-  const [viewTimeStamp, setViewTimeStamp] = useState();
   const [message, setMessage] = useState();
   const [uploaderId, setUploaderId] = useState();
   const [loaded, setLoaded] = useState(false);
@@ -90,13 +86,12 @@ export default function ChessModal({
       setMessage(chessMessage);
       setUploaderId(chessMessage?.userId);
       setInitialState(chessMessage?.chessState);
-      setViewTimeStamp(chessMessage?.moveViewTimeStamp);
       loading.current = false;
       setLoaded(true);
     }
     return function cleanUp() {
       loading.current = true;
-      setInitialState(undefined);
+      setInitialState(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -182,8 +177,7 @@ export default function ChessModal({
               spoilerOff={
                 spoilerOff ||
                 (!loading.current && !initialState) ||
-                !!userMadeLastMove ||
-                !!viewTimeStamp
+                !!userMadeLastMove
               }
               onSpoilerClick={handleSpoilerClick}
             />
@@ -215,7 +209,7 @@ export default function ChessModal({
             <Button
               style={{ marginLeft: '1rem' }}
               color={warningColor}
-              onClick={() => setNewChessState(undefined)}
+              onClick={() => setNewChessState(null)}
             >
               {cancelMoveLabel}
             </Button>
@@ -226,7 +220,7 @@ export default function ChessModal({
               color="orange"
               onClick={() => {
                 setUserMadeLastMove(false);
-                setInitialState(undefined);
+                setInitialState(null);
               }}
             >
               {startNewGameLabel}
@@ -282,7 +276,6 @@ export default function ChessModal({
     try {
       await setChessMoveViewTimeStamp({ channelId, message });
       setSpoilerOff(true);
-      onUpdateChessMoveViewTimeStamp(channelId);
       onSpoilerClick(message.userId);
     } catch (error) {
       console.error(error);

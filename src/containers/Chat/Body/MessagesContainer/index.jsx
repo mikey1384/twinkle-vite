@@ -461,7 +461,6 @@ function MessagesContainer({
 
   const handleChessSpoilerClick = useCallback(
     (senderId) => {
-      socket.emit('viewed_chess_move', selectedChannelId);
       socket.emit('start_chess_timer', {
         currentChannel,
         targetUserId: userId,

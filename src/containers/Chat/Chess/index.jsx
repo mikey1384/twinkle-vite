@@ -30,7 +30,6 @@ Chess.propTypes = {
   initialState: PropTypes.object,
   isFromModal: PropTypes.bool,
   loaded: PropTypes.bool,
-  moveViewed: PropTypes.bool,
   myId: PropTypes.number,
   newChessState: PropTypes.object,
   onBoardClick: PropTypes.func,
@@ -54,7 +53,6 @@ function Chess({
   isFromModal,
   loaded,
   myId,
-  moveViewed,
   newChessState,
   onBoardClick,
   onChessMove,
@@ -137,7 +135,7 @@ function Chess({
   const statusMsgShown = useMemo(() => {
     return (
       !(isCheckmate || isStalemate || isDraw) &&
-      ((loaded && userMadeLastMove && !moveViewed) || !!countdownNumber)
+      ((loaded && userMadeLastMove) || !!countdownNumber)
     );
   }, [
     countdownNumber,
@@ -145,7 +143,6 @@ function Chess({
     isDraw,
     isStalemate,
     loaded,
-    moveViewed,
     userMadeLastMove
   ]);
 

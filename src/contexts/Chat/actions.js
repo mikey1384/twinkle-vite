@@ -627,10 +627,11 @@ export default function ChatActions(dispatch) {
         pathId
       });
     },
-    onUpdateChessMoveViewTimeStamp(channelId) {
+    onUpdateLastChessMoveViewerId({ channelId, viewerId }) {
       return dispatch({
-        type: 'UPDATE_CHESS_MOVE_VIEW_STAMP',
-        channelId
+        type: 'UPDATE_LAST_CHESS_MOVE_VIEWER_ID',
+        channelId,
+        viewerId
       });
     },
     onUpdateCollectorsRankings(data) {

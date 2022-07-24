@@ -104,7 +104,6 @@ function Message({
     linkDescription,
     linkTitle,
     linkUrl,
-    moveViewTimeStamp,
     numMsgs,
     rewardAmount,
     rewardReason,
@@ -146,7 +145,7 @@ function Message({
       onSetSiteUrl,
       onSetThumbUrl,
       onSetReplyTarget,
-      onUpdateChessMoveViewTimeStamp,
+      onUpdateLastChessMoveViewerId,
       onUpdateRecentChessMessage
     },
     requests: {
@@ -242,7 +241,6 @@ function Message({
   } = message;
   const [messageRewardModalShown, setMessageRewardModalShown] = useState(false);
   const [extractedUrl, setExtractedUrl] = useState(fetchURLFromText(content));
-  const [spoilerOff, setSpoilerOff] = useState(false);
 
   if (fileToUpload && !userId) {
     userId = myId;
@@ -296,14 +294,14 @@ function Message({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const userMadeLastMove = chessState?.move?.by === myId;
-    if (!userMadeLastMove && !moveViewTimeStamp) {
-      setSpoilerOff(false);
-    } else {
-      setSpoilerOff(true);
+  const spoilerOff = useMemo(() => {
+    const userMadeThisMove = chessState?.move?.by === myId;
+    const userMadeLastMove = currentChannel.lastChessMoveViewerId === myId;
+    if (userMadeThisMove || userMadeLastMove) {
+      return true;
     }
-  }, [chessState, moveViewTimeStamp, myId]);
+    return false;
+  }, [chessState, currentChannel.lastChessMoveViewerId, myId]);
 
   useEffect(() => {
     const url = fetchURLFromText(content);
@@ -461,8 +459,8 @@ function Message({
     spoilerClickedRef.current = true;
     onSetReplyTarget({ channelId: currentChannel.id, target: null });
     try {
-      await setChessMoveViewTimeStamp({ channelId, message });
-      onUpdateChessMoveViewTimeStamp(channelId);
+      setChessMoveViewTimeStamp({ channelId, message });
+      onUpdateLastChessMoveViewerId({ channelId, viewerId: myId });
       onChessSpoilerClick(userId);
       spoilerClickedRef.current = false;
     } catch (error) {
@@ -671,14 +669,13 @@ function Message({
                   />
                 ) : isChessMsg ? (
                   <Chess
+                    loaded
                     channelId={channelId}
                     countdownNumber={chessCountdownNumber}
                     gameWinnerId={gameWinnerId}
-                    loaded
                     spoilerOff={spoilerOff}
                     myId={myId}
                     initialState={chessState}
-                    moveViewed={!!moveViewTimeStamp}
                     onBoardClick={onChessBoardClick}
                     onSpoilerClick={handleChessSpoilerClick}
                     opponentId={chessOpponent?.id}
