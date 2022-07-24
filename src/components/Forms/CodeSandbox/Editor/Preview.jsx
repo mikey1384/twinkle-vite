@@ -49,7 +49,7 @@ export default function Preview({ evaling, style, children }) {
         }
       `}
     >
-      {evaling ? <Loading style={{ position: 'absolute' }} /> : null}
+      {evaling ? <Loading style={{ position: 'absolute', height: 0 }} /> : null}
       {children}
     </PreviewErrorBoundary>
   );
