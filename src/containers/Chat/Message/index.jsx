@@ -146,6 +146,7 @@ function Message({
       onSetSiteUrl,
       onSetThumbUrl,
       onSetReplyTarget,
+      onUpdateLastChessMessageId,
       onUpdateLastChessMoveViewerId,
       onUpdateRecentChessMessage
     },
@@ -248,6 +249,13 @@ function Message({
     username = myUsername;
     profilePicUrl = myProfilePicUrl;
   }
+  useEffect(() => {
+    if (isChessMsg && typeof messageId === 'number') {
+      onUpdateLastChessMessageId({ channelId, messageId });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, isChessMsg, messageId]);
+
   useEffect(() => {
     if (!message.id && message.isChessMsg) {
       onUpdateRecentChessMessage({ channelId, message });
@@ -478,7 +486,7 @@ function Message({
     onSetReplyTarget({ channelId: currentChannel.id, target: null });
     try {
       await setChessMoveViewTimeStamp({ channelId, message });
-      onUpdateLastChessMoveViewerId({ channelId, viewerId: myId, messageId });
+      onUpdateLastChessMoveViewerId({ channelId, viewerId: myId });
       onChessSpoilerClick(userId);
       spoilerClickedRef.current = false;
     } catch (error) {

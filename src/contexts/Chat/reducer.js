@@ -1019,15 +1019,12 @@ export default function ChatReducer(state, action) {
               [messageId]: { ...action.message, id: messageId }
             },
             lastChessMoveViewerId:
-              action.message.isChessMsg && action.message.userId
+              action.message.isChessMsg &&
+              action.message.userId &&
+              !action.message.isDrawOffer
                 ? action.message.userId
                 : state.channelsObj[action.message.channelId]
                     .lastChessMoveViewerId,
-            lastChessMessageId:
-              action.message.isChessMsg && action.message.userId
-                ? messageId
-                : state.channelsObj[action.message.channelId]
-                    .lastChessMessageId,
             members: [
               ...state.channelsObj[action.message.channelId].members,
               ...action.newMembers.filter(
@@ -1600,6 +1597,22 @@ export default function ChatReducer(state, action) {
             currentRankings: state.wordCollectors
           })
       };
+    case 'UPDATE_LAST_CHESS_MESSAGE_ID':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            lastChessMessageId:
+              typeof action.messageId === 'number' &&
+              action.messageId >
+                (state.channelsObj[action.channelId]?.lastChessMessageId || 0)
+                ? action.messageId
+                : state.channelsObj[action.channelId]?.lastChessMessageId
+          }
+        }
+      };
     case 'UPDATE_LAST_CHESS_MOVE_VIEWER_ID':
       return {
         ...state,
@@ -1607,8 +1620,7 @@ export default function ChatReducer(state, action) {
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            lastChessMoveViewerId: action.viewerId,
-            lastChessMessageId: action.messageId
+            lastChessMoveViewerId: action.viewerId
           }
         }
       };

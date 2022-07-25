@@ -291,8 +291,7 @@ export default function ChessModal({
       await setChessMoveViewTimeStamp({ channelId, message });
       onUpdateLastChessMoveViewerId({
         channelId,
-        viewerId: myId,
-        messageId: message.id
+        viewerId: myId
       });
       onSpoilerClick(message.userId);
     } catch (error) {
@@ -312,8 +311,7 @@ export default function ChessModal({
     await setChessMoveViewTimeStamp({ channelId, message });
     onUpdateLastChessMoveViewerId({
       channelId,
-      viewerId: myId,
-      messageId: message.id
+      viewerId: myId
     });
     socket.emit('end_chess_game', {
       channel: {

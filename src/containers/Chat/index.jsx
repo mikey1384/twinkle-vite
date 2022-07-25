@@ -217,6 +217,9 @@ function Chat({ onFileUpload }) {
     (v) => v.actions.onUpdateChannelPathIdHash
   );
   const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
+  const onUpdateLastChessMessageId = useChatContext(
+    (v) => v.actions.onUpdateLastChessMessageId
+  );
   const onUpdateLastChessMoveViewerId = useChatContext(
     (v) => v.actions.onUpdateLastChessMoveViewerId
   );
@@ -560,6 +563,7 @@ function Chat({ onFileUpload }) {
           onSetUserState,
           onShowIncoming,
           onSubmitMessage,
+          onUpdateLastChessMessageId,
           onUpdateLastChessMoveViewerId,
           onUpdateRecentChessMessage,
           onUploadChatSubject,
