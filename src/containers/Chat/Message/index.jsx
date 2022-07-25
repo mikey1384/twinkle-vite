@@ -252,6 +252,11 @@ function Message({
   useEffect(() => {
     if (isChessMsg && typeof messageId === 'number') {
       onUpdateLastChessMessageId({ channelId, messageId });
+    } else if (gameWinnerId || isDraw) {
+      onUpdateLastChessMessageId({
+        channelId,
+        messageId: currentChannel.lastChessMessageId + 1
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId, isChessMsg, messageId]);
@@ -696,12 +701,15 @@ function Message({
                 ) : isChessMsg ? (
                   <Chess
                     loaded
+                    moveViewed={!!moveViewTimeStamp}
                     channelId={channelId}
                     countdownNumber={chessCountdownNumber}
                     gameWinnerId={gameWinnerId}
                     spoilerOff={spoilerOff}
+                    messageId={messageId}
                     myId={myId}
                     initialState={chessState}
+                    lastChessMessageId={currentChannel.lastChessMessageId}
                     onBoardClick={onChessBoardClick}
                     onSpoilerClick={handleChessSpoilerClick}
                     opponentId={chessOpponent?.id}

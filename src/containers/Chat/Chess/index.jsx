@@ -29,16 +29,17 @@ Chess.propTypes = {
   interactable: PropTypes.bool,
   initialState: PropTypes.object,
   isFromModal: PropTypes.bool,
+  lastChessMessageId: PropTypes.number,
   loaded: PropTypes.bool,
+  messageId: PropTypes.number,
+  moveViewed: PropTypes.bool,
   myId: PropTypes.number,
   newChessState: PropTypes.object,
   onBoardClick: PropTypes.func,
   onChessMove: PropTypes.func,
-  onSetScrollToBottom: PropTypes.func,
   onSpoilerClick: PropTypes.func,
   opponentId: PropTypes.number,
   opponentName: PropTypes.string,
-  scrollAtBottom: PropTypes.bool,
   senderId: PropTypes.number,
   spoilerOff: PropTypes.bool,
   style: PropTypes.object
@@ -51,7 +52,10 @@ function Chess({
   interactable,
   initialState,
   isFromModal,
+  messageId,
+  lastChessMessageId,
   loaded,
+  moveViewed,
   myId,
   newChessState,
   onBoardClick,
@@ -134,15 +138,21 @@ function Chess({
     : '';
   const statusMsgShown = useMemo(() => {
     return (
-      !(isCheckmate || isStalemate || isDraw) &&
-      ((loaded && userMadeLastMove) || !!countdownNumber)
+      !!countdownNumber ||
+      ((lastChessMessageId === messageId || isFromModal) &&
+        !(isCheckmate || isStalemate || moveViewed) &&
+        loaded &&
+        userMadeLastMove)
     );
   }, [
     countdownNumber,
     isCheckmate,
-    isDraw,
+    isFromModal,
     isStalemate,
+    lastChessMessageId,
     loaded,
+    messageId,
+    moveViewed,
     userMadeLastMove
   ]);
 
