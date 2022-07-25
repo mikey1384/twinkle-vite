@@ -66,7 +66,7 @@ export default function ChessModal({
   );
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
   const [initialState, setInitialState] = useState();
-  const [message, setMessage] = useState();
+  const [message, setMessage] = useState({});
   const [uploaderId, setUploaderId] = useState();
   const [loaded, setLoaded] = useState(false);
   const [newChessState, setNewChessState] = useState();
@@ -154,12 +154,15 @@ export default function ChessModal({
     return (
       (!loading.current && !initialState) ||
       !!userMadeLastMove ||
-      userIsTheLastMoveViewer
+      userIsTheLastMoveViewer ||
+      message.id < currentChannel.lastChessMessageId
     );
   }, [
     countdownNumber,
+    currentChannel.lastChessMessageId,
     currentChannel.lastChessMoveViewerId,
     initialState,
+    message.id,
     myId,
     userMadeLastMove
   ]);
@@ -286,7 +289,11 @@ export default function ChessModal({
   async function handleSpoilerClick() {
     try {
       await setChessMoveViewTimeStamp({ channelId, message });
-      onUpdateLastChessMoveViewerId({ channelId, viewerId: myId });
+      onUpdateLastChessMoveViewerId({
+        channelId,
+        viewerId: myId,
+        messageId: message.id
+      });
       onSpoilerClick(message.userId);
     } catch (error) {
       console.error(error);
@@ -301,8 +308,13 @@ export default function ChessModal({
     }
   }
 
-  function handleGameOver() {
-    onUpdateLastChessMoveViewerId({ channelId, viewerId: myId });
+  async function handleGameOver() {
+    await setChessMoveViewTimeStamp({ channelId, message });
+    onUpdateLastChessMoveViewerId({
+      channelId,
+      viewerId: myId,
+      messageId: message.id
+    });
     socket.emit('end_chess_game', {
       channel: {
         id: currentChannel.id,

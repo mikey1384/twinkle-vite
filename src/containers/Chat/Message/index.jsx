@@ -296,16 +296,27 @@ function Message({
   }, []);
 
   const spoilerOff = useMemo(() => {
+    if (typeof chessCountdownNumber === 'number') {
+      return true;
+    }
     const userMadeThisMove = chessState?.move?.by === myId;
     const userIsTheLastMoveViewer =
       currentChannel.lastChessMoveViewerId === myId;
-    if (userMadeThisMove || userIsTheLastMoveViewer || moveViewTimeStamp) {
+    if (
+      userMadeThisMove ||
+      userIsTheLastMoveViewer ||
+      moveViewTimeStamp ||
+      messageId < currentChannel.lastChessMessageId
+    ) {
       return true;
     }
     return false;
   }, [
+    chessCountdownNumber,
     chessState?.move?.by,
+    currentChannel.lastChessMessageId,
     currentChannel.lastChessMoveViewerId,
+    messageId,
     moveViewTimeStamp,
     myId
   ]);
@@ -467,7 +478,7 @@ function Message({
     onSetReplyTarget({ channelId: currentChannel.id, target: null });
     try {
       await setChessMoveViewTimeStamp({ channelId, message });
-      onUpdateLastChessMoveViewerId({ channelId, viewerId: myId });
+      onUpdateLastChessMoveViewerId({ channelId, viewerId: myId, messageId });
       onChessSpoilerClick(userId);
       spoilerClickedRef.current = false;
     } catch (error) {

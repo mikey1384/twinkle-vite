@@ -1018,10 +1018,16 @@ export default function ChatReducer(state, action) {
               ...state.channelsObj[action.message.channelId].messagesObj,
               [messageId]: { ...action.message, id: messageId }
             },
-            lastChessMoveViewerId: action.message.isChessMsg
-              ? action.message.userId
-              : state.channelsObj[action.message.channelId]
-                  .lastChessMoveViewerId,
+            lastChessMoveViewerId:
+              action.message.isChessMsg && action.message.userId
+                ? action.message.userId
+                : state.channelsObj[action.message.channelId]
+                    .lastChessMoveViewerId,
+            lastChessMessageId:
+              action.message.isChessMsg && action.message.userId
+                ? messageId
+                : state.channelsObj[action.message.channelId]
+                    .lastChessMessageId,
             members: [
               ...state.channelsObj[action.message.channelId].members,
               ...action.newMembers.filter(
@@ -1595,21 +1601,6 @@ export default function ChatReducer(state, action) {
           })
       };
     case 'UPDATE_LAST_CHESS_MOVE_VIEWER_ID':
-      const newMessagesObj = {
-        ...state.channelsObj[action.channelId]?.messagesObj
-      };
-      const chessMessageIdsWithoutMoveViewTimeStamp = (
-        state.channelsObj[action.channelId]?.messageIds || []
-      ).filter(
-        (messageId) =>
-          newMessagesObj[messageId]?.isChessMsg &&
-          !newMessagesObj[messageId]?.moveViewTimeStamp
-      );
-      for (let messageId of chessMessageIdsWithoutMoveViewTimeStamp) {
-        newMessagesObj[messageId].moveViewTimeStamp = Math.floor(
-          Date.now() / 1000
-        );
-      }
       return {
         ...state,
         channelsObj: {
@@ -1617,7 +1608,7 @@ export default function ChatReducer(state, action) {
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             lastChessMoveViewerId: action.viewerId,
-            messagesObj: newMessagesObj
+            lastChessMessageId: action.messageId
           }
         }
       };
