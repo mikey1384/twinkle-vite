@@ -235,6 +235,8 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  const currentPathIdRef = useRef(currentPathId);
+
   useEffect(() => {
     socket.on('ban_status_updated', handleBanStatusUpdate);
     socket.on('signal_received', handleCallSignal);
@@ -371,6 +373,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           !isNaN(pathId) ? parseChannelPath(pathId) : selectedChannelId
         );
         onInitChat(data);
+        if (Number(currentPathIdRef.current) !== pathId) {
+          onUpdateSelectedChannelId(parseChannelPath(currentPathIdRef.current));
+        }
         socket.emit(
           'check_online_members',
           selectedChannelId,
@@ -801,6 +806,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     prevIncomingShown.current = channelOnCall.incomingShown;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelOnCall.id, channelOnCall.incomingShown, channelOnCall.imCalling]);
+
+  useEffect(() => {
+    currentPathIdRef.current = currentPathId;
+  }, [currentPathId]);
 
   useEffect(() => {
     const newNotiNum =
