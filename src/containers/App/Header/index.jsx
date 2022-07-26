@@ -150,6 +150,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onSetOnlineUserData = useChatContext(
     (v) => v.actions.onSetOnlineUserData
   );
+  const onSetOnlineMembers = useChatContext(
+    (v) => v.actions.onSetOnlineMembers
+  );
   const onSetPeerStreams = useChatContext((v) => v.actions.onSetPeerStreams);
   const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
   const onShowOutgoing = useChatContext((v) => v.actions.onShowOutgoing);
@@ -234,22 +237,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.connect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
-
-  useEffect(() => {
-    socket.emit(
-      'check_online_members',
-      selectedChannelId,
-      ({ membersOnline }) => {
-        const members = Object.entries(membersOnline).map(
-          ([, member]) => member
-        );
-        for (let member of members) {
-          onSetOnlineUserData(member);
-        }
-      }
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageVisible]);
 
   const currentPathIdRef = useRef(Number(currentPathId));
 
@@ -402,6 +389,8 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
             const members = Object.entries(membersOnline).map(
               ([, member]) => member
             );
+            const onlineMemberIds = members.map((member) => member.id);
+            onSetOnlineMembers(onlineMemberIds);
             for (let member of members) {
               onSetOnlineUserData(member);
             }

@@ -1369,6 +1369,16 @@ export default function ChatReducer(state, action) {
               : {}
         }
       };
+    case 'SET_ONLINE_MEMBERS': {
+      const newChatStatus = {};
+      for (const memberId in action.onlineMemberIds) {
+        newChatStatus[memberId] = state.chatStatus[memberId];
+      }
+      return {
+        ...state,
+        chatStatus: newChatStatus
+      };
+    }
     case 'SET_ONLINE_USER_DATA':
       return {
         ...state,

@@ -552,6 +552,12 @@ export default function ChatActions(dispatch) {
         target
       });
     },
+    onSetOnlineMembers(onlineMemberIds) {
+      return dispatch({
+        type: 'SET_ONLINE_MEMBERS',
+        onlineMemberIds
+      });
+    },
     onSetOnlineUserData(profile) {
       return dispatch({
         type: 'SET_ONLINE_USER_DATA',
