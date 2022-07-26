@@ -93,6 +93,7 @@ export default function MessageInput({
   const textRef = useRef(textForThisChannel);
   const inputCoolingDown = useRef(false);
   const timerRef = useRef(null);
+  const timerRef2 = useRef(null);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [fileObj, setFileObj] = useState(null);
   const [uploadModalShown, setUploadModalShown] = useState(false);
@@ -201,6 +202,14 @@ export default function MessageInput({
 
   const handleSetText = (newText) => {
     setInputText(newText);
+    clearTimeout(timerRef2.current);
+    timerRef2.current = setTimeout(() => {
+      onEnterComment({
+        contentType: 'chat',
+        contentId: selectedChannelId,
+        text: newText
+      });
+    }, 700);
     textRef.current = newText;
   };
 
