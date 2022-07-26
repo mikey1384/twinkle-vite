@@ -235,6 +235,22 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  useEffect(() => {
+    socket.emit(
+      'check_online_members',
+      selectedChannelId,
+      ({ membersOnline }) => {
+        const members = Object.entries(membersOnline).map(
+          ([, member]) => member
+        );
+        for (let member of members) {
+          onSetOnlineUserData(member);
+        }
+      }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageVisible]);
+
   const currentPathIdRef = useRef(Number(currentPathId));
 
   useEffect(() => {
