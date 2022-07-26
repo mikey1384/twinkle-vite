@@ -1,5 +1,4 @@
 import {
-  memo,
   useCallback,
   useContext,
   useEffect,
@@ -38,7 +37,7 @@ const enterMessageLabel = localize('enterMessage');
 MessageInput.propTypes = {
   selectedChannelId: PropTypes.number,
   innerRef: PropTypes.object,
-  inputText: PropTypes.string,
+  inputState: PropTypes.object,
   isRespondingToSubject: PropTypes.bool,
   isTwoPeopleChannel: PropTypes.oneOfType([PropTypes.number, PropTypes.bool]),
   loading: PropTypes.bool,
@@ -47,20 +46,18 @@ MessageInput.propTypes = {
   onHeightChange: PropTypes.func.isRequired,
   onMessageSubmit: PropTypes.func.isRequired,
   onSelectVideoButtonClick: PropTypes.func.isRequired,
-  onSetInputText: PropTypes.func.isRequired,
   replyTarget: PropTypes.object,
   recepientId: PropTypes.number,
   socketConnected: PropTypes.bool,
-  subjectId: PropTypes.number,
-  textForThisChannel: PropTypes.string
+  subjectId: PropTypes.number
 };
 
 const deviceIsMobile = isMobile(navigator);
 
-function MessageInput({
+export default function MessageInput({
   selectedChannelId = 0,
   innerRef,
-  inputText,
+  inputState,
   isRespondingToSubject,
   isTwoPeopleChannel,
   loading,
@@ -69,13 +66,16 @@ function MessageInput({
   onHeightChange,
   onMessageSubmit,
   onSelectVideoButtonClick,
-  onSetInputText,
   replyTarget,
   recepientId,
   socketConnected,
-  subjectId,
-  textForThisChannel
+  subjectId
 }) {
+  const textForThisChannel = useMemo(
+    () => inputState['chat' + selectedChannelId]?.text || '',
+    [selectedChannelId, inputState]
+  );
+  const [inputText, setInputText] = useState(textForThisChannel);
   const { banned, fileUploadLvl } = useKeyContext((v) => v.myState);
   const {
     button: { color: buttonColor },
@@ -200,7 +200,7 @@ function MessageInput({
   ]);
 
   const handleSetText = (newText) => {
-    onSetInputText(newText);
+    setInputText(newText);
     textRef.current = newText;
   };
 
@@ -413,5 +413,3 @@ function MessageInput({
     </div>
   );
 }
-
-export default memo(MessageInput);

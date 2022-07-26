@@ -149,7 +149,7 @@ function MessagesContainer({
     () => inputState['chat' + selectedChannelId]?.text || '',
     [selectedChannelId, inputState]
   );
-  const [inputText, setInputText] = useState(textForThisChannel);
+
   const [chessCountdownObj, setChessCountdownObj] = useState({});
   const [wordleModalShown, setWordleModalShown] = useState(false);
   const [textAreaHeight, setTextAreaHeight] = useState(0);
@@ -1167,8 +1167,7 @@ function MessagesContainer({
           loading={loadingAnimationShown}
           socketConnected={socketConnected}
           myId={userId}
-          inputText={inputText}
-          onSetInputText={setInputText}
+          inputState={inputState}
           isRespondingToSubject={currentChannel.isRespondingToSubject}
           isTwoPeopleChannel={currentChannel.twoPeople}
           currentChannel={currentChannel}
@@ -1186,7 +1185,6 @@ function MessagesContainer({
           recepientId={recepientId}
           replyTarget={currentChannel.replyTarget}
           subjectId={subjectId}
-          textForThisChannel={textForThisChannel}
         />
       </div>
       {chessModalShown && (
@@ -1261,8 +1259,8 @@ function MessagesContainer({
             onEnterComment({
               contentType: 'chat',
               contentId: selectedChannelId,
-              text: !stringIsEmpty(inputText)
-                ? `${inputText.trim()} https://www.twin-kle.com/videos/${videoId}`
+              text: !stringIsEmpty(textForThisChannel)
+                ? `${textForThisChannel.trim()} https://www.twin-kle.com/videos/${videoId}`
                 : `https://www.twin-kle.com/videos/${videoId}`
             });
             setSelectVideoModalShown(false);
