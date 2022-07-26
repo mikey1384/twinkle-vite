@@ -235,7 +235,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const currentPathIdRef = useRef(currentPathId);
+  const currentPathIdRef = useRef(Number(currentPathId));
 
   useEffect(() => {
     socket.on('ban_status_updated', handleBanStatusUpdate);
@@ -373,7 +373,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           !isNaN(pathId) ? parseChannelPath(pathId) : selectedChannelId
         );
         onInitChat(data);
-        if (Number(currentPathIdRef.current) !== pathId) {
+        if (
+          !isNaN(currentPathIdRef.current) &&
+          currentPathIdRef.current !== pathId
+        ) {
           onUpdateSelectedChannelId(parseChannelPath(currentPathIdRef.current));
         }
         socket.emit(
@@ -808,7 +811,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   }, [channelOnCall.id, channelOnCall.incomingShown, channelOnCall.imCalling]);
 
   useEffect(() => {
-    currentPathIdRef.current = currentPathId;
+    currentPathIdRef.current = Number(currentPathId);
   }, [currentPathId]);
 
   useEffect(() => {
