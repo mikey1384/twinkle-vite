@@ -4,6 +4,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
 const chessEndedInDrawLabel = localize('chessEndedInDraw');
@@ -17,9 +18,16 @@ GameOverMessage.propTypes = {
 };
 
 function GameOverMessage({ myId, opponentName, winnerId, isDraw, isResign }) {
+  const {
+    draw: { color: drawColor },
+    victory: { color: victoryColor },
+    defeat: { color: defeatColor }
+  } = useKeyContext((v) => v.theme);
+
+  const isVictorious = useMemo(() => myId === winnerId, [myId, winnerId]);
   const failedToMakeMoveInTimeLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
-      return myId === winnerId ? (
+      return isVictorious ? (
         <div style={{ textAlign: 'center' }}>
           <p>{opponentName}님이 제한시간 안에 회신하지 못했습니다...</p>
           <p style={{ fontWeight: 'bold' }}>
@@ -33,7 +41,7 @@ function GameOverMessage({ myId, opponentName, winnerId, isDraw, isResign }) {
         </div>
       );
     }
-    return myId === winnerId ? (
+    return isVictorious ? (
       <div style={{ textAlign: 'center' }}>
         <p>{opponentName} failed to make a move in time...</p>
         <p style={{ fontWeight: 'bold' }}>You win!</p>
@@ -44,11 +52,11 @@ function GameOverMessage({ myId, opponentName, winnerId, isDraw, isResign }) {
         <p>{opponentName} wins</p>
       </div>
     );
-  }, [myId, opponentName, winnerId]);
+  }, [isVictorious, opponentName]);
 
   const resignLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
-      return myId === winnerId ? (
+      return isVictorious ? (
         <div style={{ textAlign: 'center' }}>
           <p>{opponentName}님이 기권했습니다</p>
           <p style={{ fontWeight: 'bold' }}>
@@ -62,7 +70,7 @@ function GameOverMessage({ myId, opponentName, winnerId, isDraw, isResign }) {
         </div>
       );
     }
-    return myId === winnerId ? (
+    return isVictorious ? (
       <div style={{ textAlign: 'center' }}>
         <p>{opponentName} resigned!</p>
         <p style={{ fontWeight: 'bold' }}>You win!</p>
@@ -73,7 +81,7 @@ function GameOverMessage({ myId, opponentName, winnerId, isDraw, isResign }) {
         <p>{opponentName} wins</p>
       </div>
     );
-  }, [myId, opponentName, winnerId]);
+  }, [isVictorious, opponentName]);
 
   return (
     <ErrorBoundary componentPath="GameOverMessage">
@@ -86,10 +94,10 @@ function GameOverMessage({ myId, opponentName, winnerId, isDraw, isResign }) {
         <div
           className={css`
             background: ${isDraw
-              ? Color.logoBlue()
-              : myId === winnerId
-              ? Color.brownOrange()
-              : Color.black()};
+              ? Color[drawColor]()
+              : isVictorious
+              ? Color[victoryColor]()
+              : Color[defeatColor]()};
             font-size: 2.5rem;
             display: flex;
             justify-content: center;

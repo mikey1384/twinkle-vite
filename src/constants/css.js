@@ -210,7 +210,9 @@ export function Theme(color = 'logoBlue') {
           gold: 'magenta'
         }[color] || 'rose'
     },
+    defeat: { color: 'black' },
     done: { color: 'blue' },
+    draw: { color: 'logoBlue' },
     filter: {
       color:
         {
@@ -380,6 +382,7 @@ export function Theme(color = 'logoBlue') {
           green: 'green'
         }[color] || color
     },
+    victory: { color: 'brownOrange' },
     warning: { color: 'pink' },
     xpNumber: { color: 'logoGreen' }
   };
