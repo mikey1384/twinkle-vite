@@ -6,9 +6,9 @@ import { charLimit } from '~/constants/defaultValues';
 // previously used urlRegex: /(((http[s]?:\/\/|ftp:\/\/)|www\.)+([0-9a-zA-Z\p{L}\-])+(\.[a-zA-Z]{1,3})+([0-9\p{L}.,;:?!&@%_\-\+~#=\/()\[\]])*[^.,;:?!"'\n\)\]<* ])/giu;
 
 const urlRegex =
-  /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^() ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)/giu;
+  /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)/giu;
 const urlRegex2 =
-  /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^() ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)/i;
+  /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)/i;
 
 export function addCommasToNumber(number) {
   const numArray = `${number}`.split('');
