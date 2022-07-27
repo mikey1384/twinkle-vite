@@ -69,6 +69,7 @@ function Channel({
       gameWinnerId,
       userId: senderId,
       username: senderName,
+      isAbort,
       isDraw
     }) {
       const messageSender = senderId
@@ -82,6 +83,9 @@ function Channel({
             {`${messageSender}:`} {`"${fileName}"`}
           </span>
         );
+      }
+      if (isAbort) {
+        return <span>chess match was aborted</span>;
       }
       if (isDraw) {
         return <span>chess match ended in a draw</span>;
