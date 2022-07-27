@@ -97,7 +97,6 @@ function GameOverMessage({
     <ErrorBoundary componentPath="GameOverMessage">
       <div
         style={{
-          marginRight: '1rem',
           paddingBottom: '1rem'
         }}
       >
