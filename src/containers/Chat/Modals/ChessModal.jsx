@@ -20,6 +20,8 @@ const doneLabel = localize('done');
 const offerDrawLabel = localize('offerDraw');
 const offeredDrawLabel = localize('offeredDraw');
 const resignLabel = localize('resign');
+const abortLabel = localize('abort');
+const abortChessMatchLabel = localize('abortChessMatch');
 const resignChessMatchLabel = localize('resignChessMatch');
 const startNewGameLabel = localize('startNewGame');
 
@@ -167,6 +169,11 @@ export default function ChessModal({
     userMadeLastMove
   ]);
 
+  const isAbortable = useMemo(
+    () => boardState?.move?.number < 4,
+    [boardState?.move?.number]
+  );
+
   return (
     <ErrorBoundary componentPath="ChessModal">
       <Modal large onHide={onHide}>
@@ -201,10 +208,14 @@ export default function ChessModal({
           {gameEndButtonShown && (
             <Button
               style={{ marginRight: '1rem' }}
-              color={drawOfferPending ? 'orange' : 'red'}
+              color={drawOfferPending || isAbortable ? 'orange' : 'red'}
               onClick={() => setConfirmModalShown(true)}
             >
-              {drawOfferPending ? acceptDrawLabel : resignLabel}
+              {drawOfferPending
+                ? acceptDrawLabel
+                : isAbortable
+                ? abortLabel
+                : resignLabel}
             </Button>
           )}
           {drawButtonShown ? (
@@ -261,7 +272,13 @@ export default function ChessModal({
         {confirmModalShown && (
           <ConfirmModal
             modalOverModal
-            title={drawOfferPending ? acceptDrawLabel : resignChessMatchLabel}
+            title={
+              drawOfferPending
+                ? acceptDrawLabel
+                : isAbortable
+                ? abortChessMatchLabel
+                : resignChessMatchLabel
+            }
             onConfirm={handleGameOver}
             onHide={() => setConfirmModalShown(false)}
           />
@@ -325,6 +342,8 @@ export default function ChessModal({
       targetUserId: myId,
       ...(drawOfferPending
         ? { isDraw: true }
+        : isAbortable
+        ? { isAbort: true }
         : { winnerId: opponentId, isResign: true })
     });
     onHide();

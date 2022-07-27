@@ -1,5 +1,9 @@
 const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
 const languageObj = {
+  abort: {
+    en: 'Abort',
+    kr: '게임취소'
+  },
   acceptDraw: {
     en: 'Accept Draw',
     kr: '무승부 수락'
@@ -219,6 +223,10 @@ const languageObj = {
   chessEndedInDraw: {
     en: 'The chess match ended in a draw',
     kr: '체스 게임이 무승부로 종료되었습니다'
+  },
+  chessWasAborted: {
+    en: 'The chess match was aborted',
+    kr: '체스 게임이 취소되었습니다'
   },
   choiceA: {
     en: 'Choice A',
@@ -1227,6 +1235,10 @@ const languageObj = {
   resign: {
     en: 'Resign',
     kr: '기권하기'
+  },
+  abortChessMatch: {
+    en: 'Abort Chess Match',
+    kr: '게임취소'
   },
   resignChessMatch: {
     en: 'Resign Chess Match',

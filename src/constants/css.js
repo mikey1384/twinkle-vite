@@ -83,6 +83,9 @@ export const strongColors = ['rose', 'red', 'purple'];
 
 export function Theme(color = 'logoBlue') {
   return {
+    abort: {
+      color: 'darkerGray'
+    },
     action: {
       color:
         {
@@ -383,7 +386,7 @@ export function Theme(color = 'logoBlue') {
         }[color] || color
     },
     victory: { color: 'brownOrange' },
-    warning: { color: 'pink' },
+    warning: { color: 'redOrange' },
     xpNumber: { color: 'logoGreen' }
   };
 }

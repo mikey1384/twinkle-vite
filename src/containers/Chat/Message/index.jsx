@@ -96,6 +96,7 @@ function Message({
     invitePath,
     invitationChannelId,
     isChessMsg,
+    isAbort,
     isDraw,
     isDrawOffer,
     isNewMessage,
@@ -579,12 +580,13 @@ function Message({
     [channelId, messageId, myId]
   );
 
-  if (!chessState && (gameWinnerId || isDraw)) {
+  if (!chessState && (gameWinnerId || isDraw || isAbort)) {
     return (
       <GameOverMessage
         winnerId={gameWinnerId}
         opponentName={chessOpponent?.username}
         myId={myId}
+        isAbort={!!isAbort}
         isResign={!!isResign}
         isDraw={!!isDraw}
       />

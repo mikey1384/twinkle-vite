@@ -8,17 +8,27 @@ import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
 const chessEndedInDrawLabel = localize('chessEndedInDraw');
+const chessWasAbortedLabel = localize('chessWasAborted');
 
 GameOverMessage.propTypes = {
   opponentName: PropTypes.string,
   myId: PropTypes.number.isRequired,
   winnerId: PropTypes.number,
+  isAbort: PropTypes.bool,
   isDraw: PropTypes.bool,
   isResign: PropTypes.bool
 };
 
-function GameOverMessage({ myId, opponentName, winnerId, isDraw, isResign }) {
+function GameOverMessage({
+  myId,
+  opponentName,
+  winnerId,
+  isAbort,
+  isDraw,
+  isResign
+}) {
   const {
+    abort: { color: abortColor },
     draw: { color: drawColor },
     victory: { color: victoryColor },
     defeat: { color: defeatColor }
@@ -95,6 +105,8 @@ function GameOverMessage({ myId, opponentName, winnerId, isDraw, isResign }) {
           className={css`
             background: ${isDraw
               ? Color[drawColor]()
+              : isAbort
+              ? Color[abortColor]()
               : isVictorious
               ? Color[victoryColor]()
               : Color[defeatColor]()};
@@ -102,7 +114,7 @@ function GameOverMessage({ myId, opponentName, winnerId, isDraw, isResign }) {
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: ${isDraw ? '2rem' : '1rem'};
+            padding: ${isDraw || isAbort ? '2rem' : '1rem'};
             color: #fff;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.7rem;
@@ -111,6 +123,8 @@ function GameOverMessage({ myId, opponentName, winnerId, isDraw, isResign }) {
         >
           {isDraw ? (
             <div style={{ textAlign: 'center' }}>{chessEndedInDrawLabel}</div>
+          ) : isAbort ? (
+            <div style={{ textAlign: 'center' }}>{chessWasAbortedLabel}</div>
           ) : isResign ? (
             resignLabel
           ) : (
