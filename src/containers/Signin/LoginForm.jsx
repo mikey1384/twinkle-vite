@@ -40,7 +40,7 @@ export default function LoginForm({
     <ErrorBoundary componentPath="Signin/LoginForm">
       <header>{yourUsernameAndPasswordLabel}</header>
       {errorMessage && (
-        <Banner color="pink">
+        <Banner>
           {typeof errorMessage === 'string'
             ? errorMessage
             : 'Server connection failed. Make sure your internet is connected'}
