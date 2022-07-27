@@ -1214,6 +1214,7 @@ function MessagesContainer({
           nextDayTimeStamp={nextDayTimeStamp}
           onHide={() => setWordleModalShown(false)}
           socketConnected={socketConnected}
+          theme={displayedThemeColor}
         />
       )}
       {inviteUsersModalShown && (

@@ -22,7 +22,8 @@ WordleModal.propTypes = {
   wordLevel: PropTypes.number,
   wordleStats: PropTypes.object,
   onHide: PropTypes.func.isRequired,
-  socketConnected: PropTypes.bool
+  socketConnected: PropTypes.bool,
+  theme: PropTypes.string
 };
 
 export default function WordleModal({
@@ -35,7 +36,8 @@ export default function WordleModal({
   wordLevel,
   wordleStats,
   onHide,
-  socketConnected
+  socketConnected,
+  theme
 }) {
   const {
     done: { color: doneColor }
@@ -138,7 +140,7 @@ export default function WordleModal({
             />
           </div>
         ) : (
-          <Streaks channelId={channelId} />
+          <Streaks channelId={channelId} theme={theme} />
         )}
         {overviewModalShown && (
           <OverviewModal

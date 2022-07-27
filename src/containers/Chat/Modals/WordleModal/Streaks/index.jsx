@@ -8,10 +8,11 @@ import { mobileMaxWidth } from '~/constants/css';
 import StreakItem from './StreakItem';
 
 Streaks.propTypes = {
-  channelId: PropTypes.number.isRequired
+  channelId: PropTypes.number.isRequired,
+  theme: PropTypes.string
 };
 
-export default function Streaks({ channelId }) {
+export default function Streaks({ channelId, theme }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
   const loadWordleStreaks = useAppContext(
     (v) => v.requestHelpers.loadWordleStreaks
@@ -68,6 +69,7 @@ export default function Streaks({ channelId }) {
               rank={index + 1}
               streak={streak}
               streakObj={streakObj}
+              theme={theme}
               myId={myId}
             />
           ))}

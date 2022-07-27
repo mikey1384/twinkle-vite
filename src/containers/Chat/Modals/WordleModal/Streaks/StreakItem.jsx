@@ -6,6 +6,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { useTheme } from '~/helpers/hooks';
 import localize from '~/constants/localize';
 
 const youLabel = localize('You');
@@ -14,10 +15,15 @@ StreakItem.propTypes = {
   myId: PropTypes.number.isRequired,
   rank: PropTypes.number.isRequired,
   streak: PropTypes.number.isRequired,
-  streakObj: PropTypes.object.isRequired
+  streakObj: PropTypes.object.isRequired,
+  theme: PropTypes.string.isRequired
 };
 
-export default function StreakItem({ myId, streak, rank, streakObj }) {
+export default function StreakItem({ myId, streak, rank, streakObj, theme }) {
+  const {
+    link: { color: linkColor }
+  } = useTheme(theme);
+
   const [userListModalShown, setUserListModalShown] = useState(false);
   const rankColor = useMemo(() => {
     return rank === 1
@@ -119,6 +125,7 @@ export default function StreakItem({ myId, streak, rank, streakObj }) {
           <span>
             <a
               style={{
+                color: Color[linkColor](),
                 fontWeight: 'bold',
                 cursor: 'pointer'
               }}
