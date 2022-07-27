@@ -21,7 +21,8 @@ StreakItem.propTypes = {
 
 export default function StreakItem({ myId, streak, rank, streakObj, theme }) {
   const {
-    link: { color: linkColor }
+    link: { color: linkColor },
+    active: { color: activeColor }
   } = useTheme(theme);
 
   const [userListModalShown, setUserListModalShown] = useState(false);
@@ -100,27 +101,32 @@ export default function StreakItem({ myId, streak, rank, streakObj, theme }) {
         >
           {rank ? `#${rank}` : '--'}
         </span>
-        {displayedUsers.map((user, index) => (
-          <div
-            style={{ display: 'inline', marginRight: '0.5rem' }}
-            key={user.id}
-          >
-            <UsernameText
-              displayedName={myId === user.id ? youLabel : ''}
-              color={Color.darkerGray()}
-              user={user}
-            />
-            {otherUserNumber === 0 &&
-            displayedUsers.length === 2 &&
-            index === 0 ? (
-              <span style={{ marginLeft: '0.5rem' }}>and</span>
-            ) : index === displayedUsers.length - 1 ? (
-              ''
-            ) : (
-              ','
-            )}
-          </div>
-        ))}
+        {displayedUsers.map((user, index) => {
+          const userStreakIsOngoing = user.currentStreak === streak;
+          return (
+            <div
+              style={{ display: 'inline', marginRight: '0.5rem' }}
+              key={user.id}
+            >
+              <UsernameText
+                displayedName={myId === user.id ? youLabel : ''}
+                color={Color[
+                  userStreakIsOngoing ? activeColor : 'darkerGray'
+                ]()}
+                user={user}
+              />
+              {otherUserNumber === 0 &&
+              displayedUsers.length === 2 &&
+              index === 0 ? (
+                <span style={{ marginLeft: '0.5rem' }}>and</span>
+              ) : index === displayedUsers.length - 1 ? (
+                ''
+              ) : (
+                ','
+              )}
+            </div>
+          );
+        })}
         {otherUserNumber > 0 ? (
           <span>
             <a
@@ -172,6 +178,9 @@ export default function StreakItem({ myId, streak, rank, streakObj, theme }) {
           title="People who achieved this streak"
           users={streakObj[streak]}
           onHide={() => setUserListModalShown(false)}
+          descriptionColor={Color[activeColor]()}
+          descriptionShown={(user) => user.currentStreak === streak}
+          description="(active)"
         />
       )}
     </nav>

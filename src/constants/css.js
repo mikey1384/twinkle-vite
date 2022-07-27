@@ -99,6 +99,7 @@ export function Theme(color = 'logoBlue') {
           vantaBlack: 'armyGreen'
         }[color] || 'green'
     },
+    active: { color: { green: 'pinkOrange' }[color] || 'green' },
     alert: {
       color:
         {
