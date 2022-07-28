@@ -779,6 +779,7 @@ function Message({
                             reactionsMenuShown={reactionsMenuShown}
                             onRemoveReaction={handleRemoveReaction}
                             onAddReaction={handleAddReaction}
+                            theme={displayedThemeColor}
                           />
                         )}
                       </div>

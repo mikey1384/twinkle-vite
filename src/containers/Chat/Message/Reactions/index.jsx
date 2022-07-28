@@ -6,14 +6,16 @@ Reactions.propTypes = {
   reactions: PropTypes.array,
   onRemoveReaction: PropTypes.func,
   onAddReaction: PropTypes.func,
-  reactionsMenuShown: PropTypes.bool
+  reactionsMenuShown: PropTypes.bool,
+  theme: PropTypes.string
 };
 
 export default function Reactions({
   reactions,
   onRemoveReaction,
   onAddReaction,
-  reactionsMenuShown
+  reactionsMenuShown,
+  theme
 }) {
   const reactionList = useMemo(() => {
     const result = [];
@@ -49,6 +51,7 @@ export default function Reactions({
           onRemoveReaction={() => onRemoveReaction(reaction)}
           onAddReaction={() => onAddReaction(reaction)}
           reactionsMenuShown={reactionsMenuShown}
+          theme={theme}
         />
       ))}
     </div>

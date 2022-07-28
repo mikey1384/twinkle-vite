@@ -519,11 +519,16 @@ function Chat({ onFileUpload }) {
     if (currentChannel.theme) {
       return currentChannel.theme;
     }
-    if (selectedChannelId === GENERAL_CHAT_ID) {
+    if (selectedChannelId === GENERAL_CHAT_ID || currentChannel?.twoPeople) {
       return profileTheme;
     }
     return 'logoBlue';
-  }, [currentChannel.theme, profileTheme, selectedChannelId]);
+  }, [
+    currentChannel.theme,
+    currentChannel?.twoPeople,
+    profileTheme,
+    selectedChannelId
+  ]);
 
   return (
     <LocalContext.Provider
