@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { matchPath } from 'react-router-dom';
+import { useMemo } from 'react';
+import { matchPath, Navigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
@@ -32,12 +32,7 @@ Body.propTypes = {
 export default function Body({ profile, selectedTheme }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { username, ['*']: subPath } = useParams();
-  useEffect(() => {
-    if (subPath === 'likes' || subPath === 'likes/') {
-      navigate(`/users/${username}/likes/all`, { replace: true });
-    }
-  }, [navigate, subPath, username]);
+  const { username } = useParams();
 
   const mainMatch = useMemo(
     () =>
@@ -166,8 +161,9 @@ export default function Body({ profile, selectedTheme }) {
           `}
         >
           <Routes>
+            <Route path="/likes" element={<Navigate replace to={`./all`} />} />
             <Route
-              path="/likes/*"
+              path="/likes/:section"
               element={
                 <LikedPosts
                   username={profile.username}

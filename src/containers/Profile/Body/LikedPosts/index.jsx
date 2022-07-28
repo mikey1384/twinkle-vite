@@ -21,7 +21,7 @@ const filterTable = {
 export default function LikedPosts({ selectedTheme }) {
   const { section, username } = useParams();
   const {
-    posts: {
+    likes: {
       [section]: profileFeeds,
       [section + 'ByUser']: byUserFeeds = [],
       [`${section}LoadMoreButton`]: loadMoreButton,
