@@ -499,7 +499,7 @@ function Message({
       console.error(error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId, message, userId]);
+  }, [onChessSpoilerClick, channelId, message, userId]);
 
   const handleRewardMessageSubmit = useCallback(
     ({ reasonId, amount }) => {
@@ -779,6 +779,7 @@ function Message({
                             reactionsMenuShown={reactionsMenuShown}
                             onRemoveReaction={handleRemoveReaction}
                             onAddReaction={handleAddReaction}
+                            theme={displayedThemeColor}
                           />
                         )}
                       </div>

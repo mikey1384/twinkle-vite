@@ -16,6 +16,7 @@ import { reactionsObj } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
 import { isMobile } from '~/helpers';
+import { useTheme } from '~/helpers/hooks';
 import { isEqual } from 'lodash';
 import localize from '~/constants/localize';
 
@@ -28,7 +29,8 @@ Reaction.propTypes = {
   reactedUserIds: PropTypes.array,
   onRemoveReaction: PropTypes.func,
   onAddReaction: PropTypes.func,
-  reactionsMenuShown: PropTypes.bool
+  reactionsMenuShown: PropTypes.bool,
+  theme: PropTypes.string
 };
 
 function Reaction({
@@ -37,7 +39,8 @@ function Reaction({
   reactedUserIds,
   onRemoveReaction,
   onAddReaction,
-  reactionsMenuShown
+  reactionsMenuShown,
+  theme
 }) {
   const {
     actions: { onSetUserState },
@@ -57,7 +60,7 @@ function Reaction({
       color: reactionButtonColor,
       opacity: reactionButtonOpacity
     }
-  } = useKeyContext((v) => v.theme);
+  } = useTheme(theme);
   const userReacted = useMemo(
     () => reactedUserIds.includes(userId),
     [reactedUserIds, userId]
