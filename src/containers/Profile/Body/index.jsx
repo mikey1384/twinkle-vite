@@ -58,7 +58,8 @@ export default function Body({ profile, selectedTheme }) {
     () =>
       matchPath(
         {
-          path: '/users/:username/likes/:filter'
+          path: '/users/:username/likes',
+          exact: true
         },
         location.pathname
       ),
