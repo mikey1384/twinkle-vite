@@ -163,7 +163,7 @@ export default function Body({ profile, selectedTheme }) {
           <Routes>
             <Route path="/likes" element={<Navigate replace to={`./all`} />} />
             <Route
-              path="/likes/:section"
+              path="/likes/:section/*"
               element={
                 <LikedPosts
                   username={profile.username}

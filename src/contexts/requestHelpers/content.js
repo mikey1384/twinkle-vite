@@ -294,6 +294,26 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async loadLikedFeeds({
+      filter = 'all',
+      lastFeedId,
+      lastTimeStamp,
+      username
+    } = {}) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/feeds/liked?filter=${filter}&username=${username}${
+            lastFeedId
+              ? `&lastFeedId=${lastFeedId}&lastTimeStamp=${lastTimeStamp}`
+              : ''
+          }`,
+          auth()
+        );
+        return Promise.resolve({ data, filter });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadFeedsByUser({
       lastFeedId,
       lastTimeStamp,

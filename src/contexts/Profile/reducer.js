@@ -107,6 +107,19 @@ export default function ProfileReducer(state, action) {
           }
         }
       };
+    case 'LOAD_LIKED_POSTS':
+      return {
+        ...state,
+        [username]: {
+          ...prevContentState,
+          likes: {
+            ...prevContentState.likes,
+            [action.section]: action.feeds,
+            [`${action.section}Loaded`]: true,
+            [`${action.section}LoadMoreButton`]: action.loadMoreButton
+          }
+        }
+      };
     case 'LOAD_POSTS_BY_USER':
       return {
         ...state,
@@ -128,6 +141,20 @@ export default function ProfileReducer(state, action) {
           posts: {
             ...prevContentState.posts,
             [action.section]: prevContentState.posts[action.section].concat(
+              action.feeds
+            ),
+            [`${action.section}LoadMoreButton`]: action.loadMoreButton
+          }
+        }
+      };
+    case 'LOAD_MORE_LIKED_POSTS':
+      return {
+        ...state,
+        [username]: {
+          ...prevContentState,
+          likes: {
+            ...prevContentState.likes,
+            [action.section]: prevContentState.likes[action.section].concat(
               action.feeds
             ),
             [`${action.section}LoadMoreButton`]: action.loadMoreButton
