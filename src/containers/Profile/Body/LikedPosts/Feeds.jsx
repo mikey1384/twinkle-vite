@@ -219,10 +219,10 @@ export default function Feeds({
               `}`}
               menuItems={[
                 { key: 'all', label: 'All' },
-                { key: 'comment', label: 'Comments' },
-                { key: 'subject', label: 'Subjects' },
                 { key: 'video', label: 'Videos' },
-                { key: 'url', label: 'Links' }
+                { key: 'url', label: 'Links' },
+                { key: 'subject', label: 'Subjects' },
+                { key: 'comment', label: 'Comments' }
               ]}
               onMenuClick={handleClickPostsMenu}
               selectedKey={filterTable[section]}
