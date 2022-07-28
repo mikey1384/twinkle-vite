@@ -96,36 +96,35 @@ export default function Feeds({
   }, [section, username]);
 
   return (
-    <ErrorBoundary componentPath="Profile/Body/Posts/Feeds">
+    <ErrorBoundary componentPath="Profile/Body/LikedPosts/Feeds">
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-        {!['likes', 'watched'].includes(section) && (
-          <FilterBar
-            color={selectedTheme}
-            style={{ height: '5rem', marginTop: '-1rem' }}
-            className={`mobile ${css`
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.3rem;
-              }
-            `}`}
-          >
-            {[
-              { key: 'all', label: 'All' },
-              { key: 'subject', label: 'Subjects' },
-              { key: 'video', label: 'Videos' },
-              { key: 'url', label: 'Links' }
-            ].map((type) => {
-              return (
-                <nav
-                  key={type.key}
-                  className={filterTable[section] === type.key ? 'active' : ''}
-                  onClick={() => handleClickPostsMenu({ item: type.key })}
-                >
-                  {type.label}
-                </nav>
-              );
-            })}
-          </FilterBar>
-        )}
+        <FilterBar
+          color={selectedTheme}
+          style={{ height: '5rem', marginTop: '-1rem' }}
+          className={`mobile ${css`
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.3rem;
+            }
+          `}`}
+        >
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'video', label: 'Videos' },
+            { key: 'subject', label: 'Subjects' },
+            { key: 'comment', label: 'Comments' },
+            { key: 'url', label: 'Links' }
+          ].map((type) => {
+            return (
+              <nav
+                key={type.key}
+                className={filterTable[section] === type.key ? 'active' : ''}
+                onClick={() => handleClickPostsMenu({ item: type.key })}
+              >
+                {type.label}
+              </nav>
+            );
+          })}
+        </FilterBar>
         <div
           className={css`
             width: 100%;
@@ -250,11 +249,7 @@ export default function Feeds({
           filter: filterTable[section],
           lastFeedId: feeds.length > 0 ? feeds[feeds.length - 1].feedId : null,
           lastTimeStamp:
-            feeds.length > 0
-              ? feeds[feeds.length - 1][
-                  section === 'watched' ? 'viewTimeStamp' : 'lastInteraction'
-                ]
-              : null
+            feeds.length > 0 ? feeds[feeds.length - 1]['lastInteraction'] : null
         });
         onLoadMoreLikedPosts({ ...data, section, username });
         setLoadingMore(false);
