@@ -116,15 +116,12 @@ export default function Feeds({
   );
 
   useEffect(() => {
-    if (section === 'likes') {
-      navigate(`/users/${username}/likes/all`);
-    } else if (filter && filter !== 'byuser') {
+    if (filter && filter !== 'byuser') {
       navigate(`/users/${username}/${section}`);
     } else if (filter === 'byuser' && !filterBarShown) {
       navigate(`/users/${username}/${section}`);
     }
   }, [filterBarShown, filter, section, username, navigate]);
-
   const noFeedLabel = useMemo(() => {
     switch (section) {
       case 'all':
