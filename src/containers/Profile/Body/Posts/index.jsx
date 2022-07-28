@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import SideMenu from '../SideMenu';
@@ -35,6 +36,26 @@ export default function Posts({ selectedTheme }) {
       [`${section}ByUserLoaded`]: byUserloaded
     }
   } = useProfileState(username);
+
+  const sideMenuItems = useMemo(() => {
+    if (section === 'likes') {
+      return [
+        { key: 'all', label: 'All' },
+        { key: 'video', label: 'Videos' },
+        { key: 'url', label: 'Links' },
+        { key: 'subject', label: 'Subjects' },
+        { key: 'comment', label: 'Comments' }
+      ];
+    }
+    return [
+      { key: 'all', label: 'All' },
+      { key: 'comment', label: 'Comments' },
+      { key: 'subject', label: 'Subjects' },
+      { key: 'video', label: 'Videos' },
+      { key: 'url', label: 'Links' }
+    ];
+  }, [section]);
+
   if (!profileFeeds) return <InvalidPage style={{ paddingTop: '13rem' }} />;
 
   return (
@@ -107,18 +128,12 @@ export default function Posts({ selectedTheme }) {
             }
           />
         </Routes>
-        {!['likes', 'watched'].includes(section) && (
+        {section !== 'watched' && (
           <SideMenu
             className={`desktop ${css`
               width: 10%;
             `}`}
-            menuItems={[
-              { key: 'all', label: 'All' },
-              { key: 'comment', label: 'Comments' },
-              { key: 'subject', label: 'Subjects' },
-              { key: 'video', label: 'Videos' },
-              { key: 'url', label: 'Links' }
-            ]}
+            menuItems={sideMenuItems}
             onMenuClick={onClickPostsMenu}
             selectedKey={filterTable[section]}
           />
@@ -128,6 +143,13 @@ export default function Posts({ selectedTheme }) {
   );
 
   function onClickPostsMenu({ item }) {
+    if (section === 'likes') {
+      return navigate(
+        `/users/${username}/likes/${item === 'url' ? 'link' : item}${
+          item === 'all' ? '' : 's'
+        }`
+      );
+    }
     navigate(
       `/users/${username}/${item === 'url' ? 'link' : item}${
         item === 'all' ? '' : 's'

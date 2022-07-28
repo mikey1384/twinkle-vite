@@ -58,7 +58,7 @@ export default function Body({ profile, selectedTheme }) {
     () =>
       matchPath(
         {
-          path: '/users/:username/likes'
+          path: '/users/:username/likes/:filter'
         },
         location.pathname
       ),
@@ -117,7 +117,7 @@ export default function Body({ profile, selectedTheme }) {
           <nav
             className={likesMatch ? 'active' : ''}
             style={{ cursor: 'pointer' }}
-            onClick={() => (likesMatch ? null : navigate(`likes`))}
+            onClick={() => (likesMatch ? null : navigate(`likes/all`))}
           >
             <a>{likesLabel}</a>
           </nav>
