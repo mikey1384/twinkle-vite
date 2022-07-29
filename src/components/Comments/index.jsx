@@ -96,9 +96,7 @@ function Comments({
   userId
 }) {
   const { banned, profileTheme } = useKeyContext((v) => v.myState);
-  const checkUserChangeAfterResolvingPromises = useKeyContext(
-    (v) => v.helpers.checkUserChangeAfterResolvingPromises
-  );
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useTheme(theme || profileTheme);
@@ -244,8 +242,8 @@ function Comments({
             })()
           );
         }
-        const { result, userChanged } =
-          await checkUserChangeAfterResolvingPromises({ promises, userId });
+        const result = await Promise.all(promises);
+        const userChanged = checkUserChange(userId);
         if (userChanged) {
           return;
         }
@@ -291,6 +289,10 @@ function Comments({
         console.error(error);
       }
       function handleUploadProgress({ loaded, total }) {
+        const userChanged = checkUserChange(userId);
+        if (userChanged) {
+          return;
+        }
         onUpdateCommentFileUploadProgress({
           contentType: finalContentType,
           contentId: finalContentId,
