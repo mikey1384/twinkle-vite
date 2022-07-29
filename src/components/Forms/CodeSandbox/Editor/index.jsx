@@ -129,7 +129,11 @@ export default function Editor({
   return (
     <div style={{ width: '100%', ...style }}>
       {elementObj ? (
-        <Preview evaling={evaling} style={{ marginBottom: '5rem' }}>
+        <Preview
+          onError={(error) => handleSetError({ error, lineNumber: 0 })}
+          evaling={evaling}
+          style={{ marginBottom: '5rem' }}
+        >
           {CompiledComponent}
         </Preview>
       ) : ast ? (
@@ -170,7 +174,11 @@ export default function Editor({
         </p>
       )}
       {elementObj ? (
-        <Preview evaling={evaling} style={{ marginTop: '5rem' }}>
+        <Preview
+          onError={(error) => handleSetError({ error, lineNumber: 0 })}
+          evaling={evaling}
+          style={{ marginTop: '5rem' }}
+        >
           {CompiledComponent}
         </Preview>
       ) : ast ? (
