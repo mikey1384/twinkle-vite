@@ -101,7 +101,7 @@ export default function UsernameText({
           display: 'inline'
         }}
       >
-        <p
+        <div
           style={{
             display: 'inline',
             cursor: 'pointer',
@@ -117,7 +117,7 @@ export default function UsernameText({
           onMouseEnter={onMouseEnter}
         >
           {displayedName || user.username || `(${deletedLabel})`}
-        </p>
+        </div>
       </div>
       {dropdownContext && (
         <DropdownList

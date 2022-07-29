@@ -4,14 +4,24 @@ import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 
 Preview.propTypes = {
+  numKeyInput: PropTypes.number,
   evaling: PropTypes.bool,
   style: PropTypes.object,
-  children: PropTypes.node
+  children: PropTypes.node,
+  onError: PropTypes.func
 };
 
-export default function Preview({ evaling, style, children }) {
+export default function Preview({
+  numKeyInput,
+  evaling,
+  style,
+  children,
+  onError
+}) {
   return (
     <PreviewErrorBoundary
+      numKeyInput={numKeyInput}
+      onError={onError}
       style={{
         opacity: evaling ? 0.5 : 1,
         position: 'relative',
