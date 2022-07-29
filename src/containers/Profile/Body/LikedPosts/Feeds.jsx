@@ -103,7 +103,7 @@ export default function Feeds({
           style={{ height: '5rem', marginTop: '-1rem' }}
           className={`mobile ${css`
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.3rem;
+              font-size: 1.3rem !important;
             }
           `}`}
         >
