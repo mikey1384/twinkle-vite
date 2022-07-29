@@ -562,7 +562,10 @@ function App() {
       <KeyContext.Provider
         value={{
           myState,
-          theme
+          theme,
+          helpers: {
+            checkUserChangeAfterResolvingPromises
+          }
         }}
       >
         {mobileMenuShown && (
