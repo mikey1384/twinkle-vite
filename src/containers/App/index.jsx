@@ -89,6 +89,7 @@ function App() {
     username
   } = myState;
 
+  const prevUserId = useRef(userId);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const currentChannelName = useChatContext((v) => v.state.currentChannelName);
@@ -404,6 +405,14 @@ function App() {
     ]
   );
 
+  useEffect(() => {
+    prevUserId.current = userId;
+    onSetSubmittingSubject(false);
+    onClearFileUploadProgress();
+    onSetUploadingFile(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
   const handleFileUploadOnHome = useCallback(
     async ({
       attachment,
@@ -467,6 +476,9 @@ function App() {
           );
         }
         const result = await Promise.all(promises);
+        if (userId !== prevUserId.current) {
+          return;
+        }
         if (thumbnail) {
           const numberToDeduct = secretAttachment?.thumbnail ? 2 : 1;
           thumbUrl = result[result.length - numberToDeduct];
@@ -514,7 +526,7 @@ function App() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [userId]
   );
 
   return (
