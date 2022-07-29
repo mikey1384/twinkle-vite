@@ -324,8 +324,9 @@ function App() {
         );
       }
       let thumbUrl = '';
-      const result = await Promise.all(promises);
-      if (userId !== prevUserId.current) {
+      const { result, userChanged } =
+        await checkUserChangeAfterResolvingPromises({ promises, userId });
+      if (userChanged) {
         return;
       }
       if (thumbnail) {
@@ -481,8 +482,9 @@ function App() {
             })()
           );
         }
-        const result = await Promise.all(promises);
-        if (userId !== prevUserId.current) {
+        const { result, userChanged } =
+          await checkUserChangeAfterResolvingPromises({ promises, userId });
+        if (userChanged) {
           return;
         }
         if (thumbnail) {
@@ -537,6 +539,14 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [userId]
   );
+
+  async function checkUserChangeAfterResolvingPromises({ promises, userId }) {
+    const result = await Promise.all(promises);
+    return Promise.resolve({
+      result,
+      userChanged: userId !== prevUserId.current
+    });
+  }
 
   return (
     <ErrorBoundary
