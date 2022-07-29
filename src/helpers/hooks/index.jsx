@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useLayoutEffect,
-  useRef,
-  useState
-} from 'react';
+import { useEffect, useMemo, useLayoutEffect, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import { addEvent, removeEvent } from '../listenerHelpers';
 import { stringIsEmpty, addCommasToNumber } from '../stringHelpers';
@@ -204,10 +198,16 @@ export function useProfileState(username) {
   const {
     notExist = false,
     notables = { feeds: [] },
+    likes = {
+      all: [],
+      comments: [],
+      subjects: [],
+      videos: [],
+      links: []
+    },
     posts = {
       all: [],
       comments: [],
-      likes: [],
       subjects: [],
       videos: [],
       watched: [],
@@ -215,7 +215,7 @@ export function useProfileState(username) {
     },
     profileId
   } = userState;
-  return { notables, posts, notExist, profileId };
+  return { likes, notables, posts, notExist, profileId };
 }
 
 export function useSearch({

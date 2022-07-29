@@ -25,6 +25,15 @@ export default function HomeActions(dispatch) {
         username
       });
     },
+    onLoadLikedPosts({ feeds, loadMoreButton, section, username }) {
+      return dispatch({
+        type: 'LOAD_LIKED_POSTS',
+        feeds,
+        loadMoreButton,
+        section,
+        username
+      });
+    },
     onLoadPostsByUser({ feeds, loadMoreButton, section, username }) {
       return dispatch({
         type: 'LOAD_POSTS_BY_USER',
@@ -37,6 +46,15 @@ export default function HomeActions(dispatch) {
     onLoadMorePosts({ feeds, loadMoreButton, section, username }) {
       return dispatch({
         type: 'LOAD_MORE_POSTS',
+        feeds,
+        loadMoreButton,
+        section,
+        username
+      });
+    },
+    onLoadMoreLikedPosts({ feeds, loadMoreButton, section, username }) {
+      return dispatch({
+        type: 'LOAD_MORE_LIKED_POSTS',
         feeds,
         loadMoreButton,
         section,
