@@ -267,6 +267,14 @@ function App() {
     return channelOnCall.imCalling || channelOnCall.outgoingShown;
   }, [channelOnCall.imCalling, channelOnCall.outgoingShown]);
 
+  useEffect(() => {
+    prevUserId.current = userId;
+    onSetSubmittingSubject(false);
+    onClearFileUploadProgress();
+    onSetUploadingFile(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
   const handleFileUploadOnChat = useCallback(
     async ({
       channelId,
@@ -317,6 +325,9 @@ function App() {
       }
       let thumbUrl = '';
       const result = await Promise.all(promises);
+      if (userId !== prevUserId.current) {
+        return;
+      }
       if (thumbnail) {
         thumbUrl = result[result.length - 1];
       }
@@ -404,14 +415,6 @@ function App() {
       username
     ]
   );
-
-  useEffect(() => {
-    prevUserId.current = userId;
-    onSetSubmittingSubject(false);
-    onClearFileUploadProgress();
-    onSetUploadingFile(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
 
   const handleFileUploadOnHome = useCallback(
     async ({
