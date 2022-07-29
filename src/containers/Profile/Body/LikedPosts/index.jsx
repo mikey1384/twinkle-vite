@@ -11,7 +11,6 @@ LikedPosts.propTypes = {
 const filterTable = {
   all: 'all',
   comments: 'comment',
-  watched: 'watched',
   subjects: 'subject',
   videos: 'video',
   links: 'url'

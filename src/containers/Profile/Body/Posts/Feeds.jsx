@@ -5,7 +5,7 @@ import ContentPanel from '~/components/ContentPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
-import SideMenu from './SideMenu';
+import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll, useTheme } from '~/helpers/hooks';
 import { useAppContext, useProfileContext } from '~/contexts';
@@ -116,9 +116,7 @@ export default function Feeds({
   );
 
   useEffect(() => {
-    if (section === 'likes') {
-      navigate(`/users/${username}/likes/all`);
-    } else if (filter && filter !== 'byuser') {
+    if (filter && filter !== 'byuser') {
       navigate(`/users/${username}/${section}`);
     } else if (filter === 'byuser' && !filterBarShown) {
       navigate(`/users/${username}/${section}`);
@@ -139,8 +137,6 @@ export default function Feeds({
         return `${username} has not posted a video, yet`;
       case 'watched':
         return `${username} has not watched any XP video so far`;
-      case 'likes':
-        return `${username} has not liked any content so far`;
     }
   }, [section, username]);
   const noFeedByUserLabel = useMemo(() => {
@@ -159,7 +155,7 @@ export default function Feeds({
   return (
     <ErrorBoundary componentPath="Profile/Body/Posts/Feeds">
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-        {!['likes', 'watched'].includes(section) && (
+        {section !== 'watched' && (
           <FilterBar
             color={selectedTheme}
             style={{ height: '5rem', marginTop: '-1rem' }}
@@ -201,7 +197,7 @@ export default function Feeds({
           <div
             className={css`
               margin-top: 1rem;
-              width: ${['likes', 'watched'].includes(section) ? '55%' : '50%'};
+              width: ${section === 'watched' ? '55%' : '50%'};
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
               }
@@ -237,9 +233,7 @@ export default function Feeds({
               <Loading
                 theme={selectedTheme}
                 className={css`
-                  margin-top: ${['likes', 'watched'].includes(section)
-                    ? '12rem'
-                    : '8rem'};
+                  margin-top: ${section === 'watched' ? '12rem' : '8rem'};
                   width: 100%;
                 `}
                 text="Loading..."
@@ -302,7 +296,7 @@ export default function Feeds({
               `}
             />
           </div>
-          {!['likes', 'watched'].includes(section) && (
+          {section !== 'watched' && (
             <SideMenu
               className={`desktop ${css`
                 width: 10%;

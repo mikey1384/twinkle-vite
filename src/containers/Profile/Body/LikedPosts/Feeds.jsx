@@ -5,7 +5,7 @@ import ContentPanel from '~/components/ContentPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
-import SideMenu from './SideMenu';
+import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll, useTheme } from '~/helpers/hooks';
 import { useAppContext, useProfileContext } from '~/contexts';
@@ -138,7 +138,7 @@ export default function Feeds({
           <div
             className={css`
               margin-top: 1rem;
-              width: ${['likes', 'watched'].includes(section) ? '55%' : '50%'};
+              width: 50%;
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
               }
@@ -147,12 +147,9 @@ export default function Feeds({
             {loadingShown ? (
               <Loading
                 theme={selectedTheme}
-                className={css`
-                  margin-top: ${['likes', 'watched'].includes(section)
-                    ? '12rem'
-                    : '8rem'};
-                  width: 100%;
-                `}
+                style={{
+                  marginTop: '5rem'
+                }}
                 text="Loading..."
               />
             ) : (
@@ -211,22 +208,20 @@ export default function Feeds({
               `}
             />
           </div>
-          {!['likes', 'watched'].includes(section) && (
-            <SideMenu
-              className={`desktop ${css`
-                width: 10%;
-              `}`}
-              menuItems={[
-                { key: 'all', label: 'All' },
-                { key: 'video', label: 'Videos' },
-                { key: 'subject', label: 'Subjects' },
-                { key: 'comment', label: 'Comments' },
-                { key: 'url', label: 'Links' }
-              ]}
-              onMenuClick={handleClickPostsMenu}
-              selectedKey={filterTable[section]}
-            />
-          )}
+          <SideMenu
+            className={`desktop ${css`
+              width: 10%;
+            `}`}
+            menuItems={[
+              { key: 'all', label: 'All' },
+              { key: 'video', label: 'Videos' },
+              { key: 'subject', label: 'Subjects' },
+              { key: 'comment', label: 'Comments' },
+              { key: 'url', label: 'Links' }
+            ]}
+            onMenuClick={handleClickPostsMenu}
+            selectedKey={filterTable[section]}
+          />
         </div>
       </div>
     </ErrorBoundary>
