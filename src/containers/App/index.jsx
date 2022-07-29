@@ -397,6 +397,9 @@ function App() {
         });
       }
       function handleUploadProgress({ loaded, total }) {
+        if (userId !== prevUserId.current) {
+          return;
+        }
         onUpdateChatUploadProgress({
           channelId,
           path: filePath,
@@ -525,6 +528,9 @@ function App() {
         onUpdateSecretAttachmentUploadProgress(loaded / total);
       }
       function handleUploadProgress({ loaded, total }) {
+        if (userId !== prevUserId.current) {
+          return;
+        }
         onUpdateFileUploadProgress(loaded / total);
       }
     },
