@@ -96,6 +96,9 @@ function Comments({
   userId
 }) {
   const { banned, profileTheme } = useKeyContext((v) => v.myState);
+  const checkUserChangeAfterResolvingPromises = useKeyContext(
+    (v) => v.helpers.checkUserChangeAfterResolvingPromises
+  );
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useTheme(theme || profileTheme);
@@ -241,7 +244,11 @@ function Comments({
             })()
           );
         }
-        const result = await Promise.all(promises);
+        const { result, userChanged } =
+          await checkUserChangeAfterResolvingPromises({ promises, userId });
+        if (userChanged) {
+          return;
+        }
         if (attachment.thumbnail) {
           thumbUrl = result[result.length - 1];
         }
