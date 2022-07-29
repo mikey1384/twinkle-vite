@@ -5,6 +5,7 @@ import ContentPanel from '~/components/ContentPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
+import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll, useTheme } from '~/helpers/hooks';
 import { useAppContext, useProfileContext } from '~/contexts';
@@ -121,6 +122,7 @@ export default function Feeds({
       navigate(`/users/${username}/${section}`);
     }
   }, [filterBarShown, filter, section, username, navigate]);
+
   const noFeedLabel = useMemo(() => {
     switch (section) {
       case 'all':
@@ -135,8 +137,6 @@ export default function Feeds({
         return `${username} has not posted a video, yet`;
       case 'watched':
         return `${username} has not watched any XP video so far`;
-      case 'likes':
-        return `${username} has not liked any content so far`;
     }
   }, [section, username]);
   const noFeedByUserLabel = useMemo(() => {
@@ -154,110 +154,176 @@ export default function Feeds({
 
   return (
     <ErrorBoundary componentPath="Profile/Body/Posts/Feeds">
-      <div
-        className={css`
-          margin-top: 1rem;
-          width: ${['likes', 'watched'].includes(section) ? '55%' : '50%'};
-          @media (max-width: ${mobileMaxWidth}) {
-            width: 100%;
-          }
-        `}
-      >
-        {filterBarShown && (
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+        {section !== 'watched' && (
           <FilterBar
-            bordered
             color={selectedTheme}
-            style={{
-              height: '5rem',
-              marginTop: '-1rem',
-              marginBottom: '2rem'
-            }}
+            style={{ height: '5rem', marginTop: '-1rem' }}
+            className={`mobile ${css`
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.3rem;
+              }
+            `}`}
           >
-            <nav
-              className={filter === 'byuser' ? '' : 'active'}
-              onClick={() => navigate(`/users/${username}/${section}`)}
-            >
-              All
-            </nav>
-            <nav
-              className={filter === 'byuser' ? 'active' : ''}
-              onClick={() => navigate(`/users/${username}/${section}/byuser`)}
-            >
-              Made by {username}
-            </nav>
+            {[
+              { key: 'all', label: 'All' },
+              { key: 'comment', label: 'Comments' },
+              { key: 'subject', label: 'Subjects' },
+              { key: 'video', label: 'Videos' },
+              { key: 'url', label: 'Links' }
+            ].map((type) => {
+              return (
+                <nav
+                  key={type.key}
+                  className={filterTable[section] === type.key ? 'active' : ''}
+                  onClick={() => handleClickPostsMenu({ item: type.key })}
+                >
+                  {type.label}
+                </nav>
+              );
+            })}
           </FilterBar>
-        )}
-        {loadingShown ? (
-          <Loading
-            theme={selectedTheme}
-            className={css`
-              margin-top: ${['likes', 'watched'].includes(section)
-                ? '12rem'
-                : '8rem'};
-              width: 100%;
-            `}
-            text="Loading..."
-          />
-        ) : (
-          <>
-            {feeds.length > 0 &&
-              feeds.map((feed, index) => {
-                const { contentId, contentType } = feed;
-                return (
-                  <ContentPanel
-                    key={filterTable[section] + feed.feedId}
-                    style={{
-                      marginTop: index === 0 && '-1rem',
-                      marginBottom: '1rem',
-                      zIndex: feeds.length - index
-                    }}
-                    zIndex={feeds.length - index}
-                    contentId={contentId}
-                    contentType={contentType}
-                    theme={selectedTheme}
-                    commentsLoadLimit={5}
-                    numPreviewComments={1}
-                  />
-                );
-              })}
-            {feeds.length === 0 && (
-              <div
-                style={{
-                  marginTop: '10rem',
-                  fontSize: '2.5rem',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  justifyContent: 'center'
-                }}
-              >
-                <div style={{ textAlign: 'center' }}>
-                  {filter === 'byuser' ? noFeedByUserLabel : noFeedLabel}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-        {loadMoreButton && !loadingShown && (
-          <LoadMoreButton
-            style={{ marginBottom: '1rem' }}
-            onClick={handleLoadMoreFeeds}
-            loading={loadingMore}
-            color={loadMoreButtonColor}
-            filled
-          />
         )}
         <div
           className={css`
-            display: ${loadMoreButton ? 'none' : 'block'};
-            height: 7rem;
+            width: 100%;
+            display: flex;
+            justify-content: center;
             @media (max-width: ${mobileMaxWidth}) {
-              display: block;
+              width: 100vw;
             }
           `}
-        />
+        >
+          <div
+            className={css`
+              margin-top: 1rem;
+              width: ${section === 'watched' ? '55%' : '50%'};
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 100%;
+              }
+            `}
+          >
+            {filterBarShown && (
+              <FilterBar
+                bordered
+                color={selectedTheme}
+                style={{
+                  height: '5rem',
+                  marginTop: '-1rem',
+                  marginBottom: '2rem'
+                }}
+              >
+                <nav
+                  className={filter === 'byuser' ? '' : 'active'}
+                  onClick={() => navigate(`/users/${username}/${section}`)}
+                >
+                  All
+                </nav>
+                <nav
+                  className={filter === 'byuser' ? 'active' : ''}
+                  onClick={() =>
+                    navigate(`/users/${username}/${section}/byuser`)
+                  }
+                >
+                  Made by {username}
+                </nav>
+              </FilterBar>
+            )}
+            {loadingShown ? (
+              <Loading
+                theme={selectedTheme}
+                className={css`
+                  margin-top: ${section === 'watched' ? '12rem' : '8rem'};
+                  width: 100%;
+                `}
+                text="Loading..."
+              />
+            ) : (
+              <>
+                {feeds.length > 0 &&
+                  feeds.map((feed, index) => {
+                    const { contentId, contentType } = feed;
+                    return (
+                      <ContentPanel
+                        key={filterTable[section] + feed.feedId}
+                        style={{
+                          marginTop: index === 0 && '-1rem',
+                          marginBottom: '1rem',
+                          zIndex: feeds.length - index
+                        }}
+                        zIndex={feeds.length - index}
+                        contentId={contentId}
+                        contentType={contentType}
+                        theme={selectedTheme}
+                        commentsLoadLimit={5}
+                        numPreviewComments={1}
+                      />
+                    );
+                  })}
+                {feeds.length === 0 && (
+                  <div
+                    style={{
+                      marginTop: '10rem',
+                      fontSize: '2.5rem',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <div style={{ textAlign: 'center' }}>
+                      {filter === 'byuser' ? noFeedByUserLabel : noFeedLabel}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+            {loadMoreButton && !loadingShown && (
+              <LoadMoreButton
+                style={{ marginBottom: '1rem' }}
+                onClick={handleLoadMoreFeeds}
+                loading={loadingMore}
+                color={loadMoreButtonColor}
+                filled
+              />
+            )}
+            <div
+              className={css`
+                display: ${loadMoreButton ? 'none' : 'block'};
+                height: 7rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  display: block;
+                }
+              `}
+            />
+          </div>
+          {section !== 'watched' && (
+            <SideMenu
+              className={`desktop ${css`
+                width: 10%;
+              `}`}
+              menuItems={[
+                { key: 'all', label: 'All' },
+                { key: 'comment', label: 'Comments' },
+                { key: 'subject', label: 'Subjects' },
+                { key: 'video', label: 'Videos' },
+                { key: 'url', label: 'Links' }
+              ]}
+              onMenuClick={handleClickPostsMenu}
+              selectedKey={filterTable[section]}
+            />
+          )}
+        </div>
       </div>
     </ErrorBoundary>
   );
+
+  function handleClickPostsMenu({ item }) {
+    navigate(
+      `/users/${username}/${item === 'url' ? 'link' : item}${
+        item === 'all' ? '' : 's'
+      }`
+    );
+  }
 
   async function handleLoadMoreFeeds() {
     if (filter === 'byuser') {
