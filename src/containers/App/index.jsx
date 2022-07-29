@@ -635,7 +635,7 @@ function App() {
                 <Home section="story" onFileUpload={handleFileUploadOnHome} />
               }
             />
-            <Route path="/:username" element={<Redirect />} />
+            <Route path="/:username/*" element={<Redirect />} />
             <Route path="*" element={<InvalidPage />} />
           </Routes>
         </div>
