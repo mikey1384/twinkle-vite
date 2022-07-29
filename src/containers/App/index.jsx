@@ -324,8 +324,8 @@ function App() {
         );
       }
       let thumbUrl = '';
-      const { result, userChanged } =
-        await checkUserChangeAfterResolvingPromises({ promises, userId });
+      const result = await Promise.all(promises);
+      const userChanged = checkUserChange(userId);
       if (userChanged) {
         return;
       }
@@ -398,7 +398,8 @@ function App() {
         });
       }
       function handleUploadProgress({ loaded, total }) {
-        if (userId !== prevUserId.current) {
+        const userChanged = checkUserChange(userId);
+        if (userChanged) {
           return;
         }
         onUpdateChatUploadProgress({
@@ -482,8 +483,8 @@ function App() {
             })()
           );
         }
-        const { result, userChanged } =
-          await checkUserChangeAfterResolvingPromises({ promises, userId });
+        const result = await Promise.all(promises);
+        const userChanged = checkUserChange(userId);
         if (userChanged) {
           return;
         }
@@ -530,7 +531,8 @@ function App() {
         onUpdateSecretAttachmentUploadProgress(loaded / total);
       }
       function handleUploadProgress({ loaded, total }) {
-        if (userId !== prevUserId.current) {
+        const userChanged = checkUserChange(userId);
+        if (userChanged) {
           return;
         }
         onUpdateFileUploadProgress(loaded / total);
@@ -540,12 +542,8 @@ function App() {
     [userId]
   );
 
-  async function checkUserChangeAfterResolvingPromises({ promises, userId }) {
-    const result = await Promise.all(promises);
-    return Promise.resolve({
-      result,
-      userChanged: userId !== prevUserId.current
-    });
+  function checkUserChange(userId) {
+    return userId !== prevUserId.current;
   }
 
   return (
@@ -563,9 +561,7 @@ function App() {
         value={{
           myState,
           theme,
-          helpers: {
-            checkUserChangeAfterResolvingPromises
-          }
+          helpers: { checkUserChange }
         }}
       >
         {mobileMenuShown && (
