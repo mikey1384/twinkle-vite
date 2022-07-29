@@ -7,7 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 export default function Redirect() {
   const navigate = useNavigate();
-  const { username } = useParams();
+  const { username, ['*']: subPath } = useParams();
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     init();
@@ -16,7 +16,8 @@ export default function Redirect() {
       const { data: userExists } = await request.get(
         `${URL}/user/check?username=${username}`
       );
-      if (userExists) return navigate(`/users/${username}`);
+      if (userExists)
+        return navigate(`/users/${username}${subPath ? `/${subPath}` : ''}`);
       setLoaded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
