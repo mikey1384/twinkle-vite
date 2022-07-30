@@ -43,7 +43,8 @@ export default function TakeScreenshot({
   );
   const [screenshotTaken, setScreenshotTaken] = useState(false);
   const [buttonShown, setButtonShown] = useState(false);
-  const { fileUploadLvl, username } = useKeyContext((v) => v.myState);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
+  const { fileUploadLvl, username, userId } = useKeyContext((v) => v.myState);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const FileInputRef = useRef(null);
   const maxSize = useMemo(
@@ -369,6 +370,16 @@ export default function TakeScreenshot({
       file: attachment.file,
       onUploadProgress: handleUploadProgress
     });
+    const userChanged = checkUserChange(userId);
+    if (userChanged) {
+      onSetMissionState({
+        missionId,
+        newState: {
+          uploadingFile: false
+        }
+      });
+      return;
+    }
     const { success } = await uploadMissionAttempt({
       missionId,
       attempt: {
@@ -404,6 +415,10 @@ export default function TakeScreenshot({
     });
 
     function handleUploadProgress({ loaded, total }) {
+      const userChanged = checkUserChange(userId);
+      if (userChanged) {
+        return;
+      }
       onSetMissionState({
         missionId,
         newState: {
