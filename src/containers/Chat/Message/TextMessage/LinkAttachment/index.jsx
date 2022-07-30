@@ -203,11 +203,6 @@ function LinkAttachment({
     [startingPosition, url]
   );
 
-  const thumbUrlRef = useRef(fallbackImage);
-  useEffect(() => {
-    thumbUrlRef.current = thumbUrl;
-  }, [thumbUrl]);
-
   useEffect(() => {
     if (
       url &&
@@ -224,7 +219,7 @@ function LinkAttachment({
         });
       }
       if (!loading) {
-        setImageUrl(thumbUrlRef.current);
+        setImageUrl(thumbUrl);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -214,7 +214,9 @@ function Embedly({
       if (thumbUrl?.includes('http://')) {
         makeThumbnailSecure({ contentId, contentType, thumbUrl });
       }
-      setImageUrl(thumbUrl || fallbackImage);
+      if (!loading) {
+        setImageUrl(thumbUrl);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thumbUrl, url]);
