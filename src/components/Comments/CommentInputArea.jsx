@@ -67,7 +67,6 @@ export default function CommentInputArea({
   const onSetUploadingFile = useContentContext(
     (v) => v.actions.onSetUploadingFile
   );
-
   const { fileUploadProgress, uploadingFile } = useContentState({
     contentId,
     contentType
@@ -130,7 +129,7 @@ export default function CommentInputArea({
         targetCommentId
       });
       onSetCommentAttachment({
-        attachment: undefined,
+        attachment: null,
         contentType,
         contentId
       });

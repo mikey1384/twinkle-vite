@@ -78,6 +78,7 @@ export default function TargetContent({
   const navigate = useNavigate();
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const {
     authLevel,
     canReward,
@@ -632,6 +633,19 @@ export default function TargetContent({
           file: attachment.file,
           onUploadProgress: handleUploadProgress
         });
+        const userChanged = checkUserChange(userId);
+        if (userChanged) {
+          onClearCommentFileUploadProgress({
+            contentType: 'comment',
+            contentId: comment.id
+          });
+          onSetUploadingFile({
+            contentId: comment.id,
+            contentType: 'comment',
+            isUploading: false
+          });
+          return;
+        }
         const data = await uploadComment({
           content: text,
           parent: {
@@ -680,6 +694,10 @@ export default function TargetContent({
     }
 
     function handleUploadProgress({ loaded, total }) {
+      const userChanged = checkUserChange(userId);
+      if (userChanged) {
+        return;
+      }
       onUpdateCommentFileUploadProgress({
         contentType: 'comment',
         contentId: comment.id,

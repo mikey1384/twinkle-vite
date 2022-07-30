@@ -6,10 +6,7 @@ import AlertModal from '~/components/Modals/AlertModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import { Color } from '~/constants/css';
-import {
-  addCommasToNumber,
-  getFileInfoFromFileName
-} from '~/helpers/stringHelpers';
+import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useInputContext, useKeyContext } from '~/contexts';
 import {
   FILE_UPLOAD_XP_REQUIREMENT,
@@ -94,16 +91,6 @@ export default function StartScreen({ navigateTo, onHide }) {
           >
             <Icon icon="upload" />
           </Button>
-          {disabled && (
-            <div
-              style={{
-                marginTop: '1rem',
-                fontWeight: 'bold'
-              }}
-            >{`Requires ${addCommasToNumber(
-              FILE_UPLOAD_XP_REQUIREMENT
-            )} XP`}</div>
-          )}
         </div>
       </div>
       <div

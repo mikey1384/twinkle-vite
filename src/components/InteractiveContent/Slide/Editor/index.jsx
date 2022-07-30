@@ -71,6 +71,8 @@ export default function Editor({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
+  const { userId } = useKeyContext((v) => v.myState);
   const defaultInputState = useMemo(
     () => ({
       editedPortalButton: portalButton || {
@@ -601,6 +603,10 @@ export default function Editor({
         slideId,
         newState: { uploadingFile: false }
       });
+      const userChanged = checkUserChange(userId);
+      if (userChanged) {
+        return;
+      }
       const post = {
         ...editForm,
         editedAttachment: {
@@ -648,6 +654,10 @@ export default function Editor({
     }
 
     function handleUploadProgress({ loaded, total }) {
+      const userChanged = checkUserChange(userId);
+      if (userChanged) {
+        return;
+      }
       onSetSlideState({
         interactiveId,
         slideId,

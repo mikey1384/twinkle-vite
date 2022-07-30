@@ -89,6 +89,7 @@ function App() {
     username
   } = myState;
 
+  const prevUserId = useRef(userId);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const currentChannelName = useChatContext((v) => v.state.currentChannelName);
@@ -266,6 +267,14 @@ function App() {
     return channelOnCall.imCalling || channelOnCall.outgoingShown;
   }, [channelOnCall.imCalling, channelOnCall.outgoingShown]);
 
+  useEffect(() => {
+    prevUserId.current = userId;
+    onSetSubmittingSubject(false);
+    onClearFileUploadProgress();
+    onSetUploadingFile(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
   const handleFileUploadOnChat = useCallback(
     async ({
       channelId,
@@ -316,6 +325,10 @@ function App() {
       }
       let thumbUrl = '';
       const result = await Promise.all(promises);
+      const userChanged = checkUserChange(userId);
+      if (userChanged) {
+        return;
+      }
       if (thumbnail) {
         thumbUrl = result[result.length - 1];
       }
@@ -385,6 +398,10 @@ function App() {
         });
       }
       function handleUploadProgress({ loaded, total }) {
+        const userChanged = checkUserChange(userId);
+        if (userChanged) {
+          return;
+        }
         onUpdateChatUploadProgress({
           channelId,
           path: filePath,
@@ -467,6 +484,10 @@ function App() {
           );
         }
         const result = await Promise.all(promises);
+        const userChanged = checkUserChange(userId);
+        if (userChanged) {
+          return;
+        }
         if (thumbnail) {
           const numberToDeduct = secretAttachment?.thumbnail ? 2 : 1;
           thumbUrl = result[result.length - numberToDeduct];
@@ -510,12 +531,20 @@ function App() {
         onUpdateSecretAttachmentUploadProgress(loaded / total);
       }
       function handleUploadProgress({ loaded, total }) {
+        const userChanged = checkUserChange(userId);
+        if (userChanged) {
+          return;
+        }
         onUpdateFileUploadProgress(loaded / total);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [userId]
   );
+
+  function checkUserChange(userId) {
+    return userId !== prevUserId.current;
+  }
 
   return (
     <ErrorBoundary
@@ -531,7 +560,8 @@ function App() {
       <KeyContext.Provider
         value={{
           myState,
-          theme
+          theme,
+          helpers: { checkUserChange }
         }}
       >
         {mobileMenuShown && (
