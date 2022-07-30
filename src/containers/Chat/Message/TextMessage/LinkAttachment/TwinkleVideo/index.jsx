@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import XPVideoPlayer from '../../../XPVideoPlayer';
 import TwinkleVideoLink from './TwinkleVideoLink';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { isMobile } from '~/helpers';
@@ -45,27 +46,29 @@ export default function TwinkleVideo({
   }, []);
 
   return (
-    <div style={{ position: 'relative', ...style }}>
-      {!loaded ? (
-        <Loading style={{ height: '100%' }} />
-      ) : deviceIsMobile ? (
-        <TwinkleVideoLink
-          rewardLevel={rewardLevel}
-          title={title}
-          messageId={messageId}
-          videoCode={content}
-          videoId={videoId}
-        />
-      ) : (
-        <XPVideoPlayer
-          loaded={loaded}
-          style={{ width: '65rem', height: '100%' }}
-          rewardLevel={rewardLevel}
-          videoCode={content}
-          videoId={videoId}
-          onPlay={onPlay}
-        />
-      )}
-    </div>
+    <ErrorBoundary componentPath="Chat/Message/TextMessage/LinkAttachment/TwinkleVideo">
+      <div style={{ position: 'relative', ...style }}>
+        {!loaded ? (
+          <Loading style={{ height: '100%' }} />
+        ) : deviceIsMobile ? (
+          <TwinkleVideoLink
+            rewardLevel={rewardLevel}
+            title={title}
+            messageId={messageId}
+            videoCode={content}
+            videoId={videoId}
+          />
+        ) : (
+          <XPVideoPlayer
+            loaded={loaded}
+            style={{ width: '65rem', height: '100%' }}
+            rewardLevel={rewardLevel}
+            videoCode={content}
+            videoId={videoId}
+            onPlay={onPlay}
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
