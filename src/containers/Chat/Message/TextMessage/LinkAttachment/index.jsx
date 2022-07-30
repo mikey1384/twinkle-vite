@@ -19,6 +19,7 @@ import { useContentState } from '~/helpers/hooks';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
 
+const fallbackImage = '/img/link.png';
 const API_URL = `${URL}/content`;
 const deviceIsMobile = isMobile(navigator);
 
@@ -106,7 +107,6 @@ function LinkAttachment({
   );
   const YTPlayerRef = useRef(null);
   const loadingRef = useRef(false);
-  const fallbackImage = '/img/link.png';
 
   useEffect(() => {
     if (isYouTube) {
@@ -189,10 +189,9 @@ function LinkAttachment({
         setLoading(false);
         return Promise.resolve();
       } catch (error) {
-        setLoading(false);
         setImageUrl(fallbackImage);
         onHideAttachment();
-        console.error(error.response || error);
+        setLoading(false);
         return Promise.reject(error);
       }
     }
@@ -203,6 +202,11 @@ function LinkAttachment({
     () => `${url}${startingPosition > 0 ? `?t=${startingPosition}` : ''}`,
     [startingPosition, url]
   );
+
+  const thumbUrlRef = useRef(fallbackImage);
+  useEffect(() => {
+    thumbUrlRef.current = thumbUrl;
+  }, [thumbUrl]);
 
   useEffect(() => {
     if (
@@ -219,10 +223,12 @@ function LinkAttachment({
           thumbUrl
         });
       }
-      setImageUrl(thumbUrl || fallbackImage);
+      if (!loading) {
+        setImageUrl(thumbUrlRef.current);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [thumbUrl, url]);
+  }, [thumbUrl, url, loading]);
 
   useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
