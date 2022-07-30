@@ -96,6 +96,7 @@ function Comments({
   userId
 }) {
   const { banned, profileTheme } = useKeyContext((v) => v.myState);
+  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useTheme(theme || profileTheme);
@@ -136,6 +137,7 @@ function Comments({
     () => !!parent.secretAnswer || !!parent.secretAttachment,
     [parent.secretAnswer, parent.secretAttachment]
   );
+
   const renderLoadMoreButton = useCallback(() => {
     return (autoExpand || commentsShown) && !isLoading ? (
       <LoadMoreButton
@@ -242,6 +244,10 @@ function Comments({
           );
         }
         const result = await Promise.all(promises);
+        const userChanged = checkUserChange(userId);
+        if (userChanged) {
+          return;
+        }
         if (attachment.thumbnail) {
           thumbUrl = result[result.length - 1];
         }
@@ -283,7 +289,12 @@ function Comments({
       } catch (error) {
         console.error(error);
       }
+
       function handleUploadProgress({ loaded, total }) {
+        const userChanged = checkUserChange(userId);
+        if (userChanged) {
+          return;
+        }
         onUpdateCommentFileUploadProgress({
           contentType: finalContentType,
           contentId: finalContentId,
