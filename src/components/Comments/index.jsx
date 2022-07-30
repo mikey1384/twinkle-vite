@@ -113,9 +113,6 @@ function Comments({
   const onClearCommentFileUploadProgress = useContentContext(
     (v) => v.actions.onClearCommentFileUploadProgress
   );
-  const onSetUploadingFile = useContentContext(
-    (v) => v.actions.onSetUploadingFile
-  );
   const onUpdateCommentFileUploadProgress = useContentContext(
     (v) => v.actions.onUpdateCommentFileUploadProgress
   );
@@ -140,6 +137,7 @@ function Comments({
     () => !!parent.secretAnswer || !!parent.secretAttachment,
     [parent.secretAnswer, parent.secretAttachment]
   );
+
   const renderLoadMoreButton = useCallback(() => {
     return (autoExpand || commentsShown) && !isLoading ? (
       <LoadMoreButton
@@ -291,18 +289,10 @@ function Comments({
       } catch (error) {
         console.error(error);
       }
+
       function handleUploadProgress({ loaded, total }) {
         const userChanged = checkUserChange(userId);
         if (userChanged) {
-          onClearCommentFileUploadProgress({
-            contentType: finalContentType,
-            contentId: finalContentId
-          });
-          onSetUploadingFile({
-            contentId: finalContentId,
-            contentType: finalContentType,
-            isUploading: false
-          });
           return;
         }
         onUpdateCommentFileUploadProgress({
