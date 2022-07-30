@@ -356,6 +356,7 @@ function LinkAttachment({
               loading={loading}
               url={url}
               siteUrl={siteUrl}
+              onSetImageUrl={setImageUrl}
             />
           )}
         </div>
