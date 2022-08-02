@@ -45,7 +45,7 @@ export default function YearItem({ style, year }) {
       handleLoadMonthlyLeaderboards();
     }
     async function handleLoadMonthlyLeaderboards() {
-      const leaderboards = await loadMonthlyLeaderboards();
+      const leaderboards = await loadMonthlyLeaderboards(year);
       onLoadMonthlyLeaderboards({ leaderboards, year });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

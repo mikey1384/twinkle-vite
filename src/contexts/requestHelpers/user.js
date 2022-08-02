@@ -270,10 +270,10 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async loadMonthlyLeaderboards() {
+    async loadMonthlyLeaderboards(year) {
       try {
         const { data: leaderboards } = await request.get(
-          `${URL}/user/leaderBoard/monthly`
+          `${URL}/user/leaderBoard/monthly?year=${year}`
         );
         return Promise.resolve(leaderboards);
       } catch (error) {
