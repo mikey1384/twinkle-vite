@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { useMemo } from 'react';
+import moment from 'moment';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import YearItem from './YearItem';
 
@@ -8,11 +9,7 @@ Leaderboards.propTypes = {
 };
 
 const firstYear = 2021;
-const currentYear = (() => {
-  const dt = new Date();
-  const yr = dt.getFullYear();
-  return yr;
-})();
+const currentYear = moment().utc().year();
 
 export default function Leaderboards({ style }) {
   const shownYears = useMemo(() => {
@@ -27,7 +24,12 @@ export default function Leaderboards({ style }) {
     <ErrorBoundary componentPath="Home/Earn/Leaderboard/index">
       <div style={{ width: '100%', ...style }}>
         {shownYears.map((year) => (
-          <YearItem key={year} year={year} />
+          <YearItem
+            key={year}
+            year={year}
+            currentYear={currentYear}
+            style={{ marginTop: year !== currentYear ? '3rem' : 0 }}
+          />
         ))}
       </div>
     </ErrorBoundary>
