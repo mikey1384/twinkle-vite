@@ -27,6 +27,8 @@ RecommendationInterface.propTypes = {
   uploaderId: PropTypes.number
 };
 
+const recommendationRewardDisabledByDefault = ['staff', 'teacher'];
+
 export default function RecommendationInterface({
   contentId,
   contentType,
@@ -40,7 +42,7 @@ export default function RecommendationInterface({
   );
   const [recommending, setRecommending] = useState(false);
   const [rewardDisabled, setRewardDisabled] = useState(
-    userType?.toLowerCase?.() === 'staff'
+    recommendationRewardDisabledByDefault.includes(userType?.toLowerCase?.())
   );
   const [hidden, setHidden] = useState(false);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
