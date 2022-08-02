@@ -243,6 +243,12 @@ function Embedly({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentId, contentType]);
 
+  useEffect(() => {
+    if (typeof siteUrl === 'string' && !thumbUrl) {
+      setImageUrl(fallbackImage);
+    }
+  }, [siteUrl, thumbUrl]);
+
   const InnerContent = useMemo(() => {
     return (
       <div className={contentCss}>
