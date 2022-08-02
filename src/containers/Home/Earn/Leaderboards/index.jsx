@@ -8,7 +8,7 @@ Leaderboards.propTypes = {
   style: PropTypes.object
 };
 
-const firstYear = 2021;
+const firstYear = 2022;
 const currentYear = moment().utc().year();
 
 export default function Leaderboards({ style }) {
