@@ -233,7 +233,7 @@ export default function Feeds({
               <Loading
                 theme={selectedTheme}
                 className={css`
-                  margin-top: ${section === 'watched' ? '12rem' : '8rem'};
+                  margin-top: ${section === 'watched' ? '10rem' : '8rem'};
                   width: 100%;
                 `}
                 text="Loading..."
