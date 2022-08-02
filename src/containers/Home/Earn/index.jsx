@@ -3,7 +3,7 @@ import HighXPSubjects from './HighXPSubjects';
 import localize from '~/constants/localize';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import Leaderboard from './Leaderboard';
+import Leaderboards from './Leaderboards';
 
 const earnXPLabel = localize('earnXP');
 const leaderboardsLabel = localize('leaderboards');
@@ -36,7 +36,7 @@ export default function Earn() {
         </section>
         <section>
           <h2>{leaderboardsLabel}</h2>
-          <Leaderboard />
+          <Leaderboards />
         </section>
         <div style={{ height: '15rem' }} />
       </div>
