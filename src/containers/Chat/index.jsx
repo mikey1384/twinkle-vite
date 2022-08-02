@@ -314,8 +314,9 @@ function Chat({ onFileUpload }) {
       setLoading(true);
       const data = await loadChatChannel({ channelId });
       if (
-        !isNaN(Number(prevPathId.current)) &&
-        data.channel.pathId !== Number(prevPathId.current)
+        (!isNaN(Number(prevPathId.current)) &&
+          data.channel.pathId !== Number(prevPathId.current)) ||
+        currentPathIdRef.current === 'vocabulary'
       ) {
         setLoading(false);
         loadingRef.current = false;
