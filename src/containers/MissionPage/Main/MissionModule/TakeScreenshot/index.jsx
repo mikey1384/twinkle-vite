@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import AlertModal from '~/components/Modals/AlertModal';
@@ -13,7 +13,8 @@ import {
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import SectionToScreenshot from './SectionToScreenshot';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
@@ -41,6 +42,7 @@ export default function TakeScreenshot({
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
+  const [isReady, setIsReady] = useState(false);
   const [screenshotTaken, setScreenshotTaken] = useState(false);
   const [buttonShown, setButtonShown] = useState(false);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
@@ -52,22 +54,46 @@ export default function TakeScreenshot({
     [fileUploadLvl]
   );
 
-  useEffect(() => {
-    setTimeout(() => {
-      setButtonShown(true);
-    }, 3200);
-  });
-
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
         fontSize: '1.7rem',
         ...style
       }}
     >
-      {uploadingFile ? (
+      {!isReady ? (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
+          <div style={{ marginBottom: '1rem' }}>
+            {`Take a screenshot of the section that appears after you press the "I am ready" button`}
+          </div>
+          <div
+            style={{
+              marginBottom: '3rem',
+              textAlign: 'center',
+              fontWeight: 'bold'
+            }}
+          >
+            Are you ready?
+          </div>
+          <Button
+            skeuomorphic
+            color="logoBlue"
+            style={{ fontSize: '2rem' }}
+            onClick={() => setIsReady(true)}
+          >
+            <span style={{ marginLeft: '1rem' }}>I am ready</span>
+          </Button>
+        </div>
+      ) : uploadingFile ? (
         <FileUploadStatusIndicator
           style={{
             fontSize: '1.7rem',
@@ -80,9 +106,6 @@ export default function TakeScreenshot({
         />
       ) : (
         <>
-          <div style={{ marginBottom: '2rem', fontWeight: 'bold' }}>
-            Follow the instructions below
-          </div>
           <div>
             <b>1.</b> Take a screenshot of{' '}
             <b style={{ color: Color.green() }}>
@@ -104,49 +127,10 @@ export default function TakeScreenshot({
                 alignItems: 'center'
               }}
             >
-              <div
-                className={css`
-                  animation: fadeIn 3s;
-                  @keyframes fadeIn {
-                    0% {
-                      opacity: 0;
-                    }
-                    100% {
-                      opacity: 1;
-                    }
-                  }
-                  border: 1px solid ${Color.borderGray()};
-                  border-radius: ${borderRadius};
-                  text-align: center;
-                  padding: 1rem;
-                  background: ${Color.ivory()};
-                  font-size: 1.7rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.3rem;
-                  }
-                `}
-                style={{
-                  display: 'flex',
-                  width: '75%',
-                  flexDirection: 'column',
-                  alignItems: 'center'
-                }}
-              >
-                <p
-                  className={css`
-                    font-weight: bold;
-                    font-size: 3rem;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 2.5rem;
-                    }
-                  `}
-                >
-                  Screenshot this
-                </p>
-                <p style={{ marginTop: '1.5rem' }}>
-                  <b>{username}</b> captured this screenshot on {returnNow()}
-                </p>
-              </div>
+              <SectionToScreenshot
+                username={username}
+                onSetButtonShown={setButtonShown}
+              />
             </div>
           </div>
           {screenshotTaken && (
@@ -313,11 +297,6 @@ export default function TakeScreenshot({
       )}
     </div>
   );
-
-  function returnNow() {
-    const now = new Date(Date.now());
-    return now.toString();
-  }
 
   function handleFileSelection(event) {
     const fileObj = event.target.files[0];
