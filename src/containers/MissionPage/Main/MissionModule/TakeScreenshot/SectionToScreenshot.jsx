@@ -54,7 +54,7 @@ export default function SectionToScreenshot({ username, onSetButtonShown }) {
           }
         `}
       >
-        Screenshot this
+        Screenshot this box
       </p>
       <p style={{ marginTop: '1.5rem' }}>
         <b>{username}</b> captured this screenshot on {returnNow()}
