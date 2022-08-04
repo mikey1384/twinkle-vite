@@ -41,7 +41,12 @@ export default function SwitchButton({
       }}
     >
       {label && (
-        <div style={{ marginRight: small ? 0 : '1rem', ...labelStyle }}>
+        <div
+          style={{
+            marginRight: small ? 0 : '1rem',
+            ...labelStyle
+          }}
+        >
           {label}
         </div>
       )}
