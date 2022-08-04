@@ -15,13 +15,11 @@ import {
 const BodyRef = document.scrollingElement || document.documentElement;
 
 Nav.propTypes = {
-  isMobileSideMenu: PropTypes.bool,
   alert: PropTypes.bool,
   className: PropTypes.string,
   children: PropTypes.node,
   imgLabel: PropTypes.string,
   isHome: PropTypes.bool,
-  onClick: PropTypes.func,
   profileUsername: PropTypes.string,
   to: PropTypes.string,
   style: PropTypes.object
@@ -33,8 +31,6 @@ function Nav({
   children,
   imgLabel,
   isHome,
-  isMobileSideMenu,
-  onClick,
   profileUsername,
   to,
   style
@@ -155,9 +151,6 @@ function Nav({
   );
 
   function handleNavClick() {
-    if (isMobileSideMenu) {
-      return onClick?.();
-    }
     if (!pathname) return;
     if (pathname === to) {
       document.getElementById('App').scrollTop = 0;

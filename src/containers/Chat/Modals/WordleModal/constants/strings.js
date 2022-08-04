@@ -1,10 +1,7 @@
 export const WIN_MESSAGES = ['Great Job!', 'Awesome', 'Well done!'];
-export const GAME_COPIED_MESSAGE = 'Copied to clipboard';
 export const NOT_ENOUGH_LETTERS_MESSAGE = 'Not enough letters';
 export const WORD_NOT_FOUND_MESSAGE = 'Word not found';
-export const HARD_MODE_ALERT_MESSAGE =
-  'Hard Mode can only be enabled at the start!';
-export const HARD_MODE_DESCRIPTION =
+export const STRICT_MODE_DESCRIPTION =
   'Any revealed hints must be used in subsequent guesses';
 export const HIGH_CONTRAST_MODE_DESCRIPTION = 'For improved color vision';
 export const CORRECT_WORD_MESSAGE = (solution) => `The word was ${solution}`;

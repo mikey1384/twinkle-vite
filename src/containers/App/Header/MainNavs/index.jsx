@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Nav from './Nav';
+import MobileSideMenuNav from './MobileSideMenuNav';
 import Icon from '~/components/Icon';
 import { matchPath } from 'react-router-dom';
 import { mobileMaxWidth } from '~/constants/css';
@@ -306,11 +307,8 @@ function MainNavs({
         }
       `}
     >
-      <Nav
-        isMobileSideMenu
-        className="mobile"
+      <MobileSideMenuNav
         alert={numNewNotis > 0 || totalRewardAmount > 0}
-        imgLabel="bars"
         onClick={onMobileMenuOpen}
       />
       {profileNav && (
