@@ -73,7 +73,7 @@ export default function TakeScreenshot({
           }}
         >
           <div style={{ marginBottom: '1rem' }}>
-            {`Take a screenshot of the section that appears after you press the "I am ready" button`}
+            {`Take a screenshot of the box that appears after you press the "I am ready" button`}
           </div>
           <div
             style={{
@@ -109,7 +109,7 @@ export default function TakeScreenshot({
           <div>
             <b>1.</b> Take a screenshot of{' '}
             <b style={{ color: Color.green() }}>
-              this <Icon icon="arrow-down" />
+              this box <Icon icon="arrow-down" />
             </b>
             <div
               className={css`
@@ -265,7 +265,7 @@ export default function TakeScreenshot({
                 color="logoBlue"
                 onClick={() => setScreenshotTaken(true)}
               >
-                I took the screenshot of that{' '}
+                I took the screenshot of that box{' '}
                 <Icon style={{ marginLeft: '0.7rem' }} icon="arrow-up" />
               </Button>
             </div>
