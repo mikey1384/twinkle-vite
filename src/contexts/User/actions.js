@@ -99,6 +99,12 @@ export default function UserActions(dispatch) {
         hideWatched
       });
     },
+    onToggleWordleStrictMode(strictMode) {
+      return dispatch({
+        type: 'TOGGLE_WORDLE_STRICT_MODE',
+        strictMode
+      });
+    },
     onUpdateNumWordsCollected(numWordsCollected) {
       return dispatch({
         type: 'UPDATE_NUM_WORDS_COLLECTED',

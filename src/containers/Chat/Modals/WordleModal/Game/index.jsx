@@ -22,7 +22,7 @@ import {
   WORD_NOT_FOUND_MESSAGE
 } from '../constants/strings';
 import { default as GraphemeSplitter } from 'grapheme-splitter';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
@@ -54,6 +54,13 @@ export default function Game({
   onSetIsRevealing,
   socketConnected
 }) {
+  const { wordleStrictMode: isStrictMode } = useKeyContext((v) => v.myState);
+  const onToggleWordleStrictMode = useAppContext(
+    (v) => v.user.actions.onToggleWordleStrictMode
+  );
+  const toggleWordleStrictMode = useAppContext(
+    (v) => v.requestHelpers.toggleWordleStrictMode
+  );
   const [isChecking, setIsChecking] = useState(false);
   const updateWordleAttempt = useAppContext(
     (v) => v.requestHelpers.updateWordleAttempt
@@ -67,7 +74,6 @@ export default function Game({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const MAX_WORD_LENGTH = solution.length;
   const delayMs = REVEAL_TIME_MS * MAX_WORD_LENGTH;
-  const [isStrictMode, setIsStrictMode] = useState(false);
   const [alertMessage, setAlertMessage] = useState({});
   const [isWaving, setIsWaving] = useState(false);
   const [currentGuess, setCurrentGuess] = useState('');
@@ -100,8 +106,9 @@ export default function Game({
 
   useEffect(() => {
     if (strictModeSwitchDisabled) {
-      setIsStrictMode(false);
+      onToggleWordleStrictMode(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [strictModeSwitchDisabled]);
 
   useEffect(() => {
@@ -120,7 +127,10 @@ export default function Game({
   return (
     <ErrorBoundary componentPath="WordleModal/Game">
       {alertMessage.shown && (
-        <Banner style={{ marginTop: '1rem' }} color={alertMessageColor}>
+        <Banner
+          style={{ marginTop: '1rem', marginBottom: '1rem' }}
+          color={alertMessageColor}
+        >
           {alertMessage.message}
         </Banner>
       )}
@@ -142,9 +152,9 @@ export default function Game({
           }}
           style={{ flexDirection: 'row' }}
           small={deviceIsMobile}
-          checked={isStrictMode}
+          checked={!!isStrictMode}
           label="Aim for Double Bonus"
-          onChange={() => setIsStrictMode((isStrictMode) => !isStrictMode)}
+          onChange={() => handleToggleWordleStrictMode(!isStrictMode)}
         />
       </div>
       <div
@@ -183,6 +193,11 @@ export default function Game({
       </div>
     </ErrorBoundary>
   );
+
+  function handleToggleWordleStrictMode(isStrictMode) {
+    toggleWordleStrictMode(isStrictMode);
+    onToggleWordleStrictMode(isStrictMode);
+  }
 
   function handleChar(value) {
     if (

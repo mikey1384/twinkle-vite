@@ -87,6 +87,9 @@ export function useLazyLoad({
 
 export function useMyState() {
   const hideWatched = useAppContext((v) => v.user.state.myState.hideWatched);
+  const wordleStrictMode = useAppContext(
+    (v) => v.user.state.myState.wordleStrictMode
+  );
   const lastChatPath = useAppContext((v) => v.user.state.myState.lastChatPath);
   const missions = useAppContext((v) => v.user.state.missions);
   const numWordsCollected = useAppContext(
@@ -118,6 +121,7 @@ export function useMyState() {
             loggedIn: true,
             profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME,
             signinModalShown,
+            wordleStrictMode,
             xpThisMonth
           }
         : {
@@ -137,6 +141,7 @@ export function useMyState() {
       searchFilter,
       signinModalShown,
       userId,
+      wordleStrictMode,
       xpThisMonth
     ]
   );

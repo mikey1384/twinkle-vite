@@ -33,6 +33,7 @@ export const initialMyState = {
   profileTheme: 'logoBlue',
   searchFilter: '',
   userId: null,
+  wordleStrictMode: false,
   xpThisMonth: null
 };
 
