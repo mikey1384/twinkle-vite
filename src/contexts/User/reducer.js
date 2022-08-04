@@ -140,6 +140,14 @@ export default function UserReducer(state, action) {
           hideWatched: action.hideWatched
         }
       };
+    case 'TOGGLE_WORDLE_STRICT_MODE':
+      return {
+        ...state,
+        myState: {
+          ...state.myState,
+          wordleStrictMode: action.strictMode
+        }
+      };
     case 'UPDATE_NUM_WORDS_COLLECTED':
       return {
         ...state,

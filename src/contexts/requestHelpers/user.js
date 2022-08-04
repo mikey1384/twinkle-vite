@@ -547,6 +547,18 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
+    async toggleWordleStrictMode(strictMode) {
+      try {
+        const data = await request.put(
+          `${URL}/user/wordleStrictMode`,
+          { strictMode },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateCurrentlyWatching({ watchCode }) {
       const authorization = auth();
       const authExists = !!authorization.headers.authorization;
