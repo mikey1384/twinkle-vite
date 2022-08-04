@@ -4,6 +4,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Grid from './Grid';
 import Keyboard from './Keyboard';
 import Banner from '~/components/Banner';
+import SwitchButton from '~/components/Buttons/SwitchButton';
 import {
   ALERT_TIME_MS,
   MAX_GUESSES,
@@ -18,6 +19,9 @@ import {
 } from '../constants/strings';
 import { default as GraphemeSplitter } from 'grapheme-splitter';
 import { useAppContext, useChatContext } from '~/contexts';
+import { isMobile } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator);
 
 Game.propTypes = {
   channelId: PropTypes.number.isRequired,
@@ -59,6 +63,7 @@ export default function Game({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const MAX_WORD_LENGTH = solution.length;
   const delayMs = REVEAL_TIME_MS * MAX_WORD_LENGTH;
+  const [isStrictMode, setIsStrictMode] = useState(false);
   const [alertMessage, setAlertMessage] = useState({});
   const [isWaving, setIsWaving] = useState(false);
   const [currentGuess, setCurrentGuess] = useState('');
@@ -101,6 +106,28 @@ export default function Game({
           {alertMessage.message}
         </Banner>
       )}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          width: '100%',
+          marginRight: '5rem'
+        }}
+      >
+        <SwitchButton
+          labelStyle={{
+            display: 'inline',
+            fontSize: deviceIsMobile ? '1.2rem' : '1.3rem',
+            fontWeight: deviceIsMobile ? 'normal' : 'bold',
+            marginRight: deviceIsMobile ? '0.5rem' : '1rem'
+          }}
+          style={{ flexDirection: 'row' }}
+          small={deviceIsMobile}
+          checked={isStrictMode}
+          label="Aim for Double Bonus"
+          onChange={() => setIsStrictMode((isStrictMode) => !isStrictMode)}
+        />
+      </div>
       <div
         style={{
           width: '100%',
