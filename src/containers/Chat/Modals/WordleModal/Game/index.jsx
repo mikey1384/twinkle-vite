@@ -10,7 +10,11 @@ import {
   MAX_GUESSES,
   REVEAL_TIME_MS
 } from '../constants/settings';
-import { isWordInWordList, unicodeLength } from './helpers/words';
+import {
+  isWordInWordList,
+  unicodeLength,
+  checkWordleAttemptStrictness
+} from './helpers/words';
 import {
   CORRECT_WORD_MESSAGE,
   NOT_ENOUGH_LETTERS_MESSAGE,
@@ -86,6 +90,20 @@ export default function Game({
     return 'green';
   }, [alertMessage.status]);
 
+  const strictModeSwitchDisabled = useMemo(() => {
+    const { isPass } = checkWordleAttemptStrictness({
+      guesses,
+      solution
+    });
+    return !isPass;
+  }, [guesses, solution]);
+
+  useEffect(() => {
+    if (strictModeSwitchDisabled) {
+      setIsStrictMode(false);
+    }
+  }, [strictModeSwitchDisabled]);
+
   useEffect(() => {
     if (isGameLost) {
       handleShowAlert({
@@ -115,6 +133,7 @@ export default function Game({
         }}
       >
         <SwitchButton
+          disabled={strictModeSwitchDisabled}
           labelStyle={{
             display: 'inline',
             fontSize: deviceIsMobile ? '1.2rem' : '1.3rem',
@@ -186,6 +205,23 @@ export default function Game({
     const newGuesses = guesses.concat(currentGuess);
     if (isGameWon || isGameLost) {
       return;
+    }
+
+    if (isStrictMode) {
+      const { isPass, message } = checkWordleAttemptStrictness({
+        guesses: guesses.concat(currentGuess),
+        solution
+      });
+      if (!isPass) {
+        setCurrentRowClass('jiggle');
+        return handleShowAlert({
+          status: 'error',
+          message,
+          options: {
+            callback: () => setCurrentRowClass('')
+          }
+        });
+      }
     }
 
     if (!(unicodeLength(currentGuess) === MAX_WORD_LENGTH)) {
