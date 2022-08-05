@@ -42,9 +42,10 @@ export default function WordleModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const { wordleStrictMode: isStrictMode } = useKeyContext((v) => v.myState);
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
-  const [streaksTab, setStreaksTab] = useState('win');
+  const [streaksTab, setStreaksTab] = useState(isStrictMode ? 'double' : 'win');
   const loadWordle = useAppContext((v) => v.requestHelpers.loadWordle);
   const getCurrentNextDayTimeStamp = useAppContext(
     (v) => v.requestHelpers.getCurrentNextDayTimeStamp
@@ -64,6 +65,10 @@ export default function WordleModal({
     () => isGameWon || isGameLost,
     [isGameLost, isGameWon]
   );
+
+  useEffect(() => {
+    setStreaksTab(isStrictMode ? 'double' : 'win');
+  }, [isStrictMode]);
 
   useEffect(() => {
     init();
@@ -121,6 +126,7 @@ export default function WordleModal({
             isGameOver={isGameOver}
             isGameWon={isGameWon}
             isGameLost={isGameLost}
+            isStrictMode={isStrictMode}
             nextDayTimeStamp={nextDayTimeStamp}
             solution={solution}
             onSetOverviewModalShown={setOverviewModalShown}
