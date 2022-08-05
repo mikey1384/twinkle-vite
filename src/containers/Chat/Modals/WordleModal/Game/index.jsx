@@ -22,7 +22,7 @@ import {
   WORD_NOT_FOUND_MESSAGE
 } from '../constants/strings';
 import { default as GraphemeSplitter } from 'grapheme-splitter';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
@@ -35,6 +35,7 @@ Game.propTypes = {
   isGameWon: PropTypes.bool,
   isGameLost: PropTypes.bool,
   isRevealing: PropTypes.bool,
+  isStrictMode: PropTypes.bool,
   onSetIsRevealing: PropTypes.func.isRequired,
   onSetOverviewModalShown: PropTypes.func.isRequired,
   socketConnected: PropTypes.bool,
@@ -51,10 +52,10 @@ export default function Game({
   onSetOverviewModalShown,
   solution,
   isRevealing,
+  isStrictMode,
   onSetIsRevealing,
   socketConnected
 }) {
-  const { wordleStrictMode: isStrictMode } = useKeyContext((v) => v.myState);
   const onToggleWordleStrictMode = useAppContext(
     (v) => v.user.actions.onToggleWordleStrictMode
   );
