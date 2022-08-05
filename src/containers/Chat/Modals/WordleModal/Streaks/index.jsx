@@ -4,6 +4,7 @@ import WinStreaks from './WinStreaks';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
+import DoubleStreaks from './DoubleStreak';
 
 Streaks.propTypes = {
   streaksTab: PropTypes.string,
@@ -70,7 +71,11 @@ export default function Streaks({
           }
         `}
       >
-        <WinStreaks channelId={channelId} myId={myId} theme={theme} />
+        {streaksTab === 'win' ? (
+          <WinStreaks channelId={channelId} myId={myId} theme={theme} />
+        ) : (
+          <DoubleStreaks channelId={channelId} myId={myId} theme={theme} />
+        )}
         <div style={{ width: '100%', padding: '1rem' }} />
       </div>
     </div>
