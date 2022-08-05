@@ -380,6 +380,19 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async loadWordleDoubleStreaks(channelId) {
+      try {
+        const {
+          data: { bestStreaks, bestStreakObj }
+        } = await request.get(
+          `${URL}/chat/wordle/leaderBoard/streak/double?channelId=${channelId}`,
+          auth()
+        );
+        return Promise.resolve({ bestStreaks, bestStreakObj });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async reloadChatSubject({ subjectId, channelId }) {
       try {
         const {
