@@ -44,6 +44,7 @@ export default function WordleModal({
   } = useKeyContext((v) => v.theme);
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
+  const [streaksTab, setStreaksTab] = useState('win');
   const loadWordle = useAppContext((v) => v.requestHelpers.loadWordle);
   const getCurrentNextDayTimeStamp = useAppContext(
     (v) => v.requestHelpers.getCurrentNextDayTimeStamp
@@ -140,7 +141,12 @@ export default function WordleModal({
             />
           </div>
         ) : (
-          <Streaks channelId={channelId} theme={theme} />
+          <Streaks
+            channelId={channelId}
+            streaksTab={streaksTab}
+            onSetStreaksTab={setStreaksTab}
+            theme={theme}
+          />
         )}
         {overviewModalShown && (
           <OverviewModal
