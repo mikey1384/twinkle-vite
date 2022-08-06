@@ -51,6 +51,12 @@ export default function HomeActions(dispatch) {
         order
       });
     },
+    onSetEarnSection(section) {
+      return dispatch({
+        type: 'SET_EARN_SECTION',
+        section
+      });
+    },
     onSetFeedsOutdated(outdated) {
       return dispatch({
         type: 'SET_FEEDS_OUTDATED',
