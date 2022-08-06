@@ -11,11 +11,11 @@ import localize from '~/constants/localize';
 const randomHighXPSubjectLabel = localize('randomHighXPSubject');
 const showMeAnotherSubjectLabel = localize('showMeAnotherSubject');
 
-HighXPSubjects.propTypes = {
+EarnSuggester.propTypes = {
   style: PropTypes.object
 };
 
-export default function HighXPSubjects({ style }) {
+export default function EarnSuggester({ style }) {
   const {
     showMeAnotherSubjectButton: { color: showMeAnotherSubjectButtonColor }
   } = useKeyContext((v) => v.theme);

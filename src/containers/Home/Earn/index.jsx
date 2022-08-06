@@ -1,5 +1,5 @@
 import ErrorBoundary from '~/components/ErrorBoundary';
-import HighXPSubjects from './HighXPSubjects';
+import EarnSuggester from './EarnSuggester';
 import localize from '~/constants/localize';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -32,7 +32,7 @@ export default function Earn() {
       >
         <section>
           <h2>{earnXPAndKPLabel}</h2>
-          <HighXPSubjects />
+          <EarnSuggester />
         </section>
         <section>
           <h2>{leaderboardsLabel}</h2>
