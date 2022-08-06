@@ -18,12 +18,12 @@ export default function StartMenu() {
         <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>Earn XP</p>
         <Button
           onClick={() => onSetEarnSection('subject')}
-          style={{ marginTop: '1rem' }}
+          style={{ marginTop: '0.7rem' }}
           filled
           color="logoBlue"
         >
           <Icon icon="bolt" />
-          <span style={{ marginLeft: '1rem' }}>
+          <span style={{ marginLeft: '0.7rem' }}>
             Respond to high XP subjects
           </span>
         </Button>
