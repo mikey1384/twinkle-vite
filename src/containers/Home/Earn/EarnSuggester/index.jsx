@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { panel } from './Styles';
+import { panel } from '../Styles';
 import { useAppContext, useKeyContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import ContentListItem from '~/components/ContentListItem';
