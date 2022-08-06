@@ -376,6 +376,10 @@ const languageObj = {
     en: 'Done',
     kr: '완료'
   },
+  earnKP: {
+    en: 'Earn KP',
+    kr: 'KP 쌓기'
+  },
   earnXP: {
     en: 'Earn XP',
     kr: 'XP 쌓기'
