@@ -27,39 +27,47 @@ export default function EarnXPFromSubjects() {
 
   return (
     <ErrorBoundary componentPath="Home/Earn/EarnSuggester/EarnXPFromSubjects">
-      <p>Earn XP by responding to subjects</p>
-      <div style={{ marginTop: '1.5rem' }}>
-        {loading ? (
-          <Loading />
-        ) : (
-          <>
-            {subjects.map((subject) => (
-              <ContentListItem key={subject.id} contentObj={subject} />
-            ))}
-          </>
-        )}
-        <div
-          style={{
-            marginTop: '1.5rem',
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center'
-          }}
-        >
-          <Button
-            filled
-            color={showMeAnotherSubjectButtonColor}
-            onClick={handleLoadHighXPSubjects}
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        <p>Earn XP by Responding to Subjects</p>
+        <div style={{ marginTop: '1.5rem' }}>
+          {loading ? (
+            <Loading />
+          ) : (
+            <>
+              {subjects.map((subject) => (
+                <ContentListItem key={subject.id} contentObj={subject} />
+              ))}
+            </>
+          )}
+          <div
+            style={{
+              marginTop: '1.5rem',
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
           >
-            <Icon icon="redo" />
-            <span style={{ marginLeft: '0.7rem' }}>
-              {showMeAnotherSubjectLabel}
-            </span>
-          </Button>
+            <Button
+              filled
+              color={showMeAnotherSubjectButtonColor}
+              onClick={handleLoadHighXPSubjects}
+            >
+              <Icon icon="redo" />
+              <span style={{ marginLeft: '0.7rem' }}>
+                {showMeAnotherSubjectLabel}
+              </span>
+            </Button>
+          </div>
         </div>
         <div
           style={{
-            marginTop: '5rem',
+            marginTop: '3.5rem',
             width: '100%',
             display: 'flex',
             justifyContent: 'center'
@@ -68,9 +76,7 @@ export default function EarnXPFromSubjects() {
           <div
             style={{ display: 'flex', flexDirection: 'column', width: '80%' }}
           >
-            <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>
-              Earn Karma Points
-            </p>
+            <p>Earn Karma Points</p>
             <Button
               onClick={() => onSetEarnSection('recommend')}
               style={{ marginTop: '0.7rem' }}

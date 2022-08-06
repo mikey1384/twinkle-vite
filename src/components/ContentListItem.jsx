@@ -169,7 +169,7 @@ function ContentListItem({
               {contentType === 'video' && (
                 <>
                   <div style={{ marginLeft: '1rem' }}>
-                    <p
+                    <div
                       style={{
                         fontSize: '2rem',
                         fontWeight: 'bold',
@@ -180,10 +180,10 @@ function ContentListItem({
                       className="label"
                     >
                       {title}
-                    </p>
-                    <p style={{ color: Color.gray() }}>
+                    </div>
+                    <div style={{ color: Color.gray() }}>
                       Uploaded by {uploader.username}
-                    </p>
+                    </div>
                   </div>
                   <div
                     style={{
@@ -216,7 +216,7 @@ function ContentListItem({
                       wordBreak: 'break-word'
                     }}
                   >
-                    <p
+                    <div
                       className={css`
                         line-clamp: 2;
                         font-size: 2.5rem;
@@ -227,11 +227,11 @@ function ContentListItem({
                       `}
                     >
                       {title}
-                    </p>
+                    </div>
                     {uploader.username && (
-                      <p style={{ color: Color.gray() }}>
+                      <div style={{ color: Color.gray() }}>
                         Posted by {uploader.username}
-                      </p>
+                      </div>
                     )}
                     {description && (
                       <div

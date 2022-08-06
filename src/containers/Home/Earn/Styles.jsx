@@ -7,7 +7,7 @@ export const panel = css`
   padding: 1rem;
   border: 1px solid ${Color.borderGray()};
   border-radius: ${borderRadius};
-  > p {
+  p {
     font-size: 2rem;
     font-weight: bold;
   }
