@@ -1,8 +1,11 @@
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import { useHomeContext } from '~/contexts';
 
 export default function StartMenu() {
+  const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
+
   return (
     <ErrorBoundary componentPath="Home/Earn/EarnSuggester/StartMenu">
       <div
@@ -13,7 +16,12 @@ export default function StartMenu() {
         }}
       >
         <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>Earn XP</p>
-        <Button style={{ marginTop: '1rem' }} filled color="logoBlue">
+        <Button
+          onClick={() => onSetEarnSection('subject')}
+          style={{ marginTop: '1rem' }}
+          filled
+          color="logoBlue"
+        >
           <Icon icon="bolt" />
           <span style={{ marginLeft: '1rem' }}>
             Respond to high XP subjects
@@ -31,11 +39,21 @@ export default function StartMenu() {
         <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>
           Earn Karma Points
         </p>
-        <Button style={{ marginTop: '0.7rem' }} filled color="brownOrange">
+        <Button
+          onClick={() => onSetEarnSection('recommend')}
+          style={{ marginTop: '0.7rem' }}
+          filled
+          color="brownOrange"
+        >
           <Icon icon="heart" />
           <span style={{ marginLeft: '0.7rem' }}>Recommend posts</span>
         </Button>
-        <Button style={{ marginTop: '0.7rem' }} filled color="pink">
+        <Button
+          onClick={() => onSetEarnSection('reward')}
+          style={{ marginTop: '0.7rem' }}
+          filled
+          color="pink"
+        >
           <Icon icon="certificate" />
           <span style={{ marginLeft: '0.7rem' }}>Reward posts</span>
         </Button>

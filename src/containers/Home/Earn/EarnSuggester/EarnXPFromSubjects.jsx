@@ -5,7 +5,7 @@ import ContentListItem from '~/components/ContentListItem';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import localize from '~/constants/localize';
-import { useKeyContext, useAppContext } from '~/contexts';
+import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
 
 const showMeAnotherSubjectLabel = localize('showMeAnotherSubject');
 
@@ -13,6 +13,7 @@ export default function EarnXPFromSubjects() {
   const {
     showMeAnotherSubjectButton: { color: showMeAnotherSubjectButtonColor }
   } = useKeyContext((v) => v.theme);
+  const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const loadHighXPSubjects = useAppContext(
@@ -39,7 +40,7 @@ export default function EarnXPFromSubjects() {
         )}
         <div
           style={{
-            marginTop: '2rem',
+            marginTop: '1.5rem',
             width: '100%',
             display: 'flex',
             justifyContent: 'center'
@@ -55,6 +56,40 @@ export default function EarnXPFromSubjects() {
               {showMeAnotherSubjectLabel}
             </span>
           </Button>
+        </div>
+        <div
+          style={{
+            marginTop: '5rem',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center'
+          }}
+        >
+          <div
+            style={{ display: 'flex', flexDirection: 'column', width: '80%' }}
+          >
+            <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>
+              Earn Karma Points
+            </p>
+            <Button
+              onClick={() => onSetEarnSection('recommend')}
+              style={{ marginTop: '0.7rem' }}
+              filled
+              color="brownOrange"
+            >
+              <Icon icon="heart" />
+              <span style={{ marginLeft: '0.7rem' }}>Recommend posts</span>
+            </Button>
+            <Button
+              onClick={() => onSetEarnSection('reward')}
+              style={{ marginTop: '0.7rem' }}
+              filled
+              color="pink"
+            >
+              <Icon icon="certificate" />
+              <span style={{ marginLeft: '0.7rem' }}>Reward posts</span>
+            </Button>
+          </div>
         </div>
       </div>
     </ErrorBoundary>

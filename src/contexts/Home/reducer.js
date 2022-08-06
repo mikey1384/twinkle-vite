@@ -66,6 +66,11 @@ export default function HomeReducer(state, action) {
         ...state,
         displayOrder: action.order
       };
+    case 'SET_EARN_SECTION':
+      return {
+        ...state,
+        earnSection: action.section
+      };
     case 'SET_FEEDS_OUTDATED':
       return {
         ...state,
