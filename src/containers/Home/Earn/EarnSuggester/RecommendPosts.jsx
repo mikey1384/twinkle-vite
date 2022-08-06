@@ -15,7 +15,8 @@ export default function StartMenu() {
           flexDirection: 'column'
         }}
       >
-        Recommend Posts
+        <p>Earn Karma Points by Recommending Posts</p>
+        <div style={{ marginTop: '1.5rem' }}>section</div>
         <div
           style={{
             marginTop: '5rem',
@@ -27,7 +28,7 @@ export default function StartMenu() {
           <div
             style={{ display: 'flex', flexDirection: 'column', width: '80%' }}
           >
-            <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>Earn XP</p>
+            <p>Earn XP</p>
             <Button
               onClick={() => onSetEarnSection('subject')}
               style={{ marginTop: '0.7rem' }}
@@ -39,15 +40,7 @@ export default function StartMenu() {
                 Respond to high XP subjects
               </span>
             </Button>
-            <p
-              style={{
-                fontWeight: 'bold',
-                fontSize: '2rem',
-                marginTop: '1.5rem'
-              }}
-            >
-              Earn Karma Points
-            </p>
+            <p style={{ marginTop: '1.5rem' }}>Earn Karma Points</p>
             <Button
               onClick={() => onSetEarnSection('reward')}
               style={{ marginTop: '0.7rem' }}
