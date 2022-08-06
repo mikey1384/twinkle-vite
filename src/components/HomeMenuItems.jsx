@@ -17,6 +17,7 @@ HomeMenuItems.propTypes = {
 
 const peopleLabel = localize('people');
 const storiesLabel = localize('stories');
+const earnKPLabel = localize('earnKP');
 const earnXPLabel = localize('earnXP');
 const storeLabel = localize('store');
 const deviceIsMobile = isMobile(navigator);
@@ -192,6 +193,20 @@ export default function HomeMenuItems({ style = {} }) {
                 <Icon icon="bolt" size="1x" />
               </div>
               <div className="label">{earnXPLabel}</div>
+            </div>
+          </a>
+        </nav>
+        <nav
+          className={location.pathname === '/earn' ? 'active' : ''}
+          onClick={() => navigate('/earn')}
+        >
+          <a href="/earn" onClick={(e) => e.preventDefault()}>
+            <div className="homemenu__item">
+              <div className="selection" />
+              <div className="icon">
+                <Icon icon="dharmachakra" size="1x" />
+              </div>
+              <div className="label">{earnKPLabel}</div>
             </div>
           </a>
         </nav>
