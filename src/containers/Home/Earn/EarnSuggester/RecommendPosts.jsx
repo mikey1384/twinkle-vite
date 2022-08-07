@@ -1,10 +1,23 @@
+import { useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
+import ContentListItem from '~/components/ContentListItem';
+import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import { useHomeContext } from '~/contexts';
+import { useAppContext, useHomeContext } from '~/contexts';
 
 export default function StartMenu() {
   const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const loadPostsToRecommend = useAppContext(
+    (v) => v.requestHelpers.loadPostsToRecommend
+  );
+
+  useEffect(() => {
+    handleLoadPostsToRecommend();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ErrorBoundary componentPath="Home/Earn/EarnSuggester/RecommendPosts">
@@ -16,7 +29,17 @@ export default function StartMenu() {
         }}
       >
         <p>Earn Karma Points by Recommending Posts</p>
-        <div style={{ marginTop: '1.5rem' }}>section</div>
+        <div style={{ marginTop: '1.5rem' }}>
+          {loading ? (
+            <Loading />
+          ) : (
+            <>
+              {posts.map((subject) => (
+                <ContentListItem key={subject.id} contentObj={subject} />
+              ))}
+            </>
+          )}
+        </div>
         <div
           style={{
             marginTop: '5rem',
@@ -55,4 +78,11 @@ export default function StartMenu() {
       </div>
     </ErrorBoundary>
   );
+
+  async function handleLoadPostsToRecommend() {
+    setLoading(true);
+    const data = await loadPostsToRecommend();
+    setPosts(data);
+    setLoading(false);
+  }
 }
