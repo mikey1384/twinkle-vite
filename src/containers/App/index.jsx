@@ -56,6 +56,7 @@ function App() {
     (v) => v.user.actions.onCloseSigninModal
   );
   const onInitMyState = useAppContext((v) => v.user.actions.onInitMyState);
+  const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
   const onLogout = useAppContext((v) => v.user.actions.onLogout);
   const onSetSessionLoaded = useAppContext(
     (v) => v.user.actions.onSetSessionLoaded
@@ -269,6 +270,7 @@ function App() {
 
   useEffect(() => {
     prevUserId.current = userId;
+    onSetEarnSection('start');
     onSetSubmittingSubject(false);
     onClearFileUploadProgress();
     onSetUploadingFile(false);
