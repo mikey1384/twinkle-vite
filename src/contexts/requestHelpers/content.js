@@ -336,7 +336,10 @@ export default function contentRequestHelpers({ auth, handleError }) {
     },
     async loadPostsToRecommend() {
       try {
-        const { data } = await request.get(`${URL}/content/karma/recommend`);
+        const { data } = await request.get(
+          `${URL}/content/karma/recommend`,
+          auth()
+        );
         return Promise.resolve(data);
       } catch (error) {
         return handleError(error);
