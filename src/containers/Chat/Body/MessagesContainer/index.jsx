@@ -463,6 +463,7 @@ function MessagesContainer({
     (senderId) => {
       socket.emit('start_chess_timer', {
         currentChannel,
+        selectedChannelId,
         targetUserId: userId,
         winnerId: senderId,
         isResign: false
