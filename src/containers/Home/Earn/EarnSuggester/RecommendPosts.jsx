@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import ContentListItem from '~/components/ContentListItem';
+import CommentPreview from './CommentPreview';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import { useAppContext, useHomeContext } from '~/contexts';
+import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
 
 export default function StartMenu() {
+  const {
+    showMeAnotherPostButton: { color: showMeAnotherPostButtonColor }
+  } = useKeyContext((v) => v.theme);
   const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -35,10 +38,27 @@ export default function StartMenu() {
           ) : (
             <>
               {posts.map((subject) => (
-                <ContentListItem key={subject.id} contentObj={subject} />
+                <CommentPreview key={subject.id} contentObj={subject} />
               ))}
             </>
           )}
+        </div>
+        <div
+          style={{
+            marginTop: '1.5rem',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center'
+          }}
+        >
+          <Button
+            filled
+            color={showMeAnotherPostButtonColor}
+            onClick={handleLoadPostsToRecommend}
+          >
+            <Icon icon="redo" />
+            <span style={{ marginLeft: '0.7rem' }}>Show me another post</span>
+          </Button>
         </div>
         <div
           style={{
