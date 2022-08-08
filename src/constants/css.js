@@ -362,6 +362,7 @@ export function Theme(color = 'logoBlue') {
         }[color] || ''
     },
     showMeAnotherSubjectButton: { color: 'green' },
+    showMeAnotherPostButton: { color: 'green' },
     skeuomorphicDisabled: { color, opacity: 0.2 },
     spinner: { color },
     statusMsgLink: {
