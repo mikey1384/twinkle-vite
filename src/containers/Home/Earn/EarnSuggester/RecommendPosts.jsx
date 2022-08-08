@@ -35,6 +35,10 @@ export default function StartMenu() {
         <div style={{ marginTop: '1.5rem' }}>
           {loading ? (
             <Loading />
+          ) : posts.length === 0 ? (
+            <div
+              style={{ textAlign: 'center', padding: '6.5rem 0 3rem 0' }}
+            >{`Wow, it looks like there aren't any post left to recommend!`}</div>
           ) : (
             <>
               {posts.map((subject) => (
@@ -43,23 +47,25 @@ export default function StartMenu() {
             </>
           )}
         </div>
-        <div
-          style={{
-            marginTop: '1.5rem',
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center'
-          }}
-        >
-          <Button
-            filled
-            color={showMeAnotherPostButtonColor}
-            onClick={handleLoadPostsToRecommend}
+        {posts.length > 0 && (
+          <div
+            style={{
+              marginTop: '1.5rem',
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
           >
-            <Icon icon="redo" />
-            <span style={{ marginLeft: '0.7rem' }}>Show me another post</span>
-          </Button>
-        </div>
+            <Button
+              filled
+              color={showMeAnotherPostButtonColor}
+              onClick={handleLoadPostsToRecommend}
+            >
+              <Icon icon="redo" />
+              <span style={{ marginLeft: '0.7rem' }}>Show me another post</span>
+            </Button>
+          </div>
+        )}
         <div
           style={{
             marginTop: '5rem',
