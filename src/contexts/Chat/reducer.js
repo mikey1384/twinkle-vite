@@ -1134,8 +1134,8 @@ export default function ChatReducer(state, action) {
               action.message.userId &&
               !action.message.isDrawOffer
                 ? action.message.userId
-                : state.channelsObj[action.message.channelId]
-                    .lastChessMoveViewerId,
+                : state.channelsObj?.[action.message.channelId]
+                    ?.lastChessMoveViewerId,
             numUnreads: action.isMyMessage
               ? Number(state.channelsObj[action.channel.id]?.numUnreads || 0)
               : Number(state.channelsObj[action.channel.id]?.numUnreads || 0) +
