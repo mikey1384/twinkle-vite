@@ -41,7 +41,13 @@ export default function StartMenu() {
             <Loading style={{ height: '20rem' }} />
           ) : posts.length === 0 ? (
             <div
-              style={{ height: '20rem', textAlign: 'center' }}
+              style={{
+                height: '17rem',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: '2rem'
+              }}
             >{`Wow, it looks like there aren't any post left to recommend!`}</div>
           ) : (
             <>
