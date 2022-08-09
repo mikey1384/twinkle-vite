@@ -264,7 +264,7 @@ export default function Game({
 
     if (newGuesses.length < MAX_GUESSES && currentGuess !== solution) {
       setIsChecking(true);
-      const { isDuplicate, actualSolution, needsReload } =
+      const { isDuplicate, actualWordLevel, actualSolution, needsReload } =
         await checkIfDuplicateWordleAttempt({
           channelId,
           numGuesses: newGuesses.length,
@@ -275,7 +275,10 @@ export default function Game({
       if (actualSolution) {
         onSetChannelState({
           channelId,
-          newState: { wordleSolution: actualSolution }
+          newState: {
+            wordleWordLevel: actualWordLevel,
+            wordleSolution: actualSolution
+          }
         });
       }
       updateWordleAttempt({
