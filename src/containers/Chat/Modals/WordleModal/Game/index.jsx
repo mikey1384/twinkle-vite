@@ -153,7 +153,7 @@ export default function Game({
           }}
           style={{ flexDirection: 'row' }}
           small={deviceIsMobile}
-          checked={!!isStrictMode}
+          checked={isStrictMode}
           label="Aim for Double Bonus"
           onChange={() => handleToggleWordleStrictMode(!isStrictMode)}
         />
