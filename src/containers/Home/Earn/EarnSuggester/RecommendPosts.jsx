@@ -32,12 +32,16 @@ export default function StartMenu() {
         }}
       >
         <p>Earn Karma Points by Recommending Posts</p>
-        <div style={{ marginTop: '1.5rem' }}>
+        <div
+          style={{
+            marginTop: '1.5rem'
+          }}
+        >
           {loading ? (
-            <Loading />
+            <Loading style={{ height: '20rem' }} />
           ) : posts.length === 0 ? (
             <div
-              style={{ textAlign: 'center', padding: '6.5rem 0 3rem 0' }}
+              style={{ height: '20rem', textAlign: 'center' }}
             >{`Wow, it looks like there aren't any post left to recommend!`}</div>
           ) : (
             <>
@@ -53,7 +57,8 @@ export default function StartMenu() {
               marginTop: '1.5rem',
               width: '100%',
               display: 'flex',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              marginBottom: '5rem'
             }}
           >
             <Button
@@ -68,7 +73,6 @@ export default function StartMenu() {
         )}
         <div
           style={{
-            marginTop: '5rem',
             width: '100%',
             display: 'flex',
             justifyContent: 'center'
