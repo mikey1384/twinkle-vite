@@ -1,12 +1,25 @@
+import { useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
+import CommentPreview from './CommentPreview';
+import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import { useHomeContext } from '~/contexts';
+import { useAppContext, useHomeContext } from '~/contexts';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
 export default function StartMenu() {
   const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const loadPostsToReward = useAppContext(
+    (v) => v.requestHelpers.loadPostsToReward
+  );
+
+  useEffect(() => {
+    handleLoadPostsToReward();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ErrorBoundary componentPath="Home/Earn/EarnSuggester/RewardPosts">
@@ -18,7 +31,31 @@ export default function StartMenu() {
         }}
       >
         <p>Earn Karma Points by Rewarding Posts</p>
-        <div style={{ marginTop: '1.5rem' }}>section</div>
+        <div
+          style={{
+            marginTop: '1.5rem'
+          }}
+        >
+          {loading ? (
+            <Loading style={{ height: '20rem' }} />
+          ) : posts.length === 0 ? (
+            <div
+              style={{
+                height: '17rem',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: '2rem'
+              }}
+            >{`Wow, it looks like there aren't any post left to reward!`}</div>
+          ) : (
+            <>
+              {posts.map((post) => (
+                <CommentPreview key={post.id} contentObj={post} />
+              ))}
+            </>
+          )}
+        </div>
         <div
           style={{
             marginTop: '5rem',
@@ -62,5 +99,12 @@ export default function StartMenu() {
     onSetEarnSection(section);
     document.getElementById('App').scrollTop = 0;
     BodyRef.scrollTop = 0;
+  }
+
+  async function handleLoadPostsToReward() {
+    setLoading(true);
+    const data = await loadPostsToReward();
+    setPosts(data);
+    setLoading(false);
   }
 }
