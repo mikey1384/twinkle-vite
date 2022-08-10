@@ -337,7 +337,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
     async loadPostsToRecommend() {
       try {
         const { data } = await request.get(
-          `${URL}/content/karma/recommend`,
+          `${URL}/content/earn/karma/recommend`,
           auth()
         );
         return Promise.resolve(data);
@@ -347,7 +347,19 @@ export default function contentRequestHelpers({ auth, handleError }) {
     },
     async loadHighXPSubjects() {
       try {
-        const { data } = await request.get(`${URL}/content/highxp/subjects`);
+        const { data } = await request.get(`${URL}/content/earn/xp/subjects`);
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async markPostAsSkipped({ earnType, action, contentType, contentId }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/earn/skip`,
+          { earnType, action, contentType, contentId },
+          auth()
+        );
         return Promise.resolve(data);
       } catch (error) {
         return handleError(error);
