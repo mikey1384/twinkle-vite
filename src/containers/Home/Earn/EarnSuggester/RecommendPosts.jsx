@@ -118,9 +118,9 @@ export default function StartMenu() {
     </ErrorBoundary>
   );
 
-  function handleLoadAnotherPostClick() {
+  async function handleLoadAnotherPostClick() {
     if (posts[0]?.id) {
-      markPostAsSkipped({
+      await markPostAsSkipped({
         earnType: 'karma',
         action: 'recommendation',
         contentType: 'comment',
