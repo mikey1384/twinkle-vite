@@ -16,6 +16,7 @@ MediaPlayer.propTypes = {
   onPause: PropTypes.func,
   onPlay: PropTypes.func,
   src: PropTypes.string,
+  thumbHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   thumbUrl: PropTypes.string,
   videoHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
@@ -32,6 +33,7 @@ export default function MediaPlayer({
   onPlay = () => {},
   src,
   thumbUrl,
+  thumbHeight = '7rem',
   videoHeight
 }) {
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
@@ -97,7 +99,7 @@ export default function MediaPlayer({
         <ExtractedThumb
           src={src}
           isHidden={!isThumb}
-          style={{ width: '100%', height: '7rem' }}
+          style={{ width: '100%', height: thumbHeight }}
           onThumbnailLoad={handleThumbnailLoad}
           thumbUrl={thumbUrl}
         />

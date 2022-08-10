@@ -126,6 +126,7 @@ export default function CommentPreview({
                         {userId ? (
                           <div style={{ width: '100%' }}>
                             <ContentFileViewer
+                              isThumb
                               contentId={contentId}
                               contentType="comment"
                               fileName={fileName}
@@ -133,9 +134,12 @@ export default function CommentPreview({
                               fileSize={Number(fileSize)}
                               thumbUrl={thumbUrl}
                               videoHeight="100%"
+                              thumbHeight="100%"
                               style={{
                                 display: 'flex',
                                 justifyContent: 'center',
+                                width: '100%',
+                                height: 'auto',
                                 marginBottom: commentIsEmpty
                                   ? fileType === 'audio'
                                     ? '2rem'
