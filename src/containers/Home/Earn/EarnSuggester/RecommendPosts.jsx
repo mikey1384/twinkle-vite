@@ -16,6 +16,9 @@ export default function StartMenu() {
   const loadPostsToRecommend = useAppContext(
     (v) => v.requestHelpers.loadPostsToRecommend
   );
+  const markPostAsSkipped = useAppContext(
+    (v) => v.requestHelpers.markPostAsSkipped
+  );
 
   useEffect(() => {
     handleLoadPostsToRecommend();
@@ -51,8 +54,8 @@ export default function StartMenu() {
             >{`Wow, it looks like there aren't any post left to recommend!`}</div>
           ) : (
             <>
-              {posts.map((subject) => (
-                <CommentPreview key={subject.id} contentObj={subject} />
+              {posts.map((post) => (
+                <CommentPreview key={post.id} contentObj={post} />
               ))}
             </>
           )}
@@ -70,7 +73,7 @@ export default function StartMenu() {
             <Button
               filled
               color={showMeAnotherPostButtonColor}
-              onClick={handleLoadPostsToRecommend}
+              onClick={handleLoadAnotherPostClick}
             >
               <Icon icon="redo" />
               <span style={{ marginLeft: '0.7rem' }}>Show me another post</span>
@@ -114,6 +117,18 @@ export default function StartMenu() {
       </div>
     </ErrorBoundary>
   );
+
+  function handleLoadAnotherPostClick() {
+    if (posts[0]?.id) {
+      markPostAsSkipped({
+        earnType: 'karma',
+        action: 'recommendation',
+        contentType: 'comment',
+        contentId: posts[0].id
+      });
+    }
+    handleLoadPostsToRecommend();
+  }
 
   async function handleLoadPostsToRecommend() {
     setLoading(true);
