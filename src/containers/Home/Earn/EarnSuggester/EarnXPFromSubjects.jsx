@@ -7,6 +7,7 @@ import Loading from '~/components/Loading';
 import localize from '~/constants/localize';
 import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
 
+const BodyRef = document.scrollingElement || document.documentElement;
 const showMeAnotherSubjectLabel = localize('showMeAnotherSubject');
 
 export default function EarnXPFromSubjects() {
@@ -56,7 +57,7 @@ export default function EarnXPFromSubjects() {
             <Button
               filled
               color={showMeAnotherSubjectButtonColor}
-              onClick={handleLoadHighXPSubjects}
+              onClick={handleLoadAnotherSubjectClick}
             >
               <Icon icon="redo" />
               <span style={{ marginLeft: '0.7rem' }}>
@@ -78,7 +79,7 @@ export default function EarnXPFromSubjects() {
           >
             <p>Earn Karma Points</p>
             <Button
-              onClick={() => onSetEarnSection('recommend')}
+              onClick={() => handleSetEarnSection('recommend')}
               style={{ marginTop: '0.7rem' }}
               filled
               color="brownOrange"
@@ -87,7 +88,7 @@ export default function EarnXPFromSubjects() {
               <span style={{ marginLeft: '0.7rem' }}>Recommend posts</span>
             </Button>
             <Button
-              onClick={() => onSetEarnSection('reward')}
+              onClick={() => handleSetEarnSection('reward')}
               style={{ marginTop: '0.7rem' }}
               filled
               color="pink"
@@ -100,6 +101,18 @@ export default function EarnXPFromSubjects() {
       </div>
     </ErrorBoundary>
   );
+
+  function handleSetEarnSection(section) {
+    onSetEarnSection(section);
+    document.getElementById('App').scrollTop = 0;
+    BodyRef.scrollTop = 0;
+  }
+
+  async function handleLoadAnotherSubjectClick() {
+    document.getElementById('App').scrollTop = 0;
+    BodyRef.scrollTop = 0;
+    handleLoadHighXPSubjects();
+  }
 
   async function handleLoadHighXPSubjects() {
     setLoading(true);

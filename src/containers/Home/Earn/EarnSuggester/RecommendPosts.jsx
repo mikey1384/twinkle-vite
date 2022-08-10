@@ -6,6 +6,8 @@ import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
 
+const BodyRef = document.scrollingElement || document.documentElement;
+
 export default function StartMenu() {
   const {
     showMeAnotherPostButton: { color: showMeAnotherPostButtonColor }
@@ -92,7 +94,7 @@ export default function StartMenu() {
           >
             <p>Earn XP</p>
             <Button
-              onClick={() => onSetEarnSection('subject')}
+              onClick={() => handleSetEarnSection('subject')}
               style={{ marginTop: '0.7rem' }}
               filled
               color="logoBlue"
@@ -104,7 +106,7 @@ export default function StartMenu() {
             </Button>
             <p style={{ marginTop: '1.5rem' }}>Earn Karma Points</p>
             <Button
-              onClick={() => onSetEarnSection('reward')}
+              onClick={() => handleSetEarnSection('reward')}
               style={{ marginTop: '0.7rem' }}
               filled
               color="pink"
@@ -118,6 +120,12 @@ export default function StartMenu() {
     </ErrorBoundary>
   );
 
+  function handleSetEarnSection(section) {
+    onSetEarnSection(section);
+    document.getElementById('App').scrollTop = 0;
+    BodyRef.scrollTop = 0;
+  }
+
   async function handleLoadAnotherPostClick() {
     if (posts[0]?.id) {
       await markPostAsSkipped({
@@ -127,6 +135,8 @@ export default function StartMenu() {
         contentId: posts[0].id
       });
     }
+    document.getElementById('App').scrollTop = 0;
+    BodyRef.scrollTop = 0;
     handleLoadPostsToRecommend();
   }
 
