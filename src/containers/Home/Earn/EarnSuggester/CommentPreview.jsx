@@ -1,7 +1,12 @@
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
+import LoginToViewContent from '~/components/LoginToViewContent';
+import ContentFileViewer from '~/components/ContentFileViewer';
 import { useNavigate } from 'react-router-dom';
+import { useKeyContext } from '~/contexts';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
 CommentPreview.propTypes = {
@@ -10,10 +15,22 @@ CommentPreview.propTypes = {
 };
 
 export default function CommentPreview({
-  contentObj: { id: contentId, uploader, content },
+  contentObj: {
+    id: contentId,
+    uploader,
+    content,
+    fileName,
+    filePath,
+    fileType,
+    fileSize,
+    thumbUrl
+  },
   style
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();
+  const commentIsEmpty = useMemo(() => stringIsEmpty(content), [content]);
+
   return (
     <div
       style={{
@@ -104,7 +121,35 @@ export default function CommentPreview({
                       WebkitLineClamp: 15
                     }}
                   >
-                    {content}
+                    {filePath && (
+                      <div>
+                        {userId ? (
+                          <div style={{ width: '100%' }}>
+                            <ContentFileViewer
+                              contentId={contentId}
+                              contentType="comment"
+                              fileName={fileName}
+                              filePath={filePath}
+                              fileSize={Number(fileSize)}
+                              thumbUrl={thumbUrl}
+                              videoHeight="100%"
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                marginBottom: commentIsEmpty
+                                  ? fileType === 'audio'
+                                    ? '2rem'
+                                    : '1rem'
+                                  : 0
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <LoginToViewContent />
+                        )}
+                      </div>
+                    )}
+                    <div>{content}</div>
                   </div>
                 </div>
               </div>
