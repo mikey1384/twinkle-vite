@@ -3,6 +3,8 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useHomeContext } from '~/contexts';
 
+const BodyRef = document.scrollingElement || document.documentElement;
+
 export default function StartMenu() {
   const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
 
@@ -30,7 +32,7 @@ export default function StartMenu() {
           >
             <p>Earn XP</p>
             <Button
-              onClick={() => onSetEarnSection('subject')}
+              onClick={() => handleSetEarnSection('subject')}
               style={{ marginTop: '0.7rem' }}
               filled
               color="logoBlue"
@@ -42,7 +44,7 @@ export default function StartMenu() {
             </Button>
             <p style={{ marginTop: '1.5rem' }}>Earn Karma Points</p>
             <Button
-              onClick={() => onSetEarnSection('recommend')}
+              onClick={() => handleSetEarnSection('recommend')}
               style={{ marginTop: '0.7rem' }}
               filled
               color="brownOrange"
@@ -55,4 +57,10 @@ export default function StartMenu() {
       </div>
     </ErrorBoundary>
   );
+
+  function handleSetEarnSection(section) {
+    onSetEarnSection(section);
+    document.getElementById('App').scrollTop = 0;
+    BodyRef.scrollTop = 0;
+  }
 }
