@@ -58,7 +58,6 @@ export default function StartMenu() {
         </div>
         <div
           style={{
-            marginTop: '5rem',
             width: '100%',
             display: 'flex',
             justifyContent: 'center'
