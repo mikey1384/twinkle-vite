@@ -22,6 +22,7 @@ ContentFileViewer.propTypes = {
   onMediaPlay: PropTypes.func,
   style: PropTypes.object,
   theme: PropTypes.string,
+  thumbHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   thumbUrl: PropTypes.string,
   videoHeight: PropTypes.string
 };
@@ -39,6 +40,7 @@ export default function ContentFileViewer({
   onMediaPlay = () => {},
   style,
   theme,
+  thumbHeight,
   thumbUrl,
   videoHeight
 }) {
@@ -126,6 +128,7 @@ export default function ContentFileViewer({
             onPause={onMediaPause}
             src={src}
             thumbUrl={thumbUrl}
+            thumbHeight={thumbHeight}
             videoHeight={videoHeight}
           />
         </div>
