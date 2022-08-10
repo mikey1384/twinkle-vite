@@ -4,16 +4,22 @@ import Button from '~/components/Button';
 import CommentPreview from './CommentPreview';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import { useAppContext, useHomeContext } from '~/contexts';
+import { useAppContext, useKeyContext, useHomeContext } from '~/contexts';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
 export default function StartMenu() {
+  const {
+    showMeAnotherPostButton: { color: showMeAnotherPostButtonColor }
+  } = useKeyContext((v) => v.theme);
   const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const loadPostsToReward = useAppContext(
     (v) => v.requestHelpers.loadPostsToReward
+  );
+  const markPostAsSkipped = useAppContext(
+    (v) => v.requestHelpers.markPostAsSkipped
   );
 
   useEffect(() => {
@@ -56,6 +62,26 @@ export default function StartMenu() {
             </>
           )}
         </div>
+        {posts.length > 0 && (
+          <div
+            style={{
+              marginTop: '1.5rem',
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              marginBottom: '5rem'
+            }}
+          >
+            <Button
+              filled
+              color={showMeAnotherPostButtonColor}
+              onClick={handleLoadAnotherPostClick}
+            >
+              <Icon icon="redo" />
+              <span style={{ marginLeft: '0.7rem' }}>Show me another post</span>
+            </Button>
+          </div>
+        )}
         <div
           style={{
             width: '100%',
@@ -98,6 +124,20 @@ export default function StartMenu() {
     onSetEarnSection(section);
     document.getElementById('App').scrollTop = 0;
     BodyRef.scrollTop = 0;
+  }
+
+  async function handleLoadAnotherPostClick() {
+    if (posts[0]?.id) {
+      await markPostAsSkipped({
+        earnType: 'karma',
+        action: 'reward',
+        contentType: 'comment',
+        contentId: posts[0].id
+      });
+    }
+    document.getElementById('App').scrollTop = 0;
+    BodyRef.scrollTop = 0;
+    handleLoadPostsToReward();
   }
 
   async function handleLoadPostsToReward() {
