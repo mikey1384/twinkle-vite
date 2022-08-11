@@ -271,7 +271,6 @@ function Chat({ onFileUpload }) {
   useEffect(() => {
     if (currentPathId === 'vocabulary') {
       handleEnterVocabulary();
-      prevPathId.current = currentPathId;
     } else {
       if (!stringIsEmpty(currentPathId)) {
         onUpdateChatType('default');
@@ -314,8 +313,8 @@ function Chat({ onFileUpload }) {
       setLoading(true);
       const data = await loadChatChannel({ channelId });
       if (
-        (!isNaN(Number(prevPathId.current)) &&
-          data.channel.pathId !== Number(prevPathId.current)) ||
+        (!isNaN(Number(currentPathIdRef.current)) &&
+          data.channel.pathId !== Number(currentPathIdRef.current)) ||
         currentPathIdRef.current === 'vocabulary'
       ) {
         setLoading(false);
