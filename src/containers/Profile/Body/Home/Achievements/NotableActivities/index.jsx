@@ -74,7 +74,7 @@ export default function NotableActivities({
       {posts.map((post, index) => {
         return (
           <ActivityItem
-            key={post.postId}
+            key={post.feedId}
             post={post}
             style={{ marginBottom: index !== posts.length - 1 ? '1rem' : 0 }}
           />
@@ -98,7 +98,7 @@ export default function NotableActivities({
     setLoadingMore(true);
     const { results, loadMoreButton } = await loadMoreNotableContents({
       userId: profile.id,
-      notables: posts
+      lastFeedId: posts[posts.length - 1].feedId
     });
     onLoadMoreNotables({
       feeds: results,
