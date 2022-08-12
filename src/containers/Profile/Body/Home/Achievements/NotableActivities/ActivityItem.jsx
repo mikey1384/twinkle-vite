@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import ProfilePic from '~/components/ProfilePic';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import { useNavigate } from 'react-router-dom';
@@ -15,15 +14,7 @@ ActivityItem.propTypes = {
 export default function ActivityItem({ post, style }) {
   const { userId } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();
-  const {
-    contentId,
-    content,
-    uploader,
-    filePath,
-    fileName,
-    fileSize,
-    thumbUrl
-  } = post;
+  const { contentId, content, filePath, fileName, fileSize, thumbUrl } = post;
 
   return (
     <div
@@ -35,17 +26,10 @@ export default function ActivityItem({ post, style }) {
       className={css`
         border: 1px solid ${Color.borderGray()};
         background: #fff;
-        .label {
-          color: ${Color.black()};
-          transition: color 1s;
-        }
         margin-top: 0;
         transition: background 0.5s, border 0.5s;
         &:hover {
           border-color: ${Color.darkerBorderGray()};
-          .label {
-            color: ${Color.black()};
-          }
           background: ${Color.highlightGray()};
         }
         @media (max-width: ${mobileMaxWidth}) {
@@ -66,8 +50,7 @@ export default function ActivityItem({ post, style }) {
           <div
             style={{
               display: 'flex',
-              width: '100%',
-              fontSize: '1.5rem'
+              width: '100%'
             }}
           >
             <div
@@ -84,7 +67,6 @@ export default function ActivityItem({ post, style }) {
                 }}
               >
                 <div
-                  className="label"
                   style={{
                     width: '100%',
                     overflowWrap: 'break-word',
@@ -92,23 +74,13 @@ export default function ActivityItem({ post, style }) {
                     wordBreak: 'break-word'
                   }}
                 >
-                  <div style={{ width: '5rem' }}>
-                    <ProfilePic
-                      style={{ width: '100%' }}
-                      userId={uploader.id}
-                      profilePicUrl={uploader.profilePicUrl}
-                    />
-                  </div>
-                  {uploader.username && (
-                    <div
-                      style={{ color: Color.darkGray(), fontWeight: 'bold' }}
-                    >
-                      by {uploader.username}
-                    </div>
-                  )}
+                  <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
+                    {post.subjectTitle}
+                  </p>
                   <div
                     style={{
-                      marginTop: '2rem',
+                      fontSize: '1.5rem',
+                      marginTop: '1.7rem',
                       width: '100%',
                       textAlign: 'left',
                       color: Color.black(),
@@ -118,7 +90,7 @@ export default function ActivityItem({ post, style }) {
                       display: '-webkit-box',
                       WebkitBoxOrient: 'vertical',
                       overflow: 'hidden',
-                      WebkitLineClamp: 15
+                      WebkitLineClamp: 7
                     }}
                   >
                     {filePath && (
