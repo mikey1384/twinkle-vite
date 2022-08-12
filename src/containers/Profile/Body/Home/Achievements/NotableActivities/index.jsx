@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
-import ContentPanel from '~/components/ContentPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import localize from '~/constants/localize';
+import ActivityItem from './ActivityItem';
 import { useAppContext, useProfileContext } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
@@ -71,19 +71,13 @@ export default function NotableActivities({
           {hasntEngagedLabel}
         </div>
       )}
-      {feeds.map((notable, index) => {
+      {feeds.map((notable) => {
         const { contentId, contentType } = notable;
         return (
-          <ContentPanel
+          <ActivityItem
             key={contentType + contentId}
-            theme={selectedTheme}
-            alwaysShow={feeds.length <= 3}
-            zIndex={feeds.length - index}
-            style={{ marginBottom: '1rem' }}
             contentId={contentId}
             contentType={contentType}
-            commentsLoadLimit={5}
-            numPreviewComments={1}
           />
         );
       })}
