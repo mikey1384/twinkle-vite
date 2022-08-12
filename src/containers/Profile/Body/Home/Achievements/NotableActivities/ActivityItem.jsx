@@ -2,16 +2,15 @@ import PropTypes from 'prop-types';
 import ContentPanel from '~/components/ContentPanel';
 
 ActivityItem.propTypes = {
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired
+  post: PropTypes.object.isRequired
 };
 
-export default function ActivityItem({ contentId, contentType }) {
+export default function ActivityItem({ post }) {
   return (
     <ContentPanel
       style={{ marginBottom: '1rem' }}
-      contentId={contentId}
-      contentType={contentType}
+      contentId={post.contentId}
+      contentType={post.contentType}
     />
   );
 }
