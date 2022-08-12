@@ -10,7 +10,7 @@ export default function ActivityItem({ post }) {
     <ContentPanel
       style={{ marginBottom: '1rem' }}
       contentId={post.contentId}
-      contentType={post.contentType}
+      contentType={post.type}
     />
   );
 }

@@ -72,9 +72,7 @@ export default function NotableActivities({
         </div>
       )}
       {posts.map((post) => {
-        return (
-          <ActivityItem key={post.contentType + post.contentId} post={post} />
-        );
+        return <ActivityItem key={post.postId} post={post} />;
       })}
       {loadMoreButtonShown && (
         <LoadMoreButton
