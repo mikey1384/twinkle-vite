@@ -37,17 +37,10 @@ export default function CommentPreview({
       className={css`
         border: 1px solid ${Color.borderGray()};
         background: #fff;
-        .label {
-          color: ${Color.black()};
-          transition: color 1s;
-        }
         margin-top: 0;
         transition: background 0.5s, border 0.5s;
         &:hover {
           border-color: ${Color.darkerBorderGray()};
-          .label {
-            color: ${Color.black()};
-          }
           background: ${Color.highlightGray()};
         }
         @media (max-width: ${mobileMaxWidth}) {
@@ -80,7 +73,6 @@ export default function CommentPreview({
                 }}
               >
                 <div
-                  className="label"
                   style={{
                     width: '100%',
                     overflowWrap: 'break-word',
