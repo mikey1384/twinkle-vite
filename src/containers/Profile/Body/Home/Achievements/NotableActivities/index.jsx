@@ -71,8 +71,14 @@ export default function NotableActivities({
           {hasntEngagedLabel}
         </div>
       )}
-      {posts.map((post) => {
-        return <ActivityItem key={post.postId} post={post} />;
+      {posts.map((post, index) => {
+        return (
+          <ActivityItem
+            key={post.postId}
+            post={post}
+            style={{ marginBottom: index !== posts.length - 1 ? '1rem' : 0 }}
+          />
+        );
       })}
       {loadMoreButtonShown && (
         <LoadMoreButton

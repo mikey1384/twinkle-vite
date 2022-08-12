@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
@@ -6,7 +5,6 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
 CommentPreview.propTypes = {
@@ -21,7 +19,6 @@ export default function CommentPreview({
     content,
     fileName,
     filePath,
-    fileType,
     fileSize,
     thumbUrl
   },
@@ -29,7 +26,6 @@ export default function CommentPreview({
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();
-  const commentIsEmpty = useMemo(() => stringIsEmpty(content), [content]);
 
   return (
     <div
@@ -140,11 +136,7 @@ export default function CommentPreview({
                                 justifyContent: 'center',
                                 width: '100%',
                                 height: 'auto',
-                                marginBottom: commentIsEmpty
-                                  ? fileType === 'audio'
-                                    ? '2rem'
-                                    : '1rem'
-                                  : 0
+                                marginBottom: '1rem'
                               }}
                             />
                           </div>

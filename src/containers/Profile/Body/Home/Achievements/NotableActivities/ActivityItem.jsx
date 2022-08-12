@@ -1,16 +1,162 @@
 import PropTypes from 'prop-types';
-import ContentPanel from '~/components/ContentPanel';
+import ProfilePic from '~/components/ProfilePic';
+import ContentFileViewer from '~/components/ContentFileViewer';
+import LoginToViewContent from '~/components/LoginToViewContent';
+import { useNavigate } from 'react-router-dom';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { useKeyContext } from '~/contexts';
+import { css } from '@emotion/css';
 
 ActivityItem.propTypes = {
-  post: PropTypes.object.isRequired
+  post: PropTypes.object.isRequired,
+  style: PropTypes.object
 };
 
-export default function ActivityItem({ post }) {
+export default function ActivityItem({ post, style }) {
+  const { userId } = useKeyContext((v) => v.myState);
+  const navigate = useNavigate();
+  const {
+    contentId,
+    content,
+    uploader,
+    filePath,
+    fileName,
+    fileSize,
+    thumbUrl
+  } = post;
+
   return (
-    <ContentPanel
-      style={{ marginBottom: '1rem' }}
-      contentId={post.contentId}
-      contentType={post.type}
-    />
+    <div
+      style={{
+        cursor: 'pointer',
+        borderRadius,
+        ...style
+      }}
+      className={css`
+        border: 1px solid ${Color.borderGray()};
+        background: #fff;
+        .label {
+          color: ${Color.black()};
+          transition: color 1s;
+        }
+        margin-top: 0;
+        transition: background 0.5s, border 0.5s;
+        &:hover {
+          border-color: ${Color.darkerBorderGray()};
+          .label {
+            color: ${Color.black()};
+          }
+          background: ${Color.highlightGray()};
+        }
+        @media (max-width: ${mobileMaxWidth}) {
+          margin-top: -0.5rem;
+          border-left: 0;
+          border-right: 0;
+        }
+      `}
+    >
+      <div
+        onClick={() =>
+          navigate(
+            `/${post.type === 'url' ? 'link' : post.type}s/${post.contentId}`
+          )
+        }
+      >
+        <div style={{ padding: '1rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              width: '100%',
+              fontSize: '1.5rem'
+            }}
+          >
+            <div
+              style={{
+                width: '100%',
+                paddingLeft: 0,
+                paddingRight: 0
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%'
+                }}
+              >
+                <div
+                  className="label"
+                  style={{
+                    width: '100%',
+                    overflowWrap: 'break-word',
+                    paddingRight: '1rem',
+                    wordBreak: 'break-word'
+                  }}
+                >
+                  <div style={{ width: '5rem' }}>
+                    <ProfilePic
+                      style={{ width: '100%' }}
+                      userId={uploader.id}
+                      profilePicUrl={uploader.profilePicUrl}
+                    />
+                  </div>
+                  {uploader.username && (
+                    <div
+                      style={{ color: Color.darkGray(), fontWeight: 'bold' }}
+                    >
+                      by {uploader.username}
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      marginTop: '2rem',
+                      width: '100%',
+                      textAlign: 'left',
+                      color: Color.black(),
+                      whiteSpace: 'pre-wrap',
+                      overflowWrap: 'break-word',
+                      wordBreak: 'break-word',
+                      display: '-webkit-box',
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      WebkitLineClamp: 15
+                    }}
+                  >
+                    {filePath && (
+                      <div>
+                        {userId ? (
+                          <div style={{ width: '100%' }}>
+                            <ContentFileViewer
+                              isThumb
+                              contentId={contentId}
+                              contentType="comment"
+                              fileName={fileName}
+                              filePath={filePath}
+                              fileSize={Number(fileSize)}
+                              thumbUrl={thumbUrl}
+                              videoHeight="100%"
+                              thumbHeight="100%"
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                width: '100%',
+                                height: 'auto',
+                                marginBottom: '1rem'
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <LoginToViewContent />
+                        )}
+                      </div>
+                    )}
+                    <div>{content}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
