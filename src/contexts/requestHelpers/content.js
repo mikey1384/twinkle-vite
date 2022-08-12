@@ -386,18 +386,12 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMoreNotableContents({ userId, notables }) {
+    async loadMoreNotableContents({ userId, lastFeedId }) {
       try {
         const {
           data: { results, loadMoreButton }
         } = await request.get(
-          `${URL}/content/noteworthy?userId=${userId}&limit=2&${queryStringForArray(
-            {
-              array: notables,
-              originVar: 'feedId',
-              destinationVar: 'shownFeeds'
-            }
-          )}`
+          `${URL}/content/noteworthy?userId=${userId}&lastFeedId=${lastFeedId}`
         );
         return Promise.resolve({ results, loadMoreButton });
       } catch (error) {
