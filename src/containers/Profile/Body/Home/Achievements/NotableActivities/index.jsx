@@ -82,7 +82,7 @@ export default function NotableActivities({
       })}
       {loadMoreButtonShown && (
         <LoadMoreButton
-          style={{ fontSize: '1.7rem' }}
+          style={{ fontSize: '1.7rem', marginTop: '1rem' }}
           loading={loadingMore}
           label={showMoreLabel}
           transparent

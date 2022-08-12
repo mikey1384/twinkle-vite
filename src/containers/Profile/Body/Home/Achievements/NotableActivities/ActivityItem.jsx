@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import SecretComment from '~/components/SecretComment';
+import { timeSince } from '~/helpers/timeStampHelpers';
 import { useNavigate } from 'react-router-dom';
 import { useContentState } from '~/helpers/hooks';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -29,6 +30,7 @@ export default function ActivityItem({ post, style }) {
     filePath,
     fileName,
     fileSize,
+    timeStamp,
     thumbUrl,
     secretAnswer,
     secretAttachment,
@@ -67,6 +69,8 @@ export default function ActivityItem({ post, style }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subjectId, subjectState?.prevSecretViewerId, userId]);
+
+  const timeSincePost = useMemo(() => timeSince(timeStamp), [timeStamp]);
 
   const isHidden = useMemo(() => {
     const secretShown =
@@ -141,6 +145,17 @@ export default function ActivityItem({ post, style }) {
                   <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
                     {post.subjectTitle}
                   </p>
+                  <span
+                    className={css`
+                      font-size: 1rem;
+                      color: ${Color.gray()};
+                      @media (max-width: ${mobileMaxWidth}) {
+                        font-size: 0.8rem;
+                      }
+                    `}
+                  >
+                    {timeSincePost}
+                  </span>
                   {isHidden ? (
                     <SecretComment style={{ marginTop: '1.7rem' }} />
                   ) : (
