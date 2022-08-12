@@ -27,7 +27,7 @@ export default function NotableActivities({
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const {
-    notables: { feeds, loaded, loadMoreButton: loadMoreButtonShown }
+    notables: { feeds: posts, loaded, loadMoreButton: loadMoreButtonShown }
   } = useProfileState(username);
   const loadMoreNotableContents = useAppContext(
     (v) => v.requestHelpers.loadMoreNotableContents
@@ -66,19 +66,14 @@ export default function NotableActivities({
       title={notableActivitiesLabel}
       loaded={!loading}
     >
-      {feeds.length === 0 && (
+      {posts.length === 0 && (
         <div style={{ fontSize: '2rem', textAlign: 'center' }}>
           {hasntEngagedLabel}
         </div>
       )}
-      {feeds.map((notable) => {
-        const { contentId, contentType } = notable;
+      {posts.map((post) => {
         return (
-          <ActivityItem
-            key={contentType + contentId}
-            contentId={contentId}
-            contentType={contentType}
-          />
+          <ActivityItem key={post.contentType + post.contentId} post={post} />
         );
       })}
       {loadMoreButtonShown && (
@@ -99,7 +94,7 @@ export default function NotableActivities({
     setLoadingMore(true);
     const { results, loadMoreButton } = await loadMoreNotableContents({
       userId: profile.id,
-      notables: feeds
+      notables: posts
     });
     onLoadMoreNotables({
       feeds: results,
