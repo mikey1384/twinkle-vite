@@ -291,10 +291,11 @@ function App() {
       thumbnail
     }) => {
       if (channelId === 0 && !recepientId) {
-        return reportError({
+        reportError({
           componentPath: 'App/index',
           message: `handleFileUploadOnChat: User is trying to send the first file message to someone but recepient ID is missing`
         });
+        return window.location.reload();
       }
       const promises = [];
       onPostFileUploadStatus({

@@ -513,10 +513,11 @@ function MessagesContainer({
           );
         } else {
           if (selectedChannelId === 0 && !recepientId) {
-            return reportError({
+            reportError({
               componentPath: 'MessagesContainer/index',
               message: `handleConfirmChessMove: User is trying to send the first chess message to someone but recepient ID is missing`
             });
+            return window.location.reload();
           }
           const { alreadyExists, channel, message, pathId } =
             await startNewDMChannel({
@@ -629,10 +630,11 @@ function MessagesContainer({
         const recepientIds = [];
         for (let user of users) {
           if (!user.id) {
-            return reportError({
+            reportError({
               componentPath: 'MessagesContainer/index',
               message: `handleInviteUsersDone: User is trying to invite people to their channel but at least one of their user ID is missing. Channel ID was: ${selectedChannelId}`
             });
+            return window.location.reload();
           }
           recepientIds.push(user.id);
         }
@@ -807,12 +809,13 @@ function MessagesContainer({
       if (isFirstDirectMessage) {
         if (creatingNewDMChannel) return;
         if (!recepientId) {
-          return reportError({
+          reportError({
             componentPath: 'MessagesContainer/index',
             message: `handleMessageSubmit: User is trying to send the first message to someone but recepient ID is missing. Content of the message was "${content}," and pathId was ${
               currentPathId ? `"${currentPathId}"` : 'empty'
             }`
           });
+          return window.location.reload();
         }
         onSetCreatingNewDMChannel(true);
         try {

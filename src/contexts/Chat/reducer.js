@@ -669,6 +669,7 @@ export default function ChatReducer(state, action) {
           : homeLoadMoreButton,
         customChannelNames: action.data.customChannelNames,
         reconnecting: false,
+        recepientId: state.recepientId,
         selectedChannelId:
           state.selectedChannelId || state.selectedChannelId === 0
             ? state.selectedChannelId
