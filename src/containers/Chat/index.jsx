@@ -270,6 +270,7 @@ function Chat({ onFileUpload }) {
 
   useEffect(() => {
     if (currentPathId === 'vocabulary') {
+      prevPathId.current = 'vocabulary';
       handleEnterVocabulary();
     } else {
       if (!stringIsEmpty(currentPathId)) {
