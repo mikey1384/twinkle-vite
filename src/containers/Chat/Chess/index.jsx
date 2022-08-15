@@ -1,6 +1,6 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import Board from './Board';
+import Game from './Game';
 import FallenPieces from './FallenPieces';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -45,7 +45,7 @@ Chess.propTypes = {
   style: PropTypes.object
 };
 
-function Chess({
+export default function Chess({
   countdownNumber,
   channelId,
   gameWinnerId,
@@ -157,45 +157,48 @@ function Chess({
   ]);
 
   useEffect(() => {
-    if (newChessState) return;
-    playerColors.current = boardState
-      ? boardState.playerColors
-      : {
-          [myId]: 'white',
-          [opponentId]: 'black'
-        };
-    setSquares(initializeChessBoard({ initialState, loading: !loaded, myId }));
-    capturedPiece.current = null;
-    if (boardState) {
-      enPassantTarget.current = boardState.enPassantTarget || null;
-      setBlackFallenPieces(boardState.fallenPieces?.black);
-      setWhiteFallenPieces(boardState.fallenPieces?.white);
-      fallenPieces.current = boardState?.fallenPieces;
-    } else {
-      enPassantTarget.current = null;
-      setBlackFallenPieces([]);
-      setWhiteFallenPieces([]);
-      fallenPieces.current = {
-        white: [],
-        black: []
-      };
-    }
-    if (interactable && !userMadeLastMove) {
-      setSquares((squares) =>
-        squares.map((square) =>
-          square.color === playerColors.current[myId]
-            ? {
-                ...square,
-                state:
-                  gameOverMsg || ['check', 'checkmate'].includes(square.state)
-                    ? square.state
-                    : 'highlighted'
-              }
-            : square
-        )
+    if (!newChessState) {
+      playerColors.current = boardState
+        ? boardState.playerColors
+        : {
+            [myId]: 'white',
+            [opponentId]: 'black'
+          };
+      setSquares(
+        initializeChessBoard({ initialState, loading: !loaded, myId })
       );
-      setGameOverMsg('');
-      setStatus('');
+      capturedPiece.current = null;
+      if (boardState) {
+        enPassantTarget.current = boardState.enPassantTarget || null;
+        setBlackFallenPieces(boardState.fallenPieces?.black);
+        setWhiteFallenPieces(boardState.fallenPieces?.white);
+        fallenPieces.current = boardState?.fallenPieces;
+      } else {
+        enPassantTarget.current = null;
+        setBlackFallenPieces([]);
+        setWhiteFallenPieces([]);
+        fallenPieces.current = {
+          white: [],
+          black: []
+        };
+      }
+      if (interactable && !userMadeLastMove) {
+        setSquares((squares) =>
+          squares.map((square) =>
+            square.color === playerColors.current[myId]
+              ? {
+                  ...square,
+                  state:
+                    gameOverMsg || ['check', 'checkmate'].includes(square.state)
+                      ? square.state
+                      : 'highlighted'
+                }
+              : square
+          )
+        );
+        setGameOverMsg('');
+        setStatus('');
+      }
     }
   }, [
     gameOverMsg,
@@ -804,7 +807,7 @@ function Chess({
                 />
               )}
           </div>
-          <Board
+          <Game
             loading={!loaded || !opponentId}
             spoilerOff={
               spoilerOff ||
@@ -949,5 +952,3 @@ function Chess({
     </div>
   );
 }
-
-export default memo(Chess);
