@@ -12,6 +12,7 @@ Replies.propTypes = {
     id: PropTypes.number.isRequired,
     loadMoreButton: PropTypes.bool
   }).isRequired,
+  isSubjectPannelComment: PropTypes.bool,
   subject: PropTypes.object,
   onPinReply: PropTypes.func,
   parent: PropTypes.object.isRequired,
@@ -33,6 +34,7 @@ function Replies({
   replies,
   userId,
   comment,
+  isSubjectPannelComment,
   subject,
   onPinReply,
   parent,
@@ -123,6 +125,7 @@ function Replies({
           <Reply
             index={index}
             innerRef={(ref) => (ReplyRefs[reply.id] = ref)}
+            isSubjectPannelComment={isSubjectPannelComment}
             key={reply.id}
             comment={comment}
             reply={reply}

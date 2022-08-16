@@ -54,6 +54,7 @@ const replyLabel = localize('reply');
 const rewardLabel = localize('reward');
 
 Comment.propTypes = {
+  isSubjectPannelComment: PropTypes.bool,
   comment: PropTypes.shape({
     commentId: PropTypes.number,
     content: PropTypes.string.isRequired,
@@ -97,6 +98,7 @@ Comment.propTypes = {
 function Comment({
   comment,
   innerRef,
+  isSubjectPannelComment,
   isPreview,
   parent,
   pinnedCommentId,
@@ -317,13 +319,21 @@ function Comment({
     () => uploader?.id === userId,
     [uploader?.id, userId]
   );
-  const userIsParentUploader = useMemo(
-    () =>
-      userId &&
-      parent.uploader?.id === userId &&
-      parent.contentType !== 'comment',
-    [parent.contentType, parent.uploader?.id, userId]
-  );
+  const userIsParentUploader = useMemo(() => {
+    if (!userId) {
+      return false;
+    }
+    if (isSubjectPannelComment) {
+      return subject?.uploader?.id === userId;
+    }
+    return parent.uploader?.id === userId && parent.contentType !== 'comment';
+  }, [
+    isSubjectPannelComment,
+    parent.contentType,
+    parent.uploader?.id,
+    subject?.uploader?.id,
+    userId
+  ]);
   const userIsRootUploader = useMemo(
     () => userId && rootContent.uploader?.id === userId,
     [rootContent.uploader?.id, userId]
@@ -876,6 +886,7 @@ function Comment({
                         targetCommentId={comment.id}
                       />
                       <Replies
+                        isSubjectPannelComment={isSubjectPannelComment}
                         pinnedCommentId={pinnedCommentId}
                         subject={subject || {}}
                         userId={userId}
@@ -946,18 +957,16 @@ function Comment({
   }
 
   async function handlePinComment(commentId) {
-    let target = parent;
-    if (parent.contentType === 'comment') {
-      target = { ...rootContent, contentId: rootContent.id };
-    }
+    let contentId = isSubjectPannelComment ? subject.id : parent.contentId;
+    const contentType = isSubjectPannelComment ? 'subject' : parent.contentType;
     await updateCommentPinStatus({
       commentId,
-      contentId: target.contentId,
-      contentType: target.contentType
+      contentId,
+      contentType
     });
     onUpdateCommentPinStatus({
-      contentId: target.contentId,
-      contentType: target.contentType,
+      contentId,
+      contentType,
       commentId
     });
   }
