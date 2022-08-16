@@ -93,10 +93,6 @@ export default function ChessModal({
       loading.current = false;
       setLoaded(true);
     }
-    return function cleanUp() {
-      loading.current = true;
-      setInitialState(null);
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
