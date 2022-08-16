@@ -30,6 +30,7 @@ Comments.propTypes = {
   inputAreaInnerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
   inputAtBottom: PropTypes.bool,
   inputTypeLabel: PropTypes.string,
+  isSubjectPannelComments: PropTypes.bool,
   isLoading: PropTypes.bool,
   loadMoreButton: PropTypes.bool.isRequired,
   numInputRows: PropTypes.number,
@@ -72,6 +73,7 @@ function Comments({
   inputAreaInnerRef,
   inputAtBottom,
   inputTypeLabel,
+  isSubjectPannelComments,
   isLoading,
   loadMoreButton,
   noInput,
@@ -124,14 +126,19 @@ function Comments({
   const CommentInputAreaRef = useRef(null);
   const CommentRefs = {};
   const pinnedCommentId = useMemo(() => {
+    if (isSubjectPannelComments) {
+      return subject?.pinnedCommentId;
+    }
     if (parent.contentType === 'comment') {
       return rootContentState?.pinnedCommentId;
     }
     return parent.pinnedCommentId;
   }, [
+    isSubjectPannelComments,
     parent.contentType,
     parent.pinnedCommentId,
-    rootContentState?.pinnedCommentId
+    rootContentState?.pinnedCommentId,
+    subject?.pinnedCommentId
   ]);
   const parentHasSecretMessage = useMemo(
     () => !!parent.secretAnswer || !!parent.secretAttachment,
@@ -551,6 +558,7 @@ function Comments({
             {!isLoading &&
               (isPreview ? previewComments : comments).map((comment) => (
                 <Comment
+                  isSubjectPannelComment={isSubjectPannelComments}
                   isPreview={isPreview}
                   innerRef={(ref) => (CommentRefs[comment.id] = ref)}
                   parent={parent}

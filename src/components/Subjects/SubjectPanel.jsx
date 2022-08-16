@@ -138,6 +138,7 @@ export default function SubjectPanel({
     contentType: 'subject',
     contentId: subjectId
   });
+
   const [expanded, setExpanded] = useState(false);
   const [onEdit, setOnEdit] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -503,6 +504,7 @@ export default function SubjectPanel({
               `}
             />
             <Comments
+              isSubjectPannelComments
               inputAreaInnerRef={CommentsRef}
               isLoading={loadingComments}
               numInputRows={3}
@@ -540,7 +542,6 @@ export default function SubjectPanel({
               parent={{
                 contentId: rootId,
                 contentType: rootType,
-                pinnedCommentId,
                 rewardLevel: rootRewardLevel,
                 secretAnswer,
                 secretAttachment,
@@ -558,6 +559,7 @@ export default function SubjectPanel({
                 rewardLevel,
                 secretAnswer,
                 secretAttachment,
+                pinnedCommentId,
                 uploader: {
                   id: userId,
                   authLevel: uploaderAuthLevel

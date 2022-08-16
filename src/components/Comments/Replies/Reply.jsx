@@ -52,6 +52,7 @@ Reply.propTypes = {
   }),
   innerRef: PropTypes.func,
   deleteReply: PropTypes.func.isRequired,
+  isSubjectPannelComment: PropTypes.bool,
   onLoadRepliesOfReply: PropTypes.func,
   onPinReply: PropTypes.func,
   onSubmitWithAttachment: PropTypes.func.isRequired,
@@ -91,6 +92,7 @@ function Reply({
   comment,
   innerRef = () => {},
   deleteReply,
+  isSubjectPannelComment,
   onLoadRepliesOfReply,
   onPinReply,
   onSubmitWithAttachment,
@@ -154,13 +156,21 @@ function Reply({
   const ReplyInputAreaRef = useRef(null);
   const RewardInterfaceRef = useRef(null);
   const userIsUploader = userId === uploader.id;
-  const userIsParentUploader = useMemo(
-    () =>
-      userId &&
-      parent.contentType !== 'comment' &&
-      parent.uploader?.id === userId,
-    [parent.contentType, parent.uploader?.id, userId]
-  );
+  const userIsParentUploader = useMemo(() => {
+    if (!userId) {
+      return false;
+    }
+    if (isSubjectPannelComment) {
+      return subject?.uploader?.id === userId;
+    }
+    return parent.uploader?.id === userId && parent.contentType !== 'comment';
+  }, [
+    isSubjectPannelComment,
+    parent.contentType,
+    parent.uploader?.id,
+    subject?.uploader?.id,
+    userId
+  ]);
   const userIsRootUploader = useMemo(
     () => userId && rootContent?.uploader?.id === userId,
     [rootContent?.uploader?.id, userId]
