@@ -58,8 +58,9 @@ export default function Board({
 
   const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   if (myColor === 'black') letters.reverse();
-  if (spoilerOff) {
-    const board = [];
+
+  const board = useMemo(() => {
+    const result = [];
     for (let i = 0; i < 8; i++) {
       const squareRows = [];
       for (let j = 0; j < 8; j++) {
@@ -81,9 +82,12 @@ export default function Board({
           />
         );
       }
-      board.push(<Fragment key={i}>{squareRows}</Fragment>);
+      result.push(<Fragment key={i}>{squareRows}</Fragment>);
     }
+    return result;
+  }, [interactable, myColor, onClick, squares]);
 
+  if (spoilerOff) {
     return (
       <div
         onClick={spoilerOff ? onBoardClick : undefined}
