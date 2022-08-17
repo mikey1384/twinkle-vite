@@ -18,6 +18,7 @@ Board.propTypes = {
   spoilerOff: PropTypes.bool,
   squares: PropTypes.array
 };
+
 export default function Board({
   interactable,
   myColor,
