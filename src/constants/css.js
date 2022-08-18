@@ -89,7 +89,7 @@ export function Theme(color = 'logoBlue') {
     action: {
       color:
         {
-          green: 'blue',
+          green: 'logoBlue',
           orange: 'pinkOrange',
           rose: 'cranberry',
           purple: 'purple',
@@ -187,7 +187,7 @@ export function Theme(color = 'logoBlue') {
     content: {
       color:
         {
-          green: 'blue',
+          green: 'logoBlue',
           orange: 'pinkOrange',
           rose: 'cranberry',
           pink: 'passionFruit',
