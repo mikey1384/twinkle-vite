@@ -337,7 +337,7 @@ function Reply({
     userIsUploader
   ]);
 
-  return !reply.isDeleted ? (
+  return !(isDeleteNotification && !reply.numReplies) && !reply.isDeleted ? (
     <ErrorBoundary componentPath="Comments/Replies/Reply">
       <div className={commentContainer} ref={innerRef}>
         {pinnedCommentId === reply.id && (
@@ -355,22 +355,24 @@ function Reply({
           </div>
         )}
         <div className="content-wrapper">
-          <div
-            style={{
-              display: 'flex',
-              width: '7rem',
-              marginTop: '1rem',
-              justifyContent: 'center'
-            }}
-          >
-            <div style={{ width: '5rem' }}>
-              <ProfilePic
-                style={{ width: '100%' }}
-                userId={uploader.id}
-                profilePicUrl={uploader.profilePicUrl}
-              />
+          {isDeleteNotification ? null : (
+            <div
+              style={{
+                display: 'flex',
+                width: '7rem',
+                marginTop: '1rem',
+                justifyContent: 'center'
+              }}
+            >
+              <div style={{ width: '5rem' }}>
+                <ProfilePic
+                  style={{ width: '100%' }}
+                  userId={uploader.id}
+                  profilePicUrl={uploader.profilePicUrl}
+                />
+              </div>
             </div>
-          </div>
+          )}
           {!!dropdownButtonShown && !isEditing && (
             <div className="dropdown-wrapper">
               <DropdownButton
@@ -383,11 +385,15 @@ function Reply({
             </div>
           )}
           <section>
-            <div>
-              <UsernameText className="username" user={uploader} />{' '}
-              {isDeleteNotification ? (
-                <small className="timestamp">{timeSincePost}</small>
-              ) : (
+            <div
+              style={{
+                height: isDeleteNotification ? '0.3rem' : 'auto'
+              }}
+            >
+              {isDeleteNotification ? null : (
+                <UsernameText className="username" user={uploader} />
+              )}{' '}
+              {isDeleteNotification ? null : (
                 <small className="timestamp">
                   <Link to={`/comments/${reply.id}`}>{timeSincePost}</Link>
                 </small>
@@ -454,6 +460,7 @@ function Reply({
                         color: Color.gray(),
                         fontWeight: 'bold',
                         margin: '1rem 0',
+                        padding: '0.5rem 0',
                         borderRadius
                       }}
                     >

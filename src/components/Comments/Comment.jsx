@@ -367,6 +367,14 @@ function Comment({
 
   const isForSecretSubject = useMemo(
     () =>
+      rootContent?.secretAnswer ||
+      parent?.secretAnswer ||
+      subject?.secretAnswer,
+    [parent?.secretAnswer, rootContent?.secretAnswer, subject?.secretAnswer]
+  );
+
+  const answerForSecretSubjectNotViewed = useMemo(() => {
+    return (
       (rootContent?.secretAnswer &&
         !(
           rootContent?.uploader?.id === userId ||
@@ -381,25 +389,29 @@ function Comment({
         !(
           subject?.uploader?.id === userId ||
           authLevel > subject?.uploader?.authLevel
-        )),
-    [
-      authLevel,
-      parent?.secretAnswer,
-      parent?.uploader?.authLevel,
-      parent?.uploader?.id,
-      rootContent?.secretAnswer,
-      rootContent?.uploader?.authLevel,
-      rootContent?.uploader?.id,
-      subject?.secretAnswer,
-      subject?.uploader?.authLevel,
-      subject?.uploader?.id,
-      userId
-    ]
-  );
+        ))
+    );
+  }, [
+    authLevel,
+    parent?.secretAnswer,
+    parent?.uploader?.authLevel,
+    parent?.uploader?.id,
+    rootContent?.secretAnswer,
+    rootContent?.uploader?.authLevel,
+    rootContent?.uploader?.id,
+    subject?.secretAnswer,
+    subject?.uploader?.authLevel,
+    subject?.uploader?.id,
+    userId
+  ]);
 
   const dropdownMenuItems = useMemo(() => {
     const items = [];
-    if ((userIsUploader || canEdit) && !isNotification && !isForSecretSubject) {
+    if (
+      (userIsUploader || canEdit) &&
+      !isNotification &&
+      !answerForSecretSubjectNotViewed
+    ) {
       items.push({
         label: (
           <>
@@ -756,7 +768,8 @@ function Comment({
                             color: Color.gray(),
                             fontWeight: 'bold',
                             margin: '1rem 0',
-                            borderRadius
+                            borderRadius,
+                            padding: '0.5rem 0'
                           }}
                         >
                           {isNotification
