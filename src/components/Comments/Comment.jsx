@@ -878,11 +878,9 @@ function Comment({
                     uploaderName={uploader?.username}
                   />
                 )}
-                {!isPreview &&
-                  !isNotification &&
-                  !isDeleteNotification &&
-                  !isHidden && (
-                    <>
+                {!isPreview && !isNotification && !isHidden && (
+                  <>
+                    {isDeleteNotification ? null : (
                       <ReplyInputArea
                         innerRef={ReplyInputAreaRef}
                         numReplies={numReplies}
@@ -896,23 +894,24 @@ function Comment({
                         theme={theme}
                         targetCommentId={comment.id}
                       />
-                      <Replies
-                        isSubjectPannelComment={isSubjectPannelComment}
-                        pinnedCommentId={pinnedCommentId}
-                        subject={subject || {}}
-                        userId={userId}
-                        replies={replies}
-                        comment={comment}
-                        parent={parent}
-                        rootContent={rootContent}
-                        onLoadMoreReplies={onLoadMoreReplies}
-                        onPinReply={handlePinComment}
-                        onReplySubmit={onReplySubmit}
-                        ReplyRefs={ReplyRefs}
-                        theme={theme}
-                      />
-                    </>
-                  )}
+                    )}
+                    <Replies
+                      isSubjectPannelComment={isSubjectPannelComment}
+                      pinnedCommentId={pinnedCommentId}
+                      subject={subject || {}}
+                      userId={userId}
+                      replies={replies}
+                      comment={comment}
+                      parent={parent}
+                      rootContent={rootContent}
+                      onLoadMoreReplies={onLoadMoreReplies}
+                      onPinReply={handlePinComment}
+                      onReplySubmit={onReplySubmit}
+                      ReplyRefs={ReplyRefs}
+                      theme={theme}
+                    />
+                  </>
+                )}
               </section>
             </div>
           </div>
