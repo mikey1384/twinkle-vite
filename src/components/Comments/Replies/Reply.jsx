@@ -695,25 +695,23 @@ function Reply({
     if (!isDeleteNotification) {
       ReplyInputAreaRef.current.focus();
     }
-    if (isExpanded) {
+    if (isExpanded || !reply.numReplies) {
       return;
     }
     setLoadingReplies(true);
-    if (!isExpanded && reply.numReplies > 0) {
-      const { replies, loadMoreButton } = await loadReplies({
-        commentId: reply.id,
-        isReverse: true
+    const { replies, loadMoreButton } = await loadReplies({
+      commentId: reply.id,
+      isReverse: true
+    });
+    if (replies.length > 0) {
+      onLoadRepliesOfReply({
+        replies,
+        commentId: reply.commentId,
+        replyId: reply.id,
+        contentId: parent.contentId,
+        contentType: parent.contentType,
+        loadMoreButton
       });
-      if (replies.length > 0) {
-        onLoadRepliesOfReply({
-          replies,
-          commentId: reply.commentId,
-          replyId: reply.id,
-          contentId: parent.contentId,
-          contentType: parent.contentType,
-          loadMoreButton
-        });
-      }
     }
     setLoadingReplies(false);
   }
