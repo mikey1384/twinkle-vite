@@ -464,7 +464,7 @@ function Comment({
     canEdit,
     comment.id,
     isCreator,
-    isForSecretSubject,
+    answerForSecretSubjectNotViewed,
     isNotification,
     pinnedCommentId,
     userIsParentUploader,
