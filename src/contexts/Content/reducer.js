@@ -869,8 +869,7 @@ export default function ContentReducer(state, action) {
                       (action.rootReplyId ? action.rootReplyId : action.replyId)
                         ? {
                             ...reply,
-                            isExpanded: true,
-                            numReplies: 0
+                            isExpanded: true
                           }
                         : reply
                     ),
@@ -916,8 +915,7 @@ export default function ContentReducer(state, action) {
               );
               replies[replies.length - 1] = {
                 ...replies[replies.length - 1],
-                isExpanded: true,
-                numReplies: 0
+                isExpanded: true
               };
               return {
                 ...comment,
@@ -926,8 +924,7 @@ export default function ContentReducer(state, action) {
                     reply.id === action.replyId
                       ? {
                           ...reply,
-                          isExpanded: true,
-                          numReplies: 0
+                          isExpanded: true
                         }
                       : reply
                   ),
@@ -962,7 +959,7 @@ export default function ContentReducer(state, action) {
                       reply.id === action.replyId
                         ? {
                             ...reply,
-                            numReplies: 0
+                            isExpanded: true
                           }
                         : reply
                     ),
@@ -986,7 +983,7 @@ export default function ContentReducer(state, action) {
               );
               replies[replies.length - 1] = {
                 ...replies[replies.length - 1],
-                numReplies: 0
+                isExpanded: true
               };
               const replyIds = (comment.replies || []).map((reply) => reply.id);
               const loadedReplies = action.replies.filter(
@@ -999,7 +996,7 @@ export default function ContentReducer(state, action) {
                     reply.id === action.replyId
                       ? {
                           ...reply,
-                          numReplies: 0
+                          isExpanded: true
                         }
                       : reply
                   ),
