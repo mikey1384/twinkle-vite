@@ -137,7 +137,6 @@ function Reply({
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
   const {
-    isDeleted,
     isEditing,
     thumbUrl: thumbUrlFromContext,
     xpRewardInterfaceShown
@@ -328,7 +327,7 @@ function Reply({
     userIsUploader
   ]);
 
-  return !isDeleted && !reply.isDeleted ? (
+  return (
     <ErrorBoundary componentPath="Comments/Replies/Reply">
       <div className={commentContainer} ref={innerRef}>
         {pinnedCommentId === reply.id && (
@@ -606,7 +605,7 @@ function Reply({
         )}
       </div>
     </ErrorBoundary>
-  ) : null;
+  );
 
   async function handleEditDone(editedReply) {
     const { content } = await editContent({
