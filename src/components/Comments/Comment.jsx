@@ -745,7 +745,8 @@ function Comment({
                                   theme={theme}
                                 />
                               )}
-                              {isDeleteNotification && numReplies === 0 ? (
+                              {isDeleteNotification &&
+                              (numReplies === 0 || replies.length > 0) ? (
                                 <div style={{ height: '1rem' }} />
                               ) : (
                                 <Button
