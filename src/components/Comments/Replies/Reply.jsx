@@ -496,7 +496,8 @@ function Reply({
                             small
                           />
                         )}
-                        {isDeleteNotification && reply.numReplies === 0 ? (
+                        {isDeleteNotification &&
+                        (reply.numReplies === 0 || reply.isExpanded) ? (
                           <div style={{ height: '1rem' }} />
                         ) : (
                           <Button
@@ -691,14 +692,14 @@ function Reply({
   }
 
   async function handleReplyClick() {
-    if (isExpanded) {
-      return;
-    }
     if (!isDeleteNotification) {
       ReplyInputAreaRef.current.focus();
     }
+    if (isExpanded) {
+      return;
+    }
     setLoadingReplies(true);
-    if (reply.numReplies > 0) {
+    if (!isExpanded && reply.numReplies > 0) {
       const { replies, loadMoreButton } = await loadReplies({
         commentId: reply.id,
         isReverse: true
