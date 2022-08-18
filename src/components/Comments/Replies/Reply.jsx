@@ -385,7 +385,9 @@ function Reply({
           <section>
             <div>
               <UsernameText className="username" user={uploader} />{' '}
-              {isDeleteNotification ? null : (
+              {isDeleteNotification ? (
+                <small className="timestamp">{timeSincePost}</small>
+              ) : (
                 <small className="timestamp">
                   <Link to={`/comments/${reply.id}`}>{timeSincePost}</Link>
                 </small>
