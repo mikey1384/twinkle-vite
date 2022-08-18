@@ -365,9 +365,8 @@ function Comment({
     userIsUploader
   ]);
 
-  const dropdownMenuItems = useMemo(() => {
-    const items = [];
-    const isForSecretSubject =
+  const isForSecretSubject = useMemo(
+    () =>
       (rootContent?.secretAnswer &&
         !(
           rootContent?.uploader?.id === userId ||
@@ -382,7 +381,24 @@ function Comment({
         !(
           subject?.uploader?.id === userId ||
           authLevel > subject?.uploader?.authLevel
-        ));
+        )),
+    [
+      authLevel,
+      parent?.secretAnswer,
+      parent?.uploader?.authLevel,
+      parent?.uploader?.id,
+      rootContent?.secretAnswer,
+      rootContent?.uploader?.authLevel,
+      rootContent?.uploader?.id,
+      subject?.secretAnswer,
+      subject?.uploader?.authLevel,
+      subject?.uploader?.id,
+      userId
+    ]
+  );
+
+  const dropdownMenuItems = useMemo(() => {
+    const items = [];
     if ((userIsUploader || canEdit) && !isNotification && !isForSecretSubject) {
       items.push({
         label: (
@@ -431,12 +447,16 @@ function Comment({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    banned?.posting,
     canDelete,
     canEdit,
     comment.id,
+    isCreator,
+    isForSecretSubject,
     isNotification,
     pinnedCommentId,
     userIsParentUploader,
+    userIsRootUploader,
     userIsUploader
   ]);
 
@@ -549,7 +569,23 @@ function Comment({
     return `${uploader?.username} viewed the secret message`;
   }, [uploader?.username]);
 
-  return !isDeleted && !comment.isDeleted ? (
+  const isDisplayed = useMemo(() => {
+    if (isDeleteNotification && !isPreview) {
+      if (numReplies === 0 && replies.length === 0) {
+        return false;
+      }
+    }
+    return !isDeleted && !comment.isDeleted;
+  }, [
+    comment.isDeleted,
+    isDeleteNotification,
+    isDeleted,
+    isPreview,
+    numReplies,
+    replies.length
+  ]);
+
+  return isDisplayed ? (
     <div ref={ComponentRef}>
       <div
         style={{
@@ -576,22 +612,24 @@ function Comment({
               </div>
             )}
             <div className="content-wrapper">
-              <div
-                style={{
-                  display: 'flex',
-                  width: '7rem',
-                  marginTop: '1rem',
-                  justifyContent: 'center'
-                }}
-              >
-                <div style={{ width: '5rem' }}>
-                  <ProfilePic
-                    style={{ width: '100%' }}
-                    userId={uploader?.id}
-                    profilePicUrl={uploader?.profilePicUrl}
-                  />
+              {(!isDeleteNotification || isForSecretSubject) && (
+                <div
+                  style={{
+                    display: 'flex',
+                    width: '7rem',
+                    marginTop: '1rem',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <div style={{ width: '5rem' }}>
+                    <ProfilePic
+                      style={{ width: '100%' }}
+                      userId={uploader?.id}
+                      profilePicUrl={uploader?.profilePicUrl}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
               {dropdownButtonShown && !isEditing && (
                 <div className="dropdown-wrapper">
                   <DropdownButton
@@ -604,33 +642,44 @@ function Comment({
                 </div>
               )}
               <section>
-                <div>
-                  <UsernameText className="username" user={uploader} />{' '}
-                  <small className="timestamp">
-                    <a
-                      className={css`
-                        &:hover {
-                          text-decoration: ${isNotification ||
-                          isDeleteNotification
-                            ? 'none'
-                            : 'underline'};
-                        }
-                      `}
-                      style={{
-                        cursor:
+                <div
+                  style={{
+                    height:
+                      isDeleteNotification && !isForSecretSubject
+                        ? '0.3rem'
+                        : 'auto'
+                  }}
+                >
+                  {(!isDeleteNotification || isForSecretSubject) && (
+                    <UsernameText className="username" user={uploader} />
+                  )}{' '}
+                  {(!isDeleteNotification || isForSecretSubject) && (
+                    <small className="timestamp">
+                      <a
+                        className={css`
+                          &:hover {
+                            text-decoration: ${isNotification ||
+                            isDeleteNotification
+                              ? 'none'
+                              : 'underline'};
+                          }
+                        `}
+                        style={{
+                          cursor:
+                            isNotification || isDeleteNotification
+                              ? 'default'
+                              : 'pointer'
+                        }}
+                        onClick={() =>
                           isNotification || isDeleteNotification
-                            ? 'default'
-                            : 'pointer'
-                      }}
-                      onClick={() =>
-                        isNotification || isDeleteNotification
-                          ? null
-                          : navigate(`/comments/${comment.id}`)
-                      }
-                    >
-                      {timeSincePost}
-                    </a>
-                  </small>
+                            ? null
+                            : navigate(`/comments/${comment.id}`)
+                        }
+                      >
+                        {timeSincePost}
+                      </a>
+                    </small>
+                  )}
                 </div>
                 <div>
                   {comment.targetUserId &&
@@ -649,7 +698,7 @@ function Comment({
                         />
                       </span>
                     )}
-                  {isCommentForContentSubject && (
+                  {isCommentForContentSubject && !isDeleteNotification && (
                     <SubjectLink theme={theme} subject={subject} />
                   )}
                   {filePath &&
