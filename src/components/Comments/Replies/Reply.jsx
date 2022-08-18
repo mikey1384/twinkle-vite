@@ -569,12 +569,14 @@ function Reply({
                 </div>
               )}
             </div>
-            <RecommendationStatus
-              style={{ marginTop: '0.5rem' }}
-              contentType="comment"
-              recommendations={recommendations}
-              theme={theme}
-            />
+            {isDeleteNotification ? null : (
+              <RecommendationStatus
+                style={{ marginTop: '0.5rem' }}
+                contentType="comment"
+                recommendations={recommendations}
+                theme={theme}
+              />
+            )}
             {recommendationInterfaceShown && (
               <RecommendationInterface
                 style={{ marginTop: '0.5rem' }}
@@ -601,19 +603,21 @@ function Reply({
                 uploaderId={uploader.id}
               />
             )}
-            <RewardStatus
-              noMarginForEditButton
-              contentType="comment"
-              contentId={reply.id}
-              rewardLevel={rewardLevel}
-              onCommentEdit={onRewardCommentEdit}
-              style={{
-                fontSize: '1.5rem',
-                marginTop: '0.5rem'
-              }}
-              rewards={rewards}
-              uploaderName={uploader.username}
-            />
+            {isDeleteNotification ? null : (
+              <RewardStatus
+                noMarginForEditButton
+                contentType="comment"
+                contentId={reply.id}
+                rewardLevel={rewardLevel}
+                onCommentEdit={onRewardCommentEdit}
+                style={{
+                  fontSize: '1.5rem',
+                  marginTop: '0.5rem'
+                }}
+                rewards={rewards}
+                uploaderName={uploader.username}
+              />
+            )}
             {isDeleteNotification ? null : (
               <ReplyInputArea
                 innerRef={ReplyInputAreaRef}

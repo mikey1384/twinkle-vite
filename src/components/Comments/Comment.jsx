@@ -727,18 +727,16 @@ function Comment({
                           {comment.content}
                         </LongText>
                       ) : null}
-                      {!isPreview &&
-                        !isHidden &&
-                        !isNotification &&
-                        !isDeleteNotification && (
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between'
-                            }}
-                          >
-                            <div>
-                              <div className="comment__buttons">
+                      {!isPreview && !isHidden && !isNotification && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between'
+                          }}
+                        >
+                          <div>
+                            <div className="comment__buttons">
+                              {isDeleteNotification ? null : (
                                 <LikeButton
                                   contentType="comment"
                                   contentId={comment.id}
@@ -746,10 +744,18 @@ function Comment({
                                   likes={likes}
                                   theme={theme}
                                 />
+                              )}
+                              {isDeleteNotification && numReplies === 0 ? (
+                                <div style={{ height: '1rem' }} />
+                              ) : (
                                 <Button
                                   disabled={loadingReplies}
                                   transparent
-                                  style={{ marginLeft: '1rem' }}
+                                  style={{
+                                    marginLeft: isDeleteNotification
+                                      ? 0
+                                      : '1rem'
+                                  }}
                                   onClick={handleReplyButtonClick}
                                 >
                                   <Icon icon="comment-alt" />
@@ -772,26 +778,28 @@ function Comment({
                                     )}
                                   </span>
                                 </Button>
-                                {userCanRewardThis && (
-                                  <Button
-                                    color={rewardColor}
-                                    style={{ marginLeft: '0.7rem' }}
-                                    onClick={() =>
-                                      onSetXpRewardInterfaceShown({
-                                        contentId: commentId,
-                                        contentType: 'comment',
-                                        shown: true
-                                      })
-                                    }
-                                    disabled={!!xpButtonDisabled}
-                                  >
-                                    <Icon icon="certificate" />
-                                    <span style={{ marginLeft: '0.7rem' }}>
-                                      {xpButtonDisabled || rewardLabel}
-                                    </span>
-                                  </Button>
-                                )}
-                              </div>
+                              )}
+                              {userCanRewardThis && !isDeleteNotification && (
+                                <Button
+                                  color={rewardColor}
+                                  style={{ marginLeft: '0.7rem' }}
+                                  onClick={() =>
+                                    onSetXpRewardInterfaceShown({
+                                      contentId: commentId,
+                                      contentType: 'comment',
+                                      shown: true
+                                    })
+                                  }
+                                  disabled={!!xpButtonDisabled}
+                                >
+                                  <Icon icon="certificate" />
+                                  <span style={{ marginLeft: '0.7rem' }}>
+                                    {xpButtonDisabled || rewardLabel}
+                                  </span>
+                                </Button>
+                              )}
+                            </div>
+                            {isDeleteNotification ? null : (
                               <Likers
                                 theme={theme}
                                 className="comment__likes"
@@ -799,7 +807,9 @@ function Comment({
                                 likes={likes}
                                 onLinkClick={() => setUserListModalShown(true)}
                               />
-                            </div>
+                            )}
+                          </div>
+                          {isDeleteNotification ? null : (
                             <div>
                               <Button
                                 color={rewardColor}
@@ -812,8 +822,9 @@ function Comment({
                                 <Icon icon="heart" />
                               </Button>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -984,7 +995,7 @@ function Comment({
       });
       setLoadingReplies(false);
     }
-    ReplyInputAreaRef.current.focus();
+    if (!isDeleteNotification) ReplyInputAreaRef.current.focus();
   }
 
   async function handleSubmitWithAttachment(params) {
