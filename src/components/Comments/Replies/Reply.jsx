@@ -337,7 +337,7 @@ function Reply({
     userIsUploader
   ]);
 
-  return (
+  return !reply.isDeleted ? (
     <ErrorBoundary componentPath="Comments/Replies/Reply">
       <div className={commentContainer} ref={innerRef}>
         {pinnedCommentId === reply.id && (
@@ -650,7 +650,7 @@ function Reply({
         )}
       </div>
     </ErrorBoundary>
-  );
+  ) : null;
 
   async function handleEditDone(editedReply) {
     const { content } = await editContent({
