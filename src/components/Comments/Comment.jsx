@@ -582,7 +582,7 @@ function Comment({
   }, [uploader?.username]);
 
   const isDisplayed = useMemo(() => {
-    if (isDeleteNotification && !isPreview) {
+    if (isDeleteNotification && !isPreview && !isForSecretSubject) {
       if (numReplies === 0 && replies.length === 0) {
         return false;
       }
@@ -592,6 +592,7 @@ function Comment({
     comment.isDeleted,
     isDeleteNotification,
     isDeleted,
+    isForSecretSubject,
     isPreview,
     numReplies,
     replies.length
