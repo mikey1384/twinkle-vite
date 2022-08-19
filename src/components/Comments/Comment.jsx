@@ -365,9 +365,16 @@ function Comment({
     userIsUploader
   ]);
 
-  const dropdownMenuItems = useMemo(() => {
-    const items = [];
-    const isForSecretSubject =
+  const isForSecretSubject = useMemo(
+    () =>
+      rootContent?.secretAnswer ||
+      parent?.secretAnswer ||
+      subject?.secretAnswer,
+    [parent?.secretAnswer, rootContent?.secretAnswer, subject?.secretAnswer]
+  );
+
+  const answerForSecretSubjectNotViewed = useMemo(() => {
+    return (
       (rootContent?.secretAnswer &&
         !(
           rootContent?.uploader?.id === userId ||
@@ -382,8 +389,29 @@ function Comment({
         !(
           subject?.uploader?.id === userId ||
           authLevel > subject?.uploader?.authLevel
-        ));
-    if ((userIsUploader || canEdit) && !isNotification && !isForSecretSubject) {
+        ))
+    );
+  }, [
+    authLevel,
+    parent?.secretAnswer,
+    parent?.uploader?.authLevel,
+    parent?.uploader?.id,
+    rootContent?.secretAnswer,
+    rootContent?.uploader?.authLevel,
+    rootContent?.uploader?.id,
+    subject?.secretAnswer,
+    subject?.uploader?.authLevel,
+    subject?.uploader?.id,
+    userId
+  ]);
+
+  const dropdownMenuItems = useMemo(() => {
+    const items = [];
+    if (
+      (userIsUploader || canEdit) &&
+      !isNotification &&
+      !answerForSecretSubjectNotViewed
+    ) {
       items.push({
         label: (
           <>
@@ -431,12 +459,16 @@ function Comment({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    banned?.posting,
     canDelete,
     canEdit,
     comment.id,
+    isCreator,
+    answerForSecretSubjectNotViewed,
     isNotification,
     pinnedCommentId,
     userIsParentUploader,
+    userIsRootUploader,
     userIsUploader
   ]);
 
@@ -549,7 +581,24 @@ function Comment({
     return `${uploader?.username} viewed the secret message`;
   }, [uploader?.username]);
 
-  return !isDeleted && !comment.isDeleted ? (
+  const isDisplayed = useMemo(() => {
+    if (isDeleteNotification && !isPreview && !isForSecretSubject) {
+      if (numReplies === 0 && replies.length === 0) {
+        return false;
+      }
+    }
+    return !isDeleted && !comment.isDeleted;
+  }, [
+    comment.isDeleted,
+    isDeleteNotification,
+    isDeleted,
+    isForSecretSubject,
+    isPreview,
+    numReplies,
+    replies.length
+  ]);
+
+  return isDisplayed ? (
     <div ref={ComponentRef}>
       <div
         style={{
@@ -576,22 +625,24 @@ function Comment({
               </div>
             )}
             <div className="content-wrapper">
-              <div
-                style={{
-                  display: 'flex',
-                  width: '7rem',
-                  marginTop: '1rem',
-                  justifyContent: 'center'
-                }}
-              >
-                <div style={{ width: '5rem' }}>
-                  <ProfilePic
-                    style={{ width: '100%' }}
-                    userId={uploader?.id}
-                    profilePicUrl={uploader?.profilePicUrl}
-                  />
+              {(!isDeleteNotification || isForSecretSubject) && (
+                <div
+                  style={{
+                    display: 'flex',
+                    width: '7rem',
+                    marginTop: '1rem',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <div style={{ width: '5rem' }}>
+                    <ProfilePic
+                      style={{ width: '100%' }}
+                      userId={uploader?.id}
+                      profilePicUrl={uploader?.profilePicUrl}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
               {dropdownButtonShown && !isEditing && (
                 <div className="dropdown-wrapper">
                   <DropdownButton
@@ -604,33 +655,44 @@ function Comment({
                 </div>
               )}
               <section>
-                <div>
-                  <UsernameText className="username" user={uploader} />{' '}
-                  <small className="timestamp">
-                    <a
-                      className={css`
-                        &:hover {
-                          text-decoration: ${isNotification ||
-                          isDeleteNotification
-                            ? 'none'
-                            : 'underline'};
-                        }
-                      `}
-                      style={{
-                        cursor:
+                <div
+                  style={{
+                    height:
+                      isDeleteNotification && !isForSecretSubject
+                        ? '0.3rem'
+                        : 'auto'
+                  }}
+                >
+                  {(!isDeleteNotification || isForSecretSubject) && (
+                    <UsernameText className="username" user={uploader} />
+                  )}{' '}
+                  {(!isDeleteNotification || isForSecretSubject) && (
+                    <small className="timestamp">
+                      <a
+                        className={css`
+                          &:hover {
+                            text-decoration: ${isNotification ||
+                            isDeleteNotification
+                              ? 'none'
+                              : 'underline'};
+                          }
+                        `}
+                        style={{
+                          cursor:
+                            isNotification || isDeleteNotification
+                              ? 'default'
+                              : 'pointer'
+                        }}
+                        onClick={() =>
                           isNotification || isDeleteNotification
-                            ? 'default'
-                            : 'pointer'
-                      }}
-                      onClick={() =>
-                        isNotification || isDeleteNotification
-                          ? null
-                          : navigate(`/comments/${comment.id}`)
-                      }
-                    >
-                      {timeSincePost}
-                    </a>
-                  </small>
+                            ? null
+                            : navigate(`/comments/${comment.id}`)
+                        }
+                      >
+                        {timeSincePost}
+                      </a>
+                    </small>
+                  )}
                 </div>
                 <div>
                   {comment.targetUserId &&
@@ -649,7 +711,7 @@ function Comment({
                         />
                       </span>
                     )}
-                  {isCommentForContentSubject && (
+                  {isCommentForContentSubject && !isDeleteNotification && (
                     <SubjectLink theme={theme} subject={subject} />
                   )}
                   {filePath &&
@@ -707,7 +769,8 @@ function Comment({
                             color: Color.gray(),
                             fontWeight: 'bold',
                             margin: '1rem 0',
-                            borderRadius
+                            borderRadius,
+                            padding: '0.5rem 0'
                           }}
                         >
                           {isNotification
@@ -727,18 +790,16 @@ function Comment({
                           {comment.content}
                         </LongText>
                       ) : null}
-                      {!isPreview &&
-                        !isHidden &&
-                        !isNotification &&
-                        !isDeleteNotification && (
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between'
-                            }}
-                          >
-                            <div>
-                              <div className="comment__buttons">
+                      {!isPreview && !isHidden && !isNotification && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between'
+                          }}
+                        >
+                          <div>
+                            <div className="comment__buttons">
+                              {isDeleteNotification ? null : (
                                 <LikeButton
                                   contentType="comment"
                                   contentId={comment.id}
@@ -746,10 +807,19 @@ function Comment({
                                   likes={likes}
                                   theme={theme}
                                 />
+                              )}
+                              {isDeleteNotification &&
+                              (numReplies === 0 || replies.length > 0) ? (
+                                <div style={{ height: '1rem' }} />
+                              ) : (
                                 <Button
                                   disabled={loadingReplies}
                                   transparent
-                                  style={{ marginLeft: '1rem' }}
+                                  style={{
+                                    marginLeft: isDeleteNotification
+                                      ? 0
+                                      : '1rem'
+                                  }}
                                   onClick={handleReplyButtonClick}
                                 >
                                   <Icon icon="comment-alt" />
@@ -772,26 +842,28 @@ function Comment({
                                     )}
                                   </span>
                                 </Button>
-                                {userCanRewardThis && (
-                                  <Button
-                                    color={rewardColor}
-                                    style={{ marginLeft: '0.7rem' }}
-                                    onClick={() =>
-                                      onSetXpRewardInterfaceShown({
-                                        contentId: commentId,
-                                        contentType: 'comment',
-                                        shown: true
-                                      })
-                                    }
-                                    disabled={!!xpButtonDisabled}
-                                  >
-                                    <Icon icon="certificate" />
-                                    <span style={{ marginLeft: '0.7rem' }}>
-                                      {xpButtonDisabled || rewardLabel}
-                                    </span>
-                                  </Button>
-                                )}
-                              </div>
+                              )}
+                              {userCanRewardThis && !isDeleteNotification && (
+                                <Button
+                                  color={rewardColor}
+                                  style={{ marginLeft: '0.7rem' }}
+                                  onClick={() =>
+                                    onSetXpRewardInterfaceShown({
+                                      contentId: commentId,
+                                      contentType: 'comment',
+                                      shown: true
+                                    })
+                                  }
+                                  disabled={!!xpButtonDisabled}
+                                >
+                                  <Icon icon="certificate" />
+                                  <span style={{ marginLeft: '0.7rem' }}>
+                                    {xpButtonDisabled || rewardLabel}
+                                  </span>
+                                </Button>
+                              )}
+                            </div>
+                            {isDeleteNotification ? null : (
                               <Likers
                                 theme={theme}
                                 className="comment__likes"
@@ -799,7 +871,9 @@ function Comment({
                                 likes={likes}
                                 onLinkClick={() => setUserListModalShown(true)}
                               />
-                            </div>
+                            )}
+                          </div>
+                          {isDeleteNotification ? null : (
                             <div>
                               <Button
                                 color={rewardColor}
@@ -812,8 +886,9 @@ function Comment({
                                 <Icon icon="heart" />
                               </Button>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -867,11 +942,9 @@ function Comment({
                     uploaderName={uploader?.username}
                   />
                 )}
-                {!isPreview &&
-                  !isNotification &&
-                  !isDeleteNotification &&
-                  !isHidden && (
-                    <>
+                {!isPreview && !isNotification && !isHidden && (
+                  <>
+                    {isDeleteNotification ? null : (
                       <ReplyInputArea
                         innerRef={ReplyInputAreaRef}
                         numReplies={numReplies}
@@ -885,23 +958,24 @@ function Comment({
                         theme={theme}
                         targetCommentId={comment.id}
                       />
-                      <Replies
-                        isSubjectPannelComment={isSubjectPannelComment}
-                        pinnedCommentId={pinnedCommentId}
-                        subject={subject || {}}
-                        userId={userId}
-                        replies={replies}
-                        comment={comment}
-                        parent={parent}
-                        rootContent={rootContent}
-                        onLoadMoreReplies={onLoadMoreReplies}
-                        onPinReply={handlePinComment}
-                        onReplySubmit={onReplySubmit}
-                        ReplyRefs={ReplyRefs}
-                        theme={theme}
-                      />
-                    </>
-                  )}
+                    )}
+                    <Replies
+                      isSubjectPannelComment={isSubjectPannelComment}
+                      pinnedCommentId={pinnedCommentId}
+                      subject={subject || {}}
+                      userId={userId}
+                      replies={replies}
+                      comment={comment}
+                      parent={parent}
+                      rootContent={rootContent}
+                      onLoadMoreReplies={onLoadMoreReplies}
+                      onPinReply={handlePinComment}
+                      onReplySubmit={onReplySubmit}
+                      ReplyRefs={ReplyRefs}
+                      theme={theme}
+                    />
+                  </>
+                )}
               </section>
             </div>
           </div>
@@ -984,7 +1058,7 @@ function Comment({
       });
       setLoadingReplies(false);
     }
-    ReplyInputAreaRef.current.focus();
+    if (!isDeleteNotification) ReplyInputAreaRef.current.focus();
   }
 
   async function handleSubmitWithAttachment(params) {
