@@ -22,7 +22,7 @@ import XPRewardInterface from '~/components/XPRewardInterface';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import { commentContainer } from '../Styles';
 import { Link } from 'react-router-dom';
-import { Color } from '~/constants/css';
+import { borderRadius, Color } from '~/constants/css';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled
@@ -36,6 +36,7 @@ import {
 } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
 
+const commentWasDeletedLabel = localize('commentWasDeleted');
 const editLabel = localize('edit');
 const pinLabel = localize('pin');
 const pinnedLabel = localize('pinned');
@@ -78,6 +79,10 @@ Reply.propTypes = {
     targetObj: PropTypes.object,
     targetUserId: PropTypes.number,
     targetUserName: PropTypes.string,
+    isDeleteNotification: PropTypes.oneOfType([
+      PropTypes.bool,
+      PropTypes.number
+    ]),
     timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
       .isRequired,
     uploader: PropTypes.object.isRequired
@@ -108,6 +113,7 @@ function Reply({
     filePath,
     fileName,
     fileSize,
+    isDeleteNotification,
     thumbUrl: initialThumbUrl
   },
   rootContent,
@@ -137,7 +143,6 @@ function Reply({
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
   const {
-    isDeleted,
     isEditing,
     thumbUrl: thumbUrlFromContext,
     xpRewardInterfaceShown
@@ -190,6 +195,9 @@ function Reply({
   }, [rewards, userId]);
 
   const dropdownButtonShown = useMemo(() => {
+    if (isDeleteNotification) {
+      return false;
+    }
     const userCanEditThis = (canEdit || canDelete) && userIsHigherAuth;
     return (
       userIsUploader ||
@@ -200,6 +208,7 @@ function Reply({
   }, [
     canDelete,
     canEdit,
+    isDeleteNotification,
     userIsHigherAuth,
     userIsParentUploader,
     userIsRootUploader,
@@ -328,7 +337,7 @@ function Reply({
     userIsUploader
   ]);
 
-  return !isDeleted && !reply.isDeleted ? (
+  return !(isDeleteNotification && !reply.numReplies) && !reply.isDeleted ? (
     <ErrorBoundary componentPath="Comments/Replies/Reply">
       <div className={commentContainer} ref={innerRef}>
         {pinnedCommentId === reply.id && (
@@ -346,22 +355,24 @@ function Reply({
           </div>
         )}
         <div className="content-wrapper">
-          <div
-            style={{
-              display: 'flex',
-              width: '7rem',
-              marginTop: '1rem',
-              justifyContent: 'center'
-            }}
-          >
-            <div style={{ width: '5rem' }}>
-              <ProfilePic
-                style={{ width: '100%' }}
-                userId={uploader.id}
-                profilePicUrl={uploader.profilePicUrl}
-              />
+          {isDeleteNotification ? null : (
+            <div
+              style={{
+                display: 'flex',
+                width: '7rem',
+                marginTop: '1rem',
+                justifyContent: 'center'
+              }}
+            >
+              <div style={{ width: '5rem' }}>
+                <ProfilePic
+                  style={{ width: '100%' }}
+                  userId={uploader.id}
+                  profilePicUrl={uploader.profilePicUrl}
+                />
+              </div>
             </div>
-          </div>
+          )}
           {!!dropdownButtonShown && !isEditing && (
             <div className="dropdown-wrapper">
               <DropdownButton
@@ -374,11 +385,19 @@ function Reply({
             </div>
           )}
           <section>
-            <div>
-              <UsernameText className="username" user={uploader} />{' '}
-              <small className="timestamp">
-                <Link to={`/comments/${reply.id}`}>{timeSincePost}</Link>
-              </small>
+            <div
+              style={{
+                height: isDeleteNotification ? '0.3rem' : 'auto'
+              }}
+            >
+              {isDeleteNotification ? null : (
+                <UsernameText className="username" user={uploader} />
+              )}{' '}
+              {isDeleteNotification ? null : (
+                <small className="timestamp">
+                  <Link to={`/comments/${reply.id}`}>{timeSincePost}</Link>
+                </small>
+              )}
             </div>
             <div>
               {reply.targetObj?.comment?.uploader &&
@@ -435,7 +454,19 @@ function Reply({
                 />
               ) : (
                 <div>
-                  {!replyIsEmpty ? (
+                  {isDeleteNotification ? (
+                    <div
+                      style={{
+                        color: Color.gray(),
+                        fontWeight: 'bold',
+                        margin: '1rem 0',
+                        padding: '0.5rem 0',
+                        borderRadius
+                      }}
+                    >
+                      {commentWasDeletedLabel}
+                    </div>
+                  ) : !replyIsEmpty ? (
                     <LongText
                       theme={theme}
                       contentType="comment"
@@ -455,39 +486,52 @@ function Reply({
                   >
                     <div>
                       <div className="comment__buttons">
-                        <LikeButton
-                          contentId={reply.id}
-                          contentType="comment"
-                          onClick={handleLikeClick}
-                          likes={likes}
-                          theme={theme}
-                          small
-                        />
-                        <Button
-                          transparent
-                          style={{ marginLeft: '1rem' }}
-                          onClick={handleReplyClick}
-                          disabled={loadingReplies}
-                        >
-                          <Icon icon="comment-alt" />
-                          <span style={{ marginLeft: '0.7rem' }}>
-                            {!isExpanded && reply.numReplies > 1
-                              ? repliesLabel
-                              : replyLabel}
-                            {loadingReplies ? (
-                              <Icon
-                                style={{ marginLeft: '0.7rem' }}
-                                icon="spinner"
-                                pulse
-                              />
-                            ) : !isExpanded && reply.numReplies > 0 ? (
-                              ` (${reply.numReplies})`
-                            ) : (
-                              ''
-                            )}
-                          </span>
-                        </Button>
-                        {userCanRewardThis && (
+                        {isDeleteNotification ? null : (
+                          <LikeButton
+                            contentId={reply.id}
+                            contentType="comment"
+                            onClick={handleLikeClick}
+                            likes={likes}
+                            theme={theme}
+                            small
+                          />
+                        )}
+                        {isDeleteNotification &&
+                        (reply.numReplies === 0 || reply.isExpanded) ? (
+                          <div style={{ height: '1rem' }} />
+                        ) : (
+                          <Button
+                            transparent
+                            style={{
+                              marginLeft: isDeleteNotification ? 0 : '1rem'
+                            }}
+                            onClick={handleReplyClick}
+                            disabled={loadingReplies}
+                          >
+                            <Icon icon="comment-alt" />
+                            <span
+                              style={{
+                                marginLeft: '0.7rem'
+                              }}
+                            >
+                              {!isExpanded && reply.numReplies > 1
+                                ? repliesLabel
+                                : replyLabel}
+                              {loadingReplies ? (
+                                <Icon
+                                  style={{ marginLeft: '0.7rem' }}
+                                  icon="spinner"
+                                  pulse
+                                />
+                              ) : !isExpanded && reply.numReplies > 0 ? (
+                                ` (${reply.numReplies})`
+                              ) : (
+                                ''
+                              )}
+                            </span>
+                          </Button>
+                        )}
+                        {userCanRewardThis && !isDeleteNotification && (
                           <Button
                             color={rewardColor}
                             style={{ marginLeft: '1rem' }}
@@ -507,36 +551,42 @@ function Reply({
                           </Button>
                         )}
                       </div>
-                      <small>
-                        <Likers
-                          theme={theme}
-                          className="comment__likes"
-                          userId={userId}
-                          likes={reply.likes}
-                          onLinkClick={() => setUserListModalShown(true)}
-                        />
-                      </small>
+                      {isDeleteNotification ? null : (
+                        <small>
+                          <Likers
+                            theme={theme}
+                            className="comment__likes"
+                            userId={userId}
+                            likes={reply.likes}
+                            onLinkClick={() => setUserListModalShown(true)}
+                          />
+                        </small>
+                      )}
                     </div>
-                    <div>
-                      <Button
-                        color={rewardColor}
-                        filled={isRecommendedByUser}
-                        disabled={recommendationInterfaceShown}
-                        onClick={() => setRecommendationInterfaceShown(true)}
-                      >
-                        <Icon icon="heart" />
-                      </Button>
-                    </div>
+                    {isDeleteNotification ? null : (
+                      <div>
+                        <Button
+                          color={rewardColor}
+                          filled={isRecommendedByUser}
+                          disabled={recommendationInterfaceShown}
+                          onClick={() => setRecommendationInterfaceShown(true)}
+                        >
+                          <Icon icon="heart" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
-            <RecommendationStatus
-              style={{ marginTop: '0.5rem' }}
-              contentType="comment"
-              recommendations={recommendations}
-              theme={theme}
-            />
+            {isDeleteNotification ? null : (
+              <RecommendationStatus
+                style={{ marginTop: '0.5rem' }}
+                contentType="comment"
+                recommendations={recommendations}
+                theme={theme}
+              />
+            )}
             {recommendationInterfaceShown && (
               <RecommendationInterface
                 style={{ marginTop: '0.5rem' }}
@@ -563,31 +613,35 @@ function Reply({
                 uploaderId={uploader.id}
               />
             )}
-            <RewardStatus
-              noMarginForEditButton
-              contentType="comment"
-              contentId={reply.id}
-              rewardLevel={rewardLevel}
-              onCommentEdit={onRewardCommentEdit}
-              style={{
-                fontSize: '1.5rem',
-                marginTop: '0.5rem'
-              }}
-              rewards={rewards}
-              uploaderName={uploader.username}
-            />
-            <ReplyInputArea
-              innerRef={ReplyInputAreaRef}
-              onSubmit={onSubmitReply}
-              onSubmitWithAttachment={onSubmitWithAttachment}
-              parent={parent}
-              rootCommentId={reply.commentId}
-              style={{
-                marginTop: '0.5rem'
-              }}
-              theme={theme}
-              targetCommentId={reply.id}
-            />
+            {isDeleteNotification ? null : (
+              <RewardStatus
+                noMarginForEditButton
+                contentType="comment"
+                contentId={reply.id}
+                rewardLevel={rewardLevel}
+                onCommentEdit={onRewardCommentEdit}
+                style={{
+                  fontSize: '1.5rem',
+                  marginTop: '0.5rem'
+                }}
+                rewards={rewards}
+                uploaderName={uploader.username}
+              />
+            )}
+            {isDeleteNotification ? null : (
+              <ReplyInputArea
+                innerRef={ReplyInputAreaRef}
+                onSubmit={onSubmitReply}
+                onSubmitWithAttachment={onSubmitWithAttachment}
+                parent={parent}
+                rootCommentId={reply.commentId}
+                style={{
+                  marginTop: '0.5rem'
+                }}
+                theme={theme}
+                targetCommentId={reply.id}
+              />
+            )}
           </section>
         </div>
         {userListModalShown && (
@@ -638,26 +692,26 @@ function Reply({
   }
 
   async function handleReplyClick() {
-    if (isExpanded) {
+    if (!isDeleteNotification) {
+      ReplyInputAreaRef.current.focus();
+    }
+    if (isExpanded || !reply.numReplies) {
       return;
     }
-    ReplyInputAreaRef.current.focus();
     setLoadingReplies(true);
-    if (reply.numReplies > 0) {
-      const { replies, loadMoreButton } = await loadReplies({
-        commentId: reply.id,
-        isReverse: true
+    const { replies, loadMoreButton } = await loadReplies({
+      commentId: reply.id,
+      isReverse: true
+    });
+    if (replies.length > 0) {
+      onLoadRepliesOfReply({
+        replies,
+        commentId: reply.commentId,
+        replyId: reply.id,
+        contentId: parent.contentId,
+        contentType: parent.contentType,
+        loadMoreButton
       });
-      if (replies.length > 0) {
-        onLoadRepliesOfReply({
-          replies,
-          commentId: reply.commentId,
-          replyId: reply.id,
-          contentId: parent.contentId,
-          contentType: parent.contentType,
-          loadMoreButton
-        });
-      }
     }
     setLoadingReplies(false);
   }
