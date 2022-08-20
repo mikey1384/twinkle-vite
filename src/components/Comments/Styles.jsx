@@ -24,6 +24,7 @@ export const commentContainer = css`
     }
     > section {
       flex-grow: 1;
+      min-width: CALC(100% - 7rem);
       margin-left: 1rem;
     }
   }
