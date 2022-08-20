@@ -113,7 +113,7 @@ export default function LongText({
   }, [cleanString, fullText, text, isOverflown]);
 
   return (
-    <div style={{ width: '100%', ...style }} className={className}>
+    <div style={{ minWidth: '100%', width: 0, ...style }} className={className}>
       <span
         ref={ContainerRef}
         style={{
