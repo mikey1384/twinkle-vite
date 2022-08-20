@@ -367,9 +367,9 @@ function Comment({
 
   const isForSecretSubject = useMemo(
     () =>
-      rootContent?.secretAnswer ||
-      parent?.secretAnswer ||
-      subject?.secretAnswer,
+      !!rootContent?.secretAnswer ||
+      !!parent?.secretAnswer ||
+      !!subject?.secretAnswer,
     [parent?.secretAnswer, rootContent?.secretAnswer, subject?.secretAnswer]
   );
 
