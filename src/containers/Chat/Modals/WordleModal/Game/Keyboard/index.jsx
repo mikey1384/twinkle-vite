@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { getStatuses } from '../helpers/statuses';
 import Key from './Key';
 import { ENTER_TEXT, DELETE_TEXT } from '../../constants/strings';
-import { localeAwareUpperCase } from '../helpers/words';
 
 Keyboard.propTypes = {
   isChecking: PropTypes.bool,
@@ -52,8 +51,7 @@ export default function Keyboard({
       } else if (e.code === 'Backspace') {
         onDelete();
       } else {
-        const key = localeAwareUpperCase(e.key);
-        // TODO: check this test if the range works with non-english letters
+        const key = e.key.toUpperCase();
         if (key.length === 1 && key >= 'A' && key <= 'Z') {
           onChar(key);
         }

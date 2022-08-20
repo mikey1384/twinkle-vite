@@ -38,7 +38,7 @@ export const checkWordleAttemptStrictness = ({ guesses, solution }) => {
 };
 
 export const isWordInWordList = (word) => {
-  return VALID_GUESSES.includes(localeAwareLowerCase(word));
+  return VALID_GUESSES.includes(word.toLowerCase());
 };
 
 export const unicodeSplit = (word) => {
@@ -47,16 +47,4 @@ export const unicodeSplit = (word) => {
 
 export const unicodeLength = (word) => {
   return unicodeSplit(word).length;
-};
-
-export const localeAwareLowerCase = (text) => {
-  return import.meta.env.VITE_LOCALE_STRING
-    ? text.toLocaleLowerCase(import.meta.env.VITE_LOCALE_STRING)
-    : text.toLowerCase();
-};
-
-export const localeAwareUpperCase = (text) => {
-  return import.meta.env.VITE_LOCALE_STRING
-    ? text.toLocaleUpperCase(import.meta.env.VITE_LOCALE_STRING)
-    : text.toUpperCase();
 };
