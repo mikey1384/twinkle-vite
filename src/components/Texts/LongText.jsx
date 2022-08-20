@@ -118,8 +118,7 @@ export default function LongText({
         ref={ContainerRef}
         style={{
           lineHeight,
-          minWidth: '100%',
-          width: 0,
+          width: '100%',
           ...(fullText
             ? {}
             : {
