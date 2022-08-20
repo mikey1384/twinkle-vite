@@ -143,8 +143,6 @@ export default function LongText({
         style={{
           height: readMoreHeightFixed ? '2rem' : 'auto',
           display: 'flex',
-          minWidth: '100%',
-          width: 0,
           alignItems: 'center'
         }}
       >
