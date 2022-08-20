@@ -694,7 +694,7 @@ function Comment({
                     </small>
                   )}
                 </div>
-                <div>
+                <div style={{ width: '100%' }}>
                   {comment.targetUserId &&
                     !!comment.replyId &&
                     comment.replyId !== parent.contentId && (
@@ -758,7 +758,7 @@ function Comment({
                       onEditDone={handleEditDone}
                     />
                   ) : (
-                    <div>
+                    <div style={{ width: '100%' }}>
                       {isHidden ? (
                         <SecretComment
                           onClick={() => navigate(`/subjects/${subject?.id}`)}

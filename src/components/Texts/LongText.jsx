@@ -113,11 +113,13 @@ export default function LongText({
   }, [cleanString, fullText, text, isOverflown]);
 
   return (
-    <div style={style} className={className}>
+    <div style={{ width: '100%', ...style }} className={className}>
       <span
         ref={ContainerRef}
         style={{
           lineHeight,
+          minWidth: '100%',
+          width: 0,
           ...(fullText
             ? {}
             : {
@@ -141,7 +143,8 @@ export default function LongText({
         style={{
           height: readMoreHeightFixed ? '2rem' : 'auto',
           display: 'flex',
-          width: '100%',
+          minWidth: '100%',
+          width: 0,
           alignItems: 'center'
         }}
       >
