@@ -31,6 +31,7 @@ const passphraseLabel = localize('passphrase');
 const setUpPasswordLabel = localize('setUpPassword');
 const whatIsYourFirstNameLabel = localize('whatIsYourFirstName');
 const whatIsYourLastNameLabel = localize('whatIsYourLastName');
+const passphraseErrorMsgLabel = localize('passphraseErrorMsg');
 
 SignUpForm.propTypes = {
   username: PropTypes.string,
@@ -91,10 +92,22 @@ export default function SignUpForm({
     return `${email} is not a valid email address`;
   }, [email]);
 
+  const isOtherErrorMessage = useMemo(() => {
+    const validTypes = [
+      'username',
+      'firstname',
+      'password',
+      'lastname',
+      'email',
+      'keyphrase'
+    ];
+    return errorMessage && !validTypes.includes(errorMessage);
+  }, [errorMessage]);
+
   return (
     <ErrorBoundary componentPath="Signin/SignupForm">
       <header>{letsSetUpYourAccountLabel}</header>
-      {errorMessage && <Banner>{errorMessage}</Banner>}
+      {isOtherErrorMessage && <Banner>{errorMessage}</Banner>}
       <main>
         <div
           className={css`
@@ -118,6 +131,7 @@ export default function SignUpForm({
             <label>{usernameLabel}</label>
             <Input
               value={username}
+              hasError={errorMessage === 'username'}
               placeholder={enterTheUsernameYouWishToUseLabel}
               onChange={(text) => {
                 setErrorMessage('');
@@ -129,11 +143,15 @@ export default function SignUpForm({
                 }
               }}
             />
+            {errorMessage === 'username' && (
+              <p style={{ color: 'red' }}>{usernameErrorMsgLabel}</p>
+            )}
           </section>
           <section>
             <label>{passwordLabel}</label>
             <Input
               value={password}
+              hasError={errorMessage === 'password'}
               placeholder={setUpPasswordLabel}
               onChange={(text) => {
                 setErrorMessage('');
@@ -146,11 +164,15 @@ export default function SignUpForm({
               }}
               type="password"
             />
+            {errorMessage === 'password' && (
+              <p style={{ color: 'red' }}>{passwordsNeedToBeAtLeastLabel}</p>
+            )}
           </section>
           <section>
             <label>{firstNameLabel}</label>
             <Input
               maxLength={30}
+              hasError={errorMessage === 'firstname'}
               value={firstname}
               placeholder={whatIsYourFirstNameLabel}
               onChange={(text) => {
@@ -163,11 +185,15 @@ export default function SignUpForm({
                 }
               }}
             />
+            {errorMessage === 'firstname' && (
+              <p style={{ color: 'red' }}>{notValidFirstNameLabel}</p>
+            )}
           </section>
           <section>
             <label>{lastNameLabel}</label>
             <Input
               maxLength={30}
+              hasError={errorMessage === 'lastname'}
               value={lastname}
               placeholder={whatIsYourLastNameLabel}
               onChange={(text) => {
@@ -180,11 +206,15 @@ export default function SignUpForm({
                 }
               }}
             />
+            {errorMessage === 'lastname' && (
+              <p style={{ color: 'red' }}>{notValidLastNameLabel}</p>
+            )}
           </section>
           <section>
             <label>{passphraseLabel}</label>
             <Input
               value={keyphrase}
+              hasError={errorMessage === 'keyphrase'}
               placeholder={passphraseLabel}
               onChange={(text) => {
                 setErrorMessage('');
@@ -196,11 +226,15 @@ export default function SignUpForm({
                 }
               }}
             />
+            {errorMessage === 'keyphrase' && (
+              <p style={{ color: 'red' }}>{passphraseErrorMsgLabel}</p>
+            )}
           </section>
           <section style={{ marginTop: '2rem' }}>
             <label>{emailYoursOrYourParentsLabel}</label>
             <Input
               value={email}
+              hasError={errorMessage === 'email'}
               placeholder={emailIsNeededInCaseLabel}
               onChange={(text) => {
                 setErrorMessage('');
@@ -213,6 +247,9 @@ export default function SignUpForm({
               }}
               type="email"
             />
+            {errorMessage === 'email' && (
+              <p style={{ color: 'red' }}>{notValidEmailLabel}</p>
+            )}
           </section>
         </div>
       </main>
@@ -242,19 +279,19 @@ export default function SignUpForm({
 
   async function onSubmit() {
     if (!isValidUsername(username)) {
-      return setErrorMessage(usernameErrorMsgLabel);
+      return setErrorMessage('username');
     }
     if (!isValidPassword(password)) {
-      return setErrorMessage(passwordsNeedToBeAtLeastLabel);
+      return setErrorMessage('password');
     }
     if (!isValidRealname(firstname)) {
-      return setErrorMessage(notValidFirstNameLabel);
+      return setErrorMessage('firstname');
     }
     if (!isValidRealname(lastname)) {
-      return setErrorMessage(notValidLastNameLabel);
+      return setErrorMessage('lastname');
     }
     if (email && !isValidEmailAddress(email)) {
-      return setErrorMessage(notValidEmailLabel);
+      return setErrorMessage('email');
     }
 
     try {
