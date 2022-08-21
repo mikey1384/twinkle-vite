@@ -992,6 +992,10 @@ const languageObj = {
     en: "Who is the Big Bad Wolf's brother?",
     kr: 'Big Bad Wolf의 형의 이름은 무엇인가요?'
   },
+  passphraseErrorMsg: {
+    en: 'Passphrase is incorrect',
+    kr: '질문에 대한 답이 올바르지 않습니다'
+  },
   password: {
     en: 'Password',
     kr: '비밀번호'
