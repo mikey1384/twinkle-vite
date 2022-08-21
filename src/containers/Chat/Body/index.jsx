@@ -5,7 +5,6 @@ import Vocabulary from './Vocabulary';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../Context';
-import { Route, Routes } from 'react-router-dom';
 import { mobileMaxWidth, Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -50,21 +49,14 @@ function Body({
             {chatType === 'vocabulary' ? (
               <Vocabulary />
             ) : (
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <MessagesContainer
-                      key={currentChannel.id}
-                      displayedThemeColor={displayedThemeColor}
-                      loading={loading}
-                      channelName={channelName}
-                      chessOpponent={chessOpponent}
-                      currentChannel={currentChannel}
-                    />
-                  }
-                />
-              </Routes>
+              <MessagesContainer
+                key={currentChannel.id}
+                displayedThemeColor={displayedThemeColor}
+                loading={loading}
+                channelName={channelName}
+                chessOpponent={chessOpponent}
+                currentChannel={currentChannel}
+              />
             )}
           </>
         )}
