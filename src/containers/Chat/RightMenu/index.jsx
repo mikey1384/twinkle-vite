@@ -81,7 +81,7 @@ function RightMenu({
     <div
       ref={MenuRef}
       className={css`
-        width: 18vw;
+        width: ${chatType === 'vocabulary' ? '22vw' : '18vw'};
         position: relative;
         background: #fff;
         border-left: 1px solid ${Color.borderGray()};
