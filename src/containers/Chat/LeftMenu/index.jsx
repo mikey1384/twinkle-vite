@@ -47,7 +47,7 @@ function LeftMenu({ onNewButtonClick }) {
         display: flex;
         flex-direction: column;
         height: 100%;
-        width: 20vw;
+        width: 16vw;
         position: relative;
         background: #fff;
         -webkit-overflow-scrolling: touch;
