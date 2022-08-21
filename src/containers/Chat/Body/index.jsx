@@ -33,7 +33,7 @@ function Body({
       <div
         className={css`
           height: 100%;
-          width: 64vw;
+          width: 66vw;
           border-left: 1px solid ${Color.borderGray()};
           padding: 0;
           position: relative;

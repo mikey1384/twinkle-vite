@@ -81,7 +81,7 @@ function RightMenu({
     <div
       ref={MenuRef}
       className={css`
-        width: 20vw;
+        width: 18vw;
         position: relative;
         background: #fff;
         border-left: 1px solid ${Color.borderGray()};
