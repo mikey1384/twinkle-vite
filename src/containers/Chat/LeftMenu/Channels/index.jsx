@@ -141,41 +141,42 @@ function Channels() {
   }, [homeChannelIds, selectedChannelId, prevChannelIds]);
 
   return (
-    <ErrorBoundary
-      componentPath="LeftMenu/Channels/index"
-      innerRef={ChannelListRef}
-      style={{
-        overflow: 'scroll',
-        top: '17.5rem',
-        width: '80%',
-        height: '100%'
-      }}
-    >
-      {channelIds
-        ?.map((channelId) => channelsObj[channelId])
-        .filter((channel) => !channel?.isHidden)
-        .map((channel) => (
-          <Channel
-            key={selectedChatTab + channel.id}
-            channel={channel}
-            customChannelNames={customChannelNames}
-            chatType={chatType}
-            selectedChannelId={selectedChannelId}
+    <ErrorBoundary componentPath="LeftMenu/Channels/index">
+      <div
+        ref={ChannelListRef}
+        style={{
+          overflow: 'scroll',
+          width: '100%',
+          height: '100%',
+          marginTop: '1rem'
+        }}
+      >
+        {channelIds
+          ?.map((channelId) => channelsObj[channelId])
+          .filter((channel) => !channel?.isHidden)
+          .map((channel) => (
+            <Channel
+              key={selectedChatTab + channel.id}
+              channel={channel}
+              customChannelNames={customChannelNames}
+              chatType={chatType}
+              selectedChannelId={selectedChannelId}
+            />
+          ))}
+        {loadMoreButtonShown && (
+          <LoadMoreButton
+            color={loadMoreButtonColor}
+            filled
+            loading={channelsLoading}
+            onClick={handleLoadMoreChannels}
+            style={{
+              width: '100%',
+              borderRadius: 0,
+              border: 0
+            }}
           />
-        ))}
-      {loadMoreButtonShown && (
-        <LoadMoreButton
-          color={loadMoreButtonColor}
-          filled
-          loading={channelsLoading}
-          onClick={handleLoadMoreChannels}
-          style={{
-            width: '100%',
-            borderRadius: 0,
-            border: 0
-          }}
-        />
-      )}
+        )}
+      </div>
     </ErrorBoundary>
   );
 }

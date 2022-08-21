@@ -203,7 +203,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
                   {newsLabel}
                 </nav>
                 <nav
-                  className={activeTab === 'rankings' ? 'active' : undefined}
+                  className={activeTab === 'rankings' ? 'active' : ''}
                   onClick={() => {
                     userChangedTab.current = true;
                     setActiveTab('rankings');
@@ -213,7 +213,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
                 </nav>
                 {rewardTabShown && (
                   <nav
-                    className={`${activeTab === 'reward' && 'active'} ${
+                    className={`${activeTab === 'reward' ? 'active' : ''} ${
                       totalRewardedTwinkles + totalRewardedTwinkleCoins > 0 &&
                       'alert'
                     }`}
