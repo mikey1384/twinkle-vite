@@ -647,7 +647,7 @@ function App() {
             <Route path="/missions/:missionType/*" element={<MissionPage />} />
             <Route path="/missions" element={<Mission />} />
             <Route
-              path="/chat/*"
+              path="/chat/:currentPathId"
               element={<Chat onFileUpload={handleFileUploadOnChat} />}
             />
             <Route
