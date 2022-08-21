@@ -13,7 +13,7 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   useAppContext,
   useContentContext,
@@ -37,7 +37,7 @@ function Chat({ onFileUpload }) {
   const { lastChatPath, userId, profileTheme } = useKeyContext(
     (v) => v.myState
   );
-  const { pathname } = useLocation();
+  const { currentPathId } = useParams();
   const navigate = useNavigate();
   const userObj = useAppContext((v) => v.user.state.userObj);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -260,8 +260,6 @@ function Chat({ onFileUpload }) {
     () => channelsObj[selectedChannelId] || {},
     [channelsObj, selectedChannelId]
   );
-
-  const currentPathId = useMemo(() => pathname.split('chat/')[1], [pathname]);
   const currentPathIdRef = useRef(currentPathId);
 
   useEffect(() => {
