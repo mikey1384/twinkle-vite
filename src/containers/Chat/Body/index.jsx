@@ -39,7 +39,7 @@ function Body({
           position: relative;
           background: #fff;
           @media (max-width: ${mobileMaxWidth}) {
-            width: ${chatType === 'vocabulary' ? '77vw' : '85vw'};
+            width: ${chatType === 'vocabulary' ? '82vw' : '90vw'};
           }
         `}
       >

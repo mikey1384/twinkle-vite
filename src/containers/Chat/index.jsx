@@ -636,7 +636,7 @@ function Chat({ onFileUpload }) {
                 font-size: 1.6rem;
                 position: relative;
                 @media (max-width: ${mobileMaxWidth}) {
-                  width: 152vw;
+                  width: 170vw;
                   height: CALC(100% - 7rem);
                 }
               `}

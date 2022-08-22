@@ -64,7 +64,7 @@ function LeftMenu({
         background: #fff;
         -webkit-overflow-scrolling: touch;
         @media (max-width: ${mobileMaxWidth}) {
-          width: 32vw;
+          width: 40vw;
         }
       `}
     >

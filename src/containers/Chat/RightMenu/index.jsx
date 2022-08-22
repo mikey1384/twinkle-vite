@@ -88,7 +88,7 @@ function RightMenu({
         overflow-y: scroll;
         -webkit-overflow-scrolling: touch;
         @media (max-width: ${mobileMaxWidth}) {
-          width: ${chatType === 'vocabulary' ? '43vw' : '35vw'};
+          width: ${chatType === 'vocabulary' ? '48vw' : '40vw'};
         }
       `}
     >
