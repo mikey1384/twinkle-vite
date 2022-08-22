@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Item from './Item';
 import { Color } from '~/constants/css';
 
 SubChannels.propTypes = {
@@ -22,10 +23,9 @@ export default function SubChannels({ displayedThemeColor }) {
           alignItems: 'center'
         }}
       >
-        <div>menu1</div>
-        <div>menu2</div>
-        <div>menu3</div>
-        <div>menu4</div>
+        <Item />
+        <Item />
+        <Item />
       </div>
     </ErrorBoundary>
   );
