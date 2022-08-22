@@ -20,8 +20,7 @@ export default function SubChannels({ displayedThemeColor }) {
           marginRight: '1rem',
           marginBottom: '-1rem',
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
+          flexDirection: 'column'
         }}
       >
         <Item>
