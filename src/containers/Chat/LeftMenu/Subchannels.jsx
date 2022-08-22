@@ -1,11 +1,17 @@
+import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { Color } from '~/constants/css';
 
-export default function SubChannels() {
+SubChannels.propTypes = {
+  displayedThemeColor: PropTypes.string
+};
+
+export default function SubChannels({ displayedThemeColor }) {
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
         style={{
-          border: '1px solid #e6e6e6',
+          border: `1px solid ${Color[displayedThemeColor](0.5)}`,
           padding: '1rem',
           marginTop: '2rem',
           marginLeft: '1rem',
