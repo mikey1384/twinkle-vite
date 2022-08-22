@@ -664,6 +664,7 @@ function Chat({ onFileUpload }) {
               )}
               <LeftMenu
                 selectedChannelId={selectedChannelId}
+                displayedThemeColor={displayedThemeColor}
                 onNewButtonClick={() => setCreateNewChatModalShown(true)}
                 showUserListModal={() => setUserListModalShown(true)}
               />

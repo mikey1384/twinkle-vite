@@ -16,11 +16,16 @@ import localize from '~/constants/localize';
 const newChatLabel = localize('newChat');
 
 LeftMenu.propTypes = {
+  displayedThemeColor: PropTypes.string,
   onNewButtonClick: PropTypes.func.isRequired,
   selectedChannelId: PropTypes.number
 };
 
-function LeftMenu({ onNewButtonClick, selectedChannelId }) {
+function LeftMenu({
+  displayedThemeColor,
+  onNewButtonClick,
+  selectedChannelId
+}) {
   const navigate = useNavigate();
   const {
     chatFlatButton: {
@@ -109,7 +114,9 @@ function LeftMenu({ onNewButtonClick, selectedChannelId }) {
         }}
       />
       <Tabs />
-      {generalChatSelected && <Subchannels />}
+      {generalChatSelected && (
+        <Subchannels displayedThemeColor={displayedThemeColor} />
+      )}
       <Channels />
     </div>
   );
