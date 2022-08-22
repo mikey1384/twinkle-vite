@@ -51,7 +51,7 @@ export default function SubChannels({ displayedThemeColor }) {
         </nav>
         <nav>
           <Icon icon="comments" />
-          <span style={{ marginLeft: '1rem' }}>Free Chat</span>
+          <span style={{ marginLeft: '1rem' }}>General Chat</span>
         </nav>
         <nav>
           <Icon icon="bullhorn" />
