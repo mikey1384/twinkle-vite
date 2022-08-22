@@ -108,30 +108,9 @@ function LeftMenu({ onNewButtonClick, selectedChannelId }) {
           width: '100%'
         }}
       />
-      <div style={{ width: '100%', position: 'relative', height: '100%' }}>
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0
-          }}
-        >
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            <Tabs />
-            {generalChatSelected && <Subchannels />}
-            <Channels />
-          </div>
-        </div>
-      </div>
+      <Tabs />
+      {generalChatSelected && <Subchannels />}
+      <Channels />
     </div>
   );
 }

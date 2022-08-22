@@ -147,8 +147,8 @@ function Channels() {
         style={{
           overflow: 'scroll',
           width: '100%',
-          height: '100%',
-          marginTop: '1rem'
+          marginTop: '1rem',
+          flex: 1
         }}
       >
         {channelIds
