@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Item from './Item';
 import Icon from '~/components/Icon';
-import { Color } from '~/constants/css';
+import { css } from '@emotion/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 
 SubChannels.propTypes = {
   displayedThemeColor: PropTypes.string
@@ -12,6 +12,28 @@ export default function SubChannels({ displayedThemeColor }) {
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
+        className={css`
+          > nav {
+            color: ${Color.darkerGray()};
+            cursor: pointer;
+            width: 100%;
+            padding: 0.7rem 2.5rem;
+            text-align: left;
+            font-size: 1.4rem;
+            font-family: Helvetica;
+            &:hover {
+              background: ${Color.checkboxAreaGray()};
+            }
+            &.active {
+              color: ${Color.vantaBlack()};
+              background: ${Color.highlightGray()};
+            }
+            @media (max-width: ${mobileMaxWidth}) {
+              padding: 0.7rem 1rem;
+              font-size: 1.2rem;
+            }
+          }
+        `}
         style={{
           border: `1px solid ${Color[displayedThemeColor](0.5)}`,
           padding: '0.5rem 0',
@@ -23,18 +45,18 @@ export default function SubChannels({ displayedThemeColor }) {
           flexDirection: 'column'
         }}
       >
-        <Item>
+        <nav className="active">
           <Icon icon="home" />
           <span style={{ marginLeft: '1rem' }}>Home</span>
-        </Item>
-        <Item>
+        </nav>
+        <nav>
           <Icon icon="comments" />
           <span style={{ marginLeft: '1rem' }}>Free Chat</span>
-        </Item>
-        <Item>
+        </nav>
+        <nav>
           <Icon icon="bullhorn" />
           <span style={{ marginLeft: '1rem' }}>Announcements</span>
-        </Item>
+        </nav>
       </div>
     </ErrorBoundary>
   );
