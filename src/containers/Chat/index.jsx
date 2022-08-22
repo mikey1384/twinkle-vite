@@ -663,6 +663,7 @@ function Chat({ onFileUpload }) {
                 />
               )}
               <LeftMenu
+                selectedChannelId={selectedChannelId}
                 onNewButtonClick={() => setCreateNewChatModalShown(true)}
                 showUserListModal={() => setUserListModalShown(true)}
               />

@@ -5,19 +5,22 @@ import Channels from './Channels';
 import Vocabulary from './Vocabulary';
 import Icon from '~/components/Icon';
 import Tabs from './Tabs';
+import Subchannels from './Subchannels';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
+import { GENERAL_CHAT_ID } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const newChatLabel = localize('newChat');
 
 LeftMenu.propTypes = {
-  onNewButtonClick: PropTypes.func.isRequired
+  onNewButtonClick: PropTypes.func.isRequired,
+  selectedChannelId: PropTypes.number
 };
 
-function LeftMenu({ onNewButtonClick }) {
+function LeftMenu({ onNewButtonClick, selectedChannelId }) {
   const navigate = useNavigate();
   const {
     chatFlatButton: {
@@ -39,6 +42,10 @@ function LeftMenu({ onNewButtonClick }) {
   const leftMenuTopButtonHoverColor = useMemo(
     () => Color[chatFlatButtonHoveredColor](),
     [chatFlatButtonHoveredColor]
+  );
+  const generalChatSelected = useMemo(
+    () => selectedChannelId === GENERAL_CHAT_ID,
+    [selectedChannelId]
   );
 
   return (
@@ -120,6 +127,7 @@ function LeftMenu({ onNewButtonClick }) {
             }}
           >
             <Tabs />
+            {generalChatSelected && <Subchannels />}
             <Channels />
           </div>
         </div>
