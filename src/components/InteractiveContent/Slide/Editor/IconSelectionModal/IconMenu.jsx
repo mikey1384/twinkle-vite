@@ -17,6 +17,7 @@ const availableIcons = [
   'bolt',
   'book',
   'briefcase',
+  'bullhorn',
   'camera-alt',
   'caret-down',
   'certificate',
