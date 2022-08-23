@@ -142,6 +142,7 @@ export default function StatusMessage({
               icon={status === 'pass' ? 'check' : 'times'}
             />
             <LongText
+              style={{ width: 'auto' }}
               className={css`
                 font-size: 1.7rem;
                 margin-left: 2rem;
