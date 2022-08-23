@@ -13,7 +13,7 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Route, Routes, useParams, useNavigate } from 'react-router-dom';
 import {
   useAppContext,
   useContentContext,
@@ -662,12 +662,30 @@ function Chat({ onFileUpload }) {
                   title="Online Status"
                 />
               )}
-              <LeftMenu
-                selectedChannelId={selectedChannelId}
-                displayedThemeColor={displayedThemeColor}
-                onNewButtonClick={() => setCreateNewChatModalShown(true)}
-                showUserListModal={() => setUserListModalShown(true)}
-              />
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <LeftMenu
+                      selectedChannelId={selectedChannelId}
+                      displayedThemeColor={displayedThemeColor}
+                      onNewButtonClick={() => setCreateNewChatModalShown(true)}
+                      showUserListModal={() => setUserListModalShown(true)}
+                    />
+                  }
+                />
+                <Route
+                  path="/:subChannelPath"
+                  element={
+                    <LeftMenu
+                      selectedChannelId={selectedChannelId}
+                      displayedThemeColor={displayedThemeColor}
+                      onNewButtonClick={() => setCreateNewChatModalShown(true)}
+                      showUserListModal={() => setUserListModalShown(true)}
+                    />
+                  }
+                />
+              </Routes>
               <Body
                 displayedThemeColor={displayedThemeColor}
                 loading={loading}

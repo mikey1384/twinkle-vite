@@ -9,7 +9,7 @@ import Subchannels from './Subchannels';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { GENERAL_CHAT_ID } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
@@ -26,6 +26,7 @@ function LeftMenu({
   onNewButtonClick,
   selectedChannelId
 }) {
+  const { subChannelPath } = useParams();
   const navigate = useNavigate();
   const {
     chatFlatButton: {
@@ -115,7 +116,10 @@ function LeftMenu({
       />
       <Tabs />
       {generalChatSelected && (
-        <Subchannels displayedThemeColor={displayedThemeColor} />
+        <Subchannels
+          displayedThemeColor={displayedThemeColor}
+          subChannelPath={subChannelPath}
+        />
       )}
       <Channels />
     </div>
