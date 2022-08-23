@@ -664,17 +664,6 @@ function Chat({ onFileUpload }) {
               )}
               <Routes>
                 <Route
-                  path="/"
-                  element={
-                    <LeftMenu
-                      selectedChannelId={selectedChannelId}
-                      displayedThemeColor={displayedThemeColor}
-                      onNewButtonClick={() => setCreateNewChatModalShown(true)}
-                      showUserListModal={() => setUserListModalShown(true)}
-                    />
-                  }
-                />
-                <Route
                   path="/:subChannelPath"
                   element={
                     <LeftMenu
@@ -685,14 +674,44 @@ function Chat({ onFileUpload }) {
                     />
                   }
                 />
+                <Route
+                  path="/"
+                  element={
+                    <LeftMenu
+                      selectedChannelId={selectedChannelId}
+                      displayedThemeColor={displayedThemeColor}
+                      onNewButtonClick={() => setCreateNewChatModalShown(true)}
+                      showUserListModal={() => setUserListModalShown(true)}
+                    />
+                  }
+                />
               </Routes>
-              <Body
-                displayedThemeColor={displayedThemeColor}
-                loading={loading}
-                channelName={currentChannelName}
-                chessOpponent={partner}
-                currentChannel={currentChannel}
-              />
+              <Routes>
+                <Route
+                  path="/:subChannelPath"
+                  element={
+                    <Body
+                      displayedThemeColor={displayedThemeColor}
+                      loading={loading}
+                      channelName={currentChannelName}
+                      chessOpponent={partner}
+                      currentChannel={currentChannel}
+                    />
+                  }
+                />
+                <Route
+                  path="/"
+                  element={
+                    <Body
+                      displayedThemeColor={displayedThemeColor}
+                      loading={loading}
+                      channelName={currentChannelName}
+                      chessOpponent={partner}
+                      currentChannel={currentChannel}
+                    />
+                  }
+                />
+              </Routes>
               <RightMenu
                 channelOnCall={channelOnCall}
                 channelName={currentChannelName}
