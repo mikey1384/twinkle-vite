@@ -1,20 +1,31 @@
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
+import Link from '~/components/Link';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
 SubChannels.propTypes = {
+  currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   displayedThemeColor: PropTypes.string,
   subChannelPath: PropTypes.string
 };
 
-export default function SubChannels({ displayedThemeColor, subChannelPath }) {
+export default function SubChannels({
+  currentPathId,
+  displayedThemeColor,
+  subChannelPath
+}) {
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
         className={css`
-          > nav {
+          a {
+            &:hover {
+              text-decoration: none;
+            }
+          }
+          nav {
             color: ${Color.darkerGray()};
             cursor: pointer;
             width: 100%;
@@ -46,18 +57,24 @@ export default function SubChannels({ displayedThemeColor, subChannelPath }) {
           flexDirection: 'column'
         }}
       >
-        <nav className={subChannelPath === 'home' ? 'active' : ''}>
-          <Icon icon="home" />
-          <span style={{ marginLeft: '1rem' }}>Home</span>
-        </nav>
-        <nav className={subChannelPath === 'chat' ? 'active' : ''}>
-          <Icon icon="comments" />
-          <span style={{ marginLeft: '1rem' }}>General Chat</span>
-        </nav>
-        <nav className={subChannelPath === 'announcement' ? 'active' : ''}>
-          <Icon icon="bullhorn" />
-          <span style={{ marginLeft: '1rem' }}>Announcements</span>
-        </nav>
+        <Link to={`/chat/${currentPathId}`}>
+          <nav className={!subChannelPath ? 'active' : ''}>
+            <Icon icon="home" />
+            <span style={{ marginLeft: '1rem' }}>Main</span>
+          </nav>
+        </Link>
+        <Link to={`/chat/${currentPathId}/chat`}>
+          <nav className={subChannelPath === 'chat' ? 'active' : ''}>
+            <Icon icon="comments" />
+            <span style={{ marginLeft: '1rem' }}>General Chat</span>
+          </nav>
+        </Link>
+        <Link to={`/chat/${currentPathId}/announcements`}>
+          <nav className={subChannelPath === 'announcements' ? 'active' : ''}>
+            <Icon icon="bullhorn" />
+            <span style={{ marginLeft: '1rem' }}>Announcements</span>
+          </nav>
+        </Link>
       </div>
     </ErrorBoundary>
   );

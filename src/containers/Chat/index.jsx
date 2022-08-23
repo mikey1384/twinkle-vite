@@ -667,6 +667,7 @@ function Chat({ onFileUpload }) {
                   path="/:subChannelPath"
                   element={
                     <LeftMenu
+                      currentPathId={currentPathId}
                       selectedChannelId={selectedChannelId}
                       displayedThemeColor={displayedThemeColor}
                       onNewButtonClick={() => setCreateNewChatModalShown(true)}
@@ -678,6 +679,7 @@ function Chat({ onFileUpload }) {
                   path="/"
                   element={
                     <LeftMenu
+                      currentPathId={currentPathId}
                       selectedChannelId={selectedChannelId}
                       displayedThemeColor={displayedThemeColor}
                       onNewButtonClick={() => setCreateNewChatModalShown(true)}
