@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { matchPath, Navigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
@@ -7,6 +6,8 @@ import Home from './Home';
 import LikedPosts from './LikedPosts';
 import Posts from './Posts';
 import {
+  matchPath,
+  Navigate,
   Routes,
   Route,
   useParams,

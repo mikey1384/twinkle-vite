@@ -5,10 +5,11 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
 SubChannels.propTypes = {
-  displayedThemeColor: PropTypes.string
+  displayedThemeColor: PropTypes.string,
+  subChannelPath: PropTypes.string
 };
 
-export default function SubChannels({ displayedThemeColor }) {
+export default function SubChannels({ displayedThemeColor, subChannelPath }) {
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
@@ -45,15 +46,15 @@ export default function SubChannels({ displayedThemeColor }) {
           flexDirection: 'column'
         }}
       >
-        <nav className="active">
+        <nav className={subChannelPath === 'home' ? 'active' : ''}>
           <Icon icon="home" />
           <span style={{ marginLeft: '1rem' }}>Home</span>
         </nav>
-        <nav>
+        <nav className={subChannelPath === 'chat' ? 'active' : ''}>
           <Icon icon="comments" />
           <span style={{ marginLeft: '1rem' }}>General Chat</span>
         </nav>
-        <nav>
+        <nav className={subChannelPath === 'announcement' ? 'active' : ''}>
           <Icon icon="bullhorn" />
           <span style={{ marginLeft: '1rem' }}>Announcements</span>
         </nav>
