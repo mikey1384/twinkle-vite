@@ -8,13 +8,17 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 SubChannels.propTypes = {
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   displayedThemeColor: PropTypes.string,
-  subChannelPath: PropTypes.string
+  subChannelPath: PropTypes.string,
+  subchannelIds: PropTypes.arrayOf(PropTypes.number),
+  subchannelObj: PropTypes.object
 };
 
 export default function SubChannels({
   currentPathId,
   displayedThemeColor,
-  subChannelPath
+  subChannelPath,
+  subchannelIds,
+  subchannelObj
 }) {
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
@@ -63,18 +67,25 @@ export default function SubChannels({
             <span style={{ marginLeft: '1rem' }}>Main</span>
           </nav>
         </Link>
-        <Link to={`/chat/${currentPathId}/chat`}>
-          <nav className={subChannelPath === 'chat' ? 'active' : ''}>
-            <Icon icon="comments" />
-            <span style={{ marginLeft: '1rem' }}>General Chat</span>
-          </nav>
-        </Link>
-        <Link to={`/chat/${currentPathId}/announcements`}>
-          <nav className={subChannelPath === 'announcements' ? 'active' : ''}>
-            <Icon icon="bullhorn" />
-            <span style={{ marginLeft: '1rem' }}>Announcements</span>
-          </nav>
-        </Link>
+        {subchannelIds.map((subchannelId) => (
+          <Link
+            key={subchannelId}
+            to={`/chat/${currentPathId}/${subchannelObj[subchannelId].path}`}
+          >
+            <nav
+              className={
+                subChannelPath === subchannelObj[subchannelId].path
+                  ? 'active'
+                  : ''
+              }
+            >
+              <Icon icon={subchannelObj[subchannelId].icon} />
+              <span style={{ marginLeft: '1rem' }}>
+                {subchannelObj[subchannelId].label}
+              </span>
+            </nav>
+          </Link>
+        ))}
       </div>
     </ErrorBoundary>
   );
