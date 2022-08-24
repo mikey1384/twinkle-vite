@@ -40,7 +40,7 @@ import { socket } from '~/constants/io';
 import { isMobile, parseChannelPath } from '~/helpers';
 import { useTheme } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAppContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
@@ -125,11 +125,14 @@ function MessagesContainer({
   } = useContext(LocalContext);
   const { banned, profilePicUrl, userId, profileTheme, username } =
     useKeyContext((v) => v.myState);
+  const { subChannelPath } = useParams();
   const {
     isRespondingToSubject = false,
     messageIds = [],
     messagesObj = {},
     messagesLoadMoreButton = false,
+    subchannelIds,
+    subchannelObj,
     wordleGuesses,
     wordleSolution,
     wordleWordLevel,
@@ -141,7 +144,6 @@ function MessagesContainer({
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useTheme(twoPeople ? profileTheme : displayedThemeColor || profileTheme);
-
   const scrolledToBottomRef = useRef(true);
   const loadMoreButtonLock = useRef(false);
   const currentPathId = useMemo(() => pathname.split('chat/')[1], [pathname]);
@@ -149,7 +151,6 @@ function MessagesContainer({
     () => inputState['chat' + selectedChannelId]?.text || '',
     [selectedChannelId, inputState]
   );
-
   const [chessCountdownObj, setChessCountdownObj] = useState({});
   const [wordleModalShown, setWordleModalShown] = useState(false);
   const [textAreaHeight, setTextAreaHeight] = useState(0);
@@ -182,12 +183,38 @@ function MessagesContainer({
   const prevChannelId = useRef(null);
   const prevTopMessageId = useRef(null);
   const prevScrollPosition = useRef(null);
+
+  const subChannel = useMemo(() => {
+    if (!subChannelPath) {
+      return null;
+    }
+    for (let subchannelId of subchannelIds) {
+      if (subchannelObj[subchannelId]?.path === subChannelPath) {
+        return subchannelObj[subchannelId];
+      }
+    }
+    return null;
+  }, [subChannelPath, subchannelIds, subchannelObj]);
+
+  const loadMoreButtonShown = useMemo(() => {
+    if (subChannel) {
+      return subChannel?.loadMoreButtonShown;
+    }
+    return messagesLoadMoreButton;
+  }, [messagesLoadMoreButton, subChannel]);
+
   const messages = useMemo(() => {
+    const displayedMessageIds = subChannel
+      ? subChannel?.messageIds
+      : messageIds;
+    const displayedMessagesObj = subChannel
+      ? subChannel?.messagesObj
+      : messagesObj;
     const result = [];
     const dupe = {};
-    for (let messageId of messageIds) {
+    for (let messageId of displayedMessageIds) {
       if (!dupe[messageId]) {
-        const message = messagesObj[messageId];
+        const message = displayedMessagesObj[messageId];
         if (message) {
           result.push(message);
           dupe[messageId] = true;
@@ -195,7 +222,7 @@ function MessagesContainer({
       }
     }
     return result;
-  }, [messageIds, messagesObj]);
+  }, [messageIds, messagesObj, subChannel]);
 
   const favorited = useMemo(() => {
     return allFavoriteChannelIds[selectedChannelId];
@@ -726,7 +753,7 @@ function MessagesContainer({
   ]);
 
   const handleLoadMore = useCallback(async () => {
-    if (messagesLoadMoreButton) {
+    if (loadMoreButtonShown) {
       const messageId = messages[messages.length - 1].id;
       if (!loadMoreButtonLock.current) {
         setLoadingMore(true);
@@ -753,7 +780,7 @@ function MessagesContainer({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, messagesLoadMoreButton, selectedChannelId, userId]);
+  }, [messages, loadMoreButtonShown, selectedChannelId, userId]);
 
   const handleAcceptGroupInvitation = useCallback(
     async (invitationChannelPath) => {
@@ -1100,7 +1127,7 @@ function MessagesContainer({
                 />
               ))}
               {!loadingAnimationShown &&
-                (messagesLoadMoreButton ? (
+                (loadMoreButtonShown ? (
                   <div>
                     <div style={{ width: '100%', height: '1rem' }} />
                     <div
