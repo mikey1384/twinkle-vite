@@ -10,7 +10,6 @@ import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { useParams, useNavigate } from 'react-router-dom';
-import { GENERAL_CHAT_ID } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const newChatLabel = localize('newChat');
@@ -19,14 +18,16 @@ LeftMenu.propTypes = {
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   displayedThemeColor: PropTypes.string,
   onNewButtonClick: PropTypes.func.isRequired,
-  selectedChannelId: PropTypes.number
+  subchannelIds: PropTypes.arrayOf(PropTypes.number),
+  subchannelObj: PropTypes.object
 };
 
 function LeftMenu({
   currentPathId,
   displayedThemeColor,
   onNewButtonClick,
-  selectedChannelId
+  subchannelIds,
+  subchannelObj
 }) {
   const { subChannelPath } = useParams();
   const navigate = useNavigate();
@@ -50,10 +51,6 @@ function LeftMenu({
   const leftMenuTopButtonHoverColor = useMemo(
     () => Color[chatFlatButtonHoveredColor](),
     [chatFlatButtonHoveredColor]
-  );
-  const generalChatSelected = useMemo(
-    () => selectedChannelId === GENERAL_CHAT_ID,
-    [selectedChannelId]
   );
 
   return (
@@ -117,11 +114,13 @@ function LeftMenu({
         }}
       />
       <Tabs />
-      {generalChatSelected && (
+      {!!subchannelIds?.length && (
         <Subchannels
           currentPathId={currentPathId}
           displayedThemeColor={displayedThemeColor}
           subChannelPath={subChannelPath}
+          subchannelIds={subchannelIds}
+          subchannelObj={subchannelObj}
         />
       )}
       <Channels />

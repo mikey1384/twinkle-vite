@@ -668,10 +668,10 @@ function Chat({ onFileUpload }) {
                   element={
                     <LeftMenu
                       currentPathId={currentPathId}
-                      selectedChannelId={selectedChannelId}
                       displayedThemeColor={displayedThemeColor}
                       onNewButtonClick={() => setCreateNewChatModalShown(true)}
-                      showUserListModal={() => setUserListModalShown(true)}
+                      subchannelIds={currentChannel.subchannelIds}
+                      subchannelObj={currentChannel.subchannelObj}
                     />
                   }
                 />
@@ -680,10 +680,10 @@ function Chat({ onFileUpload }) {
                   element={
                     <LeftMenu
                       currentPathId={currentPathId}
-                      selectedChannelId={selectedChannelId}
                       displayedThemeColor={displayedThemeColor}
                       onNewButtonClick={() => setCreateNewChatModalShown(true)}
-                      showUserListModal={() => setUserListModalShown(true)}
+                      subchannelIds={currentChannel.subchannelIds}
+                      subchannelObj={currentChannel.subchannelObj}
                     />
                   }
                 />
