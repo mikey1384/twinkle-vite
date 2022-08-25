@@ -214,6 +214,7 @@ function ProfilePanel({ expandable, profileId, style }) {
         const data = await loadComments({
           contentId: profileId,
           contentType: 'user',
+          isPreview: true,
           limit: 1
         });
         onLoadComments({
