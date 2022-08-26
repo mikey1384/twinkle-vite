@@ -467,6 +467,8 @@ export default function ChatReducer(state, action) {
           [selectedChannel.id]: {
             ...selectedChannel,
             messagesLoadMoreButton,
+            subchannelIds: action.data.channel?.subchannelIds,
+            subchannelObj: action.data.channel?.subchannelObj,
             messageIds: action.data.messageIds,
             messagesObj: action.data.messagesObj,
             numUnreads: 0,
