@@ -222,10 +222,12 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadChat(channelId) {
+    async loadChat({ channelId, subchannelId }) {
       try {
         const { data } = await request.get(
-          `${URL}/chat?channelId=${channelId}`,
+          `${URL}/chat?channelId=${channelId}${
+            subchannelId ? `&subchannelId=${subchannelId}` : ''
+          }`,
           auth()
         );
         return Promise.resolve(data);
