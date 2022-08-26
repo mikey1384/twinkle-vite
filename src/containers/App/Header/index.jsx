@@ -88,17 +88,11 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
 
-  const subchannelId = useMemo(() => {
+  const subchannelPath = useMemo(() => {
     if (!currentPathId) return null;
-    const [, subchannelPath] = currentPathId.split('/');
-    const currentChannel = channelsObj?.[selectedChannelId] || {};
-    for (let subchannel of Object.values(currentChannel?.subchannelObj || {})) {
-      if (subchannel.path === subchannelPath) {
-        return subchannel.id;
-      }
-    }
-    return null;
-  }, [channelsObj, currentPathId, selectedChannelId]);
+    const [, result] = currentPathId.split('/');
+    return result;
+  }, [currentPathId]);
 
   const myStream = useChatContext((v) => v.state.myStream);
   const numUnreads = useChatContext((v) => v.state.numUnreads);
@@ -389,7 +383,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           channelId: !isNaN(pathId)
             ? parseChannelPath(pathId)
             : selectedChannelId,
-          subchannelId
+          subchannelPath
         });
         onInitChat(data);
         if (
