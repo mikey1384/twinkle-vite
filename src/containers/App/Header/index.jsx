@@ -46,7 +46,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   );
 
   const navigate = useNavigate();
-  const currentPathId = useMemo(() => pathname.split('chat/')[1], [pathname]);
+  const currentPathId = useMemo(
+    () => pathname.split('chat/')[1]?.split('/')?.[0],
+    [pathname]
+  );
   const usingChat = useMemo(
     () => getSectionFromPathname(pathname)?.section === 'chat',
     [pathname]
@@ -90,9 +93,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
   const subchannelPath = useMemo(() => {
     if (!currentPathId) return null;
-    const [, result] = currentPathId.split('/');
+    const [, result] = pathname.split(currentPathId)?.[1]?.split('/') || [];
     return result;
-  }, [currentPathId]);
+  }, [currentPathId, pathname]);
 
   const myStream = useChatContext((v) => v.state.myStream);
   const numUnreads = useChatContext((v) => v.state.numUnreads);

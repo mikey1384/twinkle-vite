@@ -13,7 +13,13 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
-import { Route, Routes, useParams, useNavigate } from 'react-router-dom';
+import {
+  Route,
+  Routes,
+  useLocation,
+  useParams,
+  useNavigate
+} from 'react-router-dom';
 import {
   useAppContext,
   useContentContext,
@@ -34,10 +40,17 @@ Chat.propTypes = {
 };
 
 function Chat({ onFileUpload }) {
+  const { pathname } = useLocation();
   const { lastChatPath, userId, profileTheme } = useKeyContext(
     (v) => v.myState
   );
   const { currentPathId } = useParams();
+  const subchannelPath = useMemo(() => {
+    if (!currentPathId) return null;
+    const [, result] = pathname.split(currentPathId)?.[1]?.split('/') || [];
+    return result;
+  }, [currentPathId, pathname]);
+
   const navigate = useNavigate();
   const userObj = useAppContext((v) => v.user.state.userObj);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -255,6 +268,7 @@ function Chat({ onFileUpload }) {
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
   const prevPathId = useRef('');
+  const prevSubchannelPath = useRef('');
   const prevUserId = useRef(null);
   const currentChannel = useMemo(
     () => channelsObj[selectedChannelId] || {},
@@ -269,6 +283,7 @@ function Chat({ onFileUpload }) {
   useEffect(() => {
     if (currentPathId === 'vocabulary') {
       prevPathId.current = 'vocabulary';
+      prevSubchannelPath.current = '';
       handleEnterVocabulary();
     } else {
       if (!stringIsEmpty(currentPathId)) {
@@ -276,22 +291,25 @@ function Chat({ onFileUpload }) {
       }
       if (currentPathId === 'new') {
         prevPathId.current = currentPathId;
+        prevSubchannelPath.current = '';
         if (homeChannelIds.includes(0)) {
           onEnterEmptyChat();
         } else {
           navigate(`/chat`, { replace: true });
         }
       } else if (
-        currentPathId &&
-        Number(currentPathId) !== Number(prevPathId.current) &&
+        ((currentPathId &&
+          Number(currentPathId) !== Number(prevPathId.current)) ||
+          (subchannelPath && subchannelPath !== prevSubchannelPath.current)) &&
         userId
       ) {
         prevPathId.current = currentPathId;
-        handleChannelEnter(currentPathId);
+        prevSubchannelPath.current = subchannelPath || '';
+        handleChannelEnter({ pathId: currentPathId, subchannelPath });
       }
     }
 
-    async function handleChannelEnter(pathId) {
+    async function handleChannelEnter({ pathId, subchannelPath }) {
       loadingRef.current = true;
       onUpdateChatType('default');
       const { isAccessible } = await checkChatAccessible(pathId);
@@ -302,7 +320,7 @@ function Chat({ onFileUpload }) {
       if (!channelPathIdHash[pathId]) {
         onUpdateChannelPathIdHash({ channelId, pathId });
       }
-      if (channelsObj[channelId]?.loaded) {
+      if (channelsObj[channelId]?.loaded && !subchannelPath) {
         onUpdateSelectedChannelId(channelId);
         if (lastChatPath !== `/${pathId}`) {
           updateLastChannelId(channelId);
@@ -310,7 +328,8 @@ function Chat({ onFileUpload }) {
         return;
       }
       setLoading(true);
-      const data = await loadChatChannel({ channelId });
+      const data = await loadChatChannel({ channelId, subchannelPath });
+      console.log(data);
       if (
         (!isNaN(Number(currentPathIdRef.current)) &&
           data.channel.pathId !== Number(currentPathIdRef.current)) ||
@@ -325,7 +344,7 @@ function Chat({ onFileUpload }) {
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPathId]);
+  }, [currentPathId, subchannelPath]);
 
   useEffect(() => {
     if (
