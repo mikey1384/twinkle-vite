@@ -329,7 +329,6 @@ function Chat({ onFileUpload }) {
       }
       setLoading(true);
       const data = await loadChatChannel({ channelId, subchannelPath });
-      console.log(data);
       if (
         (!isNaN(Number(currentPathIdRef.current)) &&
           data.channel.pathId !== Number(currentPathIdRef.current)) ||
