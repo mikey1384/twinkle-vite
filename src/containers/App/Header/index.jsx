@@ -84,9 +84,22 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   } = useKeyContext((v) => v.theme);
 
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
-  const channelsObj = useChatContext((v) => v.state.channelsObj);
   const chatType = useChatContext((v) => v.state.chatType);
+  const channelsObj = useChatContext((v) => v.state.channelsObj);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
+
+  const subchannelId = useMemo(() => {
+    if (!currentPathId) return null;
+    const [, subchannelPath] = currentPathId.split('/');
+    const currentChannel = channelsObj?.[selectedChannelId] || {};
+    for (let subchannel of Object.values(currentChannel?.subchannelObj || {})) {
+      if (subchannel.path === subchannelPath) {
+        return subchannel.id;
+      }
+    }
+    return null;
+  }, [channelsObj, currentPathId, selectedChannelId]);
+
   const myStream = useChatContext((v) => v.state.myStream);
   const numUnreads = useChatContext((v) => v.state.numUnreads);
   const chatStatus = useChatContext((v) => v.state.chatStatus);
@@ -361,7 +374,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           }
         );
         socket.emit('enter_my_notification_channel', userId);
-        handleLoadChat();
+        handleLoadChat(selectedChannelId);
       }
 
       async function handleLoadChat() {
@@ -372,9 +385,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           const { isAccessible } = await checkChatAccessible(pathId);
           currentChannelIsAccessible = isAccessible;
         }
-        const data = await loadChat(
-          !isNaN(pathId) ? parseChannelPath(pathId) : selectedChannelId
-        );
+        const data = await loadChat({
+          channelId: !isNaN(pathId)
+            ? parseChannelPath(pathId)
+            : selectedChannelId,
+          subchannelId
+        });
         onInitChat(data);
         if (
           !isNaN(currentPathIdRef.current) &&
