@@ -74,8 +74,10 @@ export default function MessageInput({
   subjectId
 }) {
   const textForThisChannel = useMemo(
-    () => inputState['chat' + selectedChannelId]?.text || '',
-    [selectedChannelId, inputState]
+    () =>
+      inputState['chat' + selectedChannelId + (subchannelPath || '')]?.text ||
+      '',
+    [inputState, selectedChannelId, subchannelPath]
   );
   const [inputText, setInputText] = useState(textForThisChannel);
   const { banned, fileUploadLvl } = useKeyContext((v) => v.myState);
@@ -88,6 +90,7 @@ export default function MessageInput({
   } = useContext(LocalContext);
   const FileInputRef = useRef(null);
   const prevChannelId = useRef(selectedChannelId);
+  const prevSubchannelPath = useRef(subchannelPath);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
@@ -103,7 +106,10 @@ export default function MessageInput({
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
 
   useEffect(() => {
-    if (prevChannelId !== selectedChannelId) {
+    if (
+      prevChannelId.current !== selectedChannelId ||
+      prevSubchannelPath.current !== subchannelPath
+    ) {
       onEnterComment({
         contentType: 'chat',
         contentId: prevChannelId.current,
@@ -113,8 +119,9 @@ export default function MessageInput({
       handleSetText('');
     }
     prevChannelId.current = selectedChannelId;
+    prevSubchannelPath.current = subchannelPath;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId]);
+  }, [selectedChannelId, subchannelPath]);
 
   useEffect(() => {
     handleSetText(textForThisChannel);
@@ -133,7 +140,7 @@ export default function MessageInput({
     if (!deviceIsMobile) {
       innerRef.current.focus();
     }
-  }, [selectedChannelId, innerRef]);
+  }, [selectedChannelId, subchannelPath, innerRef]);
 
   const messageExceedsCharLimit = useMemo(
     () =>
@@ -198,6 +205,7 @@ export default function MessageInput({
   }, [
     banned?.chat,
     selectedChannelId,
+    subchannelPath,
     innerRef,
     onEnterComment,
     onMessageSubmit,
