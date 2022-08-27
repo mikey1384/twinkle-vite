@@ -62,7 +62,8 @@ MessagesContainer.propTypes = {
   chessOpponent: PropTypes.object,
   currentChannel: PropTypes.object.isRequired,
   displayedThemeColor: PropTypes.string,
-  loading: PropTypes.bool
+  loading: PropTypes.bool,
+  subchannelPath: PropTypes.string
 };
 
 function MessagesContainer({
@@ -70,7 +71,8 @@ function MessagesContainer({
   chessOpponent,
   currentChannel,
   displayedThemeColor,
-  loading: channelLoading
+  loading: channelLoading,
+  subchannelPath
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
@@ -1215,6 +1217,7 @@ function MessagesContainer({
           onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
           recepientId={recepientId}
           replyTarget={currentChannel.replyTarget}
+          subchannelPath={subchannelPath}
           subjectId={subjectId}
         />
       </div>

@@ -45,12 +45,6 @@ function Chat({ onFileUpload }) {
     (v) => v.myState
   );
   const { currentPathId } = useParams();
-  const subchannelPath = useMemo(() => {
-    if (!currentPathId) return null;
-    const [, result] = pathname.split(currentPathId)?.[1]?.split('/') || [];
-    return result;
-  }, [currentPathId, pathname]);
-
   const navigate = useNavigate();
   const userObj = useAppContext((v) => v.user.state.userObj);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -268,13 +262,34 @@ function Chat({ onFileUpload }) {
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
   const prevPathId = useRef('');
-  const prevSubchannelPath = useRef('');
   const prevUserId = useRef(null);
+  const currentPathIdRef = useRef(currentPathId);
   const currentChannel = useMemo(
     () => channelsObj[selectedChannelId] || {},
     [channelsObj, selectedChannelId]
   );
-  const currentPathIdRef = useRef(currentPathId);
+  const subchannelPath = useMemo(() => {
+    if (!currentPathId) return '';
+    const [, result] = pathname.split(currentPathId)?.[1]?.split('/') || [];
+    return result || '';
+  }, [currentPathId, pathname]);
+  const prevSubchannelPath = useRef(subchannelPath);
+
+  useEffect(() => {
+    let subchannelPathExistsAndIsInvalid = true;
+    if (!stringIsEmpty(subchannelPath) && currentChannel?.subchannelObj) {
+      for (let value of Object.values(currentChannel?.subchannelObj)) {
+        if (value.path === subchannelPath) {
+          subchannelPathExistsAndIsInvalid = false;
+        }
+      }
+    } else {
+      subchannelPathExistsAndIsInvalid = false;
+    }
+    if (subchannelPathExistsAndIsInvalid) {
+      navigate('/chat', { replace: true });
+    }
+  }, [currentChannel?.subchannelObj, navigate, subchannelPath]);
 
   useEffect(() => {
     currentPathIdRef.current = currentPathId;
@@ -716,6 +731,7 @@ function Chat({ onFileUpload }) {
                       channelName={currentChannelName}
                       chessOpponent={partner}
                       currentChannel={currentChannel}
+                      subchannelPath={subchannelPath}
                     />
                   }
                 />
