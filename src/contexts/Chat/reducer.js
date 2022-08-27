@@ -510,7 +510,7 @@ export default function ChatReducer(state, action) {
         numUnreads: action.numUnreads
       };
     case 'HANG_UP': {
-      const newChannelOnCallMembers = { ...state.channelOnCall.members };
+      const newChannelOnCallMembers = { ...state.channelOnCall?.members };
       delete newChannelOnCallMembers[action.memberId];
       const newPeerStreams = { ...state.peerStreams };
       if (!action.iHungUp) {
@@ -712,7 +712,7 @@ export default function ChatReducer(state, action) {
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             loaded: false,
-            members: state.channelsObj[action.channelId].members.filter(
+            members: state.channelsObj[action.channelId]?.members.filter(
               (member) => member.id !== action.userId
             )
           }
@@ -1373,7 +1373,7 @@ export default function ChatReducer(state, action) {
           members:
             Object.keys(action.members).length > 0
               ? {
-                  ...state.channelOnCall.members,
+                  ...state.channelOnCall?.members,
                   ...action.members
                 }
               : {}
