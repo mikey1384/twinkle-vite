@@ -52,7 +52,7 @@ function Body({
               <Vocabulary />
             ) : (
               <MessagesContainer
-                key={currentChannel.id}
+                key={currentChannel.id + subchannelPath}
                 displayedThemeColor={displayedThemeColor}
                 loading={loading}
                 channelName={channelName}
