@@ -73,7 +73,6 @@ export default function MessageInput({
   subchannelPath,
   subjectId
 }) {
-  console.log(subchannelPath, 'hi');
   const textForThisChannel = useMemo(
     () => inputState['chat' + selectedChannelId]?.text || '',
     [selectedChannelId, inputState]
@@ -108,6 +107,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: prevChannelId.current,
+        subId: subchannelPath,
         text: textRef.current
       });
       handleSetText('');
@@ -150,6 +150,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: prevChannelId.current,
+        subId: subchannelPath,
         text: textRef.current
       });
     };
@@ -187,6 +188,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: selectedChannelId,
+        subId: subchannelPath,
         text: ''
       });
     } catch (error) {
@@ -210,6 +212,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: selectedChannelId,
+        subId: subchannelPath,
         text: newText
       });
     }, 700);

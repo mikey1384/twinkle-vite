@@ -1,10 +1,11 @@
 export default function InputActions(dispatch) {
   return {
-    onEnterComment({ contentId, contentType, text }) {
+    onEnterComment({ contentId, contentType, text, subId }) {
       return dispatch({
         type: 'ENTER_COMMENT',
         contentId,
         contentType,
+        subId,
         text:
           contentType === 'vocabulary'
             ? text.replace(/\s+/g, ' ').toLowerCase()

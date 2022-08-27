@@ -5,7 +5,7 @@ export default function InputReducer(state, action) {
     action.contentType === 'vocabulary'
       ? 'vocabulary'
       : action.contentType && typeof action.contentId === 'number'
-      ? action.contentType + action.contentId
+      ? action.contentType + action.contentId + (action.subId || '')
       : 'temp';
   switch (action.type) {
     case 'ENTER_COMMENT':
