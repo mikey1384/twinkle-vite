@@ -13,7 +13,8 @@ Body.propTypes = {
   chessOpponent: PropTypes.object,
   currentChannel: PropTypes.object,
   displayedThemeColor: PropTypes.string,
-  loading: PropTypes.bool
+  loading: PropTypes.bool,
+  subchannelPath: PropTypes.string
 };
 
 function Body({
@@ -21,7 +22,8 @@ function Body({
   chessOpponent,
   currentChannel,
   displayedThemeColor,
-  loading
+  loading,
+  subchannelPath
 }) {
   const {
     state: { chatType, loadingVocabulary }
@@ -56,6 +58,7 @@ function Body({
                 channelName={channelName}
                 chessOpponent={chessOpponent}
                 currentChannel={currentChannel}
+                subchannelPath={subchannelPath}
               />
             )}
           </>

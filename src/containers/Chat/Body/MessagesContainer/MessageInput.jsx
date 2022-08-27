@@ -49,6 +49,7 @@ MessageInput.propTypes = {
   replyTarget: PropTypes.object,
   recepientId: PropTypes.number,
   socketConnected: PropTypes.bool,
+  subchannelPath: PropTypes.string,
   subjectId: PropTypes.number
 };
 
@@ -69,8 +70,10 @@ export default function MessageInput({
   replyTarget,
   recepientId,
   socketConnected,
+  subchannelPath,
   subjectId
 }) {
+  console.log(subchannelPath, 'hi');
   const textForThisChannel = useMemo(
     () => inputState['chat' + selectedChannelId]?.text || '',
     [selectedChannelId, inputState]
