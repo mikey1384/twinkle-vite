@@ -1,7 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import CreateNewChat from './Modals/CreateNewChat';
-import UserListModal from '~/components/Modals/UserListModal';
 import LeftMenu from './LeftMenu';
 import RightMenu from './RightMenu';
 import Body from './Body';
@@ -258,7 +257,6 @@ function Chat({ onFileUpload }) {
   const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
   const [creatingChat, setCreatingChat] = useState(false);
   const [createNewChatModalShown, setCreateNewChatModalShown] = useState(false);
-  const [userListModalShown, setUserListModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
   const prevPathId = useRef('');
@@ -278,8 +276,8 @@ function Chat({ onFileUpload }) {
   useEffect(() => {
     let subchannelPathExistsAndIsInvalid = true;
     if (!stringIsEmpty(subchannelPath) && currentChannel?.subchannelObj) {
-      for (let value of Object.values(currentChannel?.subchannelObj)) {
-        if (value.path === subchannelPath) {
+      for (let subchannel of Object.values(currentChannel?.subchannelObj)) {
+        if (subchannel.path === subchannelPath) {
           subchannelPathExistsAndIsInvalid = false;
         }
       }
@@ -486,7 +484,7 @@ function Chat({ onFileUpload }) {
   const currentChannelOnlineMembers = useMemo(() => {
     if (currentChannel.id === GENERAL_CHAT_ID) {
       const result = {};
-      for (let [, member] of Object.entries(chatStatus)) {
+      for (let member of Object.values(chatStatus)) {
         if (member?.isOnline) {
           result[member.id] = member;
         }
@@ -681,20 +679,6 @@ function Chat({ onFileUpload }) {
                   onDone={handleCreateNewChannel}
                 />
               )}
-              {userListModalShown && (
-                <UserListModal
-                  onHide={() => setUserListModalShown(false)}
-                  users={returnUsers(
-                    currentChannel,
-                    currentChannelOnlineMembers
-                  )}
-                  descriptionShown={(user) =>
-                    !!currentChannelOnlineMembers[user.id]
-                  }
-                  description="(online)"
-                  title="Online Status"
-                />
-              )}
               <Routes>
                 <Route
                   path="/:subChannelPath"
@@ -766,12 +750,6 @@ function Chat({ onFileUpload }) {
       </ErrorBoundary>
     </LocalContext.Provider>
   );
-
-  function returnUsers({ members: allMembers }, currentChannelOnlineMembers) {
-    return allMembers.length > 0
-      ? allMembers
-      : Object.entries(currentChannelOnlineMembers).map(([, member]) => member);
-  }
 }
 
 export default memo(Chat);

@@ -62,11 +62,9 @@ function ChatInfo({
   const displayedChannelMembers = useMemo(() => {
     const totalChannelMembers = currentChannel?.members || [];
     const me = { id: myId, username, profilePicUrl };
-    let currentChannelOnlineMembersOtherThanMe = Object.entries(
+    let currentChannelOnlineMembersOtherThanMe = Object.values(
       currentChannelOnlineMembers
-    )
-      .map(([, member]) => member)
-      .filter((member) => !!member.id && member.id !== myId);
+    ).filter((member) => !!member.id && member.id !== myId);
     if (selectedChannelId !== GENERAL_CHAT_ID) {
       const totalChannelMemberIds = totalChannelMembers.map(
         (member) => member.id
