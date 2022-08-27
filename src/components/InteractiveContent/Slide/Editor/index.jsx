@@ -150,7 +150,7 @@ export default function Editor({
 
   const pathsExist = useMemo(() => {
     if (!paths) return false;
-    for (let [, path] of Object.entries(paths)) {
+    for (let path of Object.values(paths)) {
       if (path.length > 0) return true;
     }
     return false;
@@ -260,7 +260,7 @@ export default function Editor({
       return true;
     }
     if (editedIsFork) {
-      for (let [, button] of Object.entries(editedForkButtonsObj)) {
+      for (let button of Object.values(editedForkButtonsObj)) {
         if (
           stringIsEmpty(button.label) ||
           exceedsCharLimit({

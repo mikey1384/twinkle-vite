@@ -399,9 +399,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           'check_online_members',
           selectedChannelId,
           ({ membersOnline }) => {
-            const members = Object.entries(membersOnline).map(
-              ([, member]) => member
-            );
+            const members = Object.values(membersOnline);
             const onlineMemberIds = members.map((member) => member.id);
             onSetOnlineMembers(onlineMemberIds);
             for (let member of members) {
@@ -781,9 +779,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       ({ callData, membersOnline }) => {
         if (callData && Object.keys(membersOnCall.current).length === 0) {
           const membersHash = {};
-          for (let member of Object.entries(membersOnline)
-            .map(([, member]) => member)
-            .filter((member) => !!callData.peers[member.socketId])) {
+          for (let member of Object.values(membersOnline).filter(
+            (member) => !!callData.peers[member.socketId]
+          )) {
             membersHash[member.id] = member.socketId;
           }
           onSetCall({
