@@ -1124,6 +1124,7 @@ function MessagesContainer({
                   onRewardMessageSubmit={handleRewardMessageSubmit}
                   onScrollToBottom={handleScrollToBottom}
                   recepientId={recepientId}
+                  subchannelPath={subchannelPath}
                   onShowSubjectMsgsModal={({ subjectId, content }) =>
                     setSubjectMsgsModal({ shown: true, subjectId, content })
                   }
