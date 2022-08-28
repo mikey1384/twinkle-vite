@@ -1555,6 +1555,7 @@ export default function ChatReducer(state, action) {
                 [action.messageId]: {
                   ...action.message,
                   tempMessageId: action.messageId,
+                  subchannelId,
                   content: action.message.content,
                   targetMessage: action.replyTarget,
                   targetSubject
