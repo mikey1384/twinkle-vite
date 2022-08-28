@@ -579,6 +579,7 @@ function Message({
         channelId,
         messageId,
         reaction,
+        subchannelId,
         userId: myId
       });
       removeChatReaction({ messageId, reaction });

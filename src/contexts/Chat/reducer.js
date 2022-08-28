@@ -47,7 +47,6 @@ export default function ChatReducer(state, action) {
             }
           }
         : prevChannelObj?.subchannelObj;
-
       return {
         ...state,
         channelsObj: {
@@ -100,7 +99,6 @@ export default function ChatReducer(state, action) {
             }
           }
         : prevChannelObj?.subchannelObj;
-
       return {
         ...state,
         channelsObj: {
@@ -120,9 +118,34 @@ export default function ChatReducer(state, action) {
       };
     }
     case 'REMOVE_REACTION_FROM_MESSAGE': {
+      const prevChannelObj = state.channelsObj[action.channelId];
       const message =
-        state.channelsObj[action.channelId]?.messagesObj?.[action.messageId] ||
-        {};
+        (action.subchannelId
+          ? prevChannelObj?.subchannelObj[action.subchannelId]?.messagesObj?.[
+              action.messageId
+            ]
+          : prevChannelObj?.messagesObj?.[action.messageId]) || {};
+      const reactions = (message.reactions || []).filter((reaction) => {
+        return (
+          reaction.userId !== action.userId || reaction.type !== action.reaction
+        );
+      });
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj[action.subchannelId],
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj[action.subchannelId]
+                  ?.messagesObj,
+                [action.messageId]: {
+                  ...message,
+                  reactions
+                }
+              }
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         channelsObj: {
@@ -133,14 +156,10 @@ export default function ChatReducer(state, action) {
               ...state.channelsObj[action.channelId]?.messagesObj,
               [action.messageId]: {
                 ...message,
-                reactions: (message.reactions || []).filter((reaction) => {
-                  return (
-                    reaction.userId !== action.userId ||
-                    reaction.type !== action.reaction
-                  );
-                })
+                reactions
               }
-            }
+            },
+            ...(subchannelObj ? { subchannelObj } : {})
           }
         }
       };
