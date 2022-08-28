@@ -400,12 +400,19 @@ export default function ChatActions(dispatch) {
         message
       });
     },
-    onRemoveReactionFromMessage({ channelId, messageId, reaction, userId }) {
+    onRemoveReactionFromMessage({
+      channelId,
+      messageId,
+      reaction,
+      subchannelId,
+      userId
+    }) {
       return dispatch({
         type: 'REMOVE_REACTION_FROM_MESSAGE',
         channelId,
         messageId,
         reaction,
+        subchannelId,
         userId
       });
     },
