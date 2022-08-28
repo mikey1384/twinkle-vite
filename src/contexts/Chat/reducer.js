@@ -66,32 +66,55 @@ export default function ChatReducer(state, action) {
       };
     }
     case 'ADD_REACTION_TO_MESSAGE': {
+      const prevChannelObj = state.channelsObj[action.channelId];
       const message =
-        state.channelsObj[action.channelId]?.messagesObj?.[action.messageId] ||
-        {};
+        (action.subchannelId
+          ? prevChannelObj?.subchannelObj[action.subchannelId]?.messagesObj?.[
+              action.messageId
+            ]
+          : prevChannelObj?.messagesObj?.[action.messageId]) || {};
+      const reactions = (message.reactions || [])
+        .filter((reaction) => {
+          return (
+            reaction.userId !== action.userId ||
+            reaction.type !== action.reaction
+          );
+        })
+        .concat({
+          userId: action.userId,
+          type: action.reaction
+        });
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj[action.subchannelId],
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj[action.subchannelId]
+                  ?.messagesObj,
+                [action.messageId]: {
+                  ...message,
+                  reactions
+                }
+              }
+            }
+          }
+        : prevChannelObj?.subchannelObj;
+
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
-            ...state.channelsObj[action.channelId],
+            ...prevChannelObj,
             messagesObj: {
-              ...state.channelsObj[action.channelId]?.messagesObj,
+              ...prevChannelObj?.messagesObj,
               [action.messageId]: {
                 ...message,
-                reactions: (message.reactions || [])
-                  .filter((reaction) => {
-                    return (
-                      reaction.userId !== action.userId ||
-                      reaction.type !== action.reaction
-                    );
-                  })
-                  .concat({
-                    userId: action.userId,
-                    type: action.reaction
-                  })
+                reactions
               }
-            }
+            },
+            ...(subchannelObj ? { subchannelObj } : {})
           }
         }
       };
