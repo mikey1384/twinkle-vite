@@ -1,11 +1,18 @@
 export default function ChatActions(dispatch) {
   return {
-    onAddReactionToMessage({ channelId, messageId, reaction, userId }) {
+    onAddReactionToMessage({
+      channelId,
+      messageId,
+      reaction,
+      subchannelId,
+      userId
+    }) {
       dispatch({
         type: 'ADD_REACTION_TO_MESSAGE',
         channelId,
         messageId,
         reaction,
+        subchannelId,
         userId
       });
     },

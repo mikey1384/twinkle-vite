@@ -108,6 +108,7 @@ function Message({
     numMsgs,
     rewardAmount,
     rewardReason,
+    subchannelId,
     subjectId,
     thumbUrl,
     timeStamp,
@@ -282,7 +283,7 @@ function Message({
       });
       onSaveMessage({
         messageId,
-        subchannelId: post.subchannelId,
+        subchannelId,
         index,
         channelId,
         tempMessageId
@@ -559,7 +560,13 @@ function Message({
           }
         }
       }
-      onAddReactionToMessage({ channelId, messageId, reaction, userId: myId });
+      onAddReactionToMessage({
+        channelId,
+        messageId,
+        subchannelId,
+        reaction,
+        userId: myId
+      });
       postChatReaction({ messageId, reaction });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
