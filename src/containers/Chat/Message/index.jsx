@@ -68,6 +68,7 @@ Message.propTypes = {
   onRewardMessageSubmit: PropTypes.func.isRequired,
   onScrollToBottom: PropTypes.func.isRequired,
   onShowSubjectMsgsModal: PropTypes.func,
+  subchannelPath: PropTypes.string,
   zIndex: PropTypes.number
 };
 
@@ -126,6 +127,7 @@ function Message({
   onRewardMessageSubmit,
   onScrollToBottom,
   onShowSubjectMsgsModal,
+  subchannelPath,
   zIndex
 }) {
   const {
@@ -276,6 +278,7 @@ function Message({
       handleSaveMessage();
     }
     async function handleSaveMessage() {
+      console.log(subchannelPath);
       const messageId = await saveChatMessage({
         message: post,
         targetMessageId: targetMessage?.id,
