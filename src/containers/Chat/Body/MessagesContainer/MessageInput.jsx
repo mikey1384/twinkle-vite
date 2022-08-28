@@ -190,7 +190,10 @@ export default function MessageInput({
       if (selectedChannelId === 0) {
         handleSetText('');
       }
-      await onMessageSubmit(finalizeEmoji(inputText));
+      await onMessageSubmit({
+        message: finalizeEmoji(inputText),
+        subchannelPath
+      });
       handleSetText('');
       onEnterComment({
         contentType: 'chat',

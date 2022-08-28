@@ -832,7 +832,7 @@ function MessagesContainer({
   }, [selectedChannelId]);
 
   const handleMessageSubmit = useCallback(
-    async ({ content, rewardAmount, rewardReason, target }) => {
+    async ({ content, rewardAmount, rewardReason, target, subchannelPath }) => {
       setTextAreaHeight(0);
       let isFirstDirectMessage = selectedChannelId === 0;
       if (isFirstDirectMessage) {
@@ -882,12 +882,13 @@ function MessagesContainer({
       };
       const messageId = uuidv1();
       onSubmitMessage({
+        isRespondingToSubject,
         messageId,
         message,
         replyTarget: target,
         rewardReason,
         rewardAmount,
-        isRespondingToSubject
+        subchannelPath
       });
       onSetReplyTarget({ channelId: selectedChannelId, target: null });
       return Promise.resolve();
@@ -1206,8 +1207,12 @@ function MessagesContainer({
           currentChannel={currentChannel}
           onChessButtonClick={handleChessModalShown}
           onWordleButtonClick={handleWordleModalShown}
-          onMessageSubmit={(content) =>
-            handleMessageSubmit({ content, target: currentChannel.replyTarget })
+          onMessageSubmit={({ message, subchannelPath }) =>
+            handleMessageSubmit({
+              content: message,
+              subchannelPath,
+              target: currentChannel.replyTarget
+            })
           }
           onHeightChange={(height) => {
             if (height !== textAreaHeight) {

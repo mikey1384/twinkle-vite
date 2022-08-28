@@ -1490,6 +1490,25 @@ export default function ChatReducer(state, action) {
       };
     }
     case 'SUBMIT_MESSAGE': {
+      const prevChannelObj = state.channelsObj[action.message.channelId] || {};
+      const gameState = {
+        ...prevChannelObj?.gameState,
+        ...(action.message.isChessMsg
+          ? {
+              chess: {
+                ...prevChannelObj?.gameState?.chess,
+                drawOfferedBy: null
+              }
+            }
+          : action.message.isDrawOffer
+          ? {
+              chess: {
+                ...prevChannelObj?.gameState?.chess,
+                drawOfferedBy: action.message.userId
+              }
+            }
+          : {})
+      };
       const targetSubject = action.isRespondingToSubject
         ? {
             ...state.subjectObj[action.message.channelId],
@@ -1498,7 +1517,53 @@ export default function ChatReducer(state, action) {
               defaultChatSubject
           }
         : null;
-      const prevChannelObj = state.channelsObj[action.message.channelId] || {};
+
+      const messageIds = action.subchannelPath
+        ? prevChannelObj?.messageIds
+        : [action.messageId].concat(prevChannelObj?.messageIds);
+      const messagesObj = action.subchannelPath
+        ? prevChannelObj?.messagesObj
+        : {
+            ...prevChannelObj?.messagesObj,
+            [action.messageId]: {
+              ...action.message,
+              tempMessageId: action.messageId,
+              content: action.message.content,
+              targetMessage: action.replyTarget,
+              targetSubject
+            }
+          };
+      let subchannelId = null;
+      if (action.subchannelPath) {
+        for (let subchannel of Object.values(prevChannelObj?.subchannelObj)) {
+          if (subchannel.path === action.subchannelPath) {
+            subchannelId = subchannel.id;
+            break;
+          }
+        }
+      }
+      const subchannelObj = subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [subchannelId]: {
+              ...prevChannelObj?.subchannelObj[subchannelId],
+              messageIds: [action.messageId].concat(
+                prevChannelObj?.subchannelObj[subchannelId].messageIds
+              ),
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj[subchannelId].messagesObj,
+                [action.messageId]: {
+                  ...action.message,
+                  tempMessageId: action.messageId,
+                  content: action.message.content,
+                  targetMessage: action.replyTarget,
+                  targetSubject
+                }
+              }
+            }
+          }
+        : prevChannelObj?.subchannelObj;
+
       return {
         ...state,
         homeChannelIds: action.message.isNotification
@@ -1513,36 +1578,11 @@ export default function ChatReducer(state, action) {
           [action.message.channelId]: {
             ...prevChannelObj,
             isRespondingToSubject: false,
-            gameState: {
-              ...prevChannelObj?.gameState,
-              ...(action.message.isChessMsg
-                ? {
-                    chess: {
-                      ...prevChannelObj?.gameState?.chess,
-                      drawOfferedBy: null
-                    }
-                  }
-                : action.message.isDrawOffer
-                ? {
-                    chess: {
-                      ...prevChannelObj?.gameState?.chess,
-                      drawOfferedBy: action.message.userId
-                    }
-                  }
-                : {})
-            },
-            messageIds: [action.messageId].concat(prevChannelObj?.messageIds),
-            messagesObj: {
-              ...prevChannelObj?.messagesObj,
-              [action.messageId]: {
-                ...action.message,
-                tempMessageId: action.messageId,
-                content: action.message.content,
-                targetMessage: action.replyTarget,
-                targetSubject
-              }
-            },
-            numUnreads: 0
+            gameState,
+            messageIds,
+            messagesObj,
+            numUnreads: 0,
+            subchannelObj
           }
         }
       };
