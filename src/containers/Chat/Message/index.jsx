@@ -28,9 +28,9 @@ import LocalContext from '../Context';
 import ReactionButton from './ReactionButton';
 import Reactions from './Reactions';
 import localize from '~/constants/localize';
+import moment from 'moment';
 import { useInView } from 'react-intersection-observer';
 import { socket } from '~/constants/io';
-import moment from 'moment';
 import { MessageStyle } from '../Styles';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
@@ -50,7 +50,6 @@ Message.propTypes = {
   chessCountdownNumber: PropTypes.number,
   chessOpponent: PropTypes.object,
   channelId: PropTypes.number,
-  channelName: PropTypes.string,
   currentChannel: PropTypes.object,
   displayedThemeColor: PropTypes.string,
   forceRefreshForMobile: PropTypes.func,
@@ -68,7 +67,6 @@ Message.propTypes = {
   onRewardMessageSubmit: PropTypes.func.isRequired,
   onScrollToBottom: PropTypes.func.isRequired,
   onShowSubjectMsgsModal: PropTypes.func,
-  subchannelPath: PropTypes.string,
   zIndex: PropTypes.number
 };
 
@@ -127,7 +125,6 @@ function Message({
   onRewardMessageSubmit,
   onScrollToBottom,
   onShowSubjectMsgsModal,
-  subchannelPath,
   zIndex
 }) {
   const {
@@ -278,7 +275,6 @@ function Message({
       handleSaveMessage();
     }
     async function handleSaveMessage() {
-      console.log(subchannelPath);
       const messageId = await saveChatMessage({
         message: post,
         targetMessageId: targetMessage?.id,
