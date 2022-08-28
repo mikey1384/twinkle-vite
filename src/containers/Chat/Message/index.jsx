@@ -282,6 +282,7 @@ function Message({
       });
       onSaveMessage({
         messageId,
+        subchannelId: post.subchannelId,
         index,
         channelId,
         tempMessageId
