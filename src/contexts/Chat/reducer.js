@@ -393,15 +393,30 @@ export default function ChatReducer(state, action) {
       };
     }
     case 'DELETE_MESSAGE':
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj[action.subchannelId],
+              messageIds: prevChannelObj?.subchannelObj?.[
+                action.subchannelId
+              ]?.messageIds?.filter(
+                (messageId) => messageId !== action.messageId
+              )
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            messageIds: state.channelsObj[action.channelId]?.messageIds?.filter(
+            ...prevChannelObj,
+            messageIds: prevChannelObj?.messageIds?.filter(
               (messageId) => messageId !== action.messageId
-            )
+            ),
+            ...(subchannelObj ? { subchannelObj } : {})
           }
         }
       };

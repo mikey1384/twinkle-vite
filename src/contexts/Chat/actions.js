@@ -111,11 +111,12 @@ export default function ChatActions(dispatch) {
         data
       });
     },
-    onDeleteMessage({ messageId, channelId }) {
+    onDeleteMessage({ messageId, channelId, subchannelId }) {
       return dispatch({
         type: 'DELETE_MESSAGE',
         channelId,
-        messageId
+        messageId,
+        subchannelId
       });
     },
     onDisplayAttachedFile({

@@ -580,7 +580,11 @@ function MessagesContainer({
   const handleDelete = useCallback(async () => {
     const { fileName, filePath, messageId } = deleteModal;
     await deleteChatMessage({ fileName, filePath, messageId });
-    onDeleteMessage({ channelId: selectedChannelId, messageId });
+    onDeleteMessage({
+      channelId: selectedChannelId,
+      messageId,
+      subchannelId: subChannel?.id
+    });
     setDeleteModal({
       shown: false,
       fileName: '',
