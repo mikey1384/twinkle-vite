@@ -11,34 +11,60 @@ const chatTabHash = {
 
 export default function ChatReducer(state, action) {
   switch (action.type) {
-    case 'ADD_ID_TO_NEW_MESSAGE':
+    case 'ADD_ID_TO_NEW_MESSAGE': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const messageIds = prevChannelObj?.messageIds?.map((messageId) =>
+        messageId === action.tempMessageId ? action.messageId : messageId
+      );
+      const messagesObj = {
+        ...prevChannelObj?.messagesObj,
+        [action.messageId]: {
+          ...prevChannelObj?.messagesObj?.[action.tempMessageId],
+          id: action.messageId
+        }
+      };
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj[action.subchannelId],
+              messageIds: prevChannelObj?.subchannelObj[
+                action.subchannelId
+              ]?.messageIds.map((messageId) =>
+                messageId === action.tempMessageId
+                  ? action.messageId
+                  : messageId
+              ),
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj[action.subchannelId]
+                  ?.messagesObj,
+                [action.messageId]: {
+                  ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                    ?.messagesObj?.[action.tempMessageId],
+                  id: action.messageId
+                }
+              }
+            }
+          }
+        : prevChannelObj?.subchannelObj;
+
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: state.channelsObj[action.channelId]
+          ...(prevChannelObj
             ? {
-                ...state.channelsObj[action.channelId],
-                messageIds: state.channelsObj[
-                  action.channelId
-                ]?.messageIds?.map((messageId) =>
-                  messageId === action.tempMessageId
-                    ? action.messageId
-                    : messageId
-                ),
-                messagesObj: {
-                  ...state.channelsObj[action.channelId]?.messagesObj,
-                  [action.messageId]: {
-                    ...state.channelsObj[action.channelId]?.messagesObj[
-                      action.tempMessageId
-                    ],
-                    id: action.messageId
-                  }
+                [action.channelId]: {
+                  ...prevChannelObj,
+                  messageIds,
+                  messagesObj,
+                  ...(subchannelObj ? { subchannelObj } : {})
                 }
               }
-            : {}
+            : {})
         }
       };
+    }
     case 'ADD_REACTION_TO_MESSAGE': {
       const message =
         state.channelsObj[action.channelId]?.messagesObj?.[action.messageId] ||

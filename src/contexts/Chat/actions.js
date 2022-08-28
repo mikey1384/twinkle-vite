@@ -413,12 +413,19 @@ export default function ChatActions(dispatch) {
         type: 'RESET_CHAT'
       });
     },
-    onSaveMessage({ index, messageId, channelId, tempMessageId }) {
+    onSaveMessage({
+      index,
+      messageId,
+      channelId,
+      subchannelId,
+      tempMessageId
+    }) {
       return dispatch({
         type: 'ADD_ID_TO_NEW_MESSAGE',
         channelId,
         messageIndex: index,
         messageId,
+        subchannelId,
         tempMessageId
       });
     },
