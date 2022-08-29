@@ -31,7 +31,8 @@ UploadModal.propTypes = {
   onUpload: PropTypes.func.isRequired,
   recepientId: PropTypes.number,
   replyTarget: PropTypes.object,
-  subjectId: PropTypes.number
+  subjectId: PropTypes.number,
+  subchannelId: PropTypes.number
 };
 
 function UploadModal({
@@ -42,7 +43,8 @@ function UploadModal({
   onUpload,
   replyTarget,
   recepientId,
-  subjectId
+  subjectId,
+  subchannelId
 }) {
   const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
   const {
@@ -127,6 +129,7 @@ function UploadModal({
         userId,
         recepientId,
         messageId,
+        subchannelId,
         targetMessageId: replyTarget?.id,
         subjectId: isRespondingToSubject ? subjectId : null,
         thumbnail: videoThumbnail
@@ -144,7 +147,8 @@ function UploadModal({
           username
         },
         isRespondingToSubject,
-        replyTarget
+        replyTarget,
+        subchannelId
       });
       onUpload();
     }

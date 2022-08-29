@@ -49,7 +49,7 @@ MessageInput.propTypes = {
   replyTarget: PropTypes.object,
   recepientId: PropTypes.number,
   socketConnected: PropTypes.bool,
-  subchannelPath: PropTypes.string,
+  subchannelId: PropTypes.number,
   subjectId: PropTypes.number
 };
 
@@ -70,14 +70,13 @@ export default function MessageInput({
   replyTarget,
   recepientId,
   socketConnected,
-  subchannelPath,
+  subchannelId,
   subjectId
 }) {
   const textForThisChannel = useMemo(
     () =>
-      inputState['chat' + selectedChannelId + (subchannelPath || '')]?.text ||
-      '',
-    [inputState, selectedChannelId, subchannelPath]
+      inputState['chat' + selectedChannelId + (subchannelId || '')]?.text || '',
+    [inputState, selectedChannelId, subchannelId]
   );
   const [inputText, setInputText] = useState(textForThisChannel);
   const { banned, fileUploadLvl } = useKeyContext((v) => v.myState);
@@ -90,7 +89,7 @@ export default function MessageInput({
   } = useContext(LocalContext);
   const FileInputRef = useRef(null);
   const prevChannelId = useRef(selectedChannelId);
-  const prevSubchannelPath = useRef(subchannelPath);
+  const prevSubchannelId = useRef(subchannelId);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
@@ -108,20 +107,20 @@ export default function MessageInput({
   useEffect(() => {
     if (
       prevChannelId.current !== selectedChannelId ||
-      prevSubchannelPath.current !== subchannelPath
+      prevSubchannelId.current !== subchannelId
     ) {
       onEnterComment({
         contentType: 'chat',
         contentId: prevChannelId.current,
-        subId: subchannelPath,
+        subId: subchannelId,
         text: textRef.current
       });
       handleSetText('');
     }
     prevChannelId.current = selectedChannelId;
-    prevSubchannelPath.current = subchannelPath;
+    prevSubchannelId.current = subchannelId;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId, subchannelPath]);
+  }, [selectedChannelId, subchannelId]);
 
   useEffect(() => {
     handleSetText(textForThisChannel);
@@ -140,7 +139,7 @@ export default function MessageInput({
     if (!deviceIsMobile) {
       innerRef.current.focus();
     }
-  }, [selectedChannelId, subchannelPath, innerRef]);
+  }, [selectedChannelId, subchannelId, innerRef]);
 
   const messageExceedsCharLimit = useMemo(
     () =>
@@ -157,7 +156,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: prevChannelId.current,
-        subId: subchannelPath,
+        subId: subchannelId,
         text: textRef.current
       });
     };
@@ -192,13 +191,13 @@ export default function MessageInput({
       }
       await onMessageSubmit({
         message: finalizeEmoji(inputText),
-        subchannelPath
+        subchannelId
       });
       handleSetText('');
       onEnterComment({
         contentType: 'chat',
         contentId: selectedChannelId,
-        subId: subchannelPath,
+        subId: subchannelId,
         text: ''
       });
     } catch (error) {
@@ -208,7 +207,7 @@ export default function MessageInput({
   }, [
     banned?.chat,
     selectedChannelId,
-    subchannelPath,
+    subchannelId,
     innerRef,
     onEnterComment,
     onMessageSubmit,
@@ -223,7 +222,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: selectedChannelId,
-        subId: subchannelPath,
+        subId: subchannelId,
         text: newText
       });
     }, 700);
@@ -433,6 +432,7 @@ export default function MessageInput({
             setUploadModalShown(false);
           }}
           replyTarget={replyTarget}
+          subchannelId={subchannelId}
           onHide={() => setUploadModalShown(false)}
         />
       )}
