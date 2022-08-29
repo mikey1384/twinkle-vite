@@ -685,11 +685,12 @@ export default function ChatActions(dispatch) {
         chatType
       });
     },
-    onUpdateChatUploadProgress({ progress, channelId, path }) {
+    onUpdateChatUploadProgress({ progress, channelId, subchannelId, path }) {
       return dispatch({
         type: 'UPDATE_UPLOAD_PROGRESS',
         progress,
         channelId,
+        subchannelId,
         path
       });
     },

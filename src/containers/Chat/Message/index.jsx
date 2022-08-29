@@ -225,13 +225,12 @@ function Message({
     () => canReward && authLevel > uploaderAuthLevel && myId !== userId,
     [authLevel, canReward, uploaderAuthLevel, userId, myId]
   );
-
   const [uploadStatus = {}] = useMemo(
     () =>
-      filesBeingUploaded[channelId]?.filter(
-        ({ filePath: path }) => path === filePath
-      ) || [],
-    [channelId, filePath, filesBeingUploaded]
+      filesBeingUploaded[
+        channelId + (subchannelId ? `/${subchannelId}` : '')
+      ]?.filter(({ filePath: path }) => path === filePath) || [],
+    [channelId, filePath, filesBeingUploaded, subchannelId]
   );
   let {
     username,

@@ -412,6 +412,7 @@ function App() {
         }
         onUpdateChatUploadProgress({
           channelId,
+          subchannelId,
           path: filePath,
           progress: loaded / total
         });
