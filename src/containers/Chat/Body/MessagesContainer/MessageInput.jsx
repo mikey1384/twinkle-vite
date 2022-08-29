@@ -50,7 +50,6 @@ MessageInput.propTypes = {
   recepientId: PropTypes.number,
   socketConnected: PropTypes.bool,
   subchannelId: PropTypes.number,
-  subchannelPath: PropTypes.string,
   subjectId: PropTypes.number
 };
 
@@ -72,14 +71,14 @@ export default function MessageInput({
   recepientId,
   socketConnected,
   subchannelId,
-  subchannelPath,
   subjectId
 }) {
   const textForThisChannel = useMemo(
     () =>
-      inputState['chat' + selectedChannelId + (subchannelPath || '')]?.text ||
-      '',
-    [inputState, selectedChannelId, subchannelPath]
+      inputState[
+        'chat' + selectedChannelId + (subchannelId ? `/${subchannelId}` : '')
+      ]?.text || '',
+    [inputState, selectedChannelId, subchannelId]
   );
   const [inputText, setInputText] = useState(textForThisChannel);
   const { banned, fileUploadLvl } = useKeyContext((v) => v.myState);
@@ -115,7 +114,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: prevChannelId.current,
-        subId: subchannelPath,
+        subId: subchannelId,
         text: textRef.current
       });
       handleSetText('');
@@ -159,7 +158,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: prevChannelId.current,
-        subId: subchannelPath,
+        subId: subchannelId,
         text: textRef.current
       });
     };
@@ -200,7 +199,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: selectedChannelId,
-        subId: subchannelPath,
+        subId: subchannelId,
         text: ''
       });
     } catch (error) {
@@ -225,7 +224,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: selectedChannelId,
-        subId: subchannelPath,
+        subId: subchannelId,
         text: newText
       });
     }, 700);
