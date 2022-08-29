@@ -455,24 +455,41 @@ export default function ChatReducer(state, action) {
         }
       };
     }
-    case 'EDIT_MESSAGE':
+    case 'EDIT_MESSAGE': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                  ?.messagesObj,
+                [action.messageId]: {
+                  ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                    ?.messagesObj?.[action.messageId],
+                  content: action.editedMessage
+                }
+              }
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          ...(state.channelsObj[action.channelId]?.messagesObj
+          ...(prevChannelObj?.messagesObj
             ? {
                 [action.channelId]: {
-                  ...state.channelsObj[action.channelId],
+                  ...prevChannelObj,
                   messagesObj: {
-                    ...state.channelsObj[action.channelId].messagesObj,
+                    ...prevChannelObj?.messagesObj,
                     [action.messageId]: {
-                      ...state.channelsObj[action.channelId].messagesObj[
-                        action.messageId
-                      ],
+                      ...prevChannelObj?.messagesObj[action.messageId],
                       content: action.editedMessage
                     }
-                  }
+                  },
+                  ...(subchannelObj ? { subchannelObj } : {})
                 }
               }
             : {})
@@ -488,6 +505,7 @@ export default function ChatReducer(state, action) {
               }
             : state.subjectObj
       };
+    }
     case 'EDIT_WORD':
       return {
         ...state,
