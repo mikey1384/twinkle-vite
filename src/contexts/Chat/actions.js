@@ -628,7 +628,7 @@ export default function ChatActions(dispatch) {
       replyTarget,
       rewardReason,
       rewardAmount,
-      subchannelPath
+      subchannelId
     }) {
       return dispatch({
         type: 'SUBMIT_MESSAGE',
@@ -640,7 +640,7 @@ export default function ChatActions(dispatch) {
           rewardAmount,
           timeStamp: Math.floor(Date.now() / 1000)
         },
-        subchannelPath,
+        subchannelId,
         replyTarget
       });
     },

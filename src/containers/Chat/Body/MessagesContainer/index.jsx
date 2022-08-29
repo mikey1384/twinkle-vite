@@ -62,8 +62,7 @@ MessagesContainer.propTypes = {
   chessOpponent: PropTypes.object,
   currentChannel: PropTypes.object.isRequired,
   displayedThemeColor: PropTypes.string,
-  loading: PropTypes.bool,
-  subchannelPath: PropTypes.string
+  loading: PropTypes.bool
 };
 
 function MessagesContainer({
@@ -71,8 +70,7 @@ function MessagesContainer({
   chessOpponent,
   currentChannel,
   displayedThemeColor,
-  loading: channelLoading,
-  subchannelPath
+  loading: channelLoading
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
@@ -186,7 +184,7 @@ function MessagesContainer({
   const prevTopMessageId = useRef(null);
   const prevScrollPosition = useRef(null);
 
-  const subChannel = useMemo(() => {
+  const subchannel = useMemo(() => {
     if (!subChannelPath) {
       return null;
     }
@@ -199,18 +197,18 @@ function MessagesContainer({
   }, [subChannelPath, subchannelIds, subchannelObj]);
 
   const loadMoreButtonShown = useMemo(() => {
-    if (subChannel) {
-      return subChannel?.loadMoreButtonShown;
+    if (subchannel) {
+      return subchannel?.loadMoreButtonShown;
     }
     return messagesLoadMoreButton;
-  }, [messagesLoadMoreButton, subChannel]);
+  }, [messagesLoadMoreButton, subchannel]);
 
   const messages = useMemo(() => {
-    const displayedMessageIds = subChannel
-      ? subChannel?.messageIds
+    const displayedMessageIds = subchannel
+      ? subchannel?.messageIds
       : messageIds;
-    const displayedMessagesObj = subChannel
-      ? subChannel?.messagesObj
+    const displayedMessagesObj = subchannel
+      ? subchannel?.messagesObj
       : messagesObj;
     const result = [];
     const dupe = {};
@@ -224,7 +222,7 @@ function MessagesContainer({
       }
     }
     return result;
-  }, [messageIds, messagesObj, subChannel]);
+  }, [messageIds, messagesObj, subchannel]);
 
   const favorited = useMemo(() => {
     return allFavoriteChannelIds[selectedChannelId];
@@ -583,7 +581,7 @@ function MessagesContainer({
     onDeleteMessage({
       channelId: selectedChannelId,
       messageId,
-      subchannelId: subChannel?.id
+      subchannelId: subchannel?.id
     });
     setDeleteModal({
       shown: false,
@@ -836,7 +834,7 @@ function MessagesContainer({
   }, [selectedChannelId]);
 
   const handleMessageSubmit = useCallback(
-    async ({ content, rewardAmount, rewardReason, target, subchannelPath }) => {
+    async ({ content, rewardAmount, rewardReason, target, subchannelId }) => {
       setTextAreaHeight(0);
       let isFirstDirectMessage = selectedChannelId === 0;
       if (isFirstDirectMessage) {
@@ -892,7 +890,7 @@ function MessagesContainer({
         replyTarget: target,
         rewardReason,
         rewardAmount,
-        subchannelPath
+        subchannelId
       });
       onSetReplyTarget({ channelId: selectedChannelId, target: null });
       return Promise.resolve();
@@ -1211,10 +1209,10 @@ function MessagesContainer({
           currentChannel={currentChannel}
           onChessButtonClick={handleChessModalShown}
           onWordleButtonClick={handleWordleModalShown}
-          onMessageSubmit={({ message, subchannelPath }) =>
+          onMessageSubmit={({ message, subchannelId }) =>
             handleMessageSubmit({
               content: message,
-              subchannelPath,
+              subchannelId,
               target: currentChannel.replyTarget
             })
           }
@@ -1226,7 +1224,7 @@ function MessagesContainer({
           onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
           recepientId={recepientId}
           replyTarget={currentChannel.replyTarget}
-          subchannelPath={subchannelPath}
+          subchannelId={subchannel?.id}
           subjectId={subjectId}
         />
       </div>

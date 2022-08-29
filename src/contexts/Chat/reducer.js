@@ -1601,10 +1601,10 @@ export default function ChatReducer(state, action) {
           }
         : null;
 
-      const messageIds = action.subchannelPath
+      const messageIds = action.subchannelId
         ? prevChannelObj?.messageIds
         : [action.messageId].concat(prevChannelObj?.messageIds);
-      const messagesObj = action.subchannelPath
+      const messagesObj = action.subchannelId
         ? prevChannelObj?.messagesObj
         : {
             ...prevChannelObj?.messagesObj,
@@ -1616,29 +1616,21 @@ export default function ChatReducer(state, action) {
               targetSubject
             }
           };
-      let subchannelId = null;
-      if (action.subchannelPath) {
-        for (let subchannel of Object.values(prevChannelObj?.subchannelObj)) {
-          if (subchannel.path === action.subchannelPath) {
-            subchannelId = subchannel.id;
-            break;
-          }
-        }
-      }
-      const subchannelObj = subchannelId
+      const subchannelObj = action.subchannelId
         ? {
             ...prevChannelObj?.subchannelObj,
-            [subchannelId]: {
-              ...prevChannelObj?.subchannelObj[subchannelId],
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj[action.subchannelId],
               messageIds: [action.messageId].concat(
-                prevChannelObj?.subchannelObj[subchannelId].messageIds
+                prevChannelObj?.subchannelObj[action.subchannelId].messageIds
               ),
               messagesObj: {
-                ...prevChannelObj?.subchannelObj[subchannelId].messagesObj,
+                ...prevChannelObj?.subchannelObj[action.subchannelId]
+                  .messagesObj,
                 [action.messageId]: {
                   ...action.message,
                   tempMessageId: action.messageId,
-                  subchannelId,
+                  subchannelId: action.subchannelId,
                   content: action.message.content,
                   targetMessage: action.replyTarget,
                   targetSubject
