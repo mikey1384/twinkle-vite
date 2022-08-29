@@ -287,6 +287,7 @@ function App() {
       recepientId,
       messageId: tempMessageId,
       targetMessageId,
+      subchannelId,
       subjectId,
       thumbnail
     }) => {
@@ -304,7 +305,8 @@ function App() {
         fileName,
         filePath,
         fileToUpload,
-        recepientId
+        recepientId,
+        subchannelId
       });
       promises.push(
         uploadFileOnChat({
@@ -345,6 +347,7 @@ function App() {
           recepientId,
           targetMessageId,
           thumbUrl,
+          subchannelId,
           subjectId
         });
       if (alreadyExists) {
@@ -355,6 +358,7 @@ function App() {
         channelId,
         tempMessageId,
         messageId: messageId,
+        subchannelId,
         result: !!messageId
       });
       const params = {
@@ -368,6 +372,7 @@ function App() {
         userId,
         username,
         profilePicUrl,
+        subchannelId,
         thumbUrl,
         targetMessage: currentChannel.replyTarget
       };
