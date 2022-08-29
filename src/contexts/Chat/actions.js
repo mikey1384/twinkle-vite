@@ -44,12 +44,6 @@ export default function ChatActions(dispatch) {
         isBusy
       });
     },
-    onChangeMuted(muted) {
-      return dispatch({
-        type: 'CHANGE_CALL_MUTED',
-        muted
-      });
-    },
     onChangeChannelOwner({ channelId, message, newOwner }) {
       return dispatch({
         type: 'CHANGE_CHANNEL_OWNER',

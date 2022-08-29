@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { useChatContext } from '~/contexts';
 
 Audio.propTypes = {
   stream: PropTypes.object.isRequired
@@ -8,7 +7,6 @@ Audio.propTypes = {
 
 export default function Audio({ stream }) {
   const audioRef = useRef(stream);
-  const callMuted = useChatContext((v) => v.state.callMuted);
   useEffect(() => {
     const currentAudio = audioRef.current;
     if (audioRef.current && !audioRef.current.srcObject) {
@@ -22,9 +20,6 @@ export default function Audio({ stream }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => {
-    audioRef.current.muted = callMuted;
-  }, [callMuted]);
 
   return (
     <audio
