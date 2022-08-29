@@ -1225,6 +1225,7 @@ function MessagesContainer({
           recepientId={recepientId}
           replyTarget={currentChannel.replyTarget}
           subchannelId={subchannel?.id}
+          subchannelPath={subchannel?.path}
           subjectId={subjectId}
         />
       </div>

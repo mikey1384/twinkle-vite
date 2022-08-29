@@ -311,11 +311,13 @@ export default function ChatActions(dispatch) {
       content,
       fileName,
       filePath,
-      fileToUpload
+      fileToUpload,
+      subchannelId
     }) {
       return dispatch({
         type: 'POST_FILE_UPLOAD_STATUS',
         channelId,
+        subchannelId,
         file: {
           content,
           fileName,
