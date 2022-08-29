@@ -32,6 +32,7 @@
   },
   "rules": {
     "jsx-quotes": ["error", "prefer-double"],
+    "no-dupe-keys": "error",
     "no-undef": "error",
     "no-unused-vars": "error",
     "no-duplicate-imports": "error",
