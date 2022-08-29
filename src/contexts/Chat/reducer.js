@@ -421,23 +421,42 @@ export default function ChatReducer(state, action) {
         }
       };
     case 'DISPLAY_ATTACHED_FILE': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                  ?.messagesObj,
+                [action.messageId]: {
+                  ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                    ?.messagesObj?.[action.messageId],
+                  ...action.fileInfo,
+                  id: action.messageId,
+                  fileToUpload: null
+                }
+              }
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
-            ...state.channelsObj[action.channelId],
+            ...prevChannelObj,
             messagesObj: {
-              ...state.channelsObj[action.channelId].messagesObj,
+              ...prevChannelObj?.messagesObj,
               [action.messageId]: {
-                ...state.channelsObj[action.channelId].messagesObj[
-                  action.messageId
-                ],
+                ...prevChannelObj?.messagesObj?.[action.messageId],
                 ...action.fileInfo,
                 id: action.messageId,
-                fileToUpload: undefined
+                fileToUpload: null
               }
-            }
+            },
+            ...(subchannelObj ? { subchannelObj } : {})
           }
         }
       };
@@ -1044,25 +1063,44 @@ export default function ChatReducer(state, action) {
       };
     }
     case 'POST_UPLOAD_COMPLETE': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj[action.subchannelId],
+              messageIds: prevChannelObj?.subchannelObj[
+                action.subchannelId
+              ]?.messageIds.map((messageId) =>
+                messageId === action.tempMessageId
+                  ? action.messageId
+                  : messageId
+              ),
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj[action.subchannelId]
+                  ?.messagesObj,
+                [action.messageId]:
+                  prevChannelObj?.subchannelObj?.[action.subchannelId]
+                    ?.messagesObj?.[action.tempMessageId]
+              }
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            messageIds: state.channelsObj[action.channelId]?.messageIds?.map(
-              (messageId) =>
-                messageId === action.tempMessageId
-                  ? action.messageId
-                  : messageId
+            ...prevChannelObj,
+            messageIds: prevChannelObj?.messageIds?.map((messageId) =>
+              messageId === action.tempMessageId ? action.messageId : messageId
             ),
             messagesObj: {
-              ...state.channelsObj[action.channelId].messagesObj,
+              ...prevChannelObj?.messagesObj,
               [action.messageId]:
-                state.channelsObj[action.channelId].messagesObj[
-                  action.tempMessageId
-                ]
-            }
+                prevChannelObj?.messagesObj?.[action.tempMessageId]
+            },
+            ...(subchannelObj ? { subchannelObj } : {})
           }
         }
       };

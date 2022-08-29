@@ -127,6 +127,7 @@ export default function ChatActions(dispatch) {
       userId,
       username,
       profilePicUrl,
+      subchannelId,
       uploaderAuthLevel,
       thumbUrl
     }) {
@@ -134,6 +135,7 @@ export default function ChatActions(dispatch) {
         type: 'DISPLAY_ATTACHED_FILE',
         messageId: id,
         channelId,
+        subchannelId,
         filePath,
         fileInfo: {
           userId,
