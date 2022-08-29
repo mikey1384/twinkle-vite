@@ -773,6 +773,7 @@ function Message({
                         onEditDone={handleEditDone}
                         onShowSubjectMsgsModal={onShowSubjectMsgsModal}
                         socketConnected={socketConnected}
+                        subchannelId={subchannelId}
                         subjectId={subjectId}
                         thumbUrl={thumbUrl}
                         targetMessage={targetMessage}

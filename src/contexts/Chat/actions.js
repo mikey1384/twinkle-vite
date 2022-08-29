@@ -223,11 +223,12 @@ export default function ChatActions(dispatch) {
         peerId
       });
     },
-    onHideAttachment({ messageId, channelId }) {
+    onHideAttachment({ messageId, channelId, subchannelId }) {
       return dispatch({
         type: 'HIDE_ATTACHMENT',
         channelId,
-        messageId
+        messageId,
+        subchannelId
       });
     },
     onHideChat(channelId) {
