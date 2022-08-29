@@ -667,16 +667,6 @@ export default function ChatReducer(state, action) {
         ...state.channelsObj[action.data.currentChannelId]?.messagesObj,
         ...action.data.messagesObj
       };
-      const uploadStatusMessages = state.filesBeingUploaded[
-        action.data.currentChannelId
-      ]?.filter((message) => !message.uploadComplete);
-      if (uploadStatusMessages) {
-        for (let message of uploadStatusMessages) {
-          const messageId = uuidv1();
-          newMessageIds.push(messageId);
-          newMessagesObj[messageId] = message;
-        }
-      }
       if (newMessageIds && newMessageIds.length === 21) {
         newMessageIds.pop();
         messagesLoadMoreButton = true;
@@ -1053,7 +1043,7 @@ export default function ChatReducer(state, action) {
         }
       };
     }
-    case 'POST_UPLOAD_COMPLETE':
+    case 'POST_UPLOAD_COMPLETE': {
       return {
         ...state,
         channelsObj: {
@@ -1074,21 +1064,9 @@ export default function ChatReducer(state, action) {
                 ]
             }
           }
-        },
-        filesBeingUploaded: {
-          ...state.filesBeingUploaded,
-          [action.channelId]: state.filesBeingUploaded[action.channelId]?.map(
-            (file) =>
-              file.filePath === action.path
-                ? {
-                    ...file,
-                    id: action.messageId,
-                    uploadComplete: action.result
-                  }
-                : file
-          )
         }
       };
+    }
     case 'RECEIVE_MESSAGE': {
       const messageId = action.message.id || uuidv1();
       return {
@@ -1714,22 +1692,6 @@ export default function ChatReducer(state, action) {
         }
       };
     }
-    case 'UPDATE_CLIENT_TO_API_SERVER_PROGRESS':
-      return {
-        ...state,
-        filesBeingUploaded: {
-          ...state.filesBeingUploaded,
-          [action.channelId]: state.filesBeingUploaded[action.channelId]?.map(
-            (file) =>
-              file.filePath === action.path
-                ? {
-                    ...file,
-                    clientToApiServerProgress: action.progress
-                  }
-                : file
-          )
-        }
-      };
     case 'UPDATE_COLLECTORS_RANKINGS':
       return {
         ...state,

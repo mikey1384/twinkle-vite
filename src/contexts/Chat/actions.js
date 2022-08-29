@@ -328,6 +328,7 @@ export default function ChatActions(dispatch) {
     },
     onPostUploadComplete({
       channelId,
+      subchannelId,
       tempMessageId,
       messageId,
       path,
@@ -336,6 +337,7 @@ export default function ChatActions(dispatch) {
       return dispatch({
         type: 'POST_UPLOAD_COMPLETE',
         tempMessageId,
+        subchannelId,
         channelId,
         messageId,
         path,
