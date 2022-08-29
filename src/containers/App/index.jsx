@@ -367,6 +367,7 @@ function App() {
         filePath,
         fileSize: fileToUpload.size,
         id: messageId,
+        subchannelId,
         uploaderAuthLevel: authLevel,
         channelId,
         userId,

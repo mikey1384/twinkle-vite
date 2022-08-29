@@ -654,6 +654,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
       path,
       recepientId,
       targetMessageId,
+      subchannelId,
       subjectId,
       thumbUrl
     }) {
@@ -669,6 +670,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
           content,
           recepientId,
           targetMessageId,
+          subchannelId,
           subjectId,
           thumbUrl
         },
