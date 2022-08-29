@@ -1039,16 +1039,20 @@ export default function ChatReducer(state, action) {
         },
         recepientId: action.recepient.id
       };
-    case 'POST_FILE_UPLOAD_STATUS':
+    case 'POST_FILE_UPLOAD_STATUS': {
+      const targetId =
+        action.channelId +
+        (action.subchannelId ? `/${action.subchannelId}` : '');
       return {
         ...state,
         filesBeingUploaded: {
           ...state.filesBeingUploaded,
-          [action.channelId]: state.filesBeingUploaded[
-            action.channelId
-          ]?.concat(action.file) || [action.file]
+          [targetId]: state.filesBeingUploaded[targetId]?.concat(
+            action.file
+          ) || [action.file]
         }
       };
+    }
     case 'POST_UPLOAD_COMPLETE':
       return {
         ...state,
@@ -1691,22 +1695,25 @@ export default function ChatReducer(state, action) {
           [action.pathId]: action.channelId
         }
       };
-    case 'UPDATE_UPLOAD_PROGRESS':
+    case 'UPDATE_UPLOAD_PROGRESS': {
+      const targetId =
+        action.channelId +
+        (action.subchannelId ? `/${action.subchannelId}` : '');
       return {
         ...state,
         filesBeingUploaded: {
           ...state.filesBeingUploaded,
-          [action.channelId]: state.filesBeingUploaded[action.channelId]?.map(
-            (file) =>
-              file.filePath === action.path
-                ? {
-                    ...file,
-                    uploadProgress: action.progress
-                  }
-                : file
+          [targetId]: state.filesBeingUploaded[targetId]?.map((file) =>
+            file.filePath === action.path
+              ? {
+                  ...file,
+                  uploadProgress: action.progress
+                }
+              : file
           )
         }
       };
+    }
     case 'UPDATE_CLIENT_TO_API_SERVER_PROGRESS':
       return {
         ...state,
