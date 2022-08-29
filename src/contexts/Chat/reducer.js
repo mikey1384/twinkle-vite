@@ -232,12 +232,6 @@ export default function ChatReducer(state, action) {
         }
       };
     }
-    case 'CHANGE_CALL_MUTED': {
-      return {
-        ...state,
-        callMuted: action.muted
-      };
-    }
     case 'CHANGE_CHANNEL_OWNER': {
       const notificationId = uuidv1();
       if (!state.channelsObj[action.channelId]) return state;
