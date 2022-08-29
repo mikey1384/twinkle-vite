@@ -800,7 +800,6 @@ export default function ChatReducer(state, action) {
             : action.data.currentChannelId
       };
     }
-
     case 'INVITE_USERS_TO_CHANNEL':
       return {
         ...state,
