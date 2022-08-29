@@ -162,6 +162,7 @@ export default function ChatActions(dispatch) {
       channelId,
       messageId,
       isSubject,
+      subchannelId,
       subjectChanged
     }) {
       return dispatch({
@@ -170,6 +171,7 @@ export default function ChatActions(dispatch) {
         editedMessage,
         messageId,
         isSubject,
+        subchannelId,
         subjectChanged
       });
     },

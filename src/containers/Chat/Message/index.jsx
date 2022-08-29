@@ -532,6 +532,7 @@ function Message({
         channelId,
         messageId,
         isSubject: messageIsSubject,
+        subchannelId,
         subjectChanged
       });
       socket.emit('edit_chat_message', {
