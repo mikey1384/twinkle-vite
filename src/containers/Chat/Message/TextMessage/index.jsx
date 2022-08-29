@@ -32,6 +32,7 @@ TextMessage.propTypes = {
   onEditDone: PropTypes.func.isRequired,
   onShowSubjectMsgsModal: PropTypes.func.isRequired,
   socketConnected: PropTypes.bool,
+  subchannelId: PropTypes.number,
   subjectId: PropTypes.number,
   thumbUrl: PropTypes.string,
   userCanEditThis: PropTypes.bool
@@ -56,6 +57,7 @@ function TextMessage({
   subjectId,
   onShowSubjectMsgsModal,
   socketConnected,
+  subchannelId,
   thumbUrl,
   userCanEditThis
 }) {
@@ -95,10 +97,14 @@ function TextMessage({
 
   const handleHideAttachment = useCallback(async () => {
     await hideChatAttachment(messageId);
-    onHideAttachment({ messageId, channelId });
-    socket.emit('hide_message_attachment', { channelId, messageId });
+    onHideAttachment({ messageId, channelId, subchannelId });
+    socket.emit('hide_message_attachment', {
+      channelId,
+      messageId,
+      subchannelId
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId, messageId]);
+  }, [channelId, messageId, subchannelId]);
 
   useEffect(() => {
     if (deviceIsMobile && isEditing) {

@@ -650,29 +650,47 @@ export default function ChatReducer(state, action) {
         }
       };
     }
-    case 'HIDE_ATTACHMENT':
+    case 'HIDE_ATTACHMENT': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                  ?.messagesObj,
+                [action.messageId]: {
+                  ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                    ?.messagesObj?.[action.messageId],
+                  attachmentHidden: true
+                }
+              }
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          ...(state.channelsObj[action.channelId]?.messagesObj
+          ...(prevChannelObj?.messagesObj
             ? {
                 [action.channelId]: {
-                  ...state.channelsObj[action.channelId],
+                  ...prevChannelObj,
                   messagesObj: {
-                    ...state.channelsObj[action.channelId].messagesObj,
+                    ...prevChannelObj.messagesObj,
                     [action.messageId]: {
-                      ...state.channelsObj[action.channelId].messagesObj[
-                        action.messageId
-                      ],
+                      ...prevChannelObj.messagesObj[action.messageId],
                       attachmentHidden: true
                     }
-                  }
+                  },
+                  ...(subchannelObj ? { subchannelObj } : {})
                 }
               }
             : {})
         }
       };
+    }
     case 'HIDE_CHAT':
       return {
         ...state,
