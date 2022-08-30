@@ -893,25 +893,51 @@ export default function ChatReducer(state, action) {
     }
     case 'LOAD_MORE_MESSAGES': {
       if (state.selectedChannelId !== action.loadedChannelId) return state;
-      let messagesLoadMoreButton = false;
+      let loadMoreButton = false;
       if (action.messageIds.length === 21) {
         action.messageIds.pop();
-        messagesLoadMoreButton = true;
+        loadMoreButton = true;
       }
+      const prevChannelObj = state.channelsObj[action.loadedChannelId];
+      const messageIds = action.loadedSubchannelId
+        ? prevChannelObj.messageIds
+        : prevChannelObj.messageIds.concat(action.messageIds);
+      const messagesObj = action.loadedSubchannelId
+        ? prevChannelObj.messagesObj
+        : {
+            ...prevChannelObj.messagesObj,
+            ...action.messagesObj
+          };
+      const messagesLoadMoreButton = action.loadedSubchannelId
+        ? prevChannelObj.messagesLoadMoreButton
+        : loadMoreButton;
+      const subchannelObj = action.loadedSubchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.loadedSubchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[action.loadedSubchannelId],
+              messageIds: prevChannelObj?.subchannelObj?.[
+                action.loadedSubchannelId
+              ]?.messageIds.concat(action.messageIds),
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj?.[action.loadedSubchannelId]
+                  ?.messagesObj,
+                ...action.messagesObj
+              },
+              loadMoreButtonShown: loadMoreButton
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.loadedChannelId]: {
-            ...state.channelsObj[action.loadedChannelId],
-            messageIds: state.channelsObj[
-              action.loadedChannelId
-            ].messageIds.concat(action.messageIds),
-            messagesObj: {
-              ...state.channelsObj[action.loadedChannelId].messagesObj,
-              ...action.messagesObj
-            },
-            messagesLoadMoreButton
+            ...prevChannelObj,
+            messageIds,
+            messagesObj,
+            messagesLoadMoreButton,
+            ...(subchannelObj ? { subchannelObj } : {})
           }
         }
       };

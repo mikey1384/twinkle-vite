@@ -269,12 +269,18 @@ export default function ChatActions(dispatch) {
         channels
       });
     },
-    onLoadMoreMessages({ messageIds, messagesObj, loadedChannelId }) {
+    onLoadMoreMessages({
+      messageIds,
+      messagesObj,
+      loadedChannelId,
+      loadedSubchannelId
+    }) {
       return dispatch({
         type: 'LOAD_MORE_MESSAGES',
         messageIds,
         messagesObj,
-        loadedChannelId
+        loadedChannelId,
+        loadedSubchannelId
       });
     },
     onLoadVocabulary({ vocabActivities, wordsObj, wordCollectors }) {
