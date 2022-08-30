@@ -287,15 +287,22 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMoreChatMessages({ userId, messageId, channelId }) {
+    async loadMoreChatMessages({ userId, messageId, channelId, subchannelId }) {
       try {
         const {
-          data: { messageIds, messagesObj, loadedChannelId }
+          data: { messageIds, messagesObj, loadedChannelId, loadedSubchannelId }
         } = await request.get(
-          `${URL}/chat/more/messages?userId=${userId}&messageId=${messageId}&channelId=${channelId}`,
+          `${URL}/chat/more/messages?userId=${userId}&messageId=${messageId}&channelId=${channelId}${
+            subchannelId ? `&subchannelId=${subchannelId}` : ''
+          }`,
           auth()
         );
-        return Promise.resolve({ messageIds, messagesObj, loadedChannelId });
+        return Promise.resolve({
+          messageIds,
+          messagesObj,
+          loadedChannelId,
+          loadedSubchannelId
+        });
       } catch (error) {
         return handleError(error);
       }

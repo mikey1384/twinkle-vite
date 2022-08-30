@@ -767,13 +767,23 @@ function MessagesContainer({
             (MessagesRef.current || {}).offsetHeight) *
           -1;
         try {
-          const { messageIds, messagesObj, loadedChannelId } =
-            await loadMoreChatMessages({
-              userId,
-              messageId,
-              channelId: selectedChannelId
-            });
-          onLoadMoreMessages({ messageIds, messagesObj, loadedChannelId });
+          const {
+            messageIds,
+            messagesObj,
+            loadedChannelId,
+            loadedSubchannelId
+          } = await loadMoreChatMessages({
+            userId,
+            messageId,
+            channelId: selectedChannelId,
+            subchannelId: subchannel?.id
+          });
+          onLoadMoreMessages({
+            messageIds,
+            messagesObj,
+            loadedChannelId,
+            loadedSubchannelId
+          });
           setLoadingMore(false);
           loadMoreButtonLock.current = false;
         } catch (error) {
@@ -784,7 +794,13 @@ function MessagesContainer({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, loadMoreButtonShown, selectedChannelId, userId]);
+  }, [
+    messages,
+    loadMoreButtonShown,
+    selectedChannelId,
+    subchannel?.id,
+    userId
+  ]);
 
   const handleAcceptGroupInvitation = useCallback(
     async (invitationChannelPath) => {
