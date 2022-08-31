@@ -1162,64 +1162,90 @@ export default function ChatReducer(state, action) {
     }
     case 'RECEIVE_MESSAGE': {
       const messageId = action.message.id || uuidv1();
+      const numUnreads =
+        action.pageVisible && action.usingChat
+          ? state.numUnreads
+          : state.numUnreads + 1;
+      const prevChannelObj = state.channelsObj[action.message.channelId];
+      const lastChessMoveViewerId =
+        action.message.isChessMsg &&
+        action.message.userId &&
+        !action.message.isDrawOffer
+          ? action.message.userId
+          : prevChannelObj.lastChessMoveViewerId;
+      const messageIds = action.subchannelId
+        ? prevChannelObj.messageIds
+        : [messageId].concat(prevChannelObj.messageIds);
+      const messagesObj = action.subchannelId
+        ? prevChannelObj.messagesObj
+        : {
+            ...prevChannelObj.messagesObj,
+            [messageId]: { ...action.message, id: messageId }
+          };
+      const members = action.newMembers
+        ? [
+            ...prevChannelObj.members,
+            ...action.newMembers.filter(
+              (newMember) =>
+                !prevChannelObj.members
+                  .map((member) => member.id)
+                  .includes(newMember.id)
+            )
+          ]
+        : prevChannelObj.members;
+      const gameState = {
+        ...prevChannelObj.gameState,
+        ...(action.message.isChessMsg
+          ? {
+              chess: {
+                ...prevChannelObj.gameState?.chess,
+                drawOfferedBy: null
+              }
+            }
+          : action.message.isDrawOffer
+          ? {
+              chess: {
+                ...prevChannelObj.gameState?.chess,
+                drawOfferedBy: action.message.userId
+              }
+            }
+          : {})
+      };
+      const subchannelObj = action.message.subchannelId
+        ? {
+            ...prevChannelObj.subchannelObj,
+            [action.message.subchannelId]: {
+              ...prevChannelObj.subchannelObj[action.message.subchannelId],
+              messageIds: [messageId].concat(
+                prevChannelObj.subchannelObj[action.message.subchannelId]
+                  ?.messageIds
+              ),
+              messagesObj: {
+                ...prevChannelObj.subchannelObj[action.message.subchannelId]
+                  ?.messagesObj,
+                [messageId]: { ...action.message, id: messageId }
+              }
+            }
+          }
+        : prevChannelObj.subchannelObj;
+
       return {
         ...state,
-        numUnreads:
-          action.pageVisible && action.usingChat
-            ? state.numUnreads
-            : state.numUnreads + 1,
+        numUnreads,
         channelsObj: {
           ...state.channelsObj,
           [action.message.channelId]: {
-            ...state.channelsObj[action.message.channelId],
-            messageIds: [messageId].concat(
-              state.channelsObj[action.message.channelId].messageIds
-            ),
-            messagesObj: {
-              ...state.channelsObj[action.message.channelId].messagesObj,
-              [messageId]: { ...action.message, id: messageId }
-            },
-            lastChessMoveViewerId:
-              action.message.isChessMsg &&
-              action.message.userId &&
-              !action.message.isDrawOffer
-                ? action.message.userId
-                : state.channelsObj[action.message.channelId]
-                    .lastChessMoveViewerId,
-            members: [
-              ...state.channelsObj[action.message.channelId].members,
-              ...action.newMembers.filter(
-                (newMember) =>
-                  !state.channelsObj[action.message.channelId].members
-                    .map((member) => member.id)
-                    .includes(newMember.id)
-              )
-            ],
+            ...prevChannelObj,
+            messageIds,
+            messagesObj,
+            lastChessMoveViewerId,
+            members,
             numUnreads: action.usingChat
               ? 0
-              : Number(state.channelsObj[action.message.channelId].numUnreads) +
-                1,
-            gameState: {
-              ...state.channelsObj[action.message.channelId].gameState,
-              ...(action.message.isChessMsg
-                ? {
-                    chess: {
-                      ...state.channelsObj[action.message.channelId].gameState
-                        ?.chess,
-                      drawOfferedBy: null
-                    }
-                  }
-                : action.message.isDrawOffer
-                ? {
-                    chess: {
-                      ...state.channelsObj[action.message.channelId].gameState
-                        ?.chess,
-                      drawOfferedBy: action.message.userId
-                    }
-                  }
-                : {})
-            },
-            isHidden: false
+              : Number(prevChannelObj.numUnreads) + 1,
+            gameState,
+            isHidden: false,
+            ...(subchannelObj ? { subchannelObj } : {})
           }
         }
       };
