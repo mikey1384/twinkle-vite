@@ -272,6 +272,15 @@ function Chat({ onFileUpload }) {
     return result || '';
   }, [currentPathId, pathname]);
   const prevSubchannelPath = useRef(subchannelPath);
+  const subchannelId = useMemo(() => {
+    if (!subchannelPath || !currentChannel?.subchannelObj) return null;
+    for (let subchannel of Object.values(currentChannel.subchannelObj)) {
+      if (subchannel.path === subchannelPath) {
+        return subchannel.id;
+      }
+    }
+    return null;
+  }, [currentChannel.subchannelObj, subchannelPath]);
 
   useEffect(() => {
     let subchannelPathExistsAndIsInvalid = true;
@@ -333,12 +342,19 @@ function Chat({ onFileUpload }) {
       if (!channelPathIdHash[pathId]) {
         onUpdateChannelPathIdHash({ channelId, pathId });
       }
-      if (channelsObj[channelId]?.loaded && !subchannelPath) {
+      if (channelsObj[channelId]?.loaded) {
         onUpdateSelectedChannelId(channelId);
-        if (lastChatPath !== `/${pathId}`) {
-          updateLastChannelId(channelId);
+        if (!subchannelPath) {
+          if (lastChatPath !== `/${pathId}`) {
+            updateLastChannelId(channelId);
+          }
+          return;
+        } else {
+          console.log(
+            'here...',
+            channelsObj[channelId]?.subchannelObj[subchannelId].loaded
+          );
         }
-        return;
       }
       setLoading(true);
       const data = await loadChatChannel({ channelId, subchannelPath });
@@ -351,12 +367,12 @@ function Chat({ onFileUpload }) {
         loadingRef.current = false;
         return;
       }
-      onEnterChannelWithId({ data });
+      onEnterChannelWithId(data);
       setLoading(false);
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPathId, subchannelPath]);
+  }, [currentPathId, subchannelPath, currentChannel?.subchannelObj]);
 
   useEffect(() => {
     if (

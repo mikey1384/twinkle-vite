@@ -481,7 +481,7 @@ function MessagesContainer({
     const data = await loadChatChannel({
       channelId: GENERAL_CHAT_ID
     });
-    onEnterChannelWithId({ data });
+    onEnterChannelWithId(data);
     setHideModalShown(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId]);

@@ -553,16 +553,28 @@ export default function ChatReducer(state, action) {
         action.data.messageIds.pop();
         messagesLoadMoreButton = true;
       }
+      const newSubchannelObj = {};
+      if (
+        action.data.currentSubchannelId &&
+        action.data.channel?.subchannelObj
+      ) {
+        for (let subchannel of Object.values(
+          action.data.channel.subchannelObj
+        )) {
+          const currentSubchannelObj =
+            state.channelsObj[selectedChannel.id]?.subchannelObj || {};
+          newSubchannelObj[subchannel.id] = {
+            ...(currentSubchannelObj[subchannel.id] || {}),
+            ...subchannel,
+            ...(action.data.currentSubchannelId === subchannel.id
+              ? { loaded: true }
+              : {})
+          };
+        }
+      }
       return {
         ...state,
         chatType: 'default',
-        homeChannelIds: action.showOnTop
-          ? [selectedChannel.id].concat(
-              state.homeChannelIds.filter(
-                (channelId) => channelId !== selectedChannel.id
-              )
-            )
-          : state.homeChannelIds,
         selectedChatTab: determineSelectedChatTab({
           currentSelectedChatTab: state.selectedChatTab,
           selectedChannel
@@ -586,7 +598,10 @@ export default function ChatReducer(state, action) {
             messageIds: action.data.messageIds,
             messagesObj: action.data.messagesObj,
             numUnreads: 0,
-            loaded: true
+            loaded: true,
+            ...(action.data.currentSubchannelId
+              ? { subchannelObj: newSubchannelObj }
+              : {})
           }
         },
         selectedChannelId: selectedChannel.id
@@ -741,13 +756,29 @@ export default function ChatReducer(state, action) {
         ...state.channelsObj,
         ...action.data.channelsObj
       };
+      const newSubchannelObj = {};
+      if (action.data.currentSubchannelId && action.data.channelsObj) {
+        for (let subchannel of Object.values(
+          action.data.channelsObj?.[action.data.currentChannelId]?.subchannelObj
+        )) {
+          newSubchannelObj[subchannel.id] = {
+            ...subchannel,
+            ...(action.data.currentSubchannelId === subchannel.id
+              ? { loaded: true }
+              : {})
+          };
+        }
+      }
       newChannelsObj[action.data.currentChannelId] = {
         ...action.data.channelsObj[action.data.currentChannelId],
         messagesLoadMoreButton,
         messageIds: newMessageIds,
         messagesObj: newMessagesObj,
         recentChessMessage: null,
-        loaded: true
+        loaded: true,
+        ...(action.data.currentSubchannelId
+          ? { subchannelObj: newSubchannelObj }
+          : {})
       };
       if (alreadyUsingChat) {
         newChannelsObj[state.selectedChannelId] =
