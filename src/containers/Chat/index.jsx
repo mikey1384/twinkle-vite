@@ -351,9 +351,13 @@ function Chat({ onFileUpload }) {
           return;
         } else {
           console.log(
-            'here...',
-            channelsObj[channelId]?.subchannelObj[subchannelId].loaded
+            channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded,
+            'ho'
           );
+          if (channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded) {
+            console.log('got here');
+            return;
+          }
         }
       }
       setLoading(true);
