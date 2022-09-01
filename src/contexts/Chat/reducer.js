@@ -553,24 +553,29 @@ export default function ChatReducer(state, action) {
         action.data.messageIds.pop();
         messagesLoadMoreButton = true;
       }
-      const newSubchannelObj = {};
+      let newSubchannelObj = {};
       if (
         action.data.currentSubchannelId &&
         action.data.channel?.subchannelObj
       ) {
-        for (let subchannel of Object.values(
-          action.data.channel.subchannelObj
-        )) {
-          const currentSubchannelObj =
-            state.channelsObj[selectedChannel.id]?.subchannelObj || {};
-          newSubchannelObj[subchannel.id] = {
-            ...(currentSubchannelObj[subchannel.id] || {}),
-            ...subchannel,
-            ...(action.data.currentSubchannelId === subchannel.id
-              ? { loaded: true }
-              : {})
-          };
-        }
+        newSubchannelObj = {
+          ...state.channelsObj[selectedChannel.id]?.subchannelObj,
+          [action.data.currentSubchannelId]: {
+            ...state.channelsObj[selectedChannel.id]?.subchannelObj[
+              action.data.currentSubchannelId
+            ],
+            ...action.data.channel?.subchannelObj,
+            messageIds:
+              action.data.channel?.subchannelObj[
+                action.data.currentSubchannelId
+              ]?.messageIds,
+            messagesObj:
+              action.data.channel?.subchannelObj[
+                action.data.currentSubchannelId
+              ]?.messagesObj,
+            loaded: true
+          }
+        };
       }
       return {
         ...state,
