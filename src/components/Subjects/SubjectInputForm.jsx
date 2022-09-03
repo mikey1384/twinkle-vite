@@ -235,7 +235,7 @@ export default function SubjectInputForm({
     onSetSubjectInputForm({
       contentId,
       contentType,
-      form: undefined
+      form: null
     });
     onClose();
   }
@@ -334,6 +334,11 @@ export default function SubjectInputForm({
         contentId,
         contentType,
         progress: 0
+      });
+      onSetSubjectInputForm({
+        contentId,
+        contentType,
+        form: null
       });
       titleRef.current = '';
       descriptionRef.current = '';
