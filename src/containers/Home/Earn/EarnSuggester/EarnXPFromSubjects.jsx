@@ -58,6 +58,7 @@ export default function EarnXPFromSubjects() {
               filled
               color={showMeAnotherSubjectButtonColor}
               onClick={handleLoadAnotherSubjectClick}
+              disabled={loading}
             >
               <Icon icon="redo" />
               <span style={{ marginLeft: '0.7rem' }}>
