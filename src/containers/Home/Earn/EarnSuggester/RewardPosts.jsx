@@ -15,6 +15,7 @@ export default function StartMenu() {
   const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [skipping, setSkipping] = useState(false);
   const loadPostsToReward = useAppContext(
     (v) => v.requestHelpers.loadPostsToReward
   );
@@ -76,6 +77,7 @@ export default function StartMenu() {
               filled
               color={showMeAnotherPostButtonColor}
               onClick={handleLoadAnotherPostClick}
+              disabled={skipping || loading}
             >
               <Icon icon="redo" />
               <span style={{ marginLeft: '0.7rem' }}>Show me another post</span>
@@ -128,12 +130,14 @@ export default function StartMenu() {
 
   async function handleLoadAnotherPostClick() {
     if (posts[0]?.id) {
+      setSkipping(true);
       await markPostAsSkipped({
         earnType: 'karma',
         action: 'reward',
         contentType: 'comment',
         contentId: posts[0].id
       });
+      setSkipping(false);
     }
     document.getElementById('App').scrollTop = 0;
     BodyRef.scrollTop = 0;
