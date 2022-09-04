@@ -102,6 +102,7 @@ export default function RecommendationInterface({
         marginBottom: '1rem',
         padding: '1rem',
         display: 'flex',
+        minHeight: '6rem',
         flexDirection: 'column',
         justifyContent: 'center',
         ...style
