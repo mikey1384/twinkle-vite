@@ -36,6 +36,7 @@ export default function Pictures({
   selectedTheme
 }) {
   const { userId, banned } = useKeyContext((v) => v.myState);
+  const [saveDisabled, setSaveDisabled] = useState(false);
   const [addPictureModalShown, setAddPictureModalShown] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);
   const [deleteMode, setDeleteMode] = useState(false);
@@ -68,6 +69,7 @@ export default function Pictures({
         </Button>
         <Button
           skeuomorphic
+          disabled={saveDisabled}
           style={{ marginLeft: '1rem' }}
           onClick={handleConfirm}
         >
@@ -149,6 +151,7 @@ export default function Pictures({
     }
 
     async function handlePictureDeleteConfirm() {
+      setSaveDisabled(true);
       const success = await deleteProfilePictures(remainingPictures);
       if (success) {
         onSetUserState({
@@ -156,10 +159,12 @@ export default function Pictures({
           newState: { pictures: remainingPictures }
         });
       }
+      setSaveDisabled(false);
       setDeleteMode(false);
     }
 
     async function handlePictureReorderConfirm() {
+      setSaveDisabled(true);
       const success = await reorderProfilePictures(reorderedPictureIds);
       if (success) {
         const pictureObj = objectify(pictures);
@@ -172,6 +177,7 @@ export default function Pictures({
           }
         });
       }
+      setSaveDisabled(false);
       setReorderMode(false);
     }
 
