@@ -188,7 +188,8 @@ export default function Pictures({
     numPics,
     pictures,
     remainingPictures,
-    reorderedPictureIds
+    reorderedPictureIds,
+    saveDisabled
   ]);
 
   return (
