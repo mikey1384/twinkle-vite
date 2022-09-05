@@ -78,7 +78,7 @@ export default function Questions({ isRepeating, mission }) {
   }, [currentSlideIndex, questionObj]);
 
   return (
-    <div>
+    <div style={{ width: '100%' }}>
       {questionIds.length > 0 ? (
         <QuestionCarousel
           conditionPassStatus={
@@ -102,19 +102,21 @@ export default function Questions({ isRepeating, mission }) {
         <Loading />
       )}
       {conditionPassStatus && (
-        <StatusMessage
-          mission={mission}
-          missionComplete={repeatMissionComplete}
-          status={conditionPassStatus}
-          passMessage="Correct!"
-          failMessage={questionObj[currentSlideIndex].failMessage}
-          onBackToStart={() =>
-            onSetMissionState({
-              missionId: mission.id,
-              newState: { started: false, grammarReviewLoaded: false }
-            })
-          }
-        />
+        <div>
+          <StatusMessage
+            mission={mission}
+            missionComplete={repeatMissionComplete}
+            status={conditionPassStatus}
+            passMessage="*Correct!*"
+            failMessage={questionObj[currentSlideIndex].failMessage}
+            onBackToStart={() =>
+              onSetMissionState({
+                missionId: mission.id,
+                newState: { started: false, grammarReviewLoaded: false }
+              })
+            }
+          />
+        </div>
       )}
     </div>
   );
