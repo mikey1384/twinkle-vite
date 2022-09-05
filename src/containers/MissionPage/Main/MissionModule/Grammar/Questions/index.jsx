@@ -102,7 +102,7 @@ export default function Questions({ isRepeating, mission }) {
         <Loading />
       )}
       {conditionPassStatus && (
-        <div>
+        <div style={{ marginTop: '-0.5rem' }}>
           <StatusMessage
             mission={mission}
             missionComplete={repeatMissionComplete}
