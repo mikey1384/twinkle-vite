@@ -131,6 +131,9 @@ function Chat({ onFileUpload }) {
   const chessModalShown = useChatContext((v) => v.state.chessModalShown);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
+  const lastSubchannelPaths = useChatContext(
+    (v) => v.state.lastSubchannelPaths
+  );
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const creatingNewDMChannel = useChatContext(
     (v) => v.state.creatingNewDMChannel
@@ -224,6 +227,9 @@ function Chat({ onFileUpload }) {
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
   );
+  const onUpdateLastSubchannelPath = useChatContext(
+    (v) => v.actions.onUpdateLastSubchannelPath
+  );
   const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
   const onUpdateLastChessMessageId = useChatContext(
     (v) => v.actions.onUpdateLastChessMessageId
@@ -296,6 +302,7 @@ function Chat({ onFileUpload }) {
       subchannelPathExistsAndIsInvalid = false;
     }
     if (subchannelPathExistsAndIsInvalid) {
+      console.log('hereee');
       navigate('/chat', { replace: true });
     }
   }, [currentChannel?.subchannelObj, navigate, subchannelPath]);
@@ -353,12 +360,16 @@ function Chat({ onFileUpload }) {
           return;
         } else {
           if (channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded) {
-            return;
+            return onUpdateLastSubchannelPath({
+              channelId,
+              path: subchannelPath
+            });
           }
           const subchannel = await loadSubchannel({
             channelId,
             subchannelId
           });
+          onUpdateLastSubchannelPath({ channelId, path: subchannel.path });
           return onSetSubchannel({ channelId, subchannel });
         }
       }
@@ -400,18 +411,6 @@ function Chat({ onFileUpload }) {
       navigate(`/chat/vocabulary`, { replace: true });
     }
   }, [chatType, currentPathId, navigate]);
-
-  useEffect(() => {
-    if (!currentPathId) {
-      if (chatType === 'vocabulary') {
-        prevPathId.current = 'vocabulary';
-        navigate(`/chat/vocabulary`, { replace: true });
-      } else if (!isNaN(currentChannel.pathId)) {
-        prevPathId.current = currentChannel.pathId;
-        navigate(`/chat/${currentChannel.pathId}`, { replace: true });
-      }
-    }
-  }, [chatType, currentChannel.pathId, currentPathId, navigate]);
 
   useEffect(() => {
     if (!prevUserId.current) {
@@ -665,6 +664,7 @@ function Chat({ onFileUpload }) {
           creatingNewDMChannel,
           filesBeingUploaded,
           isRespondingToSubject,
+          lastSubchannelPaths,
           loadingVocabulary,
           recepientId,
           reconnecting,

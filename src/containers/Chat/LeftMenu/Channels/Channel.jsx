@@ -1,10 +1,11 @@
-import { memo, useCallback, useMemo } from 'react';
+import { useContext, memo, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 import { useNavigate, useLocation } from 'react-router-dom';
+import LocalContext from '../../Context';
 import localize from '~/constants/localize';
 
 const deletedLabel = localize('deleted');
@@ -31,6 +32,9 @@ function Channel({
   chatType,
   selectedChannelId
 }) {
+  const {
+    state: { lastSubchannelPaths }
+  } = useContext(LocalContext);
   const navigate = useNavigate();
   const location = useLocation();
   const currentPathId = useMemo(() => {
@@ -126,13 +130,20 @@ function Channel({
     [effectiveChannelName, otherMember]
   );
 
+  const lastSubchannelPath = useMemo(
+    () => lastSubchannelPaths[channelId],
+    [channelId, lastSubchannelPaths]
+  );
+
   const handleChannelClick = useCallback(() => {
     if (pathIdMatches) return;
     if (pathId) {
-      return navigate(`/chat/${pathId}`);
+      return navigate(
+        `/chat/${pathId}${lastSubchannelPath ? `/${lastSubchannelPath}` : ''}`
+      );
     }
     navigate('/chat/new');
-  }, [navigate, pathId, pathIdMatches]);
+  }, [lastSubchannelPath, navigate, pathId, pathIdMatches]);
 
   const badgeShown = useMemo(() => {
     return (

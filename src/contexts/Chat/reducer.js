@@ -1842,6 +1842,14 @@ export default function ChatReducer(state, action) {
           [action.pathId]: action.channelId
         }
       };
+    case 'UPDATE_LAST_SUBCHANNEL_PATH':
+      return {
+        ...state,
+        lastSubchannelPaths: {
+          ...state.lastSubchannelPaths,
+          [action.channelId]: action.path
+        }
+      };
     case 'UPDATE_UPLOAD_PROGRESS': {
       const targetId =
         action.channelId +
