@@ -257,11 +257,11 @@ export default function chatRequestHelpers({ auth, handleError }) {
     },
     async loadSubchannel({ channelId, subchannelId }) {
       try {
-        const { data } = await request.get(
+        const { data: subchannel } = await request.get(
           `${URL}/chat/channel/subchannel?channelId=${channelId}&subchannelId=${subchannelId}`,
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve(subchannel);
       } catch (error) {
         return handleError(error);
       }

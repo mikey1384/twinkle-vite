@@ -1656,6 +1656,20 @@ export default function ChatReducer(state, action) {
         }
       };
     }
+    case 'SET_SUBCHANNEL':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            subchannelObj: {
+              ...state.channelsObj[action.channelId].subchannelObj,
+              [action.subchannel.id]: action.subchannel
+            }
+          }
+        }
+      };
     case 'SET_VOCAB_ERROR_MESSAGE': {
       return {
         ...state,
