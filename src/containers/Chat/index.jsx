@@ -292,7 +292,11 @@ function Chat({ onFileUpload }) {
 
   useEffect(() => {
     let subchannelPathExistsAndIsInvalid = true;
-    if (!stringIsEmpty(subchannelPath) && currentChannel?.subchannelObj) {
+    if (
+      !stringIsEmpty(subchannelPath) &&
+      currentChannel?.subchannelObj &&
+      selectedChannelId === parseChannelPath(currentPathId)
+    ) {
       for (let subchannel of Object.values(currentChannel?.subchannelObj)) {
         if (subchannel.path === subchannelPath) {
           subchannelPathExistsAndIsInvalid = false;
@@ -302,10 +306,15 @@ function Chat({ onFileUpload }) {
       subchannelPathExistsAndIsInvalid = false;
     }
     if (subchannelPathExistsAndIsInvalid) {
-      console.log('hereee');
       navigate('/chat', { replace: true });
     }
-  }, [currentChannel?.subchannelObj, navigate, subchannelPath]);
+  }, [
+    currentChannel?.subchannelObj,
+    navigate,
+    subchannelPath,
+    selectedChannelId,
+    currentPathId
+  ]);
 
   useEffect(() => {
     currentPathIdRef.current = currentPathId;
@@ -414,7 +423,6 @@ function Chat({ onFileUpload }) {
 
   useEffect(() => {
     if (!currentPathId) {
-      console.log('there');
       if (chatType === 'vocabulary') {
         prevPathId.current = 'vocabulary';
         navigate(`/chat/vocabulary`, { replace: true });
