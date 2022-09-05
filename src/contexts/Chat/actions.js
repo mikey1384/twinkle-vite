@@ -686,6 +686,13 @@ export default function ChatActions(dispatch) {
         viewerId
       });
     },
+    onUpdateLastSubchannelPath({ channelId, path }) {
+      return dispatch({
+        type: 'UPDATE_LAST_SUBCHANNEL_PATH',
+        channelId,
+        path
+      });
+    },
     onUpdateCollectorsRankings(data) {
       return dispatch({
         type: 'UPDATE_COLLECTORS_RANKINGS',
