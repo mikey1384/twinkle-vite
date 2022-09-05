@@ -413,6 +413,19 @@ function Chat({ onFileUpload }) {
   }, [chatType, currentPathId, navigate]);
 
   useEffect(() => {
+    if (!currentPathId) {
+      console.log('there');
+      if (chatType === 'vocabulary') {
+        prevPathId.current = 'vocabulary';
+        navigate(`/chat/vocabulary`, { replace: true });
+      } else if (!isNaN(currentChannel.pathId)) {
+        prevPathId.current = currentChannel.pathId;
+        navigate(`/chat/${currentChannel.pathId}`, { replace: true });
+      }
+    }
+  }, [chatType, currentChannel.pathId, currentPathId, navigate]);
+
+  useEffect(() => {
     if (!prevUserId.current) {
       prevUserId.current = userId;
     } else {
