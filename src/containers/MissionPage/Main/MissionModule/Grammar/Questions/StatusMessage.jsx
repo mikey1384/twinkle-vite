@@ -1,12 +1,10 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
-import LongText from '~/components/Texts/LongText';
 import Button from '~/components/Button';
-import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { borderRadius, Color } from '~/constants/css';
+import { addCommasToNumber, applyTextEffects } from '~/helpers/stringHelpers';
 
 StatusMessage.propTypes = {
   failMessage: PropTypes.string,
@@ -86,7 +84,8 @@ export default function StatusMessage({
         marginRight: '-1rem',
         marginBottom: '-1rem',
         fontSize: '1.5rem',
-        padding: '1.5rem'
+        minHeight: '5rem',
+        padding: '1.5rem 0'
       }}
     >
       {missionComplete ? (
@@ -126,10 +125,11 @@ export default function StatusMessage({
           </div>
         </div>
       ) : (
-        <div>
+        <div style={{ marginLeft: '2rem' }}>
           <div
             style={{
               display: 'flex',
+              width: '100%',
               justifyContent: 'center',
               alignItems: 'center'
             }}
@@ -141,18 +141,14 @@ export default function StatusMessage({
               }}
               icon={status === 'pass' ? 'check' : 'times'}
             />
-            <LongText
-              style={{ width: 'auto' }}
-              className={css`
-                font-size: 1.7rem;
-                margin-left: 2rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.5rem;
-                }
-              `}
-            >
-              {status === 'pass' ? passMessage : failMessage}
-            </LongText>
+            <span
+              style={{ marginLeft: '1.5rem', fontSize: '1.7rem' }}
+              dangerouslySetInnerHTML={{
+                __html: applyTextEffects(
+                  status === 'pass' ? passMessage : failMessage
+                )
+              }}
+            />
           </div>
           {status === 'fail' && (
             <div
