@@ -368,17 +368,17 @@ function Chat({ onFileUpload }) {
           }
           return;
         } else {
+          onUpdateLastSubchannelPath({
+            channelId,
+            path: subchannelPath
+          });
           if (channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded) {
-            return onUpdateLastSubchannelPath({
-              channelId,
-              path: subchannelPath
-            });
+            return;
           }
           const subchannel = await loadSubchannel({
             channelId,
             subchannelId
           });
-          onUpdateLastSubchannelPath({ channelId, path: subchannel.path });
           return onSetSubchannel({ channelId, subchannel });
         }
       }
