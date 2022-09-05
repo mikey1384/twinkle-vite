@@ -350,10 +350,6 @@ function Chat({ onFileUpload }) {
           }
           return;
         } else {
-          console.log(
-            channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded,
-            'ho'
-          );
           if (channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded) {
             console.log('got here');
             return;

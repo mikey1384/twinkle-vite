@@ -1209,10 +1209,10 @@ export default function ChatReducer(state, action) {
         !action.message.isDrawOffer
           ? action.message.userId
           : prevChannelObj.lastChessMoveViewerId;
-      const messageIds = action.subchannelId
+      const messageIds = action.message.subchannelId
         ? prevChannelObj.messageIds
         : [messageId].concat(prevChannelObj.messageIds);
-      const messagesObj = action.subchannelId
+      const messagesObj = action.message.subchannelId
         ? prevChannelObj.messagesObj
         : {
             ...prevChannelObj.messagesObj,
