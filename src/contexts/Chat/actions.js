@@ -594,6 +594,13 @@ export default function ChatActions(dispatch) {
         profile
       });
     },
+    onSetSubchannel({ channelId, subchannel }) {
+      return dispatch({
+        type: 'SET_SUBCHANNEL',
+        channelId,
+        subchannel
+      });
+    },
     onSetVocabErrorMessage(message) {
       return dispatch({
         type: 'SET_VOCAB_ERROR_MESSAGE',

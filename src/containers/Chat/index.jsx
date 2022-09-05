@@ -214,6 +214,7 @@ function Chat({ onFileUpload }) {
     (v) => v.actions.onSetFavoriteChannel
   );
   const onSetReplyTarget = useChatContext((v) => v.actions.onSetReplyTarget);
+  const onSetSubchannel = useChatContext((v) => v.actions.onSetSubchannel);
   const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
   const onSearchChatSubject = useChatContext(
@@ -353,9 +354,12 @@ function Chat({ onFileUpload }) {
         } else {
           if (channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded) {
             return;
-          } else {
-            return await loadSubchannel({ channelId, subchannelId });
           }
+          const subchannel = await loadSubchannel({
+            channelId,
+            subchannelId
+          });
+          return onSetSubchannel({ channelId, subchannel });
         }
       }
       setLoading(true);
