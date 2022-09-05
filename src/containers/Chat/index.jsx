@@ -74,6 +74,7 @@ function Chat({ onFileUpload }) {
   const loadChatChannel = useAppContext(
     (v) => v.requestHelpers.loadChatChannel
   );
+  const loadSubchannel = useAppContext((v) => v.requestHelpers.loadSubchannel);
   const loadChatSubject = useAppContext(
     (v) => v.requestHelpers.loadChatSubject
   );
@@ -351,8 +352,9 @@ function Chat({ onFileUpload }) {
           return;
         } else {
           if (channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded) {
-            console.log('got here');
             return;
+          } else {
+            return await loadSubchannel({ channelId, subchannelId });
           }
         }
       }
