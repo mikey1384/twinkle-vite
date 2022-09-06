@@ -375,13 +375,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         const data = await loadChat(
           !isNaN(pathId) ? parseChannelPath(pathId) : selectedChannelId
         );
-        onInitChat(data);
         if (
           !isNaN(currentPathIdRef.current) &&
           currentPathIdRef.current !== pathId
         ) {
           onUpdateSelectedChannelId(parseChannelPath(currentPathIdRef.current));
         }
+        onInitChat(data);
         socket.emit(
           'check_online_members',
           selectedChannelId,

@@ -1,11 +1,15 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import Channel from './Channel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-function Channels() {
+Channels.propTypes = {
+  currentPathId: PropTypes.string
+};
+function Channels({ currentPathId }) {
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
@@ -158,6 +162,7 @@ function Channels() {
             <Channel
               key={selectedChatTab + channel.id}
               channel={channel}
+              currentPathId={currentPathId}
               customChannelNames={customChannelNames}
               chatType={chatType}
               selectedChannelId={selectedChannelId}

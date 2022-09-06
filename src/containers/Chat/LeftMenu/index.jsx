@@ -14,10 +14,11 @@ import localize from '~/constants/localize';
 const newChatLabel = localize('newChat');
 
 LeftMenu.propTypes = {
+  currentPathId: PropTypes.string,
   onNewButtonClick: PropTypes.func.isRequired
 };
 
-function LeftMenu({ onNewButtonClick }) {
+function LeftMenu({ currentPathId, onNewButtonClick }) {
   const navigate = useNavigate();
   const {
     chatFlatButton: {
@@ -120,7 +121,7 @@ function LeftMenu({ onNewButtonClick }) {
             }}
           >
             <Tabs />
-            <Channels />
+            <Channels currentPathId={currentPathId} />
           </div>
         </div>
       </div>
