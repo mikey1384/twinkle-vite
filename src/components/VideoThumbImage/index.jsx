@@ -50,6 +50,8 @@ function VideoThumbImage({
       if (userId) {
         const percentage = await loadVideoWatchPercentage(videoId);
         setProgressBarPercentage(percentage);
+      } else {
+        setProgressBarPercentage(0);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
