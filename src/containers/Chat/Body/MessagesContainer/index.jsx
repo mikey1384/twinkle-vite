@@ -40,7 +40,7 @@ import { socket } from '~/constants/io';
 import { isMobile, parseChannelPath } from '~/helpers';
 import { useTheme } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAppContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
@@ -61,6 +61,7 @@ MessagesContainer.propTypes = {
   channelName: PropTypes.string,
   chessOpponent: PropTypes.object,
   currentChannel: PropTypes.object.isRequired,
+  currentPathId: PropTypes.string,
   displayedThemeColor: PropTypes.string,
   loading: PropTypes.bool
 };
@@ -69,12 +70,12 @@ function MessagesContainer({
   channelName,
   chessOpponent,
   currentChannel,
+  currentPathId,
   displayedThemeColor,
   loading: channelLoading
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const {
     actions: {
       onDeleteMessage,
@@ -146,7 +147,6 @@ function MessagesContainer({
   } = useTheme(twoPeople ? profileTheme : displayedThemeColor || profileTheme);
   const scrolledToBottomRef = useRef(true);
   const loadMoreButtonLock = useRef(false);
-  const currentPathId = useMemo(() => pathname.split('chat/')[1], [pathname]);
   const textForThisChannel = useMemo(
     () => inputState['chat' + selectedChannelId]?.text || '',
     [selectedChannelId, inputState]
