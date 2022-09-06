@@ -325,7 +325,7 @@ function Chat({ onFileUpload }) {
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPathId]);
+  }, [currentPathId, lastChatPath, navigate, userId]);
 
   useEffect(() => {
     if (
