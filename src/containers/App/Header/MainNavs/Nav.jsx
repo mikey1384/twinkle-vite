@@ -151,13 +151,11 @@ function Nav({
   );
 
   function handleNavClick() {
-    if (!pathname) return;
-    if (pathname === to) {
-      document.getElementById('App').scrollTop = 0;
-      BodyRef.scrollTop = 0;
-    }
-    if (pathname.includes('/users/') && pathname === to) {
-      const username = pathname.split('/users/')[1].split('/')[0];
+    if (!to) return;
+    document.getElementById('App').scrollTop = 0;
+    BodyRef.scrollTop = 0;
+    if (to.includes('/users/')) {
+      const username = to.split('/users/')[1].split('/')[0];
       const { profileId } = profileState[username] || {};
       onReloadContent({
         contentId: profileId,
@@ -165,13 +163,12 @@ function Nav({
       });
       onResetProfile(username);
     }
-    if (pathname === '/users' && pathname === to) {
+    if (to === '/users') {
       onSetProfilesLoaded(false);
     }
     if (
-      ['/featured', '/videos', '/links', '/subjects', '/comments'].includes(
-        pathname
-      )
+      ['/videos', '/links', '/subjects'].includes(to) &&
+      ['/videos', '/links', '/subjects'].includes(pathname)
     ) {
       onClearLinksLoaded();
       onSetSubjectsLoaded(false);
