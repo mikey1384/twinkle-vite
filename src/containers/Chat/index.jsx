@@ -398,7 +398,14 @@ function Chat({ onFileUpload }) {
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPathId, subchannelPath, currentChannel?.subchannelObj]);
+  }, [
+    currentPathId,
+    subchannelPath,
+    lastChatPath,
+    navigate,
+    userId,
+    subchannelId
+  ]);
 
   useEffect(() => {
     if (
