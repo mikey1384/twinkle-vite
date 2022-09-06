@@ -516,11 +516,13 @@ function Comment({
   );
 
   const maxLines = useMemo(() => {
-    return isPreview &&
-      filePath &&
-      (fileType === 'video' || fileType === 'image')
-      ? 3
-      : 10;
+    if (isPreview) {
+      if (filePath && (fileType === 'video' || fileType === 'image')) {
+        return 3;
+      }
+      return 5;
+    }
+    return 10;
   }, [filePath, isPreview, fileType]);
 
   const commentIsEmpty = useMemo(
