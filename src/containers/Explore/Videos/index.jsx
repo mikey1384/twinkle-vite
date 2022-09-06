@@ -38,7 +38,6 @@ export default function Videos() {
   const searchedPlaylists = useExploreContext(
     (v) => v.state.videos.searchedPlaylists
   );
-  const prevUserId = useExploreContext((v) => v.state.prevUserId);
   const onCloseAddPlaylistModal = useExploreContext(
     (v) => v.actions.onCloseAddPlaylistModal
   );
@@ -60,10 +59,9 @@ export default function Videos() {
       onSetSearchText({ category: 'playlist', searchText })
   });
   const AllPlaylistsPanelRef = useRef(null);
-  const loadedRef = useRef(false);
 
   useEffect(() => {
-    if (!(allPlaylistsLoaded || loadedRef.current) || userId !== prevUserId) {
+    if (!allPlaylistsLoaded) {
       init();
     }
     async function init() {
@@ -72,10 +70,9 @@ export default function Videos() {
         playlists: results,
         loadMoreButton
       });
-      loadedRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allPlaylistsLoaded, userId, prevUserId]);
+  }, [allPlaylistsLoaded]);
 
   const playlists = useMemo(
     () =>
@@ -116,7 +113,7 @@ export default function Videos() {
         }
         userId={userId}
         playlists={playlists}
-        loaded={allPlaylistsLoaded || loadedRef.current}
+        loaded={allPlaylistsLoaded}
         isSearching={searching}
         onSearch={handleSearch}
         searchQuery={playlistSearchText}
