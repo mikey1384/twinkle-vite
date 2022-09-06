@@ -16,25 +16,14 @@ export default function notificationRequestHelpers({ auth, handleError }) {
     },
     async fetchNotifications() {
       try {
-        if (auth().headers.authorization === null) {
-          const { data } = await request.get(`${URL}/notification/chatSubject`);
-          return Promise.resolve({
-            notifications: [],
-            rewards: [],
-            totalRewardedTwinkles: 0,
-            totalRewardedTwinkleCoins: 0,
-            currentChatSubject: data
-          });
-        } else {
-          const {
-            data: { currentChatSubject, loadMoreNotifications, notifications }
-          } = await request.get(`${URL}/notification`, auth());
-          return Promise.resolve({
-            currentChatSubject,
-            loadMoreNotifications,
-            notifications
-          });
-        }
+        const {
+          data: { currentChatSubject, loadMoreNotifications, notifications }
+        } = await request.get(`${URL}/notification`, auth());
+        return Promise.resolve({
+          currentChatSubject,
+          loadMoreNotifications,
+          notifications
+        });
       } catch (error) {
         return handleError(error);
       }
