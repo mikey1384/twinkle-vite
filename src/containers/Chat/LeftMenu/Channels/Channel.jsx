@@ -4,7 +4,7 @@ import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
 
 const deletedLabel = localize('deleted');
@@ -12,12 +12,14 @@ const deletedLabel = localize('deleted');
 Channel.propTypes = {
   channel: PropTypes.object.isRequired,
   chatType: PropTypes.string,
+  currentPathId: PropTypes.string,
   customChannelNames: PropTypes.object.isRequired,
   selectedChannelId: PropTypes.number
 };
 
 function Channel({
   customChannelNames,
+  currentPathId,
   channel: {
     id: channelId,
     channelName,
@@ -32,10 +34,6 @@ function Channel({
   selectedChannelId
 }) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const currentPathId = useMemo(() => {
-    return Number(location.pathname.split('chat/')[1]);
-  }, [location.pathname]);
   const { userId } = useKeyContext((v) => v.myState);
   const {
     generalChat: { color: generalChatColor }
@@ -45,7 +43,7 @@ function Channel({
     [channelName, customChannelNames, channelId]
   );
   const pathIdMatches = useMemo(
-    () => pathId === currentPathId,
+    () => Number(pathId) === Number(currentPathId),
     [currentPathId, pathId]
   );
   const selected = useMemo(() => {

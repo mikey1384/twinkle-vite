@@ -663,12 +663,14 @@ function Chat({ onFileUpload }) {
                 />
               )}
               <LeftMenu
+                currentPathId={currentPathId}
                 onNewButtonClick={() => setCreateNewChatModalShown(true)}
                 showUserListModal={() => setUserListModalShown(true)}
               />
               <Body
                 displayedThemeColor={displayedThemeColor}
                 loading={loading}
+                currentPathId={currentPathId}
                 channelName={currentChannelName}
                 chessOpponent={partner}
                 currentChannel={currentChannel}

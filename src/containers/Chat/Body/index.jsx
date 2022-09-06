@@ -12,6 +12,7 @@ Body.propTypes = {
   channelName: PropTypes.string,
   chessOpponent: PropTypes.object,
   currentChannel: PropTypes.object,
+  currentPathId: PropTypes.string,
   displayedThemeColor: PropTypes.string,
   loading: PropTypes.bool
 };
@@ -20,6 +21,7 @@ function Body({
   channelName,
   chessOpponent,
   currentChannel,
+  currentPathId,
   displayedThemeColor,
   loading
 }) {
@@ -51,6 +53,7 @@ function Body({
             ) : (
               <MessagesContainer
                 key={currentChannel.id}
+                currentPathId={currentPathId}
                 displayedThemeColor={displayedThemeColor}
                 loading={loading}
                 channelName={channelName}
