@@ -154,7 +154,7 @@ function Nav({
     if (!to) return;
     document.getElementById('App').scrollTop = 0;
     BodyRef.scrollTop = 0;
-    if (to.includes('/users/')) {
+    if (to.includes('/users/') && to === pathname) {
       const username = to.split('/users/')[1].split('/')[0];
       const { profileId } = profileState[username] || {};
       onReloadContent({
@@ -163,7 +163,7 @@ function Nav({
       });
       onResetProfile(username);
     }
-    if (to === '/users') {
+    if (to === '/users' && to === pathname) {
       onSetProfilesLoaded(false);
     }
     if (
