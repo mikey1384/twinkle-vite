@@ -255,6 +255,10 @@ function Comment({
       subjectState?.secretAttachment
     ]
   );
+  const isCommentForASubjectWithSecretMessage = useMemo(
+    () => !!parent?.secretAnswer || !!parent?.secretAttachment,
+    [parent?.secretAnswer, parent?.secretAttachment]
+  );
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(
@@ -365,30 +369,13 @@ function Comment({
     userIsUploader
   ]);
 
-  const isForSecretSubject = useMemo(
-    () =>
-      !!rootContent?.secretAnswer ||
-      !!rootContent?.secretAttachment ||
-      !!parent?.secretAnswer ||
-      !!parent?.secretAttachment ||
-      !!subject?.secretAnswer ||
-      !!subject?.secretAttachment,
-    [
-      parent?.secretAnswer,
-      rootContent?.secretAnswer,
-      subject?.secretAnswer,
-      parent?.secretAttachment,
-      rootContent?.secretAttachment,
-      subject?.secretAttachment
-    ]
-  );
-
   const dropdownMenuItems = useMemo(() => {
     const items = [];
     if (
       (userIsUploader || canEdit) &&
       !isNotification &&
-      (!isForSecretSubject || (userIsUploader && userIsParentUploader))
+      (!isCommentForASubjectWithSecretMessage ||
+        (userIsUploader && userIsParentUploader))
     ) {
       items.push({
         label: (
@@ -441,7 +428,7 @@ function Comment({
     canDelete,
     canEdit,
     comment.id,
-    isForSecretSubject,
+    isCommentForASubjectWithSecretMessage,
     isCreator,
     isNotification,
     pinnedCommentId,
@@ -562,7 +549,11 @@ function Comment({
   }, [uploader?.username]);
 
   const isDisplayed = useMemo(() => {
-    if (isDeleteNotification && !isPreview && !isForSecretSubject) {
+    if (
+      isDeleteNotification &&
+      !isPreview &&
+      !isCommentForASubjectWithSecretMessage
+    ) {
       if (numReplies === 0 && replies.length === 0) {
         return false;
       }
@@ -572,7 +563,7 @@ function Comment({
     comment.isDeleted,
     isDeleteNotification,
     isDeleted,
-    isForSecretSubject,
+    isCommentForASubjectWithSecretMessage,
     isPreview,
     numReplies,
     replies.length
@@ -605,7 +596,8 @@ function Comment({
               </div>
             )}
             <div className="content-wrapper">
-              {(!isDeleteNotification || isForSecretSubject) && (
+              {(!isDeleteNotification ||
+                isCommentForASubjectWithSecretMessage) && (
                 <div
                   style={{
                     display: 'flex',
@@ -638,15 +630,18 @@ function Comment({
                 <div
                   style={{
                     height:
-                      isDeleteNotification && !isForSecretSubject
+                      isDeleteNotification &&
+                      !isCommentForASubjectWithSecretMessage
                         ? '0.3rem'
                         : 'auto'
                   }}
                 >
-                  {(!isDeleteNotification || isForSecretSubject) && (
+                  {(!isDeleteNotification ||
+                    isCommentForASubjectWithSecretMessage) && (
                     <UsernameText className="username" user={uploader} />
                   )}{' '}
-                  {(!isDeleteNotification || isForSecretSubject) && (
+                  {(!isDeleteNotification ||
+                    isCommentForASubjectWithSecretMessage) && (
                     <small className="timestamp">
                       <a
                         className={css`
