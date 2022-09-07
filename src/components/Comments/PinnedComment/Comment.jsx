@@ -108,6 +108,7 @@ function Comment({
 
   const {
     authLevel,
+    banned,
     canDelete,
     canEdit,
     canReward,
@@ -243,53 +244,46 @@ function Comment({
     [authLevel, uploader.authLevel]
   );
   const dropdownButtonShown = useMemo(() => {
-    const isForSecretSubject =
-      (rootContent?.secretAnswer &&
-        !(
-          rootContent?.uploader?.id === userId ||
-          authLevel > rootContent?.uploader?.authLevel
-        )) ||
-      (parent?.secretAnswer &&
-        !(
-          parent?.uploader?.id === userId ||
-          authLevel > parent?.uploader?.authLevel
-        )) ||
-      (subject?.secretAnswer &&
-        !(
-          subject?.uploader?.id === userId ||
-          authLevel > subject?.uploader?.authLevel
-        ));
+    if (isNotification || isPreview) {
+      return false;
+    }
     const userCanEditThis = (canEdit || canDelete) && userIsHigherAuth;
-    return (
-      ((userIsUploader && !(isForSecretSubject || isNotification)) ||
-        userCanEditThis ||
-        (userIsParentUploader && !isNotification)) &&
-      !isPreview
-    );
+    return userIsUploader || userCanEditThis || userIsParentUploader;
   }, [
-    authLevel,
     canDelete,
     canEdit,
     isNotification,
     isPreview,
-    parent?.secretAnswer,
-    parent?.uploader?.authLevel,
-    parent?.uploader?.id,
-    rootContent?.secretAnswer,
-    rootContent?.uploader?.authLevel,
-    rootContent?.uploader?.id,
-    subject?.secretAnswer,
-    subject?.uploader?.authLevel,
-    subject?.uploader?.id,
-    userId,
     userIsHigherAuth,
     userIsParentUploader,
     userIsUploader
   ]);
 
+  const isForSecretSubject = useMemo(
+    () =>
+      !!rootContent?.secretAnswer ||
+      !!rootContent?.secretAttachment ||
+      !!parent?.secretAnswer ||
+      !!parent?.secretAttachment ||
+      !!subject?.secretAnswer ||
+      !!subject?.secretAttachment,
+    [
+      parent?.secretAnswer,
+      rootContent?.secretAnswer,
+      subject?.secretAnswer,
+      parent?.secretAttachment,
+      rootContent?.secretAttachment,
+      subject?.secretAttachment
+    ]
+  );
+
   const dropdownMenuItems = useMemo(() => {
     const items = [];
-    if ((userIsUploader || canEdit) && !isNotification) {
+    if (
+      (userIsUploader || canEdit) &&
+      !isNotification &&
+      (!isForSecretSubject || (userIsUploader && userIsParentUploader))
+    ) {
       items.push({
         label: (
           <>
@@ -305,7 +299,11 @@ function Comment({
           })
       });
     }
-    if (userIsParentUploader || isCreator) {
+    if (
+      (userIsParentUploader || isCreator) &&
+      !isNotification &&
+      !banned?.posting
+    ) {
       items.push({
         label: (
           <>
@@ -330,9 +328,12 @@ function Comment({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    banned?.posting,
     canDelete,
     canEdit,
     comment.id,
+    isForSecretSubject,
+    isCreator,
     isNotification,
     userIsParentUploader,
     userIsUploader
