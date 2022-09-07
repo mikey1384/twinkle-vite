@@ -368,49 +368,27 @@ function Comment({
   const isForSecretSubject = useMemo(
     () =>
       !!rootContent?.secretAnswer ||
+      !!rootContent?.secretAttachment ||
       !!parent?.secretAnswer ||
-      !!subject?.secretAnswer,
-    [parent?.secretAnswer, rootContent?.secretAnswer, subject?.secretAnswer]
+      !!parent?.secretAttachment ||
+      !!subject?.secretAnswer ||
+      !!subject?.secretAttachment,
+    [
+      parent?.secretAnswer,
+      rootContent?.secretAnswer,
+      subject?.secretAnswer,
+      parent?.secretAttachment,
+      rootContent?.secretAttachment,
+      subject?.secretAttachment
+    ]
   );
-
-  const answerForSecretSubjectNotViewed = useMemo(() => {
-    return (
-      (rootContent?.secretAnswer &&
-        !(
-          rootContent?.uploader?.id === userId ||
-          authLevel > rootContent?.uploader?.authLevel
-        )) ||
-      (parent?.secretAnswer &&
-        !(
-          parent?.uploader?.id === userId ||
-          authLevel > parent?.uploader?.authLevel
-        )) ||
-      (subject?.secretAnswer &&
-        !(
-          subject?.uploader?.id === userId ||
-          authLevel > subject?.uploader?.authLevel
-        ))
-    );
-  }, [
-    authLevel,
-    parent?.secretAnswer,
-    parent?.uploader?.authLevel,
-    parent?.uploader?.id,
-    rootContent?.secretAnswer,
-    rootContent?.uploader?.authLevel,
-    rootContent?.uploader?.id,
-    subject?.secretAnswer,
-    subject?.uploader?.authLevel,
-    subject?.uploader?.id,
-    userId
-  ]);
 
   const dropdownMenuItems = useMemo(() => {
     const items = [];
     if (
       (userIsUploader || canEdit) &&
       !isNotification &&
-      !answerForSecretSubjectNotViewed
+      (!isForSecretSubject || (userIsUploader && userIsParentUploader))
     ) {
       items.push({
         label: (
@@ -463,8 +441,8 @@ function Comment({
     canDelete,
     canEdit,
     comment.id,
+    isForSecretSubject,
     isCreator,
-    answerForSecretSubjectNotViewed,
     isNotification,
     pinnedCommentId,
     userIsParentUploader,
