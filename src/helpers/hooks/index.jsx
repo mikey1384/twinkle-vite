@@ -257,26 +257,19 @@ export function useScrollPosition({
   scrollPositions = {}
 }) {
   useEffect(() => {
-    // prevents bug on mobile devices where tapping stops working after user swipes left to go to previous page
-    if (isMobile) {
+    document.getElementById('App').scrollTop = scrollPositions[pathname] || 0;
+    BodyRef.scrollTop = scrollPositions[pathname] || 0;
+    setTimeout(() => {
       document.getElementById('App').scrollTop = scrollPositions[pathname] || 0;
       BodyRef.scrollTop = scrollPositions[pathname] || 0;
-      setTimeout(() => {
-        document.getElementById('App').scrollTop =
-          scrollPositions[pathname] || 0;
-        BodyRef.scrollTop = scrollPositions[pathname] || 0;
-      }, 0);
+    }, 0);
+    // prevents bug on mobile devices where tapping stops working after user swipes left to go to previous page
+    if (isMobile) {
       setTimeout(() => {
         document.getElementById('App').scrollTop =
           scrollPositions[pathname] || 0;
         BodyRef.scrollTop = scrollPositions[pathname] || 0;
       }, 500);
-    } else {
-      setTimeout(() => {
-        document.getElementById('App').scrollTop =
-          scrollPositions[pathname] || 0;
-        BodyRef.scrollTop = scrollPositions[pathname] || 0;
-      }, 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
