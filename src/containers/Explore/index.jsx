@@ -6,15 +6,13 @@ import { mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useExploreContext, useKeyContext } from '~/contexts';
+import DisplayedContent from './DisplayedContent';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Notification from '~/components/Notification';
 import SideMenu from '~/components/SideMenu';
 import Search from './Search';
 import Categories from './Categories';
 import Icon from '~/components/Icon';
-import Videos from './Videos';
-import Links from './Links';
-import Subjects from './Subjects';
 import localize from '~/constants/localize';
 
 const subjectsLabel = localize('subjects');
@@ -117,9 +115,7 @@ export default function Explore({ category }) {
               marginBottom: '3rem'
             }}
           />
-          {category === 'videos' && <Videos />}
-          {category === 'links' && <Links />}
-          {category === 'subjects' && <Subjects />}
+          <DisplayedContent category={category} />
           <Categories
             style={{ marginTop: '3rem', marginBottom: '4rem' }}
             filter={category}
