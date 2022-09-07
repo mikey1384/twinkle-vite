@@ -211,17 +211,32 @@ export default function Body({
     [finalRewardLevel, rewards, userId, xpRewardInterfaceShown]
   );
 
+  const isCommentForSecretSubject = useMemo(() => {
+    return (
+      !!targetObj?.subject?.secretAnswer ||
+      !!targetObj?.subject?.secretAttachment
+    );
+  }, [targetObj?.subject]);
+
+  const userCanDeleteThis = useMemo(() => {
+    if (userId === uploader.id) return true;
+    return canDelete && authLevel > uploader?.authLevel;
+  }, [authLevel, canDelete, uploader.authLevel, uploader.id, userId]);
+
+  const userCanEditThis = useMemo(() => {
+    if (userId === uploader.id) return true;
+    return canEdit && authLevel > uploader?.authLevel;
+  }, [authLevel, canEdit, uploader.authLevel, uploader.id, userId]);
+
   const editMenuItems = useMemo(() => {
     const items = [];
-    const secretAnswerExists =
-      targetObj?.contentType === 'subject' && rootObj?.secretAnswer;
-    const isSecretAnswerPoster = rootObj?.uploader?.id === userId;
-    const isHigherAuthThanSecretAnswerPoster =
-      authLevel > rootObj?.uploader?.authLevel;
-    const isForSecretSubject =
-      secretAnswerExists &&
-      !(isSecretAnswerPoster || isHigherAuthThanSecretAnswerPoster);
-    if ((userId === uploader.id || canEdit) && !isForSecretSubject) {
+    if (
+      userCanEditThis &&
+      (!isCommentForSecretSubject ||
+        (targetObj.subject?.uploader?.id &&
+          targetObj.subject?.uploader?.id === userId &&
+          userId === uploader.id))
+    ) {
       items.push({
         label: (
           <>
@@ -233,7 +248,7 @@ export default function Body({
           onSetIsEditing({ contentId, contentType, isEditing: true })
       });
     }
-    if (userId === uploader.id || canDelete) {
+    if (userCanDeleteThis) {
       items.push({
         label: (
           <>
@@ -247,6 +262,10 @@ export default function Body({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canDelete, canEdit, contentId, contentType, uploader.id, userId]);
+
+  const editButtonShown = useMemo(() => {
+    return !!editMenuItems?.length;
+  }, [editMenuItems?.length]);
 
   useEffect(() => {
     if (!commentsLoaded && !(numPreviewComments > 0 && previewLoaded)) {
@@ -275,12 +294,6 @@ export default function Body({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const editButtonShown = useMemo(() => {
-    const userCanEditThis =
-      (canEdit || canDelete) && authLevel > uploader.authLevel;
-    return (userId === uploader.id && !isNotification) || userCanEditThis;
-  }, [authLevel, canDelete, canEdit, isNotification, uploader, userId]);
 
   const userCanRewardThis = useMemo(
     () =>
