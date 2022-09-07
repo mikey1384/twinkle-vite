@@ -265,6 +265,11 @@ export function useScrollPosition({
         document.getElementById('App').scrollTop =
           scrollPositions[pathname] || 0;
         BodyRef.scrollTop = scrollPositions[pathname] || 0;
+      }, 0);
+      setTimeout(() => {
+        document.getElementById('App').scrollTop =
+          scrollPositions[pathname] || 0;
+        BodyRef.scrollTop = scrollPositions[pathname] || 0;
       }, 500);
     } else {
       setTimeout(() => {
