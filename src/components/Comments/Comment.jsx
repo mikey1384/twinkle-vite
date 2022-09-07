@@ -343,15 +343,15 @@ function Comment({
     [authLevel, uploader?.authLevel]
   );
   const dropdownButtonShown = useMemo(() => {
-    if (isDeleteNotification) {
+    if (isNotification || isDeleteNotification || isPreview) {
       return false;
     }
     const userCanEditThis = (canEdit || canDelete) && userIsHigherAuth;
     return (
-      ((userIsUploader && !isNotification) ||
-        userCanEditThis ||
-        ((userIsParentUploader || userIsRootUploader) && !isNotification)) &&
-      !isPreview
+      userIsUploader ||
+      userCanEditThis ||
+      userIsParentUploader ||
+      userIsRootUploader
     );
   }, [
     canDelete,
