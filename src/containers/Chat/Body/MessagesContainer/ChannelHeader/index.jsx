@@ -44,7 +44,8 @@ ChannelHeader.propTypes = {
   onSetInviteUsersModalShown: PropTypes.func,
   onSetLeaveConfirmModalShown: PropTypes.func,
   onSetSettingsModalShown: PropTypes.func,
-  selectedChannelId: PropTypes.number
+  selectedChannelId: PropTypes.number,
+  subchannelId: PropTypes.number
 };
 
 export default function ChannelHeader({
@@ -55,7 +56,8 @@ export default function ChannelHeader({
   onSetInviteUsersModalShown,
   onSetLeaveConfirmModalShown,
   onSetSettingsModalShown,
-  selectedChannelId
+  selectedChannelId,
+  subchannelId
 }) {
   const {
     actions: {
@@ -112,11 +114,14 @@ export default function ChannelHeader({
       handleInitialLoad();
     }
     async function handleInitialLoad() {
-      const data = await loadChatSubject(selectedChannelId);
+      const data = await loadChatSubject({
+        channelId: selectedChannelId,
+        subchannelId
+      });
       onLoadChatSubject(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId, loaded]);
+  }, [selectedChannelId, subchannelId, loaded]);
 
   useEffect(() => {
     setTimeSincePost(timeSince(timeStamp));

@@ -653,11 +653,7 @@ function App() {
             <Route path="/missions/:missionType/*" element={<MissionPage />} />
             <Route path="/missions" element={<Mission />} />
             <Route
-              path="/chat/:currentPathId/*"
-              element={<Chat onFileUpload={handleFileUploadOnChat} />}
-            />
-            <Route
-              path="/chat"
+              path="/chat/*"
               element={<Chat onFileUpload={handleFileUploadOnChat} />}
             />
             <Route path="/management/*" element={<Management />} />
