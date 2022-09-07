@@ -168,6 +168,10 @@ function Comment({
     () => !!subjectState?.secretAnswer || !!subject?.secretAnswer,
     [subject?.secretAnswer, subjectState?.secretAnswer]
   );
+  const isCommentForASubjectWithSecretMessage = useMemo(
+    () => !!parent?.secretAnswer || !!parent?.secretAttachment,
+    [parent?.secretAnswer, parent?.secretAttachment]
+  );
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(
@@ -259,30 +263,13 @@ function Comment({
     userIsUploader
   ]);
 
-  const isForSecretSubject = useMemo(
-    () =>
-      !!rootContent?.secretAnswer ||
-      !!rootContent?.secretAttachment ||
-      !!parent?.secretAnswer ||
-      !!parent?.secretAttachment ||
-      !!subject?.secretAnswer ||
-      !!subject?.secretAttachment,
-    [
-      parent?.secretAnswer,
-      rootContent?.secretAnswer,
-      subject?.secretAnswer,
-      parent?.secretAttachment,
-      rootContent?.secretAttachment,
-      subject?.secretAttachment
-    ]
-  );
-
   const dropdownMenuItems = useMemo(() => {
     const items = [];
     if (
       (userIsUploader || canEdit) &&
       !isNotification &&
-      (!isForSecretSubject || (userIsUploader && userIsParentUploader))
+      (!isCommentForASubjectWithSecretMessage ||
+        (userIsUploader && userIsParentUploader))
     ) {
       items.push({
         label: (
@@ -332,7 +319,7 @@ function Comment({
     canDelete,
     canEdit,
     comment.id,
-    isForSecretSubject,
+    isCommentForASubjectWithSecretMessage,
     isCreator,
     isNotification,
     userIsParentUploader,
