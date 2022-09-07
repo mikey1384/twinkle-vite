@@ -212,11 +212,18 @@ export default function Body({
   );
 
   const isCommentForSecretSubject = useMemo(() => {
+    if (targetObj?.comment) {
+      return false;
+    }
     return (
       !!targetObj?.subject?.secretAnswer ||
       !!targetObj?.subject?.secretAttachment
     );
-  }, [targetObj?.subject]);
+  }, [
+    targetObj?.comment,
+    targetObj?.subject?.secretAnswer,
+    targetObj?.subject?.secretAttachment
+  ]);
 
   const userCanDeleteThis = useMemo(() => {
     if (userId === uploader.id) return true;
