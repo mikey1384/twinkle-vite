@@ -63,7 +63,8 @@ MessagesContainer.propTypes = {
   currentChannel: PropTypes.object.isRequired,
   currentPathId: PropTypes.string,
   displayedThemeColor: PropTypes.string,
-  loading: PropTypes.bool
+  loading: PropTypes.bool,
+  subchannelId: PropTypes.number
 };
 
 function MessagesContainer({
@@ -72,7 +73,8 @@ function MessagesContainer({
   currentChannel,
   currentPathId,
   displayedThemeColor,
-  loading: channelLoading
+  loading: channelLoading,
+  subchannelId
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
@@ -1078,6 +1080,7 @@ function MessagesContainer({
             onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
             onSetSettingsModalShown={setSettingsModalShown}
             selectedChannelId={selectedChannelId}
+            subchannelId={subchannelId}
             onFavoriteClick={handleFavoriteClick}
           />
         )}

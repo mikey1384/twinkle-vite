@@ -15,6 +15,7 @@ Body.propTypes = {
   currentPathId: PropTypes.string,
   displayedThemeColor: PropTypes.string,
   loading: PropTypes.bool,
+  subchannelId: PropTypes.number,
   subchannelPath: PropTypes.string
 };
 
@@ -25,6 +26,7 @@ function Body({
   currentPathId,
   displayedThemeColor,
   loading,
+  subchannelId,
   subchannelPath
 }) {
   const {
@@ -61,6 +63,7 @@ function Body({
                 channelName={channelName}
                 chessOpponent={chessOpponent}
                 currentChannel={currentChannel}
+                subchannelId={subchannelId}
               />
             )}
           </>
