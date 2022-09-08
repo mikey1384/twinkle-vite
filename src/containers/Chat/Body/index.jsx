@@ -64,7 +64,7 @@ function Body({
                 chessOpponent={chessOpponent}
                 currentChannel={currentChannel}
                 subchannelId={subchannelId}
-                subChannelPath={subchannelPath}
+                subchannelPath={subchannelPath}
               />
             )}
           </>
