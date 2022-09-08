@@ -222,9 +222,6 @@ function Main({ currentPathId, onFileUpload }) {
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
   );
-  const onUpdateLastSubchannelPath = useChatContext(
-    (v) => v.actions.onUpdateLastSubchannelPath
-  );
   const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
   const onUpdateLastChessMessageId = useChatContext(
     (v) => v.actions.onUpdateLastChessMessageId
@@ -359,10 +356,6 @@ function Main({ currentPathId, onFileUpload }) {
           }
           return;
         } else {
-          onUpdateLastSubchannelPath({
-            channelId,
-            path: subchannelPath
-          });
           if (channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded) {
             return;
           }
@@ -731,9 +724,9 @@ function Main({ currentPathId, onFileUpload }) {
                 currentPathId={currentPathId}
                 displayedThemeColor={displayedThemeColor}
                 onNewButtonClick={() => setCreateNewChatModalShown(true)}
+                selectedChannelId={selectedChannelId}
                 subchannelIds={currentChannel.subchannelIds}
                 subchannelObj={currentChannel.subchannelObj}
-                subchannelPath={subchannelPath}
               />
               <Body
                 displayedThemeColor={displayedThemeColor}

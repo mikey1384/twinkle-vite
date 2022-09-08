@@ -1,14 +1,17 @@
+import { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import LocalContext from '../Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { useChatContext } from '~/contexts';
 
 SubChannels.propTypes = {
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   displayedThemeColor: PropTypes.string,
-  subchannelPath: PropTypes.string,
+  selectedChannelId: PropTypes.number,
   subchannelIds: PropTypes.arrayOf(PropTypes.number),
   subchannelObj: PropTypes.object
 };
@@ -16,10 +19,20 @@ SubChannels.propTypes = {
 export default function SubChannels({
   currentPathId,
   displayedThemeColor,
-  subchannelPath,
+  selectedChannelId,
   subchannelIds,
   subchannelObj
 }) {
+  const {
+    state: { lastSubchannelPaths }
+  } = useContext(LocalContext);
+  const lastSubchannelPath = useMemo(
+    () => lastSubchannelPaths[selectedChannelId],
+    [lastSubchannelPaths, selectedChannelId]
+  );
+  const onUpdateLastSubchannelPath = useChatContext(
+    (v) => v.actions.onUpdateLastSubchannelPath
+  );
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
@@ -61,8 +74,16 @@ export default function SubChannels({
           flexDirection: 'column'
         }}
       >
-        <Link to={`/chat/${currentPathId}`}>
-          <nav className={!subchannelPath ? 'active' : ''}>
+        <Link
+          onClick={() =>
+            onUpdateLastSubchannelPath({
+              channelId: selectedChannelId,
+              path: ''
+            })
+          }
+          to={`/chat/${currentPathId}`}
+        >
+          <nav className={!lastSubchannelPath ? 'active' : ''}>
             <Icon icon="home" />
             <span style={{ marginLeft: '1rem' }}>Main</span>
           </nav>
@@ -71,10 +92,16 @@ export default function SubChannels({
           <Link
             key={subchannelId}
             to={`/chat/${currentPathId}/${subchannelObj[subchannelId].path}`}
+            onClick={() =>
+              onUpdateLastSubchannelPath({
+                channelId: selectedChannelId,
+                path: subchannelObj[subchannelId].path
+              })
+            }
           >
             <nav
               className={
-                subchannelPath === subchannelObj[subchannelId].path
+                lastSubchannelPath === subchannelObj[subchannelId].path
                   ? 'active'
                   : ''
               }
