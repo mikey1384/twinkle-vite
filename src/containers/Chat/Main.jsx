@@ -759,34 +759,15 @@ function Main({ currentPathId, onFileUpload }) {
                   }
                 />
               </Routes>
-              <Routes>
-                <Route
-                  path="/:subChannelPath"
-                  element={
-                    <Body
-                      displayedThemeColor={displayedThemeColor}
-                      loading={loading}
-                      channelName={currentChannelName}
-                      chessOpponent={partner}
-                      currentChannel={currentChannel}
-                      subchannelId={subchannelId}
-                      subchannelPath={subchannelPath}
-                    />
-                  }
-                />
-                <Route
-                  path="/"
-                  element={
-                    <Body
-                      displayedThemeColor={displayedThemeColor}
-                      loading={loading}
-                      channelName={currentChannelName}
-                      chessOpponent={partner}
-                      currentChannel={currentChannel}
-                    />
-                  }
-                />
-              </Routes>
+              <Body
+                displayedThemeColor={displayedThemeColor}
+                loading={loading}
+                channelName={currentChannelName}
+                chessOpponent={partner}
+                currentChannel={currentChannel}
+                subchannelId={subchannelId}
+                subchannelPath={subchannelPath}
+              />
               <RightMenu
                 channelOnCall={channelOnCall}
                 channelName={currentChannelName}

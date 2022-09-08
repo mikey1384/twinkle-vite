@@ -40,7 +40,7 @@ import { socket } from '~/constants/io';
 import { isMobile, parseChannelPath } from '~/helpers';
 import { useTheme } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
@@ -64,7 +64,8 @@ MessagesContainer.propTypes = {
   currentPathId: PropTypes.string,
   displayedThemeColor: PropTypes.string,
   loading: PropTypes.bool,
-  subchannelId: PropTypes.number
+  subchannelId: PropTypes.number,
+  subChannelPath: PropTypes.string
 };
 
 function MessagesContainer({
@@ -74,7 +75,8 @@ function MessagesContainer({
   currentPathId,
   displayedThemeColor,
   loading: channelLoading,
-  subchannelId
+  subchannelId,
+  subChannelPath
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
@@ -128,7 +130,6 @@ function MessagesContainer({
   } = useContext(LocalContext);
   const { banned, profilePicUrl, userId, profileTheme, username } =
     useKeyContext((v) => v.myState);
-  const { subChannelPath } = useParams();
   const {
     isRespondingToSubject = false,
     messageIds = [],
