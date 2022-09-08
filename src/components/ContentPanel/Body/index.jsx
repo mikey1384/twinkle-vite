@@ -335,6 +335,13 @@ export default function Body({
     );
   }, [views]);
 
+  const numCommentsShown = useMemo(() => {
+    if (commentsShown || autoExpand) {
+      return false;
+    }
+    return Number(numComments) > 0 || Number(numReplies) > 0;
+  }, [autoExpand, commentsShown, numComments, numReplies]);
+
   return (
     <ErrorBoundary componentPath="ContentPanel/Body/index">
       <div
@@ -428,14 +435,11 @@ export default function Body({
                           ? respondLabel
                           : replyLabel}
                       </span>
-                      {numComments > 0 || numReplies > 0
-                        ? !commentsShown &&
-                          !autoExpand && (
-                            <span style={{ marginLeft: '0.5rem' }}>
-                              ({numComments || numReplies})
-                            </span>
-                          )
-                        : null}
+                      {numCommentsShown ? (
+                        <span style={{ marginLeft: '0.5rem' }}>
+                          ({numComments || numReplies})
+                        </span>
+                      ) : null}
                     </Button>
                   )}
                   {userCanRewardThis && !secretHidden && (
