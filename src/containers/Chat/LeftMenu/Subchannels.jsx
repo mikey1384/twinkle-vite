@@ -8,7 +8,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 SubChannels.propTypes = {
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   displayedThemeColor: PropTypes.string,
-  subChannelPath: PropTypes.string,
+  subchannelPath: PropTypes.string,
   subchannelIds: PropTypes.arrayOf(PropTypes.number),
   subchannelObj: PropTypes.object
 };
@@ -16,7 +16,7 @@ SubChannels.propTypes = {
 export default function SubChannels({
   currentPathId,
   displayedThemeColor,
-  subChannelPath,
+  subchannelPath,
   subchannelIds,
   subchannelObj
 }) {
@@ -62,7 +62,7 @@ export default function SubChannels({
         }}
       >
         <Link to={`/chat/${currentPathId}`}>
-          <nav className={!subChannelPath ? 'active' : ''}>
+          <nav className={!subchannelPath ? 'active' : ''}>
             <Icon icon="home" />
             <span style={{ marginLeft: '1rem' }}>Main</span>
           </nav>
@@ -74,7 +74,7 @@ export default function SubChannels({
           >
             <nav
               className={
-                subChannelPath === subchannelObj[subchannelId].path
+                subchannelPath === subchannelObj[subchannelId].path
                   ? 'active'
                   : ''
               }

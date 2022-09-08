@@ -12,13 +12,7 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
-import {
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-  useParams
-} from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   useAppContext,
   useContentContext,
@@ -733,32 +727,14 @@ function Main({ currentPathId, onFileUpload }) {
                   onDone={handleCreateNewChannel}
                 />
               )}
-              <Routes>
-                <Route
-                  path="/:subChannelPath"
-                  element={
-                    <LeftMenu
-                      currentPathId={currentPathId}
-                      displayedThemeColor={displayedThemeColor}
-                      onNewButtonClick={() => setCreateNewChatModalShown(true)}
-                      subchannelIds={currentChannel.subchannelIds}
-                      subchannelObj={currentChannel.subchannelObj}
-                    />
-                  }
-                />
-                <Route
-                  path="/"
-                  element={
-                    <LeftMenu
-                      currentPathId={currentPathId}
-                      displayedThemeColor={displayedThemeColor}
-                      onNewButtonClick={() => setCreateNewChatModalShown(true)}
-                      subchannelIds={currentChannel.subchannelIds}
-                      subchannelObj={currentChannel.subchannelObj}
-                    />
-                  }
-                />
-              </Routes>
+              <LeftMenu
+                currentPathId={currentPathId}
+                displayedThemeColor={displayedThemeColor}
+                onNewButtonClick={() => setCreateNewChatModalShown(true)}
+                subchannelIds={currentChannel.subchannelIds}
+                subchannelObj={currentChannel.subchannelObj}
+                subchannelPath={subchannelPath}
+              />
               <Body
                 displayedThemeColor={displayedThemeColor}
                 loading={loading}

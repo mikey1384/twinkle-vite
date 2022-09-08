@@ -9,7 +9,7 @@ import Subchannels from './Subchannels';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
 
 const newChatLabel = localize('newChat');
@@ -19,7 +19,8 @@ LeftMenu.propTypes = {
   displayedThemeColor: PropTypes.string,
   onNewButtonClick: PropTypes.func.isRequired,
   subchannelIds: PropTypes.arrayOf(PropTypes.number),
-  subchannelObj: PropTypes.object
+  subchannelObj: PropTypes.object,
+  subchannelPath: PropTypes.string
 };
 
 function LeftMenu({
@@ -27,9 +28,9 @@ function LeftMenu({
   displayedThemeColor,
   onNewButtonClick,
   subchannelIds,
-  subchannelObj
+  subchannelObj,
+  subchannelPath
 }) {
-  const { subChannelPath } = useParams();
   const navigate = useNavigate();
   const {
     chatFlatButton: {
@@ -118,7 +119,7 @@ function LeftMenu({
         <Subchannels
           currentPathId={currentPathId}
           displayedThemeColor={displayedThemeColor}
-          subChannelPath={subChannelPath}
+          subchannelPath={subchannelPath}
           subchannelIds={subchannelIds}
           subchannelObj={subchannelObj}
         />

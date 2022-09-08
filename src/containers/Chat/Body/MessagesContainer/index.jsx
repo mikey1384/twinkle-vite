@@ -65,7 +65,7 @@ MessagesContainer.propTypes = {
   displayedThemeColor: PropTypes.string,
   loading: PropTypes.bool,
   subchannelId: PropTypes.number,
-  subChannelPath: PropTypes.string
+  subchannelPath: PropTypes.string
 };
 
 function MessagesContainer({
@@ -76,7 +76,7 @@ function MessagesContainer({
   displayedThemeColor,
   loading: channelLoading,
   subchannelId,
-  subChannelPath
+  subchannelPath
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
@@ -188,16 +188,16 @@ function MessagesContainer({
   const prevScrollPosition = useRef(null);
 
   const subchannel = useMemo(() => {
-    if (!subChannelPath) {
+    if (!subchannelPath) {
       return null;
     }
     for (let subchannelId of subchannelIds) {
-      if (subchannelObj[subchannelId]?.path === subChannelPath) {
+      if (subchannelObj[subchannelId]?.path === subchannelPath) {
         return subchannelObj[subchannelId];
       }
     }
     return null;
-  }, [subChannelPath, subchannelIds, subchannelObj]);
+  }, [subchannelPath, subchannelIds, subchannelObj]);
 
   const loadMoreButtonShown = useMemo(() => {
     if (subchannel) {
