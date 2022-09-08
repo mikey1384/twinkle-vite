@@ -18,18 +18,18 @@ LeftMenu.propTypes = {
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   displayedThemeColor: PropTypes.string,
   onNewButtonClick: PropTypes.func.isRequired,
+  selectedChannelId: PropTypes.number,
   subchannelIds: PropTypes.arrayOf(PropTypes.number),
-  subchannelObj: PropTypes.object,
-  subchannelPath: PropTypes.string
+  subchannelObj: PropTypes.object
 };
 
 function LeftMenu({
   currentPathId,
   displayedThemeColor,
   onNewButtonClick,
+  selectedChannelId,
   subchannelIds,
-  subchannelObj,
-  subchannelPath
+  subchannelObj
 }) {
   const navigate = useNavigate();
   const {
@@ -119,9 +119,9 @@ function LeftMenu({
         <Subchannels
           currentPathId={currentPathId}
           displayedThemeColor={displayedThemeColor}
-          subchannelPath={subchannelPath}
           subchannelIds={subchannelIds}
           subchannelObj={subchannelObj}
+          selectedChannelId={selectedChannelId}
         />
       )}
       <Channels />
