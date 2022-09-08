@@ -594,10 +594,11 @@ function MessagesContainer({
     });
     socket.emit('delete_chat_message', {
       channelId: selectedChannelId,
+      subchannelId,
       messageId
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deleteModal, selectedChannelId]);
+  }, [deleteModal, selectedChannelId, subchannelId]);
 
   const handleEditSettings = useCallback(
     async ({
