@@ -934,7 +934,8 @@ function MessagesContainer({
         content: rewardReasons[reasonId].message,
         rewardAmount: amount,
         rewardReason: reasonId,
-        target: message
+        target: message,
+        subchannelId
       });
       await updateUserXP({
         amount,
@@ -947,7 +948,7 @@ function MessagesContainer({
       handleUpdateRankings();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [handleMessageSubmit]
+    [handleMessageSubmit, subchannelId]
   );
 
   const handleUpdateRankings = useCallback(async () => {
