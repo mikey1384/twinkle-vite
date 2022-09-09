@@ -31,7 +31,7 @@ const changeTopicLabel = localize('changeTopic');
 const editGroupNameLabel = localize('editGroupName');
 const invitePeopleLabel = localize('invitePeople');
 const leaveLabel = localize('leave');
-const loadingSubjectLabel = localize('loadingSubject');
+const loadingTopicLabel = localize('loadingTopic');
 const menuLabel = deviceIsMobile ? '' : localize('menu');
 const settingsLabel = localize('settings');
 const startedByLabel = localize('startedBy');
@@ -402,7 +402,7 @@ export default function ChannelHeader({
           style={{
             color: Color[displayedThemeColor]()
           }}
-          text={`${loadingSubjectLabel}...`}
+          text={`${loadingTopicLabel}...`}
         />
       )}
     </ErrorBoundary>
