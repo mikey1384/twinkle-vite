@@ -359,10 +359,13 @@ function MessagesContainer({
   ]);
 
   const channelHeaderShown = useMemo(() => {
+    if (subchannelId) {
+      return false;
+    }
     return (
       selectedChannelId === GENERAL_CHAT_ID || !!currentChannel.canChangeSubject
     );
-  }, [currentChannel.canChangeSubject, selectedChannelId]);
+  }, [currentChannel.canChangeSubject, selectedChannelId, subchannelId]);
 
   useEffect(() => {
     handleScrollToBottom();

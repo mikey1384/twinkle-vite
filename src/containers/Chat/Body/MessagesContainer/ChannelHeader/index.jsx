@@ -92,10 +92,12 @@ export default function ChannelHeader({
     return allFavoriteChannelIds[selectedChannelId];
   }, [allFavoriteChannelIds, selectedChannelId]);
   const reloadingChatSubject = useRef(false);
-  const subjectObj = useMemo(
-    () => currentChannel?.subjectObj || {},
-    [currentChannel]
-  );
+  const subjectObj = useMemo(() => {
+    if (currentChannel.subjectObj) {
+      return currentChannel.subjectObj;
+    }
+    return {};
+  }, [currentChannel]);
   const {
     content = defaultChatSubject,
     id: subjectId,
