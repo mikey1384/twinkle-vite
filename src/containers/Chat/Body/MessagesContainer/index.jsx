@@ -123,8 +123,7 @@ function MessagesContainer({
       recepientId,
       reconnecting,
       selectedChannelId,
-      socketConnected,
-      subjectObj
+      socketConnected
     },
     inputState
   } = useContext(LocalContext);
@@ -143,6 +142,7 @@ function MessagesContainer({
     wordleAttemptState,
     wordleStats,
     nextDayTimeStamp,
+    subjectObj = {},
     twoPeople
   } = currentChannel;
   const {
@@ -236,10 +236,7 @@ function MessagesContainer({
     [channelOnCall.id, selectedChannelId]
   );
 
-  const subjectId = useMemo(
-    () => subjectObj[selectedChannelId]?.id,
-    [selectedChannelId, subjectObj]
-  );
+  const subjectId = useMemo(() => subjectObj?.id, [subjectObj]);
 
   const selectedChannelIdAndPathIdNotSynced = useMemo(() => {
     const pathId = Number(currentPathId);
@@ -1248,6 +1245,7 @@ function MessagesContainer({
           replyTarget={currentChannel.replyTarget}
           subchannelId={subchannel?.id}
           subjectId={subjectId}
+          subjectObj={subjectObj}
         />
       </div>
       {chessModalShown && (

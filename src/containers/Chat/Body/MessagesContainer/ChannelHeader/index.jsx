@@ -74,7 +74,7 @@ export default function ChannelHeader({
       searchChatSubject,
       uploadChatSubject
     },
-    state: { allFavoriteChannelIds, subjectObj, subjectSearchResults }
+    state: { allFavoriteChannelIds, subjectSearchResults }
   } = useContext(LocalContext);
   const { authLevel, banned, profilePicUrl, userId, username } = useKeyContext(
     (v) => v.myState
@@ -92,17 +92,19 @@ export default function ChannelHeader({
     return allFavoriteChannelIds[selectedChannelId];
   }, [allFavoriteChannelIds, selectedChannelId]);
   const reloadingChatSubject = useRef(false);
-
+  const subjectObj = useMemo(
+    () => currentChannel?.subjectObj || {},
+    [currentChannel]
+  );
   const {
     content = defaultChatSubject,
     id: subjectId,
-    loaded,
-    uploader = {},
-    reloader = {},
     timeStamp,
-    reloadTimeStamp
-  } = subjectObj[selectedChannelId] || {};
-
+    reloadTimeStamp,
+    reloader = {},
+    uploader = {},
+    loaded
+  } = subjectObj;
   const [timeSincePost, setTimeSincePost] = useState(timeSince(timeStamp));
   const [timeSinceReload, setTimeSinceReload] = useState(
     timeSince(reloadTimeStamp)

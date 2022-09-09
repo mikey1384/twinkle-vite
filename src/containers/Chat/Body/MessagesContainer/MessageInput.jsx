@@ -50,7 +50,8 @@ MessageInput.propTypes = {
   recepientId: PropTypes.number,
   socketConnected: PropTypes.bool,
   subchannelId: PropTypes.number,
-  subjectId: PropTypes.number
+  subjectId: PropTypes.number,
+  subjectObj: PropTypes.object
 };
 
 const deviceIsMobile = isMobile(navigator);
@@ -71,7 +72,8 @@ export default function MessageInput({
   recepientId,
   socketConnected,
   subchannelId,
-  subjectId
+  subjectId,
+  subjectObj
 }) {
   const textForThisChannel = useMemo(
     () =>
@@ -308,6 +310,7 @@ export default function MessageInput({
       {isRespondingToSubject ? (
         <TargetSubjectPreview
           channelId={selectedChannelId}
+          subjectObj={subjectObj}
           onClose={() =>
             onSetIsRespondingToSubject({
               channelId: selectedChannelId,
