@@ -144,7 +144,6 @@ function Main({ currentPathId, onFileUpload }) {
   const recepientId = useChatContext((v) => v.state.recepientId);
   const reconnecting = useChatContext((v) => v.state.reconnecting);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
-  const subjectObj = useChatContext((v) => v.state.subjectObj);
   const subjectSearchResults = useChatContext(
     (v) => v.state.subjectSearchResults
   );
@@ -689,7 +688,6 @@ function Main({ currentPathId, onFileUpload }) {
           reconnecting,
           selectedChannelId,
           socketConnected,
-          subjectObj,
           subjectSearchResults,
           userObj,
           wordleModalShown

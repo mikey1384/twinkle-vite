@@ -1,25 +1,14 @@
-import { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { defaultChatSubject } from '~/constants/defaultValues';
 import { Color, borderRadius } from '~/constants/css';
-import LocalContext from '../../Context';
 
 TargetSubjectPreview.propTypes = {
-  channelId: PropTypes.number,
+  subjectObj: PropTypes.object,
   onClose: PropTypes.func.isRequired
 };
 
-export default function TargetSubjectPreview({ channelId, onClose }) {
-  const {
-    state: { subjectObj }
-  } = useContext(LocalContext);
-
-  const { content = defaultChatSubject } = useMemo(
-    () => subjectObj[channelId] || {},
-    [channelId, subjectObj]
-  );
-
+export default function TargetSubjectPreview({ subjectObj, onClose }) {
   return (
     <div
       style={{
@@ -55,7 +44,7 @@ export default function TargetSubjectPreview({ channelId, onClose }) {
       >
         <div>
           <div style={{ marginTop: '0.5rem', paddingBottom: '1rem' }}>
-            {content}
+            {subjectObj?.content || defaultChatSubject}
           </div>
         </div>
       </div>
