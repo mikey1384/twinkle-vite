@@ -272,11 +272,15 @@ export default function ChatReducer(state, action) {
       };
     }
     case 'CHANGE_SUBJECT': {
+      const prevChannelObj = state.channelsObj[action.channelId];
       return {
         ...state,
-        subjectObj: {
-          ...state.subjectObj,
-          [action.channelId]: action.subject
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            subjectObj: action.subject
+          }
         }
       };
     }
@@ -482,6 +486,13 @@ export default function ChatReducer(state, action) {
             ? {
                 [action.channelId]: {
                   ...prevChannelObj,
+                  subjectObj:
+                    action.isSubject && action.subjectChanged
+                      ? {
+                          ...prevChannelObj.subjectObj,
+                          content: action.editedMessage
+                        }
+                      : prevChannelObj.subjectObj,
                   messagesObj: {
                     ...prevChannelObj?.messagesObj,
                     [action.messageId]: {
@@ -493,17 +504,7 @@ export default function ChatReducer(state, action) {
                 }
               }
             : {})
-        },
-        subjectObj:
-          action.isSubject && action.subjectChanged
-            ? {
-                ...state.subjectObj,
-                [state.selectedChannelId]: {
-                  ...state.subjectObj[state.selectedChannelId],
-                  content: action.editedMessage
-                }
-              }
-            : state.subjectObj
+        }
       };
     }
     case 'EDIT_WORD':
@@ -989,17 +990,22 @@ export default function ChatReducer(state, action) {
         }
       };
     }
-    case 'LOAD_SUBJECT':
+    case 'LOAD_SUBJECT': {
+      const prevChannelObj = state.channelsObj[action.data.channelId];
       return {
         ...state,
-        subjectObj: {
-          ...state.subjectObj,
+        channelsObj: {
+          ...state.channelsObj,
           [action.data.channelId]: {
-            ...action.data,
-            loaded: true
+            ...prevChannelObj,
+            subjectObj: {
+              ...action.data,
+              loaded: true
+            }
           }
         }
       };
+    }
     case 'LOAD_VOCABULARY': {
       let vocabActivitiesLoadMoreButton = false;
       if (action.vocabActivities.length > 20) {
@@ -1062,13 +1068,6 @@ export default function ChatReducer(state, action) {
             (channelId) => channelId !== action.channelId
           )
         ],
-        subjectObj: {
-          ...state.subjectObj,
-          [action.channelId]: {
-            ...state.subjectObj[action.channelId],
-            ...action.subject
-          }
-        },
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
@@ -1083,7 +1082,8 @@ export default function ChatReducer(state, action) {
                 channelId: action.channelId,
                 ...action.subject
               }
-            }
+            },
+            subjectObj: action.subject
           }
         }
       };
@@ -1419,10 +1419,6 @@ export default function ChatReducer(state, action) {
     case 'RELOAD_SUBJECT':
       return {
         ...state,
-        subjectObj: {
-          ...state.subjectObj,
-          [action.channelId]: action.subject
-        },
         homeChannelIds: [
           action.channelId,
           ...state.homeChannelIds.filter(
@@ -1439,7 +1435,8 @@ export default function ChatReducer(state, action) {
             messagesObj: {
               ...state.channelsObj[action.channelId].messagesObj,
               [action.message.id]: action.message
-            }
+            },
+            subjectObj: action.subject
           }
         }
       };
@@ -1756,10 +1753,8 @@ export default function ChatReducer(state, action) {
       };
       const targetSubject = action.isRespondingToSubject
         ? {
-            ...state.subjectObj[action.message.channelId],
-            content:
-              state.subjectObj[action.message.channelId].content ||
-              defaultChatSubject
+            ...prevChannelObj?.subjectObj,
+            content: prevChannelObj?.subjectObj?.content || defaultChatSubject
           }
         : null;
 
