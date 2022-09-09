@@ -728,8 +728,8 @@ const languageObj = {
     en: 'Links',
     kr: '링크'
   },
-  loadingSubject: {
-    en: 'Loading Subject',
+  loadingTopic: {
+    en: 'Loading Topic',
     kr: '주제 불러오는 중'
   },
   loadMore: {
