@@ -359,14 +359,14 @@ function MessagesContainer({
   ]);
 
   const channelHeaderShown = useMemo(() => {
-    if (
-      loadingAnimationShown ||
-      (subchannel?.loaded && !subchannel?.canChangeSubject)
-    ) {
+    if (loadingAnimationShown) {
       return false;
     }
     return (
-      selectedChannelId === GENERAL_CHAT_ID || !!currentChannel.canChangeSubject
+      (!subchannel &&
+        (selectedChannelId === GENERAL_CHAT_ID ||
+          !!currentChannel.canChangeSubject)) ||
+      subchannel.canChangeSubject
     );
   }, [
     currentChannel.canChangeSubject,
@@ -1094,7 +1094,7 @@ function MessagesContainer({
             onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
             onSetSettingsModalShown={setSettingsModalShown}
             selectedChannelId={selectedChannelId}
-            subchannelId={subchannelId}
+            subchannel={subchannel}
             onFavoriteClick={handleFavoriteClick}
           />
         )}

@@ -45,7 +45,7 @@ ChannelHeader.propTypes = {
   onSetLeaveConfirmModalShown: PropTypes.func,
   onSetSettingsModalShown: PropTypes.func,
   selectedChannelId: PropTypes.number,
-  subchannelId: PropTypes.number
+  subchannel: PropTypes.object
 };
 
 export default function ChannelHeader({
@@ -57,7 +57,7 @@ export default function ChannelHeader({
   onSetLeaveConfirmModalShown,
   onSetSettingsModalShown,
   selectedChannelId,
-  subchannelId
+  subchannel
 }) {
   const {
     actions: {
@@ -88,34 +88,50 @@ export default function ChannelHeader({
   const [onHover, setOnHover] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [addToFavoritesShown, setAddToFavoritesShown] = useState(false);
+  const [subchannelLoading, setSubchannelLoading] = useState(false);
   const favorited = useMemo(() => {
     return allFavoriteChannelIds[selectedChannelId];
   }, [allFavoriteChannelIds, selectedChannelId]);
   const reloadingChatSubject = useRef(false);
   const subjectObj = useMemo(() => {
+    if (subchannel) {
+      if (subchannel?.subjectObj) {
+        return subchannel?.subjectObj;
+      }
+      return {};
+    }
     if (currentChannel.subjectObj) {
       return currentChannel.subjectObj;
     }
     return {};
-  }, [currentChannel]);
+  }, [currentChannel, subchannel]);
   const canChangeSubject = useMemo(() => {
+    if (subchannel) {
+      if (subchannel?.subjectObj) {
+        return subchannel?.subjectObj?.canChangeSubject;
+      }
+      return false;
+    }
     return currentChannel.canChangeSubject;
-  }, [currentChannel.canChangeSubject]);
+  }, [currentChannel.canChangeSubject, subchannel]);
 
   const {
-    content = defaultChatSubject,
+    content,
     id: subjectId,
     timeStamp,
     reloadTimeStamp,
     reloader = {},
-    uploader = {},
-    loaded
+    uploader = {}
   } = subjectObj;
   const [timeSincePost, setTimeSincePost] = useState(timeSince(timeStamp));
   const [timeSinceReload, setTimeSinceReload] = useState(
     timeSince(reloadTimeStamp)
   );
   const HeaderLabelRef = useRef(null);
+
+  const loaded = useMemo(() => {
+    return currentChannel.subjectObj?.loaded;
+  }, [currentChannel.subjectObj?.loaded]);
 
   useEffect(() => {
     if (!loaded) {
@@ -124,12 +140,37 @@ export default function ChannelHeader({
     async function handleInitialLoad() {
       const data = await loadChatSubject({
         channelId: selectedChannelId,
-        subchannelId
+        subchannelId: subchannel?.id
       });
       onLoadChatSubject(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId, subchannelId, loaded]);
+  }, [loaded]);
+
+  useEffect(() => {
+    if (subchannel?.loaded && !subchannel?.subjectObj?.loaded) {
+      setSubchannelLoading(true);
+      handleInitialLoad();
+    }
+    async function handleInitialLoad() {
+      const data = await loadChatSubject({
+        channelId: selectedChannelId,
+        subchannelId: subchannel?.id
+      });
+      onLoadChatSubject(data);
+      setSubchannelLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subchannel?.loaded, subchannel?.subjectObj?.loaded]);
+
+  const displayedContent = useMemo(() => {
+    if (!currentChannel.subjectObj && !subchannel?.subjectObj) return '';
+    if (subchannel?.subjectObj?.loaded) {
+      return subchannel?.subjectObj?.content || defaultChatSubject;
+    }
+    if (!loaded) return '';
+    return currentChannel.subjectObj?.content || defaultChatSubject;
+  }, [currentChannel.subjectObj, loaded, subchannel?.subjectObj]);
 
   useEffect(() => {
     setTimeSincePost(timeSince(timeStamp));
@@ -265,7 +306,7 @@ export default function ChannelHeader({
         }
       `}
     >
-      {loaded ? (
+      {loaded || (subchannel?.loaded && !subchannelLoading) ? (
         <>
           {!onEdit && (
             <>
@@ -298,9 +339,9 @@ export default function ChannelHeader({
                     onMouseLeave={() => setOnHover(false)}
                     ref={HeaderLabelRef}
                   >
-                    {content}
+                    {displayedContent}
                   </span>
-                  <FullTextReveal text={content} show={onHover} />
+                  <FullTextReveal text={displayedContent} show={onHover} />
                 </div>
                 <div style={{ width: '100%' }}>{subjectDetails}</div>
               </section>
