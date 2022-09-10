@@ -165,7 +165,9 @@ export default function ChannelHeader({
   const menuProps = useMemo(() => {
     let result = [];
     if (
-      (selectedChannelId === GENERAL_CHAT_ID && authLevel > 0) ||
+      ((selectedChannelId === GENERAL_CHAT_ID ||
+        currentChannel.canChangeSubject === 'mod') &&
+        authLevel > 0) ||
       currentChannel.canChangeSubject === 'all' ||
       (currentChannel.canChangeSubject === 'owner' &&
         currentChannel.creatorId === userId)
