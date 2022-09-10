@@ -359,13 +359,21 @@ function MessagesContainer({
   ]);
 
   const channelHeaderShown = useMemo(() => {
-    if (subchannelId) {
+    if (
+      loadingAnimationShown ||
+      (subchannel?.loaded && !subchannel?.canChangeSubject)
+    ) {
       return false;
     }
     return (
       selectedChannelId === GENERAL_CHAT_ID || !!currentChannel.canChangeSubject
     );
-  }, [currentChannel.canChangeSubject, selectedChannelId, subchannelId]);
+  }, [
+    currentChannel.canChangeSubject,
+    loadingAnimationShown,
+    selectedChannelId,
+    subchannel
+  ]);
 
   useEffect(() => {
     handleScrollToBottom();
@@ -1000,65 +1008,68 @@ function MessagesContainer({
 
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">
-      {!channelHeaderShown && !banned?.chat && selectedChannelId !== 0 && (
-        <div
-          style={{
-            display: 'flex',
-            position: 'absolute',
-            alignItems: 'center',
-            zIndex: 50000,
-            top: '1rem',
-            right: '1rem'
-          }}
-        >
-          <DropdownButton
-            skeuomorphic
-            color="darkerGray"
-            opacity={0.7}
-            listStyle={{
-              width: '15rem'
-            }}
-            icon="bars"
-            text={menuLabel}
-            menuProps={menuProps}
-          />
+      {!channelHeaderShown &&
+        !loadingAnimationShown &&
+        !banned?.chat &&
+        selectedChannelId !== 0 && (
           <div
             style={{
-              marginLeft: '1.5rem'
+              display: 'flex',
+              position: 'absolute',
+              alignItems: 'center',
+              zIndex: 50000,
+              top: '1rem',
+              right: '1rem'
             }}
           >
-            <div
-              style={{ cursor: 'pointer', fontSize: '2rem' }}
-              onClick={handleFavoriteClick}
-              onMouseEnter={() => {
-                if (!favorited) {
-                  setAddToFavoritesShown(true);
-                }
+            <DropdownButton
+              skeuomorphic
+              color="darkerGray"
+              opacity={0.7}
+              listStyle={{
+                width: '15rem'
               }}
-              onMouseLeave={() => setAddToFavoritesShown(false)}
+              icon="bars"
+              text={menuLabel}
+              menuProps={menuProps}
+            />
+            <div
+              style={{
+                marginLeft: '1.5rem'
+              }}
             >
-              <Icon
-                color={Color.brownOrange()}
-                icon={favorited ? 'star' : ['far', 'star']}
+              <div
+                style={{ cursor: 'pointer', fontSize: '2rem' }}
+                onClick={handleFavoriteClick}
+                onMouseEnter={() => {
+                  if (!favorited) {
+                    setAddToFavoritesShown(true);
+                  }
+                }}
+                onMouseLeave={() => setAddToFavoritesShown(false)}
+              >
+                <Icon
+                  color={Color.brownOrange()}
+                  icon={favorited ? 'star' : ['far', 'star']}
+                />
+              </div>
+              <FullTextReveal
+                direction="left"
+                className="desktop"
+                show={addToFavoritesShown && !favorited}
+                text={addToFavoritesLabel}
+                style={{
+                  marginTop: '0.5rem',
+                  fontSize: '1.3rem',
+                  width: 'auto',
+                  minWidth: null,
+                  maxWidth: null,
+                  padding: '1rem'
+                }}
               />
             </div>
-            <FullTextReveal
-              direction="left"
-              className="desktop"
-              show={addToFavoritesShown && !favorited}
-              text={addToFavoritesLabel}
-              style={{
-                marginTop: '0.5rem',
-                fontSize: '1.3rem',
-                width: 'auto',
-                minWidth: null,
-                maxWidth: null,
-                padding: '1rem'
-              }}
-            />
           </div>
-        </div>
-      )}
+        )}
       {selectedChannelIsOnCall && (
         <CallScreen style={{ height: CALL_SCREEN_HEIGHT }} />
       )}
@@ -1074,7 +1085,7 @@ function MessagesContainer({
           height: containerHeight
         }}
       >
-        {!loadingAnimationShown && channelHeaderShown && (
+        {channelHeaderShown && (
           <ChannelHeader
             currentChannel={currentChannel}
             displayedThemeColor={displayedThemeColor}
