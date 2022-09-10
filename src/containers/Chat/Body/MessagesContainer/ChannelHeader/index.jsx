@@ -98,6 +98,10 @@ export default function ChannelHeader({
     }
     return {};
   }, [currentChannel]);
+  const canChangeSubject = useMemo(() => {
+    return currentChannel.canChangeSubject;
+  }, [currentChannel.canChangeSubject]);
+
   const {
     content = defaultChatSubject,
     id: subjectId,
@@ -165,12 +169,10 @@ export default function ChannelHeader({
   const menuProps = useMemo(() => {
     let result = [];
     if (
-      ((selectedChannelId === GENERAL_CHAT_ID ||
-        currentChannel.canChangeSubject === 'mod') &&
+      ((selectedChannelId === GENERAL_CHAT_ID || canChangeSubject === 'mod') &&
         authLevel > 0) ||
-      currentChannel.canChangeSubject === 'all' ||
-      (currentChannel.canChangeSubject === 'owner' &&
-        currentChannel.creatorId === userId)
+      canChangeSubject === 'all' ||
+      (canChangeSubject === 'owner' && currentChannel.creatorId === userId)
     ) {
       result.push({
         label: (
