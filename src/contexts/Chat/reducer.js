@@ -992,17 +992,34 @@ export default function ChatReducer(state, action) {
     }
     case 'LOAD_SUBJECT': {
       const prevChannelObj = state.channelsObj[action.data.channelId];
+      const subchannelObj = action.data.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.data.subchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[action.data.subchannelId],
+              subjectObj: {
+                ...action.data,
+                loaded: true
+              }
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.data.channelId]: {
-            ...prevChannelObj,
-            subjectObj: {
-              ...action.data,
-              loaded: true
-            }
-          }
+          [action.data.channelId]: action.data.subchannelId
+            ? {
+                ...prevChannelObj,
+                subchannelObj
+              }
+            : {
+                ...prevChannelObj,
+                subjectObj: {
+                  ...action.data,
+                  loaded: true
+                }
+              }
         }
       };
     }
