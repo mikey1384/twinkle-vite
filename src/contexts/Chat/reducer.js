@@ -480,6 +480,15 @@ export default function ChatReducer(state, action) {
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              subjectObj:
+                action.isSubject && action.subjectChanged
+                  ? {
+                      ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                        ?.subjectObj,
+                      content: action.editedMessage
+                    }
+                  : prevChannelObj?.subchannelObj?.[action.subchannelId]
+                      ?.subjectObj,
               messagesObj: {
                 ...prevChannelObj?.subchannelObj?.[action.subchannelId]
                   ?.messagesObj,
@@ -498,24 +507,28 @@ export default function ChatReducer(state, action) {
           ...state.channelsObj,
           ...(prevChannelObj?.messagesObj
             ? {
-                [action.channelId]: {
-                  ...prevChannelObj,
-                  subjectObj:
-                    action.isSubject && action.subjectChanged
-                      ? {
-                          ...prevChannelObj.subjectObj,
+                [action.channelId]: action.subchannelId
+                  ? {
+                      ...prevChannelObj,
+                      subchannelObj
+                    }
+                  : {
+                      ...prevChannelObj,
+                      subjectObj:
+                        action.isSubject && action.subjectChanged
+                          ? {
+                              ...prevChannelObj.subjectObj,
+                              content: action.editedMessage
+                            }
+                          : prevChannelObj.subjectObj,
+                      messagesObj: {
+                        ...prevChannelObj?.messagesObj,
+                        [action.messageId]: {
+                          ...prevChannelObj?.messagesObj[action.messageId],
                           content: action.editedMessage
                         }
-                      : prevChannelObj.subjectObj,
-                  messagesObj: {
-                    ...prevChannelObj?.messagesObj,
-                    [action.messageId]: {
-                      ...prevChannelObj?.messagesObj[action.messageId],
-                      content: action.editedMessage
+                      }
                     }
-                  },
-                  ...(subchannelObj ? { subchannelObj } : {})
-                }
               }
             : {})
         }
