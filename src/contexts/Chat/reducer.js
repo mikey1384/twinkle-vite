@@ -1090,7 +1090,29 @@ export default function ChatReducer(state, action) {
         ...state,
         wordCollectors: action.wordCollectors
       };
-    case 'NEW_SUBJECT':
+    case 'NEW_SUBJECT': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              messageIds: [action.subject.id].concat(
+                prevChannelObj?.subchannelObj?.[action.subchannelId]?.messageIds
+              ),
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                  ?.messagesObj,
+                [action.subject.id]: {
+                  id: action.subject.id,
+                  channelId: action.channelId,
+                  ...action.subject
+                }
+              },
+              subjectObj: action.subject
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         homeChannelIds: [
@@ -1101,23 +1123,29 @@ export default function ChatReducer(state, action) {
         ],
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            messageIds: [action.subject.id].concat(
-              state.channelsObj[action.channelId].messageIds
-            ),
-            messagesObj: {
-              ...state.channelsObj[action.channelId].messagesObj,
-              [action.subject.id]: {
-                id: action.subject.id,
-                channelId: action.channelId,
-                ...action.subject
+          [action.channelId]: action.subchannelId
+            ? {
+                ...prevChannelObj,
+                subchannelObj
               }
-            },
-            subjectObj: action.subject
-          }
+            : {
+                ...prevChannelObj,
+                messageIds: [action.subject.id].concat(
+                  prevChannelObj.messageIds
+                ),
+                messagesObj: {
+                  ...prevChannelObj.messagesObj,
+                  [action.subject.id]: {
+                    id: action.subject.id,
+                    channelId: action.channelId,
+                    ...action.subject
+                  }
+                },
+                subjectObj: action.subject
+              }
         }
       };
+    }
     case 'NOTIFY_MEMBER_LEFT': {
       const messageId = uuidv1();
       const leaveMessage = 'left the chat group';
