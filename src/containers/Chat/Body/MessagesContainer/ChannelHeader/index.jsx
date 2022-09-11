@@ -466,14 +466,21 @@ export default function ChannelHeader({
       reloadingChatSubject.current = true;
       const { message, subject } = await reloadChatSubject({
         channelId: selectedChannelId,
+        subchannelId: subchannel?.id,
         subjectId
       });
-      onReloadChatSubject({ channelId: selectedChannelId, message, subject });
+      onReloadChatSubject({
+        channelId: selectedChannelId,
+        subchannelId: subchannel?.id,
+        message,
+        subject
+      });
       socket.emit('new_subject', {
         subject,
         message,
         channelName: currentChannel.channelName,
         channelId: selectedChannelId,
+        subchannelId: subchannel?.id,
         pathId: currentChannel.pathId
       });
       setOnEdit(false);

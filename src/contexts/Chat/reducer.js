@@ -1488,7 +1488,25 @@ export default function ChatReducer(state, action) {
           }
         }
       };
-    case 'RELOAD_SUBJECT':
+    case 'RELOAD_SUBJECT': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              messageIds: [action.message.id].concat(
+                prevChannelObj?.subchannelObj?.[action.subchannelId]?.messageIds
+              ),
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
+                  ?.messagesObj,
+                [action.message.id]: action.message
+              },
+              subjectObj: action.subject
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         homeChannelIds: [
@@ -1499,19 +1517,25 @@ export default function ChatReducer(state, action) {
         ],
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            messageIds: [action.message.id].concat(
-              state.channelsObj[action.channelId].messageIds
-            ),
-            messagesObj: {
-              ...state.channelsObj[action.channelId].messagesObj,
-              [action.message.id]: action.message
-            },
-            subjectObj: action.subject
-          }
+          [action.channelId]: action.subchannelId
+            ? {
+                ...prevChannelObj,
+                subchannelObj
+              }
+            : {
+                ...prevChannelObj,
+                messageIds: [action.message.id].concat(
+                  prevChannelObj.messageIds
+                ),
+                messagesObj: {
+                  ...prevChannelObj.messagesObj,
+                  [action.message.id]: action.message
+                },
+                subjectObj: action.subject
+              }
         }
       };
+    }
     case 'REMOVE_NEW_ACTIVITY_STATUS':
       return {
         ...state,
