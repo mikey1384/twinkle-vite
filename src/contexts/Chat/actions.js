@@ -66,11 +66,12 @@ export default function ChatActions(dispatch) {
         isClosed
       });
     },
-    onChangeChatSubject({ subject, channelId }) {
+    onChangeChatSubject({ subject, channelId, subchannelId }) {
       return dispatch({
         type: 'CHANGE_SUBJECT',
         subject,
-        channelId
+        channelId,
+        subchannelId
       });
     },
     onClearNumUnreads() {
@@ -727,12 +728,13 @@ export default function ChatActions(dispatch) {
         channelId
       });
     },
-    onUploadChatSubject({ subjectId, subject, channelId }) {
+    onUploadChatSubject({ subjectId, subject, channelId, subchannelId }) {
       return dispatch({
         type: 'NEW_SUBJECT',
         subjectId,
         subject,
-        channelId
+        channelId,
+        subchannelId
       });
     }
   };
