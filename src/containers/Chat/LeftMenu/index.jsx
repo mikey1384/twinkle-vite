@@ -20,7 +20,8 @@ LeftMenu.propTypes = {
   onNewButtonClick: PropTypes.func.isRequired,
   selectedChannelId: PropTypes.number,
   subchannelIds: PropTypes.arrayOf(PropTypes.number),
-  subchannelObj: PropTypes.object
+  subchannelObj: PropTypes.object,
+  subchannelPath: PropTypes.string
 };
 
 function LeftMenu({
@@ -29,7 +30,8 @@ function LeftMenu({
   onNewButtonClick,
   selectedChannelId,
   subchannelIds,
-  subchannelObj
+  subchannelObj,
+  subchannelPath
 }) {
   const navigate = useNavigate();
   const {
@@ -122,6 +124,7 @@ function LeftMenu({
           subchannelIds={subchannelIds}
           subchannelObj={subchannelObj}
           selectedChannelId={selectedChannelId}
+          subchannelPath={subchannelPath}
         />
       )}
       <Channels />

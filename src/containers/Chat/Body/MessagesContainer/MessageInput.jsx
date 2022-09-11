@@ -346,7 +346,7 @@ export default function MessageInput({
                 Chess
               </span>
             </Button>
-          ) : selectedChannelId === GENERAL_CHAT_ID ? (
+          ) : selectedChannelId === GENERAL_CHAT_ID && !subchannelId ? (
             <Button
               disabled={loading}
               skeuomorphic

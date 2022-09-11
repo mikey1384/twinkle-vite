@@ -1,6 +1,4 @@
-import { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import LocalContext from '../Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import { Link } from 'react-router-dom';
@@ -13,7 +11,8 @@ SubChannels.propTypes = {
   displayedThemeColor: PropTypes.string,
   selectedChannelId: PropTypes.number,
   subchannelIds: PropTypes.arrayOf(PropTypes.number),
-  subchannelObj: PropTypes.object
+  subchannelObj: PropTypes.object,
+  subchannelPath: PropTypes.string
 };
 
 export default function SubChannels({
@@ -21,18 +20,13 @@ export default function SubChannels({
   displayedThemeColor,
   selectedChannelId,
   subchannelIds,
-  subchannelObj
+  subchannelObj,
+  subchannelPath
 }) {
-  const {
-    state: { lastSubchannelPaths }
-  } = useContext(LocalContext);
-  const lastSubchannelPath = useMemo(
-    () => lastSubchannelPaths[selectedChannelId],
-    [lastSubchannelPaths, selectedChannelId]
-  );
   const onUpdateLastSubchannelPath = useChatContext(
     (v) => v.actions.onUpdateLastSubchannelPath
   );
+
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
       <div
@@ -83,7 +77,7 @@ export default function SubChannels({
           }
           to={`/chat/${currentPathId}`}
         >
-          <nav className={!lastSubchannelPath ? 'active' : ''}>
+          <nav className={!subchannelPath ? 'active' : ''}>
             <Icon icon="home" />
             <span style={{ marginLeft: '1rem' }}>Main</span>
           </nav>
@@ -101,7 +95,7 @@ export default function SubChannels({
           >
             <nav
               className={
-                lastSubchannelPath === subchannelObj[subchannelId].path
+                subchannelPath === subchannelObj[subchannelId].path
                   ? 'active'
                   : ''
               }
