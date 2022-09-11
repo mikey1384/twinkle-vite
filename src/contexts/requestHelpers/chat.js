@@ -422,13 +422,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async reloadChatSubject({ subjectId, channelId }) {
+    async reloadChatSubject({ subjectId, subchannelId, channelId }) {
       try {
         const {
           data: { subject, message }
         } = await request.put(
           `${URL}/chat/chatSubject/reload`,
-          { channelId, subjectId },
+          { channelId, subchannelId, subjectId },
           auth()
         );
         return Promise.resolve({ subject, message });

@@ -402,10 +402,11 @@ export default function ChatActions(dispatch) {
         word
       });
     },
-    onReloadChatSubject({ channelId, subject, message }) {
+    onReloadChatSubject({ channelId, subchannelId, subject, message }) {
       return dispatch({
         type: 'RELOAD_SUBJECT',
         channelId,
+        subchannelId,
         subject,
         message
       });
