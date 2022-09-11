@@ -500,9 +500,14 @@ export default function ChannelHeader({
         const content = `${text[0].toUpperCase()}${text.slice(1)}`;
         const data = await uploadChatSubject({
           content: text,
-          channelId: selectedChannelId
+          channelId: selectedChannelId,
+          subchannelId: subchannel?.id
         });
-        onUploadChatSubject({ ...data, channelId: selectedChannelId });
+        onUploadChatSubject({
+          ...data,
+          channelId: selectedChannelId,
+          subchannelId: subchannel?.id
+        });
         const timeStamp = Math.floor(Date.now() / 1000);
         const subject = {
           id: data.subjectId,
@@ -522,13 +527,15 @@ export default function ChannelHeader({
           isSubject: true,
           channelId: selectedChannelId,
           timeStamp,
-          isNewMessage: true
+          isNewMessage: true,
+          subchannelId: subchannel?.id
         };
         socket.emit('new_subject', {
           subject,
           message,
           channelName: currentChannel.channelName,
           channelId: selectedChannelId,
+          subchannelId: subchannel?.id,
           pathId: currentChannel.pathId
         });
         setOnEdit(false);

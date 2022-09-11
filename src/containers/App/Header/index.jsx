@@ -283,7 +283,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('peer_accepted', handlePeerAccepted);
     socket.on('peer_hung_up', handlePeerHungUp);
     socket.on('profile_pic_changed', handleProfilePicChange);
-    socket.on('subject_changed', handleSubjectChange);
+    socket.on('subject_changed', handleTopicChange);
     socket.on('user_type_updated', handleUserTypeUpdate);
     socket.on('username_changed', handleUsernameChange);
 
@@ -341,7 +341,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       socket.removeListener('peer_accepted', handlePeerAccepted);
       socket.removeListener('peer_hung_up', handlePeerHungUp);
       socket.removeListener('profile_pic_changed', handleProfilePicChange);
-      socket.removeListener('subject_changed', handleSubjectChange);
+      socket.removeListener('subject_changed', handleTopicChange);
       socket.removeListener('user_type_updated', handleUserTypeUpdate);
       socket.removeListener('username_changed', handleUsernameChange);
     };
@@ -764,11 +764,11 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleSubjectChange({ channelId, subject }) {
-      if (channelId === GENERAL_CHAT_ID) {
+    function handleTopicChange({ channelId, subchannelId, subject }) {
+      if (channelId === GENERAL_CHAT_ID && !subchannelId) {
         onNotifyChatSubjectChange(subject);
       }
-      onChangeChatSubject({ subject, channelId });
+      onChangeChatSubject({ subject, channelId, subchannelId });
     }
   });
 

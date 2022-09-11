@@ -635,11 +635,11 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadChatSubject({ channelId, content }) {
+    async uploadChatSubject({ channelId, content, subchannelId }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/chatSubject`,
-          { channelId, content },
+          { channelId, content, subchannelId },
           auth()
         );
         return Promise.resolve(data);

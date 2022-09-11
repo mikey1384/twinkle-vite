@@ -273,14 +273,28 @@ export default function ChatReducer(state, action) {
     }
     case 'CHANGE_SUBJECT': {
       const prevChannelObj = state.channelsObj[action.channelId];
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              subjectObj: action.subject
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: {
-            ...prevChannelObj,
-            subjectObj: action.subject
-          }
+          [action.channelId]: action.subchannelId
+            ? {
+                ...prevChannelObj,
+                subchannelObj
+              }
+            : {
+                ...prevChannelObj,
+                subjectObj: action.subject
+              }
         }
       };
     }
