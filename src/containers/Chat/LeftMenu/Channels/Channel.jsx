@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useKeyContext } from '~/contexts';
+import { useKeyContext, useChatContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
@@ -39,6 +39,9 @@ function Channel({
   } = useContext(LocalContext);
   const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
+  const onUpdateSelectedChannelId = useChatContext(
+    (v) => v.actions.onUpdateSelectedChannelId
+  );
   const {
     generalChat: { color: generalChatColor }
   } = useKeyContext((v) => v.theme);
@@ -136,12 +139,14 @@ function Channel({
   const handleChannelClick = useCallback(() => {
     if (pathIdMatches) return;
     if (pathId) {
+      onUpdateSelectedChannelId(channelId);
       return navigate(
         `/chat/${pathId}${lastSubchannelPath ? `/${lastSubchannelPath}` : ''}`
       );
     }
     navigate('/chat/new');
-  }, [lastSubchannelPath, navigate, pathId, pathIdMatches]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, lastSubchannelPath, navigate, pathId, pathIdMatches]);
 
   const badgeShown = useMemo(() => {
     return (

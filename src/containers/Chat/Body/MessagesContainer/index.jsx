@@ -366,7 +366,7 @@ function MessagesContainer({
       (!subchannel &&
         (selectedChannelId === GENERAL_CHAT_ID ||
           !!currentChannel.canChangeSubject)) ||
-      subchannel.canChangeSubject
+      subchannel?.canChangeSubject
     );
   }, [
     currentChannel.canChangeSubject,

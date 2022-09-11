@@ -725,6 +725,7 @@ function Main({ currentPathId, onFileUpload }) {
                 selectedChannelId={selectedChannelId}
                 subchannelIds={currentChannel.subchannelIds}
                 subchannelObj={currentChannel.subchannelObj}
+                subchannelPath={subchannelPath}
               />
               <Body
                 displayedThemeColor={displayedThemeColor}
