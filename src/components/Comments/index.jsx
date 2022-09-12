@@ -140,10 +140,6 @@ function Comments({
     rootContentState?.pinnedCommentId,
     subject?.pinnedCommentId
   ]);
-  const parentHasSecretMessage = useMemo(
-    () => !!parent.secretAnswer || !!parent.secretAttachment,
-    [parent.secretAnswer, parent.secretAttachment]
-  );
 
   const renderLoadMoreButton = useCallback(() => {
     return (autoExpand || commentsShown) && !isLoading ? (
@@ -173,8 +169,7 @@ function Comments({
             contentId: parent.contentId,
             contentType: parent.contentType,
             lastCommentId,
-            limit: commentsLoadLimit,
-            parentHasSecretMessage
+            limit: commentsLoadLimit
           });
           onLoadMoreComments({
             ...data,
@@ -199,8 +194,7 @@ function Comments({
     loadMoreButtonColor,
     onLoadMoreComments,
     parent.contentId,
-    parent.contentType,
-    parentHasSecretMessage
+    parent.contentType
   ]);
 
   const handleFileUpload = useCallback(

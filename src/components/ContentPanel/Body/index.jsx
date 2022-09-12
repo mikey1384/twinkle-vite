@@ -288,8 +288,7 @@ export default function Body({
         contentType,
         contentId,
         limit: numPreviewComments || commentsLoadLimit,
-        isPreview,
-        parentHasSecretMessage: !!secretAnswer || !!secretAttachment
+        isPreview
       });
       onLoadComments({
         ...data,
@@ -738,8 +737,7 @@ export default function Body({
     const data = await loadComments({
       contentType,
       contentId,
-      limit: commentsLoadLimit,
-      parentHasSecretMessage: !!secretAnswer || !!secretAttachment
+      limit: commentsLoadLimit
     });
     onLoadComments({ ...data, contentId, contentType });
     onSetCommentsShown({ contentId, contentType });
