@@ -207,8 +207,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
       contentType,
       lastCommentId,
       limit,
-      isPreview,
-      parentHasSecretMessage
+      isPreview
     }) {
       try {
         const {
@@ -216,7 +215,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         } = await request.get(
           `${URL}/content/comments?contentId=${contentId}&contentType=${contentType}&lastCommentId=${lastCommentId}&limit=${limit}${
             isPreview ? '&isPreview=1' : ''
-          }${parentHasSecretMessage ? '&parentHasSecretMessage=1' : ''}`
+          }`
         );
         return Promise.resolve({ comments, loadMoreButton });
       } catch (error) {
