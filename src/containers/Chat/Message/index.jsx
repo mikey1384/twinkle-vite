@@ -58,6 +58,7 @@ Message.propTypes = {
   index: PropTypes.number,
   isLastMsg: PropTypes.bool,
   isNotification: PropTypes.bool,
+  isRestricted: PropTypes.bool,
   loading: PropTypes.bool,
   onAcceptGroupInvitation: PropTypes.func.isRequired,
   onChessBoardClick: PropTypes.func,
@@ -80,6 +81,7 @@ function Message({
   index,
   isLastMsg,
   isNotification,
+  isRestricted,
   loading,
   message,
   message: {
@@ -378,8 +380,9 @@ function Message({
   );
 
   const messageMenuItems = useMemo(() => {
-    const result = [
-      {
+    const result = [];
+    if (!isRestricted) {
+      result.push({
         label: (
           <>
             <Icon icon="reply" />
@@ -399,8 +402,8 @@ function Message({
           });
           onReplyClick();
         }
-      }
-    ];
+      });
+    }
     if (userCanEditThis && !rewardAmount) {
       result.push({
         label: (
@@ -477,13 +480,8 @@ function Message({
   );
 
   const dropdownButtonShown = useMemo(
-    () =>
-      !!messageId &&
-      !isNotification &&
-      !isChessMsg &&
-      !isEditing &&
-      !fileToUpload,
-    [fileToUpload, isChessMsg, isEditing, isNotification, messageId]
+    () => messageMenuItems?.length > 0,
+    [messageMenuItems?.length]
   );
 
   const handleChessSpoilerClick = useCallback(async () => {
