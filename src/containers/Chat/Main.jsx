@@ -349,7 +349,7 @@ function Main({ currentPathId, onFileUpload }) {
         onUpdateChannelPathIdHash({ channelId, pathId });
       }
       if (channelsObj[channelId]?.loaded) {
-        if (!currentSelectedChannelIdRef.current) {
+        if (currentSelectedChannelIdRef.current !== channelId) {
           onUpdateSelectedChannelId(channelId);
         }
         if (!subchannelPath) {
