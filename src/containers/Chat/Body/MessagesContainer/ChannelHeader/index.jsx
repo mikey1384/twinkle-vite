@@ -116,7 +116,7 @@ export default function ChannelHeader({
   }, [currentChannel.canChangeSubject, subchannel]);
 
   const {
-    content,
+    content = '',
     id: subjectId,
     timeStamp,
     reloadTimeStamp,
@@ -365,6 +365,8 @@ export default function ChannelHeader({
                   onClick={() => {
                     onSetIsRespondingToSubject({
                       channelId: selectedChannelId,
+                      subchannelId: subchannel?.id,
+                      subjectId,
                       isResponding: true
                     });
                     onInputFocus();

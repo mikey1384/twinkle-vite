@@ -1653,7 +1653,7 @@ export default function ChatReducer(state, action) {
           : filteredFavChannelIds
       };
     }
-    case 'SET_IS_RESPONDING_TO_SUBJECT':
+    case 'SET_IS_RESPONDING_TO_SUBJECT': {
       return {
         ...state,
         channelsObj: {
@@ -1665,6 +1665,7 @@ export default function ChatReducer(state, action) {
           }
         }
       };
+    }
     case 'SET_LOADING_VOCABULARY':
       return {
         ...state,
