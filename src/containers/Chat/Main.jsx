@@ -261,6 +261,7 @@ function Main({ currentPathId, onFileUpload }) {
   const prevPathId = useRef('');
   const prevUserId = useRef(null);
   const currentPathIdRef = useRef(currentPathId);
+  const currentSelectedChannelIdRef = useRef(selectedChannelId);
   const currentChannel = useMemo(
     () => channelsObj[selectedChannelId] || {},
     [channelsObj, selectedChannelId]
@@ -304,7 +305,12 @@ function Main({ currentPathId, onFileUpload }) {
   ]);
 
   useEffect(() => {
+    const channelId = parseChannelPath(currentPathId);
+    if (currentSelectedChannelIdRef.current !== channelId) {
+      onUpdateSelectedChannelId(channelId);
+    }
     currentPathIdRef.current = currentPathId;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPathId]);
 
   useEffect(() => {
@@ -343,12 +349,11 @@ function Main({ currentPathId, onFileUpload }) {
       if (!isAccessible) {
         return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
       }
-      const channelId = channelPathIdHash[pathId] || parseChannelPath(pathId);
+      const channelId = parseChannelPath(pathId);
       if (!channelPathIdHash[pathId]) {
         onUpdateChannelPathIdHash({ channelId, pathId });
       }
       if (channelsObj[channelId]?.loaded) {
-        onUpdateSelectedChannelId(channelId);
         if (!subchannelPath) {
           if (lastChatPath !== `/${pathId}`) {
             updateLastChannelId(channelId);
@@ -389,6 +394,10 @@ function Main({ currentPathId, onFileUpload }) {
     userId,
     subchannelId
   ]);
+
+  useEffect(() => {
+    currentSelectedChannelIdRef.current = selectedChannelId;
+  }, [selectedChannelId]);
 
   useEffect(() => {
     if (
