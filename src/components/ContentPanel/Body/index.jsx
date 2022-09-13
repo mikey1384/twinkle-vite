@@ -113,12 +113,18 @@ export default function Body({
     contentId
   });
 
+  const subjectId = useMemo(() => {
+    if (contentType === 'subject') {
+      return contentId;
+    }
+    return targetObj.subject?.id;
+  }, [contentId, contentType, targetObj.subject?.id]);
   const { secretShown: rootSecretShown } = useContentState({
     contentId: rootId,
     contentType: rootType
   });
   const { secretShown: subjectSecretShown } = useContentState({
-    contentId: targetObj.subject?.id,
+    contentId: subjectId,
     contentType: 'subject'
   });
   const {
@@ -693,7 +699,7 @@ export default function Body({
       await handleExpandComments();
       onChangeSpoilerStatus({
         shown: true,
-        subjectId: contentObj.id,
+        subjectId,
         prevSecretViewerId: userId
       });
     } else {
