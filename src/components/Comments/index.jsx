@@ -140,6 +140,10 @@ function Comments({
     rootContentState?.pinnedCommentId,
     subject?.pinnedCommentId
   ]);
+  const subjectId = useMemo(
+    () => (parent.contentType === 'subject' ? parent.contentId : subject?.id),
+    [parent.contentId, parent.contentType, subject?.id]
+  );
 
   const renderLoadMoreButton = useCallback(() => {
     return (autoExpand || commentsShown) && !isLoading ? (
@@ -324,7 +328,7 @@ function Comments({
           rootCommentId={
             parent.contentType === 'comment' ? parent.commentId : null
           }
-          subjectId={subject?.id}
+          subjectId={subjectId}
           subjectRewardLevel={
             parent?.contentType === 'subject'
               ? parent?.rewardLevel
@@ -375,8 +379,7 @@ function Comments({
           const { comment } = await uploadComment({
             content: 'viewed the secret message',
             parent,
-            subjectId:
-              parent.contentType === 'subject' ? parent.contentId : subject?.id,
+            subjectId,
             isNotification: true
           });
           await onCommentSubmit({
@@ -400,7 +403,7 @@ function Comments({
       onCommentSubmit,
       parent,
       showSecretButtonAvailable,
-      subject?.id,
+      subjectId,
       subject?.rewardLevel,
       theme
     ]
