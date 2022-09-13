@@ -532,10 +532,11 @@ export default function ChatActions(dispatch) {
         favorited
       });
     },
-    onSetIsRespondingToSubject({ channelId, isResponding }) {
+    onSetIsRespondingToSubject({ channelId, subchannelId, isResponding }) {
       return dispatch({
         type: 'SET_IS_RESPONDING_TO_SUBJECT',
         channelId,
+        subchannelId,
         isResponding
       });
     },
