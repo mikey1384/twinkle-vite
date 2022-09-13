@@ -576,7 +576,7 @@ export default function ChatReducer(state, action) {
     }
     case 'ENTER_CHANNEL': {
       let messagesLoadMoreButton = false;
-      const selectedChannel = action.data.channel;
+      const loadedChannel = action.data.channel;
       if (action.data.messageIds.length === 21) {
         action.data.messageIds.pop();
         messagesLoadMoreButton = true;
@@ -587,9 +587,9 @@ export default function ChatReducer(state, action) {
         action.data.channel?.subchannelObj
       ) {
         newSubchannelObj = {
-          ...state.channelsObj[selectedChannel.id]?.subchannelObj,
+          ...state.channelsObj[loadedChannel.id]?.subchannelObj,
           [action.data.currentSubchannelId]: {
-            ...state.channelsObj[selectedChannel.id]?.subchannelObj[
+            ...state.channelsObj[loadedChannel.id]?.subchannelObj?.[
               action.data.currentSubchannelId
             ],
             ...action.data.channel?.subchannelObj?.[
@@ -612,7 +612,7 @@ export default function ChatReducer(state, action) {
         chatType: 'default',
         selectedChatTab: determineSelectedChatTab({
           currentSelectedChatTab: state.selectedChatTab,
-          selectedChannel
+          selectedChannel: loadedChannel
         }),
         channelsObj: {
           ...state.channelsObj,
@@ -625,8 +625,8 @@ export default function ChatReducer(state, action) {
                 }
               }
             : {}),
-          [selectedChannel.id]: {
-            ...selectedChannel,
+          [loadedChannel.id]: {
+            ...loadedChannel,
             messagesLoadMoreButton,
             subchannelIds: action.data.channel?.subchannelIds,
             subchannelObj: action.data.channel?.subchannelObj,
@@ -639,7 +639,7 @@ export default function ChatReducer(state, action) {
               : {})
           }
         },
-        selectedChannelId: selectedChannel.id
+        selectedChannelId: state.selectedChannelId || loadedChannel.id
       };
     }
     case 'ENTER_EMPTY_CHAT':
@@ -797,10 +797,9 @@ export default function ChatReducer(state, action) {
           action.data.channelsObj?.[action.data.currentChannelId]?.subchannelObj
         )) {
           newSubchannelObj[subchannel.id] = {
-            ...subchannel,
-            ...(action.data.currentSubchannelId === subchannel.id
-              ? { loaded: true }
-              : {})
+            ...(state.channelsObj[action.data.currentChannelId]
+              ?.subchannelObj?.[subchannel.id] || {}),
+            ...subchannel
           };
         }
       }
@@ -1332,21 +1331,21 @@ export default function ChatReducer(state, action) {
       };
       const subchannelObj = action.message.subchannelId
         ? {
-            ...prevChannelObj.subchannelObj,
+            ...prevChannelObj?.subchannelObj,
             [action.message.subchannelId]: {
-              ...prevChannelObj.subchannelObj[action.message.subchannelId],
+              ...prevChannelObj?.subchannelObj[action.message.subchannelId],
               messageIds: [messageId].concat(
-                prevChannelObj.subchannelObj[action.message.subchannelId]
+                prevChannelObj?.subchannelObj[action.message.subchannelId]
                   ?.messageIds
               ),
               messagesObj: {
-                ...prevChannelObj.subchannelObj[action.message.subchannelId]
+                ...prevChannelObj?.subchannelObj[action.message.subchannelId]
                   ?.messagesObj,
                 [messageId]: { ...action.message, id: messageId }
               }
             }
           }
-        : prevChannelObj.subchannelObj;
+        : prevChannelObj?.subchannelObj;
 
       return {
         ...state,
@@ -1407,46 +1406,65 @@ export default function ChatReducer(state, action) {
     }
     case 'RECEIVE_MSG_ON_DIFF_CHANNEL': {
       const messageId = action.message.id || uuidv1();
+      const prevChannelObj = state.channelsObj[action.channel.id];
+      const subchannelId = action.message.subchannelId;
+      const subchannelObj = subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.message.subchannelId]: {
+              ...prevChannelObj?.subchannelObj[action.message.subchannelId],
+              messageIds: [messageId].concat(
+                prevChannelObj?.subchannelObj[action.message.subchannelId]
+                  ?.messageIds
+              ),
+              messagesObj: {
+                ...prevChannelObj?.subchannelObj[action.message.subchannelId]
+                  ?.messagesObj,
+                [messageId]: { ...action.message, id: messageId }
+              }
+            }
+          }
+        : prevChannelObj?.subchannelObj;
+
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channel.id]: {
-            ...state.channelsObj[action.channel.id],
-            ...action.channel,
-            ...(state.channelsObj[action.channel.id]?.members &&
-            action.newMembers.length > 0
-              ? {
-                  members: [
-                    ...state.channelsObj[action.channel.id]?.members,
-                    ...action.newMembers.filter(
-                      (newMember) =>
-                        !state.channelsObj[action.channel.id].members
-                          .map((member) => member.id)
-                          .includes(newMember.id)
-                    )
-                  ]
-                }
-              : {}),
-            messageIds: [messageId].concat(
-              state.channelsObj[action.channel.id]?.messageIds || []
-            ),
-            messagesObj: {
-              ...state.channelsObj[action.channel.id]?.messagesObj,
-              [messageId]: { ...action.message, id: messageId }
-            },
-            lastChessMoveViewerId:
-              action.message.isChessMsg &&
-              action.message.userId &&
-              !action.message.isDrawOffer
-                ? action.message.userId
-                : state.channelsObj?.[action.message.channelId]
-                    ?.lastChessMoveViewerId,
-            numUnreads: action.isMyMessage
-              ? Number(state.channelsObj[action.channel.id]?.numUnreads || 0)
-              : Number(state.channelsObj[action.channel.id]?.numUnreads || 0) +
-                1
-          }
+          [action.channel.id]: subchannelId
+            ? { ...prevChannelObj, subchannelObj }
+            : {
+                ...prevChannelObj,
+                ...action.channel,
+                ...(prevChannelObj?.members && action.newMembers.length > 0
+                  ? {
+                      members: [
+                        ...prevChannelObj?.members,
+                        ...action.newMembers.filter(
+                          (newMember) =>
+                            !prevChannelObj?.members
+                              .map((member) => member.id)
+                              .includes(newMember.id)
+                        )
+                      ]
+                    }
+                  : {}),
+                messageIds: [messageId].concat(
+                  prevChannelObj?.messageIds || []
+                ),
+                messagesObj: {
+                  ...prevChannelObj?.messagesObj,
+                  [messageId]: { ...action.message, id: messageId }
+                },
+                lastChessMoveViewerId:
+                  action.message.isChessMsg &&
+                  action.message.userId &&
+                  !action.message.isDrawOffer
+                    ? action.message.userId
+                    : prevChannelObj?.lastChessMoveViewerId,
+                numUnreads: action.isMyMessage
+                  ? Number(prevChannelObj?.numUnreads || 0)
+                  : Number(prevChannelObj?.numUnreads || 0) + 1
+              }
         },
         numUnreads:
           action.pageVisible && action.usingChat

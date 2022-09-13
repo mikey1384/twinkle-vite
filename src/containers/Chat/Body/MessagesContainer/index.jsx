@@ -134,7 +134,7 @@ function MessagesContainer({
     messageIds = [],
     messagesObj = {},
     messagesLoadMoreButton = false,
-    subchannelIds,
+    subchannelIds = [],
     subchannelObj,
     wordleGuesses,
     wordleSolution,
@@ -278,14 +278,18 @@ function MessagesContainer({
   ]);
 
   const loadingAnimationShown = useMemo(() => {
-    return (
-      (!!subchannelPath && !subchannel?.loaded) ||
-      !currentChannel?.loaded ||
+    if (
       channelLoading ||
       creatingNewDMChannel ||
       reconnecting ||
       selectedChannelIdAndPathIdNotSynced
-    );
+    ) {
+      return true;
+    }
+    if (subchannelPath) {
+      return !subchannel?.loaded;
+    }
+    return !currentChannel?.loaded;
   }, [
     subchannelPath,
     subchannel?.loaded,
@@ -1156,6 +1160,7 @@ function MessagesContainer({
                   index={index}
                   isLastMsg={index === 0}
                   isNotification={!!message.isNotification}
+                  isRestricted={!!isChatRestricted}
                   loading={loadingAnimationShown}
                   message={message}
                   onAcceptGroupInvitation={handleAcceptGroupInvitation}
