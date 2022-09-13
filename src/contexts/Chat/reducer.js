@@ -589,7 +589,7 @@ export default function ChatReducer(state, action) {
         newSubchannelObj = {
           ...state.channelsObj[loadedChannel.id]?.subchannelObj,
           [action.data.currentSubchannelId]: {
-            ...state.channelsObj[loadedChannel.id]?.subchannelObj[
+            ...state.channelsObj[loadedChannel.id]?.subchannelObj?.[
               action.data.currentSubchannelId
             ],
             ...action.data.channel?.subchannelObj?.[
@@ -1406,46 +1406,65 @@ export default function ChatReducer(state, action) {
     }
     case 'RECEIVE_MSG_ON_DIFF_CHANNEL': {
       const messageId = action.message.id || uuidv1();
+      const prevChannelObj = state.channelsObj[action.channel.id];
+      const subchannelId = action.message.subchannelId;
+      const subchannelObj = action.message.subchannelId
+        ? {
+            ...prevChannelObj.subchannelObj,
+            [action.message.subchannelId]: {
+              ...prevChannelObj.subchannelObj[action.message.subchannelId],
+              messageIds: [messageId].concat(
+                prevChannelObj.subchannelObj[action.message.subchannelId]
+                  ?.messageIds
+              ),
+              messagesObj: {
+                ...prevChannelObj.subchannelObj[action.message.subchannelId]
+                  ?.messagesObj,
+                [messageId]: { ...action.message, id: messageId }
+              }
+            }
+          }
+        : prevChannelObj.subchannelObj;
+
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channel.id]: {
-            ...state.channelsObj[action.channel.id],
-            ...action.channel,
-            ...(state.channelsObj[action.channel.id]?.members &&
-            action.newMembers.length > 0
-              ? {
-                  members: [
-                    ...state.channelsObj[action.channel.id]?.members,
-                    ...action.newMembers.filter(
-                      (newMember) =>
-                        !state.channelsObj[action.channel.id].members
-                          .map((member) => member.id)
-                          .includes(newMember.id)
-                    )
-                  ]
-                }
-              : {}),
-            messageIds: [messageId].concat(
-              state.channelsObj[action.channel.id]?.messageIds || []
-            ),
-            messagesObj: {
-              ...state.channelsObj[action.channel.id]?.messagesObj,
-              [messageId]: { ...action.message, id: messageId }
-            },
-            lastChessMoveViewerId:
-              action.message.isChessMsg &&
-              action.message.userId &&
-              !action.message.isDrawOffer
-                ? action.message.userId
-                : state.channelsObj?.[action.message.channelId]
-                    ?.lastChessMoveViewerId,
-            numUnreads: action.isMyMessage
-              ? Number(state.channelsObj[action.channel.id]?.numUnreads || 0)
-              : Number(state.channelsObj[action.channel.id]?.numUnreads || 0) +
-                1
-          }
+          [action.channel.id]: subchannelId
+            ? { ...prevChannelObj, subchannelObj }
+            : {
+                ...prevChannelObj,
+                ...action.channel,
+                ...(prevChannelObj?.members && action.newMembers.length > 0
+                  ? {
+                      members: [
+                        ...prevChannelObj?.members,
+                        ...action.newMembers.filter(
+                          (newMember) =>
+                            !prevChannelObj.members
+                              .map((member) => member.id)
+                              .includes(newMember.id)
+                        )
+                      ]
+                    }
+                  : {}),
+                messageIds: [messageId].concat(
+                  prevChannelObj?.messageIds || []
+                ),
+                messagesObj: {
+                  ...prevChannelObj?.messagesObj,
+                  [messageId]: { ...action.message, id: messageId }
+                },
+                lastChessMoveViewerId:
+                  action.message.isChessMsg &&
+                  action.message.userId &&
+                  !action.message.isDrawOffer
+                    ? action.message.userId
+                    : prevChannelObj?.lastChessMoveViewerId,
+                numUnreads: action.isMyMessage
+                  ? Number(prevChannelObj?.numUnreads || 0)
+                  : Number(prevChannelObj?.numUnreads || 0) + 1
+              }
         },
         numUnreads:
           action.pageVisible && action.usingChat
