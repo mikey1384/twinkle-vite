@@ -279,12 +279,17 @@ function MessagesContainer({
 
   const loadingAnimationShown = useMemo(() => {
     return (
+      (subchannelId && !subchannel?.loaded) ||
+      !currentChannel?.loaded ||
       channelLoading ||
       creatingNewDMChannel ||
       reconnecting ||
       selectedChannelIdAndPathIdNotSynced
     );
   }, [
+    subchannelId,
+    subchannel?.loaded,
+    currentChannel?.loaded,
     channelLoading,
     creatingNewDMChannel,
     reconnecting,
