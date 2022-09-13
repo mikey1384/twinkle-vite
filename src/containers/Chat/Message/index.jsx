@@ -379,7 +379,7 @@ function Message({
     [inView, isLastMsg, placeholderHeight, started, visible]
   );
 
-  const messageMenuItems = useMemo(() => {
+  const dropdownMenuItems = useMemo(() => {
     const result = [];
     if (!isRestricted) {
       result.push({
@@ -480,8 +480,18 @@ function Message({
   );
 
   const dropdownButtonShown = useMemo(
-    () => messageMenuItems?.length > 0,
-    [messageMenuItems?.length]
+    () => dropdownMenuItems?.length > 0,
+    [dropdownMenuItems?.length]
+  );
+
+  const menuButtonsShown = useMemo(
+    () =>
+      !!messageId &&
+      !isNotification &&
+      !isChessMsg &&
+      !isEditing &&
+      !fileToUpload,
+    [fileToUpload, isChessMsg, isEditing, isNotification, messageId]
   );
 
   const handleChessSpoilerClick = useCallback(async () => {
@@ -625,9 +635,7 @@ function Message({
             display: ${highlighted ? 'block' : 'none'};
           }
           &:hover {
-            ${dropdownButtonShown
-              ? `background-color: ${Color.whiteGray()};`
-              : ''}
+            ${menuButtonsShown ? `background-color: ${Color.whiteGray()};` : ''}
             .menu-button {
               display: block;
             }
@@ -781,7 +789,7 @@ function Message({
                     )}
                     {!isEditing && !isNotification && (
                       <div style={{ marginTop: '1rem', height: '2.5rem' }}>
-                        {dropdownButtonShown && (
+                        {menuButtonsShown && (
                           <Reactions
                             reactions={message.reactions}
                             reactionsMenuShown={reactionsMenuShown}
@@ -795,7 +803,7 @@ function Message({
                   </>
                 )}
               </div>
-              {dropdownButtonShown && (
+              {menuButtonsShown && (
                 <div
                   style={{
                     position: 'absolute',
@@ -809,23 +817,27 @@ function Message({
                       onReactionClick={handleAddReaction}
                       reactionsMenuShown={reactionsMenuShown}
                       onSetReactionsMenuShown={setReactionsMenuShown}
-                      style={{ marginRight: '0.5rem' }}
+                      style={{
+                        marginRight: dropdownButtonShown ? '0.5rem' : 0
+                      }}
                     />
                   )}
-                  <DropdownButton
-                    skeuomorphic
-                    buttonStyle={{
-                      fontSize: '1rem',
-                      lineHeight: 1
-                    }}
-                    className="menu-button"
-                    innerRef={DropdownButtonRef}
-                    color="darkerGray"
-                    icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
-                    opacity={0.5}
-                    menuProps={messageMenuItems}
-                    onDropdownShown={setHighlighted}
-                  />
+                  {dropdownButtonShown && (
+                    <DropdownButton
+                      skeuomorphic
+                      buttonStyle={{
+                        fontSize: '1rem',
+                        lineHeight: 1
+                      }}
+                      className="menu-button"
+                      innerRef={DropdownButtonRef}
+                      color="darkerGray"
+                      icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
+                      opacity={0.5}
+                      menuProps={dropdownMenuItems}
+                      onDropdownShown={setHighlighted}
+                    />
+                  )}
                 </div>
               )}
             </div>
