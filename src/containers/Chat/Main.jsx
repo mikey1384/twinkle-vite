@@ -261,6 +261,7 @@ function Main({ currentPathId, onFileUpload }) {
   const prevPathId = useRef('');
   const prevUserId = useRef(null);
   const currentPathIdRef = useRef(currentPathId);
+  const currentSelectedChannelIdRef = useRef(selectedChannelId);
   const currentChannel = useMemo(
     () => channelsObj[selectedChannelId] || {},
     [channelsObj, selectedChannelId]
@@ -348,7 +349,9 @@ function Main({ currentPathId, onFileUpload }) {
         onUpdateChannelPathIdHash({ channelId, pathId });
       }
       if (channelsObj[channelId]?.loaded) {
-        onUpdateSelectedChannelId(channelId);
+        if (!currentSelectedChannelIdRef.current) {
+          onUpdateSelectedChannelId(channelId);
+        }
         if (!subchannelPath) {
           if (lastChatPath !== `/${pathId}`) {
             updateLastChannelId(channelId);
@@ -389,6 +392,10 @@ function Main({ currentPathId, onFileUpload }) {
     userId,
     subchannelId
   ]);
+
+  useEffect(() => {
+    currentSelectedChannelIdRef.current = selectedChannelId;
+  }, [selectedChannelId]);
 
   useEffect(() => {
     if (
