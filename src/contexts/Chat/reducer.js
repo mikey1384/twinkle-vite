@@ -576,7 +576,7 @@ export default function ChatReducer(state, action) {
     }
     case 'ENTER_CHANNEL': {
       let messagesLoadMoreButton = false;
-      const selectedChannel = action.data.channel;
+      const loadedChannel = action.data.channel;
       if (action.data.messageIds.length === 21) {
         action.data.messageIds.pop();
         messagesLoadMoreButton = true;
@@ -587,9 +587,9 @@ export default function ChatReducer(state, action) {
         action.data.channel?.subchannelObj
       ) {
         newSubchannelObj = {
-          ...state.channelsObj[selectedChannel.id]?.subchannelObj,
+          ...state.channelsObj[loadedChannel.id]?.subchannelObj,
           [action.data.currentSubchannelId]: {
-            ...state.channelsObj[selectedChannel.id]?.subchannelObj[
+            ...state.channelsObj[loadedChannel.id]?.subchannelObj[
               action.data.currentSubchannelId
             ],
             ...action.data.channel?.subchannelObj?.[
@@ -612,7 +612,7 @@ export default function ChatReducer(state, action) {
         chatType: 'default',
         selectedChatTab: determineSelectedChatTab({
           currentSelectedChatTab: state.selectedChatTab,
-          selectedChannel
+          selectedChannel: loadedChannel
         }),
         channelsObj: {
           ...state.channelsObj,
@@ -625,8 +625,8 @@ export default function ChatReducer(state, action) {
                 }
               }
             : {}),
-          [selectedChannel.id]: {
-            ...selectedChannel,
+          [loadedChannel.id]: {
+            ...loadedChannel,
             messagesLoadMoreButton,
             subchannelIds: action.data.channel?.subchannelIds,
             subchannelObj: action.data.channel?.subchannelObj,
@@ -639,7 +639,7 @@ export default function ChatReducer(state, action) {
               : {})
           }
         },
-        selectedChannelId: selectedChannel.id
+        selectedChannelId: state.selectedChannelId || loadedChannel.id
       };
     }
     case 'ENTER_EMPTY_CHAT':

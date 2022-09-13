@@ -134,7 +134,7 @@ function MessagesContainer({
     messageIds = [],
     messagesObj = {},
     messagesLoadMoreButton = false,
-    subchannelIds,
+    subchannelIds = [],
     subchannelObj,
     wordleGuesses,
     wordleSolution,
