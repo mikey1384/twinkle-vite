@@ -344,14 +344,14 @@ function Main({ currentPathId, onFileUpload }) {
       if (!isAccessible) {
         return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
       }
-      const channelId = channelPathIdHash[pathId] || parseChannelPath(pathId);
+      const channelId = parseChannelPath(pathId);
+      if (currentSelectedChannelIdRef.current !== channelId) {
+        onUpdateSelectedChannelId(channelId);
+      }
       if (!channelPathIdHash[pathId]) {
         onUpdateChannelPathIdHash({ channelId, pathId });
       }
       if (channelsObj[channelId]?.loaded) {
-        if (currentSelectedChannelIdRef.current !== channelId) {
-          onUpdateSelectedChannelId(channelId);
-        }
         if (!subchannelPath) {
           if (lastChatPath !== `/${pathId}`) {
             updateLastChannelId(channelId);
