@@ -1160,6 +1160,7 @@ function MessagesContainer({
                   index={index}
                   isLastMsg={index === 0}
                   isNotification={!!message.isNotification}
+                  isRestricted={!!isChatRestricted}
                   loading={loadingAnimationShown}
                   message={message}
                   onAcceptGroupInvitation={handleAcceptGroupInvitation}
