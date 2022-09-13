@@ -153,6 +153,7 @@ export function addAdvancedEmoji(string) {
     .replace(/(\:heart\:)/gi, '❤️')
     .replace(/(\:hello\:)/gi, '👋')
     .replace(/(\:hi\:)/gi, '👋')
+    .replace(/(\:helpless\:)/gi, '😣')
     .replace(/(\:hen\:)/gi, '🐔')
     .replace(/(\:hmmm\:)/gi, '🧐')
     .replace(/(\:horror\:)/gi, '😱')
