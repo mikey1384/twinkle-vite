@@ -7,9 +7,10 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 Channels.propTypes = {
-  currentPathId: PropTypes.string
+  currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  subchannelPath: PropTypes.string
 };
-function Channels({ currentPathId }) {
+function Channels({ currentPathId, subchannelPath }) {
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
@@ -166,6 +167,7 @@ function Channels({ currentPathId }) {
               customChannelNames={customChannelNames}
               chatType={chatType}
               selectedChannelId={selectedChannelId}
+              subchannelPath={subchannelPath}
             />
           ))}
         {loadMoreButtonShown && (

@@ -15,12 +15,14 @@ Channel.propTypes = {
   chatType: PropTypes.string,
   currentPathId: PropTypes.string,
   customChannelNames: PropTypes.object.isRequired,
-  selectedChannelId: PropTypes.number
+  selectedChannelId: PropTypes.number,
+  subchannelPath: PropTypes.string
 };
 
 function Channel({
   customChannelNames,
   currentPathId,
+  subchannelPath,
   channel: {
     id: channelId,
     channelName,
@@ -139,14 +141,21 @@ function Channel({
   const handleChannelClick = useCallback(() => {
     if (pathIdMatches) return;
     if (pathId) {
-      onUpdateSelectedChannelId(channelId);
+      if (subchannelPath) onUpdateSelectedChannelId(channelId);
       return navigate(
         `/chat/${pathId}${lastSubchannelPath ? `/${lastSubchannelPath}` : ''}`
       );
     }
     navigate('/chat/new');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId, lastSubchannelPath, navigate, pathId, pathIdMatches]);
+  }, [
+    channelId,
+    lastSubchannelPath,
+    navigate,
+    pathId,
+    pathIdMatches,
+    subchannelPath
+  ]);
 
   const badgeShown = useMemo(() => {
     return (
