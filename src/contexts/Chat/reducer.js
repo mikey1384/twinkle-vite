@@ -1331,21 +1331,21 @@ export default function ChatReducer(state, action) {
       };
       const subchannelObj = action.message.subchannelId
         ? {
-            ...prevChannelObj.subchannelObj,
+            ...prevChannelObj?.subchannelObj,
             [action.message.subchannelId]: {
-              ...prevChannelObj.subchannelObj[action.message.subchannelId],
+              ...prevChannelObj?.subchannelObj[action.message.subchannelId],
               messageIds: [messageId].concat(
-                prevChannelObj.subchannelObj[action.message.subchannelId]
+                prevChannelObj?.subchannelObj[action.message.subchannelId]
                   ?.messageIds
               ),
               messagesObj: {
-                ...prevChannelObj.subchannelObj[action.message.subchannelId]
+                ...prevChannelObj?.subchannelObj[action.message.subchannelId]
                   ?.messagesObj,
                 [messageId]: { ...action.message, id: messageId }
               }
             }
           }
-        : prevChannelObj.subchannelObj;
+        : prevChannelObj?.subchannelObj;
 
       return {
         ...state,
@@ -1408,23 +1408,23 @@ export default function ChatReducer(state, action) {
       const messageId = action.message.id || uuidv1();
       const prevChannelObj = state.channelsObj[action.channel.id];
       const subchannelId = action.message.subchannelId;
-      const subchannelObj = action.message.subchannelId
+      const subchannelObj = subchannelId
         ? {
-            ...prevChannelObj.subchannelObj,
+            ...prevChannelObj?.subchannelObj,
             [action.message.subchannelId]: {
-              ...prevChannelObj.subchannelObj[action.message.subchannelId],
+              ...prevChannelObj?.subchannelObj[action.message.subchannelId],
               messageIds: [messageId].concat(
-                prevChannelObj.subchannelObj[action.message.subchannelId]
+                prevChannelObj?.subchannelObj[action.message.subchannelId]
                   ?.messageIds
               ),
               messagesObj: {
-                ...prevChannelObj.subchannelObj[action.message.subchannelId]
+                ...prevChannelObj?.subchannelObj[action.message.subchannelId]
                   ?.messagesObj,
                 [messageId]: { ...action.message, id: messageId }
               }
             }
           }
-        : prevChannelObj.subchannelObj;
+        : prevChannelObj?.subchannelObj;
 
       return {
         ...state,
@@ -1441,7 +1441,7 @@ export default function ChatReducer(state, action) {
                         ...prevChannelObj?.members,
                         ...action.newMembers.filter(
                           (newMember) =>
-                            !prevChannelObj.members
+                            !prevChannelObj?.members
                               .map((member) => member.id)
                               .includes(newMember.id)
                         )
