@@ -7,7 +7,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 Channels.propTypes = {
-  currentPathId: PropTypes.string
+  currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 function Channels({ currentPathId }) {
   const {
