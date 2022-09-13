@@ -305,7 +305,12 @@ function Main({ currentPathId, onFileUpload }) {
   ]);
 
   useEffect(() => {
+    const channelId = parseChannelPath(currentPathId);
+    if (currentSelectedChannelIdRef.current !== channelId) {
+      onUpdateSelectedChannelId(channelId);
+    }
     currentPathIdRef.current = currentPathId;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPathId]);
 
   useEffect(() => {
@@ -345,9 +350,6 @@ function Main({ currentPathId, onFileUpload }) {
         return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
       }
       const channelId = parseChannelPath(pathId);
-      if (currentSelectedChannelIdRef.current !== channelId) {
-        onUpdateSelectedChannelId(channelId);
-      }
       if (!channelPathIdHash[pathId]) {
         onUpdateChannelPathIdHash({ channelId, pathId });
       }
