@@ -127,7 +127,7 @@ function LeftMenu({
           subchannelPath={subchannelPath}
         />
       )}
-      <Channels currentPathId={currentPathId} subchannelPath={subchannelPath} />
+      <Channels currentPathId={currentPathId} />
     </div>
   );
 }
