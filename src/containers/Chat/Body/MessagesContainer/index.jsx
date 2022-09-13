@@ -127,7 +127,7 @@ function MessagesContainer({
     },
     inputState
   } = useContext(LocalContext);
-  const { banned, profilePicUrl, userId, profileTheme, username } =
+  const { banned, profilePicUrl, userId, profileTheme, isCreator, username } =
     useKeyContext((v) => v.myState);
   const {
     isRespondingToSubject = false,
@@ -198,6 +198,9 @@ function MessagesContainer({
     }
     return null;
   }, [subchannelPath, subchannelIds, subchannelObj]);
+  const isChatRestricted = useMemo(() => {
+    return subchannel?.isRestricted && !isCreator;
+  }, [subchannel?.isRestricted, isCreator]);
 
   const loadMoreButtonShown = useMemo(() => {
     if (subchannel) {
@@ -1232,6 +1235,7 @@ function MessagesContainer({
       >
         <MessageInput
           selectedChannelId={selectedChannelId}
+          isRestricted={!!isChatRestricted}
           innerRef={ChatInputRef}
           loading={loadingAnimationShown}
           socketConnected={socketConnected}

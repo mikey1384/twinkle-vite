@@ -39,6 +39,7 @@ MessageInput.propTypes = {
   innerRef: PropTypes.object,
   inputState: PropTypes.object,
   isRespondingToSubject: PropTypes.bool,
+  isRestricted: PropTypes.bool,
   isTwoPeopleChannel: PropTypes.oneOfType([PropTypes.number, PropTypes.bool]),
   loading: PropTypes.bool,
   onChessButtonClick: PropTypes.func.isRequired,
@@ -60,6 +61,7 @@ export default function MessageInput({
   selectedChannelId = 0,
   innerRef,
   inputState,
+  isRestricted,
   isRespondingToSubject,
   isTwoPeopleChannel,
   loading,
@@ -359,9 +361,14 @@ export default function MessageInput({
           ) : null}
         </div>
         <Textarea
+          disabled={isRestricted}
           innerRef={innerRef}
           minRows={1}
-          placeholder={`${enterMessageLabel}...`}
+          placeholder={
+            isRestricted
+              ? `Only the administrator can post messages here...`
+              : `${enterMessageLabel}...`
+          }
           onKeyDown={handleKeyDown}
           value={inputText}
           onChange={handleChange}
@@ -394,7 +401,9 @@ export default function MessageInput({
           </div>
         )}
         <AddButtons
-          disabled={loading || !!banned?.chat || !socketConnected}
+          disabled={
+            isRestricted || loading || !!banned?.chat || !socketConnected
+          }
           onUploadButtonClick={() => FileInputRef.current.click()}
           onSelectVideoButtonClick={onSelectVideoButtonClick}
         />
