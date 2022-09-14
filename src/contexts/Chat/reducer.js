@@ -1882,13 +1882,6 @@ export default function ChatReducer(state, action) {
             }
           : {})
       };
-      const targetSubject = action.isRespondingToSubject
-        ? {
-            ...prevChannelObj?.subjectObj,
-            content: prevChannelObj?.subjectObj?.content || defaultChatSubject
-          }
-        : null;
-
       const messageIds = action.subchannelId
         ? prevChannelObj?.messageIds
         : [action.messageId].concat(prevChannelObj?.messageIds);
@@ -1901,7 +1894,16 @@ export default function ChatReducer(state, action) {
               tempMessageId: action.messageId,
               content: action.message.content,
               targetMessage: action.replyTarget,
-              targetSubject
+              ...(action.isRespondingToSubject
+                ? {
+                    targetSubject: {
+                      ...prevChannelObj?.subjectObj,
+                      content:
+                        prevChannelObj?.subjectObj?.content ||
+                        defaultChatSubject
+                    }
+                  }
+                : {})
             }
           };
       const subchannelObj = action.subchannelId
@@ -1909,6 +1911,7 @@ export default function ChatReducer(state, action) {
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
               ...prevChannelObj?.subchannelObj[action.subchannelId],
+              isRespondingToSubject: false,
               messageIds: [action.messageId].concat(
                 prevChannelObj?.subchannelObj[action.subchannelId].messageIds
               ),
@@ -1921,7 +1924,17 @@ export default function ChatReducer(state, action) {
                   subchannelId: action.subchannelId,
                   content: action.message.content,
                   targetMessage: action.replyTarget,
-                  targetSubject
+                  ...(action.isRespondingToSubject
+                    ? {
+                        targetSubject: {
+                          ...prevChannelObj?.subchannelObj[action.subchannelId]
+                            ?.subjectObj,
+                          content:
+                            prevChannelObj?.subchannelObj[action.subchannelId]
+                              ?.subjectObj?.content || defaultChatSubject
+                        }
+                      }
+                    : {})
                 }
               }
             }
