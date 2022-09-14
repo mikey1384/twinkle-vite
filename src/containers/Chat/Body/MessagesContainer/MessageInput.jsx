@@ -316,6 +316,7 @@ export default function MessageInput({
           onClose={() =>
             onSetIsRespondingToSubject({
               channelId: selectedChannelId,
+              subchannelId,
               isResponding: false
             })
           }
@@ -437,6 +438,7 @@ export default function MessageInput({
       {uploadModalShown && (
         <UploadModal
           initialCaption={inputText}
+          isRespondingToSubject={isRespondingToSubject}
           recepientId={recepientId}
           subjectId={subjectId}
           channelId={selectedChannelId}

@@ -136,9 +136,6 @@ function Main({ currentPathId, onFileUpload }) {
   const currentChannelName = useChatContext((v) => v.state.currentChannelName);
   const filesBeingUploaded = useChatContext((v) => v.state.filesBeingUploaded);
   const homeChannelIds = useChatContext((v) => v.state.homeChannelIds);
-  const isRespondingToSubject = useChatContext(
-    (v) => v.state.isRespondingToSubject
-  );
   const loadingVocabulary = useChatContext((v) => v.state.loadingVocabulary);
   const loaded = useChatContext((v) => v.state.loaded);
   const recepientId = useChatContext((v) => v.state.recepientId);
@@ -692,7 +689,6 @@ function Main({ currentPathId, onFileUpload }) {
           chessModalShown,
           creatingNewDMChannel,
           filesBeingUploaded,
-          isRespondingToSubject,
           lastSubchannelPaths,
           loadingVocabulary,
           recepientId,

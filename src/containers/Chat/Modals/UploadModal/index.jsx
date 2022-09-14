@@ -25,6 +25,7 @@ import LocalContext from '../../Context';
 
 UploadModal.propTypes = {
   initialCaption: PropTypes.string,
+  isRespondingToSubject: PropTypes.bool,
   channelId: PropTypes.number,
   fileObj: PropTypes.object,
   onHide: PropTypes.func.isRequired,
@@ -37,6 +38,7 @@ UploadModal.propTypes = {
 
 function UploadModal({
   initialCaption = '',
+  isRespondingToSubject,
   channelId,
   fileObj,
   onHide,
@@ -52,7 +54,6 @@ function UploadModal({
   } = useKeyContext((v) => v.theme);
   const {
     onFileUpload,
-    state: { isRespondingToSubject },
     actions: { onSubmitMessage }
   } = useContext(LocalContext);
   const [caption, setCaption] = useState(initialCaption);
