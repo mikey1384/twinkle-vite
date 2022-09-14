@@ -12,7 +12,9 @@ export default function Router({ onFileUpload }) {
     <Routes>
       <Route
         path="/:subchannelPath"
-        element={<Main currentPathId={currentPathId} />}
+        element={
+          <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />
+        }
       />
       <Route
         path="/*"
