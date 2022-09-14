@@ -2044,19 +2044,30 @@ export default function ChatReducer(state, action) {
         chatType: action.chatType
       };
     }
-    case 'UPDATE_SELECTED_CHANNEL_ID':
+    case 'UPDATE_SELECTED_CHANNEL_ID': {
+      let selectedChannelObj = {};
+      if (state.selectedChannelId) {
+        selectedChannelObj = {
+          [state.selectedChannelId]: {
+            ...state.channelsObj[state.selectedChannelId],
+            numUnreads: 0
+          }
+        };
+      }
       return {
         ...state,
         chatType: 'default',
         selectedChannelId: action.channelId,
         channelsObj: {
           ...state.channelsObj,
+          ...selectedChannelObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             numUnreads: 0
           }
         }
       };
+    }
     default:
       return state;
   }
