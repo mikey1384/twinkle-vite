@@ -1351,6 +1351,7 @@ function MessagesContainer({
             onEnterComment({
               contentType: 'chat',
               contentId: selectedChannelId,
+              subId: subchannelId,
               text: !stringIsEmpty(textForThisChannel)
                 ? `${textForThisChannel.trim()} https://www.twin-kle.com/videos/${videoId}`
                 : `https://www.twin-kle.com/videos/${videoId}`
