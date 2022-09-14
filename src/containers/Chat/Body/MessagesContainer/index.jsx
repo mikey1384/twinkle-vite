@@ -286,18 +286,20 @@ function MessagesContainer({
     ) {
       return true;
     }
+    if (currentPathId === 'vocabulary') return false;
     if (subchannelPath) {
       return !subchannel?.loaded;
     }
     return !currentChannel?.loaded;
   }, [
-    subchannelPath,
-    subchannel?.loaded,
-    currentChannel?.loaded,
     channelLoading,
     creatingNewDMChannel,
     reconnecting,
-    selectedChannelIdAndPathIdNotSynced
+    selectedChannelIdAndPathIdNotSynced,
+    subchannelPath,
+    currentPathId,
+    currentChannel?.loaded,
+    subchannel?.loaded
   ]);
 
   const chessCountdownNumber = useMemo(
