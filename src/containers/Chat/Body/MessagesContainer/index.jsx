@@ -213,6 +213,13 @@ function MessagesContainer({
     return isRespondingToSubject;
   }, [isRespondingToSubject, subchannel?.isRespondingToSubject, subchannelId]);
 
+  const replyTarget = useMemo(() => {
+    if (subchannelId) {
+      return subchannel?.replyTarget;
+    }
+    return currentChannel?.replyTarget;
+  }, [currentChannel?.replyTarget, subchannel?.replyTarget, subchannelId]);
+
   const isChatRestricted = useMemo(() => {
     return subchannel?.isRestricted && !isCreator;
   }, [subchannel?.isRestricted, isCreator]);
@@ -279,14 +286,14 @@ function MessagesContainer({
     }${
       socketConnected && appliedIsRespondingToSubject
         ? ' - 8rem - 2px'
-        : currentChannel.replyTarget
+        : replyTarget
         ? ' - 12rem - 2px'
         : ''
     }
     ${selectedChannelIsOnCall ? ` - ${CALL_SCREEN_HEIGHT}` : ''})`;
   }, [
     appliedIsRespondingToSubject,
-    currentChannel.replyTarget,
+    replyTarget,
     selectedChannelIsOnCall,
     socketConnected,
     textAreaHeight
@@ -1277,7 +1284,7 @@ function MessagesContainer({
             handleMessageSubmit({
               content: message,
               subchannelId,
-              target: currentChannel.replyTarget
+              target: replyTarget
             })
           }
           onHeightChange={(height) => {
@@ -1287,7 +1294,7 @@ function MessagesContainer({
           }}
           onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
           recepientId={recepientId}
-          replyTarget={currentChannel.replyTarget}
+          replyTarget={replyTarget}
           subchannelId={subchannel?.id}
           subjectId={subjectId}
           subjectObj={appliedSubjectObj}

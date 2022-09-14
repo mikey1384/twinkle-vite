@@ -578,10 +578,11 @@ export default function ChatActions(dispatch) {
         type: 'SET_RECONNECTING'
       });
     },
-    onSetReplyTarget({ channelId, target }) {
+    onSetReplyTarget({ channelId, subchannelId, target }) {
       return dispatch({
         type: 'SET_REPLY_TARGET',
         channelId,
+        subchannelId,
         target
       });
     },

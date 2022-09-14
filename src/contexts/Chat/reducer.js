@@ -1783,15 +1783,31 @@ export default function ChatReducer(state, action) {
       };
     }
     case 'SET_REPLY_TARGET': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              replyTarget: action.target,
+              isRespondingToSubject: false
+            }
+          }
+        : prevChannelObj?.subchannelObj;
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            replyTarget: action.target,
-            isRespondingToSubject: false
-          }
+          [action.channelId]: action.subchannelId
+            ? {
+                ...prevChannelObj,
+                subchannelObj
+              }
+            : {
+                ...prevChannelObj,
+                replyTarget: action.target,
+                isRespondingToSubject: false
+              }
         }
       };
     }
