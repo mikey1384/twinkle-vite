@@ -390,7 +390,7 @@ function App() {
           channel: channelData
         });
       }
-      onSetReplyTarget({ channelId, target: null });
+      onSetReplyTarget({ channelId, subchannelId, target: null });
       if (channel) {
         onUpdateChannelPathIdHash({
           channelId: channel.id,
