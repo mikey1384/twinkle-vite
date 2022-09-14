@@ -198,6 +198,21 @@ function MessagesContainer({
     }
     return null;
   }, [subchannelPath, subchannelIds, subchannelObj]);
+
+  const appliedSubjectObj = useMemo(() => {
+    if (subchannelId) {
+      return subchannel?.subjectObj || {};
+    }
+    return subjectObj;
+  }, [subchannel?.subjectObj, subchannelId, subjectObj]);
+
+  const appliedIsRespondingToSubject = useMemo(() => {
+    if (subchannelId) {
+      return subchannel?.isRespondingToSubject;
+    }
+    return isRespondingToSubject;
+  }, [isRespondingToSubject, subchannel?.isRespondingToSubject, subchannelId]);
+
   const isChatRestricted = useMemo(() => {
     return subchannel?.isRestricted && !isCreator;
   }, [subchannel?.isRestricted, isCreator]);
@@ -239,7 +254,7 @@ function MessagesContainer({
     [channelOnCall.id, selectedChannelId]
   );
 
-  const subjectId = useMemo(() => subjectObj?.id, [subjectObj]);
+  const subjectId = useMemo(() => appliedSubjectObj?.id, [appliedSubjectObj]);
 
   const selectedChannelIdAndPathIdNotSynced = useMemo(() => {
     const pathId = Number(currentPathId);
@@ -262,7 +277,7 @@ function MessagesContainer({
         ? `${textAreaHeight}px - 1rem`
         : '5.5rem'
     }${
-      socketConnected && isRespondingToSubject
+      socketConnected && appliedIsRespondingToSubject
         ? ' - 8rem - 2px'
         : currentChannel.replyTarget
         ? ' - 12rem - 2px'
@@ -270,7 +285,7 @@ function MessagesContainer({
     }
     ${selectedChannelIsOnCall ? ` - ${CALL_SCREEN_HEIGHT}` : ''})`;
   }, [
-    isRespondingToSubject,
+    appliedIsRespondingToSubject,
     currentChannel.replyTarget,
     selectedChannelIsOnCall,
     socketConnected,
@@ -922,11 +937,11 @@ function MessagesContainer({
         profilePicUrl,
         content,
         channelId: selectedChannelId,
-        subjectId: isRespondingToSubject ? subjectId : null
+        subjectId: appliedIsRespondingToSubject ? subjectId : null
       };
       const messageId = uuidv1();
       onSubmitMessage({
-        isRespondingToSubject,
+        appliedIsRespondingToSubject,
         messageId,
         message,
         replyTarget: target,
@@ -940,7 +955,7 @@ function MessagesContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       creatingNewDMChannel,
-      isRespondingToSubject,
+      appliedIsRespondingToSubject,
       profilePicUrl,
       recepientId,
       selectedChannelId,
@@ -1253,7 +1268,7 @@ function MessagesContainer({
           socketConnected={socketConnected}
           myId={userId}
           inputState={inputState}
-          isRespondingToSubject={currentChannel.isRespondingToSubject}
+          isRespondingToSubject={appliedIsRespondingToSubject}
           isTwoPeopleChannel={currentChannel.twoPeople}
           currentChannel={currentChannel}
           onChessButtonClick={handleChessModalShown}
@@ -1275,7 +1290,7 @@ function MessagesContainer({
           replyTarget={currentChannel.replyTarget}
           subchannelId={subchannel?.id}
           subjectId={subjectId}
-          subjectObj={subjectObj}
+          subjectObj={appliedSubjectObj}
         />
       </div>
       {chessModalShown && (
