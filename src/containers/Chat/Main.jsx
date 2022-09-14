@@ -305,9 +305,11 @@ function Main({ currentPathId, onFileUpload }) {
   ]);
 
   useEffect(() => {
-    const channelId = parseChannelPath(currentPathId);
-    if (currentSelectedChannelIdRef.current !== channelId) {
-      onUpdateSelectedChannelId(channelId);
+    if (!isNaN(Number(currentPathIdRef.current))) {
+      const channelId = parseChannelPath(currentPathId);
+      if (currentSelectedChannelIdRef.current !== channelId) {
+        onUpdateSelectedChannelId(channelId);
+      }
     }
     currentPathIdRef.current = currentPathId;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -742,6 +744,7 @@ function Main({ currentPathId, onFileUpload }) {
                 channelName={currentChannelName}
                 chessOpponent={partner}
                 currentChannel={currentChannel}
+                currentPathId={currentPathId}
                 subchannelId={subchannelId}
                 subchannelPath={subchannelPath}
               />

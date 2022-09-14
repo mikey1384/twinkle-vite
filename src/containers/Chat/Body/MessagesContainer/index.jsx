@@ -286,18 +286,20 @@ function MessagesContainer({
     ) {
       return true;
     }
+    if (currentPathId === 'vocabulary') return false;
     if (subchannelPath) {
       return !subchannel?.loaded;
     }
     return !currentChannel?.loaded;
   }, [
-    subchannelPath,
-    subchannel?.loaded,
-    currentChannel?.loaded,
     channelLoading,
     creatingNewDMChannel,
     reconnecting,
-    selectedChannelIdAndPathIdNotSynced
+    selectedChannelIdAndPathIdNotSynced,
+    subchannelPath,
+    currentPathId,
+    currentChannel?.loaded,
+    subchannel?.loaded
   ]);
 
   const chessCountdownNumber = useMemo(
@@ -1349,6 +1351,7 @@ function MessagesContainer({
             onEnterComment({
               contentType: 'chat',
               contentId: selectedChannelId,
+              subId: subchannelId,
               text: !stringIsEmpty(textForThisChannel)
                 ? `${textForThisChannel.trim()} https://www.twin-kle.com/videos/${videoId}`
                 : `https://www.twin-kle.com/videos/${videoId}`
