@@ -392,6 +392,7 @@ function Message({
         onClick: () => {
           onSetReplyTarget({
             channelId: currentChannel.id,
+            subchannelId,
             target: rewardAmount
               ? targetMessage
               : {
