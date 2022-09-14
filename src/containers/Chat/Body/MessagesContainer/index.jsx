@@ -941,7 +941,7 @@ function MessagesContainer({
       };
       const messageId = uuidv1();
       onSubmitMessage({
-        appliedIsRespondingToSubject,
+        isRespondingToSubject: appliedIsRespondingToSubject,
         messageId,
         message,
         replyTarget: target,
