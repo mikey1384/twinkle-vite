@@ -223,10 +223,9 @@ function MainNavs({
     }
 
     if (chatMatch) {
-      const lastChatPath = pathname.split('chat')[1]
-        ? pathname.split('chat')[1]
-        : '';
-      onSetLastChatPath(lastChatPath);
+      const lastChatPathArray = pathname.split('chat/');
+      const lastChatPath = lastChatPathArray?.[1] ? lastChatPathArray?.[1] : '';
+      onSetLastChatPath(`/${lastChatPath}`);
     }
 
     if (contentPageMatch) {
