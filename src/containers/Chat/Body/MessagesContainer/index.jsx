@@ -956,7 +956,11 @@ function MessagesContainer({
         rewardAmount,
         subchannelId
       });
-      onSetReplyTarget({ channelId: selectedChannelId, target: null });
+      onSetReplyTarget({
+        channelId: selectedChannelId,
+        subchannelId,
+        target: null
+      });
       return Promise.resolve();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -325,7 +325,11 @@ export default function MessageInput({
         <TargetMessagePreview
           replyTarget={replyTarget}
           onClose={() =>
-            onSetReplyTarget({ channelId: selectedChannelId, target: null })
+            onSetReplyTarget({
+              channelId: selectedChannelId,
+              subchannelId,
+              target: null
+            })
           }
         />
       ) : null}
