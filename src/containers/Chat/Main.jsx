@@ -353,25 +353,22 @@ function Main({ currentPathId, onFileUpload }) {
         onUpdateChannelPathIdHash({ channelId, pathId });
       }
       if (channelsObj[channelId]?.loaded) {
+        if (!currentSelectedChannelIdRef.current) {
+          onUpdateSelectedChannelId(channelId);
+        }
         if (!subchannelPath) {
           if (lastChatPath !== `/${pathId}`) {
-            if (!selectedChannelId) {
-              onUpdateSelectedChannelId(channelId);
-            }
             updateLastChannelId(channelId);
           }
           return;
         } else {
           if (channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded) {
-            return onUpdateSelectedChannelId(channelId);
+            return;
           }
           const subchannel = await loadSubchannel({
             channelId,
             subchannelId
           });
-          if (!selectedChannelId) {
-            onUpdateSelectedChannelId(channelId);
-          }
           return onSetSubchannel({ channelId, subchannel });
         }
       }
