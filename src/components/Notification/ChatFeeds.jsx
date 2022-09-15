@@ -142,8 +142,10 @@ function ChatFeeds({
   async function initChatFromThis() {
     if (myId) {
       setLoadingChat(true);
-      onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-      return setTimeout(() => navigate(`/chat/${GENERAL_CHAT_PATH_ID}`), 10);
+      return setTimeout(() => {
+        onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+        navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+      }, 10);
     }
     navigate('/chat');
   }
