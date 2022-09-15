@@ -355,6 +355,7 @@ function Main({ currentPathId, onFileUpload }) {
       if (channelsObj[channelId]?.loaded) {
         if (!subchannelPath) {
           if (lastChatPath !== `/${pathId}`) {
+            onUpdateSelectedChannelId(channelId);
             updateLastChannelId(channelId);
           }
           return;
