@@ -17,6 +17,7 @@ const newChatLabel = localize('newChat');
 LeftMenu.propTypes = {
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   displayedThemeColor: PropTypes.string,
+  loadingVocabulary: PropTypes.bool,
   onNewButtonClick: PropTypes.func.isRequired,
   selectedChannelId: PropTypes.number,
   subchannelIds: PropTypes.arrayOf(PropTypes.number),
@@ -27,6 +28,7 @@ LeftMenu.propTypes = {
 function LeftMenu({
   currentPathId,
   displayedThemeColor,
+  loadingVocabulary,
   onNewButtonClick,
   selectedChannelId,
   subchannelIds,
@@ -46,7 +48,6 @@ function LeftMenu({
     }
   } = useKeyContext((v) => v.theme);
   const chatType = useChatContext((v) => v.state.chatType);
-  const loadingVocabulary = useChatContext((v) => v.state.loadingVocabulary);
   const leftMenuTopButtonColor = useMemo(
     () => Color[chatFlatButtonColor](chatFlatButtonOpacity),
     [chatFlatButtonColor, chatFlatButtonOpacity]
@@ -55,6 +56,11 @@ function LeftMenu({
     () => Color[chatFlatButtonHoveredColor](),
     [chatFlatButtonHoveredColor]
   );
+  const subchannelsShown = useMemo(() => {
+    return (
+      !!subchannelIds?.length && chatType === 'default' && !loadingVocabulary
+    );
+  }, [chatType, loadingVocabulary, subchannelIds?.length]);
 
   return (
     <div
@@ -117,7 +123,7 @@ function LeftMenu({
         }}
       />
       <Tabs />
-      {!!subchannelIds?.length && (
+      {subchannelsShown ? (
         <Subchannels
           currentPathId={currentPathId}
           displayedThemeColor={displayedThemeColor}
@@ -126,7 +132,7 @@ function LeftMenu({
           selectedChannelId={selectedChannelId}
           subchannelPath={subchannelPath}
         />
-      )}
+      ) : null}
       <Channels currentPathId={currentPathId} />
     </div>
   );
