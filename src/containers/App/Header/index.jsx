@@ -388,12 +388,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
             : selectedChannelId,
           subchannelPath
         });
-        if (
-          !isNaN(currentPathIdRef.current) &&
-          currentPathIdRef.current !== pathId
-        ) {
-          onUpdateSelectedChannelId(parseChannelPath(currentPathIdRef.current));
-        }
         onInitChat(data);
         socket.emit(
           'check_online_members',
