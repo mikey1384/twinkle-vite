@@ -408,6 +408,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           }
         );
         if (!currentChannelIsAccessible) {
+          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
           return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
         }
       }
