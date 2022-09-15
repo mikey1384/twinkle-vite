@@ -361,12 +361,13 @@ function Main({ currentPathId, onFileUpload }) {
           return;
         } else {
           if (channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded) {
-            return;
+            return onUpdateSelectedChannelId(channelId);
           }
           const subchannel = await loadSubchannel({
             channelId,
             subchannelId
           });
+          onUpdateSelectedChannelId(channelId);
           return onSetSubchannel({ channelId, subchannel });
         }
       }
