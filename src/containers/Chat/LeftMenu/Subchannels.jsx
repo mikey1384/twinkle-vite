@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
@@ -26,6 +27,16 @@ export default function SubChannels({
   const onUpdateLastSubchannelPath = useChatContext(
     (v) => v.actions.onUpdateLastSubchannelPath
   );
+  const subchannels = useMemo(() => {
+    const result = [];
+    for (let subchannelId of subchannelIds) {
+      const subchannel = subchannelObj[subchannelId];
+      if (subchannel) {
+        result.push(subchannel);
+      }
+    }
+    return result;
+  }, [subchannelIds, subchannelObj]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
@@ -82,31 +93,27 @@ export default function SubChannels({
             <span style={{ marginLeft: '1rem' }}>Main</span>
           </nav>
         </Link>
-        {subchannelIds.map((subchannelId) => (
-          <Link
-            key={subchannelId}
-            to={`/chat/${currentPathId}/${subchannelObj[subchannelId].path}`}
-            onClick={() =>
-              onUpdateLastSubchannelPath({
-                channelId: selectedChannelId,
-                path: subchannelObj[subchannelId].path
-              })
-            }
-          >
-            <nav
-              className={
-                subchannelPath === subchannelObj[subchannelId].path
-                  ? 'active'
-                  : ''
+        {subchannels.map((subchannel) => {
+          return (
+            <Link
+              key={subchannel.id}
+              to={`/chat/${currentPathId}/${subchannel.path}`}
+              onClick={() =>
+                onUpdateLastSubchannelPath({
+                  channelId: selectedChannelId,
+                  path: subchannel.path
+                })
               }
             >
-              <Icon icon={subchannelObj[subchannelId].icon} />
-              <span style={{ marginLeft: '1rem' }}>
-                {subchannelObj[subchannelId].label}
-              </span>
-            </nav>
-          </Link>
-        ))}
+              <nav
+                className={subchannelPath === subchannel.path ? 'active' : ''}
+              >
+                <Icon icon={subchannel.icon} />
+                <span style={{ marginLeft: '1rem' }}>{subchannel.label}</span>
+              </nav>
+            </Link>
+          );
+        })}
       </div>
     </ErrorBoundary>
   );
