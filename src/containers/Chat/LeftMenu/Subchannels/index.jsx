@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
+import Subchannel from './Subchannel';
 import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -95,23 +96,14 @@ export default function SubChannels({
         </Link>
         {subchannels.map((subchannel) => {
           return (
-            <Link
+            <Subchannel
               key={subchannel.id}
-              to={`/chat/${currentPathId}/${subchannel.path}`}
-              onClick={() =>
-                onUpdateLastSubchannelPath({
-                  channelId: selectedChannelId,
-                  path: subchannel.path
-                })
-              }
-            >
-              <nav
-                className={subchannelPath === subchannel.path ? 'active' : ''}
-              >
-                <Icon icon={subchannel.icon} />
-                <span style={{ marginLeft: '1rem' }}>{subchannel.label}</span>
-              </nav>
-            </Link>
+              currentPathId={currentPathId}
+              selectedChannelId={selectedChannelId}
+              subchannel={subchannel}
+              subchannelPath={subchannelPath}
+              onUpdateLastSubchannelPath={onUpdateLastSubchannelPath}
+            />
           );
         })}
       </div>
