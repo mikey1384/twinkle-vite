@@ -63,7 +63,6 @@ MessagesContainer.propTypes = {
   currentChannel: PropTypes.object.isRequired,
   currentPathId: PropTypes.string,
   displayedThemeColor: PropTypes.string,
-  loading: PropTypes.bool,
   subchannelId: PropTypes.number,
   subchannelPath: PropTypes.string
 };
@@ -74,7 +73,6 @@ function MessagesContainer({
   currentChannel,
   currentPathId,
   displayedThemeColor,
-  loading: channelLoading,
   subchannelId,
   subchannelPath
 }) {
@@ -301,7 +299,6 @@ function MessagesContainer({
 
   const loadingAnimationShown = useMemo(() => {
     if (
-      channelLoading ||
       creatingNewDMChannel ||
       reconnecting ||
       selectedChannelIdAndPathIdNotSynced
@@ -317,7 +314,6 @@ function MessagesContainer({
     }
     return !currentChannel?.loaded;
   }, [
-    channelLoading,
     selectedChannelId,
     creatingNewDMChannel,
     reconnecting,
