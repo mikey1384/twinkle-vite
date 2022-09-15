@@ -302,7 +302,7 @@ function Main({ currentPathId, onFileUpload }) {
   ]);
 
   useEffect(() => {
-    if (!isNaN(Number(currentPathIdRef.current))) {
+    if (!isNaN(Number(currentPathId))) {
       const channelId = parseChannelPath(currentPathId);
       if (currentSelectedChannelIdRef.current !== channelId) {
         onUpdateSelectedChannelId(channelId);
@@ -346,6 +346,7 @@ function Main({ currentPathId, onFileUpload }) {
       onUpdateChatType('default');
       const { isAccessible } = await checkChatAccessible(pathId);
       if (!isAccessible) {
+        onUpdateSelectedChannelId(GENERAL_CHAT_ID);
         return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, { replace: true });
       }
       const channelId = parseChannelPath(pathId);
@@ -355,7 +356,9 @@ function Main({ currentPathId, onFileUpload }) {
       if (channelsObj[channelId]?.loaded) {
         if (!subchannelPath) {
           if (lastChatPath !== `/${pathId}`) {
-            onUpdateSelectedChannelId(channelId);
+            if (!selectedChannelId) {
+              onUpdateSelectedChannelId(channelId);
+            }
             updateLastChannelId(channelId);
           }
           return;
@@ -367,7 +370,9 @@ function Main({ currentPathId, onFileUpload }) {
             channelId,
             subchannelId
           });
-          onUpdateSelectedChannelId(channelId);
+          if (!selectedChannelId) {
+            onUpdateSelectedChannelId(channelId);
+          }
           return onSetSubchannel({ channelId, subchannel });
         }
       }
@@ -730,6 +735,7 @@ function Main({ currentPathId, onFileUpload }) {
               <LeftMenu
                 currentPathId={currentPathId}
                 displayedThemeColor={displayedThemeColor}
+                loadingVocabulary={loadingVocabulary}
                 onNewButtonClick={() => setCreateNewChatModalShown(true)}
                 selectedChannelId={selectedChannelId}
                 subchannelIds={currentChannel.subchannelIds}
