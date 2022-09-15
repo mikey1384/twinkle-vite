@@ -306,6 +306,9 @@ function MessagesContainer({
       reconnecting ||
       selectedChannelIdAndPathIdNotSynced
     ) {
+      if (selectedChannelIdAndPathIdNotSynced) {
+        console.log('loading', currentPathId, selectedChannelId);
+      }
       return true;
     }
     if (currentPathId === 'vocabulary') return false;
@@ -315,6 +318,7 @@ function MessagesContainer({
     return !currentChannel?.loaded;
   }, [
     channelLoading,
+    selectedChannelId,
     creatingNewDMChannel,
     reconnecting,
     selectedChannelIdAndPathIdNotSynced,
