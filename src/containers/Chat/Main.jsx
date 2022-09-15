@@ -253,7 +253,6 @@ function Main({ currentPathId, onFileUpload }) {
   const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
   const [creatingChat, setCreatingChat] = useState(false);
   const [createNewChatModalShown, setCreateNewChatModalShown] = useState(false);
-  const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
   const prevPathId = useRef('');
   const prevUserId = useRef(null);
@@ -354,41 +353,35 @@ function Main({ currentPathId, onFileUpload }) {
         onUpdateChannelPathIdHash({ channelId, pathId });
       }
       if (channelsObj[channelId]?.loaded) {
+        if (!currentSelectedChannelIdRef.current) {
+          onUpdateSelectedChannelId(channelId);
+        }
         if (!subchannelPath) {
           if (lastChatPath !== `/${pathId}`) {
-            if (!selectedChannelId) {
-              onUpdateSelectedChannelId(channelId);
-            }
             updateLastChannelId(channelId);
           }
           return;
         } else {
           if (channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded) {
-            return onUpdateSelectedChannelId(channelId);
+            return;
           }
           const subchannel = await loadSubchannel({
             channelId,
             subchannelId
           });
-          if (!selectedChannelId) {
-            onUpdateSelectedChannelId(channelId);
-          }
           return onSetSubchannel({ channelId, subchannel });
         }
       }
-      setLoading(true);
       const data = await loadChatChannel({ channelId, subchannelPath });
       if (
         (!isNaN(Number(currentPathIdRef.current)) &&
           data.channel.pathId !== Number(currentPathIdRef.current)) ||
         currentPathIdRef.current === 'vocabulary'
       ) {
-        setLoading(false);
         loadingRef.current = false;
         return;
       }
       onEnterChannelWithId(data);
-      setLoading(false);
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -744,7 +737,6 @@ function Main({ currentPathId, onFileUpload }) {
               />
               <Body
                 displayedThemeColor={displayedThemeColor}
-                loading={loading}
                 channelName={currentChannelName}
                 chessOpponent={partner}
                 currentChannel={currentChannel}
