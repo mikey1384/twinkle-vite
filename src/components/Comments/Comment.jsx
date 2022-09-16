@@ -346,34 +346,13 @@ function Comment({
     () => authLevel > uploader?.authLevel,
     [authLevel, uploader?.authLevel]
   );
-  const dropdownButtonShown = useMemo(() => {
-    if (isNotification || isDeleteNotification || isPreview) {
-      return false;
-    }
-    const userCanEditThis = (canEdit || canDelete) && userIsHigherAuth;
-    return (
-      userIsUploader ||
-      userCanEditThis ||
-      userIsParentUploader ||
-      userIsRootUploader
-    );
-  }, [
-    canDelete,
-    canEdit,
-    isDeleteNotification,
-    isNotification,
-    isPreview,
-    userIsHigherAuth,
-    userIsParentUploader,
-    userIsRootUploader,
-    userIsUploader
-  ]);
 
   const dropdownMenuItems = useMemo(() => {
+    const userCanEditThis = canEdit && userIsHigherAuth;
+    const userCanDeleteThis = canDelete && userIsHigherAuth;
     const items = [];
     if (
-      (userIsUploader || canEdit) &&
-      !isNotification &&
+      (userIsUploader || userCanEditThis) &&
       (!isCommentForASubjectWithSecretMessage ||
         (userIsUploader && userIsParentUploader))
     ) {
@@ -394,7 +373,6 @@ function Comment({
     }
     if (
       (userIsParentUploader || userIsRootUploader || isCreator) &&
-      !isNotification &&
       !banned?.posting
     ) {
       items.push({
@@ -410,7 +388,7 @@ function Comment({
           handlePinComment(pinnedCommentId === comment.id ? null : comment.id)
       });
     }
-    if (userIsUploader || canDelete) {
+    if (userIsUploader || userCanDeleteThis) {
       items.push({
         label: (
           <>
@@ -430,11 +408,23 @@ function Comment({
     comment.id,
     isCommentForASubjectWithSecretMessage,
     isCreator,
-    isNotification,
     pinnedCommentId,
+    userIsHigherAuth,
     userIsParentUploader,
     userIsRootUploader,
     userIsUploader
+  ]);
+
+  const dropdownButtonShown = useMemo(() => {
+    if (isNotification || isDeleteNotification || isPreview) {
+      return false;
+    }
+    return !!dropdownMenuItems?.length;
+  }, [
+    dropdownMenuItems?.length,
+    isDeleteNotification,
+    isNotification,
+    isPreview
   ]);
 
   const userCanRewardThis = useMemo(
