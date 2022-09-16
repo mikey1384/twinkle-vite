@@ -124,9 +124,11 @@ function XPVideoPlayer({
   const [reachedMaxWatchDuration, setReachedMaxWatchDuration] = useState(false);
   const [startingPosition, setStartingPosition] = useState(0);
   const [myViewDuration, setMyViewDuration] = useState(0);
+  const [xpWarningShown, setXpWarningShown] = useState(false);
   const requiredDurationForCoin = 60;
   const PlayerRef = useRef(null);
   const timerRef = useRef(null);
+  const timerRef2 = useRef(null);
   const timeWatchedRef = useRef(prevTimeWatched);
   const totalDurationRef = useRef(0);
   const userIdRef = useRef(userId);
@@ -135,11 +137,25 @@ function XPVideoPlayer({
   const rewardingXP = useRef(false);
   const rewardLevelRef = useRef(0);
   const pageVisibleRef = useRef(pageVisible);
+  const pageLoadedRef = useRef(false);
   const twinkleCoinsRef = useRef(twinkleCoins);
 
   useEffect(() => {
+    if (
+      playing &&
+      pageLoadedRef.current &&
+      !pageVisibleRef.current &&
+      pageVisible
+    ) {
+      clearTimeout(timerRef2.current);
+      setXpWarningShown(true);
+      timerRef2.current = setTimeout(() => setXpWarningShown(false), 5000);
+    }
     pageVisibleRef.current = pageVisible;
-  }, [pageVisible]);
+    if (pageVisibleRef.current && !pageLoadedRef.current) {
+      pageLoadedRef.current = true;
+    }
+  }, [pageVisible, playing]);
 
   useEffect(() => {
     init();
@@ -482,6 +498,8 @@ function XPVideoPlayer({
       {(!!rewardLevel || (startingPosition > 0 && !started)) && (
         <XPBar
           isChat={isChat}
+          playing={playing}
+          xpWarningShown={xpWarningShown}
           reachedMaxWatchDuration={reachedMaxWatchDuration}
           rewardLevel={rewardLevel}
           started={started}
