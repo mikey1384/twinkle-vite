@@ -136,8 +136,8 @@ function XPVideoPlayer({
   const rewardingCoin = useRef(false);
   const rewardingXP = useRef(false);
   const rewardLevelRef = useRef(0);
-  const pageVisibleRef = useRef(pageVisible);
   const pageLoadedRef = useRef(false);
+  const pageVisibleRef = useRef(pageVisible);
   const twinkleCoinsRef = useRef(twinkleCoins);
 
   useEffect(() => {

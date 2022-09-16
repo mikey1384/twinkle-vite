@@ -15,6 +15,7 @@ import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
 const continueLabel = localize('continue');
+const notGainXPLabel = localize('notGainXP');
 const watchingLabel = localize('watching');
 const perMinuteLabel = localize('perMinute');
 
@@ -108,9 +109,7 @@ function XPBar({
             justifyContent: 'center'
           }}
         >
-          <div style={{ marginLeft: '0.7rem' }}>
-            You did not gain more XP because you were not watching the video
-          </div>
+          <div style={{ marginLeft: '0.7rem' }}>{notGainXPLabel}</div>
         </div>
       ) : (
         <ProgressBar
