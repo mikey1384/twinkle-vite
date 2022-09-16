@@ -996,8 +996,11 @@ function Comment({
   }
 
   async function handlePinComment(commentId) {
-    let contentId = isSubjectPannelComment ? subject.id : parent.contentId;
-    const contentType = isSubjectPannelComment ? 'subject' : parent.contentType;
+    const root = parent.contentType === 'comment' ? rootContent : parent;
+    let contentId = isSubjectPannelComment
+      ? subject.id
+      : root.contentId || root.id;
+    const contentType = isSubjectPannelComment ? 'subject' : root.contentType;
     await updateCommentPinStatus({
       commentId,
       contentId,
