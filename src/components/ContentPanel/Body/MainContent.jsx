@@ -382,7 +382,7 @@ export default function MainContent({
             </div>
           )}
         </div>
-        {!isEditing && contentType === 'url' && (
+        {contentType === 'url' && (
           <Embedly
             contentId={contentId}
             loadingHeight="30rem"
