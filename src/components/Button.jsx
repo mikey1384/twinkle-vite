@@ -2,12 +2,14 @@ import { memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import Icon from '~/components/Icon';
 
 Button.propTypes = {
   className: PropTypes.string,
   color: PropTypes.string,
   disabled: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   filled: PropTypes.bool,
+  loading: PropTypes.bool,
   stretch: PropTypes.bool,
   hoverColor: PropTypes.string,
   onClick: PropTypes.func,
@@ -25,6 +27,7 @@ function Button({
   className,
   color = 'black',
   disabled,
+  loading,
   onClick,
   onHover,
   children = null,
@@ -38,16 +41,17 @@ function Button({
   style = {},
   transparent
 }) {
+  const isDisabled = useMemo(() => disabled || loading, [disabled, loading]);
   const ButtonStyle = useMemo(() => {
     const colorKey = onHover ? hoverColor : color;
     const backgroundOpacity = opacity || (filled ? 1 : skeuomorphic ? 0.5 : 0);
     const backgroundHoverOpacity = transparent ? 0 : 0.9;
     const backgroundDisabledOpacity = filled || skeuomorphic ? 0.2 : 0;
-    const textOpacity = disabled ? 0.2 : transparent ? 0.7 : 1;
+    const textOpacity = isDisabled ? 0.2 : transparent ? 0.7 : 1;
 
     return `${css`
       display: flex;
-      cursor: ${disabled ? 'default' : 'pointer'};
+      cursor: ${isDisabled ? 'default' : 'pointer'};
       align-items: center;
       justify-content: center;
       font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
@@ -62,25 +66,25 @@ function Button({
       background: ${skeuomorphic
         ? Color.white(opacity || 1)
         : Color[colorKey](
-            disabled ? backgroundDisabledOpacity : backgroundOpacity
+            isDisabled ? backgroundDisabledOpacity : backgroundOpacity
           )};
       border: 1px solid
         ${Color[colorKey](
-          disabled ? backgroundDisabledOpacity : backgroundOpacity
+          isDisabled ? backgroundDisabledOpacity : backgroundOpacity
         )};
       ${skeuomorphic && filled
         ? `border-color: ${Color[colorKey](
-            disabled ? backgroundDisabledOpacity : backgroundHoverOpacity
+            isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
           )};`
         : ''};
       border-radius: ${borderRadius};
       ${skeuomorphic
-        ? disabled
+        ? isDisabled
           ? 'opacity: 0.5;'
           : `box-shadow: 0 0 1px ${Color[colorKey](0.5)};`
         : ''}
       &:focus {
-        outline: ${(transparent || disabled || skeuomorphic) && 0};
+        outline: ${(transparent || isDisabled || skeuomorphic) && 0};
       }
       ${skeuomorphic && filled
         ? `box-shadow: 0 0 3px ${Color[colorKey]()};`
@@ -89,14 +93,14 @@ function Button({
         background: ${skeuomorphic
           ? '#fff'
           : Color[hoverColor || color](
-              disabled ? backgroundDisabledOpacity : backgroundHoverOpacity
+              isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
             )};
         color: ${renderHoverColor()};
         border-color: ${Color[hoverColor || color](
-          disabled ? backgroundDisabledOpacity : backgroundHoverOpacity
+          isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
         )};
         ${skeuomorphic
-          ? disabled
+          ? isDisabled
             ? ''
             : `box-shadow: 0 0 3px ${Color[hoverColor || color]()};`
           : ''};
@@ -107,7 +111,7 @@ function Button({
           background: ${skeuomorphic
             ? '#fff'
             : Color[hoverColor || color](
-                disabled ? backgroundDisabledOpacity : backgroundOpacity
+                isDisabled ? backgroundDisabledOpacity : backgroundOpacity
               )};
           color: ${!skeuomorphic && (filled || opacity)
             ? '#fff'
@@ -117,7 +121,7 @@ function Button({
             : 'none'};
           border: 1px solid
             ${Color[hoverColor || color](
-              disabled
+              isDisabled
                 ? backgroundDisabledOpacity
                 : skeuomorphic && filled
                 ? backgroundHoverOpacity
@@ -128,7 +132,7 @@ function Button({
       }
     `} ${className} unselectable`;
     function renderHoverColor() {
-      if (disabled) {
+      if (isDisabled) {
         if (!filled) {
           return Color[hoverColor || color](textOpacity);
         }
@@ -140,7 +144,7 @@ function Button({
   }, [
     className,
     color,
-    disabled,
+    isDisabled,
     filled,
     hoverColor,
     onHover,
@@ -154,11 +158,14 @@ function Button({
       style={{ ...style, ...(stretch ? { width: '100%' } : {}) }}
       className={ButtonStyle}
       onClick={onClick}
-      disabled={disabled}
+      disabled={isDisabled}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       {children}
+      {loading && (
+        <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
+      )}
     </button>
   );
 }
