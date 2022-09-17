@@ -4,33 +4,39 @@ import { css } from '@emotion/css';
 GradientButton.propTypes = {
   disabled: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   onClick: PropTypes.func,
-  children: PropTypes.node,
-  style: PropTypes.object
+  children: PropTypes.node
 };
 
-export default function GradientButton({
-  disabled,
-  onClick,
-  children = null,
-  style = {}
-}) {
+export default function GradientButton({ disabled, onClick, children = null }) {
   return (
     <div
-      style={style}
       className={css`
+        display: block;
         cursor: pointer;
         padding: 1.5rem;
         font-weight: bold;
         overflow: visible;
         pointer-events: auto;
-        transform-origin: 50% 50% 0px;
         border-radius: 5px;
         color: white;
         font-size: 14.5px;
         text-transform: uppercase;
         letter-spacing: 2px;
         box-shadow: rgb(0 0 0 / 15%) 0 1px 2px;
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        @-webkit-keyframes Gradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        animation: Gradient 5s ease infinite;
+        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+        background-size: 400% 400%;
       `}
       onClick={onClick}
       disabled={disabled}
