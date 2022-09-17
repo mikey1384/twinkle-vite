@@ -149,7 +149,7 @@ function Button({
     transparent
   ]);
   return (
-    <div
+    <button
       style={{ ...style, ...(stretch ? { width: '100%' } : {}) }}
       className={ButtonStyle}
       onClick={onClick}
@@ -158,7 +158,7 @@ function Button({
       onMouseLeave={onMouseLeave}
     >
       {children}
-    </div>
+    </button>
   );
 }
 
