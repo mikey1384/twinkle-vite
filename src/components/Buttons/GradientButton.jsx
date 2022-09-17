@@ -19,7 +19,7 @@ export default function GradientButton({
       style={style}
       className={css`
         cursor: pointer;
-        padding: 2rem;
+        padding: 1.5rem;
         font-weight: bold;
         overflow: visible;
         pointer-events: auto;
