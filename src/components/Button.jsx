@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef } from 'react';
+import { memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -38,7 +38,6 @@ function Button({
   style = {},
   transparent
 }) {
-  const ButtonRef = useRef(null);
   const ButtonStyle = useMemo(() => {
     const colorKey = onHover ? hoverColor : color;
     const backgroundOpacity = opacity || (filled ? 1 : skeuomorphic ? 0.5 : 0);
@@ -151,20 +150,16 @@ function Button({
     transparent
   ]);
   return (
-    <button
+    <div
       style={{ ...style, ...(stretch ? { width: '100%' } : {}) }}
       className={ButtonStyle}
-      ref={ButtonRef}
-      onClick={(event) => {
-        if (ButtonRef.current !== null) ButtonRef.current.blur();
-        if (onClick) onClick(event);
-      }}
+      onClick={onClick}
       disabled={disabled}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       {children}
-    </button>
+    </div>
   );
 }
 
