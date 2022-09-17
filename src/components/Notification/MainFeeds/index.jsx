@@ -201,10 +201,7 @@ function MainFeeds({
               </div>
             </GradientButton>
           ) : (
-            <Banner
-              color={successColor}
-              style={{ marginBottom: '1rem', width: '100%' }}
-            >
+            <Banner color={successColor} style={{ marginBottom: '1rem' }}>
               {totalTwinkles > 0 ? (
                 <div style={{ fontSize: '1.7rem' }}>
                   <p>
