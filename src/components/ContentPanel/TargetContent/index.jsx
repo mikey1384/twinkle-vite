@@ -411,7 +411,7 @@ export default function TargetContent({
                     >
                       <div
                         style={{
-                          width: '100%',
+                          flexGrow: 1,
                           display: 'flex'
                         }}
                       >
