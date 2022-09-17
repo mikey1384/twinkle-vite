@@ -234,11 +234,6 @@ function App() {
   }, [auth, location.pathname, pageVisible, signinModalShown]);
 
   useEffect(() => {
-    window.ga('send', 'pageview', location.pathname);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
-
-  useEffect(() => {
     if (typeof document.hidden !== 'undefined') {
       hiddenRef.current = 'hidden';
       visibilityChangeRef.current = 'visibilitychange';
