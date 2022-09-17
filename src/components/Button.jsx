@@ -47,7 +47,6 @@ function Button({
 
     return `${css`
       cursor: ${disabled ? 'default' : 'pointer'};
-      display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
