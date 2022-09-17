@@ -45,6 +45,7 @@ ProfilePanel.propTypes = {
 };
 
 function ProfilePanel({ expandable, profileId, style }) {
+  const [chatLoading, setChatLoading] = useState(false);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const navigate = useNavigate();
@@ -453,6 +454,7 @@ function ProfilePanel({ expandable, profileId, style }) {
                           {profileId === userId && comments.length > 0 && (
                             <MessagesButton
                               commentsShown={commentsShown}
+                              loading={loadingComments}
                               profileId={profileId}
                               myId={userId}
                               onMessagesButtonClick={onMessagesButtonClick}
@@ -470,7 +472,11 @@ function ProfilePanel({ expandable, profileId, style }) {
                           display: 'flex'
                         }}
                       >
-                        <Button color="green" onClick={handleTalkClick}>
+                        <Button
+                          loading={chatLoading}
+                          color="green"
+                          onClick={handleTalkClick}
+                        >
                           <Icon icon="comments" />
                           <span style={{ marginLeft: '0.7rem' }}>
                             {chatLabel}
@@ -608,6 +614,7 @@ function ProfilePanel({ expandable, profileId, style }) {
   }
 
   async function handleTalkClick() {
+    setChatLoading(true);
     const { channelId, pathId } = await loadDMChannel({ recepient: profile });
     if (!pathId) {
       if (!profile?.id) {
@@ -630,6 +637,7 @@ function ProfilePanel({ expandable, profileId, style }) {
     }
     onUpdateSelectedChannelId(channelId);
     setTimeout(() => navigate(pathId ? `/chat/${pathId}` : `/chat/new`), 0);
+    setChatLoading(false);
   }
 
   function onChangeProfilePictureClick() {

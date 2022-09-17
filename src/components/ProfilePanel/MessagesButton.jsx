@@ -6,6 +6,7 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 MessagesButton.propTypes = {
   commentsShown: PropTypes.bool,
+  loading: PropTypes.bool,
   profileId: PropTypes.number.isRequired,
   myId: PropTypes.number,
   onMessagesButtonClick: PropTypes.func.isRequired,
@@ -15,6 +16,7 @@ MessagesButton.propTypes = {
 
 export default function MessagesButton({
   commentsShown,
+  loading,
   profileId,
   myId,
   onMessagesButtonClick,
@@ -40,6 +42,7 @@ export default function MessagesButton({
 
   return (
     <Button
+      loading={loading}
       style={style}
       disabled={commentsShown && profileId === myId}
       color="logoBlue"
