@@ -180,7 +180,7 @@ function MainFeeds({
               loading={collectingReward}
               color={totalRewardAmount > 0 ? alertColor : successColor}
               style={{ marginBottom: '1rem', width: '100%' }}
-              fontSize="2.3rem"
+              fontSize="2.2rem"
               mobileFontSize="1.7rem"
               onClick={totalRewardAmount > 0 ? onCollectReward : null}
             >
@@ -205,7 +205,7 @@ function MainFeeds({
               color={successColor}
               style={{ marginBottom: '1rem', width: '100%' }}
             >
-              {totalRewardAmount === 0 && totalTwinkles > 0 ? (
+              {totalTwinkles > 0 ? (
                 <div style={{ fontSize: '1.7rem' }}>
                   <p>
                     {yourXPLabel}: {addCommasToNumber(originalTwinkleXP)} XP{' '}
@@ -220,7 +220,7 @@ function MainFeeds({
                   </p>
                 </div>
               ) : null}
-              {totalRewardAmount === 0 && totalCoins > 0 ? (
+              {totalCoins > 0 ? (
                 <div
                   style={{
                     fontSize: '1.7rem',
