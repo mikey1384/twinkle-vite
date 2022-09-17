@@ -169,6 +169,14 @@ function App() {
   });
 
   useEffect(() => {
+    window.gtag('event', 'page_view', {
+      page_path: location.pathname + location.search + location.hash,
+      page_search: location.search,
+      page_hash: location.hash
+    });
+  }, [location]);
+
+  useEffect(() => {
     if (
       typeof twinkleXP === 'number' &&
       twinkleXP > (prevTwinkleXP.current || 0)
