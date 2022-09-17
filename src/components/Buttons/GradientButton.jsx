@@ -1,5 +1,5 @@
-import { useRef } from 'react';
 import PropTypes from 'prop-types';
+import { css } from '@emotion/css';
 
 GradientButton.propTypes = {
   disabled: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
@@ -14,18 +14,28 @@ export default function GradientButton({
   children = null,
   style = {}
 }) {
-  const ButtonRef = useRef(null);
   return (
-    <button
-      style={{ cursor: 'pointer', padding: '1rem', ...style }}
-      ref={ButtonRef}
-      onClick={(event) => {
-        if (ButtonRef.current !== null) ButtonRef.current.blur();
-        if (onClick) onClick(event);
-      }}
+    <div
+      style={style}
+      className={css`
+        cursor: pointer;
+        padding: 2rem;
+        font-weight: bold;
+        overflow: visible;
+        pointer-events: auto;
+        transform-origin: 50% 50% 0px;
+        border-radius: 5px;
+        color: white;
+        font-size: 14.5px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        box-shadow: rgb(0 0 0 / 15%) 0 1px 2px;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      `}
+      onClick={onClick}
       disabled={disabled}
     >
       {children}
-    </button>
+    </div>
   );
 }
