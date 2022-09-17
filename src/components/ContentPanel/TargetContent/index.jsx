@@ -409,7 +409,12 @@ export default function TargetContent({
                         paddingBottom: comment.likes.length === 0 && '1rem'
                       }}
                     >
-                      <div style={{ display: 'flex' }}>
+                      <div
+                        style={{
+                          width: '100%',
+                          display: 'flex'
+                        }}
+                      >
                         <LikeButton
                           theme={theme}
                           contentType="comment"
