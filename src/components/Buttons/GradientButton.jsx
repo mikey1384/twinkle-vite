@@ -1,30 +1,48 @@
 import PropTypes from 'prop-types';
+import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, borderRadius } from '~/constants/css';
 
 GradientButton.propTypes = {
   disabled: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+  isFlat: PropTypes.bool,
   onClick: PropTypes.func,
-  children: PropTypes.node
+  children: PropTypes.node,
+  loading: PropTypes.bool,
+  fontSize: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  mobileFontSize: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  style: PropTypes.object
 };
 
-export default function GradientButton({ disabled, onClick, children = null }) {
+export default function GradientButton({
+  isFlat,
+  disabled,
+  onClick,
+  children = null,
+  fontSize = '2.5rem',
+  mobileFontSize = '2rem',
+  loading,
+  style
+}) {
   return (
     <button
+      style={style}
       className={css`
-        display: block;
+        ${disabled || loading ? `opacity: 0.5;` : ''}
+        color: #fff;
+        display: flex;
+        justify-content: center;
         border: none;
-        cursor: pointer;
+        cursor: ${disabled || loading ? 'default' : 'pointer'};
         padding: 1.5rem;
         overflow: visible;
         pointer-events: auto;
-        border-radius: 5px;
+        ${isFlat ? '' : `border-radius: ${borderRadius};`}
         color: white;
         font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
         text-transform: uppercase;
         font-weight: bold;
-        font-size: 2.5rem;
-        letter-spacing: 2px;
+        font-size: ${fontSize};
         box-shadow: rgb(0 0 0 / 15%) 0 1px 2px;
         @-webkit-keyframes Gradient {
           0% {
@@ -41,13 +59,16 @@ export default function GradientButton({ disabled, onClick, children = null }) {
         background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
         background-size: 400% 400%;
         @media (max-width: ${mobileMaxWidth}) {
-          font-size: 2rem;
+          font-size: ${mobileFontSize};
         }
       `}
       onClick={onClick}
-      disabled={disabled}
+      disabled={!!loading || !!disabled}
     >
       {children}
+      {loading && (
+        <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
+      )}
     </button>
   );
 }

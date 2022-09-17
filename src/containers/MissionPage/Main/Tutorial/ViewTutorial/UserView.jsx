@@ -24,10 +24,7 @@ export default function UserView({
           justifyContent: 'center'
         }}
       >
-        <GradientButton
-          style={{ marginLeft: '1rem', fontSize: '2rem' }}
-          onClick={onStartClick}
-        >
+        <GradientButton style={{ marginLeft: '1rem' }} onClick={onStartClick}>
           <Icon icon="star" />
           <span style={{ marginLeft: '1rem' }}>
             {tutorialButtonLabel || 'Show Tutorial'}
