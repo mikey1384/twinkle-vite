@@ -265,8 +265,16 @@ export default function TakeScreenshot({
                 color="logoBlue"
                 onClick={() => setScreenshotTaken(true)}
               >
-                I took the screenshot of that box{' '}
-                <Icon style={{ marginLeft: '0.7rem' }} icon="arrow-up" />
+                <div
+                  className={css`
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1.3rem;
+                    }
+                  `}
+                >
+                  <Icon style={{ marginRight: '0.7rem' }} icon="arrow-up" />I
+                  took a screenshot of that box
+                </div>
               </Button>
             </div>
           )}
