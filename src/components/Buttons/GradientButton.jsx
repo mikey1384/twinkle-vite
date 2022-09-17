@@ -17,7 +17,7 @@ export default function GradientButton({
   const ButtonRef = useRef(null);
   return (
     <button
-      style={style}
+      style={{ cursor: 'pointer', padding: '1rem', ...style }}
       ref={ButtonRef}
       onClick={(event) => {
         if (ButtonRef.current !== null) ButtonRef.current.blur();
