@@ -948,6 +948,10 @@ const languageObj = {
     en: 'Notable Activities',
     kr: '주요 활동'
   },
+  notGainXP: {
+    en: 'You earn XP only while you watch the video',
+    kr: '비디오를 시청하지 않았기 때문에 XP를 획득하지 못했습니다'
+  },
   noUserMadeContent: {
     en: 'No user made content',
     kr: '사용자 제작 콘텐츠가 존재하지 않습니다'

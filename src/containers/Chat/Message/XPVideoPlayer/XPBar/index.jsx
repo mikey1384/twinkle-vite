@@ -10,22 +10,26 @@ import Link from '~/components/Link';
 
 XPBar.propTypes = {
   loaded: PropTypes.bool,
+  playing: PropTypes.bool,
   rewardLevel: PropTypes.number,
   reachedMaxWatchDuration: PropTypes.bool,
   started: PropTypes.bool,
   startingPosition: PropTypes.number,
   userId: PropTypes.number,
-  videoId: PropTypes.number.isRequired
+  videoId: PropTypes.number.isRequired,
+  xpWarningShown: PropTypes.bool
 };
 
 function XPBar({
   loaded,
+  playing,
   rewardLevel,
   started,
   startingPosition,
   userId,
   reachedMaxWatchDuration,
-  videoId
+  videoId,
+  xpWarningShown
 }) {
   const { videoProgress = 0 } = useContentState({
     contentType: 'video',
@@ -52,13 +56,17 @@ function XPBar({
           `}
         >
           <XPProgressBar
+            playing={playing}
             started={started}
             startingPosition={startingPosition}
             userId={userId}
             rewardLevel={rewardLevel}
             videoProgress={videoProgress}
+            xpWarningShown={xpWarningShown}
           />
           <RewardLevelInfo
+            playing={playing}
+            xpWarningShown={xpWarningShown}
             reachedMaxWatchDuration={reachedMaxWatchDuration}
             rewardLevel={rewardLevel}
             videoId={videoId}

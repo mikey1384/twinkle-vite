@@ -12,15 +12,19 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 const deviceIsMobile = isMobile(navigator);
 
 RewardLevelInfo.propTypes = {
+  playing: PropTypes.bool,
   reachedMaxWatchDuration: PropTypes.bool,
   rewardLevel: PropTypes.number,
-  videoId: PropTypes.number.isRequired
+  videoId: PropTypes.number.isRequired,
+  xpWarningShown: PropTypes.bool
 };
 
 export default function RewardLevelInfo({
+  playing,
   reachedMaxWatchDuration,
   rewardLevel,
-  videoId
+  videoId,
+  xpWarningShown
 }) {
   const { twinkleCoins } = useKeyContext((v) => v.myState);
   const theme = useKeyContext((v) => v.theme);
@@ -43,6 +47,7 @@ export default function RewardLevelInfo({
     () => theme[`level${rewardLevel}`]?.color,
     [rewardLevel, theme]
   );
+  const warningColor = useMemo(() => theme.defeat?.color, [theme]);
   const Stars = useMemo(
     () =>
       [...Array(rewardLevel)].map((elem, index) => (
@@ -83,9 +88,9 @@ export default function RewardLevelInfo({
             padding: 0 1rem;
             font-size: 1.3rem;
             font-weight: bold;
-            background: ${Color[xpLevelColor](
-              reachedMaxWatchDuration ? 0.3 : 1
-            )};
+            background: ${Color[
+              playing && xpWarningShown ? warningColor : xpLevelColor
+            ](reachedMaxWatchDuration ? 0.3 : 1)};
             cursor: default;
             @media (max-width: ${mobileMaxWidth}) {
               flex-grow: 0;
