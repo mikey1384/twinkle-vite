@@ -10,9 +10,10 @@ GradientButton.propTypes = {
 
 export default function GradientButton({ disabled, onClick, children = null }) {
   return (
-    <div
+    <button
       className={css`
         display: block;
+        border: none;
         cursor: pointer;
         padding: 1.5rem;
         overflow: visible;
@@ -47,6 +48,6 @@ export default function GradientButton({ disabled, onClick, children = null }) {
       disabled={disabled}
     >
       {children}
-    </div>
+    </button>
   );
 }
