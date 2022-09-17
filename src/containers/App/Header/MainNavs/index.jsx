@@ -224,8 +224,8 @@ function MainNavs({
 
     if (chatMatch) {
       const lastChatPathArray = pathname.split('chat/');
-      const lastChatPath = lastChatPathArray?.[1] ? lastChatPathArray?.[1] : '';
-      onSetLastChatPath(`/${lastChatPath}`);
+      const path = lastChatPathArray?.[1] || '';
+      onSetLastChatPath(`/${path}`);
     }
 
     if (contentPageMatch) {
@@ -285,7 +285,7 @@ function MainNavs({
       chatLoaded
         ? chatType === 'vocabulary'
           ? '/vocabulary'
-          : lastChatPath
+          : lastChatPath || ''
         : ''
     }`;
   }, [chatLoaded, chatType, lastChatPath]);
