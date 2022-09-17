@@ -46,6 +46,7 @@ function Button({
     const textOpacity = disabled ? 0.2 : transparent ? 0.7 : 1;
 
     return `${css`
+      display: flex;
       cursor: ${disabled ? 'default' : 'pointer'};
       align-items: center;
       justify-content: center;
