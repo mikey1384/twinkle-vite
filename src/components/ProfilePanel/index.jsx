@@ -483,6 +483,7 @@ function ProfilePanel({ expandable, profileId, style }) {
                           </span>
                         </Button>
                         <MessagesButton
+                          loading={loadingComments}
                           commentsShown={commentsShown}
                           profileId={profileId}
                           myId={userId}
