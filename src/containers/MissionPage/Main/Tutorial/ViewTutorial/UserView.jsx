@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import Button from '~/components/Button';
+import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
 
 UserView.propTypes = {
@@ -24,18 +24,15 @@ export default function UserView({
           justifyContent: 'center'
         }}
       >
-        <Button
+        <GradientButton
           style={{ marginLeft: '1rem', fontSize: '2rem' }}
-          color="brownOrange"
-          filled
-          skeuomorphic
           onClick={onStartClick}
         >
           <Icon icon="star" />
           <span style={{ marginLeft: '1rem' }}>
             {tutorialButtonLabel || 'Show Tutorial'}
           </span>
-        </Button>
+        </GradientButton>
       </div>
     </div>
   );

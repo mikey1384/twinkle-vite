@@ -15,27 +15,32 @@ import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
 const continueLabel = localize('continue');
+const notGainXPLabel = localize('notGainXP');
 const watchingLabel = localize('watching');
 const perMinuteLabel = localize('perMinute');
 
 XPBar.propTypes = {
   isChat: PropTypes.bool,
+  playing: PropTypes.bool,
   rewardLevel: PropTypes.number,
   reachedMaxWatchDuration: PropTypes.bool,
   started: PropTypes.bool,
   startingPosition: PropTypes.number,
   userId: PropTypes.number,
-  videoId: PropTypes.number.isRequired
+  videoId: PropTypes.number.isRequired,
+  xpWarningShown: PropTypes.bool
 };
 
 function XPBar({
   isChat,
+  playing,
   rewardLevel,
   started,
   startingPosition,
   userId,
   reachedMaxWatchDuration,
-  videoId
+  videoId,
+  xpWarningShown
 }) {
   const [coinHovered, setCoinHovered] = useState(false);
   const [xpHovered, setXPHovered] = useState(false);
@@ -46,6 +51,7 @@ function XPBar({
     () => theme[`level${rewardLevel}`]?.color,
     [rewardLevel, theme]
   );
+  const warningColor = useMemo(() => theme.defeat?.color, [theme]);
   const xpRewardAmount = useMemo(
     () => rewardLevel * (videoRewardHash?.[rewardBoostLvl]?.xp || 20),
     [rewardBoostLvl, rewardLevel]
@@ -83,7 +89,29 @@ function XPBar({
       return null;
     }
     if (started) {
-      return (
+      return playing && xpWarningShown ? (
+        <div
+          className={css`
+            height: 2.7rem;
+            font-size: 1.3rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1rem;
+              height: ${isChat ? '2rem' : '2.7rem'};
+            }
+          `}
+          style={{
+            background: Color[warningColor](),
+            color: '#fff',
+            fontWeight: 'bold',
+            display: 'flex',
+            flexGrow: 1,
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div style={{ marginLeft: '0.7rem' }}>{notGainXPLabel}</div>
+        </div>
+      ) : (
         <ProgressBar
           className={css`
             margin-top: 0;
@@ -155,13 +183,16 @@ function XPBar({
       );
     }
   }, [
-    continuingStatusShown,
     userId,
-    started,
     rewardLevel,
+    started,
+    playing,
+    xpWarningShown,
     isChat,
+    warningColor,
     videoProgress,
     xpLevelColor,
+    continuingStatusShown,
     xpRewardAmount,
     coinRewardAmount
   ]);
@@ -216,9 +247,9 @@ function XPBar({
                   color: #fff;
                   font-size: 1.3rem;
                   font-weight: bold;
-                  background: ${Color[xpLevelColor](
-                    reachedMaxWatchDuration ? 0.3 : 1
-                  )};
+                  background: ${Color[
+                    playing && xpWarningShown ? warningColor : xpLevelColor
+                  ](reachedMaxWatchDuration ? 0.3 : 1)};
                   cursor: default;
                   @media (max-width: ${mobileMaxWidth}) {
                     flex-grow: 0;
