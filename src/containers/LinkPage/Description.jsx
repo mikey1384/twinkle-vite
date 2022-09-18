@@ -54,6 +54,8 @@ export default function Description({
   userCanEditThis,
   userIsUploader
 }) {
+  const timerRef = useRef(null);
+  const [urlHasError, setUrlHasError] = useState(false);
   const { canDelete, canEdit } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
@@ -211,6 +213,15 @@ export default function Description({
   ]);
 
   useEffect(() => {
+    clearTimeout(timerRef.current);
+    setUrlHasError(false);
+    const urlHasError = !stringIsEmpty(editedUrl) && !isValidUrl(editedUrl);
+    if (urlHasError) {
+      timerRef.current = setTimeout(() => setUrlHasError(true), 500);
+    }
+  }, [editedUrl]);
+
+  useEffect(() => {
     return function onUnmount() {
       onSetEditForm({
         contentId: linkId,
@@ -302,13 +313,11 @@ export default function Description({
                 placeholder={`${enterUrlLabel}...`}
                 style={urlExceedsCharLimit?.style}
                 value={editedUrl}
-                hasError={!urlIsValid}
+                hasError={urlHasError}
                 onChange={handleUrlChange}
               />
-              {!urlIsValid && (
-                <small style={{ color: 'red' }}>
-                  {urlIsEmpty ? 'Please enter url' : 'Please check the url'}
-                </small>
+              {urlHasError && (
+                <small style={{ color: 'red' }}>Please check the url</small>
               )}
             </div>
             <Textarea
