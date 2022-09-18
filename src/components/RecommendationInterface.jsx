@@ -24,6 +24,7 @@ RecommendationInterface.propTypes = {
   onHide: PropTypes.func.isRequired,
   recommendations: PropTypes.array,
   style: PropTypes.object,
+  theme: PropTypes.string,
   uploaderId: PropTypes.number
 };
 
@@ -35,6 +36,7 @@ export default function RecommendationInterface({
   onHide,
   recommendations,
   style,
+  theme,
   uploaderId
 }) {
   const { userId, twinkleCoins, authLevel, userType } = useKeyContext(
@@ -109,7 +111,10 @@ export default function RecommendationInterface({
       }}
     >
       {recommending && (
-        <Loading style={{ position: 'absolute', width: '100%', left: 0 }} />
+        <Loading
+          theme={theme}
+          style={{ position: 'absolute', width: '100%', left: 0 }}
+        />
       )}
       <div
         style={{
@@ -169,6 +174,7 @@ export default function RecommendationInterface({
                 small={deviceIsMobile}
                 checked={!rewardDisabled}
                 label={rewardableLabel}
+                theme={theme}
                 onChange={() => setRewardDisabled((disabled) => !disabled)}
               />
             )}

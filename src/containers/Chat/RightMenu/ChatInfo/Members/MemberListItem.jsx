@@ -63,7 +63,7 @@ function MemberListItem({ onlineMembers, creatorId, member, style }) {
           style={{
             color: Color.darkerGray(),
             marginLeft: '2rem',
-            maxWidth: creatorId === member.id ? '42%' : `CALC(42% + 2rem)`
+            flexGrow: 1
           }}
           className={css`
             font-size: 1.5rem;
@@ -79,6 +79,7 @@ function MemberListItem({ onlineMembers, creatorId, member, style }) {
         {creatorId === member.id ? (
           <div
             style={{
+              width: '2.5rem',
               marginLeft: '1rem'
             }}
           >

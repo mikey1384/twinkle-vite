@@ -60,7 +60,7 @@ function Embedly({
   imageWidth,
   imageOnly,
   loadingHeight = '100%',
-  mobileLoadingHeight = '100%',
+  mobileLoadingHeight,
   noLink,
   onHideAttachment = () => {},
   small,
@@ -107,10 +107,9 @@ function Embedly({
     [translator.url]: contentStateUrl
   } = useContentState({ contentType, contentId });
 
-  const url = useMemo(
-    () => contentStateUrl || extractedUrl,
-    [contentStateUrl, extractedUrl]
-  );
+  const url = useMemo(() => {
+    return contentStateUrl || extractedUrl;
+  }, [contentStateUrl, extractedUrl]);
 
   const thumbUrl = useMemo(() => {
     if (rawThumbUrl?.split('/')[1] === 'thumbs') {
@@ -186,13 +185,12 @@ function Embedly({
         onSetActualDescription({ contentId, contentType, description });
         onSetActualTitle({ contentId, contentType, title });
         onSetSiteUrl({ contentId, contentType, siteUrl: site });
-        setLoading(false);
       } catch (error) {
-        setLoading(false);
         setImageUrl(fallbackImage);
         onHideAttachment();
         console.error(error.response || error);
       }
+      setLoading(false);
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -214,7 +212,7 @@ function Embedly({
       if (thumbUrl?.includes('http://')) {
         makeThumbnailSecure({ contentId, contentType, thumbUrl });
       }
-      if (!loading) {
+      if (!loadingRef.current) {
         setImageUrl(thumbUrl);
       }
     }
@@ -257,7 +255,7 @@ function Embedly({
             className={css`
               height: ${loadingHeight};
               @media (max-width: ${mobileMaxWidth}) {
-                height: ${mobileLoadingHeight};
+                height: ${mobileLoadingHeight || loadingHeight};
               }
             `}
           />

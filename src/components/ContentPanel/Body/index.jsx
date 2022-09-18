@@ -587,6 +587,7 @@ export default function Body({
             contentType={contentType}
             onHide={() => setRecommendationInterfaceShown(false)}
             recommendations={recommendations}
+            theme={theme}
             uploaderId={uploader.id}
           />
         )}
