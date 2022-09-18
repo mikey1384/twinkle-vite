@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   exceedsCharLimit,
@@ -44,13 +44,21 @@ export default function AttachmentField({
     }
     return '';
   }, [linkUrl, type]);
-  const urlError = useMemo(
-    () =>
+  const timerRef = useRef(null);
+  const [urlError, setUrlError] = useState(false);
+
+  useEffect(() => {
+    clearTimeout(timerRef.current);
+    setUrlError(false);
+    const urlHasError =
       !stringIsEmpty(editedUrl) &&
       ((isYouTubeVideo && !isValidYoutubeUrl(editedUrl)) ||
-        !isValidUrl(editedUrl)),
-    [editedUrl, isYouTubeVideo]
-  );
+        !isValidUrl(editedUrl));
+    if (urlHasError) {
+      timerRef.current = setTimeout(() => setUrlError(true), 500);
+    }
+  }, [editedUrl, isYouTubeVideo]);
+
   const urlExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -126,9 +134,9 @@ export default function AttachmentField({
                 style={urlExceedsCharLimit?.style}
               />
               {(urlExceedsCharLimit || urlError) && (
-                <small style={{ color: 'red', lineHeight: 0.5 }}>
+                <span style={{ color: 'red', lineHeight: 0.5 }}>
                   {urlExceedsCharLimit?.message || 'Please check the url'}
-                </small>
+                </span>
               )}
               <Checkbox
                 label="YouTube Video:"

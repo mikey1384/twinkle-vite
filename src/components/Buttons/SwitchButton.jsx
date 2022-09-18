@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 
 SwitchButton.propTypes = {
@@ -12,7 +13,8 @@ SwitchButton.propTypes = {
   labelStyle: PropTypes.object,
   onChange: PropTypes.func.isRequired,
   small: PropTypes.bool,
-  style: PropTypes.object
+  style: PropTypes.object,
+  theme: PropTypes.string
 };
 
 export default function SwitchButton({
@@ -22,12 +24,14 @@ export default function SwitchButton({
   label,
   onChange,
   small,
+  theme,
   labelStyle = { fontSize: small ? '1.1rem' : '1.3rem' },
   style
 }) {
+  const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     switch: { color: switchColor }
-  } = useKeyContext((v) => v.theme);
+  } = useTheme(theme || profileTheme);
 
   return (
     <ErrorBoundary

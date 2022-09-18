@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Input from '~/components/Texts/Input';
@@ -48,14 +48,20 @@ export default function TextEditSection({
   secretAnswerExceedsCharLimit,
   titleExceedsCharLimit
 }) {
-  const urlError = useMemo(
-    () =>
+  const timerRef = useRef(null);
+  const [urlError, setUrlError] = useState(false);
+  useEffect(() => {
+    clearTimeout(timerRef.current);
+    setUrlError(false);
+    const urlHasError =
       !stringIsEmpty(editedUrl) &&
       !(contentType === 'video'
         ? isValidYoutubeUrl(editedUrl)
-        : isValidUrl(editedUrl)),
-    [contentType, editedUrl]
-  );
+        : isValidUrl(editedUrl));
+    if (urlHasError) {
+      timerRef.current = setTimeout(() => setUrlError(true), 500);
+    }
+  }, [contentType, editedUrl]);
 
   return (
     <ErrorBoundary componentPath="ContentPanel/Body/ContentEditor/TextEditSection">
