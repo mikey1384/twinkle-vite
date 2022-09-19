@@ -90,7 +90,7 @@ export default function SubChannels({
         >
           <nav className={!subchannelPath ? 'active' : ''}>
             <Icon icon="home" />
-            <span style={{ marginLeft: '1rem' }}>Main</span>
+            <span style={{ marginLeft: '1rem' }}>Main (Wordle)</span>
           </nav>
         </Link>
         {subchannels.map((subchannel) => {
