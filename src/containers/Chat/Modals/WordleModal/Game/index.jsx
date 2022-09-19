@@ -21,7 +21,6 @@ import {
   WIN_MESSAGES,
   WORD_NOT_FOUND_MESSAGE
 } from '../constants/strings';
-import { default as GraphemeSplitter } from 'grapheme-splitter';
 import { useAppContext, useChatContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 
@@ -211,8 +210,8 @@ export default function Game({
   }
 
   function handleDelete() {
-    setCurrentGuess(
-      new GraphemeSplitter().splitGraphemes(currentGuess).slice(0, -1).join('')
+    setCurrentGuess((currentGuess) =>
+      currentGuess.split('').slice(0, -1).join('')
     );
   }
 
