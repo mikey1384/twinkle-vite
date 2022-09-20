@@ -62,8 +62,7 @@ function MemberListItem({ onlineMembers, creatorId, member, style }) {
         <UsernameText
           style={{
             color: Color.darkerGray(),
-            marginLeft: '2rem',
-            flexGrow: 1
+            marginLeft: '2rem'
           }}
           className={css`
             font-size: 1.5rem;
