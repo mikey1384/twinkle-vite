@@ -181,8 +181,6 @@ function MessagesContainer({
   const ChatInputRef = useRef(null);
   const favoritingRef = useRef(false);
   const timerRef = useRef(null);
-  const prevChannelId = useRef(null);
-  const prevTopMessageId = useRef(null);
   const prevScrollPosition = useRef(null);
 
   const subchannel = useMemo(() => {
@@ -408,33 +406,10 @@ function MessagesContainer({
   ]);
 
   useEffect(() => {
-    handleScrollToBottom();
-    prevChannelId.current = selectedChannelId;
     onSetChessModalShown(false);
     setWordleModalShown(false);
-    prevTopMessageId.current = null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId]);
-
-  useEffect(() => {
-    const topMessageId = messageIds[messageIds.length - 1];
-    if (
-      prevChannelId.current === selectedChannelId &&
-      prevTopMessageId.current &&
-      topMessageId !== prevTopMessageId.current
-    ) {
-      if (deviceIsMobile) {
-        (MessagesRef.current || {}).scrollTop = prevScrollPosition.current;
-        (MessagesRef.current || {}).scrollTop =
-          prevScrollPosition.current + 1000;
-      }
-      (MessagesRef.current || {}).scrollTop = prevScrollPosition.current;
-    }
-    if (messageIds.length > 1) {
-      // prevent scroll event from being triggered by a preview message
-      prevTopMessageId.current = topMessageId;
-    }
-  }, [messageIds, selectedChannelId]);
 
   useEffect(() => {
     socket.on('chess_countdown_number_received', onReceiveCountdownNumber);
