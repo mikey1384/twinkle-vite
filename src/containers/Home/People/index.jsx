@@ -129,7 +129,8 @@ function People() {
               profileId={profile.id}
             />
           ))}
-        {!stringIsEmpty(userSearchText) &&
+        {profilesLoaded &&
+          !stringIsEmpty(userSearchText) &&
           !searching &&
           searchedProfiles.map((profile, index) => (
             <ProfilePanel
