@@ -261,33 +261,31 @@ export default function Game({
       });
     }
 
-    if (newGuesses.length < MAX_GUESSES && currentGuess !== solution) {
-      setIsChecking(true);
-      const { isDuplicate, actualWordLevel, actualSolution, needsReload } =
-        await checkIfDuplicateWordleAttempt({
-          channelId,
-          numGuesses: newGuesses.length,
-          solution
-        });
-      if (needsReload) window.location.reload();
-      if (isDuplicate) return;
-      if (actualSolution) {
-        onSetChannelState({
-          channelId,
-          newState: {
-            wordleWordLevel: actualWordLevel,
-            wordleSolution: actualSolution
-          }
-        });
-      }
-      updateWordleAttempt({
-        channelName,
+    setIsChecking(true);
+    const { isDuplicate, actualWordLevel, actualSolution, needsReload } =
+      await checkIfDuplicateWordleAttempt({
         channelId,
-        guesses: newGuesses,
-        solution: actualSolution || solution
+        numGuesses: newGuesses.length,
+        solution
       });
-      setIsChecking(false);
+    if (isDuplicate || needsReload) return window.location.reload();
+    if (actualSolution) {
+      onSetChannelState({
+        channelId,
+        newState: {
+          wordleWordLevel: actualWordLevel,
+          wordleSolution: actualSolution
+        }
+      });
     }
+    updateWordleAttempt({
+      channelName,
+      channelId,
+      guesses: newGuesses,
+      solution: actualSolution || solution
+    });
+    setIsChecking(false);
+
     setCurrentGuess('');
     onSetWordleGuesses({
       channelId,
