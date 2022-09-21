@@ -44,7 +44,7 @@ Game.propTypes = {
 export default function Game({
   channelId,
   channelName,
-  guesses,
+  guesses = [],
   isGameOver,
   isGameWon,
   isGameLost,
@@ -217,14 +217,14 @@ export default function Game({
 
   async function handleEnter() {
     if (!socketConnected) return;
-    const newGuesses = guesses.concat(currentGuess);
+    const newGuesses = guesses.concat([currentGuess]);
     if (isGameWon || isGameLost) {
       return;
     }
 
     if (isStrictMode) {
       const { isPass, message } = checkWordleAttemptStrictness({
-        guesses: guesses.concat(currentGuess),
+        guesses: guesses.concat([currentGuess]),
         solution
       });
       if (!isPass) {
@@ -317,7 +317,7 @@ export default function Game({
       const { wordleAttemptState, wordleStats } = await updateWordleAttempt({
         channelName,
         channelId,
-        guesses: guesses.concat(currentGuess),
+        guesses: guesses.concat([currentGuess]),
         solution,
         isSolved: false
       });
@@ -343,7 +343,7 @@ export default function Game({
       const { wordleAttemptState, wordleStats } = await updateWordleAttempt({
         channelName,
         channelId,
-        guesses: guesses.concat(currentGuess),
+        guesses: guesses.concat([currentGuess]),
         solution,
         isSolved: true
       });
