@@ -278,12 +278,14 @@ export default function Game({
         }
       });
     }
-    updateWordleAttempt({
-      channelName,
-      channelId,
-      guesses: newGuesses,
-      solution: actualSolution || solution
-    });
+    if (newGuesses.length < MAX_GUESSES && currentGuess !== solution) {
+      updateWordleAttempt({
+        channelName,
+        channelId,
+        guesses: newGuesses,
+        solution: actualSolution || solution
+      });
+    }
     setIsChecking(false);
 
     setCurrentGuess('');
