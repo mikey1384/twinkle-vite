@@ -25,13 +25,13 @@ export default function Grid({
   maxWordLength,
   solution
 }) {
-  const empties = useMemo(
-    () =>
-      guesses.length < MAX_GUESSES - 1
-        ? Array(MAX_GUESSES - 1 - guesses.length).fill()
-        : [],
-    [guesses.length]
-  );
+  const empties = useMemo(() => {
+    const guessLength = guesses?.length || 0;
+    if (guessLength < MAX_GUESSES - 1) {
+      return Array(MAX_GUESSES - 1 - guessLength).fill();
+    }
+    return [];
+  }, [guesses?.length]);
 
   return (
     <div className={gridContainer}>

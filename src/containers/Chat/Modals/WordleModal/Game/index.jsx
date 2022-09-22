@@ -72,7 +72,7 @@ export default function Game({
     (v) => v.actions.onSetWordleGuesses
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
-  const MAX_WORD_LENGTH = solution.length;
+  const MAX_WORD_LENGTH = useMemo(() => solution?.length || 5, [solution]);
   const delayMs = REVEAL_TIME_MS * MAX_WORD_LENGTH;
   const [alertMessage, setAlertMessage] = useState({});
   const [isWaving, setIsWaving] = useState(false);
@@ -168,15 +168,17 @@ export default function Game({
           paddingRight: '2rem'
         }}
       >
-        <Grid
-          guesses={guesses}
-          currentGuess={currentGuess}
-          isRevealing={isRevealing}
-          isWaving={isWaving}
-          currentRowClassName={currentRowClass}
-          maxWordLength={MAX_WORD_LENGTH}
-          solution={solution}
-        />
+        <ErrorBoundary componentPath="WordleModal/Game/Grid">
+          <Grid
+            guesses={guesses}
+            currentGuess={currentGuess}
+            isRevealing={isRevealing}
+            isWaving={isWaving}
+            currentRowClassName={currentRowClass}
+            maxWordLength={MAX_WORD_LENGTH}
+            solution={solution}
+          />
+        </ErrorBoundary>
         <Keyboard
           isChecking={isChecking}
           onChar={handleChar}
