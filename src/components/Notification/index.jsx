@@ -241,7 +241,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
                 }}
               />
             </div>
-            {loadingNotifications && (
+            {loadingNotifications && userId && (
               <Loading
                 style={{
                   position: 'absolute',

@@ -44,7 +44,7 @@ Game.propTypes = {
 export default function Game({
   channelId,
   channelName,
-  guesses,
+  guesses = [],
   isGameOver,
   isGameWon,
   isGameLost,
@@ -72,7 +72,7 @@ export default function Game({
     (v) => v.actions.onSetWordleGuesses
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
-  const MAX_WORD_LENGTH = solution.length;
+  const MAX_WORD_LENGTH = useMemo(() => solution?.length || 5, [solution]);
   const delayMs = REVEAL_TIME_MS * MAX_WORD_LENGTH;
   const [alertMessage, setAlertMessage] = useState({});
   const [isWaving, setIsWaving] = useState(false);
@@ -168,15 +168,17 @@ export default function Game({
           paddingRight: '2rem'
         }}
       >
-        <Grid
-          guesses={guesses}
-          currentGuess={currentGuess}
-          isRevealing={isRevealing}
-          isWaving={isWaving}
-          currentRowClassName={currentRowClass}
-          maxWordLength={MAX_WORD_LENGTH}
-          solution={solution}
-        />
+        <ErrorBoundary componentPath="WordleModal/Game/Grid">
+          <Grid
+            guesses={guesses}
+            currentGuess={currentGuess}
+            isRevealing={isRevealing}
+            isWaving={isWaving}
+            currentRowClassName={currentRowClass}
+            maxWordLength={MAX_WORD_LENGTH}
+            solution={solution}
+          />
+        </ErrorBoundary>
         <Keyboard
           isChecking={isChecking}
           onChar={handleChar}
@@ -217,14 +219,14 @@ export default function Game({
 
   async function handleEnter() {
     if (!socketConnected) return;
-    const newGuesses = guesses.concat(currentGuess);
+    const newGuesses = guesses.concat([currentGuess]);
     if (isGameWon || isGameLost) {
       return;
     }
 
     if (isStrictMode) {
       const { isPass, message } = checkWordleAttemptStrictness({
-        guesses: guesses.concat(currentGuess),
+        guesses: guesses.concat([currentGuess]),
         solution
       });
       if (!isPass) {
@@ -261,33 +263,33 @@ export default function Game({
       });
     }
 
+    setIsChecking(true);
+    const { isDuplicate, actualWordLevel, actualSolution, needsReload } =
+      await checkIfDuplicateWordleAttempt({
+        channelId,
+        numGuesses: newGuesses.length,
+        solution
+      });
+    if (isDuplicate || needsReload) return window.location.reload();
+    if (actualSolution) {
+      onSetChannelState({
+        channelId,
+        newState: {
+          wordleWordLevel: actualWordLevel,
+          wordleSolution: actualSolution
+        }
+      });
+    }
     if (newGuesses.length < MAX_GUESSES && currentGuess !== solution) {
-      setIsChecking(true);
-      const { isDuplicate, actualWordLevel, actualSolution, needsReload } =
-        await checkIfDuplicateWordleAttempt({
-          channelId,
-          numGuesses: newGuesses.length,
-          solution
-        });
-      if (needsReload) window.location.reload();
-      if (isDuplicate) return;
-      if (actualSolution) {
-        onSetChannelState({
-          channelId,
-          newState: {
-            wordleWordLevel: actualWordLevel,
-            wordleSolution: actualSolution
-          }
-        });
-      }
       updateWordleAttempt({
         channelName,
         channelId,
         guesses: newGuesses,
         solution: actualSolution || solution
       });
-      setIsChecking(false);
     }
+    setIsChecking(false);
+
     setCurrentGuess('');
     onSetWordleGuesses({
       channelId,
@@ -317,7 +319,7 @@ export default function Game({
       const { wordleAttemptState, wordleStats } = await updateWordleAttempt({
         channelName,
         channelId,
-        guesses: guesses.concat(currentGuess),
+        guesses: guesses.concat([currentGuess]),
         solution,
         isSolved: false
       });
@@ -343,7 +345,7 @@ export default function Game({
       const { wordleAttemptState, wordleStats } = await updateWordleAttempt({
         channelName,
         channelId,
-        guesses: guesses.concat(currentGuess),
+        guesses: guesses.concat([currentGuess]),
         solution,
         isSolved: true
       });
