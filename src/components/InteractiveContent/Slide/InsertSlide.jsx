@@ -25,6 +25,7 @@ export default function InsertSlide({
   className,
   style
 }) {
+  const [insertingSlide, setInsertingSlide] = useState(false);
   const insertArchivedSlide = useAppContext(
     (v) => v.requestHelpers.insertArchivedSlide
   );
@@ -52,11 +53,13 @@ export default function InsertSlide({
         alignItems: 'center'
       }}
     >
-      <div
+      <button
         className={`unselectable ${css`
-          &:hover {
+          ${insertingSlide
+            ? ''
+            : `&:hover {
             font-weight: bold;
-          }
+          }`}
         `}`}
         style={{
           width: 'auto',
@@ -64,18 +67,19 @@ export default function InsertSlide({
           background: '#fff',
           textAlign: 'center',
           border: `1px solid ${Color.borderGray()}`,
-          cursor: 'pointer',
+          cursor: insertingSlide ? 'default' : 'pointer',
           ...style
         }}
+        disabled={insertingSlide}
         onClick={handleInsertSlide}
       >
         <Icon icon="plus" />
         <span style={{ marginLeft: '0.7rem', fontSize: '1.2rem' }}>
           insert{archivedSlides.length > 0 ? ' new' : ''}
         </span>
-      </div>
+      </button>
       {archivedSlides.length > 0 && (
-        <div
+        <button
           className={`unselectable ${css`
             &:hover {
               font-weight: bold;
@@ -96,7 +100,7 @@ export default function InsertSlide({
           <span style={{ marginLeft: '0.7rem', fontSize: '1.2rem' }}>
             archived
           </span>
-        </div>
+        </button>
       )}
       {selectArchivedSlideModalShown && (
         <SelectArchivedSlideModal
@@ -128,6 +132,7 @@ export default function InsertSlide({
   }
 
   async function handleInsertSlide() {
+    setInsertingSlide(true);
     const { slide, numUpdates } = await insertInteractiveSlide({
       interactiveId,
       forkedFrom,
@@ -140,5 +145,6 @@ export default function InsertSlide({
       slideId,
       newSlide: slide
     });
+    setInsertingSlide(false);
   }
 }
