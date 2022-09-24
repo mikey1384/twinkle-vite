@@ -820,7 +820,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     const { section, isSubsection } = getSectionFromPathname(pathname) || {};
     const newNotiNum =
       (pathname === '/' ? numNewPosts : 0) + numNewNotis + numUnreads;
-    if (!['chat', 'comments', 'subjects'].includes(section) && isSubsection) {
+    if (section === 'chat' && chatType === 'vocabulary') {
+      document.title = `${`Vocabulary | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
+    } else if (
+      !['chat', 'comments', 'subjects'].includes(section) &&
+      isSubsection &&
+      !!pageTitle
+    ) {
       document.title = `${pageTitle}${newNotiNum > 0 ? ' *' : ''}`;
     } else {
       let currentPageTitle = 'Twinkle';
@@ -829,7 +835,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
       document.title = `${currentPageTitle}${newNotiNum > 0 ? ' *' : ''}`;
     }
-  }, [numNewNotis, numNewPosts, numUnreads, pathname, pageTitle]);
+  }, [numNewNotis, numNewPosts, numUnreads, pathname, pageTitle, chatType]);
 
   useEffect(() => {
     onShowUpdateNotice(!versionMatch);
