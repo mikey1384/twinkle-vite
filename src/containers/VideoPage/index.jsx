@@ -115,6 +115,7 @@ export default function VideoPage() {
   const onSetByUserStatus = useContentContext(
     (v) => v.actions.onSetByUserStatus
   );
+  const onSetPageTitle = useViewContext((v) => v.actions.onSetPageTitle);
   const onSetRewardLevel = useContentContext((v) => v.actions.onSetRewardLevel);
   const onSetVideoQuestions = useContentContext(
     (v) => v.actions.onSetVideoQuestions
@@ -148,6 +149,13 @@ export default function VideoPage() {
     uploader,
     views
   } = useContentState({ contentType: 'video', contentId: videoId });
+
+  useEffect(() => {
+    if (title) {
+      onSetPageTitle(title);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title]);
 
   useEffect(() => {
     if (!prevDeleted.current && isDeleted) {

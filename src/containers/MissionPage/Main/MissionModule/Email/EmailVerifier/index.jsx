@@ -14,7 +14,7 @@ export default function EmailVerifier() {
   const [email, setEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   return (
-    <ErrorBoundary>
+    <ErrorBoundary componentPath="MissionModule/Email/EmailVerifier">
       <div
         className={css`
           width: 100%;
