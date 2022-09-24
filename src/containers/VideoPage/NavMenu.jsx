@@ -124,8 +124,8 @@ export default function NavMenu({ playlistId, videoId, isContinuing }) {
   useEffect(() => {
     handleLoadRightMenuVideos();
     async function handleLoadRightMenuVideos() {
+      setLoading(true);
       try {
-        setLoading(true);
         const data = await loadRightMenuVideos({
           videoId,
           playlistId,
@@ -150,10 +150,10 @@ export default function NavMenu({ playlistId, videoId, isContinuing }) {
         if (data.otherVideos) {
           onSetNavVideoState({ otherVideos: data.otherVideos });
         }
-        setLoading(false);
       } catch (error) {
         console.error(error);
       }
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId, hideWatched, userId]);
