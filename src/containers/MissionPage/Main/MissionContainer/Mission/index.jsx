@@ -86,6 +86,7 @@ export default function Mission({
     if (title) {
       onSetPageTitle(`Mission: ${title}`);
     }
+    return () => onSetPageTitle('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 

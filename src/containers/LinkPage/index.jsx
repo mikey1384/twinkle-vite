@@ -141,6 +141,7 @@ export default function LinkPage() {
     if (title) {
       onSetPageTitle(title);
     }
+    return () => onSetPageTitle('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 
