@@ -154,6 +154,7 @@ export default function VideoPage() {
     if (title) {
       onSetPageTitle(title);
     }
+    return () => onSetPageTitle('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 
