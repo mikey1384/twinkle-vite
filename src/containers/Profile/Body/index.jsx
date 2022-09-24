@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { useViewContext } from '~/contexts';
 import FilterBar from '~/components/FilterBar';
 import Home from './Home';
 import LikedPosts from './LikedPosts';
@@ -31,6 +32,7 @@ Body.propTypes = {
 };
 
 export default function Body({ profile, selectedTheme }) {
+  const onSetPageTitle = useViewContext((v) => v.actions.onSetPageTitle);
   const navigate = useNavigate();
   const location = useLocation();
   const { username } = useParams();
@@ -67,6 +69,26 @@ export default function Body({ profile, selectedTheme }) {
       ),
     [location.pathname]
   );
+
+  useEffect(() => {
+    const postsMatch = !mainMatch && !watchedMatch && !likesMatch;
+    const subTitle = watchedMatch
+      ? watchedLabel
+      : likesMatch
+      ? likesLabel
+      : postsMatch
+      ? postsLabel
+      : '';
+    if (username) {
+      onSetPageTitle(
+        `${subTitle ? `${subTitle} | ` : ''}${
+          subTitle ? username : `${username} | Twinkle`
+        }`
+      );
+    }
+    return () => onSetPageTitle('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, mainMatch, watchedMatch, likesMatch]);
 
   return (
     <div
