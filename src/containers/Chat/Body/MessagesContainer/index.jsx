@@ -812,7 +812,7 @@ function MessagesContainer({
             () =>
               ((MessagesRef.current || {}).scrollTop =
                 prevScrollPosition.current),
-            10
+            50
           );
         }
       }
