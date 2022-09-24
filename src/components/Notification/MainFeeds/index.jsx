@@ -173,7 +173,7 @@ function MainFeeds({
         </Banner>
       )}
       {activeTab === 'reward' && !loadingNotifications && (
-        <ErrorBoundary>
+        <ErrorBoundary componentPath="Notification/MainFeeds/RewardNotification">
           {totalRewardAmount > 0 ? (
             <GradientButton
               isFlat

@@ -49,6 +49,7 @@ export default function Mission({
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
+  const onSetPageTitle = useViewContext((v) => v.actions.onSetPageTitle);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
   const myAttempt = useMemo(
     () => myAttempts[missionId],
@@ -80,6 +81,13 @@ export default function Mission({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageVisible]);
+
+  useEffect(() => {
+    if (title) {
+      onSetPageTitle(`Mission: ${title}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title]);
 
   const { isCreator } = useKeyContext((v) => v.myState);
   return (
