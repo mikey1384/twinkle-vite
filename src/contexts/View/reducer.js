@@ -33,6 +33,11 @@ export default function ViewReducer(state, action) {
         ...state,
         homeNav: action.nav
       };
+    case 'SET_PAGE_TITLE':
+      return {
+        ...state,
+        pageTitle: action.title
+      };
     case 'SET_PROFILE_NAV':
       return {
         ...state,

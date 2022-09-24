@@ -12,6 +12,7 @@ const initialViewState = {
   ],
   contentPath: '',
   contentNav: '',
+  pageTitle: '',
   profileNav: '',
   homeNav: '/',
   scrollPositions: {}

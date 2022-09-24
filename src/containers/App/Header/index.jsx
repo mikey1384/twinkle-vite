@@ -6,9 +6,10 @@ import TwinkleLogo from './TwinkleLogo';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Peer from 'simple-peer';
 import { css } from '@emotion/css';
+import { capitalize } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth, desktopMinWidth } from '~/constants/css';
 import { socket } from '~/constants/io';
-import { useNavigate, useLocation, matchPath } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getSectionFromPathname, parseChannelPath } from '~/helpers';
 import {
   useAppContext,
@@ -34,22 +35,12 @@ Header.propTypes = {
 
 export default function Header({ onMobileMenuOpen, style = {} }) {
   const { pathname, search } = useLocation();
-  const chatMatch = useMemo(
-    () =>
-      matchPath(
-        {
-          path: '/chat'
-        },
-        pathname
-      ),
-    [pathname]
-  );
-
   const navigate = useNavigate();
   const currentPathId = useMemo(
     () => pathname.split('chat/')[1]?.split('/')?.[0],
     [pathname]
   );
+  const pageTitle = useViewContext((v) => v.state.pageTitle);
   const usingChat = useMemo(
     () => getSectionFromPathname(pathname)?.section === 'chat',
     [pathname]
@@ -367,7 +358,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           'bind_uid_to_socket',
           { userId, username, profilePicUrl },
           () => {
-            socket.emit('change_busy_status', !chatMatch);
+            socket.emit('change_busy_status', !usingChat);
           }
         );
         socket.emit('enter_my_notification_channel', userId);
@@ -826,10 +817,19 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   }, [currentPathId]);
 
   useEffect(() => {
+    const { section, isSubsection } = getSectionFromPathname(pathname) || {};
     const newNotiNum =
       (pathname === '/' ? numNewPosts : 0) + numNewNotis + numUnreads;
-    document.title = `Twinkle${newNotiNum > 0 ? ' *' : ''}`;
-  }, [numNewNotis, numNewPosts, numUnreads, pathname]);
+    if (!['chat', 'comments', 'subjects'].includes(section) && isSubsection) {
+      document.title = `${pageTitle}${newNotiNum > 0 ? ' *' : ''}`;
+    } else {
+      let currentPageTitle = 'Twinkle';
+      if (section !== 'home') {
+        currentPageTitle = `${capitalize(section)} | ${currentPageTitle}`;
+      }
+      document.title = `${currentPageTitle}${newNotiNum > 0 ? ' *' : ''}`;
+    }
+  }, [numNewNotis, numNewPosts, numUnreads, pathname, pageTitle]);
 
   useEffect(() => {
     onShowUpdateNotice(!versionMatch);
