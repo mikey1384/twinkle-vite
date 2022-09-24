@@ -781,10 +781,7 @@ function MessagesContainer({
       if (!loadMoreButtonLock.current) {
         setLoadingMore(true);
         loadMoreButtonLock.current = true;
-        prevScrollPosition.current =
-          ((MessagesRef.current || {}).scrollHeight -
-            (MessagesRef.current || {}).offsetHeight) *
-          -1;
+        prevScrollPosition.current = (MessagesRef.current || {}).scrollTop;
         try {
           const {
             messageIds,
@@ -810,12 +807,14 @@ function MessagesContainer({
           setLoadingMore(false);
           loadMoreButtonLock.current = false;
         }
-        setTimeout(
-          () =>
-            ((MessagesRef.current || {}).scrollTop =
-              prevScrollPosition.current),
-          0
-        );
+        if (deviceIsMobile) {
+          setTimeout(
+            () =>
+              ((MessagesRef.current || {}).scrollTop =
+                prevScrollPosition.current),
+            10
+          );
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
