@@ -810,6 +810,7 @@ function MessagesContainer({
           setLoadingMore(false);
           loadMoreButtonLock.current = false;
         }
+        (MessagesRef.current || {}).scrollTop = prevScrollPosition.current;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
