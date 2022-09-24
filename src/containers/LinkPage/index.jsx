@@ -109,6 +109,7 @@ export default function LinkPage() {
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
+  const onSetPageTitle = useViewContext((v) => v.actions.onSetPageTitle);
   const onSetRewardLevel = useContentContext((v) => v.actions.onSetRewardLevel);
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
@@ -135,6 +136,13 @@ export default function LinkPage() {
     uploader,
     xpRewardInterfaceShown
   } = useContentState({ contentType: 'url', contentId: linkId });
+
+  useEffect(() => {
+    if (title) {
+      onSetPageTitle(title);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title]);
 
   const onSetContentNav = useViewContext((v) => v.actions.onSetContentNav);
   const [loadingComments, setLoadingComments] = useState(false);

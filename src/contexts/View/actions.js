@@ -37,6 +37,12 @@ export default function ViewActions(dispatch) {
         nav
       });
     },
+    onSetPageTitle(title) {
+      return dispatch({
+        type: 'SET_PAGE_TITLE',
+        title
+      });
+    },
     onSetProfileNav(nav) {
       return dispatch({
         type: 'SET_PROFILE_NAV',
