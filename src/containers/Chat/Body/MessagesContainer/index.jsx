@@ -781,10 +781,7 @@ function MessagesContainer({
       if (!loadMoreButtonLock.current) {
         setLoadingMore(true);
         loadMoreButtonLock.current = true;
-        prevScrollPosition.current =
-          ((MessagesRef.current || {}).scrollHeight -
-            (MessagesRef.current || {}).offsetHeight) *
-          -1;
+        prevScrollPosition.current = (MessagesRef.current || {}).scrollTop;
         try {
           const {
             messageIds,
@@ -809,6 +806,14 @@ function MessagesContainer({
           console.error(error);
           setLoadingMore(false);
           loadMoreButtonLock.current = false;
+        }
+        if (deviceIsMobile) {
+          setTimeout(
+            () =>
+              ((MessagesRef.current || {}).scrollTop =
+                prevScrollPosition.current),
+            10
+          );
         }
       }
     }
