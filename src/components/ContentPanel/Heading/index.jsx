@@ -4,6 +4,7 @@ import ProfilePic from '~/components/ProfilePic';
 import { useNavigate } from 'react-router-dom';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { css } from '@emotion/css';
+import { useContentState } from '~/helpers/hooks';
 import useHeadingText from './useHeadingText';
 
 Heading.propTypes = {
@@ -30,12 +31,17 @@ function Heading({
   action,
   theme,
   contentObj,
-  contentObj: { contentType, id, rootObj = {}, timeStamp, uploader = {} }
+  contentObj: { contentType, id, rootType, rootId, timeStamp, uploader = {} }
 }) {
+  const rootObj = useContentState({
+    contentType: rootType,
+    contentId: rootId
+  });
   const navigate = useNavigate();
   const HeadingText = useHeadingText({
     action,
     contentObj,
+    rootObj,
     theme
   });
 
