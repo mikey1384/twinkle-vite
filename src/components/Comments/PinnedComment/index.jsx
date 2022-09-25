@@ -41,7 +41,8 @@ export default function PinnedComment({
     async function init() {
       const data = await loadContent({
         contentId: commentId,
-        contentType: 'comment'
+        contentType: 'comment',
+        isPinnedComment: true
       });
       onInitContent({ contentId: commentId, contentType: 'comment', ...data });
     }
