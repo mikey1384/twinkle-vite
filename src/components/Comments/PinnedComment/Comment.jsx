@@ -96,6 +96,10 @@ function Comment({
   }
 }) {
   subject = subject || comment.targetObj?.subject || {};
+  const subjectUploaderId = useMemo(
+    () => subject.uploader?.id || subject?.userId,
+    [subject]
+  );
   const { fileType } = getFileInfoFromFileName(fileName);
   const navigate = useNavigate();
   const checkIfUserResponded = useAppContext(
@@ -345,10 +349,10 @@ function Comment({
 
   const isHidden = useMemo(() => {
     const secretShown =
-      subjectState.secretShown || subject?.uploader?.id === userId;
+      subjectState.secretShown || subjectUploaderId === userId;
     return subjectHasSecretMessage && !secretShown;
   }, [
-    subject?.uploader?.id,
+    subjectUploaderId,
     subjectHasSecretMessage,
     subjectState.secretShown,
     userId

@@ -161,19 +161,23 @@ function Reply({
   const ReplyInputAreaRef = useRef(null);
   const RewardInterfaceRef = useRef(null);
   const userIsUploader = userId === uploader.id;
+  const subjectUploaderId = useMemo(
+    () => subject?.uploader?.id || subject?.userId,
+    [subject]
+  );
   const userIsParentUploader = useMemo(() => {
     if (!userId) {
       return false;
     }
     if (isSubjectPannelComment) {
-      return subject?.uploader?.id === userId;
+      return subjectUploaderId === userId;
     }
     return parent.uploader?.id === userId && parent.contentType !== 'comment';
   }, [
     isSubjectPannelComment,
     parent.contentType,
     parent.uploader?.id,
-    subject?.uploader?.id,
+    subjectUploaderId,
     userId
   ]);
   const userIsRootUploader = useMemo(
