@@ -156,6 +156,10 @@ export default function TargetContent({
     }
     return result;
   }, [comment]);
+  const subjectUploaderId = useMemo(
+    () => subject?.uploader?.id || subject?.userId,
+    [subject]
+  );
 
   const finalRewardLevel = useMemo(() => {
     const rootRewardLevel =
@@ -263,9 +267,14 @@ export default function TargetContent({
   const contentHidden = useMemo(() => {
     const hasSecretAnswer = subject?.secretAnswer;
     const secretShown =
-      subjectState.secretShown || subject?.uploader?.id === userId;
+      subjectState.secretShown || subjectUploaderId === userId;
     return hasSecretAnswer && !secretShown;
-  }, [subject, subjectState.secretShown, userId]);
+  }, [
+    subject?.secretAnswer,
+    subjectState.secretShown,
+    subjectUploaderId,
+    userId
+  ]);
 
   return (
     <ErrorBoundary
