@@ -119,6 +119,17 @@ export default function Body({
     }
     return targetObj.subject?.id;
   }, [contentId, contentType, targetObj.subject?.id]);
+  const subjectUploaderId = useMemo(() => {
+    if (contentType === 'subject') {
+      return uploader.id;
+    }
+    return targetObj.subject?.uploader?.id || targetObj.subject?.userId;
+  }, [
+    contentType,
+    targetObj.subject?.uploader?.id,
+    targetObj.subject?.userId,
+    uploader.id
+  ]);
   const { secretShown: rootSecretShown } = useContentState({
     contentId: rootId,
     contentType: rootType
@@ -168,7 +179,7 @@ export default function Body({
   const secretHidden = useMemo(() => {
     const contentSecretHidden = !(secretShown || uploader.id === userId);
     const targetSubjectSecretHidden = !(
-      subjectSecretShown || targetObj.subject?.uploader?.id === userId
+      subjectSecretShown || subjectUploaderId === userId
     );
     const rootObjSecretHidden = !(
       rootSecretShown || rootObj?.uploader?.id === userId
@@ -189,7 +200,7 @@ export default function Body({
     subjectSecretShown,
     targetObj.subject?.secretAnswer,
     targetObj.subject?.secretAttachment,
-    targetObj.subject?.uploader?.id,
+    subjectUploaderId,
     uploader.id,
     userId
   ]);
@@ -246,8 +257,8 @@ export default function Body({
     if (
       userCanEditThis &&
       (!isCommentForSecretSubject ||
-        (targetObj.subject?.uploader?.id &&
-          targetObj.subject?.uploader?.id === userId &&
+        (subjectUploaderId &&
+          subjectUploaderId === userId &&
           userId === uploader.id))
     ) {
       items.push({

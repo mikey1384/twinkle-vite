@@ -5,7 +5,7 @@ import { useKeyContext } from '~/contexts';
 import renderEnglishMessage from './localization/english';
 import renderKoreanMessage from './localization/korean';
 
-export default function useHeadingText({ action, contentObj, theme }) {
+export default function useHeadingText({ action, contentObj, rootObj, theme }) {
   const {
     id,
     byUser,
@@ -14,8 +14,7 @@ export default function useHeadingText({ action, contentObj, theme }) {
     replyId,
     rootType,
     contentType,
-    uploader,
-    rootObj
+    uploader
   } = contentObj;
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
@@ -45,13 +44,13 @@ export default function useHeadingText({ action, contentObj, theme }) {
       ? renderKoreanMessage(params)
       : renderEnglishMessage(params);
   }, [
+    id,
     action,
     byUser,
     contentColor,
     commentId,
     contentObj,
     contentType,
-    id,
     linkColor,
     replyId,
     rootObj,
