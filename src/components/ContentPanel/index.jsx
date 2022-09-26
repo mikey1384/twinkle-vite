@@ -102,13 +102,13 @@ export default function ContentPanel({
     commentsShown,
     loaded,
     placeholderHeight: previousPlaceholderHeight,
-    rootObj,
     rootType,
     started,
     targetObj,
     visible: previousVisible,
     rootId
   } = contentState;
+  const rootObj = useContentState({ contentType: rootType, contentId: rootId });
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
@@ -306,7 +306,10 @@ export default function ContentPanel({
                     onClick={() =>
                       navigate(`/subjects/${targetObj.subject.id}`)
                     }
-                    contentObj={targetObj.subject}
+                    contentObj={{
+                      ...targetObj.subject,
+                      contentType: 'subject'
+                    }}
                     onChangeSpoilerStatus={onChangeSpoilerStatus}
                   />
                 )}

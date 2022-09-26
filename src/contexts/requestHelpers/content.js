@@ -222,10 +222,12 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadContent({ contentId, contentType }) {
+    async loadContent({ contentId, contentType, isPinnedComment }) {
       try {
         const { data } = await request.get(
-          `${URL}/content?contentId=${contentId}&contentType=${contentType}`
+          `${URL}/content?contentId=${contentId}&contentType=${contentType}${
+            isPinnedComment ? '&isPinnedComment=1' : ''
+          }`
         );
         return Promise.resolve(data);
       } catch (error) {

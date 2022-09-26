@@ -126,6 +126,7 @@ function Comment({
   });
   const PanelRef = useRef(null);
   subject = subject || comment.targetObj?.subject || {};
+  const subjectUploaderId = subject.uploader?.id || subject.userId;
   const { fileType } = getFileInfoFromFileName(fileName);
   const navigate = useNavigate();
   const checkIfUserResponded = useAppContext(
@@ -328,14 +329,14 @@ function Comment({
       return false;
     }
     if (isSubjectPannelComment) {
-      return subject?.uploader?.id === userId;
+      return subjectUploaderId === userId;
     }
     return parent.uploader?.id === userId && parent.contentType !== 'comment';
   }, [
     isSubjectPannelComment,
     parent.contentType,
     parent.uploader?.id,
-    subject?.uploader?.id,
+    subjectUploaderId,
     userId
   ]);
   const userIsRootUploader = useMemo(
@@ -446,10 +447,10 @@ function Comment({
 
   const isHidden = useMemo(() => {
     const secretShown =
-      subjectState.secretShown || subject?.uploader?.id === userId;
+      subjectState.secretShown || subjectUploaderId === userId;
     return subjectHasSecretMessage && !secretShown;
   }, [
-    subject?.uploader?.id,
+    subjectUploaderId,
     subjectHasSecretMessage,
     subjectState.secretShown,
     userId
