@@ -1,10 +1,13 @@
 import PropTypes from 'prop-types';
-import BlackRook from '~/assets/chess/BlackRook.svg';
-import BlackKing from '~/assets/chess/BlackKing.svg';
-import WhiteRook from '~/assets/chess/WhiteRook.svg';
-import WhiteKing from '~/assets/chess/WhiteKing.svg';
+import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+
+const BlackRook = `${cloudFrontURL}/assets/chess/BlackRook.svg`;
+const BlackKing = `${cloudFrontURL}/assets/chess/BlackKing.svg`;
+
+const WhiteRook = `${cloudFrontURL}/assets/chess/WhiteRook.svg`;
+const WhiteKing = `${cloudFrontURL}/assets/chess/WhiteKing.svg`;
 
 CastlingButton.propTypes = {
   interactable: PropTypes.bool,

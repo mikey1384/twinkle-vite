@@ -1,16 +1,18 @@
-import WhitePawn from '~/assets/chess/WhitePawn.svg';
-import WhiteBishop from '~/assets/chess/WhiteBishop.svg';
-import WhiteKnight from '~/assets/chess/WhiteKnight.svg';
-import WhiteRook from '~/assets/chess/WhiteRook.svg';
-import WhiteQueen from '~/assets/chess/WhiteQueen.svg';
-import WhiteKing from '~/assets/chess/WhiteKing.svg';
+import { cloudFrontURL } from '~/constants/defaultValues';
 
-import BlackPawn from '~/assets/chess/BlackPawn.svg';
-import BlackBishop from '~/assets/chess/BlackBishop.svg';
-import BlackKnight from '~/assets/chess/BlackKnight.svg';
-import BlackRook from '~/assets/chess/BlackRook.svg';
-import BlackQueen from '~/assets/chess/BlackQueen.svg';
-import BlackKing from '~/assets/chess/BlackKing.svg';
+const WhitePawn = `${cloudFrontURL}/assets/chess/WhitePawn.svg`;
+const WhiteBishop = `${cloudFrontURL}/assets/chess/WhiteBishop.svg`;
+const WhiteKnight = `${cloudFrontURL}/assets/chess/WhiteKnight.svg`;
+const WhiteRook = `${cloudFrontURL}/assets/chess/WhiteRook.svg`;
+const WhiteQueen = `${cloudFrontURL}/assets/chess/WhiteQueen.svg`;
+const WhiteKing = `${cloudFrontURL}/assets/chess/WhiteKing.svg`;
+
+const BlackPawn = `${cloudFrontURL}/assets/chess/BlackPawn.svg`;
+const BlackBishop = `${cloudFrontURL}/assets/chess/BlackBishop.svg`;
+const BlackKnight = `${cloudFrontURL}/assets/chess/BlackKnight.svg`;
+const BlackRook = `${cloudFrontURL}/assets/chess/BlackRook.svg`;
+const BlackQueen = `${cloudFrontURL}/assets/chess/BlackQueen.svg`;
+const BlackKing = `${cloudFrontURL}/assets/chess/BlackKing.svg`;
 
 export default function getPiece({
   piece: { type, color },
