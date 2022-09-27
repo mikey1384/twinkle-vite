@@ -202,7 +202,8 @@ function ProfilePanel({ expandable, profileId, style }) {
       const data = await loadProfile(profileId);
       onInitContent({
         contentType: 'user',
-        contentId: profileId
+        contentId: profileId,
+        ...data
       });
       onSetUserState({
         userId: profileId,
