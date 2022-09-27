@@ -70,7 +70,6 @@ export default function Body({
     rootId,
     rootType,
     rewards = [],
-    rootObj = {},
     targetObj = {},
     contentType,
     uploader = {},
@@ -83,6 +82,7 @@ export default function Body({
 }) {
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
+  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
 
   const {
     authLevel,
@@ -97,6 +97,7 @@ export default function Body({
     reward: { color: rewardColor }
   } = useTheme(theme || profileTheme);
 
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
@@ -112,6 +113,25 @@ export default function Body({
     contentType,
     contentId
   });
+  const rootObj = useContentState({
+    contentType: rootType,
+    contentId: rootId
+  });
+
+  useEffect(() => {
+    if (rootId && rootType && !rootObj?.loaded) {
+      initRoot();
+    }
+
+    async function initRoot() {
+      const data = await loadContent({
+        contentId: rootId,
+        contentType: rootType
+      });
+      onInitContent(data);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const subjectId = useMemo(() => {
     if (contentType === 'subject') {
