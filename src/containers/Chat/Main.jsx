@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import CreateNewChat from './Modals/CreateNewChat';
 import LeftMenu from './LeftMenu';
@@ -33,7 +33,7 @@ Main.propTypes = {
   onFileUpload: PropTypes.func
 };
 
-function Main({ currentPathId, onFileUpload }) {
+export default function Main({ currentPathId, onFileUpload }) {
   const { subchannelPath } = useParams();
   const { pathname } = useLocation();
   const { lastChatPath, userId, profileTheme } = useKeyContext(
@@ -763,5 +763,3 @@ function Main({ currentPathId, onFileUpload }) {
     </LocalContext.Provider>
   );
 }
-
-export default memo(Main);
