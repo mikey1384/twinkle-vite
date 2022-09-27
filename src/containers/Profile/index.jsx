@@ -5,7 +5,12 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import { useAppContext, useProfileContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useContentContext,
+  useProfileContext,
+  useKeyContext
+} from '~/contexts';
 import { useProfileState, useTheme } from '~/helpers/hooks';
 import { useParams, useNavigate } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
@@ -20,6 +25,7 @@ export default function Profile() {
   const setTheme = useAppContext((v) => v.requestHelpers.setTheme);
   const { userId, username } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const onSetProfileId = useProfileContext((v) => v.actions.onSetProfileId);
   const onUserNotExist = useProfileContext((v) => v.actions.onUserNotExist);
   const [loading, setLoading] = useState(false);
@@ -56,7 +62,13 @@ export default function Profile() {
             loaded: true
           }
         });
+        onInitContent({
+          contentId: user.id,
+          contentType: 'user',
+          ...user
+        });
       } catch (error) {
+        console.log('here', error);
         onUserNotExist(params.username);
       }
       setLoading(false);
