@@ -122,7 +122,7 @@ export default function ChatReducer(state, action) {
       const subchannelObj = {
         ...prevChannelObj?.subchannelObj,
         [action.subchannelId]: {
-          ...prevChannelObj?.subchannelObj[action.subchannelId],
+          ...prevChannelObj?.subchannelObj?.[action.subchannelId],
           numUnreads: 0
         }
       };
