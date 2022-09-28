@@ -68,7 +68,6 @@ export default function Profile() {
           ...user
         });
       } catch (error) {
-        console.log('here', error);
         onUserNotExist(params.username);
       }
       setLoading(false);

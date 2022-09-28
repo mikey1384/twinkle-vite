@@ -89,6 +89,19 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     const [, result] = pathname.split(currentPathId)?.[1]?.split('/') || [];
     return result;
   }, [currentPathId, pathname]);
+  const currentChannel = useMemo(
+    () => channelsObj[selectedChannelId] || {},
+    [channelsObj, selectedChannelId]
+  );
+  const subchannelId = useMemo(() => {
+    if (!subchannelPath || !currentChannel?.subchannelObj) return null;
+    for (let subchannel of Object.values(currentChannel.subchannelObj)) {
+      if (subchannel.path === subchannelPath) {
+        return subchannel.id;
+      }
+    }
+    return null;
+  }, [currentChannel.subchannelObj, subchannelPath]);
 
   const myStream = useChatContext((v) => v.state.myStream);
   const numUnreads = useChatContext((v) => v.state.numUnreads);
@@ -705,7 +718,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       if (messageIsForCurrentChannel) {
         if (usingChat) {
           updateChatLastRead(message.channelId);
-          if (message.subchannelId) {
+          if (message.subchannelId === subchannelId) {
             updateSubchannelLastRead(message.subchannelId);
           }
         }
@@ -713,7 +726,8 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           message,
           pageVisible,
           usingChat,
-          newMembers
+          newMembers,
+          currentSubchannelId: subchannelId
         });
       }
       if (!messageIsForCurrentChannel) {
