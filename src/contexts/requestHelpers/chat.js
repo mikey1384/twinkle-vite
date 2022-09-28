@@ -635,6 +635,18 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async updateSubchannelLastRead(subchannelId) {
+      try {
+        await request.post(
+          `${URL}/chat/lastRead/subchannel`,
+          { subchannelId },
+          auth()
+        );
+        return Promise.resolve();
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadChatSubject({ channelId, content, subchannelId }) {
       try {
         const { data } = await request.post(

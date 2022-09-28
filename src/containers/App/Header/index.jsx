@@ -70,7 +70,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const updateChatLastRead = useAppContext(
     (v) => v.requestHelpers.updateChatLastRead
   );
-
+  const updateSubchannelLastRead = useAppContext(
+    (v) => v.requestHelpers.updateSubchannelLastRead
+  );
   const { searchFilter, userId, username, loggedIn, profilePicUrl } =
     useKeyContext((v) => v.myState);
   const {
@@ -703,6 +705,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       if (messageIsForCurrentChannel) {
         if (usingChat) {
           updateChatLastRead(message.channelId);
+          if (message.subchannelId) {
+            updateSubchannelLastRead(message.subchannelId);
+          }
         }
         onReceiveMessage({
           message,

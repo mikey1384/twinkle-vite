@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
 import { Link } from 'react-router-dom';
 
 Subchannel.propTypes = {
@@ -21,23 +21,10 @@ export default function Subchannel({
   onUpdateLastSubchannelPath
 }) {
   const { userId } = useKeyContext((v) => v.myState);
-  const onClearSubchannelUnreads = useChatContext(
-    (v) => v.actions.onClearSubchannelUnreads
-  );
   const subchannelSelected = useMemo(
     () => subchannelPath === subchannel.path,
     [subchannel.path, subchannelPath]
   );
-
-  useEffect(() => {
-    if (subchannelSelected) {
-      onClearSubchannelUnreads({
-        channelId: selectedChannelId,
-        subchannelId: subchannel.id
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId, subchannel.id, subchannelSelected]);
 
   const lastMessage = useMemo(() => {
     const lastMessageId = subchannel?.messageIds[0];
