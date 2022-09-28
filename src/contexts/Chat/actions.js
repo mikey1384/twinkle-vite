@@ -356,9 +356,16 @@ export default function ChatActions(dispatch) {
         result
       });
     },
-    onReceiveMessage({ pageVisible, message, newMembers = [], usingChat }) {
+    onReceiveMessage({
+      pageVisible,
+      message,
+      newMembers = [],
+      usingChat,
+      currentSubchannelId
+    }) {
       return dispatch({
         type: 'RECEIVE_MESSAGE',
+        currentSubchannelId,
         usingChat,
         pageVisible,
         message: {
