@@ -85,6 +85,13 @@ export default function ChatActions(dispatch) {
         channelId
       });
     },
+    onClearSubchannelUnreads({ channelId, subchannelId }) {
+      return dispatch({
+        type: 'CLEAR_SUBCHANNEL_UNREADS',
+        channelId,
+        subchannelId
+      });
+    },
     onClearChatSearchResults() {
       return dispatch({
         type: 'CLEAR_CHAT_SEARCH_RESULTS'

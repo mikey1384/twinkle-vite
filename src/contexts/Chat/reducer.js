@@ -117,6 +117,26 @@ export default function ChatReducer(state, action) {
         }
       };
     }
+    case 'CLEAR_SUBCHANNEL_UNREADS': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const subchannelObj = {
+        ...prevChannelObj?.subchannelObj,
+        [action.subchannelId]: {
+          ...prevChannelObj?.subchannelObj[action.subchannelId],
+          numUnreads: 0
+        }
+      };
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            subchannelObj
+          }
+        }
+      };
+    }
     case 'REMOVE_REACTION_FROM_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const message =
@@ -1280,6 +1300,7 @@ export default function ChatReducer(state, action) {
     }
     case 'RECEIVE_MESSAGE': {
       const messageId = action.message.id || uuidv1();
+      const subchannelId = action.message.subchannelId;
       const numUnreads =
         action.pageVisible && action.usingChat
           ? state.numUnreads
@@ -1291,10 +1312,10 @@ export default function ChatReducer(state, action) {
         !action.message.isDrawOffer
           ? action.message.userId
           : prevChannelObj.lastChessMoveViewerId;
-      const messageIds = action.message.subchannelId
+      const messageIds = subchannelId
         ? prevChannelObj.messageIds
         : [messageId].concat(prevChannelObj.messageIds);
-      const messagesObj = action.message.subchannelId
+      const messagesObj = subchannelId
         ? prevChannelObj.messagesObj
         : {
             ...prevChannelObj.messagesObj,
@@ -1329,18 +1350,19 @@ export default function ChatReducer(state, action) {
             }
           : {})
       };
-      const subchannelObj = action.message.subchannelId
+      const subchannelObj = subchannelId
         ? {
             ...prevChannelObj?.subchannelObj,
-            [action.message.subchannelId]: {
-              ...prevChannelObj?.subchannelObj[action.message.subchannelId],
+            [subchannelId]: {
+              ...prevChannelObj?.subchannelObj[subchannelId],
+              numUnreads:
+                (prevChannelObj?.subchannelObj[subchannelId]?.numUnreads || 0) +
+                1,
               messageIds: [messageId].concat(
-                prevChannelObj?.subchannelObj[action.message.subchannelId]
-                  ?.messageIds
+                prevChannelObj?.subchannelObj[subchannelId]?.messageIds
               ),
               messagesObj: {
-                ...prevChannelObj?.subchannelObj[action.message.subchannelId]
-                  ?.messagesObj,
+                ...prevChannelObj?.subchannelObj[subchannelId]?.messagesObj,
                 [messageId]: { ...action.message, id: messageId }
               }
             }
