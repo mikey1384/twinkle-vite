@@ -68,9 +68,10 @@ function Channel({
     let mostRecentMessage = messagesObj?.[lastMessageId];
     if (Object.values(subchannelObj).length > 0) {
       for (let subchannel of Object.values(subchannelObj)) {
-        const lastSubchannelMessageId = subchannel?.messageIds[0];
+        const lastSubchannelMessageId = subchannel?.messageIds?.[0];
         if (lastSubchannelMessageId > lastMessageId) {
-          mostRecentMessage = subchannel.messagesObj[lastSubchannelMessageId];
+          mostRecentMessage =
+            subchannel?.messagesObj?.[lastSubchannelMessageId];
         }
       }
     }
