@@ -29,25 +29,21 @@ export default function Subchannel({
     const lastMessageId = subchannel?.messageIds[0];
     return subchannel?.messagesObj[lastMessageId];
   }, [subchannel?.messageIds, subchannel?.messagesObj]);
+  const numUnreads = useMemo(() => subchannel?.numUnreads || 0, [subchannel]);
   const badgeShown = useMemo(() => {
     return (
       !subchannelSelected &&
-      subchannel?.numUnreads > 0 &&
+      numUnreads > 0 &&
       lastMessage?.sender?.id !== userId
     );
-  }, [
-    lastMessage?.sender?.id,
-    subchannel?.numUnreads,
-    subchannelSelected,
-    userId
-  ]);
+  }, [lastMessage?.sender?.id, numUnreads, subchannelSelected, userId]);
   const badgeWidth = useMemo(() => {
-    const numDigits = subchannel?.numUnreads?.toString?.()?.length || 1;
+    const numDigits = numUnreads?.toString?.()?.length || 1;
     if (numDigits === 1) {
       return '2rem';
     }
     return `${Math.min(numDigits, 4)}.5rem`;
-  }, [subchannel?.numUnreads]);
+  }, [numUnreads]);
 
   return (
     <Link
@@ -60,28 +56,43 @@ export default function Subchannel({
         })
       }
     >
-      <nav className={subchannelSelected ? 'active' : ''}>
+      <nav
+        style={{
+          display: 'flex',
+          alignItems: 'center'
+        }}
+        className={subchannelSelected ? 'active' : ''}
+      >
         <Icon icon={subchannel.icon} />
-        <span style={{ marginLeft: '1rem' }}>{subchannel.label}</span>
-        {badgeShown && (
-          <div
-            style={{
-              background: Color.rose(),
-              display: 'flex',
-              color: '#fff',
-              fontWeight: 'bold',
-              fontSize: '1.5rem',
-              minWidth: badgeWidth,
-              height: '2rem',
-              borderRadius: '1rem',
-              lineHeight: 1,
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-          >
-            {subchannel?.numUnreads}
-          </div>
-        )}
+        <div
+          style={{
+            marginLeft: '1rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            flexGrow: 1
+          }}
+        >
+          <div>{subchannel.label}</div>
+          {badgeShown && (
+            <div
+              style={{
+                background: Color.rose(),
+                display: 'flex',
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: '1.5rem',
+                minWidth: badgeWidth,
+                height: '2rem',
+                borderRadius: '1rem',
+                lineHeight: 1,
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              {subchannel?.numUnreads}
+            </div>
+          )}
+        </div>
       </nav>
     </Link>
   );
