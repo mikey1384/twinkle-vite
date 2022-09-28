@@ -280,17 +280,21 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [currentChannel.subchannelObj, subchannelPath]);
 
   useEffect(() => {
-    updateSubchannelLastRead(subchannelId);
-    onClearSubchannelUnreads({
-      channelId: selectedChannelId,
-      subchannelId
-    });
-    return () => {
+    if (subchannelId) {
       updateSubchannelLastRead(subchannelId);
       onClearSubchannelUnreads({
         channelId: selectedChannelId,
         subchannelId
       });
+    }
+    return () => {
+      if (subchannelId) {
+        updateSubchannelLastRead(subchannelId);
+        onClearSubchannelUnreads({
+          channelId: selectedChannelId,
+          subchannelId
+        });
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId, subchannelId]);
