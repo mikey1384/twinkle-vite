@@ -29,7 +29,8 @@ function Channel({
     twoPeople,
     members,
     numUnreads,
-    pathId
+    pathId,
+    subchannelObj = {}
   },
   chatType,
   selectedChannelId
@@ -63,9 +64,18 @@ function Channel({
     return false;
   }, [currentPathId, chatType, pathIdMatches, channelId, selectedChannelId]);
   const lastMessage = useMemo(() => {
-    const lastMessageId = messageIds[0];
-    return messagesObj[lastMessageId];
-  }, [messageIds, messagesObj]);
+    const lastMessageId = messageIds?.[0];
+    let mostRecentMessage = messagesObj?.[lastMessageId];
+    if (Object.values(subchannelObj).length > 0) {
+      for (let subchannel of Object.values(subchannelObj)) {
+        const lastSubchannelMessageId = subchannel?.messageIds[0];
+        if (lastSubchannelMessageId > lastMessageId) {
+          mostRecentMessage = subchannel.messagesObj[lastSubchannelMessageId];
+        }
+      }
+    }
+    return mostRecentMessage;
+  }, [messageIds, messagesObj, subchannelObj]);
   const PreviewMessage = useMemo(() => {
     return renderPreviewMessage(lastMessage || {});
     function renderPreviewMessage({

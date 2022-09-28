@@ -1356,8 +1356,9 @@ export default function ChatReducer(state, action) {
             [subchannelId]: {
               ...prevChannelObj?.subchannelObj[subchannelId],
               numUnreads:
-                (prevChannelObj?.subchannelObj[subchannelId]?.numUnreads || 0) +
-                1,
+                Number(
+                  prevChannelObj?.subchannelObj[subchannelId]?.numUnreads || 0
+                ) + 1,
               messageIds: [messageId].concat(
                 prevChannelObj?.subchannelObj[subchannelId]?.messageIds
               ),
@@ -1397,7 +1398,7 @@ export default function ChatReducer(state, action) {
         numUnreads:
           action.duplicate && action.pageVisible
             ? state.numUnreads
-            : state.numUnreads + 1,
+            : Number(state.numUnreads) + 1,
         selectedChannelId: action.duplicate
           ? action.message.channelId
           : state.selectedChannelId,
@@ -1455,7 +1456,13 @@ export default function ChatReducer(state, action) {
         channelsObj: {
           ...state.channelsObj,
           [action.channel.id]: subchannelId
-            ? { ...prevChannelObj, subchannelObj }
+            ? {
+                ...prevChannelObj,
+                subchannelObj,
+                numUnreads: action.isMyMessage
+                  ? Number(prevChannelObj?.numUnreads || 0)
+                  : Number(prevChannelObj?.numUnreads || 0) + 1
+              }
             : {
                 ...prevChannelObj,
                 ...action.channel,
@@ -1493,7 +1500,7 @@ export default function ChatReducer(state, action) {
         numUnreads:
           action.pageVisible && action.usingChat
             ? state.numUnreads
-            : state.numUnreads + 1,
+            : Number(state.numUnreads) + 1,
         favoriteChannelIds: state.allFavoriteChannelIds[action.channel.id]
           ? [action.channel.id].concat(
               state.favoriteChannelIds.filter(
