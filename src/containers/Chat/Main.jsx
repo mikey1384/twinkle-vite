@@ -129,6 +129,9 @@ export default function Main({ currentPathId, onFileUpload }) {
   const lastSubchannelPaths = useChatContext(
     (v) => v.state.lastSubchannelPaths
   );
+  const updateSubchannelLastRead = useAppContext(
+    (v) => v.requestHelpers.updateSubchannelLastRead
+  );
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const creatingNewDMChannel = useChatContext(
     (v) => v.state.creatingNewDMChannel
@@ -277,15 +280,18 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [currentChannel.subchannelObj, subchannelPath]);
 
   useEffect(() => {
+    updateSubchannelLastRead(subchannelId);
     onClearSubchannelUnreads({
       channelId: selectedChannelId,
       subchannelId
     });
-    return () =>
+    return () => {
+      updateSubchannelLastRead(subchannelId);
       onClearSubchannelUnreads({
         channelId: selectedChannelId,
         subchannelId
       });
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId, subchannelId]);
 
