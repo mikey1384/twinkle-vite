@@ -218,6 +218,9 @@ export default function Main({ currentPathId, onFileUpload }) {
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
   );
+  const onClearSubchannelUnreads = useChatContext(
+    (v) => v.actions.onClearSubchannelUnreads
+  );
   const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
   const onUpdateLastChessMessageId = useChatContext(
     (v) => v.actions.onUpdateLastChessMessageId
@@ -272,6 +275,19 @@ export default function Main({ currentPathId, onFileUpload }) {
     }
     return null;
   }, [currentChannel.subchannelObj, subchannelPath]);
+
+  useEffect(() => {
+    onClearSubchannelUnreads({
+      channelId: selectedChannelId,
+      subchannelId
+    });
+    return () =>
+      onClearSubchannelUnreads({
+        channelId: selectedChannelId,
+        subchannelId
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChannelId, subchannelId]);
 
   useEffect(() => {
     let subchannelPathExistsAndIsInvalid = !!currentChannel?.id;
