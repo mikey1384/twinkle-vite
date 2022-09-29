@@ -295,6 +295,17 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async loadGrammarGame() {
+      try {
+        const { data: questions } = await request.get(
+          `${URL}/content/grammar`,
+          auth()
+        );
+        return Promise.resolve(questions);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadLikedFeeds({
       filter = 'all',
       lastFeedId,
