@@ -248,6 +248,7 @@ export default function Carousel({
       },
       selectedChoiceIndex: selectedIndex
     }));
+    handleGoToNextSlide();
   }
 
   function handleSwipe() {
