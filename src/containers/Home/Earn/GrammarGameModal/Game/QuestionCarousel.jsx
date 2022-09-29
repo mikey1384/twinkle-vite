@@ -6,18 +6,14 @@ import * as d3Ease from 'd3-ease';
 import { Animate } from 'react-move';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-Carousel.propTypes = {
-  afterSlide: PropTypes.func,
-  beforeSlide: PropTypes.func,
+QuestionCarousel.propTypes = {
   questions: PropTypes.array,
   slideIndex: PropTypes.number,
   slidesToShow: PropTypes.number,
   style: PropTypes.object
 };
 
-export default function Carousel({
-  afterSlide = () => {},
-  beforeSlide = () => {},
+export default function QuestionCarousel({
   questions,
   slideIndex = 0,
   slidesToShow = 1,
@@ -97,7 +93,7 @@ export default function Carousel({
             show
             start={{ tx: 0, ty: 0 }}
             update={() => {
-              const { tx, ty } = getOffsetDeltas();
+              const { tx, ty } = handleGetOffsetDeltas();
               return {
                 tx,
                 ty,
@@ -107,7 +103,7 @@ export default function Carousel({
                 },
                 events: {
                   end: () => {
-                    const newLeft = getTargetLeft();
+                    const newLeft = handleGetTargetLeft();
                     if (newLeft !== left) {
                       setLeft(newLeft);
                     }
@@ -167,29 +163,18 @@ export default function Carousel({
     </ErrorBoundary>
   );
 
-  function getTargetLeft() {
+  function handleGetTargetLeft() {
     const target = currentSlide;
     const left = slideWidth * target;
     return left * -1;
   }
 
-  function getOffsetDeltas() {
-    const offset = getTargetLeft();
+  function handleGetOffsetDeltas() {
+    const offset = handleGetTargetLeft();
     return {
       tx: [offset],
       ty: [0]
     };
-  }
-
-  function goToSlide(index) {
-    if (index >= slideCount || index < 0 || currentSlide === index) {
-      return;
-    }
-    setEasing(DEFAULT_EASING);
-    beforeSlide(currentSlide, index);
-    setLeft(getTargetLeft(slideWidth, currentSlide));
-    setCurrentSlide(index);
-    afterSlide(index);
   }
 
   function handleSelectChoice({ selectedIndex, questionId }) {
@@ -210,7 +195,15 @@ export default function Carousel({
 
   function handleGoToNextSlide() {
     if (currentSlide < slideCount - slidesToShow) {
-      goToSlide(Math.min(currentSlide + 1, slideCount - slidesToShow));
+      handleGoToSlide(Math.min(currentSlide + 1, slideCount - slidesToShow));
+    }
+    function handleGoToSlide(index) {
+      if (index >= slideCount || index < 0 || currentSlide === index) {
+        return;
+      }
+      setEasing(DEFAULT_EASING);
+      setLeft(handleGetTargetLeft(slideWidth, currentSlide));
+      setCurrentSlide(index);
     }
   }
 
