@@ -1,5 +1,6 @@
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
+import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
 import { useHomeContext } from '~/contexts';
 
@@ -27,6 +28,14 @@ export default function StartMenu() {
             Respond to high XP subjects
           </span>
         </Button>
+        <GradientButton
+          style={{ marginTop: '1rem' }}
+          fontSize="1.5rem"
+          mobileFontSize="1.3rem"
+        >
+          <Icon icon="spell-check" />
+          <span style={{ marginLeft: '0.7rem' }}>The Grammar Game</span>
+        </GradientButton>
       </div>
       <div
         style={{
