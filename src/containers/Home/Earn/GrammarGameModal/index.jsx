@@ -9,7 +9,7 @@ GrammarGameModal.propTypes = {
 export default function GrammarGameModal({ onHide }) {
   const [activeTab, setActiveTab] = useState('game');
   return (
-    <Modal closeWhenClickedOutside={false} onHide={onHide}>
+    <Modal large closeWhenClickedOutside={false} onHide={onHide}>
       <header style={{ padding: 0 }}>
         <FilterBar
           style={{
