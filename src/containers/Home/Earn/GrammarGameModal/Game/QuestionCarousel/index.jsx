@@ -10,9 +10,7 @@ import { useExploreContext } from '~/contexts';
 Carousel.propTypes = {
   afterSlide: PropTypes.func,
   beforeSlide: PropTypes.func,
-  onSelectChoice: PropTypes.func,
-  questionIds: PropTypes.array,
-  questionObj: PropTypes.object,
+  questions: PropTypes.array,
   slideIndex: PropTypes.number,
   slidesToShow: PropTypes.number,
   style: PropTypes.object
@@ -21,9 +19,7 @@ Carousel.propTypes = {
 export default function Carousel({
   afterSlide = () => {},
   beforeSlide = () => {},
-  onSelectChoice,
-  questionIds,
-  questionObj,
+  questions,
   slideIndex = 0,
   slidesToShow = 1,
   style
@@ -31,7 +27,8 @@ export default function Carousel({
   const clickSafe = useExploreContext((v) => v.state.videos.clickSafe);
   const onClickSafeOff = useExploreContext((v) => v.actions.onClickSafeOff);
   const onClickSafeOn = useExploreContext((v) => v.actions.onClickSafeOn);
-
+  const [questionIds, setQuestionIds] = useState([]);
+  const [questionObj, setQuestionObj] = useState({});
   const DEFAULT_DURATION = 300;
   const DEFAULT_EASING = 'easeCircleOut';
   const DEFAULT_EDGE_EASING = 'easeElasticOut';
@@ -41,16 +38,13 @@ export default function Carousel({
   const [dragging, setDragging] = useState(false);
   const [slideWidth, setSlideWidth] = useState(0);
   const [touchObject, setTouchObject] = useState({});
-  const [loaded, setLoaded] = useState(false);
   const FrameRef = useRef(null);
   const scrollYRef = useRef(null);
-  const firstSlide = FrameRef.current?.childNodes?.[0]?.childNodes?.[0];
   const slideCount = questionIds?.length;
 
   useEffect(() => {
     setSlideWidth(FrameRef.current.offsetWidth / slidesToShow);
-    setLoaded(true);
-  }, [firstSlide, slidesToShow]);
+  }, [slidesToShow]);
 
   useEffect(() => {
     addEvent(window, 'resize', onResize);
@@ -61,12 +55,30 @@ export default function Carousel({
     };
   });
 
+  useEffect(() => {
+    const resultObj = questions.reduce((prev, curr, index) => {
+      const choices = curr.choices.map((choice) => ({
+        label: choice,
+        checked: false
+      }));
+      return {
+        ...prev,
+        [index]: {
+          ...curr,
+          choices,
+          selectedChoiceIndex: null
+        }
+      };
+    }, {});
+    setQuestionObj(resultObj);
+    setQuestionIds([...Array(questions.length).keys()]);
+  }, [questions]);
+
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Carousel/index">
       <div
         style={{
           width: '100%',
-          display: loaded ? 'block' : 'none',
           position: 'relative',
           fontSize: '1.5rem',
           height: 'auto',
@@ -186,7 +198,7 @@ export default function Carousel({
                       choices={questionObj[questionId].choices}
                       answerIndex={questionObj[questionId].answerIndex}
                       onSelectChoice={(selectedIndex) => {
-                        onSelectChoice({ selectedIndex, questionId });
+                        handleSelectChoice({ selectedIndex, questionId });
                       }}
                     />
                   </li>
@@ -233,6 +245,21 @@ export default function Carousel({
     setLeft(getTargetLeft(slideWidth, currentSlide));
     setCurrentSlide(index);
     afterSlide(index);
+  }
+
+  function handleSelectChoice({ selectedIndex, questionId }) {
+    setQuestionObj((questionObj) => ({
+      ...questionObj,
+      [questionId]: {
+        ...questionObj[questionId],
+        choices: questionObj[questionId].choices.map((choice, index) =>
+          index === selectedIndex
+            ? { ...choice, checked: true }
+            : { ...choice, checked: false }
+        )
+      },
+      selectedChoiceIndex: selectedIndex
+    }));
   }
 
   function handleSwipe() {
