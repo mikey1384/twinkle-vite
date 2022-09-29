@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import QuestionSlide from '../QuestionSlide';
+import QuestionSlide from './QuestionSlide';
 import * as d3Ease from 'd3-ease';
 import { Animate } from 'react-move';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
