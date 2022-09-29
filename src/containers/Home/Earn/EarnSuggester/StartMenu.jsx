@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
+import GradientButton from '~/components/Buttons/GradientButton';
+import GrammarGameModal from '../GrammarGameModal';
 import { useHomeContext } from '~/contexts';
 
 export default function StartMenu() {
+  const [grammarGameModalShown, setGrammarGameModalShown] = useState(false);
   const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
 
   return (
@@ -32,6 +35,7 @@ export default function StartMenu() {
           style={{ marginTop: '1rem' }}
           fontSize="1.5rem"
           mobileFontSize="1.3rem"
+          onClick={() => setGrammarGameModalShown(true)}
         >
           <Icon icon="spell-check" />
           <span style={{ marginLeft: '0.7rem' }}>The Grammar Game</span>
@@ -67,6 +71,9 @@ export default function StartMenu() {
           <span style={{ marginLeft: '0.7rem' }}>Reward posts</span>
         </Button>
       </div>
+      {grammarGameModalShown && (
+        <GrammarGameModal onHide={() => setGrammarGameModalShown(false)} />
+      )}
     </ErrorBoundary>
   );
 }
