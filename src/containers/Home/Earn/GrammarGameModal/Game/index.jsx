@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import StatusMessage from './StatusMessage';
 import Loading from '~/components/Loading';
 import QuestionCarousel from './QuestionCarousel';
 
@@ -24,22 +23,9 @@ export default function Game({ questions = [] }) {
         [index]: {
           ...curr,
           choices,
-          failMessage: renderFailMessage(),
           selectedChoiceIndex: null
         }
       };
-
-      function renderFailMessage() {
-        const answer = curr.choices[curr.answerIndex];
-        const answerInBold = answer
-          .split(' ')
-          .map((word) => `*${word}*`)
-          .join(' ');
-        return `Wrong. Correct sentence is "${curr.question.replace(
-          '_____',
-          answerInBold
-        )}"`;
-      }
     }, {});
     setQuestionObj(resultObj);
     setQuestionIds([...Array(questions.length).keys()]);
@@ -77,17 +63,6 @@ export default function Game({ questions = [] }) {
         />
       ) : (
         <Loading />
-      )}
-      {conditionPassStatus && (
-        <div style={{ marginTop: '-0.5rem' }}>
-          <StatusMessage
-            isComplete={isComplete}
-            status={conditionPassStatus}
-            passMessage="*Correct!*"
-            failMessage={questionObj[currentSlideIndex].failMessage}
-            onBackToStart={() => console.log('back to start')}
-          />
-        </div>
       )}
     </div>
   );
