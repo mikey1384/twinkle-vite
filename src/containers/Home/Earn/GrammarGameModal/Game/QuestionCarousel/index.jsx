@@ -1,6 +1,7 @@
-import { Children, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import QuestionSlide from '../QuestionSlide';
 import * as d3Ease from 'd3-ease';
 import { Animate } from 'react-move';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
@@ -10,14 +11,12 @@ import { css } from '@emotion/css';
 Carousel.propTypes = {
   afterSlide: PropTypes.func,
   beforeSlide: PropTypes.func,
-  children: PropTypes.array.isRequired,
-  cellSpacing: PropTypes.number,
   className: PropTypes.string,
-  framePadding: PropTypes.string,
+  onSelectChoice: PropTypes.func,
+  questionIds: PropTypes.array,
+  questionObj: PropTypes.object,
   slideIndex: PropTypes.number,
-  slidesToScroll: PropTypes.number.isRequired,
   slidesToShow: PropTypes.number,
-  slideWidthMultiplier: PropTypes.number,
   style: PropTypes.object
 };
 
@@ -25,13 +24,11 @@ export default function Carousel({
   afterSlide = () => {},
   beforeSlide = () => {},
   className,
-  cellSpacing = 0,
-  children,
-  framePadding = '0px',
+  onSelectChoice,
+  questionIds,
+  questionObj,
   slideIndex = 0,
-  slidesToScroll = 1,
   slidesToShow = 1,
-  slideWidthMultiplier = 1,
   style
 }) {
   const clickSafe = useExploreContext((v) => v.state.videos.clickSafe);
@@ -46,23 +43,17 @@ export default function Carousel({
   const [currentSlide, setCurrentSlide] = useState(slideIndex);
   const [dragging, setDragging] = useState(false);
   const [slideWidth, setSlideWidth] = useState(0);
-  const [slideCount, setSlideCount] = useState(Children.count(children));
   const [touchObject, setTouchObject] = useState({});
   const [loaded, setLoaded] = useState(false);
   const FrameRef = useRef(null);
   const scrollYRef = useRef(null);
   const firstSlide = FrameRef.current?.childNodes?.[0]?.childNodes?.[0];
+  const slideCount = questionIds?.length;
+
   useEffect(() => {
-    if (firstSlide) {
-      firstSlide.style.height = 'auto';
-    }
-    setSlideWidth(
-      (FrameRef.current.offsetWidth / slidesToShow -
-        cellSpacing * (1 - 1 / slidesToShow)) *
-        slideWidthMultiplier
-    );
+    setSlideWidth(FrameRef.current.offsetWidth / slidesToShow);
     setLoaded(true);
-  }, [firstSlide, cellSpacing, slideWidthMultiplier, slidesToShow]);
+  }, [firstSlide, slidesToShow]);
 
   useEffect(() => {
     addEvent(window, 'resize', onResize);
@@ -72,10 +63,6 @@ export default function Carousel({
       removeEvent(document, 'readystatechange', onReadyStateChange);
     };
   });
-
-  useEffect(() => {
-    setSlideCount(Children.count(children));
-  }, [children]);
 
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Carousel/index">
@@ -104,7 +91,7 @@ export default function Carousel({
             display: 'block',
             overflowX: 'hidden',
             height: 'auto',
-            margin: framePadding,
+            margin: 0,
             padding: '6px',
             transform: 'translate3d(0, 0, 0)',
             boxSizing: 'border-box'
@@ -174,22 +161,44 @@ export default function Carousel({
                 style={{
                   position: 'relative',
                   transform: `translate3d(${tx}px, ${ty}px, 0)`,
-                  display: 'block',
-                  margin: `0px ${(cellSpacing / 2) * -1}px`,
+                  display: !!slideWidth ? 'block' : 'none',
+                  margin: 0,
                   padding: 0,
                   height: 'auto',
-                  width: slideWidth * slideCount + cellSpacing * slideCount,
+                  width: slideWidth * slideCount,
                   cursor: dragging ? 'pointer' : 'inherit',
                   boxSizing: 'border-box'
                 }}
               >
-                {slideCount > 1
-                  ? formatChildren({
-                      children,
-                      slideWidth,
-                      cellSpacing
-                    })
-                  : children}
+                {questionIds.map((questionId, index) => (
+                  <li
+                    style={{
+                      display: 'inline-block',
+                      listStyleType: 'none',
+                      verticalAlign: 'top',
+                      width: slideWidth,
+                      height: 'auto',
+                      boxSizing: 'border-box',
+                      MozBoxSizing: 'border-box',
+                      marginLeft: -0.5,
+                      marginRight: -0.5,
+                      marginTop: 'auto',
+                      marginBottom: 'auto'
+                    }}
+                    key={index}
+                  >
+                    <QuestionSlide
+                      key={questionId}
+                      gotWrong={questionObj[questionId].gotWrong}
+                      question={questionObj[questionId].question}
+                      choices={questionObj[questionId].choices}
+                      answerIndex={questionObj[questionId].answerIndex}
+                      onSelectChoice={(selectedIndex) => {
+                        onSelectChoice({ selectedIndex, questionId });
+                      }}
+                    />
+                  </li>
+                ))}
               </ul>
             )}
           </Animate>
@@ -197,29 +206,6 @@ export default function Carousel({
       </div>
     </ErrorBoundary>
   );
-
-  function formatChildren({ children, slideWidth, cellSpacing }) {
-    return Children.map(children, (child, index) => (
-      <li
-        style={{
-          display: 'inline-block',
-          listStyleType: 'none',
-          verticalAlign: 'top',
-          width: slideWidth,
-          height: 'auto',
-          boxSizing: 'border-box',
-          MozBoxSizing: 'border-box',
-          marginLeft: cellSpacing / 2 - 0.5,
-          marginRight: cellSpacing / 2 - 0.5,
-          marginTop: 'auto',
-          marginBottom: 'auto'
-        }}
-        key={index}
-      >
-        {child}
-      </li>
-    ));
-  }
 
   function handleClick(e) {
     if (clickSafe) {
@@ -233,7 +219,7 @@ export default function Carousel({
 
   function getTargetLeft(touchOffset, slide) {
     const target = slide || currentSlide;
-    const offset = 0 - cellSpacing * target - (touchOffset || 0);
+    const offset = 0 - (touchOffset || 0);
     const left = slideWidth * target;
     return (left - offset) * -1;
   }
@@ -287,15 +273,13 @@ export default function Carousel({
 
   function handleGoToNextSlide() {
     if (currentSlide < slideCount - slidesToShow) {
-      goToSlide(
-        Math.min(currentSlide + slidesToScroll, slideCount - slidesToShow)
-      );
+      goToSlide(Math.min(currentSlide + 1, slideCount - slidesToShow));
     }
   }
 
   function handleGoToPreviousSlide() {
     if (currentSlide > 0) {
-      goToSlide(Math.max(0, currentSlide - slidesToScroll));
+      goToSlide(Math.max(0, currentSlide - 1));
     }
   }
 
@@ -312,11 +296,7 @@ export default function Carousel({
     if (firstSlide) {
       firstSlide.style.height = 'auto';
     }
-    setSlideWidth(
-      (ref.current.offsetWidth / slidesToShow -
-        cellSpacing * (1 - 1 / slidesToShow)) *
-        slideWidthMultiplier
-    );
+    setSlideWidth(ref.current.offsetWidth / slidesToShow);
   }
 
   function swipeDirection(x1, x2, y1, y2) {
