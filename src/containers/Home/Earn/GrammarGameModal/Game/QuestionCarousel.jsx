@@ -24,7 +24,6 @@ export default function Carousel({
   slidesToShow = 1,
   style
 }) {
-  const clickSafe = useExploreContext((v) => v.state.videos.clickSafe);
   const onClickSafeOff = useExploreContext((v) => v.actions.onClickSafeOff);
   const onClickSafeOn = useExploreContext((v) => v.actions.onClickSafeOn);
   const [questionIds, setQuestionIds] = useState([]);
@@ -135,7 +134,6 @@ export default function Carousel({
               handleSwipe(e);
             }
           }}
-          onClick={handleClick}
         >
           <Animate
             show
@@ -210,16 +208,6 @@ export default function Carousel({
       </div>
     </ErrorBoundary>
   );
-
-  function handleClick(e) {
-    if (clickSafe) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.nativeEvent) {
-        e.nativeEvent.stopPropagation();
-      }
-    }
-  }
 
   function getTargetLeft(touchOffset, slide) {
     const target = slide || currentSlide;
