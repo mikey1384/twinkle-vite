@@ -5,14 +5,12 @@ import { borderRadius, Color, innerBorderRadius } from '~/constants/css';
 
 ChoiceList.propTypes = {
   answerIndex: PropTypes.number,
-  conditionPassStatus: PropTypes.string,
   listItems: PropTypes.array.isRequired,
   onSelect: PropTypes.func.isRequired,
   style: PropTypes.object
 };
 export default function ChoiceList({
   answerIndex,
-  conditionPassStatus,
   listItems,
   onSelect,
   style
@@ -50,7 +48,6 @@ export default function ChoiceList({
           <ListItem
             key={index}
             answerIndex={answerIndex}
-            conditionPassStatus={conditionPassStatus}
             listItem={listItem}
             onSelect={onSelect}
             index={index}

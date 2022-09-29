@@ -12,7 +12,7 @@ NavButton.propTypes = {
 
 export default function NavButton({ disabled, onGoToNextSlide, left }) {
   return disabled ? null : (
-    <ErrorBoundary componentPath="Carousel/NavButton">
+    <ErrorBoundary componentPath="GrammarGameModal/Game/Carousel/NavButton">
       <Button
         className={css`
           position: absolute;
