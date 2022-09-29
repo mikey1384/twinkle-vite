@@ -2,6 +2,7 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import FilterBar from '~/components/FilterBar';
+import Game from './Game';
 
 GrammarGameModal.propTypes = {
   onHide: PropTypes.func.isRequired
@@ -38,7 +39,7 @@ export default function GrammarGameModal({ onHide }) {
         }}
       >
         {activeTab === 'game' ? (
-          <div>Game Tab</div>
+          <Game />
         ) : activeTab === 'rankings' ? (
           <div>Rankings</div>
         ) : (
