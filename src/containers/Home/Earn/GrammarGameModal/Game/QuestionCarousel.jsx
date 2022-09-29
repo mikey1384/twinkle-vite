@@ -5,7 +5,6 @@ import QuestionSlide from './QuestionSlide';
 import * as d3Ease from 'd3-ease';
 import { Animate } from 'react-move';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
-import { useExploreContext } from '~/contexts';
 
 Carousel.propTypes = {
   afterSlide: PropTypes.func,
@@ -24,21 +23,15 @@ export default function Carousel({
   slidesToShow = 1,
   style
 }) {
-  const onClickSafeOff = useExploreContext((v) => v.actions.onClickSafeOff);
-  const onClickSafeOn = useExploreContext((v) => v.actions.onClickSafeOn);
   const [questionIds, setQuestionIds] = useState([]);
   const [questionObj, setQuestionObj] = useState({});
   const DEFAULT_DURATION = 300;
   const DEFAULT_EASING = 'easeCircleOut';
-  const DEFAULT_EDGE_EASING = 'easeElasticOut';
   const [left, setLeft] = useState(0);
   const [easing, setEasing] = useState(DEFAULT_EASING);
   const [currentSlide, setCurrentSlide] = useState(slideIndex);
-  const [dragging, setDragging] = useState(false);
   const [slideWidth, setSlideWidth] = useState(0);
-  const [touchObject, setTouchObject] = useState({});
   const FrameRef = useRef(null);
-  const scrollYRef = useRef(null);
   const slideCount = questionIds?.length;
 
   useEffect(() => {
@@ -99,41 +92,6 @@ export default function Carousel({
             transform: 'translate3d(0, 0, 0)',
             boxSizing: 'border-box'
           }}
-          onTouchEnd={handleSwipe}
-          onTouchCancel={handleSwipe}
-          onMouseMove={(e) => {
-            if (dragging) {
-              const direction = swipeDirection(
-                touchObject.startX,
-                e.clientX,
-                touchObject.startY,
-                e.clientY
-              );
-              if (direction !== 0) {
-                e.preventDefault();
-              }
-              let length = Math.round(
-                Math.sqrt(Math.pow(e.clientX - touchObject.startX, 2))
-              );
-              setTouchObject({
-                ...touchObject,
-                endX: e.clientX,
-                endY: e.clientY,
-                length,
-                direction
-              });
-            }
-          }}
-          onMouseUp={(e) => {
-            if (dragging) {
-              handleSwipe(e);
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (dragging) {
-              handleSwipe(e);
-            }
-          }}
         >
           <Animate
             show
@@ -168,7 +126,7 @@ export default function Carousel({
                   padding: 0,
                   height: 'auto',
                   width: slideWidth * slideCount,
-                  cursor: dragging ? 'pointer' : 'inherit',
+                  cursor: 'pointer',
                   boxSizing: 'border-box'
                 }}
               >
@@ -209,15 +167,14 @@ export default function Carousel({
     </ErrorBoundary>
   );
 
-  function getTargetLeft(touchOffset, slide) {
-    const target = slide || currentSlide;
-    const offset = 0 - (touchOffset || 0);
+  function getTargetLeft() {
+    const target = currentSlide;
     const left = slideWidth * target;
-    return (left - offset) * -1;
+    return left * -1;
   }
 
   function getOffsetDeltas() {
-    const offset = getTargetLeft(touchObject.length * touchObject.direction);
+    const offset = getTargetLeft();
     return {
       tx: [offset],
       ty: [0]
@@ -251,43 +208,9 @@ export default function Carousel({
     handleGoToNextSlide();
   }
 
-  function handleSwipe() {
-    if (typeof touchObject.length !== 'undefined' && touchObject.length > 44) {
-      onClickSafeOn();
-    } else {
-      onClickSafeOff();
-    }
-    if (touchObject.length > slideWidth / slidesToShow / 5) {
-      if (touchObject.direction === 1) {
-        if (currentSlide >= slideCount - slidesToShow) {
-          setEasing(DEFAULT_EDGE_EASING);
-        } else {
-          handleGoToNextSlide();
-        }
-      } else if (touchObject.direction === -1) {
-        if (currentSlide <= 0) {
-          setEasing(DEFAULT_EDGE_EASING);
-        } else {
-          handleGoToPreviousSlide();
-        }
-      }
-    } else {
-      goToSlide(currentSlide);
-    }
-    setTouchObject({});
-    setDragging(false);
-    scrollYRef.current = null;
-  }
-
   function handleGoToNextSlide() {
     if (currentSlide < slideCount - slidesToShow) {
       goToSlide(Math.min(currentSlide + 1, slideCount - slidesToShow));
-    }
-  }
-
-  function handleGoToPreviousSlide() {
-    if (currentSlide > 0) {
-      goToSlide(Math.max(0, currentSlide - 1));
     }
   }
 
@@ -305,27 +228,5 @@ export default function Carousel({
       firstSlide.style.height = 'auto';
     }
     setSlideWidth(ref.current.offsetWidth / slidesToShow);
-  }
-
-  function swipeDirection(x1, x2, y1, y2) {
-    const xDist = x1 - x2;
-    const yDist = y1 - y2;
-    const r = Math.atan2(yDist, xDist);
-    const maxAngle = 10;
-
-    let swipeAngle = Math.round((r * 180) / Math.PI);
-    if (swipeAngle < 0) {
-      swipeAngle = 360 - Math.abs(swipeAngle);
-    }
-    if (swipeAngle >= 0 && swipeAngle <= maxAngle) {
-      return 1;
-    }
-    if (swipeAngle <= 360 && swipeAngle >= 360 - maxAngle) {
-      return 1;
-    }
-    if (swipeAngle >= 180 - maxAngle && swipeAngle <= 180 + maxAngle) {
-      return -1;
-    }
-    return 0;
   }
 }
