@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import StatusMessage from './StatusMessage';
 import Loading from '~/components/Loading';
 import QuestionCarousel from './QuestionCarousel';
-import { useAppContext } from '~/contexts';
 
 Game.propTypes = {
   questions: PropTypes.array
@@ -12,9 +11,6 @@ Game.propTypes = {
 export default function Game({ questions = [] }) {
   const [submitDisabled, setSubmitDisabled] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
-  const uploadGrammarAttempt = useAppContext(
-    (v) => v.requestHelpers.uploadGrammarAttempt
-  );
   const [questionIds, setQuestionIds] = useState([]);
   const [questionObj, setQuestionObj] = useState({});
   useEffect(() => {
@@ -61,7 +57,7 @@ export default function Game({ questions = [] }) {
   }, [currentSlideIndex, questionObj]);
 
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ width: '100%', padding: '0 3rem 2rem 3rem' }}>
       {questionIds.length > 0 ? (
         <QuestionCarousel
           conditionPassStatus={isComplete ? 'complete' : conditionPassStatus}
@@ -126,10 +122,6 @@ export default function Game({ questions = [] }) {
       questionObj[currentSlideIndex].answerIndex === selectedAnswerIndex.current
         ? 'pass'
         : 'fail';
-    uploadGrammarAttempt({
-      result: statusRef.current,
-      questionId: questionObj[currentSlideIndex].id
-    });
     setConditionPassStatus(statusRef.current);
     selectedAnswerIndex.current = null;
   }
