@@ -6,12 +6,10 @@ import * as d3Ease from 'd3-ease';
 import { Animate } from 'react-move';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { useExploreContext } from '~/contexts';
-import { css } from '@emotion/css';
 
 Carousel.propTypes = {
   afterSlide: PropTypes.func,
   beforeSlide: PropTypes.func,
-  className: PropTypes.string,
   onSelectChoice: PropTypes.func,
   questionIds: PropTypes.array,
   questionObj: PropTypes.object,
@@ -23,7 +21,6 @@ Carousel.propTypes = {
 export default function Carousel({
   afterSlide = () => {},
   beforeSlide = () => {},
-  className,
   onSelectChoice,
   questionIds,
   questionObj,
@@ -67,13 +64,8 @@ export default function Carousel({
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Carousel/index">
       <div
-        className={
-          className ||
-          css`
-            width: 100%;
-          `
-        }
         style={{
+          width: '100%',
           display: loaded ? 'block' : 'none',
           position: 'relative',
           fontSize: '1.5rem',
