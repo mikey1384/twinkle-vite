@@ -4,14 +4,12 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 ListItem.propTypes = {
-  answerIndex: PropTypes.number,
   conditionPassStatus: PropTypes.string.isRequired,
   listItem: PropTypes.object.isRequired,
   index: PropTypes.number,
   onSelect: PropTypes.func.isRequired
 };
 export default function ListItem({
-  answerIndex,
   conditionPassStatus,
   listItem,
   onSelect,
@@ -20,8 +18,7 @@ export default function ListItem({
   return (
     <nav
       className={css`
-        display: flex;
-        align-items: center;
+        padding: 1rem;
         width: 100%;
         cursor: pointer;
         &:hover {
@@ -31,30 +28,8 @@ export default function ListItem({
       onClick={handleSelect}
       key={index}
     >
-      <section
-        className={css`
-          height: 4.3rem;
-          width: 4.3rem;
-          background: ${Color.checkboxAreaGray()};
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        `}
-      >
-        <input
-          type="checkbox"
-          checked={listItem.checked}
-          onChange={handleSelect}
-        />
-      </section>
-      <div style={{ padding: '0 2rem', display: 'flex', alignItems: 'center' }}>
+      <div style={{ padding: '0', textAlign: 'center' }}>
         <div dangerouslySetInnerHTML={{ __html: listItem.label }} />
-        {conditionPassStatus === 'fail' && index === answerIndex && (
-          <Icon
-            style={{ color: Color.green(), marginLeft: '1rem' }}
-            icon="check"
-          />
-        )}
         {conditionPassStatus === 'fail' && listItem.checked && (
           <Icon
             style={{ color: Color.rose(), marginLeft: '1rem' }}
