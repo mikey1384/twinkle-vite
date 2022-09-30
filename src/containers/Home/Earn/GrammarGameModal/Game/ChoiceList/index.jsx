@@ -60,6 +60,10 @@ export default function ChoiceList({
           }
         }
         .correct {
+          font-weight: bold;
+          border: 0;
+          color: #fff;
+          background: ${Color[successColor]()};
           box-shadow: 0 0 0 0 rgba(#5a99d4, 0.5);
           animation: pulse 1.5s;
         }
