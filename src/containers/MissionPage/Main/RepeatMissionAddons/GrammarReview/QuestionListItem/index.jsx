@@ -10,7 +10,7 @@ QuestionListItem.propTypes = {
 };
 
 export default function QuestionListItem({
-  question: { question, choices: choiceLabels, answerIndex },
+  question: { question, choices: choiceLabels, answerIndex } = {},
   style
 }) {
   const [passStatus, setPassStatus] = useState('');
