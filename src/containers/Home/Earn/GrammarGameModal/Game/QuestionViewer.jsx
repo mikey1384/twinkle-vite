@@ -6,14 +6,14 @@ import * as d3Ease from 'd3-ease';
 import { Animate } from 'react-move';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-QuestionCarousel.propTypes = {
+QuestionViewer.propTypes = {
   questions: PropTypes.array,
   slideIndex: PropTypes.number,
   slidesToShow: PropTypes.number,
   style: PropTypes.object
 };
 
-export default function QuestionCarousel({
+export default function QuestionViewer({
   questions,
   slideIndex = 0,
   slidesToShow = 1,
