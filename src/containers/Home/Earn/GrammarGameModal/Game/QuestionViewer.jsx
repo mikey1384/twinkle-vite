@@ -6,19 +6,13 @@ import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
 
 QuestionViewer.propTypes = {
-  questions: PropTypes.array,
-  slideIndex: PropTypes.number,
-  slidesToShow: PropTypes.number
+  questions: PropTypes.array
 };
 
-export default function QuestionViewer({
-  questions,
-  slideIndex = 0,
-  slidesToShow = 1
-}) {
+export default function QuestionViewer({ questions }) {
   const [questionIds, setQuestionIds] = useState(null);
   const [questionObj, setQuestionObj] = useState({});
-  const [currentSlide, setCurrentSlide] = useState(slideIndex);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const slideCount = questionIds?.length;
 
   useEffect(() => {
@@ -70,21 +64,18 @@ export default function QuestionViewer({
     }
 
     function handleGoToNextSlide() {
-      if (currentSlide < slideCount - slidesToShow) {
-        handleGoToSlide(Math.min(currentSlide + 1, slideCount - slidesToShow));
+      if (currentIndex === slideCount - 1) {
+        return;
       }
-      function handleGoToSlide(index) {
-        if (index >= slideCount || index < 0 || currentSlide === index) {
-          return;
-        }
-        setCurrentSlide(index);
-      }
+      setCurrentIndex((index) => index + 1);
     }
-  }, [currentSlide, questionIds, questionObj, slideCount, slidesToShow]);
+  }, [currentIndex, questionIds, questionObj, slideCount]);
 
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Carousel/index">
-      <SlideContainer>{Slides || <Loading />}</SlideContainer>
+      <SlideContainer selectedIndex={currentIndex}>
+        {Slides || <Loading />}
+      </SlideContainer>
     </ErrorBoundary>
   );
 }
