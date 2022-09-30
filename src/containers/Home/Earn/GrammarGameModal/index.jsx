@@ -25,11 +25,11 @@ export default function GrammarGameModal({ onHide }) {
   }, []);
 
   return (
-    <Modal large closeWhenClickedOutside={false} onHide={onHide}>
+    <Modal closeWhenClickedOutside={false} onHide={onHide}>
       <header style={{ padding: 0 }}>
         <FilterBar
           style={{
-            marginTop: '3rem',
+            marginTop: '2rem',
             height: '5rem'
           }}
         >

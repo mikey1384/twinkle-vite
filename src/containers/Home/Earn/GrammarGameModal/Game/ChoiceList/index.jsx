@@ -1,7 +1,13 @@
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ListItem from './ListItem';
 import { css } from '@emotion/css';
-import { borderRadius, Color, innerBorderRadius } from '~/constants/css';
+import {
+  borderRadius,
+  Color,
+  innerBorderRadius,
+  mobileMaxWidth
+} from '~/constants/css';
 
 ChoiceList.propTypes = {
   answerIndex: PropTypes.number,
@@ -15,12 +21,19 @@ export default function ChoiceList({
   onSelect,
   style
 }) {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    setTimeout(() => setShown(true), 1300);
+  }, []);
+
   return (
     <div
       className={css`
-        display: flex;
+        display: ${shown ? 'flex' : 'none'};
+        opacity: ${shown ? 1 : 0};
+        transition: opacity 1s;
         flex-direction: column;
-        width: 100%;
+        width: 80%;
         nav {
           border: 1px solid ${Color.borderGray()};
           border-top: none;
@@ -39,6 +52,10 @@ export default function ChoiceList({
           section {
             border-bottom-left-radius: ${innerBorderRadius};
           }
+        }
+
+        @media (max-width: ${mobileMaxWidth}) {
+          width: 100%;
         }
       `}
       style={style}

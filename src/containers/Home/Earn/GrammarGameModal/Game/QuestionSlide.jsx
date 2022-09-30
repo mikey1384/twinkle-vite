@@ -20,7 +20,7 @@ export default function QuestionSlide({
     <div
       className={css`
         width: 100%;
-        padding: 2rem 1rem 3rem 1rem;
+        padding: 0 1rem 3rem 1rem;
         border-radius: ${borderRadius};
         @media (max-width: ${mobileMaxWidth}) {
           padding-bottom: 1rem;
@@ -30,10 +30,14 @@ export default function QuestionSlide({
       <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
         <div
           className={css`
-            width: 80%;
+            width: 100%;
+            min-height: 25rem;
             display: flex;
             flex-direction: column;
-            margin-top: 3rem;
+            justify-content: center;
+            margin-top: 2rem;
+            text-align: center;
+            align-items: center;
             @media (max-width: ${mobileMaxWidth}) {
               > h3 {
                 font-size: 1.8rem;
@@ -43,7 +47,7 @@ export default function QuestionSlide({
         >
           <h3>{question}</h3>
           <ChoiceList
-            style={{ marginTop: '2rem', fontSize: '1.6rem' }}
+            style={{ marginTop: '3rem', fontSize: '1.6rem' }}
             answerIndex={answerIndex}
             onSelect={onSelectChoice}
             listItems={choices}
