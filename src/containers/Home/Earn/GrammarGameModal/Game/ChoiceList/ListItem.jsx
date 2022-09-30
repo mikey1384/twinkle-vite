@@ -18,7 +18,7 @@ export default function ListItem({ listItem, onSelect, index }) {
           background: ${Color.highlightGray()};
         }
       `}
-      onClick={handleSelect}
+      onMouseDown={handleSelect}
       key={index}
     >
       <div style={{ padding: '0', textAlign: 'center' }}>
