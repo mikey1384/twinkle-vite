@@ -44,9 +44,9 @@ export default function QuestionViewer({ questions }) {
         }}
       />
     ));
-    function handleSelectChoice({ selectedIndex, questionId }) {
+    async function handleSelectChoice({ selectedIndex, questionId }) {
       if (selectedIndex === questionObj[questionId]?.answerIndex) {
-        correctSound.play();
+        await handlePlayCorrectSound();
         handleGoToNextSlide();
       } else {
         console.log('wrong');
@@ -58,6 +58,19 @@ export default function QuestionViewer({ questions }) {
         return;
       }
       setCurrentIndex((index) => index + 1);
+    }
+
+    async function handlePlayCorrectSound() {
+      return new Promise((resolve, reject) => {
+        try {
+          correctSound.play();
+          setTimeout(() => {
+            return resolve();
+          }, 1000);
+        } catch (error) {
+          return reject(error);
+        }
+      });
     }
   }, [currentIndex, questionIds, questionObj, slideCount]);
 
