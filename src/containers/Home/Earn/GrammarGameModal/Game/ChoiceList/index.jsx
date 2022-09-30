@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ListItem from './ListItem';
 import { css } from '@emotion/css';
+import { useKeyContext } from '~/contexts';
 import {
   borderRadius,
   Color,
@@ -13,14 +14,19 @@ ChoiceList.propTypes = {
   answerIndex: PropTypes.number,
   listItems: PropTypes.array.isRequired,
   onSelect: PropTypes.func.isRequired,
+  selectedChoiceIndex: PropTypes.number,
   style: PropTypes.object
 };
 export default function ChoiceList({
   answerIndex,
   listItems,
   onSelect,
+  selectedChoiceIndex,
   style
 }) {
+  const {
+    success: { color: successColor }
+  } = useKeyContext((v) => v.theme);
   const [shown, setShown] = useState(false);
   useEffect(() => {
     setTimeout(() => setShown(true), 1300);
@@ -53,9 +59,27 @@ export default function ChoiceList({
             border-bottom-left-radius: ${innerBorderRadius};
           }
         }
-
+        .correct {
+          box-shadow: 0 0 0 0 rgba(#5a99d4, 0.5);
+          animation: pulse 1.5s;
+        }
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;
+        }
+
+        @keyframes pulse {
+          0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 ${Color[successColor](0.7)};
+          }
+          70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 20px ${Color[successColor](0)};
+          }
+          100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 ${Color[successColor](0)};
+          }
         }
       `}
       style={style}
@@ -65,6 +89,7 @@ export default function ChoiceList({
           <ListItem
             key={index}
             answerIndex={answerIndex}
+            selectedChoiceIndex={selectedChoiceIndex}
             listItem={listItem}
             onSelect={onSelect}
             index={index}
