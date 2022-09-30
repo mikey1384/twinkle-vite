@@ -60,10 +60,17 @@ export default function ChoiceList({
           }
         }
         .correct {
-          font-weight: bold;
           border: 0;
+          background-image: linear-gradient(
+            to right,
+            ${Color[successColor](1)} 0%,
+            ${Color[successColor](0.6)} 50%,
+            ${Color[successColor](1)} 100%
+          );
+          background-size: 200% auto;
+          background-position: left top;
+          font-weight: bold;
           color: #fff;
-          background: ${Color[successColor]()};
           box-shadow: 0 0 0 0 rgba(#5a99d4, 0.5);
           animation: pulse 1.5s;
         }
@@ -73,16 +80,16 @@ export default function ChoiceList({
 
         @keyframes pulse {
           0% {
-            transform: scale(0.95);
             box-shadow: 0 0 0 0 ${Color[successColor](0.7)};
+            background-position: left top;
           }
           70% {
-            transform: scale(1);
-            box-shadow: 0 0 0 20px ${Color[successColor](0)};
+            box-shadow: 0 0 0 10px ${Color[successColor](0)};
+            background-position: right center;
           }
           100% {
-            transform: scale(0.95);
             box-shadow: 0 0 0 0 ${Color[successColor](0)};
+            background-position: right center;
           }
         }
       `}
