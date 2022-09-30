@@ -4,10 +4,13 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
+import correct from './correct.mp3';
 
 QuestionViewer.propTypes = {
   questions: PropTypes.array
 };
+
+const correctSound = new Audio(correct);
 
 export default function QuestionViewer({ questions }) {
   const [questionIds, setQuestionIds] = useState(null);
@@ -43,6 +46,7 @@ export default function QuestionViewer({ questions }) {
     ));
     function handleSelectChoice({ selectedIndex, questionId }) {
       if (selectedIndex === questionObj[questionId]?.answerIndex) {
+        correctSound.play();
         handleGoToNextSlide();
       } else {
         console.log('wrong');
