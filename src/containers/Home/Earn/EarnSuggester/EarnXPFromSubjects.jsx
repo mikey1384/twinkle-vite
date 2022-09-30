@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import ContentListItem from '~/components/ContentListItem';
 import Button from '~/components/Button';
+import GradientButton from '~/components/Buttons/GradientButton';
 import Loading from '~/components/Loading';
 import localize from '~/constants/localize';
 import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
@@ -10,7 +12,10 @@ import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
 const BodyRef = document.scrollingElement || document.documentElement;
 const showMeAnotherSubjectLabel = localize('showMeAnotherSubject');
 
-export default function EarnXPFromSubjects() {
+EarnXPFromSubjects.propTypes = {
+  onSetGrammarGameModalShown: PropTypes.func.isRequired
+};
+export default function EarnXPFromSubjects({ onSetGrammarGameModalShown }) {
   const {
     showMeAnotherSubjectButton: { color: showMeAnotherSubjectButtonColor }
   } = useKeyContext((v) => v.theme);
@@ -78,7 +83,17 @@ export default function EarnXPFromSubjects() {
           <div
             style={{ display: 'flex', flexDirection: 'column', width: '80%' }}
           >
-            <p>Earn Karma Points</p>
+            <p>Earn XP</p>
+            <GradientButton
+              style={{ marginTop: '0.7rem' }}
+              fontSize="1.5rem"
+              mobileFontSize="1.3rem"
+              onClick={() => onSetGrammarGameModalShown(true)}
+            >
+              <Icon icon="spell-check" />
+              <span style={{ marginLeft: '0.7rem' }}>The Grammar Game</span>
+            </GradientButton>
+            <p style={{ marginTop: '1.5rem' }}>Earn Karma Points</p>
             <Button
               onClick={() => handleSetEarnSection('recommend')}
               style={{ marginTop: '0.7rem' }}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
+import GradientButton from '~/components/Buttons/GradientButton';
 import CommentPreview from './CommentPreview';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
@@ -8,7 +10,11 @@ import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
-export default function StartMenu() {
+RecommendPosts.propTypes = {
+  onSetGrammarGameModalShown: PropTypes.func.isRequired
+};
+
+export default function RecommendPosts({ onSetGrammarGameModalShown }) {
   const {
     showMeAnotherPostButton: { color: showMeAnotherPostButtonColor }
   } = useKeyContext((v) => v.theme);
@@ -106,6 +112,15 @@ export default function StartMenu() {
                 Respond to high XP subjects
               </span>
             </Button>
+            <GradientButton
+              style={{ marginTop: '0.7rem' }}
+              fontSize="1.5rem"
+              mobileFontSize="1.3rem"
+              onClick={() => onSetGrammarGameModalShown(true)}
+            >
+              <Icon icon="spell-check" />
+              <span style={{ marginLeft: '0.7rem' }}>The Grammar Game</span>
+            </GradientButton>
             <p style={{ marginTop: '1.5rem' }}>Earn Karma Points</p>
             <Button
               onClick={() => handleSetEarnSection('reward')}
