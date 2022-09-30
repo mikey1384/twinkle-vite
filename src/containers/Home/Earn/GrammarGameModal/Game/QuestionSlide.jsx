@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 QuestionSlide.propTypes = {
   answerIndex: PropTypes.number,
   question: PropTypes.string.isRequired,
+  selectedChoiceIndex: PropTypes.number,
   choices: PropTypes.array.isRequired,
   onSelectChoice: PropTypes.func.isRequired
 };
@@ -13,6 +14,7 @@ QuestionSlide.propTypes = {
 export default function QuestionSlide({
   answerIndex,
   question,
+  selectedChoiceIndex,
   choices,
   onSelectChoice
 }) {
@@ -49,6 +51,7 @@ export default function QuestionSlide({
           <ChoiceList
             style={{ marginTop: '3rem', fontSize: '1.6rem' }}
             answerIndex={answerIndex}
+            selectedChoiceIndex={selectedChoiceIndex}
             onSelect={onSelectChoice}
             listItems={choices}
           />

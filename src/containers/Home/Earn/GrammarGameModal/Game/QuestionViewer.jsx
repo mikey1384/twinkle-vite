@@ -16,7 +16,6 @@ export default function QuestionViewer({ questions }) {
   const [questionIds, setQuestionIds] = useState(null);
   const [questionObj, setQuestionObj] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
-  const slideCount = questionIds?.length;
 
   useEffect(() => {
     const resultObj = questions.reduce((prev, curr, index) => {
@@ -39,6 +38,7 @@ export default function QuestionViewer({ questions }) {
         question={questionObj[questionId].question}
         choices={questionObj[questionId].choices}
         answerIndex={questionObj[questionId].answerIndex}
+        selectedChoiceIndex={questionObj[questionId].selectedChoiceIndex}
         onSelectChoice={(selectedIndex) => {
           handleSelectChoice({ selectedIndex, questionId });
         }}
@@ -46,33 +46,23 @@ export default function QuestionViewer({ questions }) {
     ));
     async function handleSelectChoice({ selectedIndex, questionId }) {
       if (selectedIndex === questionObj[questionId]?.answerIndex) {
-        await handlePlayCorrectSound();
-        handleGoToNextSlide();
+        setQuestionObj({
+          ...questionObj,
+          [questionId]: {
+            ...questionObj[questionId],
+            selectedChoiceIndex: selectedIndex
+          }
+        });
+        correctSound.play();
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        if (currentIndex < questionIds.length - 1) {
+          setCurrentIndex((prev) => prev + 1);
+        }
       } else {
         console.log('wrong');
       }
     }
-
-    function handleGoToNextSlide() {
-      if (currentIndex === slideCount - 1) {
-        return;
-      }
-      setCurrentIndex((index) => index + 1);
-    }
-
-    async function handlePlayCorrectSound() {
-      return new Promise((resolve, reject) => {
-        try {
-          correctSound.play();
-          setTimeout(() => {
-            return resolve();
-          }, 1000);
-        } catch (error) {
-          return reject(error);
-        }
-      });
-    }
-  }, [currentIndex, questionIds, questionObj, slideCount]);
+  }, [currentIndex, questionIds, questionObj]);
 
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Carousel/index">
