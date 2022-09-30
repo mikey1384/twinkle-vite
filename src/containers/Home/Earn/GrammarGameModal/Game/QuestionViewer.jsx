@@ -17,15 +17,10 @@ export default function QuestionViewer({ questions }) {
 
   useEffect(() => {
     const resultObj = questions.reduce((prev, curr, index) => {
-      const choices = curr.choices.map((choice) => ({
-        label: choice,
-        checked: false
-      }));
       return {
         ...prev,
         [index]: {
           ...curr,
-          choices,
           selectedChoiceIndex: null
         }
       };
@@ -48,19 +43,11 @@ export default function QuestionViewer({ questions }) {
       />
     ));
     function handleSelectChoice({ selectedIndex, questionId }) {
-      setQuestionObj((questionObj) => ({
-        ...questionObj,
-        [questionId]: {
-          ...questionObj[questionId],
-          choices: questionObj[questionId].choices.map((choice, index) =>
-            index === selectedIndex
-              ? { ...choice, checked: true }
-              : { ...choice, checked: false }
-          )
-        },
-        selectedChoiceIndex: selectedIndex
-      }));
-      handleGoToNextSlide();
+      if (selectedIndex === questionObj[questionId]?.answerIndex) {
+        handleGoToNextSlide();
+      } else {
+        console.log('wrong');
+      }
     }
 
     function handleGoToNextSlide() {
