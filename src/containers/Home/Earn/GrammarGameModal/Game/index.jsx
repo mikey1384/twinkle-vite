@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
-import QuestionCarousel from './QuestionCarousel';
+import QuestionViewer from './QuestionViewer';
 
 Game.propTypes = {
   questions: PropTypes.array
@@ -8,9 +8,9 @@ Game.propTypes = {
 
 export default function Game({ questions = [] }) {
   return (
-    <div style={{ width: '100%', padding: '0 3rem 2rem 3rem' }}>
+    <div style={{ width: '100%', padding: '0' }}>
       {questions.length > 0 ? (
-        <QuestionCarousel questions={questions} />
+        <QuestionViewer questions={questions} />
       ) : (
         <Loading />
       )}
