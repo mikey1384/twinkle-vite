@@ -143,34 +143,4 @@ export const gridContainer = css`
       transform: scale(1);
     }
   }
-
-  @keyframes jiggle {
-    0% {
-      transform: translate(0, 0);
-    }
-    25% {
-      transform: translate(-0.5rem, 0);
-    }
-    50% {
-      transform: translate(0.5rem, 0);
-    }
-    75% {
-      transform: translate(-0.5rem, 0);
-    }
-    100% {
-      transform: translate(0, 0);
-    }
-  }
-
-  @keyframes wave {
-    0% {
-      transform: translate(0, 0);
-    }
-    50% {
-      transform: translate(0, -2rem);
-    }
-    100% {
-      transform: translate(0, 0);
-    }
-  }
 `;

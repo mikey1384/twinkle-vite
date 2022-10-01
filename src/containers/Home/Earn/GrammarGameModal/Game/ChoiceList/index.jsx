@@ -35,7 +35,7 @@ export default function ChoiceList({
 
   return (
     <div
-      className={`${gotWrong ? 'waving ' : ''}${css`
+      className={`${gotWrong ? 'jiggle ' : ''}${css`
         display: ${shown ? 'flex' : 'none'};
         opacity: ${shown ? 1 : 0};
         transition: opacity 1s;
@@ -78,7 +78,6 @@ export default function ChoiceList({
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;
         }
-
         @keyframes pulse {
           0% {
             box-shadow: 0 0 0 0 ${Color[successColor](0.7)};

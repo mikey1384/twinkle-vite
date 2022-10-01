@@ -103,6 +103,16 @@ ul {
   user-select: none;
 }
 
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
 @keyframes Gradient {
   0% {
     background-position: 0% 50%;
@@ -114,6 +124,42 @@ ul {
 
   100% {
     background-position: 0% 50%;
+  }
+}
+
+@keyframes jiggle {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  50% {
+    transform: translate(0.5rem, 0);
+  }
+
+  75% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes wave {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  50% {
+    transform: translate(0, -2rem);
+  }
+
+  100% {
+    transform: translate(0, 0);
   }
 }
 
