@@ -3,11 +3,14 @@ import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import FilterBar from '~/components/FilterBar';
 import Game from './Game';
+import ErrorBoundary from '~/components/ErrorBoundary';
+import StartScreen from './StartScreen';
 
 GrammarGameModal.propTypes = {
   onHide: PropTypes.func.isRequired
 };
 export default function GrammarGameModal({ onHide }) {
+  const [gameState, setGameState] = useState('notStarted');
   const [activeTab, setActiveTab] = useState('game');
 
   return (
@@ -40,7 +43,13 @@ export default function GrammarGameModal({ onHide }) {
         }}
       >
         {activeTab === 'game' ? (
-          <Game />
+          <ErrorBoundary componentPath="Earn/GrammarGameModal/GameState">
+            {gameState === 'notStarted' && (
+              <StartScreen onSetGameState={setGameState} />
+            )}
+            {gameState === 'started' && <Game />}
+            {gameState === 'finished' && <div>Finished</div>}
+          </ErrorBoundary>
         ) : activeTab === 'rankings' ? (
           <div>Rankings</div>
         ) : (
