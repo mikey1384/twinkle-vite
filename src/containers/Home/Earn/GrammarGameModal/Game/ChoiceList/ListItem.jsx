@@ -32,9 +32,7 @@ export default function ListItem({
       onMouseDown={handleSelect}
       key={index}
     >
-      <div style={{ padding: '0', textAlign: 'center' }}>
-        <div dangerouslySetInnerHTML={{ __html: listItem }} />
-      </div>
+      <div style={{ padding: '0', textAlign: 'center' }}>{listItem}</div>
     </nav>
   );
 
