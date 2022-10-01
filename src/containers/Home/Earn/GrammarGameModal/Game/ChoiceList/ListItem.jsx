@@ -10,6 +10,7 @@ ListItem.propTypes = {
   onCorrectAnswer: PropTypes.func.isRequired,
   onSetGotWrong: PropTypes.func
 };
+
 export default function ListItem({
   listItem,
   index,
