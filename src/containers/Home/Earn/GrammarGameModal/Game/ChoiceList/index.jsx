@@ -79,6 +79,9 @@ export default function ChoiceList({
           animation: pulse 1.5s;
         }
         .wrong {
+          color: #fff;
+          border: 1px solid ${Color.red()};
+          background: ${Color.red()};
           box-shadow: 0 0 10px ${Color.red()};
         }
         @media (max-width: ${mobileMaxWidth}) {

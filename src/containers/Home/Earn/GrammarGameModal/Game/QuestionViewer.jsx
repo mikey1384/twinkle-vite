@@ -66,9 +66,9 @@ export default function QuestionViewer({ questions }) {
       }
     }
     function handleSetGotWrong(index) {
-      loadingRef.current = true;
-      setGotWrong(true);
-      if (!timerRef.current) {
+      if (!loadingRef.current) {
+        loadingRef.current = true;
+        setGotWrong(true);
         setQuestionObj((prev) => ({
           ...prev,
           [currentIndex]: {
@@ -86,8 +86,6 @@ export default function QuestionViewer({ questions }) {
           }));
           setGotWrong(false);
           loadingRef.current = false;
-          clearTimeout(timerRef.current);
-          timerRef.current = null;
         }, 1000);
       }
     }

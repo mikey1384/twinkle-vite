@@ -55,7 +55,7 @@ export default function QuestionSlide({
             }
           `}
         >
-          <h3>{question}</h3>
+          <h3 className="unselectable">{question}</h3>
           <ChoiceList
             style={{ marginTop: '3rem', fontSize: '1.6rem' }}
             answerIndex={answerIndex}
