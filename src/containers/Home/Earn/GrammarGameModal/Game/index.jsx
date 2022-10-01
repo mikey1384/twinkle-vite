@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import QuestionViewer from './QuestionViewer';
 import { useAppContext } from '~/contexts';
 
-export default function Game() {
+Game.propTypes = {
+  onSetGameState: PropTypes.func.isRequired
+};
+
+export default function Game({ onSetGameState }) {
   const [questions, setQuestions] = useState([]);
   const loadGrammarGame = useAppContext(
     (v) => v.requestHelpers.loadGrammarGame
@@ -20,7 +25,7 @@ export default function Game() {
   return (
     <div style={{ width: '100%', padding: '0' }}>
       {questions.length > 0 ? (
-        <QuestionViewer questions={questions} />
+        <QuestionViewer onSetGameState={onSetGameState} questions={questions} />
       ) : (
         <Loading />
       )}
