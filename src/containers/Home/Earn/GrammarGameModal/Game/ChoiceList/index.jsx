@@ -61,7 +61,7 @@ export default function ChoiceList({
         }
         .correct {
           border: 0;
-          background-image: linear-gradient(
+          background: linear-gradient(
             to right,
             ${Color[successColor](1)} 0%,
             ${Color[successColor](0.6)} 50%,
