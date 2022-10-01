@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -19,6 +20,10 @@ export default function ListItem({
   onCorrectAnswer,
   onSetGotWrong
 }) {
+  const isWrong = useMemo(
+    () => selectedChoiceIndex === index && selectedChoiceIndex !== answerIndex,
+    [answerIndex, index, selectedChoiceIndex]
+  );
   return (
     <nav
       className={`${
@@ -32,13 +37,20 @@ export default function ListItem({
         width: 100%;
         cursor: pointer;
         &:hover {
+          &.wrong {
+            color: #fff;
+            border: 1px solid ${Color.red()};
+            background: ${Color.red()};
+          }
           background: ${Color.highlightGray()};
         }
       `}`}
       onMouseDown={handleSelect}
       key={index}
     >
-      <div style={{ padding: '0', textAlign: 'center' }}>{listItem}</div>
+      <div style={{ padding: '0', textAlign: 'center' }}>
+        {isWrong ? 'Wrong!' : listItem}
+      </div>
     </nav>
   );
 
