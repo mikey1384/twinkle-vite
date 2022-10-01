@@ -12,22 +12,25 @@ import {
 
 ChoiceList.propTypes = {
   answerIndex: PropTypes.number,
+  gotWrong: PropTypes.bool,
   listItems: PropTypes.array.isRequired,
   onCorrectAnswer: PropTypes.func.isRequired,
+  onSetGotWrong: PropTypes.func.isRequired,
   selectedChoiceIndex: PropTypes.number,
   style: PropTypes.object
 };
 export default function ChoiceList({
   answerIndex,
+  gotWrong,
   listItems,
   onCorrectAnswer,
+  onSetGotWrong,
   selectedChoiceIndex,
   style
 }) {
   const {
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
-  const [gotWrong, setGotWrong] = useState(false);
   const [shown, setShown] = useState(false);
   useEffect(() => {
     setTimeout(() => setShown(true), 1300);
@@ -35,7 +38,7 @@ export default function ChoiceList({
 
   return (
     <div
-      className={`${gotWrong ? 'jiggle ' : ''}${css`
+      className={`${gotWrong ? 'jiggle-jiggle-jiggle ' : ''}${css`
         display: ${shown ? 'flex' : 'none'};
         opacity: ${shown ? 1 : 0};
         transition: opacity 1s;
@@ -103,7 +106,7 @@ export default function ChoiceList({
             selectedChoiceIndex={selectedChoiceIndex}
             listItem={listItem}
             onCorrectAnswer={onCorrectAnswer}
-            onSetGotWrong={setGotWrong}
+            onSetGotWrong={onSetGotWrong}
             index={index}
           />
         );

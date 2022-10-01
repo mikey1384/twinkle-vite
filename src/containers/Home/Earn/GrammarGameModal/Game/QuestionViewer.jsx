@@ -16,6 +16,7 @@ export default function QuestionViewer({ questions }) {
   const [questionIds, setQuestionIds] = useState(null);
   const [questionObj, setQuestionObj] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [gotWrong, setGotWrong] = useState(false);
   const loadingRef = useRef(false);
 
   useEffect(() => {
@@ -41,11 +42,20 @@ export default function QuestionViewer({ questions }) {
         answerIndex={questionObj[questionId].answerIndex}
         selectedChoiceIndex={questionObj[questionId].selectedChoiceIndex}
         onCorrectAnswer={handleSelectCorrectAnswer}
+        onSetGotWrong={handleSetGotWrong}
+        gotWrong={gotWrong}
       />
     ));
     async function handleSelectCorrectAnswer() {
       if (!loadingRef.current) {
         loadingRef.current = true;
+        setQuestionObj((prev) => ({
+          ...prev,
+          [currentIndex]: {
+            ...prev[currentIndex],
+            selectedChoiceIndex: prev[currentIndex].answerIndex
+          }
+        }));
         correctSound.play();
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (currentIndex < questionIds.length - 1) {
@@ -54,7 +64,15 @@ export default function QuestionViewer({ questions }) {
         }
       }
     }
-  }, [currentIndex, questionIds, questionObj]);
+    function handleSetGotWrong() {
+      loadingRef.current = true;
+      setGotWrong(true);
+      setTimeout(() => {
+        setGotWrong(false);
+        loadingRef.current = false;
+      }, 1000);
+    }
+  }, [currentIndex, gotWrong, questionIds, questionObj]);
 
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Carousel/index">

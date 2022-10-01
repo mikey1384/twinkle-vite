@@ -149,6 +149,110 @@ ul {
   }
 }
 
+@keyframes jiggle-jiggle {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  12.5% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  25% {
+    transform: translate(0.5rem, 0);
+  }
+
+  37.5% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  50% {
+    transform: translate(0.5rem, 0);
+  }
+
+  62.5% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  75% {
+    transform: translate(0.5rem, 0);
+  }
+
+  87.5% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes jiggle-jiggle-jiggle {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  6.25% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  12.5% {
+    transform: translate(0.5rem, 0);
+  }
+
+  18.75% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  25% {
+    transform: translate(0.5rem, 0);
+  }
+
+  31.25% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  37.5% {
+    transform: translate(0.5rem, 0);
+  }
+
+  43.75% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  50% {
+    transform: translate(0.5rem, 0);
+  }
+
+  56.25% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  62.5% {
+    transform: translate(0.5rem, 0);
+  }
+
+  68.75% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  75% {
+    transform: translate(0.5rem, 0);
+  }
+
+  81.25% {
+    transform: translate(-0.5rem, 0);
+  }
+
+  87.5% {
+    transform: translate(0.5rem, 0);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
 @keyframes wave {
   0% {
     transform: translate(0, 0);

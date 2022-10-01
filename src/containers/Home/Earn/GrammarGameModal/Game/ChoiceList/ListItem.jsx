@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -8,20 +7,25 @@ ListItem.propTypes = {
   listItem: PropTypes.string.isRequired,
   index: PropTypes.number,
   onCorrectAnswer: PropTypes.func.isRequired,
-  onSetGotWrong: PropTypes.func
+  onSetGotWrong: PropTypes.func,
+  selectedChoiceIndex: PropTypes.number
 };
 
 export default function ListItem({
   listItem,
   index,
   answerIndex,
+  selectedChoiceIndex,
   onCorrectAnswer,
   onSetGotWrong
 }) {
-  const [className, setClassName] = useState('');
   return (
     <nav
-      className={`${className}unselectable ${css`
+      className={`${
+        selectedChoiceIndex === index && selectedChoiceIndex === answerIndex
+          ? 'correct '
+          : ''
+      }unselectable ${css`
         padding: 1rem;
         width: 100%;
         cursor: pointer;
@@ -38,13 +42,9 @@ export default function ListItem({
 
   function handleSelect() {
     if (index === answerIndex) {
-      setClassName('correct ');
       onCorrectAnswer();
     } else {
-      onSetGotWrong(true);
-      setTimeout(() => {
-        onSetGotWrong(false);
-      }, 100);
+      onSetGotWrong();
     }
   }
 }
