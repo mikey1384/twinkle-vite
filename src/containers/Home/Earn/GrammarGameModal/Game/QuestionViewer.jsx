@@ -7,12 +7,13 @@ import Loading from '~/components/Loading';
 import correct from './correct_sound.mp3';
 
 QuestionViewer.propTypes = {
+  onSetGameState: PropTypes.func.isRequired,
   questions: PropTypes.array
 };
 
 const correctSound = new Audio(correct);
 
-export default function QuestionViewer({ questions }) {
+export default function QuestionViewer({ onSetGameState, questions }) {
   const timerRef = useRef(null);
   const [questionIds, setQuestionIds] = useState(null);
   const [questionObj, setQuestionObj] = useState({});
@@ -62,6 +63,8 @@ export default function QuestionViewer({ questions }) {
         if (currentIndex < questionIds.length - 1) {
           setCurrentIndex((prev) => prev + 1);
           loadingRef.current = false;
+        } else {
+          onSetGameState('finished');
         }
       }
     }
@@ -89,7 +92,7 @@ export default function QuestionViewer({ questions }) {
         }, 1000);
       }
     }
-  }, [currentIndex, gotWrong, questionIds, questionObj]);
+  }, [currentIndex, gotWrong, onSetGameState, questionIds, questionObj]);
 
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Carousel/index">

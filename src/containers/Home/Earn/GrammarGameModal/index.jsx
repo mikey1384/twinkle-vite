@@ -47,7 +47,7 @@ export default function GrammarGameModal({ onHide }) {
             {gameState === 'notStarted' && (
               <StartScreen onSetGameState={setGameState} />
             )}
-            {gameState === 'started' && <Game />}
+            {gameState === 'started' && <Game onSetGameState={setGameState} />}
             {gameState === 'finished' && <div>Finished</div>}
           </ErrorBoundary>
         ) : activeTab === 'rankings' ? (
