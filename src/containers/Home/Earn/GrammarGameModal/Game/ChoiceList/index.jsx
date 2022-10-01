@@ -13,20 +13,21 @@ import {
 ChoiceList.propTypes = {
   answerIndex: PropTypes.number,
   listItems: PropTypes.array.isRequired,
-  onSelect: PropTypes.func.isRequired,
+  onCorrectAnswer: PropTypes.func.isRequired,
   selectedChoiceIndex: PropTypes.number,
   style: PropTypes.object
 };
 export default function ChoiceList({
   answerIndex,
   listItems,
-  onSelect,
+  onCorrectAnswer,
   selectedChoiceIndex,
   style
 }) {
   const {
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
+  const [gotWrong, setGotWrong] = useState(false);
   const [shown, setShown] = useState(false);
   useEffect(() => {
     setTimeout(() => setShown(true), 1300);
@@ -34,7 +35,7 @@ export default function ChoiceList({
 
   return (
     <div
-      className={css`
+      className={`${gotWrong ? 'waving ' : ''}${css`
         display: ${shown ? 'flex' : 'none'};
         opacity: ${shown ? 1 : 0};
         transition: opacity 1s;
@@ -92,7 +93,7 @@ export default function ChoiceList({
             background-position: right center;
           }
         }
-      `}
+      `}`}
       style={style}
     >
       {listItems.map((listItem, index) => {
@@ -102,7 +103,8 @@ export default function ChoiceList({
             answerIndex={answerIndex}
             selectedChoiceIndex={selectedChoiceIndex}
             listItem={listItem}
-            onSelect={onSelect}
+            onCorrectAnswer={onCorrectAnswer}
+            onSetGotWrong={setGotWrong}
             index={index}
           />
         );

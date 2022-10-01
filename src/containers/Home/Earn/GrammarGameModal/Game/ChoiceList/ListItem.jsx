@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -7,26 +7,20 @@ ListItem.propTypes = {
   answerIndex: PropTypes.number,
   listItem: PropTypes.string.isRequired,
   index: PropTypes.number,
-  onSelect: PropTypes.func.isRequired,
-  selectedChoiceIndex: PropTypes.number
+  onCorrectAnswer: PropTypes.func.isRequired,
+  onSetGotWrong: PropTypes.func
 };
 export default function ListItem({
   listItem,
-  onSelect,
   index,
   answerIndex,
-  selectedChoiceIndex
+  onCorrectAnswer,
+  onSetGotWrong
 }) {
   const [className, setClassName] = useState('');
-  useEffect(() => {
-    if (selectedChoiceIndex === answerIndex && selectedChoiceIndex === index) {
-      setClassName('correct ');
-    }
-  }, [selectedChoiceIndex, answerIndex, index]);
-
   return (
     <nav
-      className={`${className}${css`
+      className={`${className}unselectable ${css`
         padding: 1rem;
         width: 100%;
         cursor: pointer;
@@ -44,6 +38,14 @@ export default function ListItem({
   );
 
   function handleSelect() {
-    onSelect(index);
+    if (index === answerIndex) {
+      setClassName('correct ');
+      onCorrectAnswer();
+    } else {
+      onSetGotWrong(true);
+      setTimeout(() => {
+        onSetGotWrong(false);
+      }, 100);
+    }
   }
 }
