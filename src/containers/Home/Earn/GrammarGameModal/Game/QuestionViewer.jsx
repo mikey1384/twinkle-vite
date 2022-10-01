@@ -13,6 +13,7 @@ QuestionViewer.propTypes = {
 const correctSound = new Audio(correct);
 
 export default function QuestionViewer({ questions }) {
+  const timerRef = useRef(null);
   const [questionIds, setQuestionIds] = useState(null);
   const [questionObj, setQuestionObj] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -64,14 +65,6 @@ export default function QuestionViewer({ questions }) {
         }
       }
     }
-    function handleSetGotWrong() {
-      loadingRef.current = true;
-      setGotWrong(true);
-      setTimeout(() => {
-        setGotWrong(false);
-        loadingRef.current = false;
-      }, 1000);
-    }
   }, [currentIndex, gotWrong, questionIds, questionObj]);
 
   return (
@@ -81,4 +74,17 @@ export default function QuestionViewer({ questions }) {
       </SlideContainer>
     </ErrorBoundary>
   );
+
+  function handleSetGotWrong() {
+    loadingRef.current = true;
+    setGotWrong(true);
+    if (!timerRef.current) {
+      timerRef.current = setTimeout(() => {
+        setGotWrong(false);
+        loadingRef.current = false;
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }, 1000);
+    }
+  }
 }
