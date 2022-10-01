@@ -4,7 +4,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
-import correct from './correct.mp3';
+import correct from './correct_sound.mp3';
 
 QuestionViewer.propTypes = {
   questions: PropTypes.array
