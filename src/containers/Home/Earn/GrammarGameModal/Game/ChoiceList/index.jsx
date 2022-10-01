@@ -78,6 +78,9 @@ export default function ChoiceList({
           box-shadow: 0 0 0 0 rgba(#5a99d4, 0.5);
           animation: pulse 1.5s;
         }
+        .wrong {
+          box-shadow: 0 0 10px ${Color.red()};
+        }
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;
         }
@@ -107,6 +110,7 @@ export default function ChoiceList({
             listItem={listItem}
             onCorrectAnswer={onCorrectAnswer}
             onSetGotWrong={onSetGotWrong}
+            gotWrong={gotWrong}
             index={index}
           />
         );

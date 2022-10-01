@@ -22,8 +22,10 @@ export default function ListItem({
   return (
     <nav
       className={`${
-        selectedChoiceIndex === index && selectedChoiceIndex === answerIndex
-          ? 'correct '
+        selectedChoiceIndex === index
+          ? selectedChoiceIndex === answerIndex
+            ? 'correct '
+            : 'wrong '
           : ''
       }unselectable ${css`
         padding: 1rem;
@@ -44,7 +46,7 @@ export default function ListItem({
     if (index === answerIndex) {
       onCorrectAnswer();
     } else {
-      onSetGotWrong();
+      onSetGotWrong(index);
     }
   }
 }
