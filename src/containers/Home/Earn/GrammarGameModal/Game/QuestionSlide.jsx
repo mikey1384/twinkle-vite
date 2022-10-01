@@ -8,7 +8,9 @@ QuestionSlide.propTypes = {
   question: PropTypes.string.isRequired,
   selectedChoiceIndex: PropTypes.number,
   choices: PropTypes.array.isRequired,
-  onCorrectAnswer: PropTypes.func.isRequired
+  onCorrectAnswer: PropTypes.func.isRequired,
+  onSetGotWrong: PropTypes.func.isRequired,
+  gotWrong: PropTypes.bool
 };
 
 export default function QuestionSlide({
@@ -16,7 +18,9 @@ export default function QuestionSlide({
   question,
   selectedChoiceIndex,
   choices,
-  onCorrectAnswer
+  onCorrectAnswer,
+  onSetGotWrong,
+  gotWrong
 }) {
   return (
     <div
@@ -40,8 +44,9 @@ export default function QuestionSlide({
             margin-top: 2rem;
             text-align: center;
             align-items: center;
-            .jiggle {
-              animation: jiggle 100ms ease-in-out;
+            .jiggle-jiggle-jiggle {
+              animation: jiggle-jiggle-jiggle linear;
+              animation-duration: 1000ms;
             }
             @media (max-width: ${mobileMaxWidth}) {
               > h3 {
@@ -56,7 +61,9 @@ export default function QuestionSlide({
             answerIndex={answerIndex}
             selectedChoiceIndex={selectedChoiceIndex}
             onCorrectAnswer={onCorrectAnswer}
+            onSetGotWrong={onSetGotWrong}
             listItems={choices}
+            gotWrong={gotWrong}
           />
         </div>
       </div>
