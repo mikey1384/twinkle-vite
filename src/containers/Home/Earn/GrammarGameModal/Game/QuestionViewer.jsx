@@ -65,6 +65,32 @@ export default function QuestionViewer({ questions }) {
         }
       }
     }
+    function handleSetGotWrong(index) {
+      loadingRef.current = true;
+      setGotWrong(true);
+      if (!timerRef.current) {
+        setQuestionObj((prev) => ({
+          ...prev,
+          [currentIndex]: {
+            ...prev[currentIndex],
+            selectedChoiceIndex: index
+          }
+        }));
+        timerRef.current = setTimeout(() => {
+          setQuestionObj((prev) => ({
+            ...prev,
+            [currentIndex]: {
+              ...prev[currentIndex],
+              selectedChoiceIndex: null
+            }
+          }));
+          setGotWrong(false);
+          loadingRef.current = false;
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }, 1000);
+      }
+    }
   }, [currentIndex, gotWrong, questionIds, questionObj]);
 
   return (
@@ -74,17 +100,4 @@ export default function QuestionViewer({ questions }) {
       </SlideContainer>
     </ErrorBoundary>
   );
-
-  function handleSetGotWrong() {
-    loadingRef.current = true;
-    setGotWrong(true);
-    if (!timerRef.current) {
-      timerRef.current = setTimeout(() => {
-        setGotWrong(false);
-        loadingRef.current = false;
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }, 1000);
-    }
-  }
 }
