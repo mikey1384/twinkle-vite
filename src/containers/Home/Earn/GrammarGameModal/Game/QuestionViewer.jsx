@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from './QuestionSlide';
@@ -16,6 +16,7 @@ export default function QuestionViewer({ questions }) {
   const [questionIds, setQuestionIds] = useState(null);
   const [questionObj, setQuestionObj] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
     const resultObj = questions.reduce((prev, curr, index) => {
@@ -39,27 +40,18 @@ export default function QuestionViewer({ questions }) {
         choices={questionObj[questionId].choices}
         answerIndex={questionObj[questionId].answerIndex}
         selectedChoiceIndex={questionObj[questionId].selectedChoiceIndex}
-        onSelectChoice={(selectedIndex) => {
-          handleSelectChoice({ selectedIndex, questionId });
-        }}
+        onCorrectAnswer={handleSelectCorrectAnswer}
       />
     ));
-    async function handleSelectChoice({ selectedIndex, questionId }) {
-      if (selectedIndex === questionObj[questionId]?.answerIndex) {
-        setQuestionObj({
-          ...questionObj,
-          [questionId]: {
-            ...questionObj[questionId],
-            selectedChoiceIndex: selectedIndex
-          }
-        });
+    async function handleSelectCorrectAnswer() {
+      if (!loadingRef.current) {
+        loadingRef.current = true;
         correctSound.play();
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (currentIndex < questionIds.length - 1) {
           setCurrentIndex((prev) => prev + 1);
+          loadingRef.current = false;
         }
-      } else {
-        console.log('wrong');
       }
     }
   }, [currentIndex, questionIds, questionObj]);

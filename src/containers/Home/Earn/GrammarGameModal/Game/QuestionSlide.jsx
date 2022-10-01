@@ -8,7 +8,7 @@ QuestionSlide.propTypes = {
   question: PropTypes.string.isRequired,
   selectedChoiceIndex: PropTypes.number,
   choices: PropTypes.array.isRequired,
-  onSelectChoice: PropTypes.func.isRequired
+  onCorrectAnswer: PropTypes.func.isRequired
 };
 
 export default function QuestionSlide({
@@ -16,7 +16,7 @@ export default function QuestionSlide({
   question,
   selectedChoiceIndex,
   choices,
-  onSelectChoice
+  onCorrectAnswer
 }) {
   return (
     <div
@@ -40,6 +40,10 @@ export default function QuestionSlide({
             margin-top: 2rem;
             text-align: center;
             align-items: center;
+            .waving {
+              animation: wave ease-in-out;
+              animation-duration: 200ms;
+            }
             @media (max-width: ${mobileMaxWidth}) {
               > h3 {
                 font-size: 1.8rem;
@@ -52,7 +56,7 @@ export default function QuestionSlide({
             style={{ marginTop: '3rem', fontSize: '1.6rem' }}
             answerIndex={answerIndex}
             selectedChoiceIndex={selectedChoiceIndex}
-            onSelect={onSelectChoice}
+            onCorrectAnswer={onCorrectAnswer}
             listItems={choices}
           />
         </div>
