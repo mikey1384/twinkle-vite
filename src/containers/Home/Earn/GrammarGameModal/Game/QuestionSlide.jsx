@@ -40,9 +40,8 @@ export default function QuestionSlide({
             margin-top: 2rem;
             text-align: center;
             align-items: center;
-            .waving {
-              animation: wave ease-in-out;
-              animation-duration: 200ms;
+            .jiggle {
+              animation: jiggle 100ms ease-in-out;
             }
             @media (max-width: ${mobileMaxWidth}) {
               > h3 {
