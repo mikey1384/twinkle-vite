@@ -1,12 +1,22 @@
-import PropTypes from 'prop-types';
+import { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import QuestionViewer from './QuestionViewer';
+import { useAppContext } from '~/contexts';
 
-Game.propTypes = {
-  questions: PropTypes.array
-};
+export default function Game() {
+  const [questions, setQuestions] = useState([]);
+  const loadGrammarGame = useAppContext(
+    (v) => v.requestHelpers.loadGrammarGame
+  );
+  useEffect(() => {
+    init();
+    async function init() {
+      const questions = await loadGrammarGame();
+      setQuestions(questions);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-export default function Game({ questions = [] }) {
   return (
     <div style={{ width: '100%', padding: '0' }}>
       {questions.length > 0 ? (
