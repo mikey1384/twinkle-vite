@@ -11,8 +11,8 @@ export default function StartScreen({ onGameStart }) {
   const [screenIndex, setScreenIndex] = useState(0);
   useEffect(() => {
     setTimeout(() => setScreenIndex(1), 1300);
-    setTimeout(() => setScreenIndex(2), 3500);
-    setTimeout(() => setScreenIndex(3), 6000);
+    setTimeout(() => setScreenIndex(2), 3600);
+    setTimeout(() => setScreenIndex(3), 6200);
     setTimeout(() => setScreenIndex(4), 9000);
   }, []);
 

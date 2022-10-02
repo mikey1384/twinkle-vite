@@ -9,7 +9,7 @@ Game.propTypes = {
 
 export default function Game({ questions, onSetGameState }) {
   return (
-    <div style={{ width: '100%', padding: '0' }}>
+    <div style={{ width: '100%', paddingTop: '3.5rem' }}>
       {questions.length > 0 ? (
         <QuestionViewer onSetGameState={onSetGameState} questions={questions} />
       ) : (
