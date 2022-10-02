@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -7,6 +8,21 @@ StartScreen.propTypes = {
 };
 
 export default function StartScreen({ onGameStart }) {
+  const timerRef = useRef(null);
+  const [screenIndex, setScreenIndex] = useState(0);
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setScreenIndex((index) => {
+        if (index < 4) {
+          return index + 1;
+        } else {
+          clearInterval(timerRef.current);
+          return index;
+        }
+      });
+    }, 2000);
+  }, []);
+
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">
       <div
@@ -28,13 +44,37 @@ export default function StartScreen({ onGameStart }) {
           >
             The Grammar Game
           </div>
-          <div style={{ marginTop: '3rem', lineHeight: 1.7 }}>
-            <p>Answer 10 fill-in-the-blank grammar questions.</p>
-            <p>The faster you answer a question, the more XP you earn.</p>
-            <p>The more difficult a question is, the more XP you earn.</p>
-            <p>Move up the leaderboard by earning lots of XP!</p>
+          <div style={{ marginTop: '4rem', lineHeight: 1.7 }}>
+            {screenIndex === 0 && (
+              <p style={{ fontSize: '1.7rem' }}>
+                Answer 10 fill-in-the-blank grammar questions.
+              </p>
+            )}
+            {screenIndex === 1 && (
+              <p style={{ fontSize: '1.7rem' }}>
+                The faster you answer a question, the more XP you earn.
+              </p>
+            )}
+            {screenIndex === 2 && (
+              <p style={{ fontSize: '1.7rem' }}>
+                The more difficult a question is, the more XP you earn.
+              </p>
+            )}
+            {screenIndex === 3 && (
+              <p style={{ fontSize: '1.7rem' }}>
+                Move up the leaderboard by earning lots of XP!
+              </p>
+            )}
+            {screenIndex === 4 && (
+              <>
+                <p>Answer 10 fill-in-the-blank grammar questions.</p>
+                <p>The faster you answer a question, the more XP you earn.</p>
+                <p>The more difficult a question is, the more XP you earn.</p>
+                <p>Move up the leaderboard by earning lots of XP!</p>
+              </>
+            )}
           </div>
-          <p style={{ marginTop: '3.5rem', textAlign: 'center' }}>
+          <p style={{ marginTop: '4rem', textAlign: 'center' }}>
             Press the <b>start</b> button when you are ready
           </p>
         </div>
