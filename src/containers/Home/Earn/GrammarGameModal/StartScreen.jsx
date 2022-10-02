@@ -59,12 +59,12 @@ export default function StartScreen({ onGameStart }) {
               </p>
             )}
             {screenIndex === 4 && (
-              <>
+              <div>
                 <p>Answer 10 fill-in-the-blank grammar questions.</p>
                 <p>The faster you answer a question, the more XP you earn.</p>
                 <p>The more difficult a question is, the more XP you earn.</p>
                 <p>Move up the leaderboard by earning lots of XP!</p>
-              </>
+              </div>
             )}
           </div>
           <p style={{ marginTop: '4rem', textAlign: 'center' }}>
