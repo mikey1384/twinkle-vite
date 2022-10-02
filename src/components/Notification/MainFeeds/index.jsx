@@ -178,7 +178,6 @@ function MainFeeds({
             <GradientButton
               isFlat
               loading={collectingReward}
-              color={totalRewardAmount > 0 ? alertColor : successColor}
               style={{ marginBottom: '1rem', width: '100%' }}
               fontSize="2.2rem"
               mobileFontSize="1.7rem"
