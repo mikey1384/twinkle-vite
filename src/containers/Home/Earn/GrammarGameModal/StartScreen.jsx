@@ -3,10 +3,10 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 StartScreen.propTypes = {
-  onSetGameState: PropTypes.func.isRequired
+  onGameStart: PropTypes.func.isRequired
 };
 
-export default function StartScreen({ onSetGameState }) {
+export default function StartScreen({ onGameStart }) {
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">
       <div
@@ -30,8 +30,8 @@ export default function StartScreen({ onSetGameState }) {
           </div>
           <div style={{ marginTop: '3rem', lineHeight: 1.7 }}>
             <p>Answer 10 fill-in-the-blank grammar questions.</p>
-            <p>The quicker you answer a question, the more XP you can earn.</p>
-            <p>The more difficult a question is, the more XP you can earn.</p>
+            <p>The faster you answer a question, the more XP you earn.</p>
+            <p>The more difficult a question is, the more XP you earn.</p>
             <p>Move up the leaderboard by earning lots of XP!</p>
           </div>
           <p style={{ marginTop: '3.5rem', textAlign: 'center' }}>
@@ -40,7 +40,7 @@ export default function StartScreen({ onSetGameState }) {
         </div>
         <GradientButton
           style={{ marginTop: '4rem', fontSize: '1.7rem' }}
-          onClick={() => onSetGameState('started')}
+          onClick={onGameStart}
         >
           Start
         </GradientButton>

@@ -5,13 +5,19 @@ import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StartScreen from './StartScreen';
+import { useAppContext } from '~/contexts';
 
 GrammarGameModal.propTypes = {
   onHide: PropTypes.func.isRequired
 };
+
 export default function GrammarGameModal({ onHide }) {
+  const loadGrammarGame = useAppContext(
+    (v) => v.requestHelpers.loadGrammarGame
+  );
   const [gameState, setGameState] = useState('notStarted');
   const [activeTab, setActiveTab] = useState('game');
+  const [questions, setQuestions] = useState([]);
 
   return (
     <Modal closeWhenClickedOutside={false} onHide={onHide}>
@@ -45,9 +51,11 @@ export default function GrammarGameModal({ onHide }) {
         {activeTab === 'game' ? (
           <ErrorBoundary componentPath="Earn/GrammarGameModal/GameState">
             {gameState === 'notStarted' && (
-              <StartScreen onSetGameState={setGameState} />
+              <StartScreen onGameStart={handleGameStart} />
             )}
-            {gameState === 'started' && <Game onSetGameState={setGameState} />}
+            {gameState === 'started' && (
+              <Game questions={questions} onSetGameState={setGameState} />
+            )}
             {gameState === 'finished' && <div>Finished</div>}
           </ErrorBoundary>
         ) : activeTab === 'rankings' ? (
@@ -59,4 +67,10 @@ export default function GrammarGameModal({ onHide }) {
       <footer></footer>
     </Modal>
   );
+
+  async function handleGameStart() {
+    const questions = await loadGrammarGame();
+    setQuestions(questions);
+    setGameState('started');
+  }
 }
