@@ -21,27 +21,29 @@ export default function GrammarGameModal({ onHide }) {
 
   return (
     <Modal closeWhenClickedOutside={false} onHide={onHide}>
-      <header style={{ padding: 0 }}>
-        <FilterBar
-          style={{
-            marginTop: '2rem',
-            height: '5rem'
-          }}
-        >
-          <nav
-            className={activeTab === 'game' ? 'active' : null}
-            onClick={() => setActiveTab('game')}
+      {gameState !== 'started' && (
+        <header style={{ padding: 0 }}>
+          <FilterBar
+            style={{
+              marginTop: '2rem',
+              height: '5rem'
+            }}
           >
-            The Grammar Game
-          </nav>
-          <nav
-            className={activeTab === 'rankings' ? 'active' : null}
-            onClick={() => setActiveTab('rankings')}
-          >
-            Top Scorers
-          </nav>
-        </FilterBar>
-      </header>
+            <nav
+              className={activeTab === 'game' ? 'active' : null}
+              onClick={() => setActiveTab('game')}
+            >
+              The Grammar Game
+            </nav>
+            <nav
+              className={activeTab === 'rankings' ? 'active' : null}
+              onClick={() => setActiveTab('rankings')}
+            >
+              Top Scorers
+            </nav>
+          </FilterBar>
+        </header>
+      )}
       <main
         style={{
           padding: 0,

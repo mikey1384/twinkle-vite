@@ -35,7 +35,7 @@ export default function ChoiceList({
   } = useKeyContext((v) => v.theme);
   const [shown, setShown] = useState(false);
   useEffect(() => {
-    setTimeout(() => setShown(true), Math.max(1300, questionLength * 45));
+    setTimeout(() => setShown(true), Math.max(1500, questionLength * 35));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
