@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -8,19 +8,12 @@ StartScreen.propTypes = {
 };
 
 export default function StartScreen({ onGameStart }) {
-  const timerRef = useRef(null);
   const [screenIndex, setScreenIndex] = useState(0);
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setScreenIndex((index) => {
-        if (index < 4) {
-          return index + 1;
-        } else {
-          clearInterval(timerRef.current);
-          return index;
-        }
-      });
-    }, 2000);
+    setTimeout(() => setScreenIndex(1), 1100);
+    setTimeout(() => setScreenIndex(2), 3000);
+    setTimeout(() => setScreenIndex(3), 5500);
+    setTimeout(() => setScreenIndex(4), 8500);
   }, []);
 
   return (
