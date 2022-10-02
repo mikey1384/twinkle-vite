@@ -20,6 +20,7 @@ export default function StartScreen({ onSetGameState }) {
         <div>
           <div
             style={{
+              marginTop: '0.5rem',
               textAlign: 'center',
               fontWeight: 'bold',
               fontSize: '1.7rem'
@@ -27,17 +28,18 @@ export default function StartScreen({ onSetGameState }) {
           >
             The Grammar Game
           </div>
-          <div style={{ marginTop: '2rem', lineHeight: 1.7 }}>
-            <p>Earn XP based on how quickly you answer the questions.</p>
-            <p>The harder a question is, the more XP you can earn.</p>
-            <p>There are 10 questions in total.</p>
+          <div style={{ marginTop: '3rem', lineHeight: 1.7 }}>
+            <p>Answer 10 fill-in-the-blank grammar questions.</p>
+            <p>The quicker you answer a question, the more XP you can earn.</p>
+            <p>The more difficult a question is, the more XP you can earn.</p>
+            <p>Move up the leaderboard by earning lots of XP!</p>
           </div>
-          <p style={{ marginTop: '5rem' }}>
-            Press the start button when you are ready. Good luck!
+          <p style={{ marginTop: '3.5rem', textAlign: 'center' }}>
+            Press the <b>start</b> button when you are ready
           </p>
         </div>
         <GradientButton
-          style={{ marginTop: '3.5rem', fontSize: '1.7rem' }}
+          style={{ marginTop: '4rem', fontSize: '1.7rem' }}
           onClick={() => onSetGameState('started')}
         >
           Start
