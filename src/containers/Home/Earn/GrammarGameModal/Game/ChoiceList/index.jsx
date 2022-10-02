@@ -16,6 +16,7 @@ ChoiceList.propTypes = {
   listItems: PropTypes.array.isRequired,
   onCorrectAnswer: PropTypes.func.isRequired,
   onSetGotWrong: PropTypes.func.isRequired,
+  questionLength: PropTypes.number,
   selectedChoiceIndex: PropTypes.number,
   style: PropTypes.object
 };
@@ -25,6 +26,7 @@ export default function ChoiceList({
   listItems,
   onCorrectAnswer,
   onSetGotWrong,
+  questionLength = 0,
   selectedChoiceIndex,
   style
 }) {
@@ -33,7 +35,8 @@ export default function ChoiceList({
   } = useKeyContext((v) => v.theme);
   const [shown, setShown] = useState(false);
   useEffect(() => {
-    setTimeout(() => setShown(true), 1300);
+    setTimeout(() => setShown(true), Math.max(1300, questionLength * 45));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

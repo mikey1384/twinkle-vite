@@ -63,6 +63,7 @@ export default function QuestionSlide({
             onCorrectAnswer={onCorrectAnswer}
             onSetGotWrong={onSetGotWrong}
             listItems={choices}
+            questionLength={question.length}
             gotWrong={gotWrong}
           />
         </div>
