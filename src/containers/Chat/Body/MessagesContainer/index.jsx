@@ -1164,6 +1164,7 @@ function MessagesContainer({
                   index={index}
                   isLastMsg={index === 0}
                   isNotification={!!message.isNotification}
+                  isBanned={!!banned?.chat}
                   isRestricted={!!isChatRestricted}
                   loading={loadingAnimationShown}
                   message={message}
@@ -1250,6 +1251,7 @@ function MessagesContainer({
         <MessageInput
           selectedChannelId={selectedChannelId}
           isRestricted={!!isChatRestricted}
+          isBanned={!!banned?.chat}
           innerRef={ChatInputRef}
           loading={loadingAnimationShown}
           socketConnected={socketConnected}
