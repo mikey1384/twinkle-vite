@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Prompt from './Prompt';
 
 StartScreen.propTypes = {
   onGameStart: PropTypes.func.isRequired
@@ -10,10 +11,10 @@ StartScreen.propTypes = {
 export default function StartScreen({ onGameStart }) {
   const [screenIndex, setScreenIndex] = useState(0);
   useEffect(() => {
-    setTimeout(() => setScreenIndex(1), 1300);
-    setTimeout(() => setScreenIndex(2), 3600);
-    setTimeout(() => setScreenIndex(3), 6200);
-    setTimeout(() => setScreenIndex(4), 9000);
+    setTimeout(() => setScreenIndex(1), 2000);
+    setTimeout(() => setScreenIndex(2), 4500);
+    setTimeout(() => setScreenIndex(3), 7000);
+    setTimeout(() => setScreenIndex(4), 9500);
   }, []);
 
   return (
@@ -39,24 +40,20 @@ export default function StartScreen({ onGameStart }) {
           </div>
           <div style={{ marginTop: '4rem', lineHeight: 1.7 }}>
             {screenIndex === 0 && (
-              <p style={{ fontSize: '1.7rem' }}>
-                Answer 10 fill-in-the-blank grammar questions.
-              </p>
+              <Prompt>Answer 10 fill-in-the-blank grammar questions.</Prompt>
             )}
             {screenIndex === 1 && (
-              <p style={{ fontSize: '1.7rem' }}>
+              <Prompt>
                 The faster you answer a question, the more XP you earn.
-              </p>
+              </Prompt>
             )}
             {screenIndex === 2 && (
-              <p style={{ fontSize: '1.7rem' }}>
+              <Prompt>
                 The more difficult a question is, the more XP you earn.
-              </p>
+              </Prompt>
             )}
             {screenIndex === 3 && (
-              <p style={{ fontSize: '1.7rem' }}>
-                Move up the leaderboard by earning lots of XP!
-              </p>
+              <Prompt>Move up the leaderboard by earning lots of XP!</Prompt>
             )}
             {screenIndex === 4 && (
               <div>
