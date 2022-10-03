@@ -56,6 +56,7 @@ Message.propTypes = {
   message: PropTypes.object,
   onDelete: PropTypes.func,
   index: PropTypes.number,
+  isBanned: PropTypes.bool,
   isLastMsg: PropTypes.bool,
   isNotification: PropTypes.bool,
   isRestricted: PropTypes.bool,
@@ -82,6 +83,7 @@ function Message({
   isLastMsg,
   isNotification,
   isRestricted,
+  isBanned,
   loading,
   message,
   message: {
@@ -381,6 +383,7 @@ function Message({
 
   const dropdownMenuItems = useMemo(() => {
     const result = [];
+    if (isBanned) return result;
     if (!isRestricted) {
       result.push({
         label: (
@@ -462,6 +465,7 @@ function Message({
   }, [
     canDelete,
     channelId,
+    isBanned,
     isCreator,
     isDrawOffer,
     message,
@@ -813,7 +817,7 @@ function Message({
                     display: 'flex'
                   }}
                 >
-                  {!invitePath && !isDrawOffer && !isChessMsg && (
+                  {!invitePath && !isDrawOffer && !isChessMsg && !isBanned && (
                     <ReactionButton
                       onReactionClick={handleAddReaction}
                       reactionsMenuShown={reactionsMenuShown}
