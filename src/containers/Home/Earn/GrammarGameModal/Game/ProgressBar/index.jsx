@@ -1,3 +1,4 @@
+import Marble from './Marble';
 import { css } from '@emotion/css';
 
 export default function ProgressBar() {
@@ -62,36 +63,16 @@ export default function ProgressBar() {
         justifyContent: 'center'
       }}
     >
-      <div className="marble">
-        <div className="ball bubble" />
-      </div>
-      <div className="marble">
-        <div className="ball bubble" />
-      </div>
-      <div className="marble">
-        <div className="ball bubble" />
-      </div>
-      <div className="marble">
-        <div className="ball bubble" />
-      </div>
-      <div className="marble">
-        <div className="ball bubble" />
-      </div>
-      <div className="marble">
-        <div className="ball bubble" />
-      </div>
-      <div className="marble">
-        <div className="ball bubble" />
-      </div>
-      <div className="marble">
-        <div className="ball bubble" />
-      </div>
-      <div className="marble">
-        <div className="ball bubble" />
-      </div>
-      <div className="marble">
-        <div className="ball bubble" />
-      </div>
+      <Marble />
+      <Marble style={{ marginLeft: '0.5rem' }} />
+      <Marble style={{ marginLeft: '0.5rem' }} />
+      <Marble style={{ marginLeft: '0.5rem' }} />
+      <Marble style={{ marginLeft: '0.5rem' }} />
+      <Marble style={{ marginLeft: '0.5rem' }} />
+      <Marble style={{ marginLeft: '0.5rem' }} />
+      <Marble style={{ marginLeft: '0.5rem' }} />
+      <Marble style={{ marginLeft: '0.5rem' }} />
+      <Marble style={{ marginLeft: '0.5rem' }} />
     </div>
   );
 }
