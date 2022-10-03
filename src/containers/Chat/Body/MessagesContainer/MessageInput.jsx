@@ -38,6 +38,7 @@ MessageInput.propTypes = {
   selectedChannelId: PropTypes.number,
   innerRef: PropTypes.object,
   inputState: PropTypes.object,
+  isBanned: PropTypes.bool,
   isRespondingToSubject: PropTypes.bool,
   isRestricted: PropTypes.bool,
   isTwoPeopleChannel: PropTypes.oneOfType([PropTypes.number, PropTypes.bool]),
@@ -61,6 +62,7 @@ export default function MessageInput({
   selectedChannelId = 0,
   innerRef,
   inputState,
+  isBanned,
   isRestricted,
   isRespondingToSubject,
   isTwoPeopleChannel,
@@ -366,11 +368,13 @@ export default function MessageInput({
           ) : null}
         </div>
         <Textarea
-          disabled={isRestricted}
+          disabled={isRestricted || isBanned}
           innerRef={innerRef}
           minRows={1}
           placeholder={
-            isRestricted
+            isBanned
+              ? 'You are banned from using the Chat feature'
+              : isRestricted
               ? `Only the administrator can post messages here...`
               : `${enterMessageLabel}...`
           }
