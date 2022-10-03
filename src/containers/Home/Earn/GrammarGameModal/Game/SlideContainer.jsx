@@ -1,6 +1,7 @@
 import { Children, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import ProgressBar from './ProgressBar';
 import { scrollElementToCenter } from '~/helpers';
 
 SlideContainer.propTypes = {
@@ -34,7 +35,10 @@ export default function SlideContainer({ children, selectedIndex = 0 }) {
       componentPath="Earn/GrammarGameModal/SlideContainer"
       style={{ width: '100%' }}
     >
-      <div style={{ width: '100%', minHeight: '7rem' }}>{DisplayedSlide}</div>
+      <div style={{ width: '100%', minHeight: '7rem', marginTop: '2rem' }}>
+        {DisplayedSlide}
+      </div>
+      <ProgressBar />
     </ErrorBoundary>
   );
 }
