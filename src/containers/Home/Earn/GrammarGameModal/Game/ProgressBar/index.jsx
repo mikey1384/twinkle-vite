@@ -3,10 +3,11 @@ import Bubble from './Bubble';
 import './styles.css';
 
 ProgressBar.propTypes = {
+  questions: PropTypes.arrayOf(PropTypes.object).isRequired,
   style: PropTypes.object
 };
 
-export default function ProgressBar({ style }) {
+export default function ProgressBar({ questions, style }) {
   return (
     <div
       style={{
@@ -15,17 +16,15 @@ export default function ProgressBar({ style }) {
         ...style
       }}
     >
-      {Array(10)
-        .fill()
-        .map((_, index) => (
-          <Bubble
-            key={index}
-            style={{
-              marginLeft: index === 0 ? 0 : '-1rem',
-              zIndex: 10 - index
-            }}
-          />
-        ))}
+      {questions.map((_, index) => (
+        <Bubble
+          key={index}
+          style={{
+            marginLeft: index === 0 ? 0 : '-1rem',
+            zIndex: 10 - index
+          }}
+        />
+      ))}
     </div>
   );
 }

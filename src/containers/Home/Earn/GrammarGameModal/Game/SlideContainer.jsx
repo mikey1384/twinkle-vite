@@ -6,10 +6,15 @@ import { scrollElementToCenter } from '~/helpers';
 
 SlideContainer.propTypes = {
   children: PropTypes.node,
+  questions: PropTypes.array,
   selectedIndex: PropTypes.number
 };
 
-export default function SlideContainer({ children, selectedIndex = 0 }) {
+export default function SlideContainer({
+  children,
+  questions,
+  selectedIndex = 0
+}) {
   const SlideRefs = useRef({});
   const childrenArray = useMemo(() => Children.toArray(children), [children]);
   const DisplayedSlide = useMemo(() => {
@@ -38,7 +43,7 @@ export default function SlideContainer({ children, selectedIndex = 0 }) {
       <div style={{ width: '100%', minHeight: '7rem', marginTop: '2rem' }}>
         {DisplayedSlide}
       </div>
-      <ProgressBar style={{ marginBottom: '3rem' }} />
+      <ProgressBar questions={questions} style={{ marginBottom: '3rem' }} />
     </ErrorBoundary>
   );
 }

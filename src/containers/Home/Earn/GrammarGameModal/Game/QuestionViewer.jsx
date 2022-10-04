@@ -96,7 +96,7 @@ export default function QuestionViewer({ onSetGameState, questions }) {
 
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Carousel/index">
-      <SlideContainer selectedIndex={currentIndex}>
+      <SlideContainer questions={questions} selectedIndex={currentIndex}>
         {Slides || <Loading />}
       </SlideContainer>
     </ErrorBoundary>
