@@ -73,6 +73,15 @@ const className = css`
     );
   }
 
+  .lighted {
+    background: radial-gradient(
+      rgba(140, 145, 155, 0.9),
+      rgba(140, 145, 155, 0.9) 40%,
+      rgba(125, 138, 155, 0.8) 60%,
+      rgba(43, 30, 155, 0.4)
+    );
+  }
+
   .gloss:after {
     display: block;
     background: radial-gradient(

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 Bubble.propTypes = {
@@ -7,13 +7,11 @@ Bubble.propTypes = {
 };
 
 export default function Bubble({ question, style }) {
-  useEffect(() => {
-    console.log(question);
-  }, [question]);
+  const isGraded = useMemo(() => !!question.score, [question.score]);
 
   return (
     <div style={style} className="bubble">
-      <div className="ball gloss" />
+      <div className={`ball gloss ${isGraded ? 'lighted' : ''}`} />
     </div>
   );
 }

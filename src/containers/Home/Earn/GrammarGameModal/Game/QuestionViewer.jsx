@@ -55,6 +55,7 @@ export default function QuestionViewer({ onSetGameState, questions }) {
           ...prev,
           [currentIndex]: {
             ...prev[currentIndex],
+            score: 'S',
             selectedChoiceIndex: prev[currentIndex].answerIndex
           }
         }));
@@ -94,9 +95,17 @@ export default function QuestionViewer({ onSetGameState, questions }) {
     }
   }, [currentIndex, gotWrong, onSetGameState, questionIds, questionObj]);
 
+  const displayedQuestions = useMemo(() => {
+    if (!questionIds || !Object.values(questionObj)?.length) return [];
+    return questionIds.map((questionId) => questionObj[questionId]);
+  }, [questionIds, questionObj]);
+
   return (
     <ErrorBoundary componentPath="GrammarGameModal/Game/Carousel/index">
-      <SlideContainer questions={questions} selectedIndex={currentIndex}>
+      <SlideContainer
+        questions={displayedQuestions}
+        selectedIndex={currentIndex}
+      >
         {Slides || <Loading />}
       </SlideContainer>
     </ErrorBoundary>
