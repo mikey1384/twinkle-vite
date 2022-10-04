@@ -7,8 +7,6 @@ export default function useInfiniteScroll({
   feedsLength,
   scrollable,
   loadable,
-  loading,
-  onLoad,
   onScrollToBottom
 }) {
   const prevFeedsLength = useRef(0);
@@ -66,11 +64,4 @@ export default function useInfiniteScroll({
     }
     prevFeedsLength.current = feedsLength;
   }, [feedsLength]);
-
-  useEffect(() => {
-    if (loading) {
-      onLoad();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
 }

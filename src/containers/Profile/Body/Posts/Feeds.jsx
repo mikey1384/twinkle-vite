@@ -31,6 +31,7 @@ export default function Feeds({
   selectedTheme,
   username
 }) {
+  const loadingRef = useRef(false);
   const { filter } = useParams();
   const {
     loadMoreButton: { color: loadMoreButtonColor }
@@ -58,9 +59,10 @@ export default function Feeds({
     feedsLength: feeds.length,
     scrollable: feeds.length > 0,
     loadable: loadMoreButton,
-    loading: loadingMore,
-    onScrollToBottom: () => setLoadingMore(true),
-    onLoad: handleLoadMoreFeeds
+    onScrollToBottom: () => {
+      setLoadingMore(true);
+      handleLoadMoreFeeds;
+    }
   });
 
   useEffect(() => {
@@ -331,6 +333,8 @@ export default function Feeds({
     }
     loadMoreFeeds();
     async function loadMoreFeeds() {
+      if (loadingRef.current) return;
+      loadingRef.current = true;
       try {
         const { data } = await loadFeeds({
           username,
@@ -344,10 +348,11 @@ export default function Feeds({
               : null
         });
         onLoadMorePosts({ ...data, section, username });
-        setLoadingMore(false);
       } catch (error) {
         console.error(error);
       }
+      setLoadingMore(false);
+      loadingRef.current = false;
     }
     async function loadMoreFeedsByUser() {
       try {
