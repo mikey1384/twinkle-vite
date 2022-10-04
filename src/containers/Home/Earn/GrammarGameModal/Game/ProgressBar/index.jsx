@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import Bubble from './Bubble';
 import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 ProgressBar.propTypes = {
   questions: PropTypes.arrayOf(PropTypes.object).isRequired,
@@ -17,10 +18,11 @@ export default function ProgressBar({ questions, style }) {
         ...style
       }}
     >
-      {questions.map((_, index) => {
+      {questions.map((question, index) => {
         return (
           <Bubble
             key={index}
+            question={question}
             style={{
               marginLeft: index === 0 ? 0 : '-1rem',
               zIndex: 10 - index
@@ -87,11 +89,10 @@ const className = css`
     width: 50px;
     height: 50px;
     display: inline-block;
-    @media (max-width: 850px) {
-      .gloss {
-        width: 30px;
-        height: 30px;
-      }
+    @media (max-width: ${mobileMaxWidth}) {
+      margin-top: 2rem;
+      width: 30px;
+      height: 30px;
     }
   }
 `;
