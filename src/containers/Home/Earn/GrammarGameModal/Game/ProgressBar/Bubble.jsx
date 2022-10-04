@@ -11,7 +11,19 @@ export default function Bubble({ question, style }) {
 
   return (
     <div style={style} className="bubble">
-      <div className={`ball gloss ${isGraded ? 'lighted' : ''}`} />
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          fontWeight: 'bold',
+          color: '#fff',
+          fontSize: '2rem'
+        }}
+        className={`ball gloss ${isGraded ? 'lighted' : ''}`}
+      >
+        {isGraded ? 'S' : ''}
+      </div>
     </div>
   );
 }
