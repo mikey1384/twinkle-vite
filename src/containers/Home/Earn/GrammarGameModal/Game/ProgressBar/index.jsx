@@ -1,13 +1,18 @@
+import PropTypes from 'prop-types';
 import Bubble from './Bubble';
 import './styles.css';
 
-export default function ProgressBar() {
+ProgressBar.propTypes = {
+  style: PropTypes.object
+};
+
+export default function ProgressBar({ style }) {
   return (
     <div
       style={{
-        marginBottom: '1rem',
         display: 'flex',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        ...style
       }}
     >
       {Array(10)
@@ -15,7 +20,10 @@ export default function ProgressBar() {
         .map((_, index) => (
           <Bubble
             key={index}
-            style={{ marginLeft: index === 0 ? 0 : '0.5rem' }}
+            style={{
+              marginLeft: index === 0 ? 0 : '-1rem',
+              zIndex: 10 - index
+            }}
           />
         ))}
     </div>
