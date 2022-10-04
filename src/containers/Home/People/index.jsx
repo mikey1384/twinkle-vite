@@ -20,6 +20,7 @@ import localize from '~/constants/localize';
 const searchUsersLabel = localize('searchUsers');
 
 function People() {
+  const loadingRef = useRef(false);
   const { loadUsers } = useAppContext((v) => v.requestHelpers);
   const onClearUserSearch = useAppContext(
     (v) => v.user.actions.onClearUserSearch
@@ -57,12 +58,11 @@ function People() {
   useInfiniteScroll({
     scrollable: profiles.length > 0 && stringIsEmpty(userSearchText),
     loadable: loadMoreButton,
-    loading,
     feedsLength: profiles.length,
     onScrollToBottom: () => {
       setLoading(true);
-    },
-    onLoad: loadMoreProfiles
+      loadMoreProfiles();
+    }
   });
 
   useEffect(() => {
@@ -187,6 +187,8 @@ function People() {
   }
 
   async function loadMoreProfiles() {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     try {
       const data = await loadUsers({
         lastActive:
@@ -198,11 +200,11 @@ function People() {
         orderBy: orderUsersBy === RANKING_FILTER_LABEL ? 'twinkleXP' : ''
       });
       onLoadMoreUsers(data);
-      setLoading(false);
     } catch (error) {
       console.error(error);
-      setLoading(false);
     }
+    setLoading(false);
+    loadingRef.current = false;
   }
 }
 

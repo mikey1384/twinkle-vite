@@ -31,6 +31,7 @@ export default function Feeds({
   selectedTheme,
   username
 }) {
+  const loadingRef = useRef(false);
   const { filter } = useParams();
   const {
     loadMoreButton: { color: loadMoreButtonColor }
@@ -50,9 +51,10 @@ export default function Feeds({
     feedsLength: feeds.length,
     scrollable: feeds.length > 0,
     loadable: loadMoreButton,
-    loading: loadingMore,
-    onScrollToBottom: () => setLoadingMore(true),
-    onLoad: handleLoadMoreFeeds
+    onScrollToBottom: () => {
+      setLoadingMore(true);
+      handleLoadMoreFeeds();
+    }
   });
 
   useEffect(() => {
@@ -236,6 +238,8 @@ export default function Feeds({
   }
 
   async function handleLoadMoreFeeds() {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     loadMoreFeeds();
     async function loadMoreFeeds() {
       try {
@@ -247,10 +251,11 @@ export default function Feeds({
             feeds.length > 0 ? feeds[feeds.length - 1]['lastInteraction'] : null
         });
         onLoadMoreLikedPosts({ ...data, section, username });
-        setLoadingMore(false);
       } catch (error) {
         console.error(error);
       }
     }
+    setLoadingMore(false);
+    loadingRef.current = false;
   }
 }
