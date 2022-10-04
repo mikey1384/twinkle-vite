@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import Bubble from './Bubble';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 
 ProgressBar.propTypes = {
   questions: PropTypes.arrayOf(PropTypes.object).isRequired,
@@ -75,10 +75,10 @@ const className = css`
 
   .lighted {
     background: radial-gradient(
-      rgba(140, 145, 155, 0.9),
-      rgba(140, 145, 155, 0.9) 40%,
-      rgba(125, 138, 155, 0.8) 60%,
-      rgba(43, 30, 155, 0.4)
+      ${Color.gold(0.9)},
+      ${Color.gold(0.9)} 40%,
+      ${Color.gold(0.8)} 60%,
+      rgba(143, 130, 255, 0.4)
     );
   }
 
