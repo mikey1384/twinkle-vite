@@ -1,10 +1,10 @@
 import PropTypes from 'prop-types';
 
-Marble.propTypes = {
+Bubble.propTypes = {
   style: PropTypes.object
 };
 
-export default function Marble({ style }) {
+export default function Bubble({ style }) {
   return (
     <div style={style} className="marble">
       <div className="ball bubble" />
