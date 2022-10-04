@@ -6,7 +6,6 @@ const BodyRef = document.scrollingElement || document.documentElement;
 export default function useInfiniteScroll({
   feedsLength,
   scrollable,
-  loadable,
   onScrollToBottom
 }) {
   const prevFeedsLength = useRef(0);
@@ -37,11 +36,10 @@ export default function useInfiniteScroll({
             mobile: BodyRef.scrollTop
           };
           if (
-            loadable &&
-            (scrollPositionRef.current.desktop >=
+            scrollPositionRef.current.desktop >=
               scrollHeightRef.current - window.innerHeight - 3000 ||
-              scrollPositionRef.current.mobile >=
-                scrollHeightRef.current - window.innerHeight - 3000)
+            scrollPositionRef.current.mobile >=
+              scrollHeightRef.current - window.innerHeight - 3000
           ) {
             onScrollToBottom();
           }

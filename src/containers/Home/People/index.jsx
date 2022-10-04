@@ -57,7 +57,6 @@ function People() {
 
   useInfiniteScroll({
     scrollable: profiles.length > 0 && stringIsEmpty(userSearchText),
-    loadable: loadMoreButton,
     feedsLength: profiles.length,
     onScrollToBottom: () => {
       setLoading(true);

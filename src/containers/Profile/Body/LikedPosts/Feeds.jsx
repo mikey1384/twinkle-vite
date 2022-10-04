@@ -50,7 +50,6 @@ export default function Feeds({
   useInfiniteScroll({
     feedsLength: feeds.length,
     scrollable: feeds.length > 0,
-    loadable: loadMoreButton,
     onScrollToBottom: () => {
       setLoadingMore(true);
       handleLoadMoreFeeds();
