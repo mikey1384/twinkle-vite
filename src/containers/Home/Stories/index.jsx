@@ -42,6 +42,7 @@ const categoryObj = {
 };
 
 export default function Stories() {
+  const loadingRef = useRef(false);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
   const { hideWatched, userId, username } = useKeyContext((v) => v.myState);
@@ -78,11 +79,10 @@ export default function Stories() {
     scrollable: feeds.length > 0,
     feedsLength: feeds.length,
     loadable: loadMoreButton,
-    loading: loadingMore,
     onScrollToBottom: () => {
       setLoadingMore(true);
-    },
-    onLoad: handleLoadMoreFeeds
+      handleLoadMoreFeeds();
+    }
   });
 
   useEffect(() => {
@@ -257,6 +257,8 @@ export default function Stories() {
   }
 
   async function handleLoadMoreFeeds() {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     try {
       const { data } = await loadFeeds({
         filter:
@@ -273,11 +275,11 @@ export default function Stories() {
           feeds.length > 0 ? feeds[feeds.length - 1].totalViewDuration : null
       });
       onLoadMoreFeeds(data);
-      setLoadingMore(false);
     } catch (error) {
       console.error(error);
-      setLoadingMore(false);
     }
+    setLoadingMore(false);
+    loadingRef.current = false;
   }
 
   async function handleChangeCategory(newCategory) {
