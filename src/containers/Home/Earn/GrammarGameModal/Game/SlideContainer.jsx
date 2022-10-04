@@ -38,7 +38,7 @@ export default function SlideContainer({ children, selectedIndex = 0 }) {
       <div style={{ width: '100%', minHeight: '7rem', marginTop: '2rem' }}>
         {DisplayedSlide}
       </div>
-      <ProgressBar />
+      <ProgressBar style={{ marginBottom: '3rem' }} />
     </ErrorBoundary>
   );
 }

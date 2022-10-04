@@ -25,14 +25,14 @@
   transform: rotateZ(-30deg);
 }
 
-.bubble {
+.gloss {
   background: radial-gradient(rgba(240, 245, 255, 0.9),
       rgba(240, 245, 255, 0.9) 40%,
       rgba(225, 238, 255, 0.8) 60%,
       rgba(43, 130, 255, 0.4));
 }
 
-.bubble:after {
+.gloss:after {
   display: block;
   background: radial-gradient(circle at 50% 80%,
       rgba(255, 255, 255, 0),
@@ -42,8 +42,15 @@
       rgba(255, 255, 255, 0) 100%);
 }
 
-.marble {
+.gloss {
   width: 50px;
   height: 50px;
   display: inline-block;
+}
+
+@media (max-width: 850px) {
+  .gloss {
+    width: 30px;
+    height: 30px;
+  }
 }
