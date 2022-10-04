@@ -78,7 +78,6 @@ export default function Stories() {
   useInfiniteScroll({
     scrollable: feeds.length > 0,
     feedsLength: feeds.length,
-    loadable: loadMoreButton,
     onScrollToBottom: () => {
       setLoadingMore(true);
       handleLoadMoreFeeds();
