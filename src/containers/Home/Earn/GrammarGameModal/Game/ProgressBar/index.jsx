@@ -17,15 +17,17 @@ export default function ProgressBar({ questions, style }) {
         ...style
       }}
     >
-      {questions.map((_, index) => (
-        <Bubble
-          key={index}
-          style={{
-            marginLeft: index === 0 ? 0 : '-1rem',
-            zIndex: 10 - index
-          }}
-        />
-      ))}
+      {questions.map((_, index) => {
+        return (
+          <Bubble
+            key={index}
+            style={{
+              marginLeft: index === 0 ? 0 : '-1rem',
+              zIndex: 10 - index
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
