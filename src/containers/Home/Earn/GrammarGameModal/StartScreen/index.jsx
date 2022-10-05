@@ -11,10 +11,9 @@ StartScreen.propTypes = {
 export default function StartScreen({ onGameStart }) {
   const [screenIndex, setScreenIndex] = useState(0);
   useEffect(() => {
-    setTimeout(() => setScreenIndex(1), 2000);
-    setTimeout(() => setScreenIndex(2), 4500);
-    setTimeout(() => setScreenIndex(3), 7000);
-    setTimeout(() => setScreenIndex(4), 9500);
+    setTimeout(() => setScreenIndex(1), 1500);
+    setTimeout(() => setScreenIndex(2), 4000);
+    setTimeout(() => setScreenIndex(3), 6500);
   }, []);
 
   return (
@@ -48,18 +47,12 @@ export default function StartScreen({ onGameStart }) {
               </Prompt>
             )}
             {screenIndex === 2 && (
-              <Prompt>
-                The more difficult a question is, the more XP you earn.
-              </Prompt>
-            )}
-            {screenIndex === 3 && (
               <Prompt>Move up the leaderboard by earning lots of XP!</Prompt>
             )}
-            {screenIndex === 4 && (
+            {screenIndex === 3 && (
               <div>
                 <p>Answer 10 fill-in-the-blank grammar questions.</p>
                 <p>The faster you answer a question, the more XP you earn.</p>
-                <p>The more difficult a question is, the more XP you earn.</p>
                 <p>Move up the leaderboard by earning lots of XP!</p>
               </div>
             )}
