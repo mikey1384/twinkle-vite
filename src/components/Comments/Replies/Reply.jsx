@@ -706,9 +706,10 @@ function Reply({
     setLoadingReplies(true);
     const { replies, loadMoreButton } = await loadReplies({
       commentId: reply.id,
+      isLoadingRepliesOfReply: true,
       isReverse: true
     });
-    if (replies.length > 0) {
+    if (typeof replies.length === 'number') {
       onLoadRepliesOfReply({
         replies,
         commentId: reply.commentId,

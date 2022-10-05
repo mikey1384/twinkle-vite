@@ -482,12 +482,19 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadReplies({ lastReplyId, commentId, isReverse }) {
+    async loadReplies({
+      lastReplyId,
+      commentId,
+      isReverse,
+      isLoadingRepliesOfReply
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/content/replies?${
             lastReplyId ? `lastReplyId=${lastReplyId}&` : ''
-          }commentId=${commentId}${isReverse ? '&isReverse=true' : ''}`
+          }commentId=${commentId}${isReverse ? '&isReverse=true' : ''}${
+            isLoadingRepliesOfReply ? '&isLoadingRepliesOfReply=true' : ''
+          }`
         );
         return Promise.resolve(data);
       } catch (error) {
