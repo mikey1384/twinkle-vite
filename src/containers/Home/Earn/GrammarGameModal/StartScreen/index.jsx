@@ -37,23 +37,27 @@ export default function StartScreen({ onGameStart }) {
           >
             The Grammar Game
           </div>
-          <div style={{ marginTop: '4rem', lineHeight: 1.7 }}>
+          <div
+            style={{ marginTop: '4rem', lineHeight: 1.7, textAlign: 'center' }}
+          >
             {screenIndex === 0 && (
               <Prompt>Answer 10 fill-in-the-blank grammar questions.</Prompt>
             )}
             {screenIndex === 1 && (
               <Prompt>
-                The faster you answer a question, the more XP you earn.
+                The faster you answer a question, the more coins you earn.
               </Prompt>
             )}
             {screenIndex === 2 && (
-              <Prompt>Move up the leaderboard by earning lots of XP!</Prompt>
+              <Prompt>Move up the leaderboard by earning lots of coins!</Prompt>
             )}
             {screenIndex === 3 && (
               <div>
                 <p>Answer 10 fill-in-the-blank grammar questions.</p>
-                <p>The faster you answer a question, the more XP you earn.</p>
-                <p>Move up the leaderboard by earning lots of XP!</p>
+                <p>
+                  The faster you answer a question, the more coins you earn.
+                </p>
+                <p>Move up the leaderboard by earning lots of coins!</p>
               </div>
             )}
           </div>
