@@ -97,7 +97,14 @@ export default function Main({ onSetGameState, questions }) {
         }, 1000);
       }
     }
-  }, [currentIndex, gotWrong, onSetGameState, questionIds, questionObj]);
+  }, [
+    currentIndex,
+    elapsedTime,
+    gotWrong,
+    onSetGameState,
+    questionIds,
+    questionObj
+  ]);
 
   const displayedQuestions = useMemo(() => {
     if (!questionIds || !Object.values(questionObj)?.length) return [];

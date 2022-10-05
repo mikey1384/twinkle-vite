@@ -22,7 +22,7 @@ export default function Bubble({ question, style }) {
         }}
         className={`ball gloss ${isGraded ? 'lighted' : ''}`}
       >
-        {isGraded ? 'S' : ''}
+        {isGraded ? question.score : ''}
       </div>
     </div>
   );
