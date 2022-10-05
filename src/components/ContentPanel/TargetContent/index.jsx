@@ -666,6 +666,7 @@ export default function TargetContent({
             contentType: rootType,
             contentId: rootObj.id
           },
+          rootCommentId: contentId,
           targetCommentId: comment.id,
           attachment,
           filePath,
@@ -699,6 +700,7 @@ export default function TargetContent({
             contentType: rootType,
             contentId: rootObj.id
           },
+          rootCommentId: contentId,
           targetCommentId: comment.id
         });
         onUploadTargetComment({ ...data.comment, contentId, contentType });
