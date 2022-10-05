@@ -207,6 +207,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
       contentType,
       lastCommentId,
       limit,
+      isRepliesOfReply,
       isPreview
     }) {
       try {
@@ -215,7 +216,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         } = await request.get(
           `${URL}/content/comments?contentId=${contentId}&contentType=${contentType}&lastCommentId=${lastCommentId}&limit=${limit}${
             isPreview ? '&isPreview=1' : ''
-          }`
+          }${isRepliesOfReply ? '&isRepliesOfReply=1' : ''}`
         );
         return Promise.resolve({ comments, loadMoreButton });
       } catch (error) {

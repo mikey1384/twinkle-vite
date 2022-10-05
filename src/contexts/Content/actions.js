@@ -139,11 +139,18 @@ export default function ContentActions(dispatch) {
         loadMoreButton
       });
     },
-    onLoadMoreComments({ comments, loadMoreButton, contentId, contentType }) {
+    onLoadMoreComments({
+      comments,
+      loadMoreButton,
+      isRepliesOfReply,
+      contentId,
+      contentType
+    }) {
       return dispatch({
         type: 'LOAD_MORE_COMMENTS',
         comments,
         loadMoreButton,
+        isRepliesOfReply,
         contentId,
         contentType
       });
