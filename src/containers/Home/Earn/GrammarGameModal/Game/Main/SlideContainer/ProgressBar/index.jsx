@@ -73,11 +73,56 @@ const className = css`
     );
   }
 
-  .lighted {
+  .gradedS {
     background: radial-gradient(
       ${Color.gold(0.9)},
       ${Color.gold(0.9)} 40%,
       ${Color.gold(0.8)} 60%,
+      rgba(143, 130, 255, 0.4)
+    );
+  }
+
+  .gradedA {
+    background: radial-gradient(
+      ${Color.magenta(0.9)},
+      ${Color.magenta(0.9)} 40%,
+      ${Color.magenta(0.8)} 60%,
+      rgba(143, 130, 255, 0.4)
+    );
+  }
+
+  .gradedB {
+    background: radial-gradient(
+      ${Color.orange(0.9)},
+      ${Color.orange(0.9)} 40%,
+      ${Color.orange(0.8)} 60%,
+      rgba(143, 130, 255, 0.4)
+    );
+  }
+
+  .gradedC {
+    background: radial-gradient(
+      ${Color.pastelPink(0.9)},
+      ${Color.pastelPink(0.9)} 40%,
+      ${Color.pastelPink(0.8)} 60%,
+      rgba(143, 130, 255, 0.4)
+    );
+  }
+
+  .gradedD {
+    background: radial-gradient(
+      ${Color.logoBlue(0.9)},
+      ${Color.logoBlue(0.9)} 40%,
+      ${Color.logoBlue(0.8)} 60%,
+      rgba(143, 130, 255, 0.4)
+    );
+  }
+
+  .gradedF {
+    background: radial-gradient(
+      ${Color.gray(0.9)},
+      ${Color.gray(0.9)} 40%,
+      ${Color.gray(0.8)} 60%,
       rgba(143, 130, 255, 0.4)
     );
   }

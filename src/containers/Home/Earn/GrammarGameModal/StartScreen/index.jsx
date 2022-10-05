@@ -49,7 +49,9 @@ export default function StartScreen({ onGameStart }) {
               </Prompt>
             )}
             {screenIndex === 2 && (
-              <Prompt>Move up the leaderboard by earning lots of coins!</Prompt>
+              <Prompt>
+                To move up on the leaderboard, earn as many coins as possible!
+              </Prompt>
             )}
             {screenIndex === 3 && (
               <div>
@@ -57,7 +59,9 @@ export default function StartScreen({ onGameStart }) {
                 <p>
                   The faster you answer a question, the more coins you earn.
                 </p>
-                <p>Move up the leaderboard by earning lots of coins!</p>
+                <p>
+                  To move up on the leaderboard, earn as many coins as possible!
+                </p>
               </div>
             )}
           </div>
