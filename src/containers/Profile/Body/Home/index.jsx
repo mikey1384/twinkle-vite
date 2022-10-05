@@ -130,7 +130,7 @@ export default function Home({ profile, selectedTheme }) {
             onRewardCommentEdit={onEditRewardComment}
             parent={{
               ...profile,
-              pinnedCommentId: pinnedCommentId || profile.pinnedCommentId,
+              pinnedCommentId,
               contentType: 'user'
             }}
             userId={userId}
