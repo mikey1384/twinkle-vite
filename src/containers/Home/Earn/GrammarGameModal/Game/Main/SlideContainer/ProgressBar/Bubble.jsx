@@ -7,7 +7,7 @@ Bubble.propTypes = {
 };
 
 export default function Bubble({ question, style }) {
-  const isGraded = useMemo(() => !!question.score, [question.score]);
+  const grade = useMemo(() => question.score, [question.score]);
 
   return (
     <div style={style} className="bubble">
@@ -20,9 +20,9 @@ export default function Bubble({ question, style }) {
           color: '#fff',
           fontSize: '2rem'
         }}
-        className={`ball gloss ${isGraded ? 'lighted' : ''}`}
+        className={`ball gloss ${grade ? `graded${grade}` : ''}`}
       >
-        {isGraded ? question.score : ''}
+        {!!grade ? question.score : ''}
       </div>
     </div>
   );
