@@ -716,7 +716,8 @@ export default function ContentReducer(state, action) {
         [contentKey]: {
           ...prevContentState,
           comments:
-            prevContentState.contentType === 'comment'
+            prevContentState.contentType === 'comment' &&
+            !action.isRepliesOfReply
               ? (action.comments || []).concat(prevContentState.comments)
               : (prevContentState.comments || []).concat(action.comments),
           commentsLoadMoreButton: action.loadMoreButton

@@ -46,6 +46,7 @@ Comments.propTypes = {
   onReplySubmit: PropTypes.func.isRequired,
   onRewardCommentEdit: PropTypes.func.isRequired,
   parent: PropTypes.shape({
+    id: PropTypes.number,
     commentId: PropTypes.number,
     contentId: PropTypes.number.isRequired,
     contentType: PropTypes.string.isRequired,
@@ -123,6 +124,10 @@ function Comments({
   const [commentSubmitted, setCommentSubmitted] = useState(false);
   const [prevComments, setPrevComments] = useState(comments);
   const ContainerRef = useRef(null);
+  const isRepliesOfReply = useMemo(
+    () => parent.contentType === 'comment' && parent.commentId !== parent.id,
+    [parent]
+  );
   const CommentInputAreaRef = useRef(null);
   const CommentRefs = {};
   const pinnedCommentId = useMemo(() => {
@@ -164,7 +169,8 @@ function Comments({
     async function handleLoadMoreComments() {
       if (!isLoadingMore) {
         setIsLoadingMore(true);
-        const lastCommentLocation = inputAtBottom ? 0 : comments.length - 1;
+        const lastCommentLocation =
+          inputAtBottom && !isRepliesOfReply ? 0 : comments.length - 1;
         const lastCommentId = comments[lastCommentLocation]
           ? comments[lastCommentLocation].id
           : 'undefined';
@@ -173,10 +179,12 @@ function Comments({
             contentId: parent.contentId,
             contentType: parent.contentType,
             lastCommentId,
-            limit: commentsLoadLimit
+            limit: commentsLoadLimit,
+            isRepliesOfReply
           });
           onLoadMoreComments({
             ...data,
+            isRepliesOfReply,
             contentId: parent.contentId,
             contentType: parent.contentType
           });
@@ -194,6 +202,7 @@ function Comments({
     inputAtBottom,
     isLoading,
     isLoadingMore,
+    isRepliesOfReply,
     loadComments,
     loadMoreButtonColor,
     onLoadMoreComments,
@@ -551,7 +560,10 @@ function Comments({
                   theme={theme}
                 />
               )}
-            {inputAtBottom && loadMoreButton && renderLoadMoreButton()}
+            {inputAtBottom &&
+              !isRepliesOfReply &&
+              loadMoreButton &&
+              renderLoadMoreButton()}
             {!isLoading &&
               (isPreview ? previewComments : comments).map((comment) => (
                 <Comment
@@ -568,7 +580,9 @@ function Comments({
                   userId={userId}
                 />
               ))}
-            {!inputAtBottom && loadMoreButton && renderLoadMoreButton()}
+            {(!inputAtBottom || isRepliesOfReply) &&
+              loadMoreButton &&
+              renderLoadMoreButton()}
           </div>
         )}
         {inputAtBottom &&

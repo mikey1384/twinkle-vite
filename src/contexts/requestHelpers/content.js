@@ -207,6 +207,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
       contentType,
       lastCommentId,
       limit,
+      isRepliesOfReply,
       isPreview
     }) {
       try {
@@ -215,7 +216,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         } = await request.get(
           `${URL}/content/comments?contentId=${contentId}&contentType=${contentType}&lastCommentId=${lastCommentId}&limit=${limit}${
             isPreview ? '&isPreview=1' : ''
-          }`
+          }${isRepliesOfReply ? '&isRepliesOfReply=1' : ''}`
         );
         return Promise.resolve({ comments, loadMoreButton });
       } catch (error) {
@@ -493,12 +494,19 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadReplies({ lastReplyId, commentId, isReverse }) {
+    async loadReplies({
+      lastReplyId,
+      commentId,
+      isReverse,
+      isLoadingRepliesOfReply
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/content/replies?${
             lastReplyId ? `lastReplyId=${lastReplyId}&` : ''
-          }commentId=${commentId}${isReverse ? '&isReverse=true' : ''}`
+          }commentId=${commentId}${isReverse ? '&isReverse=true' : ''}${
+            isLoadingRepliesOfReply ? '&isLoadingRepliesOfReply=true' : ''
+          }`
         );
         return Promise.resolve(data);
       } catch (error) {
