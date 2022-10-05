@@ -6,14 +6,14 @@ import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
 import correct from './correct_sound.mp3';
 
-QuestionViewer.propTypes = {
+Main.propTypes = {
   onSetGameState: PropTypes.func.isRequired,
   questions: PropTypes.array
 };
 
 const correctSound = new Audio(correct);
 
-export default function QuestionViewer({ onSetGameState, questions }) {
+export default function Main({ onSetGameState, questions }) {
   const timerRef = useRef(null);
   const [questionIds, setQuestionIds] = useState(null);
   const [questionObj, setQuestionObj] = useState({});
