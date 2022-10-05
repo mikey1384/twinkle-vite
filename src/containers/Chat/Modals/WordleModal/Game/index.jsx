@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Grid from './Grid';
@@ -55,6 +55,7 @@ export default function Game({
   onSetIsRevealing,
   socketConnected
 }) {
+  const isProcessingGameResult = useRef(false);
   const onToggleWordleStrictMode = useAppContext(
     (v) => v.user.actions.onToggleWordleStrictMode
   );
@@ -218,7 +219,7 @@ export default function Game({
   }
 
   async function handleEnter() {
-    if (!socketConnected) return;
+    if (!socketConnected || isProcessingGameResult.current) return;
     const newGuesses = guesses.concat([currentGuess]);
     if (isGameWon || isGameLost) {
       return;
@@ -262,7 +263,7 @@ export default function Game({
         }
       });
     }
-
+    isProcessingGameResult.current = true;
     setIsChecking(true);
     const { isDuplicate, actualWordLevel, actualSolution, needsReload } =
       await checkIfDuplicateWordleAttempt({
@@ -279,8 +280,12 @@ export default function Game({
           wordleSolution: actualSolution
         }
       });
+      isProcessingGameResult.current = false;
     }
-    if (newGuesses.length < MAX_GUESSES && currentGuess !== solution) {
+    if (
+      newGuesses.length < MAX_GUESSES &&
+      currentGuess !== (actualSolution || solution)
+    ) {
       updateWordleAttempt({
         channelName,
         channelId,
@@ -298,6 +303,7 @@ export default function Game({
     onSetIsRevealing(true);
     setTimeout(() => {
       onSetIsRevealing(false);
+      isProcessingGameResult.current = false;
     }, REVEAL_TIME_MS * MAX_WORD_LENGTH);
 
     if (
