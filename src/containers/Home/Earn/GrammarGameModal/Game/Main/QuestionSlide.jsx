@@ -9,6 +9,7 @@ QuestionSlide.propTypes = {
   selectedChoiceIndex: PropTypes.number,
   choices: PropTypes.array.isRequired,
   onCorrectAnswer: PropTypes.func.isRequired,
+  onCountdownStart: PropTypes.func,
   onSetGotWrong: PropTypes.func.isRequired,
   gotWrong: PropTypes.bool
 };
@@ -19,6 +20,7 @@ export default function QuestionSlide({
   selectedChoiceIndex,
   choices,
   onCorrectAnswer,
+  onCountdownStart,
   onSetGotWrong,
   gotWrong
 }) {
@@ -61,6 +63,7 @@ export default function QuestionSlide({
             answerIndex={answerIndex}
             selectedChoiceIndex={selectedChoiceIndex}
             onCorrectAnswer={onCorrectAnswer}
+            onCountdownStart={onCountdownStart}
             onSetGotWrong={onSetGotWrong}
             listItems={choices}
             questionLength={question.length}

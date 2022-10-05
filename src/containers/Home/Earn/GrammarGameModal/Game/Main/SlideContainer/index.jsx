@@ -6,12 +6,14 @@ import { scrollElementToCenter } from '~/helpers';
 
 SlideContainer.propTypes = {
   children: PropTypes.node,
+  onCountdownStart: PropTypes.func,
   questions: PropTypes.array,
   selectedIndex: PropTypes.number
 };
 
 export default function SlideContainer({
   children,
+  onCountdownStart,
   questions,
   selectedIndex = 0
 }) {
@@ -25,11 +27,12 @@ export default function SlideContainer({
       ...SlideComponent,
       props: {
         ...SlideComponent?.props,
+        onCountdownStart,
         innerRef: (ref) => (SlideRefs.current[selectedIndex] = ref),
         index: selectedIndex
       }
     };
-  }, [childrenArray, selectedIndex]);
+  }, [childrenArray, onCountdownStart, selectedIndex]);
 
   useEffect(() => {
     scrollElementToCenter(SlideRefs.current[selectedIndex]);
