@@ -6,6 +6,7 @@ import Comment from './Comment';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import PinnedComment from './PinnedComment';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { v1 as uuidv1 } from 'uuid';
 import { returnImageFileFromUrl, scrollElementToCenter } from '~/helpers';
 import { css } from '@emotion/css';
@@ -505,92 +506,94 @@ function Comments({
   );
 
   return (
-    <Context.Provider
-      value={{
-        onDelete: handleDeleteComment,
-        onEditDone,
-        onLikeClick,
-        onLoadMoreReplies,
-        onRewardCommentEdit,
-        onReplySubmit: handleSubmitReply,
-        onLoadRepliesOfReply,
-        onSubmitWithAttachment: handleFileUpload
-      }}
-    >
-      <div
-        className={`${
-          isPreview && !(commentsShown || autoExpand)
-            ? css`
-                &:hover {
-                  background: ${Color.highlightGray()};
-                }
-                @media (max-width: ${mobileMaxWidth}) {
-                  &:hover {
-                    background: #fff;
-                  }
-                }
-              `
-            : ''
-        } ${className}`}
-        style={style}
-        ref={ContainerRef}
-        onClick={isPreview ? onPreviewClick : () => {}}
+    <ErrorBoundary componentPath="Comments">
+      <Context.Provider
+        value={{
+          onDelete: handleDeleteComment,
+          onEditDone,
+          onLikeClick,
+          onLoadMoreReplies,
+          onRewardCommentEdit,
+          onReplySubmit: handleSubmitReply,
+          onLoadRepliesOfReply,
+          onSubmitWithAttachment: handleFileUpload
+        }}
       >
-        {!inputAtBottom &&
-          !noInput &&
-          (commentsShown || autoExpand) &&
-          renderInputArea()}
-        {(commentsShown || autoExpand || numPreviews > 0) && !commentsHidden && (
-          <div
-            style={{
-              width: '100%'
-            }}
-          >
-            {isLoading && <Loading theme={theme} />}
-            {!isLoading &&
-              parent.contentType !== 'comment' &&
-              pinnedCommentId &&
-              !isPreview && (
-                <PinnedComment
-                  parent={parent}
-                  rootContent={rootContent}
-                  subject={subject}
-                  commentId={pinnedCommentId}
-                  userId={userId}
-                  theme={theme}
-                />
-              )}
-            {inputAtBottom &&
-              !isRepliesOfReply &&
-              loadMoreButton &&
-              renderLoadMoreButton()}
-            {!isLoading &&
-              (isPreview ? previewComments : comments).map((comment) => (
-                <Comment
-                  isSubjectPannelComment={isSubjectPannelComments}
-                  isPreview={isPreview}
-                  innerRef={(ref) => (CommentRefs[comment.id] = ref)}
-                  parent={parent}
-                  rootContent={rootContent}
-                  subject={subject}
-                  theme={theme}
-                  comment={comment}
-                  pinnedCommentId={pinnedCommentId}
-                  key={comment.id}
-                  userId={userId}
-                />
-              ))}
-            {(!inputAtBottom || isRepliesOfReply) &&
-              loadMoreButton &&
-              renderLoadMoreButton()}
-          </div>
-        )}
-        {inputAtBottom &&
-          !noInput &&
-          (commentsShown || autoExpand) &&
-          renderInputArea({ marginTop: comments.length > 0 ? '1rem' : 0 })}
-      </div>
-    </Context.Provider>
+        <div
+          className={`${
+            isPreview && !(commentsShown || autoExpand)
+              ? css`
+                  &:hover {
+                    background: ${Color.highlightGray()};
+                  }
+                  @media (max-width: ${mobileMaxWidth}) {
+                    &:hover {
+                      background: #fff;
+                    }
+                  }
+                `
+              : ''
+          } ${className}`}
+          style={style}
+          ref={ContainerRef}
+          onClick={isPreview ? onPreviewClick : () => {}}
+        >
+          {!inputAtBottom &&
+            !noInput &&
+            (commentsShown || autoExpand) &&
+            renderInputArea()}
+          {(commentsShown || autoExpand || numPreviews > 0) && !commentsHidden && (
+            <div
+              style={{
+                width: '100%'
+              }}
+            >
+              {isLoading && <Loading theme={theme} />}
+              {!isLoading &&
+                parent.contentType !== 'comment' &&
+                pinnedCommentId &&
+                !isPreview && (
+                  <PinnedComment
+                    parent={parent}
+                    rootContent={rootContent}
+                    subject={subject}
+                    commentId={pinnedCommentId}
+                    userId={userId}
+                    theme={theme}
+                  />
+                )}
+              {inputAtBottom &&
+                !isRepliesOfReply &&
+                loadMoreButton &&
+                renderLoadMoreButton()}
+              {!isLoading &&
+                (isPreview ? previewComments : comments).map((comment) => (
+                  <Comment
+                    isSubjectPannelComment={isSubjectPannelComments}
+                    isPreview={isPreview}
+                    innerRef={(ref) => (CommentRefs[comment.id] = ref)}
+                    parent={parent}
+                    rootContent={rootContent}
+                    subject={subject}
+                    theme={theme}
+                    comment={comment}
+                    pinnedCommentId={pinnedCommentId}
+                    key={comment.id}
+                    userId={userId}
+                  />
+                ))}
+              {(!inputAtBottom || isRepliesOfReply) &&
+                loadMoreButton &&
+                renderLoadMoreButton()}
+            </div>
+          )}
+          {inputAtBottom &&
+            !noInput &&
+            (commentsShown || autoExpand) &&
+            renderInputArea({ marginTop: comments.length > 0 ? '1rem' : 0 })}
+        </div>
+      </Context.Provider>
+    </ErrorBoundary>
   );
 }
 
