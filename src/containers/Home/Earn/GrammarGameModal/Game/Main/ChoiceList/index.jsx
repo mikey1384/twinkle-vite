@@ -15,6 +15,7 @@ ChoiceList.propTypes = {
   gotWrong: PropTypes.bool,
   listItems: PropTypes.array.isRequired,
   onCorrectAnswer: PropTypes.func.isRequired,
+  onCountdownStart: PropTypes.func.isRequired,
   onSetGotWrong: PropTypes.func.isRequired,
   questionLength: PropTypes.number,
   selectedChoiceIndex: PropTypes.number,
@@ -25,6 +26,7 @@ export default function ChoiceList({
   gotWrong,
   listItems,
   onCorrectAnswer,
+  onCountdownStart,
   onSetGotWrong,
   questionLength = 0,
   selectedChoiceIndex,
@@ -35,7 +37,10 @@ export default function ChoiceList({
   } = useKeyContext((v) => v.theme);
   const [shown, setShown] = useState(false);
   useEffect(() => {
-    setTimeout(() => setShown(true), Math.max(1500, questionLength * 35));
+    setTimeout(() => {
+      setShown(true);
+      onCountdownStart();
+    }, Math.max(1500, questionLength * 35));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

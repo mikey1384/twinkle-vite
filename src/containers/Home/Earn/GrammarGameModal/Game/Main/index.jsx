@@ -15,9 +15,11 @@ const correctSound = new Audio(correct);
 
 export default function Main({ onSetGameState, questions }) {
   const timerRef = useRef(null);
+  const gotWrongTimerRef = useRef(null);
   const [questionIds, setQuestionIds] = useState(null);
   const [questionObj, setQuestionObj] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
   const loadingRef = useRef(false);
 
@@ -50,12 +52,14 @@ export default function Main({ onSetGameState, questions }) {
     ));
     async function handleSelectCorrectAnswer() {
       if (!loadingRef.current) {
+        clearTimeout(timerRef.current);
         loadingRef.current = true;
+        const score = handleReturnCalculatedScore(elapsedTime);
         setQuestionObj((prev) => ({
           ...prev,
           [currentIndex]: {
             ...prev[currentIndex],
-            score: 'S',
+            score: score,
             selectedChoiceIndex: prev[currentIndex].answerIndex
           }
         }));
@@ -80,7 +84,7 @@ export default function Main({ onSetGameState, questions }) {
             selectedChoiceIndex: index
           }
         }));
-        timerRef.current = setTimeout(() => {
+        gotWrongTimerRef.current = setTimeout(() => {
           setQuestionObj((prev) => ({
             ...prev,
             [currentIndex]: {
@@ -105,9 +109,27 @@ export default function Main({ onSetGameState, questions }) {
       <SlideContainer
         questions={displayedQuestions}
         selectedIndex={currentIndex}
+        onCountdownStart={handleCountdownStart}
       >
         {Slides || <Loading />}
       </SlideContainer>
     </ErrorBoundary>
   );
+
+  function handleCountdownStart() {
+    clearTimeout(timerRef.current);
+    setElapsedTime(0);
+    timerRef.current = setInterval(() => {
+      setElapsedTime((elapsedTime) => elapsedTime + 1);
+    }, 1);
+  }
+
+  function handleReturnCalculatedScore(elapsedTime) {
+    if (elapsedTime < 150) return 'S';
+    if (elapsedTime < 300) return 'A';
+    if (elapsedTime < 450) return 'B';
+    if (elapsedTime < 600) return 'C';
+    if (elapsedTime < 750) return 'D';
+    return 'F';
+  }
 }
