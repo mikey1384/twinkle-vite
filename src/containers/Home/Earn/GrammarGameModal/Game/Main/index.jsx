@@ -132,10 +132,10 @@ export default function Main({ onSetGameState, questions }) {
   }
 
   function handleReturnCalculatedScore(elapsedTime) {
-    if (elapsedTime < 170) return 'S';
-    if (elapsedTime < 300) return 'A';
-    if (elapsedTime < 450) return 'B';
-    if (elapsedTime < 800) return 'C';
+    if (elapsedTime < 300) return 'S';
+    if (elapsedTime < 500) return 'A';
+    if (elapsedTime < 750) return 'B';
+    if (elapsedTime < 950) return 'C';
     if (elapsedTime < 1100) return 'D';
     return 'F';
   }
