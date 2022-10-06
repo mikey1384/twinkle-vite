@@ -44,6 +44,25 @@ export default function ChoiceList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const listener = (e) => {
+      if (e.key === '1') {
+        handleSelect(0);
+      } else if (e.key === '2') {
+        handleSelect(1);
+      } else if (e.key === '3') {
+        handleSelect(2);
+      } else if (e.key === '4') {
+        handleSelect(3);
+      }
+      return;
+    };
+    window.addEventListener('keyup', listener);
+    return function cleanUp() {
+      window.removeEventListener('keyup', listener);
+    };
+  }, [handleSelect]);
+
   return (
     <div
       className={`${gotWrong ? 'jiggle-jiggle-jiggle ' : ''}${css`
@@ -119,8 +138,7 @@ export default function ChoiceList({
             answerIndex={answerIndex}
             selectedChoiceIndex={selectedChoiceIndex}
             listItem={listItem}
-            onCorrectAnswer={onCorrectAnswer}
-            onSetGotWrong={onSetGotWrong}
+            onSelect={handleSelect}
             gotWrong={gotWrong}
             index={index}
           />
@@ -128,4 +146,13 @@ export default function ChoiceList({
       })}
     </div>
   );
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  function handleSelect(selectedIndex) {
+    if (selectedIndex === answerIndex) {
+      onCorrectAnswer();
+    } else {
+      onSetGotWrong(selectedIndex);
+    }
+  }
 }

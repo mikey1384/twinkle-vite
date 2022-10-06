@@ -7,8 +7,7 @@ ListItem.propTypes = {
   answerIndex: PropTypes.number,
   listItem: PropTypes.string.isRequired,
   index: PropTypes.number,
-  onCorrectAnswer: PropTypes.func.isRequired,
-  onSetGotWrong: PropTypes.func,
+  onSelect: PropTypes.func.isRequired,
   selectedChoiceIndex: PropTypes.number
 };
 
@@ -17,8 +16,7 @@ export default function ListItem({
   index,
   answerIndex,
   selectedChoiceIndex,
-  onCorrectAnswer,
-  onSetGotWrong
+  onSelect
 }) {
   const isWrong = useMemo(
     () => selectedChoiceIndex === index && selectedChoiceIndex !== answerIndex,
@@ -45,7 +43,7 @@ export default function ListItem({
           background: ${Color.highlightGray()};
         }
       `}`}
-      onMouseDown={handleSelect}
+      onMouseDown={() => onSelect(index)}
       key={index}
     >
       <div style={{ padding: '0', textAlign: 'center' }}>
@@ -53,12 +51,4 @@ export default function ListItem({
       </div>
     </nav>
   );
-
-  function handleSelect() {
-    if (index === answerIndex) {
-      onCorrectAnswer();
-    } else {
-      onSetGotWrong(index);
-    }
-  }
 }

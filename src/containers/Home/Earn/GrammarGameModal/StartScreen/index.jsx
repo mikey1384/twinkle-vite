@@ -65,9 +65,15 @@ export default function StartScreen({ onGameStart }) {
               </div>
             )}
           </div>
-          <p style={{ marginTop: '4rem', textAlign: 'center' }}>
-            Press the <b>start</b> button when you are ready
-          </p>
+          <div style={{ marginTop: '4rem', textAlign: 'center' }}>
+            <p>
+              {`You can use 1, 2, 3, 4 keys in your keyboard or use your mouse to
+              select the options`}
+            </p>
+            <p>
+              Press the <b>start</b> button when you are ready
+            </p>
+          </div>
         </div>
         <GradientButton
           style={{ marginTop: '4rem', fontSize: '1.7rem' }}
