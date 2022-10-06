@@ -6,6 +6,7 @@ import { scrollElementToCenter } from '~/helpers';
 
 SlideContainer.propTypes = {
   children: PropTypes.node,
+  isOnStreak: PropTypes.bool,
   onCountdownStart: PropTypes.func,
   questions: PropTypes.array,
   selectedIndex: PropTypes.number
@@ -13,6 +14,7 @@ SlideContainer.propTypes = {
 
 export default function SlideContainer({
   children,
+  isOnStreak,
   onCountdownStart,
   questions,
   selectedIndex = 0
@@ -46,7 +48,11 @@ export default function SlideContainer({
       <div style={{ width: '100%', minHeight: '7rem', marginTop: '2rem' }}>
         {DisplayedSlide}
       </div>
-      <ProgressBar questions={questions} style={{ marginBottom: '3rem' }} />
+      <ProgressBar
+        questions={questions}
+        isOnStreak={isOnStreak}
+        style={{ marginBottom: '3rem' }}
+      />
     </ErrorBoundary>
   );
 }

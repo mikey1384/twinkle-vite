@@ -4,11 +4,12 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
 ProgressBar.propTypes = {
+  isOnStreak: PropTypes.bool,
   questions: PropTypes.arrayOf(PropTypes.object).isRequired,
   style: PropTypes.object
 };
 
-export default function ProgressBar({ questions, style }) {
+export default function ProgressBar({ isOnStreak, questions, style }) {
   return (
     <div
       className={className}
@@ -22,6 +23,7 @@ export default function ProgressBar({ questions, style }) {
         return (
           <Bubble
             key={index}
+            isOnStreak={isOnStreak}
             question={question}
             style={{
               marginLeft: index === 0 ? 0 : '-1rem',

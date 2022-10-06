@@ -4,6 +4,9 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import GradientButton from '~/components/Buttons/GradientButton';
 import { useHomeContext } from '~/contexts';
+import localize from '~/constants/localize';
+
+const earnXPLabel = localize('earnXP');
 
 StartMenu.propTypes = {
   onSetGrammarGameModalShown: PropTypes.func.isRequired
@@ -21,7 +24,7 @@ export default function StartMenu({ onSetGrammarGameModalShown }) {
           flexDirection: 'column'
         }}
       >
-        <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>Earn XP</p>
+        <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>{earnXPLabel}</p>
         <Button
           onClick={() => onSetEarnSection('subject')}
           style={{ marginTop: '0.7rem' }}
