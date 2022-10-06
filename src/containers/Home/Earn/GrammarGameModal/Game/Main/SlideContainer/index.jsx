@@ -6,6 +6,7 @@ import { scrollElementToCenter } from '~/helpers';
 
 SlideContainer.propTypes = {
   children: PropTypes.node,
+  isCompleted: PropTypes.bool,
   isOnStreak: PropTypes.bool,
   onCountdownStart: PropTypes.func,
   questions: PropTypes.array,
@@ -14,6 +15,7 @@ SlideContainer.propTypes = {
 
 export default function SlideContainer({
   children,
+  isCompleted,
   isOnStreak,
   onCountdownStart,
   questions,
@@ -51,6 +53,7 @@ export default function SlideContainer({
       <ProgressBar
         questions={questions}
         isOnStreak={isOnStreak}
+        isCompleted={isCompleted}
         selectedIndex={selectedIndex}
         style={{ marginBottom: '3rem' }}
       />
