@@ -57,9 +57,9 @@ export default function ChoiceList({
       }
       return;
     };
-    window.addEventListener('keyup', listener);
+    window.addEventListener('keydown', listener);
     return function cleanUp() {
-      window.removeEventListener('keyup', listener);
+      window.removeEventListener('keydown', listener);
     };
   }, [handleSelect]);
 
