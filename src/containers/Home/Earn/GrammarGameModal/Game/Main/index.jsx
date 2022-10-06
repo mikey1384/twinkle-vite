@@ -23,6 +23,22 @@ export default function Main({ onSetGameState, questions }) {
   const [gotWrong, setGotWrong] = useState(false);
   const loadingRef = useRef(false);
 
+  const scoreArray = useMemo(() => {
+    return questionIds
+      ?.map((id) => questionObj[id].score)
+      .filter((score) => !!score);
+  }, [questionIds, questionObj]);
+
+  const isOnStreak = useMemo(() => {
+    if (!scoreArray || scoreArray?.length < 2) return false;
+    for (let score of scoreArray) {
+      if (score !== 'S') {
+        return false;
+      }
+    }
+    return true;
+  }, [scoreArray]);
+
   useEffect(() => {
     const resultObj = questions.reduce((prev, curr, index) => {
       return {
@@ -116,6 +132,7 @@ export default function Main({ onSetGameState, questions }) {
       <SlideContainer
         questions={displayedQuestions}
         selectedIndex={currentIndex}
+        isOnStreak={isOnStreak}
         onCountdownStart={handleCountdownStart}
       >
         {Slides || <Loading />}
