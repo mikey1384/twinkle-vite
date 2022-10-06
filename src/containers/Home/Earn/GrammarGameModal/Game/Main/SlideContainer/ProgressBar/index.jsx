@@ -76,7 +76,7 @@ export default function ProgressBar({
         ${Color.gold()},
         ${Color.magenta()},
         ${Color.orange()},
-        ${Color.logoBlue()}
+        ${Color.purple()}
       );
       background-size: 200% 200%;
       animation: Gradient ${selectedIndex === 9 ? 0.3 : 1}s ease infinite;
