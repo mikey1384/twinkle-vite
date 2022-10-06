@@ -51,6 +51,7 @@ export default function SlideContainer({
       <ProgressBar
         questions={questions}
         isOnStreak={isOnStreak}
+        selectedIndex={selectedIndex}
         style={{ marginBottom: '3rem' }}
       />
     </ErrorBoundary>
