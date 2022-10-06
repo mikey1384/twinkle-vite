@@ -84,6 +84,18 @@ const className = css`
     );
   }
 
+  .streak {
+    background: linear-gradient(
+      -45deg,
+      ${Color.gold()},
+      ${Color.magenta()},
+      ${Color.orange()},
+      ${Color.logoBlue()}
+    );
+    background-size: 200% 200%;
+    animation: Gradient 0.5s ease infinite;
+  }
+
   .gradedA {
     background: radial-gradient(
       ${Color.magenta(0.9)},
