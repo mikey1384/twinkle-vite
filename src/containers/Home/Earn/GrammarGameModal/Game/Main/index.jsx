@@ -16,6 +16,7 @@ const correctSound = new Audio(correct);
 export default function Main({ onSetGameState, questions }) {
   const timerRef = useRef(null);
   const gotWrongTimerRef = useRef(null);
+  const [isCompleted, setIsCompleted] = useState(false);
   const [questionIds, setQuestionIds] = useState(null);
   const [questionObj, setQuestionObj] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -85,7 +86,7 @@ export default function Main({ onSetGameState, questions }) {
           setCurrentIndex((prev) => prev + 1);
           loadingRef.current = false;
         } else {
-          onSetGameState('finished');
+          handleGameFinish();
         }
       }
     }
@@ -113,6 +114,12 @@ export default function Main({ onSetGameState, questions }) {
         }, 1000);
       }
     }
+    async function handleGameFinish() {
+      setIsCompleted(true);
+      setTimeout(() => {
+        onSetGameState('finished');
+      }, 10000000);
+    }
   }, [
     currentIndex,
     elapsedTime,
@@ -133,6 +140,7 @@ export default function Main({ onSetGameState, questions }) {
         questions={displayedQuestions}
         selectedIndex={currentIndex}
         isOnStreak={isOnStreak}
+        isCompleted={isCompleted}
         onCountdownStart={handleCountdownStart}
       >
         {Slides || <Loading />}

@@ -5,6 +5,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 
 ProgressBar.propTypes = {
   isOnStreak: PropTypes.bool,
+  isCompleted: PropTypes.bool,
   questions: PropTypes.arrayOf(PropTypes.object).isRequired,
   selectedIndex: PropTypes.number.isRequired,
   style: PropTypes.object
@@ -12,11 +13,16 @@ ProgressBar.propTypes = {
 
 export default function ProgressBar({
   isOnStreak,
+  isCompleted,
   questions,
   selectedIndex,
   style
 }) {
   const className = css`
+    .waving {
+      animation: wave ease-in-out;
+      animation-duration: 200ms;
+    }
     .ball {
       display: inline-block;
       width: 100%;
@@ -158,7 +164,9 @@ export default function ProgressBar({
         return (
           <Bubble
             key={index}
+            index={index}
             isOnStreak={isOnStreak}
+            isCompleted={isCompleted}
             question={question}
             style={{
               marginLeft: index === 0 ? 0 : '-1rem',
