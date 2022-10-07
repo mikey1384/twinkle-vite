@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { panel } from './Styles';
+import { panel } from '../Styles';
 import { useHomeContext } from '~/contexts';
 import EarnXPFromSubjects from './EarnXPFromSubjects';
 import RecommendPosts from './RecommendPosts';

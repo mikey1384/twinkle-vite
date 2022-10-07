@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import ActivitySuggester from './ActivitySuggester';
-import InputPanel from './InputPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import Banner from '~/components/Banner';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import HomeFilter from './HomeFilter';
 import ContentPanel from '~/components/ContentPanel';
+import TopMenu from './TopMenu';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -167,8 +166,7 @@ export default function Stories() {
           applyFilter={applyFilter}
           setDisplayOrder={handleDisplayOrder}
         />
-        <ActivitySuggester />
-        <InputPanel />
+        <TopMenu />
         <div style={{ width: '100%' }}>
           {loadingFeeds && <Loading text="Loading Feeds..." />}
           {loaded && feeds.length === 0 && !loadingFeeds && (
