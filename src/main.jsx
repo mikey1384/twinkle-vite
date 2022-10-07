@@ -81,6 +81,7 @@ import { faPlay } from '@fortawesome/pro-solid-svg-icons/faPlay';
 import { faPlus } from '@fortawesome/pro-solid-svg-icons/faPlus';
 import { faPortalEnter } from '@fortawesome/pro-solid-svg-icons/faPortalEnter';
 import { faQuestion } from '@fortawesome/pro-solid-svg-icons/faQuestion';
+import { faRankingStar } from '@fortawesome/pro-solid-svg-icons/faRankingStar';
 import { faReact } from '@fortawesome/free-brands-svg-icons/faReact';
 import { faRecycle } from '@fortawesome/pro-solid-svg-icons/faRecycle';
 import { faRedo } from '@fortawesome/pro-solid-svg-icons/faRedo';
@@ -193,6 +194,7 @@ library.add(
   faPlay,
   faPlus,
   faPortalEnter,
+  faRankingStar,
   faReact,
   faRecycle,
   faRedo,

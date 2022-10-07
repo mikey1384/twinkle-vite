@@ -1,12 +1,10 @@
 import ErrorBoundary from '~/components/ErrorBoundary';
-import EarnSuggester from './EarnSuggester';
 import localize from '~/constants/localize';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import Leaderboards from './Leaderboards';
 
-const earnXPAndKPLabel = localize('earnXPAndKP');
-const leaderboardsLabel = localize('leaderboards');
+const rankingsLabel = localize('rankings');
 
 export default function Earn() {
   return (
@@ -31,11 +29,7 @@ export default function Earn() {
         `}
       >
         <section>
-          <h2>{earnXPAndKPLabel}</h2>
-          <EarnSuggester />
-        </section>
-        <section>
-          <h2>{leaderboardsLabel}</h2>
+          <h2>{rankingsLabel}</h2>
           <Leaderboards />
         </section>
         <div style={{ height: '15rem' }} />
