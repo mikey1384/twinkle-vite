@@ -182,10 +182,10 @@ export default function HomeMenuItems({ style = {} }) {
           </a>
         </nav>
         <nav
-          className={location.pathname === '/earn' ? 'active' : ''}
-          onClick={() => navigate('/earn')}
+          className={location.pathname === '/rankings' ? 'active' : ''}
+          onClick={() => navigate('/rankings')}
         >
-          <a href="/earn" onClick={(e) => e.preventDefault()}>
+          <a href="/rankings" onClick={(e) => e.preventDefault()}>
             <div className="homemenu__item">
               <div className="selection" />
               <div className="icon">
