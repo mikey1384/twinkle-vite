@@ -5,9 +5,9 @@ import { mobileMaxWidth } from '~/constants/css';
 import Leaderboards from './Leaderboards';
 import TopMenu from '../TopMenu';
 
-const rankingsLabel = localize('rankings');
+const leaderboardsLabel = localize('leaderboards');
 
-export default function Rankings() {
+export default function Earn() {
   return (
     <ErrorBoundary componentPath="Home/Earn/index">
       <TopMenu />
@@ -31,7 +31,7 @@ export default function Rankings() {
         `}
       >
         <section>
-          <h2>{rankingsLabel}</h2>
+          <h2>{leaderboardsLabel}</h2>
           <Leaderboards />
         </section>
         <div style={{ height: '15rem' }} />
