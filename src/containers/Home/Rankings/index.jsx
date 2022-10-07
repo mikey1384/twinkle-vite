@@ -3,12 +3,14 @@ import localize from '~/constants/localize';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import Leaderboards from './Leaderboards';
+import TopMenu from '../TopMenu';
 
 const rankingsLabel = localize('rankings');
 
 export default function Rankings() {
   return (
     <ErrorBoundary componentPath="Home/Earn/index">
+      <TopMenu />
       <div
         className={css`
           > section {

@@ -1,5 +1,5 @@
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { panel } from '../Styles';
+import { panel } from './Styles';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
