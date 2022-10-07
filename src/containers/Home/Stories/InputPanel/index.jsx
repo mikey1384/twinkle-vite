@@ -12,7 +12,7 @@ export default function InputPanel() {
       <div>
         <input
           style={{ width: '100%', marginTop: '1rem', marginBottom: '1rem' }}
-          placeholder="Post Something..."
+          placeholder="Post Something"
           value={inputValue}
           onChange={() => setInputValue('')}
           onClick={() => setInputModalShown(true)}
