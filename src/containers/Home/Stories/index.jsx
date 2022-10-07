@@ -6,6 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import HomeFilter from './HomeFilter';
 import ContentPanel from '~/components/ContentPanel';
 import TopMenu from '../TopMenu';
+import InputPanel from './InputPanel';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -158,7 +159,9 @@ export default function Stories() {
   return (
     <ErrorBoundary componentPath="Home/Stories/index">
       <div style={{ width: '100%' }} ref={ContainerRef}>
-        <TopMenu />
+        <TopMenu>
+          <InputPanel />
+        </TopMenu>
         <HomeFilter
           category={category}
           changeCategory={handleChangeCategory}
