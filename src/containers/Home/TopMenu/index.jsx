@@ -24,10 +24,7 @@ export default function TopMenu({ children = null }) {
         </p>
         {children}
         <div style={{ marginTop: '1rem', display: 'flex' }}>
-          <div className={panel}>Post something</div>
-          <div style={{ marginLeft: '1rem' }} className={panel}>
-            Play Grammar Game
-          </div>
+          <div className={panel}>Play Grammar Game</div>
           <div style={{ marginLeft: '1rem' }} className={panel}>
             Earn Karma Points
           </div>

@@ -5,7 +5,7 @@ import Textarea from '~/components/Texts/Textarea';
 import AttachContentModal from './AttachContentModal';
 import Attachment from '~/components/Attachment';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import LocalContext from '../../../Context';
+import LocalContext from '../../../../Context';
 import {
   addEmoji,
   getFileInfoFromFileName,
