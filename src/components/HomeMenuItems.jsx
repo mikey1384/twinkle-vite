@@ -16,7 +16,6 @@ HomeMenuItems.propTypes = {
 };
 
 const peopleLabel = localize('people');
-const rankingsLabel = localize('rankings');
 const storiesLabel = localize('stories');
 const storeLabel = localize('store');
 const deviceIsMobile = isMobile(navigator);
@@ -182,16 +181,16 @@ export default function HomeMenuItems({ style = {} }) {
           </a>
         </nav>
         <nav
-          className={location.pathname === '/rankings' ? 'active' : ''}
-          onClick={() => navigate('/rankings')}
+          className={location.pathname === '/earn' ? 'active' : ''}
+          onClick={() => navigate('/earn')}
         >
-          <a href="/rankings" onClick={(e) => e.preventDefault()}>
+          <a href="/earn" onClick={(e) => e.preventDefault()}>
             <div className="homemenu__item">
               <div className="selection" />
               <div className="icon">
-                <Icon icon="ranking-star" size="1x" />
+                <Icon icon="bolt" size="1x" />
               </div>
-              <div className="label">{rankingsLabel}</div>
+              <div className="label">XP & KP</div>
             </div>
           </a>
         </nav>
