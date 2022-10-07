@@ -5,7 +5,7 @@ import Banner from '~/components/Banner';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import HomeFilter from './HomeFilter';
 import ContentPanel from '~/components/ContentPanel';
-import TopMenu from './TopMenu';
+import TopMenu from '../TopMenu';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
