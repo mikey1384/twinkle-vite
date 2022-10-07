@@ -6,7 +6,7 @@ import Leaderboards from './Leaderboards';
 
 const rankingsLabel = localize('rankings');
 
-export default function Earn() {
+export default function Rankings() {
   return (
     <ErrorBoundary componentPath="Home/Earn/index">
       <div

@@ -7,7 +7,7 @@ import ProfileWidget from '~/components/ProfileWidget';
 import HomeMenuItems from '~/components/HomeMenuItems';
 import Notification from '~/components/Notification';
 import People from './People';
-import Earn from './Earn';
+import Rankings from './Rankings';
 import Store from './Store';
 import Stories from './Stories';
 import LocalContext from './Context';
@@ -47,7 +47,7 @@ function Home({ onFileUpload, section }) {
           <div className={Center}>
             <div style={{ maxWidth: '700px', width: '100%' }}>
               {section === 'people' && <People />}
-              {section === 'earn' && <Earn />}
+              {section === 'rankings' && <Rankings />}
               {section === 'store' && <Store />}
               {section === 'story' && <Stories />}
             </div>

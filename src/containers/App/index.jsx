@@ -665,7 +665,7 @@ function App() {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/users" element={<Home section="people" />} />
             <Route path="/store" element={<Home section="store" />} />
-            <Route path="/earn" element={<Home section="earn" />} />
+            <Route path="/rankings" element={<Home section="rankings" />} />
             <Route
               path="/"
               element={
