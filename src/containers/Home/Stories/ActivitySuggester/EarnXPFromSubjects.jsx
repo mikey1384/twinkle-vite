@@ -19,7 +19,9 @@ export default function EarnXPFromSubjects({ onSetGrammarGameModalShown }) {
   const {
     showMeAnotherSubjectButton: { color: showMeAnotherSubjectButtonColor }
   } = useKeyContext((v) => v.theme);
-  const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
+  const onSetTopMenuSectionSection = useHomeContext(
+    (v) => v.actions.onSetTopMenuSectionSection
+  );
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const loadHighXPSubjects = useAppContext(
@@ -32,7 +34,7 @@ export default function EarnXPFromSubjects({ onSetGrammarGameModalShown }) {
   }, []);
 
   return (
-    <ErrorBoundary componentPath="Home/Earn/EarnSuggester/EarnXPFromSubjects">
+    <ErrorBoundary componentPath="Home/Earn/ActivitySuggester/EarnXPFromSubjects">
       <div
         style={{
           width: '100%',
@@ -95,7 +97,7 @@ export default function EarnXPFromSubjects({ onSetGrammarGameModalShown }) {
             </GradientButton>
             <p style={{ marginTop: '1.5rem' }}>Earn Karma Points</p>
             <Button
-              onClick={() => handleSetEarnSection('recommend')}
+              onClick={() => handleSetTopMenuSection('recommend')}
               style={{ marginTop: '0.7rem' }}
               filled
               color="brownOrange"
@@ -104,7 +106,7 @@ export default function EarnXPFromSubjects({ onSetGrammarGameModalShown }) {
               <span style={{ marginLeft: '0.7rem' }}>Recommend posts</span>
             </Button>
             <Button
-              onClick={() => handleSetEarnSection('reward')}
+              onClick={() => handleSetTopMenuSection('reward')}
               style={{ marginTop: '0.7rem' }}
               filled
               color="pink"
@@ -118,8 +120,8 @@ export default function EarnXPFromSubjects({ onSetGrammarGameModalShown }) {
     </ErrorBoundary>
   );
 
-  function handleSetEarnSection(section) {
-    onSetEarnSection(section);
+  function handleSetTopMenuSection(section) {
+    onSetTopMenuSectionSection(section);
     document.getElementById('App').scrollTop = 0;
     BodyRef.scrollTop = 0;
   }

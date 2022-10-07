@@ -13,10 +13,12 @@ StartMenu.propTypes = {
 };
 
 export default function StartMenu({ onSetGrammarGameModalShown }) {
-  const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
+  const onSetTopMenuSectionSection = useHomeContext(
+    (v) => v.actions.onSetTopMenuSectionSection
+  );
 
   return (
-    <ErrorBoundary componentPath="Home/Earn/EarnSuggester/StartMenu">
+    <ErrorBoundary componentPath="Home/Earn/ActivitySuggester/StartMenu">
       <div
         style={{
           width: '100%',
@@ -26,7 +28,7 @@ export default function StartMenu({ onSetGrammarGameModalShown }) {
       >
         <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>{earnXPLabel}</p>
         <Button
-          onClick={() => onSetEarnSection('subject')}
+          onClick={() => onSetTopMenuSectionSection('subject')}
           style={{ marginTop: '0.7rem' }}
           filled
           color="logoBlue"
@@ -58,7 +60,7 @@ export default function StartMenu({ onSetGrammarGameModalShown }) {
           Earn Karma Points
         </p>
         <Button
-          onClick={() => onSetEarnSection('recommend')}
+          onClick={() => onSetTopMenuSectionSection('recommend')}
           style={{ marginTop: '0.7rem' }}
           filled
           color="brownOrange"
@@ -67,7 +69,7 @@ export default function StartMenu({ onSetGrammarGameModalShown }) {
           <span style={{ marginLeft: '0.7rem' }}>Recommend posts</span>
         </Button>
         <Button
-          onClick={() => onSetEarnSection('reward')}
+          onClick={() => onSetTopMenuSectionSection('reward')}
           style={{ marginTop: '0.7rem' }}
           filled
           color="pink"
