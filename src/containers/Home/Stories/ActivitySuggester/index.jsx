@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { panel } from '../Styles';
+import { panel } from './Styles';
 import { useHomeContext } from '~/contexts';
 import EarnXPFromSubjects from './EarnXPFromSubjects';
 import RecommendPosts from './RecommendPosts';
 import RewardPosts from './RewardPosts';
 import StartMenu from './StartMenu';
-import GrammarGameModal from '../GrammarGameModal';
+import GrammarGameModal from './GrammarGameModal';
 
 ActivitySuggester.propTypes = {
   style: PropTypes.object

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import ActivitySuggester from './ActivitySuggester';
 import InputPanel from './InputPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
@@ -166,6 +167,7 @@ export default function Stories() {
           applyFilter={applyFilter}
           setDisplayOrder={handleDisplayOrder}
         />
+        <ActivitySuggester />
         <InputPanel />
         <div style={{ width: '100%' }}>
           {loadingFeeds && <Loading text="Loading Feeds..." />}
