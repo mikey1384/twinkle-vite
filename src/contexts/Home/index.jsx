@@ -8,7 +8,7 @@ export const HomeContext = createContext();
 export const initialHomeState = {
   category: 'recommended',
   displayOrder: 'desc',
-  earnSection: 'start',
+  topMenuSection: 'start',
   feeds: [],
   feedsOutdated: false,
   fileUploadProgress: null,

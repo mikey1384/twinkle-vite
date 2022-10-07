@@ -51,9 +51,9 @@ export default function HomeActions(dispatch) {
         order
       });
     },
-    onSetEarnSection(section) {
+    onSetTopMenuSectionSection(section) {
       return dispatch({
-        type: 'SET_EARN_SECTION',
+        type: 'SET_TOP_MENU_SECTION',
         section
       });
     },

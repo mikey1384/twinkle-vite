@@ -8,23 +8,23 @@ import RewardPosts from './RewardPosts';
 import StartMenu from './StartMenu';
 import GrammarGameModal from '../GrammarGameModal';
 
-EarnSuggester.propTypes = {
+ActivitySuggester.propTypes = {
   style: PropTypes.object
 };
 
-export default function EarnSuggester({ style }) {
+export default function ActivitySuggester({ style }) {
   const [grammarGameModalShown, setGrammarGameModalShown] = useState(false);
-  const earnSection = useHomeContext((v) => v.state.earnSection);
+  const topMenuSection = useHomeContext((v) => v.state.topMenuSection);
 
   return (
     <div style={style} className={panel}>
-      {earnSection === 'start' ? (
+      {topMenuSection === 'start' ? (
         <StartMenu onSetGrammarGameModalShown={setGrammarGameModalShown} />
-      ) : earnSection === 'subject' ? (
+      ) : topMenuSection === 'subject' ? (
         <EarnXPFromSubjects
           onSetGrammarGameModalShown={setGrammarGameModalShown}
         />
-      ) : earnSection === 'recommend' ? (
+      ) : topMenuSection === 'recommend' ? (
         <RecommendPosts onSetGrammarGameModalShown={setGrammarGameModalShown} />
       ) : (
         <RewardPosts onSetGrammarGameModalShown={setGrammarGameModalShown} />

@@ -66,10 +66,10 @@ export default function HomeReducer(state, action) {
         ...state,
         displayOrder: action.order
       };
-    case 'SET_EARN_SECTION':
+    case 'SET_TOP_MENU_SECTION':
       return {
         ...state,
-        earnSection: action.section
+        topMenuSection: action.section
       };
     case 'SET_FEEDS_OUTDATED':
       return {

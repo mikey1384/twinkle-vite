@@ -6,36 +6,38 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import CommentPreview from './CommentPreview';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import { useAppContext, useKeyContext, useHomeContext } from '~/contexts';
+import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
-RewardPosts.propTypes = {
+RecommendPosts.propTypes = {
   onSetGrammarGameModalShown: PropTypes.func.isRequired
 };
 
-export default function RewardPosts({ onSetGrammarGameModalShown }) {
+export default function RecommendPosts({ onSetGrammarGameModalShown }) {
   const {
     showMeAnotherPostButton: { color: showMeAnotherPostButtonColor }
   } = useKeyContext((v) => v.theme);
-  const onSetEarnSection = useHomeContext((v) => v.actions.onSetEarnSection);
+  const onSetTopMenuSectionSection = useHomeContext(
+    (v) => v.actions.onSetTopMenuSectionSection
+  );
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [skipping, setSkipping] = useState(false);
-  const loadPostsToReward = useAppContext(
-    (v) => v.requestHelpers.loadPostsToReward
+  const [loading, setLoading] = useState(false);
+  const loadPostsToRecommend = useAppContext(
+    (v) => v.requestHelpers.loadPostsToRecommend
   );
   const markPostAsSkipped = useAppContext(
     (v) => v.requestHelpers.markPostAsSkipped
   );
 
   useEffect(() => {
-    handleLoadPostsToReward();
+    handleLoadPostsToRecommend();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <ErrorBoundary componentPath="Home/Earn/EarnSuggester/RewardPosts">
+    <ErrorBoundary componentPath="Home/Earn/ActivitySuggester/RecommendPosts">
       <div
         style={{
           width: '100%',
@@ -43,7 +45,7 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
           flexDirection: 'column'
         }}
       >
-        <p>Earn Karma Points by Rewarding Posts</p>
+        <p>Earn Karma Points by Recommending Posts</p>
         <div
           style={{
             marginTop: '1.5rem'
@@ -60,7 +62,7 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
                 alignItems: 'center',
                 marginBottom: '2rem'
               }}
-            >{`Wow, it looks like there aren't any post left to reward!`}</div>
+            >{`Wow, it looks like there aren't any post left to recommend!`}</div>
           ) : (
             <>
               {posts.map((post) => (
@@ -102,7 +104,7 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
           >
             <p>Earn XP</p>
             <Button
-              onClick={() => handleSetEarnSection('subject')}
+              onClick={() => handleSetTopMenuSection('subject')}
               style={{ marginTop: '0.7rem' }}
               filled
               color="logoBlue"
@@ -123,13 +125,13 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
             </GradientButton>
             <p style={{ marginTop: '1.5rem' }}>Earn Karma Points</p>
             <Button
-              onClick={() => handleSetEarnSection('recommend')}
+              onClick={() => handleSetTopMenuSection('reward')}
               style={{ marginTop: '0.7rem' }}
               filled
-              color="brownOrange"
+              color="pink"
             >
-              <Icon icon="heart" />
-              <span style={{ marginLeft: '0.7rem' }}>Recommend posts</span>
+              <Icon icon="certificate" />
+              <span style={{ marginLeft: '0.7rem' }}>Reward posts</span>
             </Button>
           </div>
         </div>
@@ -137,8 +139,8 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
     </ErrorBoundary>
   );
 
-  function handleSetEarnSection(section) {
-    onSetEarnSection(section);
+  function handleSetTopMenuSection(section) {
+    onSetTopMenuSectionSection(section);
     document.getElementById('App').scrollTop = 0;
     BodyRef.scrollTop = 0;
   }
@@ -148,7 +150,7 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
       setSkipping(true);
       await markPostAsSkipped({
         earnType: 'karma',
-        action: 'reward',
+        action: 'recommendation',
         contentType: 'comment',
         contentId: posts[0].id
       });
@@ -156,12 +158,12 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
     }
     document.getElementById('App').scrollTop = 0;
     BodyRef.scrollTop = 0;
-    handleLoadPostsToReward();
+    handleLoadPostsToRecommend();
   }
 
-  async function handleLoadPostsToReward() {
+  async function handleLoadPostsToRecommend() {
     setLoading(true);
-    const data = await loadPostsToReward();
+    const data = await loadPostsToRecommend();
     setPosts(data);
     setLoading(false);
   }
