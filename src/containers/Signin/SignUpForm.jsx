@@ -47,6 +47,7 @@ export default function SignUpForm({
   const onSignup = useAppContext((v) => v.user.actions.onSignup);
   const signup = useAppContext((v) => v.requestHelpers.signup);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const [signingUp, setSigningUp] = useState(false);
   const [password, setPassword] = useState('');
   const [firstname, setFirstname] = useState('');
   const [lastname, setLastname] = useState('');
@@ -55,13 +56,22 @@ export default function SignUpForm({
   const [errorMessage, setErrorMessage] = useState('');
   const submitDisabled = useMemo(
     () =>
+      signingUp ||
       stringIsEmpty(username) ||
       stringIsEmpty(password) ||
       stringIsEmpty(firstname) ||
       stringIsEmpty(lastname) ||
       stringIsEmpty(keyphrase) ||
       errorMessage,
-    [errorMessage, firstname, keyphrase, lastname, password, username]
+    [
+      errorMessage,
+      firstname,
+      keyphrase,
+      lastname,
+      password,
+      signingUp,
+      username
+    ]
   );
   const usernameErrorMsgLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
@@ -295,6 +305,7 @@ export default function SignUpForm({
     }
 
     try {
+      setSigningUp(true);
       const data = await signup({
         username,
         password,
@@ -305,6 +316,7 @@ export default function SignUpForm({
       });
       onSignup(data);
       onSetUserState({ userId: data.id, newState: data });
+      setSigningUp(false);
     } catch (error) {
       setErrorMessage(error?.data);
     }
