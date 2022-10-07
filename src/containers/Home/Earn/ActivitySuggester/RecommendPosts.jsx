@@ -1,20 +1,14 @@
 import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import GradientButton from '~/components/Buttons/GradientButton';
 import CommentPreview from './CommentPreview';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import { useAppContext, useKeyContext, useHomeContext } from '~/contexts';
+import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
-RewardPosts.propTypes = {
-  onSetGrammarGameModalShown: PropTypes.func.isRequired
-};
-
-export default function RewardPosts({ onSetGrammarGameModalShown }) {
+export default function RecommendPosts() {
   const {
     showMeAnotherPostButton: { color: showMeAnotherPostButtonColor }
   } = useKeyContext((v) => v.theme);
@@ -22,22 +16,22 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
     (v) => v.actions.onSetTopMenuSectionSection
   );
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [skipping, setSkipping] = useState(false);
-  const loadPostsToReward = useAppContext(
-    (v) => v.requestHelpers.loadPostsToReward
+  const [loading, setLoading] = useState(false);
+  const loadPostsToRecommend = useAppContext(
+    (v) => v.requestHelpers.loadPostsToRecommend
   );
   const markPostAsSkipped = useAppContext(
     (v) => v.requestHelpers.markPostAsSkipped
   );
 
   useEffect(() => {
-    handleLoadPostsToReward();
+    handleLoadPostsToRecommend();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <ErrorBoundary componentPath="Home/Earn/ActivitySuggester/RewardPosts">
+    <ErrorBoundary componentPath="Home/Earn/ActivitySuggester/RecommendPosts">
       <div
         style={{
           width: '100%',
@@ -45,7 +39,7 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
           flexDirection: 'column'
         }}
       >
-        <p>Earn Karma Points by Rewarding Posts</p>
+        <p>Earn Karma Points by Recommending Posts</p>
         <div
           style={{
             marginTop: '1.5rem'
@@ -62,7 +56,7 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
                 alignItems: 'center',
                 marginBottom: '2rem'
               }}
-            >{`Wow, it looks like there aren't any post left to reward!`}</div>
+            >{`Wow, it looks like there aren't any post left to recommend!`}</div>
           ) : (
             <>
               {posts.map((post) => (
@@ -99,41 +93,15 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
             justifyContent: 'center'
           }}
         >
-          <div
-            style={{ display: 'flex', flexDirection: 'column', width: '80%' }}
+          <Button
+            onClick={() => handleSetTopMenuSection('reward')}
+            style={{ marginTop: '0.7rem', width: '100%' }}
+            filled
+            color="pink"
           >
-            <p>Earn XP</p>
-            <Button
-              onClick={() => handleSetTopMenuSection('subject')}
-              style={{ marginTop: '0.7rem' }}
-              filled
-              color="logoBlue"
-            >
-              <Icon icon="bolt" />
-              <span style={{ marginLeft: '0.7rem' }}>
-                Respond to high XP subjects
-              </span>
-            </Button>
-            <GradientButton
-              style={{ marginTop: '0.7rem' }}
-              fontSize="1.5rem"
-              mobileFontSize="1.3rem"
-              onClick={() => onSetGrammarGameModalShown(true)}
-            >
-              <Icon icon="spell-check" />
-              <span style={{ marginLeft: '0.7rem' }}>The Grammar Game</span>
-            </GradientButton>
-            <p style={{ marginTop: '1.5rem' }}>Earn Karma Points</p>
-            <Button
-              onClick={() => handleSetTopMenuSection('recommend')}
-              style={{ marginTop: '0.7rem' }}
-              filled
-              color="brownOrange"
-            >
-              <Icon icon="heart" />
-              <span style={{ marginLeft: '0.7rem' }}>Recommend posts</span>
-            </Button>
-          </div>
+            <Icon icon="certificate" />
+            <span style={{ marginLeft: '0.7rem' }}>Reward posts</span>
+          </Button>
         </div>
       </div>
     </ErrorBoundary>
@@ -150,7 +118,7 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
       setSkipping(true);
       await markPostAsSkipped({
         earnType: 'karma',
-        action: 'reward',
+        action: 'recommendation',
         contentType: 'comment',
         contentId: posts[0].id
       });
@@ -158,12 +126,12 @@ export default function RewardPosts({ onSetGrammarGameModalShown }) {
     }
     document.getElementById('App').scrollTop = 0;
     BodyRef.scrollTop = 0;
-    handleLoadPostsToReward();
+    handleLoadPostsToRecommend();
   }
 
-  async function handleLoadPostsToReward() {
+  async function handleLoadPostsToRecommend() {
     setLoading(true);
-    const data = await loadPostsToReward();
+    const data = await loadPostsToRecommend();
     setPosts(data);
     setLoading(false);
   }

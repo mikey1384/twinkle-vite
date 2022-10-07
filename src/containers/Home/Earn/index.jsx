@@ -3,6 +3,7 @@ import localize from '~/constants/localize';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import Leaderboards from './Leaderboards';
+import ActivitySuggester from './ActivitySuggester';
 import TopMenu from '../TopMenu';
 
 const leaderboardsLabel = localize('leaderboards');
@@ -30,6 +31,10 @@ export default function Earn() {
           }
         `}
       >
+        <section>
+          <h2>Earn Karma Points</h2>
+          <ActivitySuggester />
+        </section>
         <section>
           <h2>{leaderboardsLabel}</h2>
           <Leaderboards />
