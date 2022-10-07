@@ -1,12 +1,32 @@
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { panel } from '../Styles';
+import { useKeyContext } from '~/contexts';
+import { css } from '@emotion/css';
+import { Color } from '~/constants/css';
 
 export default function TopMenu() {
-  return (
+  const { username } = useKeyContext((v) => v.myState);
+  return username ? (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
       <div style={{ marginBottom: '1rem' }} className={panel}>
-        This is the top menu
+        <p
+          className={css`
+            color: ${Color.darkerGray()};
+            font-size: 2rem;
+          `}
+        >
+          Hi, {username}! What do you want to do today?
+        </p>
+        <div style={{ marginTop: '1rem', display: 'flex' }}>
+          <div className={panel}>Post something</div>
+          <div style={{ marginLeft: '1rem' }} className={panel}>
+            Play Grammar Game
+          </div>
+          <div style={{ marginLeft: '1rem' }} className={panel}>
+            Earn Karma Points
+          </div>
+        </div>
       </div>
     </ErrorBoundary>
-  );
+  ) : null;
 }

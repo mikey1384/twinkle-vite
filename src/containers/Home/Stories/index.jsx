@@ -158,6 +158,7 @@ export default function Stories() {
   return (
     <ErrorBoundary componentPath="Home/Stories/index">
       <div style={{ width: '100%' }} ref={ContainerRef}>
+        <TopMenu />
         <HomeFilter
           category={category}
           changeCategory={handleChangeCategory}
@@ -166,7 +167,6 @@ export default function Stories() {
           applyFilter={applyFilter}
           setDisplayOrder={handleDisplayOrder}
         />
-        <TopMenu />
         <div style={{ width: '100%' }}>
           {loadingFeeds && <Loading text="Loading Feeds..." />}
           {loaded && feeds.length === 0 && !loadingFeeds && (
