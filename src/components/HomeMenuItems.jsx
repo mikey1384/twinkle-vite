@@ -16,6 +16,7 @@ HomeMenuItems.propTypes = {
 };
 
 const peopleLabel = localize('people');
+const rankingsLabel = localize('rankings');
 const storiesLabel = localize('stories');
 const storeLabel = localize('store');
 const deviceIsMobile = isMobile(navigator);
@@ -188,9 +189,9 @@ export default function HomeMenuItems({ style = {} }) {
             <div className="homemenu__item">
               <div className="selection" />
               <div className="icon">
-                <Icon icon="bolt" size="1x" />
+                <Icon icon="ranking-star" size="1x" />
               </div>
-              <div className="label">XP & KP</div>
+              <div className="label">{rankingsLabel}</div>
             </div>
           </a>
         </nav>
