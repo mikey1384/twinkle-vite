@@ -12,6 +12,9 @@ const leaderboardsLabel = localize('leaderboards');
 
 export default function Earn() {
   const navigate = useNavigate();
+  const onSetTopMenuSectionSection = useHomeContext(
+    (v) => v.actions.onSetTopMenuSectionSection
+  );
   const onSetGrammarGameModalShown = useHomeContext(
     (v) => v.actions.onSetGrammarGameModalShown
   );
@@ -22,6 +25,10 @@ export default function Earn() {
   return (
     <ErrorBoundary componentPath="Home/Earn/index">
       <TopMenu
+        onAnswerSubjectsButtonClick={() =>
+          onSetTopMenuSectionSection('subject')
+        }
+        onEarnKarmaButtonClick={() => onSetTopMenuSectionSection('karma')}
         onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
         onInputModalButtonClick={handleInputModalButtonClick}
       />
@@ -46,7 +53,6 @@ export default function Earn() {
         `}
       >
         <section>
-          <h2>Earn Karma Points</h2>
           <ActivitySuggester />
         </section>
         <section>

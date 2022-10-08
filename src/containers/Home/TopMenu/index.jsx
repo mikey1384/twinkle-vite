@@ -6,11 +6,15 @@ import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 
 TopMenu.propTypes = {
+  onAnswerSubjectsButtonClick: PropTypes.func,
+  onEarnKarmaButtonClick: PropTypes.func,
   onInputModalButtonClick: PropTypes.func.isRequired,
   onPlayGrammarGame: PropTypes.func.isRequired
 };
 
 export default function TopMenu({
+  onAnswerSubjectsButtonClick,
+  onEarnKarmaButtonClick,
   onInputModalButtonClick,
   onPlayGrammarGame
 }) {
@@ -57,7 +61,18 @@ export default function TopMenu({
           <div className={buttonStyle} onClick={onPlayGrammarGame}>
             Play Grammar Game
           </div>
-          <div style={{ marginLeft: '1rem' }} className={buttonStyle}>
+          <div
+            style={{ marginLeft: '1rem' }}
+            onClick={onAnswerSubjectsButtonClick}
+            className={buttonStyle}
+          >
+            Answer Subjects
+          </div>
+          <div
+            style={{ marginLeft: '1rem' }}
+            onClick={onEarnKarmaButtonClick}
+            className={buttonStyle}
+          >
             Earn Karma Points
           </div>
         </div>
@@ -68,23 +83,11 @@ export default function TopMenu({
 
 const buttonStyle = css`
   cursor: pointer;
+  text-align: center;
+  font-weight: bold;
   background: #fff;
+  font-size: 1.5rem;
   border-radius: ${borderRadius};
   border: 1px solid ${Color.borderGray()};
-  padding: 1.5rem 2rem;
-  small {
-    font-size: 1.3rem;
-    line-height: 2.5rem;
-  }
-  > p {
-    color: ${Color.darkerGray()};
-    margin-bottom: 1rem;
-    font-size: 2rem;
-    font-weight: bold;
-  }
-  .button-container {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-  }
+  padding: 1rem;
 `;

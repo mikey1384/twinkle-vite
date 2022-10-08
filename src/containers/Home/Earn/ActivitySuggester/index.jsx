@@ -6,6 +6,7 @@ import RecommendPosts from './RecommendPosts';
 import RewardPosts from './RewardPosts';
 import StartMenu from './StartMenu';
 import GrammarGameModal from './GrammarGameModal';
+import KarmaMenu from './KarmaMenu';
 
 ActivitySuggester.propTypes = {
   style: PropTypes.object
@@ -24,6 +25,8 @@ export default function ActivitySuggester({ style }) {
     <div style={style} className={panel}>
       {topMenuSection === 'start' ? (
         <StartMenu onSetGrammarGameModalShown={onSetGrammarGameModalShown} />
+      ) : topMenuSection === 'karma' ? (
+        <KarmaMenu />
       ) : topMenuSection === 'subject' ? (
         <EarnXPFromSubjects
           onSetGrammarGameModalShown={onSetGrammarGameModalShown}

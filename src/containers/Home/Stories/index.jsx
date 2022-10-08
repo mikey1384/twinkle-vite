@@ -69,6 +69,9 @@ export default function Stories() {
   const onSetInputModalShown = useHomeContext(
     (v) => v.actions.onSetInputModalShown
   );
+  const onSetTopMenuSectionSection = useHomeContext(
+    (v) => v.actions.onSetTopMenuSectionSection
+  );
   const onChangeCategory = useHomeContext((v) => v.actions.onChangeCategory);
   const onChangeSubFilter = useHomeContext((v) => v.actions.onChangeSubFilter);
   const onLoadFeeds = useHomeContext((v) => v.actions.onLoadFeeds);
@@ -167,6 +170,8 @@ export default function Stories() {
     <ErrorBoundary componentPath="Home/Stories/index">
       <div style={{ width: '100%' }} ref={ContainerRef}>
         <TopMenu
+          onAnswerSubjectsButtonClick={handleAnswerSubjectsButtonClick}
+          onEarnKarmaButtonClick={handleEarnKarmaButtonClick}
           onInputModalButtonClick={() => onSetInputModalShown(true)}
           onPlayGrammarGame={handlePlayGrammarGame}
         />
@@ -312,6 +317,16 @@ export default function Stories() {
       onSetDisplayOrder('desc');
       setLoadingFeeds(false);
     }
+  }
+
+  function handleAnswerSubjectsButtonClick() {
+    onSetTopMenuSectionSection('subject');
+    navigate('/earn');
+  }
+
+  function handleEarnKarmaButtonClick() {
+    onSetTopMenuSectionSection('karma');
+    navigate('/earn');
   }
 
   async function handleFetchNewFeeds() {
