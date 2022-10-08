@@ -461,7 +461,6 @@ function SubjectInput({ onModalHide }) {
     }
     document.getElementById('App').scrollTop = 0;
     BodyRef.scrollTop = 0;
-    onModalHide();
   }
 
   function handleSetTitle(text) {
@@ -519,6 +518,7 @@ function SubjectInput({ onModalHide }) {
         onResetSubjectInput();
       }
       onSetSubmittingSubject(false);
+      onModalHide();
       return Promise.resolve();
     } catch (error) {
       console.error(error);

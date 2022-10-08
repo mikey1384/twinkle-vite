@@ -66,6 +66,11 @@ export default function HomeReducer(state, action) {
         ...state,
         displayOrder: action.order
       };
+    case 'SET_INPUT_MODAL_SHOWN':
+      return {
+        ...state,
+        inputModalShown: action.shown
+      };
     case 'SET_TOP_MENU_SECTION':
       return {
         ...state,
