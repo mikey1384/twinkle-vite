@@ -147,6 +147,9 @@ export default function Main({ currentPathId, onFileUpload }) {
   const subjectSearchResults = useChatContext(
     (v) => v.state.subjectSearchResults
   );
+  const onSetWordleModalShown = useChatContext(
+    (v) => v.actions.onSetWordleModalShown
+  );
   const wordleModalShown = useChatContext((v) => v.state.wordleModalShown);
   const onAddReactionToMessage = useChatContext(
     (v) => v.actions.onAddReactionToMessage
@@ -278,6 +281,14 @@ export default function Main({ currentPathId, onFileUpload }) {
     }
     return null;
   }, [currentChannel.subchannelObj, subchannelPath]);
+
+  useEffect(() => {
+    return function cleanUp() {
+      onSetWordleModalShown(false);
+      onSetChessModalShown(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (subchannelId) {
@@ -669,6 +680,7 @@ export default function Main({ currentPathId, onFileUpload }) {
           onSetSiteUrl,
           onSetThumbUrl,
           onSetUserState,
+          onSetWordleModalShown,
           onShowIncoming,
           onSubmitMessage,
           onUpdateLastChessMessageId,

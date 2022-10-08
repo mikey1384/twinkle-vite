@@ -1865,6 +1865,11 @@ export default function ChatReducer(state, action) {
         vocabErrorMessage: action.message
       };
     }
+    case 'SET_WORDLE_MODAL_SHOWN':
+      return {
+        ...state,
+        wordleModalShown: action.shown
+      };
     case 'SET_WORDS_OBJECT': {
       return {
         ...state,
