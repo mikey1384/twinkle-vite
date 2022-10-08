@@ -1,4 +1,5 @@
 import { useContext, memo, useMemo, useRef, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Textarea from '~/components/Texts/Textarea';
@@ -41,7 +42,11 @@ const postSubjectLabel = localize('postSubject');
 const postSubjectPlaceholder = localize('postSubjectPlaceholder');
 const secretMessageLabel = localize('secretMessage');
 
-function SubjectInput() {
+SubjectInput.propTypes = {
+  onModalHide: PropTypes.func.isRequired
+};
+
+function SubjectInput({ onModalHide }) {
   const { onFileUpload } = useContext(LocalContext);
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const { canEditRewardLevel, banned } = useKeyContext((v) => v.myState);
@@ -456,6 +461,7 @@ function SubjectInput() {
     }
     document.getElementById('App').scrollTop = 0;
     BodyRef.scrollTop = 0;
+    onModalHide();
   }
 
   function handleSetTitle(text) {
