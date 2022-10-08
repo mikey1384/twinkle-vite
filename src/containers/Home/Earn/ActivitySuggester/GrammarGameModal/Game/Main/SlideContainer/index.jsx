@@ -2,6 +2,7 @@ import { Children, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ProgressBar from './ProgressBar';
+import { useSpring, animated } from 'react-spring';
 import { scrollElementToCenter } from '~/helpers';
 
 SlideContainer.propTypes = {
@@ -21,6 +22,7 @@ export default function SlideContainer({
   questions,
   selectedIndex = 0
 }) {
+  const styles = useSpring({ opacity: isCompleted ? 0 : 1 });
   const SlideRefs = useRef({});
   const childrenArray = useMemo(() => Children.toArray(children), [children]);
   const DisplayedSlide = useMemo(() => {
@@ -33,30 +35,37 @@ export default function SlideContainer({
         ...SlideComponent?.props,
         onCountdownStart,
         innerRef: (ref) => (SlideRefs.current[selectedIndex] = ref),
-        index: selectedIndex
+        index: selectedIndex,
+        isCompleted
       }
     };
-  }, [childrenArray, onCountdownStart, selectedIndex]);
+  }, [childrenArray, isCompleted, onCountdownStart, selectedIndex]);
 
   useEffect(() => {
     scrollElementToCenter(SlideRefs.current[selectedIndex]);
   }, [selectedIndex]);
 
   return (
-    <ErrorBoundary
-      componentPath="Earn/GrammarGameModal/SlideContainer"
-      style={{ width: '100%' }}
-    >
-      <div style={{ width: '100%', minHeight: '7rem', marginTop: '2rem' }}>
-        {DisplayedSlide}
+    <ErrorBoundary componentPath="Earn/GrammarGameModal/SlideContainer">
+      <div style={{ width: '100%' }}>
+        <animated.div
+          style={{
+            width: '100%',
+            minHeight: '7rem',
+            marginTop: '2rem',
+            ...styles
+          }}
+        >
+          {DisplayedSlide}
+        </animated.div>
+        <ProgressBar
+          questions={questions}
+          isOnStreak={isOnStreak}
+          isCompleted={isCompleted}
+          selectedIndex={selectedIndex}
+          style={{ marginBottom: '3rem' }}
+        />
       </div>
-      <ProgressBar
-        questions={questions}
-        isOnStreak={isOnStreak}
-        isCompleted={isCompleted}
-        selectedIndex={selectedIndex}
-        style={{ marginBottom: '3rem' }}
-      />
     </ErrorBoundary>
   );
 }
