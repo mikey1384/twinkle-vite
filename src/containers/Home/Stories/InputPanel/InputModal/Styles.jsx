@@ -1,10 +1,8 @@
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 
 export const PanelStyle = css`
   background: #fff;
-  border-radius: ${borderRadius};
-  border: 1px solid ${Color.borderGray()};
   margin-bottom: 1rem;
   padding: 1.5rem 2rem;
   small {
@@ -21,10 +19,5 @@ export const PanelStyle = css`
     display: flex;
     align-items: center;
     justify-content: flex-end;
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
   }
 `;
