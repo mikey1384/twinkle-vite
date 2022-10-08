@@ -57,6 +57,9 @@ export default function Stories() {
   const onResetNumNewPosts = useNotiContext(
     (v) => v.actions.onResetNumNewPosts
   );
+  const onSetGrammarGameModalShown = useHomeContext(
+    (v) => v.actions.onSetGrammarGameModalShown
+  );
   const category = useHomeContext((v) => v.state.category);
   const displayOrder = useHomeContext((v) => v.state.displayOrder);
   const feeds = useHomeContext((v) => v.state.feeds);
@@ -355,5 +358,6 @@ export default function Stories() {
 
   function handlePlayGrammarGame() {
     navigate('/earn');
+    onSetGrammarGameModalShown(true);
   }
 }

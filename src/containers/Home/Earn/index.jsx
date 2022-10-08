@@ -5,13 +5,18 @@ import { mobileMaxWidth } from '~/constants/css';
 import Leaderboards from './Leaderboards';
 import ActivitySuggester from './ActivitySuggester';
 import TopMenu from '../TopMenu';
+import { useHomeContext } from '~/contexts';
 
 const leaderboardsLabel = localize('leaderboards');
 
 export default function Earn() {
+  const onSetGrammarGameModalShown = useHomeContext(
+    (v) => v.actions.onSetGrammarGameModalShown
+  );
+
   return (
     <ErrorBoundary componentPath="Home/Earn/index">
-      <TopMenu />
+      <TopMenu onPlayGrammarGame={() => onSetGrammarGameModalShown(true)} />
       <div
         className={css`
           margin-top: 2.5rem;

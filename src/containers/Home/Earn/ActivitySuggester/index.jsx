@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { panel } from '../Styles';
 import { useHomeContext } from '~/contexts';
@@ -13,24 +12,31 @@ ActivitySuggester.propTypes = {
 };
 
 export default function ActivitySuggester({ style }) {
-  const [grammarGameModalShown, setGrammarGameModalShown] = useState(false);
+  const grammarGameModalShown = useHomeContext(
+    (v) => v.state.grammarGameModalShown
+  );
+  const onSetGrammarGameModalShown = useHomeContext(
+    (v) => v.actions.onSetGrammarGameModalShown
+  );
   const topMenuSection = useHomeContext((v) => v.state.topMenuSection);
 
   return (
     <div style={style} className={panel}>
       {topMenuSection === 'start' ? (
-        <StartMenu onSetGrammarGameModalShown={setGrammarGameModalShown} />
+        <StartMenu onSetGrammarGameModalShown={onSetGrammarGameModalShown} />
       ) : topMenuSection === 'subject' ? (
         <EarnXPFromSubjects
-          onSetGrammarGameModalShown={setGrammarGameModalShown}
+          onSetGrammarGameModalShown={onSetGrammarGameModalShown}
         />
       ) : topMenuSection === 'recommend' ? (
-        <RecommendPosts onSetGrammarGameModalShown={setGrammarGameModalShown} />
+        <RecommendPosts
+          onSetGrammarGameModalShown={onSetGrammarGameModalShown}
+        />
       ) : (
-        <RewardPosts onSetGrammarGameModalShown={setGrammarGameModalShown} />
+        <RewardPosts onSetGrammarGameModalShown={onSetGrammarGameModalShown} />
       )}
       {grammarGameModalShown && (
-        <GrammarGameModal onHide={() => setGrammarGameModalShown(false)} />
+        <GrammarGameModal onHide={() => onSetGrammarGameModalShown(false)} />
       )}
     </div>
   );
