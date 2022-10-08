@@ -6,12 +6,13 @@ import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID
 } from '~/constants/defaultValues';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useChatContext, useHomeContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 
 TopMenu.propTypes = {
+  isEarnPage: PropTypes.bool,
   onAnswerSubjectsButtonClick: PropTypes.func,
   onEarnKarmaButtonClick: PropTypes.func,
   onInputModalButtonClick: PropTypes.func.isRequired,
@@ -22,9 +23,11 @@ export default function TopMenu({
   onAnswerSubjectsButtonClick,
   onEarnKarmaButtonClick,
   onInputModalButtonClick,
-  onPlayGrammarGame
+  onPlayGrammarGame,
+  isEarnPage
 }) {
   const navigate = useNavigate();
+  const topMenuSection = useHomeContext((v) => v.state.topMenuSection);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
@@ -75,20 +78,24 @@ export default function TopMenu({
           <div className={buttonStyle} onClick={onPlayGrammarGame}>
             Grammar Game
           </div>
-          <div
-            style={{ marginLeft: '1rem' }}
-            onClick={onAnswerSubjectsButtonClick}
-            className={buttonStyle}
-          >
-            Answer Subjects
-          </div>
-          <div
-            style={{ marginLeft: '1rem' }}
-            onClick={onEarnKarmaButtonClick}
-            className={buttonStyle}
-          >
-            Earn KP
-          </div>
+          {!(isEarnPage && topMenuSection === 'subject') && (
+            <div
+              style={{ marginLeft: '1rem' }}
+              onClick={onAnswerSubjectsButtonClick}
+              className={buttonStyle}
+            >
+              Answer Subjects
+            </div>
+          )}
+          {!(isEarnPage && topMenuSection === 'karma') && (
+            <div
+              style={{ marginLeft: '1rem' }}
+              onClick={onEarnKarmaButtonClick}
+              className={buttonStyle}
+            >
+              Earn KP
+            </div>
+          )}
           <button
             disabled={loadingChat}
             style={{ marginLeft: '1rem' }}
