@@ -14,6 +14,7 @@ export default function Earn() {
       <TopMenu />
       <div
         className={css`
+          margin-top: 2.5rem;
           > section {
             margin-bottom: 3rem;
             > h2 {
