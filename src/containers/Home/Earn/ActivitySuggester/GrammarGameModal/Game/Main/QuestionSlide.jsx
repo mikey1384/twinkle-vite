@@ -5,6 +5,7 @@ import { css } from '@emotion/css';
 
 QuestionSlide.propTypes = {
   answerIndex: PropTypes.number,
+  isCompleted: PropTypes.bool,
   question: PropTypes.string.isRequired,
   selectedChoiceIndex: PropTypes.number,
   choices: PropTypes.array.isRequired,
@@ -16,6 +17,7 @@ QuestionSlide.propTypes = {
 
 export default function QuestionSlide({
   answerIndex,
+  isCompleted,
   question,
   selectedChoiceIndex,
   choices,
@@ -61,6 +63,7 @@ export default function QuestionSlide({
           <ChoiceList
             style={{ marginTop: '3rem', fontSize: '1.6rem' }}
             answerIndex={answerIndex}
+            isCompleted={isCompleted}
             selectedChoiceIndex={selectedChoiceIndex}
             onCorrectAnswer={onCorrectAnswer}
             onCountdownStart={onCountdownStart}

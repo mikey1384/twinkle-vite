@@ -13,6 +13,7 @@ import {
 ChoiceList.propTypes = {
   answerIndex: PropTypes.number,
   gotWrong: PropTypes.bool,
+  isCompleted: PropTypes.bool,
   listItems: PropTypes.array.isRequired,
   onCorrectAnswer: PropTypes.func.isRequired,
   onCountdownStart: PropTypes.func.isRequired,
@@ -24,6 +25,7 @@ ChoiceList.propTypes = {
 export default function ChoiceList({
   answerIndex,
   gotWrong,
+  isCompleted,
   listItems,
   onCorrectAnswer,
   onCountdownStart,
@@ -136,6 +138,7 @@ export default function ChoiceList({
           <ListItem
             key={index}
             answerIndex={answerIndex}
+            isCompleted={isCompleted}
             selectedChoiceIndex={selectedChoiceIndex}
             listItem={listItem}
             onSelect={handleSelect}
