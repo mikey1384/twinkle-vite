@@ -1,9 +1,15 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InputPanel from './InputPanel';
-import { useKeyContext } from '~/contexts';
+import {
+  GENERAL_CHAT_ID,
+  GENERAL_CHAT_PATH_ID
+} from '~/constants/defaultValues';
+import { useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { useNavigate } from 'react-router-dom';
 
 TopMenu.propTypes = {
   onAnswerSubjectsButtonClick: PropTypes.func,
@@ -18,8 +24,16 @@ export default function TopMenu({
   onInputModalButtonClick,
   onPlayGrammarGame
 }) {
-  const { username } = useKeyContext((v) => v.myState);
-  return username ? (
+  const navigate = useNavigate();
+  const onUpdateSelectedChannelId = useChatContext(
+    (v) => v.actions.onUpdateSelectedChannelId
+  );
+  const onSetWordleModalShown = useChatContext(
+    (v) => v.actions.onSetWordleModalShown
+  );
+  const [loadingChat, setLoadingChat] = useState(false);
+  const { userId, username } = useKeyContext((v) => v.myState);
+  return userId ? (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
       <div
         style={{ marginBottom: '1rem' }}
@@ -59,7 +73,7 @@ export default function TopMenu({
           `}
         >
           <div className={buttonStyle} onClick={onPlayGrammarGame}>
-            Play Grammar Game
+            Grammar Game
           </div>
           <div
             style={{ marginLeft: '1rem' }}
@@ -73,16 +87,38 @@ export default function TopMenu({
             onClick={onEarnKarmaButtonClick}
             className={buttonStyle}
           >
-            Earn Karma Points
+            Earn KP
           </div>
+          <button
+            disabled={loadingChat}
+            style={{ marginLeft: '1rem' }}
+            onClick={handleWordleButtonClick}
+            className={buttonStyle}
+          >
+            Wordle
+          </button>
         </div>
       </div>
     </ErrorBoundary>
   ) : null;
+
+  function handleWordleButtonClick() {
+    setLoadingChat(true);
+    onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+    return setTimeout(() => {
+      navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+      setTimeout(() => {
+        onSetWordleModalShown(true);
+      }, 10);
+    }, 10);
+  }
 }
 
 const buttonStyle = css`
   cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   text-align: center;
   font-weight: bold;
   background: #fff;

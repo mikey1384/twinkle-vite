@@ -94,6 +94,7 @@ function MessagesContainer({
       onSetCreatingNewDMChannel,
       onSetFavoriteChannel,
       onSetReplyTarget,
+      onSetWordleModalShown,
       onSubmitMessage,
       onUpdateChannelPathIdHash
     },
@@ -121,7 +122,8 @@ function MessagesContainer({
       recepientId,
       reconnecting,
       selectedChannelId,
-      socketConnected
+      socketConnected,
+      wordleModalShown
     },
     inputState
   } = useContext(LocalContext);
@@ -153,7 +155,6 @@ function MessagesContainer({
     [selectedChannelId, inputState]
   );
   const [chessCountdownObj, setChessCountdownObj] = useState({});
-  const [wordleModalShown, setWordleModalShown] = useState(false);
   const [textAreaHeight, setTextAreaHeight] = useState(0);
   const [inviteUsersModalShown, setInviteUsersModalShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -407,7 +408,7 @@ function MessagesContainer({
 
   useEffect(() => {
     onSetChessModalShown(false);
-    setWordleModalShown(false);
+    onSetWordleModalShown(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId]);
 
@@ -489,7 +490,7 @@ function MessagesContainer({
   const handleWordleModalShown = useCallback(() => {
     const channelId = currentChannel?.id;
     onSetReplyTarget({ channelId, target: null });
-    setWordleModalShown(true);
+    onSetWordleModalShown(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChannel?.id]);
 
@@ -1307,7 +1308,7 @@ function MessagesContainer({
           wordLevel={wordleWordLevel}
           wordleStats={wordleStats}
           nextDayTimeStamp={nextDayTimeStamp}
-          onHide={() => setWordleModalShown(false)}
+          onHide={() => onSetWordleModalShown(false)}
           socketConnected={socketConnected}
           theme={displayedThemeColor}
         />
