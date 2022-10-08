@@ -25,6 +25,7 @@ export default function Earn() {
   return (
     <ErrorBoundary componentPath="Home/Earn/index">
       <TopMenu
+        isEarnPage
         onAnswerSubjectsButtonClick={() =>
           onSetTopMenuSectionSection('subject')
         }
