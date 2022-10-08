@@ -11,10 +11,14 @@ export default function InputPanel() {
     <ErrorBoundary componentPath="Home/Stories/InputPanel">
       <div>
         <input
-          style={{ width: '100%', marginTop: '1rem', marginBottom: '1rem' }}
+          style={{ width: '100%', marginTop: '1rem' }}
           placeholder="Post Something"
           value={inputValue}
           onChange={() => setInputValue('')}
+          onFocus={(event) => {
+            event.currentTarget.blur();
+            setInputModalShown(true);
+          }}
           onClick={() => setInputModalShown(true)}
           className={css`
             line-height: 2rem;
