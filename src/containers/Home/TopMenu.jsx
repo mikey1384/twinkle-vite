@@ -5,10 +5,11 @@ import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 
 TopMenu.propTypes = {
-  children: PropTypes.node
+  children: PropTypes.node,
+  onPlayGrammarGame: PropTypes.func
 };
 
-export default function TopMenu({ children = null }) {
+export default function TopMenu({ children = null, onPlayGrammarGame }) {
   const { username } = useKeyContext((v) => v.myState);
   return username ? (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
@@ -49,7 +50,9 @@ export default function TopMenu({ children = null }) {
             display: flex;
           `}
         >
-          <div className={buttonStyle}>Play Grammar Game</div>
+          <div className={buttonStyle} onClick={onPlayGrammarGame}>
+            Play Grammar Game
+          </div>
           <div style={{ marginLeft: '1rem' }} className={buttonStyle}>
             Earn Karma Points
           </div>
@@ -60,6 +63,7 @@ export default function TopMenu({ children = null }) {
 }
 
 const buttonStyle = css`
+  cursor: pointer;
   background: #fff;
   border-radius: ${borderRadius};
   border: 1px solid ${Color.borderGray()};

@@ -18,6 +18,7 @@ import {
   useNotiContext,
   useKeyContext
 } from '~/contexts';
+import { useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
 
 const hiThereLabel = localize('hiThere');
@@ -43,6 +44,7 @@ const categoryObj = {
 };
 
 export default function Stories() {
+  const navigate = useNavigate();
   const loadingRef = useRef(false);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
@@ -159,7 +161,7 @@ export default function Stories() {
   return (
     <ErrorBoundary componentPath="Home/Stories/index">
       <div style={{ width: '100%' }} ref={ContainerRef}>
-        <TopMenu>
+        <TopMenu onPlayGrammarGame={handlePlayGrammarGame}>
           <InputPanel />
         </TopMenu>
         <HomeFilter
@@ -349,5 +351,9 @@ export default function Stories() {
       onSetDisplayOrder(newDisplayOrder);
       setLoadingFeeds(false);
     }
+  }
+
+  function handlePlayGrammarGame() {
+    navigate('/earn');
   }
 }
