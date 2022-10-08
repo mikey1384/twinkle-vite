@@ -6,7 +6,6 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import HomeFilter from './HomeFilter';
 import ContentPanel from '~/components/ContentPanel';
 import TopMenu from '../TopMenu';
-import InputPanel from './InputPanel';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -67,6 +66,9 @@ export default function Stories() {
   const loaded = useHomeContext((v) => v.state.loaded);
   const feedsOutdated = useHomeContext((v) => v.state.feedsOutdated);
   const subFilter = useHomeContext((v) => v.state.subFilter);
+  const onSetInputModalShown = useHomeContext(
+    (v) => v.actions.onSetInputModalShown
+  );
   const onChangeCategory = useHomeContext((v) => v.actions.onChangeCategory);
   const onChangeSubFilter = useHomeContext((v) => v.actions.onChangeSubFilter);
   const onLoadFeeds = useHomeContext((v) => v.actions.onLoadFeeds);
@@ -164,9 +166,10 @@ export default function Stories() {
   return (
     <ErrorBoundary componentPath="Home/Stories/index">
       <div style={{ width: '100%' }} ref={ContainerRef}>
-        <TopMenu onPlayGrammarGame={handlePlayGrammarGame}>
-          <InputPanel />
-        </TopMenu>
+        <TopMenu
+          onInputModalButtonClick={() => onSetInputModalShown(true)}
+          onPlayGrammarGame={handlePlayGrammarGame}
+        />
         <HomeFilter
           category={category}
           changeCategory={handleChangeCategory}

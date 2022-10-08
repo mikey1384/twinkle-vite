@@ -1,15 +1,19 @@
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import InputPanel from './InputPanel';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 
 TopMenu.propTypes = {
-  children: PropTypes.node,
-  onPlayGrammarGame: PropTypes.func
+  onInputModalButtonClick: PropTypes.func.isRequired,
+  onPlayGrammarGame: PropTypes.func.isRequired
 };
 
-export default function TopMenu({ children = null, onPlayGrammarGame }) {
+export default function TopMenu({
+  onInputModalButtonClick,
+  onPlayGrammarGame
+}) {
   const { username } = useKeyContext((v) => v.myState);
   return username ? (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
@@ -43,7 +47,7 @@ export default function TopMenu({ children = null, onPlayGrammarGame }) {
         >
           Hi, {username}! What do you want to do today?
         </p>
-        {children}
+        <InputPanel onInputModalButtonClick={onInputModalButtonClick} />
         <div
           className={css`
             margin-top: 1.5rem;
