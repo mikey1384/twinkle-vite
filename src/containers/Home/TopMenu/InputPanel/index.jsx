@@ -1,11 +1,16 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import InputModal from './InputModal';
 import { useHomeContext } from '~/contexts';
 
-export default function InputPanel() {
+InputPanel.propTypes = {
+  onInputModalButtonClick: PropTypes.func.isRequired
+};
+
+export default function InputPanel({ onInputModalButtonClick }) {
   const inputModalShown = useHomeContext((v) => v.state.inputModalShown);
   const onSetInputModalShown = useHomeContext(
     (v) => v.actions.onSetInputModalShown
@@ -21,9 +26,12 @@ export default function InputPanel() {
           onChange={() => setInputValue('')}
           onFocus={(event) => {
             event.currentTarget.blur();
-            onSetInputModalShown(true);
+            onInputModalButtonClick();
           }}
-          onClick={() => onSetInputModalShown(true)}
+          onClick={() => {
+            event.currentTarget.blur();
+            onInputModalButtonClick();
+          }}
           className={css`
             line-height: 2rem;
             padding: 1rem;

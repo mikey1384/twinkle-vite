@@ -6,17 +6,25 @@ import Leaderboards from './Leaderboards';
 import ActivitySuggester from './ActivitySuggester';
 import TopMenu from '../TopMenu';
 import { useHomeContext } from '~/contexts';
+import { useNavigate } from 'react-router-dom';
 
 const leaderboardsLabel = localize('leaderboards');
 
 export default function Earn() {
+  const navigate = useNavigate();
   const onSetGrammarGameModalShown = useHomeContext(
     (v) => v.actions.onSetGrammarGameModalShown
+  );
+  const onSetInputModalShown = useHomeContext(
+    (v) => v.actions.onSetInputModalShown
   );
 
   return (
     <ErrorBoundary componentPath="Home/Earn/index">
-      <TopMenu onPlayGrammarGame={() => onSetGrammarGameModalShown(true)} />
+      <TopMenu
+        onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
+        onInputModalButtonClick={handleInputModalButtonClick}
+      />
       <div
         className={css`
           margin-top: 2.5rem;
@@ -49,4 +57,9 @@ export default function Earn() {
       </div>
     </ErrorBoundary>
   );
+
+  function handleInputModalButtonClick() {
+    navigate('/');
+    onSetInputModalShown(true);
+  }
 }
