@@ -90,4 +90,7 @@ const buttonStyle = css`
   border-radius: ${borderRadius};
   border: 1px solid ${Color.borderGray()};
   padding: 1rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.3rem;
+  }
 `;
