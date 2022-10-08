@@ -1,23 +1,40 @@
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ContentInput from './ContentInput';
 import SubjectInput from './SubjectInput';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
+import { isValidUrl } from '~/helpers/stringHelpers';
 
 InputModal.propTypes = {
   onHide: PropTypes.func.isRequired
 };
 
 export default function InputModal({ onHide }) {
+  const [inputOrder, setInputOrder] = useState(['subject', 'content']);
+  useEffect(() => {
+    loadClipboard();
+    async function loadClipboard() {
+      const text = await navigator.clipboard.readText();
+      if (isValidUrl(text)) {
+        setInputOrder(['content', 'subject']);
+      }
+    }
+  }, []);
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel/InputModal">
       <Modal onHide={onHide}>
         <header>Post Something</header>
         <main>
           <div style={{ width: '100%' }}>
-            <SubjectInput onModalHide={onHide} />
-            <ContentInput onModalHide={onHide} />
+            {inputOrder.map((inputType) => {
+              if (inputType === 'subject') {
+                return <SubjectInput onModalHide={onHide} key={inputType} />;
+              } else if (inputType === 'content') {
+                return <ContentInput onModalHide={onHide} key={inputType} />;
+              }
+            })}
           </div>
         </main>
         <footer>
