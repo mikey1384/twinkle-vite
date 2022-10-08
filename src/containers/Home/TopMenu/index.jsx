@@ -1,9 +1,8 @@
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { panel } from './Styles';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 
 TopMenu.propTypes = {
   children: PropTypes.node
@@ -13,19 +12,45 @@ export default function TopMenu({ children = null }) {
   const { username } = useKeyContext((v) => v.myState);
   return username ? (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
-      <div style={{ marginBottom: '1rem' }} className={panel}>
+      <div
+        style={{ marginBottom: '1rem' }}
+        className={css`
+          background: #fff;
+          font-size: 1.7rem;
+          padding: 1rem;
+          border: 1px solid ${Color.borderGray()};
+          border-radius: ${borderRadius};
+          p {
+            font-size: 2rem;
+            font-weight: bold;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.7rem;
+            }
+          }
+          @media (max-width: ${mobileMaxWidth}) {
+            border-radius: 0;
+            border-top: 0;
+            border-left: 0;
+            border-right: 0;
+          }
+        `}
+      >
         <p
           className={css`
             color: ${Color.darkerGray()};
-            font-size: 2rem;
           `}
         >
           Hi, {username}! What do you want to do today?
         </p>
         {children}
-        <div style={{ marginTop: '1rem', display: 'flex' }}>
-          <div className={panel}>Play Grammar Game</div>
-          <div style={{ marginLeft: '1rem' }} className={panel}>
+        <div
+          className={css`
+            margin-top: 1.5rem;
+            display: flex;
+          `}
+        >
+          <div className={buttonStyle}>Play Grammar Game</div>
+          <div style={{ marginLeft: '1rem' }} className={buttonStyle}>
             Earn Karma Points
           </div>
         </div>
@@ -33,3 +58,25 @@ export default function TopMenu({ children = null }) {
     </ErrorBoundary>
   ) : null;
 }
+
+const buttonStyle = css`
+  background: #fff;
+  border-radius: ${borderRadius};
+  border: 1px solid ${Color.borderGray()};
+  padding: 1.5rem 2rem;
+  small {
+    font-size: 1.3rem;
+    line-height: 2.5rem;
+  }
+  > p {
+    color: ${Color.darkerGray()};
+    margin-bottom: 1rem;
+    font-size: 2rem;
+    font-weight: bold;
+  }
+  .button-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+`;
