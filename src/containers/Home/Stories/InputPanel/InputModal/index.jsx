@@ -4,25 +4,25 @@ import SubjectInput from './SubjectInput';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import { useKeyContext } from '~/contexts';
 
 InputModal.propTypes = {
   onHide: PropTypes.func.isRequired
 };
 
 export default function InputModal({ onHide }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
-
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel/InputModal">
       <Modal onHide={onHide}>
-        <SubjectInput />
-        <ContentInput />
+        <header>Post Something</header>
+        <main>
+          <div style={{ width: '100%' }}>
+            <SubjectInput />
+            <ContentInput />
+          </div>
+        </main>
         <footer>
-          <Button color={doneColor} onClick={onHide}>
-            OK
+          <Button transparent onClick={onHide}>
+            Close
           </Button>
         </footer>
       </Modal>
