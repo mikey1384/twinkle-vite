@@ -1,22 +1,16 @@
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
 import { useHomeContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-StartMenu.propTypes = {
-  onSetGrammarGameModalShown: PropTypes.func.isRequired
-};
-
-export default function StartMenu({ onSetGrammarGameModalShown }) {
+export default function KarmaMenu() {
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
   );
 
   return (
-    <ErrorBoundary componentPath="Home/Earn/ActivitySuggester/StartMenu">
+    <ErrorBoundary componentPath="Home/Earn/ActivitySuggester/KarmaMenu">
       <div
         className={css`
           > section {
@@ -32,26 +26,6 @@ export default function StartMenu({ onSetGrammarGameModalShown }) {
         }}
       >
         <section>
-          <p>Earn XP</p>
-          <GradientButton
-            style={{ marginTop: '0.7rem' }}
-            fontSize="1.5rem"
-            mobileFontSize="1.3rem"
-            onClick={onSetGrammarGameModalShown}
-          >
-            The Grammar Game
-          </GradientButton>
-          <Button
-            onClick={() => onSetTopMenuSectionSection('subject')}
-            style={{ marginTop: '0.7rem' }}
-            filled
-            color="logoBlue"
-          >
-            <Icon icon="bolt" />
-            <span style={{ marginLeft: '0.7rem' }}>Answer Subjects</span>
-          </Button>
-        </section>
-        <section style={{ marginTop: '2rem' }}>
           <p>Earn Karma Points</p>
           <Button
             onClick={() => onSetTopMenuSectionSection('recommend')}

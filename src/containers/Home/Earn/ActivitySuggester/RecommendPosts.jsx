@@ -72,7 +72,7 @@ export default function RecommendPosts() {
               width: '100%',
               display: 'flex',
               justifyContent: 'center',
-              marginBottom: '5rem'
+              marginBottom: '3rem'
             }}
           >
             <Button
