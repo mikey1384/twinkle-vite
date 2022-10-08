@@ -25,6 +25,7 @@ export default function Earn() {
   return (
     <ErrorBoundary componentPath="Home/Earn/index">
       <TopMenu
+        style={{ marginBottom: '3.5rem' }}
         isEarnPage
         onAnswerSubjectsButtonClick={() =>
           onSetTopMenuSectionSection('subject')
@@ -35,7 +36,6 @@ export default function Earn() {
       />
       <div
         className={css`
-          margin-top: 2.5rem;
           > section {
             margin-bottom: 3rem;
             > h2 {

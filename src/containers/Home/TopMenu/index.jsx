@@ -16,7 +16,8 @@ TopMenu.propTypes = {
   onAnswerSubjectsButtonClick: PropTypes.func,
   onEarnKarmaButtonClick: PropTypes.func,
   onInputModalButtonClick: PropTypes.func.isRequired,
-  onPlayGrammarGame: PropTypes.func.isRequired
+  onPlayGrammarGame: PropTypes.func.isRequired,
+  style: PropTypes.object
 };
 
 export default function TopMenu({
@@ -24,6 +25,7 @@ export default function TopMenu({
   onEarnKarmaButtonClick,
   onInputModalButtonClick,
   onPlayGrammarGame,
+  style,
   isEarnPage
 }) {
   const navigate = useNavigate();
@@ -39,7 +41,7 @@ export default function TopMenu({
   return userId ? (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
       <div
-        style={{ marginBottom: '1rem' }}
+        style={{ marginBottom: '1rem', ...style }}
         className={css`
           background: #fff;
           font-size: 1.7rem;
