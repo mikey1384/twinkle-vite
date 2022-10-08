@@ -3,10 +3,14 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import InputModal from './InputModal';
+import { useHomeContext } from '~/contexts';
 
 export default function InputPanel() {
+  const inputModalShown = useHomeContext((v) => v.state.inputModalShown);
+  const onSetInputModalShown = useHomeContext(
+    (v) => v.actions.onSetInputModalShown
+  );
   const [inputValue, setInputValue] = useState('');
-  const [inputModalShown, setInputModalShown] = useState(false);
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel">
       <div>
@@ -17,9 +21,9 @@ export default function InputPanel() {
           onChange={() => setInputValue('')}
           onFocus={(event) => {
             event.currentTarget.blur();
-            setInputModalShown(true);
+            onSetInputModalShown(true);
           }}
-          onClick={() => setInputModalShown(true)}
+          onClick={() => onSetInputModalShown(true)}
           className={css`
             line-height: 2rem;
             padding: 1rem;
@@ -37,7 +41,7 @@ export default function InputPanel() {
           `}
         />
         {inputModalShown && (
-          <InputModal onHide={() => setInputModalShown(false)} />
+          <InputModal onHide={() => onSetInputModalShown(false)} />
         )}
       </div>
     </ErrorBoundary>

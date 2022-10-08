@@ -119,6 +119,9 @@ function App() {
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
+  const onSetInputModalShown = useHomeContext(
+    (v) => v.actions.onSetInputModalShown
+  );
   const onSetSubmittingSubject = useHomeContext(
     (v) => v.actions.onSetSubmittingSubject
   );
@@ -537,6 +540,7 @@ function App() {
         onResetSubjectInput();
         onSetSubmittingSubject(false);
         onClearFileUploadProgress();
+        onSetInputModalShown(false);
         onSetUploadingFile(false);
       } catch (error) {
         console.error(error);

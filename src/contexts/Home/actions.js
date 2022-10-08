@@ -76,6 +76,12 @@ export default function HomeActions(dispatch) {
         shown
       });
     },
+    onSetInputModalShown(shown) {
+      return dispatch({
+        type: 'SET_INPUT_MODAL_SHOWN',
+        shown
+      });
+    },
     onSetSubmittingSubject(submitting) {
       return dispatch({
         type: 'SET_SUBMITTING_SUBJECT',

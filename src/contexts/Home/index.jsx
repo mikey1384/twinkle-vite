@@ -13,6 +13,7 @@ export const initialHomeState = {
   feedsOutdated: false,
   fileUploadProgress: null,
   grammarGameModalShown: false,
+  inputModalShown: false,
   secretAttachmentUploadProgress: null,
   loadMoreButton: false,
   subFilter: 'all',
