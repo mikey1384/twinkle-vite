@@ -39,6 +39,7 @@ export default function AttachContentModal({ onConfirm, onHide }) {
   const [selected, setSelected] = useState();
   return (
     <Modal
+      modalOverModal
       large={section === 'selectVideo' || section === 'selectLink'}
       onHide={onHide}
     >
