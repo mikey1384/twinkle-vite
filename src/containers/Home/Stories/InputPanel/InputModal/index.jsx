@@ -22,6 +22,7 @@ export default function InputModal({ onHide }) {
       }
     }
   }, []);
+
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel/InputModal">
       <Modal onHide={onHide}>
