@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -36,7 +37,11 @@ const postContentLabel = localize('postContent');
 const copyAndPasteUrlLabel = localize('copyAndPasteUrl');
 const youtubeVideoLabel = localize('youtubeVideo');
 
-function ContentInput() {
+ContentInput.propTypes = {
+  onModalHide: PropTypes.func.isRequired
+};
+
+function ContentInput({ onModalHide }) {
   const checkContentUrl = useAppContext(
     (v) => v.requestHelpers.checkContentUrl
   );
@@ -398,6 +403,7 @@ function ContentInput() {
         BodyRef.scrollTop = 0;
       }
       setSubmitting(false);
+      onModalHide();
     } catch (error) {
       console.error(error);
       setSubmitting(false);
