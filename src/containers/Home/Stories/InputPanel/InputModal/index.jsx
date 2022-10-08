@@ -16,8 +16,8 @@ export default function InputModal({ onHide }) {
         <header>Post Something</header>
         <main>
           <div style={{ width: '100%' }}>
-            <SubjectInput />
-            <ContentInput />
+            <SubjectInput onModalHide={onHide} />
+            <ContentInput onModalHide={onHide} />
           </div>
         </main>
         <footer>
