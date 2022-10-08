@@ -17,8 +17,10 @@ export default function InputModal({ onHide }) {
     loadClipboard();
     async function loadClipboard() {
       const text = await navigator.clipboard.readText();
-      if (isValidUrl(text)) {
+      const storedText = localStorage.getItem('clipboard-text');
+      if (isValidUrl(text) && text !== storedText) {
         setInputOrder(['content', 'subject']);
+        localStorage.setItem('clipboard-text', text);
       }
     }
   }, []);
