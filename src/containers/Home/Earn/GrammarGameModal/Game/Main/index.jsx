@@ -14,6 +14,7 @@ Main.propTypes = {
 const correctSound = new Audio(correct);
 
 export default function Main({ onSetGameState, questions }) {
+  const baseTime = 1000;
   const timerRef = useRef(null);
   const gotWrongTimerRef = useRef(null);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -157,11 +158,11 @@ export default function Main({ onSetGameState, questions }) {
   }
 
   function handleReturnCalculatedScore(elapsedTime) {
-    if (elapsedTime < 300) return 'S';
-    if (elapsedTime < 500) return 'A';
-    if (elapsedTime < 750) return 'B';
-    if (elapsedTime < 950) return 'C';
-    if (elapsedTime < 1100) return 'D';
+    if (elapsedTime < baseTime * 0.35) return 'S';
+    if (elapsedTime < baseTime * 0.55) return 'A';
+    if (elapsedTime < baseTime * 0.75) return 'B';
+    if (elapsedTime < baseTime * 0.9) return 'C';
+    if (elapsedTime < baseTime * 1) return 'D';
     return 'F';
   }
 }
