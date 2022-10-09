@@ -31,7 +31,7 @@ export default function Feeds({
   selectedTheme,
   username
 }) {
-  const loadingRef = useRef(false);
+  const lastFeedIdRef = useRef(null);
   const { filter } = useParams();
   const {
     loadMoreButton: { color: loadMoreButtonColor }
@@ -58,10 +58,7 @@ export default function Feeds({
   useInfiniteScroll({
     feedsLength: feeds.length,
     scrollable: feeds.length > 0,
-    onScrollToBottom: () => {
-      setLoadingMore(true);
-      handleLoadMoreFeeds();
-    }
+    onScrollToBottom: handleLoadMoreFeeds
   });
 
   useEffect(() => {
@@ -332,13 +329,16 @@ export default function Feeds({
     }
     loadMoreFeeds();
     async function loadMoreFeeds() {
-      if (loadingRef.current) return;
-      loadingRef.current = true;
+      const lastFeedId =
+        feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
+      if (lastFeedIdRef.current === lastFeedId) return;
+      lastFeedIdRef.current = lastFeedId;
+      setLoadingMore(true);
       try {
         const { data } = await loadFeeds({
           username,
           filter: filterTable[section],
-          lastFeedId: feeds.length > 0 ? feeds[feeds.length - 1].feedId : null,
+          lastFeedId,
           lastTimeStamp:
             feeds.length > 0
               ? feeds[feeds.length - 1][
@@ -351,7 +351,6 @@ export default function Feeds({
         console.error(error);
       }
       setLoadingMore(false);
-      loadingRef.current = false;
     }
     async function loadMoreFeedsByUser() {
       try {

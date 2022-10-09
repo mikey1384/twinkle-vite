@@ -44,7 +44,7 @@ const categoryObj = {
 
 export default function Stories() {
   const navigate = useNavigate();
-  const loadingRef = useRef(false);
+  const lastFeedIdRef = useRef(null);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
   const { hideWatched, userId, username } = useKeyContext((v) => v.myState);
@@ -85,14 +85,16 @@ export default function Stories() {
   const categoryRef = useRef(null);
   const ContainerRef = useRef(null);
   const hideWatchedRef = useRef(null);
+  const subFilterRef = useRef(null);
+
+  useEffect(() => {
+    subFilterRef.current = subFilter;
+  }, [subFilter]);
 
   useInfiniteScroll({
     scrollable: feeds.length > 0,
     feedsLength: feeds.length,
-    onScrollToBottom: () => {
-      setLoadingMore(true);
-      handleLoadMoreFeeds();
-    }
+    onScrollToBottom: handleLoadMoreFeeds
   });
 
   useEffect(() => {
@@ -142,23 +144,6 @@ export default function Stories() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
 
-  const ContentPanels = useMemo(() => {
-    return feeds.map((feed, index) => (
-      <ContentPanel
-        key={category + subFilter + feed.contentId + feed.contentType}
-        style={{
-          marginBottom: '1rem'
-        }}
-        zIndex={feeds.length - index}
-        contentId={feed.contentId}
-        contentType={feed.contentType}
-        commentsLoadLimit={5}
-        numPreviewComments={1}
-        userId={userId}
-      />
-    ));
-  }, [category, feeds, subFilter, userId]);
-
   const beTheFirstLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return `안녕하세요 ${username}님! 첫 번째 게시물을 올려보세요!`;
@@ -180,7 +165,7 @@ export default function Stories() {
           changeCategory={handleChangeCategory}
           displayOrder={displayOrder}
           selectedFilter={subFilter}
-          applyFilter={applyFilter}
+          applyFilter={handleApplyFilter}
           setDisplayOrder={handleDisplayOrder}
         />
         <div style={{ width: '100%' }}>
@@ -229,7 +214,20 @@ export default function Stories() {
                   )}
                 </Banner>
               )}
-              {ContentPanels}
+              {feeds.map((feed, index) => (
+                <ContentPanel
+                  key={category + subFilter + feed.contentId + feed.contentType}
+                  style={{
+                    marginBottom: '1rem'
+                  }}
+                  zIndex={feeds.length - index}
+                  contentId={feed.contentId}
+                  contentType={feed.contentType}
+                  commentsLoadLimit={5}
+                  numPreviewComments={1}
+                  userId={userId}
+                />
+              ))}
               {loadMoreButton && (
                 <LoadMoreButton
                   style={{ marginBottom: '1rem' }}
@@ -256,8 +254,8 @@ export default function Stories() {
     </ErrorBoundary>
   );
 
-  async function applyFilter(filter) {
-    if (filter === subFilter) return;
+  async function handleApplyFilter(filter) {
+    if (filter === subFilterRef.current) return;
     setLoadingFeeds(true);
     categoryRef.current = 'uploads';
     onChangeCategory('uploads');
@@ -272,8 +270,10 @@ export default function Stories() {
   }
 
   async function handleLoadMoreFeeds() {
-    if (loadingRef.current) return;
-    loadingRef.current = true;
+    const lastFeedId = feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
+    if (lastFeedIdRef.current === lastFeedId) return;
+    lastFeedIdRef.current = lastFeedId;
+    setLoadingMore(true);
     try {
       const { data } = await loadFeeds({
         filter:
@@ -281,7 +281,7 @@ export default function Stories() {
         order: displayOrder,
         orderBy: categoryObj[category].orderBy,
         mustInclude: categoryObj[category].mustInclude,
-        lastFeedId: feeds.length > 0 ? feeds[feeds.length - 1].feedId : null,
+        lastFeedId,
         lastRewardLevel:
           feeds.length > 0 ? feeds[feeds.length - 1].rewardLevel : null,
         lastTimeStamp:
@@ -294,7 +294,6 @@ export default function Stories() {
       console.error(error);
     }
     setLoadingMore(false);
-    loadingRef.current = false;
   }
 
   async function handleChangeCategory(newCategory) {
