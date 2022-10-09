@@ -5,6 +5,7 @@ import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StartScreen from './StartScreen';
+import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
 
 GrammarGameModal.propTypes = {
@@ -66,7 +67,13 @@ export default function GrammarGameModal({ onHide }) {
           <div>Something Else</div>
         )}
       </main>
-      <footer></footer>
+      {gameState !== 'started' && (
+        <footer>
+          <Button transparent onClick={onHide}>
+            Close
+          </Button>
+        </footer>
+      )}
     </Modal>
   );
 
