@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { addEvent, removeEvent } from '../listenerHelpers';
 
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -13,7 +13,7 @@ export default function useInfiniteScroll({
   const scrollPositionRef = useRef({ desktop: 0, mobile: 0 });
   const timerRef = useRef(null);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     addEvent(window, 'scroll', onScroll);
     addEvent(document.getElementById('App'), 'scroll', onScroll);
 
@@ -51,7 +51,7 @@ export default function useInfiniteScroll({
       removeEvent(window, 'scroll', onScroll);
       removeEvent(document.getElementById('App'), 'scroll', onScroll);
     };
-  });
+  }, [onScrollToBottom, scrollable]);
 
   useEffect(() => {
     if (feedsLength < prevFeedsLength.current) {
