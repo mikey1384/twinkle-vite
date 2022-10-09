@@ -1,11 +1,36 @@
 import { useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import { useSpring, animated } from 'react-spring';
 
-export default function ReactionText() {
-  const reactionFontSize = useMemo(() => {
-    return '3rem';
+ReactionText.propTypes = {
+  questions: PropTypes.array.isRequired
+};
+
+export default function ReactionText({ questions }) {
+  const totalScore = useMemo(() => {
+    const scoreTable = {
+      S: 200,
+      A: 100,
+      B: 70,
+      C: 50,
+      D: 30,
+      F: 0
+    };
+    return questions.reduce((acc, cur) => acc + scoreTable[cur.score], 0);
+  }, [questions]);
+
+  const reactionText = useMemo(() => {
+    return 'AWESOME';
   }, []);
+
+  const reactionFontSize = useMemo(() => {
+    if (totalScore === 2000) return '5rem';
+    if (totalScore > 1000) return '4rem';
+    if (totalScore > 500) return '3rem';
+    if (totalScore > 300) return '2rem';
+    return '1.5rem';
+  }, [totalScore]);
 
   const reactionColor = useMemo(() => {
     return Color.gold();
@@ -47,7 +72,7 @@ export default function ReactionText() {
           })
         }}
       >
-        AWESOME
+        {reactionText}
       </animated.div>
     </div>
   );
