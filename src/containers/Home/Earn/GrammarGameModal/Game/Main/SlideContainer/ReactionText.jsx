@@ -10,14 +10,17 @@ ReactionText.propTypes = {
 export default function ReactionText({ questions }) {
   const totalScore = useMemo(() => {
     const scoreTable = {
-      S: 200,
+      S: 150,
       A: 100,
       B: 70,
       C: 50,
       D: 30,
       F: 0
     };
-    return questions.reduce((acc, cur) => acc + scoreTable[cur.score], 0);
+    const sum = questions.reduce((acc, cur) => acc + scoreTable[cur.score], 0);
+    if (sum === 150 * 10) {
+      return 10000;
+    }
   }, [questions]);
 
   const reactionText = useMemo(() => {
@@ -25,9 +28,10 @@ export default function ReactionText({ questions }) {
   }, []);
 
   const reactionFontSize = useMemo(() => {
-    if (totalScore === 2000) return '5rem';
-    if (totalScore > 1000) return '4rem';
-    if (totalScore > 500) return '3rem';
+    if (totalScore === 10000) return '5rem';
+    if (totalScore > 1500) return '3.5rem';
+    if (totalScore > 1000) return '3rem';
+    if (totalScore > 500) return '2.5rem';
     if (totalScore > 300) return '2rem';
     return '1.5rem';
   }, [totalScore]);
