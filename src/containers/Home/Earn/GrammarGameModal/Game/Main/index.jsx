@@ -106,6 +106,7 @@ export default function Main({ onSetGameState, questions }) {
             ...prev,
             [currentIndex]: {
               ...prev[currentIndex],
+              wasWrong: true,
               selectedChoiceIndex: null
             }
           }));
@@ -122,14 +123,18 @@ export default function Main({ onSetGameState, questions }) {
     }
 
     function handleReturnCalculatedScore(elapsedTime) {
-      let baseTime = 1000;
+      const defaultBaseTime = 1000;
+      let baseTime = defaultBaseTime;
       if (questionObj[currentIndex]) {
-        const { choices } = questionObj[currentIndex];
+        const { choices, wasWrong } = questionObj[currentIndex];
         let numLetters = 0;
         for (let choice of choices) {
           numLetters += choice.length;
         }
         baseTime = numLetters * 9 + 500;
+        if (wasWrong) {
+          baseTime = Math.min(baseTime, defaultBaseTime);
+        }
       }
       if (elapsedTime < baseTime * 0.35) return 'S';
       if (elapsedTime < baseTime * 0.55) return 'A';

@@ -3,6 +3,9 @@ import PropTypes from 'prop-types';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Prompt from './Prompt';
+import { isMobile } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator);
 
 StartScreen.propTypes = {
   onGameStart: PropTypes.func.isRequired
@@ -66,10 +69,12 @@ export default function StartScreen({ onGameStart }) {
             )}
           </div>
           <div style={{ marginTop: '4rem', textAlign: 'center' }}>
-            <p>
-              You can use <b>1, 2, 3, 4 keys</b> in your <b>keyboard</b> or use
-              your mouse to select the choices
-            </p>
+            {!deviceIsMobile && (
+              <p>
+                You can use <b>1, 2, 3, 4 keys</b> in your <b>keyboard</b> or
+                use your mouse to select the choices
+              </p>
+            )}
             <p>
               Press the <b>start</b> button when you are ready
             </p>
