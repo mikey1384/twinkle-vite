@@ -59,7 +59,7 @@ export default function SlideContainer({
         >
           {DisplayedSlide}
         </animated.div>
-        {isCompleted && <ReactionText />}
+        {isCompleted && <ReactionText questions={questions} />}
         <ProgressBar
           questions={questions}
           isOnStreak={isOnStreak}
