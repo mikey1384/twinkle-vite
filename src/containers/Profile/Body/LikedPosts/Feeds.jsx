@@ -50,10 +50,7 @@ export default function Feeds({
   useInfiniteScroll({
     feedsLength: feeds.length,
     scrollable: feeds.length > 0,
-    onScrollToBottom: () => {
-      setLoadingMore(true);
-      handleLoadMoreFeeds();
-    }
+    onScrollToBottom: handleLoadMoreFeeds
   });
 
   useEffect(() => {
@@ -240,6 +237,7 @@ export default function Feeds({
     const lastFeedId = feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
     if (lastFeedIdRef.current === lastFeedId) return;
     lastFeedIdRef.current = lastFeedId;
+    setLoadingMore(true);
     loadMoreFeeds();
     async function loadMoreFeeds() {
       try {
