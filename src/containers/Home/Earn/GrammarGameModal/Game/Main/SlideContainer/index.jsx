@@ -2,6 +2,7 @@ import { Children, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ProgressBar from './ProgressBar';
+import { Color } from '~/constants/css';
 import { useSpring, animated } from 'react-spring';
 import { scrollElementToCenter } from '~/helpers';
 
@@ -22,7 +23,7 @@ export default function SlideContainer({
   questions,
   selectedIndex = 0
 }) {
-  const styles = useSpring({ opacity: isCompleted ? 0 : 1 });
+  const questionsStyle = useSpring({ opacity: isCompleted ? 0 : 1 });
   const SlideRefs = useRef({});
   const childrenArray = useMemo(() => Children.toArray(children), [children]);
   const DisplayedSlide = useMemo(() => {
@@ -45,19 +46,51 @@ export default function SlideContainer({
     scrollElementToCenter(SlideRefs.current[selectedIndex]);
   }, [selectedIndex]);
 
+  const reactionFontSize = useMemo(() => {
+    return '3rem';
+  }, []);
+
+  const reactionColor = useMemo(() => {
+    return Color.brownOrange();
+  }, []);
+
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/SlideContainer">
-      <div style={{ width: '100%' }}>
+      <div style={{ width: '100%', position: 'relative' }}>
         <animated.div
           style={{
             width: '100%',
             minHeight: '7rem',
             marginTop: '2rem',
-            ...styles
+            ...questionsStyle
           }}
         >
           {DisplayedSlide}
         </animated.div>
+        {isCompleted && (
+          <div
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              top: 0,
+              textAlign: 'center'
+            }}
+          >
+            <div
+              style={{
+                marginBottom: '5rem',
+                fontSize: reactionFontSize,
+                color: reactionColor
+              }}
+            >
+              AWESOME
+            </div>
+          </div>
+        )}
         <ProgressBar
           questions={questions}
           isOnStreak={isOnStreak}
