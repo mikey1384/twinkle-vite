@@ -83,10 +83,7 @@ export default function Stories() {
   useInfiniteScroll({
     scrollable: feeds.length > 0,
     feedsLength: feeds.length,
-    onScrollToBottom: () => {
-      setLoadingMore(true);
-      handleLoadMoreFeeds();
-    }
+    onScrollToBottom: handleLoadMoreFeeds
   });
 
   useEffect(() => {
@@ -260,6 +257,7 @@ export default function Stories() {
     const lastFeedId = feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
     if (lastFeedIdRef.current === lastFeedId) return;
     lastFeedIdRef.current = lastFeedId;
+    setLoadingMore(true);
     try {
       const { data } = await loadFeeds({
         filter:
