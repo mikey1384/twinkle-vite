@@ -67,8 +67,8 @@ export default function StartScreen({ onGameStart }) {
           </div>
           <div style={{ marginTop: '4rem', textAlign: 'center' }}>
             <p>
-              {`You can use 1, 2, 3, 4 keys in your keyboard or use your mouse to
-              select the choices`}
+              You can use <b>1, 2, 3, 4 keys</b> in your <b>keyboard</b> or use
+              your mouse to select the choices
             </p>
             <p>
               Press the <b>start</b> button when you are ready
