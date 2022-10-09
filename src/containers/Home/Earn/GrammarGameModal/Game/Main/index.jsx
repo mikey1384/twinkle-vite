@@ -14,7 +14,6 @@ Main.propTypes = {
 const correctSound = new Audio(correct);
 
 export default function Main({ onSetGameState, questions }) {
-  const baseTime = 1000;
   const timerRef = useRef(null);
   const gotWrongTimerRef = useRef(null);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -121,6 +120,24 @@ export default function Main({ onSetGameState, questions }) {
         onSetGameState('finished');
       }, 10000000);
     }
+
+    function handleReturnCalculatedScore(elapsedTime) {
+      let baseTime = 1000;
+      if (questionObj[currentIndex]) {
+        const { choices } = questionObj[currentIndex];
+        let numLetters = 0;
+        for (let choice of choices) {
+          numLetters += choice.length;
+        }
+        baseTime = numLetters * 9 + 500;
+      }
+      if (elapsedTime < baseTime * 0.35) return 'S';
+      if (elapsedTime < baseTime * 0.55) return 'A';
+      if (elapsedTime < baseTime * 0.75) return 'B';
+      if (elapsedTime < baseTime * 0.9) return 'C';
+      if (elapsedTime < baseTime * 1) return 'D';
+      return 'F';
+    }
   }, [
     currentIndex,
     elapsedTime,
@@ -155,14 +172,5 @@ export default function Main({ onSetGameState, questions }) {
     timerRef.current = setInterval(() => {
       setElapsedTime((elapsedTime) => elapsedTime + 1);
     }, 1);
-  }
-
-  function handleReturnCalculatedScore(elapsedTime) {
-    if (elapsedTime < baseTime * 0.35) return 'S';
-    if (elapsedTime < baseTime * 0.55) return 'A';
-    if (elapsedTime < baseTime * 0.75) return 'B';
-    if (elapsedTime < baseTime * 0.9) return 'C';
-    if (elapsedTime < baseTime * 1) return 'D';
-    return 'F';
   }
 }
