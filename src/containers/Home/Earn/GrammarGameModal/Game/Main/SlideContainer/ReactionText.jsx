@@ -13,7 +13,7 @@ const scoreTable = {
   B: 70,
   C: 50,
   D: 30,
-  F: 0
+  F: 10
 };
 const perfectScore = 10000;
 
