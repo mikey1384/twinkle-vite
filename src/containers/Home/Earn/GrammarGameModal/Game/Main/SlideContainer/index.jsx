@@ -2,7 +2,7 @@ import { Children, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ProgressBar from './ProgressBar';
-import { Color } from '~/constants/css';
+import ReactionText from './ReactionText';
 import { useSpring, animated } from 'react-spring';
 import { scrollElementToCenter } from '~/helpers';
 
@@ -46,14 +46,6 @@ export default function SlideContainer({
     scrollElementToCenter(SlideRefs.current[selectedIndex]);
   }, [selectedIndex]);
 
-  const reactionFontSize = useMemo(() => {
-    return '3rem';
-  }, []);
-
-  const reactionColor = useMemo(() => {
-    return Color.brownOrange();
-  }, []);
-
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/SlideContainer">
       <div style={{ width: '100%', position: 'relative' }}>
@@ -67,30 +59,7 @@ export default function SlideContainer({
         >
           {DisplayedSlide}
         </animated.div>
-        {isCompleted && (
-          <div
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              top: 0,
-              textAlign: 'center'
-            }}
-          >
-            <div
-              style={{
-                marginBottom: '5rem',
-                fontSize: reactionFontSize,
-                color: reactionColor
-              }}
-            >
-              AWESOME
-            </div>
-          </div>
-        )}
+        {isCompleted && <ReactionText />}
         <ProgressBar
           questions={questions}
           isOnStreak={isOnStreak}
