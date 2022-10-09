@@ -5,7 +5,7 @@ import EarnXPFromSubjects from './EarnXPFromSubjects';
 import RecommendPosts from './RecommendPosts';
 import RewardPosts from './RewardPosts';
 import StartMenu from './StartMenu';
-import GrammarGameModal from './GrammarGameModal';
+import GrammarGameModal from '../GrammarGameModal';
 import KarmaMenu from './KarmaMenu';
 
 ActivitySuggester.propTypes = {
