@@ -74,6 +74,11 @@ export default function Stories() {
   const categoryRef = useRef(null);
   const ContainerRef = useRef(null);
   const hideWatchedRef = useRef(null);
+  const subFilterRef = useRef(null);
+
+  useEffect(() => {
+    subFilterRef.current = subFilter;
+  }, [subFilter]);
 
   useInfiniteScroll({
     scrollable: feeds.length > 0,
@@ -163,7 +168,7 @@ export default function Stories() {
           changeCategory={handleChangeCategory}
           displayOrder={displayOrder}
           selectedFilter={subFilter}
-          applyFilter={applyFilter}
+          applyFilter={handleApplyFilter}
           setDisplayOrder={handleDisplayOrder}
         />
         <InputPanel />
@@ -240,8 +245,8 @@ export default function Stories() {
     </ErrorBoundary>
   );
 
-  async function applyFilter(filter) {
-    if (filter === subFilter) return;
+  async function handleApplyFilter(filter) {
+    if (filter === subFilterRef.current) return;
     setLoadingFeeds(true);
     categoryRef.current = 'uploads';
     onChangeCategory('uploads');
