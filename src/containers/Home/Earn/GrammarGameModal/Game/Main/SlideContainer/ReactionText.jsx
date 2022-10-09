@@ -7,20 +7,23 @@ ReactionText.propTypes = {
   questions: PropTypes.array.isRequired
 };
 
+const scoreTable = {
+  S: 150,
+  A: 100,
+  B: 70,
+  C: 50,
+  D: 30,
+  F: 0
+};
+const perfectScore = 10000;
+
 export default function ReactionText({ questions }) {
   const totalScore = useMemo(() => {
-    const scoreTable = {
-      S: 150,
-      A: 100,
-      B: 70,
-      C: 50,
-      D: 30,
-      F: 0
-    };
     const sum = questions.reduce((acc, cur) => acc + scoreTable[cur.score], 0);
     if (sum === 150 * 10) {
-      return 10000;
+      return perfectScore;
     }
+    return sum;
   }, [questions]);
 
   const reactionText = useMemo(() => {
@@ -28,11 +31,11 @@ export default function ReactionText({ questions }) {
   }, []);
 
   const reactionFontSize = useMemo(() => {
-    if (totalScore === 10000) return '5rem';
-    if (totalScore > 1500) return '3.5rem';
-    if (totalScore > 1000) return '3rem';
-    if (totalScore > 500) return '2.5rem';
-    if (totalScore > 300) return '2rem';
+    if (totalScore === perfectScore) return '5rem';
+    if (totalScore > scoreTable.A * 10) return '3.5rem';
+    if (totalScore > scoreTable.B * 10) return '3rem';
+    if (totalScore > scoreTable.C * 10) return '2.5rem';
+    if (totalScore > scoreTable.D * 10) return '2rem';
     return '1.5rem';
   }, [totalScore]);
 
