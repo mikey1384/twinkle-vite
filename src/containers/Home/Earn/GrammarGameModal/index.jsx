@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import FilterBar from '~/components/FilterBar';
@@ -20,6 +20,35 @@ export default function GrammarGameModal({ onHide }) {
   const [gameState, setGameState] = useState('notStarted');
   const [activeTab, setActiveTab] = useState('game');
   const [questions, setQuestions] = useState([]);
+  const [questionIds, setQuestionIds] = useState(null);
+  const [questionObj, setQuestionObj] = useState({});
+  const scoreArray = useMemo(() => {
+    return questionIds
+      ?.map((id) => questionObj[id].score)
+      .filter((score) => !!score);
+  }, [questionIds, questionObj]);
+  const isOnStreak = useMemo(() => {
+    if (!scoreArray || scoreArray?.length < 2) return false;
+    for (let score of scoreArray) {
+      if (score !== 'S') {
+        return false;
+      }
+    }
+    return true;
+  }, [scoreArray]);
+  useEffect(() => {
+    const resultObj = questions.reduce((prev, curr, index) => {
+      return {
+        ...prev,
+        [index]: {
+          ...curr,
+          selectedChoiceIndex: null
+        }
+      };
+    }, {});
+    setQuestionObj(resultObj);
+    setQuestionIds([...Array(questions.length).keys()]);
+  }, [questions]);
 
   return (
     <Modal closeWhenClickedOutside={false} onHide={onHide}>
@@ -58,7 +87,13 @@ export default function GrammarGameModal({ onHide }) {
               <StartScreen onGameStart={handleGameStart} />
             )}
             {gameState === 'started' && (
-              <Game questions={questions} onSetGameState={setGameState} />
+              <Game
+                isOnStreak={isOnStreak}
+                questionIds={questionIds}
+                questionObj={questionObj}
+                onSetQuestionObj={setQuestionObj}
+                onSetGameState={setGameState}
+              />
             )}
             {gameState === 'finished' && <FinishScreen />}
           </ErrorBoundary>
