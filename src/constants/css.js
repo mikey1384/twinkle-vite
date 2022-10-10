@@ -252,7 +252,7 @@ export function Theme(color = 'logoBlue') {
     grammarGameScorePerfect: { color: 'gold' },
     grammarGameScoreA: { color: 'magenta' },
     grammarGameScoreB: { color: 'orange' },
-    grammarGameScoreC: { color: 'purple' },
+    grammarGameScoreC: { color: 'pastelPink' },
     grammarGameScoreD: { color: 'logoBlue' },
     grammarGameScoreF: { color: 'gray' },
     header: {
