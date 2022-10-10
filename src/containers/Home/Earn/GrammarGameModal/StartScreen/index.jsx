@@ -48,22 +48,20 @@ export default function StartScreen({ onGameStart }) {
             )}
             {screenIndex === 1 && (
               <Prompt>
-                The faster you answer a question, the more coins you earn.
+                The faster you answer a question, the more XP you earn.
               </Prompt>
             )}
             {screenIndex === 2 && (
               <Prompt>
-                To move up on the leaderboard, earn as many coins as possible!
+                To move up on the leaderboard, earn as much XP as possible!
               </Prompt>
             )}
             {screenIndex === 3 && (
               <div>
                 <p>Answer 10 fill-in-the-blank grammar questions.</p>
+                <p>The faster you answer a question, the more XP you earn.</p>
                 <p>
-                  The faster you answer a question, the more coins you earn.
-                </p>
-                <p>
-                  To move up on the leaderboard, earn as many coins as possible!
+                  To move up on the leaderboard, earn as much XP as possible!
                 </p>
               </div>
             )}
