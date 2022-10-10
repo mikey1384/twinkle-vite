@@ -65,7 +65,7 @@ export default function GrammarGameModal({ onHide }) {
         ) : activeTab === 'rankings' ? (
           <div>Rankings</div>
         ) : (
-          <div>Something Else</div>
+          <div>Hmmm... how did you get here?</div>
         )}
       </main>
       {gameState !== 'started' && (
