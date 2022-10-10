@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
-import { useSpring, animated } from 'react-spring';
+import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
@@ -18,7 +18,6 @@ const scoreTable = {
   F: 10
 };
 const perfectScore = 10000;
-
 export default function ReactionText({ questions }) {
   const {
     grammarGameScorePerfect: { color: colorPerfect },
@@ -35,7 +34,6 @@ export default function ReactionText({ questions }) {
     }
     return sum;
   }, [questions]);
-
   const reactionObj = useMemo(() => {
     if (totalScore === perfectScore)
       return {
@@ -79,13 +77,13 @@ export default function ReactionText({ questions }) {
       bling: false
     };
   }, [colorA, colorB, colorC, colorD, colorF, colorPerfect, totalScore]);
-
+  const effectRef = useSpringRef();
   const { x } = useSpring({
+    ref: effectRef,
     from: { x: 0 },
     x: 1,
     config: { duration: 1000 }
   });
-
   const animationEffect = useMemo(() => {
     if (totalScore === perfectScore) {
       return {
@@ -98,8 +96,15 @@ export default function ReactionText({ questions }) {
     }
     return {};
   }, [totalScore, x]);
-
+  const opacityRef = useSpringRef();
+  const styles = useSpring({
+    ref: opacityRef,
+    from: { opacity: 0 },
+    to: { opacity: 1 }
+  });
   const { color, fontSize, text, bling } = reactionObj;
+
+  useChain([opacityRef, effectRef]);
 
   return (
     <div
@@ -117,7 +122,8 @@ export default function ReactionText({ questions }) {
       <animated.div
         style={{
           marginBottom: '5rem',
-          ...animationEffect
+          ...animationEffect,
+          ...styles
         }}
       >
         <span
