@@ -95,7 +95,9 @@ export default function GrammarGameModal({ onHide }) {
                 onSetGameState={setGameState}
               />
             )}
-            {gameState === 'finished' && <FinishScreen />}
+            {gameState === 'finished' && (
+              <FinishScreen scoreArray={scoreArray} />
+            )}
           </ErrorBoundary>
         ) : activeTab === 'rankings' ? (
           <div>Rankings</div>
