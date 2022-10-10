@@ -41,35 +41,42 @@ export default function ReactionText({ questions }) {
       return {
         color: colorPerfect,
         fontSize: '5rem',
-        text: 'PERFECT'
+        text: 'PERFECT',
+        bling: true
       };
     if (totalScore > scoreTable.A * 10)
       return {
         color: colorA,
         fontSize: '3.5rem',
-        text: 'YOU ACED IT'
+        text: 'YOU ACED IT',
+        bling: true
       };
     if (totalScore > scoreTable.B * 10)
       return {
         color: colorB,
         fontSize: '3rem',
-        text: 'GREAT'
+        text: 'GREAT',
+        bling: true
       };
     if (totalScore > scoreTable.C * 10)
       return {
         color: colorC,
         fontSize: '2.5rem',
-        text: 'Good'
+        text: 'Good',
+        bling: false
       };
     if (totalScore > scoreTable.D * 10)
       return {
         color: colorD,
         fontSize: '2rem',
-        text: 'Better luck next time'
+        text: 'Better luck next time',
+        bling: false
       };
     return {
       color: Color[colorF](),
-      fontSize: `Don't give up`
+      fontSize: '1.5rem',
+      text: `Don't give up`,
+      bling: false
     };
   }, [colorA, colorB, colorC, colorD, colorF, colorPerfect, totalScore]);
 
@@ -92,7 +99,7 @@ export default function ReactionText({ questions }) {
     return {};
   }, [totalScore, x]);
 
-  const { color, fontSize, text } = reactionObj;
+  const { color, fontSize, text, bling } = reactionObj;
 
   return (
     <div
@@ -114,32 +121,38 @@ export default function ReactionText({ questions }) {
         }}
       >
         <span
-          className={css`
-            background-image: linear-gradient(
-              to left,
-              ${Color[color](1)} 0%,
-              ${Color[color](0.5)} 30%,
-              ${Color[color](1)} 100%
-            );
-            background-clip: text;
-            color: transparent;
-            background-size: 500% auto;
-            background-position: right center;
-            animation: bling 3s ease infinite;
-            @keyframes bling {
-              0% {
-                background-position: 100% 0%;
-              }
+          className={
+            bling
+              ? css`
+                  background-image: linear-gradient(
+                    to left,
+                    ${Color[color](1)} 0%,
+                    ${Color[color](0.5)} 30%,
+                    ${Color[color](1)} 100%
+                  );
+                  background-clip: text;
+                  color: transparent;
+                  background-size: 500% auto;
+                  background-position: right center;
+                  animation: bling 3s ease infinite;
+                  @keyframes bling {
+                    0% {
+                      background-position: 100% 0%;
+                    }
 
-              50% {
-                background-position: 10% 10%;
-              }
+                    50% {
+                      background-position: 10% 10%;
+                    }
 
-              100% {
-                background-position: 0% 0%;
-              }
-            }
-          `}
+                    100% {
+                      background-position: 0% 0%;
+                    }
+                  }
+                `
+              : css`
+                  color: ${Color[color]()};
+                `
+          }
           style={{
             fontSize,
             fontWeight: 'bold'
