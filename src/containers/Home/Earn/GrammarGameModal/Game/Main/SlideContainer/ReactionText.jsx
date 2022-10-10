@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import { useSpring, animated } from 'react-spring';
+import { useKeyContext } from '~/contexts';
+import { css } from '@emotion/css';
 
 ReactionText.propTypes = {
   questions: PropTypes.array.isRequired
@@ -18,6 +20,14 @@ const scoreTable = {
 const perfectScore = 10000;
 
 export default function ReactionText({ questions }) {
+  const {
+    grammarGameScorePerfect: { color: colorPerfect },
+    grammarGameScoreA: { color: colorA },
+    grammarGameScoreB: { color: colorB },
+    grammarGameScoreC: { color: colorC },
+    grammarGameScoreD: { color: colorD },
+    grammarGameScoreF: { color: colorF }
+  } = useKeyContext((v) => v.theme);
   const totalScore = useMemo(() => {
     const sum = questions.reduce((acc, cur) => acc + scoreTable[cur.score], 0);
     if (sum === 150 * 10) {
@@ -26,32 +36,63 @@ export default function ReactionText({ questions }) {
     return sum;
   }, [questions]);
 
-  const reactionText = useMemo(() => {
-    return 'AWESOME';
-  }, []);
-
-  const reactionFontSize = useMemo(() => {
-    if (totalScore === perfectScore) return '5rem';
-    if (totalScore > scoreTable.A * 10) return '3.5rem';
-    if (totalScore > scoreTable.B * 10) return '3rem';
-    if (totalScore > scoreTable.C * 10) return '2.5rem';
-    if (totalScore > scoreTable.D * 10) return '2rem';
-    return '1.5rem';
-  }, [totalScore]);
-
-  const reactionColor = useMemo(() => {
-    return Color.gold();
-  }, []);
-
-  const animationOutput = useMemo(() => {
-    return [1, 0.8, 0.5, 1.1, 0.5, 1.1, 1.03, 1];
-  }, []);
+  const reactionObj = useMemo(() => {
+    if (totalScore === perfectScore)
+      return {
+        color: colorPerfect,
+        fontSize: '5rem',
+        text: 'PERFECT'
+      };
+    if (totalScore > scoreTable.A * 10)
+      return {
+        color: colorA,
+        fontSize: '3.5rem',
+        text: 'YOU ACED IT'
+      };
+    if (totalScore > scoreTable.B * 10)
+      return {
+        color: colorB,
+        fontSize: '3rem',
+        text: 'GREAT'
+      };
+    if (totalScore > scoreTable.C * 10)
+      return {
+        color: colorC,
+        fontSize: '2.5rem',
+        text: 'Good'
+      };
+    if (totalScore > scoreTable.D * 10)
+      return {
+        color: colorD,
+        fontSize: '2rem',
+        text: 'Better luck next time'
+      };
+    return {
+      color: Color[colorF](),
+      fontSize: `Don't give up`
+    };
+  }, [colorA, colorB, colorC, colorD, colorF, colorPerfect, totalScore]);
 
   const { x } = useSpring({
     from: { x: 0 },
     x: 1,
     config: { duration: 1000 }
   });
+
+  const animationEffect = useMemo(() => {
+    if (totalScore === perfectScore) {
+      return {
+        opacity: x.to({ range: [0, 1], output: [0.3, 1] }),
+        scale: x.to({
+          range: [0, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 1],
+          output: [1, 0.8, 0.5, 1.1, 0.5, 1.1, 1.03, 1]
+        })
+      };
+    }
+    return {};
+  }, [totalScore, x]);
+
+  const { color, fontSize, text } = reactionObj;
 
   return (
     <div
@@ -69,17 +110,43 @@ export default function ReactionText({ questions }) {
       <animated.div
         style={{
           marginBottom: '5rem',
-          fontSize: reactionFontSize,
-          color: reactionColor,
-          fontWeight: 'bold',
-          opacity: x.to({ range: [0, 1], output: [0.3, 1] }),
-          scale: x.to({
-            range: [0, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 1],
-            output: animationOutput
-          })
+          ...animationEffect
         }}
       >
-        {reactionText}
+        <span
+          className={css`
+            background-image: linear-gradient(
+              to left,
+              ${Color[color](1)} 0%,
+              ${Color[color](0.5)} 30%,
+              ${Color[color](1)} 100%
+            );
+            background-clip: text;
+            color: transparent;
+            background-size: 500% auto;
+            background-position: right center;
+            animation: bling 3s ease infinite;
+            @keyframes bling {
+              0% {
+                background-position: 100% 0%;
+              }
+
+              50% {
+                background-position: 10% 10%;
+              }
+
+              100% {
+                background-position: 0% 0%;
+              }
+            }
+          `}
+          style={{
+            fontSize,
+            fontWeight: 'bold'
+          }}
+        >
+          {text}
+        </span>
       </animated.div>
     </div>
   );
