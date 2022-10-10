@@ -73,9 +73,9 @@ export default function ReactionText({ questions }) {
         bling: false
       };
     return {
-      color: Color[colorF](),
-      fontSize: '1.5rem',
-      text: `Don't give up, keep trying`,
+      color: colorF,
+      fontSize: '1.7rem',
+      text: `Don't give up! You'll get better at this`,
       bling: false
     };
   }, [colorA, colorB, colorC, colorD, colorF, colorPerfect, totalScore]);
