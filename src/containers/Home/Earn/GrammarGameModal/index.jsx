@@ -5,6 +5,7 @@ import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StartScreen from './StartScreen';
+import FinishScreen from './FinishScreen';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
 
@@ -59,7 +60,7 @@ export default function GrammarGameModal({ onHide }) {
             {gameState === 'started' && (
               <Game questions={questions} onSetGameState={setGameState} />
             )}
-            {gameState === 'finished' && <div>Finished</div>}
+            {gameState === 'finished' && <FinishScreen />}
           </ErrorBoundary>
         ) : activeTab === 'rankings' ? (
           <div>Rankings</div>
