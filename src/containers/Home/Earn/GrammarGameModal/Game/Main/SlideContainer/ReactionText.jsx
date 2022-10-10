@@ -4,20 +4,12 @@ import { Color } from '~/constants/css';
 import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { scoreTable, perfectScore } from '../../../constants';
 
 ReactionText.propTypes = {
   questions: PropTypes.array.isRequired
 };
 
-const scoreTable = {
-  S: 150,
-  A: 100,
-  B: 70,
-  C: 50,
-  D: 30,
-  F: 10
-};
-const perfectScore = 10000;
 export default function ReactionText({ questions }) {
   const {
     grammarGameScorePerfect: { color: colorPerfect },
@@ -29,7 +21,7 @@ export default function ReactionText({ questions }) {
   } = useKeyContext((v) => v.theme);
   const totalScore = useMemo(() => {
     const sum = questions.reduce((acc, cur) => acc + scoreTable[cur.score], 0);
-    if (sum === 150 * 10) {
+    if (sum === scoreTable.S * 10) {
       return perfectScore;
     }
     return sum;
