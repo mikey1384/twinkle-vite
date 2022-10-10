@@ -48,7 +48,7 @@ export default function ReactionText({ questions }) {
       return {
         color: colorA,
         fontSize: '3.5rem',
-        text: 'YOU ACED IT',
+        text: 'OUTSTANDING',
         bling: true
       };
     if (totalScore > scoreTable.B * 10)
@@ -75,7 +75,7 @@ export default function ReactionText({ questions }) {
     return {
       color: Color[colorF](),
       fontSize: '1.5rem',
-      text: `Don't give up`,
+      text: `Don't give up, keep trying`,
       bling: false
     };
   }, [colorA, colorB, colorC, colorD, colorF, colorPerfect, totalScore]);
