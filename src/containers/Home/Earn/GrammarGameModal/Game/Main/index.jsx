@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from './QuestionSlide';
@@ -7,54 +7,32 @@ import Loading from '~/components/Loading';
 import correct from './correct_sound.mp3';
 
 Main.propTypes = {
+  isOnStreak: PropTypes.bool,
   onSetGameState: PropTypes.func.isRequired,
-  questions: PropTypes.array
+  onSetQuestionObj: PropTypes.func.isRequired,
+  questionIds: PropTypes.array,
+  questionObj: PropTypes.object
 };
 
 const correctSound = new Audio(correct);
 
-export default function Main({ onSetGameState, questions }) {
+export default function Main({
+  isOnStreak,
+  onSetGameState,
+  onSetQuestionObj,
+  questionIds,
+  questionObj
+}) {
   const timerRef = useRef(null);
   const gotWrongTimerRef = useRef(null);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [questionIds, setQuestionIds] = useState(null);
-  const [questionObj, setQuestionObj] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
   const loadingRef = useRef(false);
 
-  const scoreArray = useMemo(() => {
-    return questionIds
-      ?.map((id) => questionObj[id].score)
-      .filter((score) => !!score);
-  }, [questionIds, questionObj]);
-
-  const isOnStreak = useMemo(() => {
-    if (!scoreArray || scoreArray?.length < 2) return false;
-    for (let score of scoreArray) {
-      if (score !== 'S') {
-        return false;
-      }
-    }
-    return true;
-  }, [scoreArray]);
-
-  useEffect(() => {
-    const resultObj = questions.reduce((prev, curr, index) => {
-      return {
-        ...prev,
-        [index]: {
-          ...curr,
-          selectedChoiceIndex: null
-        }
-      };
-    }, {});
-    setQuestionObj(resultObj);
-    setQuestionIds([...Array(questions.length).keys()]);
-  }, [questions]);
-
   const Slides = useMemo(() => {
+    if (!questionIds || questionIds?.length === 0) return null;
     return questionIds?.map((questionId) => (
       <QuestionSlide
         key={questionId}
@@ -72,7 +50,7 @@ export default function Main({ onSetGameState, questions }) {
         clearTimeout(timerRef.current);
         loadingRef.current = true;
         const score = handleReturnCalculatedScore(elapsedTime);
-        setQuestionObj((prev) => ({
+        onSetQuestionObj((prev) => ({
           ...prev,
           [currentIndex]: {
             ...prev[currentIndex],
@@ -94,7 +72,7 @@ export default function Main({ onSetGameState, questions }) {
       if (!loadingRef.current) {
         loadingRef.current = true;
         setGotWrong(true);
-        setQuestionObj((prev) => ({
+        onSetQuestionObj((prev) => ({
           ...prev,
           [currentIndex]: {
             ...prev[currentIndex],
@@ -102,7 +80,7 @@ export default function Main({ onSetGameState, questions }) {
           }
         }));
         gotWrongTimerRef.current = setTimeout(() => {
-          setQuestionObj((prev) => ({
+          onSetQuestionObj((prev) => ({
             ...prev,
             [currentIndex]: {
               ...prev[currentIndex],
@@ -148,6 +126,7 @@ export default function Main({ onSetGameState, questions }) {
     elapsedTime,
     gotWrong,
     onSetGameState,
+    onSetQuestionObj,
     questionIds,
     questionObj
   ]);
