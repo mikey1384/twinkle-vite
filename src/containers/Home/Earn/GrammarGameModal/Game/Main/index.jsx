@@ -119,7 +119,7 @@ export default function Main({ onSetGameState, questions }) {
       setIsCompleted(true);
       setTimeout(() => {
         onSetGameState('finished');
-      }, 10000000);
+      }, 3000);
     }
 
     function handleReturnCalculatedScore(elapsedTime) {
