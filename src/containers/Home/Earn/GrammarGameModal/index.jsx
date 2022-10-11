@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
-import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StartScreen from './StartScreen';
@@ -18,7 +17,6 @@ export default function GrammarGameModal({ onHide }) {
     (v) => v.requestHelpers.loadGrammarGame
   );
   const [gameState, setGameState] = useState('notStarted');
-  const [activeTab, setActiveTab] = useState('game');
   const [questions, setQuestions] = useState([]);
   const [questionIds, setQuestionIds] = useState(null);
   const [questionObj, setQuestionObj] = useState({});
@@ -52,58 +50,27 @@ export default function GrammarGameModal({ onHide }) {
 
   return (
     <Modal closeWhenClickedOutside={false} onHide={onHide}>
-      {gameState !== 'started' && (
-        <header style={{ padding: 0 }}>
-          <FilterBar
-            style={{
-              marginTop: '2rem',
-              height: '5rem'
-            }}
-          >
-            <nav
-              className={activeTab === 'game' ? 'active' : null}
-              onClick={() => setActiveTab('game')}
-            >
-              Grammarbles
-            </nav>
-            <nav
-              className={activeTab === 'rankings' ? 'active' : null}
-              onClick={() => setActiveTab('rankings')}
-            >
-              Top Scorers
-            </nav>
-          </FilterBar>
-        </header>
-      )}
       <main
         style={{
           padding: 0,
           marginTop: 0
         }}
       >
-        {activeTab === 'game' ? (
-          <ErrorBoundary componentPath="Earn/GrammarGameModal/GameState">
-            {gameState === 'notStarted' && (
-              <StartScreen onGameStart={handleGameStart} />
-            )}
-            {gameState === 'started' && (
-              <Game
-                isOnStreak={isOnStreak}
-                questionIds={questionIds}
-                questionObj={questionObj}
-                onSetQuestionObj={setQuestionObj}
-                onSetGameState={setGameState}
-              />
-            )}
-            {gameState === 'finished' && (
-              <FinishScreen scoreArray={scoreArray} />
-            )}
-          </ErrorBoundary>
-        ) : activeTab === 'rankings' ? (
-          <div>Rankings</div>
-        ) : (
-          <div>Hmmm... how did you get here?</div>
-        )}
+        <ErrorBoundary componentPath="Earn/GrammarGameModal/GameState">
+          {gameState === 'notStarted' && (
+            <StartScreen onGameStart={handleGameStart} />
+          )}
+          {gameState === 'started' && (
+            <Game
+              isOnStreak={isOnStreak}
+              questionIds={questionIds}
+              questionObj={questionObj}
+              onSetQuestionObj={setQuestionObj}
+              onSetGameState={setGameState}
+            />
+          )}
+          {gameState === 'finished' && <FinishScreen scoreArray={scoreArray} />}
+        </ErrorBoundary>
       </main>
       {gameState !== 'started' && (
         <footer>

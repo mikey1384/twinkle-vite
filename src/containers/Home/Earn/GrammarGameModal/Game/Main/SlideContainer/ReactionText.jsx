@@ -4,7 +4,7 @@ import { Color } from '~/constants/css';
 import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { scoreTable, perfectScore } from '../../../constants';
+import { scoreTable, perfectScoreBonus } from '../../../constants';
 
 ReactionText.propTypes = {
   questions: PropTypes.array.isRequired
@@ -19,13 +19,14 @@ export default function ReactionText({ questions }) {
     grammarGameScoreD: { color: colorD },
     grammarGameScoreF: { color: colorF }
   } = useKeyContext((v) => v.theme);
+  const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
   const totalScore = useMemo(() => {
     const sum = questions.reduce((acc, cur) => acc + scoreTable[cur.score], 0);
     if (sum === scoreTable.S * 10) {
       return perfectScore;
     }
     return sum;
-  }, [questions]);
+  }, [questions, perfectScore]);
   const reactionObj = useMemo(() => {
     if (totalScore === perfectScore)
       return {
@@ -68,7 +69,16 @@ export default function ReactionText({ questions }) {
       text: `Don't give up! You'll get better at this`,
       bling: false
     };
-  }, [colorA, colorB, colorC, colorD, colorF, colorPerfect, totalScore]);
+  }, [
+    colorA,
+    colorB,
+    colorC,
+    colorD,
+    colorF,
+    colorPerfect,
+    totalScore,
+    perfectScore
+  ]);
   const effectRef = useSpringRef();
   const { x } = useSpring({
     ref: effectRef,
@@ -87,7 +97,7 @@ export default function ReactionText({ questions }) {
       };
     }
     return {};
-  }, [totalScore, x]);
+  }, [totalScore, x, perfectScore]);
   const opacityRef = useSpringRef();
   const styles = useSpring({
     ref: opacityRef,
