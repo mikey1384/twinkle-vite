@@ -13,14 +13,15 @@ StartScreen.propTypes = {
 
 const firstLine = 'Answer 10 fill-in-the-blank grammar questions.';
 const secondLine = 'The faster you answer a question, the more XP you earn.';
-const thirdLine = 'Earn as much XP as possible to move up on the leaderboard!';
+const thirdLine =
+  'You can only play 5 games per day. Try to earn as much XP as possible!';
 
 export default function StartScreen({ onGameStart }) {
   const [screenIndex, setScreenIndex] = useState(0);
   useEffect(() => {
     setTimeout(() => setScreenIndex(1), 1500);
     setTimeout(() => setScreenIndex(2), 4000);
-    setTimeout(() => setScreenIndex(3), 6500);
+    setTimeout(() => setScreenIndex(3), 7500);
   }, []);
 
   return (
@@ -36,10 +37,10 @@ export default function StartScreen({ onGameStart }) {
         <div>
           <div
             style={{
-              marginTop: '0.5rem',
+              marginTop: '3rem',
               textAlign: 'center',
               fontWeight: 'bold',
-              fontSize: '1.7rem'
+              fontSize: '2rem'
             }}
           >
             Grammarbles
