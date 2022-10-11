@@ -39,7 +39,7 @@ export default function FinishScreen({ scoreArray }) {
   }, [scoreArray]);
 
   const numLetterGrades = useMemo(() => {
-    const resultObj = {};
+    const resultObj = { S: 0, A: 0, B: 0, C: 0, D: 0, F: 0 };
     for (let score of scoreArray) {
       if (!resultObj[score]) {
         resultObj[score] = 1;
@@ -53,16 +53,21 @@ export default function FinishScreen({ scoreArray }) {
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/FinishScreen">
       <div>Game Finished</div>
-      {Object.entries(numLetterGrades).map(([letter, num]) => (
-        <div key={letter}>
-          <span
-            style={{ fontWeight: 'bold', color: Color[letterColor[letter]]() }}
-          >
-            {letter}
-          </span>{' '}
-          ×{num}
-        </div>
-      ))}
+      {Object.entries(numLetterGrades)
+        .filter(([, number]) => number > 0)
+        .map(([letter, num]) => (
+          <div key={letter}>
+            <span
+              style={{
+                fontWeight: 'bold',
+                color: Color[letterColor[letter]]()
+              }}
+            >
+              {letter}
+            </span>{' '}
+            ×{num}
+          </div>
+        ))}
       <div>You earned {addCommasToNumber(score)}XP</div>
     </ErrorBoundary>
   );
