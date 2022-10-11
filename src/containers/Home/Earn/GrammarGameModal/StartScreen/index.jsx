@@ -11,6 +11,10 @@ StartScreen.propTypes = {
   onGameStart: PropTypes.func.isRequired
 };
 
+const firstLine = 'Answer 10 fill-in-the-blank grammar questions.';
+const secondLine = 'The faster you answer a question, the more XP you earn.';
+const thirdLine = 'Earn as much XP as possible to move up on the leaderboard!';
+
 export default function StartScreen({ onGameStart }) {
   const [screenIndex, setScreenIndex] = useState(0);
   useEffect(() => {
@@ -43,26 +47,14 @@ export default function StartScreen({ onGameStart }) {
           <div
             style={{ marginTop: '4rem', lineHeight: 1.7, textAlign: 'center' }}
           >
-            {screenIndex === 0 && (
-              <Prompt>Answer 10 fill-in-the-blank grammar questions.</Prompt>
-            )}
-            {screenIndex === 1 && (
-              <Prompt>
-                The faster you answer a question, the more XP you earn.
-              </Prompt>
-            )}
-            {screenIndex === 2 && (
-              <Prompt>
-                To move up on the leaderboard, earn as much XP as possible!
-              </Prompt>
-            )}
+            {screenIndex === 0 && <Prompt>{firstLine}</Prompt>}
+            {screenIndex === 1 && <Prompt>{secondLine}</Prompt>}
+            {screenIndex === 2 && <Prompt>{thirdLine}</Prompt>}
             {screenIndex === 3 && (
               <div>
-                <p>Answer 10 fill-in-the-blank grammar questions.</p>
-                <p>The faster you answer a question, the more XP you earn.</p>
-                <p>
-                  To move up on the leaderboard, earn as much XP as possible!
-                </p>
+                <p>{firstLine}</p>
+                <p>{secondLine}</p>
+                <p>{thirdLine}</p>
               </div>
             )}
           </div>
