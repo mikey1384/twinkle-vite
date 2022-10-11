@@ -64,7 +64,7 @@ export default function GrammarGameModal({ onHide }) {
               className={activeTab === 'game' ? 'active' : null}
               onClick={() => setActiveTab('game')}
             >
-              The Grammar Game
+              Grammarbles
             </nav>
             <nav
               className={activeTab === 'rankings' ? 'active' : null}
