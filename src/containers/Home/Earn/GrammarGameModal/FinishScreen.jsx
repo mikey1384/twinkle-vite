@@ -37,7 +37,7 @@ export default function FinishScreen({ scoreArray }) {
           <span style={{ fontWeight: 'bold' }}>{letter}:</span> ×{num}
         </div>
       ))}
-      <div>Your score is {score}</div>
+      <div>You earned {score}XP</div>
     </ErrorBoundary>
   );
 }
