@@ -1,4 +1,4 @@
-import { Children, useEffect, useMemo, useRef } from 'react';
+import { Children, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ProgressBar from './ProgressBar';
@@ -23,6 +23,7 @@ export default function SlideContainer({
   questions,
   selectedIndex = 0
 }) {
+  const [streakEffectOff, setStreakEffectOff] = useState(false);
   const questionsStyle = useSpring({ opacity: isCompleted ? 0 : 1 });
   const SlideRefs = useRef({});
   const childrenArray = useMemo(() => Children.toArray(children), [children]);
@@ -46,6 +47,12 @@ export default function SlideContainer({
     scrollElementToCenter(SlideRefs.current[selectedIndex]);
   }, [selectedIndex]);
 
+  useEffect(() => {
+    if (isCompleted) {
+      setTimeout(() => setStreakEffectOff(true), 1000);
+    }
+  }, [isCompleted]);
+
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/SlideContainer">
       <div style={{ width: '100%', position: 'relative' }}>
@@ -62,7 +69,7 @@ export default function SlideContainer({
         {isCompleted && <ReactionText questions={questions} />}
         <ProgressBar
           questions={questions}
-          isOnStreak={isOnStreak}
+          isOnStreak={isOnStreak && !streakEffectOff}
           isCompleted={isCompleted}
           selectedIndex={selectedIndex}
           style={{ marginBottom: '3rem' }}
