@@ -132,7 +132,7 @@ export default function ReactionText({ questions }) {
                   color: transparent;
                   background-size: 500% auto;
                   background-position: right center;
-                  animation: bling 3s ease infinite;
+                  animation: bling 1.5s ease infinite;
                   @keyframes bling {
                     0% {
                       background-position: 100% 0%;
