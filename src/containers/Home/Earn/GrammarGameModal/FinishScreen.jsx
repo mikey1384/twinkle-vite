@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import PropTypes from 'prop-types';
+import { useKeyContext } from '~/contexts';
+import { Color } from '~/constants/css';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { scoreTable, perfectScore } from './constants';
 
 FinishScreen.propTypes = {
@@ -8,6 +11,24 @@ FinishScreen.propTypes = {
 };
 
 export default function FinishScreen({ scoreArray }) {
+  const {
+    grammarGameScoreS: { color: colorS },
+    grammarGameScoreA: { color: colorA },
+    grammarGameScoreB: { color: colorB },
+    grammarGameScoreC: { color: colorC },
+    grammarGameScoreD: { color: colorD },
+    grammarGameScoreF: { color: colorF }
+  } = useKeyContext((v) => v.theme);
+
+  const letterColor = {
+    S: colorS,
+    A: colorA,
+    B: colorB,
+    C: colorC,
+    D: colorD,
+    F: colorF
+  };
+
   const score = useMemo(() => {
     if (!scoreArray) return 0;
     const sum = scoreArray.reduce((acc, cur) => acc + scoreTable[cur], 0);
@@ -34,10 +55,15 @@ export default function FinishScreen({ scoreArray }) {
       <div>Game Finished</div>
       {Object.entries(numLetterGrades).map(([letter, num]) => (
         <div key={letter}>
-          <span style={{ fontWeight: 'bold' }}>{letter}:</span> ×{num}
+          <span
+            style={{ fontWeight: 'bold', color: Color[letterColor[letter]]() }}
+          >
+            {letter}
+          </span>{' '}
+          ×{num}
         </div>
       ))}
-      <div>You earned {score}XP</div>
+      <div>You earned {addCommasToNumber(score)}XP</div>
     </ErrorBoundary>
   );
 }
