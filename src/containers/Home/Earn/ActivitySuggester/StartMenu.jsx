@@ -39,7 +39,7 @@ export default function StartMenu({ onSetGrammarGameModalShown }) {
             mobileFontSize="1.3rem"
             onClick={onSetGrammarGameModalShown}
           >
-            The Grammar Game
+            Grammarbles
           </GradientButton>
           <Button
             onClick={() => onSetTopMenuSectionSection('subject')}

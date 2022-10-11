@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { scoreTable, perfectScore } from './constants';
+import { scoreTable, perfectScoreBonus } from './constants';
 
 FinishScreen.propTypes = {
   scoreArray: PropTypes.array
@@ -33,7 +33,7 @@ export default function FinishScreen({ scoreArray }) {
     if (!scoreArray) return 0;
     const sum = scoreArray.reduce((acc, cur) => acc + scoreTable[cur], 0);
     if (sum === scoreTable.S * 10) {
-      return perfectScore;
+      return scoreTable.S * 10 * perfectScoreBonus;
     }
     return sum;
   }, [scoreArray]);
@@ -49,26 +49,63 @@ export default function FinishScreen({ scoreArray }) {
     }
     return resultObj;
   }, [scoreArray]);
+  const numLetterGradesArray = useMemo(
+    () => Object.entries(numLetterGrades).filter(([, number]) => number > 0),
+    [numLetterGrades]
+  );
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/FinishScreen">
-      <div>Game Finished</div>
-      {Object.entries(numLetterGrades)
-        .filter(([, number]) => number > 0)
-        .map(([letter, num]) => (
-          <div key={letter}>
-            <span
-              style={{
-                fontWeight: 'bold',
-                color: Color[letterColor[letter]]()
-              }}
-            >
-              {letter}
-            </span>{' '}
-            ×{num}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <div
+          style={{
+            fontWeight: 'bold',
+            marginTop: '1.5rem',
+            fontSize: '2rem'
+          }}
+        >
+          Game Result
+        </div>
+        <div style={{ fontSize: '1.7rem', marginTop: '2.5rem' }}>
+          {numLetterGradesArray.map(([letter, num]) => (
+            <div key={letter}>
+              <span
+                style={{
+                  fontWeight: 'bold',
+                  color: Color[letterColor[letter]]()
+                }}
+              >
+                {letter}
+              </span>{' '}
+              ×{num}
+            </div>
+          ))}
+        </div>
+        <div
+          style={{
+            marginTop: '2.5rem',
+            marginBottom: '2rem',
+            textAlign: 'center'
+          }}
+        >
+          <div>
+            {numLetterGradesArray
+              .map(([letter, num]) => `(${scoreTable[letter]} × ${num})`)
+              .join(' + ')}{' '}
+            = {score}
           </div>
-        ))}
-      <div>You earned {addCommasToNumber(score)}XP</div>
+          <div style={{ marginTop: '1rem' }}>
+            You earned {addCommasToNumber(score)} XP
+          </div>
+        </div>
+      </div>
     </ErrorBoundary>
   );
 }

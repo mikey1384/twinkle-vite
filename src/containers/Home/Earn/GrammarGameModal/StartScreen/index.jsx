@@ -42,7 +42,7 @@ export default function StartScreen({ onGameStart }) {
               fontSize: '1.7rem'
             }}
           >
-            The Grammar Game
+            Grammarbles
           </div>
           <div
             style={{ marginTop: '4rem', lineHeight: 1.7, textAlign: 'center' }}
