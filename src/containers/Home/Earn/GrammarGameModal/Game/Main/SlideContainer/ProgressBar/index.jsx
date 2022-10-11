@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import Bubble from './Bubble';
 import { css } from '@emotion/css';
+import { useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
 ProgressBar.propTypes = {
@@ -18,6 +19,15 @@ export default function ProgressBar({
   selectedIndex,
   style
 }) {
+  const {
+    grammarGameScoreS: { color: colorS },
+    grammarGameScoreA: { color: colorA },
+    grammarGameScoreB: { color: colorB },
+    grammarGameScoreC: { color: colorC },
+    grammarGameScoreD: { color: colorD },
+    grammarGameScoreF: { color: colorF }
+  } = useKeyContext((v) => v.theme);
+
   const className = css`
     .waving {
       animation: wave ease-in-out;
@@ -63,9 +73,9 @@ export default function ProgressBar({
 
     .gradedS {
       background: radial-gradient(
-        ${Color.gold(0.9)},
-        ${Color.gold(0.9)} 40%,
-        ${Color.gold(0.8)} 60%,
+        ${Color[colorS](0.9)},
+        ${Color[colorS](0.9)} 40%,
+        ${Color[colorS](0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }
@@ -73,10 +83,10 @@ export default function ProgressBar({
     .streak {
       background: linear-gradient(
         -45deg,
-        ${Color.gold()},
-        ${Color.magenta()},
-        ${Color.orange()},
-        ${Color.purple()}
+        ${Color[colorS]()},
+        ${Color[colorA]()},
+        ${Color[colorB]()},
+        ${Color[colorC]()}
       );
       background-size: 200% 200%;
       animation: Gradient ${selectedIndex === 9 ? 0.3 : 1}s ease infinite;
@@ -84,45 +94,45 @@ export default function ProgressBar({
 
     .gradedA {
       background: radial-gradient(
-        ${Color.magenta(0.9)},
-        ${Color.magenta(0.9)} 40%,
-        ${Color.magenta(0.8)} 60%,
+        ${Color[colorA](0.9)},
+        ${Color[colorA](0.9)} 40%,
+        ${Color[colorA](0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }
 
     .gradedB {
       background: radial-gradient(
-        ${Color.orange(0.9)},
-        ${Color.orange(0.9)} 40%,
-        ${Color.orange(0.8)} 60%,
+        ${Color[colorB](0.9)},
+        ${Color[colorB](0.9)} 40%,
+        ${Color[colorB](0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }
 
     .gradedC {
       background: radial-gradient(
-        ${Color.pastelPink(0.9)},
-        ${Color.pastelPink(0.9)} 40%,
-        ${Color.pastelPink(0.8)} 60%,
+        ${Color[colorC](0.9)},
+        ${Color[colorC](0.9)} 40%,
+        ${Color[colorC](0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }
 
     .gradedD {
       background: radial-gradient(
-        ${Color.logoBlue(0.9)},
-        ${Color.logoBlue(0.9)} 40%,
-        ${Color.logoBlue(0.8)} 60%,
+        ${Color[colorD](0.9)},
+        ${Color[colorD](0.9)} 40%,
+        ${Color[colorD](0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }
 
     .gradedF {
       background: radial-gradient(
-        ${Color.gray(0.9)},
-        ${Color.gray(0.9)} 40%,
-        ${Color.gray(0.8)} 60%,
+        ${Color[colorF](0.9)},
+        ${Color[colorF](0.9)} 40%,
+        ${Color[colorF](0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }
