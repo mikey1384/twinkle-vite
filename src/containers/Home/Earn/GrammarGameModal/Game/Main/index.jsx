@@ -101,19 +101,39 @@ export default function Main({
     }
 
     function handleReturnCalculatedScore(elapsedTime) {
-      const defaultBaseTime = 1000;
-      let baseTime = defaultBaseTime;
+      const defaultBaseLetterLengthTime = 500;
+      const defaultBaseNumWordsTime = 500;
+      let baseLetterLengthTime = defaultBaseLetterLengthTime;
       if (questionObj[currentIndex]) {
         const { choices, wasWrong } = questionObj[currentIndex];
         let numLetters = 0;
         for (let choice of choices) {
           numLetters += choice.length;
         }
-        baseTime = numLetters * 9 + 500;
+        baseLetterLengthTime = numLetters * 9;
         if (wasWrong) {
-          baseTime = Math.min(baseTime, defaultBaseTime);
+          baseLetterLengthTime = Math.min(
+            baseLetterLengthTime,
+            defaultBaseLetterLengthTime
+          );
         }
       }
+      let baseNumWordsTime = defaultBaseNumWordsTime;
+      if (questionObj[currentIndex]) {
+        const { choices, wasWrong } = questionObj[currentIndex];
+        let numWords = 0;
+        for (let choice of choices) {
+          numWords += choice.split(' ').length;
+        }
+        baseNumWordsTime = numWords * 100;
+        if (wasWrong) {
+          baseNumWordsTime = Math.min(
+            baseNumWordsTime,
+            defaultBaseNumWordsTime
+          );
+        }
+      }
+      const baseTime = baseLetterLengthTime + baseNumWordsTime;
       if (elapsedTime < baseTime * 0.35) return 'S';
       if (elapsedTime < baseTime * 0.55) return 'A';
       if (elapsedTime < baseTime * 0.75) return 'B';
