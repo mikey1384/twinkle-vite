@@ -53,6 +53,23 @@ export default function FinishScreen({ scoreArray }) {
     () => Object.entries(numLetterGrades).filter(([, number]) => number > 0),
     [numLetterGrades]
   );
+  const isPerfectScore = useMemo(
+    () => score === scoreTable.S * 10 * perfectScoreBonus,
+    [score]
+  );
+  const totalScoreEquationText = useMemo(() => {
+    let scoreText = '';
+    if (numLetterGradesArray.length === 1) {
+      scoreText = `${scoreTable[numLetterGradesArray[0][0]]} x ${
+        numLetterGradesArray[0][1]
+      }`;
+    } else {
+      scoreText = numLetterGradesArray
+        .map(([letter, num]) => `(${scoreTable[letter]} × ${num})`)
+        .join(' + ');
+    }
+    return isPerfectScore ? `${scoreText} × ${perfectScoreBonus}` : scoreText;
+  }, [isPerfectScore, numLetterGradesArray]);
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/FinishScreen">
@@ -95,11 +112,9 @@ export default function FinishScreen({ scoreArray }) {
             textAlign: 'center'
           }}
         >
-          <div>
-            {numLetterGradesArray
-              .map(([letter, num]) => `(${scoreTable[letter]} × ${num})`)
-              .join(' + ')}{' '}
-            = {score}
+          {isPerfectScore && <div>Perfect score! You get a 5x bonus!</div>}
+          <div style={{ marginTop: '1rem' }}>
+            {totalScoreEquationText} = {score}
           </div>
           <div style={{ marginTop: '1rem' }}>
             You earned {addCommasToNumber(score)} XP

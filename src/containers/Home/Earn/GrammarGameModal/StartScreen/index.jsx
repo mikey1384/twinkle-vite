@@ -37,7 +37,6 @@ export default function StartScreen({ onGameStart }) {
         <div>
           <div
             style={{
-              marginTop: '3rem',
               textAlign: 'center',
               fontWeight: 'bold',
               fontSize: '2rem'
