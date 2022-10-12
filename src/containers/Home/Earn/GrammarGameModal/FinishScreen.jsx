@@ -57,18 +57,54 @@ export default function FinishScreen({ scoreArray }) {
     () => score === scoreTable.S * 10 * perfectScoreBonus,
     [score]
   );
+
   const totalScoreEquationText = useMemo(() => {
-    let scoreText = '';
+    let scoreText = <div style={{ display: 'inline' }}></div>;
     if (numLetterGradesArray.length === 1) {
-      scoreText = `${scoreTable[numLetterGradesArray[0][0]]} x ${
-        numLetterGradesArray[0][1]
-      }`;
+      const letter = numLetterGradesArray[0][0];
+      scoreText = (
+        <div style={{ display: 'inline' }}>
+          <b
+            style={{
+              color: Color[letterColor[letter]]()
+            }}
+          >
+            {scoreTable[letter]}
+          </b>{' '}
+          × <span>{numLetterGradesArray[0][1]}</span>
+        </div>
+      );
     } else {
-      scoreText = numLetterGradesArray
-        .map(([letter, num]) => `(${scoreTable[letter]} × ${num})`)
-        .join(' + ');
+      scoreText = (
+        <div style={{ display: 'inline' }}>
+          {numLetterGradesArray.map(([letter, number], index) => {
+            return (
+              <div style={{ display: 'inline' }} key={letter}>
+                (
+                <b
+                  style={{
+                    color: Color[letterColor[letter]]()
+                  }}
+                >
+                  {scoreTable[letter]}
+                </b>{' '}
+                × {number})
+                {index < numLetterGradesArray.length - 1 ? ' + ' : ''}
+              </div>
+            );
+          })}
+        </div>
+      );
     }
-    return isPerfectScore ? `${scoreText} × ${perfectScoreBonus}` : scoreText;
+    return isPerfectScore ? (
+      <div style={{ display: 'inline' }}>
+        {scoreText} ×{' '}
+        {<b style={{ color: Color.magenta() }}>{perfectScoreBonus}</b>}
+      </div>
+    ) : (
+      scoreText
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPerfectScore, numLetterGradesArray]);
 
   return (
@@ -93,14 +129,13 @@ export default function FinishScreen({ scoreArray }) {
         <div style={{ fontSize: '1.7rem', marginTop: '2.5rem' }}>
           {numLetterGradesArray.map(([letter, num]) => (
             <div key={letter}>
-              <span
+              <b
                 style={{
-                  fontWeight: 'bold',
                   color: Color[letterColor[letter]]()
                 }}
               >
                 {letter}
-              </span>{' '}
+              </b>{' '}
               ×{num}
             </div>
           ))}
@@ -112,7 +147,13 @@ export default function FinishScreen({ scoreArray }) {
             textAlign: 'center'
           }}
         >
-          {isPerfectScore && <div>Perfect score! You get a 5x bonus!</div>}
+          {isPerfectScore && (
+            <div>
+              Perfect score! You get a{' '}
+              <b style={{ color: Color.magenta() }}>{perfectScoreBonus}x</b>{' '}
+              bonus!
+            </div>
+          )}
           <div style={{ marginTop: '1rem' }}>
             {totalScoreEquationText} = {score}
           </div>
