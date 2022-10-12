@@ -393,10 +393,9 @@ function MessagesContainer({
       return false;
     }
     return (
-      (!subchannel &&
-        (selectedChannelId === GENERAL_CHAT_ID ||
-          !!currentChannel.canChangeSubject)) ||
-      subchannel?.canChangeSubject
+      (!subchannel || subchannel?.canChangeSubject) &&
+      (selectedChannelId === GENERAL_CHAT_ID ||
+        !!currentChannel.canChangeSubject)
     );
   }, [
     currentChannel.canChangeSubject,
@@ -690,7 +689,7 @@ function MessagesContainer({
         }
         const { channels, messages } = await sendInvitationMessage({
           recepients: recepientIds,
-          origin: currentChannel.id
+          origin: selectedChannelId
         });
         for (let i = 0; i < channels.length; i++) {
           onReceiveMessageOnDifferentChannel({
@@ -1027,7 +1026,8 @@ function MessagesContainer({
       {!channelHeaderShown &&
         !loadingAnimationShown &&
         !banned?.chat &&
-        selectedChannelId !== 0 && (
+        selectedChannelId !== 0 &&
+        selectedChannelId !== GENERAL_CHAT_ID && (
           <div
             style={{
               display: 'flex',
