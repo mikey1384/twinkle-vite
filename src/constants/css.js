@@ -101,10 +101,7 @@ export function Theme(color = 'logoBlue') {
     },
     active: { color: { green: 'pinkOrange' }[color] || 'green' },
     alert: {
-      color:
-        {
-          gold: 'brownOrange'
-        }[color] || 'gold'
+      color: 'gold'
     },
     alreadyPostedByOtherUser: { color: 'red' },
     alreadyPostedByThisUser: { color: 'blue' },
