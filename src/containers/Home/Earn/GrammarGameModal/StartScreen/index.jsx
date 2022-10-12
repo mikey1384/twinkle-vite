@@ -61,8 +61,8 @@ export default function StartScreen({ onGameStart }) {
           <div style={{ marginTop: '4rem', textAlign: 'center' }}>
             {!deviceIsMobile && (
               <p>
-                You can use <b>1, 2, 3, 4 keys</b> in your <b>keyboard</b> or
-                use your mouse to select the choices
+                You can use the <b>1, 2, 3, 4 keys</b> on your <b>keyboard</b>{' '}
+                or use your mouse to select the choices
               </p>
             )}
             <p>
