@@ -64,6 +64,17 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async checkNumGrammarGamesPlayedToday() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/grammar/numGamesPlayed`,
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async deleteContent({ id, contentType, undo }) {
       try {
         const {

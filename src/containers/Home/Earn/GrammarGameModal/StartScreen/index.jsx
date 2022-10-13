@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Prompt from './Prompt';
+import { useAppContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
@@ -17,7 +18,20 @@ const thirdLine =
   'You can only play 5 games per day. Try to earn as much XP as possible!';
 
 export default function StartScreen({ onGameStart }) {
+  const checkNumGrammarGamesPlayedToday = useAppContext(
+    (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
+  );
   const [screenIndex, setScreenIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    init();
+    async function init() {
+      const data = await checkNumGrammarGamesPlayedToday();
+      console.log(data);
+      setLoaded(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     setTimeout(() => setScreenIndex(1), 1500);
     setTimeout(() => setScreenIndex(2), 4000);
@@ -71,6 +85,7 @@ export default function StartScreen({ onGameStart }) {
           </div>
         </div>
         <GradientButton
+          loading={!loaded}
           style={{ marginTop: '4rem', fontSize: '1.7rem' }}
           onClick={onGameStart}
         >
