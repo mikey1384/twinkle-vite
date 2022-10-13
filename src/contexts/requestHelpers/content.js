@@ -55,11 +55,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
     },
     async checkIfUserResponded(subjectId) {
       try {
-        const { data } = await request.get(
+        const {
+          data: { attemptNumber }
+        } = await request.get(
           `${URL}/content/checkResponded?subjectId=${subjectId}`,
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve({ attemptNumber });
       } catch (error) {
         return handleError(error);
       }
