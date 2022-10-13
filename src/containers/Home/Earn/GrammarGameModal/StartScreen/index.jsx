@@ -22,12 +22,13 @@ export default function StartScreen({ onGameStart }) {
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
   );
   const [screenIndex, setScreenIndex] = useState(0);
+  const [timesPlayedToday, setTimesPlayedToday] = useState(0);
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     init();
     async function init() {
-      const data = await checkNumGrammarGamesPlayedToday();
-      console.log(data);
+      const { attemptNumber } = await checkNumGrammarGamesPlayedToday();
+      setTimesPlayedToday(attemptNumber);
       setLoaded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,9 +85,15 @@ export default function StartScreen({ onGameStart }) {
             </p>
           </div>
         </div>
+        {loaded && (
+          <div style={{ marginTop: '3rem' }}>
+            {timesPlayedToday}/5 games played
+          </div>
+        )}
         <GradientButton
           loading={!loaded}
-          style={{ marginTop: '4rem', fontSize: '1.7rem' }}
+          disabled={timesPlayedToday >= 5}
+          style={{ marginTop: '1.5rem', fontSize: '1.7rem' }}
           onClick={onGameStart}
         >
           Start
