@@ -298,10 +298,9 @@ export default function contentRequestHelpers({ auth, handleError }) {
     },
     async loadGrammarGame() {
       try {
-        const { data: questions } = await request.get(
-          `${URL}/content/grammar`,
-          auth()
-        );
+        const {
+          data: { questions }
+        } = await request.get(`${URL}/content/game/grammar`, auth());
         return Promise.resolve(questions);
       } catch (error) {
         return handleError(error);
