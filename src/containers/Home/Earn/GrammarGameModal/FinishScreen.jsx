@@ -38,7 +38,7 @@ export default function FinishScreen({ scoreArray }) {
     init();
     async function init() {
       setLoading(true);
-      const data = await uploadGrammarGameResult();
+      const data = await uploadGrammarGameResult(scoreArray);
       console.log(data);
       setLoading(false);
     }
