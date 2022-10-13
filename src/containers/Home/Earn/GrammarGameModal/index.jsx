@@ -84,7 +84,7 @@ export default function GrammarGameModal({ onHide }) {
   );
 
   async function handleGameStart() {
-    const questions = await loadGrammarGame();
+    const { questions } = await loadGrammarGame();
     setQuestions(questions);
     setGameState('started');
   }
