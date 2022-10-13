@@ -1,16 +1,21 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import PropTypes from 'prop-types';
-import { useKeyContext } from '~/contexts';
+import { useContentContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { scoreTable, perfectScoreBonus } from './constants';
+import Loading from '~/components/Loading';
 
 FinishScreen.propTypes = {
   scoreArray: PropTypes.array
 };
 
 export default function FinishScreen({ scoreArray }) {
+  const [loading, setLoading] = useState(false);
+  const uploadGrammarGameResult = useContentContext(
+    (v) => v.actions.uploadGrammarGameResult
+  );
   const {
     grammarGameScoreS: { color: colorS },
     grammarGameScoreA: { color: colorA },
@@ -28,6 +33,17 @@ export default function FinishScreen({ scoreArray }) {
     D: colorD,
     F: colorF
   };
+
+  useEffect(() => {
+    init();
+    async function init() {
+      setLoading(true);
+      const data = await uploadGrammarGameResult();
+      console.log(data);
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const score = useMemo(() => {
     if (!scoreArray) return 0;
@@ -109,59 +125,63 @@ export default function FinishScreen({ scoreArray }) {
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/FinishScreen">
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
+      {loading ? (
+        <Loading />
+      ) : (
         <div
           style={{
-            fontWeight: 'bold',
-            marginTop: '1.5rem',
-            fontSize: '2rem'
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
-          Game Result
-        </div>
-        <div style={{ fontSize: '1.7rem', marginTop: '2.5rem' }}>
-          {numLetterGradesArray.map(([letter, num]) => (
-            <div key={letter}>
-              <b
-                style={{
-                  color: Color[letterColor[letter]]()
-                }}
-              >
-                {letter}
-              </b>{' '}
-              ×{num}
-            </div>
-          ))}
-        </div>
-        <div
-          style={{
-            marginTop: '2.5rem',
-            marginBottom: '2rem',
-            textAlign: 'center'
-          }}
-        >
-          {isPerfectScore && (
-            <div>
-              Perfect score! You get a{' '}
-              <b style={{ color: Color.magenta() }}>{perfectScoreBonus}x</b>{' '}
-              bonus!
-            </div>
-          )}
-          <div style={{ marginTop: '1rem' }}>
-            {totalScoreEquationText} = {score}
+          <div
+            style={{
+              fontWeight: 'bold',
+              marginTop: '1.5rem',
+              fontSize: '2rem'
+            }}
+          >
+            Game Result
           </div>
-          <div style={{ marginTop: '1rem' }}>
-            You earned {addCommasToNumber(score)} XP
+          <div style={{ fontSize: '1.7rem', marginTop: '2.5rem' }}>
+            {numLetterGradesArray.map(([letter, num]) => (
+              <div key={letter}>
+                <b
+                  style={{
+                    color: Color[letterColor[letter]]()
+                  }}
+                >
+                  {letter}
+                </b>{' '}
+                ×{num}
+              </div>
+            ))}
+          </div>
+          <div
+            style={{
+              marginTop: '2.5rem',
+              marginBottom: '2rem',
+              textAlign: 'center'
+            }}
+          >
+            {isPerfectScore && (
+              <div>
+                Perfect score! You get a{' '}
+                <b style={{ color: Color.magenta() }}>{perfectScoreBonus}x</b>{' '}
+                bonus!
+              </div>
+            )}
+            <div style={{ marginTop: '1rem' }}>
+              {totalScoreEquationText} = {score}
+            </div>
+            <div style={{ marginTop: '1rem' }}>
+              You earned {addCommasToNumber(score)} XP
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </ErrorBoundary>
   );
 }
