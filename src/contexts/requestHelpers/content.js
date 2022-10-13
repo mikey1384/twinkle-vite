@@ -879,6 +879,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async uploadGrammarGameResult() {
+      try {
+        const data = await request.post(`${URL}/content/grammar`, {}, auth());
+        console.log('got here');
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadQuestions({ questions, videoId }) {
       const data = {
         videoId,
