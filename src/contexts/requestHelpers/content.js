@@ -879,11 +879,11 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadGrammarGameResult() {
+    async uploadGrammarGameResult(scoreArray) {
       try {
         const data = await request.post(
           `${URL}/content/game/grammar`,
-          {},
+          { scoreArray },
           auth()
         );
         return Promise.resolve(data);
