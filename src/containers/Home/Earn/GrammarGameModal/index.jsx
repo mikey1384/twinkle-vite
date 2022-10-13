@@ -84,7 +84,10 @@ export default function GrammarGameModal({ onHide }) {
   );
 
   async function handleGameStart() {
-    const { questions } = await loadGrammarGame();
+    const { questions, maxAttemptNumberReached } = await loadGrammarGame();
+    if (maxAttemptNumberReached) {
+      return window.location.reload();
+    }
     setQuestions(questions);
     setGameState('started');
   }
