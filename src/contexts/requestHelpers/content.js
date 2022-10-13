@@ -881,8 +881,11 @@ export default function contentRequestHelpers({ auth, handleError }) {
     },
     async uploadGrammarGameResult() {
       try {
-        const data = await request.post(`${URL}/content/grammar`, {}, auth());
-        console.log('got here');
+        const data = await request.post(
+          `${URL}/content/game/grammar`,
+          {},
+          auth()
+        );
         return Promise.resolve(data);
       } catch (error) {
         return handleError(error);

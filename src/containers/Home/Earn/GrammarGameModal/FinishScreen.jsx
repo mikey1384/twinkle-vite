@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import PropTypes from 'prop-types';
-import { useContentContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { scoreTable, perfectScoreBonus } from './constants';
@@ -13,8 +13,8 @@ FinishScreen.propTypes = {
 
 export default function FinishScreen({ scoreArray }) {
   const [loading, setLoading] = useState(false);
-  const uploadGrammarGameResult = useContentContext(
-    (v) => v.actions.uploadGrammarGameResult
+  const uploadGrammarGameResult = useAppContext(
+    (v) => v.requestHelpers.uploadGrammarGameResult
   );
   const {
     grammarGameScoreS: { color: colorS },
