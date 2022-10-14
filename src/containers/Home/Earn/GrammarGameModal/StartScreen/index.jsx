@@ -3,10 +3,12 @@ import PropTypes from 'prop-types';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Prompt from './Prompt';
+import Button from '~/components/Button';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
 import Countdown from 'react-countdown';
 
@@ -28,6 +30,7 @@ export default function StartScreen({
   timesPlayedToday,
   onSetTimesPlayedToday
 }) {
+  const navigate = useNavigate();
   const [nextDayTimeStamp, setNextDayTimeStamp] = useState(null);
   const {
     fail: { color: failColor },
@@ -145,6 +148,16 @@ export default function StartScreen({
         >
           {startButtonLabel}
         </GradientButton>
+        {maxTimesPlayedToday && (
+          <Button
+            onClick={() => navigate('/missions/grammar')}
+            style={{ marginTop: '1.5rem' }}
+            filled
+            color="logoBlue"
+          >
+            Practice
+          </Button>
+        )}
       </div>
     </ErrorBoundary>
   );
