@@ -102,12 +102,12 @@ export default function GrammarGameModal({ onHide }) {
     setGameState('started');
   }
 
-  async function handleGameFinish() {
+  async function handleGameFinish(finalScore) {
     const promises = [
       (async () => {
         const newXP = await uploadGrammarGameResult({
           attemptNumber: timesPlayedToday + 1,
-          scoreArray
+          scoreArray: [...scoreArray, finalScore]
         });
         onSetUserState({
           userId,
