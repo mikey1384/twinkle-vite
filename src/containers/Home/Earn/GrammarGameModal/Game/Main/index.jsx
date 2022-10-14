@@ -8,7 +8,7 @@ import correct from './correct_sound.mp3';
 
 Main.propTypes = {
   isOnStreak: PropTypes.bool,
-  onSetGameState: PropTypes.func.isRequired,
+  onGameFinish: PropTypes.func.isRequired,
   onSetQuestionObj: PropTypes.func.isRequired,
   questionIds: PropTypes.array,
   questionObj: PropTypes.object
@@ -18,8 +18,8 @@ const correctSound = new Audio(correct);
 
 export default function Main({
   isOnStreak,
-  onSetGameState,
   onSetQuestionObj,
+  onGameFinish,
   questionIds,
   questionObj
 }) {
@@ -95,9 +95,7 @@ export default function Main({
     }
     async function handleGameFinish() {
       setIsCompleted(true);
-      setTimeout(() => {
-        onSetGameState('finished');
-      }, 3000);
+      onGameFinish();
     }
 
     function handleReturnCalculatedScore(elapsedTime) {
@@ -145,7 +143,7 @@ export default function Main({
     currentIndex,
     elapsedTime,
     gotWrong,
-    onSetGameState,
+    onGameFinish,
     onSetQuestionObj,
     questionIds,
     questionObj

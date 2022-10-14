@@ -72,7 +72,7 @@ export default function GrammarGameModal({ onHide }) {
               questionIds={questionIds}
               questionObj={questionObj}
               onSetQuestionObj={setQuestionObj}
-              onSetGameState={setGameState}
+              onGameFinish={handleGameFinish}
             />
           )}
           {gameState === 'finished' && (
@@ -100,5 +100,11 @@ export default function GrammarGameModal({ onHide }) {
     }
     setQuestions(questions);
     setGameState('started');
+  }
+
+  async function handleGameFinish() {
+    setTimeout(() => {
+      setGameState('finished');
+    }, 3000);
   }
 }
