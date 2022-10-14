@@ -10,6 +10,9 @@ import { useChatContext, useHomeContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
+import localize from '~/constants/localize';
+
+const grammarGameLabel = localize('grammarGame');
 
 TopMenu.propTypes = {
   isEarnPage: PropTypes.bool,
@@ -78,7 +81,7 @@ export default function TopMenu({
           `}
         >
           <div className={buttonStyle} onClick={onPlayGrammarGame}>
-            Grammar Game
+            {grammarGameLabel}
           </div>
           {!(isEarnPage && topMenuSection === 'subject') && (
             <div

@@ -588,6 +588,10 @@ const languageObj = {
     en: 'from Twinkle Website',
     kr: '트윈클 웹사이트에서 가져오기'
   },
+  grammarGame: {
+    en: 'Grammarbles',
+    kr: '문법 게임'
+  },
   grammarRank: {
     en: 'Grammar Rank',
     kr: '문법게임 랭킹:'
