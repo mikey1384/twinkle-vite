@@ -13,10 +13,8 @@ FinishScreen.propTypes = {
 };
 
 export default function FinishScreen({ attemptNumber, scoreArray }) {
-  const [loading, setLoading] = useState(false);
-  const uploadGrammarGameResult = useAppContext(
-    (v) => v.requestHelpers.uploadGrammarGameResult
-  );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const { userId } = useKeyContext((v) => v.myState);
   const {
     grammarGameScoreS: { color: colorS },
     grammarGameScoreA: { color: colorA },
@@ -25,6 +23,10 @@ export default function FinishScreen({ attemptNumber, scoreArray }) {
     grammarGameScoreD: { color: colorD },
     grammarGameScoreF: { color: colorF }
   } = useKeyContext((v) => v.theme);
+  const [loading, setLoading] = useState(false);
+  const uploadGrammarGameResult = useAppContext(
+    (v) => v.requestHelpers.uploadGrammarGameResult
+  );
 
   const letterColor = {
     S: colorS,
@@ -43,7 +45,10 @@ export default function FinishScreen({ attemptNumber, scoreArray }) {
         attemptNumber,
         scoreArray
       });
-      console.log(newXP);
+      onSetUserState({
+        userId,
+        newState: { twinkleXP: newXP }
+      });
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
