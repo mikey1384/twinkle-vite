@@ -893,12 +893,14 @@ export default function contentRequestHelpers({ auth, handleError }) {
     },
     async uploadGrammarGameResult({ attemptNumber, scoreArray }) {
       try {
-        const data = await request.post(
+        const {
+          data: { newXP }
+        } = await request.post(
           `${URL}/content/game/grammar`,
           { attemptNumber, scoreArray },
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve(newXP);
       } catch (error) {
         return handleError(error);
       }

@@ -39,8 +39,11 @@ export default function FinishScreen({ attemptNumber, scoreArray }) {
     init();
     async function init() {
       setLoading(true);
-      const data = await uploadGrammarGameResult({ attemptNumber, scoreArray });
-      console.log(data);
+      const newXP = await uploadGrammarGameResult({
+        attemptNumber,
+        scoreArray
+      });
+      console.log(newXP);
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
