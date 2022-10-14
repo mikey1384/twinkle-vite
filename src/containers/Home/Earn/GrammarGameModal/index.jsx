@@ -17,6 +17,7 @@ export default function GrammarGameModal({ onHide }) {
     (v) => v.requestHelpers.loadGrammarGame
   );
   const [gameState, setGameState] = useState('notStarted');
+  const [timesPlayedToday, setTimesPlayedToday] = useState(0);
   const [questions, setQuestions] = useState([]);
   const [questionIds, setQuestionIds] = useState(null);
   const [questionObj, setQuestionObj] = useState({});
@@ -59,7 +60,11 @@ export default function GrammarGameModal({ onHide }) {
       >
         <ErrorBoundary componentPath="Earn/GrammarGameModal/GameState">
           {gameState === 'notStarted' && (
-            <StartScreen onGameStart={handleGameStart} />
+            <StartScreen
+              timesPlayedToday={timesPlayedToday}
+              onGameStart={handleGameStart}
+              onSetTimesPlayedToday={setTimesPlayedToday}
+            />
           )}
           {gameState === 'started' && (
             <Game
@@ -70,7 +75,12 @@ export default function GrammarGameModal({ onHide }) {
               onSetGameState={setGameState}
             />
           )}
-          {gameState === 'finished' && <FinishScreen scoreArray={scoreArray} />}
+          {gameState === 'finished' && (
+            <FinishScreen
+              scoreArray={scoreArray}
+              attemptNumber={timesPlayedToday + 1}
+            />
+          )}
         </ErrorBoundary>
       </main>
       {gameState !== 'started' && (
