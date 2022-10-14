@@ -891,11 +891,11 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadGrammarGameResult(scoreArray) {
+    async uploadGrammarGameResult({ attemptNumber, scoreArray }) {
       try {
         const data = await request.post(
           `${URL}/content/game/grammar`,
-          { scoreArray },
+          { attemptNumber, scoreArray },
           auth()
         );
         return Promise.resolve(data);

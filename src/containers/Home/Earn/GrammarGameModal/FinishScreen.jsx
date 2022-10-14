@@ -8,10 +8,11 @@ import { scoreTable, perfectScoreBonus } from './constants';
 import Loading from '~/components/Loading';
 
 FinishScreen.propTypes = {
+  attemptNumber: PropTypes.number.isRequired,
   scoreArray: PropTypes.array
 };
 
-export default function FinishScreen({ scoreArray }) {
+export default function FinishScreen({ attemptNumber, scoreArray }) {
   const [loading, setLoading] = useState(false);
   const uploadGrammarGameResult = useAppContext(
     (v) => v.requestHelpers.uploadGrammarGameResult
@@ -38,7 +39,7 @@ export default function FinishScreen({ scoreArray }) {
     init();
     async function init() {
       setLoading(true);
-      const data = await uploadGrammarGameResult(scoreArray);
+      const data = await uploadGrammarGameResult({ attemptNumber, scoreArray });
       console.log(data);
       setLoading(false);
     }

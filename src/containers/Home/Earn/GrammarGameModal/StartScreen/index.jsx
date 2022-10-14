@@ -10,7 +10,9 @@ import { Color } from '~/constants/css';
 const deviceIsMobile = isMobile(navigator);
 
 StartScreen.propTypes = {
-  onGameStart: PropTypes.func.isRequired
+  onGameStart: PropTypes.func.isRequired,
+  onSetTimesPlayedToday: PropTypes.func.isRequired,
+  timesPlayedToday: PropTypes.number.isRequired
 };
 
 const firstLine = 'Answer 10 fill-in-the-blank grammar questions.';
@@ -18,7 +20,11 @@ const secondLine = 'The faster you answer a question, the more XP you earn.';
 const thirdLine =
   'You can only play 5 games per day. Try to earn as much XP as possible!';
 
-export default function StartScreen({ onGameStart }) {
+export default function StartScreen({
+  onGameStart,
+  timesPlayedToday,
+  onSetTimesPlayedToday
+}) {
   const {
     fail: { color: failColor },
     success: { color: successColor }
@@ -27,17 +33,16 @@ export default function StartScreen({ onGameStart }) {
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
   );
   const [screenIndex, setScreenIndex] = useState(0);
-  const [timesPlayedToday, setTimesPlayedToday] = useState(0);
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     init();
     async function init() {
       const { attemptNumber } = await checkNumGrammarGamesPlayedToday();
-      setTimesPlayedToday(attemptNumber);
+      onSetTimesPlayedToday(attemptNumber);
       setLoaded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onSetTimesPlayedToday]);
   useEffect(() => {
     setTimeout(() => setScreenIndex(1), 1500);
     setTimeout(() => setScreenIndex(2), 4000);
