@@ -5,6 +5,9 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
 import { useHomeContext } from '~/contexts';
 import { css } from '@emotion/css';
+import localize from '~/constants/localize';
+
+const grammarGameLabel = localize('grammarGame');
 
 StartMenu.propTypes = {
   onSetGrammarGameModalShown: PropTypes.func.isRequired
@@ -39,7 +42,7 @@ export default function StartMenu({ onSetGrammarGameModalShown }) {
             mobileFontSize="1.3rem"
             onClick={onSetGrammarGameModalShown}
           >
-            Grammarbles
+            {grammarGameLabel}
           </GradientButton>
           <Button
             onClick={() => onSetTopMenuSectionSection('subject')}

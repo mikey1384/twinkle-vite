@@ -6,19 +6,20 @@ import Prompt from './Prompt';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import { Color } from '~/constants/css';
+import localize from '~/constants/localize';
 
+const grammarGameLabel = localize('grammarGame');
 const deviceIsMobile = isMobile(navigator);
+const firstLine = 'Answer 10 fill-in-the-blank grammar questions.';
+const secondLine = 'The faster you answer a question, the more XP you earn.';
+const thirdLine =
+  'You can only play 5 games per day. Try to earn as much XP as possible!';
 
 StartScreen.propTypes = {
   onGameStart: PropTypes.func.isRequired,
   onSetTimesPlayedToday: PropTypes.func.isRequired,
   timesPlayedToday: PropTypes.number.isRequired
 };
-
-const firstLine = 'Answer 10 fill-in-the-blank grammar questions.';
-const secondLine = 'The faster you answer a question, the more XP you earn.';
-const thirdLine =
-  'You can only play 5 games per day. Try to earn as much XP as possible!';
 
 export default function StartScreen({
   onGameStart,
@@ -72,7 +73,7 @@ export default function StartScreen({
               fontSize: '2rem'
             }}
           >
-            Grammarbles
+            {grammarGameLabel}
           </div>
           <div
             style={{ marginTop: '4rem', lineHeight: 1.7, textAlign: 'center' }}
