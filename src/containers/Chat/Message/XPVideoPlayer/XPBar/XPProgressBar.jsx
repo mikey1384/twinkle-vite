@@ -33,7 +33,7 @@ export default function XPProgressBar({
     () => theme[`level${rewardLevel}`]?.color,
     [rewardLevel, theme]
   );
-  const warningColor = useMemo(() => theme.defeat?.color, [theme]);
+  const warningColor = useMemo(() => theme.fail?.color, [theme]);
   if (!userId || !rewardLevel) {
     return null;
   }

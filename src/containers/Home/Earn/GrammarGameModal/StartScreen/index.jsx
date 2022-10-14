@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Prompt from './Prompt';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
+import { Color } from '~/constants/css';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -18,6 +19,10 @@ const thirdLine =
   'You can only play 5 games per day. Try to earn as much XP as possible!';
 
 export default function StartScreen({ onGameStart }) {
+  const {
+    fail: { color: failColor },
+    success: { color: successColor }
+  } = useKeyContext((v) => v.theme);
   const checkNumGrammarGamesPlayedToday = useAppContext(
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
   );
@@ -38,6 +43,11 @@ export default function StartScreen({ onGameStart }) {
     setTimeout(() => setScreenIndex(2), 4000);
     setTimeout(() => setScreenIndex(3), 7500);
   }, []);
+
+  const maxTimesPlayedToday = useMemo(
+    () => timesPlayedToday >= 5,
+    [timesPlayedToday]
+  );
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">
@@ -86,14 +96,20 @@ export default function StartScreen({ onGameStart }) {
           </div>
         </div>
         {loaded && (
-          <div style={{ marginTop: '3rem' }}>
-            {timesPlayedToday}/5 games played
+          <div
+            style={{
+              marginTop: '3rem',
+              fontWeight: 'bold',
+              color: Color[maxTimesPlayedToday ? failColor : successColor]()
+            }}
+          >
+            {timesPlayedToday}/5 games played today
           </div>
         )}
         <GradientButton
           loading={!loaded}
-          disabled={timesPlayedToday >= 5}
-          style={{ marginTop: '1.5rem', fontSize: '1.7rem' }}
+          disabled={maxTimesPlayedToday}
+          style={{ marginTop: '2rem', fontSize: '1.7rem' }}
           onClick={onGameStart}
         >
           Start
