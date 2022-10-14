@@ -5,8 +5,10 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Prompt from './Prompt';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
+import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
+import Countdown from 'react-countdown';
 
 const grammarGameLabel = localize('grammarGame');
 const deviceIsMobile = isMobile(navigator);
@@ -26,6 +28,7 @@ export default function StartScreen({
   timesPlayedToday,
   onSetTimesPlayedToday
 }) {
+  const [nextDayTimeStamp, setNextDayTimeStamp] = useState(null);
   const {
     fail: { color: failColor },
     success: { color: successColor }
@@ -38,7 +41,9 @@ export default function StartScreen({
   useEffect(() => {
     init();
     async function init() {
-      const { attemptNumber } = await checkNumGrammarGamesPlayedToday();
+      const { attemptNumber, nextDayTimeStamp } =
+        await checkNumGrammarGamesPlayedToday();
+      setNextDayTimeStamp(nextDayTimeStamp);
       onSetTimesPlayedToday(attemptNumber);
       setLoaded(true);
     }
@@ -54,6 +59,26 @@ export default function StartScreen({
     () => timesPlayedToday >= 5,
     [timesPlayedToday]
   );
+
+  const startButtonLabel = useMemo(() => {
+    if (maxTimesPlayedToday) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          Game available in{' '}
+          <Countdown
+            key={nextDayTimeStamp}
+            className={css`
+              margin-top: 0.5rem;
+            `}
+            date={nextDayTimeStamp}
+            daysInHours={true}
+            onComplete={() => onSetTimesPlayedToday(0)}
+          />
+        </div>
+      );
+    }
+    return 'Start';
+  }, [maxTimesPlayedToday, nextDayTimeStamp, onSetTimesPlayedToday]);
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">
@@ -118,7 +143,7 @@ export default function StartScreen({
           style={{ marginTop: '2rem', fontSize: '1.7rem' }}
           onClick={onGameStart}
         >
-          Start
+          {startButtonLabel}
         </GradientButton>
       </div>
     </ErrorBoundary>

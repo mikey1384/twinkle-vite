@@ -312,9 +312,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
     async loadGrammarGame() {
       try {
         const {
-          data: { questions, maxAttemptNumberReached }
+          data: { nextDayTimeStamp, questions, maxAttemptNumberReached }
         } = await request.get(`${URL}/content/game/grammar`, auth());
-        return Promise.resolve({ questions, maxAttemptNumberReached });
+        return Promise.resolve({
+          nextDayTimeStamp,
+          questions,
+          maxAttemptNumberReached
+        });
       } catch (error) {
         return handleError(error);
       }
