@@ -163,7 +163,7 @@ export default function FinishScreen({ scoreArray }) {
           <div style={{ marginTop: '1rem' }}>
             {totalScoreEquationText} = {score}
           </div>
-          <div style={{ marginTop: '3rem', fontSize: scoreFontSize }}>
+          <div style={{ marginTop: '5rem', fontSize: scoreFontSize }}>
             You earned {addCommasToNumber(score)} XP
           </div>
         </div>
