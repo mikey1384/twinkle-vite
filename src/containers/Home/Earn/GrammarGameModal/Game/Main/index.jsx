@@ -64,7 +64,7 @@ export default function Main({
           setCurrentIndex((prev) => prev + 1);
           loadingRef.current = false;
         } else {
-          handleGameFinish(score);
+          handleGameFinish();
         }
       }
     }
@@ -93,9 +93,9 @@ export default function Main({
         }, 1000);
       }
     }
-    async function handleGameFinish(finalScore) {
+    async function handleGameFinish() {
       setIsCompleted(true);
-      onGameFinish(finalScore);
+      onGameFinish();
     }
 
     function handleReturnCalculatedScore(elapsedTime) {
