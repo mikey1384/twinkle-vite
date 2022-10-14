@@ -43,8 +43,12 @@ export default function FinishScreen({ scoreArray }) {
   const scoreFontSize = useMemo(() => {
     if (score === perfectScore) return '2rem';
     if (score > scoreTable.A * 10) return '1.7rem';
-    if (score > scoreTable.B * 10) return '1.5rem';
-    return '1.3rem';
+    return '1.5rem';
+  }, [score]);
+
+  const scoreFontWeight = useMemo(() => {
+    if (score > scoreTable.A * 10) return 'bold';
+    return 'normal';
   }, [score]);
 
   const numLetterGrades = useMemo(() => {
@@ -163,7 +167,13 @@ export default function FinishScreen({ scoreArray }) {
           <div style={{ marginTop: '1rem' }}>
             {totalScoreEquationText} = {score}
           </div>
-          <div style={{ marginTop: '5rem', fontSize: scoreFontSize }}>
+          <div
+            style={{
+              marginTop: '5rem',
+              fontSize: scoreFontSize,
+              fontWeight: scoreFontWeight
+            }}
+          >
             You earned {addCommasToNumber(score)} XP
           </div>
         </div>
