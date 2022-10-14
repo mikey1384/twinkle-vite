@@ -200,7 +200,7 @@ function SubjectInput({ onModalHide }) {
                 style={titleExceedsCharLimit?.style}
               />
             </div>
-            <div style={{ marginLeft: '1rem' }}>
+            <div style={{ marginLeft: '1rem', fontSize: '1rem' }}>
               {attachment ? (
                 <Attachment
                   attachment={attachment}
