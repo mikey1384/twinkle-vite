@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Game from './Game';
@@ -39,6 +39,10 @@ export default function GrammarGameModal({ onHide }) {
       }
     }
     return true;
+  }, [scoreArray]);
+  const scoreArrayRef = useRef(scoreArray);
+  useEffect(() => {
+    scoreArrayRef.current = scoreArray;
   }, [scoreArray]);
   useEffect(() => {
     const resultObj = questions.reduce((prev, curr, index) => {
@@ -102,12 +106,12 @@ export default function GrammarGameModal({ onHide }) {
     setGameState('started');
   }
 
-  async function handleGameFinish(finalScore) {
+  async function handleGameFinish() {
     const promises = [
       (async () => {
         const newXP = await uploadGrammarGameResult({
           attemptNumber: timesPlayedToday + 1,
-          scoreArray: [...scoreArray, finalScore]
+          scoreArray: scoreArrayRef.current
         });
         onSetUserState({
           userId,
