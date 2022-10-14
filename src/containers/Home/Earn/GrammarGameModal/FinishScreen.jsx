@@ -1,20 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import PropTypes from 'prop-types';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { scoreTable, perfectScoreBonus } from './constants';
-import Loading from '~/components/Loading';
 
 FinishScreen.propTypes = {
-  attemptNumber: PropTypes.number.isRequired,
   scoreArray: PropTypes.array
 };
 
-export default function FinishScreen({ attemptNumber, scoreArray }) {
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { userId } = useKeyContext((v) => v.myState);
+export default function FinishScreen({ scoreArray }) {
   const {
     grammarGameScoreS: { color: colorS },
     grammarGameScoreA: { color: colorA },
@@ -23,10 +19,6 @@ export default function FinishScreen({ attemptNumber, scoreArray }) {
     grammarGameScoreD: { color: colorD },
     grammarGameScoreF: { color: colorF }
   } = useKeyContext((v) => v.theme);
-  const [loading, setLoading] = useState(false);
-  const uploadGrammarGameResult = useAppContext(
-    (v) => v.requestHelpers.uploadGrammarGameResult
-  );
 
   const letterColor = {
     S: colorS,
@@ -36,23 +28,6 @@ export default function FinishScreen({ attemptNumber, scoreArray }) {
     D: colorD,
     F: colorF
   };
-
-  useEffect(() => {
-    init();
-    async function init() {
-      setLoading(true);
-      const newXP = await uploadGrammarGameResult({
-        attemptNumber,
-        scoreArray
-      });
-      onSetUserState({
-        userId,
-        newState: { twinkleXP: newXP }
-      });
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const score = useMemo(() => {
     if (!scoreArray) return 0;
@@ -134,63 +109,59 @@ export default function FinishScreen({ attemptNumber, scoreArray }) {
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/FinishScreen">
-      {loading ? (
-        <Loading />
-      ) : (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
+            fontWeight: 'bold',
+            marginTop: '1.5rem',
+            fontSize: '2rem'
           }}
         >
-          <div
-            style={{
-              fontWeight: 'bold',
-              marginTop: '1.5rem',
-              fontSize: '2rem'
-            }}
-          >
-            Game Result
-          </div>
-          <div style={{ fontSize: '1.7rem', marginTop: '2.5rem' }}>
-            {numLetterGradesArray.map(([letter, num]) => (
-              <div key={letter}>
-                <b
-                  style={{
-                    color: Color[letterColor[letter]]()
-                  }}
-                >
-                  {letter}
-                </b>{' '}
-                ×{num}
-              </div>
-            ))}
-          </div>
-          <div
-            style={{
-              marginTop: '2.5rem',
-              marginBottom: '2rem',
-              textAlign: 'center'
-            }}
-          >
-            {isPerfectScore && (
-              <div>
-                Perfect score! You get a{' '}
-                <b style={{ color: Color.magenta() }}>{perfectScoreBonus}x</b>{' '}
-                bonus!
-              </div>
-            )}
-            <div style={{ marginTop: '1rem' }}>
-              {totalScoreEquationText} = {score}
+          Game Result
+        </div>
+        <div style={{ fontSize: '1.7rem', marginTop: '2.5rem' }}>
+          {numLetterGradesArray.map(([letter, num]) => (
+            <div key={letter}>
+              <b
+                style={{
+                  color: Color[letterColor[letter]]()
+                }}
+              >
+                {letter}
+              </b>{' '}
+              ×{num}
             </div>
-            <div style={{ marginTop: '1rem' }}>
-              You earned {addCommasToNumber(score)} XP
+          ))}
+        </div>
+        <div
+          style={{
+            marginTop: '2.5rem',
+            marginBottom: '2rem',
+            textAlign: 'center'
+          }}
+        >
+          {isPerfectScore && (
+            <div>
+              Perfect score! You get a{' '}
+              <b style={{ color: Color.magenta() }}>{perfectScoreBonus}x</b>{' '}
+              bonus!
             </div>
+          )}
+          <div style={{ marginTop: '1rem' }}>
+            {totalScoreEquationText} = {score}
+          </div>
+          <div style={{ marginTop: '1rem' }}>
+            You earned {addCommasToNumber(score)} XP
           </div>
         </div>
-      )}
+      </div>
     </ErrorBoundary>
   );
 }

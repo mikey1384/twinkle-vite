@@ -6,16 +6,21 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import StartScreen from './StartScreen';
 import FinishScreen from './FinishScreen';
 import Button from '~/components/Button';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 
 GrammarGameModal.propTypes = {
   onHide: PropTypes.func.isRequired
 };
 
 export default function GrammarGameModal({ onHide }) {
+  const { userId } = useKeyContext((v) => v.myState);
+  const uploadGrammarGameResult = useAppContext(
+    (v) => v.requestHelpers.uploadGrammarGameResult
+  );
   const loadGrammarGame = useAppContext(
     (v) => v.requestHelpers.loadGrammarGame
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [gameState, setGameState] = useState('notStarted');
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
   const [questions, setQuestions] = useState([]);
@@ -75,12 +80,7 @@ export default function GrammarGameModal({ onHide }) {
               onGameFinish={handleGameFinish}
             />
           )}
-          {gameState === 'finished' && (
-            <FinishScreen
-              scoreArray={scoreArray}
-              attemptNumber={timesPlayedToday + 1}
-            />
-          )}
+          {gameState === 'finished' && <FinishScreen scoreArray={scoreArray} />}
         </ErrorBoundary>
       </main>
       {gameState !== 'started' && (
@@ -103,8 +103,27 @@ export default function GrammarGameModal({ onHide }) {
   }
 
   async function handleGameFinish() {
-    setTimeout(() => {
-      setGameState('finished');
-    }, 3000);
+    const promises = [
+      (async () => {
+        const newXP = await uploadGrammarGameResult({
+          attemptNumber: timesPlayedToday + 1,
+          scoreArray
+        });
+        onSetUserState({
+          userId,
+          newState: { twinkleXP: newXP }
+        });
+      })(),
+      (async () => {
+        await new Promise((resolve) =>
+          setTimeout(() => {
+            setGameState('finished');
+            resolve();
+          }, 3000)
+        );
+      })()
+    ];
+    await Promise.all(promises);
+    setGameState('finished');
   }
 }
