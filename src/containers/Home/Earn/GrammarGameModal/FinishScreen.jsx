@@ -6,6 +6,8 @@ import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { scoreTable, perfectScoreBonus } from './constants';
 
+const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
+
 FinishScreen.propTypes = {
   scoreArray: PropTypes.array
 };
@@ -33,10 +35,17 @@ export default function FinishScreen({ scoreArray }) {
     if (!scoreArray) return 0;
     const sum = scoreArray.reduce((acc, cur) => acc + scoreTable[cur], 0);
     if (sum === scoreTable.S * 10) {
-      return scoreTable.S * 10 * perfectScoreBonus;
+      return perfectScore;
     }
     return sum;
   }, [scoreArray]);
+
+  const scoreFontSize = useMemo(() => {
+    if (score === perfectScore) return '2rem';
+    if (score > scoreTable.A * 10) return '1.7rem';
+    if (score > scoreTable.B * 10) return '1.5rem';
+    return '1.3rem';
+  }, [score]);
 
   const numLetterGrades = useMemo(() => {
     const resultObj = { S: 0, A: 0, B: 0, C: 0, D: 0, F: 0 };
@@ -53,10 +62,7 @@ export default function FinishScreen({ scoreArray }) {
     () => Object.entries(numLetterGrades).filter(([, number]) => number > 0),
     [numLetterGrades]
   );
-  const isPerfectScore = useMemo(
-    () => score === scoreTable.S * 10 * perfectScoreBonus,
-    [score]
-  );
+  const isPerfectScore = useMemo(() => score === perfectScore, [score]);
 
   const totalScoreEquationText = useMemo(() => {
     let scoreText = <div style={{ display: 'inline' }}></div>;
@@ -157,7 +163,7 @@ export default function FinishScreen({ scoreArray }) {
           <div style={{ marginTop: '1rem' }}>
             {totalScoreEquationText} = {score}
           </div>
-          <div style={{ marginTop: '1rem' }}>
+          <div style={{ marginTop: '3rem', fontSize: scoreFontSize }}>
             You earned {addCommasToNumber(score)} XP
           </div>
         </div>
