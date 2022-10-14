@@ -51,7 +51,7 @@ function XPBar({
     () => theme[`level${rewardLevel}`]?.color,
     [rewardLevel, theme]
   );
-  const warningColor = useMemo(() => theme.defeat?.color, [theme]);
+  const warningColor = useMemo(() => theme.fail?.color, [theme]);
   const xpRewardAmount = useMemo(
     () => rewardLevel * (videoRewardHash?.[rewardBoostLvl]?.xp || 20),
     [rewardBoostLvl, rewardLevel]

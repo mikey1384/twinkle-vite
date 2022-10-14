@@ -47,7 +47,7 @@ export default function RewardLevelInfo({
     () => theme[`level${rewardLevel}`]?.color,
     [rewardLevel, theme]
   );
-  const warningColor = useMemo(() => theme.defeat?.color, [theme]);
+  const warningColor = useMemo(() => theme.fail?.color, [theme]);
   const Stars = useMemo(
     () =>
       [...Array(rewardLevel)].map((elem, index) => (

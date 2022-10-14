@@ -211,7 +211,7 @@ export function Theme(color = 'logoBlue') {
           gold: 'magenta'
         }[color] || 'rose'
     },
-    defeat: { color: 'black' },
+    fail: { color: 'black' },
     done: { color: 'blue' },
     draw: { color: 'logoBlue' },
     filter: {

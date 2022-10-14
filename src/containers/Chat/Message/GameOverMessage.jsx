@@ -31,7 +31,7 @@ function GameOverMessage({
     abort: { color: abortColor },
     draw: { color: drawColor },
     victory: { color: victoryColor },
-    defeat: { color: defeatColor }
+    fail: { color: failColor }
   } = useKeyContext((v) => v.theme);
 
   const isVictorious = useMemo(() => myId === winnerId, [myId, winnerId]);
@@ -108,7 +108,7 @@ function GameOverMessage({
               ? Color[abortColor]()
               : isVictorious
               ? Color[victoryColor]()
-              : Color[defeatColor]()};
+              : Color[failColor]()};
             font-size: 2.5rem;
             display: flex;
             justify-content: center;
