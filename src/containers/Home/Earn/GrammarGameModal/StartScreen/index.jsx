@@ -17,7 +17,7 @@ const deviceIsMobile = isMobile(navigator);
 const firstLine = 'Answer 10 fill-in-the-blank grammar questions.';
 const secondLine = 'The faster you answer a question, the more XP you earn.';
 const thirdLine =
-  'You can only play 5 games per day. Try to earn as much XP as possible!';
+  'You can only play up to 5 games per day. Try to earn as much XP as possible!';
 
 StartScreen.propTypes = {
   onGameStart: PropTypes.func.isRequired,
