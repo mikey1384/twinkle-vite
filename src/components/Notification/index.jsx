@@ -164,7 +164,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
             flexDirection: 'column'
           }}
         >
-          {userId && location === 'home' && <TodayStats />}
+          {userId && <TodayStats />}
           <div style={{ position: 'relative' }}>
             {userId && (numNewNotis > 0 || notifications.length > 0) && (
               <FilterBar
