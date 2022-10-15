@@ -37,7 +37,7 @@ export default function InputPanel({ onInputModalButtonClick }) {
             padding: 1rem;
             border: 1px solid ${Color.darkerBorderGray()};
             font-size: 1.7rem;
-            &:focus {
+            &:hover {
               outline: none;
               ::placeholder {
                 color: ${Color.lighterGray()};

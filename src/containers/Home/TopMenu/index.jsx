@@ -81,11 +81,19 @@ export default function TopMenu({
             display: flex;
           `}
         >
-          <TopButton style={{ marginLeft: '1rem' }} onClick={onPlayGrammarGame}>
+          <TopButton
+            colorLeft={Color.purple()}
+            colorMiddle={Color.redOrange()}
+            colorRight={Color.rose()}
+            onClick={onPlayGrammarGame}
+          >
             {grammarGameLabel}
           </TopButton>
           {!(isEarnPage && topMenuSection === 'subject') && (
             <TopButton
+              colorLeft={Color.logoBlue()}
+              colorMiddle={Color.logoBlue()}
+              colorRight={Color.lightBlue()}
               style={{ marginLeft: '1rem' }}
               onClick={onAnswerSubjectsButtonClick}
             >
@@ -94,6 +102,9 @@ export default function TopMenu({
           )}
           {!(isEarnPage && topMenuSection === 'karma') && (
             <TopButton
+              colorLeft={Color.strongPink()}
+              colorMiddle={Color.strongPink()}
+              colorRight={Color.pastelPink()}
               style={{ marginLeft: '1rem' }}
               onClick={onEarnKarmaButtonClick}
             >
@@ -102,6 +113,9 @@ export default function TopMenu({
           )}
           <TopButton
             disabled={loadingChat}
+            colorLeft={Color.orange()}
+            colorMiddle={Color.gold()}
+            colorRight={Color.magenta()}
             style={{ marginLeft: '1rem' }}
             onClick={handleWordleButtonClick}
           >
