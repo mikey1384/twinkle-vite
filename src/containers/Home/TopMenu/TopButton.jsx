@@ -22,7 +22,7 @@ export default function TopButton({
   style
 }) {
   const buttonStyle = css`
-    font-family: sans-serif;
+    font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
     cursor: pointer;
     display: flex;
     background-image: linear-gradient(
