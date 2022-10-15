@@ -28,6 +28,16 @@ export default function notificationRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async fetchTodayStats() {
+      try {
+        const {
+          data: { xpEarned, kpEarned, coinsEarned }
+        } = await request.get(`${URL}/notification/today`, auth());
+        return Promise.resolve({ xpEarned, kpEarned, coinsEarned });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMoreNotifications(lastId) {
       try {
         const {

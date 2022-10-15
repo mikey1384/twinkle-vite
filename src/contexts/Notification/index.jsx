@@ -24,6 +24,12 @@ export const initialNotiState = {
   top30s: [],
   top30sMonthly: [],
   socketConnected: false,
+  todayStats: {
+    loaded: false,
+    xpEarned: 0,
+    kpEarned: 0,
+    coinsEarned: 0
+  },
   updateDetail: '',
   updateNoticeShown: false
 };

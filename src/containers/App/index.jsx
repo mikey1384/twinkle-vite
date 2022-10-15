@@ -65,6 +65,9 @@ function App() {
   );
   const auth = useAppContext((v) => v.requestHelpers.auth);
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
+  const fetchTodayStats = useAppContext(
+    (v) => v.requestHelpers.fetchTodayStats
+  );
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
   const recordUserTraffic = useAppContext(
     (v) => v.requestHelpers.recordUserTraffic
@@ -87,6 +90,7 @@ function App() {
     authLevel,
     profilePicUrl,
     signinModalShown,
+    twinkleCoins,
     twinkleXP,
     userId,
     username
@@ -214,6 +218,18 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [twinkleXP]);
+
+  useEffect(() => {
+    if (userId) {
+      handleLoadTodayStats();
+    }
+    async function handleLoadTodayStats() {
+      const { xpEarned, kpEarned, coinsEarned } = await fetchTodayStats();
+      console.log('today stats', xpEarned, kpEarned, coinsEarned);
+      // onUpdateTodayStats({ xpEarned, kpEarned, coinsEarned });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [twinkleXP, twinkleCoins, userId]);
 
   useEffect(() => {
     if (!auth()?.headers?.authorization && !signinModalShown) {
