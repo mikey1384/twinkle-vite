@@ -11,6 +11,7 @@ import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
+import TopButton from './TopButton';
 
 const grammarGameLabel = localize('grammarGame');
 
@@ -80,35 +81,32 @@ export default function TopMenu({
             display: flex;
           `}
         >
-          <div className={buttonStyle} onClick={onPlayGrammarGame}>
+          <TopButton style={{ marginLeft: '1rem' }} onClick={onPlayGrammarGame}>
             {grammarGameLabel}
-          </div>
+          </TopButton>
           {!(isEarnPage && topMenuSection === 'subject') && (
-            <div
+            <TopButton
               style={{ marginLeft: '1rem' }}
               onClick={onAnswerSubjectsButtonClick}
-              className={buttonStyle}
             >
               Answer Subjects
-            </div>
+            </TopButton>
           )}
           {!(isEarnPage && topMenuSection === 'karma') && (
-            <div
+            <TopButton
               style={{ marginLeft: '1rem' }}
               onClick={onEarnKarmaButtonClick}
-              className={buttonStyle}
             >
               Earn KP
-            </div>
+            </TopButton>
           )}
-          <button
+          <TopButton
             disabled={loadingChat}
             style={{ marginLeft: '1rem' }}
             onClick={handleWordleButtonClick}
-            className={buttonStyle}
           >
             Wordle
-          </button>
+          </TopButton>
         </div>
       </div>
     </ErrorBoundary>
@@ -125,20 +123,3 @@ export default function TopMenu({
     }, 10);
   }
 }
-
-const buttonStyle = css`
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  font-weight: bold;
-  background: #fff;
-  font-size: 1.5rem;
-  border-radius: ${borderRadius};
-  border: 1px solid ${Color.borderGray()};
-  padding: 1rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.3rem;
-  }
-`;
