@@ -1,6 +1,6 @@
 import localize from '~/constants/localize';
 
-export const clientVersion = '1.6.72';
+export const clientVersion = '1.6.73';
 export const defaultChatSubject = 'Welcome!';
 export const defaultContentState = {
   isEditing: false,
