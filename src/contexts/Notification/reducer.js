@@ -133,6 +133,16 @@ export default function NotiReducer(state, action) {
         ...state,
         updateNoticeShown: action.shown
       };
+    case 'UPDATE_TODAY_STATS':
+      return {
+        ...state,
+        todayStats: {
+          ...state.todayStats,
+          xpEarned: action.xpEarned,
+          coinsEarned: action.coinsEarned,
+          loaded: true
+        }
+      };
     default:
       return state;
   }

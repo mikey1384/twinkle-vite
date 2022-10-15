@@ -27,7 +27,6 @@ export const initialNotiState = {
   todayStats: {
     loaded: false,
     xpEarned: 0,
-    kpEarned: 0,
     coinsEarned: 0
   },
   updateDetail: '',

@@ -117,6 +117,13 @@ export default function NotiActions(dispatch) {
         type: 'SHOW_UPDATE_NOTICE',
         shown
       });
+    },
+    onUpdateTodayStats({ xpEarned, coinsEarned }) {
+      return dispatch({
+        type: 'UPDATE_TODAY_STATS',
+        xpEarned,
+        coinsEarned
+      });
     }
   };
 }

@@ -145,6 +145,9 @@ function App() {
   const updateNoticeShown = useNotiContext((v) => v.state.updateNoticeShown);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const pageVisible = useViewContext((v) => v.state.pageVisible);
   const scrollPositions = useViewContext((v) => v.state.scrollPositions);
   const onChangePageVisibility = useViewContext(
@@ -224,9 +227,8 @@ function App() {
       handleLoadTodayStats();
     }
     async function handleLoadTodayStats() {
-      const { xpEarned, kpEarned, coinsEarned } = await fetchTodayStats();
-      console.log('today stats', xpEarned, kpEarned, coinsEarned);
-      // onUpdateTodayStats({ xpEarned, kpEarned, coinsEarned });
+      const { xpEarned, coinsEarned } = await fetchTodayStats();
+      onUpdateTodayStats({ xpEarned, coinsEarned });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [twinkleXP, twinkleCoins, userId]);
