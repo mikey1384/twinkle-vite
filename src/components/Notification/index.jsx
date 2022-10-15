@@ -1,12 +1,11 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import MainFeeds from './MainFeeds';
-import ChatFeeds from './ChatFeeds';
+import TodayStats from './TodayStats';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
 import { container } from './Styles';
-import { defaultChatSubject } from '~/constants/defaultValues';
 import {
   useAppContext,
   useNotiContext,
@@ -41,11 +40,6 @@ function Notification({ className, location, style, trackScrollPosition }) {
   );
   const rankingsLoaded = useNotiContext((v) => v.state.rankingsLoaded);
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
-  const {
-    content = defaultChatSubject,
-    loaded: chatTopicLoaded,
-    ...subject
-  } = useNotiContext((v) => v.state.currentChatSubject);
   const onLoadNotifications = useNotiContext(
     (v) => v.actions.onLoadNotifications
   );
@@ -170,16 +164,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
             flexDirection: 'column'
           }}
         >
-          {userId && chatTopicLoaded && location === 'home' && (
-            <ChatFeeds
-              myId={userId}
-              content={content}
-              style={{
-                marginBottom: '1rem'
-              }}
-              {...subject}
-            />
-          )}
+          {userId && location === 'home' && <TodayStats />}
           <div style={{ position: 'relative' }}>
             {userId && (numNewNotis > 0 || notifications.length > 0) && (
               <FilterBar
