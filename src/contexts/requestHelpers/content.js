@@ -56,23 +56,25 @@ export default function contentRequestHelpers({ auth, handleError }) {
     async checkIfUserResponded(subjectId) {
       try {
         const {
-          data: { attemptNumber }
+          data: { responded }
         } = await request.get(
           `${URL}/content/checkResponded?subjectId=${subjectId}`,
           auth()
         );
-        return Promise.resolve({ attemptNumber });
+        return Promise.resolve({ responded });
       } catch (error) {
         return handleError(error);
       }
     },
     async checkNumGrammarGamesPlayedToday() {
       try {
-        const { data } = await request.get(
+        const {
+          data: { attemptNumber, nextDayTimeStamp }
+        } = await request.get(
           `${URL}/content/game/grammar/numGamesPlayed`,
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve({ attemptNumber, nextDayTimeStamp });
       } catch (error) {
         return handleError(error);
       }
