@@ -2,6 +2,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
 import { useNotiContext } from '~/contexts';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Loading from '~/components/Loading';
 
 export default function TodayStats() {
@@ -23,11 +24,8 @@ export default function TodayStats() {
           <div>
             <b style={{ fontSize: '1.7rem' }}>{`Today's Progress`}</b>
             <div style={{ marginTop: '1rem' }}>
-              <p>
-                <b>XP</b> Earned: {todayStats.xpEarned}
-              </p>
-              <p>Karma Points Earned: {todayStats.kpEarned}</p>
-              <p>Coins Earned: {todayStats.coinsEarned}</p>
+              <p>XP Earned: {addCommasToNumber(todayStats.xpEarned)}</p>
+              <p>Coins Earned: {addCommasToNumber(todayStats.coinsEarned)}</p>
             </div>
           </div>
         ) : (
