@@ -89,6 +89,17 @@ export default function TopMenu({
           >
             {grammarGameLabel}
           </TopButton>
+          {isEarnPage && (
+            <TopButton
+              colorLeft={Color.passionFruit()}
+              colorMiddle={Color.passionFruit()}
+              colorRight={Color.lightOrange()}
+              style={{ marginLeft: '1rem' }}
+              onClick={() => navigate('/')}
+            >
+              Read Posts
+            </TopButton>
+          )}
           {!(isEarnPage && topMenuSection === 'subject') && (
             <TopButton
               colorLeft={Color.logoBlue()}
