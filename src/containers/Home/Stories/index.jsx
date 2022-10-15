@@ -169,7 +169,7 @@ export default function Stories() {
           setDisplayOrder={handleDisplayOrder}
         />
         <div style={{ width: '100%' }}>
-          {loadingFeeds && <Loading text="Loading Feeds..." />}
+          {loadingFeeds && <Loading text="Loading Posts..." />}
           {loaded && feeds.length === 0 && !loadingFeeds && (
             <div
               style={{

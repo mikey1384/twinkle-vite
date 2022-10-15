@@ -16,7 +16,7 @@ HomeMenuItems.propTypes = {
 };
 
 const peopleLabel = localize('people');
-const storiesLabel = localize('stories');
+const postsLabel = localize('posts');
 const storeLabel = localize('store');
 const deviceIsMobile = isMobile(navigator);
 const year = (() => {
@@ -162,7 +162,7 @@ export default function HomeMenuItems({ style = {} }) {
               <div className="icon">
                 <Icon icon="book" size="1x" />
               </div>
-              <div className="label">{storiesLabel}</div>
+              <div className="label">{postsLabel}</div>
             </div>
           </a>
         </nav>
