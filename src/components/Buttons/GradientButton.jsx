@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { mobileMaxWidth, borderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 
 GradientButton.propTypes = {
   disabled: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
@@ -44,7 +44,13 @@ export default function GradientButton({
         font-weight: bold;
         font-size: ${fontSize};
         box-shadow: rgb(0 0 0 / 15%) 0 1px 2px;
-        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+        background: linear-gradient(
+          -45deg,
+          ${Color.redOrange()},
+          ${Color.rose()},
+          ${Color.oceanGreen()},
+          ${Color.limeGreen()}
+        );
         background-size: 400% 400%;
         animation: Gradient 5s ease infinite;
         @media (max-width: ${mobileMaxWidth}) {
