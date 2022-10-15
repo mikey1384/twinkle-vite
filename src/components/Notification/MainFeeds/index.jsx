@@ -193,7 +193,7 @@ function MainFeeds({
                 )}
                 {totalCoins > 0 && (
                   <p style={{ fontSize: '1.4rem', marginTop: '0.5rem' }}>
-                    * {addCommasToNumber(totalCoins)} Twinkle Coin
+                    {addCommasToNumber(totalCoins)} Twinkle Coin
                     {totalCoins > 0 ? 's' : ''}
                   </p>
                 )}
