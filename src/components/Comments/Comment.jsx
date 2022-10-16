@@ -21,6 +21,7 @@ import SubjectLink from './SubjectLink';
 import Icon from '~/components/Icon';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
+import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { commentContainer } from './Styles';
@@ -230,6 +231,7 @@ function Comment({
     [placeholderHeight, previousPlaceholderHeight]
   );
 
+  const [isPostingReply, setIsPostingReply] = useState(false);
   const [userListModalShown, setUserListModalShown] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [loadingReplies, setLoadingReplies] = useState(false);
@@ -910,7 +912,7 @@ function Comment({
                   />
                 )}
                 {!isPreview && !isNotification && !isHidden && (
-                  <>
+                  <div style={{ position: 'relative' }}>
                     {isDeleteNotification ? null : (
                       <ReplyInputArea
                         innerRef={ReplyInputAreaRef}
@@ -924,6 +926,11 @@ function Comment({
                         }}
                         theme={theme}
                         targetCommentId={comment.id}
+                      />
+                    )}
+                    {isPostingReply && (
+                      <Loading
+                        style={{ position: 'absolute', top: '7rem', height: 0 }}
                       />
                     )}
                     <Replies
@@ -941,7 +948,7 @@ function Comment({
                       ReplyRefs={ReplyRefs}
                       theme={theme}
                     />
-                  </>
+                  </div>
                 )}
               </section>
             </div>
@@ -1036,9 +1043,11 @@ function Comment({
     await onSubmitWithAttachment(params);
   }
 
-  function submitReply(reply) {
+  async function submitReply(reply) {
     setReplying(true);
-    onReplySubmit(reply);
+    setIsPostingReply(true);
+    await onReplySubmit(reply);
+    setIsPostingReply(false);
   }
 }
 
