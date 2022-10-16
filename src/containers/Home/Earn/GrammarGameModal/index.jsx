@@ -113,13 +113,16 @@ export default function GrammarGameModal({ onHide }) {
   async function handleGameFinish() {
     const promises = [
       (async () => {
-        const newXP = await uploadGrammarGameResult({
+        const { isDuplicate, newXp } = await uploadGrammarGameResult({
           attemptNumber: timesPlayedToday + 1,
           scoreArray: scoreArrayRef.current
         });
+        if (isDuplicate) {
+          return window.location.reload();
+        }
         onSetUserState({
           userId,
-          newState: { twinkleXP: newXP }
+          newState: { twinkleXP: newXp }
         });
       })(),
       (async () => {
