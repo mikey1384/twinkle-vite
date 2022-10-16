@@ -117,7 +117,7 @@ export default function HomeFilter({
                     skeuomorphic
                     className={css`
                       @media (max-width: ${mobileMaxWidth}) {
-                        font-size: 1.3rem;
+                        font-size: 1.2rem !important;
                       }
                     `}
                     color="darkerGray"
