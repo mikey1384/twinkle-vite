@@ -126,9 +126,11 @@ export default function StartScreen({
                 or use your mouse to select the choices
               </p>
             )}
-            <p>
-              Press the <b>start</b> button when you are ready
-            </p>
+            {!maxTimesPlayedToday && (
+              <p>
+                Press the <b>start</b> button when you are ready
+              </p>
+            )}
           </div>
         </div>
         {loaded && (
