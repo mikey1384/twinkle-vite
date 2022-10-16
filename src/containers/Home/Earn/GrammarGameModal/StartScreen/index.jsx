@@ -20,12 +20,14 @@ const thirdLine =
   'You can only play up to 5 games per day. Try to earn as much XP as possible!';
 
 StartScreen.propTypes = {
+  loading: PropTypes.bool,
   onGameStart: PropTypes.func.isRequired,
   onSetTimesPlayedToday: PropTypes.func.isRequired,
   timesPlayedToday: PropTypes.number.isRequired
 };
 
 export default function StartScreen({
+  loading,
   onGameStart,
   timesPlayedToday,
   onSetTimesPlayedToday
@@ -141,7 +143,7 @@ export default function StartScreen({
           </div>
         )}
         <GradientButton
-          loading={!loaded}
+          loading={!loaded || loading}
           disabled={maxTimesPlayedToday}
           style={{ marginTop: '2rem', fontSize: '1.7rem' }}
           onClick={onGameStart}
