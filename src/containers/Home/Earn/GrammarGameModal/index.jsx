@@ -75,6 +75,7 @@ export default function GrammarGameModal({ onHide }) {
               timesPlayedToday={timesPlayedToday}
               onGameStart={handleGameStart}
               onSetTimesPlayedToday={setTimesPlayedToday}
+              onHide={onHide}
             />
           )}
           {gameState === 'started' && (

@@ -23,14 +23,16 @@ StartScreen.propTypes = {
   loading: PropTypes.bool,
   onGameStart: PropTypes.func.isRequired,
   onSetTimesPlayedToday: PropTypes.func.isRequired,
-  timesPlayedToday: PropTypes.number.isRequired
+  timesPlayedToday: PropTypes.number.isRequired,
+  onHide: PropTypes.func.isRequired
 };
 
 export default function StartScreen({
   loading,
   onGameStart,
   timesPlayedToday,
-  onSetTimesPlayedToday
+  onSetTimesPlayedToday,
+  onHide
 }) {
   const navigate = useNavigate();
   const [nextDayTimeStamp, setNextDayTimeStamp] = useState(null);
@@ -154,7 +156,10 @@ export default function StartScreen({
         </GradientButton>
         {maxTimesPlayedToday && (
           <Button
-            onClick={() => navigate('/missions/grammar')}
+            onClick={() => {
+              navigate('/missions/grammar');
+              onHide();
+            }}
             style={{ marginTop: '1.5rem' }}
             filled
             color="logoBlue"
