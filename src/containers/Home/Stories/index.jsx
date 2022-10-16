@@ -231,7 +231,7 @@ export default function Stories() {
               {loadMoreButton && (
                 <LoadMoreButton
                   style={{ marginBottom: '1rem' }}
-                  onClick={() => setLoadingMore(true)}
+                  onClick={handleLoadMoreFeeds}
                   loading={loadingMore}
                   color={loadMoreButtonColor}
                   filled
