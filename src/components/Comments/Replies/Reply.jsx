@@ -20,6 +20,7 @@ import LoginToViewContent from '~/components/LoginToViewContent';
 import RewardStatus from '~/components/RewardStatus';
 import XPRewardInterface from '~/components/XPRewardInterface';
 import ContentFileViewer from '~/components/ContentFileViewer';
+import Loading from '~/components/Loading';
 import { commentContainer } from '../Styles';
 import { Link } from 'react-router-dom';
 import { borderRadius, Color } from '~/constants/css';
@@ -153,6 +154,7 @@ function Reply({
   const { onEditDone, onLikeClick, onRewardCommentEdit } =
     useContext(LocalContext);
   const { fileType } = getFileInfoFromFileName(fileName);
+  const [isPostingReply, setIsPostingReply] = useState(false);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [userListModalShown, setUserListModalShown] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
@@ -633,20 +635,32 @@ function Reply({
                 uploaderName={uploader.username}
               />
             )}
-            {isDeleteNotification ? null : (
-              <ReplyInputArea
-                innerRef={ReplyInputAreaRef}
-                onSubmit={onSubmitReply}
-                onSubmitWithAttachment={onSubmitWithAttachment}
-                parent={parent}
-                rootCommentId={reply.commentId}
-                style={{
-                  marginTop: '0.5rem'
-                }}
-                theme={theme}
-                targetCommentId={reply.id}
-              />
-            )}
+            <div style={{ position: 'relative' }}>
+              {isDeleteNotification ? null : (
+                <ReplyInputArea
+                  innerRef={ReplyInputAreaRef}
+                  onSubmit={handleSubmitReply}
+                  onSubmitWithAttachment={onSubmitWithAttachment}
+                  parent={parent}
+                  rootCommentId={reply.commentId}
+                  style={{
+                    marginTop: '0.5rem'
+                  }}
+                  theme={theme}
+                  targetCommentId={reply.id}
+                />
+              )}
+              {isPostingReply && (
+                <Loading
+                  style={{
+                    position: 'absolute',
+                    top: '7rem',
+                    zIndex: 100,
+                    height: 0
+                  }}
+                />
+              )}
+            </div>
           </section>
         </div>
         {userListModalShown && (
@@ -720,6 +734,12 @@ function Reply({
       });
     }
     setLoadingReplies(false);
+  }
+
+  async function handleSubmitReply(params) {
+    setIsPostingReply(true);
+    await onSubmitReply(params);
+    setIsPostingReply(false);
   }
 }
 

@@ -194,9 +194,10 @@ function Replies({
     onDelete(replyId);
   }
 
-  function handleSubmitReply(params) {
+  async function handleSubmitReply(params) {
     setReplying(true);
-    onReplySubmit(params);
+    await onReplySubmit(params);
+    return Promise.resolve();
   }
 
   async function handleSubmitWithAttachment(params) {
