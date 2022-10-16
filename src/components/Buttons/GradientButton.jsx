@@ -32,6 +32,7 @@ export default function GradientButton({
         color: #fff;
         display: flex;
         justify-content: center;
+        align-items: center;
         border: none;
         cursor: ${disabled || loading ? 'default' : 'pointer'};
         padding: 1.5rem;
