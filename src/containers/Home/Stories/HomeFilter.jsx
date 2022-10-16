@@ -115,6 +115,11 @@ export default function HomeFilter({
                 dropdownButton={
                   <DropdownButton
                     skeuomorphic
+                    className={css`
+                      @media (max-width: ${mobileMaxWidth}) {
+                        font-size: 1.3rem;
+                      }
+                    `}
                     color="darkerGray"
                     icon="caret-down"
                     text={categoryObj.uploads[displayOrder]}
