@@ -271,7 +271,8 @@ export default function Stories() {
 
   async function handleLoadMoreFeeds() {
     const lastFeedId = feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
-    if (lastFeedRef.current === lastFeedId) return;
+    if (lastFeedRef.current === `${category}/${subFilter}/${lastFeedId}`)
+      return;
     lastFeedRef.current = `${category}/${subFilter}/${lastFeedId}`;
     setLoadingMore(true);
     try {
