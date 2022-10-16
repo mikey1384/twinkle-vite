@@ -14,6 +14,7 @@ GrammarGameModal.propTypes = {
 
 export default function GrammarGameModal({ onHide }) {
   const { userId } = useKeyContext((v) => v.myState);
+  const [gameLoading, setGameLoading] = useState(false);
   const uploadGrammarGameResult = useAppContext(
     (v) => v.requestHelpers.uploadGrammarGameResult
   );
@@ -70,6 +71,7 @@ export default function GrammarGameModal({ onHide }) {
         <ErrorBoundary componentPath="Earn/GrammarGameModal/GameState">
           {gameState === 'notStarted' && (
             <StartScreen
+              loading={gameLoading}
               timesPlayedToday={timesPlayedToday}
               onGameStart={handleGameStart}
               onSetTimesPlayedToday={setTimesPlayedToday}
@@ -98,12 +100,14 @@ export default function GrammarGameModal({ onHide }) {
   );
 
   async function handleGameStart() {
+    setGameLoading(true);
     const { questions, maxAttemptNumberReached } = await loadGrammarGame();
     if (maxAttemptNumberReached) {
       return window.location.reload();
     }
     setQuestions(questions);
     setGameState('started');
+    setGameLoading(false);
   }
 
   async function handleGameFinish() {
