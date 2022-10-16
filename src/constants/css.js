@@ -64,6 +64,7 @@ export const Color = {
   bronze: (opacity = 1) => `rgba(255,190,130,${opacity})`,
   cranberry: (opacity = 1) => `rgba(230,80,112,${opacity})`,
   purple: (opacity = 1) => `rgba(152,28,235,${opacity})`,
+  darkPurple: (opacity = 1) => `rgba(72,43,200,${opacity})`,
   lightPurple: (opacity = 1) => `rgba(225,105,255,${opacity})`,
   whitePurple: (opacity = 1) => `rgba(248,246,255,${opacity})`,
   lightRed: (opacity = 1) => `rgba(255,130,134,${opacity})`,
