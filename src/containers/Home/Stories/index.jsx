@@ -91,6 +91,10 @@ export default function Stories() {
     subFilterRef.current = subFilter;
   }, [subFilter]);
 
+  useEffect(() => {
+    lastFeedRef.current = null;
+  }, [category, subFilter]);
+
   useInfiniteScroll({
     scrollable: feeds.length > 0,
     feedsLength: feeds.length,
@@ -271,9 +275,8 @@ export default function Stories() {
 
   async function handleLoadMoreFeeds() {
     const lastFeedId = feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
-    if (lastFeedRef.current === `${category}/${subFilter}/${lastFeedId}`)
-      return;
-    lastFeedRef.current = `${category}/${subFilter}/${lastFeedId}`;
+    if (lastFeedRef.current === lastFeedId) return;
+    lastFeedRef.current = lastFeedId;
     setLoadingMore(true);
     try {
       const { data } = await loadFeeds({
