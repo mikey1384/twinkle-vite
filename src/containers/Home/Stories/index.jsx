@@ -44,7 +44,7 @@ const categoryObj = {
 
 export default function Stories() {
   const navigate = useNavigate();
-  const lastFeedIdRef = useRef(null);
+  const lastFeedRef = useRef(null);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
   const { hideWatched, userId, username } = useKeyContext((v) => v.myState);
@@ -271,8 +271,8 @@ export default function Stories() {
 
   async function handleLoadMoreFeeds() {
     const lastFeedId = feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
-    if (lastFeedIdRef.current === lastFeedId) return;
-    lastFeedIdRef.current = lastFeedId;
+    if (lastFeedRef.current === lastFeedId) return;
+    lastFeedRef.current = `${category}/${subFilter}/${lastFeedId}`;
     setLoadingMore(true);
     try {
       const { data } = await loadFeeds({
