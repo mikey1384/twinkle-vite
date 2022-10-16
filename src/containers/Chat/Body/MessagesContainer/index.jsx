@@ -412,6 +412,12 @@ function MessagesContainer({
   }, [selectedChannelId]);
 
   useEffect(() => {
+    if (wordleModalShown) {
+      ChatInputRef.current.blur();
+    }
+  }, [wordleModalShown]);
+
+  useEffect(() => {
     socket.on('chess_countdown_number_received', onReceiveCountdownNumber);
     socket.on('new_message_received', handleReceiveMessage);
 
