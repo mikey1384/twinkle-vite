@@ -108,7 +108,10 @@ export default function Main({
         for (let choice of choices) {
           numLetters += choice.length;
         }
-        baseLetterLengthTime = numLetters * 9;
+        baseLetterLengthTime = Math.max(
+          numLetters * 9,
+          defaultBaseLetterLengthTime
+        );
         if (wasWrong) {
           baseLetterLengthTime = Math.min(
             baseLetterLengthTime,
