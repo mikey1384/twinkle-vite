@@ -277,8 +277,8 @@ export function Theme(color = 'logoBlue') {
     itemSelected: { color, opacity: strongColors.includes(color) ? 0.7 : 0.8 },
     level1: { color: 'logoBlue' },
     level2: { color: 'pink' },
-    level3: { color: 'orange' },
-    level4: { color: 'cranberry' },
+    level3: { color: 'redOrange' },
+    level4: { color: 'magenta' },
     level5: { color: 'gold' },
     likeButton: {
       color:
