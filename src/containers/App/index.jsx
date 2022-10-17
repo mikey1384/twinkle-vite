@@ -671,6 +671,7 @@ function App() {
             <Route path="/users/:username/*" element={<Profile />} />
             <Route path="/comments/:contentId" element={<ContentPage />} />
             <Route path="/videos/:videoId" element={<VideoPage />} />
+            <Route path="/videos/:videoId/*" element={<VideoPage />} />
             <Route path="/links/:linkId" element={<LinkPage />} />
             <Route path="/subjects/:contentId" element={<ContentPage />} />
             <Route path="/videos" element={<Explore category="videos" />} />

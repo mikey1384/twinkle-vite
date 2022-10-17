@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import Carousel from '~/components/Carousel';
-import Button from '~/components/Button';
-import XPVideoPlayer from '~/components/XPVideoPlayer';
 import InvalidPage from '~/components/InvalidPage';
-import CheckListGroup from '~/components/CheckListGroup';
 import Comments from '~/components/Comments';
-import ResultModal from './Modals/ResultModal';
-import QuestionsBuilder from './QuestionsBuilder';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import request from 'axios';
 import queryString from 'query-string';
@@ -16,9 +10,15 @@ import RewardStatus from '~/components/RewardStatus';
 import Loading from '~/components/Loading';
 import Details from './Details';
 import NavMenu from './NavMenu';
-import PageTab from './PageTab';
 import URL from '~/constants/URL';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import Content from './Content';
+import {
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+  useParams
+} from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
@@ -32,10 +32,7 @@ import {
 } from '~/contexts';
 import localize from '~/constants/localize';
 
-const addEditQuestionsLabel = localize('addEditQuestions');
-const addQuestionsLabel = localize('addQuestions');
 const commentOnThisVideoLabel = localize('commentOnThisVideo');
-const thereAreNoQuestionsLabel = localize('thereAreNoQuestions');
 
 export default function VideoPage() {
   const navigate = useNavigate();
@@ -43,13 +40,8 @@ export default function VideoPage() {
   const { videoId: initialVideoId } = useParams();
   const videoId = Number(initialVideoId);
   const [changingPage, setChangingPage] = useState(false);
-  const [watchTabActive, setWatchTabActive] = useState(true);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [loadingComments, setLoadingComments] = useState(false);
-  const [userAnswers, setUserAnswers] = useState({});
-  const [resultModalShown, setResultModalShown] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
-  const [questionsBuilderShown, setQuestionsBuilderShown] = useState(false);
   const [videoUnavailable, setVideoUnavailable] = useState(false);
   const CommentInputAreaRef = useRef(null);
   const prevDeleted = useRef(false);
@@ -61,10 +53,7 @@ export default function VideoPage() {
   );
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const loadSubjects = useAppContext((v) => v.requestHelpers.loadSubjects);
-  const uploadQuestions = useAppContext(
-    (v) => v.requestHelpers.uploadQuestions
-  );
-  const { authLevel, canEdit, userId } = useKeyContext((v) => v.myState);
+  const { userId } = useKeyContext((v) => v.myState);
   const onChangeVideoByUserStatus = useExploreContext(
     (v) => v.actions.onChangeVideoByUserStatus
   );
@@ -117,9 +106,6 @@ export default function VideoPage() {
   );
   const onSetPageTitle = useViewContext((v) => v.actions.onSetPageTitle);
   const onSetRewardLevel = useContentContext((v) => v.actions.onSetRewardLevel);
-  const onSetVideoQuestions = useContentContext(
-    (v) => v.actions.onSetVideoQuestions
-  );
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
   const onUploadSubject = useContentContext((v) => v.actions.onUploadSubject);
@@ -169,8 +155,6 @@ export default function VideoPage() {
 
   useEffect(() => {
     setChangingPage(true);
-    setCurrentSlide(0);
-    setWatchTabActive(true);
     setVideoUnavailable(false);
     if (!loaded) {
       handleLoadVideoPage();
@@ -234,8 +218,6 @@ export default function VideoPage() {
   }, [videoId]);
   const { playlist: playlistId, continue: isContinuing } =
     queryString.parse(search);
-  const userIsUploader = uploader?.id === userId;
-  const userCanEditThis = !!canEdit && authLevel >= uploader?.authLevel;
 
   return (
     <ErrorBoundary
@@ -285,93 +267,41 @@ export default function VideoPage() {
               }
             `}
           >
-            <div
-              className={css`
-                width: 100%;
-                background: #fff;
-                margin-bottom: 1rem;
-                padding: 1rem;
-                border: 1px solid ${Color.borderGray()};
-                padding-top: 0;
-                @media (max-width: ${mobileMaxWidth}) {
-                  border-top: 0;
-                  border-left: 0;
-                  border-right: 0;
-                }
-              `}
-            >
-              <PageTab
-                questions={questions}
-                watchTabActive={watchTabActive}
-                onWatchTabClick={() => setWatchTabActive(true)}
-                onQuestionTabClick={() => setWatchTabActive(false)}
-              />
-              <div style={{ marginTop: '2rem' }}>
-                {!questionsBuilderShown && (
-                  <XPVideoPlayer
-                    autoplay
-                    rewardLevel={rewardLevel}
+            <Routes>
+              <Route
+                path="/*"
+                element={
+                  <Content
                     byUser={!!byUser}
-                    key={videoId}
+                    content={content}
+                    isContinuing={isContinuing}
+                    questions={questions}
+                    rewardLevel={rewardLevel}
+                    title={title}
+                    watchTabActive
+                    uploader={uploader}
                     videoId={videoId}
-                    videoCode={content}
+                    playlistId={playlistId}
+                  />
+                }
+              />
+              <Route
+                path="/questions"
+                element={
+                  <Content
+                    byUser={!!byUser}
+                    content={content}
+                    isContinuing={isContinuing}
+                    questions={questions}
+                    rewardLevel={rewardLevel}
                     title={title}
                     uploader={uploader}
-                    minimized={!watchTabActive}
+                    videoId={videoId}
+                    playlistId={playlistId}
                   />
-                )}
-                {(userIsUploader || userCanEditThis) && !watchTabActive && (
-                  <div style={{ marginTop: rewardLevel ? '1rem' : 0 }}>
-                    <a
-                      style={{
-                        cursor: 'pointer',
-                        fontSize: '1.5rem'
-                      }}
-                      onClick={() => setQuestionsBuilderShown(true)}
-                    >
-                      {addEditQuestionsLabel}
-                    </a>
-                  </div>
-                )}
-                {!watchTabActive && questions.length > 0 && (
-                  <Carousel
-                    allowDrag={false}
-                    progressBar
-                    slidesToShow={1}
-                    slidesToScroll={1}
-                    slideIndex={currentSlide}
-                    afterSlide={setCurrentSlide}
-                    onFinish={() => setResultModalShown(true)}
-                  >
-                    {handleRenderSlides()}
-                  </Carousel>
-                )}
-                {!watchTabActive && questions.length === 0 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      fontSize: '2rem',
-                      height: '15rem'
-                    }}
-                  >
-                    <p>{thereAreNoQuestionsLabel}.</p>
-                    {(userIsUploader || userCanEditThis) && (
-                      <Button
-                        style={{ marginTop: '2rem', fontSize: '2rem' }}
-                        skeuomorphic
-                        color="darkerGray"
-                        onClick={() => setQuestionsBuilderShown(true)}
-                      >
-                        {addQuestionsLabel}
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+                }
+              />
+            </Routes>
             <div
               className={css`
                 display: flex;
@@ -504,27 +434,11 @@ export default function VideoPage() {
                 }
               `}
             />
-            {resultModalShown && (
-              <ResultModal
-                onHide={() => setResultModalShown(false)}
-                numberCorrect={numberCorrect}
-                totalQuestions={questions.length}
-              />
-            )}
             {confirmModalShown && (
               <ConfirmModal
                 title="Remove Video"
                 onHide={() => setConfirmModalShown(false)}
                 onConfirm={handleDeleteVideo}
-              />
-            )}
-            {questionsBuilderShown && (
-              <QuestionsBuilder
-                questions={questions}
-                title={title}
-                videoCode={content}
-                onSubmit={handleUploadQuestions}
-                onHide={() => setQuestionsBuilderShown(false)}
               />
             )}
           </div>
@@ -569,63 +483,8 @@ export default function VideoPage() {
     onChangeVideoByUserStatus({ videoId, byUser });
   }
 
-  function numberCorrect() {
-    const correctAnswers = questions.map((question) => question.correctChoice);
-    let numberCorrect = 0;
-    for (let i = 0; i < correctAnswers.length; i++) {
-      if (userAnswers[i] + 1 === correctAnswers[i]) numberCorrect++;
-    }
-    return numberCorrect;
-  }
-
-  function handleRenderSlides() {
-    return questions.map((question, questionIndex) => {
-      const filteredChoices = question.choices.filter((choice) => !!choice);
-      const isCurrentSlide = currentSlide === questionIndex;
-      const listItems = filteredChoices.map((choice, choiceIndex) => ({
-        label: choice,
-        checked: isCurrentSlide && userAnswers[currentSlide] === choiceIndex
-      }));
-
-      return (
-        <div key={questionIndex}>
-          <div>
-            <h3
-              style={{ marginTop: '1rem' }}
-              dangerouslySetInnerHTML={{ __html: question.title }}
-            />
-          </div>
-          <CheckListGroup
-            inputType="radio"
-            listItems={listItems}
-            onSelect={handleSelectChoice}
-            style={{ marginTop: '1.5rem', paddingRight: '1rem' }}
-          />
-        </div>
-      );
-    });
-  }
-
-  function handleSelectChoice(newAnswer) {
-    setUserAnswers((userAnswers) => ({
-      ...userAnswers,
-      [currentSlide]: newAnswer
-    }));
-  }
-
   function handleSetRewardLevel({ contentId, contentType, rewardLevel }) {
     onSetRewardLevel({ contentType, contentId, rewardLevel });
     onSetThumbRewardLevel({ videoId, rewardLevel });
-  }
-
-  async function handleUploadQuestions(questions) {
-    const data = await uploadQuestions({ questions, videoId });
-    onSetVideoQuestions({
-      contentType: 'video',
-      contentId: videoId,
-      questions: data
-    });
-    setCurrentSlide(0);
-    setUserAnswers({});
   }
 }
