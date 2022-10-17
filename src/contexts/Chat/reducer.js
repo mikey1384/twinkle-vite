@@ -1854,8 +1854,8 @@ export default function ChatReducer(state, action) {
           ...state.channelsObj,
           [state.selectedChannelId]: {
             ...state.channelsObj[state.selectedChannelId],
-            numUnreads: state.lastSubchannelPaths[state.selectedChannelId]
-              ? state.channelsObj[state.selectedChannelId].numUnreads
+            numUnreads: state.lastSubchannelPaths?.[state.selectedChannelId]
+              ? state.channelsObj?.[state.selectedChannelId]?.numUnreads || 0
               : 0
           }
         }
@@ -2075,7 +2075,7 @@ export default function ChatReducer(state, action) {
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             numUnreads: action.currentSubchannelPath
-              ? state.channelsObj[action.channelId].numUnreads
+              ? state.channelsObj?.[action.channelId]?.numUnreads || 0
               : 0
           }
         }
