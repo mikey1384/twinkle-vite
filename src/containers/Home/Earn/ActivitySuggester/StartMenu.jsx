@@ -42,7 +42,8 @@ export default function StartMenu({ onSetGrammarGameModalShown }) {
             mobileFontSize="1.3rem"
             onClick={onSetGrammarGameModalShown}
           >
-            {grammarGameLabel}
+            <Icon icon="spell-check" />
+            <span style={{ marginLeft: '0.7rem' }}>{grammarGameLabel}</span>
           </GradientButton>
           <Button
             onClick={() => onSetTopMenuSectionSection('subject')}
