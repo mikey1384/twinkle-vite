@@ -1854,7 +1854,7 @@ export default function ChatReducer(state, action) {
           ...state.channelsObj,
           [state.selectedChannelId]: {
             ...state.channelsObj[state.selectedChannelId],
-            numUnreads: action.subchannelId
+            numUnreads: state.lastSubchannelPaths[state.selectedChannelId]
               ? state.channelsObj[state.selectedChannelId].numUnreads
               : 0
           }
