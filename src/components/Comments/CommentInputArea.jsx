@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import InputForm from '~/components/Forms/InputForm';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
@@ -7,6 +7,7 @@ import { useContentContext, useInputContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { v1 as uuidv1 } from 'uuid';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import Loading from '~/components/Loading';
 import RewardLevelExpectation from './RewardLevelExpectation';
 
 CommentInputArea.propTypes = {
@@ -44,6 +45,7 @@ export default function CommentInputArea({
   targetCommentId,
   theme
 }) {
+  const [uploading, setUploading] = useState(false);
   const placeholderLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return '댓글을 입력하세요...';
@@ -94,18 +96,25 @@ export default function CommentInputArea({
           uploadProgress={fileUploadProgress}
         />
       ) : (
-        <InputForm
-          innerRef={innerRef}
-          clickListenerState={clickListenerState}
-          autoFocus={autoFocus}
-          onSubmit={handleSubmit}
-          onViewSecretAnswer={onViewSecretAnswer}
-          parent={{ contentId, contentType }}
-          rows={numInputRows}
-          placeholder={placeholderLabel}
-          targetCommentId={targetCommentId}
-          theme={theme}
-        />
+        <div style={{ position: 'relative', width: '100%' }}>
+          <InputForm
+            innerRef={innerRef}
+            clickListenerState={clickListenerState}
+            autoFocus={autoFocus}
+            onSubmit={handleSubmit}
+            onViewSecretAnswer={onViewSecretAnswer}
+            parent={{ contentId, contentType }}
+            rows={numInputRows}
+            placeholder={placeholderLabel}
+            targetCommentId={targetCommentId}
+            theme={theme}
+          />
+          {uploading && (
+            <Loading
+              style={{ height: 0, position: 'absolute', top: '15rem' }}
+            />
+          )}
+        </div>
       )}
     </div>
   );
@@ -134,12 +143,14 @@ export default function CommentInputArea({
         contentId
       });
     } else {
+      setUploading(true);
       await onSubmit({
         content: text,
         rootCommentId,
         subjectId,
         targetCommentId
       });
+      setUploading(false);
     }
     onSetUploadingFile({
       contentId,
