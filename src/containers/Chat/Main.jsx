@@ -144,6 +144,9 @@ export default function Main({ currentPathId, onFileUpload }) {
   const recepientId = useChatContext((v) => v.state.recepientId);
   const reconnecting = useChatContext((v) => v.state.reconnecting);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
+  const selectedSubchannelId = useChatContext(
+    (v) => v.state.selectedSubchannelId
+  );
   const subjectSearchResults = useChatContext(
     (v) => v.state.subjectSearchResults
   );
@@ -272,15 +275,6 @@ export default function Main({ currentPathId, onFileUpload }) {
     [channelsObj, selectedChannelId]
   );
   const prevSubchannelPath = useRef(subchannelPath);
-  const subchannelId = useMemo(() => {
-    if (!subchannelPath || !currentChannel?.subchannelObj) return null;
-    for (let subchannel of Object.values(currentChannel.subchannelObj)) {
-      if (subchannel.path === subchannelPath) {
-        return subchannel.id;
-      }
-    }
-    return null;
-  }, [currentChannel.subchannelObj, subchannelPath]);
 
   useEffect(() => {
     return function cleanUp() {
@@ -291,24 +285,24 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, []);
 
   useEffect(() => {
-    if (subchannelId) {
-      updateSubchannelLastRead(subchannelId);
+    if (selectedSubchannelId) {
+      updateSubchannelLastRead(selectedSubchannelId);
       onClearSubchannelUnreads({
         channelId: selectedChannelId,
-        subchannelId
+        subchannelId: selectedSubchannelId
       });
     }
     return () => {
-      if (subchannelId) {
-        updateSubchannelLastRead(subchannelId);
+      if (selectedSubchannelId) {
+        updateSubchannelLastRead(selectedSubchannelId);
         onClearSubchannelUnreads({
           channelId: selectedChannelId,
-          subchannelId
+          subchannelId: selectedSubchannelId
         });
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId, subchannelId]);
+  }, [selectedChannelId, selectedSubchannelId]);
 
   useEffect(() => {
     let subchannelPathExistsAndIsInvalid = !!currentChannel?.id;
@@ -399,12 +393,14 @@ export default function Main({ currentPathId, onFileUpload }) {
           }
           return;
         } else {
-          if (channelsObj[channelId]?.subchannelObj[subchannelId]?.loaded) {
+          if (
+            channelsObj[channelId]?.subchannelObj[selectedSubchannelId]?.loaded
+          ) {
             return;
           }
           const subchannel = await loadSubchannel({
             channelId,
-            subchannelId
+            subchannelId: selectedSubchannelId
           });
           return onSetSubchannel({ channelId, subchannel });
         }
@@ -428,7 +424,7 @@ export default function Main({ currentPathId, onFileUpload }) {
     lastChatPath,
     navigate,
     userId,
-    subchannelId
+    selectedSubchannelId
   ]);
 
   useEffect(() => {
@@ -765,6 +761,7 @@ export default function Main({ currentPathId, onFileUpload }) {
               )}
               <LeftMenu
                 currentPathId={currentPathId}
+                currentChannel={currentChannel}
                 displayedThemeColor={displayedThemeColor}
                 loadingVocabulary={loadingVocabulary}
                 onNewButtonClick={() => setCreateNewChatModalShown(true)}
@@ -779,7 +776,7 @@ export default function Main({ currentPathId, onFileUpload }) {
                 chessOpponent={partner}
                 currentChannel={currentChannel}
                 currentPathId={currentPathId}
-                subchannelId={subchannelId}
+                subchannelId={selectedSubchannelId}
                 subchannelPath={subchannelPath}
               />
               <RightMenu

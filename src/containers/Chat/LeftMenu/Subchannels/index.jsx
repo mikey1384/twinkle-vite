@@ -9,6 +9,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useChatContext } from '~/contexts';
 
 SubChannels.propTypes = {
+  currentChannel: PropTypes.object,
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   displayedThemeColor: PropTypes.string,
   selectedChannelId: PropTypes.number,
@@ -18,6 +19,7 @@ SubChannels.propTypes = {
 };
 
 export default function SubChannels({
+  currentChannel,
   currentPathId,
   displayedThemeColor,
   selectedChannelId,
@@ -25,6 +27,9 @@ export default function SubChannels({
   subchannelObj,
   subchannelPath
 }) {
+  const currentChannelNumUnreads = useMemo(() => {
+    return currentChannel?.numUnreads || 0;
+  }, [currentChannel]);
   const onUpdateLastSubchannelPath = useChatContext(
     (v) => v.actions.onUpdateLastSubchannelPath
   );
@@ -38,6 +43,16 @@ export default function SubChannels({
     }
     return result;
   }, [subchannelIds, subchannelObj]);
+  const badgeShown = useMemo(() => {
+    return currentChannelNumUnreads > 0 && !!subchannelPath;
+  }, [currentChannelNumUnreads, subchannelPath]);
+  const badgeWidth = useMemo(() => {
+    const numDigits = 1;
+    if (numDigits === 1) {
+      return '2rem';
+    }
+    return `${Math.min(numDigits, 4)}.5rem`;
+  }, []);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
@@ -89,9 +104,40 @@ export default function SubChannels({
           }
           to={`/chat/${currentPathId}`}
         >
-          <nav className={!subchannelPath ? 'active' : ''}>
+          <nav
+            style={{ display: 'flex', alignItems: 'center' }}
+            className={!subchannelPath ? 'active' : ''}
+          >
             <Icon icon="home" />
-            <span style={{ marginLeft: '1rem' }}>Main (Wordle)</span>
+            <div
+              style={{
+                marginLeft: '1rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                flexGrow: 1
+              }}
+            >
+              <div>Main (Wordle)</div>
+              {badgeShown && (
+                <div
+                  style={{
+                    background: Color.rose(),
+                    display: 'flex',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '1.5rem',
+                    minWidth: badgeWidth,
+                    height: '2rem',
+                    borderRadius: '1rem',
+                    lineHeight: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                >
+                  {currentChannelNumUnreads}
+                </div>
+              )}
+            </div>
           </nav>
         </Link>
         {subchannels.map((subchannel) => {
