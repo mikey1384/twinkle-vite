@@ -53,7 +53,8 @@ export default function Subchannel({
       onClick={() =>
         onUpdateLastSubchannelPath({
           channelId: selectedChannelId,
-          path: subchannel.path
+          path: subchannel.path,
+          currentSubchannelPath: subchannelPath
         })
       }
     >

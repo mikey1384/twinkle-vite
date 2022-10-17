@@ -716,11 +716,12 @@ export default function ChatActions(dispatch) {
         viewerId
       });
     },
-    onUpdateLastSubchannelPath({ channelId, path }) {
+    onUpdateLastSubchannelPath({ channelId, path, currentSubchannelPath }) {
       return dispatch({
         type: 'UPDATE_LAST_SUBCHANNEL_PATH',
         channelId,
-        path
+        path,
+        currentSubchannelPath
       });
     },
     onUpdateCollectorsRankings(data) {

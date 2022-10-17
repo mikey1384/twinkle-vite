@@ -2069,6 +2069,15 @@ export default function ChatReducer(state, action) {
         lastSubchannelPaths: {
           ...state.lastSubchannelPaths,
           [action.channelId]: action.path
+        },
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            numUnreads: action.currentSubchannelPath
+              ? state.channelsObj[action.channelId].numUnreads
+              : 0
+          }
         }
       };
     case 'UPDATE_UPLOAD_PROGRESS': {
