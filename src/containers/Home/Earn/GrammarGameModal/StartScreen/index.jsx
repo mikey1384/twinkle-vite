@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Prompt from './Prompt';
 import Button from '~/components/Button';
+import Marble from './Marble';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
@@ -11,13 +11,10 @@ import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
 import Countdown from 'react-countdown';
+import { scoreTable, perfectScoreBonus } from '../constants';
 
 const grammarGameLabel = localize('grammarGame');
 const deviceIsMobile = isMobile(navigator);
-const firstLine = 'Answer 10 fill-in-the-blank grammar questions.';
-const secondLine = 'The faster you answer a question, the more XP you earn.';
-const thirdLine =
-  'You can only play up to 5 games per day. Try to earn as much XP as possible!';
 
 StartScreen.propTypes = {
   loading: PropTypes.bool,
@@ -43,7 +40,6 @@ export default function StartScreen({
   const checkNumGrammarGamesPlayedToday = useAppContext(
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
   );
-  const [screenIndex, setScreenIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     init();
@@ -56,11 +52,6 @@ export default function StartScreen({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onSetTimesPlayedToday]);
-  useEffect(() => {
-    setTimeout(() => setScreenIndex(1), 1500);
-    setTimeout(() => setScreenIndex(2), 4000);
-    setTimeout(() => setScreenIndex(3), 7500);
-  }, []);
 
   const maxTimesPlayedToday = useMemo(
     () => timesPlayedToday >= 5,
@@ -99,6 +90,17 @@ export default function StartScreen({
       >
         <div>
           <div
+            className={css`
+              background: linear-gradient(
+                to right,
+                ${Color.purple()} 5%,
+                ${Color.redOrange()} 100%
+              );
+              background-clip: text;
+              background-size: 400% 400%;
+              animation: Gradient 5s ease infinite;
+              text-fill-color: transparent;
+            `}
             style={{
               textAlign: 'center',
               fontWeight: 'bold',
@@ -110,29 +112,42 @@ export default function StartScreen({
           <div
             style={{ marginTop: '4rem', lineHeight: 1.7, textAlign: 'center' }}
           >
-            {screenIndex === 0 && <Prompt>{firstLine}</Prompt>}
-            {screenIndex === 1 && <Prompt>{secondLine}</Prompt>}
-            {screenIndex === 2 && <Prompt>{thirdLine}</Prompt>}
-            {screenIndex === 3 && (
-              <div>
-                <p>{firstLine}</p>
-                <p>{secondLine}</p>
-                <p>{thirdLine}</p>
-              </div>
-            )}
-          </div>
-          <div style={{ marginTop: '4rem', textAlign: 'center' }}>
+            <p>Answer 10 fill-in-the-blank grammar questions.</p>
+            <p style={{ marginTop: '1rem' }}>
+              The <b style={{ color: Color.redOrange() }}>faster</b> you answer
+              a question, the more <b style={{ color: Color.darkGold() }}>XP</b>{' '}
+              you earn.
+            </p>
             {!deviceIsMobile && (
-              <p>
+              <p style={{ marginTop: '1rem' }}>
                 You can use the <b>1, 2, 3, 4 keys</b> on your <b>keyboard</b>{' '}
                 or use your mouse to select the choices
               </p>
             )}
-            {!maxTimesPlayedToday && (
-              <p>
-                Press the <b>start</b> button when you are ready
-              </p>
-            )}
+            <div style={{ marginTop: '3rem' }}>
+              <div>
+                <Marble letterGrade="S" />{' '}
+                <b style={{ color: Color.logoGreen() }}>{scoreTable.S}</b>{' '}
+                <b style={{ color: Color.darkGold() }}>XP</b>
+                <Marble style={{ marginLeft: '1.5rem' }} letterGrade="A" />{' '}
+                <b style={{ color: Color.logoGreen() }}>{scoreTable.A}</b>{' '}
+                <b style={{ color: Color.darkGold() }}>XP</b>
+                <Marble style={{ marginLeft: '1.5rem' }} letterGrade="B" />{' '}
+                <b style={{ color: Color.logoGreen() }}>{scoreTable.B}</b>{' '}
+                <b style={{ color: Color.darkGold() }}>XP</b>
+              </div>
+              <div style={{ marginTop: '1rem' }}>
+                <Marble letterGrade="C" /> {scoreTable.C} XP
+                <Marble style={{ marginLeft: '1.5rem' }} letterGrade="D" />{' '}
+                {scoreTable.D} XP
+                <Marble style={{ marginLeft: '1.5rem' }} letterGrade="F" />{' '}
+                {scoreTable.F} XP
+              </div>
+              <div style={{ marginTop: '1rem' }}>
+                Perfect score bonus:{' '}
+                <b style={{ color: Color.purple() }}>x{perfectScoreBonus}</b>
+              </div>
+            </div>
           </div>
         </div>
         {loaded && (
