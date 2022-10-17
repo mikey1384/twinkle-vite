@@ -83,6 +83,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const chatType = useChatContext((v) => v.state.chatType);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
+  const onSetSelectedSubchannelId = useChatContext(
+    (v) => v.actions.onSetSelectedSubchannelId
+  );
 
   const subchannelPath = useMemo(() => {
     if (!currentPathId) return null;
@@ -102,6 +105,11 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     }
     return null;
   }, [currentChannel.subchannelObj, subchannelPath]);
+
+  useEffect(() => {
+    onSetSelectedSubchannelId(subchannelId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subchannelId]);
 
   const myStream = useChatContext((v) => v.state.myStream);
   const numUnreads = useChatContext((v) => v.state.numUnreads);

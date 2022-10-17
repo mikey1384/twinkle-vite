@@ -619,6 +619,12 @@ export default function ChatActions(dispatch) {
         subchannel
       });
     },
+    onSetSelectedSubchannelId(subchannelId) {
+      return dispatch({
+        type: 'SET_SELECTED_SUBCHANNEL_ID',
+        subchannelId
+      });
+    },
     onSetVocabErrorMessage(message) {
       return dispatch({
         type: 'SET_VOCAB_ERROR_MESSAGE',

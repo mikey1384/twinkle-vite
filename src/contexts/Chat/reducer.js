@@ -627,6 +627,7 @@ export default function ChatReducer(state, action) {
           }
         };
       }
+
       return {
         ...state,
         chatType: 'default',
@@ -1372,7 +1373,6 @@ export default function ChatReducer(state, action) {
             }
           }
         : prevChannelObj?.subchannelObj;
-
       return {
         ...state,
         numUnreads,
@@ -1384,9 +1384,10 @@ export default function ChatReducer(state, action) {
             messagesObj,
             lastChessMoveViewerId,
             members,
-            numUnreads: action.usingChat
-              ? 0
-              : Number(prevChannelObj.numUnreads) + 1,
+            numUnreads:
+              action.usingChat && (subchannelId || !action.currentSubchannelId)
+                ? Number(prevChannelObj.numUnreads)
+                : Number(prevChannelObj.numUnreads) + 1,
             gameState,
             isHidden: false,
             ...(subchannelObj ? { subchannelObj } : {})
@@ -1845,6 +1846,21 @@ export default function ChatReducer(state, action) {
         }
       };
     }
+    case 'SET_SELECTED_SUBCHANNEL_ID': {
+      return {
+        ...state,
+        selectedSubchannelId: action.subchannelId,
+        channelsObj: {
+          ...state.channelsObj,
+          [state.selectedChannelId]: {
+            ...state.channelsObj[state.selectedChannelId],
+            numUnreads: action.subchannelId
+              ? state.channelsObj[state.selectedChannelId].numUnreads
+              : 0
+          }
+        }
+      };
+    }
     case 'SET_SUBCHANNEL':
       return {
         ...state,
@@ -2134,7 +2150,9 @@ export default function ChatReducer(state, action) {
         selectedChannelObj = {
           [state.selectedChannelId]: {
             ...state.channelsObj[state.selectedChannelId],
-            numUnreads: 0
+            numUnreads: state.lastSubchannelPaths[state.selectedChannelId]
+              ? state.channelsObj[state.selectedChannelId].numUnreads
+              : 0
           }
         };
       }
@@ -2145,10 +2163,9 @@ export default function ChatReducer(state, action) {
         channelsObj: {
           ...state.channelsObj,
           ...selectedChannelObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            numUnreads: 0
-          }
+          numUnreads: state.lastSubchannelPaths[action.channelId]
+            ? state.channelsObj?.[action.channelId]?.numUnreads
+            : 0
         }
       };
     }
