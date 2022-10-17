@@ -172,6 +172,13 @@ function MainNavs({
       },
       pathname
     );
+    const videoQuestionPageMatch = matchPath(
+      {
+        path: '/videos/:id/questions',
+        exact: true
+      },
+      pathname
+    );
     const linkPageMatch = matchPath(
       {
         path: '/links/:id',
@@ -197,6 +204,7 @@ function MainNavs({
       !!subjectPageMatch ||
       !!playlistsMatch ||
       !!videoPageMatch ||
+      !!videoQuestionPageMatch ||
       !!linkPageMatch ||
       !!commentPageMatch ||
       !!missionPageMatch
