@@ -1849,16 +1849,7 @@ export default function ChatReducer(state, action) {
     case 'SET_SELECTED_SUBCHANNEL_ID': {
       return {
         ...state,
-        selectedSubchannelId: action.subchannelId,
-        channelsObj: {
-          ...state.channelsObj,
-          [state.selectedChannelId]: {
-            ...state.channelsObj[state.selectedChannelId],
-            numUnreads: state.lastSubchannelPaths?.[state.selectedChannelId]
-              ? state.channelsObj?.[state.selectedChannelId]?.numUnreads || 0
-              : 0
-          }
-        }
+        selectedSubchannelId: action.subchannelId
       };
     }
     case 'SET_SUBCHANNEL':
