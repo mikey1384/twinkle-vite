@@ -138,6 +138,7 @@ export default function NotiReducer(state, action) {
         ...state,
         todayStats: {
           ...state.todayStats,
+          grammarbleChamp: action.grammarbleChamp,
           xpEarned: action.xpEarned,
           coinsEarned: action.coinsEarned,
           loaded: true

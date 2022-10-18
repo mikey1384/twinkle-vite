@@ -227,8 +227,9 @@ function App() {
       handleLoadTodayStats();
     }
     async function handleLoadTodayStats() {
-      const { xpEarned, coinsEarned } = await fetchTodayStats();
-      onUpdateTodayStats({ xpEarned, coinsEarned });
+      const { xpEarned, coinsEarned, grammarbleChamp } =
+        await fetchTodayStats();
+      onUpdateTodayStats({ xpEarned, coinsEarned, grammarbleChamp });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [twinkleXP, twinkleCoins, userId]);
