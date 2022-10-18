@@ -21,6 +21,7 @@ AddModeratorModal.propTypes = {
 };
 
 export default function AddModeratorModal({ accountTypes, onHide }) {
+  const [loading, setLoading] = useState(false);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -146,7 +147,7 @@ export default function AddModeratorModal({ accountTypes, onHide }) {
         <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
           Cancel
         </Button>
-        <Button color={doneColor} onClick={handleSubmit}>
+        <Button loading={loading} color={doneColor} onClick={handleSubmit}>
           Done
         </Button>
       </footer>
@@ -173,6 +174,7 @@ export default function AddModeratorModal({ accountTypes, onHide }) {
   }
 
   async function handleSubmit() {
+    setLoading(true);
     const newModerators = selectedUsers.filter((user) => !!user.userType);
     await addModerators(newModerators);
     onEditModerators(newModerators);
