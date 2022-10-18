@@ -205,6 +205,13 @@ export function Theme(color = 'logoBlue') {
           gold: 'darkBrownOrange'
         }[color] || ''
     },
+    todayProgressText: {
+      color,
+      shadow:
+        {
+          gold: 'darkGold'
+        }[color] || ''
+    },
     danger: {
       color:
         {

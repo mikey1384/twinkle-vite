@@ -1,11 +1,19 @@
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
-import { useNotiContext } from '~/contexts';
+import { useKeyContext, useNotiContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Loading from '~/components/Loading';
 
 export default function TodayStats() {
+  const theme = useKeyContext((v) => v.theme);
+  const {
+    todayProgressText: {
+      color: todayProgressTextColor,
+      shadow: todayProgressTextShadowColor
+    },
+    xpNumber: { color: xpNumberColor }
+  } = theme;
   const todayStats = useNotiContext((v) => v.state.todayStats);
 
   return (
@@ -22,10 +30,30 @@ export default function TodayStats() {
       >
         {todayStats?.loaded ? (
           <div>
-            <b style={{ fontSize: '1.7rem' }}>{`Today's Progress`}</b>
+            <b
+              className={css`
+                color: ${Color[todayProgressTextColor]()};
+                ${todayProgressTextShadowColor
+                  ? `text-shadow: 0.05rem 0.05rem ${Color[
+                      todayProgressTextShadowColor
+                    ]()};`
+                  : ''}
+              `}
+              style={{ fontSize: '1.7rem' }}
+            >{`Today's Progress`}</b>
             <div style={{ marginTop: '1rem' }}>
-              <p>XP Earned: {addCommasToNumber(todayStats.xpEarned)}</p>
-              <p>Coins Earned: {addCommasToNumber(todayStats.coinsEarned)}</p>
+              <p
+                style={{
+                  fontWeight: 'bold',
+                  color: Color[xpNumberColor]()
+                }}
+              >
+                {addCommasToNumber(todayStats.xpEarned)}{' '}
+                <b style={{ color: Color.gold() }}>XP</b>
+              </p>
+              <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
+                {addCommasToNumber(todayStats.coinsEarned)} Coins
+              </p>
             </div>
           </div>
         ) : (
