@@ -48,6 +48,7 @@ MessageInput.propTypes = {
   onHeightChange: PropTypes.func.isRequired,
   onMessageSubmit: PropTypes.func.isRequired,
   onSelectVideoButtonClick: PropTypes.func.isRequired,
+  onSetTextAreaHeight: PropTypes.func.isRequired,
   replyTarget: PropTypes.object,
   recepientId: PropTypes.number,
   socketConnected: PropTypes.bool,
@@ -72,6 +73,7 @@ export default function MessageInput({
   onHeightChange,
   onMessageSubmit,
   onSelectVideoButtonClick,
+  onSetTextAreaHeight,
   replyTarget,
   recepientId,
   socketConnected,
@@ -453,6 +455,7 @@ export default function MessageInput({
           fileObj={fileObj}
           onUpload={() => {
             handleSetText('');
+            onSetTextAreaHeight(0);
             setUploadModalShown(false);
           }}
           replyTarget={replyTarget}
