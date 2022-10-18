@@ -296,6 +296,7 @@ export default function Stories() {
       onLoadMoreFeeds(data);
     } catch (error) {
       console.error(error);
+      lastFeedRef.current = null;
     }
     setLoadingMore(false);
   }
