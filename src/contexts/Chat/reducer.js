@@ -1386,7 +1386,7 @@ export default function ChatReducer(state, action) {
             lastChessMoveViewerId,
             members,
             numUnreads:
-              action.usingChat && (subchannelId || !action.currentSubchannelId)
+              subchannelId || (action.usingChat && !action.currentSubchannelId)
                 ? Number(prevChannelObj.numUnreads)
                 : Number(prevChannelObj.numUnreads) + 1,
             gameState,
