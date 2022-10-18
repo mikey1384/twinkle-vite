@@ -1282,6 +1282,7 @@ function MessagesContainer({
             }
           }}
           onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
+          onSetTextAreaHeight={setTextAreaHeight}
           recepientId={recepientId}
           replyTarget={replyTarget}
           subchannelId={subchannel?.id}
