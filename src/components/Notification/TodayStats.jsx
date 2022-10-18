@@ -56,8 +56,8 @@ export default function TodayStats() {
                 />
               </div>{' '}
               <b style={{ color: Color.green(), fontSize: '1.3rem' }}>
-                ({todayStats?.grammarbleChamp?.bestStreak} perfect games in a
-                row)
+                {todayStats?.grammarbleChamp?.bestStreak} perfect games in a
+                row!
               </b>
             </div>
             <div style={{ marginTop: '2rem' }}>
