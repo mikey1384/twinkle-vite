@@ -48,11 +48,14 @@ export default function TodayStats() {
                   color: Color[xpNumberColor]()
                 }}
               >
+                {todayStats.xpEarned > 0 ? '+' : ''}
                 {addCommasToNumber(todayStats.xpEarned)}{' '}
                 <b style={{ color: Color.gold() }}>XP</b>
               </p>
               <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
-                {addCommasToNumber(todayStats.coinsEarned)} Coins
+                {todayStats.coinsEarned > 0 ? '+' : ''}
+                {addCommasToNumber(todayStats.coinsEarned)} Coin
+                {todayStats.coinsEarned === 1 ? '' : 's'}
               </p>
             </div>
           </div>
