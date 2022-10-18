@@ -388,36 +388,41 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         handleLoadChat(selectedChannelId);
       }
 
-      async function handleLoadChat() {
-        onSetReconnecting(true);
-        const pathId = Number(currentPathId);
-        let currentChannelIsAccessible = true;
-        if (!isNaN(pathId)) {
-          const { isAccessible } = await checkChatAccessible(pathId);
-          currentChannelIsAccessible = isAccessible;
-        }
-        const data = await loadChat({
-          channelId: !isNaN(pathId)
-            ? parseChannelPath(pathId)
-            : selectedChannelId,
-          subchannelPath
-        });
-        onInitChat(data);
-        socket.emit(
-          'check_online_members',
-          selectedChannelId,
-          ({ membersOnline }) => {
-            const members = Object.values(membersOnline);
-            const onlineMemberIds = members.map((member) => member.id);
-            onSetOnlineMembers(onlineMemberIds);
-            for (let member of members) {
-              onSetOnlineUserData(member);
-            }
+      async function handleLoadChat(selectedChannelId) {
+        try {
+          onSetReconnecting(true);
+          const pathId = Number(currentPathId);
+          let currentChannelIsAccessible = true;
+          if (!isNaN(pathId)) {
+            const { isAccessible } = await checkChatAccessible(pathId);
+            currentChannelIsAccessible = isAccessible;
           }
-        );
-        if (!currentChannelIsAccessible) {
-          onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-          return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+          const data = await loadChat({
+            channelId: !isNaN(pathId)
+              ? parseChannelPath(pathId)
+              : selectedChannelId,
+            subchannelPath
+          });
+          onInitChat(data);
+          socket.emit(
+            'check_online_members',
+            selectedChannelId,
+            ({ membersOnline }) => {
+              const members = Object.values(membersOnline);
+              const onlineMemberIds = members.map((member) => member.id);
+              onSetOnlineMembers(onlineMemberIds);
+              for (let member of members) {
+                onSetOnlineUserData(member);
+              }
+            }
+          );
+          if (!currentChannelIsAccessible) {
+            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+            return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+          }
+        } catch (error) {
+          console.error(error);
+          setTimeout(() => handleLoadChat(selectedChannelId), 3000);
         }
       }
 
