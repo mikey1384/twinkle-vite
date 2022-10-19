@@ -296,9 +296,9 @@ export default function XPRewardInterface({
           <Button
             color={selectedAmount > 4 ? rewardColor : 'logoBlue'}
             filled
+            loading={rewarding}
             disabled={
               !!rewardCommentExceedsCharLimit ||
-              rewarding ||
               selectedAmount === 0 ||
               (requiresPayment &&
                 twinkleCoins < selectedAmount * priceTable.reward)
