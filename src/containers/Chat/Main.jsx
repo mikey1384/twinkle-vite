@@ -562,7 +562,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [selectedChannelId]);
 
   const currentChannelOnlineMembers = useMemo(() => {
-    if (currentChannel.id === GENERAL_CHAT_ID) {
+    if (currentChannel?.id === GENERAL_CHAT_ID) {
       const result = {};
       for (let member of Object.values(chatStatus)) {
         if (member?.isOnline) {
@@ -579,7 +579,7 @@ export default function Main({ currentPathId, onFileUpload }) {
       result[member.id] = member;
     }
     return result;
-  }, [chatStatus, currentChannel.id, currentChannel?.members]);
+  }, [chatStatus, currentChannel?.id, currentChannel?.members]);
 
   const handleCreateNewChannel = useCallback(
     async ({ userId, channelName, isClosed }) => {
@@ -736,7 +736,7 @@ export default function Main({ currentPathId, onFileUpload }) {
         onFileUpload
       }}
     >
-      <ErrorBoundary componentPath="Chat/index">
+      <ErrorBoundary componentPath="Chat/Main">
         {userId ? (
           loaded ? (
             <div
