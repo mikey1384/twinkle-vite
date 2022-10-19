@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ListItem from './ListItem';
 import { css } from '@emotion/css';
@@ -46,8 +46,18 @@ export default function ChoiceList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const shownRef = useRef(shown);
+  const delayRef = useRef(false);
+
+  useEffect(() => {
+    shownRef.current = shown;
+  }, [shown]);
+
   useEffect(() => {
     const listener = (e) => {
+      if (!shownRef.current || delayRef.current) {
+        return;
+      }
       if (e.key === '1') {
         handleSelect(0);
       } else if (e.key === '2') {
@@ -57,6 +67,10 @@ export default function ChoiceList({
       } else if (e.key === '4') {
         handleSelect(3);
       }
+      delayRef.current = true;
+      setTimeout(() => {
+        delayRef.current = false;
+      }, 500);
       return;
     };
     window.addEventListener('keydown', listener);

@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
 import { useKeyContext, useNotiContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import UsernameText from '~/components/Texts/UsernameText';
 import Loading from '~/components/Loading';
 
 export default function TodayStats() {
@@ -31,36 +30,7 @@ export default function TodayStats() {
       >
         {todayStats?.loaded ? (
           <div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column'
-              }}
-            >
-              <b
-                className={css`
-                  text-shadow: 0.05rem 0.05rem ${Color.darkGold()};
-                `}
-                style={{ color: Color.gold(), fontSize: '1.7rem' }}
-              >
-                Grammarbles World Record
-              </b>
-              <div>
-                <UsernameText
-                  color={Color.logoBlue()}
-                  style={{ fontSize: '1.7rem' }}
-                  user={{
-                    username: todayStats?.grammarbleChamp?.username,
-                    id: todayStats?.grammarbleChamp?.userId
-                  }}
-                />
-              </div>{' '}
-              <b style={{ color: Color.green(), fontSize: '1.3rem' }}>
-                {todayStats?.grammarbleChamp?.bestStreak} perfect games in a
-                row!
-              </b>
-            </div>
-            <div style={{ marginTop: '2rem' }}>
+            <div>
               <b
                 className={css`
                   color: ${Color[todayProgressTextColor]()};
