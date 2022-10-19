@@ -32,6 +32,7 @@ export default function Main({
   const [elapsedTime, setElapsedTime] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
   const loadingRef = useRef(false);
+  const isWrongRef = useRef(false);
 
   const Slides = useMemo(() => {
     if (!questionIds || questionIds?.length === 0) return null;
@@ -48,7 +49,7 @@ export default function Main({
       />
     ));
     async function handleSelectCorrectAnswer() {
-      if (!loadingRef.current) {
+      if (!loadingRef.current && !isWrongRef.current) {
         clearTimeout(timerRef.current);
         loadingRef.current = true;
         const score = handleReturnCalculatedScore(elapsedTime);
@@ -73,8 +74,14 @@ export default function Main({
       }
     }
     function handleSetGotWrong(index) {
+      let delay = 1000;
+      if (!isWrongRef.current) {
+        isWrongRef.current = true;
+      } else {
+        delay = 3000;
+      }
+      clearTimeout(gotWrongTimerRef.current);
       if (!loadingRef.current) {
-        loadingRef.current = true;
         setGotWrong(true);
         onSetQuestionObj((prev) => ({
           ...prev,
@@ -83,33 +90,19 @@ export default function Main({
             selectedChoiceIndex: index
           }
         }));
-        gotWrongTimerRef.current = setTimeout(() => {
-          onSetQuestionObj((prev) => ({
-            ...prev,
-            [currentIndex]: {
-              ...prev[currentIndex],
-              wasWrong: true,
-              selectedChoiceIndex: null
-            }
-          }));
-          setGotWrong(false);
-          loadingRef.current = false;
-        }, 1000);
-      } else {
-        clearTimeout(gotWrongTimerRef.current);
-        gotWrongTimerRef.current = setTimeout(() => {
-          onSetQuestionObj((prev) => ({
-            ...prev,
-            [currentIndex]: {
-              ...prev[currentIndex],
-              wasWrong: true,
-              selectedChoiceIndex: null
-            }
-          }));
-          setGotWrong(false);
-          loadingRef.current = false;
-        }, 1000);
       }
+      gotWrongTimerRef.current = setTimeout(() => {
+        onSetQuestionObj((prev) => ({
+          ...prev,
+          [currentIndex]: {
+            ...prev[currentIndex],
+            wasWrong: true,
+            selectedChoiceIndex: null
+          }
+        }));
+        setGotWrong(false);
+        isWrongRef.current = false;
+      }, delay);
     }
     async function handleGameFinish() {
       setIsCompleted(true);
