@@ -48,6 +48,7 @@ export default function ChoiceList({
 
   const shownRef = useRef(shown);
   const delayRef = useRef(false);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     shownRef.current = shown;
@@ -55,7 +56,15 @@ export default function ChoiceList({
 
   useEffect(() => {
     const listener = (e) => {
-      if (!shownRef.current || delayRef.current) {
+      if (!shownRef.current) {
+        return;
+      }
+      if (delayRef.current) {
+        clearTimeout(timerRef.current);
+        delayRef.current = true;
+        timerRef.current = setTimeout(() => {
+          delayRef.current = false;
+        }, 1500);
         return;
       }
       if (e.key === '1') {
@@ -68,9 +77,9 @@ export default function ChoiceList({
         handleSelect(3);
       }
       delayRef.current = true;
-      setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         delayRef.current = false;
-      }, 500);
+      }, 1000);
       return;
     };
     window.addEventListener('keydown', listener);
