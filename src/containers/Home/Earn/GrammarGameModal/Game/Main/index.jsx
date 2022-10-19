@@ -74,7 +74,7 @@ export default function Main({
       }
     }
     function handleSetGotWrong(index) {
-      let delay = 1000;
+      let delay = 2000;
       if (!isWrongRef.current) {
         isWrongRef.current = true;
       } else {

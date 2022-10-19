@@ -50,7 +50,7 @@ export default function QuestionSlide({
             align-items: center;
             .jiggle-jiggle-jiggle {
               animation: jiggle-jiggle-jiggle linear;
-              animation-duration: 1000ms;
+              animation-duration: 2000ms;
             }
             @media (max-width: ${mobileMaxWidth}) {
               > h3 {
