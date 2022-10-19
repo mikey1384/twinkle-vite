@@ -34,7 +34,7 @@ function LikeButton({
   const likeContent = useAppContext((v) => v.requestHelpers.likeContent);
   const onLikeContent = useContentContext((v) => v.actions.onLikeContent);
   const { userId, profileTheme } = useKeyContext((v) => v.myState);
-  const [disabled, setDisabled] = useState(false);
+  const [loading, setLoading] = useState(false);
   const liked = useMemo(() => {
     let userLikedThis = false;
     for (let i = 0; i < likes.length; i++) {
@@ -51,7 +51,7 @@ function LikeButton({
     <ErrorBoundary componentPath="LikeButton">
       <Button
         componentPath="LikeButton"
-        disabled={disabled}
+        loading={loading}
         className={className}
         color={
           (filled && liked) || !filled
@@ -62,7 +62,7 @@ function LikeButton({
         style={style}
         onClick={async () => {
           try {
-            setDisabled(true);
+            setLoading(true);
             const newLikes = await likeContent({
               id: contentId,
               contentType
@@ -71,9 +71,9 @@ function LikeButton({
               onLikeContent({ likes: newLikes, contentType, contentId });
               onClick({ likes: newLikes, isUnlike: liked });
             }
-            setDisabled(false);
+            setLoading(false);
           } catch (error) {
-            setDisabled(false);
+            setLoading(false);
             return console.error(error);
           }
         }}
