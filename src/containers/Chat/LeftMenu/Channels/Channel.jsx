@@ -138,6 +138,15 @@ function Channel({
       return '\u00a0';
     }
   }, [lastMessage, userId]);
+
+  const totalNumUnreads = useMemo(() => {
+    let result = Number(numUnreads);
+    for (let subchannel of Object.values(subchannelObj)) {
+      result += Number(subchannel.numUnreads || 0);
+    }
+    return result;
+  }, [numUnreads, subchannelObj]);
+
   const otherMember = twoPeople
     ? members
         ?.filter(({ id: memberId }) => memberId !== userId)
@@ -169,24 +178,24 @@ function Channel({
   const badgeShown = useMemo(() => {
     return (
       channelId !== selectedChannelId &&
-      numUnreads > 0 &&
+      totalNumUnreads > 0 &&
       lastMessage?.sender?.id !== userId
     );
   }, [
     channelId,
     lastMessage?.sender?.id,
-    numUnreads,
+    totalNumUnreads,
     selectedChannelId,
     userId
   ]);
 
   const badgeWidth = useMemo(() => {
-    const numDigits = numUnreads?.toString?.()?.length || 1;
+    const numDigits = totalNumUnreads?.toString?.()?.length || 1;
     if (numDigits === 1) {
       return '2rem';
     }
     return `${Math.min(numDigits, 4)}.5rem`;
-  }, [numUnreads]);
+  }, [totalNumUnreads]);
 
   return (
     <div
@@ -279,7 +288,7 @@ function Channel({
               alignItems: 'center'
             }}
           >
-            {numUnreads}
+            {totalNumUnreads}
           </div>
         )}
       </div>
