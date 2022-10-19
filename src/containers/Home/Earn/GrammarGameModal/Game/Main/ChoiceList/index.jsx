@@ -165,7 +165,6 @@ export default function ChoiceList({
             selectedChoiceIndex={selectedChoiceIndex}
             listItem={listItem}
             onSelect={handleSelect}
-            gotWrong={gotWrong}
             index={index}
           />
         );

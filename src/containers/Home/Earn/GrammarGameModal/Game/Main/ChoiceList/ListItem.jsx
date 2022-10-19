@@ -5,7 +5,6 @@ import { Color } from '~/constants/css';
 
 ListItem.propTypes = {
   answerIndex: PropTypes.number,
-  gotWrong: PropTypes.bool,
   listItem: PropTypes.string.isRequired,
   index: PropTypes.number,
   isCompleted: PropTypes.bool,
@@ -16,7 +15,6 @@ ListItem.propTypes = {
 export default function ListItem({
   listItem,
   index,
-  gotWrong,
   answerIndex,
   selectedChoiceIndex,
   onSelect,
@@ -47,7 +45,7 @@ export default function ListItem({
           background: ${Color.highlightGray()};
         }
       `}`}
-      onMouseDown={() => (gotWrong ? null : onSelect(index))}
+      onMouseDown={() => onSelect(index)}
       key={index}
     >
       <div style={{ padding: '0', textAlign: 'center' }}>

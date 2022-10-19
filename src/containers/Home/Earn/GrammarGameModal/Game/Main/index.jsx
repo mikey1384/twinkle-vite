@@ -95,6 +95,20 @@ export default function Main({
           setGotWrong(false);
           loadingRef.current = false;
         }, 1000);
+      } else {
+        clearTimeout(gotWrongTimerRef.current);
+        gotWrongTimerRef.current = setTimeout(() => {
+          onSetQuestionObj((prev) => ({
+            ...prev,
+            [currentIndex]: {
+              ...prev[currentIndex],
+              wasWrong: true,
+              selectedChoiceIndex: null
+            }
+          }));
+          setGotWrong(false);
+          loadingRef.current = false;
+        }, 1000);
       }
     }
     async function handleGameFinish() {
