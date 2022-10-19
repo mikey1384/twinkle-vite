@@ -5,6 +5,7 @@ import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
 import correct from './correct_sound.mp3';
+import { isMobile } from '~/helpers';
 
 Main.propTypes = {
   isOnStreak: PropTypes.bool,
@@ -14,6 +15,7 @@ Main.propTypes = {
   questionObj: PropTypes.object
 };
 
+const deviceIsMobile = isMobile(navigator);
 const correctSound = new Audio(correct);
 
 export default function Main({
@@ -58,7 +60,9 @@ export default function Main({
             selectedChoiceIndex: prev[currentIndex].answerIndex
           }
         }));
-        correctSound.play();
+        if (!deviceIsMobile) {
+          correctSound.play();
+        }
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (currentIndex < questionIds.length - 1) {
           setCurrentIndex((prev) => prev + 1);
