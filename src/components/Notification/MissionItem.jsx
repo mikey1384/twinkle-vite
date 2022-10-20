@@ -1,36 +1,21 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import PropTypes from 'prop-types';
 import Link from '~/components/Link';
-import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { textIsOverflown } from '~/helpers';
 
 MissionItem.propTypes = {
-  completed: PropTypes.bool,
   missionName: PropTypes.string,
-  taskProgress: PropTypes.string,
   missionType: PropTypes.string,
   style: PropTypes.object
 };
 
-export default function MissionItem({
-  completed,
-  missionName,
-  taskProgress,
-  missionType,
-  style
-}) {
+export default function MissionItem({ missionName, missionType, style }) {
   const NameRef = useRef(null);
-  const [nameContext, setNameContext] = useState(null);
   return (
     <div
       style={style}
       className={css`
-        border: 1px solid ${Color.borderGray()};
-        border-radius: ${borderRadius};
-        width: 15rem;
-        height: 15rem;
         display: flex;
         flex-direction: column;
         @media (max-width: ${mobileMaxWidth}) {
@@ -53,54 +38,17 @@ export default function MissionItem({
       >
         <Link
           innerRef={NameRef}
-          onMouseOver={handleMouseOver}
-          onMouseLeave={() => setNameContext(null)}
           to={`/missions/${missionType}`}
           style={{
-            color: completed ? Color.green() : Color.black(),
             width: '100%',
             textAlign: 'center',
             fontSize: '1.2rem',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden'
+            fontWeight: 'bold'
           }}
         >
           {missionName}
         </Link>
-        {nameContext && (
-          <FullTextReveal
-            textContext={nameContext}
-            text={missionName}
-            style={{ fontSize: '1.3rem' }}
-          />
-        )}
-        {taskProgress && !completed ? (
-          <div
-            style={{
-              textAlign: 'center',
-              fontWeight: 'bold',
-              color: Color.green()
-            }}
-          >
-            {taskProgress} complete
-          </div>
-        ) : null}
       </div>
     </div>
   );
-
-  function handleMouseOver() {
-    if (textIsOverflown(NameRef.current)) {
-      const parentElementDimensions =
-        NameRef.current?.getBoundingClientRect?.() || {
-          x: 0,
-          y: 0,
-          width: 0,
-          height: 0
-        };
-      setNameContext(parentElementDimensions);
-    }
-  }
 }
