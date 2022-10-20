@@ -234,10 +234,12 @@ function App() {
         unansweredChessMsgChannelId
       } = await fetchTodayStats();
       onUpdateTodayStats({
-        xpEarned,
-        coinsEarned,
-        nextMission,
-        unansweredChessMsgChannelId
+        newStats: {
+          xpEarned,
+          coinsEarned,
+          nextMission,
+          unansweredChessMsgChannelId
+        }
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

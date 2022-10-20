@@ -41,6 +41,9 @@ export default function TopMenu({
   const navigate = useNavigate();
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const topMenuSection = useHomeContext((v) => v.state.topMenuSection);
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
@@ -174,6 +177,7 @@ export default function TopMenu({
   function handleChessButtonClick() {
     setLoadingChat(true);
     onUpdateSelectedChannelId(todayStats.unansweredChessMsgChannelId);
+    onUpdateTodayStats({ newStats: { unansweredChessMsgChannelId: null } });
     return setTimeout(() => {
       navigate(
         `/chat/${
@@ -183,7 +187,7 @@ export default function TopMenu({
       );
       setTimeout(() => {
         onSetChessModalShown(true);
-      }, 10);
+      }, 1000);
     }, 10);
   }
 }
