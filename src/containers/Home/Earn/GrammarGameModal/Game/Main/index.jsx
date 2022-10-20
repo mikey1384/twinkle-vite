@@ -33,6 +33,7 @@ export default function Main({
   const [gotWrong, setGotWrong] = useState(false);
   const loadingRef = useRef(false);
   const isWrongRef = useRef(false);
+  const numWrong = useRef(0);
 
   const Slides = useMemo(() => {
     if (!questionIds || questionIds?.length === 0) return null;
@@ -67,6 +68,7 @@ export default function Main({
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (currentIndex < questionIds.length - 1) {
           setCurrentIndex((prev) => prev + 1);
+          numWrong.current = 0;
           loadingRef.current = false;
         } else {
           handleGameFinish();
@@ -74,12 +76,13 @@ export default function Main({
       }
     }
     function handleSetGotWrong(index) {
-      let delay = 2000;
+      let delay = 1000;
       if (!isWrongRef.current) {
         isWrongRef.current = true;
       } else {
         delay = 3000;
       }
+      numWrong.current = numWrong.current + 1;
       clearTimeout(gotWrongTimerRef.current);
       if (!loadingRef.current) {
         setGotWrong(true);
@@ -145,12 +148,13 @@ export default function Main({
           );
         }
       }
+      const measureTime = elapsedTime + numWrong.current * 500;
       const baseTime = baseLetterLengthTime + baseNumWordsTime;
-      if (elapsedTime < baseTime * 0.35) return 'S';
-      if (elapsedTime < baseTime * 0.55) return 'A';
-      if (elapsedTime < baseTime * 0.75) return 'B';
-      if (elapsedTime < baseTime * 0.9) return 'C';
-      if (elapsedTime < baseTime * 1) return 'D';
+      if (measureTime < baseTime * 0.35) return 'S';
+      if (measureTime < baseTime * 0.55) return 'A';
+      if (measureTime < baseTime * 0.75) return 'B';
+      if (measureTime < baseTime * 0.9) return 'C';
+      if (measureTime < baseTime * 1) return 'D';
       return 'F';
     }
   }, [
