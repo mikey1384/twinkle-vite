@@ -928,9 +928,9 @@ export default function ChatReducer(state, action) {
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             loaded: false,
-            members: state.channelsObj[action.channelId]?.members?.filter(
-              (member) => member.id !== action.userId
-            )
+            members: (
+              state.channelsObj[action.channelId]?.members || []
+            )?.filter((member) => member.id !== action.userId)
           }
         },
         allFavoriteChannelIds: {
@@ -1209,7 +1209,7 @@ export default function ChatReducer(state, action) {
                 },
                 numUnreads: 0,
                 members: (
-                  state.channelsObj[action.data.channelId].members || []
+                  state.channelsObj[action.data.channelId]?.members || []
                 ).filter((member) => member.id !== action.data.userId)
               }
             }
@@ -1474,7 +1474,7 @@ export default function ChatReducer(state, action) {
                         ...prevChannelObj?.members,
                         ...action.newMembers.filter(
                           (newMember) =>
-                            !prevChannelObj?.members
+                            !(prevChannelObj?.members || [])
                               .map((member) => member.id)
                               .includes(newMember.id)
                         )
