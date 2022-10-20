@@ -1,6 +1,6 @@
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { Color, borderRadius } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useNotiContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import MissionLink from './MissionLink';
@@ -27,6 +27,11 @@ export default function TodayStats() {
           border-radius: ${borderRadius};
           border: 1px solid ${Color.borderGray()};
           background: #fff;
+          @media (max-width: ${mobileMaxWidth}) {
+            border-radius: 0;
+            border-left: 0;
+            border-right: 0;
+          }
         `}
       >
         {todayStats?.loaded ? (
