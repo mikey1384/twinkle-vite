@@ -118,18 +118,10 @@ export default function NotiActions(dispatch) {
         shown
       });
     },
-    onUpdateTodayStats({
-      xpEarned,
-      coinsEarned,
-      nextMission,
-      unansweredChessMsgChannelId
-    }) {
+    onUpdateTodayStats({ newStats }) {
       return dispatch({
         type: 'UPDATE_TODAY_STATS',
-        xpEarned,
-        coinsEarned,
-        nextMission,
-        unansweredChessMsgChannelId
+        newStats
       });
     }
   };

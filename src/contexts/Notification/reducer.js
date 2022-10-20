@@ -138,10 +138,7 @@ export default function NotiReducer(state, action) {
         ...state,
         todayStats: {
           ...state.todayStats,
-          nextMission: action.nextMission,
-          xpEarned: action.xpEarned,
-          coinsEarned: action.coinsEarned,
-          unansweredChessMsgChannelId: action.unansweredChessMsgChannelId,
+          ...action.newStats,
           loaded: true
         }
       };
