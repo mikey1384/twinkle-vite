@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import Link from '~/components/Link';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import RewardText from '~/components/Texts/RewardText';
 import { css } from '@emotion/css';
 
 MissionItem.propTypes = {
@@ -40,18 +41,41 @@ export default function MissionItem({
           height: '100%'
         }}
       >
-        Your next mission:
+        <p
+          style={{
+            marginTop: '1.3rem',
+            fontWeight: 'bold',
+            color: Color.green()
+          }}
+        >
+          Your next mission:
+        </p>
         <Link
           to={`/missions/${missionType}`}
           style={{
             width: '100%',
             textAlign: 'center',
-            fontSize: '1.2rem',
-            fontWeight: 'bold'
+            marginTop: '0.5rem',
+            fontSize: '1.6rem',
+            fontWeight: 'bold',
+            color: Color.logoBlue()
           }}
         >
-          {missionName} {xpReward} {coinReward}
+          {missionName}
         </Link>
+        <div>
+          <RewardText
+            labelClassName={css`
+              color: ${Color.darkerGray()};
+              font-size: 1.2rem;
+            `}
+            rewardClassName={css`
+              font-size: 1.2rem;
+            `}
+            xpReward={xpReward}
+            coinReward={coinReward}
+          />
+        </div>
       </div>
     </div>
   );
