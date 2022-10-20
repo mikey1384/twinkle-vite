@@ -118,12 +118,12 @@ export default function NotiActions(dispatch) {
         shown
       });
     },
-    onUpdateTodayStats({ xpEarned, coinsEarned, grammarbleChamp }) {
+    onUpdateTodayStats({ xpEarned, coinsEarned, nextMission }) {
       return dispatch({
         type: 'UPDATE_TODAY_STATS',
         xpEarned,
         coinsEarned,
-        grammarbleChamp
+        nextMission
       });
     }
   };
