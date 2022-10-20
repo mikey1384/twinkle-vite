@@ -151,7 +151,8 @@ export default function Main({
           );
         }
       }
-      const measureTime = elapsedTime + numWrong.current * 500;
+      const measureTime =
+        elapsedTime + handleCalculatePenalty(numWrong.current);
       const baseTime = baseLetterLengthTime + baseNumWordsTime;
       if (measureTime < baseTime * 0.35) return 'S';
       if (measureTime < baseTime * 0.45) return 'A';
@@ -195,5 +196,11 @@ export default function Main({
     timerRef.current = setInterval(() => {
       setElapsedTime((elapsedTime) => elapsedTime + 1);
     }, 1);
+  }
+
+  function handleCalculatePenalty(numWrong) {
+    if (numWrong === 0) return 0;
+    if (numWrong === 1) return 50;
+    if (numWrong >= 2) return numWrong * 1000;
   }
 }
