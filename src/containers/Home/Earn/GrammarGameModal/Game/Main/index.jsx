@@ -123,7 +123,7 @@ export default function Main({
           numLetters += choice.length;
         }
         baseLetterLengthTime = Math.max(
-          numLetters * 9,
+          numLetters * 6,
           defaultBaseLetterLengthTime
         );
         if (wasWrong) {
@@ -140,7 +140,10 @@ export default function Main({
         for (let choice of choices) {
           numWords += choice.split(' ').length;
         }
-        baseNumWordsTime = numWords * 100;
+        baseNumWordsTime = Math.max(
+          numWords * 50,
+          defaultBaseNumWordsTime / 1.2
+        );
         if (wasWrong) {
           baseNumWordsTime = Math.min(
             baseNumWordsTime,
@@ -152,8 +155,8 @@ export default function Main({
       const baseTime = baseLetterLengthTime + baseNumWordsTime;
       if (measureTime < baseTime * 0.3) return 'S';
       if (measureTime < baseTime * 0.4) return 'A';
-      if (measureTime < baseTime * 0.55) return 'B';
-      if (measureTime < baseTime * 0.75) return 'C';
+      if (measureTime < baseTime * 0.5) return 'B';
+      if (measureTime < baseTime * 0.6) return 'C';
       if (measureTime < baseTime * 1) return 'D';
       return 'F';
     }
