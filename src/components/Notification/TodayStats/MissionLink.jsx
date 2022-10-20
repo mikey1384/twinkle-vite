@@ -8,14 +8,16 @@ MissionLink.propTypes = {
   missionName: PropTypes.string,
   missionType: PropTypes.string,
   xpReward: PropTypes.number,
-  coinReward: PropTypes.number
+  coinReward: PropTypes.number,
+  rootMissionType: PropTypes.string
 };
 
 export default function MissionLink({
   missionName,
   missionType,
   xpReward,
-  coinReward
+  coinReward,
+  rootMissionType
 }) {
   return (
     <div
@@ -35,7 +37,9 @@ export default function MissionLink({
             text-decoration: none;
           }
         `}
-        to={`/missions/${missionType}`}
+        to={`/missions/${
+          rootMissionType ? `${rootMissionType}/` : ''
+        }${missionType}`}
       >
         <p
           style={{

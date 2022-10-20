@@ -61,6 +61,7 @@ export default function TodayStats() {
                 </p>
                 {todayStats.nextMission ? (
                   <MissionLink
+                    rootMissionType={todayStats.nextMission.rootMissionType}
                     missionName={todayStats.nextMission.title}
                     missionType={todayStats.nextMission.missionType}
                     xpReward={todayStats.nextMission.xpReward}
