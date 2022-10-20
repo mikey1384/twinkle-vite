@@ -150,10 +150,10 @@ export default function Main({
       }
       const measureTime = elapsedTime + numWrong.current * 500;
       const baseTime = baseLetterLengthTime + baseNumWordsTime;
-      if (measureTime < baseTime * 0.35) return 'S';
-      if (measureTime < baseTime * 0.55) return 'A';
-      if (measureTime < baseTime * 0.75) return 'B';
-      if (measureTime < baseTime * 0.9) return 'C';
+      if (measureTime < baseTime * 0.3) return 'S';
+      if (measureTime < baseTime * 0.4) return 'A';
+      if (measureTime < baseTime * 0.55) return 'B';
+      if (measureTime < baseTime * 0.75) return 'C';
       if (measureTime < baseTime * 1) return 'D';
       return 'F';
     }
