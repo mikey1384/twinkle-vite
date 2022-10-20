@@ -63,6 +63,8 @@ export default function TodayStats() {
                   <MissionItem
                     missionName={todayStats.nextMission.title}
                     missionType={todayStats.nextMission.missionType}
+                    xpReward={todayStats.nextMission.xpReward}
+                    coinReward={todayStats.nextMission.coinReward}
                   />
                 ) : null}
               </div>

@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import PropTypes from 'prop-types';
 import Link from '~/components/Link';
 import { mobileMaxWidth } from '~/constants/css';
@@ -7,11 +6,18 @@ import { css } from '@emotion/css';
 MissionItem.propTypes = {
   missionName: PropTypes.string,
   missionType: PropTypes.string,
+  xpReward: PropTypes.number,
+  coinReward: PropTypes.number,
   style: PropTypes.object
 };
 
-export default function MissionItem({ missionName, missionType, style }) {
-  const NameRef = useRef(null);
+export default function MissionItem({
+  missionName,
+  missionType,
+  xpReward,
+  coinReward,
+  style
+}) {
   return (
     <div
       style={style}
@@ -26,8 +32,6 @@ export default function MissionItem({ missionName, missionType, style }) {
     >
       <div
         style={{
-          paddingLeft: '0.5rem',
-          paddingRight: '0.5rem',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -36,8 +40,8 @@ export default function MissionItem({ missionName, missionType, style }) {
           height: '100%'
         }}
       >
+        Your next mission:
         <Link
-          innerRef={NameRef}
           to={`/missions/${missionType}`}
           style={{
             width: '100%',
@@ -46,7 +50,7 @@ export default function MissionItem({ missionName, missionType, style }) {
             fontWeight: 'bold'
           }}
         >
-          {missionName}
+          {missionName} {xpReward} {coinReward}
         </Link>
       </div>
     </div>
