@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
 import { useKeyContext, useNotiContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import MissionItem from './MissionItem';
 import Loading from '~/components/Loading';
 
 export default function TodayStats() {
@@ -58,6 +59,12 @@ export default function TodayStats() {
                   {addCommasToNumber(todayStats.coinsEarned)} Coin
                   {todayStats.coinsEarned === 1 ? '' : 's'}
                 </p>
+                {todayStats.nextMission ? (
+                  <MissionItem
+                    missionName={todayStats.nextMission.title}
+                    missionType={todayStats.nextMission.missionType}
+                  />
+                ) : null}
               </div>
             </div>
           </div>
