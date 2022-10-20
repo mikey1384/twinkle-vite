@@ -199,8 +199,7 @@ export default function Main({
   }
 
   function handleCalculatePenalty(numWrong) {
-    if (numWrong === 0) return 0;
-    if (numWrong === 1) return 50;
-    if (numWrong >= 2) return numWrong * 1000;
+    if (numWrong <= 1) return 0;
+    if (numWrong > 1) return numWrong * 1000;
   }
 }
