@@ -4,6 +4,7 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { scrollElementToCenter } from '~/helpers';
 import { useSpring, animated } from 'react-spring';
 import { css } from '@emotion/css';
+import Icon from '~/components/Icon';
 
 SectionToScreenshot.propTypes = {
   onSetButtonShown: PropTypes.func.isRequired,
@@ -40,25 +41,28 @@ export default function SectionToScreenshot({ username, onSetButtonShown }) {
       style={{
         display: 'flex',
         width: '75%',
-        flexDirection: 'column',
         alignItems: 'center',
         ...styles
       }}
     >
-      <p
-        className={css`
-          font-weight: bold;
-          font-size: 3rem;
-          @media (max-width: ${mobileMaxWidth}) {
-            font-size: 2.5rem;
-          }
-        `}
-      >
-        Screenshot this box
-      </p>
-      <p style={{ marginTop: '1.5rem' }}>
-        <b>{username}</b> captured this screenshot on {returnNow()}
-      </p>
+      <Icon icon="arrow-right" size="2x" />
+      <div>
+        <p
+          className={css`
+            font-weight: bold;
+            font-size: 3rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 2.5rem;
+            }
+          `}
+        >
+          Screenshot this
+        </p>
+        <p style={{ marginTop: '1.5rem' }}>
+          <b>{username}</b> captured this screenshot on {returnNow()}
+        </p>
+      </div>
+      <Icon icon="arrow-left" size="2x" />
     </animated.div>
   );
 
