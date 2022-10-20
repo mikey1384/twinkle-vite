@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
 import { useKeyContext, useNotiContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import MissionItem from './MissionItem';
+import MissionLink from './MissionLink';
 import Loading from '~/components/Loading';
 
 export default function TodayStats() {
@@ -60,7 +60,7 @@ export default function TodayStats() {
                   {todayStats.coinsEarned === 1 ? '' : 's'}
                 </p>
                 {todayStats.nextMission ? (
-                  <MissionItem
+                  <MissionLink
                     missionName={todayStats.nextMission.title}
                     missionType={todayStats.nextMission.missionType}
                     xpReward={todayStats.nextMission.xpReward}
