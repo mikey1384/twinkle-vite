@@ -36,44 +36,42 @@ export default function TodayStats() {
       >
         {todayStats?.loaded ? (
           <div>
-            <div>
-              <b
-                className={css`
-                  color: ${Color[todayProgressTextColor]()};
-                  ${todayProgressTextShadowColor
-                    ? `text-shadow: 0.05rem 0.05rem ${Color[
-                        todayProgressTextShadowColor
-                      ]()};`
-                    : ''}
-                `}
-                style={{ fontSize: '1.7rem' }}
-              >{`Today's Progress`}</b>
-              <div style={{ marginTop: '0.3rem' }}>
-                <p
-                  style={{
-                    fontWeight: 'bold',
-                    color: Color[xpNumberColor]()
-                  }}
-                >
-                  {todayStats.xpEarned > 0 ? '+' : ''}
-                  {addCommasToNumber(todayStats.xpEarned)}{' '}
-                  <b style={{ color: Color.gold() }}>XP</b>
-                </p>
-                <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
-                  {todayStats.coinsEarned > 0 ? '+' : ''}
-                  {addCommasToNumber(todayStats.coinsEarned)} Coin
-                  {todayStats.coinsEarned === 1 ? '' : 's'}
-                </p>
-                {todayStats.nextMission ? (
-                  <MissionLink
-                    rootMissionType={todayStats.nextMission.rootMissionType}
-                    missionName={todayStats.nextMission.title}
-                    missionType={todayStats.nextMission.missionType}
-                    xpReward={todayStats.nextMission.xpReward}
-                    coinReward={todayStats.nextMission.coinReward}
-                  />
-                ) : null}
-              </div>
+            <b
+              className={css`
+                color: ${Color[todayProgressTextColor]()};
+                ${todayProgressTextShadowColor
+                  ? `text-shadow: 0.05rem 0.05rem ${Color[
+                      todayProgressTextShadowColor
+                    ]()};`
+                  : ''}
+              `}
+              style={{ fontSize: '1.7rem' }}
+            >{`Today's Progress`}</b>
+            <div style={{ marginTop: '0.3rem' }}>
+              <p
+                style={{
+                  fontWeight: 'bold',
+                  color: Color[xpNumberColor]()
+                }}
+              >
+                {todayStats.xpEarned > 0 ? '+' : ''}
+                {addCommasToNumber(todayStats.xpEarned)}{' '}
+                <b style={{ color: Color.gold() }}>XP</b>
+              </p>
+              <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
+                {todayStats.coinsEarned > 0 ? '+' : ''}
+                {addCommasToNumber(todayStats.coinsEarned)} Coin
+                {todayStats.coinsEarned === 1 ? '' : 's'}
+              </p>
+              {todayStats.nextMission ? (
+                <MissionLink
+                  rootMissionType={todayStats.nextMission.rootMissionType}
+                  missionName={todayStats.nextMission.title}
+                  missionType={todayStats.nextMission.missionType}
+                  xpReward={todayStats.nextMission.xpReward}
+                  coinReward={todayStats.nextMission.coinReward}
+                />
+              ) : null}
             </div>
           </div>
         ) : (
