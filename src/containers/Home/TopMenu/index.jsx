@@ -3,10 +3,16 @@ import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InputPanel from './InputPanel';
 import {
+  CHAT_ID_BASE_NUMBER,
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID
 } from '~/constants/defaultValues';
-import { useChatContext, useHomeContext, useKeyContext } from '~/contexts';
+import {
+  useChatContext,
+  useHomeContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
@@ -33,15 +39,20 @@ export default function TopMenu({
   isEarnPage
 }) {
   const navigate = useNavigate();
+  const todayStats = useNotiContext((v) => v.state.todayStats);
   const topMenuSection = useHomeContext((v) => v.state.topMenuSection);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
+  );
+  const onSetChessModalShown = useChatContext(
+    (v) => v.actions.onSetChessModalShown
   );
   const onSetWordleModalShown = useChatContext(
     (v) => v.actions.onSetWordleModalShown
   );
   const [loadingChat, setLoadingChat] = useState(false);
   const { userId, username } = useKeyContext((v) => v.myState);
+
   return userId ? (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
       <div
@@ -132,6 +143,18 @@ export default function TopMenu({
           >
             Wordle
           </TopButton>
+          {todayStats.unansweredChessMsgChannelId && (
+            <TopButton
+              disabled={loadingChat}
+              colorLeft={Color.darkBlue()}
+              colorMiddle={Color.rose()}
+              colorRight={Color.cranberry()}
+              style={{ marginLeft: '1rem' }}
+              onClick={handleChessButtonClick}
+            >
+              Chess
+            </TopButton>
+          )}
         </div>
       </div>
     </ErrorBoundary>
@@ -144,6 +167,22 @@ export default function TopMenu({
       navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
       setTimeout(() => {
         onSetWordleModalShown(true);
+      }, 10);
+    }, 10);
+  }
+
+  function handleChessButtonClick() {
+    setLoadingChat(true);
+    onUpdateSelectedChannelId(todayStats.unansweredChessMsgChannelId);
+    return setTimeout(() => {
+      navigate(
+        `/chat/${
+          Number(CHAT_ID_BASE_NUMBER) +
+          Number(todayStats.unansweredChessMsgChannelId)
+        }`
+      );
+      setTimeout(() => {
+        onSetChessModalShown(true);
       }, 10);
     }, 10);
   }

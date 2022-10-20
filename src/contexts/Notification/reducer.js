@@ -141,6 +141,7 @@ export default function NotiReducer(state, action) {
           nextMission: action.nextMission,
           xpEarned: action.xpEarned,
           coinsEarned: action.coinsEarned,
+          unansweredChessMsgChannelId: action.unansweredChessMsgChannelId,
           loaded: true
         }
       };
