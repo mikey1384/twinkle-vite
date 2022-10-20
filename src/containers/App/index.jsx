@@ -227,8 +227,18 @@ function App() {
       handleLoadTodayStats();
     }
     async function handleLoadTodayStats() {
-      const { xpEarned, coinsEarned, nextMission } = await fetchTodayStats();
-      onUpdateTodayStats({ xpEarned, coinsEarned, nextMission });
+      const {
+        xpEarned,
+        coinsEarned,
+        nextMission,
+        unansweredChessMsgChannelId
+      } = await fetchTodayStats();
+      onUpdateTodayStats({
+        xpEarned,
+        coinsEarned,
+        nextMission,
+        unansweredChessMsgChannelId
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [twinkleXP, twinkleCoins, userId]);

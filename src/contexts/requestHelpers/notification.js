@@ -31,9 +31,19 @@ export default function notificationRequestHelpers({ auth, handleError }) {
     async fetchTodayStats() {
       try {
         const {
-          data: { xpEarned, coinsEarned, nextMission }
+          data: {
+            xpEarned,
+            coinsEarned,
+            nextMission,
+            unansweredChessMsgChannelId
+          }
         } = await request.get(`${URL}/notification/today`, auth());
-        return Promise.resolve({ xpEarned, coinsEarned, nextMission });
+        return Promise.resolve({
+          xpEarned,
+          coinsEarned,
+          nextMission,
+          unansweredChessMsgChannelId
+        });
       } catch (error) {
         return handleError(error);
       }
