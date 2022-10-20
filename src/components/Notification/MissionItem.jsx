@@ -1,16 +1,10 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Link from '~/components/Link';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
-import {
-  Color,
-  borderRadius,
-  innerBorderRadius,
-  mobileMaxWidth
-} from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { textIsOverflown } from '~/helpers';
-import { returnMissionThumb } from '~/constants/defaultValues';
 
 MissionItem.propTypes = {
   completed: PropTypes.bool,
@@ -29,10 +23,6 @@ export default function MissionItem({
 }) {
   const NameRef = useRef(null);
   const [nameContext, setNameContext] = useState(null);
-  const missionThumb = useMemo(
-    () => returnMissionThumb(missionType),
-    [missionType]
-  );
   return (
     <div
       style={style}
@@ -49,32 +39,6 @@ export default function MissionItem({
         }
       `}
     >
-      <Link
-        className={css`
-          position: relative;
-          width: 100%;
-          padding-bottom: 10rem;
-          @media (max-width: ${mobileMaxWidth}) {
-            padding-bottom: 8rem;
-          }
-        `}
-        to={`/missions/${missionType}`}
-      >
-        <div>
-          <img
-            src={missionThumb}
-            style={{
-              borderTopLeftRadius: innerBorderRadius,
-              borderTopRightRadius: innerBorderRadius,
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center'
-            }}
-          />
-        </div>
-      </Link>
       <div
         style={{
           paddingLeft: '0.5rem',
