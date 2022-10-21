@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import Attempts from './Attempts';
+import QuestionEditor from './QuestionEditor';
 
 Main.propTypes = {
   mission: PropTypes.object.isRequired,
@@ -17,7 +18,6 @@ export default function Main({
   onSetMissionState
 }) {
   const { managementTab: activeTab = 'pending' } = mission;
-
   return (
     <div style={{ width: '100%' }}>
       <FilterBar
@@ -82,6 +82,7 @@ export default function Main({
           onSetMissionState={onSetMissionState}
         />
       )}
+      {activeTab === 'questions' && <QuestionEditor />}
     </div>
   );
 }
