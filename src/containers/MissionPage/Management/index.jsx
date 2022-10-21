@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import Attempts from './Attempts';
+import Main from './Main';
 import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
@@ -33,7 +33,7 @@ export default function Management({ mission, missionId, onSetMissionState }) {
       style={{ width: '100%', marginBottom: '10rem' }}
     >
       {mission.missionType !== 'grammar' && (
-        <Attempts
+        <Main
           mission={mission}
           missionId={missionId}
           missionType={mission.missionType}
