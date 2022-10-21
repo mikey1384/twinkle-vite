@@ -16,10 +16,16 @@ Attempts.propTypes = {
   mission: PropTypes.object.isRequired,
   missionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
     .isRequired,
+  missionType: PropTypes.string.isRequired,
   onSetMissionState: PropTypes.func.isRequired
 };
 
-export default function Attempts({ mission, missionId, onSetMissionState }) {
+export default function Attempts({
+  mission,
+  missionId,
+  missionType,
+  onSetMissionState
+}) {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const { isCreator } = useKeyContext((v) => v.myState);
@@ -28,10 +34,10 @@ export default function Attempts({ mission, missionId, onSetMissionState }) {
     (v) => v.requestHelpers.loadMissionAttemptsForPage
   );
   useEffect(() => {
-    if (isCreator) {
-      init();
+    if (isCreator && activeTab !== 'google') {
+      initAttempts();
     }
-    async function init() {
+    async function initAttempts() {
       setLoading(true);
       const {
         attemptObj,
@@ -96,6 +102,19 @@ export default function Attempts({ mission, missionId, onSetMissionState }) {
         >
           Rejected
         </nav>
+        {missionType === 'google' && (
+          <nav
+            className={activeTab === 'questions' ? 'active' : null}
+            onClick={() =>
+              onSetMissionState({
+                missionId,
+                newState: { managementTab: 'questions' }
+              })
+            }
+          >
+            Questions
+          </nav>
+        )}
       </FilterBar>
       {loading ? (
         <Loading />

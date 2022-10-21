@@ -36,6 +36,7 @@ export default function Management({ mission, missionId, onSetMissionState }) {
         <Attempts
           mission={mission}
           missionId={missionId}
+          missionType={mission.missionType}
           onSetMissionState={onSetMissionState}
         />
       )}
