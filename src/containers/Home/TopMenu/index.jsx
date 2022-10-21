@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InputPanel from './InputPanel';
@@ -39,6 +39,11 @@ export default function TopMenu({
   isEarnPage
 }) {
   const navigate = useNavigate();
+  const chatLoadedRef = useRef(false);
+  const chatLoaded = useChatContext((v) => v.state.loaded);
+  useEffect(() => {
+    chatLoadedRef.current = chatLoaded;
+  }, [chatLoaded]);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const topMenuSection = useHomeContext((v) => v.state.topMenuSection);
   const onUpdateTodayStats = useNotiContext(
@@ -149,6 +154,7 @@ export default function TopMenu({
           {todayStats.unansweredChessMsgChannelId && (
             <TopButton
               disabled={loadingChat}
+              loading={loadingChat}
               colorLeft={Color.darkBlue()}
               colorMiddle={Color.rose()}
               colorRight={Color.cranberry()}
@@ -176,6 +182,9 @@ export default function TopMenu({
 
   function handleChessButtonClick() {
     setLoadingChat(true);
+    if (!chatLoadedRef.current) {
+      return setTimeout(() => handleChessButtonClick(), 500);
+    }
     onUpdateSelectedChannelId(todayStats.unansweredChessMsgChannelId);
     onUpdateTodayStats({ newStats: { unansweredChessMsgChannelId: null } });
     return setTimeout(() => {
