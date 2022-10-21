@@ -74,12 +74,14 @@ export default function Main({
           </nav>
         )}
       </FilterBar>
-      <Attempts
-        activeTab={activeTab}
-        mission={mission}
-        missionId={missionId}
-        onSetMissionState={onSetMissionState}
-      />
+      {activeTab !== 'questions' && (
+        <Attempts
+          activeTab={activeTab}
+          mission={mission}
+          missionId={missionId}
+          onSetMissionState={onSetMissionState}
+        />
+      )}
     </div>
   );
 }
