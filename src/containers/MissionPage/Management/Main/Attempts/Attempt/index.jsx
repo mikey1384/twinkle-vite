@@ -4,7 +4,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ApproveInterface from './ApproveInterface';
 import LongText from '~/components/Texts/LongText';
 import { Color, borderRadius } from '~/constants/css';
-import { panel } from '../../../Styles';
+import { panel } from '../../../../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useKeyContext } from '~/contexts';
 import { stringIsEmpty, processedStringWithURL } from '~/helpers/stringHelpers';
