@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import Icon from '~/components/Icon';
 
 TopButton.propTypes = {
   colorLeft: PropTypes.string,
@@ -8,6 +9,7 @@ TopButton.propTypes = {
   colorRight: PropTypes.string,
   children: PropTypes.node,
   disabled: PropTypes.bool,
+  loading: PropTypes.bool,
   onClick: PropTypes.func.isRequired,
   style: PropTypes.object
 };
@@ -17,14 +19,16 @@ export default function TopButton({
   colorMiddle = '#fda085',
   colorRight = '#f6d365',
   children,
+  loading,
   disabled,
   onClick,
   style
 }) {
   const buttonStyle = css`
     font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
-    cursor: pointer;
+    cursor: ${disabled || loading ? 'default' : 'pointer'};
     display: flex;
+    opacity: ${disabled || loading ? 0.5 : 1};
     background-image: linear-gradient(
       to right,
       ${colorLeft} 0%,
@@ -51,11 +55,14 @@ export default function TopButton({
   `;
   return (
     <button
-      disabled={disabled}
+      disabled={disabled || loading}
       style={style}
       onClick={onClick}
       className={buttonStyle}
     >
+      {loading && (
+        <Icon style={{ marginRight: '0.7rem' }} icon="spinner" pulse />
+      )}
       {children}
     </button>
   );
