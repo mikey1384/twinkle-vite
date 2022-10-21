@@ -84,7 +84,6 @@ export default function MobileMenu({ onClose }) {
             className={css`
               font-weight: bold;
               border-top: 1px solid ${Color.borderGray()};
-              border-bottom: 1px solid ${Color.borderGray()};
               background: #fff;
               width: 100%;
               text-align: center;
