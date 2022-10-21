@@ -82,19 +82,21 @@ export default function MobileMenu({ onClose }) {
         {username && (
           <div
             className={css`
+              font-weight: bold;
               border-top: 1px solid ${Color.borderGray()};
               border-bottom: 1px solid ${Color.borderGray()};
               background: #fff;
               width: 100%;
               text-align: center;
-              color: ${Color.red()};
-              font-size: 3rem;
+              color: ${Color.cranberry()};
+              font-size: 2rem;
               padding: 1rem;
               margin-top: 1rem;
             `}
             onClick={handleLogout}
           >
-            Log out
+            <Icon icon="right-from-bracket" />
+            <span style={{ marginLeft: '0.7rem' }}>Log out</span>
           </div>
         )}
       </animated.div>
