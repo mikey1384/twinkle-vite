@@ -45,6 +45,7 @@ function ContentEditor({
   style,
   title
 }) {
+  const [isEditing, setIsEditing] = useState(false);
   const { banned } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
@@ -237,8 +238,10 @@ function ContentEditor({
         editedSecretAnswer: finalizeEmoji(editedSecretAnswer),
         editedTitle: finalizeEmoji(editedTitle)
       };
+      setIsEditing(true);
       await onEditContent({ ...post, contentId, contentType });
       handleDismiss();
+      setIsEditing(false);
     },
     [
       banned?.posting,
@@ -339,7 +342,12 @@ function ContentEditor({
             flexDirection: 'row-reverse'
           }}
         >
-          <Button color={doneColor} type="submit" disabled={editButtonDisabled}>
+          <Button
+            color={doneColor}
+            type="submit"
+            loading={isEditing}
+            disabled={editButtonDisabled}
+          >
             {doneLabel}
           </Button>
           <Button
