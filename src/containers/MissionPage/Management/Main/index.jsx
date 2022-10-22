@@ -82,7 +82,7 @@ export default function Main({
           onSetMissionState={onSetMissionState}
         />
       )}
-      {activeTab === 'questions' && <QuestionEditor />}
+      {activeTab === 'questions' && <QuestionEditor missionId={missionId} />}
     </div>
   );
 }

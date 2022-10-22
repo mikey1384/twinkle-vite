@@ -245,9 +245,12 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadGoogleMissionQuestions() {
+    async loadGoogleMissionQuestions({ missionId }) {
       try {
-        const { data } = await request.get(`${URL}/mission/question`, auth());
+        const { data } = await request.get(
+          `${URL}/mission/question?missionId=${missionId}`,
+          auth()
+        );
         return Promise.resolve(data);
       } catch (error) {
         return handleError(error);
