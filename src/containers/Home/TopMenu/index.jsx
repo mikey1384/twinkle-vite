@@ -171,12 +171,15 @@ export default function TopMenu({
 
   function handleWordleButtonClick() {
     setLoadingChat(true);
+    if (!chatLoadedRef.current) {
+      return setTimeout(() => handleWordleButtonClick(), 500);
+    }
     onUpdateSelectedChannelId(GENERAL_CHAT_ID);
     return setTimeout(() => {
       navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
       setTimeout(() => {
         onSetWordleModalShown(true);
-      }, 10);
+      }, 300);
     }, 10);
   }
 
