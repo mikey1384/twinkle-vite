@@ -11,6 +11,7 @@ import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 const newChatLabel = localize('newChat');
 
@@ -65,79 +66,81 @@ function LeftMenu({
   }, [chatType, loadingVocabulary, subchannelIds?.length]);
 
   return (
-    <div
-      className={css`
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        width: 16vw;
-        position: relative;
-        background: #fff;
-        -webkit-overflow-scrolling: touch;
-        @media (max-width: ${mobileMaxWidth}) {
-          width: 40vw;
-        }
-      `}
-    >
+    <ErrorBoundary componentPath="Chat/LeftMenu">
       <div
-        className={`unselectable ${css`
-          padding: 1rem;
-          background: ${leftMenuTopButtonColor};
-          color: ${Color[chatFlatButtonTextColor]()};
-          ${chatFlatButtonTextShadowColor
-            ? `text-shadow: 0 0 1px ${Color[chatFlatButtonTextShadowColor]()}`
-            : ''};
+        className={css`
           display: flex;
-          justify-content: center;
-          align-items: center;
-          cursor: pointer;
-          transition: background 0.2s;
+          flex-direction: column;
+          height: 100%;
+          width: 16vw;
+          position: relative;
+          background: #fff;
+          -webkit-overflow-scrolling: touch;
           @media (max-width: ${mobileMaxWidth}) {
-            background: ${leftMenuTopButtonHoverColor};
+            width: 40vw;
           }
-          @media (min-width: ${desktopMinWidth}) {
-            &:hover {
+        `}
+      >
+        <div
+          className={`unselectable ${css`
+            padding: 1rem;
+            background: ${leftMenuTopButtonColor};
+            color: ${Color[chatFlatButtonTextColor]()};
+            ${chatFlatButtonTextShadowColor
+              ? `text-shadow: 0 0 1px ${Color[chatFlatButtonTextShadowColor]()}`
+              : ''};
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            @media (max-width: ${mobileMaxWidth}) {
               background: ${leftMenuTopButtonHoverColor};
             }
-          }
-        `}`}
-        onClick={onNewButtonClick}
-      >
-        <Icon icon="plus" />
-        <div
-          style={{
-            marginLeft: '0.7rem'
-          }}
+            @media (min-width: ${desktopMinWidth}) {
+              &:hover {
+                background: ${leftMenuTopButtonHoverColor};
+              }
+            }
+          `}`}
+          onClick={onNewButtonClick}
         >
-          {newChatLabel}
+          <Icon icon="plus" />
+          <div
+            style={{
+              marginLeft: '0.7rem'
+            }}
+          >
+            {newChatLabel}
+          </div>
         </div>
-      </div>
-      <Vocabulary
-        selected={chatType === 'vocabulary' || loadingVocabulary}
-        onClick={() => navigate('/chat/vocabulary')}
-      />
-      <ChatSearchBox
-        style={{
-          marginTop: '1rem',
-          padding: '0 1rem',
-          zIndex: 5,
-          width: '100%'
-        }}
-      />
-      <Tabs />
-      {subchannelsShown ? (
-        <Subchannels
-          currentChannel={currentChannel}
-          currentPathId={currentPathId}
-          displayedThemeColor={displayedThemeColor}
-          subchannelIds={subchannelIds}
-          subchannelObj={subchannelObj}
-          selectedChannelId={selectedChannelId}
-          subchannelPath={subchannelPath}
+        <Vocabulary
+          selected={chatType === 'vocabulary' || loadingVocabulary}
+          onClick={() => navigate('/chat/vocabulary')}
         />
-      ) : null}
-      <Channels currentPathId={currentPathId} />
-    </div>
+        <ChatSearchBox
+          style={{
+            marginTop: '1rem',
+            padding: '0 1rem',
+            zIndex: 5,
+            width: '100%'
+          }}
+        />
+        <Tabs />
+        {subchannelsShown ? (
+          <Subchannels
+            currentChannel={currentChannel}
+            currentPathId={currentPathId}
+            displayedThemeColor={displayedThemeColor}
+            subchannelIds={subchannelIds}
+            subchannelObj={subchannelObj}
+            selectedChannelId={selectedChannelId}
+            subchannelPath={subchannelPath}
+          />
+        ) : null}
+        <Channels currentPathId={currentPathId} />
+      </div>
+    </ErrorBoundary>
   );
 }
 
