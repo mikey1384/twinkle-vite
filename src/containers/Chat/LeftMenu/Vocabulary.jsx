@@ -7,6 +7,7 @@ import { useChatContext, useKeyContext } from '~/contexts';
 import { returnWordLevel, wordLevelHash } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 const vocabularyLabel = localize('vocabulary');
 const youLabel = localize('You');
@@ -39,46 +40,51 @@ function Vocabulary({ selected, onClick }) {
   );
 
   return (
-    <div
-      style={{
-        cursor: 'pointer',
-        padding: '1rem',
-        borderBottom: `1px solid ${Color.borderGray()}`,
-        background: selected && Color.highlightGray()
-      }}
-      className={`unselectable ${css`
-        &:hover {
-          background: ${Color.checkboxAreaGray()};
-        }
-      `}`}
-      onClick={onClick}
-    >
-      <div style={{ height: '5rem', position: 'relative' }}>
-        <div style={{ fontSize: '1.7rem' }}>
-          <Icon icon="book" />
-          <span style={{ fontWeight: 'bold', marginLeft: '0.7rem' }}>
-            {vocabularyLabel}
-          </span>
-        </div>
-        {lastActivity && (
-          <div style={{ position: 'absolute' }}>
-            <p
-              style={{
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                width: '100%'
-              }}
-            >
-              {lastActivity.userId === myId ? youLabel : lastActivity.username}:{' '}
-              <b>
-                {lastActivity.content} (+{lastRewardedXp} XP)
-              </b>
-            </p>
+    <ErrorBoundary componentPath="Chat/LeftMenu/Vocabulary">
+      <div
+        style={{
+          cursor: 'pointer',
+          padding: '1rem',
+          borderBottom: `1px solid ${Color.borderGray()}`,
+          background: selected && Color.highlightGray()
+        }}
+        className={`unselectable ${css`
+          &:hover {
+            background: ${Color.checkboxAreaGray()};
+          }
+        `}`}
+        onClick={onClick}
+      >
+        <div style={{ height: '5rem', position: 'relative' }}>
+          <div style={{ fontSize: '1.7rem' }}>
+            <Icon icon="book" />
+            <span style={{ fontWeight: 'bold', marginLeft: '0.7rem' }}>
+              {vocabularyLabel}
+            </span>
           </div>
-        )}
+          {lastActivity && (
+            <div style={{ position: 'absolute' }}>
+              <p
+                style={{
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  width: '100%'
+                }}
+              >
+                {lastActivity.userId === myId
+                  ? youLabel
+                  : lastActivity.username}
+                :{' '}
+                <b>
+                  {lastActivity.content} (+{lastRewardedXp} XP)
+                </b>
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
 
