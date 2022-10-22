@@ -2,6 +2,7 @@ import { memo, useContext, useCallback, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ChatInfo from './ChatInfo';
 import VocabInfo from './VocabInfo';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
@@ -35,7 +36,7 @@ function RightMenu({
 
   useEffect(() => {
     MenuRef.current.scrollTop = 0;
-  }, [currentChannel.id]);
+  }, [currentChannel?.id]);
 
   useEffect(() => {
     handleLoadRankings();
@@ -78,32 +79,34 @@ function RightMenu({
   }, []);
 
   return (
-    <div
-      ref={MenuRef}
-      className={css`
-        width: ${chatType === 'vocabulary' ? '22vw' : '18vw'};
-        position: relative;
-        background: #fff;
-        border-left: 1px solid ${Color.borderGray()};
-        overflow-y: scroll;
-        -webkit-overflow-scrolling: touch;
-        @media (max-width: ${mobileMaxWidth}) {
-          width: ${chatType === 'vocabulary' ? '48vw' : '40vw'};
-        }
-      `}
-    >
-      {chatType === 'vocabulary' && <VocabInfo />}
-      {(!chatType || chatType === 'default') && (
-        <ChatInfo
-          channelName={channelName}
-          channelOnCall={channelOnCall}
-          currentChannel={currentChannel}
-          currentChannelOnlineMembers={currentChannelOnlineMembers}
-          displayedThemeColor={displayedThemeColor}
-          selectedChannelId={selectedChannelId}
-        />
-      )}
-    </div>
+    <ErrorBoundary componentPath="Chat/RightMenu">
+      <div
+        ref={MenuRef}
+        className={css`
+          width: ${chatType === 'vocabulary' ? '22vw' : '18vw'};
+          position: relative;
+          background: #fff;
+          border-left: 1px solid ${Color.borderGray()};
+          overflow-y: scroll;
+          -webkit-overflow-scrolling: touch;
+          @media (max-width: ${mobileMaxWidth}) {
+            width: ${chatType === 'vocabulary' ? '48vw' : '40vw'};
+          }
+        `}
+      >
+        {chatType === 'vocabulary' && <VocabInfo />}
+        {(!chatType || chatType === 'default') && (
+          <ChatInfo
+            channelName={channelName}
+            channelOnCall={channelOnCall}
+            currentChannel={currentChannel}
+            currentChannelOnlineMembers={currentChannelOnlineMembers}
+            displayedThemeColor={displayedThemeColor}
+            selectedChannelId={selectedChannelId}
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 

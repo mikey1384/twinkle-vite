@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { Link } from 'react-router-dom';
@@ -47,55 +48,57 @@ export default function Subchannel({
   }, [numUnreads]);
 
   return (
-    <Link
-      key={subchannel.id}
-      to={`/chat/${currentPathId}/${subchannel.path}`}
-      onClick={() =>
-        onUpdateLastSubchannelPath({
-          channelId: selectedChannelId,
-          path: subchannel.path,
-          currentSubchannelPath: subchannelPath
-        })
-      }
-    >
-      <nav
-        style={{
-          display: 'flex',
-          alignItems: 'center'
-        }}
-        className={subchannelSelected ? 'active' : ''}
+    <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels/Subchannel">
+      <Link
+        key={subchannel.id}
+        to={`/chat/${currentPathId}/${subchannel.path}`}
+        onClick={() =>
+          onUpdateLastSubchannelPath({
+            channelId: selectedChannelId,
+            path: subchannel.path,
+            currentSubchannelPath: subchannelPath
+          })
+        }
       >
-        <Icon icon={subchannel.icon} />
-        <div
+        <nav
           style={{
-            marginLeft: '1rem',
             display: 'flex',
-            justifyContent: 'space-between',
-            flexGrow: 1
+            alignItems: 'center'
           }}
+          className={subchannelSelected ? 'active' : ''}
         >
-          <div>{subchannel.label}</div>
-          {badgeShown && (
-            <div
-              style={{
-                background: Color.rose(),
-                display: 'flex',
-                color: '#fff',
-                fontWeight: 'bold',
-                fontSize: '1.5rem',
-                minWidth: badgeWidth,
-                height: '2rem',
-                borderRadius: '1rem',
-                lineHeight: 1,
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}
-            >
-              {subchannel?.numUnreads}
-            </div>
-          )}
-        </div>
-      </nav>
-    </Link>
+          <Icon icon={subchannel.icon} />
+          <div
+            style={{
+              marginLeft: '1rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              flexGrow: 1
+            }}
+          >
+            <div>{subchannel.label}</div>
+            {badgeShown && (
+              <div
+                style={{
+                  background: Color.rose(),
+                  display: 'flex',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '1.5rem',
+                  minWidth: badgeWidth,
+                  height: '2rem',
+                  borderRadius: '1rem',
+                  lineHeight: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
+              >
+                {subchannel?.numUnreads}
+              </div>
+            )}
+          </div>
+        </nav>
+      </Link>
+    </ErrorBoundary>
   );
 }
