@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import MemberListItem from './MemberListItem';
 import { useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 Members.propTypes = {
   channelId: PropTypes.number,
@@ -36,55 +37,57 @@ function Members({ channelId, creatorId, members, onlineMembers }) {
   );
 
   return (
-    <div style={{ width: '100%' }}>
-      {callIsOnGoing && (
-        <div
-          style={{
-            textAlign: 'center',
-            width: '100%',
-            fontWeight: 'bold',
-            color: Color.darkerGray()
-          }}
-        >
-          on call
-        </div>
-      )}
-      {callIsOnGoing && (
-        <div style={{ marginBottom: '2rem' }}>
-          {membersOnCall.map((member) => (
-            <MemberListItem
-              key={`oncall-member-${member.id}`}
-              creatorId={creatorId}
-              onlineMembers={onlineMembers}
-              member={member}
-            />
-          ))}
-        </div>
-      )}
-      {callIsOnGoing && membersNotOnCall.length > 0 && (
-        <div
-          style={{
-            textAlign: 'center',
-            width: '100%',
-            fontWeight: 'bold',
-            color: Color.darkerGray()
-          }}
-        >
-          others
-        </div>
-      )}
-      {membersNotOnCall.map((member, index) => (
-        <MemberListItem
-          key={`member-${member.id}`}
-          creatorId={creatorId}
-          onlineMembers={onlineMembers}
-          member={member}
-          style={{
-            paddingBottom: index === members.length - 1 ? '15rem' : '1rem'
-          }}
-        />
-      ))}
-    </div>
+    <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/Members/index">
+      <div style={{ width: '100%' }}>
+        {callIsOnGoing && (
+          <div
+            style={{
+              textAlign: 'center',
+              width: '100%',
+              fontWeight: 'bold',
+              color: Color.darkerGray()
+            }}
+          >
+            on call
+          </div>
+        )}
+        {callIsOnGoing && (
+          <div style={{ marginBottom: '2rem' }}>
+            {membersOnCall.map((member) => (
+              <MemberListItem
+                key={`oncall-member-${member.id}`}
+                creatorId={creatorId}
+                onlineMembers={onlineMembers}
+                member={member}
+              />
+            ))}
+          </div>
+        )}
+        {callIsOnGoing && membersNotOnCall.length > 0 && (
+          <div
+            style={{
+              textAlign: 'center',
+              width: '100%',
+              fontWeight: 'bold',
+              color: Color.darkerGray()
+            }}
+          >
+            others
+          </div>
+        )}
+        {membersNotOnCall.map((member, index) => (
+          <MemberListItem
+            key={`member-${member.id}`}
+            creatorId={creatorId}
+            onlineMembers={onlineMembers}
+            member={member}
+            style={{
+              paddingBottom: index === members.length - 1 ? '15rem' : '1rem'
+            }}
+          />
+        ))}
+      </div>
+    </ErrorBoundary>
   );
 }
 

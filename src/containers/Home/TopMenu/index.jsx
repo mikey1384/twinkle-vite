@@ -58,7 +58,8 @@ export default function TopMenu({
   const onSetWordleModalShown = useChatContext(
     (v) => v.actions.onSetWordleModalShown
   );
-  const [loadingChat, setLoadingChat] = useState(false);
+  const [loadingWordle, setLoadingWordle] = useState(false);
+  const [loadingChess, setLoadingChess] = useState(false);
   const { userId, username } = useKeyContext((v) => v.myState);
 
   return userId ? (
@@ -142,7 +143,7 @@ export default function TopMenu({
             </TopButton>
           )}
           <TopButton
-            disabled={loadingChat}
+            loading={loadingWordle}
             colorLeft={Color.orange()}
             colorMiddle={Color.gold()}
             colorRight={Color.magenta()}
@@ -153,8 +154,7 @@ export default function TopMenu({
           </TopButton>
           {todayStats.unansweredChessMsgChannelId && (
             <TopButton
-              disabled={loadingChat}
-              loading={loadingChat}
+              loading={loadingChess}
               colorLeft={Color.darkBlue()}
               colorMiddle={Color.rose()}
               colorRight={Color.cranberry()}
@@ -170,18 +170,21 @@ export default function TopMenu({
   ) : null;
 
   function handleWordleButtonClick() {
-    setLoadingChat(true);
+    setLoadingWordle(true);
+    if (!chatLoadedRef.current) {
+      return setTimeout(() => handleWordleButtonClick(), 500);
+    }
     onUpdateSelectedChannelId(GENERAL_CHAT_ID);
     return setTimeout(() => {
       navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
       setTimeout(() => {
         onSetWordleModalShown(true);
-      }, 10);
+      }, 300);
     }, 10);
   }
 
   function handleChessButtonClick() {
-    setLoadingChat(true);
+    setLoadingChess(true);
     if (!chatLoadedRef.current) {
       return setTimeout(() => handleChessButtonClick(), 500);
     }

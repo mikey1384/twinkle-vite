@@ -140,7 +140,7 @@ function MessagesContainer({
     wordleSolution,
     wordleWordLevel,
     wordleAttemptState,
-    wordleStats,
+    wordleStats = {},
     nextDayTimeStamp,
     subjectObj = {},
     twoPeople

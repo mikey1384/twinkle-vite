@@ -7,6 +7,7 @@ import { useKeyContext, useChatContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 const deletedLabel = localize('deleted');
 
@@ -198,101 +199,103 @@ function Channel({
   }, [totalNumUnreads]);
 
   return (
-    <div
-      key={channelId}
-      className={css`
-        @media (min-width: ${desktopMinWidth}) {
-          &:hover {
-            background: ${Color.checkboxAreaGray()};
-          }
-        }
-      `}
-      style={{
-        width: '100%',
-        cursor: 'pointer',
-        padding: '1rem',
-        height: '6.5rem',
-        ...(selected ? { backgroundColor: Color.highlightGray() } : {})
-      }}
-      onClick={handleChannelClick}
-    >
+    <ErrorBoundary componentPath="Chat/LeftMenu/Channels/Channel">
       <div
+        key={channelId}
+        className={css`
+          @media (min-width: ${desktopMinWidth}) {
+            &:hover {
+              background: ${Color.checkboxAreaGray()};
+            }
+          }
+        `}
         style={{
-          display: 'flex',
-          height: '100%',
-          justifyContent: 'space-between',
-          alignItems: 'center'
+          width: '100%',
+          cursor: 'pointer',
+          padding: '1rem',
+          height: '6.5rem',
+          ...(selected ? { backgroundColor: Color.highlightGray() } : {})
         }}
+        onClick={handleChannelClick}
       >
         <div
           style={{
             display: 'flex',
-            width: badgeShown ? 'CALC(100% - 3rem)' : '100%',
             height: '100%',
-            whiteSpace: 'nowrap',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            alignItems: 'center'
           }}
         >
-          <div>
-            <p
-              style={{
-                color:
-                  channelId === 2
-                    ? Color[generalChatColor]()
-                    : !effectiveChannelName && !otherMember && '#7c7c7c',
-                fontWeight: 'bold',
-                margin: 0,
-                padding: 0,
-                textOverflow: 'ellipsis',
-                overflow: 'hidden',
-                lineHeight: 'normal'
-              }}
+          <div
+            style={{
+              display: 'flex',
+              width: badgeShown ? 'CALC(100% - 3rem)' : '100%',
+              height: '100%',
+              whiteSpace: 'nowrap',
+              flexDirection: 'column',
+              justifyContent: 'space-between'
+            }}
+          >
+            <div>
+              <p
+                style={{
+                  color:
+                    channelId === 2
+                      ? Color[generalChatColor]()
+                      : !effectiveChannelName && !otherMember && '#7c7c7c',
+                  fontWeight: 'bold',
+                  margin: 0,
+                  padding: 0,
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                  lineHeight: 'normal'
+                }}
+                className={css`
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.5rem;
+                  }
+                `}
+              >
+                {ChannelName}
+              </p>
+            </div>
+            <div
               className={css`
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.5rem;
+                  font-size: 1.3rem;
                 }
               `}
+              style={{
+                width: '100%',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden'
+              }}
             >
-              {ChannelName}
-            </p>
+              {PreviewMessage}
+            </div>
           </div>
-          <div
-            className={css`
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.3rem;
-              }
-            `}
-            style={{
-              width: '100%',
-              textOverflow: 'ellipsis',
-              overflow: 'hidden'
-            }}
-          >
-            {PreviewMessage}
-          </div>
+          {badgeShown && (
+            <div
+              style={{
+                background: Color.rose(),
+                display: 'flex',
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: '1.5rem',
+                minWidth: badgeWidth,
+                height: '2rem',
+                borderRadius: '1rem',
+                lineHeight: 1,
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              {totalNumUnreads}
+            </div>
+          )}
         </div>
-        {badgeShown && (
-          <div
-            style={{
-              background: Color.rose(),
-              display: 'flex',
-              color: '#fff',
-              fontWeight: 'bold',
-              fontSize: '1.5rem',
-              minWidth: badgeWidth,
-              height: '2rem',
-              borderRadius: '1rem',
-              lineHeight: 1,
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-          >
-            {totalNumUnreads}
-          </div>
-        )}
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
 
