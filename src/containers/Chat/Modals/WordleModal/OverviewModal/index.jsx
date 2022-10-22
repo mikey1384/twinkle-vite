@@ -3,6 +3,7 @@ import StatBar from './StatBar';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import AttemptResult from './AttemptResult';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { borderRadius, Color } from '~/constants/css';
 
 OverviewModal.propTypes = {
@@ -61,66 +62,68 @@ export default function OverviewModal({
 }) {
   return (
     <Modal small modalOverModal onHide={onHide}>
-      <header>{isGameOver ? 'Overview' : 'Your Statistics'}</header>
-      <main>
-        {isGameOver && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              padding: '0.3rem 1rem 1rem 1rem',
-              borderRadius,
-              boxShadow: `0 0 2px ${Color.borderGray()}`,
-              border: `1px solid ${Color.borderGray()}`,
-              background: Color[wordLevelObj[wordLevel].backgroundColor]()
-            }}
-          >
+      <ErrorBoundary componentPath="Chat/Modals/WordleModal/OverviewModal">
+        <header>{isGameOver ? 'Overview' : 'Your Statistics'}</header>
+        <main>
+          {isGameOver && (
             <div
               style={{
-                fontWeight: 'bold',
-                fontSize: '2.5rem',
-                textAlign: 'center',
-                color: Color[wordLevelObj[wordLevel].textColor]()
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '0.3rem 1rem 1rem 1rem',
+                borderRadius,
+                boxShadow: `0 0 2px ${Color.borderGray()}`,
+                border: `1px solid ${Color.borderGray()}`,
+                background: Color[wordLevelObj[wordLevel].backgroundColor]()
               }}
             >
-              {solution}
-            </div>
-            <div style={{ fontWeight: 'bold', lineHeight: 1.1 }}>
-              <span
-                style={{ color: Color[wordLevelObj[wordLevel].textColor]() }}
-              >
-                Level:{' '}
-              </span>
-              <span
+              <div
                 style={{
-                  color: Color[wordLevelObj[wordLevel].difficultyColor](),
-                  textTransform: 'capitalize'
+                  fontWeight: 'bold',
+                  fontSize: '2.5rem',
+                  textAlign: 'center',
+                  color: Color[wordLevelObj[wordLevel].textColor]()
                 }}
               >
-                {wordLevelObj[wordLevel].label}
-              </span>
+                {solution}
+              </div>
+              <div style={{ fontWeight: 'bold', lineHeight: 1.1 }}>
+                <span
+                  style={{ color: Color[wordLevelObj[wordLevel].textColor]() }}
+                >
+                  Level:{' '}
+                </span>
+                <span
+                  style={{
+                    color: Color[wordLevelObj[wordLevel].difficultyColor](),
+                    textTransform: 'capitalize'
+                  }}
+                >
+                  {wordLevelObj[wordLevel].label}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
-        {isGameOver && (
-          <AttemptResult
-            style={{ marginTop: '4rem' }}
-            isSolved={isSolved}
-            numGuesses={numGuesses}
-            attemptState={attemptState}
+          )}
+          {isGameOver && (
+            <AttemptResult
+              style={{ marginTop: '4rem' }}
+              isSolved={isSolved}
+              numGuesses={numGuesses}
+              attemptState={attemptState}
+            />
+          )}
+          <StatBar
+            style={{ marginTop: isGameOver ? '3.5rem' : 0 }}
+            isGameOver={isGameOver}
+            stats={wordleStats}
           />
-        )}
-        <StatBar
-          style={{ marginTop: isGameOver ? '3.5rem' : 0 }}
-          isGameOver={isGameOver}
-          stats={wordleStats}
-        />
-      </main>
-      <footer>
-        <Button transparent onClick={onHide}>
-          Close
-        </Button>
-      </footer>
+        </main>
+        <footer>
+          <Button transparent onClick={onHide}>
+            Close
+          </Button>
+        </footer>
+      </ErrorBoundary>
     </Modal>
   );
 }
