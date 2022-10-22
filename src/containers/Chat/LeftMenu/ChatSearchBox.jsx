@@ -6,6 +6,7 @@ import { useSearch } from '~/helpers/hooks';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 ChatSearchBox.propTypes = {
   style: PropTypes.object
@@ -23,7 +24,6 @@ function ChatSearchBox({ style }) {
     chatGroup: { color: chatGroupColor }
   } = useKeyContext((v) => v.theme);
   const chatSearchResults = useChatContext((v) => v.state.chatSearchResults);
-  const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const onClearChatSearchResults = useChatContext(
     (v) => v.actions.onClearChatSearchResults
   );
@@ -69,46 +69,48 @@ function ChatSearchBox({ style }) {
       onClearChatSearchResults();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [authLevel, profilePicUrl, selectedChannelId, userId, username]
+    [authLevel, navigate, profilePicUrl, userId, username]
   );
 
   return (
-    <div style={style}>
-      <SearchInput
-        placeholder="Search..."
-        onChange={handleSearch}
-        value={searchText}
-        searchResults={chatSearchResults}
-        renderItemLabel={(item) =>
-          !item.primary || (item.primary && item.twoPeople) ? (
-            <span>
-              {item.label}{' '}
-              {item.subLabel && <small>{`(${item.subLabel})`}</small>}
-            </span>
-          ) : (
-            <span
-              style={{
-                color:
-                  Color[
-                    item.channelId === 2 ? generalChatColor : chatGroupColor
-                  ](),
-                fontWeight: 'bold'
-              }}
-            >
-              {item.label}
-            </span>
-          )
-        }
-        onClickOutSide={() => {
-          setSearchText('');
-          onClearChatSearchResults();
-        }}
-        onSelect={handleSelect}
-      />
-      {searching && (
-        <Loading style={{ height: '7rem', position: 'absolute' }} />
-      )}
-    </div>
+    <ErrorBoundary componentPath="Chat/LeftMenu/ChatSearchBox">
+      <div style={style}>
+        <SearchInput
+          placeholder="Search..."
+          onChange={handleSearch}
+          value={searchText}
+          searchResults={chatSearchResults}
+          renderItemLabel={(item) =>
+            !item.primary || (item.primary && item.twoPeople) ? (
+              <span>
+                {item.label}{' '}
+                {item.subLabel && <small>{`(${item.subLabel})`}</small>}
+              </span>
+            ) : (
+              <span
+                style={{
+                  color:
+                    Color[
+                      item.channelId === 2 ? generalChatColor : chatGroupColor
+                    ](),
+                  fontWeight: 'bold'
+                }}
+              >
+                {item.label}
+              </span>
+            )
+          }
+          onClickOutSide={() => {
+            setSearchText('');
+            onClearChatSearchResults();
+          }}
+          onSelect={handleSelect}
+        />
+        {searching && (
+          <Loading style={{ height: '7rem', position: 'absolute' }} />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 
