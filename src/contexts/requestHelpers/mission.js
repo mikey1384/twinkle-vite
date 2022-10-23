@@ -322,6 +322,33 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async disapproveGoogleQuestion(questionId) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(
+          `${URL}/mission/google/question/disapprove`,
+          { questionId },
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async deleteGoogleQuestion(questionId) {
+      try {
+        const {
+          data: { success }
+        } = await request.delete(
+          `${URL}/mission/google/question?questionId=${questionId}`,
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadGrammarQuestion({
       leftSideText,
       rightSideText,

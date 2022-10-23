@@ -82,6 +82,7 @@ export default function QuestionEditor({ missionId }) {
           <Loading />
         ) : (
           <Questions
+            onSetQuestionIds={setQuestionIds}
             onSetQuestionObj={setQuestionObj}
             approvedQuestions={questions.filter(
               (question) => question.isApproved
