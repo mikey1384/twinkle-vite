@@ -5,6 +5,8 @@ import { Color } from '~/constants/css';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Textarea from '~/components/Texts/Textarea';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 
 QuestionEditor.propTypes = {
   missionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
@@ -33,16 +35,32 @@ export default function QuestionEditor({ missionId }) {
   return (
     <ErrorBoundary componentPath="MissionPage/Main/QuestionEditor">
       <div>
-        <Textarea
+        <div
           style={{
-            marginTop: '2rem',
-            fontSize: '1.7rem'
+            marginTop: '3rem',
+            display: 'flex',
+            flexDirection: 'column'
           }}
-          minRows={3}
-          value={inputText}
-          placeholder="Enter new questions here"
-          onChange={(event) => setInputText(event.target.value)}
-        />
+        >
+          <Textarea
+            style={{
+              fontSize: '1.7rem'
+            }}
+            minRows={3}
+            value={inputText}
+            placeholder="Enter new questions here"
+            onChange={(event) => setInputText(event.target.value)}
+          />
+          <Button
+            style={{ marginTop: '1rem', alignSelf: 'flex-end' }}
+            color="blue"
+            filled
+            onClick={() => console.log('clicked')}
+          >
+            <Icon icon="plus" />
+            <span style={{ marginLeft: '0.7rem' }}>Add</span>
+          </Button>
+        </div>
         {loading ? (
           <Loading />
         ) : (
