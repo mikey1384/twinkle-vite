@@ -16,7 +16,8 @@ QuestionEditor.propTypes = {
 export default function QuestionEditor({ missionId }) {
   const [isAdding, setIsAdding] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [questions, setQuestions] = useState([]);
+  const [questionIds, setQuestionIds] = useState([]);
+  const [questionObj, setQuestionObj] = useState({});
   const [inputText, setInputText] = useState('');
   const loadGoogleMissionQuestions = useAppContext(
     (v) => v.requestHelpers.loadGoogleMissionQuestions
@@ -35,11 +36,16 @@ export default function QuestionEditor({ missionId }) {
       const { questionObj, questionIds } = await loadGoogleMissionQuestions({
         missionId
       });
-      setQuestions(questionIds.map((id) => questionObj[id]));
+      setQuestionObj(questionObj);
+      setQuestionIds(questionIds);
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [missionId]);
+
+  const questions = useMemo(() => {
+    return questionIds.map((questionId) => questionObj[questionId] || []);
+  }, [questionIds, questionObj]);
 
   return (
     <ErrorBoundary componentPath="MissionPage/Main/QuestionEditor">
@@ -76,6 +82,7 @@ export default function QuestionEditor({ missionId }) {
           <Loading />
         ) : (
           <Questions
+            onSetQuestionObj={setQuestionObj}
             approvedQuestions={questions.filter(
               (question) => question.isApproved
             )}
@@ -99,7 +106,8 @@ export default function QuestionEditor({ missionId }) {
       setIsAdding(false);
       return alert('Question already exists');
     }
-    setQuestions((prev) => [question, ...prev]);
+    setQuestionIds((prev) => [question.id, ...prev]);
+    setQuestionObj((prev) => ({ ...prev, [question.id]: question }));
     setIsAdding(false);
   }
 }

@@ -308,6 +308,20 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async approveGoogleQuestion(questionId) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(
+          `${URL}/mission/google/question/approve`,
+          { questionId },
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadGrammarQuestion({
       leftSideText,
       rightSideText,
