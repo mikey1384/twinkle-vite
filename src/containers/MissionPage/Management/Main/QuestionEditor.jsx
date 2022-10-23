@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Textarea from '~/components/Texts/Textarea';
@@ -19,6 +20,10 @@ export default function QuestionEditor({ missionId }) {
   const loadGoogleMissionQuestions = useAppContext(
     (v) => v.requestHelpers.loadGoogleMissionQuestions
   );
+  const inputDisabled = useMemo(() => {
+    return stringIsEmpty(inputText);
+  }, [inputText]);
+
   useEffect(() => {
     init();
     async function init() {
@@ -53,9 +58,10 @@ export default function QuestionEditor({ missionId }) {
           />
           <Button
             style={{ marginTop: '1rem', alignSelf: 'flex-end' }}
+            disabled={inputDisabled}
             color="blue"
             filled
-            onClick={() => console.log('clicked')}
+            onClick={handleNewQuestionSubmit}
           >
             <Icon icon="plus" />
             <span style={{ marginLeft: '0.7rem' }}>Add</span>
@@ -90,4 +96,8 @@ export default function QuestionEditor({ missionId }) {
       </div>
     </ErrorBoundary>
   );
+
+  async function handleNewQuestionSubmit() {
+    console.log('clllicked');
+  }
 }
