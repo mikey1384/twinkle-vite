@@ -14,6 +14,7 @@ QuestionEditor.propTypes = {
 };
 
 export default function QuestionEditor({ missionId }) {
+  const [isAdding, setIsAdding] = useState(false);
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -67,7 +68,9 @@ export default function QuestionEditor({ missionId }) {
             onClick={handleNewQuestionSubmit}
           >
             <Icon icon="plus" />
-            <span style={{ marginLeft: '0.7rem' }}>Add</span>
+            <span loading={isAdding} style={{ marginLeft: '0.7rem' }}>
+              Add
+            </span>
           </Button>
         </div>
         {loading ? (
@@ -87,6 +90,17 @@ export default function QuestionEditor({ missionId }) {
   );
 
   async function handleNewQuestionSubmit() {
-    await uploadGoogleQuestion({ missionId, questionText: inputText });
+    setInputText('');
+    setIsAdding(true);
+    const { alreadyExists, question } = await uploadGoogleQuestion({
+      missionId,
+      questionText: inputText
+    });
+    if (alreadyExists) {
+      setIsAdding(false);
+      return alert('Question already exists');
+    }
+    setQuestions((prev) => [question, ...prev]);
+    setIsAdding(false);
   }
 }
