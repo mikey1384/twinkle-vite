@@ -12,7 +12,6 @@ import RewardLevelExpectation from './RewardLevelExpectation';
 
 CommentInputArea.propTypes = {
   autoFocus: PropTypes.bool,
-  clickListenerState: PropTypes.bool,
   inputTypeLabel: PropTypes.string,
   innerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
   InputFormRef: PropTypes.object,
@@ -30,7 +29,6 @@ CommentInputArea.propTypes = {
 
 export default function CommentInputArea({
   autoFocus,
-  clickListenerState,
   innerRef,
   inputTypeLabel,
   InputFormRef,
@@ -99,7 +97,6 @@ export default function CommentInputArea({
         <div style={{ position: 'relative', width: '100%' }}>
           <InputForm
             innerRef={innerRef}
-            clickListenerState={clickListenerState}
             autoFocus={autoFocus}
             onSubmit={handleSubmit}
             onViewSecretAnswer={onViewSecretAnswer}
