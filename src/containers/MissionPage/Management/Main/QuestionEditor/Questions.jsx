@@ -4,13 +4,22 @@ import { Color } from '~/constants/css';
 import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
+import { useAppContext } from '~/contexts';
 
 Questions.propTypes = {
   approvedQuestions: PropTypes.array.isRequired,
-  pendingQuestions: PropTypes.array.isRequired
+  pendingQuestions: PropTypes.array.isRequired,
+  onSetQuestionObj: PropTypes.func.isRequired
 };
 
-export default function Questions({ approvedQuestions, pendingQuestions }) {
+export default function Questions({
+  approvedQuestions,
+  onSetQuestionObj,
+  pendingQuestions
+}) {
+  const approveGoogleQuestion = useAppContext(
+    (v) => v.requestHelpers.approveGoogleQuestion
+  );
   const [activeTab, setActiveTab] = useState('pending');
   const displayedQuestions = useMemo(
     () => (activeTab === 'pending' ? pendingQuestions : approvedQuestions),
@@ -96,7 +105,14 @@ export default function Questions({ approvedQuestions, pendingQuestions }) {
     </div>
   );
 
-  function handleApprove(questionId) {
-    console.log('approve', questionId);
+  async function handleApprove(questionId) {
+    await approveGoogleQuestion(questionId);
+    onSetQuestionObj((prev) => ({
+      ...prev,
+      [questionId]: {
+        ...prev[questionId],
+        isApproved: true
+      }
+    }));
   }
 }
