@@ -294,6 +294,20 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async uploadGoogleQuestion({ missionId, questionText }) {
+      try {
+        const {
+          data: { alreadyExists, question }
+        } = await request.post(
+          `${URL}/mission/google/question`,
+          { missionId, questionText },
+          auth()
+        );
+        return Promise.resolve({ alreadyExists, question });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadGrammarQuestion({
       leftSideText,
       rightSideText,
