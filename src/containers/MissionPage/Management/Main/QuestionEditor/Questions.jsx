@@ -75,7 +75,7 @@ export default function Questions({ approvedQuestions, pendingQuestions }) {
                   color="green"
                   skeuomorphic
                   opacity={0.5}
-                  onClick={() => console.log('clicked')}
+                  onClick={() => handleApprove(question.id)}
                 >
                   <Icon icon="check" />
                 </Button>
@@ -95,4 +95,8 @@ export default function Questions({ approvedQuestions, pendingQuestions }) {
       </div>
     </div>
   );
+
+  function handleApprove(questionId) {
+    console.log('approve', questionId);
+  }
 }

@@ -62,15 +62,14 @@ export default function QuestionEditor({ missionId }) {
           />
           <Button
             style={{ marginTop: '1rem', alignSelf: 'flex-end' }}
+            loading={isAdding}
             disabled={inputDisabled}
             color="blue"
             filled
             onClick={handleNewQuestionSubmit}
           >
             <Icon icon="plus" />
-            <span loading={isAdding} style={{ marginLeft: '0.7rem' }}>
-              Add
-            </span>
+            <span style={{ marginLeft: '0.7rem' }}>Add</span>
           </Button>
         </div>
         {loading ? (
