@@ -42,6 +42,7 @@ export default function EditTextArea({
   style,
   text
 }) {
+  const [isEditing, setIsEditing] = useState(false);
   const { banned } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
@@ -126,6 +127,7 @@ export default function EditTextArea({
         <Button
           color={doneColor}
           onClick={onSubmit}
+          loading={isEditing}
           disabled={
             (!allowEmptyText && stringIsEmpty(editText)) ||
             !!commentExceedsCharLimit ||
@@ -178,6 +180,7 @@ export default function EditTextArea({
       form: undefined
     });
     submitting.current = true;
+    setIsEditing(true);
     onEditDone(finalizeEmoji(editText));
   }
 }
