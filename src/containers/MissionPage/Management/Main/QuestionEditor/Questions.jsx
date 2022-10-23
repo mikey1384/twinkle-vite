@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
+import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
+import Icon from '~/components/Icon';
 
 Questions.propTypes = {
   approvedQuestions: PropTypes.array.isRequired,
@@ -48,6 +50,8 @@ export default function Questions({ approvedQuestions, pendingQuestions }) {
         {displayedQuestions.map((question, index) => (
           <div
             style={{
+              width: '100%',
+              position: 'relative',
               background: '#fff',
               marginTop: index === 0 ? '0' : '1rem',
               padding: '2rem',
@@ -58,6 +62,34 @@ export default function Questions({ approvedQuestions, pendingQuestions }) {
             key={question.id}
           >
             {question.content}
+            {activeTab === 'pending' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  right: '1rem',
+                  top: '1rem',
+                  display: 'flex'
+                }}
+              >
+                <Button
+                  color="green"
+                  skeuomorphic
+                  opacity={0.5}
+                  onClick={() => console.log('clicked')}
+                >
+                  <Icon icon="check" />
+                </Button>
+                <Button
+                  color="cranberry"
+                  skeuomorphic
+                  opacity={0.5}
+                  style={{ marginLeft: '1rem' }}
+                  onClick={() => console.log('clicked')}
+                >
+                  <Icon icon="trash-alt" />
+                </Button>
+              </div>
+            )}
           </div>
         ))}
       </div>
