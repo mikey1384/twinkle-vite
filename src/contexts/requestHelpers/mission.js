@@ -297,13 +297,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
     async uploadGoogleQuestion({ missionId, questionText }) {
       try {
         const {
-          data: { alreadyExists, question }
+          data: { alreadyExists, questionId, question }
         } = await request.post(
           `${URL}/mission/google/question`,
           { missionId, questionText },
           auth()
         );
-        return Promise.resolve({ alreadyExists, question });
+        return Promise.resolve({ alreadyExists, question, questionId });
       } catch (error) {
         return handleError(error);
       }
