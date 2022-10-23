@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useAppContext } from '~/contexts';
-import { Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import Questions from './Questions';
 
 QuestionEditor.propTypes = {
   missionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
@@ -73,28 +73,14 @@ export default function QuestionEditor({ missionId }) {
         {loading ? (
           <Loading />
         ) : (
-          <div style={{ marginTop: '3rem' }}>
-            <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>
-              Registered questions
-            </p>
-            <div style={{ marginTop: '1.7rem' }}>
-              {questions.map((question, index) => (
-                <div
-                  style={{
-                    background: '#fff',
-                    marginTop: index === 0 ? '0' : '1rem',
-                    padding: '2rem',
-                    fontSize: '1.7rem',
-                    textAlign: 'center',
-                    border: `1px solid ${Color.borderGray()}`
-                  }}
-                  key={question.id}
-                >
-                  {question.content}
-                </div>
-              ))}
-            </div>
-          </div>
+          <Questions
+            approvedQuestions={questions.filter(
+              (question) => question.isApproved
+            )}
+            pendingQuestions={questions.filter(
+              (question) => !question.isApproved
+            )}
+          />
         )}
       </div>
     </ErrorBoundary>
