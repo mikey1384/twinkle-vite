@@ -20,6 +20,9 @@ export default function QuestionEditor({ missionId }) {
   const loadGoogleMissionQuestions = useAppContext(
     (v) => v.requestHelpers.loadGoogleMissionQuestions
   );
+  const uploadGoogleQuestion = useAppContext(
+    (v) => v.requestHelpers.uploadGoogleQuestion
+  );
   const inputDisabled = useMemo(() => {
     return stringIsEmpty(inputText);
   }, [inputText]);
@@ -98,6 +101,6 @@ export default function QuestionEditor({ missionId }) {
   );
 
   async function handleNewQuestionSubmit() {
-    console.log('clllicked');
+    await uploadGoogleQuestion({ missionId, questionText: inputText });
   }
 }
