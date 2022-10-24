@@ -81,8 +81,6 @@ export default function StartScreen({
     return 'Start';
   }, [maxTimesPlayedToday, nextDayTimeStamp, onSetTimesPlayedToday]);
 
-  console.log(results);
-
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">
       <div
