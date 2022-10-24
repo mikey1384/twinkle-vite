@@ -100,22 +100,27 @@ export default function ContentFileViewer({
                 padding: isDisplayedOnHome && '0 1rem 0 1rem'
               }}
             >
-              <a
+              <div
                 style={{
-                  width: '100%',
-                  fontWeight: 'bold',
-                  color: Color[linkColor](),
-                  overflow: 'hidden',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical'
+                  maxWidth: '100%',
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden'
                 }}
-                href={src}
-                target="_blank"
-                rel="noopener noreferrer"
               >
-                {fileName}
-              </a>
+                <a
+                  style={{
+                    fontWeight: 'bold',
+                    color: Color[linkColor](),
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical'
+                  }}
+                  href={src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {fileName}
+                </a>
+              </div>
             </div>
           )}
           <MediaPlayer

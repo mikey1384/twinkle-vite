@@ -60,7 +60,15 @@ export default function FileInfo({
         }}
       >
         <div>
-          <div>File Name: {fileObj.name}</div>
+          <div
+            style={{
+              maxWidth: '100%',
+              textOverflow: 'ellipsis',
+              overflow: 'hidden'
+            }}
+          >
+            File Name: {fileObj.name}
+          </div>
           <div>
             File Size: {addCommasToNumber(fileObj.size)} byte{' '}
             {renderFileSize(fileObj.size)}

@@ -35,9 +35,14 @@ export default function FileUploadStatusIndicator({
 
   return (
     <div style={{ marginTop: '1rem', ...style }}>
-      <div style={{ textAlign: 'center' }}>{`Uploading${
-        fileName ? ` ${fileName}` : ''
-      }...`}</div>
+      <div
+        style={{
+          textAlign: 'center',
+          maxWidth: '100%',
+          textOverflow: 'ellipsis',
+          overflow: 'hidden'
+        }}
+      >{`Uploading${fileName ? ` ${fileName}` : ''}...`}</div>
       <ProgressBar
         text={text}
         theme={theme}
