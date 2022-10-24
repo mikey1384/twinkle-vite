@@ -633,7 +633,15 @@ export default function Chess({
               }
             `}
           >
-            {move.number && <span>Move {move.number}: </span>}
+            {move.number && (
+              <span>
+                Move{' '}
+                {`${Math.ceil(move.number / 2)}-${
+                  move.number % 2 === 0 ? 2 : 1
+                }`}
+                :{' '}
+              </span>
+            )}
             <span>
               {isFromModal && (
                 <>
