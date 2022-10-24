@@ -120,7 +120,7 @@ export default function StartScreen({
                 <p>Answer 10 fill-in-the-blank grammar questions.</p>
                 <p style={{ marginTop: '1rem' }}>
                   The <b style={{ color: Color.redOrange() }}>faster</b> you
-                  answer a question, the more{' '}
+                  select the correct choice, the more{' '}
                   <b style={{ color: Color.darkGold() }}>XP</b> you earn.
                 </p>
                 {!deviceIsMobile && (
