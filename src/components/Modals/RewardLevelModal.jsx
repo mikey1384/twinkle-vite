@@ -38,7 +38,7 @@ export default function RewardLevelModal({
   );
   const [moderatorName, setModeratorName] = useState('');
   const [cannotChangeModalShown, setCannotChangeModalShown] = useState(false);
-  const [disabled, setDisabled] = useState(false);
+  const [posting, setPosting] = useState(false);
   const [rewardLevel, setRewardLevel] = useState(initialRewardLevel);
 
   const moderatorHasDisabledChangeLabel = useMemo(() => {
@@ -81,7 +81,7 @@ export default function RewardLevelModal({
           >
             {cancelLabel}
           </Button>
-          <Button disabled={disabled} color={doneColor} onClick={submit}>
+          <Button loading={posting} color={doneColor} onClick={submit}>
             {setLabel}
           </Button>
         </footer>
@@ -98,7 +98,7 @@ export default function RewardLevelModal({
   );
 
   async function submit() {
-    setDisabled(true);
+    setPosting(true);
     const { cannotChange, success, moderatorName } = await updateRewardLevel({
       contentId,
       contentType,
