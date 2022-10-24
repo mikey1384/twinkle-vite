@@ -4,13 +4,14 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Marble from './Marble';
+import localize from '~/constants/localize';
+import Countdown from 'react-countdown';
+import TodayResult from './TodayResult';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
-import localize from '~/constants/localize';
-import Countdown from 'react-countdown';
 import { scoreTable, perfectScoreBonus } from '../constants';
 
 const grammarGameLabel = localize('grammarGame');
@@ -32,6 +33,7 @@ export default function StartScreen({
   onHide
 }) {
   const navigate = useNavigate();
+  const [results, setResults] = useState([]);
   const [nextDayTimeStamp, setNextDayTimeStamp] = useState(null);
   const {
     fail: { color: failColor },
@@ -44,8 +46,9 @@ export default function StartScreen({
   useEffect(() => {
     init();
     async function init() {
-      const { attemptNumber, nextDayTimeStamp } =
+      const { attemptResults, attemptNumber, nextDayTimeStamp } =
         await checkNumGrammarGamesPlayedToday();
+      setResults(attemptResults);
       setNextDayTimeStamp(nextDayTimeStamp);
       onSetTimesPlayedToday(attemptNumber);
       setLoaded(true);
@@ -77,6 +80,8 @@ export default function StartScreen({
     }
     return 'Start';
   }, [maxTimesPlayedToday, nextDayTimeStamp, onSetTimesPlayedToday]);
+
+  console.log(results);
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">
@@ -112,17 +117,23 @@ export default function StartScreen({
           <div
             style={{ marginTop: '4rem', lineHeight: 1.7, textAlign: 'center' }}
           >
-            <p>Answer 10 fill-in-the-blank grammar questions.</p>
-            <p style={{ marginTop: '1rem' }}>
-              The <b style={{ color: Color.redOrange() }}>faster</b> you answer
-              a question, the more <b style={{ color: Color.darkGold() }}>XP</b>{' '}
-              you earn.
-            </p>
-            {!deviceIsMobile && (
-              <p style={{ marginTop: '1rem' }}>
-                You can use the <b>1, 2, 3, 4 keys</b> on your <b>keyboard</b>{' '}
-                or use your mouse to select the choices
-              </p>
+            {!results?.length ? (
+              <div>
+                <p>Answer 10 fill-in-the-blank grammar questions.</p>
+                <p style={{ marginTop: '1rem' }}>
+                  The <b style={{ color: Color.redOrange() }}>faster</b> you
+                  answer a question, the more{' '}
+                  <b style={{ color: Color.darkGold() }}>XP</b> you earn.
+                </p>
+                {!deviceIsMobile && (
+                  <p style={{ marginTop: '1rem' }}>
+                    You can use the <b>1, 2, 3, 4 keys</b> on your{' '}
+                    <b>keyboard</b> or use your mouse to select the choices
+                  </p>
+                )}
+              </div>
+            ) : (
+              <TodayResult results={results} />
             )}
             <div style={{ marginTop: '3rem' }}>
               <div>
