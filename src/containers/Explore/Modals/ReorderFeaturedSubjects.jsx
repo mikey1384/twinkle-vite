@@ -28,7 +28,7 @@ export default function ReorderFeaturedSubjects({
     (v) => v.actions.onLoadFeaturedSubjects
   );
   const [subjectIds, setSubjectIds] = useState(initialSubjectIds);
-  const [disabled, setDisabled] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
   const listItemObj = objectify(featuredSubjects);
 
   return (
@@ -47,12 +47,11 @@ export default function ReorderFeaturedSubjects({
           Cancel
         </Button>
         <Button
-          disabled={
-            isEqual(
-              subjectIds,
-              featuredSubjects.map((subject) => subject.id)
-            ) || disabled
-          }
+          disabled={isEqual(
+            subjectIds,
+            featuredSubjects.map((subject) => subject.id)
+          )}
+          loading={isReordering}
           color={doneColor}
           onClick={handleSubmit}
         >
@@ -72,7 +71,7 @@ export default function ReorderFeaturedSubjects({
   }
 
   async function handleSubmit() {
-    setDisabled(true);
+    setIsReordering(true);
     for (let subjectId of subjectIds) {
       if (!subjectId) {
         return reportError({

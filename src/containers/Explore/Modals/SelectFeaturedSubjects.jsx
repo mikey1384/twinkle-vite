@@ -192,7 +192,8 @@ export default function SelectFeaturedSubjectsModal({
           Cancel
         </Button>
         <Button
-          disabled={selected.length > 10 || submitting}
+          disabled={selected.length > 10}
+          loading={submitting}
           color={doneColor}
           onClick={handleSubmit}
         >
