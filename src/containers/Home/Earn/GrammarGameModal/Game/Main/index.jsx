@@ -76,11 +76,9 @@ export default function Main({
       }
     }
     function handleSetGotWrong(index) {
-      let delay = 1000;
+      const delay = 1000;
       if (!isWrongRef.current) {
         isWrongRef.current = true;
-      } else {
-        delay = 3000;
       }
       numWrong.current = numWrong.current + 1;
       clearTimeout(gotWrongTimerRef.current);
