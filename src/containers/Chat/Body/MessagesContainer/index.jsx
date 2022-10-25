@@ -525,6 +525,26 @@ function MessagesContainer({
     [currentChannel, selectedChannelId, userId]
   );
 
+  const handleRewindChessMove = useCallback(
+    async ({ chessState, userId, username, profilePicUrl }) => {
+      const messageId = uuidv1();
+      onSubmitMessage({
+        messageId,
+        message: {
+          content: 'Made a chess move',
+          userId,
+          chessState,
+          isChessMsg: 1,
+          profilePicUrl,
+          username,
+          channelId: selectedChannelId
+        }
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedChannelId]
+  );
+
   const handleConfirmChessMove = useCallback(
     async ({ state, isCheckmate, isStalemate, moveNumber }) => {
       const gameWinnerId = isCheckmate ? userId : isStalemate ? 0 : undefined;
@@ -1182,6 +1202,7 @@ function MessagesContainer({
                   onReceiveNewMessage={handleReceiveNewMessage}
                   onReplyClick={() => ChatInputRef.current.focus()}
                   onRewardMessageSubmit={handleRewardMessageSubmit}
+                  onRewindChessMove={handleRewindChessMove}
                   onScrollToBottom={handleScrollToBottom}
                   recepientId={recepientId}
                   onShowSubjectMsgsModal={({ subjectId, content }) =>
