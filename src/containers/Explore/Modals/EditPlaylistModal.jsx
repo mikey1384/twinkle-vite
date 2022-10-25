@@ -320,10 +320,10 @@ export default function EditPlaylistModal({
               color={doneColor}
               onClick={handleSave}
               disabled={
-                (Object.keys(removedVideoIds).length === numPlaylistVids &&
-                  addedVideos.length === 0) ||
-                isSaving
+                Object.keys(removedVideoIds).length === numPlaylistVids &&
+                addedVideos.length === 0
               }
+              loading={isSaving}
             >
               Save
             </Button>

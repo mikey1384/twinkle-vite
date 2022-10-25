@@ -29,7 +29,7 @@ export default function ReorderFeaturedPlaylists({
     (v) => v.actions.onChangeFeaturedPlaylists
   );
   const [playlistIds, setPlaylistIds] = useState(initialPlaylistIds);
-  const [disabled, setDisabled] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const listItemObj = objectify(featuredPlaylists);
 
   return (
@@ -48,12 +48,11 @@ export default function ReorderFeaturedPlaylists({
           Cancel
         </Button>
         <Button
-          disabled={
-            isEqual(
-              playlistIds,
-              featuredPlaylists.map((playlist) => playlist.id)
-            ) || disabled
-          }
+          disabled={isEqual(
+            playlistIds,
+            featuredPlaylists.map((playlist) => playlist.id)
+          )}
+          loading={isSubmitting}
           color={doneColor}
           onClick={handleSubmit}
         >
@@ -73,7 +72,7 @@ export default function ReorderFeaturedPlaylists({
   }
 
   async function handleSubmit() {
-    setDisabled(true);
+    setIsSubmitting(true);
     const newSelectedPlaylists = await uploadFeaturedPlaylists({
       selectedPlaylists: playlistIds
     });
