@@ -154,10 +154,10 @@ export default function Main({
       const measureTime =
         elapsedTime + handleCalculatePenalty(numWrong.current);
       const baseTime = baseLetterLengthTime + baseNumWordsTime;
-      if (measureTime < baseTime * 0.35) return 'S';
-      if (measureTime < baseTime * 0.45) return 'A';
-      if (measureTime < baseTime * 0.55) return 'B';
-      if (measureTime < baseTime * 0.65) return 'C';
+      if (measureTime < baseTime * 0.38) return 'S';
+      if (measureTime < baseTime * 0.5) return 'A';
+      if (measureTime < baseTime * 0.6) return 'B';
+      if (measureTime < baseTime * 0.7) return 'C';
       if (measureTime < baseTime * 1) return 'D';
       return 'F';
     }
