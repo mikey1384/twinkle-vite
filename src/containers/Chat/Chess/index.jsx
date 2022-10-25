@@ -603,8 +603,36 @@ export default function Chess({
     spoilerOff,
     userMadeLastMove
   ]);
+  const dropdownProps = useMemo(() => {
+    const result = [];
+    if (messageId !== lastChessMessageId) {
+      result.push({
+        label: (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Icon icon="clock-rotate-left" />
+            <span style={{ marginLeft: '1rem' }}>Rewind</span>
+          </div>
+        ),
+        onClick: () => console.log('clicked')
+      });
+    }
+    return result;
+  }, [lastChessMessageId, messageId]);
   const gameDropdownButtonShown = useMemo(() => {
-    return loaded && boardState && !isCheckmate && !isStalemate && !isDraw;
+    return (
+      !!dropdownProps.length &&
+      loaded &&
+      boardState &&
+      !isCheckmate &&
+      !isStalemate &&
+      !isDraw
+    );
   }, [boardState, isCheckmate, isDraw, isStalemate, loaded]);
 
   return (
@@ -652,23 +680,7 @@ export default function Chess({
             className="menu-button"
             color="darkerGray"
             icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
-            menuProps={[
-              {
-                label: (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <Icon icon="clock-rotate-left" />
-                    <span style={{ marginLeft: '1rem' }}>Rewind</span>
-                  </div>
-                ),
-                onClick: () => console.log('clicked')
-              }
-            ]}
+            menuProps={dropdownProps}
             onDropdownShown={setHighlighted}
           />
         </div>
