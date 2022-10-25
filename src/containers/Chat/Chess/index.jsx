@@ -626,14 +626,21 @@ export default function Chess({
   }, [lastChessMessageId, messageId]);
   const gameDropdownButtonShown = useMemo(() => {
     return (
-      !!dropdownProps.length &&
+      !!dropdownProps?.length &&
       loaded &&
       boardState &&
       !isCheckmate &&
       !isStalemate &&
       !isDraw
     );
-  }, [boardState, isCheckmate, isDraw, isStalemate, loaded]);
+  }, [
+    boardState,
+    dropdownProps?.length,
+    isCheckmate,
+    isDraw,
+    isStalemate,
+    loaded
+  ]);
 
   return (
     <div
