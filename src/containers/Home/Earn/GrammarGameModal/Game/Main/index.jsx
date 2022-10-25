@@ -114,7 +114,6 @@ export default function Main({
 
     function handleReturnCalculatedScore(elapsedTime) {
       const defaultBaseLetterLengthTime = 500;
-      const defaultBaseNumWordsTime = 500;
       let baseLetterLengthTime = defaultBaseLetterLengthTime;
       if (questionObj[currentIndex]) {
         const { choices, wasWrong } = questionObj[currentIndex];
@@ -133,22 +132,16 @@ export default function Main({
           );
         }
       }
-      let baseNumWordsTime = defaultBaseNumWordsTime;
+      let baseNumWordsTime = baseLetterLengthTime;
       if (questionObj[currentIndex]) {
         const { choices, wasWrong } = questionObj[currentIndex];
         let numWords = 0;
         for (let choice of choices) {
           numWords += choice.split(' ').length;
         }
-        baseNumWordsTime = Math.max(
-          numWords * 50,
-          defaultBaseNumWordsTime / 1.2
-        );
+        baseNumWordsTime = Math.max(numWords * 40, baseLetterLengthTime);
         if (wasWrong) {
-          baseNumWordsTime = Math.min(
-            baseNumWordsTime,
-            defaultBaseNumWordsTime
-          );
+          baseNumWordsTime = Math.min(baseNumWordsTime, baseLetterLengthTime);
         }
       }
       const measureTime =
