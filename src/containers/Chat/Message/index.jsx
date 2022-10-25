@@ -66,6 +66,7 @@ Message.propTypes = {
   onChessSpoilerClick: PropTypes.func,
   onReceiveNewMessage: PropTypes.func,
   onReplyClick: PropTypes.func,
+  onRewindChessMove: PropTypes.func,
   onRewardMessageSubmit: PropTypes.func.isRequired,
   onScrollToBottom: PropTypes.func.isRequired,
   onShowSubjectMsgsModal: PropTypes.func,
@@ -128,6 +129,7 @@ function Message({
   onReceiveNewMessage,
   onReplyClick,
   onRewardMessageSubmit,
+  onRewindChessMove,
   onScrollToBottom,
   onShowSubjectMsgsModal,
   zIndex
@@ -522,10 +524,6 @@ function Message({
     [message]
   );
 
-  const handleRewindChessMove = useCallback(async () => {
-    console.log(chessState);
-  }, [chessState]);
-
   const handleEditCancel = useCallback(() => {
     onSetIsEditing({
       contentId: messageId,
@@ -737,7 +735,14 @@ function Message({
                     initialState={chessState}
                     lastChessMessageId={currentChannel.lastChessMessageId}
                     onBoardClick={onChessBoardClick}
-                    onRewindClick={handleRewindChessMove}
+                    onRewindClick={() =>
+                      onRewindChessMove({
+                        chessState,
+                        userId,
+                        username,
+                        profilePicUrl
+                      })
+                    }
                     onSpoilerClick={handleChessSpoilerClick}
                     opponentId={chessOpponent?.id}
                     opponentName={chessOpponent?.username}
