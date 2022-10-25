@@ -15,6 +15,16 @@ export default function TodayResult({ results }) {
         letterGrade={letterGrade}
       />
     ));
+    if (row.length === 0) {
+      return Array(10)
+        .fill()
+        .map((_, index) => (
+          <Marble
+            key={index}
+            style={{ marginLeft: index === 0 ? 0 : '0.1rem' }}
+          />
+        ));
+    }
     return row;
   }, [results]);
   const secondRow = useMemo(() => {
