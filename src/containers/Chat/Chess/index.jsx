@@ -655,10 +655,16 @@ export default function Chess({
             menuProps={[
               {
                 label: (
-                  <>
-                    <Icon icon="reply" />
-                    <span style={{ marginLeft: '1rem' }}>Something</span>
-                  </>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Icon icon="clock-rotate-left" />
+                    <span style={{ marginLeft: '1rem' }}>Rewind</span>
+                  </div>
                 ),
                 onClick: () => console.log('clicked')
               }
