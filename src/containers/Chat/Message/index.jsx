@@ -522,6 +522,10 @@ function Message({
     [message]
   );
 
+  const handleRewindChessMove = useCallback(async () => {
+    console.log(chessState);
+  }, [chessState]);
+
   const handleEditCancel = useCallback(() => {
     onSetIsEditing({
       contentId: messageId,
@@ -733,6 +737,7 @@ function Message({
                     initialState={chessState}
                     lastChessMessageId={currentChannel.lastChessMessageId}
                     onBoardClick={onChessBoardClick}
+                    onRewindClick={handleRewindChessMove}
                     onSpoilerClick={handleChessSpoilerClick}
                     opponentId={chessOpponent?.id}
                     opponentName={chessOpponent?.username}
