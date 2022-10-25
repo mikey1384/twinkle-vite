@@ -612,6 +612,9 @@ export default function Chess({
       className={css`
         .menu-button {
           display: ${highlighted ? 'block' : 'none'};
+          @media (max-width: ${mobileMaxWidth}) {
+            display: block;
+          }
         }
         height: 515px;
         @media (max-width: ${mobileMaxWidth}) {
@@ -629,7 +632,17 @@ export default function Chess({
       }}
     >
       {gameDropdownButtonShown ? (
-        <div style={{ right: 0, position: 'absolute' }}>
+        <div
+          className={css`
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              right: 0;
+              top: 0;
+            }
+          `}
+        >
           <DropdownButton
             skeuomorphic
             buttonStyle={{
@@ -639,7 +652,6 @@ export default function Chess({
             className="menu-button"
             color="darkerGray"
             icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
-            opacity={0.5}
             menuProps={[
               {
                 label: (
@@ -669,7 +681,7 @@ export default function Chess({
             @media (max-width: ${mobileMaxWidth}) {
               top: 0;
               left: 0.5rem;
-              width: CALC(100% - 1rem);
+              width: CALC(100% - 5rem);
               position: relative;
               font-size: 1.2rem;
               p {
