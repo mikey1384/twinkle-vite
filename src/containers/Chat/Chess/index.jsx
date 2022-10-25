@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Game from './Game';
 import FallenPieces from './FallenPieces';
+import DropdownButton from '~/components/Buttons/DropdownButton';
+import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { initializeChessBoard, getPositionId } from './helpers/model.js';
@@ -79,6 +81,7 @@ export default function Chess({
   const [squares, setSquares] = useState([]);
   const [whiteFallenPieces, setWhiteFallenPieces] = useState([]);
   const [blackFallenPieces, setBlackFallenPieces] = useState([]);
+  const [highlighted, setHighlighted] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [status, setStatus] = useState('');
   const [gameOverMsg, setGameOverMsg] = useState();
@@ -607,6 +610,9 @@ export default function Chess({
   return (
     <div
       className={css`
+        .menu-button {
+          display: ${highlighted ? 'block' : 'none'};
+        }
         height: 515px;
         @media (max-width: ${mobileMaxWidth}) {
           height: ${isFromModal || !deviceIsMobile
@@ -623,8 +629,30 @@ export default function Chess({
       }}
     >
       {gameDropdownButtonShown ? (
-        <div style={{ position: 'absolute', right: '1rem' }}>
-          drop down goes here
+        <div style={{ right: 0, position: 'absolute' }}>
+          <DropdownButton
+            skeuomorphic
+            buttonStyle={{
+              fontSize: '1rem',
+              lineHeight: 1
+            }}
+            className="menu-button"
+            color="darkerGray"
+            icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
+            opacity={0.5}
+            menuProps={[
+              {
+                label: (
+                  <>
+                    <Icon icon="reply" />
+                    <span style={{ marginLeft: '1rem' }}>Something</span>
+                  </>
+                ),
+                onClick: () => console.log('clicked')
+              }
+            ]}
+            onDropdownShown={setHighlighted}
+          />
         </div>
       ) : null}
       {gameStatusMessageShown ? (
