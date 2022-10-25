@@ -52,7 +52,7 @@ export default function SelectFeaturedPlaylists({
   const [selectedPlaylists, setSelectedPlaylists] = useState([]);
   const [searchedPlaylists, setSearchedPlaylists] = useState([]);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [disabled, setDisabled] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [searchLoadMoreButton, setSearchLoadMoreButton] = useState(false);
   const [searchText, setSearchText] = useState('');
   const playlistsToPinObjectRef = useRef({});
@@ -196,9 +196,9 @@ export default function SelectFeaturedPlaylists({
           onClick={handleSubmit}
           disabled={
             isEqual(selectedPlaylists, initialSelectedPlaylists) ||
-            selectedPlaylists.length > 5 ||
-            disabled
+            selectedPlaylists.length > 5
           }
+          loading={uploading}
         >
           Done
         </Button>
@@ -265,7 +265,7 @@ export default function SelectFeaturedPlaylists({
   }
 
   async function handleSubmit() {
-    setDisabled(true);
+    setUploading(true);
     const newFeaturedPlaylists = await uploadFeaturedPlaylists({
       selectedPlaylists
     });
