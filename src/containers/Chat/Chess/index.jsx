@@ -132,6 +132,7 @@ export default function Chess({
   const isCheckmate = boardState?.isCheckmate;
   const isStalemate = boardState?.isStalemate;
   const isRewinded = boardState?.isRewinded;
+  const isDiscussion = boardState?.isDiscussion;
   const isDraw = boardState?.isDraw;
   const statusText = isCheckmate
     ? 'Checkmate!'
@@ -655,6 +656,7 @@ export default function Chess({
       spoilerOff ||
       userMadeLastMove ||
       !!isCheckmate ||
+      !!isDiscussion ||
       !!isStalemate ||
       !!isRewinded ||
       !!isDraw
@@ -663,6 +665,7 @@ export default function Chess({
     spoilerOff,
     userMadeLastMove,
     isCheckmate,
+    isDiscussion,
     isStalemate,
     isRewinded,
     isDraw
