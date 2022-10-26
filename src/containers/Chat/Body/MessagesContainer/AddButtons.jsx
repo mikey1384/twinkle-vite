@@ -42,7 +42,7 @@ export default function AddButtons({
         color={buttonColor}
         hoverColor={buttonHoverColor}
         onClick={onSelectVideoButtonClick}
-        style={{ marginLeft: '1rem' }}
+        style={{ marginLeft: '0.5rem' }}
       >
         <Icon size="lg" icon="film" />
       </Button>
