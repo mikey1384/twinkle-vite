@@ -529,8 +529,9 @@ function MessagesContainer({
   );
 
   const handleRewindChessMove = useCallback(
-    async ({ chessState, userId, username, profilePicUrl }) => {
+    async ({ channelId, chessState, userId, username, profilePicUrl }) => {
       const data = await rewindChessMove({
+        channelId,
         chessState,
         userId,
         username,
@@ -539,7 +540,7 @@ function MessagesContainer({
       console.log(data);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedChannelId]
+    []
   );
 
   const handleConfirmChessMove = useCallback(

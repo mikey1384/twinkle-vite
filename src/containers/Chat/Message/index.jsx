@@ -737,6 +737,7 @@ function Message({
                     onBoardClick={onChessBoardClick}
                     onRewindClick={() =>
                       onRewindChessMove({
+                        channelId,
                         chessState,
                         userId,
                         username,
