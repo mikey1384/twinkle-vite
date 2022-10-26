@@ -77,6 +77,9 @@ function MessagesContainer({
   subchannelPath
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
+  const rewindChessMove = useAppContext(
+    (v) => v.requestHelpers.rewindChessMove
+  );
   const navigate = useNavigate();
   const {
     actions: {
@@ -527,19 +530,13 @@ function MessagesContainer({
 
   const handleRewindChessMove = useCallback(
     async ({ chessState, userId, username, profilePicUrl }) => {
-      const messageId = uuidv1();
-      onSubmitMessage({
-        messageId,
-        message: {
-          content: 'Made a chess move',
-          userId,
-          chessState,
-          isChessMsg: 1,
-          profilePicUrl,
-          username,
-          channelId: selectedChannelId
-        }
+      const data = await rewindChessMove({
+        chessState,
+        userId,
+        username,
+        profilePicUrl
       });
+      console.log(data);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectedChannelId]
