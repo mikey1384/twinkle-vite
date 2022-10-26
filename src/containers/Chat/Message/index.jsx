@@ -29,6 +29,8 @@ import ReactionButton from './ReactionButton';
 import Reactions from './Reactions';
 import localize from '~/constants/localize';
 import moment from 'moment';
+import FileAttachment from './FileAttachment';
+import TargetChessPosition from './TargetChessPosition';
 import { useInView } from 'react-intersection-observer';
 import { socket } from '~/constants/io';
 import { MessageStyle } from '../Styles';
@@ -38,7 +40,6 @@ import { useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
-import FileAttachment from './FileAttachment';
 
 const deviceIsMobile = isMobile(navigator);
 const replyLabel = localize('reply2');
@@ -501,6 +502,10 @@ function Message({
     [fileToUpload, isChessMsg, isEditing, isNotification, messageId]
   );
 
+  const isChessDiscussion = useMemo(() => {
+    return !!chessState?.isDiscussion;
+  }, [chessState?.isDiscussion]);
+
   const handleChessSpoilerClick = useCallback(async () => {
     if (spoilerClickedRef.current) return;
     spoilerClickedRef.current = true;
@@ -753,6 +758,7 @@ function Message({
                   />
                 ) : (
                   <>
+                    {isChessDiscussion && <TargetChessPosition />}
                     {targetSubject && <TargetSubject subject={targetSubject} />}
                     {targetMessage && <TargetMessage message={targetMessage} />}
                     {filePath && fileName && (
