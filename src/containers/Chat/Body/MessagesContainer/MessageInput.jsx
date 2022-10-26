@@ -341,6 +341,8 @@ export default function MessageInput({
         <div
           style={{
             margin: '0.2rem 1rem 0.2rem 0',
+            display: 'flex',
+            alignItems: 'center',
             height: '100%'
           }}
         >
@@ -368,6 +370,24 @@ export default function MessageInput({
               W<span className="desktop">ordle</span>
             </Button>
           ) : null}
+          {subjectObj?.id && (
+            <Button
+              disabled={loading}
+              style={{ marginLeft: '0.5rem' }}
+              skeuomorphic
+              onClick={() =>
+                onSetIsRespondingToSubject({
+                  channelId: selectedChannelId,
+                  subchannelId,
+                  isResponding: true
+                })
+              }
+              color={buttonColor}
+              hoverColor={buttonHoverColor}
+            >
+              <Icon icon="comment" />
+            </Button>
+          )}
         </div>
         <Textarea
           disabled={isRestricted || isBanned}
