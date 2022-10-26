@@ -758,7 +758,12 @@ function Message({
                   />
                 ) : (
                   <>
-                    {isChessDiscussion && <TargetChessPosition />}
+                    {isChessDiscussion && (
+                      <TargetChessPosition
+                        chessState={chessState}
+                        channelId={channelId}
+                      />
+                    )}
                     {targetSubject && <TargetSubject subject={targetSubject} />}
                     {targetMessage && <TargetMessage message={targetMessage} />}
                     {filePath && fileName && (
