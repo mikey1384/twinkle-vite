@@ -913,7 +913,7 @@ export default function Chess({
             )}
           </div>
           <Game
-            loading={!loaded || !opponentId}
+            loading={!loaded || (!isDiscussion && !opponentId)}
             spoilerOff={!!gameWinnerId || chessBoardShown}
             interactable={interactable && !newChessState && !userMadeLastMove}
             squares={squares}
