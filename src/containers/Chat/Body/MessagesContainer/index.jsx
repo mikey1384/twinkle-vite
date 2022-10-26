@@ -77,8 +77,13 @@ function MessagesContainer({
   subchannelPath
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
+  /*
   const rewindChessMove = useAppContext(
     (v) => v.requestHelpers.rewindChessMove
+  );
+  */
+  const suggestChessPositionDiscussion = useAppContext(
+    (v) => v.requestHelpers.suggestChessPositionDiscussion
   );
   const navigate = useNavigate();
   const {
@@ -528,6 +533,19 @@ function MessagesContainer({
     [currentChannel, selectedChannelId, userId]
   );
 
+  const handleDiscussChessPosition = useCallback(
+    async ({ channelId, chessState }) => {
+      const data = await suggestChessPositionDiscussion({
+        channelId,
+        chessState
+      });
+      console.log(data);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  /*
   const handleRewindChessMove = useCallback(
     async ({ channelId, chessState, userId, username, profilePicUrl }) => {
       const data = await rewindChessMove({
@@ -542,6 +560,7 @@ function MessagesContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
+  */
 
   const handleConfirmChessMove = useCallback(
     async ({ state, isCheckmate, isStalemate, moveNumber }) => {
@@ -1200,7 +1219,7 @@ function MessagesContainer({
                   onReceiveNewMessage={handleReceiveNewMessage}
                   onReplyClick={() => ChatInputRef.current.focus()}
                   onRewardMessageSubmit={handleRewardMessageSubmit}
-                  onRewindChessMove={handleRewindChessMove}
+                  onDiscussChessPosition={handleDiscussChessPosition}
                   onScrollToBottom={handleScrollToBottom}
                   recepientId={recepientId}
                   onShowSubjectMsgsModal={({ subjectId, content }) =>

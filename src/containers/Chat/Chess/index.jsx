@@ -39,7 +39,7 @@ Chess.propTypes = {
   newChessState: PropTypes.object,
   onBoardClick: PropTypes.func,
   onChessMove: PropTypes.func,
-  onRewindClick: PropTypes.func,
+  onDiscussClick: PropTypes.func,
   onSpoilerClick: PropTypes.func,
   opponentId: PropTypes.number,
   opponentName: PropTypes.string,
@@ -63,7 +63,7 @@ export default function Chess({
   newChessState,
   onBoardClick,
   onChessMove,
-  onRewindClick,
+  onDiscussClick,
   onSpoilerClick,
   opponentId,
   opponentName,
@@ -624,15 +624,15 @@ export default function Chess({
               justifyContent: 'center'
             }}
           >
-            <Icon icon="clock-rotate-left" />
-            <span style={{ marginLeft: '1rem' }}>Request Rewind</span>
+            <Icon icon="comments" />
+            <span style={{ marginLeft: '1rem' }}>Discuss</span>
           </div>
         ),
-        onClick: onRewindClick
+        onClick: onDiscussClick
       });
     }
     return result;
-  }, [lastChessMessageId, messageId, onRewindClick]);
+  }, [lastChessMessageId, messageId, onDiscussClick]);
   const gameDropdownButtonShown = useMemo(() => {
     return (
       !!dropdownProps?.length &&
