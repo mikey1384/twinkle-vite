@@ -650,6 +650,23 @@ export default function Chess({
     isStalemate,
     loaded
   ]);
+  const chessBoardShown = useMemo(() => {
+    return (
+      spoilerOff ||
+      userMadeLastMove ||
+      !!isCheckmate ||
+      !!isStalemate ||
+      !!isRewinded ||
+      !!isDraw
+    );
+  }, [
+    spoilerOff,
+    userMadeLastMove,
+    isCheckmate,
+    isStalemate,
+    isRewinded,
+    isDraw
+  ]);
 
   return (
     <div
@@ -756,12 +773,7 @@ export default function Chess({
               </>
             )}
             {move.piece ? <b>{move.piece?.type}</b> : <b>castled</b>}
-            {(spoilerOff ||
-              isRewinded ||
-              isCheckmate ||
-              isStalemate ||
-              isDraw ||
-              userMadeLastMove) && (
+            {chessBoardShown && (
               <>
                 {move.piece?.type && (
                   <>
@@ -885,36 +897,21 @@ export default function Chess({
               }
             `}
           >
-            {loaded &&
-              (userMadeLastMove ||
-                spoilerOff ||
-                isRewinded ||
-                isCheckmate ||
-                isStalemate) && (
-                <FallenPieces
-                  myColor={myColor}
-                  {...{
-                    [myColor === 'white'
-                      ? 'whiteFallenPieces'
-                      : 'blackFallenPieces']:
-                      myColor === 'white'
-                        ? whiteFallenPieces
-                        : blackFallenPieces
-                  }}
-                />
-              )}
+            {loaded && chessBoardShown && (
+              <FallenPieces
+                myColor={myColor}
+                {...{
+                  [myColor === 'white'
+                    ? 'whiteFallenPieces'
+                    : 'blackFallenPieces']:
+                    myColor === 'white' ? whiteFallenPieces : blackFallenPieces
+                }}
+              />
+            )}
           </div>
           <Game
             loading={!loaded || !opponentId}
-            spoilerOff={
-              spoilerOff ||
-              userMadeLastMove ||
-              !!gameWinnerId ||
-              !!isCheckmate ||
-              !!isStalemate ||
-              !!isRewinded ||
-              !!isDraw
-            }
+            spoilerOff={!!gameWinnerId || chessBoardShown}
             interactable={interactable && !newChessState && !userMadeLastMove}
             squares={squares}
             myColor={myColor}
@@ -943,25 +940,19 @@ export default function Chess({
                 }
               `}
             >
-              {loaded &&
-                (userMadeLastMove ||
-                  spoilerOff ||
-                  isRewinded ||
-                  isCheckmate ||
-                  isStalemate ||
-                  isDraw) && (
-                  <FallenPieces
-                    myColor={myColor}
-                    {...{
-                      [myColor === 'white'
-                        ? 'blackFallenPieces'
-                        : 'whiteFallenPieces']:
-                        myColor === 'white'
-                          ? blackFallenPieces
-                          : whiteFallenPieces
-                    }}
-                  />
-                )}
+              {loaded && chessBoardShown && (
+                <FallenPieces
+                  myColor={myColor}
+                  {...{
+                    [myColor === 'white'
+                      ? 'blackFallenPieces'
+                      : 'whiteFallenPieces']:
+                      myColor === 'white'
+                        ? blackFallenPieces
+                        : whiteFallenPieces
+                  }}
+                />
+              )}
             </div>
             {(status || gameOverMsg) && (
               <div
