@@ -375,13 +375,14 @@ export default function MessageInput({
               disabled={loading}
               style={{ marginLeft: '0.5rem' }}
               skeuomorphic
-              onClick={() =>
+              onClick={() => {
                 onSetIsRespondingToSubject({
                   channelId: selectedChannelId,
                   subchannelId,
                   isResponding: true
-                })
-              }
+                });
+                innerRef.current.focus();
+              }}
               color={buttonColor}
               hoverColor={buttonHoverColor}
             >
