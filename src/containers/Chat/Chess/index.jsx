@@ -971,7 +971,7 @@ export default function Chess({
           </div>
         </div>
       </div>
-      {!isFromModal && (isCheckmate || isStalemate || isDraw) && (
+      {!isFromModal && (isCheckmate || isStalemate || isDraw || isRewinded) && (
         <div style={{ position: 'absolute', bottom: '1rem', right: '1rem' }}>
           <div
             style={{
@@ -979,9 +979,11 @@ export default function Chess({
                 ? Color.pink(0.8)
                 : isDraw
                 ? Color.logoBlue(0.8)
-                : userMadeLastMove
+                : isCheckmate && userMadeLastMove
                 ? Color.gold(0.9)
-                : Color.black(0.8),
+                : isCheckmate
+                ? Color.black(0.8)
+                : Color.green(0.8),
               color: '#fff',
               fontSize: '2.5rem',
               fontWeight: 'bold',
@@ -995,21 +997,26 @@ export default function Chess({
                 {isStalemate && <p>Stalemate!</p>}
                 <p>{`It's a draw`}</p>
               </>
-            ) : userMadeLastMove ? (
+            ) : isCheckmate && userMadeLastMove ? (
               <>
                 <p>Boom - Checkmate!</p>
                 <p>You win</p>
               </>
-            ) : (
+            ) : isCheckmate ? (
               <>
                 <p>Checkmate...</p>
                 <p>{opponentName} wins</p>
               </>
-            )}
+            ) : isRewinded ? (
+              <div>
+                <Icon icon="clock-rotate-left" />
+                <span style={{ marginLeft: '1rem' }}>Rewinded</span>
+              </div>
+            ) : null}
           </div>
         </div>
       )}
-      {statusMsgShown && (
+      {statusMsgShown && !isRewinded && (
         <div
           className={css`
             padding: 0.5rem 1rem;
