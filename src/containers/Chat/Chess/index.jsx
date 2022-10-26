@@ -131,6 +131,7 @@ export default function Chess({
   const isCheck = boardState?.isCheck;
   const isCheckmate = boardState?.isCheckmate;
   const isStalemate = boardState?.isStalemate;
+  const isRewinded = boardState?.isRewinded;
   const isDraw = boardState?.isDraw;
   const statusText = isCheckmate
     ? 'Checkmate!'
@@ -594,12 +595,18 @@ export default function Chess({
     return (
       loaded &&
       boardState &&
-      (userMadeLastMove || spoilerOff || isCheckmate || isStalemate || isDraw)
+      (userMadeLastMove ||
+        spoilerOff ||
+        isRewinded ||
+        isCheckmate ||
+        isStalemate ||
+        isDraw)
     );
   }, [
     boardState,
     isCheckmate,
     isDraw,
+    isRewinded,
     isStalemate,
     loaded,
     spoilerOff,
@@ -750,6 +757,7 @@ export default function Chess({
             )}
             {move.piece ? <b>{move.piece?.type}</b> : <b>castled</b>}
             {(spoilerOff ||
+              isRewinded ||
               isCheckmate ||
               isStalemate ||
               isDraw ||
@@ -880,6 +888,7 @@ export default function Chess({
             {loaded &&
               (userMadeLastMove ||
                 spoilerOff ||
+                isRewinded ||
                 isCheckmate ||
                 isStalemate) && (
                 <FallenPieces
@@ -903,6 +912,7 @@ export default function Chess({
               !!gameWinnerId ||
               !!isCheckmate ||
               !!isStalemate ||
+              !!isRewinded ||
               !!isDraw
             }
             interactable={interactable && !newChessState && !userMadeLastMove}
@@ -936,6 +946,7 @@ export default function Chess({
               {loaded &&
                 (userMadeLastMove ||
                   spoilerOff ||
+                  isRewinded ||
                   isCheckmate ||
                   isStalemate ||
                   isDraw) && (
