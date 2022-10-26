@@ -306,6 +306,11 @@ export default function MessageInput({
     [handleImagePaste]
   );
 
+  const hasWordleButton = useMemo(
+    () => selectedChannelId === GENERAL_CHAT_ID && !subchannelId,
+    [selectedChannelId, subchannelId]
+  );
+
   return (
     <div
       style={{
@@ -359,7 +364,7 @@ export default function MessageInput({
                 Chess
               </span>
             </Button>
-          ) : selectedChannelId === GENERAL_CHAT_ID && !subchannelId ? (
+          ) : hasWordleButton ? (
             <Button
               disabled={loading}
               skeuomorphic
@@ -373,7 +378,9 @@ export default function MessageInput({
           {subjectObj?.id && (
             <Button
               disabled={loading}
-              style={{ marginLeft: '0.5rem' }}
+              style={{
+                marginLeft: isTwoPeopleChannel || hasWordleButton ? '0.5rem' : 0
+              }}
               skeuomorphic
               onClick={() => {
                 onSetIsRespondingToSubject({
