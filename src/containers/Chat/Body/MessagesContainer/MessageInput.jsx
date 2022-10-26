@@ -393,7 +393,10 @@ export default function MessageInput({
               color={buttonColor}
               hoverColor={buttonHoverColor}
             >
-              <Icon icon="comment" />
+              <Icon
+                size={isTwoPeopleChannel || hasWordleButton ? null : 'lg'}
+                icon="comment"
+              />
             </Button>
           )}
         </div>
