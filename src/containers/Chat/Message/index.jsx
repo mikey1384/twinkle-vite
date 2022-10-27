@@ -762,6 +762,7 @@ function Message({
                       <TargetChessPosition
                         chessState={chessState}
                         channelId={channelId}
+                        myId={myId}
                       />
                     )}
                     {targetSubject && <TargetSubject subject={targetSubject} />}
