@@ -147,13 +147,14 @@ export default function Chess({
     return (
       !!countdownNumber ||
       ((lastChessMessageId === messageId || isFromModal) &&
-        !(isCheckmate || isStalemate || moveViewed) &&
+        !(isCheckmate || isStalemate || isDiscussion || moveViewed) &&
         loaded &&
         userMadeLastMove)
     );
   }, [
     countdownNumber,
     isCheckmate,
+    isDiscussion,
     isFromModal,
     isStalemate,
     lastChessMessageId,
@@ -594,6 +595,7 @@ export default function Chess({
   );
   const gameStatusMessageShown = useMemo(() => {
     return (
+      !isDiscussion &&
       loaded &&
       boardState &&
       (userMadeLastMove ||
@@ -606,6 +608,7 @@ export default function Chess({
   }, [
     boardState,
     isCheckmate,
+    isDiscussion,
     isDraw,
     isRewinded,
     isStalemate,
@@ -613,6 +616,7 @@ export default function Chess({
     spoilerOff,
     userMadeLastMove
   ]);
+
   const dropdownProps = useMemo(() => {
     const result = [];
     if (messageId !== lastChessMessageId) {
@@ -651,6 +655,7 @@ export default function Chess({
     isStalemate,
     loaded
   ]);
+
   const chessBoardShown = useMemo(() => {
     return (
       spoilerOff ||
@@ -680,7 +685,7 @@ export default function Chess({
             display: block;
           }
         }
-        height: 515px;
+        height: ${isDiscussion ? 'auto' : '515px'};
         @media (max-width: ${mobileMaxWidth}) {
           height: ${isFromModal || !deviceIsMobile
             ? 'auto'
@@ -889,7 +894,7 @@ export default function Chess({
         >
           <div
             className={css`
-              height: 4.5rem;
+              height: ${isDiscussion ? 0 : '4.5rem'};
               display: flex;
               flex-direction: column;
               margin: 1.5rem 0;
@@ -934,7 +939,7 @@ export default function Chess({
           >
             <div
               className={css`
-                height: 4.5rem;
+                height: ${isDiscussion ? 0 : '4.5rem'};
                 display: flex;
                 flex-direction: column;
                 margin: 1rem 0;
