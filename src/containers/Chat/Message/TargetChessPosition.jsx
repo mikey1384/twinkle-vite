@@ -4,10 +4,11 @@ import { borderRadius, Color } from '~/constants/css';
 
 TargetChessPosition.propTypes = {
   chessState: PropTypes.object.isRequired,
-  channelId: PropTypes.number.isRequired
+  channelId: PropTypes.number.isRequired,
+  myId: PropTypes.number.isRequired
 };
 
-export default function TargetChessPosition({ chessState, channelId }) {
+export default function TargetChessPosition({ chessState, channelId, myId }) {
   return (
     <div
       style={{
@@ -24,6 +25,7 @@ export default function TargetChessPosition({ chessState, channelId }) {
     >
       <Chess
         loaded
+        myId={myId}
         channelId={channelId}
         initialState={chessState}
         style={{ marginTop: '1rem', width: '100%' }}
