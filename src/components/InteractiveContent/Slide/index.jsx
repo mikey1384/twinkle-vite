@@ -393,7 +393,12 @@ export default function Slide({
 
   function handlePortalButtonClick(forkId) {
     if (forkId === 0) {
-      onGoBack({ interactiveId, forkId: forkedFrom });
+      for (let slideId of displayedSlideIds) {
+        if (slideObj[slideId]?.isFork) {
+          onGoBack({ interactiveId, forkId: slideId });
+          return onGoBackToMission?.();
+        }
+      }
       return onGoBackToMission?.();
     }
     onGoBack({ interactiveId, forkId: forkId || forkedFrom });
