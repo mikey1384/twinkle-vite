@@ -28,7 +28,7 @@ export default function TargetChessPosition({ chessState, channelId, myId }) {
         myId={myId}
         channelId={channelId}
         initialState={chessState}
-        style={{ marginTop: '1rem', width: '100%' }}
+        style={{ width: '100%' }}
       />
     </div>
   );
