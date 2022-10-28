@@ -124,6 +124,7 @@ export default function ChatActions(dispatch) {
     onDisplayAttachedFile({
       id,
       channelId,
+      chessState,
       filePath,
       fileSize,
       userId,
@@ -142,6 +143,7 @@ export default function ChatActions(dispatch) {
         fileInfo: {
           userId,
           username,
+          chessState,
           profilePicUrl,
           uploaderAuthLevel,
           fileSize,
