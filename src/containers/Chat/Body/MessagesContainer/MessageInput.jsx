@@ -10,6 +10,7 @@ import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import ChessTarget from './ChessTarget';
 import TargetMessagePreview from './TargetMessagePreview';
 import TargetSubjectPreview from './TargetSubjectPreview';
 import UploadModal from '../../Modals/UploadModal';
@@ -344,7 +345,7 @@ export default function MessageInput({
           }
         />
       ) : chessTarget ? (
-        <div>There is a chess target</div>
+        <ChessTarget />
       ) : null}
       <div style={{ display: 'flex' }}>
         <div
