@@ -617,27 +617,26 @@ export default function Chess({
 
   const dropdownProps = useMemo(() => {
     const result = [];
-    if (messageId !== lastChessMessageId) {
-      result.push({
-        label: (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Icon icon="comments" />
-            <span style={{ marginLeft: '1rem' }}>Discuss</span>
-          </div>
-        ),
-        onClick: onDiscussClick
-      });
-    }
+    result.push({
+      label: (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <Icon icon="comments" />
+          <span style={{ marginLeft: '1rem' }}>Discuss</span>
+        </div>
+      ),
+      onClick: onDiscussClick
+    });
     return result;
-  }, [lastChessMessageId, messageId, onDiscussClick]);
+  }, [onDiscussClick]);
   const gameDropdownButtonShown = useMemo(() => {
     return (
+      !isDiscussion &&
       !!dropdownProps?.length &&
       loaded &&
       boardState &&
@@ -646,6 +645,7 @@ export default function Chess({
       !isDraw
     );
   }, [
+    isDiscussion,
     boardState,
     dropdownProps?.length,
     isCheckmate,
@@ -686,7 +686,7 @@ export default function Chess({
       `}
       style={{
         position: 'relative',
-        background: Color.wellGray(),
+        background: isDiscussion ? 'none' : Color.wellGray(),
         ...style
       }}
     >

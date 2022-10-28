@@ -299,11 +299,14 @@ function MessagesContainer({
         ? ' - 8rem - 2px'
         : replyTarget
         ? ' - 12rem - 2px'
+        : chessTarget
+        ? ' - 509px'
         : ''
     }
     ${selectedChannelIsOnCall ? ` - ${CALL_SCREEN_HEIGHT}` : ''})`;
   }, [
     appliedIsRespondingToSubject,
+    chessTarget,
     replyTarget,
     selectedChannelIsOnCall,
     socketConnected,
