@@ -98,7 +98,12 @@ export default function MessageInput({
     buttonHovered: { color: buttonHoverColor }
   } = useKeyContext((v) => v.theme);
   const {
-    actions: { onEnterComment, onSetIsRespondingToSubject, onSetReplyTarget }
+    actions: {
+      onEnterComment,
+      onSetIsRespondingToSubject,
+      onSetChessTarget,
+      onSetReplyTarget
+    }
   } = useContext(LocalContext);
   const FileInputRef = useRef(null);
   const prevChannelId = useRef(selectedChannelId);
@@ -345,7 +350,15 @@ export default function MessageInput({
           }
         />
       ) : chessTarget ? (
-        <ChessTarget />
+        <ChessTarget
+          chessTarget={chessTarget}
+          onClose={() =>
+            onSetChessTarget({
+              channelId: selectedChannelId,
+              target: null
+            })
+          }
+        />
       ) : null}
       <div style={{ display: 'flex' }}>
         <div

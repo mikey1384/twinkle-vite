@@ -1643,7 +1643,7 @@ export default function ChatReducer(state, action) {
           ...state.channelsObj,
           [action.channelId]: {
             ...prevChannelObj,
-            chessTarget: action.chessState
+            chessTarget: action.target
           }
         }
       };

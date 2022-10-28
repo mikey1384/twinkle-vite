@@ -541,7 +541,7 @@ function MessagesContainer({
 
   const handleDiscussChessPosition = useCallback(
     async ({ channelId, chessState }) => {
-      onSetChessTarget({ channelId, chessState });
+      onSetChessTarget({ channelId, target: chessState });
       /*
       const data = await suggestChessPositionDiscussion({
         channelId,

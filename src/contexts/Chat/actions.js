@@ -592,11 +592,11 @@ export default function ChatActions(dispatch) {
         type: 'SET_RECONNECTING'
       });
     },
-    onSetChessTarget({ channelId, chessState }) {
+    onSetChessTarget({ channelId, target }) {
       return dispatch({
         type: 'SET_CHESS_TARGET',
         channelId,
-        chessState
+        target
       });
     },
     onSetReplyTarget({ channelId, subchannelId, target }) {
