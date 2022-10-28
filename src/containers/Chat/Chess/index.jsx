@@ -685,14 +685,6 @@ export default function Chess({
             display: block;
           }
         }
-        height: ${isDiscussion ? 'auto' : '515px'};
-        @media (max-width: ${mobileMaxWidth}) {
-          height: ${isFromModal || !deviceIsMobile
-            ? 'auto'
-            : statusText
-            ? '335px'
-            : '315px'};
-        }
       `}
       style={{
         position: 'relative',
@@ -931,6 +923,7 @@ export default function Chess({
           />
           <div
             style={{
+              height: isDiscussion ? 0 : '6rem',
               display: 'flex',
               width: '100%',
               flexDirection: 'column',
@@ -939,7 +932,6 @@ export default function Chess({
           >
             <div
               className={css`
-                height: ${isDiscussion ? 0 : '4.5rem'};
                 display: flex;
                 flex-direction: column;
                 margin: 1rem 0;
