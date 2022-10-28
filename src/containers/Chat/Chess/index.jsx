@@ -886,10 +886,10 @@ export default function Chess({
         >
           <div
             className={css`
-              height: ${isDiscussion ? 0 : '4.5rem'};
+              height: '4.5rem';
               display: flex;
               flex-direction: column;
-              margin: 1.5rem 0;
+              margin-top: 1.5rem;
               @media (max-width: ${mobileMaxWidth}) {
                 margin-top: 0.5rem;
                 margin-bottom: 1rem;
@@ -923,7 +923,7 @@ export default function Chess({
           />
           <div
             style={{
-              height: isDiscussion ? 0 : '6rem',
+              height: '6rem',
               display: 'flex',
               width: '100%',
               flexDirection: 'column',
