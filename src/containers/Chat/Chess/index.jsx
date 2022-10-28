@@ -134,7 +134,7 @@ export default function Chess({
   const isRewinded = boardState?.isRewinded;
   const isDiscussion = boardState?.isDiscussion;
   const isDraw = boardState?.isDraw;
-  const statusText = isCheckmate
+  const gameStateText = isCheckmate
     ? 'Checkmate!'
     : isStalemate
     ? 'Stalemate!'
@@ -595,7 +595,6 @@ export default function Chess({
   );
   const gameStatusMessageShown = useMemo(() => {
     return (
-      !isDiscussion &&
       loaded &&
       boardState &&
       (userMadeLastMove ||
@@ -608,7 +607,6 @@ export default function Chess({
   }, [
     boardState,
     isCheckmate,
-    isDiscussion,
     isDraw,
     isRewinded,
     isStalemate,
@@ -806,7 +804,7 @@ export default function Chess({
                       }
                     `}
                   >
-                    {statusText}
+                    {gameStateText}
                   </div>
                 )}
               </>
