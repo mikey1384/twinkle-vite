@@ -201,6 +201,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   const onSetChessModalShown = useChatContext(
     (v) => v.actions.onSetChessModalShown
   );
+  const onSetChessTarget = useChatContext((v) => v.actions.onSetChessTarget);
   const onSetCurrentChannelName = useChatContext(
     (v) => v.actions.onSetCurrentChannelName
   );
@@ -666,6 +667,7 @@ export default function Main({ currentPathId, onFileUpload }) {
           onSetActualDescription,
           onSetActualTitle,
           onSetChessModalShown,
+          onSetChessTarget,
           onSetCreatingNewDMChannel,
           onSetEmbeddedUrl,
           onSetIsEditing,

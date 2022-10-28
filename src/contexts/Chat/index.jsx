@@ -22,6 +22,7 @@ export const initialChatState = {
   chatSearchResults: [],
   chatType: null,
   chessModalShown: false,
+  chessTarget: null,
   creatingNewDMChannel: false,
   currentChannelName: '',
   customChannelNames: {},
