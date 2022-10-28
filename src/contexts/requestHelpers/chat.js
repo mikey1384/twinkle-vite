@@ -502,18 +502,6 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async suggestChessPositionDiscussion({ channelId, chessState, content }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/chat/chess/discuss`,
-          { channelId, chessState, content },
-          auth()
-        );
-        return Promise.resolve(data);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async registerWord(definitions) {
       try {
         const { data } = await request.post(
