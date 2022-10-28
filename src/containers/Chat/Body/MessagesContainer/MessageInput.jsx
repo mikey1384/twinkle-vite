@@ -92,7 +92,11 @@ export default function MessageInput({
     [inputState, selectedChannelId, subchannelId]
   );
   const [inputText, setInputText] = useState(textForThisChannel);
-  const { banned, fileUploadLvl } = useKeyContext((v) => v.myState);
+  const {
+    banned,
+    fileUploadLvl,
+    userId: myId
+  } = useKeyContext((v) => v.myState);
   const {
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor }
@@ -351,6 +355,8 @@ export default function MessageInput({
         />
       ) : chessTarget ? (
         <ChessTarget
+          myId={myId}
+          channelId={selectedChannelId}
           chessTarget={chessTarget}
           onClose={() =>
             onSetChessTarget({
