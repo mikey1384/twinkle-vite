@@ -698,6 +698,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
     },
     async saveChatMessageWithFileAttachment({
       channelId,
+      chessState,
       content,
       fileName,
       fileSize,
@@ -718,6 +719,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
           path,
           channelId,
           content,
+          chessState,
           recepientId,
           targetMessageId,
           subchannelId,

@@ -104,6 +104,7 @@ function App() {
   const onDisplayAttachedFile = useChatContext(
     (v) => v.actions.onDisplayAttachedFile
   );
+  const onSetChessTarget = useChatContext((v) => v.actions.onSetChessTarget);
   const onSetReplyTarget = useChatContext((v) => v.actions.onSetReplyTarget);
   const onPostFileUploadStatus = useChatContext(
     (v) => v.actions.onPostFileUploadStatus
@@ -336,6 +337,8 @@ function App() {
         });
         return window.location.reload();
       }
+      onSetChessTarget({ channelId, target: null });
+      onSetReplyTarget({ channelId, subchannelId, target: null });
       const promises = [];
       onPostFileUploadStatus({
         channelId,
@@ -384,6 +387,7 @@ function App() {
           path: filePath,
           recepientId,
           targetMessageId,
+          chessState: currentChannel.chessTarget,
           thumbUrl,
           subchannelId,
           subjectId
@@ -412,6 +416,7 @@ function App() {
         profilePicUrl,
         subchannelId,
         thumbUrl,
+        chessState: currentChannel.chessTarget,
         targetMessage: currentChannel.replyTarget
       };
       onDisplayAttachedFile(params);
@@ -428,7 +433,6 @@ function App() {
           channel: channelData
         });
       }
-      onSetReplyTarget({ channelId, subchannelId, target: null });
       if (channel) {
         onUpdateChannelPathIdHash({
           channelId: channel.id,
