@@ -1644,6 +1644,8 @@ export default function ChatReducer(state, action) {
           [action.channelId]: {
             ...prevChannelObj,
             chessTarget: action.target
+              ? { ...action.target, isDiscussion: true }
+              : null
           }
         }
       };

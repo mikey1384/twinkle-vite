@@ -77,9 +77,6 @@ function MessagesContainer({
   subchannelPath
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
-  const suggestChessPositionDiscussion = useAppContext(
-    (v) => v.requestHelpers.suggestChessPositionDiscussion
-  );
   /*
   const rewindChessMove = useAppContext(
     (v) => v.requestHelpers.rewindChessMove
@@ -553,10 +550,17 @@ function MessagesContainer({
 
   const handleSubmitChessTargetMessage = useCallback(
     async (message) => {
-      await suggestChessPositionDiscussion({
-        channelId: selectedChannelId,
-        chessState: chessTarget,
-        content: message
+      const messageId = uuidv1();
+      onSubmitMessage({
+        messageId,
+        message: {
+          userId,
+          chessState: chessTarget,
+          profilePicUrl,
+          username,
+          content: message,
+          channelId: selectedChannelId
+        }
       });
       onSetChessTarget({ channelId: selectedChannelId, target: null });
     },

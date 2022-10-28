@@ -28,7 +28,7 @@ export default function ChessTarget({ myId, channelId, chessTarget, onClose }) {
         loaded
         myId={myId}
         channelId={channelId}
-        initialState={{ ...chessTarget, isDiscussion: true }}
+        initialState={chessTarget}
         style={{ width: '100%' }}
       />
     </div>
