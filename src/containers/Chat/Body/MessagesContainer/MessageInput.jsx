@@ -49,6 +49,7 @@ MessageInput.propTypes = {
   onMessageSubmit: PropTypes.func.isRequired,
   onSelectVideoButtonClick: PropTypes.func.isRequired,
   onSetTextAreaHeight: PropTypes.func.isRequired,
+  chessTarget: PropTypes.object,
   replyTarget: PropTypes.object,
   recepientId: PropTypes.number,
   socketConnected: PropTypes.bool,
@@ -74,6 +75,7 @@ export default function MessageInput({
   onMessageSubmit,
   onSelectVideoButtonClick,
   onSetTextAreaHeight,
+  chessTarget,
   replyTarget,
   recepientId,
   socketConnected,
@@ -341,6 +343,8 @@ export default function MessageInput({
             })
           }
         />
+      ) : chessTarget ? (
+        <div>There is a chess target</div>
       ) : null}
       <div style={{ display: 'flex' }}>
         <div

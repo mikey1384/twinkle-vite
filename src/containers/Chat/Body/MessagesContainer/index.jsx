@@ -81,10 +81,10 @@ function MessagesContainer({
   const rewindChessMove = useAppContext(
     (v) => v.requestHelpers.rewindChessMove
   );
-  */
   const suggestChessPositionDiscussion = useAppContext(
     (v) => v.requestHelpers.suggestChessPositionDiscussion
   );
+  */
   const navigate = useNavigate();
   const {
     actions: {
@@ -98,6 +98,7 @@ function MessagesContainer({
       onLoadMoreMessages,
       onReceiveMessageOnDifferentChannel,
       onSendFirstDirectMessage,
+      onSetChessTarget,
       onSetChessModalShown,
       onSetCreatingNewDMChannel,
       onSetFavoriteChannel,
@@ -217,6 +218,11 @@ function MessagesContainer({
     }
     return isRespondingToSubject;
   }, [isRespondingToSubject, subchannel?.isRespondingToSubject, subchannelId]);
+
+  const chessTarget = useMemo(
+    () => currentChannel?.chessTarget,
+    [currentChannel?.chessTarget]
+  );
 
   const replyTarget = useMemo(() => {
     if (subchannelId) {
@@ -535,11 +541,13 @@ function MessagesContainer({
 
   const handleDiscussChessPosition = useCallback(
     async ({ channelId, chessState }) => {
+      onSetChessTarget({ channelId, chessState });
+      /*
       const data = await suggestChessPositionDiscussion({
         channelId,
         chessState
       });
-      console.log(data);
+      */
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
@@ -1322,6 +1330,7 @@ function MessagesContainer({
           onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
           onSetTextAreaHeight={setTextAreaHeight}
           recepientId={recepientId}
+          chessTarget={chessTarget}
           replyTarget={replyTarget}
           subchannelId={subchannel?.id}
           subjectId={subjectId}

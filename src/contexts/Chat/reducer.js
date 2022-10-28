@@ -1635,6 +1635,19 @@ export default function ChatReducer(state, action) {
           : {}
       };
     }
+    case 'SET_CHESS_TARGET': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            chessTarget: action.chessState
+          }
+        }
+      };
+    }
     case 'SET_CHANNEL_STATE':
       return {
         ...state,
