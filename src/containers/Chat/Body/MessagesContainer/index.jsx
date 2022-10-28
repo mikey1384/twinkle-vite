@@ -77,12 +77,12 @@ function MessagesContainer({
   subchannelPath
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
+  const suggestChessPositionDiscussion = useAppContext(
+    (v) => v.requestHelpers.suggestChessPositionDiscussion
+  );
   /*
   const rewindChessMove = useAppContext(
     (v) => v.requestHelpers.rewindChessMove
-  );
-  const suggestChessPositionDiscussion = useAppContext(
-    (v) => v.requestHelpers.suggestChessPositionDiscussion
   );
   */
   const navigate = useNavigate();
@@ -542,18 +542,26 @@ function MessagesContainer({
     [currentChannel, selectedChannelId, userId]
   );
 
-  const handleDiscussChessPosition = useCallback(
-    async ({ channelId, chessState }) => {
+  const handleSetChessTarget = useCallback(
+    ({ channelId, chessState }) => {
       onSetChessTarget({ channelId, target: chessState });
-      /*
-      const data = await suggestChessPositionDiscussion({
-        channelId,
-        chessState
-      });
-      */
+      ChatInputRef.current.focus();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
+  );
+
+  const handleSubmitChessTargetMessage = useCallback(
+    async (message) => {
+      await suggestChessPositionDiscussion({
+        channelId: selectedChannelId,
+        chessState: chessTarget,
+        content: message
+      });
+      onSetChessTarget({ channelId: selectedChannelId, target: null });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chessTarget, selectedChannelId]
   );
 
   /*
@@ -929,6 +937,9 @@ function MessagesContainer({
 
   const handleMessageSubmit = useCallback(
     async ({ content, rewardAmount, rewardReason, target, subchannelId }) => {
+      if (chessTarget) {
+        return handleSubmitChessTargetMessage(content);
+      }
       setTextAreaHeight(0);
       let isFirstDirectMessage = selectedChannelId === 0;
       if (isFirstDirectMessage) {
@@ -995,6 +1006,7 @@ function MessagesContainer({
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
+      chessTarget,
       creatingNewDMChannel,
       appliedIsRespondingToSubject,
       profilePicUrl,
@@ -1230,7 +1242,7 @@ function MessagesContainer({
                   onReceiveNewMessage={handleReceiveNewMessage}
                   onReplyClick={() => ChatInputRef.current.focus()}
                   onRewardMessageSubmit={handleRewardMessageSubmit}
-                  onDiscussChessPosition={handleDiscussChessPosition}
+                  onSetChessTarget={handleSetChessTarget}
                   onScrollToBottom={handleScrollToBottom}
                   recepientId={recepientId}
                   onShowSubjectMsgsModal={({ subjectId, content }) =>

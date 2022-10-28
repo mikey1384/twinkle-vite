@@ -67,7 +67,7 @@ Message.propTypes = {
   onChessSpoilerClick: PropTypes.func,
   onReceiveNewMessage: PropTypes.func,
   onReplyClick: PropTypes.func,
-  onDiscussChessPosition: PropTypes.func,
+  onSetChessTarget: PropTypes.func,
   onRewardMessageSubmit: PropTypes.func.isRequired,
   onScrollToBottom: PropTypes.func.isRequired,
   onShowSubjectMsgsModal: PropTypes.func,
@@ -130,7 +130,7 @@ function Message({
   onReceiveNewMessage,
   onReplyClick,
   onRewardMessageSubmit,
-  onDiscussChessPosition,
+  onSetChessTarget,
   onScrollToBottom,
   onShowSubjectMsgsModal,
   zIndex
@@ -741,7 +741,7 @@ function Message({
                     lastChessMessageId={currentChannel.lastChessMessageId}
                     onBoardClick={onChessBoardClick}
                     onDiscussClick={() =>
-                      onDiscussChessPosition({ chessState, channelId })
+                      onSetChessTarget({ chessState, channelId })
                     }
                     onSpoilerClick={handleChessSpoilerClick}
                     opponentId={chessOpponent?.id}

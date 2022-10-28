@@ -18,7 +18,7 @@ export default function ChessTarget({ myId, channelId, chessTarget, onClose }) {
         style={{
           position: 'absolute',
           right: '1.7rem',
-          zIndex: 9999,
+          zIndex: 1,
           top: 'CALC(50% - 2rem)',
           cursor: 'pointer'
         }}
