@@ -6,10 +6,16 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 TargetChessPosition.propTypes = {
   chessState: PropTypes.object.isRequired,
   channelId: PropTypes.number.isRequired,
-  myId: PropTypes.number.isRequired
+  myId: PropTypes.number.isRequired,
+  onRequestRewind: PropTypes.func.isRequired
 };
 
-export default function TargetChessPosition({ chessState, channelId, myId }) {
+export default function TargetChessPosition({
+  chessState,
+  channelId,
+  myId,
+  onRequestRewind
+}) {
   return (
     <div
       style={{
@@ -55,6 +61,9 @@ export default function TargetChessPosition({ chessState, channelId, myId }) {
               opacity: 1;
             }
           `}`}
+          onClick={() =>
+            onRequestRewind({ ...chessState, isRewindRequest: true })
+          }
         >
           <span
             className={css`
@@ -65,7 +74,7 @@ export default function TargetChessPosition({ chessState, channelId, myId }) {
               }
             `}
           >
-            Ask to start a new game from here
+            Propose a new game from here
           </span>
         </div>
       )}
