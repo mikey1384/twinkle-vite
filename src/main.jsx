@@ -122,6 +122,7 @@ import { faUserGraduate } from '@fortawesome/pro-solid-svg-icons/faUserGraduate'
 import { faUsers } from '@fortawesome/pro-solid-svg-icons/faUsers';
 import { faVolumeMute } from '@fortawesome/pro-solid-svg-icons/faVolumeMute';
 import { faWindows } from '@fortawesome/free-brands-svg-icons/faWindows';
+import { faXmark } from '@fortawesome/pro-solid-svg-icons/faXmark';
 import { AppContextProvider } from './contexts';
 import App from './containers/App';
 
@@ -237,7 +238,8 @@ library.add(
   faUserGraduate,
   faUsers,
   faVolumeMute,
-  faWindows
+  faWindows,
+  faXmark
 );
 
 const root = ReactDOM.createRoot(document.getElementById('react-view'));
