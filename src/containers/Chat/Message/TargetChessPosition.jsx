@@ -10,6 +10,7 @@ TargetChessPosition.propTypes = {
   lastChessMessageId: PropTypes.number.isRequired,
   messageId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
+  userId: PropTypes.number.isRequired,
   onRequestRewind: PropTypes.func.isRequired
 };
 
@@ -19,9 +20,11 @@ export default function TargetChessPosition({
   gameState,
   lastChessMessageId,
   myId,
+  userId,
   messageId,
   onRequestRewind
 }) {
+  const isMyMessage = myId === userId;
   return (
     <div
       style={{
@@ -54,7 +57,7 @@ export default function TargetChessPosition({
             background: '#fff'
           }}
         >
-          This is a rewind request
+          {isMyMessage ? 'Cancel proposal' : 'Accept?'}
         </div>
       )}
       {!chessState.isRewindRequest &&

@@ -766,6 +766,7 @@ function Message({
                         channelId={channelId}
                         messageId={messageId}
                         myId={myId}
+                        userId={userId}
                         gameState={currentChannel?.gameState?.chess}
                         lastChessMessageId={currentChannel.lastChessMessageId}
                         onRequestRewind={onRequestRewind}
