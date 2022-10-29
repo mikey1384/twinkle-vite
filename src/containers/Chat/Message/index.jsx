@@ -247,7 +247,6 @@ function Message({
     targetMessage,
     targetSubject,
     isCallNotification,
-    isChessNotification,
     tempMessageId,
     ...post
   } = message;
@@ -280,18 +279,11 @@ function Message({
       !message.id &&
       !message.fileToUpload &&
       !message.isSubject &&
-      (!message.isNotification || isCallNotification)
+      (!(message.isNotification && !message.chessState) || isCallNotification)
     ) {
-      if (isChessNotification) {
-        message.isNotification = true;
-        delete message.isChessNotification;
-      }
       handleSaveMessage();
     }
     async function handleSaveMessage() {
-      if (isChessNotification) {
-        post.isNotification = true;
-      }
       const messageId = await saveChatMessage({
         message: post,
         targetMessageId: targetMessage?.id,
