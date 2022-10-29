@@ -67,6 +67,7 @@ Message.propTypes = {
   onChessSpoilerClick: PropTypes.func,
   onReceiveNewMessage: PropTypes.func,
   onReplyClick: PropTypes.func,
+  onRequestRewind: PropTypes.func,
   onSetChessTarget: PropTypes.func,
   onRewardMessageSubmit: PropTypes.func.isRequired,
   onScrollToBottom: PropTypes.func.isRequired,
@@ -129,6 +130,7 @@ function Message({
   onChessSpoilerClick,
   onReceiveNewMessage,
   onReplyClick,
+  onRequestRewind,
   onRewardMessageSubmit,
   onSetChessTarget,
   onScrollToBottom,
@@ -763,6 +765,7 @@ function Message({
                         chessState={chessState}
                         channelId={channelId}
                         myId={myId}
+                        onRequestRewind={onRequestRewind}
                       />
                     )}
                     {targetSubject && <TargetSubject subject={targetSubject} />}

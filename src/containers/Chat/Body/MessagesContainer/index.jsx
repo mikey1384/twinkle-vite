@@ -568,6 +568,25 @@ function MessagesContainer({
     [chessTarget, selectedChannelId]
   );
 
+  const handleRequestChessRewind = useCallback(
+    async (chessTarget) => {
+      const messageId = uuidv1();
+      onSubmitMessage({
+        messageId,
+        message: {
+          userId,
+          chessState: chessTarget,
+          profilePicUrl,
+          username,
+          isNotification: true,
+          content: 'Proposes a new game from this position',
+          channelId: selectedChannelId
+        }
+      });
+    }, // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chessTarget, selectedChannelId]
+  );
+
   /*
   const handleRewindChessMove = useCallback(
     async ({ channelId, chessState, userId, username, profilePicUrl }) => {
@@ -1245,6 +1264,7 @@ function MessagesContainer({
                   onDelete={handleShowDeleteModal}
                   onReceiveNewMessage={handleReceiveNewMessage}
                   onReplyClick={() => ChatInputRef.current.focus()}
+                  onRequestRewind={handleRequestChessRewind}
                   onRewardMessageSubmit={handleRewardMessageSubmit}
                   onSetChessTarget={handleSetChessTarget}
                   onScrollToBottom={handleScrollToBottom}
