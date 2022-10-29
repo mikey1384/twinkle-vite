@@ -12,6 +12,7 @@ TargetChessPosition.propTypes = {
   messageId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
   userId: PropTypes.number.isRequired,
+  username: PropTypes.string.isRequired,
   onDeclineRewind: PropTypes.func.isRequired,
   onRequestRewind: PropTypes.func.isRequired
 };
@@ -23,6 +24,7 @@ export default function TargetChessPosition({
   lastChessMessageId,
   myId,
   userId,
+  username,
   messageId,
   onDeclineRewind,
   onRequestRewind
@@ -55,6 +57,7 @@ export default function TargetChessPosition({
           <RewindRequestButton
             isMyMessage={isMyMessage}
             onDeclineRewind={onDeclineRewind}
+            username={username}
           />
         )}
       {!chessState.isRewindRequest &&

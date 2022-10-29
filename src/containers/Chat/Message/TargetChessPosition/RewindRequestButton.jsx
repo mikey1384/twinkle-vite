@@ -5,10 +5,15 @@ import Icon from '~/components/Icon';
 
 RewindRequestButton.propTypes = {
   isMyMessage: PropTypes.bool.isRequired,
-  onDeclineRewind: PropTypes.func.isRequired
+  onDeclineRewind: PropTypes.func.isRequired,
+  username: PropTypes.string.isRequired
 };
 
-export default function RewindRequestButton({ isMyMessage, onDeclineRewind }) {
+export default function RewindRequestButton({
+  isMyMessage,
+  onDeclineRewind,
+  username
+}) {
   return (
     <div
       style={{
@@ -21,15 +26,18 @@ export default function RewindRequestButton({ isMyMessage, onDeclineRewind }) {
       }}
     >
       <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>
-        {isMyMessage
-          ? 'Proposing a new game from this position'
-          : 'Proposed a new game from this position'}
+        {`${
+          isMyMessage ? 'You' : username
+        } proposed a new game from this position`}
       </p>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         {isMyMessage ? (
-          <Button style={{ paddingBottom: '0.5rem' }} transparent color="red">
-            Cancel
-          </Button>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ marginRight: '3rem' }}>Waiting for response...</span>
+            <Button style={{ paddingBottom: '0.5rem' }} transparent color="red">
+              Cancel
+            </Button>
+          </div>
         ) : (
           <div style={{ display: 'flex' }}>
             <Button
