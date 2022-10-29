@@ -13,6 +13,7 @@ export default function TargetChessPosition({ chessState, channelId, myId }) {
     <div
       style={{
         width: '100%',
+        position: 'relative',
         marginTop: '0.5rem',
         marginBottom: '1rem',
         padding: '1rem',
@@ -30,6 +31,9 @@ export default function TargetChessPosition({ chessState, channelId, myId }) {
         initialState={chessState}
         style={{ width: '100%' }}
       />
+      <div style={{ position: 'absolute', bottom: '1rem', right: '1rem' }}>
+        menu is here
+      </div>
     </div>
   );
 }
