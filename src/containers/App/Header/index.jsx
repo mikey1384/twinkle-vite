@@ -281,6 +281,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('channel_owner_changed', handleChangeChannelOwner);
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('connect', handleConnect);
+    socket.on('declined_chess_rewind', handleChessRewindDeclined);
     socket.on('disconnect', handleDisconnect);
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
     socket.on('message_attachment_hid', onHideAttachment);
@@ -327,6 +328,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         onChangeChannelSettings
       );
       socket.removeListener('connect', handleConnect);
+      socket.removeListener('declined_chess_rewind', handleChessRewindDeclined);
       socket.removeListener('disconnect', handleDisconnect);
       socket.removeListener(
         'left_chat_from_another_tab',
@@ -362,6 +364,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
     function handleBanStatusUpdate(banStatus) {
       onSetUserState({ userId, newState: { banned: banStatus } });
+    }
+
+    function handleChessRewindDeclined({ channelId, opponent }) {
+      console.log('declined chess rewind', channelId, opponent);
     }
 
     function handleChangeChannelOwner({ channelId, message, newOwner }) {
