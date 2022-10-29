@@ -6,7 +6,9 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 TargetChessPosition.propTypes = {
   chessState: PropTypes.object.isRequired,
   channelId: PropTypes.number.isRequired,
+  gameState: PropTypes.object.isRequired,
   lastChessMessageId: PropTypes.number.isRequired,
+  messageId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
   onRequestRewind: PropTypes.func.isRequired
 };
@@ -14,8 +16,10 @@ TargetChessPosition.propTypes = {
 export default function TargetChessPosition({
   chessState,
   channelId,
+  gameState,
   lastChessMessageId,
   myId,
+  messageId,
   onRequestRewind
 }) {
   return (
@@ -40,6 +44,19 @@ export default function TargetChessPosition({
         initialState={chessState}
         style={{ width: '100%' }}
       />
+      {chessState.isRewindRequest && gameState.rewindRequestId === messageId && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '1rem',
+            right: '1rem',
+            border: `1px solid ${Color.black()}`,
+            background: '#fff'
+          }}
+        >
+          This is a rewind request
+        </div>
+      )}
       {!chessState.isRewindRequest &&
         Number(chessState.messageId) !== Number(lastChessMessageId) && (
           <div
