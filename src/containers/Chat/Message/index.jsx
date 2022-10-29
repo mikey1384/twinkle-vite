@@ -764,7 +764,9 @@ function Message({
                       <TargetChessPosition
                         chessState={chessState}
                         channelId={channelId}
+                        messageId={messageId}
                         myId={myId}
+                        gameState={currentChannel?.gameState?.chess}
                         lastChessMessageId={currentChannel.lastChessMessageId}
                         onRequestRewind={onRequestRewind}
                       />
