@@ -4,10 +4,11 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 
 RewindRequestButton.propTypes = {
-  isMyMessage: PropTypes.bool.isRequired
+  isMyMessage: PropTypes.bool.isRequired,
+  onDeclineRewind: PropTypes.func.isRequired
 };
 
-export default function RewindRequestButton({ isMyMessage }) {
+export default function RewindRequestButton({ isMyMessage, onDeclineRewind }) {
   return (
     <div
       style={{
@@ -39,7 +40,12 @@ export default function RewindRequestButton({ isMyMessage }) {
               <Icon icon="check" />
               <span style={{ marginLeft: '0.7rem' }}>Accept</span>
             </Button>
-            <Button style={{ paddingBottom: '0.5rem' }} transparent color="red">
+            <Button
+              onClick={onDeclineRewind}
+              style={{ paddingBottom: '0.5rem' }}
+              transparent
+              color="red"
+            >
               <Icon icon="xmark" />
               <span style={{ marginLeft: '0.7rem' }}>Decline</span>
             </Button>

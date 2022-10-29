@@ -943,6 +943,15 @@ function MessagesContainer({
     [currentChannel?.creatorId, selectedChannelId, userId]
   );
 
+  const handleDeclineRewind = useCallback(async () => {
+    socket.emit('decline_chess_rewind', {
+      channelId: selectedChannelId,
+      userId,
+      username,
+      profilePicUrl
+    });
+  }, [profilePicUrl, selectedChannelId, userId, username]);
+
   const handleFavoriteClick = useCallback(async () => {
     if (!favoritingRef.current) {
       favoritingRef.current = true;
@@ -1261,6 +1270,7 @@ function MessagesContainer({
                   onAcceptGroupInvitation={handleAcceptGroupInvitation}
                   onChessBoardClick={handleChessModalShown}
                   onChessSpoilerClick={handleChessSpoilerClick}
+                  onDeclineRewind={handleDeclineRewind}
                   onDelete={handleShowDeleteModal}
                   onReceiveNewMessage={handleReceiveNewMessage}
                   onReplyClick={() => ChatInputRef.current.focus()}
