@@ -617,6 +617,26 @@ export default function Chess({
     userMadeLastMove
   ]);
 
+  const chessBoardShown = useMemo(() => {
+    return (
+      spoilerOff ||
+      userMadeLastMove ||
+      !!isCheckmate ||
+      !!isDiscussion ||
+      !!isStalemate ||
+      !!isRewinded ||
+      !!isDraw
+    );
+  }, [
+    spoilerOff,
+    userMadeLastMove,
+    isCheckmate,
+    isDiscussion,
+    isStalemate,
+    isRewinded,
+    isDraw
+  ]);
+
   const dropdownProps = useMemo(() => {
     const result = [];
     result.push({
@@ -638,6 +658,7 @@ export default function Chess({
   }, [onDiscussClick]);
   const gameDropdownButtonShown = useMemo(() => {
     return (
+      chessBoardShown &&
       !isDiscussion &&
       !!dropdownProps?.length &&
       loaded &&
@@ -647,6 +668,7 @@ export default function Chess({
       !isDraw
     );
   }, [
+    chessBoardShown,
     isDiscussion,
     boardState,
     dropdownProps?.length,
@@ -654,26 +676,6 @@ export default function Chess({
     isDraw,
     isStalemate,
     loaded
-  ]);
-
-  const chessBoardShown = useMemo(() => {
-    return (
-      spoilerOff ||
-      userMadeLastMove ||
-      !!isCheckmate ||
-      !!isDiscussion ||
-      !!isStalemate ||
-      !!isRewinded ||
-      !!isDraw
-    );
-  }, [
-    spoilerOff,
-    userMadeLastMove,
-    isCheckmate,
-    isDiscussion,
-    isStalemate,
-    isRewinded,
-    isDraw
   ]);
 
   return (
