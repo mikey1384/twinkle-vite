@@ -594,10 +594,11 @@ export default function ChatActions(dispatch) {
         type: 'SET_RECONNECTING'
       });
     },
-    onSetChessTarget({ channelId, target }) {
+    onSetChessTarget({ channelId, messageId, target }) {
       return dispatch({
         type: 'SET_CHESS_TARGET',
         channelId,
+        messageId,
         target
       });
     },

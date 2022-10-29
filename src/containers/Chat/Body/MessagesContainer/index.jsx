@@ -540,8 +540,8 @@ function MessagesContainer({
   );
 
   const handleSetChessTarget = useCallback(
-    ({ channelId, chessState }) => {
-      onSetChessTarget({ channelId, target: chessState });
+    ({ channelId, messageId, chessState }) => {
+      onSetChessTarget({ channelId, messageId, target: chessState });
       ChatInputRef.current.focus();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

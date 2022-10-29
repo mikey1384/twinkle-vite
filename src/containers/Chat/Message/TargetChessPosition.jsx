@@ -6,6 +6,7 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 TargetChessPosition.propTypes = {
   chessState: PropTypes.object.isRequired,
   channelId: PropTypes.number.isRequired,
+  lastChessMessageId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
   onRequestRewind: PropTypes.func.isRequired
 };
@@ -13,6 +14,7 @@ TargetChessPosition.propTypes = {
 export default function TargetChessPosition({
   chessState,
   channelId,
+  lastChessMessageId,
   myId,
   onRequestRewind
 }) {
@@ -38,46 +40,47 @@ export default function TargetChessPosition({
         initialState={chessState}
         style={{ width: '100%' }}
       />
-      {!chessState.isRewindRequest && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '1rem',
-            right: '1rem',
-            border: `1px solid ${Color.black()}`,
-            background: '#fff'
-          }}
-          className={`unselectable ${css`
-            cursor: pointer;
-            opacity: 0.8;
-            padding: 1rem;
-            color: ${Color.black()};
-            &:hover {
-              opacity: 1;
-              color: ${Color.vantaBlack()};
-            }
-            @media (max-width: ${mobileMaxWidth}) {
-              padding: 0.7rem;
-              opacity: 1;
-            }
-          `}`}
-          onClick={() =>
-            onRequestRewind({ ...chessState, isRewindRequest: true })
-          }
-        >
-          <span
-            className={css`
-              font-size: 1.7rem;
-              font-weight: bold;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.3rem;
+      {!chessState.isRewindRequest &&
+        Number(chessState.messageId) !== Number(lastChessMessageId) && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '1rem',
+              right: '1rem',
+              border: `1px solid ${Color.black()}`,
+              background: '#fff'
+            }}
+            className={`unselectable ${css`
+              cursor: pointer;
+              opacity: 0.8;
+              padding: 1rem;
+              color: ${Color.black()};
+              &:hover {
+                opacity: 1;
+                color: ${Color.vantaBlack()};
               }
-            `}
+              @media (max-width: ${mobileMaxWidth}) {
+                padding: 0.7rem;
+                opacity: 1;
+              }
+            `}`}
+            onClick={() =>
+              onRequestRewind({ ...chessState, isRewindRequest: true })
+            }
           >
-            Propose a new game from here
-          </span>
-        </div>
-      )}
+            <span
+              className={css`
+                font-size: 1.7rem;
+                font-weight: bold;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.3rem;
+                }
+              `}
+            >
+              Propose a new game from here
+            </span>
+          </div>
+        )}
     </div>
   );
 }
