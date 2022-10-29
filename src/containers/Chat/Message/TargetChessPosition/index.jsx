@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types';
-import Chess from '../Chess';
+import Chess from '../../Chess';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import RewindRequestButton from './RewindRequestButton';
 
 TargetChessPosition.propTypes = {
   chessState: PropTypes.object.isRequired,
@@ -47,19 +48,10 @@ export default function TargetChessPosition({
         initialState={chessState}
         style={{ width: '100%' }}
       />
-      {chessState.isRewindRequest && gameState.rewindRequestId === messageId && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '1rem',
-            right: '1rem',
-            border: `1px solid ${Color.black()}`,
-            background: '#fff'
-          }}
-        >
-          {isMyMessage ? 'Cancel proposal' : 'Accept?'}
-        </div>
-      )}
+      {chessState.isRewindRequest &&
+        gameState.rewindRequestId === messageId && (
+          <RewindRequestButton isMyMessage={isMyMessage} />
+        )}
       {!chessState.isRewindRequest &&
         Number(chessState.messageId) !== Number(lastChessMessageId) && (
           <div
