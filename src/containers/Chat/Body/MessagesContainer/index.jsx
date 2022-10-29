@@ -578,8 +578,8 @@ function MessagesContainer({
           chessState: chessTarget,
           profilePicUrl,
           username,
-          isChessNotification: true,
-          content: 'Proposed a new game from this position',
+          isNotification: true,
+          content: 'proposed a new game from this position',
           channelId: selectedChannelId
         }
       });
