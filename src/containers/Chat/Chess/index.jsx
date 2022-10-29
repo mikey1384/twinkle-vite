@@ -602,11 +602,13 @@ export default function Chess({
         isRewinded ||
         isCheckmate ||
         isStalemate ||
+        isDiscussion ||
         isDraw)
     );
   }, [
     boardState,
     isCheckmate,
+    isDiscussion,
     isDraw,
     isRewinded,
     isStalemate,
