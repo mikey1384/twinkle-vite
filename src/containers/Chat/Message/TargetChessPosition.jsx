@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import Chess from '../Chess';
 import { css } from '@emotion/css';
-import { borderRadius, Color } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 
 TargetChessPosition.propTypes = {
   chessState: PropTypes.object.isRequired,
@@ -32,34 +32,43 @@ export default function TargetChessPosition({ chessState, channelId, myId }) {
         initialState={chessState}
         style={{ width: '100%' }}
       />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '1rem',
-          right: '1rem',
-          padding: '1rem',
-          border: `1px solid ${Color.black()}`,
-          background: '#fff'
-        }}
-        className={`unselectable ${css`
-          cursor: pointer;
-          opacity: 0.8;
-          color: ${Color.black()};
-          &:hover {
-            opacity: 1;
-            color: ${Color.vantaBlack()};
-          }
-        `}`}
-      >
-        <span
-          className={css`
-            font-size: 1.7rem;
-            font-weight: bold;
-          `}
+      {!chessState.isRewindRequest && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '1rem',
+            right: '1rem',
+            border: `1px solid ${Color.black()}`,
+            background: '#fff'
+          }}
+          className={`unselectable ${css`
+            cursor: pointer;
+            opacity: 0.8;
+            padding: 1rem;
+            color: ${Color.black()};
+            &:hover {
+              opacity: 1;
+              color: ${Color.vantaBlack()};
+            }
+            @media (max-width: ${mobileMaxWidth}) {
+              padding: 0.7rem;
+              opacity: 1;
+            }
+          `}`}
         >
-          Ask to start a new game from here
-        </span>
-      </div>
+          <span
+            className={css`
+              font-size: 1.7rem;
+              font-weight: bold;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.3rem;
+              }
+            `}
+          >
+            Ask to start a new game from here
+          </span>
+        </div>
+      )}
     </div>
   );
 }
