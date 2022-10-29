@@ -743,7 +743,7 @@ function Message({
                     lastChessMessageId={currentChannel.lastChessMessageId}
                     onBoardClick={onChessBoardClick}
                     onDiscussClick={() =>
-                      onSetChessTarget({ chessState, channelId })
+                      onSetChessTarget({ chessState, messageId, channelId })
                     }
                     onSpoilerClick={handleChessSpoilerClick}
                     opponentId={chessOpponent?.id}
@@ -765,6 +765,7 @@ function Message({
                         chessState={chessState}
                         channelId={channelId}
                         myId={myId}
+                        lastChessMessageId={currentChannel.lastChessMessageId}
                         onRequestRewind={onRequestRewind}
                       />
                     )}
