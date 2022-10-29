@@ -884,7 +884,7 @@ export default function Chess({
         >
           <div
             className={css`
-              height: '4.5rem';
+              height: 4.5rem;
               display: flex;
               flex-direction: column;
               margin-top: 1.5rem;
