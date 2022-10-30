@@ -222,6 +222,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onIncreaseNumNewNotis = useNotiContext(
     (v) => v.actions.onIncreaseNumNewNotis
   );
+  const onSetChessGameState = useChatContext(
+    (v) => v.actions.onSetChessGameState
+  );
   const onNotifyChatSubjectChange = useNotiContext(
     (v) => v.actions.onNotifyChatSubjectChange
   );
@@ -367,7 +370,8 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     }
 
     function handleChessRewindDeclined({ channelId, opponent }) {
-      console.log('declined chess rewind', channelId, opponent);
+      console.log(opponent);
+      onSetChessGameState({ channelId, newState: { rewindRequestId: null } });
     }
 
     function handleChangeChannelOwner({ channelId, message, newOwner }) {
