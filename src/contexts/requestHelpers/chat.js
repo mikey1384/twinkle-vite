@@ -88,6 +88,20 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async declineChessRewind(channelId) {
+      try {
+        const {
+          data: { messageId, declineMessage, timeStamp }
+        } = await request.post(
+          `${URL}/chat/chess/rewind/decline`,
+          { channelId },
+          auth()
+        );
+        return Promise.resolve({ messageId, declineMessage, timeStamp });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async deleteChatSubject(subjectId) {
       try {
         await request.delete(
