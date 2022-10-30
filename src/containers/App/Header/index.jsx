@@ -133,6 +133,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     (v) => v.actions.onEnableChatSubject
   );
   const onSetReconnecting = useChatContext((v) => v.actions.onSetReconnecting);
+  const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
   const onChangeChannelOwner = useChatContext(
     (v) => v.actions.onChangeChannelOwner
   );
@@ -369,8 +370,26 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       onSetUserState({ userId, newState: { banned: banStatus } });
     }
 
-    function handleChessRewindDeclined({ channelId, opponent }) {
-      console.log(opponent);
+    function handleChessRewindDeclined({
+      channelId,
+      declineMessage,
+      messageId,
+      sender,
+      timeStamp
+    }) {
+      onSubmitMessage({
+        message: {
+          channelId,
+          id: messageId,
+          content: declineMessage,
+          userId: sender.id,
+          username: sender.username,
+          profilePicUrl: sender.profilePicUrl,
+          isNotification: true,
+          timeStamp
+        },
+        messageId
+      });
       onSetChessGameState({ channelId, newState: { rewindRequestId: null } });
     }
 

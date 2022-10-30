@@ -77,6 +77,9 @@ function MessagesContainer({
   subchannelPath
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
+  const declineChessRewind = useAppContext(
+    (v) => v.requestHelpers.declineChessRewind
+  );
   /*
   const rewindChessMove = useAppContext(
     (v) => v.requestHelpers.rewindChessMove
@@ -944,12 +947,19 @@ function MessagesContainer({
   );
 
   const handleDeclineRewind = useCallback(async () => {
+    const { messageId, declineMessage, timeStamp } = await declineChessRewind(
+      selectedChannelId
+    );
     socket.emit('decline_chess_rewind', {
       channelId: selectedChannelId,
+      messageId,
+      declineMessage,
       userId,
       username,
-      profilePicUrl
+      profilePicUrl,
+      timeStamp
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profilePicUrl, selectedChannelId, userId, username]);
 
   const handleFavoriteClick = useCallback(async () => {
