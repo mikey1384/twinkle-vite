@@ -515,6 +515,13 @@ export default function ChatActions(dispatch) {
         newState
       });
     },
+    onSetChessGameState({ channelId, newState }) {
+      return dispatch({
+        type: 'SET_CHESS_GAME_STATE',
+        channelId,
+        newState
+      });
+    },
     onSetChatInvitationDetail({ messageId, channelId, channel }) {
       return dispatch({
         type: 'SET_CHAT_INVITATION_DETAIL',

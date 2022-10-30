@@ -1635,6 +1635,25 @@ export default function ChatReducer(state, action) {
           : {}
       };
     }
+    case 'SET_CHESS_GAME_STATE': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            gameState: {
+              ...prevChannelObj?.gameState,
+              chess: {
+                ...prevChannelObj?.gameState?.chess,
+                ...action.newState
+              }
+            }
+          }
+        }
+      };
+    }
     case 'SET_CHESS_TARGET': {
       const prevChannelObj = state.channelsObj[action.channelId];
       return {
