@@ -26,7 +26,7 @@ export default function Loading({
           width: 100%;
         `
       }
-      style={{ zIndex: 1_000_000_000, ...style }}
+      style={{ zIndex: 1_000_000, ...style }}
     >
       <div
         style={{
