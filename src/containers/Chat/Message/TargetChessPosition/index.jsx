@@ -9,7 +9,7 @@ TargetChessPosition.propTypes = {
   channelId: PropTypes.number.isRequired,
   gameState: PropTypes.object.isRequired,
   lastChessMessageId: PropTypes.number.isRequired,
-  messageId: PropTypes.number.isRequired,
+  messageId: PropTypes.number,
   myId: PropTypes.number.isRequired,
   userId: PropTypes.number.isRequired,
   username: PropTypes.string.isRequired,
@@ -53,6 +53,7 @@ export default function TargetChessPosition({
         style={{ width: '100%' }}
       />
       {chessState.isRewindRequest &&
+        messageId &&
         gameState.rewindRequestId === messageId && (
           <RewindRequestButton
             isMyMessage={isMyMessage}
