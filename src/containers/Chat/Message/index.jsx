@@ -65,6 +65,7 @@ Message.propTypes = {
   onAcceptGroupInvitation: PropTypes.func.isRequired,
   onChessBoardClick: PropTypes.func,
   onChessSpoilerClick: PropTypes.func,
+  onCancelRewindRequest: PropTypes.func,
   onDeclineRewind: PropTypes.func,
   onReceiveNewMessage: PropTypes.func,
   onReplyClick: PropTypes.func,
@@ -127,6 +128,7 @@ function Message({
   },
   onAcceptGroupInvitation,
   onChessBoardClick,
+  onCancelRewindRequest,
   onDeclineRewind,
   onDelete,
   onChessSpoilerClick,
@@ -772,6 +774,7 @@ function Message({
                         username={username}
                         gameState={currentChannel?.gameState?.chess || {}}
                         lastChessMessageId={currentChannel.lastChessMessageId}
+                        onCancelRewindRequest={onCancelRewindRequest}
                         onDeclineRewind={onDeclineRewind}
                         onRequestRewind={onRequestRewind}
                       />

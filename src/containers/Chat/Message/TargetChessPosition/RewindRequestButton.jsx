@@ -5,12 +5,14 @@ import Icon from '~/components/Icon';
 
 RewindRequestButton.propTypes = {
   isMyMessage: PropTypes.bool.isRequired,
+  onCancelRewindRequest: PropTypes.func.isRequired,
   onDeclineRewind: PropTypes.func.isRequired,
   username: PropTypes.string.isRequired
 };
 
 export default function RewindRequestButton({
   isMyMessage,
+  onCancelRewindRequest,
   onDeclineRewind,
   username
 }) {
@@ -34,7 +36,12 @@ export default function RewindRequestButton({
         {isMyMessage ? (
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <span style={{ marginRight: '3rem' }}>Waiting for response...</span>
-            <Button style={{ paddingBottom: '0.5rem' }} transparent color="red">
+            <Button
+              onClick={onCancelRewindRequest}
+              style={{ paddingBottom: '0.5rem' }}
+              transparent
+              color="red"
+            >
               Cancel
             </Button>
           </div>
