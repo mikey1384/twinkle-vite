@@ -512,17 +512,11 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async rewindChessMove({
-      channelId,
-      chessState,
-      userId,
-      username,
-      profilePicUrl
-    }) {
+    async rewindChessMove({ channelId, chessState }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/chess/rewind`,
-          { channelId, chessState, userId, username, profilePicUrl },
+          { channelId, chessState },
           auth()
         );
         return Promise.resolve(data);
