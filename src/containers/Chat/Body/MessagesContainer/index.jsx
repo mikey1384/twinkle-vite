@@ -100,6 +100,7 @@ function MessagesContainer({
       onReceiveMessageOnDifferentChannel,
       onSendFirstDirectMessage,
       onSetChessTarget,
+      onSetChessGameState,
       onSetChessModalShown,
       onSetCreatingNewDMChannel,
       onSetFavoriteChannel,
@@ -948,11 +949,18 @@ function MessagesContainer({
 
   const handleAcceptRewind = useCallback(
     async (chessState) => {
-      const data = await rewindChessMove({
+      onSetChessGameState({
+        channelId: selectedChannelId,
+        newState: { rewindRequestId: null }
+      });
+      const message = await rewindChessMove({
         channelId: selectedChannelId,
         chessState
       });
-      console.log(data);
+      onSubmitMessage({
+        messageId: uuidv1(),
+        message
+      });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectedChannelId]
