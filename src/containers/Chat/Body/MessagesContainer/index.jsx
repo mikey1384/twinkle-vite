@@ -946,6 +946,10 @@ function MessagesContainer({
     [currentChannel?.creatorId, selectedChannelId, userId]
   );
 
+  const handleCancelRewindRequest = useCallback(async () => {
+    console.log('got here');
+  }, []);
+
   const handleDeclineRewind = useCallback(async () => {
     const { messageId, declineMessage, timeStamp } = await declineChessRewind(
       selectedChannelId
@@ -1280,6 +1284,7 @@ function MessagesContainer({
                   onAcceptGroupInvitation={handleAcceptGroupInvitation}
                   onChessBoardClick={handleChessModalShown}
                   onChessSpoilerClick={handleChessSpoilerClick}
+                  onCancelRewindRequest={handleCancelRewindRequest}
                   onDeclineRewind={handleDeclineRewind}
                   onDelete={handleShowDeleteModal}
                   onReceiveNewMessage={handleReceiveNewMessage}
