@@ -40,6 +40,7 @@ Chess.propTypes = {
   onBoardClick: PropTypes.func,
   onChessMove: PropTypes.func,
   onDiscussClick: PropTypes.func,
+  onRewindClick: PropTypes.func,
   onSpoilerClick: PropTypes.func,
   opponentId: PropTypes.number,
   opponentName: PropTypes.string,
@@ -64,6 +65,7 @@ export default function Chess({
   onBoardClick,
   onChessMove,
   onDiscussClick,
+  onRewindClick,
   onSpoilerClick,
   opponentId,
   opponentName,
@@ -638,24 +640,40 @@ export default function Chess({
   ]);
 
   const dropdownProps = useMemo(() => {
-    const result = [];
-    result.push({
-      label: (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <Icon icon="comments" />
-          <span style={{ marginLeft: '1rem' }}>Discuss</span>
-        </div>
-      ),
-      onClick: onDiscussClick
-    });
+    const result = [
+      {
+        label: (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Icon icon="comments" />
+            <span style={{ marginLeft: '1rem' }}>Discuss</span>
+          </div>
+        ),
+        onClick: onDiscussClick
+      },
+      {
+        label: (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Icon icon="clock-rotate-left" />
+            <span style={{ marginLeft: '1rem' }}>Propose Rewind</span>
+          </div>
+        ),
+        onClick: onRewindClick
+      }
+    ];
     return result;
-  }, [onDiscussClick]);
+  }, [onDiscussClick, onRewindClick]);
   const gameDropdownButtonShown = useMemo(() => {
     return (
       chessBoardShown &&
