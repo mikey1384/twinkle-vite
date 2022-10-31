@@ -29,8 +29,8 @@ export default function Main({
   const gotWrongTimerRef = useRef(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [elapsedTime, setElapsedTime] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
+  const elapsedTimeRef = useRef(0);
   const loadingRef = useRef(false);
   const isWrongRef = useRef(false);
   const numWrong = useRef(0);
@@ -50,10 +50,10 @@ export default function Main({
       />
     ));
     async function handleSelectCorrectAnswer() {
-      if (!loadingRef.current && !isWrongRef.current) {
+      if (!loadingRef.current) {
         clearTimeout(timerRef.current);
         loadingRef.current = true;
-        const score = handleReturnCalculatedScore(elapsedTime);
+        const score = handleReturnCalculatedScore(elapsedTimeRef.current);
         onSetQuestionObj((prev) => ({
           ...prev,
           [currentIndex]: {
@@ -143,7 +143,7 @@ export default function Main({
         }
       }
       const measureTime =
-        elapsedTime + handleCalculatePenalty(numWrong.current);
+        Number(elapsedTime) + handleCalculatePenalty(numWrong.current);
       const baseTime = baseLetterLengthTime + baseNumWordsTime;
       if (measureTime < baseTime * 0.37) return 'S';
       if (measureTime < baseTime * 0.5) return 'A';
@@ -154,7 +154,6 @@ export default function Main({
     }
   }, [
     currentIndex,
-    elapsedTime,
     gotWrong,
     onGameFinish,
     onSetQuestionObj,
@@ -183,15 +182,14 @@ export default function Main({
 
   function handleCountdownStart() {
     clearTimeout(timerRef.current);
-    setElapsedTime(0);
+    elapsedTimeRef.current = 0;
     timerRef.current = setInterval(() => {
-      setElapsedTime((elapsedTime) => elapsedTime + 1);
+      elapsedTimeRef.current = elapsedTimeRef.current + 1;
     }, 1);
   }
 
   function handleCalculatePenalty(numWrong) {
     if (numWrong < 1) return 0;
-    if (numWrong === 1) return 300;
-    if (numWrong > 1) return numWrong * 1000;
+    return numWrong * 300;
   }
 }
