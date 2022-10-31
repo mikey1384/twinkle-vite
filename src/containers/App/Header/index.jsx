@@ -276,6 +276,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('busy_status_changed', handleBusyStatusChange);
     socket.on('call_terminated', handleCallTerminated);
     socket.on('call_reception_confirmed', handleCallReceptionConfirm);
+    socket.on('chess_rewind_requested', handleChessRewindRequest);
     socket.on('chat_invitation_received', handleChatInvitation);
     socket.on('chat_message_deleted', onDeleteMessage);
     socket.on('chat_message_edited', onEditMessage);
@@ -331,6 +332,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         'channel_settings_changed',
         onChangeChannelSettings
       );
+      socket.removeListener('chess_rewind_requested', handleChessRewindRequest);
       socket.removeListener('connect', handleConnect);
       socket.removeListener('declined_chess_rewind', handleChessRewindDeclined);
       socket.removeListener('disconnect', handleDisconnect);
@@ -368,6 +370,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
     function handleBanStatusUpdate(banStatus) {
       onSetUserState({ userId, newState: { banned: banStatus } });
+    }
+
+    function handleChessRewindRequest({ channelId, messageId }) {
+      onSetChessGameState({
+        channelId,
+        newState: { rewindRequestId: messageId }
+      });
     }
 
     function handleChessRewindDeclined({
