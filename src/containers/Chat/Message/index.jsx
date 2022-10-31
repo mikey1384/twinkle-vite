@@ -748,6 +748,13 @@ function Message({
                     initialState={chessState}
                     lastChessMessageId={currentChannel.lastChessMessageId}
                     onBoardClick={onChessBoardClick}
+                    onRewindClick={() =>
+                      onRequestRewind({
+                        ...chessState,
+                        isDiscussion: true,
+                        isRewindRequest: true
+                      })
+                    }
                     onDiscussClick={() =>
                       onSetChessTarget({ chessState, messageId, channelId })
                     }
