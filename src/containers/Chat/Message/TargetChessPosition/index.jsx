@@ -62,7 +62,7 @@ export default function TargetChessPosition({
           <RewindRequestButton
             isMyMessage={isMyMessage}
             onCancelRewindRequest={onCancelRewindRequest}
-            onAcceptRewind={onAcceptRewind}
+            onAcceptRewind={() => onAcceptRewind(chessState)}
             onDeclineRewind={onDeclineRewind}
             username={username}
           />

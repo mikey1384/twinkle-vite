@@ -83,11 +83,9 @@ function MessagesContainer({
   const cancelChessRewind = useAppContext(
     (v) => v.requestHelpers.cancelChessRewind
   );
-  /*
   const rewindChessMove = useAppContext(
     (v) => v.requestHelpers.rewindChessMove
   );
-  */
   const navigate = useNavigate();
   const {
     actions: {
@@ -593,23 +591,6 @@ function MessagesContainer({
     [chessTarget, selectedChannelId]
   );
 
-  /*
-  const handleRewindChessMove = useCallback(
-    async ({ channelId, chessState, userId, username, profilePicUrl }) => {
-      const data = await rewindChessMove({
-        channelId,
-        chessState,
-        userId,
-        username,
-        profilePicUrl
-      });
-      console.log(data);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-  */
-
   const handleConfirmChessMove = useCallback(
     async ({ state, isCheckmate, isStalemate, moveNumber }) => {
       const gameWinnerId = isCheckmate ? userId : isStalemate ? 0 : undefined;
@@ -965,9 +946,17 @@ function MessagesContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profilePicUrl, selectedChannelId, userId, username]);
 
-  const handleAcceptRewind = useCallback(async () => {
-    console.log('got here...');
-  }, []);
+  const handleAcceptRewind = useCallback(
+    async (chessState) => {
+      const data = await rewindChessMove({
+        channelId: selectedChannelId,
+        chessState
+      });
+      console.log(data);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedChannelId]
+  );
 
   const handleDeclineRewind = useCallback(async () => {
     const { messageId, declineMessage, timeStamp } = await declineChessRewind(
