@@ -88,6 +88,20 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async cancelChessRewind(channelId) {
+      try {
+        const {
+          data: { messageId, cancelMessage, timeStamp }
+        } = await request.put(
+          `${URL}/chat/chess/rewind/cancel`,
+          { channelId },
+          auth()
+        );
+        return Promise.resolve({ messageId, cancelMessage, timeStamp });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async declineChessRewind(channelId) {
       try {
         const {

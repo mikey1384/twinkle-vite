@@ -286,6 +286,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('channel_owner_changed', handleChangeChannelOwner);
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('connect', handleConnect);
+    socket.on('canceled_chess_rewind', handleChessRewindCanceled);
     socket.on('declined_chess_rewind', handleChessRewindDeclined);
     socket.on('disconnect', handleDisconnect);
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
@@ -334,6 +335,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       );
       socket.removeListener('chess_rewind_requested', handleChessRewindRequest);
       socket.removeListener('connect', handleConnect);
+      socket.removeListener('canceled_chess_rewind', handleChessRewindCanceled);
       socket.removeListener('declined_chess_rewind', handleChessRewindDeclined);
       socket.removeListener('disconnect', handleDisconnect);
       socket.removeListener(
@@ -377,6 +379,29 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         channelId,
         newState: { rewindRequestId: messageId }
       });
+    }
+
+    function handleChessRewindCanceled({
+      channelId,
+      messageId,
+      cancelMessage,
+      sender,
+      timeStamp
+    }) {
+      onSubmitMessage({
+        message: {
+          channelId,
+          id: messageId,
+          content: cancelMessage,
+          userId: sender.id,
+          username: sender.username,
+          profilePicUrl: sender.profilePicUrl,
+          isNotification: true,
+          timeStamp
+        },
+        messageId
+      });
+      onSetChessGameState({ channelId, newState: { rewindRequestId: null } });
     }
 
     function handleChessRewindDeclined({

@@ -80,6 +80,9 @@ function MessagesContainer({
   const declineChessRewind = useAppContext(
     (v) => v.requestHelpers.declineChessRewind
   );
+  const cancelChessRewind = useAppContext(
+    (v) => v.requestHelpers.cancelChessRewind
+  );
   /*
   const rewindChessMove = useAppContext(
     (v) => v.requestHelpers.rewindChessMove
@@ -947,8 +950,20 @@ function MessagesContainer({
   );
 
   const handleCancelRewindRequest = useCallback(async () => {
-    console.log('got here');
-  }, []);
+    const { messageId, cancelMessage, timeStamp } = await cancelChessRewind(
+      selectedChannelId
+    );
+    socket.emit('cancel_chess_rewind', {
+      channelId: selectedChannelId,
+      messageId,
+      cancelMessage,
+      userId,
+      username,
+      profilePicUrl,
+      timeStamp
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profilePicUrl, selectedChannelId, userId, username]);
 
   const handleDeclineRewind = useCallback(async () => {
     const { messageId, declineMessage, timeStamp } = await declineChessRewind(
