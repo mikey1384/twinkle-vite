@@ -6,6 +6,7 @@ import Icon from '~/components/Icon';
 RewindRequestButton.propTypes = {
   isMyMessage: PropTypes.bool.isRequired,
   onCancelRewindRequest: PropTypes.func.isRequired,
+  onAcceptRewind: PropTypes.func.isRequired,
   onDeclineRewind: PropTypes.func.isRequired,
   username: PropTypes.string.isRequired
 };
@@ -13,6 +14,7 @@ RewindRequestButton.propTypes = {
 export default function RewindRequestButton({
   isMyMessage,
   onCancelRewindRequest,
+  onAcceptRewind,
   onDeclineRewind,
   username
 }) {
@@ -48,6 +50,7 @@ export default function RewindRequestButton({
         ) : (
           <div style={{ display: 'flex' }}>
             <Button
+              onClick={onAcceptRewind}
               style={{ paddingBottom: '0.5rem' }}
               transparent
               color="green"

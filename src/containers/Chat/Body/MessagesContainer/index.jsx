@@ -965,6 +965,10 @@ function MessagesContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profilePicUrl, selectedChannelId, userId, username]);
 
+  const handleAcceptRewind = useCallback(async () => {
+    console.log('got here...');
+  }, []);
+
   const handleDeclineRewind = useCallback(async () => {
     const { messageId, declineMessage, timeStamp } = await declineChessRewind(
       selectedChannelId
@@ -1300,6 +1304,7 @@ function MessagesContainer({
                   onChessBoardClick={handleChessModalShown}
                   onChessSpoilerClick={handleChessSpoilerClick}
                   onCancelRewindRequest={handleCancelRewindRequest}
+                  onAcceptRewind={handleAcceptRewind}
                   onDeclineRewind={handleDeclineRewind}
                   onDelete={handleShowDeleteModal}
                   onReceiveNewMessage={handleReceiveNewMessage}
