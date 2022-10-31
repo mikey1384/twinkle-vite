@@ -770,7 +770,7 @@ function Message({
                         myId={myId}
                         userId={userId}
                         username={username}
-                        gameState={currentChannel?.gameState?.chess}
+                        gameState={currentChannel?.gameState?.chess || {}}
                         lastChessMessageId={currentChannel.lastChessMessageId}
                         onDeclineRewind={onDeclineRewind}
                         onRequestRewind={onRequestRewind}
