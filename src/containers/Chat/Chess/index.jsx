@@ -655,8 +655,10 @@ export default function Chess({
           </div>
         ),
         onClick: onDiscussClick
-      },
-      {
+      }
+    ];
+    if (lastChessMessageId !== messageId) {
+      result.push({
         label: (
           <div
             style={{
@@ -670,10 +672,10 @@ export default function Chess({
           </div>
         ),
         onClick: onRewindClick
-      }
-    ];
+      });
+    }
     return result;
-  }, [onDiscussClick, onRewindClick]);
+  }, [lastChessMessageId, messageId, onDiscussClick, onRewindClick]);
   const gameDropdownButtonShown = useMemo(() => {
     return (
       chessBoardShown &&
