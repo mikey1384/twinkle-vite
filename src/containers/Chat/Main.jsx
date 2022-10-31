@@ -211,6 +211,9 @@ export default function Main({ currentPathId, onFileUpload }) {
   const onSetLoadingVocabulary = useChatContext(
     (v) => v.actions.onSetLoadingVocabulary
   );
+  const onSetChessGameState = useChatContext(
+    (v) => v.actions.onSetChessGameState
+  );
   const onSetCreatingNewDMChannel = useChatContext(
     (v) => v.actions.onSetCreatingNewDMChannel
   );
@@ -667,6 +670,7 @@ export default function Main({ currentPathId, onFileUpload }) {
           onSetActualDescription,
           onSetActualTitle,
           onSetChessModalShown,
+          onSetChessGameState,
           onSetChessTarget,
           onSetCreatingNewDMChannel,
           onSetEmbeddedUrl,
