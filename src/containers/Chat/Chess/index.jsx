@@ -1032,7 +1032,7 @@ export default function Chess({
             ) : isRewinded ? (
               <div>
                 <Icon icon="clock-rotate-left" />
-                <span style={{ marginLeft: '1rem' }}>Rewinded</span>
+                <span style={{ marginLeft: '1rem' }}>Rewound</span>
               </div>
             ) : null}
           </div>
