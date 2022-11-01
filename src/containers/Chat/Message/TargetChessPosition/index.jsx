@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import Chess from '../../Chess';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import Icon from '~/components/Icon';
 import RewindRequestButton from './RewindRequestButton';
 
 TargetChessPosition.propTypes = {
@@ -104,7 +105,10 @@ export default function TargetChessPosition({
                 }
               `}
             >
-              Propose a new game from here
+              <Icon icon="clock-rotate-left" />
+              <span style={{ marginLeft: '1rem' }}>
+                Propose a new game from here
+              </span>
             </span>
           </div>
         )}

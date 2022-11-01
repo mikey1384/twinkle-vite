@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 import { Color } from '~/constants/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -18,6 +19,10 @@ export default function RewindRequestButton({
   onDeclineRewind,
   username
 }) {
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [isDeclining, setIsDeclining] = useState(false);
+
   return (
     <div
       style={{
@@ -39,7 +44,11 @@ export default function RewindRequestButton({
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <span style={{ marginRight: '3rem' }}>Waiting for response...</span>
             <Button
-              onClick={onCancelRewindRequest}
+              onClick={() => {
+                setIsCanceling(true);
+                onCancelRewindRequest();
+              }}
+              loading={isCanceling}
               style={{ paddingBottom: '0.5rem' }}
               transparent
               color="red"
@@ -50,7 +59,11 @@ export default function RewindRequestButton({
         ) : (
           <div style={{ display: 'flex' }}>
             <Button
-              onClick={onAcceptRewind}
+              onClick={(chessState) => {
+                setIsAccepting(true);
+                onAcceptRewind(chessState);
+              }}
+              loading={isAccepting}
               style={{ paddingBottom: '0.5rem' }}
               transparent
               color="green"
@@ -59,7 +72,11 @@ export default function RewindRequestButton({
               <span style={{ marginLeft: '0.7rem' }}>Accept</span>
             </Button>
             <Button
-              onClick={onDeclineRewind}
+              onClick={() => {
+                setIsDeclining(true);
+                onDeclineRewind();
+              }}
+              loading={isDeclining}
               style={{ paddingBottom: '0.5rem' }}
               transparent
               color="red"
