@@ -242,6 +242,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
   const state = useContentContext((v) => v.state);
 
+  const onUpdateRecentChessMessage = useChatContext(
+    (v) => v.actions.onUpdateRecentChessMessage
+  );
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
@@ -377,6 +380,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     }
 
     function handleChessRewind({ channelId, message }) {
+      onUpdateRecentChessMessage({ channelId, message });
       onSetChessGameState({
         channelId,
         newState: { rewindRequestId: null }
