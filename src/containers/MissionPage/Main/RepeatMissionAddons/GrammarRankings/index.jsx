@@ -37,6 +37,7 @@ export default function GrammarRankings({ mission, myAttempts }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   const rankers = useMemo(
     () => (allSelected ? all : top30s),
     [all, allSelected, top30s]

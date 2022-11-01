@@ -17,6 +17,9 @@ export default function Questions({ isRepeating, mission }) {
   const updateUserCoins = useAppContext(
     (v) => v.requestHelpers.updateUserCoins
   );
+  const updateMissionData = useAppContext(
+    (v) => v.requestHelpers.updateMissionData
+  );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const updateUserXP = useAppContext((v) => v.requestHelpers.updateUserXP);
   const uploadMissionAttempt = useAppContext(
@@ -181,6 +184,7 @@ export default function Questions({ isRepeating, mission }) {
           userId,
           newState: { twinkleXP: xp, twinkleCoins: coins, rank }
         });
+        await updateMissionData(mission.id);
         setRepeatMissionComplete(true);
       } else {
         const { success, newXpAndRank, newCoins } = await uploadMissionAttempt({
