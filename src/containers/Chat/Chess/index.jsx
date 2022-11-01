@@ -1005,7 +1005,7 @@ export default function Chess({
                 ? Color.gold(0.9)
                 : isCheckmate
                 ? Color.black(0.8)
-                : Color.green(0.8),
+                : Color.magenta(0.8),
               color: '#fff',
               fontSize: '2.5rem',
               fontWeight: 'bold',
