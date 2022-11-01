@@ -302,7 +302,9 @@ function MessagesContainer({
         : replyTarget
         ? ' - 12rem - 2px'
         : chessTarget
-        ? ' - 509px'
+        ? deviceIsMobile
+          ? ' - 317px'
+          : ' - 509px'
         : ''
     }
     ${selectedChannelIsOnCall ? ` - ${CALL_SCREEN_HEIGHT}` : ''})`;

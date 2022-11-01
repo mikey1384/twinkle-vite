@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
 import Chess from '../../Chess';
 import Icon from '~/components/Icon';
+import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 ChessTarget.propTypes = {
   myId: PropTypes.number.isRequired,
@@ -11,7 +13,15 @@ ChessTarget.propTypes = {
 
 export default function ChessTarget({ myId, channelId, chessTarget, onClose }) {
   return (
-    <div style={{ height: '509px', position: 'relative' }}>
+    <div
+      className={css`
+        height: 509px;
+        @media (max-width: ${mobileMaxWidth}) {
+          height: 317px;
+        }
+      `}
+      style={{ position: 'relative' }}
+    >
       <Icon
         icon="times"
         size="lg"
