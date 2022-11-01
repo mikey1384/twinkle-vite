@@ -304,6 +304,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('peer_accepted', handlePeerAccepted);
     socket.on('peer_hung_up', handlePeerHungUp);
     socket.on('profile_pic_changed', handleProfilePicChange);
+    socket.on('rewound_chess_game', handleChessRewind);
     socket.on('subject_changed', handleTopicChange);
     socket.on('user_type_updated', handleUserTypeUpdate);
     socket.on('username_changed', handleUsernameChange);
@@ -365,6 +366,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       socket.removeListener('peer_accepted', handlePeerAccepted);
       socket.removeListener('peer_hung_up', handlePeerHungUp);
       socket.removeListener('profile_pic_changed', handleProfilePicChange);
+      socket.removeListener('rewound_chess_game', handleChessRewind);
       socket.removeListener('subject_changed', handleTopicChange);
       socket.removeListener('user_type_updated', handleUserTypeUpdate);
       socket.removeListener('username_changed', handleUsernameChange);
@@ -372,6 +374,17 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
     function handleBanStatusUpdate(banStatus) {
       onSetUserState({ userId, newState: { banned: banStatus } });
+    }
+
+    function handleChessRewind({ channelId, message }) {
+      onSetChessGameState({
+        channelId,
+        newState: { rewindRequestId: null }
+      });
+      onSubmitMessage({
+        message,
+        messageId: message.id
+      });
     }
 
     function handleChessRewindRequest({ channelId, messageId }) {
