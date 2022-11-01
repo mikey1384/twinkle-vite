@@ -1,12 +1,37 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Marble from './Marble';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { useKeyContext } from '~/contexts';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { scoreTable, perfectScoreBonus } from '../constants';
+import { css } from '@emotion/css';
+
+const xpFontSize = '1.7rem';
+const mobileXpFontSize = '1.5rem';
 
 TodayResult.propTypes = {
   results: PropTypes.array.isRequired
 };
 
 export default function TodayResult({ results }) {
+  const {
+    xpNumber: { color: xpNumberColor }
+  } = useKeyContext((v) => v.theme);
+  const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
+  const todaysScore = useMemo(() => {
+    let totalScore = 0;
+    for (let result of results) {
+      if (!result?.length) continue;
+      const sum = result.reduce((acc, cur) => acc + scoreTable[cur], 0);
+      if (sum === scoreTable.S * 10) {
+        totalScore += perfectScore;
+        continue;
+      }
+      totalScore += sum;
+    }
+    return totalScore;
+  }, [perfectScore, results]);
   const firstRow = useMemo(() => {
     const row = (results[0] || []).map((letterGrade, index) => (
       <Marble
@@ -113,10 +138,25 @@ export default function TodayResult({ results }) {
       <p
         style={{
           fontWeight: 'bold',
-          marginBottom: '1.5rem',
           fontSize: '1.7rem'
         }}
       >{`Today's Results`}</p>
+      <div
+        className={css`
+          margin-top: 1rem;
+          margin-bottom: 1.7rem;
+          font-weight: bold;
+          font-size: ${xpFontSize};
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: ${mobileXpFontSize};
+          }
+        `}
+      >
+        <span style={{ color: Color[xpNumberColor]() }}>
+          {addCommasToNumber(todaysScore)}
+        </span>{' '}
+        <span style={{ color: Color.gold() }}>XP</span>
+      </div>
       <div>{firstRow}</div>
       <div style={{ marginTop: '3px' }}>{secondRow}</div>
       <div style={{ marginTop: '3px' }}>{thirdRow}</div>
