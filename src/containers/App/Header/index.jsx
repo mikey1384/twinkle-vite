@@ -424,7 +424,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       sender,
       timeStamp
     }) {
-      console.log(sender);
       onSubmitMessage({
         message: {
           channelId,
