@@ -73,6 +73,12 @@ export default function SignUpForm({
       username
     ]
   );
+  const usernameAlreadyExistsLabel = useMemo(() => {
+    if (SELECTED_LANGUAGE === 'kr') {
+      return '이미 사용중인 아이디입니다.';
+    }
+    return 'This username is already taken.';
+  }, []);
   const usernameErrorMsgLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return `"${username}" - 유효하지 않은 아이디입니다.${
@@ -104,6 +110,7 @@ export default function SignUpForm({
 
   const isOtherErrorMessage = useMemo(() => {
     const validTypes = [
+      'alreadyExists',
       'username',
       'firstname',
       'password',
@@ -141,7 +148,9 @@ export default function SignUpForm({
             <label>{usernameLabel}</label>
             <Input
               value={username}
-              hasError={errorMessage === 'username'}
+              hasError={
+                errorMessage === 'username' || errorMessage === 'alreadyExists'
+              }
               placeholder={enterTheUsernameYouWishToUseLabel}
               onChange={(text) => {
                 setErrorMessage('');
@@ -153,6 +162,9 @@ export default function SignUpForm({
                 }
               }}
             />
+            {errorMessage === 'alreadyExists' && (
+              <p style={{ color: 'red' }}>{usernameAlreadyExistsLabel}</p>
+            )}
             {errorMessage === 'username' && (
               <p style={{ color: 'red' }}>{usernameErrorMsgLabel}</p>
             )}
@@ -316,10 +328,10 @@ export default function SignUpForm({
       });
       onSignup(data);
       onSetUserState({ userId: data.id, newState: data });
-      setSigningUp(false);
     } catch (error) {
       setErrorMessage(error?.data);
     }
+    setSigningUp(false);
   }
 }
 
