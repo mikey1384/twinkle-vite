@@ -406,7 +406,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           channelId,
           id: messageId,
           content: cancelMessage,
-          userId: sender.id,
+          userId: sender.userId,
           username: sender.username,
           profilePicUrl: sender.profilePicUrl,
           isNotification: true,
@@ -424,12 +424,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       sender,
       timeStamp
     }) {
+      console.log(sender);
       onSubmitMessage({
         message: {
           channelId,
           id: messageId,
           content: declineMessage,
-          userId: sender.id,
+          userId: sender.userId,
           username: sender.username,
           profilePicUrl: sender.profilePicUrl,
           isNotification: true,
