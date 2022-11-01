@@ -953,13 +953,9 @@ function MessagesContainer({
         channelId: selectedChannelId,
         newState: { rewindRequestId: null }
       });
-      const message = await rewindChessMove({
+      await rewindChessMove({
         channelId: selectedChannelId,
         chessState
-      });
-      onSubmitMessage({
-        messageId: uuidv1(),
-        message
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
