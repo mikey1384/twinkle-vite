@@ -175,6 +175,20 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async updateMissionData(missionId) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(
+          `${URL}/mission/page/update`,
+          { missionId },
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMissionRankings(missionId) {
       try {
         const { data } = await request.get(
