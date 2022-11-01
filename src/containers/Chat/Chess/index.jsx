@@ -680,12 +680,12 @@ export default function Chess({
 
     function handleDiscussClick() {
       const spoilerIsShownAndGameIsInProgress =
-        (lastChessMessageId === messageId &&
-          userMadeLastMove &&
-          !isCheckmate) ||
-        !isDiscussion ||
-        !isStalemate ||
-        !isRewinded ||
+        lastChessMessageId === messageId &&
+        userMadeLastMove &&
+        !isCheckmate &&
+        !isDiscussion &&
+        !isStalemate &&
+        !isRewinded &&
         !isDraw;
       if (spoilerIsShownAndGameIsInProgress) {
         return setConfirmModalShown(true);
