@@ -4,6 +4,7 @@ import Game from './Game';
 import FallenPieces from './FallenPieces';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { initializeChessBoard, getPositionId } from './helpers/model.js';
@@ -83,6 +84,7 @@ export default function Chess({
     [opponentName]: 'black'
   });
   const [squares, setSquares] = useState([]);
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [whiteFallenPieces, setWhiteFallenPieces] = useState([]);
   const [blackFallenPieces, setBlackFallenPieces] = useState([]);
   const [highlighted, setHighlighted] = useState(false);
@@ -654,7 +656,7 @@ export default function Chess({
             <span style={{ marginLeft: '1rem' }}>Discuss</span>
           </div>
         ),
-        onClick: onDiscussClick
+        onClick: handleDiscussClick
       }
     ];
     if (lastChessMessageId !== messageId) {
@@ -675,7 +677,33 @@ export default function Chess({
       });
     }
     return result;
-  }, [lastChessMessageId, messageId, onDiscussClick, onRewindClick]);
+
+    function handleDiscussClick() {
+      const spoilerIsShownAndGameIsInProgress =
+        (lastChessMessageId === messageId &&
+          userMadeLastMove &&
+          !isCheckmate) ||
+        !isDiscussion ||
+        !isStalemate ||
+        !isRewinded ||
+        !isDraw;
+      if (spoilerIsShownAndGameIsInProgress) {
+        return setConfirmModalShown(true);
+      }
+      onDiscussClick();
+    }
+  }, [
+    isCheckmate,
+    isDiscussion,
+    isDraw,
+    isRewinded,
+    isStalemate,
+    lastChessMessageId,
+    messageId,
+    onDiscussClick,
+    onRewindClick,
+    userMadeLastMove
+  ]);
   const gameDropdownButtonShown = useMemo(() => {
     return (
       chessBoardShown &&
@@ -1067,6 +1095,18 @@ export default function Chess({
               : Number((countdownNumber % 600) / 10).toFixed(1)
             : awaitingMoveLabel}
         </div>
+      )}
+      {confirmModalShown && (
+        <ConfirmModal
+          onHide={() => setConfirmModalShown(false)}
+          title="Discuss chess position"
+          descriptionFontSize="1.7rem"
+          description="Are you sure? The chess move you just made will be seen by your opponent."
+          onConfirm={() => {
+            onDiscussClick();
+            setConfirmModalShown(false);
+          }}
+        />
       )}
     </div>
   );
