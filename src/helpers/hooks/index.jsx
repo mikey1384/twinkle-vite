@@ -117,7 +117,7 @@ export function useMyState() {
             searchFilter,
             hideWatched,
             isCreator:
-              myState.userType === 'admin' || myState.userType === 'creator',
+              myState.userType === 'webmaster' || myState.userType === 'admin',
             loggedIn: true,
             profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME,
             signinModalShown,
