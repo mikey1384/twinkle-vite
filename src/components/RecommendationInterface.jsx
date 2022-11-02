@@ -6,7 +6,7 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
-import { priceTable } from '~/constants/defaultValues';
+import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import SwitchButton from './Buttons/SwitchButton';
@@ -23,29 +23,31 @@ RecommendationInterface.propTypes = {
   contentType: PropTypes.string.isRequired,
   onHide: PropTypes.func.isRequired,
   recommendations: PropTypes.array,
+  rewardLevel: PropTypes.number.isRequired,
   style: PropTypes.object,
   theme: PropTypes.string,
   uploaderId: PropTypes.number
 };
-
-const recommendationRewardDisabledByDefault = ['staff', 'teacher'];
 
 export default function RecommendationInterface({
   contentId,
   contentType,
   onHide,
   recommendations,
+  rewardLevel,
   style,
   theme,
   uploaderId
 }) {
-  const { userId, twinkleCoins, authLevel, userType } = useKeyContext(
-    (v) => v.myState
-  );
+  const { userId, twinkleCoins, authLevel } = useKeyContext((v) => v.myState);
   const [recommending, setRecommending] = useState(false);
-  const [rewardDisabled, setRewardDisabled] = useState(
-    recommendationRewardDisabledByDefault.includes(userType?.toLowerCase?.())
-  );
+  const expectedContentLength = useMemo(() => {
+    if (contentType !== 'comment') {
+      return 0;
+    }
+    return expectedResponseLength(rewardLevel);
+  }, [contentType, rewardLevel]);
+  const [rewardDisabled, setRewardDisabled] = useState(meetsRequirement);
   const [hidden, setHidden] = useState(false);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const recommendContent = useAppContext(

@@ -507,6 +507,7 @@ export default function Details({
             contentType="video"
             onHide={() => setRecommendationInterfaceShown(false)}
             recommendations={recommendations}
+            rewardLevel={byUser ? 5 : 0}
             uploaderId={uploader.id}
           />
         )}
