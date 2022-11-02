@@ -115,7 +115,7 @@ function ChatInfo({
         return onSubmitMessage({
           messageId,
           message: {
-            content: `${partnerName} is not online. Try calling ${partnerName} again when there's a green circle inside ${partnerName}'s profile picture.`,
+            content: `${partnerName} is not currently online. Try calling ${partnerName} again when there's a green circle at the bottom right corner of ${partnerName}'s profile picture.`,
             channelId: selectedChannelId,
             profilePicUrl,
             userId: myId,
