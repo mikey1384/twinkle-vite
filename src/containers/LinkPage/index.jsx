@@ -439,6 +439,7 @@ export default function LinkPage() {
             contentType="url"
             onHide={() => setRecommendationInterfaceShown(false)}
             recommendations={recommendations}
+            rewardLevel={byUser ? 5 : 0}
             uploaderId={uploader.id}
           />
         )}

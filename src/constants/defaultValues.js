@@ -80,6 +80,19 @@ export const charLimit = {
   }
 };
 
+export const expectedResponseLength = (rewardLevel) => {
+  if (rewardLevel === 5) {
+    return 800;
+  }
+  if (rewardLevel === 4) {
+    return 600;
+  }
+  if (rewardLevel === 3) {
+    return 400;
+  }
+  return 200;
+};
+
 export const karmaPointTable = {
   username: 50,
   file: {
