@@ -9,12 +9,12 @@ const defaultCode = ({ username }) => `function HomePage() {
         alignItems: 'center'
       }}
     >
-      <h1 style={{ fontFamily: 'fantasy', color: '#4b9be1' }}>
+      <h1 style={{ fontFamily: '"Comic Sans MS", fantasy', color: '#4b9be1' }}>
         ${'{"' + `${username}'s website` + '"}'}
       </h1>
       <h2
         style={{
-          fontFamily: 'cursive',
+          fontFamily: 'Arial, Helvetica, cursive',
           color: 'rgb(243, 103, 123)',
           marginBottom: '10rem'
         }}
