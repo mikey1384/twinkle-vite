@@ -620,6 +620,7 @@ export default function Body({
             onHide={() => setRecommendationInterfaceShown(false)}
             recommendations={recommendations}
             rewardLevel={finalRewardLevel}
+            content={contentObj.content}
             theme={theme}
             uploaderId={uploader.id}
           />

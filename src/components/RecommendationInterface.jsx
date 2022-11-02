@@ -24,6 +24,7 @@ RecommendationInterface.propTypes = {
   onHide: PropTypes.func.isRequired,
   recommendations: PropTypes.array,
   rewardLevel: PropTypes.number.isRequired,
+  content: PropTypes.string,
   style: PropTypes.object,
   theme: PropTypes.string,
   uploaderId: PropTypes.number
@@ -35,6 +36,7 @@ export default function RecommendationInterface({
   onHide,
   recommendations,
   rewardLevel,
+  content,
   style,
   theme,
   uploaderId
@@ -47,7 +49,11 @@ export default function RecommendationInterface({
     }
     return expectedResponseLength(rewardLevel);
   }, [contentType, rewardLevel]);
-  const [rewardDisabled, setRewardDisabled] = useState(meetsRequirement);
+  const meetsRequirement = useMemo(
+    () => content.length > expectedContentLength,
+    [content.length, expectedContentLength]
+  );
+  const [rewardDisabled, setRewardDisabled] = useState(!meetsRequirement);
   const [hidden, setHidden] = useState(false);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const recommendContent = useAppContext(

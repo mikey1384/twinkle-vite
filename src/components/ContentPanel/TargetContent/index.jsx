@@ -505,6 +505,7 @@ export default function TargetContent({
                   onHide={() => setRecommendationInterfaceShown(false)}
                   recommendations={comment.recommendations}
                   rewardLevel={finalRewardLevel}
+                  content={comment.content}
                   theme={theme}
                   uploaderId={comment.uploader.id}
                 />

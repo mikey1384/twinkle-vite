@@ -508,6 +508,7 @@ export default function Details({
             onHide={() => setRecommendationInterfaceShown(false)}
             recommendations={recommendations}
             rewardLevel={byUser ? 5 : 0}
+            content={description}
             uploaderId={uploader.id}
           />
         )}
