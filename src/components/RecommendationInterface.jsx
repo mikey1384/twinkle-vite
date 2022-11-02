@@ -45,7 +45,7 @@ export default function RecommendationInterface({
   const [recommending, setRecommending] = useState(false);
   const expectedContentLength = useMemo(() => {
     if (contentType !== 'comment') {
-      return 0;
+      return -1;
     }
     return expectedResponseLength(rewardLevel);
   }, [contentType, rewardLevel]);
