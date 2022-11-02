@@ -36,7 +36,7 @@ export default function RecommendationInterface({
   onHide,
   recommendations,
   rewardLevel,
-  content,
+  content = '',
   style,
   theme,
   uploaderId
