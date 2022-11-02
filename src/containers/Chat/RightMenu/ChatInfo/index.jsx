@@ -107,6 +107,23 @@ function ChatInfo({
 
   const handleCall = useCallback(async () => {
     if (!channelOnCall.id) {
+      if (numOnline === 1) {
+        const messageId = uuidv1();
+        const partnerName = currentChannel?.members
+          ?.map((member) => member.username)
+          ?.filter((memberName) => memberName !== username)?.[0];
+        return onSubmitMessage({
+          messageId,
+          message: {
+            content: `${partnerName} is not online. Try calling ${partnerName} again when there's a green circle inside ${partnerName}'s profile picture.`,
+            channelId: selectedChannelId,
+            profilePicUrl,
+            userId: myId,
+            username,
+            isNotification: true
+          }
+        });
+      }
       const messageId = uuidv1();
       onSubmitMessage({
         messageId,
@@ -157,6 +174,7 @@ function ChatInfo({
     calling,
     channelOnCall?.id,
     myId,
+    numOnline,
     profilePicUrl,
     selectedChannelId,
     username
