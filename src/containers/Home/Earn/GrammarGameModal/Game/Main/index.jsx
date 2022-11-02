@@ -190,6 +190,6 @@ export default function Main({
 
   function handleCalculatePenalty(numWrong) {
     if (numWrong < 1) return 0;
-    return numWrong * 300;
+    return numWrong * 200;
   }
 }
