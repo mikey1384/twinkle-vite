@@ -50,8 +50,8 @@ export default function RecommendationInterface({
     return expectedResponseLength(rewardLevel);
   }, [contentType, rewardLevel]);
   const meetsRequirement = useMemo(
-    () => content.length > expectedContentLength,
-    [content.length, expectedContentLength]
+    () => content?.length > expectedContentLength,
+    [content?.length, expectedContentLength]
   );
   const [rewardDisabled, setRewardDisabled] = useState(!meetsRequirement);
   const [hidden, setHidden] = useState(false);
