@@ -470,6 +470,7 @@ export default function SubjectPanel({
                 onHide={() => setRecommendationInterfaceShown(false)}
                 recommendations={recommendations}
                 rewardLevel={finalRewardLevel}
+                content={description}
                 uploaderId={userId}
               />
             )}

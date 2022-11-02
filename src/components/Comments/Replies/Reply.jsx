@@ -601,6 +601,7 @@ function Reply({
                 onHide={() => setRecommendationInterfaceShown(false)}
                 recommendations={recommendations}
                 rewardLevel={rewardLevel}
+                content={reply.content}
                 theme={theme}
                 uploaderId={uploader.id}
               />

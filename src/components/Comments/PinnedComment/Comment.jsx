@@ -626,6 +626,7 @@ function Comment({
                 onHide={() => setRecommendationInterfaceShown(false)}
                 recommendations={recommendations}
                 rewardLevel={rewardLevel}
+                content={comment.content}
                 theme={theme}
                 uploaderId={uploader.id}
               />
