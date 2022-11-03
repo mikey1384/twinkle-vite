@@ -90,7 +90,10 @@ export const expectedResponseLength = (rewardLevel) => {
   if (rewardLevel === 3) {
     return 400;
   }
-  return 200;
+  if (rewardLevel === 2) {
+    return 200;
+  }
+  return 30;
 };
 
 export const karmaPointTable = {
