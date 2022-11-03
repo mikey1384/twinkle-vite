@@ -155,9 +155,9 @@ export default function TopMenu({
           {todayStats.unansweredChessMsgChannelId && (
             <TopButton
               loading={loadingChess}
-              colorLeft={Color.darkBlue()}
+              colorLeft={Color.pink()}
               colorMiddle={Color.rose()}
-              colorRight={Color.cranberry()}
+              colorRight={Color.brownOrange()}
               style={{ marginLeft: '1rem' }}
               onClick={handleChessButtonClick}
             >
