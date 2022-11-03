@@ -66,10 +66,10 @@ export default function GrammarGameModal({ onHide }) {
   return (
     <Modal closeWhenClickedOutside={false} onHide={onHide}>
       {gameState !== 'started' && (
-        <header style={{ height: '3rem' }}>
+        <header style={{ height: '3rem', padding: 0 }}>
           <FilterBar
             style={{
-              marginTop: '3rem',
+              marginTop: '3.5rem',
               height: '5rem'
             }}
           >
