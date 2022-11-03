@@ -16,8 +16,8 @@ Rankings.propTypes = {
 };
 
 export default function Rankings({ rankingsTab, onSetRankingsTab }) {
-  const loadWordleRankings = useAppContext(
-    (v) => v.requestHelpers.loadWordleRankings
+  const loadGrammarRankings = useAppContext(
+    (v) => v.requestHelpers.loadGrammarRankings
   );
   const [loading, setLoading] = useState(true);
   const [allRanks, setAllRanks] = useState([]);
@@ -31,7 +31,7 @@ export default function Rankings({ rankingsTab, onSetRankingsTab }) {
   useEffect(() => {
     init();
     async function init() {
-      const { all, top30s, myRank: loadedMyRank } = await loadWordleRankings(2);
+      const { all, top30s, myRank: loadedMyRank } = await loadGrammarRankings();
       setMyRank(loadedMyRank);
       setAllRanks(all);
       setTop30s(top30s);
@@ -80,7 +80,7 @@ export default function Rankings({ rankingsTab, onSetRankingsTab }) {
           height: '100%',
           overflow: 'scroll',
           width: '100%',
-          paddingTop: '2rem',
+          paddingTop: myRank ? '2rem' : '1rem',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center'

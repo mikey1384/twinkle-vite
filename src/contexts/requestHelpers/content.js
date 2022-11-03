@@ -329,6 +329,24 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async loadGrammarRankings() {
+      try {
+        const {
+          data: { all, top30s, myRank, myXP }
+        } = await request.get(
+          `${URL}/content/game/grammar/leaderBoard`,
+          auth()
+        );
+        return Promise.resolve({
+          all,
+          top30s,
+          myRank,
+          myXP
+        });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadLikedFeeds({
       filter = 'all',
       lastFeedId,
