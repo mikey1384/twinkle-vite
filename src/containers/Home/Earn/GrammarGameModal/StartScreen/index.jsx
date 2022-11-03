@@ -39,6 +39,7 @@ export default function StartScreen({
     fail: { color: failColor },
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
+  const { userId } = useKeyContext((v) => v.myState);
   const checkNumGrammarGamesPlayedToday = useAppContext(
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
   );
@@ -171,12 +172,12 @@ export default function StartScreen({
           </div>
         )}
         <GradientButton
-          loading={!loaded || loading}
-          disabled={maxTimesPlayedToday}
+          loading={userId && (!loaded || loading)}
+          disabled={!userId || maxTimesPlayedToday}
           style={{ marginTop: '2rem', fontSize: '1.7rem' }}
           onClick={onGameStart}
         >
-          {startButtonLabel}
+          {userId ? startButtonLabel : 'Log in to play'}
         </GradientButton>
         {maxTimesPlayedToday && (
           <Button
