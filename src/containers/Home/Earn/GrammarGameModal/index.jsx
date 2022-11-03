@@ -7,6 +7,7 @@ import StartScreen from './StartScreen';
 import FinishScreen from './FinishScreen';
 import FilterBar from '~/components/FilterBar';
 import Button from '~/components/Button';
+import Rankings from './Rankings';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 GrammarGameModal.propTypes = {
@@ -24,6 +25,7 @@ export default function GrammarGameModal({ onHide }) {
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [activeTab, setActiveTab] = useState('game');
+  const [rankingsTab, setRankingsTab] = useState('all');
   const [gameState, setGameState] = useState('notStarted');
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
   const [questions, setQuestions] = useState([]);
@@ -113,6 +115,20 @@ export default function GrammarGameModal({ onHide }) {
           )}
           {activeTab === 'game' && gameState === 'finished' && (
             <FinishScreen scoreArray={scoreArray} />
+          )}
+          {activeTab === 'rankings' && gameState !== 'started' && (
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <Rankings
+                onSetRankingsTab={setRankingsTab}
+                rankingsTab={rankingsTab}
+              />
+            </div>
           )}
         </ErrorBoundary>
       </main>
