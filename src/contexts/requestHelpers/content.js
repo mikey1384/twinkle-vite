@@ -332,7 +332,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
     async loadGrammarRankings() {
       try {
         const {
-          data: { all, top30s, myRank, myXP }
+          data: { all, top30s, myRank }
         } = await request.get(
           `${URL}/content/game/grammar/leaderBoard`,
           auth()
@@ -340,8 +340,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return Promise.resolve({
           all,
           top30s,
-          myRank,
-          myXP
+          myRank
         });
       } catch (error) {
         return handleError(error);

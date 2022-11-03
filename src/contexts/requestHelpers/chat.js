@@ -409,7 +409,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async loadWordleRankings(channelId) {
       try {
         const {
-          data: { all, top30s, myRank, myXP }
+          data: { all, top30s, myRank }
         } = await request.get(
           `${URL}/chat/wordle/leaderBoard?channelId=${channelId}`,
           auth()
@@ -417,8 +417,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return Promise.resolve({
           all,
           top30s,
-          myRank,
-          myXP
+          myRank
         });
       } catch (error) {
         return handleError(error);
