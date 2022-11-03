@@ -60,13 +60,13 @@ export default function ReactionText({ questions }) {
       return {
         color: colorD,
         fontSize: '2rem',
-        text: 'Better luck next time',
+        text: `It wasn't good but it wasn't terrible either`,
         bling: false
       };
     return {
       color: colorF,
       fontSize: '1.7rem',
-      text: `Don't give up! You'll get better at this`,
+      text: `You just need more practice, that's all`,
       bling: false
     };
   }, [
