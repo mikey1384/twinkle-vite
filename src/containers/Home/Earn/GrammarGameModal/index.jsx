@@ -5,6 +5,7 @@ import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StartScreen from './StartScreen';
 import FinishScreen from './FinishScreen';
+import FilterBar from '~/components/FilterBar';
 import Button from '~/components/Button';
 import { useAppContext, useKeyContext } from '~/contexts';
 
@@ -22,6 +23,7 @@ export default function GrammarGameModal({ onHide }) {
     (v) => v.requestHelpers.loadGrammarGame
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const [activeTab, setActiveTab] = useState('game');
   const [gameState, setGameState] = useState('notStarted');
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
   const [questions, setQuestions] = useState([]);
@@ -61,11 +63,33 @@ export default function GrammarGameModal({ onHide }) {
 
   return (
     <Modal closeWhenClickedOutside={false} onHide={onHide}>
-      {gameState !== 'started' && <header style={{ height: '3rem' }}></header>}
+      {gameState !== 'started' && (
+        <header style={{ height: '3rem' }}>
+          <FilterBar
+            style={{
+              marginTop: '3rem',
+              height: '5rem'
+            }}
+          >
+            <nav
+              className={activeTab === 'game' ? 'active' : null}
+              onClick={() => setActiveTab('game')}
+            >
+              Game
+            </nav>
+            <nav
+              className={activeTab === 'rankings' ? 'active' : null}
+              onClick={() => setActiveTab('rankings')}
+            >
+              Rankings
+            </nav>
+          </FilterBar>
+        </header>
+      )}
       <main
         style={{
           padding: 0,
-          marginTop: 0
+          marginTop: gameState === 'started' ? '-0.5rem' : '2.5rem'
         }}
       >
         <ErrorBoundary componentPath="Earn/GrammarGameModal/GameState">

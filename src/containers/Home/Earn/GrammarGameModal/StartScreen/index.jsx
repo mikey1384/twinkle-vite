@@ -113,7 +113,7 @@ export default function StartScreen({
             {grammarGameLabel}
           </div>
           <div
-            style={{ marginTop: '4rem', lineHeight: 1.7, textAlign: 'center' }}
+            style={{ marginTop: '3rem', lineHeight: 1.7, textAlign: 'center' }}
           >
             {!results?.length ? (
               <div>
