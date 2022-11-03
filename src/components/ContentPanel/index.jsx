@@ -256,7 +256,7 @@ export default function ContentPanel({
                         contentObj={contentState}
                         action={
                           commentId
-                            ? targetObj.comment.notFound
+                            ? targetObj?.comment.notFound
                               ? localize('repliedOn')
                               : localize('repliedTo')
                             : rootType === 'subject'
