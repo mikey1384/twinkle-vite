@@ -89,11 +89,11 @@ export default function GrammarGameModal({ onHide }) {
       <main
         style={{
           padding: 0,
-          marginTop: gameState === 'started' ? '-0.5rem' : '2.5rem'
+          marginTop: gameState === 'started' ? '-0.5rem' : '3rem'
         }}
       >
         <ErrorBoundary componentPath="Earn/GrammarGameModal/GameState">
-          {gameState === 'notStarted' && (
+          {activeTab === 'game' && gameState === 'notStarted' && (
             <StartScreen
               loading={gameLoading}
               timesPlayedToday={timesPlayedToday}
@@ -111,7 +111,9 @@ export default function GrammarGameModal({ onHide }) {
               onGameFinish={handleGameFinish}
             />
           )}
-          {gameState === 'finished' && <FinishScreen scoreArray={scoreArray} />}
+          {activeTab === 'game' && gameState === 'finished' && (
+            <FinishScreen scoreArray={scoreArray} />
+          )}
         </ErrorBoundary>
       </main>
       {gameState !== 'started' && (
