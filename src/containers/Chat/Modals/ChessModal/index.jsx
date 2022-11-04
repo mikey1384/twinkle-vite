@@ -2,15 +2,16 @@ import { useEffect, useRef, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import Chess from '../Chess';
+import Chess from '../../Chess';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Icon from '~/components/Icon';
+import FilterBar from '~/components/FilterBar';
+import ErrorBoundary from '~/components/ErrorBoundary';
+import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
-import ErrorBoundary from '~/components/ErrorBoundary';
-import localize from '~/constants/localize';
 
 const acceptDrawLabel = localize('acceptDraw');
 const cancelMoveLabel = localize('cancelMove');
@@ -50,8 +51,13 @@ export default function ChessModal({
   opponentName,
   socketConnected
 }) {
+  const [activeTab, setActiveTab] = useState('chess');
   const { banned, userId, username, profilePicUrl } = useKeyContext(
     (v) => v.myState
+  );
+  const rewindRequestId = useMemo(
+    () => currentChannel.gameState?.chess?.rewindRequestId,
+    [currentChannel]
   );
   const {
     warning: { color: warningColor },
@@ -173,34 +179,64 @@ export default function ChessModal({
   return (
     <ErrorBoundary componentPath="ChessModal">
       <Modal large onHide={onHide}>
-        <header>{chessLabel}</header>
+        <header style={{ padding: rewindRequestId ? '0' : '2rem' }}>
+          {rewindRequestId ? (
+            <FilterBar
+              style={{
+                marginBottom: 0
+              }}
+            >
+              <nav
+                className={activeTab === 'chess' ? 'active' : null}
+                onClick={() => setActiveTab('chess')}
+              >
+                Chess
+              </nav>
+              <nav
+                className={activeTab === 'rewind' ? 'active' : null}
+                onClick={() => setActiveTab('rewind')}
+              >
+                Rewind Request
+              </nav>
+            </FilterBar>
+          ) : (
+            chessLabel
+          )}
+        </header>
         <main style={{ padding: 0 }}>
-          <div
-            style={{
-              backgroundColor: Color.lightGray(),
-              position: 'relative',
-              width: '100%'
-            }}
-          >
-            <Chess
-              isFromModal
-              channelId={channelId}
-              countdownNumber={countdownNumber}
-              interactable={!boardState?.isDraw}
-              initialState={initialState}
-              loaded={loaded}
-              myId={myId}
-              newChessState={newChessState}
-              onChessMove={setNewChessState}
-              opponentId={opponentId}
-              opponentName={opponentName}
-              senderId={uploaderId}
-              spoilerOff={spoilerOff}
-              onSpoilerClick={handleSpoilerClick}
-            />
-          </div>
+          {activeTab === 'chess' ? (
+            <div
+              style={{
+                borderTop: rewindRequestId
+                  ? 'none'
+                  : `1px solid ${Color.borderGray()}`,
+                backgroundColor: Color.lightGray(),
+                position: 'relative',
+                width: '100%'
+              }}
+            >
+              <Chess
+                isFromModal
+                channelId={channelId}
+                countdownNumber={countdownNumber}
+                interactable={!boardState?.isDraw}
+                initialState={initialState}
+                loaded={loaded}
+                myId={myId}
+                newChessState={newChessState}
+                onChessMove={setNewChessState}
+                opponentId={opponentId}
+                opponentName={opponentName}
+                senderId={uploaderId}
+                spoilerOff={spoilerOff}
+                onSpoilerClick={handleSpoilerClick}
+              />
+            </div>
+          ) : (
+            <div>rewind</div>
+          )}
         </main>
-        <footer style={{ border: 0 }}>
+        <footer>
           {gameEndButtonShown && (
             <Button
               style={{ marginRight: '1rem' }}
