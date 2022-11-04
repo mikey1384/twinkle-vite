@@ -85,10 +85,10 @@ export const expectedResponseLength = (rewardLevel) => {
     return 800;
   }
   if (rewardLevel === 4) {
-    return 600;
+    return 500;
   }
   if (rewardLevel === 3) {
-    return 400;
+    return 300;
   }
   if (rewardLevel === 2) {
     return 200;
