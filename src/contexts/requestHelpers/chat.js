@@ -192,10 +192,10 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async fetchCurrentRewindRequest(channelId) {
+    async fetchCurrentRewindRequest({ channelId, rewindRequestId }) {
       try {
         const { data } = await request.get(
-          `${URL}/chat/chess/rewind?channelId=${channelId}`,
+          `${URL}/chat/chess/rewind?channelId=${channelId}&rewindRequestId=${rewindRequestId}`,
           auth()
         );
         return Promise.resolve(data);

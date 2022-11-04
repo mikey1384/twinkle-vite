@@ -183,8 +183,8 @@ export default function ChessModal({
           ) : (
             <Rewind
               channelId={channelId}
-              initialState={initialState}
               myId={myId}
+              rewindRequestId={rewindRequestId}
             />
           )}
         </main>
