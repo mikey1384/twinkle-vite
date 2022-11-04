@@ -5,11 +5,11 @@ import { useAppContext } from '~/contexts';
 
 Rewind.propTypes = {
   channelId: PropTypes.number.isRequired,
-  initialState: PropTypes.object.isRequired,
-  myId: PropTypes.number.isRequired
+  myId: PropTypes.number.isRequired,
+  rewindRequestId: PropTypes.number.isRequired
 };
 
-export default function Rewind({ channelId, initialState, myId }) {
+export default function Rewind({ channelId, myId, rewindRequestId }) {
   const fetchCurrentRewindRequest = useAppContext(
     (v) => v.requestHelpers.fetchCurrentRewindRequest
   );
@@ -18,11 +18,12 @@ export default function Rewind({ channelId, initialState, myId }) {
   useEffect(() => {
     init();
     async function init() {
-      const data = await fetchCurrentRewindRequest(channelId);
-      console.log(data);
-      setRewindRequestMessage({});
+      const message = await fetchCurrentRewindRequest({
+        channelId,
+        rewindRequestId
+      });
+      setRewindRequestMessage(message);
       setLoaded(true);
-      console.log(rewindRequestMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -33,7 +34,7 @@ export default function Rewind({ channelId, initialState, myId }) {
         loaded={loaded}
         myId={myId}
         channelId={channelId}
-        initialState={initialState}
+        initialState={rewindRequestMessage?.chessState}
         style={{ width: '100%' }}
       />
     </div>
