@@ -51,7 +51,7 @@ export default function ChessModal({
   opponentName,
   socketConnected
 }) {
-  const [activeTab, setActiveTab] = useState('chess');
+  const [activeTab, setActiveTab] = useState('game');
   const { banned, userId, username, profilePicUrl } = useKeyContext(
     (v) => v.myState
   );
@@ -187,8 +187,8 @@ export default function ChessModal({
               }}
             >
               <nav
-                className={activeTab === 'chess' ? 'active' : null}
-                onClick={() => setActiveTab('chess')}
+                className={activeTab === 'game' ? 'active' : null}
+                onClick={() => setActiveTab('game')}
               >
                 Chess
               </nav>
@@ -204,7 +204,7 @@ export default function ChessModal({
           )}
         </header>
         <main style={{ padding: 0 }}>
-          {activeTab === 'chess' ? (
+          {activeTab === 'game' ? (
             <div
               style={{
                 borderTop: rewindRequestId
