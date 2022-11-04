@@ -7,6 +7,7 @@ import Icon from '~/components/Icon';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Game from './Game';
+import Rewind from './Rewind';
 import localize from '~/constants/localize';
 import { socket } from '~/constants/io';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -180,7 +181,7 @@ export default function ChessModal({
               userMadeLastMove={userMadeLastMove}
             />
           ) : (
-            <div>rewind</div>
+            <Rewind />
           )}
         </main>
         <footer>
