@@ -36,7 +36,7 @@ function TagModal({
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedPlaylists, setSelectedPlaylists] = useState([]);
-  const [disabled, setDisabled] = useState(false);
+  const [posting, setPosting] = useState(false);
   const InputRef = useRef(null);
   const searchTextRef = useRef('');
   const dropdownFooter = useMemo(
@@ -105,7 +105,8 @@ function TagModal({
           Cancel
         </Button>
         <Button
-          disabled={disabled || selectedPlaylists.length === 0}
+          disabled={selectedPlaylists.length === 0}
+          loading={posting}
           color={doneColor}
           onClick={handleSubmit}
         >
@@ -139,7 +140,7 @@ function TagModal({
   }
 
   async function handleSubmit() {
-    setDisabled(true);
+    setPosting(true);
     await addVideoToPlaylists({
       videoId,
       playlistIds: selectedPlaylists.map((playlist) => playlist.id)
