@@ -69,7 +69,7 @@ export default function Game({
       setLoaded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [rewindRequestId]);
 
   const spoilerOff = useMemo(() => {
     if (typeof countdownNumber === 'number') {
