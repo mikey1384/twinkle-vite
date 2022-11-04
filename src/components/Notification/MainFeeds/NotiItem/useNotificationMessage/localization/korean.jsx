@@ -86,6 +86,7 @@ export default function renderEnglishMessage({
               id: targetObj.id,
               title: contentPreview
             }}
+            style={{ color: contentLinkColor }}
           />
         </>
       );
