@@ -1,14 +1,13 @@
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import Chess from '../../Chess';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Icon from '~/components/Icon';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Game from './Game';
 import localize from '~/constants/localize';
-import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
@@ -52,6 +51,7 @@ export default function ChessModal({
   socketConnected
 }) {
   const [activeTab, setActiveTab] = useState('game');
+  const [message, setMessage] = useState({});
   const { banned, userId, username, profilePicUrl } = useKeyContext(
     (v) => v.myState
   );
@@ -63,9 +63,6 @@ export default function ChessModal({
     warning: { color: warningColor },
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
-  const fetchCurrentChessState = useAppContext(
-    (v) => v.requestHelpers.fetchCurrentChessState
-  );
   const setChessMoveViewTimeStamp = useAppContext(
     (v) => v.requestHelpers.setChessMoveViewTimeStamp
   );
@@ -74,33 +71,11 @@ export default function ChessModal({
   );
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
   const [initialState, setInitialState] = useState();
-  const [message, setMessage] = useState({});
-  const [uploaderId, setUploaderId] = useState();
-  const [loaded, setLoaded] = useState(false);
   const [newChessState, setNewChessState] = useState();
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [userMadeLastMove, setUserMadeLastMove] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const loading = useRef(null);
-
-  useEffect(() => {
-    init();
-    async function init() {
-      loading.current = true;
-      const chessMessage = await fetchCurrentChessState({
-        channelId,
-        recentChessMessage: currentChannel.recentChessMessage
-      });
-      setUserMadeLastMove(chessMessage?.userId === myId);
-      setMessage(chessMessage);
-      setUploaderId(chessMessage?.userId);
-      setInitialState(chessMessage?.chessState);
-      loading.current = false;
-      setLoaded(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const boardState = useMemo(
     () => (initialState ? { ...initialState } : null),
@@ -149,28 +124,6 @@ export default function ChessModal({
     return drawOffererId && drawOffererId !== myId;
   }, [drawOffererId, myId]);
 
-  const spoilerOff = useMemo(() => {
-    if (typeof countdownNumber === 'number') {
-      return true;
-    }
-    const userIsTheLastMoveViewer =
-      currentChannel.lastChessMoveViewerId === myId;
-    return (
-      (!loading.current && !initialState) ||
-      !!userMadeLastMove ||
-      userIsTheLastMoveViewer ||
-      message.id < currentChannel.lastChessMessageId
-    );
-  }, [
-    countdownNumber,
-    currentChannel.lastChessMessageId,
-    currentChannel.lastChessMoveViewerId,
-    initialState,
-    message.id,
-    myId,
-    userMadeLastMove
-  ]);
-
   const isAbortable = useMemo(
     () => boardState?.move?.number < 4,
     [boardState?.move?.number]
@@ -205,33 +158,27 @@ export default function ChessModal({
         </header>
         <main style={{ padding: 0 }}>
           {activeTab === 'game' ? (
-            <div
-              style={{
-                borderTop: rewindRequestId
-                  ? 'none'
-                  : `1px solid ${Color.borderGray()}`,
-                backgroundColor: Color.lightGray(),
-                position: 'relative',
-                width: '100%'
-              }}
-            >
-              <Chess
-                isFromModal
-                channelId={channelId}
-                countdownNumber={countdownNumber}
-                interactable={!boardState?.isDraw}
-                initialState={initialState}
-                loaded={loaded}
-                myId={myId}
-                newChessState={newChessState}
-                onChessMove={setNewChessState}
-                opponentId={opponentId}
-                opponentName={opponentName}
-                senderId={uploaderId}
-                spoilerOff={spoilerOff}
-                onSpoilerClick={handleSpoilerClick}
-              />
-            </div>
+            <Game
+              boardState={boardState}
+              channelId={channelId}
+              countdownNumber={countdownNumber}
+              currentChannel={currentChannel}
+              initialState={initialState}
+              message={message}
+              myId={myId}
+              newChessState={newChessState}
+              onSetInitialState={setInitialState}
+              onSetMessage={setMessage}
+              onSetNewChessState={setNewChessState}
+              onSetUserMadeLastMove={setUserMadeLastMove}
+              onUpdateLastChessMoveViewerId={onUpdateLastChessMoveViewerId}
+              onSpoilerClick={onSpoilerClick}
+              opponentId={opponentId}
+              opponentName={opponentName}
+              rewindRequestId={rewindRequestId}
+              setChessMoveViewTimeStamp={setChessMoveViewTimeStamp}
+              userMadeLastMove={userMadeLastMove}
+            />
           ) : (
             <div>rewind</div>
           )}
@@ -333,19 +280,6 @@ export default function ChessModal({
       }
     });
     onHide();
-  }
-
-  async function handleSpoilerClick() {
-    try {
-      await setChessMoveViewTimeStamp({ channelId, message });
-      onUpdateLastChessMoveViewerId({
-        channelId,
-        viewerId: myId
-      });
-      onSpoilerClick(message.userId);
-    } catch (error) {
-      console.error(error);
-    }
   }
 
   async function handleSubmitChessMove() {
