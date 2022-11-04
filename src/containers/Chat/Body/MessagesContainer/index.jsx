@@ -439,8 +439,16 @@ function MessagesContainer({
   }, [wordleModalShown]);
 
   useEffect(() => {
+    socket.on('chess_timer_cleared', handleChessTimerCleared);
     socket.on('chess_countdown_number_received', onReceiveCountdownNumber);
     socket.on('new_message_received', handleReceiveMessage);
+
+    function handleChessTimerCleared({ channelId }) {
+      setChessCountdownObj((chessCountdownObj) => ({
+        ...chessCountdownObj,
+        [channelId]: null
+      }));
+    }
 
     function onReceiveCountdownNumber({ channelId, number }) {
       if (channelId === selectedChannelId) {
@@ -457,12 +465,13 @@ function MessagesContainer({
       if (message.isChessMsg) {
         setChessCountdownObj((chessCountdownObj) => ({
           ...chessCountdownObj,
-          [message.channelId]: undefined
+          [message.channelId]: null
         }));
       }
     }
 
     return function cleanUp() {
+      socket.removeListener('chess_timer_cleared', handleChessTimerCleared);
       socket.removeListener(
         'chess_countdown_number_received',
         onReceiveCountdownNumber
@@ -596,7 +605,7 @@ function MessagesContainer({
 
   const handleConfirmChessMove = useCallback(
     async ({ state, isCheckmate, isStalemate, moveNumber }) => {
-      const gameWinnerId = isCheckmate ? userId : isStalemate ? 0 : undefined;
+      const gameWinnerId = isCheckmate ? userId : isStalemate ? 0 : null;
       const params = {
         userId,
         chessState: state,
