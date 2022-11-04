@@ -181,7 +181,11 @@ export default function ChessModal({
               userMadeLastMove={userMadeLastMove}
             />
           ) : (
-            <Rewind />
+            <Rewind
+              channelId={channelId}
+              initialState={initialState}
+              myId={myId}
+            />
           )}
         </main>
         <footer>
