@@ -1078,29 +1078,6 @@ function MessagesContainer({
     ]
   );
 
-  const handleRewardMessageSubmit = useCallback(
-    async ({ amount, reasonId, message }) => {
-      handleMessageSubmit({
-        content: rewardReasons[reasonId].message,
-        rewardAmount: amount,
-        rewardReason: reasonId,
-        target: message,
-        subchannelId
-      });
-      await updateUserXP({
-        amount,
-        action: 'reward',
-        target: 'chat',
-        targetId: message.id,
-        type: 'increase',
-        userId: message.userId
-      });
-      handleUpdateRankings();
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [handleMessageSubmit, subchannelId]
-  );
-
   const handleUpdateRankings = useCallback(async () => {
     const {
       all,
@@ -1124,6 +1101,30 @@ function MessagesContainer({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleRewardMessageSubmit = useCallback(
+    async ({ amount, reasonId, message }) => {
+      handleMessageSubmit({
+        content: rewardReasons[reasonId].message,
+        rewardAmount: amount,
+        rewardReason: reasonId,
+        target: message,
+        subchannelId
+      });
+      await updateUserXP({
+        amount,
+        action: 'reward',
+        target: 'chat',
+        targetId: message.id,
+        type: 'increase',
+        userId: message.userId
+      });
+      handleUpdateRankings();
+      return Promise.resolve();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [handleMessageSubmit, handleUpdateRankings, subchannelId]
+  );
 
   const handleSelectNewOwner = useCallback(
     async ({ newOwner, andLeave }) => {

@@ -533,8 +533,7 @@ function Message({
     ({ reasonId, amount }) => {
       onRewardMessageSubmit({ amount, reasonId, message });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [message]
+    [message, onRewardMessageSubmit]
   );
 
   const handleEditCancel = useCallback(() => {
