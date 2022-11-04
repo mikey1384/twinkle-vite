@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -129,6 +129,12 @@ export default function ChessModal({
     () => boardState?.move?.number < 4,
     [boardState?.move?.number]
   );
+
+  useEffect(() => {
+    if (!rewindRequestId) {
+      setActiveTab('game');
+    }
+  }, [rewindRequestId]);
 
   return (
     <ErrorBoundary componentPath="ChessModal">
