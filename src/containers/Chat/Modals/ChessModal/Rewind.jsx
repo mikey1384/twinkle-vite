@@ -5,11 +5,17 @@ import { useAppContext } from '~/contexts';
 
 Rewind.propTypes = {
   channelId: PropTypes.number.isRequired,
+  countdownNumber: PropTypes.number,
   myId: PropTypes.number.isRequired,
   rewindRequestId: PropTypes.number.isRequired
 };
 
-export default function Rewind({ channelId, myId, rewindRequestId }) {
+export default function Rewind({
+  channelId,
+  countdownNumber,
+  myId,
+  rewindRequestId
+}) {
   const fetchCurrentRewindRequest = useAppContext(
     (v) => v.requestHelpers.fetchCurrentRewindRequest
   );
@@ -29,14 +35,13 @@ export default function Rewind({ channelId, myId, rewindRequestId }) {
   }, []);
 
   return (
-    <div>
-      <Chess
-        loaded={loaded}
-        myId={myId}
-        channelId={channelId}
-        initialState={rewindRequestMessage?.chessState}
-        style={{ width: '100%' }}
-      />
-    </div>
+    <Chess
+      countdownNumber={countdownNumber}
+      loaded={loaded}
+      myId={myId}
+      channelId={channelId}
+      initialState={rewindRequestMessage?.chessState}
+      style={{ width: '100%' }}
+    />
   );
 }
