@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import Chess from '../../Chess';
 
@@ -94,31 +93,22 @@ export default function Game({
   ]);
 
   return (
-    <div
-      style={{
-        borderTop: rewindRequestId ? 'none' : `1px solid ${Color.borderGray()}`,
-        backgroundColor: Color.lightGray(),
-        position: 'relative',
-        width: '100%'
-      }}
-    >
-      <Chess
-        isFromModal
-        channelId={channelId}
-        countdownNumber={countdownNumber}
-        interactable={!boardState?.isDraw}
-        initialState={initialState}
-        loaded={loaded}
-        myId={myId}
-        newChessState={newChessState}
-        onChessMove={onSetNewChessState}
-        opponentId={opponentId}
-        opponentName={opponentName}
-        senderId={uploaderId}
-        spoilerOff={spoilerOff}
-        onSpoilerClick={handleSpoilerClick}
-      />
-    </div>
+    <Chess
+      isFromModal
+      channelId={channelId}
+      countdownNumber={countdownNumber}
+      interactable={!boardState?.isDraw}
+      initialState={initialState}
+      loaded={loaded}
+      myId={myId}
+      newChessState={newChessState}
+      onChessMove={onSetNewChessState}
+      opponentId={opponentId}
+      opponentName={opponentName}
+      senderId={uploaderId}
+      spoilerOff={spoilerOff}
+      onSpoilerClick={handleSpoilerClick}
+    />
   );
 
   async function handleSpoilerClick() {

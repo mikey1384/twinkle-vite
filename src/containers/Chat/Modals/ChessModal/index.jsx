@@ -9,6 +9,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Game from './Game';
 import Rewind from './Rewind';
 import localize from '~/constants/localize';
+import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
@@ -164,35 +165,47 @@ export default function ChessModal({
           )}
         </header>
         <main style={{ padding: 0 }}>
-          {activeTab === 'game' ? (
-            <Game
-              boardState={boardState}
-              channelId={channelId}
-              countdownNumber={countdownNumber}
-              currentChannel={currentChannel}
-              initialState={initialState}
-              message={message}
-              myId={myId}
-              newChessState={newChessState}
-              onSetInitialState={setInitialState}
-              onSetMessage={setMessage}
-              onSetNewChessState={setNewChessState}
-              onSetUserMadeLastMove={setUserMadeLastMove}
-              onUpdateLastChessMoveViewerId={onUpdateLastChessMoveViewerId}
-              onSpoilerClick={onSpoilerClick}
-              opponentId={opponentId}
-              opponentName={opponentName}
-              rewindRequestId={rewindRequestId}
-              setChessMoveViewTimeStamp={setChessMoveViewTimeStamp}
-              userMadeLastMove={userMadeLastMove}
-            />
-          ) : (
-            <Rewind
-              channelId={channelId}
-              myId={myId}
-              rewindRequestId={rewindRequestId}
-            />
-          )}
+          <div
+            style={{
+              borderTop: rewindRequestId
+                ? 'none'
+                : `1px solid ${Color.borderGray()}`,
+              backgroundColor: Color.wellGray(),
+              position: 'relative',
+              width: '100%'
+            }}
+          >
+            {activeTab === 'game' ? (
+              <Game
+                boardState={boardState}
+                channelId={channelId}
+                countdownNumber={countdownNumber}
+                currentChannel={currentChannel}
+                initialState={initialState}
+                message={message}
+                myId={myId}
+                newChessState={newChessState}
+                onSetInitialState={setInitialState}
+                onSetMessage={setMessage}
+                onSetNewChessState={setNewChessState}
+                onSetUserMadeLastMove={setUserMadeLastMove}
+                onUpdateLastChessMoveViewerId={onUpdateLastChessMoveViewerId}
+                onSpoilerClick={onSpoilerClick}
+                opponentId={opponentId}
+                opponentName={opponentName}
+                rewindRequestId={rewindRequestId}
+                setChessMoveViewTimeStamp={setChessMoveViewTimeStamp}
+                userMadeLastMove={userMadeLastMove}
+              />
+            ) : (
+              <Rewind
+                countdownNumber={countdownNumber}
+                channelId={channelId}
+                myId={myId}
+                rewindRequestId={rewindRequestId}
+              />
+            )}
+          </div>
         </main>
         <footer>
           {gameEndButtonShown && (
