@@ -1,9 +1,8 @@
 import PropTypes from 'prop-types';
-import Chess from '../../Chess';
+import Chess from '../Chess';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
-import RewindRequestButton from './RewindRequestButton';
 
 TargetChessPosition.propTypes = {
   chessState: PropTypes.object.isRequired,
@@ -25,16 +24,15 @@ export default function TargetChessPosition({
   channelId,
   gameState,
   lastChessMessageId,
+  messageId,
   myId,
   userId,
   username,
-  messageId,
   onCancelRewindRequest,
   onAcceptRewind,
   onDeclineRewind,
   onRequestRewind
 }) {
-  const isMyMessage = myId === userId;
   return (
     <div
       style={{
@@ -53,21 +51,17 @@ export default function TargetChessPosition({
       <Chess
         loaded
         myId={myId}
+        messageId={messageId}
         channelId={channelId}
         initialState={chessState}
+        onCancelRewindRequest={onCancelRewindRequest}
+        onAcceptRewind={onAcceptRewind}
+        onDeclineRewind={onDeclineRewind}
+        rewindRequestId={gameState.rewindRequestId}
+        senderId={userId}
+        senderName={username}
         style={{ width: '100%' }}
       />
-      {chessState.isRewindRequest &&
-        messageId &&
-        gameState.rewindRequestId === messageId && (
-          <RewindRequestButton
-            isMyMessage={isMyMessage}
-            onCancelRewindRequest={onCancelRewindRequest}
-            onAcceptRewind={() => onAcceptRewind(chessState)}
-            onDeclineRewind={onDeclineRewind}
-            username={username}
-          />
-        )}
       {!chessState.isRewindRequest &&
         Number(chessState.messageId) !== Number(lastChessMessageId) && (
           <div

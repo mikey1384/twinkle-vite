@@ -7,20 +7,27 @@ Rewind.propTypes = {
   channelId: PropTypes.number.isRequired,
   countdownNumber: PropTypes.number,
   myId: PropTypes.number.isRequired,
-  rewindRequestId: PropTypes.number.isRequired
+  onCancelRewindRequest: PropTypes.func.isRequired,
+  onAcceptRewind: PropTypes.func.isRequired,
+  onDeclineRewind: PropTypes.func.isRequired,
+  rewindRequestId: PropTypes.number
 };
 
 export default function Rewind({
   channelId,
   countdownNumber,
   myId,
+  onAcceptRewind,
+  onCancelRewindRequest,
+  onDeclineRewind,
   rewindRequestId
 }) {
   const fetchCurrentRewindRequest = useAppContext(
     (v) => v.requestHelpers.fetchCurrentRewindRequest
   );
-  const [rewindRequestMessage, setRewindRequestMessage] = useState();
+  const [rewindRequestMessage, setRewindRequestMessage] = useState({});
   const [loaded, setLoaded] = useState(false);
+
   useEffect(() => {
     init();
     async function init() {
@@ -37,10 +44,17 @@ export default function Rewind({
   return (
     <Chess
       countdownNumber={countdownNumber}
-      loaded={loaded}
+      loaded={rewindRequestMessage.chessState && loaded}
       myId={myId}
       channelId={channelId}
-      initialState={rewindRequestMessage?.chessState}
+      initialState={rewindRequestMessage.chessState}
+      messageId={rewindRequestMessage.id}
+      onAcceptRewind={onAcceptRewind}
+      onCancelRewindRequest={onCancelRewindRequest}
+      onDeclineRewind={onDeclineRewind}
+      rewindRequestId={rewindRequestId}
+      senderId={rewindRequestMessage.userId}
+      senderName={rewindRequestMessage.username}
       style={{ width: '100%' }}
     />
   );

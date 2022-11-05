@@ -5,6 +5,7 @@ import FallenPieces from './FallenPieces';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import RewindRequestButton from './RewindRequestButton';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { initializeChessBoard, getPositionId } from './helpers/model.js';
@@ -27,6 +28,7 @@ const deviceIsMobile = isMobile(navigator);
 
 Chess.propTypes = {
   channelId: PropTypes.number,
+  rewindRequestMessageSenderId: PropTypes.number,
   countdownNumber: PropTypes.number,
   gameWinnerId: PropTypes.number,
   interactable: PropTypes.bool,
@@ -40,12 +42,17 @@ Chess.propTypes = {
   newChessState: PropTypes.object,
   onBoardClick: PropTypes.func,
   onChessMove: PropTypes.func,
+  onAcceptRewind: PropTypes.func,
+  onCancelRewindRequest: PropTypes.func,
+  onDeclineRewind: PropTypes.func,
   onDiscussClick: PropTypes.func,
   onRewindClick: PropTypes.func,
   onSpoilerClick: PropTypes.func,
   opponentId: PropTypes.number,
   opponentName: PropTypes.string,
+  rewindRequestId: PropTypes.number,
   senderId: PropTypes.number,
+  senderName: PropTypes.string,
   spoilerOff: PropTypes.bool,
   style: PropTypes.object
 };
@@ -61,16 +68,20 @@ export default function Chess({
   lastChessMessageId,
   loaded,
   moveViewed,
-  myId,
   newChessState,
   onBoardClick,
   onChessMove,
+  onAcceptRewind,
+  onCancelRewindRequest,
+  onDeclineRewind,
   onDiscussClick,
   onRewindClick,
   onSpoilerClick,
   opponentId,
   opponentName,
+  rewindRequestId,
   senderId,
+  senderName,
   spoilerOff,
   style
 }) {
@@ -80,8 +91,8 @@ export default function Chess({
   );
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const playerColors = useRef({
-    [myId]: 'white',
-    [opponentName]: 'black'
+    [userId]: 'white',
+    [opponentId]: 'black'
   });
   const [squares, setSquares] = useState([]);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
@@ -127,11 +138,11 @@ export default function Chess({
   }, [boardState]);
 
   const myColor = useMemo(
-    () => boardState?.playerColors?.[myId] || 'white',
-    [myId, boardState]
+    () => boardState?.playerColors?.[userId] || 'white',
+    [userId, boardState]
   );
 
-  const userMadeLastMove = useMemo(() => move.by === myId, [move.by, myId]);
+  const userMadeLastMove = useMemo(() => move.by === userId, [move.by, userId]);
   const isCheck = boardState?.isCheck;
   const isCheckmate = boardState?.isCheckmate;
   const isStalemate = boardState?.isStalemate;
@@ -173,11 +184,11 @@ export default function Chess({
       playerColors.current = boardState
         ? boardState.playerColors
         : {
-            [myId]: 'white',
+            [userId]: 'white',
             [opponentId]: 'black'
           };
       setSquares(
-        initializeChessBoard({ initialState, loading: !loaded, myId })
+        initializeChessBoard({ initialState, loading: !loaded, myId: userId })
       );
       capturedPiece.current = null;
       if (boardState) {
@@ -197,7 +208,7 @@ export default function Chess({
       if (interactable && !userMadeLastMove) {
         setSquares((squares) =>
           squares.map((square) =>
-            square.color === playerColors.current[myId]
+            square.color === playerColors.current[userId]
               ? {
                   ...square,
                   state:
@@ -217,7 +228,7 @@ export default function Chess({
     initialState,
     interactable,
     loaded,
-    myId,
+    userId,
     newChessState,
     opponentId,
     boardState,
@@ -244,12 +255,12 @@ export default function Chess({
         state: {
           move: {
             number: moveNumber,
-            by: myId,
+            by: userId,
             ...moveDetail
           },
           capturedPiece: capturedPiece.current?.type,
           playerColors: playerColors.current || {
-            [myId]: 'white',
+            [userId]: 'white',
             [opponentId]: 'black'
           },
           board: (myColor === 'black'
@@ -277,7 +288,7 @@ export default function Chess({
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [move.number, myColor, myId, opponentId, selectedIndex, squares]
+    [move.number, myColor, userId, opponentId, selectedIndex, squares]
   );
 
   const processResult = useCallback(
@@ -1108,6 +1119,17 @@ export default function Chess({
           }}
         />
       )}
+      {rewindRequestId &&
+        boardState?.isRewindRequest &&
+        rewindRequestId === messageId && (
+          <RewindRequestButton
+            isMyMessage={userId === senderId}
+            onCancelRewindRequest={onCancelRewindRequest}
+            onAcceptRewind={() => onAcceptRewind(boardState)}
+            onDeclineRewind={onDeclineRewind}
+            username={senderName}
+          />
+        )}
     </div>
   );
 }

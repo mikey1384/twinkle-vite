@@ -1434,6 +1434,9 @@ function MessagesContainer({
           myId={userId}
           onConfirmChessMove={handleConfirmChessMove}
           onHide={() => onSetChessModalShown(false)}
+          onAcceptRewind={handleAcceptRewind}
+          onCancelRewindRequest={handleCancelRewindRequest}
+          onDeclineRewind={handleDeclineRewind}
           onSetChessCountdownObj={setChessCountdownObj}
           onSpoilerClick={handleChessSpoilerClick}
           opponentId={chessOpponent?.id}
