@@ -12,6 +12,7 @@ export default function GrammarManager({ mission, onSetMissionState }) {
     <ErrorBoundary componentPath="MissionPage/Management/GrammarManager">
       <div style={{ width: '100%', display: 'flex' }}>
         <GrammarQuestionGenerator
+          style={{ width: '100%' }}
           mission={mission}
           onSetMissionState={onSetMissionState}
         />

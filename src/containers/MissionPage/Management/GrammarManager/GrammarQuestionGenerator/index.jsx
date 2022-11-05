@@ -10,12 +10,14 @@ import SubmittedQuestions from './SubmittedQuestions';
 
 GrammarQuestionGenerator.propTypes = {
   mission: PropTypes.object.isRequired,
-  onSetMissionState: PropTypes.func.isRequired
+  onSetMissionState: PropTypes.func.isRequired,
+  style: PropTypes.object
 };
 
 export default function GrammarQuestionGenerator({
   mission,
-  onSetMissionState
+  onSetMissionState,
+  style
 }) {
   const uploadGrammarQuestion = useAppContext(
     (v) => v.requestHelpers.uploadGrammarQuestion
@@ -81,7 +83,7 @@ export default function GrammarQuestionGenerator({
   }, [leftSideText, rightSideText]);
 
   return (
-    <div style={{ width: '100%' }}>
+    <div style={style}>
       <div
         className={css`
           width: 100%;
