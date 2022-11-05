@@ -21,6 +21,25 @@ export default function SideMenu({ children, className, style }) {
         justify-content: center;
         flex-direction: column;
         font-size: 2rem;
+        > nav {
+          padding: 1.5rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          text-align: center;
+          width: 100%;
+          justify-content: center;
+          color: ${Color.darkGray()};
+          text-decoration: none;
+        }
+        > nav:hover {
+          font-weight: bold;
+          color: ${Color.black()};
+        }
+        > nav.active {
+          font-weight: bold;
+          color: ${Color.black()};
+        }
         > a {
           padding: 1.5rem;
           cursor: pointer;
