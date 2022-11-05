@@ -34,6 +34,9 @@ ChessModal.propTypes = {
   onConfirmChessMove: PropTypes.func.isRequired,
   onHide: PropTypes.func.isRequired,
   countdownNumber: PropTypes.number,
+  onAcceptRewind: PropTypes.func,
+  onCancelRewindRequest: PropTypes.func,
+  onDeclineRewind: PropTypes.func,
   onSpoilerClick: PropTypes.func.isRequired,
   opponentId: PropTypes.number,
   opponentName: PropTypes.string,
@@ -47,6 +50,9 @@ export default function ChessModal({
   onConfirmChessMove,
   onHide,
   countdownNumber,
+  onCancelRewindRequest,
+  onAcceptRewind,
+  onDeclineRewind,
   onSpoilerClick,
   opponentId,
   opponentName,
@@ -202,6 +208,9 @@ export default function ChessModal({
                 countdownNumber={countdownNumber}
                 channelId={channelId}
                 myId={myId}
+                onAcceptRewind={onAcceptRewind}
+                onCancelRewindRequest={onCancelRewindRequest}
+                onDeclineRewind={onDeclineRewind}
                 rewindRequestId={rewindRequestId}
               />
             )}
