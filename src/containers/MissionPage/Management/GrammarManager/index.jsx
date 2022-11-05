@@ -3,7 +3,6 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import GrammarQuestionGenerator from './GrammarQuestionGenerator';
 import SideMenu from '~/components/SideMenu';
 import Icon from '~/components/Icon';
-import { NavLink } from 'react-router-dom';
 
 GrammarManager.propTypes = {
   mission: PropTypes.object.isRequired,
@@ -22,20 +21,14 @@ export default function GrammarManager({ mission, onSetMissionState }) {
         }}
       >
         <SideMenu style={{ left: 0 }}>
-          <NavLink
-            to="/subjects"
-            className={(navData) => (navData.isActive ? 'active' : '')}
-          >
+          <nav>
             <Icon icon="bolt" />
             <span style={{ marginLeft: '1.1rem' }}>Questions</span>
-          </NavLink>
-          <NavLink
-            to="/videos"
-            className={(navData) => (navData.isActive ? 'active' : '')}
-          >
+          </nav>
+          <nav>
             <Icon icon="film" />
             <span style={{ marginLeft: '1.1rem' }}>Categories</span>
-          </NavLink>
+          </nav>
         </SideMenu>
         <GrammarQuestionGenerator
           style={{ width: 'CALC(100% - 20rem)' }}
