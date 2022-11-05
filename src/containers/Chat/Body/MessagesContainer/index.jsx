@@ -99,6 +99,7 @@ function MessagesContainer({
       onLoadMoreMessages,
       onReceiveMessageOnDifferentChannel,
       onSendFirstDirectMessage,
+      onSetMessageState,
       onSetChessTarget,
       onSetChessGameState,
       onSetChessModalShown,
@@ -455,6 +456,14 @@ function MessagesContainer({
         if (number === 0) {
           onSetChessModalShown(false);
         }
+        // this is to prevent "awaiting opponent's move" from showing up
+        onSetMessageState({
+          channelId,
+          messageId: currentChannel?.lastChessMessageId,
+          newState: {
+            moveViewTimeStamp: Math.floor(Date.now() / 1000)
+          }
+        });
         setChessCountdownObj((chessCountdownObj) => ({
           ...chessCountdownObj,
           [channelId]: number
