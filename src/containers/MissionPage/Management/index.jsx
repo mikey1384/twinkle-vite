@@ -3,7 +3,7 @@ import Main from './Main';
 import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
-import GrammarQuestionGenerator from './GrammarQuestionGenerator';
+import GrammarManager from './GrammarManager';
 import { useKeyContext } from '~/contexts';
 
 Management.propTypes = {
@@ -41,7 +41,7 @@ export default function Management({ mission, missionId, onSetMissionState }) {
         />
       )}
       {mission.missionType === 'grammar' && (
-        <GrammarQuestionGenerator
+        <GrammarManager
           mission={mission}
           onSetMissionState={onSetMissionState}
         />
