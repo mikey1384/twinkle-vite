@@ -10,10 +10,12 @@ GrammarManager.propTypes = {
 export default function GrammarManager({ mission, onSetMissionState }) {
   return (
     <ErrorBoundary componentPath="MissionPage/Management/GrammarManager">
-      <GrammarQuestionGenerator
-        mission={mission}
-        onSetMissionState={onSetMissionState}
-      />
+      <div style={{ width: '100%', display: 'flex' }}>
+        <GrammarQuestionGenerator
+          mission={mission}
+          onSetMissionState={onSetMissionState}
+        />
+      </div>
     </ErrorBoundary>
   );
 }
