@@ -105,10 +105,8 @@ export default function MissionPage() {
     return <InvalidPage />;
   }
 
-  const isManagementPage = useMemo(
-    () => location.pathname === `/missions/${missionType}/manage`,
-    [location.pathname, missionType]
-  );
+  const isManagementPage =
+    location.pathname === `/missions/${missionType}/manage`;
 
   return userId ? (
     mission.loaded ? (
