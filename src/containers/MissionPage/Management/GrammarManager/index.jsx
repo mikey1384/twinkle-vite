@@ -10,6 +10,7 @@ GrammarManager.propTypes = {
 };
 
 export default function GrammarManager({ mission, onSetMissionState }) {
+  const { managementTab: activeTab = 'pending' } = mission;
   return (
     <ErrorBoundary componentPath="MissionPage/Management/GrammarManager">
       <div
@@ -21,20 +22,38 @@ export default function GrammarManager({ mission, onSetMissionState }) {
         }}
       >
         <SideMenu style={{ left: 0 }}>
-          <nav>
+          <nav
+            className={activeTab !== 'categories' ? 'active' : ''}
+            onClick={() =>
+              onSetMissionState({
+                missionId: mission.id,
+                newState: { managementTab: 'pending' }
+              })
+            }
+          >
             <Icon icon="bolt" />
             <span style={{ marginLeft: '1.1rem' }}>Questions</span>
           </nav>
-          <nav>
+          <nav
+            className={activeTab === 'categories' ? 'active' : ''}
+            onClick={() =>
+              onSetMissionState({
+                missionId: mission.id,
+                newState: { managementTab: 'categories' }
+              })
+            }
+          >
             <Icon icon="film" />
             <span style={{ marginLeft: '1.1rem' }}>Categories</span>
           </nav>
         </SideMenu>
-        <GrammarQuestionGenerator
-          style={{ width: 'CALC(100% - 20rem)' }}
-          mission={mission}
-          onSetMissionState={onSetMissionState}
-        />
+        {activeTab !== 'categories' && (
+          <GrammarQuestionGenerator
+            style={{ width: 'CALC(100% - 20rem)' }}
+            mission={mission}
+            onSetMissionState={onSetMissionState}
+          />
+        )}
       </div>
     </ErrorBoundary>
   );
