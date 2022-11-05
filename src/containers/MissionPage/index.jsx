@@ -105,6 +105,11 @@ export default function MissionPage() {
     return <InvalidPage />;
   }
 
+  const isManagementPage = useMemo(
+    () => location.pathname === `/missions/${missionType}/manage`,
+    [location.pathname, missionType]
+  );
+
   return userId ? (
     mission.loaded ? (
       <ErrorBoundary
@@ -120,21 +125,13 @@ export default function MissionPage() {
             }}
           >
             <nav
-              className={
-                location.pathname !== `/missions/${missionType}/manage`
-                  ? 'active'
-                  : ''
-              }
+              className={!isManagementPage ? 'active' : ''}
               onClick={() => navigate(`/missions/${missionType}`)}
             >
               Mission
             </nav>
             <nav
-              className={
-                location.pathname === `/missions/${missionType}/manage`
-                  ? 'active'
-                  : ''
-              }
+              className={isManagementPage ? 'active' : ''}
               onClick={() => navigate(`/missions/${missionType}/manage`)}
             >
               Manage
@@ -157,12 +154,15 @@ export default function MissionPage() {
           <div
             className={css`
               display: flex;
-              width: ${isCreator ? 'CALC(100% - 55rem)' : '60%'};
-              ${isCreator
-                ? 'margin-left: 25rem;'
-                : `
-                    justify-content: center;
-                    flex-direction: column;`}
+              width: 60%;
+              margin-left: ${isCreator
+                ? isManagementPage
+                  ? '1rem'
+                  : '25rem'
+                : 0};
+              flex-grow: ${isCreator ? 1 : 0};
+              justify-content: center;
+              flex-direction: column;
               @media (max-width: ${mobileMaxWidth}) {
                 margin-left: 0;
                 width: 100%;
@@ -198,7 +198,6 @@ export default function MissionPage() {
               missionType={missionType}
               style={{
                 width: '25rem',
-                marginLeft: '5rem',
                 marginTop: '3rem'
               }}
             />
