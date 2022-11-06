@@ -3,6 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import GrammarQuestionGenerator from './GrammarQuestionGenerator';
 import SideMenu from '~/components/SideMenu';
 import Icon from '~/components/Icon';
+import GrammarCategories from './GrammarCategories';
 
 GrammarManager.propTypes = {
   mission: PropTypes.object.isRequired,
@@ -47,13 +48,17 @@ export default function GrammarManager({ mission, onSetMissionState }) {
             <span style={{ marginLeft: '1.1rem' }}>Categories</span>
           </nav>
         </SideMenu>
-        {activeTab !== 'categories' && (
-          <GrammarQuestionGenerator
-            style={{ width: 'CALC(100% - 20rem)' }}
-            mission={mission}
-            onSetMissionState={onSetMissionState}
-          />
-        )}
+        <div style={{ width: 'CALC(100% - 20rem)' }}>
+          {activeTab !== 'categories' ? (
+            <GrammarQuestionGenerator
+              style={{ width: '100%' }}
+              mission={mission}
+              onSetMissionState={onSetMissionState}
+            />
+          ) : (
+            <GrammarCategories style={{ width: '100%' }} />
+          )}
+        </div>
       </div>
     </ErrorBoundary>
   );
