@@ -15,6 +15,7 @@ GrammarManager.propTypes = {
 
 export default function GrammarManager({ mission, onSetMissionState }) {
   const { managementTab: activeTab = 'pending' } = mission;
+
   return (
     <ErrorBoundary componentPath="MissionPage/Management/GrammarManager">
       <div
