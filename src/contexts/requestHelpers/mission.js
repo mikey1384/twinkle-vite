@@ -150,9 +150,9 @@ export default function missionRequestHelpers({ auth, handleError }) {
     async loadGrammarCategories() {
       try {
         const {
-          data: { result }
+          data: { categories, categoryObj }
         } = await request.get(`${URL}/mission/grammar/category`, auth());
-        return Promise.resolve(result);
+        return Promise.resolve({ categories, categoryObj });
       } catch (error) {
         return handleError(error);
       }
