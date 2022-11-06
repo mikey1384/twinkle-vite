@@ -47,7 +47,7 @@ export default function GrammarCategories({ style }) {
           <div
             className={css`
               margin-top: 0.5rem;
-              width: 50%;
+              width: 60%;
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
               }
@@ -56,6 +56,7 @@ export default function GrammarCategories({ style }) {
             <CategoryInput
               onChange={(text) => setCategoryText(text)}
               categoryText={categoryText}
+              onSubmit={() => console.log('submit')}
             />
           </div>
           <div
