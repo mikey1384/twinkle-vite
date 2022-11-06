@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import Input from '~/components/Texts/Input';
 import { useAppContext, useKeyContext } from '~/contexts';
+import CategoryInput from './CategoryInput';
 
 GrammarCategories.propTypes = {
   style: PropTypes.object
@@ -53,11 +53,9 @@ export default function GrammarCategories({ style }) {
               }
             `}
           >
-            <Input
+            <CategoryInput
               onChange={(text) => setCategoryText(text)}
-              placeholder="Enter category..."
-              value={categoryText}
-              style={{ width: '100%' }}
+              categoryText={categoryText}
             />
           </div>
           <div
