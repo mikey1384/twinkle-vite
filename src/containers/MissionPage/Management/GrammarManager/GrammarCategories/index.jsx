@@ -14,13 +14,15 @@ export default function GrammarCategories({ style }) {
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
   const [categoryText, setCategoryText] = useState('');
+  const [categories, setCategories] = useState([]);
   const loadGrammarCategories = useAppContext(
     (v) => v.requestHelpers.loadGrammarCategories
   );
   useEffect(() => {
     init();
     async function init() {
-      await loadGrammarCategories();
+      const categories = await loadGrammarCategories();
+      setCategories(categories);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -61,20 +63,26 @@ export default function GrammarCategories({ style }) {
               style={{ width: '100%' }}
             />
           </div>
-          <div style={{ marginTop: '2rem' }}>
-            <ul>
-              <li
-                className={css`
+          <div style={{ marginTop: '3rem' }}>
+            <ul
+              className={css`
+                > li {
+                  text-transform: capitalize;
                   font-size: 1.7rem;
                   color: ${Color[linkColor]()};
                   cursor: pointer;
                   &:hover {
                     text-decoration: underline;
                   }
-                `}
-              >
-                Uncategorized
-              </li>
+                }
+              `}
+            >
+              <li>Uncategorized</li>
+              {categories.map((category, index) => (
+                <li key={index} style={{ marginTop: '1rem' }}>
+                  {category}
+                </li>
+              ))}
             </ul>
           </div>
         </div>
