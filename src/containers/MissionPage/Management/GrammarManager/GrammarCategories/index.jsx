@@ -21,14 +21,16 @@ export default function GrammarCategories({ style }) {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [categoryText, setCategoryText] = useState('');
   const [categories, setCategories] = useState([]);
+  const [categoryObj, setCategoryObj] = useState({});
   const loadGrammarCategories = useAppContext(
     (v) => v.requestHelpers.loadGrammarCategories
   );
   useEffect(() => {
     init();
     async function init() {
-      const categories = await loadGrammarCategories();
+      const { categories, categoryObj } = await loadGrammarCategories();
       setCategories(categories);
+      setCategoryObj(categoryObj);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -94,6 +96,7 @@ export default function GrammarCategories({ style }) {
                   style={{ marginTop: '1rem' }}
                 >
                   {category}
+                  {categoryObj[category] ? ` (${categoryObj[category]})` : ''}
                 </li>
               ))}
             </ul>
