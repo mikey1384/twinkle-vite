@@ -18,6 +18,11 @@ export default function CategoryInput({ onChange, categoryText, onSubmit }) {
         placeholder="Enter category..."
         value={categoryText}
         style={{ width: '100%' }}
+        onKeyPress={(event) => {
+          if (!stringIsEmpty(categoryText) && event.key === 'Enter') {
+            onSubmit();
+          }
+        }}
       />
       {!stringIsEmpty(categoryText) && (
         <Button
