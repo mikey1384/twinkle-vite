@@ -4,6 +4,9 @@ import GrammarQuestionGenerator from './GrammarQuestionGenerator';
 import SideMenu from '~/components/SideMenu';
 import Icon from '~/components/Icon';
 import GrammarCategories from './GrammarCategories';
+import FilterBar from '~/components/FilterBar';
+import { mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 
 GrammarManager.propTypes = {
   mission: PropTypes.object.isRequired,
@@ -15,14 +18,52 @@ export default function GrammarManager({ mission, onSetMissionState }) {
   return (
     <ErrorBoundary componentPath="MissionPage/Management/GrammarManager">
       <div
-        style={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'flex-end',
-          position: 'relative'
-        }}
+        className={css`
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          position: relative;
+        `}
       >
-        <SideMenu style={{ left: 0 }}>
+        <FilterBar
+          bordered
+          className="mobile"
+          style={{
+            height: '5rem'
+          }}
+        >
+          <nav
+            className={activeTab !== 'categories' ? 'active' : null}
+            onClick={() =>
+              onSetMissionState({
+                missionId: mission.id,
+                newState: { managementTab: 'pending' }
+              })
+            }
+          >
+            Questions
+          </nav>
+          <nav
+            className={activeTab === 'categories' ? 'active' : null}
+            onClick={() =>
+              onSetMissionState({
+                missionId: mission.id,
+                newState: { managementTab: 'categories' }
+              })
+            }
+          >
+            Categories
+          </nav>
+        </FilterBar>
+        <SideMenu
+          className={css`
+            left: 0;
+            @media (max-width: ${mobileMaxWidth}) {
+              display: none;
+            }
+          `}
+        >
           <nav
             className={activeTab !== 'categories' ? 'active' : ''}
             onClick={() =>
@@ -44,11 +85,18 @@ export default function GrammarManager({ mission, onSetMissionState }) {
               })
             }
           >
-            <Icon icon="film" />
+            <Icon icon="list" />
             <span style={{ marginLeft: '1.1rem' }}>Categories</span>
           </nav>
         </SideMenu>
-        <div style={{ width: 'CALC(100% - 20rem)' }}>
+        <div
+          className={css`
+            width: CALC(100% - 20rem);
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 100%;
+            }
+          `}
+        >
           {activeTab !== 'categories' ? (
             <GrammarQuestionGenerator
               style={{ width: '100%' }}
