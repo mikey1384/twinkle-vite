@@ -31,10 +31,7 @@ export default function GrammarCategories({ style }) {
       <div style={style}>
         <div
           className={css`
-            width: 100%;
-            display: flex;
             font-size: 1.5rem;
-            flex-direction: column;
             background: #fff;
             padding: 1rem 1rem 1.5rem 1rem;
             border: 1px solid ${Color.borderGray()};
@@ -63,7 +60,13 @@ export default function GrammarCategories({ style }) {
               style={{ width: '100%' }}
             />
           </div>
-          <div style={{ marginTop: '3rem' }}>
+          <div
+            style={{
+              marginTop: '3rem',
+              width: 'auto',
+              display: 'inline-block'
+            }}
+          >
             <ul
               className={css`
                 > li {
