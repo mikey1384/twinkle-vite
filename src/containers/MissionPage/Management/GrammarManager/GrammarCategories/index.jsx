@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import Input from '~/components/Texts/Input';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 
 GrammarCategories.propTypes = {
   style: PropTypes.object
@@ -14,6 +14,16 @@ export default function GrammarCategories({ style }) {
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
   const [categoryText, setCategoryText] = useState('');
+  const loadGrammarCategories = useAppContext(
+    (v) => v.requestHelpers.loadGrammarCategories
+  );
+  useEffect(() => {
+    init();
+    async function init() {
+      await loadGrammarCategories();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <ErrorBoundary componentPath="MissionPage/Management/GrammarManager/GrammarCategories">
       <div style={style}>
