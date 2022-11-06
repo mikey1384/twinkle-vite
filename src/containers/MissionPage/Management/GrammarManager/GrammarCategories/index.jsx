@@ -5,6 +5,7 @@ import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import CategoryInput from './CategoryInput';
+import CategoryModal from './CategoryModal';
 
 GrammarCategories.propTypes = {
   style: PropTypes.object
@@ -17,6 +18,7 @@ export default function GrammarCategories({ style }) {
     (v) => v.requestHelpers.uploadGrammarCategory
   );
   const [uploading, setUploading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [categoryText, setCategoryText] = useState('');
   const [categories, setCategories] = useState([]);
   const loadGrammarCategories = useAppContext(
@@ -86,7 +88,11 @@ export default function GrammarCategories({ style }) {
             >
               <li>Uncategorized</li>
               {categories.map((category, index) => (
-                <li key={index} style={{ marginTop: '1rem' }}>
+                <li
+                  onClick={() => setSelectedCategory(category)}
+                  key={index}
+                  style={{ marginTop: '1rem' }}
+                >
                   {category}
                 </li>
               ))}
@@ -94,6 +100,12 @@ export default function GrammarCategories({ style }) {
           </div>
         </div>
       </div>
+      {selectedCategory && (
+        <CategoryModal
+          category={selectedCategory}
+          onHide={() => setSelectedCategory('')}
+        />
+      )}
     </ErrorBoundary>
   );
 
