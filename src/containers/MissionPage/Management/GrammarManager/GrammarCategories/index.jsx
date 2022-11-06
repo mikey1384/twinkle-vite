@@ -13,6 +13,10 @@ export default function GrammarCategories({ style }) {
   const {
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
+  const uploadGrammarCategory = useAppContext(
+    (v) => v.requestHelpers.uploadGrammarCategory
+  );
+  const [uploading, setUploading] = useState(false);
   const [categoryText, setCategoryText] = useState('');
   const [categories, setCategories] = useState([]);
   const loadGrammarCategories = useAppContext(
@@ -56,7 +60,8 @@ export default function GrammarCategories({ style }) {
             <CategoryInput
               onChange={(text) => setCategoryText(text)}
               categoryText={categoryText}
-              onSubmit={() => console.log('submit')}
+              onSubmit={handleCategorySubmit}
+              uploading={uploading}
             />
           </div>
           <div
@@ -91,4 +96,12 @@ export default function GrammarCategories({ style }) {
       </div>
     </ErrorBoundary>
   );
+
+  async function handleCategorySubmit() {
+    setUploading(true);
+    await uploadGrammarCategory(categoryText);
+    setCategories((categories) => [...categories, categoryText]);
+    setCategoryText('');
+    setUploading(false);
+  }
 }

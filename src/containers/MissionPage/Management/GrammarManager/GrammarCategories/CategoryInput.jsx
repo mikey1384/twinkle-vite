@@ -7,10 +7,16 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 CategoryInput.propTypes = {
   categoryText: PropTypes.string,
   onChange: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired
+  onSubmit: PropTypes.func.isRequired,
+  uploading: PropTypes.bool
 };
 
-export default function CategoryInput({ onChange, categoryText, onSubmit }) {
+export default function CategoryInput({
+  onChange,
+  categoryText,
+  onSubmit,
+  uploading
+}) {
   return (
     <div style={{ display: 'flex' }}>
       <Input
@@ -19,7 +25,11 @@ export default function CategoryInput({ onChange, categoryText, onSubmit }) {
         value={categoryText}
         style={{ width: '100%' }}
         onKeyPress={(event) => {
-          if (!stringIsEmpty(categoryText) && event.key === 'Enter') {
+          if (
+            !uploading &&
+            !stringIsEmpty(categoryText) &&
+            event.key === 'Enter'
+          ) {
             onSubmit();
           }
         }}
@@ -27,6 +37,7 @@ export default function CategoryInput({ onChange, categoryText, onSubmit }) {
       {!stringIsEmpty(categoryText) && (
         <Button
           onClick={onSubmit}
+          loading={uploading}
           color="blue"
           filled
           style={{ marginLeft: '1rem' }}
