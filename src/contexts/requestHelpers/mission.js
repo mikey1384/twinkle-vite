@@ -157,6 +157,18 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async uploadGrammarCategory(category) {
+      try {
+        await request.post(
+          `${URL}/mission/grammar/category`,
+          { category },
+          auth()
+        );
+        return Promise.resolve();
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadGrammarQuestions({ activeTab, lastQuestionId }) {
       try {
         const { data } = await request.get(
