@@ -33,7 +33,7 @@ export default function CategoryModal({ category, onHide }) {
   return (
     <Modal onHide={onHide}>
       <header>
-        <div style={{ display: 'flex', width: '100%' }}>
+        <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
           <div style={{ width: isEditing ? '60%' : 'auto' }}>
             {isEditing ? (
               <Input
@@ -76,6 +76,32 @@ export default function CategoryModal({ category, onHide }) {
               </small>
               <small style={{ marginLeft: '2rem' }}>
                 <Icon icon="trash-alt" /> Delete
+              </small>
+            </div>
+          )}
+          {isEditing && (
+            <div
+              className={`unselectable ${css`
+                margin-left: 3rem;
+                > small {
+                  cursor: pointer;
+                  color: ${Color.gray()};
+                  font-weight: normal;
+                  font-size: 1.5rem;
+                  &:hover {
+                    text-decoration: underline;
+                  }
+                }
+              `}`}
+            >
+              <small
+                onClick={() => {
+                  setEditedCategory(category);
+                  setIsEditing(false);
+                }}
+              >
+                <Icon icon="ban" />
+                <span style={{ marginLeft: '0.7rem' }}>Cancel</span>
               </small>
             </div>
           )}
