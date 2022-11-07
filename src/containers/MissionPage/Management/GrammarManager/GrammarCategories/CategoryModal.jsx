@@ -33,27 +33,29 @@ export default function CategoryModal({ category, onHide }) {
           <div>
             <span style={{ textTransform: 'capitalize' }}>{category}</span>
           </div>
-          <div
-            className={`unselectable ${css`
-              margin-left: 3rem;
-              > small {
-                cursor: pointer;
-                color: ${Color.gray()};
-                font-weight: normal;
-                font-size: 1.5rem;
-                &:hover {
-                  text-decoration: underline;
+          {category !== 'uncategorized' && (
+            <div
+              className={`unselectable ${css`
+                margin-left: 3rem;
+                > small {
+                  cursor: pointer;
+                  color: ${Color.gray()};
+                  font-weight: normal;
+                  font-size: 1.5rem;
+                  &:hover {
+                    text-decoration: underline;
+                  }
                 }
-              }
-            `}`}
-          >
-            <small>
-              <Icon icon="pencil-alt" /> Edit
-            </small>
-            <small style={{ marginLeft: '2rem' }}>
-              <Icon icon="trash-alt" /> Delete
-            </small>
-          </div>
+              `}`}
+            >
+              <small>
+                <Icon icon="pencil-alt" /> Edit
+              </small>
+              <small style={{ marginLeft: '2rem' }}>
+                <Icon icon="trash-alt" /> Delete
+              </small>
+            </div>
+          )}
         </div>
       </header>
       <main>
