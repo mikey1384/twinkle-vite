@@ -70,8 +70,10 @@ export default function CategoryModal({ category, onHide }) {
                 `}`}
               >
                 <small onClick={handleChangeLabel}>
-                  <Icon icon="check" />
-                  <span style={{ marginLeft: '0.7rem' }}>Change</span>
+                  <Icon style={{ color: Color.green() }} icon="check" />
+                  <span style={{ marginLeft: '0.7rem', color: Color.green() }}>
+                    Change
+                  </span>
                 </small>
                 <small
                   style={{ marginLeft: '2rem' }}
