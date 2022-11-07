@@ -88,7 +88,9 @@ export default function GrammarCategories({ style }) {
                 }
               `}
             >
-              <li>Uncategorized</li>
+              <li onClick={() => setSelectedCategory('uncategorized')}>
+                Uncategorized
+              </li>
               {categories.map((category, index) => (
                 <li
                   onClick={() => setSelectedCategory(category)}
