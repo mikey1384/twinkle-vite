@@ -18,6 +18,9 @@ export default function CategoryModal({ category, onHide }) {
   const loadGrammarCategoryQuestions = useAppContext(
     (v) => v.requestHelpers.loadGrammarCategoryQuestions
   );
+  const editGrammarCategory = useAppContext(
+    (v) => v.requestHelpers.editGrammarCategory
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [editiedCategory, setEditedCategory] = useState(category);
   const [questions, setQuestions] = useState([]);
@@ -126,7 +129,7 @@ export default function CategoryModal({ category, onHide }) {
     </Modal>
   );
 
-  async function handleChangeLabel(text) {
-    console.log(text);
+  async function handleChangeLabel() {
+    await editGrammarCategory({ category, newCategory: editiedCategory });
   }
 }
