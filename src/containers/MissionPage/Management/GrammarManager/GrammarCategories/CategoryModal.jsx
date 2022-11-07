@@ -55,6 +55,36 @@ export default function CategoryModal({ category, onHide }) {
             ) : (
               <span style={{ textTransform: 'capitalize' }}>{category}</span>
             )}
+            {isEditing && (
+              <div
+                className={`unselectable ${css`
+                  > small {
+                    cursor: pointer;
+                    color: ${Color.gray()};
+                    font-weight: normal;
+                    font-size: 1.5rem;
+                    &:hover {
+                      text-decoration: underline;
+                    }
+                  }
+                `}`}
+              >
+                <small onClick={handleChangeLabel}>
+                  <Icon icon="check" />
+                  <span style={{ marginLeft: '0.7rem' }}>Change</span>
+                </small>
+                <small
+                  style={{ marginLeft: '2rem' }}
+                  onClick={() => {
+                    setEditedCategory(category);
+                    setIsEditing(false);
+                  }}
+                >
+                  <Icon icon="ban" />
+                  <span style={{ marginLeft: '0.7rem' }}>Cancel</span>
+                </small>
+              </div>
+            )}
           </div>
           {category !== 'uncategorized' && !isEditing && (
             <div
@@ -76,32 +106,6 @@ export default function CategoryModal({ category, onHide }) {
               </small>
               <small style={{ marginLeft: '2rem' }}>
                 <Icon icon="trash-alt" /> Delete
-              </small>
-            </div>
-          )}
-          {isEditing && (
-            <div
-              className={`unselectable ${css`
-                margin-left: 3rem;
-                > small {
-                  cursor: pointer;
-                  color: ${Color.gray()};
-                  font-weight: normal;
-                  font-size: 1.5rem;
-                  &:hover {
-                    text-decoration: underline;
-                  }
-                }
-              `}`}
-            >
-              <small
-                onClick={() => {
-                  setEditedCategory(category);
-                  setIsEditing(false);
-                }}
-              >
-                <Icon icon="ban" />
-                <span style={{ marginLeft: '0.7rem' }}>Cancel</span>
               </small>
             </div>
           )}
