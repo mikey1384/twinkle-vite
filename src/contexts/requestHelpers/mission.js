@@ -170,6 +170,20 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async editGrammarCategory({ category, newCategory }) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(
+          `${URL}/mission/grammar/category`,
+          { category, newCategory },
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadGrammarCategory(category) {
       try {
         await request.post(
