@@ -157,6 +157,19 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async deleteGrammarCategory(category) {
+      try {
+        const {
+          data: { success }
+        } = await request.delete(
+          `${URL}/mission/grammar/category?category=${category}`,
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadGrammarCategoryQuestions(category) {
       try {
         const {

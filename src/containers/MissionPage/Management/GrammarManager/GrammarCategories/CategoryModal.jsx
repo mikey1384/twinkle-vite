@@ -4,6 +4,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
@@ -20,12 +21,16 @@ export default function CategoryModal({
   onEditGrammarCategory,
   onHide
 }) {
+  const deleteGrammarCategory = useAppContext(
+    (v) => v.requestHelpers.deleteGrammarCategory
+  );
   const loadGrammarCategoryQuestions = useAppContext(
     (v) => v.requestHelpers.loadGrammarCategoryQuestions
   );
   const editGrammarCategory = useAppContext(
     (v) => v.requestHelpers.editGrammarCategory
   );
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editiedCategory, setEditedCategory] = useState(category);
   const [questions, setQuestions] = useState([]);
@@ -114,7 +119,10 @@ export default function CategoryModal({
               <small onClick={() => setIsEditing(true)}>
                 <Icon icon="pencil-alt" /> Edit
               </small>
-              <small style={{ marginLeft: '2rem' }}>
+              <small
+                onClick={() => setConfirmModalShown(true)}
+                style={{ marginLeft: '2rem' }}
+              >
                 <Icon icon="trash-alt" /> Delete
               </small>
             </div>
@@ -131,6 +139,17 @@ export default function CategoryModal({
           Close
         </Button>
       </footer>
+      {confirmModalShown && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setConfirmModalShown(false)}
+          title="Delete Category"
+          onConfirm={async () => {
+            await deleteGrammarCategory(category);
+            setConfirmModalShown(false);
+          }}
+        />
+      )}
     </Modal>
   );
 
