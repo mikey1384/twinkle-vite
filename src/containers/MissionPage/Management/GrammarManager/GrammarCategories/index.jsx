@@ -109,10 +109,28 @@ export default function GrammarCategories({ style }) {
         <CategoryModal
           category={selectedCategory}
           onHide={() => setSelectedCategory('')}
+          onEditGrammarCategory={handleEditGrammarCategory}
         />
       )}
     </ErrorBoundary>
   );
+
+  function handleEditGrammarCategory({
+    category,
+    newCategory: editiedCategory
+  }) {
+    setCategories((categories) => {
+      const index = categories.indexOf(category);
+      categories.splice(index, 1, editiedCategory);
+      return [...categories];
+    });
+    setCategoryObj((categoryObj) => {
+      categoryObj[editiedCategory] = categoryObj[category];
+      delete categoryObj[category];
+      return { ...categoryObj };
+    });
+    setSelectedCategory(editiedCategory);
+  }
 
   async function handleCategorySubmit() {
     setUploading(true);

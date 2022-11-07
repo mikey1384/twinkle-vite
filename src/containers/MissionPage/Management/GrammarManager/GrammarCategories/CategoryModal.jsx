@@ -11,10 +11,15 @@ import { css } from '@emotion/css';
 
 CategoryModal.propTypes = {
   category: PropTypes.string,
+  onEditGrammarCategory: PropTypes.func.isRequired,
   onHide: PropTypes.func
 };
 
-export default function CategoryModal({ category, onHide }) {
+export default function CategoryModal({
+  category,
+  onEditGrammarCategory,
+  onHide
+}) {
   const loadGrammarCategoryQuestions = useAppContext(
     (v) => v.requestHelpers.loadGrammarCategoryQuestions
   );
@@ -131,5 +136,7 @@ export default function CategoryModal({ category, onHide }) {
 
   async function handleChangeLabel() {
     await editGrammarCategory({ category, newCategory: editiedCategory });
+    onEditGrammarCategory({ category, newCategory: editiedCategory });
+    setIsEditing(false);
   }
 }
