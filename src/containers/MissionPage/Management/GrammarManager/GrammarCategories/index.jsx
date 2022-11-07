@@ -110,6 +110,7 @@ export default function GrammarCategories({ style }) {
           category={selectedCategory}
           onHide={() => setSelectedCategory('')}
           onEditGrammarCategory={handleEditGrammarCategory}
+          onSetCategories={setCategories}
         />
       )}
     </ErrorBoundary>

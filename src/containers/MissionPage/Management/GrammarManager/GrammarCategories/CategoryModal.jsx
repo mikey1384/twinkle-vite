@@ -13,12 +13,14 @@ import { css } from '@emotion/css';
 CategoryModal.propTypes = {
   category: PropTypes.string,
   onEditGrammarCategory: PropTypes.func.isRequired,
+  onSetCategories: PropTypes.func.isRequired,
   onHide: PropTypes.func
 };
 
 export default function CategoryModal({
   category,
   onEditGrammarCategory,
+  onSetCategories,
   onHide
 }) {
   const deleteGrammarCategory = useAppContext(
@@ -147,6 +149,10 @@ export default function CategoryModal({
           onConfirm={async () => {
             await deleteGrammarCategory(category);
             setConfirmModalShown(false);
+            onSetCategories((categories) =>
+              categories.filter((c) => c !== category)
+            );
+            onHide();
           }}
         />
       )}
