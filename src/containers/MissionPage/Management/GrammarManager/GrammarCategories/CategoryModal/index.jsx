@@ -9,6 +9,7 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
+import Loading from '~/components/Loading';
 import QuestionItem from './QuestionItem';
 
 CategoryModal.propTypes = {
@@ -37,6 +38,7 @@ export default function CategoryModal({
   const editGrammarCategory = useAppContext(
     (v) => v.requestHelpers.editGrammarCategory
   );
+  const [loading, setLoading] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editiedCategory, setEditedCategory] = useState(category);
@@ -44,8 +46,10 @@ export default function CategoryModal({
   useEffect(() => {
     init();
     async function init() {
+      setLoading(true);
       const rows = await loadGrammarCategoryQuestions(category);
       setQuestions(rows);
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -137,20 +141,33 @@ export default function CategoryModal({
         </div>
       </header>
       <main>
-        {questions.length === 0 && (
-          <div>
-            <span style={{ fontSize: '2rem' }}>No questions</span>
+        {loading ? (
+          <Loading />
+        ) : (
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              flexDirection: 'column'
+            }}
+          >
+            {questions.length === 0 && (
+              <div>
+                <span style={{ fontSize: '2rem' }}>No questions</span>
+              </div>
+            )}
+            {questions.map((question, index) => (
+              <QuestionItem
+                key={question.id}
+                categories={categories}
+                index={index}
+                question={question}
+                onMoveQuestion={handleMoveQuestion}
+              />
+            ))}
           </div>
         )}
-        {questions.map((question, index) => (
-          <QuestionItem
-            key={question.id}
-            categories={categories}
-            index={index}
-            question={question}
-            onMoveQuestion={handleMoveQuestion}
-          />
-        ))}
       </main>
       <footer>
         <Button transparent onClick={onHide}>
