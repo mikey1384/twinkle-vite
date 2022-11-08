@@ -152,6 +152,20 @@ export default function SubmittedQuestions({
                     }
                   })
                 }
+                onDeleteQuestion={(questionId) =>
+                  onSetMissionState({
+                    missionId: mission.id,
+                    newState: {
+                      [`${activeTab}QuestionIds`]: mission[
+                        `${activeTab}QuestionIds`
+                      ].filter((id) => id !== questionId),
+                      questionObj: {
+                        ...mission.questionObj,
+                        [questionId]: null
+                      }
+                    }
+                  })
+                }
                 style={{ marginTop: index === 0 ? 0 : '1rem' }}
               />
             );

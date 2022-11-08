@@ -17,6 +17,19 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async deleteGrammarQuestion(questionId) {
+      try {
+        const {
+          data: { success }
+        } = await request.delete(
+          `${URL}/mission/grammar/question?questionId=${questionId}`,
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async attachMissionTutorial({ missionId, missionTitle }) {
       try {
         const {
