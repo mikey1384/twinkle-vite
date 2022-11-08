@@ -132,8 +132,17 @@ export default function CategoryModal({
         </div>
       </header>
       <main>
-        {questions.map((question) => (
-          <div key={question.id}>{question.content}</div>
+        {questions.map((question, index) => (
+          <div
+            style={{
+              padding: '1rem',
+              border: `1px solid ${Color.borderGray()}`,
+              marginTop: index === 0 ? 0 : '1rem'
+            }}
+            key={question.id}
+          >
+            {question.content}
+          </div>
         ))}
       </main>
       <footer>
