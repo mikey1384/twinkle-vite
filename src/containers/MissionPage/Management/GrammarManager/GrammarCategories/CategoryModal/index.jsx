@@ -134,7 +134,7 @@ export default function CategoryModal({
       </header>
       <main>
         {questions.map((question, index) => (
-          <QuestionItem key={index} index={index} question={question} />
+          <QuestionItem key={question.id} index={index} question={question} />
         ))}
       </main>
       <footer>
