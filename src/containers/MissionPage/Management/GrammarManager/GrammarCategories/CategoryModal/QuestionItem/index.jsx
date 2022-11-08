@@ -50,7 +50,7 @@ export default function QuestionItem({ categories, index, question }) {
       {activeTab === 'question' ? (
         <Question question={question} />
       ) : (
-        <MoveModule categories={categories} />
+        <MoveModule questionId={question.id} categories={categories} />
       )}
     </div>
   );

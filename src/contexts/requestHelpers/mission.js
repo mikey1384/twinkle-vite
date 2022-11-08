@@ -235,6 +235,20 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async updateGrammarQuestionCategory({ questionId, category }) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(
+          `${URL}/mission/grammar/question/category`,
+          { questionId, category },
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMission({ missionId, isTask }) {
       try {
         const {

@@ -1,12 +1,17 @@
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import { useAppContext } from '~/contexts';
 
 MoveModule.propTypes = {
-  categories: PropTypes.array.isRequired
+  categories: PropTypes.array.isRequired,
+  questionId: PropTypes.number.isRequired
 };
 
-export default function MoveModule({ categories }) {
+export default function MoveModule({ categories, questionId }) {
+  const updateGrammarQuestionCategory = useAppContext(
+    (v) => v.requestHelpers.updateGrammarQuestionCategory
+  );
   return (
     <div
       style={{
@@ -17,8 +22,9 @@ export default function MoveModule({ categories }) {
       }}
     >
       {categories.map((category, index) => (
-        <div key={index}>
+        <div style={{ marginTop: index === 0 ? 0 : '2rem' }} key={index}>
           <span
+            onClick={() => handleMoveQuestion(category)}
             className={css`
               line-height: 2;
               width: auto;
@@ -35,4 +41,8 @@ export default function MoveModule({ categories }) {
       ))}
     </div>
   );
+
+  async function handleMoveQuestion(category) {
+    await updateGrammarQuestionCategory({ questionId, category });
+  }
 }
