@@ -10,6 +10,7 @@ import { useAppContext } from '~/contexts';
 
 QuestionListItem.propTypes = {
   onApproveQuestion: PropTypes.func.isRequired,
+  onDeleteQuestion: PropTypes.func.isRequired,
   onEditQuestion: PropTypes.func.isRequired,
   onSetIsEditing: PropTypes.func.isRequired,
   question: PropTypes.object.isRequired,
@@ -18,6 +19,7 @@ QuestionListItem.propTypes = {
 
 export default function QuestionListItem({
   onApproveQuestion,
+  onDeleteQuestion,
   onEditQuestion,
   onSetIsEditing,
   question,
@@ -25,6 +27,9 @@ export default function QuestionListItem({
 }) {
   const approveGrammarQuestion = useAppContext(
     (v) => v.requestHelpers.approveGrammarQuestion
+  );
+  const deleteGrammarQuestion = useAppContext(
+    (v) => v.requestHelpers.deleteGrammarQuestion
   );
   const correctChoice = useMemo(() => {
     return question.choices[question.answerIndex];
@@ -106,7 +111,7 @@ export default function QuestionListItem({
               style={{ width: '50%', fontSize: '1.7rem', marginTop: '5rem' }}
               color="rose"
               skeuomorphic
-              onClick={() => console.log('delete')}
+              onClick={handleDelete}
             >
               <Icon icon="trash-alt" />
               <span style={{ marginLeft: '0.7rem' }}>Delete</span>
@@ -124,6 +129,13 @@ export default function QuestionListItem({
     });
     if (success) {
       onApproveQuestion(!question.isApproved);
+    }
+  }
+
+  async function handleDelete() {
+    const success = await deleteGrammarQuestion(question.id);
+    if (success) {
+      onDeleteQuestion(question.id);
     }
   }
 }
