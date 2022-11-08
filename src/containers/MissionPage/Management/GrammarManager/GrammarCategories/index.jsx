@@ -112,6 +112,11 @@ export default function GrammarCategories({ style }) {
           onHide={() => setSelectedCategory('')}
           onEditGrammarCategory={handleEditGrammarCategory}
           onSetCategories={setCategories}
+          onMoveQuestion={async () => {
+            const { categories, categoryObj } = await loadGrammarCategories();
+            setCategories(categories);
+            setCategoryObj(categoryObj);
+          }}
         />
       )}
     </ErrorBoundary>

@@ -15,6 +15,7 @@ CategoryModal.propTypes = {
   category: PropTypes.string,
   categories: PropTypes.array.isRequired,
   onEditGrammarCategory: PropTypes.func.isRequired,
+  onMoveQuestion: PropTypes.func.isRequired,
   onSetCategories: PropTypes.func.isRequired,
   onHide: PropTypes.func
 };
@@ -23,6 +24,7 @@ export default function CategoryModal({
   category,
   categories,
   onEditGrammarCategory,
+  onMoveQuestion,
   onSetCategories,
   onHide
 }) {
@@ -141,6 +143,7 @@ export default function CategoryModal({
             categories={categories}
             index={index}
             question={question}
+            onMoveQuestion={handleMoveQuestion}
           />
         ))}
       </main>
@@ -166,6 +169,11 @@ export default function CategoryModal({
       )}
     </Modal>
   );
+
+  function handleMoveQuestion(questionId) {
+    setQuestions((questions) => questions.filter((q) => q.id !== questionId));
+    onMoveQuestion();
+  }
 
   async function handleChangeLabel() {
     await editGrammarCategory({ category, newCategory: editiedCategory });
