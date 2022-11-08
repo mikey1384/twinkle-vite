@@ -23,6 +23,11 @@ export default function MoveModule({ categories, questionId, onMoveQuestion }) {
         border: `1px solid ${Color.borderGray()}`
       }}
     >
+      {categories.length === 0 && (
+        <div>
+          <p>There is no category to move to</p>
+        </div>
+      )}
       {categories.map((category, index) => (
         <div style={{ marginTop: index === 0 ? 0 : '2rem' }} key={index}>
           <span
