@@ -25,6 +25,7 @@ export default function ApproveInterface({
   onSetManagementObj,
   onSetAttemptObj
 }) {
+  const [confirming, setConfirming] = useState(false);
   const uploadMissionFeedback = useAppContext(
     (v) => v.requestHelpers.uploadMissionFeedback
   );
@@ -120,6 +121,7 @@ export default function ApproveInterface({
               style={{ marginTop: '1.5rem', fontSize: '2rem' }}
               color={status === 'pass' ? 'green' : 'rose'}
               filled
+              loading={confirming}
               onClick={handleConfirm}
             >
               <Icon icon={status === 'pass' ? 'thumbs-up' : 'thumbs-down'} />
@@ -134,6 +136,7 @@ export default function ApproveInterface({
   );
 
   async function handleConfirm() {
+    setConfirming(true);
     const success = await uploadMissionFeedback({
       attemptId: attempt.id,
       feedback: finalizeEmoji(feedback),
@@ -153,6 +156,7 @@ export default function ApproveInterface({
         }
       });
     }
+    setConfirming(false);
   }
 
   function handleSetFeedback(text) {
