@@ -101,6 +101,17 @@ export default function QuestionListItem({
           >
             {!question.isApproved ? 'Approve' : 'Disapprove'}
           </Button>
+          {!question.isApproved && (
+            <Button
+              style={{ width: '50%', fontSize: '1.7rem', marginTop: '5rem' }}
+              color="rose"
+              skeuomorphic
+              onClick={() => console.log('delete')}
+            >
+              <Icon icon="trash-alt" />
+              <span style={{ marginLeft: '0.7rem' }}>Delete</span>
+            </Button>
+          )}
         </div>
       )}
     </div>
