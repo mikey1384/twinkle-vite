@@ -4,6 +4,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
 import Question from './Question';
 import { css } from '@emotion/css';
+import { isMobile } from '~/helpers';
 import MoveModule from './MoveModule';
 
 QuestionItem.propTypes = {
@@ -12,6 +13,9 @@ QuestionItem.propTypes = {
   index: PropTypes.number.isRequired,
   onMoveQuestion: PropTypes.func.isRequired
 };
+
+const deviceIsMobile = isMobile(navigator);
+
 export default function QuestionItem({
   categories,
   index,
@@ -30,7 +34,7 @@ export default function QuestionItem({
       `}
     >
       <FilterBar
-        bordered
+        bordered={!deviceIsMobile}
         style={{
           fontSize: '1.3rem',
           height: '3.5rem'
