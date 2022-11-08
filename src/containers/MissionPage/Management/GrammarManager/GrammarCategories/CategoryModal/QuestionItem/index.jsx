@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Color, mobileMaxWidth } from '~/constants/css';
-import Icon from '~/components/Icon';
+import { mobileMaxWidth } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
+import Question from './Question';
 import { css } from '@emotion/css';
 
 QuestionItem.propTypes = {
@@ -45,37 +45,7 @@ export default function QuestionItem({ index, question }) {
           Move To
         </nav>
       </FilterBar>
-      <div
-        style={{
-          padding: '1rem',
-          border: `1px solid ${Color.borderGray()}`
-        }}
-        key={question.id}
-      >
-        {question.content}
-        {question.choices.map((choice, index) => (
-          <div
-            key={index}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginTop: '1rem'
-            }}
-          >
-            <span>{choice.label}</span>
-            {choice.isAnswer && (
-              <span
-                style={{
-                  marginLeft: '1rem',
-                  color: Color.green()
-                }}
-              >
-                <Icon icon="check" />
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
+      <Question question={question} />
     </div>
   );
 }
