@@ -137,6 +137,11 @@ export default function CategoryModal({
         </div>
       </header>
       <main>
+        {questions.length === 0 && (
+          <div>
+            <span style={{ fontSize: '2rem' }}>No questions</span>
+          </div>
+        )}
         {questions.map((question, index) => (
           <QuestionItem
             key={question.id}
