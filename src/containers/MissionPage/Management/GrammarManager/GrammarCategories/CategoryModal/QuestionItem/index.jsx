@@ -7,10 +7,11 @@ import { css } from '@emotion/css';
 import MoveModule from './MoveModule';
 
 QuestionItem.propTypes = {
+  categories: PropTypes.array.isRequired,
   question: PropTypes.object.isRequired,
   index: PropTypes.number.isRequired
 };
-export default function QuestionItem({ index, question }) {
+export default function QuestionItem({ categories, index, question }) {
   const [activeTab, setActiveTab] = useState('question');
   return (
     <div
@@ -49,7 +50,7 @@ export default function QuestionItem({ index, question }) {
       {activeTab === 'question' ? (
         <Question question={question} />
       ) : (
-        <MoveModule />
+        <MoveModule categories={categories} />
       )}
     </div>
   );
