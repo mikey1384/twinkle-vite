@@ -142,6 +142,28 @@ export default function CategoryModal({
             key={question.id}
           >
             {question.content}
+            {question.choices.map((choice, index) => (
+              <div
+                key={index}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginTop: '1rem'
+                }}
+              >
+                <span>{choice.label}</span>
+                {choice.isAnswer && (
+                  <span
+                    style={{
+                      marginLeft: '1rem',
+                      color: Color.green()
+                    }}
+                  >
+                    <Icon icon="check" />
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
         ))}
       </main>
