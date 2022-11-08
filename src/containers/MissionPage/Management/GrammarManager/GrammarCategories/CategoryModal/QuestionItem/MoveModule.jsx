@@ -1,7 +1,15 @@
-export default function MoveModule() {
+import PropTypes from 'prop-types';
+
+MoveModule.propTypes = {
+  categories: PropTypes.array.isRequired
+};
+
+export default function MoveModule({ categories }) {
   return (
     <div>
-      <div>testing</div>
+      {categories.map((category, index) => (
+        <div key={index}>{category}</div>
+      ))}
     </div>
   );
 }

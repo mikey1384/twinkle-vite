@@ -108,6 +108,7 @@ export default function GrammarCategories({ style }) {
       {selectedCategory && (
         <CategoryModal
           category={selectedCategory}
+          categories={categories}
           onHide={() => setSelectedCategory('')}
           onEditGrammarCategory={handleEditGrammarCategory}
           onSetCategories={setCategories}

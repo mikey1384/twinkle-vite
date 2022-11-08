@@ -13,6 +13,7 @@ import QuestionItem from './QuestionItem';
 
 CategoryModal.propTypes = {
   category: PropTypes.string,
+  categories: PropTypes.array.isRequired,
   onEditGrammarCategory: PropTypes.func.isRequired,
   onSetCategories: PropTypes.func.isRequired,
   onHide: PropTypes.func
@@ -20,6 +21,7 @@ CategoryModal.propTypes = {
 
 export default function CategoryModal({
   category,
+  categories,
   onEditGrammarCategory,
   onSetCategories,
   onHide
@@ -134,7 +136,12 @@ export default function CategoryModal({
       </header>
       <main>
         {questions.map((question, index) => (
-          <QuestionItem key={question.id} index={index} question={question} />
+          <QuestionItem
+            key={question.id}
+            categories={categories}
+            index={index}
+            question={question}
+          />
         ))}
       </main>
       <footer>
