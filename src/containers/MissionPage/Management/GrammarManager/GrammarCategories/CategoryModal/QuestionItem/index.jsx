@@ -9,9 +9,15 @@ import MoveModule from './MoveModule';
 QuestionItem.propTypes = {
   categories: PropTypes.array.isRequired,
   question: PropTypes.object.isRequired,
-  index: PropTypes.number.isRequired
+  index: PropTypes.number.isRequired,
+  onMoveQuestion: PropTypes.func.isRequired
 };
-export default function QuestionItem({ categories, index, question }) {
+export default function QuestionItem({
+  categories,
+  index,
+  question,
+  onMoveQuestion
+}) {
   const [activeTab, setActiveTab] = useState('question');
   return (
     <div
@@ -50,7 +56,11 @@ export default function QuestionItem({ categories, index, question }) {
       {activeTab === 'question' ? (
         <Question question={question} />
       ) : (
-        <MoveModule questionId={question.id} categories={categories} />
+        <MoveModule
+          questionId={question.id}
+          categories={categories}
+          onMoveQuestion={onMoveQuestion}
+        />
       )}
     </div>
   );

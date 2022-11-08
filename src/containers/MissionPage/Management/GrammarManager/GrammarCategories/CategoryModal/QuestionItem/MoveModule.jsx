@@ -5,13 +5,15 @@ import { useAppContext } from '~/contexts';
 
 MoveModule.propTypes = {
   categories: PropTypes.array.isRequired,
-  questionId: PropTypes.number.isRequired
+  questionId: PropTypes.number.isRequired,
+  onMoveQuestion: PropTypes.func.isRequired
 };
 
-export default function MoveModule({ categories, questionId }) {
+export default function MoveModule({ categories, questionId, onMoveQuestion }) {
   const updateGrammarQuestionCategory = useAppContext(
     (v) => v.requestHelpers.updateGrammarQuestionCategory
   );
+
   return (
     <div
       style={{
@@ -44,5 +46,6 @@ export default function MoveModule({ categories, questionId }) {
 
   async function handleMoveQuestion(category) {
     await updateGrammarQuestionCategory({ questionId, category });
+    onMoveQuestion(questionId);
   }
 }
