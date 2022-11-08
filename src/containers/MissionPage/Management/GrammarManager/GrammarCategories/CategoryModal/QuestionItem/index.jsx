@@ -4,6 +4,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
 import Question from './Question';
 import { css } from '@emotion/css';
+import MoveModule from './MoveModule';
 
 QuestionItem.propTypes = {
   question: PropTypes.object.isRequired,
@@ -45,7 +46,11 @@ export default function QuestionItem({ index, question }) {
           Move To
         </nav>
       </FilterBar>
-      <Question question={question} />
+      {activeTab === 'question' ? (
+        <Question question={question} />
+      ) : (
+        <MoveModule />
+      )}
     </div>
   );
 }
