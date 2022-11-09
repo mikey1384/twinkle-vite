@@ -91,6 +91,9 @@ export default function Slide({
   const [ComponentRef, inView] = useInView({
     threshold: 1
   });
+  const { canEdit } = useKeyContext((v) => v.myState);
+  const [publishing, setPublishing] = useState(false);
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
   useEffect(() => {
     if (inView) {
       onCurrentSlideIdChange?.(slideId);
@@ -120,9 +123,6 @@ export default function Slide({
   const onSetSlideState = useInteractiveContext(
     (v) => v.actions.onSetSlideState
   );
-
-  const { canEdit } = useKeyContext((v) => v.myState);
-  const [confirmModalShown, setConfirmModalShown] = useState(false);
 
   const dropdownMenuProps = useMemo(() => {
     return [
@@ -325,7 +325,12 @@ export default function Slide({
         )}
         {!isPublished && !isEditing && !isDeleted && (
           <div style={{ bottom: '1rem', right: '1rem', position: 'absolute' }}>
-            <Button color="darkBlue" onClick={handlePublishSlide} skeuomorphic>
+            <Button
+              color="darkBlue"
+              loading={publishing}
+              onClick={handlePublishSlide}
+              skeuomorphic
+            >
               <Icon icon="upload" />
               <span style={{ marginLeft: '0.7rem' }}>Publish</span>
             </Button>
@@ -405,6 +410,7 @@ export default function Slide({
   }
 
   async function handlePublishSlide() {
+    setPublishing(true);
     const numUpdates = await publishInteractiveSlide(slideId);
     onChangeNumUpdates({ interactiveId, numUpdates });
     onSetSlideState({
@@ -412,6 +418,7 @@ export default function Slide({
       slideId,
       newState: { isPublished: true }
     });
+    setPublishing(false);
   }
 
   async function handleUnpublishSlide() {
