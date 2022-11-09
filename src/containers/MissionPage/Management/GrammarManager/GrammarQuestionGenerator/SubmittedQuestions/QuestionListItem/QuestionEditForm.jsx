@@ -30,6 +30,7 @@ export default function QuestionEditForm({
   questionId,
   onCancel
 }) {
+  const [submitting, setSubmitting] = useState(false);
   const editGrammarQuestion = useAppContext(
     (v) => v.requestHelpers.editGrammarQuestion
   );
@@ -235,6 +236,7 @@ export default function QuestionEditForm({
         </Button>
         <Button
           style={{ marginLeft: '1rem' }}
+          loading={submitting}
           color="logoBlue"
           skeuomorphic
           disabled={submitDisabled}
@@ -247,6 +249,7 @@ export default function QuestionEditForm({
   );
 
   async function handleSubmit() {
+    setSubmitting(true);
     const editedQuestion = await editGrammarQuestion({
       leftSideText: finalLeftSideText,
       rightSideText: finalRightSideText,
@@ -257,5 +260,6 @@ export default function QuestionEditForm({
       questionId
     });
     onEditQuestion(editedQuestion);
+    setSubmitting(false);
   }
 }
