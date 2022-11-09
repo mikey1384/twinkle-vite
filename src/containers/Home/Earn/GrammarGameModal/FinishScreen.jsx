@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import PropTypes from 'prop-types';
+import Button from '~/components/Button';
+import GradientButton from '~/components/Buttons/GradientButton';
 import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -9,10 +11,16 @@ import { scoreTable, perfectScoreBonus } from './constants';
 const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
 
 FinishScreen.propTypes = {
-  scoreArray: PropTypes.array
+  scoreArray: PropTypes.array,
+  onBackToStart: PropTypes.func.isRequired,
+  timesPlayedToday: PropTypes.number.isRequired
 };
 
-export default function FinishScreen({ scoreArray }) {
+export default function FinishScreen({
+  scoreArray,
+  onBackToStart,
+  timesPlayedToday
+}) {
   const {
     grammarGameScoreS: { color: colorS },
     grammarGameScoreA: { color: colorA },
@@ -175,6 +183,32 @@ export default function FinishScreen({ scoreArray }) {
             }}
           >
             You earned {addCommasToNumber(score)} XP
+          </div>
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              marginTop: '3rem'
+            }}
+          >
+            {timesPlayedToday + 1 < 5 ? (
+              <GradientButton
+                style={{ marginTop: '1rem', fontSize: '1.7rem' }}
+                onClick={onBackToStart}
+              >
+                Play Again
+              </GradientButton>
+            ) : (
+              <Button
+                style={{ marginTop: '1rem', fontSize: '1.7rem' }}
+                onClick={onBackToStart}
+                filled
+                color="logoBlue"
+              >
+                {`See Today's Results`}
+              </Button>
+            )}
           </div>
         </div>
       </div>
