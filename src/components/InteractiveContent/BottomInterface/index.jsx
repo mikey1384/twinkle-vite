@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -25,6 +26,7 @@ export default function BottomInterface({
   onPublishInteractive,
   style
 }) {
+  const [publishing, setPublishing] = useState(false);
   const publishInteractive = useAppContext(
     (v) => v.requestHelpers.publishInteractive
   );
@@ -59,6 +61,7 @@ export default function BottomInterface({
             onClick={handlePublish}
             color="darkBlue"
             skeuomorphic
+            loading={publishing}
             style={{ marginLeft: '1rem' }}
           >
             <Icon icon="upload" />
@@ -70,7 +73,9 @@ export default function BottomInterface({
   );
 
   async function handlePublish() {
+    setPublishing(true);
     const numUpdates = await publishInteractive(interactiveId);
     onPublishInteractive({ interactiveId, numUpdates });
+    setPublishing(false);
   }
 }
