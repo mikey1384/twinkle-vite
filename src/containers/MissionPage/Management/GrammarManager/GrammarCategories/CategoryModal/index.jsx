@@ -38,6 +38,7 @@ export default function CategoryModal({
   const editGrammarCategory = useAppContext(
     (v) => v.requestHelpers.editGrammarCategory
   );
+  const [changingLabel, setChangingLabel] = useState(false);
   const [loading, setLoading] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -83,20 +84,30 @@ export default function CategoryModal({
               <div
                 className={`unselectable ${css`
                   > small {
-                    cursor: pointer;
+                    cursor: ${changingLabel ? 'default' : 'pointer'};
                     color: ${Color.gray()};
                     font-weight: normal;
                     font-size: 1.5rem;
                     &:hover {
-                      text-decoration: underline;
+                      text-decoration: ${changingLabel ? 'none' : 'underline'};
                     }
                   }
                 `}`}
               >
-                <small onClick={handleChangeLabel}>
+                <small
+                  style={{ opacity: changingLabel ? 0.5 : 1 }}
+                  onClick={changingLabel ? null : handleChangeLabel}
+                >
                   <Icon style={{ color: Color.green() }} icon="check" />
                   <span style={{ marginLeft: '0.7rem', color: Color.green() }}>
                     Change
+                    {changingLabel && (
+                      <Icon
+                        style={{ marginLeft: '0.7rem' }}
+                        icon="spinner"
+                        pulse
+                      />
+                    )}
                   </span>
                 </small>
                 <small
@@ -198,8 +209,10 @@ export default function CategoryModal({
   }
 
   async function handleChangeLabel() {
+    setChangingLabel(true);
     await editGrammarCategory({ category, newCategory: editiedCategory });
     onEditGrammarCategory({ category, newCategory: editiedCategory });
     setIsEditing(false);
+    setChangingLabel(false);
   }
 }
