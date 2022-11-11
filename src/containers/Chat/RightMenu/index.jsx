@@ -6,6 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
+import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import LocalContext from '../Context';
 
 RightMenu.propTypes = {
@@ -83,18 +84,18 @@ function RightMenu({
       <div
         ref={MenuRef}
         className={css`
-          width: ${chatType === 'vocabulary' ? '22vw' : '18vw'};
+          width: ${chatType === VOCAB_CHAT_TYPE ? '22vw' : '18vw'};
           position: relative;
           background: #fff;
           border-left: 1px solid ${Color.borderGray()};
           overflow-y: scroll;
           -webkit-overflow-scrolling: touch;
           @media (max-width: ${mobileMaxWidth}) {
-            width: ${chatType === 'vocabulary' ? '48vw' : '40vw'};
+            width: ${chatType === VOCAB_CHAT_TYPE ? '48vw' : '40vw'};
           }
         `}
       >
-        {chatType === 'vocabulary' && <VocabInfo />}
+        {chatType === VOCAB_CHAT_TYPE && <VocabInfo />}
         {(!chatType || chatType === 'default') && (
           <ChatInfo
             channelName={channelName}

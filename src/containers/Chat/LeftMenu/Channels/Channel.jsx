@@ -4,6 +4,7 @@ import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useKeyContext, useChatContext } from '~/contexts';
+import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
@@ -56,7 +57,7 @@ function Channel({
     [currentPathId, pathId]
   );
   const selected = useMemo(() => {
-    if (currentPathId === 'vocabulary' || chatType === 'vocabulary') {
+    if (currentPathId === VOCAB_CHAT_TYPE || chatType === VOCAB_CHAT_TYPE) {
       return false;
     }
     if (pathIdMatches || channelId === selectedChannelId) {

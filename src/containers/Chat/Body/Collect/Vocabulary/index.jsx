@@ -14,7 +14,7 @@ import {
   useNotiContext,
   useKeyContext
 } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { SELECTED_LANGUAGE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
@@ -46,7 +46,7 @@ export default function Vocabulary() {
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const { userId } = useKeyContext((v) => v.myState);
-  const inputText = state['vocabulary']?.text?.trim?.() || '';
+  const inputText = state[VOCAB_CHAT_TYPE]?.text?.trim?.() || '';
   const wordObj = useMemo(
     () => wordsObj[inputText] || {},
     [inputText, wordsObj]
@@ -157,7 +157,7 @@ export default function Vocabulary() {
         onUpdateCollectorsRankings({ rankings });
         onSetWordRegisterStatus(wordObj);
         onEnterComment({
-          contentType: 'vocabulary',
+          contentType: VOCAB_CHAT_TYPE,
           text: ''
         });
         setIsSubmitting(false);

@@ -7,6 +7,7 @@ import { matchPath } from 'react-router-dom';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { getSectionFromPathname } from '~/helpers';
+import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
 import {
   useAppContext,
@@ -291,8 +292,8 @@ function MainNavs({
   const chatButtonPath = useMemo(() => {
     return `/chat${
       chatLoaded
-        ? chatType === 'vocabulary'
-          ? '/vocabulary'
+        ? chatType === VOCAB_CHAT_TYPE
+          ? `/${VOCAB_CHAT_TYPE}`
           : lastChatPath || ''
         : ''
     }`;

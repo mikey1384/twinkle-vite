@@ -31,7 +31,8 @@ import { v1 as uuidv1 } from 'uuid';
 import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
-  rewardReasons
+  rewardReasons,
+  VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { css } from '@emotion/css';
@@ -326,7 +327,7 @@ function MessagesContainer({
     ) {
       return true;
     }
-    if (currentPathId === 'vocabulary') return false;
+    if (currentPathId === VOCAB_CHAT_TYPE) return false;
     if (subchannelPath) {
       return !subchannel?.loaded;
     }

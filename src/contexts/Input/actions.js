@@ -1,3 +1,5 @@
+import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
+
 export default function InputActions(dispatch) {
   return {
     onEnterComment({ contentId, contentType, text, subId }) {
@@ -7,7 +9,7 @@ export default function InputActions(dispatch) {
         contentType,
         subId,
         text:
-          contentType === 'vocabulary'
+          contentType === VOCAB_CHAT_TYPE
             ? text.replace(/\s+/g, ' ').toLowerCase()
             : text
       });

@@ -24,7 +24,8 @@ import {
 } from '~/contexts';
 import {
   GENERAL_CHAT_ID,
-  GENERAL_CHAT_PATH_ID
+  GENERAL_CHAT_PATH_ID,
+  VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
@@ -348,8 +349,8 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [currentPathId]);
 
   useEffect(() => {
-    if (currentPathId === 'vocabulary') {
-      prevPathId.current = 'vocabulary';
+    if (currentPathId === VOCAB_CHAT_TYPE) {
+      prevPathId.current = currentPathId;
       prevSubchannelPath.current = '';
       handleEnterVocabulary();
     } else {
@@ -414,7 +415,7 @@ export default function Main({ currentPathId, onFileUpload }) {
       if (
         (!isNaN(Number(currentPathIdRef.current)) &&
           data.channel.pathId !== Number(currentPathIdRef.current)) ||
-        currentPathIdRef.current === 'vocabulary'
+        currentPathIdRef.current === VOCAB_CHAT_TYPE
       ) {
         loadingRef.current = false;
         return;
@@ -448,20 +449,20 @@ export default function Main({ currentPathId, onFileUpload }) {
 
   useEffect(() => {
     if (
-      chatType === 'vocabulary' &&
+      chatType === VOCAB_CHAT_TYPE &&
       !prevPathId.current &&
       !!currentPathId &&
-      currentPathId !== 'vocabulary'
+      currentPathId !== VOCAB_CHAT_TYPE
     ) {
-      navigate(`/chat/vocabulary`, { replace: true });
+      navigate(`/chat/${VOCAB_CHAT_TYPE}`, { replace: true });
     }
   }, [chatType, currentPathId, navigate]);
 
   useEffect(() => {
     if (!currentPathId) {
-      if (chatType === 'vocabulary') {
-        prevPathId.current = 'vocabulary';
-        navigate(`/chat/vocabulary`, { replace: true });
+      if (chatType === VOCAB_CHAT_TYPE) {
+        prevPathId.current = VOCAB_CHAT_TYPE;
+        navigate(`/chat/${VOCAB_CHAT_TYPE}`, { replace: true });
       } else if (!isNaN(currentChannel.pathId)) {
         prevPathId.current = currentChannel.pathId;
         navigate(`/chat/${currentChannel.pathId}`, { replace: true });
@@ -486,11 +487,11 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [userId]);
 
   const handleEnterVocabulary = useCallback(async () => {
-    if (chatType === 'vocabulary') return;
+    if (chatType === VOCAB_CHAT_TYPE) return;
     onSetLoadingVocabulary(true);
     const { vocabActivities, wordsObj, wordCollectors } =
       await loadVocabulary();
-    if (currentPathIdRef.current === 'vocabulary') {
+    if (currentPathIdRef.current === VOCAB_CHAT_TYPE) {
       onLoadVocabulary({ vocabActivities, wordsObj, wordCollectors });
     }
     onSetLoadingVocabulary(false);
