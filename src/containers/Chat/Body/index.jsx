@@ -1,7 +1,7 @@
-import { memo, useContext } from 'react';
+import { memo, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MessagesContainer from './MessagesContainer';
-import Vocabulary from './Vocabulary';
+import Collect from './Collect';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../Context';
@@ -30,6 +30,10 @@ function Body({
   const {
     state: { chatType, loadingVocabulary }
   } = useContext(LocalContext);
+  const isUsingCollectSection = useMemo(
+    () => chatType === 'vocabulary' || chatType === 'image',
+    [chatType]
+  );
 
   return (
     <ErrorBoundary componentPath="Chat/Body/index">
@@ -50,8 +54,8 @@ function Body({
           <Loading text="Loading Vocabulary" />
         ) : (
           <>
-            {chatType === 'vocabulary' ? (
-              <Vocabulary />
+            {isUsingCollectSection ? (
+              <Collect />
             ) : (
               <MessagesContainer
                 key={currentChannel.id + subchannelPath}

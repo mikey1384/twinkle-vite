@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Input from './Input';
 import Loading from '~/components/Loading';
 import ActivitiesContainer from './ActivitiesContainer';
@@ -23,7 +23,7 @@ const loadingLabel = localize('loading');
 const lookingUpLabel = localize('lookingUp');
 const typeWordInBoxBelowLabel = localize('typeWordInBoxBelow');
 
-function Vocabulary() {
+export default function Collect() {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const lookUpWord = useAppContext((v) => v.requestHelpers.lookUpWord);
   const registerWord = useAppContext((v) => v.requestHelpers.registerWord);
@@ -342,5 +342,3 @@ function Vocabulary() {
     </div>
   );
 }
-
-export default memo(Vocabulary);
