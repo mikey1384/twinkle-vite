@@ -25,7 +25,8 @@ import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
   TURN_USERNAME,
-  TURN_PASSWORD
+  TURN_PASSWORD,
+  VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 
 Header.propTypes = {
@@ -850,7 +851,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       if (senderIsNotTheUser) {
         onReceiveVocabActivity({
           activity,
-          usingVocabSection: chatType === 'vocabulary'
+          usingVocabSection: chatType === VOCAB_CHAT_TYPE
         });
         onUpdateCollectorsRankings({
           id: activity.userId,
@@ -932,7 +933,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     const { section, isSubsection } = getSectionFromPathname(pathname) || {};
     const newNotiNum =
       (pathname === '/' ? numNewPosts : 0) + numNewNotis + numUnreads;
-    if (section === 'chat' && chatType === 'vocabulary') {
+    if (section === 'chat' && chatType === VOCAB_CHAT_TYPE) {
       document.title = `${`Vocabulary | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
     } else if (
       !['chat', 'comments', 'subjects'].includes(section) &&

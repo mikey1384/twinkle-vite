@@ -7,6 +7,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../Context';
 import { mobileMaxWidth, Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import { VOCAB_CHAT_TYPE, AI_IMAGE_CHAT_TYPE } from '~/constants/defaultValues';
 
 Body.propTypes = {
   channelName: PropTypes.string,
@@ -31,7 +32,7 @@ function Body({
     state: { chatType, loadingVocabulary }
   } = useContext(LocalContext);
   const isUsingCollectSection = useMemo(
-    () => chatType === 'vocabulary' || chatType === 'image',
+    () => chatType === VOCAB_CHAT_TYPE || chatType === AI_IMAGE_CHAT_TYPE,
     [chatType]
   );
 
@@ -40,13 +41,13 @@ function Body({
       <div
         className={css`
           height: 100%;
-          width: ${chatType === 'vocabulary' ? '62vw' : '66vw'};
+          width: ${chatType === VOCAB_CHAT_TYPE ? '62vw' : '66vw'};
           border-left: 1px solid ${Color.borderGray()};
           padding: 0;
           position: relative;
           background: #fff;
           @media (max-width: ${mobileMaxWidth}) {
-            width: ${chatType === 'vocabulary' ? '82vw' : '90vw'};
+            width: ${chatType === VOCAB_CHAT_TYPE ? '82vw' : '90vw'};
           }
         `}
       >

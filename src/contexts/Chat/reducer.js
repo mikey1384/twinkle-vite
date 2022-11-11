@@ -1,5 +1,5 @@
 import { initialChatState } from '.';
-import { defaultChatSubject } from '~/constants/defaultValues';
+import { defaultChatSubject, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import { determineSelectedChatTab } from './helpers';
 import { v1 as uuidv1 } from 'uuid';
 
@@ -864,11 +864,11 @@ export default function ChatReducer(state, action) {
             : state.lastSubchannelPaths,
         chatType: state.chatType ? state.chatType : action.data.chatType,
         vocabActivities:
-          state.chatType === 'vocabulary'
+          state.chatType === VOCAB_CHAT_TYPE
             ? state.vocabActivities
             : action.data.vocabActivities,
         vocabActivitiesLoadMoreButton:
-          state.chatType === 'vocabulary'
+          state.chatType === VOCAB_CHAT_TYPE
             ? state.vocabActivitiesLoadMoreButton
             : vocabActivitiesLoadMoreButton,
         wordsObj: {
@@ -1093,7 +1093,7 @@ export default function ChatReducer(state, action) {
         },
         selectedChannelId: null,
         selectedSubchannelId: null,
-        chatType: 'vocabulary',
+        chatType: VOCAB_CHAT_TYPE,
         vocabActivities: action.vocabActivities,
         vocabActivitiesLoadMoreButton,
         wordsObj: action.wordsObj,
@@ -1110,7 +1110,7 @@ export default function ChatReducer(state, action) {
       return {
         ...state,
         selectedChannelId: null,
-        chatType: 'vocabulary',
+        chatType: VOCAB_CHAT_TYPE,
         vocabActivities: action.vocabActivities.concat(state.vocabActivities),
         vocabActivitiesLoadMoreButton,
         wordsObj: {

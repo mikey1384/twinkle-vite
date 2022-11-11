@@ -9,6 +9,7 @@ import Subchannels from './Subchannels';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
+import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -115,8 +116,8 @@ function LeftMenu({
           </div>
         </div>
         <Vocabulary
-          selected={chatType === 'vocabulary' || loadingVocabulary}
-          onClick={() => navigate('/chat/vocabulary')}
+          selected={chatType === VOCAB_CHAT_TYPE || loadingVocabulary}
+          onClick={() => navigate(`/chat/${VOCAB_CHAT_TYPE}`)}
         />
         <ChatSearchBox
           style={{

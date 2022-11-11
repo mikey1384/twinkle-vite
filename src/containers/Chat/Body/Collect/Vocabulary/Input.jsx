@@ -10,7 +10,7 @@ import {
   truncateText
 } from '~/helpers/stringHelpers';
 import { useChatContext, useInputContext } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { SELECTED_LANGUAGE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
@@ -38,7 +38,7 @@ export default function Input({
   const onSetVocabErrorMessage = useChatContext(
     (v) => v.actions.onSetVocabErrorMessage
   );
-  const text = useMemo(() => state['vocabulary']?.text || '', [state]);
+  const text = useMemo(() => state[VOCAB_CHAT_TYPE]?.text || '', [state]);
 
   useEffect(() => {
     if (!deviceIsMobile) {
@@ -113,7 +113,7 @@ export default function Input({
     onInput();
     onSetVocabErrorMessage('');
     onEnterComment({
-      contentType: 'vocabulary',
+      contentType: VOCAB_CHAT_TYPE,
       text: event.target.value
     });
   }

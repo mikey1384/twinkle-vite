@@ -42,6 +42,8 @@ export const TURN_PASSWORD = import.meta.env.VITE_TURN_PASSWORD;
 export const REWARD_VALUE = 200;
 export const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
 export const mb = 1000;
+export const VOCAB_CHAT_TYPE = 'vacabulary';
+export const AI_IMAGE_CHAT_TYPE = 'ai-image';
 
 export const charLimit = {
   chat: {
