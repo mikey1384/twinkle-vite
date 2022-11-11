@@ -179,10 +179,10 @@ export default function Vocabulary() {
       }}
     >
       <FilterBar
-        bordered
         style={{
           height: '4.5rem',
-          fontSize: '1.6rem'
+          fontSize: '1.6rem',
+          marginBottom: 0
         }}
       >
         <nav className="active" onClick={() => console.log('got here')}>
