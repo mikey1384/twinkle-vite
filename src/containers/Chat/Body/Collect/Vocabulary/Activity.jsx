@@ -9,7 +9,7 @@ import {
   returnWordLevel,
   SELECTED_LANGUAGE
 } from '~/constants/defaultValues';
-import { MessageStyle } from '../../Styles';
+import { MessageStyle } from '../../../Styles';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import moment from 'moment';
 import { socket } from '~/constants/io';
