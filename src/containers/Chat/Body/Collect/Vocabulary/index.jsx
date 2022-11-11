@@ -4,6 +4,7 @@ import Loading from '~/components/Loading';
 import ActivitiesContainer from './ActivitiesContainer';
 import Definition from './Definition';
 import Icon from '~/components/Icon';
+import FilterBar from '~/components/FilterBar';
 import WordRegisterStatus from './WordRegisterStatus';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
@@ -177,6 +178,18 @@ export default function Vocabulary() {
         flexDirection: 'column'
       }}
     >
+      <FilterBar
+        bordered
+        style={{
+          height: '4.5rem',
+          fontSize: '1.6rem'
+        }}
+      >
+        <nav className="active" onClick={() => console.log('got here')}>
+          Vocabulary
+        </nav>
+        <nav onClick={() => console.log('got here')}>AI Image</nav>
+      </FilterBar>
       <ActivitiesContainer
         style={{
           width: '100%',
