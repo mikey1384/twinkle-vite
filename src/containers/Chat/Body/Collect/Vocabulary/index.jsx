@@ -201,7 +201,9 @@ export default function Vocabulary({ loadingVocabulary }) {
         </nav>
       </FilterBar>
       {loadingVocabulary ? (
-        <Loading text="Loading Vocabulary" />
+        <div style={{ height: containerHeight }}>
+          <Loading style={{ height: '50%' }} text="Loading Vocabulary" />
+        </div>
       ) : (
         <ActivitiesContainer
           style={{
