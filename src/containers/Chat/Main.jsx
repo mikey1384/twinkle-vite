@@ -351,7 +351,10 @@ export default function Main({ currentPathId, onFileUpload }) {
 
   const isUsingCollect = useMemo(() => {
     return (
-      currentPathId === VOCAB_CHAT_TYPE || currentPathId === AI_IMAGE_CHAT_TYPE
+      currentPathId === VOCAB_CHAT_TYPE ||
+      currentPathId === AI_IMAGE_CHAT_TYPE ||
+      currentPathIdRef.current === VOCAB_CHAT_TYPE ||
+      currentPathIdRef.current === AI_IMAGE_CHAT_TYPE
     );
   }, [currentPathId]);
 
@@ -422,7 +425,7 @@ export default function Main({ currentPathId, onFileUpload }) {
       if (
         (!isNaN(Number(currentPathIdRef.current)) &&
           data.channel.pathId !== Number(currentPathIdRef.current)) ||
-        currentPathIdRef.current === VOCAB_CHAT_TYPE
+        isUsingCollect
       ) {
         loadingRef.current = false;
         return;
@@ -432,7 +435,7 @@ export default function Main({ currentPathId, onFileUpload }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    isUsingCollect.currentPathId,
+    isUsingCollect,
     subchannelPath,
     lastChatPath,
     navigate,
