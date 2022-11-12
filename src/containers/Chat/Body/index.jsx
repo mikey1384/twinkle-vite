@@ -2,7 +2,6 @@ import { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MessagesContainer from './MessagesContainer';
 import Collect from './Collect';
-import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../Context';
 import { mobileMaxWidth, Color } from '~/constants/css';
@@ -54,25 +53,19 @@ export default function Body({
           }
         `}
       >
-        {loadingVocabulary ? (
-          <Loading text="Loading Vocabulary" />
+        {isUsingCollectSection ? (
+          <Collect loadingVocabulary={loadingVocabulary} chatType={chatType} />
         ) : (
-          <>
-            {isUsingCollectSection ? (
-              <Collect chatType={chatType} />
-            ) : (
-              <MessagesContainer
-                key={currentChannel.id + subchannelPath}
-                currentPathId={currentPathId}
-                displayedThemeColor={displayedThemeColor}
-                channelName={channelName}
-                chessOpponent={chessOpponent}
-                currentChannel={currentChannel}
-                subchannelId={subchannelId}
-                subchannelPath={subchannelPath}
-              />
-            )}
-          </>
+          <MessagesContainer
+            key={currentChannel.id + subchannelPath}
+            currentPathId={currentPathId}
+            displayedThemeColor={displayedThemeColor}
+            channelName={channelName}
+            chessOpponent={chessOpponent}
+            currentChannel={currentChannel}
+            subchannelId={subchannelId}
+            subchannelPath={subchannelPath}
+          />
         )}
       </div>
     </ErrorBoundary>

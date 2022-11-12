@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import Input from './Input';
 import Loading from '~/components/Loading';
 import ActivitiesContainer from './ActivitiesContainer';
@@ -29,7 +30,10 @@ const loadingLabel = localize('loading');
 const lookingUpLabel = localize('lookingUp');
 const typeWordInBoxBelowLabel = localize('typeWordInBoxBelow');
 
-export default function Vocabulary() {
+Vocabulary.propTypes = {
+  loadingVocabulary: PropTypes.bool
+};
+export default function Vocabulary({ loadingVocabulary }) {
   const navigate = useNavigate();
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const lookUpWord = useAppContext((v) => v.requestHelpers.lookUpWord);
@@ -196,13 +200,17 @@ export default function Vocabulary() {
           AI Drawing
         </nav>
       </FilterBar>
-      <ActivitiesContainer
-        style={{
-          width: '100%',
-          overflow: 'scroll',
-          height: containerHeight
-        }}
-      />
+      {loadingVocabulary ? (
+        <Loading text="Loading Vocabulary" />
+      ) : (
+        <ActivitiesContainer
+          style={{
+            width: '100%',
+            overflow: 'scroll',
+            height: containerHeight
+          }}
+        />
+      )}
       <div
         style={{
           zIndex: 5,
