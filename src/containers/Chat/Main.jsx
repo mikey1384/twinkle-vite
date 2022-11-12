@@ -25,7 +25,7 @@ import {
 import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
-  AI_IMAGE_CHAT_TYPE,
+  AI_DRAWING_CHAT_TYPE,
   VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -352,9 +352,9 @@ export default function Main({ currentPathId, onFileUpload }) {
   const isUsingCollect = useMemo(() => {
     return (
       currentPathId === VOCAB_CHAT_TYPE ||
-      currentPathId === AI_IMAGE_CHAT_TYPE ||
+      currentPathId === AI_DRAWING_CHAT_TYPE ||
       currentPathIdRef.current === VOCAB_CHAT_TYPE ||
-      currentPathIdRef.current === AI_IMAGE_CHAT_TYPE
+      currentPathIdRef.current === AI_DRAWING_CHAT_TYPE
     );
   }, [currentPathId]);
 
@@ -513,8 +513,8 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [chatType]);
 
   const handleEnterAIImageChat = useCallback(async () => {
-    if (chatType === AI_IMAGE_CHAT_TYPE) return;
-    onUpdateChatType(AI_IMAGE_CHAT_TYPE);
+    if (chatType === AI_DRAWING_CHAT_TYPE) return;
+    onUpdateChatType(AI_DRAWING_CHAT_TYPE);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatType]);
 
