@@ -188,7 +188,7 @@ export default function Vocabulary() {
         }}
       >
         <nav className="active">Vocabulary</nav>
-        <nav onClick={() => navigate('/chat/ai-image')}>AI Image</nav>
+        <nav onClick={() => navigate('/chat/ai-image')}>AI Drawing</nav>
       </FilterBar>
       <ActivitiesContainer
         style={{
