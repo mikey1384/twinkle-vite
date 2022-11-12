@@ -25,7 +25,7 @@ const loadingLabel = localize('loading');
 const lookingUpLabel = localize('lookingUp');
 const typeWordInBoxBelowLabel = localize('typeWordInBoxBelow');
 
-export default function Vocabulary() {
+export default function AIDrawing() {
   const navigate = useNavigate();
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const lookUpWord = useAppContext((v) => v.requestHelpers.lookUpWord);

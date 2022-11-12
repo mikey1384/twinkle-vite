@@ -7,7 +7,10 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../Context';
 import { mobileMaxWidth, Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { VOCAB_CHAT_TYPE, AI_IMAGE_CHAT_TYPE } from '~/constants/defaultValues';
+import {
+  VOCAB_CHAT_TYPE,
+  AI_DRAWING_CHAT_TYPE
+} from '~/constants/defaultValues';
 
 Body.propTypes = {
   channelName: PropTypes.string,
@@ -32,7 +35,7 @@ export default function Body({
     state: { chatType, loadingVocabulary }
   } = useContext(LocalContext);
   const isUsingCollectSection = useMemo(
-    () => chatType === VOCAB_CHAT_TYPE || chatType === AI_IMAGE_CHAT_TYPE,
+    () => chatType === VOCAB_CHAT_TYPE || chatType === AI_DRAWING_CHAT_TYPE,
     [chatType]
   );
 
