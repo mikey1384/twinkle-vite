@@ -26,7 +26,8 @@ import {
   GENERAL_CHAT_PATH_ID,
   TURN_USERNAME,
   TURN_PASSWORD,
-  VOCAB_CHAT_TYPE
+  VOCAB_CHAT_TYPE,
+  AI_DRAWING_CHAT_TYPE
 } from '~/constants/defaultValues';
 
 Header.propTypes = {
@@ -933,8 +934,16 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     const { section, isSubsection } = getSectionFromPathname(pathname) || {};
     const newNotiNum =
       (pathname === '/' ? numNewPosts : 0) + numNewNotis + numUnreads;
-    if (section === 'chat' && chatType === VOCAB_CHAT_TYPE) {
-      document.title = `${`Vocabulary | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
+    if (section === 'chat') {
+      if (chatType === VOCAB_CHAT_TYPE) {
+        document.title = `${`Vocabulary | Twinkle`}${
+          newNotiNum > 0 ? ' *' : ''
+        }`;
+      } else if (chatType === AI_DRAWING_CHAT_TYPE) {
+        document.title = `${`AI Drawing | Twinkle`}${
+          newNotiNum > 0 ? ' *' : ''
+        }`;
+      }
     } else if (
       !['chat', 'comments', 'subjects'].includes(section) &&
       isSubsection &&
