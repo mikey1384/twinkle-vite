@@ -6,6 +6,7 @@ import Definition from './Definition';
 import Icon from '~/components/Icon';
 import FilterBar from '~/components/FilterBar';
 import WordRegisterStatus from './WordRegisterStatus';
+import { useNavigate } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   useAppContext,
@@ -25,6 +26,7 @@ const lookingUpLabel = localize('lookingUp');
 const typeWordInBoxBelowLabel = localize('typeWordInBoxBelow');
 
 export default function Vocabulary() {
+  const navigate = useNavigate();
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const lookUpWord = useAppContext((v) => v.requestHelpers.lookUpWord);
   const registerWord = useAppContext((v) => v.requestHelpers.registerWord);
@@ -185,10 +187,8 @@ export default function Vocabulary() {
           marginBottom: 0
         }}
       >
-        <nav className="active" onClick={() => console.log('got here')}>
-          Vocabulary
-        </nav>
-        <nav onClick={() => console.log('got here')}>AI Image</nav>
+        <nav className="active">Vocabulary</nav>
+        <nav onClick={() => navigate('/chat/ai-image')}>AI Image</nav>
       </FilterBar>
       <ActivitiesContainer
         style={{
