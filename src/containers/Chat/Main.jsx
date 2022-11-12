@@ -368,6 +368,7 @@ export default function Main({ currentPathId, onFileUpload }) {
         handleEnterAIImageChat();
       }
     } else {
+      isUsingCollectRef.current = false;
       if (!stringIsEmpty(currentPathId)) {
         onUpdateChatType('default');
       }
@@ -438,7 +439,14 @@ export default function Main({ currentPathId, onFileUpload }) {
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subchannelPath, lastChatPath, navigate, userId, selectedSubchannelId]);
+  }, [
+    isUsingCollect,
+    subchannelPath,
+    lastChatPath,
+    navigate,
+    userId,
+    selectedSubchannelId
+  ]);
 
   useEffect(() => {
     currentSelectedChannelIdRef.current = selectedChannelId;
