@@ -25,6 +25,7 @@ import {
 import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
+  AI_IMAGE_CHAT_TYPE,
   VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -348,8 +349,14 @@ export default function Main({ currentPathId, onFileUpload }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPathId]);
 
+  const isUsingCollect = useMemo(() => {
+    return (
+      currentPathId === VOCAB_CHAT_TYPE || currentPathId === AI_IMAGE_CHAT_TYPE
+    );
+  }, [currentPathId]);
+
   useEffect(() => {
-    if (currentPathId === VOCAB_CHAT_TYPE) {
+    if (isUsingCollect) {
       prevPathId.current = currentPathId;
       prevSubchannelPath.current = '';
       handleEnterVocabulary();
@@ -425,7 +432,7 @@ export default function Main({ currentPathId, onFileUpload }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    currentPathId,
+    isUsingCollect.currentPathId,
     subchannelPath,
     lastChatPath,
     navigate,
