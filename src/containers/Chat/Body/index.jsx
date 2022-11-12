@@ -1,4 +1,4 @@
-import { memo, useContext, useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MessagesContainer from './MessagesContainer';
 import Collect from './Collect';
@@ -19,7 +19,7 @@ Body.propTypes = {
   subchannelPath: PropTypes.string
 };
 
-function Body({
+export default function Body({
   channelName,
   chessOpponent,
   currentChannel,
@@ -56,7 +56,7 @@ function Body({
         ) : (
           <>
             {isUsingCollectSection ? (
-              <Collect />
+              <Collect chatType={chatType} />
             ) : (
               <MessagesContainer
                 key={currentChannel.id + subchannelPath}
@@ -75,5 +75,3 @@ function Body({
     </ErrorBoundary>
   );
 }
-
-export default memo(Body);

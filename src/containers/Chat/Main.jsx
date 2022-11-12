@@ -362,7 +362,11 @@ export default function Main({ currentPathId, onFileUpload }) {
     if (isUsingCollect) {
       prevPathId.current = currentPathId;
       prevSubchannelPath.current = '';
-      handleEnterVocabulary();
+      if (currentPathId === VOCAB_CHAT_TYPE) {
+        handleEnterVocabulary();
+      } else {
+        handleEnterAIImageChat();
+      }
     } else {
       if (!stringIsEmpty(currentPathId)) {
         onUpdateChatType('default');
@@ -505,6 +509,12 @@ export default function Main({ currentPathId, onFileUpload }) {
       onLoadVocabulary({ vocabActivities, wordsObj, wordCollectors });
     }
     onSetLoadingVocabulary(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatType]);
+
+  const handleEnterAIImageChat = useCallback(async () => {
+    if (chatType === AI_IMAGE_CHAT_TYPE) return;
+    onUpdateChatType(AI_IMAGE_CHAT_TYPE);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatType]);
 
