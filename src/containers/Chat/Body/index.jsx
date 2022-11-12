@@ -43,13 +43,13 @@ export default function Body({
       <div
         className={css`
           height: 100%;
-          width: ${chatType === VOCAB_CHAT_TYPE ? '62vw' : '66vw'};
+          width: ${isUsingCollectSection ? '62vw' : '66vw'};
           border-left: 1px solid ${Color.borderGray()};
           padding: 0;
           position: relative;
           background: #fff;
           @media (max-width: ${mobileMaxWidth}) {
-            width: ${chatType === VOCAB_CHAT_TYPE ? '82vw' : '90vw'};
+            width: ${isUsingCollectSection ? '82vw' : '90vw'};
           }
         `}
       >
