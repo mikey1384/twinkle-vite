@@ -1,37 +1,15 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Input from './Input';
 import FilterBar from '~/components/FilterBar';
 import { useNavigate } from 'react-router-dom';
-import { Color, mobileMaxWidth } from '~/constants/css';
-import { useChatContext, useInputContext, useNotiContext } from '~/contexts';
+import { Color } from '~/constants/css';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
-import { css } from '@emotion/css';
 
 export default function AIDrawing() {
   const navigate = useNavigate();
-  const vocabErrorMessage = useChatContext((v) => v.state.vocabErrorMessage);
-  const wordsObj = useChatContext((v) => v.state.wordsObj);
-  const wordRegisterStatus = useChatContext((v) => v.state.wordRegisterStatus);
-  const state = useInputContext((v) => v.state);
-  const socketConnected = useNotiContext((v) => v.state.socketConnected);
-  const inputText = state[VOCAB_CHAT_TYPE]?.text?.trim?.() || '';
-  const wordObj = useMemo(
-    () => wordsObj[inputText] || {},
-    [inputText, wordsObj]
-  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const inputRef = useRef(null);
-
-  const widgetHeight = useMemo(() => {
-    return !socketConnected
-      ? wordRegisterStatus
-        ? '16rem'
-        : '10rem'
-      : wordObj.content
-      ? '20rem'
-      : `10rem`;
-  }, [socketConnected, wordRegisterStatus, wordObj.content]);
 
   return (
     <div
@@ -58,34 +36,11 @@ export default function AIDrawing() {
         style={{
           zIndex: 5,
           width: '100%',
-          height: widgetHeight,
-          boxShadow: !wordRegisterStatus && `0 -5px 6px -3px ${Color.gray()}`,
-          borderTop: !!wordRegisterStatus && `1px solid ${Color.borderGray()}`
+          height: '100%'
         }}
       >
         something goes here
       </div>
-      {(vocabErrorMessage || isSubmitting) && (
-        <div
-          className={css`
-            font-size: 2rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.5rem;
-            }
-          `}
-          style={{
-            display: 'flex',
-            background: vocabErrorMessage ? Color.rose() : Color.darkerGray(),
-            width: '100%',
-            padding: '1rem',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '7rem'
-          }}
-        >
-          {vocabErrorMessage}
-        </div>
-      )}
       <div
         style={{
           height: '6.5rem',
