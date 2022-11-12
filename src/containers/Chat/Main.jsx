@@ -495,6 +495,7 @@ export default function Main({ currentPathId, onFileUpload }) {
 
   const handleEnterVocabulary = useCallback(async () => {
     if (chatType === VOCAB_CHAT_TYPE) return;
+    onUpdateChatType(VOCAB_CHAT_TYPE);
     onSetLoadingVocabulary(true);
     const { vocabActivities, wordsObj, wordCollectors } =
       await loadVocabulary();
