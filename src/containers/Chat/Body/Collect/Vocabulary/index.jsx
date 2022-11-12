@@ -15,7 +15,11 @@ import {
   useNotiContext,
   useKeyContext
 } from '~/contexts';
-import { SELECTED_LANGUAGE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
+import {
+  SELECTED_LANGUAGE,
+  VOCAB_CHAT_TYPE,
+  AI_DRAWING_CHAT_TYPE
+} from '~/constants/defaultValues';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
@@ -188,7 +192,9 @@ export default function Vocabulary() {
         }}
       >
         <nav className="active">Vocabulary</nav>
-        <nav onClick={() => navigate('/chat/ai-drawing')}>AI Drawing</nav>
+        <nav onClick={() => navigate(`/chat/${AI_DRAWING_CHAT_TYPE}`)}>
+          AI Drawing
+        </nav>
       </FilterBar>
       <ActivitiesContainer
         style={{
