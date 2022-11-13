@@ -2,14 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
-import WordModal from './WordModal';
+import WordModal from '../WordModal';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import {
   wordLevelHash,
   returnWordLevel,
   SELECTED_LANGUAGE
 } from '~/constants/defaultValues';
-import { MessageStyle } from '../../../Styles';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import moment from 'moment';
 import { socket } from '~/constants/io';
@@ -17,6 +16,7 @@ import { useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
+import { MessageStyle } from '../../../../Styles';
 
 Activity.propTypes = {
   activity: PropTypes.object.isRequired,
