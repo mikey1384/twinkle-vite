@@ -1,4 +1,7 @@
-import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
+import {
+  VOCAB_CHAT_TYPE,
+  AI_DRAWING_CHAT_TYPE
+} from '~/constants/defaultValues';
 
 export default function InputActions(dispatch) {
   return {
@@ -9,7 +12,8 @@ export default function InputActions(dispatch) {
         contentType,
         subId,
         text:
-          contentType === VOCAB_CHAT_TYPE
+          contentType === VOCAB_CHAT_TYPE ||
+          contentType === AI_DRAWING_CHAT_TYPE
             ? text.replace(/\s+/g, ' ').toLowerCase()
             : text
       });
