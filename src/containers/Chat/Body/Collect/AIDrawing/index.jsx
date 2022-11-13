@@ -1,13 +1,19 @@
 import { useRef } from 'react';
+import PropTypes from 'prop-types';
 import Input from './Input';
 import FilterBar from '~/components/FilterBar';
 import ActivitiesContainer from './ActivitiesContainer';
+import Loading from '~/components/Loading';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import { useAppContext } from '~/contexts';
 
-export default function AIDrawing() {
+AIDrawing.propTypes = {
+  loadingAIImageChat: PropTypes.bool
+};
+
+export default function AIDrawing({ loadingAIImageChat }) {
   const generateAIDrawing = useAppContext(
     (v) => v.requestHelpers.generateAIDrawing
   );
@@ -36,7 +42,14 @@ export default function AIDrawing() {
         </nav>
         <nav className="active">AI Drawing</nav>
       </FilterBar>
-      <ActivitiesContainer />
+      {loadingAIImageChat ? (
+        <div style={{ height: 'CALC(100% - 6.5rem)' }}>
+          <Loading style={{ height: '50%' }} text="Loading AI Drawing" />
+        </div>
+      ) : (
+        <ActivitiesContainer />
+      )}
+
       <div
         style={{
           height: '6.5rem',
