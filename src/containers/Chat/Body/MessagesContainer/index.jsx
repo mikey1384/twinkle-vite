@@ -894,11 +894,9 @@ function MessagesContainer({
             loadedChannelId,
             loadedSubchannelId
           });
-          setLoadingMore(false);
           loadMoreButtonLock.current = false;
         } catch (error) {
           console.error(error);
-          setLoadingMore(false);
           loadMoreButtonLock.current = false;
         }
         if (deviceIsMobile) {
@@ -911,6 +909,7 @@ function MessagesContainer({
         }
       }
     }
+    setLoadingMore(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     messages,
