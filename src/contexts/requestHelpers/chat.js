@@ -203,6 +203,18 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async generateAIDrawing(text) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/ai-drawing`,
+          { text },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async getCurrentNextDayTimeStamp() {
       try {
         const {
