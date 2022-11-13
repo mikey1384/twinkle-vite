@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import Input from './Input';
 import FilterBar from '~/components/FilterBar';
+import ActivitiesContainer from './ActivitiesContainer';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
@@ -35,15 +36,7 @@ export default function AIDrawing() {
         </nav>
         <nav className="active">AI Drawing</nav>
       </FilterBar>
-      <div
-        style={{
-          zIndex: 5,
-          width: '100%',
-          height: 'CALC(100% - 6.5rem)'
-        }}
-      >
-        Images go here
-      </div>
+      <ActivitiesContainer />
       <div
         style={{
           height: '6.5rem',
