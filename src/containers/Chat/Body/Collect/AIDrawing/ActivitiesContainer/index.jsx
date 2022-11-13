@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useChatContext } from '~/contexts';
 
 export default function ActivitiesContainer() {
-  useEffect(() => {}, []);
+  const aiImageRows = useChatContext((v) => v.state.aiImages);
   return (
     <div
       style={{
@@ -10,7 +10,9 @@ export default function ActivitiesContainer() {
         height: 'CALC(100% - 6.5rem)'
       }}
     >
-      Images go here!!
+      {aiImageRows.map((row) => (
+        <img key={row.id} style={{ width: '50%' }} src={row.images[0]} />
+      ))}
     </div>
   );
 }
