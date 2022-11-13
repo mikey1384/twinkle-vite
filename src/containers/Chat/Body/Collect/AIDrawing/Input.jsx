@@ -4,17 +4,11 @@ import Textarea from '~/components/Texts/Textarea';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { isMobile } from '~/helpers';
-import {
-  stringIsEmpty,
-  exceedsCharLimit,
-  truncateText
-} from '~/helpers/stringHelpers';
-import { useChatContext, useInputContext } from '~/contexts';
-import { SELECTED_LANGUAGE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
+import { stringIsEmpty, exceedsCharLimit } from '~/helpers/stringHelpers';
+import { useInputContext } from '~/contexts';
+import { AI_DRAWING_CHAT_TYPE } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
-const typeWordLabel = localize('typeWord');
 
 Input.propTypes = {
   innerRef: PropTypes.object,
@@ -35,10 +29,7 @@ export default function Input({
 }) {
   const state = useInputContext((v) => v.state);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
-  const onSetVocabErrorMessage = useChatContext(
-    (v) => v.actions.onSetVocabErrorMessage
-  );
-  const text = useMemo(() => state[VOCAB_CHAT_TYPE]?.text || '', [state]);
+  const text = useMemo(() => state[AI_DRAWING_CHAT_TYPE]?.text || '', [state]);
 
   useEffect(() => {
     if (!deviceIsMobile) {
@@ -67,7 +58,7 @@ export default function Input({
         <Textarea
           innerRef={innerRef}
           minRows={1}
-          placeholder={typeWordLabel}
+          placeholder="Enter a detailed description of the thing you want the AI to draw for you"
           onKeyDown={handleKeyDown}
           value={text}
           onChange={handleChange}
@@ -95,25 +86,11 @@ export default function Input({
     const regex = /[^a-zA-Z\-'\s]/gi;
     const isInvalid = regex.test(event.target.value.trim());
     if (isInvalid) {
-      if (SELECTED_LANGUAGE === 'kr') {
-        return onSetVocabErrorMessage(
-          `허용되지 않는 문자가 포함되어 있습니다: "${truncateText({
-            text: event.target.value,
-            limit: 20
-          })}"`
-        );
-      }
-      return onSetVocabErrorMessage(
-        `"${truncateText({
-          text: event.target.value,
-          limit: 20
-        })}" is not allowed for vocabulary section.`
-      );
+      return console.log('not allowed here');
     }
     onInput();
-    onSetVocabErrorMessage('');
     onEnterComment({
-      contentType: VOCAB_CHAT_TYPE,
+      contentType: AI_DRAWING_CHAT_TYPE,
       text: event.target.value
     });
   }

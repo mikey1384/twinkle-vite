@@ -1,10 +1,14 @@
 import { initialInputState } from '.';
-import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
+import {
+  VOCAB_CHAT_TYPE,
+  AI_DRAWING_CHAT_TYPE
+} from '~/constants/defaultValues';
 
 export default function InputReducer(state, action) {
   const contentKey =
-    action.contentType === VOCAB_CHAT_TYPE
-      ? VOCAB_CHAT_TYPE
+    action.contentType === VOCAB_CHAT_TYPE ||
+    action.contentType === AI_DRAWING_CHAT_TYPE
+      ? action.contentType
       : action.contentType && typeof action.contentId === 'number'
       ? action.contentType +
         action.contentId +
