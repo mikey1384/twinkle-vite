@@ -55,11 +55,15 @@ export default function AIDrawing() {
               setIsSubmitting(false);
             }
           }}
-          onSubmit={() => console.log('submitting')}
+          onSubmit={handleSubmit}
           innerRef={inputRef}
           isSubmitting={isSubmitting}
         />
       </div>
     </div>
   );
+
+  function handleSubmit(text) {
+    console.log(text);
+  }
 }

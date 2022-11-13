@@ -97,7 +97,7 @@ export default function Input({
   );
 
   function handleChange(event) {
-    const regex = /[^a-zA-Z\-'\s]/gi;
+    const regex = /[^0-9a-zA-Z\'\s]/gi;
     const isInvalid = regex.test(event.target.value.trim());
     if (isInvalid) {
       return console.log('not allowed here');
