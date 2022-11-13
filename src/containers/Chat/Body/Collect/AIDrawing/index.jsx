@@ -4,8 +4,12 @@ import FilterBar from '~/components/FilterBar';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
+import { useAppContext } from '~/contexts';
 
 export default function AIDrawing() {
+  const generateAIDrawing = useAppContext(
+    (v) => v.requestHelpers.generateAIDrawing
+  );
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -63,7 +67,8 @@ export default function AIDrawing() {
     </div>
   );
 
-  function handleSubmit(text) {
-    console.log(text);
+  async function handleSubmit(text) {
+    const data = await generateAIDrawing(text);
+    console.log(data);
   }
 }
