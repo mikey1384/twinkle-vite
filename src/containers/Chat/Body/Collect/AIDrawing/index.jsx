@@ -39,7 +39,7 @@ export default function AIDrawing() {
           height: 'CALC(100% - 6.5rem)'
         }}
       >
-        something goes here
+        Images go here
       </div>
       <div
         style={{
