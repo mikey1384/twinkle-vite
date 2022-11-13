@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '~/components/Icon';
@@ -29,13 +29,27 @@ export default function Input({
 }) {
   const state = useInputContext((v) => v.state);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
-  const text = useMemo(() => state[AI_DRAWING_CHAT_TYPE]?.text || '', [state]);
+  const prevText = useMemo(
+    () => state[AI_DRAWING_CHAT_TYPE]?.text || '',
+    [state]
+  );
+  const [text, setText] = useState(prevText);
 
   useEffect(() => {
     if (!deviceIsMobile) {
       innerRef.current.focus();
     }
   }, [innerRef]);
+
+  useEffect(() => {
+    return () => {
+      onEnterComment({
+        contentType: AI_DRAWING_CHAT_TYPE,
+        text
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text]);
 
   const messageExceedsCharLimit = useMemo(
     () =>
@@ -89,10 +103,7 @@ export default function Input({
       return console.log('not allowed here');
     }
     onInput();
-    onEnterComment({
-      contentType: AI_DRAWING_CHAT_TYPE,
-      text: event.target.value
-    });
+    setText(event.target.value);
   }
 
   function handleKeyDown(event) {
