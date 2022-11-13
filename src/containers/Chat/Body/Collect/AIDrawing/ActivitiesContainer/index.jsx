@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
+
 export default function ActivitiesContainer() {
+  useEffect(() => {}, []);
   return (
     <div
       style={{

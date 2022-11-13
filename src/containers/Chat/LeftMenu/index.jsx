@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ChatSearchBox from './ChatSearchBox';
 import Channels from './Channels';
-import Vocabulary from './Vocabulary';
+import Collect from './Collect';
 import Icon from '~/components/Icon';
 import Tabs from './Tabs';
 import Subchannels from './Subchannels';
@@ -21,6 +21,7 @@ LeftMenu.propTypes = {
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   displayedThemeColor: PropTypes.string,
   loadingVocabulary: PropTypes.bool,
+  loadingAIImageChat: PropTypes.bool,
   onNewButtonClick: PropTypes.func.isRequired,
   selectedChannelId: PropTypes.number,
   subchannelIds: PropTypes.arrayOf(PropTypes.number),
@@ -33,6 +34,7 @@ function LeftMenu({
   currentPathId,
   displayedThemeColor,
   loadingVocabulary,
+  loadingAIImageChat,
   onNewButtonClick,
   selectedChannelId,
   subchannelIds,
@@ -62,9 +64,11 @@ function LeftMenu({
   );
   const subchannelsShown = useMemo(() => {
     return (
-      !!subchannelIds?.length && chatType === 'default' && !loadingVocabulary
+      !!subchannelIds?.length &&
+      chatType === 'default' &&
+      !(loadingVocabulary || loadingAIImageChat)
     );
-  }, [chatType, loadingVocabulary, subchannelIds?.length]);
+  }, [chatType, loadingVocabulary, loadingAIImageChat, subchannelIds?.length]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu">
@@ -115,8 +119,12 @@ function LeftMenu({
             {newChatLabel}
           </div>
         </div>
-        <Vocabulary
-          selected={chatType === VOCAB_CHAT_TYPE || loadingVocabulary}
+        <Collect
+          selected={
+            chatType === VOCAB_CHAT_TYPE ||
+            loadingVocabulary ||
+            loadingAIImageChat
+          }
           onClick={() => navigate(`/chat/${VOCAB_CHAT_TYPE}`)}
         />
         <ChatSearchBox

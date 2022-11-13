@@ -28,6 +28,7 @@ export const initialChatState = {
   customChannelNames: {},
   filesBeingUploaded: {},
   lastSubchannelPaths: {},
+  loadingAIImageChat: false,
   loadingVocabulary: false,
   loaded: false,
   messages: [],

@@ -12,12 +12,12 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 const vocabularyLabel = localize('vocabulary');
 const youLabel = localize('You');
 
-Vocabulary.propTypes = {
+Collect.propTypes = {
   selected: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired
 };
 
-function Vocabulary({ selected, onClick }) {
+function Collect({ selected, onClick }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
   const wordsObj = useChatContext((v) => v.state.wordsObj);
   const vocabActivities = useChatContext((v) => v.state.vocabActivities);
@@ -88,4 +88,4 @@ function Vocabulary({ selected, onClick }) {
   );
 }
 
-export default memo(Vocabulary);
+export default memo(Collect);

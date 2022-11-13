@@ -142,6 +142,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   const filesBeingUploaded = useChatContext((v) => v.state.filesBeingUploaded);
   const homeChannelIds = useChatContext((v) => v.state.homeChannelIds);
   const loadingVocabulary = useChatContext((v) => v.state.loadingVocabulary);
+  const loadingAIImageChat = useChatContext((v) => v.state.loadingAIImageChat);
   const loaded = useChatContext((v) => v.state.loaded);
   const recepientId = useChatContext((v) => v.state.recepientId);
   const reconnecting = useChatContext((v) => v.state.reconnecting);
@@ -212,6 +213,9 @@ export default function Main({ currentPathId, onFileUpload }) {
   );
   const onSetLoadingVocabulary = useChatContext(
     (v) => v.actions.onSetLoadingVocabulary
+  );
+  const onSetLoadingAIImageChat = useChatContext(
+    (v) => v.actions.onSetLoadingAIImageChat
   );
   const onSetMessageState = useChatContext((v) => v.actions.onSetMessageState);
   const onSetChessGameState = useChatContext(
@@ -517,6 +521,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   const handleEnterAIImageChat = useCallback(async () => {
     if (chatType === AI_DRAWING_CHAT_TYPE) return;
     onUpdateChatType(AI_DRAWING_CHAT_TYPE);
+    onSetLoadingAIImageChat(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatType]);
 
@@ -755,6 +760,7 @@ export default function Main({ currentPathId, onFileUpload }) {
           creatingNewDMChannel,
           filesBeingUploaded,
           lastSubchannelPaths,
+          loadingAIImageChat,
           loadingVocabulary,
           recepientId,
           reconnecting,
@@ -795,6 +801,7 @@ export default function Main({ currentPathId, onFileUpload }) {
                 currentChannel={currentChannel}
                 displayedThemeColor={displayedThemeColor}
                 loadingVocabulary={loadingVocabulary}
+                loadingAIImageChat={loadingAIImageChat}
                 onNewButtonClick={() => setCreateNewChatModalShown(true)}
                 selectedChannelId={selectedChannelId}
                 subchannelIds={currentChannel.subchannelIds}
