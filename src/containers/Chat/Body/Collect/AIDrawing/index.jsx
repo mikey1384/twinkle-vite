@@ -36,7 +36,7 @@ export default function AIDrawing() {
         style={{
           zIndex: 5,
           width: '100%',
-          height: '100%'
+          height: 'CALC(100% - 6.5rem)'
         }}
       >
         something goes here
