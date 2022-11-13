@@ -1776,6 +1776,11 @@ export default function ChatReducer(state, action) {
         ...state,
         loadingVocabulary: action.loading
       };
+    case 'SET_LOADING_AI_IMAGE_CHAT':
+      return {
+        ...state,
+        loadingAIImageChat: action.loading
+      };
     case 'SET_MESSAGE_STATE':
       return {
         ...state,

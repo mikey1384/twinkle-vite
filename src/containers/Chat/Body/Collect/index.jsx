@@ -5,13 +5,18 @@ import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 
 Collect.propTypes = {
   chatType: PropTypes.string,
-  loadingVocabulary: PropTypes.bool
+  loadingVocabulary: PropTypes.bool,
+  loadingAIImageChat: PropTypes.bool
 };
 
-export default function Collect({ chatType, loadingVocabulary }) {
+export default function Collect({
+  chatType,
+  loadingVocabulary,
+  loadingAIImageChat
+}) {
   return chatType === VOCAB_CHAT_TYPE ? (
     <Vocabulary loadingVocabulary={loadingVocabulary} />
   ) : (
-    <AIDrawing />
+    <AIDrawing loadingAIImageChat={loadingAIImageChat} />
   );
 }

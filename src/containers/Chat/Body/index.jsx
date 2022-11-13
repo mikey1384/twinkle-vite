@@ -31,7 +31,7 @@ export default function Body({
   subchannelPath
 }) {
   const {
-    state: { chatType, loadingVocabulary }
+    state: { chatType, loadingVocabulary, loadingAIImageChat }
   } = useContext(LocalContext);
   const isUsingCollectSection = useMemo(
     () => chatType === VOCAB_CHAT_TYPE || chatType === AI_DRAWING_CHAT_TYPE,
@@ -54,7 +54,11 @@ export default function Body({
         `}
       >
         {isUsingCollectSection ? (
-          <Collect loadingVocabulary={loadingVocabulary} chatType={chatType} />
+          <Collect
+            loadingVocabulary={loadingVocabulary}
+            loadingAIImageChat={loadingAIImageChat}
+            chatType={chatType}
+          />
         ) : (
           <MessagesContainer
             key={currentChannel.id + subchannelPath}

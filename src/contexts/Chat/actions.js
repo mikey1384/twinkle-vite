@@ -569,6 +569,12 @@ export default function ChatActions(dispatch) {
         loading
       });
     },
+    onSetLoadingAIImageChat(loading) {
+      return dispatch({
+        type: 'SET_LOADING_AI_IMAGE_CHAT',
+        loading
+      });
+    },
     onSetMembersOnCall(members) {
       return dispatch({
         type: 'SET_MEMBERS_ON_CALL',
