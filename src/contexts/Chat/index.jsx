@@ -7,6 +7,7 @@ import ChatReducer from './reducer';
 export const ChatContext = createContext();
 
 export const initialChatState = {
+  aiImages: [],
   allFavoriteChannelIds: {},
   classLoadMoreButton: false,
   chatStatus: {},

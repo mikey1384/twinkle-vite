@@ -399,6 +399,14 @@ export default function chatRequestHelpers({ auth, handleError }) {
         console.error(error.response || error);
       }
     },
+    async loadAIImageChat() {
+      try {
+        const { data } = await request.get(`${URL}/chat/ai-drawing`, auth());
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadVocabulary(lastWordId) {
       try {
         const { data } = await request.get(

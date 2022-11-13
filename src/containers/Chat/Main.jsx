@@ -79,6 +79,9 @@ export default function Main({ currentPathId, onFileUpload }) {
     (v) => v.requestHelpers.loadMoreChatMessages
   );
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
+  const loadAIImageChat = useAppContext(
+    (v) => v.requestHelpers.loadAIImageChat
+  );
   const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
   const postChatReaction = useAppContext(
     (v) => v.requestHelpers.postChatReaction
@@ -184,6 +187,7 @@ export default function Main({ currentPathId, onFileUpload }) {
     (v) => v.actions.onLoadMoreMessages
   );
   const onLoadVocabulary = useChatContext((v) => v.actions.onLoadVocabulary);
+  const onLoadAIImageChat = useChatContext((v) => v.actions.onLoadAIImageChat);
   const onNotifyThatMemberLeftChannel = useChatContext(
     (v) => v.actions.onNotifyThatMemberLeftChannel
   );
@@ -522,6 +526,11 @@ export default function Main({ currentPathId, onFileUpload }) {
     if (chatType === AI_DRAWING_CHAT_TYPE) return;
     onUpdateChatType(AI_DRAWING_CHAT_TYPE);
     onSetLoadingAIImageChat(true);
+    const images = await loadAIImageChat();
+    if (currentPathIdRef.current === AI_DRAWING_CHAT_TYPE) {
+      onLoadAIImageChat(images);
+    }
+    onSetLoadingAIImageChat(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatType]);
 

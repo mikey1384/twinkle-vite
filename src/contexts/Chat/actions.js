@@ -292,6 +292,12 @@ export default function ChatActions(dispatch) {
         loadedSubchannelId
       });
     },
+    onLoadAIImageChat(images) {
+      return dispatch({
+        type: 'LOAD_AI_IMAGE_CHAT',
+        images
+      });
+    },
     onLoadVocabulary({ vocabActivities, wordsObj, wordCollectors }) {
       return dispatch({
         type: 'LOAD_VOCABULARY',
