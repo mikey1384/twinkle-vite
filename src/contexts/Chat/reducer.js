@@ -1,5 +1,9 @@
 import { initialChatState } from '.';
-import { defaultChatSubject, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
+import {
+  defaultChatSubject,
+  VOCAB_CHAT_TYPE,
+  AI_DRAWING_CHAT_TYPE
+} from '~/constants/defaultValues';
 import { determineSelectedChatTab } from './helpers';
 import { v1 as uuidv1 } from 'uuid';
 
@@ -1068,6 +1072,27 @@ export default function ChatReducer(state, action) {
                 }
               }
         }
+      };
+    }
+    case 'LOAD_AI_IMAGE_CHAT': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          ...(state.selectedChannelId
+            ? {
+                [state.selectedChannelId]: {
+                  ...state.channelsObj[state.selectedChannelId],
+                  recentChessMessage: null,
+                  numUnreads: 0
+                }
+              }
+            : {})
+        },
+        electedChannelId: null,
+        selectedSubchannelId: null,
+        chatType: AI_DRAWING_CHAT_TYPE,
+        aiImages: action.images
       };
     }
     case 'LOAD_VOCABULARY': {
