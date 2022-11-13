@@ -14,18 +14,14 @@ Input.propTypes = {
   innerRef: PropTypes.object,
   loading: PropTypes.bool,
   registerButtonShown: PropTypes.bool,
-  onInput: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  isSubmitting: PropTypes.bool
+  onSubmit: PropTypes.func.isRequired
 };
 
 export default function Input({
   innerRef,
   loading,
-  onInput,
   onSubmit,
-  registerButtonShown,
-  isSubmitting
+  registerButtonShown
 }) {
   const state = useInputContext((v) => v.state);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
@@ -84,7 +80,7 @@ export default function Input({
           <div style={{ height: '100%', margin: '0.5rem 0 0.2rem 1rem' }}>
             <Button
               filled
-              disabled={loading || isSubmitting}
+              disabled={loading}
               color="green"
               onClick={handleSubmit}
             >
@@ -97,12 +93,6 @@ export default function Input({
   );
 
   function handleChange(event) {
-    const regex = /[^0-9a-zA-Z\'\s]/gi;
-    const isInvalid = regex.test(event.target.value.trim());
-    if (isInvalid) {
-      return console.log('not allowed here');
-    }
-    onInput();
     setText(event.target.value);
   }
 

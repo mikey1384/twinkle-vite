@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import Input from './Input';
 import FilterBar from '~/components/FilterBar';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,6 @@ export default function AIDrawing() {
     (v) => v.requestHelpers.generateAIDrawing
   );
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const inputRef = useRef(null);
 
@@ -53,16 +52,7 @@ export default function AIDrawing() {
           borderTop: `1px solid ${Color.borderGray()}`
         }}
       >
-        <Input
-          onInput={() => {
-            if (isSubmitting) {
-              setIsSubmitting(false);
-            }
-          }}
-          onSubmit={handleSubmit}
-          innerRef={inputRef}
-          isSubmitting={isSubmitting}
-        />
+        <Input onSubmit={handleSubmit} innerRef={inputRef} />
       </div>
     </div>
   );
