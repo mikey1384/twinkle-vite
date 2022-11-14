@@ -1,5 +1,5 @@
 import { useChatContext } from '~/contexts';
-import { cloudFrontURL } from '~/constants/defaultValues';
+import Activity from './Activity';
 
 export default function ActivitiesContainer() {
   const aiImageRows = useChatContext((v) => v.state.aiImages);
@@ -13,13 +13,7 @@ export default function ActivitiesContainer() {
       }}
     >
       {aiImageRows.map((row) => {
-        return (
-          <img
-            key={row.id}
-            style={{ width: '70%' }}
-            src={`${cloudFrontURL}${row.images[0]}`}
-          />
-        );
+        return <Activity key={row.id} activity={row} />;
       })}
     </div>
   );
