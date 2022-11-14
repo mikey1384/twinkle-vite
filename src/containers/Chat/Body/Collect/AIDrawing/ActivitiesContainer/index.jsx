@@ -1,4 +1,5 @@
 import { useChatContext } from '~/contexts';
+import { cloudFrontURL } from '~/constants/defaultValues';
 
 export default function ActivitiesContainer() {
   const aiImageRows = useChatContext((v) => v.state.aiImages);
@@ -11,9 +12,15 @@ export default function ActivitiesContainer() {
         overflow: 'scroll'
       }}
     >
-      {aiImageRows.map((row) => (
-        <img key={row.id} style={{ width: '50%' }} src={row.images[0]} />
-      ))}
+      {aiImageRows.map((row) => {
+        https: return (
+          <img
+            key={row.id}
+            style={{ width: '50%' }}
+            src={`${cloudFrontURL}${row.images[0]}`}
+          />
+        );
+      })}
     </div>
   );
 }
