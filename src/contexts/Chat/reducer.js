@@ -854,6 +854,10 @@ export default function ChatReducer(state, action) {
       return {
         ...state,
         ...initialChatState,
+        aiImages:
+          state.chatType === AI_DRAWING_CHAT_TYPE
+            ? state.aiImages
+            : action.data.aiImages,
         numUnreads: state.numUnreads,
         chatStatus: state.chatStatus,
         allFavoriteChannelIds: action.data.allFavoriteChannelIds,
@@ -1075,6 +1079,7 @@ export default function ChatReducer(state, action) {
       };
     }
     case 'LOAD_AI_IMAGE_CHAT': {
+      console.log(action.images, 'hereee');
       return {
         ...state,
         channelsObj: {

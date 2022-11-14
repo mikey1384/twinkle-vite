@@ -16,7 +16,7 @@ export default function ActivitiesContainer() {
         https: return (
           <img
             key={row.id}
-            style={{ width: '50%' }}
+            style={{ width: '70%' }}
             src={`${cloudFrontURL}${row.images[0]}`}
           />
         );
