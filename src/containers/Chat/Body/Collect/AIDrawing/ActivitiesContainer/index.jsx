@@ -7,7 +7,8 @@ export default function ActivitiesContainer() {
       style={{
         zIndex: 5,
         width: '100%',
-        height: 'CALC(100% - 6.5rem)'
+        height: 'CALC(100% - 6.5rem)',
+        overflow: 'scroll'
       }}
     >
       {aiImageRows.map((row) => (
