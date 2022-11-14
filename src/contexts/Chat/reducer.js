@@ -1079,7 +1079,6 @@ export default function ChatReducer(state, action) {
       };
     }
     case 'LOAD_AI_IMAGE_CHAT': {
-      console.log(action.images, 'hereee');
       return {
         ...state,
         channelsObj: {

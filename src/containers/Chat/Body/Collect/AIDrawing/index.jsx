@@ -40,11 +40,11 @@ export default function AIDrawing({ loadingAIImageChat }) {
         <nav onClick={() => navigate(`/chat/${VOCAB_CHAT_TYPE}`)}>
           Vocabulary
         </nav>
-        <nav className="active">AI Drawing</nav>
+        <nav className="active">AI Arts</nav>
       </FilterBar>
       {loadingAIImageChat ? (
         <div style={{ height: 'CALC(100% - 6.5rem)' }}>
-          <Loading style={{ height: '50%' }} text="Loading AI Drawing" />
+          <Loading style={{ height: '50%' }} text="Loading AI Arts" />
         </div>
       ) : (
         <ActivitiesContainer />

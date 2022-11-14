@@ -13,7 +13,7 @@ export default function ActivitiesContainer() {
       }}
     >
       {aiImageRows.map((row) => {
-        https: return (
+        return (
           <img
             key={row.id}
             style={{ width: '70%' }}

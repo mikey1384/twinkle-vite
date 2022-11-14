@@ -206,7 +206,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async generateAIDrawing(text) {
       try {
         const { data } = await request.post(
-          `${URL}/chat/ai-drawing`,
+          `${URL}/chat/ai-arts`,
           { text },
           auth()
         );
@@ -401,7 +401,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
     },
     async loadAIImageChat() {
       try {
-        const { data } = await request.get(`${URL}/chat/ai-drawing`, auth());
+        const { data } = await request.get(`${URL}/chat/ai-arts`, auth());
         return Promise.resolve(data);
       } catch (error) {
         return handleError(error);
