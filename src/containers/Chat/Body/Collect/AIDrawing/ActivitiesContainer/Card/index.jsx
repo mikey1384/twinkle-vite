@@ -17,6 +17,7 @@ Card.propTypes = {
 export default function Card({ frontPicUrl }) {
   return (
     <div
+      onMouseMove={handleMouseMove}
       className={css`
         width: 71.5vw;
         height: 100vw;
@@ -236,4 +237,8 @@ export default function Card({ frontPicUrl }) {
       `}
     ></div>
   );
+
+  function handleMouseMove() {
+    console.log('movign');
+  }
 }
