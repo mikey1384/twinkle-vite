@@ -17,7 +17,7 @@ export default function Activity({ activity }) {
         flexDirection: 'column'
       }}
     >
-      <div>
+      <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
         <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
       </div>
       <div style={{ padding: '1rem' }}>
