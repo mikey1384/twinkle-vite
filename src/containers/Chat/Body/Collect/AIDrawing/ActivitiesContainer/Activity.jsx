@@ -14,7 +14,8 @@ export default function Activity({ activity }) {
         width: '100%',
         padding: '1rem',
         display: 'flex',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        flexDirection: 'column'
       }}
     >
       <div>
