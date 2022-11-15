@@ -940,7 +940,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           newNotiNum > 0 ? ' *' : ''
         }`;
       } else if (chatType === AI_DRAWING_CHAT_TYPE) {
-        document.title = `${`AI Art Cards | Twinkle`}${
+        document.title = `${`AI Image Cards | Twinkle`}${
           newNotiNum > 0 ? ' *' : ''
         }`;
       }

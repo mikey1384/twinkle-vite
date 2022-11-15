@@ -197,7 +197,7 @@ export default function Vocabulary({ loadingVocabulary }) {
       >
         <nav className="active">Vocabulary</nav>
         <nav onClick={() => navigate(`/chat/${AI_DRAWING_CHAT_TYPE}`)}>
-          AI Art Cards
+          AI Image Cards
         </nav>
       </FilterBar>
       {loadingVocabulary ? (
