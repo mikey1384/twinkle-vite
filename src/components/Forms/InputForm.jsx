@@ -291,7 +291,7 @@ function InputForm({
               style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}
               color={dangerColor}
               filled
-              disabled={secretViewMessageSubmitting}
+              loading={secretViewMessageSubmitting}
               onClick={
                 authLevel > 1
                   ? handleViewAnswer
