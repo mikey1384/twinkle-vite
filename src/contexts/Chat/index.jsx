@@ -48,6 +48,7 @@ export const initialChatState = {
   wordsObj: {},
   userSearchResults: [],
   vocabActivities: [],
+  aiDrawingsLoadMoreButton: false,
   vocabActivitiesLoadMoreButton: false
 };
 
