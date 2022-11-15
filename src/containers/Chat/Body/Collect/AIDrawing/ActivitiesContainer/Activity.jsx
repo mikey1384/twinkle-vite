@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types';
-import { mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import { css } from '@emotion/css';
+import Card from './Card';
 
 Activity.propTypes = {
   activity: PropTypes.object.isRequired
@@ -19,15 +18,7 @@ export default function Activity({ activity }) {
       }}
     >
       <div>
-        <img
-          className={css`
-            height: 50vh;
-            @media (max-width: ${mobileMaxWidth}) {
-              height: 30vh;
-            }
-          `}
-          src={`${cloudFrontURL}${activity.images[0]}`}
-        />
+        <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
       </div>
       <div style={{ padding: '1rem' }}>
         <div>{activity.prompt}</div>
