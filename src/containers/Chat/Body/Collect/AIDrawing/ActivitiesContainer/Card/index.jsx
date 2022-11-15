@@ -28,12 +28,20 @@ export default function Card({ frontPicUrl }) {
           0 55px 35px -20px rgba(0, 0, 0, 0.5);
         transition: transform 0.5s ease, box-shadow 0.2s ease;
         will-change: transform, filter;
-        background-color: ${color1};
+        background-color: ${color2};
         background-image: url(${frontPicUrl});
         background-size: contain;
         background-repeat: no-repeat;
         background-position: 50% 50%;
         transform-origin: center;
+
+        &:hover {
+          box-shadow: -20px -20px 30px -25px ${color1},
+            20px 20px 30px -25px ${color2}, -7px -7px 10px -5px ${color1},
+            7px 7px 10px -5px ${color2}, 0 0 13px 4px rgba(255, 255, 255, 0.3),
+            0 55px 35px -20px rgba(0, 0, 0, 0.5);
+        }
+
         &:before,
         &:after {
           content: '';
@@ -85,12 +93,43 @@ export default function Card({ frontPicUrl }) {
           mix-blend-mode: color-dodge;
           opacity: 0.75;
         }
-        &:hover {
-          box-shadow: -20px -20px 30px -25px ${color1},
-            20px 20px 30px -25px ${color2}, -7px -7px 10px -5px ${color1},
-            7px 7px 10px -5px ${color2}, 0 0 13px 4px rgba(255, 255, 255, 0.3),
-            0 55px 35px -20px rgba(0, 0, 0, 0.5);
+
+        .active:after,
+        &:hover:after {
+          filter: brightness(1) contrast(1);
+          opacity: 1;
         }
+
+        .active,
+        &:hover {
+          animation: none;
+          transition: box-shadow 0.1s ease-out;
+        }
+
+        > .active:before,
+        &:hover:before {
+          animation: none;
+          background-image: linear-gradient(
+            110deg,
+            transparent 25%,
+            ${color1} 48%,
+            ${color2} 52%,
+            transparent 75%
+          );
+          background-position: 50% 50%;
+          background-size: 250% 250%;
+          opacity: 0.88;
+          filter: brightness(0.66) contrast(1.33);
+          transition: none;
+        }
+        .active:before,
+        &:hover:before,
+        .active:after,
+        &:hover:after {
+          animation: none;
+          transition: none;
+        }
+
         @media (min-width: ${desktopMinWidth}) {
           width: clamp(12.9vw, 61vh, 18vw);
           height: clamp(18vw, 85vh, 25.2vw);
