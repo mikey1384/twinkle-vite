@@ -2,8 +2,13 @@ import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { desktopMinWidth } from '~/constants/css';
 
-const color1 = '#54a29e';
-const color2 = '#a79d66';
+const color1 = '#ec9bb6';
+const color2 = '#ccac6f';
+const color3 = '#69e4a5';
+const color4 = '#8ec5d6';
+const color5 = '#b98cce';
+const holoUrl = 'https://assets.codepen.io/13471/holo.png';
+const sparklesUrl = 'https://assets.codepen.io/13471/sparkles.gif';
 
 Card.propTypes = {
   frontPicUrl: PropTypes.string.isRequired
@@ -55,6 +60,7 @@ export default function Card({ frontPicUrl }) {
           mix-blend-mode: color-dodge;
           transition: all 0.33s ease;
         }
+
         &:before {
           background-position: 50% 50%;
           background-size: 300% 300%;
@@ -73,8 +79,7 @@ export default function Card({ frontPicUrl }) {
         }
         &:after {
           opacity: 1;
-          background-image: url('https://assets.codepen.io/13471/sparkles.gif'),
-            url(https://assets.codepen.io/13471/holo.png),
+          background-image: url(${sparklesUrl}), url(${holoUrl}),
             linear-gradient(
               125deg,
               #ff008450 15%,
@@ -94,40 +99,134 @@ export default function Card({ frontPicUrl }) {
           opacity: 0.75;
         }
 
-        .active:after,
+        > .active:after,
         &:hover:after {
           filter: brightness(1) contrast(1);
           opacity: 1;
         }
 
-        .active,
+        &:hover:before,
+        > .active:before {
+          background-image: linear-gradient(
+            115deg,
+            transparent 20%,
+            ${color1} 36%,
+            ${color2} 43%,
+            ${color3} 50%,
+            ${color4} 57%,
+            ${color5} 64%,
+            transparent 80%
+          );
+        }
+        > .active,
         &:hover {
           animation: none;
           transition: box-shadow 0.1s ease-out;
         }
-
         > .active:before,
-        &:hover:before {
-          animation: none;
-          background-image: linear-gradient(
-            110deg,
-            transparent 25%,
-            ${color1} 48%,
-            ${color2} 52%,
-            transparent 75%
-          );
-          background-position: 50% 50%;
-          background-size: 250% 250%;
-          opacity: 0.88;
-          filter: brightness(0.66) contrast(1.33);
-          transition: none;
-        }
-        .active:before,
         &:hover:before,
         .active:after,
         &:hover:after {
           animation: none;
           transition: none;
+        }
+
+        > .animated {
+          transition: none;
+          animation: holoCard 12s ease 0s 1;
+          &:before {
+            transition: none;
+            animation: holoGradient 12s ease 0s 1;
+          }
+          &:after {
+            transition: none;
+            animation: holoSparkle 12s ease 0s 1;
+          }
+        }
+
+        @keyframes holoSparkle {
+          0%,
+          100% {
+            opacity: 0.75;
+            background-position: 50% 50%;
+            filter: brightness(1.2) contrast(1.25);
+          }
+          5%,
+          8% {
+            opacity: 1;
+            background-position: 40% 40%;
+            filter: brightness(0.8) contrast(1.2);
+          }
+          13%,
+          16% {
+            opacity: 0.5;
+            background-position: 50% 50%;
+            filter: brightness(1.2) contrast(0.8);
+          }
+          35%,
+          38% {
+            opacity: 1;
+            background-position: 60% 60%;
+            filter: brightness(1) contrast(1);
+          }
+          55% {
+            opacity: 0.33;
+            background-position: 45% 45%;
+            filter: brightness(1.2) contrast(1.25);
+          }
+        }
+
+        @keyframes holoGradient {
+          0%,
+          100% {
+            opacity: 0.5;
+            background-position: 50% 50%;
+            filter: brightness(0.5) contrast(1);
+          }
+          5%,
+          9% {
+            background-position: 100% 100%;
+            opacity: 1;
+            filter: brightness(0.75) contrast(1.25);
+          }
+          13%,
+          17% {
+            background-position: 0% 0%;
+            opacity: 0.88;
+          }
+          35%,
+          39% {
+            background-position: 100% 100%;
+            opacity: 1;
+            filter: brightness(0.5) contrast(1);
+          }
+          55% {
+            background-position: 0% 0%;
+            opacity: 1;
+            filter: brightness(0.75) contrast(1.25);
+          }
+        }
+
+        @keyframes holoCard {
+          0%,
+          100% {
+            transform: rotateZ(0deg) rotateX(0deg) rotateY(0deg);
+          }
+          5%,
+          8% {
+            transform: rotateZ(0deg) rotateX(6deg) rotateY(-20deg);
+          }
+          13%,
+          16% {
+            transform: rotateZ(0deg) rotateX(-9deg) rotateY(32deg);
+          }
+          35%,
+          38% {
+            transform: rotateZ(3deg) rotateX(12deg) rotateY(20deg);
+          }
+          55% {
+            transform: rotateZ(-3deg) rotateX(-12deg) rotateY(-27deg);
+          }
         }
 
         @media (min-width: ${desktopMinWidth}) {
