@@ -1,5 +1,7 @@
 import PropTypes from 'prop-types';
+import { mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import { css } from '@emotion/css';
 
 Activity.propTypes = {
   activity: PropTypes.object.isRequired
@@ -7,12 +9,28 @@ Activity.propTypes = {
 
 export default function Activity({ activity }) {
   return (
-    <div>
-      <img
-        style={{ width: '70%' }}
-        src={`${cloudFrontURL}${activity.images[0]}`}
-      />
-      <div>{activity.prompt}</div>
+    <div
+      style={{
+        width: '100%',
+        padding: '1rem',
+        display: 'flex',
+        justifyContent: 'center'
+      }}
+    >
+      <div>
+        <img
+          className={css`
+            height: 50vh;
+            @media (max-width: ${mobileMaxWidth}) {
+              height: 30vh;
+            }
+          `}
+          src={`${cloudFrontURL}${activity.images[0]}`}
+        />
+      </div>
+      <div style={{ padding: '1rem' }}>
+        <div>{activity.prompt}</div>
+      </div>
     </div>
   );
 }
