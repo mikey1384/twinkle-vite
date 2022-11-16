@@ -254,16 +254,25 @@ export default function Card({ frontPicUrl }) {
           height: clamp(18vw, 85vh, 25.2vw);
         }
       `}`}
-    ></div>
+    />
   );
 
-  function handleMouseMove() {
+  function handleMouseMove(e) {
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
     const element = CardRef.current.getBoundingClientRect();
-    const pa = element.x + element.y;
-    const lp = 50 + element.x / 1.5;
-    const tp = 50 + element.y / 1.5;
-    const pxSpark = 50 + (element.x - 50) / 7;
-    const pySpark = 50 + (element.y - 50) / 7;
+    const left = element.left;
+    const top = element.top;
+    const width = element.width;
+    const height = element.height;
+    const px = ((mouseX - left) * 100) / width;
+    const py = ((mouseY - top) * 100) / height;
+
+    const pa = 50 - px + (50 - py);
+    const lp = 50 - (px - 50) / 1.5;
+    const tp = 50 - (py - 50) / 1.5;
+    const pxSpark = 50 - (px - 50) / 7;
+    const pySpark = 50 - (py - 50) / 7;
     const pOpc = 20 + Math.abs(pa) * 1.5;
     const ty = ((tp - 50) / 2) * -1;
     const tx = ((lp - 50) / 1.5) * 0.5;
