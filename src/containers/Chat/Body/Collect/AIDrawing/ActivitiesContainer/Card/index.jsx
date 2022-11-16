@@ -1,7 +1,9 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { desktopMinWidth } from '~/constants/css';
+import { useSpring, animated } from 'react-spring';
+import { useGesture } from 'react-use-gesture';
 
 const color1 = '#ec9bb6';
 const color2 = '#ccac6f';
@@ -17,26 +19,43 @@ Card.propTypes = {
 
 export default function Card({ frontPicUrl }) {
   const CardRef = useRef(null);
-  const timerRef = useRef(null);
-  const [isAnimated, setIsAnimated] = useState(false);
-  const [isActive, setIsActive] = useState(false);
-  const [mouseOverStyle, setMouseOverStyle] = useState('');
-  const [transform, setTransform] = useState('');
+  const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
+    rotateX: 0,
+    rotateY: 0,
+    rotateZ: 0,
+    scale: 1,
+    zoom: 0,
+    x: 0,
+    y: 0,
+    config: { mass: 5, tension: 350, friction: 40 }
+  }));
+  useGesture(
+    {
+      onMove: ({ xy: [px, py], dragging }) =>
+        !dragging &&
+        api({
+          rotateX: calcX(py, y.get()),
+          rotateY: calcY(px, x.get()),
+          scale: 1.1
+        }),
+      onHover: ({ hovering }) =>
+        !hovering && api({ rotateX: 0, rotateY: 0, scale: 1 })
+    },
+    { domTarget: CardRef, eventOptions: { passive: false } }
+  );
+
   return (
-    <div
+    <animated.div
       ref={CardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={
-        transform
-          ? {
-              transform
-            }
-          : {}
-      }
-      className={`${isAnimated ? 'animated ' : ''}${
-        isActive ? 'active ' : ''
-      }${css`
+      style={{
+        transform: 'perspective(600px)',
+        x,
+        y,
+        rotateX,
+        rotateY,
+        rotateZ
+      }}
+      className={css`
         width: 71.5vw;
         height: 100vw;
         position: relative;
@@ -149,7 +168,6 @@ export default function Card({ frontPicUrl }) {
           animation: none;
           transition: none;
         }
-        ${mouseOverStyle ? mouseOverStyle : ''}
 
         > .animated {
           transition: none;
@@ -253,47 +271,14 @@ export default function Card({ frontPicUrl }) {
           width: clamp(12.9vw, 61vh, 18vw);
           height: clamp(18vw, 85vh, 25.2vw);
         }
-      `}`}
+      `}
     />
   );
 
-  function handleMouseMove(e) {
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
-    const element = CardRef.current.getBoundingClientRect();
-    const left = element.left;
-    const top = element.top;
-    const width = element.width;
-    const height = element.height;
-    const px = ((mouseX - left) * 100) / width;
-    const py = ((mouseY - top) * 100) / height;
-
-    const pa = 50 - px + (50 - py);
-    const lp = 50 - (px - 50) / 1.5;
-    const tp = 50 - (py - 50) / 1.5;
-    const pxSpark = 50 - (px - 50) / 7;
-    const pySpark = 50 - (py - 50) / 7;
-    const pOpc = 20 + Math.abs(pa) * 1.5;
-    const ty = ((tp - 50) / 2) * -1;
-    const tx = ((lp - 50) / 1.5) * 0.5;
-    setIsActive(false);
-    setIsAnimated(false);
-    setMouseOverStyle(`
-      &:hover:before { background-position: ${lp}% ${tp}%; }
-      &:hover:after { background-position: ${pxSpark}% ${pySpark}%; opacity: ${
-      pOpc / 100
-    }; }
-    `);
-    setTransform(`rotateX(${ty}deg) rotateY(${tx}deg)`);
-    clearTimeout(timerRef.current);
+  function calcX(y, ly) {
+    return -(y - ly - window.innerHeight / 2) / 20;
   }
-
-  function handleMouseLeave() {
-    setTransform('');
-    setMouseOverStyle('');
-    timerRef.current = setTimeout(() => {
-      setIsAnimated(true);
-      clearTimeout(timerRef);
-    }, 2500);
+  function calcY(x, lx) {
+    return (x - lx - window.innerWidth / 2) / 20;
   }
 }
