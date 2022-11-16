@@ -10,7 +10,6 @@ const color4 = '#8ec5d6';
 const color5 = '#b98cce';
 const holoUrl = 'https://assets.codepen.io/13471/holo.png';
 const sparklesUrl = 'https://assets.codepen.io/13471/sparkles.gif';
-let timer = null;
 
 Card.propTypes = {
   frontPicUrl: PropTypes.string.isRequired
@@ -18,6 +17,7 @@ Card.propTypes = {
 
 export default function Card({ frontPicUrl }) {
   const CardRef = useRef(null);
+  const timerRef = useRef(null);
   const [isAnimated, setIsAnimated] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [mouseOverStyle, setMouseOverStyle] = useState('');
@@ -288,12 +288,15 @@ export default function Card({ frontPicUrl }) {
     setIsAnimated(false);
     setMouseOverStyle(style);
     setTransform(transform);
-    clearTimeout(timer);
+    clearTimeout(timerRef.current);
   }
 
   function handleMouseLeave() {
     setTransform('');
     setMouseOverStyle('');
-    timer = setTimeout(() => setIsAnimated(true), 2500);
+    timerRef.current = setTimeout(() => {
+      setIsAnimated(true);
+      clearTimeout(timerRef.current);
+    }, 2500);
   }
 }
