@@ -17,8 +17,10 @@ Main.propTypes = {
 
 const deviceIsMobile = isMobile(navigator);
 const correctSound = new Audio(correct);
+const delay = 1000;
 let elapsedTime = 0;
 let timer = null;
+let gotWrongTimer = null;
 
 export default function Main({
   isOnStreak,
@@ -27,7 +29,6 @@ export default function Main({
   questionIds,
   questionObj
 }) {
-  const gotWrongTimerRef = useRef(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
@@ -76,12 +77,11 @@ export default function Main({
       }
     }
     function handleSetGotWrong(index) {
-      const delay = 1000;
       if (!isWrongRef.current) {
         isWrongRef.current = true;
       }
       numWrong.current = numWrong.current + 1;
-      clearTimeout(gotWrongTimerRef.current);
+      clearTimeout(gotWrongTimer);
       if (!loadingRef.current) {
         setGotWrong(true);
         onSetQuestionObj((prev) => ({
@@ -92,7 +92,7 @@ export default function Main({
           }
         }));
       }
-      gotWrongTimerRef.current = setTimeout(() => {
+      gotWrongTimer = setTimeout(() => {
         onSetQuestionObj((prev) => ({
           ...prev,
           [currentIndex]: {
