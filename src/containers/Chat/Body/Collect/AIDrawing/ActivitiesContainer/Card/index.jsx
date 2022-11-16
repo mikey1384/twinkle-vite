@@ -276,18 +276,15 @@ export default function Card({ frontPicUrl }) {
     const pOpc = 20 + Math.abs(pa) * 1.5;
     const ty = ((tp - 50) / 2) * -1;
     const tx = ((lp - 50) / 1.5) * 0.5;
-    const transform = `rotateX(${ty}deg) rotateY(${tx}deg)`;
-    const gradPos = `background-position: ${lp}% ${tp}%;`;
-    const sprkPos = `background-position: ${pxSpark}% ${pySpark}%;`;
-    const opc = `opacity: ${pOpc / 100};`;
-    const style = `
-      &:hover:before { ${gradPos} }
-      &:hover:after { ${sprkPos} ${opc} }
-    `;
     setIsActive(false);
     setIsAnimated(false);
-    setMouseOverStyle(style);
-    setTransform(transform);
+    setMouseOverStyle(`
+      &:hover:before { background-position: ${lp}% ${tp}%; }
+      &:hover:after { background-position: ${pxSpark}% ${pySpark}%; opacity: ${
+      pOpc / 100
+    }; }
+    `);
+    setTransform(`rotateX(${ty}deg) rotateY(${tx}deg)`);
     clearTimeout(timerRef.current);
   }
 
@@ -296,7 +293,7 @@ export default function Card({ frontPicUrl }) {
     setMouseOverStyle('');
     timerRef.current = setTimeout(() => {
       setIsAnimated(true);
-      clearTimeout(timerRef.current);
+      clearTimeout(timerRef);
     }, 2500);
   }
 }
