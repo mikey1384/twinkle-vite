@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { desktopMinWidth } from '~/constants/css';
@@ -9,16 +10,33 @@ const color4 = '#8ec5d6';
 const color5 = '#b98cce';
 const holoUrl = 'https://assets.codepen.io/13471/holo.png';
 const sparklesUrl = 'https://assets.codepen.io/13471/sparkles.gif';
+let timer = null;
 
 Card.propTypes = {
   frontPicUrl: PropTypes.string.isRequired
 };
 
 export default function Card({ frontPicUrl }) {
+  const CardRef = useRef(null);
+  const [isAnimated, setIsAnimated] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+  const [mouseOverStyle, setMouseOverStyle] = useState('');
+  const [transform, setTransform] = useState('');
   return (
     <div
+      ref={CardRef}
       onMouseMove={handleMouseMove}
-      className={css`
+      onMouseLeave={handleMouseLeave}
+      style={
+        transform
+          ? {
+              transform
+            }
+          : {}
+      }
+      className={`${isAnimated ? 'animated ' : ''}${
+        isActive ? 'active ' : ''
+      }${css`
         width: 71.5vw;
         height: 100vw;
         position: relative;
@@ -131,6 +149,7 @@ export default function Card({ frontPicUrl }) {
           animation: none;
           transition: none;
         }
+        ${mouseOverStyle ? mouseOverStyle : ''}
 
         > .animated {
           transition: none;
@@ -234,11 +253,44 @@ export default function Card({ frontPicUrl }) {
           width: clamp(12.9vw, 61vh, 18vw);
           height: clamp(18vw, 85vh, 25.2vw);
         }
-      `}
+      `}`}
     ></div>
   );
 
-  function handleMouseMove() {
-    console.log('movign');
+  function handleMouseMove(e) {
+    const pos = [e.clientX, e.clientY];
+    const x = pos[0];
+    const y = pos[1];
+    const width = CardRef.current.offsetWidth;
+    const height = CardRef.current.offsetHeight;
+    const px = Math.abs(Math.floor((100 * x) / width) - 100);
+    const py = Math.abs(Math.floor((100 * y) / height) - 100);
+    const pa = 50 - px + (50 - py);
+    const lp = 50 + (px - 50) / 1.5;
+    const tp = 50 + (py - 50) / 1.5;
+    const pxSpark = 50 + (px - 50) / 7;
+    const pySpark = 50 + (py - 50) / 7;
+    const pOpc = 20 + Math.abs(pa) * 1.5;
+    const ty = ((tp - 50) / 2) * -1;
+    const tx = ((lp - 50) / 1.5) * 0.5;
+    const transform = `rotateX(${ty}deg) rotateY(${tx}deg)`;
+    const gradPos = `background-position: ${lp}% ${tp}%;`;
+    const sprkPos = `background-position: ${pxSpark}% ${pySpark}%;`;
+    const opc = `opacity: ${pOpc / 100};`;
+    const style = `
+      &:hover:before { ${gradPos} }
+      &:hover:after { ${sprkPos} ${opc} }
+    `;
+    setIsActive(false);
+    setIsAnimated(false);
+    setMouseOverStyle(style);
+    setTransform(transform);
+    clearTimeout(timer);
+  }
+
+  function handleMouseLeave() {
+    setTransform('');
+    setMouseOverStyle('');
+    timer = setTimeout(() => setIsAnimated(true), 2500);
   }
 }
