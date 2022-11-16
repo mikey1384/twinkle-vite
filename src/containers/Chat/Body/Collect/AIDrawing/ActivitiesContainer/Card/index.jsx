@@ -41,20 +41,16 @@ export default function Card({ frontPicUrl }) {
     backgroundPositionY: '50%',
     config: { mass: 5, tension: 350, friction: 40 }
   }));
-  const [
-    { backgroundPositionX: sparklePosX, backgroundPositionY: sparklePosY },
-    api2
-  ] = useSpring(() => ({
-    backgroundPositionX: '50%',
-    backgroundPositionY: '50%',
-    config: { mass: 5, tension: 350, friction: 40 }
-  }));
   const CardRef = useRef(null);
-  const bind1 = useGesture({
+  const bind = useGesture({
     onMove: ({ xy: [px, py] }) => {
+      const { left, top, width, height } =
+        CardRef.current.getBoundingClientRect();
+      const posX = Math.abs((left - px) * 100) / width;
+      const posY = Math.abs((top - py) * 100) / height;
       return api.start({
-        backgroundPositionX: `${50 + (px - 50) / 1.5}%`,
-        backgroundPositionY: `${50 + (py - 50) / 1.5}%`,
+        backgroundPositionX: `${50 - posX / 7}%`,
+        backgroundPositionY: `${50 - posY / 7}%`,
         rotateX: calcX(py, y.get()),
         rotateY: calcY(px, x.get()),
         scale: 1.1
@@ -63,22 +59,10 @@ export default function Card({ frontPicUrl }) {
     onHover: ({ hovering }) =>
       !hovering && api.start({ rotateX: 0, rotateY: 0, scale: 1 })
   });
-  const bind2 = useGesture({
-    onMove: ({ xy: [px, py] }) => {
-      const { left, top, width, height } =
-        CardRef.current.getBoundingClientRect();
-      const posX = Math.abs((left - px) * 100) / width;
-      const posY = Math.abs((top - py) * 100) / height;
-      return api2.start({
-        backgroundPositionX: `${50 - posX / 3}%`,
-        backgroundPositionY: `${50 - posY / 3}%`
-      });
-    }
-  });
 
   return (
     <animated.div
-      {...bind1()}
+      {...bind()}
       ref={CardRef}
       style={{
         transform: 'perspective(600px)',
@@ -280,10 +264,10 @@ export default function Card({ frontPicUrl }) {
       `}
     >
       <animated.div
-        {...bind2()}
+        {...bind()}
         style={{
-          backgroundPositionX: sparklePosX,
-          backgroundPositionY: sparklePosY
+          backgroundPositionX,
+          backgroundPositionY
         }}
         className={css`
           position: absolute;
