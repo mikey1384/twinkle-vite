@@ -17,6 +17,8 @@ Main.propTypes = {
 
 const deviceIsMobile = isMobile(navigator);
 const correctSound = new Audio(correct);
+let elapsedTime = 0;
+let timer = null;
 
 export default function Main({
   isOnStreak,
@@ -25,12 +27,10 @@ export default function Main({
   questionIds,
   questionObj
 }) {
-  const timerRef = useRef(null);
   const gotWrongTimerRef = useRef(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
-  const elapsedTimeRef = useRef(0);
   const loadingRef = useRef(false);
   const isWrongRef = useRef(false);
   const numWrong = useRef(0);
@@ -51,9 +51,9 @@ export default function Main({
     ));
     async function handleSelectCorrectAnswer() {
       if (!loadingRef.current) {
-        clearTimeout(timerRef.current);
+        clearTimeout(timer);
         loadingRef.current = true;
-        const score = handleReturnCalculatedScore(elapsedTimeRef.current);
+        const score = handleReturnCalculatedScore(elapsedTime);
         onSetQuestionObj((prev) => ({
           ...prev,
           [currentIndex]: {
@@ -180,16 +180,16 @@ export default function Main({
     </ErrorBoundary>
   );
 
-  function handleCountdownStart() {
-    clearTimeout(timerRef.current);
-    elapsedTimeRef.current = 0;
-    timerRef.current = setInterval(() => {
-      elapsedTimeRef.current = elapsedTimeRef.current + 1;
-    }, 1);
-  }
-
   function handleCalculatePenalty(numWrong) {
     if (numWrong < 1) return 0;
     return numWrong * 200;
   }
+}
+
+function handleCountdownStart() {
+  clearTimeout(timer);
+  elapsedTime = 0;
+  timer = setInterval(() => {
+    elapsedTime = elapsedTime + 1;
+  }, 1);
 }
