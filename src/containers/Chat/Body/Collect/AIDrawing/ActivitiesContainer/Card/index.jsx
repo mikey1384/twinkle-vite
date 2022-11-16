@@ -18,7 +18,18 @@ Card.propTypes = {
 };
 
 export default function Card({ frontPicUrl }) {
-  const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
+  const [
+    {
+      x,
+      y,
+      rotateX,
+      rotateY,
+      rotateZ,
+      backgroundPositionX,
+      backgroundPositionY
+    },
+    api
+  ] = useSpring(() => ({
     rotateX: 0,
     rotateY: 0,
     rotateZ: 0,
@@ -26,19 +37,24 @@ export default function Card({ frontPicUrl }) {
     zoom: 0,
     x: 0,
     y: 0,
+    backgroundPositionX: '50%',
+    backgroundPositionY: '50%',
     config: { mass: 5, tension: 350, friction: 40 }
   }));
-  const [{ backgroundPositionX, backgroundPositionY }, api2] = useSpring(
-    () => ({
-      backgroundPositionX: '50%',
-      backgroundPositionY: '50%',
-      config: { mass: 5, tension: 350, friction: 40 }
-    })
-  );
+  const [
+    { backgroundPositionX: sparklePosX, backgroundPositionY: sparklePosY },
+    api2
+  ] = useSpring(() => ({
+    backgroundPositionX: '50%',
+    backgroundPositionY: '50%',
+    config: { mass: 5, tension: 350, friction: 40 }
+  }));
   const CardRef = useRef(null);
   const bind1 = useGesture({
     onMove: ({ xy: [px, py] }) => {
       return api.start({
+        backgroundPositionX: `${50 + (px - 50) / 1.5}%`,
+        backgroundPositionY: `${50 + (py - 50) / 1.5}%`,
         rotateX: calcX(py, y.get()),
         rotateY: calcY(px, x.get()),
         scale: 1.1
@@ -70,7 +86,9 @@ export default function Card({ frontPicUrl }) {
         y,
         rotateX,
         rotateY,
-        rotateZ
+        rotateZ,
+        backgroundPositionX,
+        backgroundPositionY
       }}
       className={css`
         width: 71.5vw;
@@ -109,6 +127,46 @@ export default function Card({ frontPicUrl }) {
           );
           animation: none;
           transition: box-shadow 0.1s ease-out;
+        }
+        &:before {
+          content: '';
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          top: 0;
+          background-repeat: no-repeat;
+          opacity: 0.5;
+          mix-blend-mode: color-dodge;
+          transition: all 0.33s ease;
+          background-position: 50% 50%;
+          background-size: 300% 300%;
+          background-image: linear-gradient(
+            115deg,
+            transparent 0%,
+            ${color1} 25%,
+            transparent 47%,
+            transparent 53%,
+            ${color2} 75%,
+            transparent 100%
+          );
+          filter: brightness(0.5) contrast(1);
+          z-index: 1;
+        }
+        &:hover:before {
+          animation: none;
+          background-image: linear-gradient(
+            110deg,
+            transparent 25%,
+            ${color1} 48%,
+            ${color2} 52%,
+            transparent 75%
+          );
+          background-position: 50% 50%;
+          background-size: 250% 250%;
+          opacity: 0.88;
+          filter: brightness(0.66) contrast(1.33);
+          transition: none;
         }
         &:hover:before,
         .active:after,
@@ -224,8 +282,8 @@ export default function Card({ frontPicUrl }) {
       <animated.div
         {...bind2()}
         style={{
-          backgroundPositionX,
-          backgroundPositionY
+          backgroundPositionX: sparklePosX,
+          backgroundPositionY: sparklePosY
         }}
         className={css`
           position: absolute;
