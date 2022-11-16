@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { desktopMinWidth } from '~/constants/css';
@@ -17,62 +18,64 @@ Card.propTypes = {
 };
 
 export default function Card({ frontPicUrl }) {
-  const [
-    {
-      x,
-      y,
-      rotateX,
-      rotateY,
-      rotateZ,
-      backgroundPositionX,
-      backgroundPositionY
-    },
-    api
-  ] = useSpring(() => ({
+  const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
     rotateX: 0,
     rotateY: 0,
     rotateZ: 0,
     scale: 1,
     zoom: 0,
-    backgroundPositionX: '0%',
-    backgroundPositionY: '0%',
     x: 0,
     y: 0,
     config: { mass: 5, tension: 350, friction: 40 }
   }));
-  const bind = useGesture({
+  const [{ backgroundPositionX, backgroundPositionY }, api2] = useSpring(
+    () => ({
+      backgroundPositionX: '50%',
+      backgroundPositionY: '50%',
+      config: { mass: 5, tension: 350, friction: 40 }
+    })
+  );
+  const CardRef = useRef(null);
+  const bind1 = useGesture({
     onMove: ({ xy: [px, py] }) => {
       return api.start({
         rotateX: calcX(py, y.get()),
         rotateY: calcY(px, x.get()),
-        scale: 1.1,
-        backgroundPositionX: calcX(py, y.get()) + '%',
-        backgroundPositionY: calcY(px, x.get()) + '%'
+        scale: 1.1
       });
     },
     onHover: ({ hovering }) =>
       !hovering && api.start({ rotateX: 0, rotateY: 0, scale: 1 })
   });
+  const bind2 = useGesture({
+    onMove: ({ xy: [px, py] }) => {
+      const { left, top, width, height } =
+        CardRef.current.getBoundingClientRect();
+      const posX = Math.abs((left - px) * 100) / width;
+      const posY = Math.abs((top - py) * 100) / height;
+      return api2.start({
+        backgroundPositionX: `${50 - posX / 3}%`,
+        backgroundPositionY: `${50 - posY / 3}%`
+      });
+    }
+  });
 
   return (
     <animated.div
-      {...bind()}
+      {...bind1()}
+      ref={CardRef}
       style={{
         transform: 'perspective(600px)',
         x,
         y,
         rotateX,
         rotateY,
-        rotateZ,
-        backgroundPositionX,
-        backgroundPositionY
+        rotateZ
       }}
       className={css`
         width: 71.5vw;
         height: 100vw;
         position: relative;
-        overflow: hidden;
-        margin: 20px;
         overflow: hidden;
         z-index: 10;
         touch-action: none;
@@ -84,10 +87,6 @@ export default function Card({ frontPicUrl }) {
         transition: transform 0.5s ease, box-shadow 0.2s ease;
         will-change: transform, filter;
         background-color: ${color2};
-        background-image: url(${frontPicUrl});
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: 50% 50%;
         transform-origin: center;
 
         &:hover {
@@ -97,66 +96,7 @@ export default function Card({ frontPicUrl }) {
             0 55px 35px -20px rgba(0, 0, 0, 0.5);
         }
 
-        &:before,
-        &:after {
-          content: '';
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          top: 0;
-          background-repeat: no-repeat;
-          opacity: 0.5;
-          mix-blend-mode: color-dodge;
-          transition: all 0.33s ease;
-        }
-
-        &:before {
-          background-position: 50% 50%;
-          background-size: 300% 300%;
-          background-image: linear-gradient(
-            115deg,
-            transparent 0%,
-            ${color1} 25%,
-            transparent 47%,
-            transparent 53%,
-            ${color2} 75%,
-            transparent 100%
-          );
-          opacity: 0.5;
-          filter: brightness(0.5) contrast(1);
-          z-index: 1;
-        }
-        &:after {
-          opacity: 1;
-          background-image: url(${sparklesUrl}), url(${holoUrl}),
-            linear-gradient(
-              125deg,
-              #ff008450 15%,
-              #fca40040 30%,
-              #ffff0030 40%,
-              #00ff8a20 60%,
-              #00cfff40 70%,
-              #cc4cfa50 85%
-            );
-          background-position: 50% 50%;
-          background-size: 160%;
-          background-blend-mode: overlay;
-          z-index: 2;
-          filter: brightness(1) contrast(1);
-          transition: all 0.33s ease;
-          mix-blend-mode: color-dodge;
-          opacity: 0.75;
-        }
-
-        > .active:after,
-        &:hover:after {
-          filter: brightness(1) contrast(1);
-          opacity: 1;
-        }
-
-        &:hover:before,
-        > .active:before {
+        &:hover {
           background-image: linear-gradient(
             115deg,
             transparent 20%,
@@ -167,13 +107,9 @@ export default function Card({ frontPicUrl }) {
             ${color5} 64%,
             transparent 80%
           );
-        }
-        > .active,
-        &:hover {
           animation: none;
           transition: box-shadow 0.1s ease-out;
         }
-        > .active:before,
         &:hover:before,
         .active:after,
         &:hover:after {
@@ -284,7 +220,64 @@ export default function Card({ frontPicUrl }) {
           height: clamp(18vw, 85vh, 25.2vw);
         }
       `}
-    />
+    >
+      <animated.div
+        {...bind2()}
+        style={{
+          backgroundPositionX,
+          backgroundPositionY
+        }}
+        className={css`
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          top: 0;
+          background-repeat: no-repeat;
+          opacity: 0.5;
+          mix-blend-mode: color-dodge;
+          transition: all 0.33s ease;
+          background-image: url(${sparklesUrl}), url(${holoUrl}),
+            linear-gradient(
+              125deg,
+              #ff008450 15%,
+              #fca40040 30%,
+              #ffff0030 40%,
+              #00ff8a20 60%,
+              #00cfff40 70%,
+              #cc4cfa50 85%
+            );
+          background-position: 50% 50%;
+          background-size: 160%;
+          background-blend-mode: overlay;
+          z-index: 3;
+          filter: brightness(1) contrast(1);
+          transition: all 0.33s ease;
+          opacity: 0.75;
+          &:before:hover {
+            filter: brightness(1) contrast(1);
+            opacity: 1;
+          }
+          &:hover {
+            filter: brightness(1) contrast(1);
+            opacity: 1;
+          }
+        `}
+      />
+      <div
+        className={css`
+          z-index: 10;
+          touch-action: none;
+          width: 100%;
+          height: 100%;
+          background-repeat: no-repeat;
+          background-position: 50% 50%;
+          transform-origin: center;
+          background-size: contain;
+          background-image: url(${frontPicUrl});
+        `}
+      ></div>
+    </animated.div>
   );
 
   function calcX(y, ly) {
