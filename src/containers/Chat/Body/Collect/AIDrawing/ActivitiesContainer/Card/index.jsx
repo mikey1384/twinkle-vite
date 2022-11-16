@@ -17,7 +17,6 @@ Card.propTypes = {
 };
 
 export default function Card({ frontPicUrl }) {
-  const [coor, set] = useSpring(() => ({ x: 0, y: 0 }));
   const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
     rotateX: 0,
     rotateY: 0,
@@ -30,7 +29,6 @@ export default function Card({ frontPicUrl }) {
   }));
   const bind = useGesture({
     onMove: ({ xy: [px, py] }) => {
-      set.start({ x: x.get(), y: y.get() });
       return api.start({
         rotateX: calcX(py, y.get()),
         rotateY: calcY(px, x.get()),
@@ -50,9 +48,7 @@ export default function Card({ frontPicUrl }) {
         y,
         rotateX,
         rotateY,
-        rotateZ,
-        backgroundPositionX: `${coor.x / 4}%`,
-        backgroundPositionY: `${coor.y / 4}%`
+        rotateZ
       }}
       className={css`
         width: 71.5vw;
