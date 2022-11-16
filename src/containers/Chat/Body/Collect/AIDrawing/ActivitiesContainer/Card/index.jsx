@@ -17,12 +17,25 @@ Card.propTypes = {
 };
 
 export default function Card({ frontPicUrl }) {
-  const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
+  const [
+    {
+      x,
+      y,
+      rotateX,
+      rotateY,
+      rotateZ,
+      backgroundPositionX,
+      backgroundPositionY
+    },
+    api
+  ] = useSpring(() => ({
     rotateX: 0,
     rotateY: 0,
     rotateZ: 0,
     scale: 1,
     zoom: 0,
+    backgroundPositionX: '0%',
+    backgroundPositionY: '0%',
     x: 0,
     y: 0,
     config: { mass: 5, tension: 350, friction: 40 }
@@ -32,7 +45,9 @@ export default function Card({ frontPicUrl }) {
       return api.start({
         rotateX: calcX(py, y.get()),
         rotateY: calcY(px, x.get()),
-        scale: 1.1
+        scale: 1.1,
+        backgroundPositionX: calcX(py, y.get()) + '%',
+        backgroundPositionY: calcY(px, x.get()) + '%'
       });
     },
     onHover: ({ hovering }) =>
@@ -48,7 +63,9 @@ export default function Card({ frontPicUrl }) {
         y,
         rotateX,
         rotateY,
-        rotateZ
+        rotateZ,
+        backgroundPositionX,
+        backgroundPositionY
       }}
       className={css`
         width: 71.5vw;
