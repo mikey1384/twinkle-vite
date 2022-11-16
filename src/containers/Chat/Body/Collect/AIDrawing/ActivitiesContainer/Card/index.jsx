@@ -257,19 +257,13 @@ export default function Card({ frontPicUrl }) {
     ></div>
   );
 
-  function handleMouseMove(e) {
-    const pos = [e.clientX, e.clientY];
-    const x = pos[0];
-    const y = pos[1];
-    const width = CardRef.current.offsetWidth;
-    const height = CardRef.current.offsetHeight;
-    const px = Math.abs(Math.floor((100 * x) / width) - 100);
-    const py = Math.abs(Math.floor((100 * y) / height) - 100);
-    const pa = 50 - px + (50 - py);
-    const lp = 50 + (px - 50) / 1.5;
-    const tp = 50 + (py - 50) / 1.5;
-    const pxSpark = 50 + (px - 50) / 7;
-    const pySpark = 50 + (py - 50) / 7;
+  function handleMouseMove() {
+    const element = CardRef.current.getBoundingClientRect();
+    const pa = element.x + element.y;
+    const lp = 50 + element.x / 1.5;
+    const tp = 50 + element.y / 1.5;
+    const pxSpark = 50 + (element.x - 50) / 7;
+    const pySpark = 50 + (element.y - 50) / 7;
     const pOpc = 20 + Math.abs(pa) * 1.5;
     const ty = ((tp - 50) / 2) * -1;
     const tx = ((lp - 50) / 1.5) * 0.5;
