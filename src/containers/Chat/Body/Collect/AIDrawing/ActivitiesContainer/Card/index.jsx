@@ -1,9 +1,8 @@
-import { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { desktopMinWidth } from '~/constants/css';
 import { useSpring, animated } from 'react-spring';
-import { useGesture } from 'react-use-gesture';
+import { useGesture } from '@use-gesture/react';
 
 const color1 = '#ec9bb6';
 const color2 = '#ccac6f';
@@ -18,7 +17,7 @@ Card.propTypes = {
 };
 
 export default function Card({ frontPicUrl }) {
-  const CardRef = useRef(null);
+  const [coor, set] = useSpring(() => ({ x: 0, y: 0 }));
   const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
     rotateX: 0,
     rotateY: 0,
@@ -29,31 +28,31 @@ export default function Card({ frontPicUrl }) {
     y: 0,
     config: { mass: 5, tension: 350, friction: 40 }
   }));
-  useGesture(
-    {
-      onMove: ({ xy: [px, py], dragging }) =>
-        !dragging &&
-        api({
-          rotateX: calcX(py, y.get()),
-          rotateY: calcY(px, x.get()),
-          scale: 1.1
-        }),
-      onHover: ({ hovering }) =>
-        !hovering && api({ rotateX: 0, rotateY: 0, scale: 1 })
+  const bind = useGesture({
+    onMove: ({ xy: [px, py] }) => {
+      set.start({ x: x.get(), y: y.get() });
+      return api.start({
+        rotateX: calcX(py, y.get()),
+        rotateY: calcY(px, x.get()),
+        scale: 1.1
+      });
     },
-    { domTarget: CardRef, eventOptions: { passive: false } }
-  );
+    onHover: ({ hovering }) =>
+      !hovering && api.start({ rotateX: 0, rotateY: 0, scale: 1 })
+  });
 
   return (
     <animated.div
-      ref={CardRef}
+      {...bind()}
       style={{
         transform: 'perspective(600px)',
         x,
         y,
         rotateX,
         rotateY,
-        rotateZ
+        rotateZ,
+        backgroundPositionX: `${coor.x / 4}%`,
+        backgroundPositionY: `${coor.y / 4}%`
       }}
       className={css`
         width: 71.5vw;
