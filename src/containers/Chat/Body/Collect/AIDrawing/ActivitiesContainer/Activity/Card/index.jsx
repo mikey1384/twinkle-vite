@@ -6,12 +6,13 @@ import { useGesture } from '@use-gesture/react';
 import $ from 'jquery';
 
 Card.propTypes = {
+  animateOnMouseLeave: PropTypes.bool,
   frontPicUrl: PropTypes.string.isRequired
 };
 
 const $style = $('#animation');
 
-export default function Card({ frontPicUrl }) {
+export default function Card({ animateOnMouseLeave, frontPicUrl }) {
   const timerRef = useRef(null);
   const CardRef = useRef(null);
   const [isAnimated, setIsAnimated] = useState(false);
@@ -67,9 +68,11 @@ export default function Card({ frontPicUrl }) {
       }}
       onMouseLeave={() => {
         $style.html('');
-        timerRef.current = setTimeout(() => {
-          setIsAnimated(true);
-        }, 500);
+        if (animateOnMouseLeave) {
+          timerRef.current = setTimeout(() => {
+            setIsAnimated(true);
+          }, 500);
+        }
       }}
       style={{
         transform: 'perspective(600px)',
