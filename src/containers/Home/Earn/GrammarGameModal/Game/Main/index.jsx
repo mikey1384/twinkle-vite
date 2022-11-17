@@ -32,8 +32,8 @@ export default function Main({
   const [isCompleted, setIsCompleted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
+  const gotWrongRef = useRef(false);
   const loadingRef = useRef(false);
-  const isWrongRef = useRef(false);
   const numWrong = useRef(0);
 
   const Slides = useMemo(() => {
@@ -51,7 +51,7 @@ export default function Main({
       />
     ));
     async function handleSelectCorrectAnswer() {
-      if (!loadingRef.current) {
+      if (!loadingRef.current && !gotWrongRef.current) {
         clearTimeout(timer);
         loadingRef.current = true;
         const score = handleReturnCalculatedScore(elapsedTime);
@@ -77,9 +77,6 @@ export default function Main({
       }
     }
     function handleSetGotWrong(index) {
-      if (!isWrongRef.current) {
-        isWrongRef.current = true;
-      }
       numWrong.current = numWrong.current + 1;
       clearTimeout(gotWrongTimer);
       if (!loadingRef.current) {
@@ -92,6 +89,7 @@ export default function Main({
           }
         }));
       }
+      gotWrongRef.current = true;
       gotWrongTimer = setTimeout(() => {
         onSetQuestionObj((prev) => ({
           ...prev,
@@ -102,7 +100,7 @@ export default function Main({
           }
         }));
         setGotWrong(false);
-        isWrongRef.current = false;
+        gotWrongRef.current = false;
       }, delay);
     }
     async function handleGameFinish() {
