@@ -150,6 +150,7 @@ export default function Activity({ activity }) {
 
             &.animated {
               transition: none;
+              animation: holoCard 12s ease 0s 1;
               &:before {
                 transition: none;
                 animation: holoGradient 12s ease 0s 1;
@@ -226,6 +227,28 @@ export default function Activity({ activity }) {
               background-position: 0% 0%;
               opacity: 1;
               filter: brightness(0.75) contrast(1.25);
+            }
+          }
+
+          @keyframes holoCard {
+            0%,
+            100% {
+              transform: rotateZ(0deg) rotateX(0deg) rotateY(0deg);
+            }
+            5%,
+            8% {
+              transform: rotateZ(0deg) rotateX(6deg) rotateY(-20deg);
+            }
+            13%,
+            16% {
+              transform: rotateZ(0deg) rotateX(-9deg) rotateY(32deg);
+            }
+            35%,
+            38% {
+              transform: rotateZ(3deg) rotateX(12deg) rotateY(20deg);
+            }
+            55% {
+              transform: rotateZ(-3deg) rotateX(-12deg) rotateY(-27deg);
             }
           }
         `}
