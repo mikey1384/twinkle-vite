@@ -16,6 +16,7 @@ AIDrawing.propTypes = {
 export default function AIDrawing({ loadingAIImageChat }) {
   const [statusMessage, setStatusMessage] = useState('');
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
+  const postAiCard = useAppContext((v) => v.requestHelpers.postAiCard);
   const navigate = useNavigate();
 
   const inputRef = useRef(null);
@@ -66,7 +67,9 @@ export default function AIDrawing({ loadingAIImageChat }) {
   async function handleSubmit(text) {
     setStatusMessage('Loading AI Image..');
     const imageUrl = await getOpenAiImage(text);
-    setStatusMessage('AI Image Card Loaded, Generating Card...');
-    console.log(imageUrl);
+    setStatusMessage('AI Image Loaded, Generating Card...');
+    const cardPath = await postAiCard({ prompt, imageUrl });
+    setStatusMessage('Card Generated');
+    console.log(cardPath);
   }
 }

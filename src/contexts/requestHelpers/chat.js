@@ -218,12 +218,14 @@ export default function chatRequestHelpers({ auth, handleError }) {
     },
     async postAiCard({ prompt, imageUrl }) {
       try {
-        const { data } = await request.post(
+        const {
+          data: { result }
+        } = await request.post(
           `${URL}/chat/aiImageCard`,
           { prompt, imageUrl },
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve(result);
       } catch (error) {
         return handleError(error);
       }
