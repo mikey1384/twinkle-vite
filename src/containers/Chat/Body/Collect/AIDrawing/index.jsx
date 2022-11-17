@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import { useAppContext, useChatContext } from '~/contexts';
+import { css } from '@emotion/css';
 import StatusInterface from './StatusInterface';
 
 AIDrawing.propTypes = {
@@ -32,18 +33,26 @@ export default function AIDrawing({ loadingAIImageChat }) {
         flexDirection: 'column'
       }}
     >
-      <FilterBar
-        style={{
-          height: '4.5rem',
-          fontSize: '1.6rem',
-          marginBottom: 0
-        }}
+      <div
+        className={css`
+          z-index: 100;
+          box-shadow: 0 3px 5px -3px ${Color.black(0.6)};
+          width: 100%;
+        `}
       >
-        <nav onClick={() => navigate(`/chat/${VOCAB_CHAT_TYPE}`)}>
-          Vocabulary
-        </nav>
-        <nav className="active">AI Image Cards</nav>
-      </FilterBar>
+        <FilterBar
+          style={{
+            height: '4.5rem',
+            fontSize: '1.6rem',
+            marginBottom: 0
+          }}
+        >
+          <nav onClick={() => navigate(`/chat/${VOCAB_CHAT_TYPE}`)}>
+            Vocabulary
+          </nav>
+          <nav className="active">AI Image Cards</nav>
+        </FilterBar>
+      </div>
       {loadingAIImageChat ? (
         <div style={{ height: 'CALC(100% - 6.5rem)' }}>
           <Loading style={{ height: '50%' }} text="Loading AI Image Cards" />
