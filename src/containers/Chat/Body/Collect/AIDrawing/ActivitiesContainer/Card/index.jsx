@@ -18,18 +18,7 @@ Card.propTypes = {
 };
 
 export default function Card({ frontPicUrl }) {
-  const [
-    {
-      x,
-      y,
-      rotateX,
-      rotateY,
-      rotateZ,
-      backgroundPositionX,
-      backgroundPositionY
-    },
-    api
-  ] = useSpring(() => ({
+  const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
     rotateX: 0,
     rotateY: 0,
     rotateZ: 0,
@@ -37,20 +26,27 @@ export default function Card({ frontPicUrl }) {
     zoom: 0,
     x: 0,
     y: 0,
-    backgroundPositionX: '50%',
-    backgroundPositionY: '50%',
     config: { mass: 5, tension: 350, friction: 40 }
   }));
+  const [{ backgroundPositionX: gradX, backgroundPositionY: gradY }, gradAPI] =
+    useSpring(() => ({
+      backgroundPositionX: '50%',
+      backgroundPositionY: '50%',
+      config: { mass: 5, tension: 350, friction: 40 }
+    }));
+  const [
+    { backgroundPositionX: sparkX, backgroundPositionY: sparkY },
+    sparkAPI
+  ] = useSpring(() => ({
+    backgroundPositionX: '50%',
+    backgroundPositionY: '50%',
+    config: { mass: 5, tension: 350, friction: 0 }
+  }));
   const CardRef = useRef(null);
+
   const bind = useGesture({
     onMove: ({ xy: [px, py] }) => {
-      const { left, top, width, height } =
-        CardRef.current.getBoundingClientRect();
-      const posX = Math.abs((left - px) * 100) / width;
-      const posY = Math.abs((top - py) * 100) / height;
       return api.start({
-        backgroundPositionX: `${50 - posX / 7}%`,
-        backgroundPositionY: `${50 - posY / 7}%`,
         rotateX: calcX(py, y.get()),
         rotateY: calcY(px, x.get()),
         scale: 1.1
@@ -58,6 +54,28 @@ export default function Card({ frontPicUrl }) {
     },
     onHover: ({ hovering }) =>
       !hovering && api.start({ rotateX: 0, rotateY: 0, scale: 1 })
+  });
+
+  const sparkBind = useGesture({
+    onMove: ({ xy: [px, py] }) => {
+      return sparkAPI.start({
+        backgroundPositionX: `${50 - px / 7}%`,
+        backgroundPositionY: `${50 - py / 7}%`
+      });
+    }
+  });
+
+  const gradBind = useGesture({
+    onMove: ({ xy: [mouseX, mouseY] }) => {
+      const { left, top, width, height } =
+        CardRef.current.getBoundingClientRect();
+      const px = (Math.abs(mouseX - left) * 100) / width;
+      const py = (Math.abs(mouseY - top) * 100) / height;
+      return gradAPI.start({
+        backgroundPositionX: `${50 + (px - 50) / 1.5}%`,
+        backgroundPositionY: `${50 + (py - 50) / 1.5}%`
+      });
+    }
   });
 
   return (
@@ -70,9 +88,7 @@ export default function Card({ frontPicUrl }) {
         y,
         rotateX,
         rotateY,
-        rotateZ,
-        backgroundPositionX,
-        backgroundPositionY
+        rotateZ
       }}
       className={css`
         width: 71.5vw;
@@ -111,65 +127,6 @@ export default function Card({ frontPicUrl }) {
           );
           animation: none;
           transition: box-shadow 0.1s ease-out;
-        }
-        &:before {
-          content: '';
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          top: 0;
-          background-repeat: no-repeat;
-          opacity: 0.5;
-          mix-blend-mode: color-dodge;
-          transition: all 0.33s ease;
-          background-position: 50% 50%;
-          background-size: 300% 300%;
-          background-image: linear-gradient(
-            115deg,
-            transparent 0%,
-            ${color1} 25%,
-            transparent 47%,
-            transparent 53%,
-            ${color2} 75%,
-            transparent 100%
-          );
-          filter: brightness(0.5) contrast(1);
-          z-index: 1;
-        }
-        &:hover:before {
-          animation: none;
-          background-image: linear-gradient(
-            110deg,
-            transparent 25%,
-            ${color1} 48%,
-            ${color2} 52%,
-            transparent 75%
-          );
-          background-position: 50% 50%;
-          background-size: 250% 250%;
-          opacity: 0.88;
-          filter: brightness(0.66) contrast(1.33);
-          transition: none;
-        }
-        &:hover:before,
-        .active:after,
-        &:hover:after {
-          animation: none;
-          transition: none;
-        }
-
-        > .animated {
-          transition: none;
-          animation: holoCard 12s ease 0s 1;
-          &:before {
-            transition: none;
-            animation: holoGradient 12s ease 0s 1;
-          }
-          &:after {
-            transition: none;
-            animation: holoSparkle 12s ease 0s 1;
-          }
         }
 
         @keyframes holoSparkle {
@@ -264,10 +221,10 @@ export default function Card({ frontPicUrl }) {
       `}
     >
       <animated.div
-        {...bind()}
+        {...sparkBind()}
         style={{
-          backgroundPositionX,
-          backgroundPositionY
+          backgroundPositionX: sparkX,
+          backgroundPositionY: sparkY
         }}
         className={css`
           position: absolute;
@@ -306,6 +263,52 @@ export default function Card({ frontPicUrl }) {
           }
         `}
       />
+      <animated.div
+        {...gradBind()}
+        style={{
+          backgroundPositionX: gradX,
+          backgroundPositionY: gradY
+        }}
+        className={css`
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          top: 0;
+          background-repeat: no-repeat;
+          opacity: 0.5;
+          mix-blend-mode: color-dodge;
+          transition: all 0.33s ease;
+          background-position: 50% 50%;
+          background-size: 300% 300%;
+          background-image: linear-gradient(
+            115deg,
+            transparent 0%,
+            ${color1} 25%,
+            transparent 47%,
+            transparent 53%,
+            ${color2} 75%,
+            transparent 100%
+          );
+          filter: brightness(0.5) contrast(1);
+          z-index: 2;
+          &:hover {
+            animation: none;
+            background-image: linear-gradient(
+              110deg,
+              transparent 25%,
+              ${color1} 48%,
+              ${color2} 52%,
+              transparent 75%
+            );
+            background-position: 50% 50%;
+            background-size: 250% 250%;
+            opacity: 0.88;
+            filter: brightness(0.66) contrast(1.33);
+            transition: none;
+          }
+        `}
+      />
       <div
         className={css`
           z-index: 10;
@@ -318,7 +321,7 @@ export default function Card({ frontPicUrl }) {
           background-size: contain;
           background-image: url(${frontPicUrl});
         `}
-      ></div>
+      />
     </animated.div>
   );
 
