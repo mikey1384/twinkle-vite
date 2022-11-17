@@ -45,7 +45,6 @@ export default function Card({ frontPicUrl }) {
     >
       <div
         className={css`
-          z-index: 10;
           touch-action: none;
           width: 100%;
           height: 100%;
