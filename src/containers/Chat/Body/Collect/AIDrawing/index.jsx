@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import { useAppContext, useChatContext } from '~/contexts';
+import StatusInterface from './StatusInterface';
 
 AIDrawing.propTypes = {
   loadingAIImageChat: PropTypes.bool
@@ -51,7 +52,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
         <ActivitiesContainer />
       )}
 
-      <div style={{ height: '10rem' }}>{statusMessage}</div>
+      <StatusInterface statusMessage={statusMessage} />
       <div
         style={{
           height: '6.5rem',
