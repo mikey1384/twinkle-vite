@@ -14,9 +14,7 @@ AIDrawing.propTypes = {
 };
 
 export default function AIDrawing({ loadingAIImageChat }) {
-  const generateAIDrawing = useAppContext(
-    (v) => v.requestHelpers.generateAIDrawing
-  );
+  const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const navigate = useNavigate();
 
   const inputRef = useRef(null);
@@ -64,7 +62,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
   );
 
   async function handleSubmit(text) {
-    const data = await generateAIDrawing(text);
+    const data = await getOpenAiImage(text);
     console.log(data);
   }
 }
