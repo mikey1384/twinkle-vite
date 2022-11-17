@@ -62,7 +62,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
   );
 
   async function handleSubmit(text) {
-    const data = await getOpenAiImage(text);
-    console.log(data);
+    const imageUrl = await getOpenAiImage(text);
+    console.log(imageUrl);
   }
 }
