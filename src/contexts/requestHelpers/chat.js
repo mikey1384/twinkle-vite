@@ -205,11 +205,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
     },
     async getOpenAiImage(prompt) {
       try {
-        const { data } = await request.get(
+        const {
+          data: { result: imageUrl }
+        } = await request.get(
           `${URL}/chat/openai/image?prompt=${prompt}`,
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve(imageUrl);
       } catch (error) {
         return handleError(error);
       }
