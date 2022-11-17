@@ -113,5 +113,6 @@ export default function PromptInput({
     innerRef.current.focus();
     if (stringIsEmpty(text)) return;
     onSubmit(text);
+    setText('');
   }
 }
