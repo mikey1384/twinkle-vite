@@ -98,7 +98,6 @@ export default function ActivitiesContainer() {
       const prevContentHeight = ContentRef.current?.offsetHeight || 0;
       if (!loadingMore) {
         setLoadingMore(true);
-        console.log('loading');
         startTransition(() => {
           setScrollHeight(prevContentHeight);
         });

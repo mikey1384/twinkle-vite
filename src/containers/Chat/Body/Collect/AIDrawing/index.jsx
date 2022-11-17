@@ -51,6 +51,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
         <ActivitiesContainer />
       )}
 
+      <div style={{ height: '10rem' }}>{statusMessage}</div>
       <div
         style={{
           height: '6.5rem',
@@ -59,7 +60,6 @@ export default function AIDrawing({ loadingAIImageChat }) {
           borderTop: `1px solid ${Color.borderGray()}`
         }}
       >
-        <div>{statusMessage}</div>
         <PromptInput onSubmit={handleSubmit} innerRef={inputRef} />
       </div>
     </div>
