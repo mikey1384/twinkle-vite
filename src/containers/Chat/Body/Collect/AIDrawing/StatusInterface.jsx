@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 
 StatusInterface.propTypes = {
   statusMessage: PropTypes.string
@@ -15,17 +16,19 @@ export default function StatusInterface({ statusMessage }) {
         justifyContent: 'flex-end'
       }}
     >
-      <div
-        style={{
-          textAlign: 'center',
-          width: '100%',
-          color: '#fff',
-          background: Color.black(),
-          padding: '1rem'
-        }}
-      >
-        {statusMessage}
-      </div>
+      {!stringIsEmpty(statusMessage) && (
+        <div
+          style={{
+            textAlign: 'center',
+            width: '100%',
+            color: '#fff',
+            background: Color.black(),
+            padding: '1rem'
+          }}
+        >
+          {statusMessage}
+        </div>
+      )}
     </div>
   );
 }
