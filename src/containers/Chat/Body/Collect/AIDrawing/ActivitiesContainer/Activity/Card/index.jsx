@@ -48,12 +48,12 @@ export default function Card({ frontPicUrl }) {
         const py = event.clientY - top;
         const percentageX = 50 - (px / width) * 100;
         const percentageY = 50 - (py / height) * 100;
-        var grad_pos = `background-position: ${
-          50 + (percentageX - 50) / 1.5
-        }% ${50 + (percentageY - 50) / 1.5}% !important;`;
+        var grad_pos = `background-position: ${50 + (percentageX - 50) / 3}% ${
+          50 + (percentageY - 50) / 3
+        }% !important;`;
         const sprk_pos = `background-position: ${
-          50 + (percentageX - 50) / 7
-        }% ${50 + (percentageY - 50) / 7}% !important;`;
+          50 + (percentageX - 50) / 15
+        }% ${50 + (percentageY - 50) / 15}% !important;`;
         const pa = 50 - px + (50 - py);
         const p_opc = 20 + Math.abs(pa) * 1.5;
         const opc = `opacity: ${p_opc / 100} !important;`;
