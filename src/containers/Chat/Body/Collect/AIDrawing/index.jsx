@@ -68,7 +68,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
     setStatusMessage('Loading AI Image..');
     const imageUrl = await getOpenAiImage(text);
     setStatusMessage('AI Image Loaded, Generating Card...');
-    const cardPath = await postAiCard({ prompt, imageUrl });
+    const cardPath = await postAiCard({ prompt: text, imageUrl });
     setStatusMessage('Card Generated');
     console.log(cardPath);
   }
