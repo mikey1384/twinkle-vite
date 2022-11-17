@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Input from './Input';
 import FilterBar from '~/components/FilterBar';
@@ -14,6 +14,7 @@ AIDrawing.propTypes = {
 };
 
 export default function AIDrawing({ loadingAIImageChat }) {
+  const [statusMessage, setStatusMessage] = useState('');
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const navigate = useNavigate();
 
@@ -56,13 +57,16 @@ export default function AIDrawing({ loadingAIImageChat }) {
           borderTop: `1px solid ${Color.borderGray()}`
         }}
       >
+        <div>{statusMessage}</div>
         <Input onSubmit={handleSubmit} innerRef={inputRef} />
       </div>
     </div>
   );
 
   async function handleSubmit(text) {
+    setStatusMessage('Loading AI Image..');
     const imageUrl = await getOpenAiImage(text);
+    setStatusMessage('AI Image Card Loaded, Generating Card...');
     console.log(imageUrl);
   }
 }
