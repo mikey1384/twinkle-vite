@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { useSpring, animated } from 'react-spring';
@@ -8,6 +9,8 @@ Card.propTypes = {
 };
 
 export default function Card({ frontPicUrl }) {
+  const timerRef = useRef(null);
+  const [isAnimated, setIsAnimated] = useState(false);
   const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
     rotateX: 0,
     rotateY: 0,
@@ -33,6 +36,15 @@ export default function Card({ frontPicUrl }) {
   return (
     <animated.div
       {...bind()}
+      onMouseMove={() => {
+        clearTimeout(timerRef.current);
+        setIsAnimated(false);
+      }}
+      onMouseLeave={() => {
+        timerRef.current = setTimeout(() => {
+          setIsAnimated(true);
+        }, 500);
+      }}
       style={{
         transform: 'perspective(600px)',
         x,
@@ -41,7 +53,7 @@ export default function Card({ frontPicUrl }) {
         rotateY,
         rotateZ
       }}
-      className={`card`}
+      className={`card${isAnimated ? ' animated' : ''}`}
     >
       <div
         className={css`
