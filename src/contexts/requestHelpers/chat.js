@@ -216,7 +216,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async generateAIDrawing({ prompt, imageUrl }) {
+    async postAiCard({ prompt, imageUrl }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/aiImageCard`,
