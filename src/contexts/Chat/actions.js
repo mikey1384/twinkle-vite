@@ -298,6 +298,12 @@ export default function ChatActions(dispatch) {
         images
       });
     },
+    onPostAICard(card) {
+      return dispatch({
+        type: 'POST_AI_CARD',
+        card: card
+      });
+    },
     onLoadVocabulary({ vocabActivities, wordsObj, wordCollectors }) {
       return dispatch({
         type: 'LOAD_VOCABULARY',

@@ -7,7 +7,7 @@ import Loading from '~/components/Loading';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 
 AIDrawing.propTypes = {
   loadingAIImageChat: PropTypes.bool
@@ -17,6 +17,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
   const [statusMessage, setStatusMessage] = useState('');
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAiCard = useAppContext((v) => v.requestHelpers.postAiCard);
+  const onPostAICard = useChatContext((v) => v.actions.onPostAICard);
   const navigate = useNavigate();
 
   const inputRef = useRef(null);
@@ -68,8 +69,8 @@ export default function AIDrawing({ loadingAIImageChat }) {
     setStatusMessage('Loading AI Image..');
     const imageUrl = await getOpenAiImage(text);
     setStatusMessage('AI Image Loaded, Generating Card...');
-    const cardPath = await postAiCard({ prompt: text, imageUrl });
+    const card = await postAiCard({ prompt: text, imageUrl });
     setStatusMessage('Card Generated');
-    console.log(cardPath);
+    onPostAICard(card);
   }
 }

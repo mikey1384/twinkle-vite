@@ -1104,6 +1104,12 @@ export default function ChatReducer(state, action) {
         aiImages: action.images
       };
     }
+    case 'POST_AI_CARD': {
+      return {
+        ...state,
+        aiImages: state.aiImages.concat(action.card)
+      };
+    }
     case 'LOAD_VOCABULARY': {
       let vocabActivitiesLoadMoreButton = false;
       if (action.vocabActivities.length > 20) {
