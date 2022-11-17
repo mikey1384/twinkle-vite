@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import Input from './Input';
+import PromptInput from './PromptInput';
 import FilterBar from '~/components/FilterBar';
 import ActivitiesContainer from './ActivitiesContainer';
 import Loading from '~/components/Loading';
@@ -60,7 +60,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
         }}
       >
         <div>{statusMessage}</div>
-        <Input onSubmit={handleSubmit} innerRef={inputRef} />
+        <PromptInput onSubmit={handleSubmit} innerRef={inputRef} />
       </div>
     </div>
   );

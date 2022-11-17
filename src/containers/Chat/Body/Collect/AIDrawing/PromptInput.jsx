@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import Textarea from '~/components/Texts/Textarea';
+import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { isMobile } from '~/helpers';
@@ -10,14 +10,14 @@ import { AI_DRAWING_CHAT_TYPE } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
 
-Input.propTypes = {
+PromptInput.propTypes = {
   innerRef: PropTypes.object,
   loading: PropTypes.bool,
   registerButtonShown: PropTypes.bool,
   onSubmit: PropTypes.func.isRequired
 };
 
-export default function Input({
+export default function PromptInput({
   innerRef,
   loading,
   onSubmit,
@@ -65,9 +65,8 @@ export default function Input({
       }}
     >
       <div style={{ display: 'flex' }}>
-        <Textarea
-          innerRef={innerRef}
-          minRows={1}
+        <Input
+          inputRef={innerRef}
           placeholder="Enter a detailed description of the thing you want the AI to draw for you"
           onKeyDown={handleKeyDown}
           value={text}
@@ -92,13 +91,19 @@ export default function Input({
     </div>
   );
 
-  function handleChange(event) {
-    setText(event.target.value);
+  function handleChange(text) {
+    setText(text);
   }
 
   function handleKeyDown(event) {
     const enterKeyPressed = event.keyCode === 13;
-    if (enterKeyPressed && !messageExceedsCharLimit && !loading) {
+    const shiftKeyPressed = event.shiftKey;
+    if (
+      enterKeyPressed &&
+      !shiftKeyPressed &&
+      !messageExceedsCharLimit &&
+      !loading
+    ) {
       event.preventDefault();
       handleSubmit();
     }
