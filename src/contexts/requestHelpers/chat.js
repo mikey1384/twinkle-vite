@@ -216,11 +216,11 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async generateAIDrawing(text) {
+    async generateAIDrawing({ prompt, imageUrl }) {
       try {
         const { data } = await request.post(
-          `${URL}/chat/aiImageCards`,
-          { text },
+          `${URL}/chat/aiImageCard`,
+          { prompt, imageUrl },
           auth()
         );
         return Promise.resolve(data);
@@ -414,7 +414,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
     },
     async loadAIImageChat() {
       try {
-        const { data } = await request.get(`${URL}/chat/aiImageCards`, auth());
+        const { data } = await request.get(`${URL}/chat/aiImageCard`, auth());
         return Promise.resolve(data);
       } catch (error) {
         return handleError(error);
