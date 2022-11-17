@@ -94,22 +94,6 @@ export default function Activity({ activity }) {
               opacity: 0.5;
               filter: brightness(0.5) contrast(1);
               z-index: 1;
-
-              &:hover {
-                animation: none;
-                background-image: linear-gradient(
-                  110deg,
-                  transparent 25%,
-                  ${color1} 48%,
-                  ${color2} 52%,
-                  transparent 75%
-                );
-                background-position: 50% 50%;
-                background-size: 250% 250%;
-                opacity: 0.88;
-                filter: brightness(0.66) contrast(1.33);
-                transition: none;
-              }
             }
 
             &:after {
@@ -130,11 +114,32 @@ export default function Activity({ activity }) {
               filter: brightness(1) contrast(1);
               transition: all 0.33s ease;
               opacity: 0.75;
+            }
 
-              &:hover {
-                filter: brightness(1) contrast(1);
-                opacity: 1;
-              }
+            &:hover:after {
+              filter: brightness(1) contrast(1);
+              opacity: 1;
+            }
+
+            &:hover {
+              animation: none;
+              transition: box-shadow 0.1s ease-out;
+            }
+
+            &:hover:before {
+              animation: none;
+              background-image: linear-gradient(
+                110deg,
+                transparent 25%,
+                ${color1} 48%,
+                ${color2} 52%,
+                transparent 75%
+              );
+              background-position: 50% 50%;
+              background-size: 250% 250%;
+              opacity: 0.88;
+              filter: brightness(0.66) contrast(1.33);
+              transition: none;
             }
 
             &:hover:before,
