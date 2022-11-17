@@ -3,13 +3,17 @@ import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { useSpring, animated } from 'react-spring';
 import { useGesture } from '@use-gesture/react';
+import $ from 'jquery';
 
 Card.propTypes = {
   frontPicUrl: PropTypes.string.isRequired
 };
 
+const $style = $('#animation');
+
 export default function Card({ frontPicUrl }) {
   const timerRef = useRef(null);
+  const CardRef = useRef(null);
   const [isAnimated, setIsAnimated] = useState(false);
   const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
     rotateX: 0,
@@ -36,11 +40,33 @@ export default function Card({ frontPicUrl }) {
   return (
     <animated.div
       {...bind()}
-      onMouseMove={() => {
+      ref={CardRef}
+      onMouseMove={(event) => {
+        const { left, top, width, height } =
+          CardRef.current.getBoundingClientRect();
+        const px = event.clientX - left;
+        const py = event.clientY - top;
+        const percentageX = 50 - (px / width) * 100;
+        const percentageY = 50 - (py / height) * 100;
+        var grad_pos = `background-position: ${
+          50 + (percentageX - 50) / 1.5
+        }% ${50 + (percentageY - 50) / 1.5}% !important;`;
+        const sprk_pos = `background-position: ${
+          50 + (percentageX - 50) / 7
+        }% ${50 + (percentageY - 50) / 7}% !important;`;
+        const pa = 50 - px + (50 - py);
+        const p_opc = 20 + Math.abs(pa) * 1.5;
+        const opc = `opacity: ${p_opc / 100} !important;`;
+        const style = `
+          .card:hover:before { ${grad_pos} }
+          .card:hover:after { ${sprk_pos} ${opc} }
+        `;
+        $style.html(style);
         clearTimeout(timerRef.current);
         setIsAnimated(false);
       }}
       onMouseLeave={() => {
+        $style.html('');
         timerRef.current = setTimeout(() => {
           setIsAnimated(true);
         }, 500);
