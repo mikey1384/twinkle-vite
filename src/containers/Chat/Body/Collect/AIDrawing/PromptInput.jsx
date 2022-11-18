@@ -13,6 +13,7 @@ const deviceIsMobile = isMobile(navigator);
 PromptInput.propTypes = {
   innerRef: PropTypes.object,
   loading: PropTypes.bool,
+  posting: PropTypes.bool,
   registerButtonShown: PropTypes.bool,
   onSubmit: PropTypes.func.isRequired
 };
@@ -21,6 +22,7 @@ export default function PromptInput({
   innerRef,
   loading,
   onSubmit,
+  posting,
   registerButtonShown
 }) {
   const state = useInputContext((v) => v.state);
@@ -96,6 +98,7 @@ export default function PromptInput({
   }
 
   function handleKeyDown(event) {
+    if (posting) return;
     const enterKeyPressed = event.keyCode === 13;
     const shiftKeyPressed = event.shiftKey;
     if (
