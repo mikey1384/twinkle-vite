@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { desktopMinWidth } from '~/constants/css';
+import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
+import ProfilePic from '~/components/ProfilePic';
 import Card from './Card';
 
 const color1 = '#ec9bb6';
@@ -270,7 +271,22 @@ export default function Activity({
       `}
     >
       <div style={{ display: 'flex' }}>
-        <div style={{ width: '30%' }}>user</div>
+        <div style={{ width: '30%' }}>
+          <div
+            className={css`
+              width: 10rem;
+              @media (min-width: ${mobileMaxWidth}) {
+                width: 7rem;
+              }
+            `}
+          >
+            <ProfilePic
+              style={{ width: '100%' }}
+              profilePicUrl={activity.creator.profilePicUrl}
+              userId={activity.creator.id}
+            />
+          </div>
+        </div>
         <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
         <div
           style={{
