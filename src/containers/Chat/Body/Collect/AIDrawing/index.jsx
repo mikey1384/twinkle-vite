@@ -16,6 +16,7 @@ AIDrawing.propTypes = {
 };
 
 export default function AIDrawing({ loadingAIImageChat }) {
+  const [posting, setPosting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAiCard = useAppContext((v) => v.requestHelpers.postAiCard);
@@ -70,17 +71,23 @@ export default function AIDrawing({ loadingAIImageChat }) {
           borderTop: `1px solid ${Color.borderGray()}`
         }}
       >
-        <PromptInput onSubmit={handleSubmit} innerRef={inputRef} />
+        <PromptInput
+          onSubmit={handleSubmit}
+          innerRef={inputRef}
+          posting={posting}
+        />
       </div>
     </div>
   );
 
   async function handleSubmit(text) {
-    setStatusMessage('Loading AI Image..');
+    setPosting(true);
+    setStatusMessage('Deciding how to make..');
     const imageUrl = await getOpenAiImage(text);
     setStatusMessage('AI Image Loaded, Generating Card...');
     const card = await postAiCard({ prompt: text, imageUrl });
     setStatusMessage('Card Generated');
     onPostAICard(card);
+    setPosting(false);
   }
 }
