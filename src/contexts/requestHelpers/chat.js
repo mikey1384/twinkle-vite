@@ -216,13 +216,23 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async postAiCard({ prompt, imageUrl }) {
+    async saveAIImageToS3(imageUrl) {
+      try {
+        const {
+          data: { imagePath }
+        } = await request.post(`${URL}/chat/aiImage/s3`, { imageUrl }, auth());
+        return Promise.resolve(imagePath);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async postAiCard({ prompt, imagePath }) {
       try {
         const {
           data: { result }
         } = await request.post(
           `${URL}/chat/aiImageCard`,
-          { prompt, imageUrl },
+          { prompt, imagePath },
           auth()
         );
         return Promise.resolve(result);
@@ -416,7 +426,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
     },
     async loadAIImageChat() {
       try {
-        const { data } = await request.get(`${URL}/chat/aiImageCard`, auth());
+        const { data } = await request.get(`${URL}/chat/aiImage`, auth());
         return Promise.resolve(data);
       } catch (error) {
         return handleError(error);
