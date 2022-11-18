@@ -8,6 +8,7 @@ export default function ActivitiesContainer() {
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
+  const { userId: myId } = useKeyContext((v) => v.myState);
   const aiDrawingsLoadMoreButton = useChatContext(
     (v) => v.state.aiDrawingsLoadMoreButton
   );
@@ -80,12 +81,15 @@ export default function ActivitiesContainer() {
         />
       )}
       <div style={{ position: 'relative' }} ref={ContentRef}>
-        {aiImageRows.map((row) => {
+        {aiImageRows.map((row, index) => {
           return (
             <Activity
               key={row.id}
               activity={row}
+              isLastActivity={index === aiImageRows.length - 1}
               onReceiveNewActivity={handleReceiveNewActivity}
+              onSetScrollToBottom={handleSetScrollToBottom}
+              myId={myId}
             />
           );
         })}
