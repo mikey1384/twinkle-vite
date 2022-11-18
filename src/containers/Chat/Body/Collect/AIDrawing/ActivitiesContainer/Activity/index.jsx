@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
 import Card from './Card';
+import moment from 'moment';
 import { MessageStyle } from '../../../../../Styles';
 
 const color1 = '#ec9bb6';
@@ -29,9 +30,14 @@ export default function Activity({
   myId,
   onSetScrollToBottom
 }) {
-  const userIsUploader = myId === activity.userId;
+  const userIsCreator = myId === activity.creatorId;
+  const displayedTimeStamp = useMemo(
+    () => moment.unix(activity.timeStamp).format('lll'),
+    [activity.timeStamp]
+  );
+
   useEffect(() => {
-    if (isLastActivity && userIsUploader) {
+    if (isLastActivity && userIsCreator) {
       onSetScrollToBottom();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -302,7 +308,7 @@ export default function Activity({
                 }}
               />{' '}
               <span className={MessageStyle.timeStamp}>
-                {activity.timeStamp}
+                {displayedTimeStamp}
               </span>
             </div>
           </div>
