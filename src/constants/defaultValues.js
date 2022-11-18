@@ -238,30 +238,40 @@ export const wordleGuessReaction = {
 export const wordLevelHash = {
   1: {
     label: 'basic',
+    cardLabel: 'basic',
     rewardAmount: 10,
-    color: 'logoBlue'
+    color: 'logoBlue',
+    cardColor: 'logoBlue'
   },
   2: {
     label: 'elementary',
+    cardLabel: 'superior',
     rewardAmount: 25,
-    color: 'pink'
+    color: 'pink',
+    cardColor: 'pink'
   },
   3: {
     label: 'intermediate',
+    cardLabel: 'exceptional',
     rewardAmount: 50,
-    color: 'orange'
+    color: 'orange',
+    cardColor: 'orange'
   },
   4: {
     label: 'advanced',
+    cardLabel: 'elite',
     rewardAmount: 100,
     coinAmount: 5,
-    color: 'red'
+    color: 'red',
+    cardColor: 'magenta'
   },
   5: {
     label: 'epic',
+    cardLabel: 'epic',
     rewardAmount: 500,
     coinAmount: 100,
-    color: 'gold'
+    color: 'gold',
+    cardColor: 'gold'
   }
 };
 

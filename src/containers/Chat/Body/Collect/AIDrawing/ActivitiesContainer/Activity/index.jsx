@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { desktopMinWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
@@ -6,6 +6,8 @@ import { css } from '@emotion/css';
 import Card from './Card';
 import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
+import moment from 'moment';
+import { MessageStyle } from '../../../../../Styles';
 
 const color1 = '#ec9bb6';
 const color2 = '#ccac6f';
@@ -29,6 +31,10 @@ export default function Activity({
   onSetScrollToBottom
 }) {
   const userIsCreator = myId === activity.creator.id;
+  const displayedTimeStamp = useMemo(
+    () => moment.unix(activity.timeStamp).format('lll'),
+    [activity.timeStamp]
+  );
 
   useEffect(() => {
     if (isLastActivity && userIsCreator) {
@@ -287,12 +293,9 @@ export default function Activity({
             paddingLeft: '1rem'
           }}
         >
-          <UserInfo
-            style={{ marginTop: '3rem' }}
-            user={activity.creator}
-            timeStamp={activity.timeStamp}
-          />
+          <UserInfo style={{ marginTop: '3rem' }} user={activity.creator} />
           <CardInfo style={{ marginTop: '3rem' }} />
+          <div className={MessageStyle.timeStamp}>{displayedTimeStamp}</div>
         </div>
         <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
         <div
