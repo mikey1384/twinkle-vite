@@ -41,7 +41,9 @@ export default function Activity({
         padding: '1rem',
         display: 'flex',
         justifyContent: 'center',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        marginTop: '2rem',
+        marginBottom: '5rem'
       }}
       className={css`
         .card {
@@ -268,10 +270,19 @@ export default function Activity({
       `}
     >
       <div style={{ display: 'flex' }}>
-        <div style={{ width: '25%' }}>user</div>
+        <div style={{ width: '30%' }}>user</div>
         <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
-        <div style={{ flexGrow: 1, padding: '1rem' }}>
-          <div>{activity.prompt}</div>
+        <div
+          style={{
+            flexGrow: 1,
+            padding: '1rem',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexDirection: 'column'
+          }}
+        >
+          <span>{activity.prompt}</span>
         </div>
       </div>
     </div>
