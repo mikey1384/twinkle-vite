@@ -3,8 +3,10 @@ import PropTypes from 'prop-types';
 import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
+import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
 import Card from './Card';
+import { MessageStyle } from '../../../../../Styles';
 
 const color1 = '#ec9bb6';
 const color2 = '#ccac6f';
@@ -285,6 +287,24 @@ export default function Activity({
               profilePicUrl={activity.creator.profilePicUrl}
               userId={activity.creator.id}
             />
+            <div>
+              <UsernameText
+                className={css`
+                  font-size: 1.7rem;
+                  line-height: 1;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.6rem;
+                  }
+                `}
+                user={{
+                  id: activity.creator.id,
+                  username: activity.creator.username
+                }}
+              />{' '}
+              <span className={MessageStyle.timeStamp}>
+                {activity.timeStamp}
+              </span>
+            </div>
           </div>
         </div>
         <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
