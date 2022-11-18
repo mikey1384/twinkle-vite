@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { desktopMinWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
@@ -13,10 +14,26 @@ const holoUrl = 'https://assets.codepen.io/13471/holo.png';
 const sparklesUrl = 'https://assets.codepen.io/13471/sparkles.gif';
 
 Activity.propTypes = {
-  activity: PropTypes.object.isRequired
+  activity: PropTypes.object.isRequired,
+  isLastActivity: PropTypes.bool,
+  myId: PropTypes.number,
+  onSetScrollToBottom: PropTypes.func.isRequired
 };
 
-export default function Activity({ activity }) {
+export default function Activity({
+  isLastActivity,
+  activity,
+  myId,
+  onSetScrollToBottom
+}) {
+  const userIsUploader = myId === activity.userId;
+  useEffect(() => {
+    if (isLastActivity && userIsUploader) {
+      onSetScrollToBottom();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div
       style={{
