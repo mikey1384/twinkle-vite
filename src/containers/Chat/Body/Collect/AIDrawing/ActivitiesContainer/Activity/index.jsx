@@ -1,13 +1,10 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
+import { desktopMinWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-import UsernameText from '~/components/Texts/UsernameText';
-import ProfilePic from '~/components/ProfilePic';
 import Card from './Card';
-import moment from 'moment';
-import { MessageStyle } from '../../../../../Styles';
+import UserInfo from './UserInfo';
 
 const color1 = '#ec9bb6';
 const color2 = '#ccac6f';
@@ -31,10 +28,6 @@ export default function Activity({
   onSetScrollToBottom
 }) {
   const userIsCreator = myId === activity.creator.id;
-  const displayedTimeStamp = useMemo(
-    () => moment.unix(activity.timeStamp).format('lll'),
-    [activity.timeStamp]
-  );
 
   useEffect(() => {
     if (isLastActivity && userIsCreator) {
@@ -293,55 +286,11 @@ export default function Activity({
             paddingLeft: '1rem'
           }}
         >
-          <div
-            style={{
-              marginTop: '3rem',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center'
-            }}
-          >
-            <div
-              className={css`
-                width: 10rem;
-                @media (min-width: ${mobileMaxWidth}) {
-                  width: 7rem;
-                }
-              `}
-            >
-              <ProfilePic
-                style={{ width: '100%' }}
-                profilePicUrl={activity.creator.profilePicUrl}
-                userId={activity.creator.id}
-              />
-            </div>
-            <div
-              style={{
-                marginTop: '1rem',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}
-            >
-              <div>
-                <UsernameText
-                  className={css`
-                    font-size: 1.7rem;
-                    line-height: 1;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.6rem;
-                    }
-                  `}
-                  user={{
-                    id: activity.creator.id,
-                    username: activity.creator.username
-                  }}
-                />
-              </div>
-              <div className={MessageStyle.timeStamp}>{displayedTimeStamp}</div>
-            </div>
-          </div>
+          <UserInfo
+            style={{ marginTop: '3rem' }}
+            user={activity.creator}
+            timeStamp={activity.timeStamp}
+          />
         </div>
         <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
         <div
