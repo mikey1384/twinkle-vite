@@ -20,6 +20,9 @@ export default function AIDrawing({ loadingAIImageChat }) {
   const [statusMessage, setStatusMessage] = useState('');
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAiCard = useAppContext((v) => v.requestHelpers.postAiCard);
+  const processAiCardRarity = useAppContext(
+    (v) => v.requestHelpers.processAiCardRarity
+  );
   const saveAIImageToS3 = useAppContext(
     (v) => v.requestHelpers.saveAIImageToS3
   );
@@ -89,6 +92,8 @@ export default function AIDrawing({ loadingAIImageChat }) {
     const imageUrl = await getOpenAiImage(text);
     setStatusMessage('AI is drawing the image for your card...');
     const imagePath = await saveAIImageToS3(imageUrl);
+    const rarity = await processAiCardRarity(imagePath);
+    console.log(rarity);
     const card = await postAiCard({ prompt: text, imagePath });
     setStatusMessage('Card Generated');
     onPostAICard(card);
