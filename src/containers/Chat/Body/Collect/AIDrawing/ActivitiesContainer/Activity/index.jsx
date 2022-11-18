@@ -270,7 +270,7 @@ export default function Activity({
         }
       `}
     >
-      <div style={{ display: 'flex' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div style={{ width: '30%' }}>
           <div
             className={css`
@@ -290,7 +290,7 @@ export default function Activity({
         <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
         <div
           style={{
-            flexGrow: 1,
+            width: '35%',
             padding: '1rem',
             display: 'flex',
             justifyContent: 'center',
