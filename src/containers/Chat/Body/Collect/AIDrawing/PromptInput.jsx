@@ -67,7 +67,7 @@ export default function PromptInput({
       <div style={{ display: 'flex' }}>
         <Input
           inputRef={innerRef}
-          placeholder="Enter a detailed description of the thing you want the AI to draw for you"
+          placeholder="What do you want the AI to draw?"
           onKeyDown={handleKeyDown}
           value={text}
           onChange={handleChange}
