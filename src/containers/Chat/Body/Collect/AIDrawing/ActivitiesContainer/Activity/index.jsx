@@ -5,6 +5,7 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import Card from './Card';
 import UserInfo from './UserInfo';
+import CardInfo from './CardInfo';
 
 const color1 = '#ec9bb6';
 const color2 = '#ccac6f';
@@ -291,6 +292,7 @@ export default function Activity({
             user={activity.creator}
             timeStamp={activity.timeStamp}
           />
+          <CardInfo style={{ marginTop: '3rem' }} />
         </div>
         <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
         <div
