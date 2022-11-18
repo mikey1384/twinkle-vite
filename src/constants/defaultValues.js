@@ -272,6 +272,15 @@ export const wordLevelHash = {
     coinAmount: 100,
     color: 'gold',
     cardColor: 'gold'
+  },
+  6: {
+    label: 'legendary',
+    cardLabel: 'legendary',
+    rewardAmount: 1000,
+    coinAmount: 200,
+    hologram: true,
+    color: 'gold',
+    cardColor: 'gold'
   }
 };
 
