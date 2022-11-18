@@ -231,7 +231,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         const {
           data: { result }
         } = await request.post(
-          `${URL}/chat/aiImageCard`,
+          `${URL}/chat/aiImage`,
           { prompt, imagePath },
           auth()
         );
