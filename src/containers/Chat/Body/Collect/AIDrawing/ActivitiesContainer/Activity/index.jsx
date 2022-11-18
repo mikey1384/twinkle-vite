@@ -267,9 +267,12 @@ export default function Activity({
         }
       `}
     >
-      <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
-      <div style={{ padding: '1rem' }}>
-        <div>{activity.prompt}</div>
+      <div style={{ display: 'flex' }}>
+        <div style={{ width: '25%' }}>user</div>
+        <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
+        <div style={{ flexGrow: 1, padding: '1rem' }}>
+          <div>{activity.prompt}</div>
+        </div>
       </div>
     </div>
   );
