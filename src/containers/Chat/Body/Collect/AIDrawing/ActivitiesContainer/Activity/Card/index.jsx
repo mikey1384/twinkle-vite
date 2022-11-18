@@ -39,64 +39,66 @@ export default function Card({ animateOnMouseLeave, frontPicUrl }) {
   });
 
   return (
-    <animated.div
-      {...bind()}
-      ref={CardRef}
-      onMouseMove={(event) => {
-        const { left, top, width, height } =
-          CardRef.current.getBoundingClientRect();
-        const px = event.clientX - left;
-        const py = event.clientY - top;
-        const percentageX = 50 - (px / width) * 100;
-        const percentageY = 50 - (py / height) * 100;
-        var grad_pos = `background-position: ${50 + (percentageX - 50) / 3}% ${
-          50 + (percentageY - 50) / 3
-        }% !important;`;
-        const sprk_pos = `background-position: ${
-          50 + (percentageX - 50) / 15
-        }% ${50 + (percentageY - 50) / 15}% !important;`;
-        const pa = 50 - px + (50 - py);
-        const p_opc = 20 + Math.abs(pa) * 1.5;
-        const opc = `opacity: ${p_opc / 100} !important;`;
-        const style = `
+    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+      <animated.div
+        {...bind()}
+        ref={CardRef}
+        onMouseMove={(event) => {
+          const { left, top, width, height } =
+            CardRef.current.getBoundingClientRect();
+          const px = event.clientX - left;
+          const py = event.clientY - top;
+          const percentageX = 50 - (px / width) * 100;
+          const percentageY = 50 - (py / height) * 100;
+          var grad_pos = `background-position: ${
+            50 + (percentageX - 50) / 3
+          }% ${50 + (percentageY - 50) / 3}% !important;`;
+          const sprk_pos = `background-position: ${
+            50 + (percentageX - 50) / 15
+          }% ${50 + (percentageY - 50) / 15}% !important;`;
+          const pa = 50 - px + (50 - py);
+          const p_opc = 20 + Math.abs(pa) * 1.5;
+          const opc = `opacity: ${p_opc / 100} !important;`;
+          const style = `
           .card:hover:before { ${grad_pos} }
           .card:hover:after { ${sprk_pos} ${opc} }
         `;
-        $style.html(style);
-        clearTimeout(timerRef.current);
-        setIsAnimated(false);
-      }}
-      onMouseLeave={() => {
-        $style.html('');
-        if (animateOnMouseLeave) {
-          timerRef.current = setTimeout(() => {
-            setIsAnimated(true);
-          }, 500);
-        }
-      }}
-      style={{
-        transform: 'perspective(600px)',
-        x,
-        y,
-        rotateX,
-        rotateY,
-        rotateZ
-      }}
-      className={`card${isAnimated ? ' animated' : ''}`}
-    >
-      <div
-        className={css`
-          touch-action: none;
-          width: 100%;
-          height: 100%;
-          background-repeat: no-repeat;
-          background-position: 50% 50%;
-          transform-origin: center;
-          background-size: contain;
-          background-image: url(${frontPicUrl});
-        `}
-      />
-    </animated.div>
+          $style.html(style);
+          clearTimeout(timerRef.current);
+          setIsAnimated(false);
+        }}
+        onMouseLeave={() => {
+          $style.html('');
+          if (animateOnMouseLeave) {
+            timerRef.current = setTimeout(() => {
+              setIsAnimated(true);
+            }, 500);
+          }
+        }}
+        style={{
+          transform: 'perspective(600px)',
+          x,
+          y,
+          rotateX,
+          rotateY,
+          rotateZ
+        }}
+        className={`card${isAnimated ? ' animated' : ''}`}
+      >
+        <div
+          className={css`
+            touch-action: none;
+            width: 100%;
+            height: 100%;
+            background-repeat: no-repeat;
+            background-position: 50% 50%;
+            transform-origin: center;
+            background-size: contain;
+            background-image: url(${frontPicUrl});
+          `}
+        />
+      </animated.div>
+    </div>
   );
 
   function calcX(y, ly) {
