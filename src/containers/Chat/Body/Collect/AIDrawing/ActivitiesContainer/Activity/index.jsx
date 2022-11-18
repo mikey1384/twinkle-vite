@@ -278,38 +278,68 @@ export default function Activity({
         }
       `}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <div style={{ width: '30%' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between'
+        }}
+      >
+        <div
+          style={{
+            width: '30%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            paddingLeft: '1rem'
+          }}
+        >
           <div
-            className={css`
-              width: 10rem;
-              @media (min-width: ${mobileMaxWidth}) {
-                width: 7rem;
-              }
-            `}
+            style={{
+              marginTop: '3rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}
           >
-            <ProfilePic
-              style={{ width: '100%' }}
-              profilePicUrl={activity.creator.profilePicUrl}
-              userId={activity.creator.id}
-            />
-            <div>
-              <UsernameText
-                className={css`
-                  font-size: 1.7rem;
-                  line-height: 1;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.6rem;
-                  }
-                `}
-                user={{
-                  id: activity.creator.id,
-                  username: activity.creator.username
-                }}
-              />{' '}
-              <span className={MessageStyle.timeStamp}>
-                {displayedTimeStamp}
-              </span>
+            <div
+              className={css`
+                width: 10rem;
+                @media (min-width: ${mobileMaxWidth}) {
+                  width: 7rem;
+                }
+              `}
+            >
+              <ProfilePic
+                style={{ width: '100%' }}
+                profilePicUrl={activity.creator.profilePicUrl}
+                userId={activity.creator.id}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: '1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              <div>
+                <UsernameText
+                  className={css`
+                    font-size: 1.7rem;
+                    line-height: 1;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1.6rem;
+                    }
+                  `}
+                  user={{
+                    id: activity.creator.id,
+                    username: activity.creator.username
+                  }}
+                />
+              </div>
+              <div className={MessageStyle.timeStamp}>{displayedTimeStamp}</div>
             </div>
           </div>
         </div>
@@ -324,7 +354,7 @@ export default function Activity({
             flexDirection: 'column'
           }}
         >
-          <span>{activity.prompt}</span>
+          <span>{`"${activity.prompt}"`}</span>
         </div>
       </div>
     </div>
