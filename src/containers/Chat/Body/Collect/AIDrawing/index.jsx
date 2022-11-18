@@ -20,6 +20,9 @@ export default function AIDrawing({ loadingAIImageChat }) {
   const [statusMessage, setStatusMessage] = useState('');
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAiCard = useAppContext((v) => v.requestHelpers.postAiCard);
+  const saveAIImageToS3 = useAppContext(
+    (v) => v.requestHelpers.saveAIImageToS3
+  );
   const onPostAICard = useChatContext((v) => v.actions.onPostAICard);
   const navigate = useNavigate();
 
@@ -85,7 +88,8 @@ export default function AIDrawing({ loadingAIImageChat }) {
     setStatusMessage('AI is thinking...');
     const imageUrl = await getOpenAiImage(text);
     setStatusMessage('AI is drawing the image for your card...');
-    const card = await postAiCard({ prompt: text, imageUrl });
+    const imagePath = await saveAIImageToS3(imageUrl);
+    const card = await postAiCard({ prompt, imagePath });
     setStatusMessage('Card Generated');
     onPostAICard(card);
     setPosting(false);
