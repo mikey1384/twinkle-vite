@@ -216,6 +216,19 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async processAiCardRarity(prompt) {
+      try {
+        const {
+          data: { result: rarity }
+        } = await request.get(
+          `${URL}/chat/aiImage/rarity?prompt=${prompt}`,
+          auth()
+        );
+        return Promise.resolve(rarity);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async saveAIImageToS3(imageUrl) {
       try {
         const {
