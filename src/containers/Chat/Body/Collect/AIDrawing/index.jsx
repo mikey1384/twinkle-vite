@@ -62,7 +62,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
         <ActivitiesContainer />
       )}
 
-      <StatusInterface statusMessage={statusMessage} />
+      <StatusInterface posting={posting} statusMessage={statusMessage} />
       <div
         style={{
           height: '6.5rem',
@@ -82,9 +82,9 @@ export default function AIDrawing({ loadingAIImageChat }) {
 
   async function handleSubmit(text) {
     setPosting(true);
-    setStatusMessage('Deciding how to make..');
+    setStatusMessage('AI is thinking...');
     const imageUrl = await getOpenAiImage(text);
-    setStatusMessage('AI Image Loaded, Generating Card...');
+    setStatusMessage('AI is drawing the image for your card...');
     const card = await postAiCard({ prompt: text, imageUrl });
     setStatusMessage('Card Generated');
     onPostAICard(card);
