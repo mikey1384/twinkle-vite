@@ -30,7 +30,7 @@ export default function Activity({
   myId,
   onSetScrollToBottom
 }) {
-  const userIsCreator = myId === activity.creatorId;
+  const userIsCreator = myId === activity.creator.id;
   const displayedTimeStamp = useMemo(
     () => moment.unix(activity.timeStamp).format('lll'),
     [activity.timeStamp]
