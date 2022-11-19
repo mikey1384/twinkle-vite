@@ -88,12 +88,13 @@ export default function AIDrawing({ loadingAIImageChat }) {
 
   async function handleSubmit(text) {
     setPosting(true);
-    setStatusMessage('AI is thinking...');
-    const imageUrl = await getOpenAiImage(text);
-    setStatusMessage('AI is drawing the image for your card...');
-    const imagePath = await saveAIImageToS3(imageUrl);
+    setStatusMessage('AI is processing your request...');
     const rarity = await processAiCardRarity(imagePath);
     console.log(rarity);
+    setStatusMessage('AI is thinking...');
+    const imageUrl = await getOpenAiImage(text);
+    setStatusMessage('AI is generating the image for your card...');
+    const imagePath = await saveAIImageToS3(imageUrl);
     const card = await postAiCard({ prompt: text, imagePath });
     setStatusMessage('Card Generated');
     onPostAICard(card);
