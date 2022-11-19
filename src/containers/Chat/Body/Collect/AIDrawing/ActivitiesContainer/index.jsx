@@ -43,7 +43,7 @@ export default function ActivitiesContainer() {
         if (ActivitiesContainerRef.current?.scrollTop === 0) {
           handleLoadMore();
         }
-      }, 200);
+      }, 100);
     }
   });
   useEffect(() => {
