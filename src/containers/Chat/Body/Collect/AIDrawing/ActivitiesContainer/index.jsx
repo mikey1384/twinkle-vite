@@ -3,6 +3,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
 import Activity from './Activity';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 export default function ActivitiesContainer() {
   const {
@@ -21,12 +22,30 @@ export default function ActivitiesContainer() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [scrollAtBottom, setScrollAtBottom] = useState(false);
   const [scrollHeight, setScrollHeight] = useState(0);
+  const timerRef = useRef(null);
   const ActivitiesContainerRef = useRef(null);
   const ContentRef = useRef(null);
   useEffect(() => {
     handleSetScrollToBottom();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    const ActivitiesContainer = ActivitiesContainerRef.current;
+    addEvent(ActivitiesContainer, 'scroll', handleScroll);
+
+    return function cleanUp() {
+      removeEvent(ActivitiesContainer, 'scroll', handleScroll);
+    };
+
+    function handleScroll() {
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        if (ActivitiesContainerRef.current?.scrollTop === 0) {
+          handleLoadMore();
+        }
+      }, 200);
+    }
+  });
   useEffect(() => {
     if (scrollHeight) {
       (ActivitiesContainerRef.current || {}).scrollTop =
