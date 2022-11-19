@@ -292,10 +292,11 @@ export default function ChatActions(dispatch) {
         loadedSubchannelId
       });
     },
-    onLoadAIImageChat(images) {
+    onLoadAIImageChat({ cards, loadMoreShown }) {
       return dispatch({
         type: 'LOAD_AI_IMAGE_CHAT',
-        images
+        cards,
+        loadMoreShown
       });
     },
     onPostAICard(card) {

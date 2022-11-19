@@ -1101,7 +1101,8 @@ export default function ChatReducer(state, action) {
         electedChannelId: null,
         selectedSubchannelId: null,
         chatType: AI_DRAWING_CHAT_TYPE,
-        aiImages: action.images
+        aiImages: action.cards,
+        aiDrawingsLoadMoreButton: action.loadMoreShown
       };
     }
     case 'POST_AI_CARD': {
