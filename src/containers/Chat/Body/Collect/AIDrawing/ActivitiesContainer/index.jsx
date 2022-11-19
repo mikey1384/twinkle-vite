@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, startTransition } from 'react';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
 import Activity from './Activity';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -9,8 +9,14 @@ export default function ActivitiesContainer() {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
   const { userId: myId } = useKeyContext((v) => v.myState);
+  const loadAIImageChat = useAppContext(
+    (v) => v.requestHelpers.loadAIImageChat
+  );
   const aiDrawingsLoadMoreButton = useChatContext(
     (v) => v.state.aiDrawingsLoadMoreButton
+  );
+  const onLoadMoreAIImages = useChatContext(
+    (v) => v.actions.onLoadMoreAIImages
   );
   const [loadingMore, setLoadingMore] = useState(false);
   const [scrollAtBottom, setScrollAtBottom] = useState(false);
@@ -102,9 +108,14 @@ export default function ActivitiesContainer() {
       const prevContentHeight = ContentRef.current?.offsetHeight || 0;
       if (!loadingMore) {
         setLoadingMore(true);
+        const { cards, loadMoreShown } = await loadAIImageChat(
+          aiImageRows[0].id
+        );
+        onLoadMoreAIImages({ cards, loadMoreShown });
         startTransition(() => {
           setScrollHeight(prevContentHeight);
         });
+        setLoadingMore(false);
       }
     }
   }
