@@ -526,9 +526,9 @@ export default function Main({ currentPathId, onFileUpload }) {
     if (chatType === AI_DRAWING_CHAT_TYPE) return;
     onUpdateChatType(AI_DRAWING_CHAT_TYPE);
     onSetLoadingAIImageChat(true);
-    const images = await loadAIImageChat();
+    const {cards} = await loadAIImageChat();
     if (currentPathIdRef.current === AI_DRAWING_CHAT_TYPE) {
-      onLoadAIImageChat(images);
+      onLoadAIImageChat(cards);
     }
     onSetLoadingAIImageChat(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
