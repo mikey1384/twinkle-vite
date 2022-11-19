@@ -437,11 +437,14 @@ export default function chatRequestHelpers({ auth, handleError }) {
         console.error(error.response || error);
       }
     },
-    async loadAIImageChat() {
+    async loadAIImageChat(lastId) {
       try {
         const {
           data: { cards, loadMoreShown }
-        } = await request.get(`${URL}/chat/aiImage`, auth());
+        } = await request.get(
+          `${URL}/chat/aiImage${lastId ? `?lastId=${lastId}` : ''}`,
+          auth()
+        );
         return Promise.resolve({ cards, loadMoreShown });
       } catch (error) {
         return handleError(error);

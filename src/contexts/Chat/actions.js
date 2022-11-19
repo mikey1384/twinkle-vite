@@ -299,6 +299,13 @@ export default function ChatActions(dispatch) {
         loadMoreShown
       });
     },
+    onLoadMoreAIImages({ cards, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_MORE_AI_IMAGES',
+        cards,
+        loadMoreShown
+      });
+    },
     onPostAICard(card) {
       return dispatch({
         type: 'POST_AI_CARD',

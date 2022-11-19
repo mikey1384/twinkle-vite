@@ -1105,6 +1105,13 @@ export default function ChatReducer(state, action) {
         aiDrawingsLoadMoreButton: action.loadMoreShown
       };
     }
+    case 'LOAD_MORE_AI_IMAGES': {
+      return {
+        ...state,
+        aiImages: action.cards.concat(state.aiImages),
+        aiDrawingsLoadMoreButton: action.loadMoreShown
+      };
+    }
     case 'POST_AI_CARD': {
       return {
         ...state,
