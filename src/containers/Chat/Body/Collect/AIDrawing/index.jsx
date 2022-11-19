@@ -101,8 +101,8 @@ export default function AIDrawing({ loadingAIImageChat }) {
       onPostAICard(card);
       setPosting(false);
     } catch (error) {
+      setPosting(false);
       if (error.data?.error?.status === 400) {
-        setPosting(false);
         setStatusMessage(
           `The AI didn't generate a card for your request because it didn't like the words you used.`
         );
