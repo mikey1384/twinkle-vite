@@ -87,17 +87,26 @@ export default function AIDrawing({ loadingAIImageChat }) {
   );
 
   async function handleSubmit(text) {
-    setPosting(true);
-    setStatusMessage('AI is processing your request...');
-    const rarity = await processAiCardRarity(text);
-    console.log(rarity);
-    setStatusMessage('AI is thinking...');
-    const imageUrl = await getOpenAiImage(text);
-    setStatusMessage('AI is generating the image for your card...');
-    const imagePath = await saveAIImageToS3(imageUrl);
-    const card = await postAiCard({ prompt: text, imagePath });
-    setStatusMessage('Card Generated');
-    onPostAICard(card);
-    setPosting(false);
+    try {
+      setPosting(true);
+      setStatusMessage('AI is processing your request...');
+      const rarity = await processAiCardRarity(text);
+      console.log(rarity);
+      setStatusMessage('The AI is thinking...');
+      const imageUrl = await getOpenAiImage(text);
+      setStatusMessage('The AI is generating your card....');
+      const imagePath = await saveAIImageToS3(imageUrl);
+      const card = await postAiCard({ prompt: text, imagePath });
+      setStatusMessage('Card Generated');
+      onPostAICard(card);
+      setPosting(false);
+    } catch (error) {
+      if (error.data?.error?.status === 400) {
+        setPosting(false);
+        setStatusMessage(
+          `The AI didn't generate a card for your request because it didn't like the words you used.`
+        );
+      }
+    }
   }
 }
