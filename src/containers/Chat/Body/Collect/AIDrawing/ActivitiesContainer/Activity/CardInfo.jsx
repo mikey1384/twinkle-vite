@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { wordLevelHash } from '~/constants/defaultValues';
+import { cardLevelHash } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 
 CardInfo.propTypes = {
@@ -10,9 +10,9 @@ export default function CardInfo({ style }) {
   return (
     <div style={style}>
       <div>
-        created an{' '}
-        <b style={{ color: Color[wordLevelHash[4].cardColor]() }}>
-          {wordLevelHash[4].cardLabel}
+        created a{' '}
+        <b style={{ color: Color[cardLevelHash[4].color]() }}>
+          {cardLevelHash[4].label}
         </b>{' '}
         card
       </div>

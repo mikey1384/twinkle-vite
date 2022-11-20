@@ -308,7 +308,7 @@ export default function Activity({
             at {displayedTime}, {displayedDate}
           </div>
         </div>
-        <Card frontPicUrl={`${cloudFrontURL}${activity.images[0]}`} />
+        <Card frontPicUrl={`${cloudFrontURL}${activity.imagePath}`} />
         <div
           style={{
             width: '35%',
