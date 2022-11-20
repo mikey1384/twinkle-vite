@@ -235,52 +235,56 @@ export const wordleGuessReaction = {
   4: 'IMPRESSIVE'
 };
 
+export const cardLevelHash = {
+  1: {
+    color: 'logoBlue',
+    label: 'blue'
+  },
+  2: {
+    color: 'pink',
+    label: 'pink'
+  },
+  3: {
+    color: 'orange',
+    label: 'orange'
+  },
+  4: {
+    color: 'magenta',
+    label: 'magenta'
+  },
+  5: {
+    color: 'gold',
+    label: 'gold'
+  }
+};
+
 export const wordLevelHash = {
   1: {
     label: 'basic',
-    cardLabel: 'basic',
     rewardAmount: 10,
-    color: 'logoBlue',
-    cardColor: 'logoBlue'
+    color: 'logoBlue'
   },
   2: {
     label: 'elementary',
-    cardLabel: 'superior',
     rewardAmount: 25,
-    color: 'pink',
-    cardColor: 'pink'
+    color: 'pink'
   },
   3: {
     label: 'intermediate',
-    cardLabel: 'exceptional',
     rewardAmount: 50,
-    color: 'orange',
-    cardColor: 'orange'
+    color: 'orange'
   },
   4: {
     label: 'advanced',
-    cardLabel: 'elite',
     rewardAmount: 100,
     coinAmount: 5,
-    color: 'red',
-    cardColor: 'magenta'
+    color: 'red'
   },
   5: {
     label: 'epic',
-    cardLabel: 'epic',
     rewardAmount: 500,
     coinAmount: 100,
-    color: 'gold',
-    cardColor: 'gold'
-  },
-  6: {
-    label: 'legendary',
-    cardLabel: 'legendary',
-    rewardAmount: 1000,
-    coinAmount: 200,
-    hologram: true,
-    color: 'gold',
-    cardColor: 'gold'
+    color: 'gold'
   }
 };
 
