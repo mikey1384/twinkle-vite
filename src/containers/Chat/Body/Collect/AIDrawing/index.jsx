@@ -90,23 +90,31 @@ export default function AIDrawing({ loadingAIImageChat }) {
     try {
       setPosting(true);
       setStatusMessage('AI is processing your request...');
-      const rarity = await processAiCardRarity(text);
-      console.log(rarity);
+      const { score, cardId } = await processAiCardRarity(text);
+      console.log(score);
       setStatusMessage('The AI is thinking...');
       const imageUrl = await getOpenAiImage(text);
       setStatusMessage('The AI is generating your card....');
       const imagePath = await saveAIImageToS3(imageUrl);
-      const card = await postAiCard({ prompt: text, imagePath });
+      const card = await postAiCard({ imagePath, cardId });
       setStatusMessage('Card Generated');
-      onPostAICard(card);
+      onPostAICard({
+        prompt: text,
+        id: cardId,
+        score,
+        ...card
+      });
       setPosting(false);
     } catch (error) {
       setPosting(false);
       if (error.data?.error?.status === 400) {
-        setStatusMessage(
+        return setStatusMessage(
           `The AI didn't generate a card for your request because it didn't like the words you used.`
         );
       }
+      return setStatusMessage(
+        `The AI couldn't generate this card. There was an error.`
+      );
     }
   }
 }

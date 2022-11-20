@@ -219,12 +219,12 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async processAiCardRarity(prompt) {
       try {
         const {
-          data: { result: rarity }
+          data: { score, cardId }
         } = await request.get(
           `${URL}/chat/aiImage/rarity?prompt=${prompt}`,
           auth()
         );
-        return Promise.resolve(rarity);
+        return Promise.resolve({ score, cardId });
       } catch (error) {
         return handleError(error);
       }
@@ -239,13 +239,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async postAiCard({ prompt, imagePath }) {
+    async postAiCard({ cardId, imagePath }) {
       try {
         const {
           data: { result }
         } = await request.post(
           `${URL}/chat/aiImage`,
-          { prompt, imagePath },
+          { cardId, imagePath },
           auth()
         );
         return Promise.resolve(result);
