@@ -90,8 +90,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
     try {
       setPosting(true);
       setStatusMessage('AI is processing your request...');
-      const { score, cardId } = await processAiCardScore(text);
-      console.log(score);
+      const { score, level, cardId } = await processAiCardScore(text);
       setStatusMessage('The AI is thinking...');
       const imageUrl = await getOpenAiImage(text);
       setStatusMessage('The AI is generating your card....');
@@ -102,6 +101,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
         prompt: text,
         id: cardId,
         score,
+        level,
         ...card
       });
       setPosting(false);
