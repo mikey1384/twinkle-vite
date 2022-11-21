@@ -29,6 +29,9 @@ export default function PromptInput({
   posting,
   registerButtonShown
 }) {
+  const onSetAIImageStatusMessage = useChatContext(
+    (v) => v.actions.onSetAIImageStatusMessage
+  );
   const onSetAIImageErrorMessage = useChatContext(
     (v) => v.actions.onSetAIImageErrorMessage
   );
@@ -102,14 +105,17 @@ export default function PromptInput({
 
   function handleChange(text) {
     onSetAIImageErrorMessage('');
-    const regex = /[^a-zA-Z\-'.,\s]/gi;
+    if (!posting) {
+      onSetAIImageStatusMessage('');
+    }
+    const regex = /[^a-zA-Z0-9\-'.,\s]/gi;
     const isInvalid = regex.test(event.target.value.trim());
     if (isInvalid) {
       return onSetAIImageErrorMessage(
         `"${truncateText({
           text: event.target.value,
           limit: 20
-        })}" contains characters that are not allowed.`
+        })}" contains character(s) that are not allowed.`
       );
     }
     setText(text);
