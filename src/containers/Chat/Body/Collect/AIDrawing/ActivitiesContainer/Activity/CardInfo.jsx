@@ -11,7 +11,7 @@ export default function CardInfo({ cardObj, quality, style }) {
   return (
     <div style={style}>
       <div>
-        created a {quality}{' '}
+        created {quality === 'elite' ? 'an' : 'a'} {quality}{' '}
         <b style={{ color: Color[cardObj?.color]() }}>{cardObj?.label}</b> card
       </div>
     </div>
