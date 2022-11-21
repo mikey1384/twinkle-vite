@@ -51,7 +51,7 @@ export default function Card({ animateOnMouseLeave, frontPicUrl }) {
           const py = event.clientY - top;
           const percentageX = 50 - (px / width) * 100;
           const percentageY = 50 - (py / height) * 100;
-          var grad_pos = `background-position: ${
+          let grad_pos = `background-position: ${
             50 + (percentageX - 50) / 3
           }% ${50 + (percentageY - 50) / 3}% !important;`;
           const sprk_pos = `background-position: ${
