@@ -9,6 +9,7 @@ import CardInfo from './CardInfo';
 import moment from 'moment';
 
 const color1 = '#ec9bb6';
+const color2 = '#ccac6f';
 const color3 = '#69e4a5';
 const color4 = '#8ec5d6';
 const color5 = '#b98cce';
@@ -88,7 +89,7 @@ export default function Activity({
               115deg,
               transparent 20%,
               ${color1} 36%,
-              ${cardColor} 43%,
+              ${color2} 43%,
               ${color3} 50%,
               ${color4} 57%,
               ${color5} 64%,
