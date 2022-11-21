@@ -9,7 +9,6 @@ import CardInfo from './CardInfo';
 import moment from 'moment';
 
 const color1 = '#ec9bb6';
-const color2 = '#ccac6f';
 const color3 = '#69e4a5';
 const color4 = '#8ec5d6';
 const color5 = '#b98cce';
@@ -33,6 +32,7 @@ export default function Activity({
     () => cardLevelHash[activity?.level],
     [activity?.level]
   );
+  const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
   const userIsCreator = myId === activity.creator.id;
   const displayedTime = useMemo(
     () => moment.unix(activity.timeStamp).format('hh:mm a'),
@@ -69,25 +69,26 @@ export default function Activity({
           z-index: 10;
           touch-action: none;
           border-radius: 5% / 3.5%;
-          box-shadow: -5px -5px 5px -5px ${color1}, 5px 5px 5px -5px ${color2},
-            -7px -7px 10px -5px transparent, 7px 7px 10px -5px transparent,
-            0 0 5px 0px rgba(255, 255, 255, 0),
+          box-shadow: -5px -5px 5px -5px ${color1},
+            5px 5px 5px -5px ${cardColor}, -7px -7px 10px -5px transparent,
+            7px 7px 10px -5px transparent, 0 0 5px 0px rgba(255, 255, 255, 0),
             0 55px 35px -20px rgba(0, 0, 0, 0.5);
           transition: transform 0.5s ease, box-shadow 0.2s ease;
           will-change: transform, filter;
-          background-color: ${Color[cardObj.color]()};
+          background-color: ${cardColor};
           transform-origin: center;
 
           &:hover {
             box-shadow: -20px -20px 30px -25px ${color1},
-              20px 20px 30px -25px ${color2}, -7px -7px 10px -5px ${color1},
-              7px 7px 10px -5px ${color2}, 0 0 13px 4px rgba(255, 255, 255, 0.3),
+              20px 20px 30px -25px ${cardColor}, -7px -7px 10px -5px ${color1},
+              7px 7px 10px -5px ${cardColor},
+              0 0 13px 4px rgba(255, 255, 255, 0.3),
               0 55px 35px -20px rgba(0, 0, 0, 0.5);
             background-image: linear-gradient(
               115deg,
               transparent 20%,
               ${color1} 36%,
-              ${color2} 43%,
+              ${cardColor} 43%,
               ${color3} 50%,
               ${color4} 57%,
               ${color5} 64%,
@@ -120,7 +121,7 @@ export default function Activity({
               ${color1} 25%,
               transparent 47%,
               transparent 53%,
-              ${color2} 75%,
+              ${cardColor} 75%,
               transparent 100%
             );
             opacity: 0.5;
@@ -164,7 +165,7 @@ export default function Activity({
               110deg,
               transparent 25%,
               ${color1} 48%,
-              ${color2} 52%,
+              ${cardColor} 52%,
               transparent 75%
             );
             background-position: 50% 50%;
