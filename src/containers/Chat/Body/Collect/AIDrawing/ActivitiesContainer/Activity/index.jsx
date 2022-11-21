@@ -321,11 +321,7 @@ export default function Activity({
           }}
         >
           <UserInfo style={{ marginTop: '3rem' }} user={activity.creator} />
-          <CardInfo
-            cardObj={cardObj}
-            quality={activity.quality}
-            style={{ marginTop: '3rem' }}
-          />
+          <CardInfo quality={activity.quality} style={{ marginTop: '3rem' }} />
           <div
             style={{
               color: Color.darkGray(),
