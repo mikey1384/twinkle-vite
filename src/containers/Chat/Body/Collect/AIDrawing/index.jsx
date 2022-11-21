@@ -120,7 +120,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
       onSetIsGeneratingAICard(false);
       if (error.data?.error?.status === 400) {
         return onSetAIImageStatusMessage(
-          `The AI didn't generate a card for your request because it didn't like the words you used.`
+          `The AI refused to handle your request because it didn't like the words you used.`
         );
       }
       return onSetAIImageStatusMessage(
