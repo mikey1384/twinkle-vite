@@ -668,6 +668,24 @@ export default function ChatActions(dispatch) {
         subchannelId
       });
     },
+    onSetAIImageErrorMessage(message) {
+      return dispatch({
+        type: 'SET_AI_IMAGE_ERROR_MESSAGE',
+        message
+      });
+    },
+    onSetAIImageStatusMessage(message) {
+      return dispatch({
+        type: 'SET_AI_IMAGE_STATUS_MESSAGE',
+        message
+      });
+    },
+    onSetIsGeneratingAICard(isGenerating) {
+      return dispatch({
+        type: 'SET_IS_GENERATING_AI_CARD',
+        isGenerating
+      });
+    },
     onSetVocabErrorMessage(message) {
       return dispatch({
         type: 'SET_VOCAB_ERROR_MESSAGE',
