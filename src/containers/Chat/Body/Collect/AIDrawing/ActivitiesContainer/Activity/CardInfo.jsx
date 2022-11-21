@@ -13,7 +13,7 @@ export default function CardInfo({ card, style }) {
   return (
     <div style={style}>
       <div>
-        created a{' '}
+        created a {card.quality}{' '}
         <b style={{ color: Color[cardLevelObj?.color]() }}>
           {cardLevelObj?.label}
         </b>{' '}
