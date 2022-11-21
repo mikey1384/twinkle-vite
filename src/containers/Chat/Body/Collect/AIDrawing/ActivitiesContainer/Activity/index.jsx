@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color, desktopMinWidth } from '~/constants/css';
-import { cloudFrontURL } from '~/constants/defaultValues';
+import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import Card from './Card';
 import UserInfo from './UserInfo';
@@ -29,6 +29,10 @@ export default function Activity({
   myId,
   onSetScrollToBottom
 }) {
+  const cardObj = useMemo(
+    () => cardLevelHash[activity?.level],
+    [activity?.level]
+  );
   const userIsCreator = myId === activity.creator.id;
   const displayedTime = useMemo(
     () => moment.unix(activity.timeStamp).format('hh:mm a'),
@@ -71,7 +75,7 @@ export default function Activity({
             0 55px 35px -20px rgba(0, 0, 0, 0.5);
           transition: transform 0.5s ease, box-shadow 0.2s ease;
           will-change: transform, filter;
-          background-color: ${color2};
+          background-color: ${Color[cardObj.color]()};
           transform-origin: center;
 
           &:hover {
@@ -297,7 +301,11 @@ export default function Activity({
           }}
         >
           <UserInfo style={{ marginTop: '3rem' }} user={activity.creator} />
-          <CardInfo card={activity} style={{ marginTop: '3rem' }} />
+          <CardInfo
+            cardObj={cardObj}
+            quality={activity.quality}
+            style={{ marginTop: '3rem' }}
+          />
           <div
             style={{
               color: Color.darkGray(),
@@ -308,7 +316,10 @@ export default function Activity({
             at {displayedTime}, {displayedDate}
           </div>
         </div>
-        <Card frontPicUrl={`${cloudFrontURL}${activity.imagePath}`} />
+        <Card
+          card={activity}
+          frontPicUrl={`${cloudFrontURL}${activity.imagePath}`}
+        />
         <div
           style={{
             width: '35%',
