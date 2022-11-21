@@ -1955,6 +1955,24 @@ export default function ChatReducer(state, action) {
           }
         }
       };
+    case 'SET_AI_IMAGE_ERROR_MESSAGE': {
+      return {
+        ...state,
+        aiImageErrorMessage: action.message
+      };
+    }
+    case 'SET_AI_IMAGE_STATUS_MESSAGE': {
+      return {
+        ...state,
+        aiImageStatusMessage: action.message
+      };
+    }
+    case 'SET_IS_GENERATING_AI_CARD': {
+      return {
+        ...state,
+        isGeneratingAICard: action.isGenerating
+      };
+    }
     case 'SET_VOCAB_ERROR_MESSAGE': {
       return {
         ...state,

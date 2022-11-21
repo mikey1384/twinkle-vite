@@ -4,8 +4,12 @@ import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { isMobile } from '~/helpers';
-import { stringIsEmpty, exceedsCharLimit } from '~/helpers/stringHelpers';
-import { useInputContext } from '~/contexts';
+import {
+  stringIsEmpty,
+  exceedsCharLimit,
+  truncateText
+} from '~/helpers/stringHelpers';
+import { useChatContext, useInputContext } from '~/contexts';
 import { AI_DRAWING_CHAT_TYPE } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
@@ -25,6 +29,9 @@ export default function PromptInput({
   posting,
   registerButtonShown
 }) {
+  const onSetAIImageErrorMessage = useChatContext(
+    (v) => v.actions.onSetAIImageErrorMessage
+  );
   const state = useInputContext((v) => v.state);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const prevText = useMemo(
@@ -94,6 +101,17 @@ export default function PromptInput({
   );
 
   function handleChange(text) {
+    onSetAIImageErrorMessage('');
+    const regex = /[^a-zA-Z\-'.\s]/gi;
+    const isInvalid = regex.test(event.target.value.trim());
+    if (isInvalid) {
+      return onSetAIImageErrorMessage(
+        `"${truncateText({
+          text: event.target.value,
+          limit: 20
+        })}" contains characters that are not allowed.`
+      );
+    }
     setText(text);
   }
 

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import PropTypes from 'prop-types';
 import PromptInput from './PromptInput';
 import FilterBar from '~/components/FilterBar';
@@ -16,8 +16,6 @@ AIDrawing.propTypes = {
 };
 
 export default function AIDrawing({ loadingAIImageChat }) {
-  const [posting, setPosting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAiCard = useAppContext((v) => v.requestHelpers.postAiCard);
   const processAiCardScore = useAppContext(
@@ -25,6 +23,16 @@ export default function AIDrawing({ loadingAIImageChat }) {
   );
   const saveAIImageToS3 = useAppContext(
     (v) => v.requestHelpers.saveAIImageToS3
+  );
+  const aiImageStatusMessage = useChatContext(
+    (v) => v.state.aiImageStatusMessage
+  );
+  const isGeneratingAICard = useChatContext((v) => v.state.isGeneratingAICard);
+  const onSetIsGeneratingAICard = useChatContext(
+    (v) => v.actions.onSetIsGeneratingAICard
+  );
+  const onSetAIImageStatusMessage = useChatContext(
+    (v) => v.actions.onSetAIImageStatusMessage
   );
   const onPostAICard = useChatContext((v) => v.actions.onPostAICard);
   const navigate = useNavigate();
@@ -68,7 +76,10 @@ export default function AIDrawing({ loadingAIImageChat }) {
         <ActivitiesContainer />
       )}
 
-      <StatusInterface posting={posting} statusMessage={statusMessage} />
+      <StatusInterface
+        posting={isGeneratingAICard}
+        statusMessage={aiImageStatusMessage}
+      />
       <div
         style={{
           height: '6.5rem',
@@ -80,7 +91,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
         <PromptInput
           onSubmit={handleSubmit}
           innerRef={inputRef}
-          posting={posting}
+          posting={isGeneratingAICard}
         />
       </div>
     </div>
@@ -88,15 +99,15 @@ export default function AIDrawing({ loadingAIImageChat }) {
 
   async function handleSubmit(text) {
     try {
-      setPosting(true);
-      setStatusMessage('AI is processing your request...');
+      onSetIsGeneratingAICard(true);
+      onSetAIImageStatusMessage('AI is processing your request...');
       const { score, level, cardId } = await processAiCardScore(text);
-      setStatusMessage('The AI is thinking...');
+      onSetAIImageStatusMessage('The AI is thinking...');
       const imageUrl = await getOpenAiImage(text);
-      setStatusMessage('The AI is generating your card....');
+      onSetAIImageStatusMessage('The AI is generating your card....');
       const imagePath = await saveAIImageToS3(imageUrl);
       const card = await postAiCard({ imagePath, cardId });
-      setStatusMessage('Card Generated');
+      onSetAIImageStatusMessage('Card Generated');
       onPostAICard({
         prompt: text,
         id: cardId,
@@ -104,15 +115,15 @@ export default function AIDrawing({ loadingAIImageChat }) {
         level,
         ...card
       });
-      setPosting(false);
+      onSetIsGeneratingAICard(false);
     } catch (error) {
-      setPosting(false);
+      onSetIsGeneratingAICard(false);
       if (error.data?.error?.status === 400) {
-        return setStatusMessage(
+        return onSetAIImageStatusMessage(
           `The AI didn't generate a card for your request because it didn't like the words you used.`
         );
       }
-      return setStatusMessage(
+      return onSetAIImageStatusMessage(
         `The AI couldn't generate this card. There was an error.`
       );
     }

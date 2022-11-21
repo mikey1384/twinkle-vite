@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
+import { useChatContext } from '~/contexts';
 
 StatusInterface.propTypes = {
   posting: PropTypes.bool,
@@ -9,6 +10,9 @@ StatusInterface.propTypes = {
 };
 
 export default function StatusInterface({ posting, statusMessage }) {
+  const aiImageErrorMessage = useChatContext(
+    (v) => v.state.aiImageErrorMessage
+  );
   return (
     <div
       style={{
@@ -18,7 +22,8 @@ export default function StatusInterface({ posting, statusMessage }) {
         justifyContent: 'flex-end'
       }}
     >
-      {!stringIsEmpty(statusMessage) && (
+      {(!stringIsEmpty(statusMessage) ||
+        !stringIsEmpty(aiImageErrorMessage)) && (
         <div
           className={css`
             p {
@@ -39,11 +44,13 @@ export default function StatusInterface({ posting, statusMessage }) {
             textAlign: 'center',
             width: '100%',
             color: '#fff',
-            background: Color.black(),
+            background: Color[aiImageErrorMessage ? 'rose' : 'black'](),
             padding: '1rem'
           }}
         >
-          <p className={posting ? 'posting' : ''}>{statusMessage}</p>
+          <p className={posting ? 'posting' : ''}>
+            {aiImageErrorMessage || statusMessage}
+          </p>
         </div>
       )}
     </div>
