@@ -23,6 +23,14 @@ Activity.propTypes = {
   onSetScrollToBottom: PropTypes.func.isRequired
 };
 
+const cardProps = {
+  common: [],
+  superior: ['glossy'],
+  rare: ['glossy', 'sparky'],
+  epic: ['glossy', 'sparky', 'holo'],
+  legendary: ['glossy', 'sparky', 'holo']
+};
+
 export default function Activity({
   isLastActivity,
   activity,
@@ -319,7 +327,9 @@ export default function Activity({
           </div>
         </div>
         <Card
+          cardProps={cardProps}
           card={activity}
+          quality={activity.quality}
           frontPicUrl={`${cloudFrontURL}${activity.imagePath}`}
         />
         <div
