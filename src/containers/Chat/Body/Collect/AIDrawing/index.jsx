@@ -20,8 +20,8 @@ export default function AIDrawing({ loadingAIImageChat }) {
   const [statusMessage, setStatusMessage] = useState('');
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAiCard = useAppContext((v) => v.requestHelpers.postAiCard);
-  const processAiCardRarity = useAppContext(
-    (v) => v.requestHelpers.processAiCardRarity
+  const processAiCardScore = useAppContext(
+    (v) => v.requestHelpers.processAiCardScore
   );
   const saveAIImageToS3 = useAppContext(
     (v) => v.requestHelpers.saveAIImageToS3
@@ -90,7 +90,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
     try {
       setPosting(true);
       setStatusMessage('AI is processing your request...');
-      const { score, cardId } = await processAiCardRarity(text);
+      const { score, cardId } = await processAiCardScore(text);
       console.log(score);
       setStatusMessage('The AI is thinking...');
       const imageUrl = await getOpenAiImage(text);
