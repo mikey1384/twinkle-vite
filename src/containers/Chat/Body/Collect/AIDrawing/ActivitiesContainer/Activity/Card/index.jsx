@@ -7,13 +7,19 @@ import $ from 'jquery';
 
 Card.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
+  cardProps: PropTypes.object.isRequired,
   frontPicUrl: PropTypes.string.isRequired,
-  card: PropTypes.object.isRequired
+  quality: PropTypes.string
 };
 
 const $style = $('#animation');
 
-export default function Card({ animateOnMouseLeave, frontPicUrl }) {
+export default function Card({
+  animateOnMouseLeave,
+  cardProps,
+  frontPicUrl,
+  quality
+}) {
   const timerRef = useRef(null);
   const CardRef = useRef(null);
   const [isAnimated, setIsAnimated] = useState(false);
@@ -64,7 +70,12 @@ export default function Card({ animateOnMouseLeave, frontPicUrl }) {
           .card:hover:before { ${grad_pos} }
           .card:hover:after { ${sprk_pos} ${opc} }
         `;
-          $style.html(style);
+          if (
+            cardProps[quality].includes('sparky') ||
+            cardProps[quality].includes('holo')
+          ) {
+            $style.html(style);
+          }
           clearTimeout(timerRef.current);
           setIsAnimated(false);
         }}
