@@ -70,10 +70,7 @@ export default function Card({
           .card:hover:before { ${grad_pos} }
           .card:hover:after { ${sprk_pos} ${opc} }
         `;
-          if (
-            cardProps[quality].includes('sparky') ||
-            cardProps[quality].includes('holo')
-          ) {
+          if (cardProps[quality].includes('glossy')) {
             $style.html(style);
           }
           clearTimeout(timerRef.current);

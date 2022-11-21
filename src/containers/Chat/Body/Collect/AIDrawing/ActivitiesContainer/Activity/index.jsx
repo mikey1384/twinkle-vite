@@ -26,9 +26,9 @@ Activity.propTypes = {
 const cardProps = {
   common: [],
   superior: ['glossy'],
-  rare: ['glossy', 'sparky'],
-  epic: ['glossy', 'sparky', 'holo'],
-  legendary: ['glossy', 'sparky', 'holo']
+  rare: ['glossy', 'grad'],
+  epic: ['glossy', 'grad'],
+  legendary: ['glossy', 'sparky', 'grad']
 };
 
 export default function Activity({
@@ -93,7 +93,9 @@ export default function Activity({
               7px 7px 10px -5px ${cardColor},
               0 0 13px 4px rgba(255, 255, 255, 0.3),
               0 55px 35px -20px rgba(0, 0, 0, 0.5);
-            background-image: linear-gradient(
+             {
+              ${cardProps[activity.quality].includes('grad')
+                ? `background-image: linear-gradient(
               115deg,
               transparent 20%,
               ${color1} 36%,
@@ -102,7 +104,9 @@ export default function Activity({
               ${color4} 57%,
               ${color5} 64%,
               transparent 80%
-            );
+            );`
+                : ''}
+            }
             animation: none;
             transition: box-shadow 0.1s ease-out;
           }
@@ -138,7 +142,8 @@ export default function Activity({
             z-index: 1;
           }
 
-          &:after {
+          ${cardProps[activity.quality].includes('sparky')
+            ? `&:after {
             background-image: url(${sparklesUrl}), url(${holoUrl}),
               linear-gradient(
                 125deg,
@@ -156,7 +161,8 @@ export default function Activity({
             filter: brightness(1) contrast(1);
             transition: all 0.33s ease;
             opacity: 0.75;
-          }
+          }`
+            : ''}
 
           &:hover:after {
             filter: brightness(1) contrast(1);
@@ -170,13 +176,15 @@ export default function Activity({
 
           &:hover:before {
             animation: none;
-            background-image: linear-gradient(
+            ${cardProps[activity.quality].includes('grad')
+              ? `background-image: linear-gradient(
               110deg,
               transparent 25%,
               ${color1} 48%,
               ${cardColor} 52%,
               transparent 75%
-            );
+            );`
+              : ''}
             background-position: 50% 50%;
             background-size: 250% 250%;
             opacity: 0.88;
