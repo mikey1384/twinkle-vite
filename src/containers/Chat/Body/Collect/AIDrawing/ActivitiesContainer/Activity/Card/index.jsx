@@ -7,7 +7,8 @@ import $ from 'jquery';
 
 Card.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
-  frontPicUrl: PropTypes.string.isRequired
+  frontPicUrl: PropTypes.string.isRequired,
+  card: PropTypes.object.isRequired
 };
 
 const $style = $('#animation');
