@@ -59,7 +59,7 @@ export default function Card({
           const percentageY = 50 - (py / height) * 100;
           let grad_pos = `background-position: ${
             50 + (percentageX - 50) / 3
-          }% ${50 + (percentageY - 50) / 3}% !important;`;
+          }% ${50 + (percentageY - 50) / 2}% !important;`;
           const sprk_pos = `background-position: ${
             50 + (percentageX - 50) / 15
           }% ${50 + (percentageY - 50) / 15}% !important;`;
