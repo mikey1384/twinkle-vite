@@ -25,10 +25,10 @@ Activity.propTypes = {
 
 const cardProps = {
   common: [],
-  superior: ['glossy'],
-  rare: ['glossy', 'grad'],
-  epic: ['glossy', 'grad'],
-  legendary: ['glossy', 'sparky', 'grad']
+  superior: ['glowy'],
+  rare: ['glowy', 'glossy'],
+  elite: ['glowy', 'glossy', 'grad'],
+  legendary: ['glowy', 'glossy', 'sparky', 'grad']
 };
 
 export default function Activity({
@@ -88,12 +88,14 @@ export default function Activity({
           transform-origin: center;
 
           &:hover {
-            box-shadow: -20px -20px 30px -25px ${color1},
-              20px 20px 30px -25px ${cardColor}, -7px -7px 10px -5px ${color1},
-              7px 7px 10px -5px ${cardColor},
-              0 0 13px 4px rgba(255, 255, 255, 0.3),
-              0 55px 35px -20px rgba(0, 0, 0, 0.5);
-             {
+            ${cardProps[activity.quality].includes('glowy')
+              ? `box-shadow: -20px -20px
+                  30px -25px ${color1},
+                20px 20px 30px -25px ${cardColor}, -7px -7px 10px -5px ${color1},
+                7px 7px 10px -5px ${cardColor},
+                0 0 13px 4px rgba(255, 255, 255, 0.3),
+                0 55px 35px -20px rgba(0, 0, 0, 0.5);`
+              : ''} {
               ${cardProps[activity.quality].includes('grad')
                 ? `background-image: linear-gradient(
               115deg,
