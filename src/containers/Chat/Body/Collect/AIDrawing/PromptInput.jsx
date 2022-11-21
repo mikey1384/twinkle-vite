@@ -108,7 +108,7 @@ export default function PromptInput({
     if (!posting) {
       onSetAIImageStatusMessage('');
     }
-    const regex = /[^a-zA-Z0-9\-'.,\s]/gi;
+    const regex = /[^a-zA-Z0-9\-'".,\s]/gi;
     const isInvalid = regex.test(event.target.value.trim());
     if (isInvalid) {
       return onSetAIImageErrorMessage(
