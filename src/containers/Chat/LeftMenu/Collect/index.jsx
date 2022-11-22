@@ -12,7 +12,7 @@ Collect.propTypes = {
 
 function Collect({ selected, onClick }) {
   return (
-    <ErrorBoundary componentPath="Chat/LeftMenu/Vocabulary">
+    <ErrorBoundary componentPath="Chat/LeftMenu/Collect">
       <div
         style={{
           cursor: 'pointer',
