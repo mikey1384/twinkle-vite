@@ -168,7 +168,10 @@ export default function Activity({
             filter: brightness(0.5) contrast(1);
             z-index: 1;
             ${cardProps[activity.quality].includes('glossy')
-              ? `animation: gloss 7s infinite;`
+              ? `
+                  transition: none;
+                  animation: gloss 7s infinite;
+                `
               : ''}
           }
 
@@ -284,18 +287,6 @@ export default function Activity({
             background-position: 50% 50%;
           }
           25% {
-            ${cardProps[activity.quality].includes('grad')
-              ? `background-image: linear-gradient(
-              115deg,
-              transparent 20%,
-              ${color1} 36%,
-              ${color2} 43%,
-              ${color3} 50%,
-              ${color4} 57%,
-              ${color5} 64%,
-              transparent 80%
-            );`
-              : ''}
             background-position: 100% 100%;
           }
           50% {
