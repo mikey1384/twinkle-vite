@@ -219,12 +219,12 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async processAiCardScore(prompt) {
       try {
         const {
-          data: { score, level, cardId }
+          data: { score, level, cardId, word }
         } = await request.get(
           `${URL}/chat/aiImage/score?prompt=${prompt}`,
           auth()
         );
-        return Promise.resolve({ score, level, cardId });
+        return Promise.resolve({ score, level, cardId, word });
       } catch (error) {
         return handleError(error);
       }
