@@ -78,10 +78,17 @@ export default function Activity({
           z-index: 10;
           touch-action: none;
           border-radius: 5% / 3.5%;
-          box-shadow: -5px -5px 5px -5px ${color1},
+          box-shadow: ${cardProps[activity.quality].includes('glowy')
+            ? `-10px -10px
+                  15px -12px ${color1},
+                10px 10px 15px -12px ${cardColor}, -7px -7px 12px -6px ${color1},
+                7px 7px 12px -6px ${cardColor},
+                0 0 7px 2px rgba(255, 255, 255, 0.3),
+                0 55px 35px -20px rgba(0, 0, 0, 0.5);`
+            : `-5px -5px 5px -5px ${color1},
             5px 5px 5px -5px ${cardColor}, -7px -7px 10px -5px transparent,
             7px 7px 10px -5px transparent, 0 0 5px 0px rgba(255, 255, 255, 0),
-            0 55px 35px -20px rgba(0, 0, 0, 0.5);
+            0 55px 35px -20px rgba(0, 0, 0, 0.5)`};
           transition: transform 0.5s ease, box-shadow 0.2s ease;
           will-change: transform, filter;
           background-color: ${cardColor};
