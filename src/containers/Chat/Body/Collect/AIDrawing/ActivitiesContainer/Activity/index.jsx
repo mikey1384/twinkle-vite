@@ -265,7 +265,19 @@ export default function Activity({
             background-position: 50% 50%;
           }
           25% {
-            background-position: 50% 50%;
+            ${cardProps[activity.quality].includes('grad')
+              ? `background-image: linear-gradient(
+              115deg,
+              transparent 20%,
+              ${color1} 36%,
+              ${color2} 43%,
+              ${color3} 50%,
+              ${color4} 57%,
+              ${color5} 64%,
+              transparent 80%
+            );`
+              : ''}
+            background-position: 100% 100%;
           }
           50% {
             background-position: 50% 50%;
@@ -273,14 +285,8 @@ export default function Activity({
           75% {
             background-position: 50% 50%;
           }
-          90% {
-            background-position: 50% 50%;
-          }
-          95% {
-            background-position: 100% 100%;
-          }
           100% {
-            background-position: 45% 45%;
+            background-position: 50% 50%;
           }
         }
 
