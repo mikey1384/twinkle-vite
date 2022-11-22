@@ -86,9 +86,9 @@ export default function Activity({
                 0 0 7px 2px rgba(255, 255, 255, 0.3),
                 0 55px 35px -20px rgba(0, 0, 0, 0.5);`
             : `-5px -5px 5px -5px ${color1},
-            5px 5px 5px -5px ${cardColor}, -7px -7px 10px -5px transparent,
-            7px 7px 10px -5px transparent, 0 0 5px 0px rgba(255, 255, 255, 0),
-            0 55px 35px -20px rgba(0, 0, 0, 0.5)`};
+            3px 3px 3px -3px ${cardColor}, -5px -5px 7px -3px transparent,
+            5px 5px 7px -3px transparent, 0 0 3px 0px rgba(255, 255, 255, 0),
+            0 30px 17px -10px rgba(0, 0, 0, 0.5)`};
           transition: transform 0.5s ease, box-shadow 0.2s ease;
           will-change: transform, filter;
           background-color: ${cardColor};
@@ -116,7 +116,6 @@ export default function Activity({
             );`
                 : ''}
             }
-            animation: none;
             transition: box-shadow 0.1s ease-out;
           }
 
@@ -149,6 +148,9 @@ export default function Activity({
             opacity: 0.5;
             filter: brightness(0.5) contrast(1);
             z-index: 1;
+            ${cardProps[activity.quality].includes('glossy')
+              ? `animation: gloss 7s infinite;`
+              : ''}
           }
 
           ${cardProps[activity.quality].includes('sparky')
@@ -255,6 +257,30 @@ export default function Activity({
             opacity: 0.33;
             background-position: 45% 45%;
             filter: brightness(1.2) contrast(1.25);
+          }
+        }
+
+        @keyframes gloss {
+          0% {
+            background-position: 50% 50%;
+          }
+          25% {
+            background-position: 50% 50%;
+          }
+          50% {
+            background-position: 50% 50%;
+          }
+          75% {
+            background-position: 50% 50%;
+          }
+          90% {
+            background-position: 50% 50%;
+          }
+          95% {
+            background-position: 100% 100%;
+          }
+          100% {
+            background-position: 45% 45%;
           }
         }
 
