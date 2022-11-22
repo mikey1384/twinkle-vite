@@ -206,12 +206,12 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async getOpenAiImage(prompt) {
       try {
         const {
-          data: { result: imageUrl }
+          data: { imageUrl, style }
         } = await request.get(
           `${URL}/chat/openai/image?prompt=${prompt}`,
           auth()
         );
-        return Promise.resolve(imageUrl);
+        return Promise.resolve({ imageUrl, style });
       } catch (error) {
         return handleError(error);
       }
@@ -239,13 +239,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async postAiCard({ cardId, imagePath }) {
+    async postAiCard({ cardId, imagePath, style }) {
       try {
         const {
           data: { result }
         } = await request.post(
           `${URL}/chat/aiImage`,
-          { cardId, imagePath },
+          { cardId, imagePath, style },
           auth()
         );
         return Promise.resolve(result);
