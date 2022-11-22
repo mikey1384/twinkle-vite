@@ -291,9 +291,33 @@ export default function Activity({
           75%,
           87.5%,
           100% {
+            ${cardProps[activity.quality].includes('grad')
+              ? `background-image: linear-gradient(
+              115deg,
+              transparent 20%,
+              ${color1} 36%,
+              ${color2} 43%,
+              ${color3} 50%,
+              ${color4} 57%,
+              ${color5} 64%,
+              transparent 90%
+            );`
+              : ''}
             background-position: 50% 50%;
           }
           12.5% {
+            ${cardProps[activity.quality].includes('grad')
+              ? `background-image: linear-gradient(
+              115deg,
+              transparent 10%,
+              ${color1} 36%,
+              ${color2} 43%,
+              ${color3} 50%,
+              ${color4} 57%,
+              ${color5} 64%,
+              transparent 90%
+            );`
+              : ''}
             background-position: 100% 100%;
           }
         }
