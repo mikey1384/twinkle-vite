@@ -283,20 +283,18 @@ export default function Activity({
         }
 
         @keyframes gloss {
-          0% {
-            background-position: 50% 50%;
-          }
-          25% {
-            background-position: 100% 100%;
-          }
-          50% {
-            background-position: 50% 50%;
-          }
-          75% {
-            background-position: 50% 50%;
-          }
+          0%,
+          25%,
+          37.5%,
+          50%,
+          62.6%,
+          75%,
+          87.5%,
           100% {
             background-position: 50% 50%;
+          }
+          12.5% {
+            background-position: 100% 100%;
           }
         }
 
