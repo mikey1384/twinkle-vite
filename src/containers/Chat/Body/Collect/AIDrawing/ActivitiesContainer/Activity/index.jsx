@@ -414,12 +414,28 @@ export default function Activity({
             width: '35%',
             padding: '1rem',
             display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
             flexDirection: 'column'
           }}
         >
-          <span dangerouslySetInnerHTML={{ __html: promptText }} />
+          <div
+            style={{
+              width: '100%',
+              marginTop: '3rem',
+              textAlign: 'center',
+              textTransform: 'capitalize',
+              fontWeight: 'bold'
+            }}
+          >
+            {activity.style}
+          </div>
+          <div
+            style={{
+              textAlign: 'center',
+              marginTop: '9.5rem'
+            }}
+          >
+            <span dangerouslySetInnerHTML={{ __html: `"${promptText}"` }} />
+          </div>
         </div>
       </div>
     </div>
