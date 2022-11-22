@@ -59,6 +59,25 @@ export default function Activity({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const promptText = useMemo(() => {
+    if (activity.word) {
+      const prompt = activity.prompt;
+      const word = activity.word;
+      const wordIndex = prompt.toLowerCase().indexOf(word.toLowerCase());
+      const isCapitalized =
+        prompt[wordIndex] !== prompt[wordIndex].toLowerCase();
+      const wordToDisplay = isCapitalized
+        ? word[0].toUpperCase() + word.slice(1)
+        : word;
+      const promptToDisplay =
+        prompt.slice(0, wordIndex) +
+        `<b style="color:${Color[cardObj?.color]()}">${wordToDisplay}</b>` +
+        prompt.slice(wordIndex + word.length);
+      return promptToDisplay;
+    }
+    return activity.prompt;
+  }, [activity.prompt, activity.word, cardObj?.color]);
+
   return (
     <div
       style={{
@@ -387,7 +406,7 @@ export default function Activity({
             flexDirection: 'column'
           }}
         >
-          <span>{`"${activity.prompt}"`}</span>
+          <span dangerouslySetInnerHTML={{ __html: promptText }} />
         </div>
       </div>
     </div>
