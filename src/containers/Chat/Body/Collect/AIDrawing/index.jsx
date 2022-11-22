@@ -103,10 +103,10 @@ export default function AIDrawing({ loadingAIImageChat }) {
       onSetAIImageStatusMessage('AI is processing your request...');
       const { score, level, cardId } = await processAiCardScore(text);
       onSetAIImageStatusMessage('The AI is thinking...');
-      const imageUrl = await getOpenAiImage(text);
+      const { imageUrl, style } = await getOpenAiImage(text);
       onSetAIImageStatusMessage('The AI is generating your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
-      const card = await postAiCard({ imagePath, cardId });
+      const card = await postAiCard({ imagePath, cardId, style });
       onSetAIImageStatusMessage('Card Generated');
       onPostAICard({
         prompt: text,
