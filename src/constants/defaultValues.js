@@ -1,4 +1,5 @@
 import localize from '~/constants/localize';
+import { Color } from '~/constants/css';
 
 export const clientVersion = '1.6.94';
 export const defaultChatSubject = 'Welcome!';
@@ -178,6 +179,29 @@ export const reactionsObj = {
   angry: {
     label: 'angry',
     position: '84% 5%'
+  }
+};
+
+export const qualityProps = {
+  common: {
+    color: Color.vantaBlack(),
+    fontWeight: 'normal'
+  },
+  superior: {
+    color: Color.darkBlue(),
+    fontWeight: 'bold'
+  },
+  rare: {
+    color: Color.purple(),
+    fontWeight: 'bold'
+  },
+  elite: {
+    color: Color.brownOrange(),
+    fontWeight: 'bold'
+  },
+  legendary: {
+    color: Color.darkGold(),
+    fontWeight: 'bold'
   }
 };
 
