@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { useSpring, animated } from 'react-spring';
 import { useGesture } from '@use-gesture/react';
+import { qualityProps } from '~/constants/defaultValues';
 import $ from 'jquery';
 
 Card.propTypes = {
@@ -90,22 +91,28 @@ export default function Card({
           y,
           rotateX,
           rotateY,
-          rotateZ
+          rotateZ,
+          display: 'flex',
+          alignItems: 'center'
         }}
         className={`card${isAnimated ? ' animated' : ''}`}
       >
         <div
           className={css`
-            touch-action: none;
             width: 100%;
-            height: 100%;
-            background-repeat: no-repeat;
-            background-position: 50% 50%;
-            transform-origin: center;
-            background-size: contain;
-            background-image: url(${frontPicUrl});
           `}
-        />
+        >
+          <img
+            style={{
+              width: '100%',
+              borderTop:
+                quality === 'common' || quality === 'legendary'
+                  ? 'none'
+                  : `5px solid ${qualityProps[quality].color}`
+            }}
+            src={frontPicUrl}
+          />
+        </div>
       </animated.div>
     </div>
   );
