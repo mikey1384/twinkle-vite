@@ -1,7 +1,12 @@
 import { memo } from 'react';
 import PropTypes from 'prop-types';
+import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import {
+  AI_DRAWING_CHAT_TYPE,
+  VOCAB_CHAT_TYPE
+} from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Vocabulary from './Vocabulary';
 
@@ -11,6 +16,8 @@ Collect.propTypes = {
 };
 
 function Collect({ selected, onClick }) {
+  const { collectType } = useKeyContext((v) => v.myState);
+
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Collect">
       <div
@@ -27,7 +34,8 @@ function Collect({ selected, onClick }) {
         `}`}
         onClick={onClick}
       >
-        <Vocabulary />
+        {collectType === VOCAB_CHAT_TYPE && <Vocabulary />}
+        {collectType === AI_DRAWING_CHAT_TYPE && <div>ai drawing</div>}
       </div>
     </ErrorBoundary>
   );

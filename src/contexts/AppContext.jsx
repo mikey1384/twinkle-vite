@@ -26,6 +26,7 @@ export const initialMyState = {
   canReward: false,
   canEditPlaylists: false,
   canPinPlaylists: false,
+  collectType: '',
   hideWatched: false,
   isCreator: false,
   lastChatPath: '',
