@@ -121,6 +121,9 @@ export default function Main({ currentPathId, onFileUpload }) {
     (v) => v.requestHelpers.uploadChatSubject
   );
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
+  const updateCollectType = useAppContext(
+    (v) => v.requestHelpers.updateCollectType
+  );
   const onSetCollectType = useAppContext(
     (v) => v.user.actions.onSetCollectType
   );
@@ -304,6 +307,7 @@ export default function Main({ currentPathId, onFileUpload }) {
 
   useEffect(() => {
     if (chatType === VOCAB_CHAT_TYPE || chatType === AI_DRAWING_CHAT_TYPE) {
+      updateCollectType(chatType);
       onSetCollectType(chatType);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -11,10 +11,10 @@ export default function AICards() {
   const aiImageRows = useChatContext((v) => v.state.aiImages);
 
   const lastActivity = useMemo(() => {
-    return aiImageRows[aiImageRows.length - 1];
+    return aiImageRows?.[aiImageRows?.length - 1];
   }, [aiImageRows]);
 
-  return (
+  return lastActivity ? (
     <div style={{ height: '5rem', position: 'relative' }}>
       <div style={{ fontSize: '1.7rem' }}>
         <Icon icon="cards-blank" />
@@ -43,5 +43,5 @@ export default function AICards() {
         </div>
       )}
     </div>
-  );
+  ) : null;
 }

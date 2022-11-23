@@ -858,7 +858,7 @@ export default function ChatReducer(state, action) {
         aiImages:
           state.chatType === AI_DRAWING_CHAT_TYPE
             ? state.aiImages
-            : action.data.aiImages,
+            : action.data.aiImages || [],
         numUnreads: state.numUnreads,
         chatStatus: state.chatStatus,
         allFavoriteChannelIds: action.data.allFavoriteChannelIds,

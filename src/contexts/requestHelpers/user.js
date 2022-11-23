@@ -559,6 +559,20 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
+    async updateCollectType(collectType) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(
+          `${URL}/user/collectType`,
+          { collectType },
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateCurrentlyWatching({ watchCode }) {
       const authorization = auth();
       const authExists = !!authorization.headers.authorization;
