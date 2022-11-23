@@ -121,6 +121,9 @@ export default function Main({ currentPathId, onFileUpload }) {
     (v) => v.requestHelpers.uploadChatSubject
   );
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
+  const onSetCollectType = useAppContext(
+    (v) => v.user.actions.onSetCollectType
+  );
   const state = useInputContext((v) => v.state);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
   const allFavoriteChannelIds = useChatContext(
@@ -298,6 +301,13 @@ export default function Main({ currentPathId, onFileUpload }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (chatType === VOCAB_CHAT_TYPE || chatType === AI_DRAWING_CHAT_TYPE) {
+      onSetCollectType(chatType);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatType]);
 
   useEffect(() => {
     if (selectedSubchannelId) {

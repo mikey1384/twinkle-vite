@@ -87,6 +87,7 @@ export function useLazyLoad({
 
 export function useMyState() {
   const hideWatched = useAppContext((v) => v.user.state.myState.hideWatched);
+  const collectType = useAppContext((v) => v.user.state.myState.collectType);
   const wordleStrictMode = useAppContext(
     (v) => v.user.state.myState.wordleStrictMode
   );
@@ -115,6 +116,7 @@ export function useMyState() {
             numWordsCollected,
             userId,
             searchFilter,
+            collectType,
             hideWatched,
             isCreator:
               myState.userType === 'webmaster' || myState.userType === 'admin',
@@ -132,6 +134,7 @@ export function useMyState() {
             signinModalShown
           },
     [
+      collectType,
       hideWatched,
       lastChatPath,
       loaded,
