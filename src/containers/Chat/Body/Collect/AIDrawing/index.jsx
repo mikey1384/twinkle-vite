@@ -24,6 +24,9 @@ export default function AIDrawing({ loadingAIImageChat }) {
   const saveAIImageToS3 = useAppContext(
     (v) => v.requestHelpers.saveAIImageToS3
   );
+  const onSetCollectType = useAppContext(
+    (v) => v.user.actions.onSetCollectType
+  );
   const aiImageStatusMessage = useChatContext(
     (v) => v.state.aiImageStatusMessage
   );
@@ -62,9 +65,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
             marginBottom: 0
           }}
         >
-          <nav onClick={() => navigate(`/chat/${VOCAB_CHAT_TYPE}`)}>
-            Vocabulary
-          </nav>
+          <nav onClick={handleFilterClick}>Vocabulary</nav>
           <nav className="active">AI Image Cards</nav>
         </FilterBar>
       </div>
@@ -96,6 +97,11 @@ export default function AIDrawing({ loadingAIImageChat }) {
       </div>
     </div>
   );
+
+  function handleFilterClick() {
+    onSetCollectType(VOCAB_CHAT_TYPE);
+    navigate(`/chat/${VOCAB_CHAT_TYPE}`);
+  }
 
   async function handleSubmit(text) {
     try {

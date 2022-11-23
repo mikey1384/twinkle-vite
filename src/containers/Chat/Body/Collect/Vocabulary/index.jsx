@@ -45,6 +45,9 @@ export default function Vocabulary({ loadingVocabulary }) {
   const wordsObj = useChatContext((v) => v.state.wordsObj);
   const wordRegisterStatus = useChatContext((v) => v.state.wordRegisterStatus);
   const onRegisterWord = useChatContext((v) => v.actions.onRegisterWord);
+  const onSetCollectType = useAppContext(
+    (v) => v.user.actions.onSetCollectType
+  );
   const onSetWordRegisterStatus = useChatContext(
     (v) => v.actions.onSetWordRegisterStatus
   );
@@ -203,9 +206,7 @@ export default function Vocabulary({ loadingVocabulary }) {
           }}
         >
           <nav className="active">Vocabulary</nav>
-          <nav onClick={() => navigate(`/chat/${AI_DRAWING_CHAT_TYPE}`)}>
-            AI Image Cards
-          </nav>
+          <nav onClick={handleFilterClick}>AI Image Cards</nav>
         </FilterBar>
       </div>
       {loadingVocabulary ? (
@@ -378,4 +379,9 @@ export default function Vocabulary({ loadingVocabulary }) {
       </div>
     </div>
   );
+
+  function handleFilterClick() {
+    onSetCollectType(AI_DRAWING_CHAT_TYPE);
+    navigate(`/chat/${AI_DRAWING_CHAT_TYPE}`);
+  }
 }
