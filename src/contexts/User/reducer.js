@@ -102,6 +102,11 @@ export default function UserReducer(state, action) {
         myState: action.data,
         signinModalShown: false
       };
+    case 'SET_COLLECT_TYPE':
+      return {
+        ...state,
+        collectType: action.collectType
+      };
     case 'SET_LAST_CHAT_PATH':
       return {
         ...state,
