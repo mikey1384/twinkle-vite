@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { useSpring, animated } from 'react-spring';
 import { useGesture } from '@use-gesture/react';
-import { qualityProps } from '~/constants/defaultValues';
 import $ from 'jquery';
 
 Card.propTypes = {
@@ -104,11 +103,7 @@ export default function Card({
         >
           <img
             style={{
-              width: '100%',
-              borderTop:
-                quality === 'common' || quality === 'legendary'
-                  ? 'none'
-                  : `5px solid ${qualityProps[quality].color}`
+              width: '100%'
             }}
             src={frontPicUrl}
           />

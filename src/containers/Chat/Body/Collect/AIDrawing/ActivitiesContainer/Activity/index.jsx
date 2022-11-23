@@ -1,7 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color, desktopMinWidth } from '~/constants/css';
-import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
+import {
+  cardLevelHash,
+  cloudFrontURL,
+  qualityProps
+} from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import Card from './Card';
 import UserInfo from './UserInfo';
@@ -98,10 +102,12 @@ export default function Activity({
           touch-action: none;
           border-radius: 5% / 3.5%;
           box-shadow: ${cardProps[activity.quality].includes('glowy')
-            ? `-10px -10px
-                  15px -12px ${color1},
-                10px 10px 15px -12px ${cardColor}, -7px -7px 12px -6px ${color1},
-                7px 7px 12px -6px ${cardColor},
+            ? `0px 0px
+                  7px ${qualityProps[activity.quality].color},
+                0px 0px 7px ${qualityProps[activity.quality].color}, 0 0 7px ${
+                qualityProps[activity.quality].color
+              },
+                0 0 7px ${qualityProps[activity.quality].color},
                 0 0 7px 2px rgba(255, 255, 255, 0.3),
                 0 55px 35px -20px rgba(0, 0, 0, 0.5);`
             : `-5px -5px 5px -5px ${color1},
@@ -116,8 +122,8 @@ export default function Activity({
           &:hover {
             ${cardProps[activity.quality].includes('glowy')
               ? `box-shadow: -20px -20px
-                  30px -25px ${color1},
-                20px 20px 30px -25px ${cardColor}, -7px -7px 10px -5px ${color1},
+                  30px -25px ${cardColor},
+                20px 20px 30px -25px ${cardColor}, -7px -7px 10px -5px ${cardColor},
                 7px 7px 10px -5px ${cardColor},
                 0 0 13px 4px rgba(255, 255, 255, 0.3),
                 0 55px 35px -20px rgba(0, 0, 0, 0.5);`

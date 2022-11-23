@@ -188,7 +188,7 @@ export const qualityProps = {
     fontWeight: 'normal'
   },
   superior: {
-    color: Color.darkBlue(),
+    color: Color.limeGreen(),
     fontWeight: 'bold'
   },
   rare: {
