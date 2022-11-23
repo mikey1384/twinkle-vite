@@ -786,7 +786,6 @@ export default function ChatReducer(state, action) {
       let homeLoadMoreButton = false;
       let favoriteLoadMoreButton = false;
       let vocabActivitiesLoadMoreButton = false;
-      let aiDrawingsLoadMoreButton = false;
       const newMessageIds = [...action.data.messageIds];
       const newMessagesObj = {
         ...state.channelsObj[action.data.currentChannelId]?.messagesObj,
@@ -879,7 +878,7 @@ export default function ChatReducer(state, action) {
         aiDrawingsLoadMoreButton:
           state.chatType === AI_DRAWING_CHAT_TYPE
             ? state.aiDrawingsLoadMoreButton
-            : aiDrawingsLoadMoreButton,
+            : action.data.aiDrawingsLoadMoreButton,
         vocabActivitiesLoadMoreButton:
           state.chatType === VOCAB_CHAT_TYPE
             ? state.vocabActivitiesLoadMoreButton
