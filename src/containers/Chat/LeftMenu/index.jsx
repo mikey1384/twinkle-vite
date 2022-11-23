@@ -9,8 +9,11 @@ import Subchannels from './Subchannels';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
-import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
-import { useNavigate } from 'react-router-dom';
+import {
+  AI_DRAWING_CHAT_TYPE,
+  VOCAB_CHAT_TYPE
+} from '~/constants/defaultValues';
+import { matchPath, useNavigate, useLocation } from 'react-router-dom';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
@@ -41,7 +44,31 @@ function LeftMenu({
   subchannelObj,
   subchannelPath
 }) {
+  const { collectType } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();
+  const location = useLocation();
+  const vocabMatch = useMemo(
+    () =>
+      matchPath(
+        {
+          path: `/chat/${VOCAB_CHAT_TYPE}`,
+          exact: true
+        },
+        location.pathname
+      ),
+    [location.pathname]
+  );
+  const aiCardMatch = useMemo(
+    () =>
+      matchPath(
+        {
+          path: `/chat/${AI_DRAWING_CHAT_TYPE}`,
+          exact: true
+        },
+        location.pathname
+      ),
+    [location.pathname]
+  );
   const {
     chatFlatButton: {
       color: chatFlatButtonColor,
@@ -120,12 +147,16 @@ function LeftMenu({
           </div>
         </div>
         <Collect
-          selected={
-            chatType === VOCAB_CHAT_TYPE ||
-            loadingVocabulary ||
-            loadingAIImageChat
+          aiCardSelected={
+            chatType === AI_DRAWING_CHAT_TYPE || loadingAIImageChat
           }
-          onClick={() => navigate(`/chat/${VOCAB_CHAT_TYPE}`)}
+          vocabSelected={chatType === VOCAB_CHAT_TYPE || loadingVocabulary}
+          onClick={() => {
+            if (vocabMatch && collectType === VOCAB_CHAT_TYPE) return null;
+            if (aiCardMatch && collectType === AI_DRAWING_CHAT_TYPE)
+              return null;
+            navigate(`/chat/${collectType}`);
+          }}
         />
         <ChatSearchBox
           style={{
