@@ -196,7 +196,7 @@ export const qualityProps = {
     fontWeight: 'bold'
   },
   elite: {
-    color: Color.brownOrange(),
+    color: Color.redOrange(),
     fontWeight: 'bold'
   },
   legendary: {
