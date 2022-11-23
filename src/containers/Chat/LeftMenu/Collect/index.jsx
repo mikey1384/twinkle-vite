@@ -12,11 +12,12 @@ import AICards from './AICards';
 import Vocabulary from './Vocabulary';
 
 Collect.propTypes = {
-  selected: PropTypes.bool.isRequired,
+  aiCardSelected: PropTypes.bool,
+  vocabSelected: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired
 };
 
-function Collect({ selected, onClick }) {
+function Collect({ aiCardSelected, vocabSelected, onClick }) {
   const { collectType } = useKeyContext((v) => v.myState);
 
   return (
@@ -26,7 +27,7 @@ function Collect({ selected, onClick }) {
           cursor: 'pointer',
           padding: '1rem',
           borderBottom: `1px solid ${Color.borderGray()}`,
-          background: selected && Color.highlightGray()
+          background: (aiCardSelected || vocabSelected) && Color.highlightGray()
         }}
         className={`unselectable ${css`
           &:hover {
