@@ -8,6 +8,7 @@ import {
   VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import AICards from './AICards';
 import Vocabulary from './Vocabulary';
 
 Collect.propTypes = {
@@ -35,7 +36,7 @@ function Collect({ selected, onClick }) {
         onClick={onClick}
       >
         {collectType === VOCAB_CHAT_TYPE && <Vocabulary />}
-        {collectType === AI_DRAWING_CHAT_TYPE && <div>ai drawing</div>}
+        {collectType === AI_DRAWING_CHAT_TYPE && <AICards />}
       </div>
     </ErrorBoundary>
   );

@@ -28,6 +28,7 @@ import { faBolt } from '@fortawesome/pro-solid-svg-icons/faBolt';
 import { faBook } from '@fortawesome/pro-solid-svg-icons/faBook';
 import { faBriefcase } from '@fortawesome/pro-solid-svg-icons/faBriefcase';
 import { faCameraAlt } from '@fortawesome/pro-solid-svg-icons/faCameraAlt';
+import { faCardsBlank } from '@fortawesome/pro-solid-svg-icons/faCardsBlank';
 import { faCaretDown } from '@fortawesome/pro-solid-svg-icons/faCaretDown';
 import { faCertificate } from '@fortawesome/pro-solid-svg-icons/faCertificate';
 import { faCertificate as farCertificate } from '@fortawesome/pro-regular-svg-icons/faCertificate';
@@ -147,6 +148,7 @@ library.add(
   faBriefcase,
   faCodeBranch,
   faCameraAlt,
+  faCardsBlank,
   faCaretDown,
   faCertificate,
   farCertificate,
