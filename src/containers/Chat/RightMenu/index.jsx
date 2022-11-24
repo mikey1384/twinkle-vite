@@ -6,8 +6,12 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
+import {
+  AI_DRAWING_CHAT_TYPE,
+  VOCAB_CHAT_TYPE
+} from '~/constants/defaultValues';
 import LocalContext from '../Context';
+import AICardInfo from './AICardInfo';
 
 RightMenu.propTypes = {
   channelName: PropTypes.string,
@@ -95,7 +99,8 @@ function RightMenu({
           }
         `}
       >
-        {chatType === VOCAB_CHAT_TYPE && <VocabInfo />}
+        {chatType === AI_DRAWING_CHAT_TYPE ? <AICardInfo /> : null}
+        {chatType === VOCAB_CHAT_TYPE ? <VocabInfo /> : null}
         {(!chatType || chatType === 'default') && (
           <ChatInfo
             channelName={channelName}
