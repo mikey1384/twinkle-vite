@@ -88,7 +88,7 @@ function RightMenu({
       <div
         ref={MenuRef}
         className={css`
-          width: ${chatType === VOCAB_CHAT_TYPE ? '22vw' : '18vw'};
+          flex-grow: 1;
           position: relative;
           background: #fff;
           border-left: 1px solid ${Color.borderGray()};
