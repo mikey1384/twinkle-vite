@@ -155,7 +155,7 @@ function LeftMenu({
             if (vocabMatch && collectType === VOCAB_CHAT_TYPE) return null;
             if (aiCardMatch && collectType === AI_DRAWING_CHAT_TYPE)
               return null;
-            navigate(`/chat/${collectType}`);
+            navigate(`/chat/${collectType || VOCAB_CHAT_TYPE}`);
           }}
         />
         <ChatSearchBox
