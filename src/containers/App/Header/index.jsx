@@ -162,6 +162,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onReceiveMessageOnDifferentChannel = useChatContext(
     (v) => v.actions.onReceiveMessageOnDifferentChannel
   );
+  const onReceiveAICardActivity = useChatContext(
+    (v) => v.actions.onReceiveAICardActivity
+  );
   const onReceiveVocabActivity = useChatContext(
     (v) => v.actions.onReceiveVocabActivity
   );
@@ -304,6 +307,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('new_message_received', handleReceiveMessage);
     socket.on('new_reward_posted', handleNewReward);
     socket.on('new_recommendation_posted', handleNewRecommendation);
+    socket.on('new_ai_card_activity_received', handleNewAiCardActivity);
     socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
     socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
     socket.on('peer_accepted', handlePeerAccepted);
@@ -356,6 +360,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       socket.removeListener('new_notification_received', handleNewNotification);
       socket.removeListener('new_message_received', handleReceiveMessage);
       socket.removeListener('new_reward_posted', handleNewReward);
+      socket.removeListener(
+        'new_ai_card_activity_received',
+        handleNewAiCardActivity
+      );
       socket.removeListener(
         'new_vocab_activity_received',
         handleReceiveVocabActivity
@@ -845,6 +853,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
     function handleUsernameChange({ userId, newUsername }) {
       onSetUserState({ userId, newState: { username: newUsername } });
+    }
+
+    function handleNewAiCardActivity(card) {
+      const senderIsNotTheUser = card.creator.id !== userId;
+      if (senderIsNotTheUser) {
+        onReceiveAICardActivity(card);
+      }
     }
 
     function handleReceiveVocabActivity(activity) {

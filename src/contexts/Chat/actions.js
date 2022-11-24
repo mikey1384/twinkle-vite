@@ -425,6 +425,12 @@ export default function ChatActions(dispatch) {
         newMembers
       });
     },
+    onReceiveAICardActivity(card) {
+      return dispatch({
+        type: 'RECEIVE_AI_CARD_ACTIVITY',
+        card
+      });
+    },
     onReceiveVocabActivity({ activity, usingVocabSection }) {
       return dispatch({
         type: 'RECEIVE_VOCAB_ACTIVITY',
@@ -467,6 +473,12 @@ export default function ChatActions(dispatch) {
       return dispatch({
         type: 'REMOVE_NEW_ACTIVITY_STATUS',
         word
+      });
+    },
+    onRemoveNewlyPostedCardStatus(cardId) {
+      return dispatch({
+        type: 'REMOVE_NEWLY_POSTED_CARD_STATUS',
+        cardId
       });
     },
     onResetChat() {
