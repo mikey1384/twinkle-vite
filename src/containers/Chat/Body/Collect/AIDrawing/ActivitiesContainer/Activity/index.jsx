@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Color, desktopMinWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   cardLevelHash,
   cloudFrontURL,
@@ -120,7 +120,6 @@ export default function Activity({
       }}
       className={css`
         .card {
-          width: 71.5vw;
           position: relative;
           overflow: hidden;
           z-index: 10;
@@ -275,9 +274,11 @@ export default function Activity({
             }
           }
 
-          @media (min-width: ${desktopMinWidth}) {
-            width: clamp(12.9vw, 61vh, 18vw);
-            height: clamp(18vw, 85vh, 25.2vw);
+          width: clamp(12.9vw, 32vh, 30vw);
+          height: clamp(20vw, 46vh, 42vw);
+          @media (max-width: ${mobileMaxWidth}) {
+            width: clamp(25vw, 16vh, 35vw);
+            height: clamp(30vw, 25vh, 50vw);
           }
         }
 
