@@ -1114,7 +1114,10 @@ export default function ChatReducer(state, action) {
     case 'POST_AI_CARD': {
       return {
         ...state,
-        aiImages: state.aiImages.concat(action.card)
+        aiImages: state.aiImages.concat({
+          ...action.card,
+          isNewlyPosted: true
+        })
       };
     }
     case 'LOAD_VOCABULARY': {
@@ -1564,6 +1567,11 @@ export default function ChatReducer(state, action) {
         )
       };
     }
+    case 'RECEIVE_AI_CARD_ACTIVITY':
+      return {
+        ...state,
+        aiImages: state.aiImages.concat(action.card)
+      };
     case 'RECEIVE_VOCAB_ACTIVITY':
       return {
         ...state,
@@ -1644,6 +1652,19 @@ export default function ChatReducer(state, action) {
             isNewActivity: false
           }
         }
+      };
+    case 'REMOVE_NEWLY_POSTED_CARD_STATUS':
+      return {
+        ...state,
+        aiImages: state.aiImages.map((aiImage) => {
+          if (aiImage.id === action.cardId) {
+            return {
+              ...aiImage,
+              isNewlyPosted: false
+            };
+          }
+          return aiImage;
+        })
       };
     case 'RESET_CHAT':
       return initialChatState;

@@ -6,7 +6,9 @@ import {
   cloudFrontURL,
   qualityProps
 } from '~/constants/defaultValues';
+import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
+import { useChatContext } from '~/contexts';
 import Card from './Card';
 import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
@@ -45,6 +47,9 @@ export default function Activity({
     () => cardLevelHash[activity?.level],
     [activity?.level]
   );
+  const onRemoveNewlyPostedCardStatus = useChatContext(
+    (v) => v.actions.onRemoveNewlyPostedCardStatus
+  );
   const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
   const userIsCreator = myId === activity.creator.id;
   const displayedTime = useMemo(
@@ -55,10 +60,20 @@ export default function Activity({
     () => moment.unix(activity.timeStamp).format('MMM D'),
     [activity.timeStamp]
   );
-
   useEffect(() => {
     if (isLastActivity && userIsCreator) {
       onSetScrollToBottom();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (activity.isNewlyPosted && isLastActivity && userIsCreator) {
+      handleSendActivity();
+    }
+    async function handleSendActivity() {
+      socket.emit('new_ai_card_activity', activity);
+      onRemoveNewlyPostedCardStatus(activity.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
