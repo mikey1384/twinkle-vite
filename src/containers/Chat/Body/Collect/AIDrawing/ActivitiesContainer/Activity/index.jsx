@@ -26,6 +26,7 @@ Activity.propTypes = {
   activity: PropTypes.object.isRequired,
   isLastActivity: PropTypes.bool,
   myId: PropTypes.number,
+  onReceiveNewActivity: PropTypes.func.isRequired,
   onSetScrollToBottom: PropTypes.func.isRequired
 };
 
@@ -41,6 +42,7 @@ export default function Activity({
   isLastActivity,
   activity,
   myId,
+  onReceiveNewActivity,
   onSetScrollToBottom
 }) {
   const cardObj = useMemo(
@@ -74,6 +76,14 @@ export default function Activity({
     async function handleSendActivity() {
       socket.emit('new_ai_card_activity', activity);
       onRemoveNewlyPostedCardStatus(activity.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (isLastActivity && activity.isNewlyPosted && !userIsCreator) {
+      onRemoveNewlyPostedCardStatus(activity.id);
+      onReceiveNewActivity();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
