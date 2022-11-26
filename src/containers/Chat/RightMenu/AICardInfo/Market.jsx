@@ -12,7 +12,7 @@ export default function Market() {
       }}
     >
       <FilterBar
-        style={{ height: '4.5rem', fontSize: '1.6rem', marginBottom: 0 }}
+        style={{ height: '4.5rem', fontSize: '1.5rem', marginBottom: 0 }}
       >
         <nav
           className={activeTab === 'buy' ? 'active' : ''}
