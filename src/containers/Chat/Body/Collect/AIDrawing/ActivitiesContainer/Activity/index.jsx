@@ -4,6 +4,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   cardLevelHash,
   cloudFrontURL,
+  cardProps,
   qualityProps
 } from '~/constants/defaultValues';
 import { socket } from '~/constants/io';
@@ -28,14 +29,6 @@ Activity.propTypes = {
   myId: PropTypes.number,
   onReceiveNewActivity: PropTypes.func.isRequired,
   onSetScrollToBottom: PropTypes.func.isRequired
-};
-
-const cardProps = {
-  common: [],
-  superior: ['glowy'],
-  rare: ['glowy', 'glossy'],
-  elite: ['glowy', 'glossy', 'grad'],
-  legendary: ['glowy', 'glossy', 'sparky', 'grad']
 };
 
 export default function Activity({
