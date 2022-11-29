@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { Color } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
+import CardItem from './CardItem';
 
-export default function Collected() {
+export default function CollectedCards() {
   const loadMyAICardCollections = useAppContext(
     (v) => v.requestHelpers.loadMyAICardCollections
   );
@@ -40,7 +41,7 @@ export default function Collected() {
         }}
       >
         {myCards.map((card) => (
-          <div key={card.id}>{card.imagePath}</div>
+          <CardItem key={card.id} card={card} />
         ))}
       </div>
     </div>
