@@ -1049,6 +1049,12 @@ export default function ChatReducer(state, action) {
         }
       };
     }
+    case 'LOAD_MY_AI_CARDS':
+      return {
+        ...state,
+        myCards: action.cards,
+        myCardsLoadMoreButton: action.loadMoreShown
+      };
     case 'LOAD_SUBJECT': {
       const prevChannelObj = state.channelsObj[action.data.channelId];
       const subchannelObj = action.data.subchannelId
