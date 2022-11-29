@@ -17,7 +17,7 @@ CardItem.propTypes = {
 export default function CardItem({ card, index }) {
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
   const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
-  const borderColor = useMemo(() => qualityProps[card.quality].color, [card]);
+  const borderColor = useMemo(() => qualityProps[card.quality]?.color, [card]);
   return (
     <div
       className={css`
@@ -45,7 +45,7 @@ export default function CardItem({ card, index }) {
           flexDirection: 'column',
           justifyContent: 'center',
           backgroundColor: cardColor,
-          border: cardProps[card.quality].includes('glowy')
+          border: cardProps[card.quality]?.includes('glowy')
             ? `3px solid ${borderColor}`
             : 'none'
         }}
