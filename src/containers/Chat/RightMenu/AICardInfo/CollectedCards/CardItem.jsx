@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import Button from '~/components/Button';
 import {
   cardLevelHash,
   cloudFrontURL,
@@ -21,7 +20,13 @@ export default function CardItem({ card, index }) {
   const borderColor = useMemo(() => qualityProps[card.quality].color, [card]);
   return (
     <div
+      className={css`
+        &:hover {
+          background: ${Color.wellGray()};
+        }
+      `}
       style={{
+        cursor: 'pointer',
         height: '10rem',
         display: 'flex',
         alignItems: 'center',
@@ -53,6 +58,7 @@ export default function CardItem({ card, index }) {
       <div style={{ flexGrow: 1, marginLeft: '1rem', height: '100%' }}>
         <div
           style={{
+            position: 'relative',
             width: '100%',
             height: '100%',
             display: 'flex',
@@ -75,26 +81,6 @@ export default function CardItem({ card, index }) {
             }}
           >
             {`"${card.prompt}"`}
-          </div>
-          <div
-            style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <Button
-              filled
-              style={{
-                position: 'absolute',
-                bottom: '0.3rem',
-                right: '1rem',
-                fontSize: '1rem',
-                padding: '0.5rem'
-              }}
-            >
-              Sell
-            </Button>
           </div>
         </div>
       </div>
