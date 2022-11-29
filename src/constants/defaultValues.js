@@ -182,6 +182,14 @@ export const reactionsObj = {
   }
 };
 
+export const cardProps = {
+  common: [],
+  superior: ['glowy'],
+  rare: ['glowy', 'glossy'],
+  elite: ['glowy', 'glossy', 'grad'],
+  legendary: ['glowy', 'glossy', 'sparky', 'grad']
+};
+
 export const qualityProps = {
   common: {
     color: Color.vantaBlack(),

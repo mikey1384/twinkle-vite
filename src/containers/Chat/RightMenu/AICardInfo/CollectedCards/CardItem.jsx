@@ -2,7 +2,12 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
+import {
+  cardLevelHash,
+  cloudFrontURL,
+  cardProps,
+  qualityProps
+} from '~/constants/defaultValues';
 
 CardItem.propTypes = {
   index: PropTypes.number.isRequired,
@@ -12,6 +17,7 @@ CardItem.propTypes = {
 export default function CardItem({ card, index }) {
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
   const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
+  const borderColor = useMemo(() => qualityProps[card.quality].color, [card]);
   return (
     <div
       style={{
@@ -25,12 +31,17 @@ export default function CardItem({ card, index }) {
     >
       <div
         style={{
+          marginLeft: '0.5rem',
+          borderRadius: '3px',
           width: '5rem',
           height: '7rem',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          backgroundColor: cardColor
+          backgroundColor: cardColor,
+          border: cardProps[card.quality].includes('glowy')
+            ? `3px solid ${borderColor}`
+            : 'none'
         }}
       >
         <img
