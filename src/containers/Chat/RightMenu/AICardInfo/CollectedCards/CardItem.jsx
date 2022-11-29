@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import Button from '~/components/Button';
 import {
   cardLevelHash,
   cloudFrontURL,
@@ -49,12 +50,13 @@ export default function CardItem({ card, index }) {
           src={`${cloudFrontURL}${card.imagePath}`}
         />
       </div>
-      <div style={{ flexGrow: 1, marginLeft: '1rem' }}>
+      <div style={{ flexGrow: 1, marginLeft: '1rem', height: '100%' }}>
         <div
           style={{
             width: '100%',
-            textAlign: 'center',
-            fontSize: '1.3rem'
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column'
           }}
           className={css`
             font-size: 1.3rem;
@@ -63,7 +65,37 @@ export default function CardItem({ card, index }) {
             }
           `}
         >
-          {`"${card.prompt}"`}
+          <div
+            style={{
+              fontSize: '1.3rem',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            {`"${card.prompt}"`}
+          </div>
+          <div
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <Button
+              filled
+              style={{
+                position: 'absolute',
+                bottom: '0.3rem',
+                right: '1rem',
+                fontSize: '1rem',
+                padding: '0.5rem'
+              }}
+            >
+              Sell
+            </Button>
+          </div>
         </div>
       </div>
     </div>
