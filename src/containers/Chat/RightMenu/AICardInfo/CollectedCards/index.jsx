@@ -40,8 +40,8 @@ export default function CollectedCards() {
           overflow: 'scroll'
         }}
       >
-        {myCards.map((card) => (
-          <CardItem key={card.id} card={card} />
+        {myCards.map((card, index) => (
+          <CardItem key={card.id} index={index} card={card} />
         ))}
       </div>
     </div>
