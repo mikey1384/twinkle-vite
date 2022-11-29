@@ -33,6 +33,8 @@ export const initialChatState = {
   loadingVocabulary: false,
   loaded: false,
   messages: [],
+  myCards: [],
+  myCardsLoadMoreButton: false,
   numUnreads: 0,
   peerStreams: {},
   recepientId: null,
