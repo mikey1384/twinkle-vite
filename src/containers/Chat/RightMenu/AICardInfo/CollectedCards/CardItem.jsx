@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 
 CardItem.propTypes = {
@@ -16,6 +17,8 @@ export default function CardItem({ card, index }) {
       style={{
         height: '10rem',
         display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
         borderTop: index === 0 ? 0 : `1px solid ${Color.borderGray()}`
       }}
       key={card.id}
@@ -35,7 +38,23 @@ export default function CardItem({ card, index }) {
           src={`${cloudFrontURL}${card.imagePath}`}
         />
       </div>
-      <div>{card.prompt}</div>
+      <div style={{ flexGrow: 1, marginLeft: '1rem' }}>
+        <div
+          style={{
+            width: '100%',
+            textAlign: 'center',
+            fontSize: '1.3rem'
+          }}
+          className={css`
+            font-size: 1.3rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.2rem;
+            }
+          `}
+        >
+          {`"${card.prompt}"`}
+        </div>
+      </div>
     </div>
   );
 }
