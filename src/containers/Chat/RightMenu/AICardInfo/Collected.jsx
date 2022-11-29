@@ -13,7 +13,6 @@ export default function Collected() {
     async function init() {
       const { myCards, myCardsLoadMoreShown } = await loadMyAICardCollections();
       onLoadMyAICards({ cards: myCards, loadMoreShown: myCardsLoadMoreShown });
-      console.log('myCards', myCards, myCardsLoadMoreShown);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
