@@ -447,19 +447,34 @@ export default function Activity({
               width: '100%',
               marginTop: '3rem',
               textAlign: 'center',
-              textTransform: 'capitalize',
               fontWeight: 'bold'
             }}
           >
-            {activity.style}
+            #{activity.id}
           </div>
           <div
             style={{
               textAlign: 'center',
-              marginTop: '9.5rem'
+              marginTop: '10rem'
             }}
           >
-            <span dangerouslySetInnerHTML={{ __html: `"${promptText}"` }} />
+            <span
+              style={{ fontFamily: 'Roboto Mono, monospace' }}
+              dangerouslySetInnerHTML={{ __html: `"${promptText}"` }}
+            />
+          </div>
+          <div
+            style={{
+              textAlign: 'center',
+              marginTop: '12rem',
+              fontSize: '1.2rem',
+              fontFamily: 'helvetica, sans-serif',
+              textTransform: 'capitalize',
+              fontWeight: 'bold',
+              color: Color.darkerGray()
+            }}
+          >
+            {activity.style}
           </div>
         </div>
       </div>
