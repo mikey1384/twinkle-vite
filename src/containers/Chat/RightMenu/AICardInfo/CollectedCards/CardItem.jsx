@@ -18,6 +18,24 @@ export default function CardItem({ card, index }) {
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
   const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
   const borderColor = useMemo(() => qualityProps[card.quality]?.color, [card]);
+  const promptText = useMemo(() => {
+    if (card.word) {
+      const prompt = card.prompt;
+      const word = card.word;
+      const wordIndex = prompt.toLowerCase().indexOf(word.toLowerCase());
+      const isCapitalized =
+        prompt[wordIndex] !== prompt[wordIndex].toLowerCase();
+      const wordToDisplay = isCapitalized
+        ? word[0].toUpperCase() + word.slice(1)
+        : word;
+      const promptToDisplay =
+        prompt.slice(0, wordIndex) +
+        `<b style="color:${Color[cardObj?.color]()}">${wordToDisplay}</b>` +
+        prompt.slice(wordIndex + word.length);
+      return promptToDisplay;
+    }
+    return card.prompt;
+  }, [card.prompt, card.word, cardObj?.color]);
   return (
     <div
       className={css`
@@ -94,9 +112,8 @@ export default function CardItem({ card, index }) {
               fontFamily: 'Roboto Mono, monospace',
               WebkitLineClamp: 1
             }}
-          >
-            {`"${card.prompt}"`}
-          </div>
+            dangerouslySetInnerHTML={{ __html: promptText }}
+          />
           <b
             style={{
               marginTop: '1rem',
