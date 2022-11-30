@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import CardItem from './CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 export default function CollectedCards() {
   const [loadingMore, setLoadingMore] = useState(false);
+  const CardItemsRef = useRef(null);
+  const timeoutRef = useRef(null);
   const {
     loadMoreButton: { color: loadMoreButtonColor },
     myCollection: { color: myCollectionColor, shadow: myCollectionShadowColor }
@@ -30,6 +33,30 @@ export default function CollectedCards() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const CardItems = CardItemsRef.current;
+    addEvent(CardItems, 'scroll', onListScroll);
+
+    function onListScroll() {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        if (
+          myCardsLoadMoreButton &&
+          CardItemsRef.current.scrollTop >=
+            (CardItemsRef.current.scrollHeight -
+              CardItemsRef.current.offsetHeight) *
+              0.7
+        ) {
+          handleLoadMore();
+        }
+      }, 250);
+    }
+
+    return function cleanUp() {
+      removeEvent(CardItems, 'scroll', onListScroll);
+    };
+  });
 
   return (
     <div style={{ width: '100%', height: '50%' }}>
@@ -60,6 +87,7 @@ export default function CollectedCards() {
           height: 'CALC(100% - 5rem)',
           overflow: 'scroll'
         }}
+        ref={CardItemsRef}
       >
         {myCards.map((card, index) => (
           <CardItem key={card.id} index={index} card={card} />
