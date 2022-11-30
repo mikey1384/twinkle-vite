@@ -7,7 +7,8 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 export default function CollectedCards() {
   const [loadingMore, setLoadingMore] = useState(false);
   const {
-    loadMoreButton: { color: loadMoreButtonColor }
+    loadMoreButton: { color: loadMoreButtonColor },
+    myCollection: { color: myCollectionColor, shadow: myCollectionShadowColor }
   } = useKeyContext((v) => v.theme);
   const loadMyAICardCollections = useAppContext(
     (v) => v.requestHelpers.loadMyAICardCollections
@@ -43,7 +44,16 @@ export default function CollectedCards() {
           borderBottom: `1px solid ${Color.borderGray()}`
         }}
       >
-        <b>My Collections</b>
+        <b
+          style={{
+            color: Color[myCollectionColor](),
+            textShadow: myCollectionShadowColor
+              ? `0 0.05rem ${Color[myCollectionShadowColor]()}`
+              : 'none'
+          }}
+        >
+          My Collections
+        </b>
       </div>
       <div
         style={{

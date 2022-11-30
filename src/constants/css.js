@@ -338,6 +338,13 @@ export function Theme(color = 'logoBlue') {
       color: { pink: 'orange', gold: 'magenta' }[color] || 'passionFruit'
     },
     mission: { color: 'orange' },
+    myCollection: {
+      color,
+      shadow:
+        {
+          gold: 'darkBrownOrange'
+        }[color] || ''
+    },
     profilePanel: { color },
     progressBar: { color: { green: 'yellowGreen' }[color] || color },
     reactionButton: { color, opacity: 0.2 },
