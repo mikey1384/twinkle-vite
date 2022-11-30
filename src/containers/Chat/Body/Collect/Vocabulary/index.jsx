@@ -206,7 +206,7 @@ export default function Vocabulary({ loadingVocabulary }) {
           }}
         >
           <nav className="active">Vocabulary</nav>
-          <nav onClick={handleFilterClick}>AI Image Cards</nav>
+          <nav onClick={handleFilterClick}>AI Cards</nav>
         </FilterBar>
       </div>
       {loadingVocabulary ? (

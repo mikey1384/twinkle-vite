@@ -66,12 +66,12 @@ export default function AIDrawing({ loadingAIImageChat }) {
           }}
         >
           <nav onClick={handleFilterClick}>Vocabulary</nav>
-          <nav className="active">AI Image Cards</nav>
+          <nav className="active">AI Cards</nav>
         </FilterBar>
       </div>
       {loadingAIImageChat ? (
         <div style={{ height: 'CALC(100% - 6.5rem)' }}>
-          <Loading style={{ height: '50%' }} text="Loading AI Image Cards" />
+          <Loading style={{ height: '50%' }} text="Loading AI Cards" />
         </div>
       ) : (
         <ActivitiesContainer />

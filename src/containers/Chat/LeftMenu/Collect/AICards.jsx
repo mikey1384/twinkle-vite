@@ -19,9 +19,7 @@ export default function AICards() {
       <div style={{ fontSize: '1.7rem' }}>
         <Icon icon="cards-blank" />
         <span style={{ fontWeight: 'bold', marginLeft: '0.7rem' }}>
-          {lastActivity.userId === myId
-            ? youLabel
-            : lastActivity.creator.username}
+          AI Cards
         </span>
       </div>
       {lastActivity && (
@@ -34,7 +32,10 @@ export default function AICards() {
               width: '100%'
             }}
           >
-            created a{' '}
+            {lastActivity.userId === myId
+              ? youLabel
+              : lastActivity.creator.username}
+            : created a{' '}
             <span style={{ ...qualityProps[lastActivity.quality] }}>
               {lastActivity.quality}
             </span>{' '}

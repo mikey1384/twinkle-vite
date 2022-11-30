@@ -955,9 +955,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           newNotiNum > 0 ? ' *' : ''
         }`;
       } else if (chatType === AI_DRAWING_CHAT_TYPE) {
-        document.title = `${`AI Image Cards | Twinkle`}${
-          newNotiNum > 0 ? ' *' : ''
-        }`;
+        document.title = `${`AI Cards | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
       }
     } else if (
       !['chat', 'comments', 'subjects'].includes(section) &&
