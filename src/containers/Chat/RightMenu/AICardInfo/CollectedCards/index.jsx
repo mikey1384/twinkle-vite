@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import CardItem from './CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 
 export default function CollectedCards() {
+  const [loadingMore, setLoadingMore] = useState(false);
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
@@ -54,7 +55,8 @@ export default function CollectedCards() {
           <LoadMoreButton
             filled
             color={loadMoreButtonColor}
-            onClick={() => console.log('clicked')}
+            loading={loadingMore}
+            onClick={handleLoadMore}
             style={{
               width: '100%',
               borderRadius: 0,
@@ -65,4 +67,8 @@ export default function CollectedCards() {
       </div>
     </div>
   );
+
+  async function handleLoadMore() {
+    setLoadingMore(true);
+  }
 }
