@@ -80,9 +80,10 @@ export default function CardItem({ card, index }) {
             }
           `}
         >
+          <b>#{card.id}</b>
           <div
             style={{
-              fontSize: '1.3rem',
+              fontSize: '1.2rem',
               display: '-webkit-box',
               alignItems: 'center',
               justifyContent: 'center',
@@ -90,11 +91,22 @@ export default function CardItem({ card, index }) {
               wordBreak: 'break-word',
               overflow: 'hidden',
               WebkitBoxOrient: 'vertical',
-              WebkitLineClamp: 3
+              fontFamily: 'Roboto Mono, monospace',
+              WebkitLineClamp: 1
             }}
           >
             {`"${card.prompt}"`}
           </div>
+          <b
+            style={{
+              marginTop: '1rem',
+              fontSize: '1.1rem',
+              fontFamily: 'helvetica, sans-serif',
+              color: Color.darkerGray()
+            }}
+          >
+            {card.style}
+          </b>
         </div>
       </div>
     </div>
