@@ -17,6 +17,9 @@ export default function CollectedCards() {
     (v) => v.state.myCardsLoadMoreButton
   );
   const onLoadMyAICards = useChatContext((v) => v.actions.onLoadMyAICards);
+  const onLoadMoreMyAICards = useChatContext(
+    (v) => v.actions.onLoadMoreMyAICards
+  );
 
   useEffect(() => {
     init();
@@ -70,5 +73,13 @@ export default function CollectedCards() {
 
   async function handleLoadMore() {
     setLoadingMore(true);
+    const lastId = myCards[myCards.length - 1].id;
+    const { myCards: loadedCards, myCardsLoadMoreShown } =
+      await loadMyAICardCollections(lastId);
+    onLoadMoreMyAICards({
+      cards: loadedCards,
+      loadMoreShown: myCardsLoadMoreShown
+    });
+    setLoadingMore(false);
   }
 }

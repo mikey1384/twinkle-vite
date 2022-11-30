@@ -55,7 +55,14 @@ export default function CardItem({ card, index }) {
           src={`${cloudFrontURL}${card.imagePath}`}
         />
       </div>
-      <div style={{ flexGrow: 1, marginLeft: '1rem', height: '100%' }}>
+      <div
+        style={{
+          flexGrow: 1,
+          marginLeft: '1rem',
+          height: '100%',
+          width: '17vw'
+        }}
+      >
         <div
           style={{
             position: 'relative',
@@ -75,9 +82,12 @@ export default function CardItem({ card, index }) {
             style={{
               fontSize: '1.3rem',
               height: '100%',
+              width: '100%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              overflowWrap: 'break-word',
+              wordBreak: 'break-word'
             }}
           >
             {`"${card.prompt}"`}

@@ -1055,6 +1055,12 @@ export default function ChatReducer(state, action) {
         myCards: action.cards,
         myCardsLoadMoreButton: action.loadMoreShown
       };
+    case 'LOAD_MORE_MY_AI_CARDS':
+      return {
+        ...state,
+        myCards: state.myCards.concat(action.cards),
+        myCardsLoadMoreButton: action.loadMoreShown
+      };
     case 'LOAD_SUBJECT': {
       const prevChannelObj = state.channelsObj[action.data.channelId];
       const subchannelObj = action.data.subchannelId
