@@ -38,11 +38,11 @@ export default function CardItem({ card, index }) {
   }, [card.prompt, card.word, cardObj?.color]);
   return (
     <div
-      className={css`
+      className={`unselectable ${css`
         &:hover {
           background: ${Color.wellGray()};
         }
-      `}
+      `}`}
       style={{
         cursor: 'pointer',
         height: '10rem',
