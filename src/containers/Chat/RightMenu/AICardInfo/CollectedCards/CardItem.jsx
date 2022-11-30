@@ -69,7 +69,9 @@ export default function CardItem({ card, index }) {
             width: '100%',
             height: '100%',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
           }}
           className={css`
             font-size: 1.3rem;
@@ -81,13 +83,14 @@ export default function CardItem({ card, index }) {
           <div
             style={{
               fontSize: '1.3rem',
-              height: '100%',
-              width: '100%',
-              display: 'flex',
+              display: '-webkit-box',
               alignItems: 'center',
               justifyContent: 'center',
               overflowWrap: 'break-word',
-              wordBreak: 'break-word'
+              wordBreak: 'break-word',
+              overflow: 'hidden',
+              WebkitBoxOrient: 'vertical',
+              WebkitLineClamp: 3
             }}
           >
             {`"${card.prompt}"`}
