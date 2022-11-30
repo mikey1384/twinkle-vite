@@ -313,6 +313,13 @@ export default function ChatActions(dispatch) {
         loadMoreShown
       });
     },
+    onLoadMoreMyAICards({ cards, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_MORE_MY_AI_CARDS',
+        cards,
+        loadMoreShown
+      });
+    },
     onPostAICard(card) {
       return dispatch({
         type: 'POST_AI_CARD',
