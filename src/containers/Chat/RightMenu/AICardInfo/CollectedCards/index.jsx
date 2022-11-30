@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
 import { Color } from '~/constants/css';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import CardItem from './CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 
 export default function CollectedCards() {
+  const {
+    loadMoreButton: { color: loadMoreButtonColor }
+  } = useKeyContext((v) => v.theme);
   const loadMyAICardCollections = useAppContext(
     (v) => v.requestHelpers.loadMyAICardCollections
   );
@@ -48,7 +51,16 @@ export default function CollectedCards() {
           <CardItem key={card.id} index={index} card={card} />
         ))}
         {myCardsLoadMoreButton && (
-          <LoadMoreButton onClick={() => console.log('clicked')} />
+          <LoadMoreButton
+            filled
+            color={loadMoreButtonColor}
+            onClick={() => console.log('clicked')}
+            style={{
+              width: '100%',
+              borderRadius: 0,
+              border: 0
+            }}
+          />
         )}
       </div>
     </div>
