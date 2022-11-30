@@ -2,12 +2,16 @@ import { useEffect } from 'react';
 import { Color } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import CardItem from './CardItem';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 
 export default function CollectedCards() {
   const loadMyAICardCollections = useAppContext(
     (v) => v.requestHelpers.loadMyAICardCollections
   );
   const myCards = useChatContext((v) => v.state.myCards);
+  const myCardsLoadMoreButton = useChatContext(
+    (v) => v.state.myCardsLoadMoreButton
+  );
   const onLoadMyAICards = useChatContext((v) => v.actions.onLoadMyAICards);
 
   useEffect(() => {
@@ -43,6 +47,9 @@ export default function CollectedCards() {
         {myCards.map((card, index) => (
           <CardItem key={card.id} index={index} card={card} />
         ))}
+        {myCardsLoadMoreButton && (
+          <LoadMoreButton onClick={() => console.log('clicked')} />
+        )}
       </div>
     </div>
   );
