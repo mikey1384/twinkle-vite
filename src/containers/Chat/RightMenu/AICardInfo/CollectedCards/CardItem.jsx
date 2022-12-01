@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -8,6 +8,8 @@ import {
   cardProps,
   qualityProps
 } from '~/constants/defaultValues';
+import AICardModal from '~/components/Modals/AICardModal';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 CardItem.propTypes = {
   index: PropTypes.number.isRequired,
@@ -15,6 +17,7 @@ CardItem.propTypes = {
 };
 
 export default function CardItem({ card, index }) {
+  const [cardModalShown, setCardModalShown] = useState(false);
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
   const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
   const borderColor = useMemo(() => qualityProps[card.quality]?.color, [card]);
@@ -37,95 +40,101 @@ export default function CardItem({ card, index }) {
     return card.prompt;
   }, [card.prompt, card.word, cardObj?.color]);
   return (
-    <div
-      className={`unselectable ${css`
-        &:hover {
-          background: ${Color.wellGray()};
-        }
-      `}`}
-      style={{
-        cursor: 'pointer',
-        height: '10rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        borderTop: index === 0 ? 0 : `1px solid ${Color.borderGray()}`
-      }}
-      key={card.id}
-    >
+    <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/CollectedCards/CardItem">
       <div
+        className={`unselectable ${css`
+          &:hover {
+            background: ${Color.wellGray()};
+          }
+        `}`}
         style={{
-          marginLeft: '0.5rem',
-          borderRadius: '3px',
-          width: '5rem',
-          height: '7rem',
+          cursor: 'pointer',
+          height: '10rem',
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          backgroundColor: cardColor,
-          border: cardProps[card.quality]?.includes('glowy')
-            ? `3px solid ${borderColor}`
-            : 'none'
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          borderTop: index === 0 ? 0 : `1px solid ${Color.borderGray()}`
         }}
-      >
-        <img
-          style={{ width: '100%' }}
-          src={`${cloudFrontURL}${card.imagePath}`}
-        />
-      </div>
-      <div
-        style={{
-          flexGrow: 1,
-          marginLeft: '1rem',
-          height: '100%',
-          width: '17vw'
-        }}
+        onClick={() => setCardModalShown(true)}
+        key={card.id}
       >
         <div
           style={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
+            marginLeft: '0.5rem',
+            borderRadius: '3px',
+            width: '5rem',
+            height: '7rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            alignItems: 'center'
+            backgroundColor: cardColor,
+            border: cardProps[card.quality]?.includes('glowy')
+              ? `3px solid ${borderColor}`
+              : 'none'
           }}
-          className={css`
-            font-size: 1.3rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.2rem;
-            }
-          `}
         >
-          <b>#{card.id}</b>
+          <img
+            style={{ width: '100%' }}
+            src={`${cloudFrontURL}${card.imagePath}`}
+          />
+        </div>
+        <div
+          style={{
+            flexGrow: 1,
+            marginLeft: '1rem',
+            height: '100%',
+            width: '17vw'
+          }}
+        >
           <div
             style={{
-              fontSize: '1.2rem',
-              display: '-webkit-box',
-              alignItems: 'center',
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
               justifyContent: 'center',
-              overflowWrap: 'break-word',
-              wordBreak: 'break-word',
-              overflow: 'hidden',
-              WebkitBoxOrient: 'vertical',
-              fontFamily: 'Roboto Mono, monospace',
-              WebkitLineClamp: 1
+              alignItems: 'center'
             }}
-            dangerouslySetInnerHTML={{ __html: promptText }}
-          />
-          <b
-            style={{
-              marginTop: '1rem',
-              fontSize: '1.1rem',
-              fontFamily: 'helvetica, sans-serif',
-              color: Color.darkerGray()
-            }}
+            className={css`
+              font-size: 1.3rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.2rem;
+              }
+            `}
           >
-            {card.style}
-          </b>
+            <b>#{card.id}</b>
+            <div
+              style={{
+                fontSize: '1.2rem',
+                display: '-webkit-box',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflowWrap: 'break-word',
+                wordBreak: 'break-word',
+                overflow: 'hidden',
+                WebkitBoxOrient: 'vertical',
+                fontFamily: 'Roboto Mono, monospace',
+                WebkitLineClamp: 1
+              }}
+              dangerouslySetInnerHTML={{ __html: promptText }}
+            />
+            <b
+              style={{
+                marginTop: '1rem',
+                fontSize: '1.1rem',
+                fontFamily: 'helvetica, sans-serif',
+                color: Color.darkerGray()
+              }}
+            >
+              {card.style}
+            </b>
+          </div>
         </div>
       </div>
-    </div>
+      {cardModalShown && (
+        <AICardModal onHide={() => setCardModalShown(false)} />
+      )}
+    </ErrorBoundary>
   );
 }
