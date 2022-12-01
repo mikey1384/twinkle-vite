@@ -56,6 +56,91 @@ export function initializeChessBoard({ initialState, loading, myId }) {
   return resultBoard || defaultBoard;
 }
 
+export function chessStateJSONToFen(chessStateJSON) {
+  if (!chessStateJSON) return '';
+  const board = chessStateJSON.board;
+  let fenString = '';
+  for (let i = 0; i < board.length; i += 8) {
+    let rank = board.slice(i, i + 8);
+    let rankString = '';
+    let emptyCount = 0;
+    for (let j = 0; j < rank.length; j++) {
+      if (rank[j].isPiece) {
+        if (emptyCount > 0) {
+          rankString += emptyCount;
+          emptyCount = 0;
+        }
+        rankString += getPieceSymbol(rank[j]);
+      } else {
+        emptyCount++;
+      }
+    }
+
+    if (emptyCount > 0) {
+      rankString += emptyCount;
+    }
+    fenString += rankString + '/';
+  }
+
+  fenString = fenString.slice(0, -1);
+  const turn = chessStateJSON.playerColors[1] === 'white' ? 'w' : 'b';
+  fenString += ' ' + turn + ' ';
+  const castlingStatus = getCastlingStatus(chessStateJSON);
+  fenString += castlingStatus + ' ';
+  const enPassantTarget = chessStateJSON.enPassantTarget
+    ? chessStateJSON.enPassantTarget
+    : '-';
+  fenString += enPassantTarget + ' ';
+  const halfMove = chessStateJSON.move.number;
+  fenString += halfMove + ' ';
+  const fullMove = Math.ceil(halfMove / 2);
+  fenString += fullMove;
+  return fenString;
+
+  function getPieceSymbol(piece) {
+    let pieceSymbol = '';
+    if (piece.color === 'white') {
+      if (piece.type === 'knight') {
+        pieceSymbol += 'N';
+      } else {
+        pieceSymbol += piece.type.charAt(0).toUpperCase();
+      }
+    } else {
+      if (piece.type === 'knight') {
+        pieceSymbol += 'n';
+      } else {
+        pieceSymbol += piece.type.charAt(0).toLowerCase();
+      }
+    }
+    return pieceSymbol;
+  }
+
+  function getCastlingStatus(chessStateJSON) {
+    const king = chessStateJSON.board.find(
+      (p) => p.isPiece && p.type === 'king' && p.color === 'white'
+    );
+    const kingIndex = chessStateJSON.board.indexOf(king);
+    let castlingStatus = 'KQkq';
+    if (kingIndex !== 4) {
+      castlingStatus = '-';
+    } else {
+      if (chessStateJSON.board[0].isPiece === false) {
+        castlingStatus = castlingStatus.replace('Q', '');
+      }
+      if (chessStateJSON.board[7].isPiece === false) {
+        castlingStatus = castlingStatus.replace('K', '');
+      }
+      if (chessStateJSON.board[56].isPiece === false) {
+        castlingStatus = castlingStatus.replace('q', '');
+      }
+      if (chessStateJSON.board[63].isPiece === false) {
+        castlingStatus = castlingStatus.replace('k', '');
+      }
+    }
+    return castlingStatus;
+  }
+}
+
 export function checkerPos({ squares, kingIndex, myColor }) {
   const result = [];
   for (let i = 0; i < squares.length; i++) {
