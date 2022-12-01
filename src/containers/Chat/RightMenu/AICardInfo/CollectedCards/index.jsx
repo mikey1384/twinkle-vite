@@ -8,9 +8,11 @@ import {
 } from '~/contexts';
 import CardItem from './CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import Loading from '~/components/Loading';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 export default function CollectedCards() {
+  const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const CardItemsRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -34,8 +36,10 @@ export default function CollectedCards() {
   useEffect(() => {
     init();
     async function init() {
+      setLoaded(false);
       const { myCards, myCardsLoadMoreShown } = await loadMyAICardCollections();
       onLoadMyAICards({ cards: myCards, loadMoreShown: myCardsLoadMoreShown });
+      setLoaded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socketConnected]);
@@ -95,10 +99,25 @@ export default function CollectedCards() {
         }}
         ref={CardItemsRef}
       >
-        {myCards.map((card, index) => (
-          <CardItem key={card.id} index={index} card={card} />
-        ))}
-        {myCardsLoadMoreButton && (
+        {!loaded ? (
+          <Loading style={{ height: '100%' }} />
+        ) : myCards.length === 0 ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 'CALC(100% - 2rem)'
+            }}
+          >
+            <b style={{ color: Color.darkerGray() }}>No cards collected</b>
+          </div>
+        ) : (
+          myCards.map((card, index) => (
+            <CardItem key={card.id} index={index} card={card} />
+          ))
+        )}
+        {loaded && myCardsLoadMoreButton && (
           <LoadMoreButton
             filled
             color={loadMoreButtonColor}
