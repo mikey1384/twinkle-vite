@@ -133,7 +133,7 @@ export default function CardItem({ card, index }) {
         </div>
       </div>
       {cardModalShown && (
-        <AICardModal onHide={() => setCardModalShown(false)} />
+        <AICardModal card={card} onHide={() => setCardModalShown(false)} />
       )}
     </ErrorBoundary>
   );
