@@ -9,6 +9,28 @@ export function checkScrollIsAtTheBottom({ content, container }) {
   return content.offsetHeight <= container.offsetHeight + container.scrollTop;
 }
 
+export function convertChessBoardArrayToFen(board) {
+  const fenRows = board.map((square) => {
+    if (square.state === '') {
+      return '-';
+    } else if (square.color === 'black') {
+      return square.type[0].toLowerCase();
+    } else {
+      return square.type[0].toUpperCase();
+    }
+  });
+
+  const fenString = fenRows.reduce((acc, val, index) => {
+    if (index % 8 === 0 && index > 0) {
+      return acc + '/' + val;
+    } else {
+      return acc + val;
+    }
+  }, '');
+
+  return fenString;
+}
+
 export function determineUserCanRewardThis({
   canReward,
   authLevel,
