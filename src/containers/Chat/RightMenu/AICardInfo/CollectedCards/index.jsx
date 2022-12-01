@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
+import {
+  useAppContext,
+  useNotiContext,
+  useKeyContext,
+  useChatContext
+} from '~/contexts';
 import CardItem from './CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
@@ -17,6 +22,7 @@ export default function CollectedCards() {
     (v) => v.requestHelpers.loadMyAICardCollections
   );
   const myCards = useChatContext((v) => v.state.myCards);
+  const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const myCardsLoadMoreButton = useChatContext(
     (v) => v.state.myCardsLoadMoreButton
   );
@@ -32,7 +38,7 @@ export default function CollectedCards() {
       onLoadMyAICards({ cards: myCards, loadMoreShown: myCardsLoadMoreShown });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [socketConnected]);
 
   useEffect(() => {
     const CardItems = CardItemsRef.current;
