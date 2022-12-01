@@ -9,7 +9,7 @@ AICardModal.propTypes = {
 
 export default function AICardModal({ card, onHide }) {
   return (
-    <Modal modalOverModal onHide={onHide}>
+    <Modal large modalOverModal onHide={onHide}>
       <header>#{card.id}</header>
       <main>this is ai card modal</main>
       <footer>
