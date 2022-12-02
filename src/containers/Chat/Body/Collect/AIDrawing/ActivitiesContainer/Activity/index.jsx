@@ -1,11 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
-import {
-  cardLevelHash,
-  cloudFrontURL,
-  cardProps
-} from '~/constants/defaultValues';
+import { cardLevelHash } from '~/constants/defaultValues';
 import { socket } from '~/constants/io';
 import { useChatContext } from '~/contexts';
 import useCardCss from '~/helpers/hooks/useCardCss';
@@ -128,12 +124,7 @@ export default function Activity({
             at {displayedTime}, {displayedDate}
           </div>
         </div>
-        <AICard
-          cardProps={cardProps}
-          card={card}
-          quality={card.quality}
-          frontPicUrl={`${cloudFrontURL}${card.imagePath}`}
-        />
+        <AICard card={card} quality={card.quality} imagePath={card.imagePath} />
         <div
           style={{
             width: '35%',
