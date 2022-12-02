@@ -5,7 +5,7 @@ import { useSpring, animated } from 'react-spring';
 import { useGesture } from '@use-gesture/react';
 import $ from 'jquery';
 
-Card.propTypes = {
+AICard.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
   cardProps: PropTypes.object.isRequired,
   frontPicUrl: PropTypes.string.isRequired,
@@ -14,7 +14,7 @@ Card.propTypes = {
 
 const $style = $('#animation');
 
-export default function Card({
+export default function AICard({
   animateOnMouseLeave,
   cardProps,
   frontPicUrl,

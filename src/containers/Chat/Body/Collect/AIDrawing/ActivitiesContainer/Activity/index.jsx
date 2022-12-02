@@ -9,7 +9,7 @@ import {
 import { socket } from '~/constants/io';
 import { useChatContext } from '~/contexts';
 import useCardCss from '~/helpers/hooks/useCardCss';
-import Card from './Card';
+import AICard from '~/components/AICard';
 import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
 import moment from 'moment';
@@ -128,7 +128,7 @@ export default function Activity({
             at {displayedTime}, {displayedDate}
           </div>
         </div>
-        <Card
+        <AICard
           cardProps={cardProps}
           card={card}
           quality={card.quality}
