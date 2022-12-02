@@ -524,84 +524,33 @@ export function processedStringWithURL(string) {
   return applyTextEffects(splitNewStringWithTextEffects.join('<a href'), true);
 
   function applyTextSize(string) {
-    const hugeWordRegex = /(h\[[^\s]+\]h)/gi;
-    const hugeSentenceRegex =
-      /((h\[[^\s]){1}((?!(h\[|\]h))[^\n])+([^\s]\]h){1})/gi;
-    const bigWordRegex = /(b\[[^\s]+\]b)/gi;
-    const bigSentenceRegex =
-      /((b\[[^\s]){1}((?!(b\[|\]b))[^\n])+([^\s]\]b){1})/gi;
-    const smallWordRegex = /(s\[[^\s]+\]s)/gi;
-    const smallSentenceRegex =
-      /((s\[[^\s]){1}((?!(s\[|\]s))[^\n])+([^\s]\]s){1})/gi;
-    const tinyWordRegex = /(t\[[^\s]+\]t)/gi;
-    const tinySentenceRegex =
-      /((t\[[^\s]){1}((?!(t\[|\]t))[^\n])+([^\s]\]t){1})/gi;
+    const sizeRegex = {
+      huge: /(h\[[^\s]+\]h)|((h\[[^\s]){1}((?!(h\[|\]h))[^\n])+([^\s]\]h){1})/gi,
+      big: /(b\[[^\s]+\]b)|((b\[[^\s]){1}((?!(b\[|\]b))[^\n])+([^\s]\]b){1})/gi,
+      small:
+        /(s\[[^\s]+\]s)|((s\[[^\s]){1}((?!(s\[|\]s))[^\n])+([^\s]\]s){1})/gi,
+      tiny: /(t\[[^\s]+\]t)|((t\[[^\s]){1}((?!(t\[|\]t))[^\n])+([^\s]\]t){1})/gi
+    };
+    const fontSizes = {
+      huge: '1.9em',
+      big: '1.4em',
+      small: '0.7em',
+      tiny: '0.5em'
+    };
+    let outputString = string;
 
-    return string
-      .replace(
-        hugeWordRegex,
+    Object.keys(sizeRegex).forEach((key) => {
+      outputString = outputString.replace(
+        sizeRegex[key],
         (string) =>
-          `<span style="font-size: 1.9em;">${string.substring(
-            2,
-            string.length - 2
-          )}</span>`
-      )
-      .replace(
-        bigWordRegex,
-        (string) =>
-          `<span style="font-size: 1.4em;">${string.substring(
-            2,
-            string.length - 2
-          )}</span>`
-      )
-      .replace(
-        smallWordRegex,
-        (string) =>
-          `<span style="font-size: 0.7em;">${string.substring(
-            2,
-            string.length - 2
-          )}</span>`
-      )
-      .replace(
-        tinyWordRegex,
-        (string) =>
-          `<span style="font-size: 0.5em;">${string.substring(
-            2,
-            string.length - 2
-          )}</span>`
-      )
-      .replace(
-        smallSentenceRegex,
-        (string) =>
-          `<span style="font-size: 0.7em;">${string.substring(
-            2,
-            string.length - 2
-          )}</span>`
-      )
-      .replace(
-        tinySentenceRegex,
-        (string) =>
-          `<span style="font-size: 0.5em;">${string.substring(
-            2,
-            string.length - 2
-          )}</span>`
-      )
-      .replace(
-        bigSentenceRegex,
-        (string) =>
-          `<span style="font-size: 1.4em;">${string.substring(
-            2,
-            string.length - 2
-          )}</span>`
-      )
-      .replace(
-        hugeSentenceRegex,
-        (string) =>
-          `<span style="font-size: 1.9em;">${string.substring(
+          `<span style="font-size: ${fontSizes[key]};">${string.substring(
             2,
             string.length - 2
           )}</span>`
       );
+    });
+
+    return outputString;
   }
 }
 
