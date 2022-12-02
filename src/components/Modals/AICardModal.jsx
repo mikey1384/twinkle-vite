@@ -11,7 +11,7 @@ export default function AICardModal({ card, onHide }) {
   return (
     <Modal large modalOverModal onHide={onHide}>
       <header>#{card.id}</header>
-      <main>this is ai card modal</main>
+      <main>ok</main>
       <footer>
         <Button transparent onClick={onHide}>
           Close

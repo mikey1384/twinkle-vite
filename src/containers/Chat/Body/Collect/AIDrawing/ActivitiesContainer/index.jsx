@@ -110,7 +110,7 @@ export default function ActivitiesContainer() {
           return (
             <Activity
               key={row.id}
-              activity={row}
+              card={row}
               isLastActivity={index === aiImageRows.length - 1}
               onReceiveNewActivity={handleReceiveNewActivity}
               onSetScrollToBottom={handleSetScrollToBottom}
