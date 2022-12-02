@@ -4,10 +4,10 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
-import correct from './correct_sound.mp3';
 import { isMobile } from '~/helpers';
 
 Main.propTypes = {
+  correctSound: PropTypes.object,
   isOnStreak: PropTypes.bool,
   onGameFinish: PropTypes.func.isRequired,
   onSetQuestionObj: PropTypes.func.isRequired,
@@ -16,13 +16,13 @@ Main.propTypes = {
 };
 
 const deviceIsMobile = isMobile(navigator);
-const correctSound = new Audio(correct);
 const delay = 1000;
 let elapsedTime = 0;
 let timer = null;
 let gotWrongTimer = null;
 
 export default function Main({
+  correctSound,
   isOnStreak,
   onSetQuestionObj,
   onGameFinish,
@@ -151,6 +151,7 @@ export default function Main({
       return 'F';
     }
   }, [
+    correctSound,
     currentIndex,
     gotWrong,
     onGameFinish,
