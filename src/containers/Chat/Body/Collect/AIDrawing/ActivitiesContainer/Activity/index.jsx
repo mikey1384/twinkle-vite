@@ -1,10 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
-import { cardLevelHash } from '~/constants/defaultValues';
 import { socket } from '~/constants/io';
 import { useChatContext } from '~/contexts';
-import useCardCss from '~/helpers/hooks/useCardCss';
+import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
 import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
@@ -25,8 +24,7 @@ export default function Activity({
   onReceiveNewActivity,
   onSetScrollToBottom
 }) {
-  const cardCss = useCardCss(card);
-  const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
+  const { cardCss, promptText } = useAICard(card);
   const onRemoveNewlyPostedCardStatus = useChatContext(
     (v) => v.actions.onRemoveNewlyPostedCardStatus
   );
@@ -64,25 +62,6 @@ export default function Activity({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const promptText = useMemo(() => {
-    if (card.word) {
-      const prompt = card.prompt;
-      const word = card.word;
-      const wordIndex = prompt.toLowerCase().indexOf(word.toLowerCase());
-      const isCapitalized =
-        prompt[wordIndex] !== prompt[wordIndex].toLowerCase();
-      const wordToDisplay = isCapitalized
-        ? word[0].toUpperCase() + word.slice(1)
-        : word;
-      const promptToDisplay =
-        prompt.slice(0, wordIndex) +
-        `<b style="color:${Color[cardObj?.color]()}">${wordToDisplay}</b>` +
-        prompt.slice(wordIndex + word.length);
-      return promptToDisplay;
-    }
-    return card.prompt;
-  }, [card.prompt, card.word, cardObj?.color]);
 
   return (
     <div
