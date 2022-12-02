@@ -111,18 +111,23 @@ export default function AICardModal({ card, onHide }) {
             <div
               style={{
                 width: '100%',
+                height: '100%',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
                 flexDirection: 'column'
               }}
             >
-              <div>
+              <div
+                style={{ height: '50%', display: 'flex', alignItems: 'center' }}
+              >
                 <Button color="oceanBlue" filled style={{ border: 'none' }}>
                   Sell
                 </Button>
               </div>
-              <div>
+              <div
+                style={{ height: '50%', display: 'flex', alignItems: 'center' }}
+              >
                 <Button color="oceanGreen" filled style={{ border: 'none' }}>
                   Burn
                 </Button>
