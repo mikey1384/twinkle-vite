@@ -10,7 +10,7 @@ AICardModal.propTypes = {
 };
 
 export default function AICardModal({ card, onHide }) {
-  const { cardCss } = useAICard(card);
+  const { cardCss, promptText } = useAICard(card);
 
   return (
     <Modal large modalOverModal onHide={onHide}>
@@ -41,6 +41,10 @@ export default function AICardModal({ card, onHide }) {
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
             <div>
               <div>
+                <span
+                  style={{ fontFamily: 'Roboto Mono, monospace' }}
+                  dangerouslySetInnerHTML={{ __html: `"${promptText}"` }}
+                />
                 <Button color="oceanBlue" filled style={{ border: 'none' }}>
                   Sell
                 </Button>
