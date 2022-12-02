@@ -1,25 +1,21 @@
 import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
+import { cardProps, cloudFrontURL } from '~/constants/defaultValues';
 import { useSpring, animated } from 'react-spring';
 import { useGesture } from '@use-gesture/react';
 import $ from 'jquery';
 
 AICard.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
-  cardProps: PropTypes.object.isRequired,
-  frontPicUrl: PropTypes.string.isRequired,
+  imagePath: PropTypes.string,
   quality: PropTypes.string
 };
 
 const $style = $('#animation');
 
-export default function AICard({
-  animateOnMouseLeave,
-  cardProps,
-  frontPicUrl,
-  quality
-}) {
+export default function AICard({ animateOnMouseLeave, imagePath, quality }) {
+  const frontPicUrl = `${cloudFrontURL}${imagePath}`;
   const timerRef = useRef(null);
   const CardRef = useRef(null);
   const [isAnimated, setIsAnimated] = useState(false);
