@@ -20,8 +20,8 @@ export default function AICardModal({ card, onHide }) {
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
-            gridColumnGap: '16px',
-            gridRowGap: '16px'
+            gridColumnGap: 'calc(5rem / 1600px * 100vw)',
+            gridRowGap: '2rem'
           }}
         >
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
@@ -36,15 +36,17 @@ export default function AICardModal({ card, onHide }) {
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
             <div className="info">
               <div>Level: {card.level}</div>
-            </div>
-          </div>
-          <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
-            <div>
               <div>
                 <span
                   style={{ fontFamily: 'Roboto Mono, monospace' }}
                   dangerouslySetInnerHTML={{ __html: `"${promptText}"` }}
                 />
+              </div>
+            </div>
+          </div>
+          <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
+            <div>
+              <div>
                 <Button color="oceanBlue" filled style={{ border: 'none' }}>
                   Sell
                 </Button>
