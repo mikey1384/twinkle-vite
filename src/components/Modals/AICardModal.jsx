@@ -3,6 +3,8 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
+import { Color } from '~/constants/css';
+import { qualityProps } from '~/constants/defaultValues';
 
 AICardModal.propTypes = {
   card: PropTypes.object.isRequired,
@@ -19,6 +21,7 @@ export default function AICardModal({ card, onHide }) {
         <div
           style={{
             display: 'grid',
+            height: '100%',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gridColumnGap: 'calc(5rem / 1600px * 100vw)',
             gridRowGap: '2rem'
@@ -33,14 +36,58 @@ export default function AICardModal({ card, onHide }) {
               />
             </div>
           </div>
-          <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
-            <div className="info">
-              <div>Level: {card.level}</div>
-              <div>
-                <span
-                  style={{ fontFamily: 'Roboto Mono, monospace' }}
-                  dangerouslySetInnerHTML={{ __html: `"${promptText}"` }}
-                />
+          <div
+            style={{ gridColumn: 'span 1', gridRow: 'span 1', height: '100%' }}
+          >
+            <div
+              style={{
+                gridColumn: 'span 1',
+                gridRow: 'span 1',
+                height: '100%'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  height: '100%'
+                }}
+              >
+                <div>
+                  <span
+                    style={{
+                      ...qualityProps[card.quality],
+                      fontSize: '1.3rem',
+                      marginBottom: '1rem'
+                    }}
+                  >
+                    {card.quality}
+                  </span>{' '}
+                  card
+                </div>
+                <div>
+                  <span
+                    style={{
+                      fontFamily: 'Roboto Mono, monospace',
+                      fontSize: '1.5rem',
+                      marginBottom: '1rem'
+                    }}
+                    dangerouslySetInnerHTML={{ __html: `"${promptText}"` }}
+                  />
+                </div>
+                <div>
+                  <b
+                    style={{
+                      fontSize: '1.2rem',
+                      fontFamily: 'helvetica, sans-serif',
+                      color: Color.darkerGray()
+                    }}
+                  >
+                    {card.style}
+                  </b>
+                </div>
               </div>
             </div>
           </div>
