@@ -524,12 +524,17 @@ export function processedStringWithURL(string) {
   return applyTextEffects(splitNewStringWithTextEffects.join('<a href'), true);
 
   function applyTextSize(string) {
-    const sizeRegex = {
-      huge: /(h\[[^\s]+\]h)|((h\[[^\s]){1}((?!(h\[|\]h))[^\n])+([^\s]\]h){1})/gi,
-      big: /(b\[[^\s]+\]b)|((b\[[^\s]){1}((?!(b\[|\]b))[^\n])+([^\s]\]b){1})/gi,
-      small:
-        /(s\[[^\s]+\]s)|((s\[[^\s]){1}((?!(s\[|\]s))[^\n])+([^\s]\]s){1})/gi,
-      tiny: /(t\[[^\s]+\]t)|((t\[[^\s]){1}((?!(t\[|\]t))[^\n])+([^\s]\]t){1})/gi
+    const wordRegex = {
+      huge: /(h\[[^\s]+\]h)/gi,
+      big: /(b\[[^\s]+\]b)/gi,
+      small: /(s\[[^\s]+\]s)/gi,
+      tiny: /(t\[[^\s]+\]t)/gi
+    };
+    const sentenceRegex = {
+      huge: /((h\[[^\s]){1}((?!(h\[|\]h))[^\n])+([^\s]\]h){1})/gi,
+      big: /((b\[[^\s]){1}((?!(b\[|\]b))[^\n])+([^\s]\]b){1})/gi,
+      small: /((s\[[^\s]){1}((?!(s\[|\]s))[^\n])+([^\s]\]s){1})/gi,
+      tiny: /((t\[[^\s]){1}((?!(t\[|\]t))[^\n])+([^\s]\]t){1})/gi
     };
     const fontSizes = {
       huge: '1.9em',
@@ -537,11 +542,23 @@ export function processedStringWithURL(string) {
       small: '0.7em',
       tiny: '0.5em'
     };
+
     let outputString = string;
 
-    Object.keys(sizeRegex).forEach((key) => {
+    Object.keys(wordRegex).forEach((key) => {
       outputString = outputString.replace(
-        sizeRegex[key],
+        wordRegex[key],
+        (string) =>
+          `<span style="font-size: ${fontSizes[key]};">${string.substring(
+            2,
+            string.length - 2
+          )}</span>`
+      );
+    });
+
+    Object.keys(sentenceRegex).forEach((key) => {
+      outputString = outputString.replace(
+        sentenceRegex[key],
         (string) =>
           `<span style="font-size: ${fontSizes[key]};">${string.substring(
             2,
