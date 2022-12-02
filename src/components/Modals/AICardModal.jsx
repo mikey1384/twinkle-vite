@@ -123,16 +123,34 @@ export default function AICardModal({ card, onHide }) {
               }}
             >
               <div
-                style={{ height: '50%', display: 'flex', alignItems: 'center' }}
+                style={{
+                  height: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column'
+                }}
               >
+                <p style={{ marginBottom: '2rem' }}>
+                  {`List this card on the market so others can buy it. You can set the price and choose how long you want it to be listed for.`}
+                </p>
                 <Button color="oceanBlue" filled style={{ border: 'none' }}>
                   <Icon icon="shopping-cart" />
                   <span style={{ marginLeft: '0.7rem' }}>Sell</span>
                 </Button>
               </div>
               <div
-                style={{ height: '50%', display: 'flex', alignItems: 'center' }}
+                style={{
+                  height: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column'
+                }}
               >
+                <p style={{ marginBottom: '2rem' }}>
+                  {`Destroy this card and receive XP based on its quality and color. The higher the quality and the more valuable the color, the more XP you will receive. This action is irreversible, so use it wisely."`}
+                </p>
                 <Button
                   onClick={() => setIsBurned(true)}
                   color="redOrange"
