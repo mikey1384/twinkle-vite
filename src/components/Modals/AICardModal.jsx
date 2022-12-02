@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
 import SanitizedHTML from 'react-sanitized-html';
+import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { qualityProps } from '~/constants/defaultValues';
 
@@ -125,7 +126,8 @@ export default function AICardModal({ card, onHide }) {
                 style={{ height: '50%', display: 'flex', alignItems: 'center' }}
               >
                 <Button color="oceanBlue" filled style={{ border: 'none' }}>
-                  Sell
+                  <Icon icon="shopping-cart" />
+                  <span style={{ marginLeft: '0.7rem' }}>Sell</span>
                 </Button>
               </div>
               <div
@@ -133,11 +135,12 @@ export default function AICardModal({ card, onHide }) {
               >
                 <Button
                   onClick={() => setIsBurned(true)}
-                  color="oceanGreen"
+                  color="redOrange"
                   filled
                   style={{ border: 'none' }}
                 >
-                  Burn
+                  <Icon icon="fire" />
+                  <span style={{ marginLeft: '0.7rem' }}>Burn</span>
                 </Button>
               </div>
             </div>
