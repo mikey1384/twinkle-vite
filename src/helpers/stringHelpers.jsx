@@ -622,36 +622,25 @@ export function applyTextEffects(string, finalProcessing) {
     /(((?![0-9\.])g\|[^\s]+\|g(?![0-9]))|(((g\|[^\s]){1}((?!(g\||\|g))[^\n])+([^\s]\|g){1})(?![0-9\.])))/gi;
   const limeRegex =
     /(((?![0-9\.])l\|[^\s]+\|l(?![0-9]))|(((l\|[^\s]){1}((?!(l\||\|l))[^\n])+([^\s]\|l){1})(?![0-9\.])))/gi;
-  const logoBlueWordRegex = /(lb\|[^\s]+\|lb)/gi;
-  const logoBlueSentenceRegex =
-    /((lb\|[^\s]){1}((?!(lb\||\|lb))[^\n])+([^\s]\|lb){1})/gi;
-  const orangeWordRegex = /(o\|[^\s]+\|o)/gi;
-  const orangeSentenceRegex =
-    /((o\|[^\s]){1}((?!(o\||\|o))[^\n])+([^\s]\|o){1})/gi;
-  const passionFruitWordRegex = /(pf\|[^\s]+\|pf)/gi;
-  const passionFruitSentenceRegex =
-    /((pf\|[^\s]){1}((?!(pf\||\|pf))[^\n])+([^\s]\|pf){1})/gi;
-  const pinkWordRegex = /(p\|[^\s]+\|p)/gi;
-  const pinkSentenceRegex =
-    /((p\|[^\s]){1}((?!(p\||\|p))[^\n])+([^\s]\|p){1})/gi;
-  const purpleWordRegex = /(pu\|[^\s]+\|pu)/gi;
-  const purpleSentenceRegex =
-    /((pu\|[^\s]){1}((?!(pu\||\|pu))[^\n])+([^\s]\|pu){1})/gi;
-  const redWordRegex = /(r\|[^\s]+\|r)/gi;
-  const redSentenceRegex =
-    /((r\|[^\s]){1}((?!(r\||\|r))[^\n])+([^\s]\|r){1})/gi;
-  const yellowWordRegex = /(y\|[^\s]+\|y)/gi;
-  const yellowSentenceRegex =
-    /((y\|[^\s]){1}((?!(y\||\|y))[^\n])+([^\s]\|y){1})/gi;
+  const logoBlueRegex =
+    /(((?![0-9\.])lb\|[^\s]+\|lb(?![0-9]))|(((lb\|[^\s]){1}((?!(lb\||\|lb))[^\n])+([^\s]\|lb){1})(?![0-9\.])))/gi;
+  const orangeRegex =
+    /(((?![0-9\.])o\|[^\s]+\|o(?![0-9]))|(((o\|[^\s]){1}((?!(o\||\|o))[^\n])+([^\s]\|o){1})(?![0-9\.])))/gi;
+  const passionFruitRegex =
+    /(((?![0-9\.])pf\|[^\s]+\|pf(?![0-9]))|(((pf\|[^\s]){1}((?!(pf\||\|pf))[^\n])+([^\s]\|pf){1})(?![0-9\.])))/gi;
+  const pinkRegex =
+    /(((?![0-9\.])p\|[^\s]+\|p(?![0-9]))|(((p\|[^\s]){1}((?!(p\||\|p))[^\n])+([^\s]\|p){1})(?![0-9\.])))/gi;
+  const purpleRegex =
+    /(((?![0-9\.])pu\|[^\s]+\|pu(?![0-9]))|(((pu\|[^\s]){1}((?!(pu\||\|pu))[^\n])+([^\s]\|pu){1})(?![0-9\.])))/gi;
+  const redRegex =
+    /(((?![0-9\.])r\|[^\s]+\|r(?![0-9]))|(((r\|[^\s]){1}((?!(r\||\|r))[^\n])+([^\s]\|r){1})(?![0-9\.])))/gi;
+  const yellowRegex =
+    /(((?![0-9\.])y\|[^\s]+\|y(?![0-9]))|(((y\|[^\s]){1}((?!(y\||\|y))[^\n])+([^\s]\|y){1})(?![0-9\.])))/gi;
   const fakeAtSymbolRegex = /＠/gi;
   const mentionRegex = /((?!([a-zA-Z1-9])).|^|\n)@[a-zA-Z0-9_]{3,}/gi;
 
   const result = string
     .replace(/(<br>)/gi, '\n')
-    .replace(
-      italicRegex,
-      (string) => `<i>${string.substring(2, string.length - 2)}</i>`
-    )
     .replace(
       blueRegex,
       (string) =>
@@ -677,7 +666,7 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      logoBlueWordRegex,
+      logoBlueRegex,
       (string) =>
         `<span style="color: rgb(65, 140, 235);">${string.substring(
           3,
@@ -685,7 +674,7 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      orangeWordRegex,
+      orangeRegex,
       (string) =>
         `<span style="color: orange;">${string.substring(
           2,
@@ -693,7 +682,7 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      passionFruitWordRegex,
+      passionFruitRegex,
       (string) =>
         `<span style="color: rgb(243,103,123);">${string.substring(
           3,
@@ -701,7 +690,7 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      pinkWordRegex,
+      pinkRegex,
       (string) =>
         `<span style="color: rgb(255,105,180);">${string.substring(
           2,
@@ -709,7 +698,7 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      purpleWordRegex,
+      purpleRegex,
       (string) =>
         `<span style="color: rgb(152,28,235);">${string.substring(
           3,
@@ -725,7 +714,7 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      redWordRegex,
+      redRegex,
       (string) =>
         `<span style="color: red;">${string.substring(
           2,
@@ -733,7 +722,7 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      yellowWordRegex,
+      yellowRegex,
       (string) =>
         `<span style="color: rgb(255,210,0);">${string.substring(
           2,
@@ -745,60 +734,8 @@ export function applyTextEffects(string, finalProcessing) {
       (string) => `<b>${string.substring(1, string.length - 1)}</b>`
     )
     .replace(
-      logoBlueSentenceRegex,
-      (string) =>
-        `<span style="color: rgb(65, 140, 235);">${string.substring(
-          3,
-          string.length - 3
-        )}</span>`
-    )
-    .replace(
-      passionFruitSentenceRegex,
-      (string) =>
-        `<span style="color: rgb(243,103,123);">${string.substring(
-          3,
-          string.length - 3
-        )}</span>`
-    )
-    .replace(
-      pinkSentenceRegex,
-      (string) =>
-        `<span style="color: rgb(255,105,180);">${string.substring(
-          2,
-          string.length - 2
-        )}</span>`
-    )
-    .replace(
-      purpleSentenceRegex,
-      (string) =>
-        `<span style="color: rgb(152,28,235);">${string.substring(
-          3,
-          string.length - 3
-        )}</span>`
-    )
-    .replace(
-      redSentenceRegex,
-      (string) =>
-        `<span style="color: red;">${string.substring(
-          2,
-          string.length - 2
-        )}</span>`
-    )
-    .replace(
-      yellowSentenceRegex,
-      (string) =>
-        `<span style="color: rgb(255,210,0);">${string.substring(
-          2,
-          string.length - 2
-        )}</span>`
-    )
-    .replace(
-      orangeSentenceRegex,
-      (string) =>
-        `<span style="color: orange;">${string.substring(
-          2,
-          string.length - 2
-        )}</span>`
+      italicRegex,
+      (string) => `<i>${string.substring(2, string.length - 2)}</i>`
     )
     .replace(
       underlineRegex,
