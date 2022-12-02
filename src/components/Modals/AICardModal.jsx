@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import useAICard from '~/helpers/hooks/useAICard';
@@ -13,6 +14,7 @@ AICardModal.propTypes = {
 };
 
 export default function AICardModal({ card, onHide }) {
+  const [isBurned, setIsBurned] = useState(false);
   const { cardCss, promptText } = useAICard(card);
 
   return (
@@ -32,6 +34,7 @@ export default function AICardModal({ card, onHide }) {
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
             <div className={cardCss}>
               <AICard
+                isBurned={isBurned}
                 card={card}
                 quality={card.quality}
                 imagePath={card.imagePath}
@@ -128,7 +131,12 @@ export default function AICardModal({ card, onHide }) {
               <div
                 style={{ height: '50%', display: 'flex', alignItems: 'center' }}
               >
-                <Button color="oceanGreen" filled style={{ border: 'none' }}>
+                <Button
+                  onClick={() => setIsBurned(true)}
+                  color="oceanGreen"
+                  filled
+                  style={{ border: 'none' }}
+                >
                   Burn
                 </Button>
               </div>

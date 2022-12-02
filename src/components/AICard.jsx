@@ -9,7 +9,8 @@ import $ from 'jquery';
 AICard.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
   imagePath: PropTypes.string,
-  quality: PropTypes.string
+  quality: PropTypes.string,
+  isBurned: PropTypes.bool
 };
 
 const MAX_ROTATE_X = 15;
@@ -21,7 +22,12 @@ const ROTATE_Y_FACTOR = 0.1;
 
 const $style = $('#animation');
 
-export default function AICard({ animateOnMouseLeave, imagePath, quality }) {
+export default function AICard({
+  animateOnMouseLeave,
+  imagePath,
+  quality,
+  isBurned
+}) {
   const frontPicUrl = `${cloudFrontURL}${imagePath}`;
   const timerRef = useRef(null);
   const CardRef = useRef(null);
@@ -108,7 +114,34 @@ export default function AICard({ animateOnMouseLeave, imagePath, quality }) {
           display: 'flex',
           alignItems: 'center'
         }}
-        className={`card${isAnimated ? ' animated' : ''}`}
+        className={`card${isAnimated ? ' animated' : ''} ${
+          isBurned
+            ? css`
+                animation: burning 2s linear;
+                animation-fill-mode: forwards;
+                @keyframes burning {
+                  0% {
+                    background-color: red;
+                    box-shadow: 0 0 10px red;
+                    filter: blur(0);
+                  }
+
+                  50% {
+                    background-color: yellow;
+                    box-shadow: 0 0 10px yellow;
+                    filter: blur(5px);
+                  }
+
+                  100% {
+                    background-color: red;
+                    box-shadow: 0 0 10px red;
+                    filter: blur(10px);
+                    opacity: 0;
+                  }
+                }
+              `
+            : ''
+        }`}
       >
         <div
           className={css`
