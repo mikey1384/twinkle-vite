@@ -606,18 +606,22 @@ export function processedStringWithURL(string) {
 }
 
 export function applyTextEffects(string, finalProcessing) {
-  const blueWordRegex = /(b\|[^\s]+\|b)/gi;
-  const blueSentenceRegex =
-    /((b\|[^\s]){1}((?!(b\||\|b))[^\n])+([^\s]\|b){1})/gi;
-  const grayWordRegex = /(gr\|[^\s]+\|gr)/gi;
-  const graySentenceRegex =
-    /((gr\|[^\s]){1}((?!(g\||\|g))[^\n])+([^\s]\|gr){1})/gi;
-  const greenWordRegex = /(g\|[^\s]+\|g)/gi;
-  const greenSentenceRegex =
-    /((g\|[^\s]){1}((?!(g\||\|g))[^\n])+([^\s]\|g){1})/gi;
-  const limeWordRegex = /(l\|[^\s]+\|l)/gi;
-  const limeSentenceRegex =
-    /((l\|[^\s]){1}((?!(l\||\|l))[^\n])+([^\s]\|l){1})/gi;
+  const boldRegex =
+    /(((?![0-9\.])\*[^\s*]+\*(?![0-9]))|(((\*[^\s]){1}((?!(\*))[^\n])+([^\s]\*){1})(?![0-9\.])))/gi;
+  const italicRegex =
+    /(((?![0-9\.])\*\*[^\s*]+\*\*(?![0-9]))|(((\*\*[^\s]){1}((?!(\*\*))[^\n])+([^\s]\*\*){1})(?![0-9\.])))/gi;
+  const underlineRegex =
+    /(((?![0-9\.])__[^_]+__(?![0-9]))|(((__[^_]){1}((?!(__))[^\n])+([^_]\__){1})(?![0-9\.])))/gi;
+  const lineThroughRegex =
+    /(((?![0-9\.])--[^-]+--(?![0-9]))|(((--[^-]){1}((?!(--))[^\n])+([^-\-]\--){1})(?![0-9\.])))/gi;
+  const blueRegex =
+    /(((?![0-9\.])b\|[^\s]+\|b(?![0-9]))|(((b\|[^\s]){1}((?!(b\||\|b))[^\n])+([^\s]\|b){1})(?![0-9\.])))/gi;
+  const grayRegex =
+    /(((?![0-9\.])gr\|[^\s]+\|gr(?![0-9]))|(((gr\|[^\s]){1}((?!(gr\||\|gr))[^\n])+([^\s]\|gr){1})(?![0-9\.])))/gi;
+  const greenRegex =
+    /(((?![0-9\.])g\|[^\s]+\|g(?![0-9]))|(((g\|[^\s]){1}((?!(g\||\|g))[^\n])+([^\s]\|g){1})(?![0-9\.])))/gi;
+  const limeRegex =
+    /(((?![0-9\.])l\|[^\s]+\|l(?![0-9]))|(((l\|[^\s]){1}((?!(l\||\|l))[^\n])+([^\s]\|l){1})(?![0-9\.])))/gi;
   const logoBlueWordRegex = /(lb\|[^\s]+\|lb)/gi;
   const logoBlueSentenceRegex =
     /((lb\|[^\s]){1}((?!(lb\||\|lb))[^\n])+([^\s]\|lb){1})/gi;
@@ -639,47 +643,17 @@ export function applyTextEffects(string, finalProcessing) {
   const yellowWordRegex = /(y\|[^\s]+\|y)/gi;
   const yellowSentenceRegex =
     /((y\|[^\s]){1}((?!(y\||\|y))[^\n])+([^\s]\|y){1})/gi;
-  const boldItalicWordRegex = /(\*\*\*[^\s]+\*\*\*)/gi;
-  const boldItalicSentenceRegex =
-    /((\*\*\*[^\s]){1}((?!(\*\*\*))[^\n])+([^\s]\*\*\*){1})/gi;
-  const boldWordRegex = /((?![0-9])\*[^\s*]+\*(?![0-9]))/gi;
-  const boldSentenceRegex =
-    /((\*(?!([0-9]|\*))[^\s]){1}[^\n*]+([^\s]\*(?![0-9])){1})/gi;
-  const italicWordRegex = /((?![0-9])\*\*[^\s*]+\*\*(?![0-9]))/gi;
-  const italicSentenceRegex =
-    /((\*\*(?![0-9])[^\s]){1}((?!(\*\*))[^\n])+([^\s]\*\*(?![0-9])){1})/gi;
-  const underlineWordRegex = /(__[^\s_]+__)/gi;
-  const underlineSentenceRegex = /(__[^\s_]){1}((?!(__))[^\n])+([^\s_]__){1}/gi;
-  const linethroughWordRegex = /(--[^\s-]+--)/gi;
-  const lineThroughSentenceRegex =
-    /(--[^\s-]){1}((?!(-))[^\n])+([^\s-]--){1}/gi;
   const fakeAtSymbolRegex = /＠/gi;
   const mentionRegex = /((?!([a-zA-Z1-9])).|^|\n)@[a-zA-Z0-9_]{3,}/gi;
 
   const result = string
     .replace(/(<br>)/gi, '\n')
     .replace(
-      boldItalicWordRegex,
-      (string) => `<b><i>${string.substring(3, string.length - 3)}</i></b>`
-    )
-    .replace(
-      italicWordRegex,
+      italicRegex,
       (string) => `<i>${string.substring(2, string.length - 2)}</i>`
     )
     .replace(
-      boldWordRegex,
-      (string) => `<b>${string.substring(1, string.length - 1)}</b>`
-    )
-    .replace(
-      underlineWordRegex,
-      (string) => `<u>${string.substring(2, string.length - 2)}</u>`
-    )
-    .replace(
-      linethroughWordRegex,
-      (string) => `<strike>${string.substring(2, string.length - 2)}</strike>`
-    )
-    .replace(
-      blueWordRegex,
+      blueRegex,
       (string) =>
         `<span style="color: rgb(5,110,178);">${string.substring(
           2,
@@ -687,7 +661,7 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      greenWordRegex,
+      greenRegex,
       (string) =>
         `<span style="color: rgb(40,182,44);">${string.substring(
           2,
@@ -695,7 +669,7 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      limeWordRegex,
+      limeRegex,
       (string) =>
         `<span style="color: lawngreen;">${string.substring(
           2,
@@ -743,7 +717,7 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      grayWordRegex,
+      grayRegex,
       (string) =>
         `<span style="color: gray;">${string.substring(
           3,
@@ -767,48 +741,8 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      boldItalicSentenceRegex,
-      (string) => `<b><i>${string.substring(3, string.length - 3)}</i></b>`
-    )
-    .replace(
-      italicSentenceRegex,
-      (string) => `<i>${string.substring(2, string.length - 2)}</i>`
-    )
-    .replace(
-      boldSentenceRegex,
+      boldRegex,
       (string) => `<b>${string.substring(1, string.length - 1)}</b>`
-    )
-    .replace(
-      graySentenceRegex,
-      (string) =>
-        `<span style="color: gray;">${string.substring(
-          3,
-          string.length - 3
-        )}</span>`
-    )
-    .replace(
-      blueSentenceRegex,
-      (string) =>
-        `<span style="color: rgb(5,110,178);">${string.substring(
-          2,
-          string.length - 2
-        )}</span>`
-    )
-    .replace(
-      greenSentenceRegex,
-      (string) =>
-        `<span style="color: rgb(40,182,44);">${string.substring(
-          2,
-          string.length - 2
-        )}</span>`
-    )
-    .replace(
-      limeSentenceRegex,
-      (string) =>
-        `<span style="color: lawngreen;">${string.substring(
-          2,
-          string.length - 2
-        )}</span>`
     )
     .replace(
       logoBlueSentenceRegex,
@@ -867,11 +801,11 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      underlineSentenceRegex,
+      underlineRegex,
       (string) => `<u>${string.substring(2, string.length - 2)}</u>`
     )
     .replace(
-      lineThroughSentenceRegex,
+      lineThroughRegex,
       (string) => `<s>${string.substring(2, string.length - 2)}</s>`
     )
     .replace(mentionRegex, (string) => {
