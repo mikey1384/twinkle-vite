@@ -12,6 +12,13 @@ AICard.propTypes = {
   quality: PropTypes.string
 };
 
+const MAX_ROTATE_X = 15;
+const MAX_ROTATE_Y = 15;
+
+// Constants used to calculate the card's rotation.
+const ROTATE_X_FACTOR = 0.05;
+const ROTATE_Y_FACTOR = 0.05;
+
 const $style = $('#animation');
 
 export default function AICard({ animateOnMouseLeave, imagePath, quality }) {
@@ -31,9 +38,20 @@ export default function AICard({ animateOnMouseLeave, imagePath, quality }) {
   }));
   const bind = useGesture({
     onMove: ({ xy: [px, py] }) => {
+      const { left, top, width, height } =
+        CardRef.current.getBoundingClientRect();
+
+      // Calculate the position of the center of the card.
+      const centerX = left + width / 2;
+      const centerY = top + height / 2;
+
+      // Calculate the position of the mouse relative to the center of the card.
+      const relativeX = px - centerX;
+      const relativeY = py - centerY;
+
       return api.start({
-        rotateX: calcX(py, y.get()),
-        rotateY: calcY(px, x.get()),
+        rotateX: calcX(relativeY),
+        rotateY: calcY(relativeX),
         scale: 1.1
       });
     },
@@ -108,10 +126,29 @@ export default function AICard({ animateOnMouseLeave, imagePath, quality }) {
     </div>
   );
 
-  function calcX(y, ly) {
-    return -(y - ly - window.innerHeight / 2) / 20;
+  function calcX(py) {
+    // Calculate the rotation value based on the mouse position.
+    // This should be proportional to the mouse position.
+    const rotateX = py * ROTATE_X_FACTOR;
+
+    // Cap the maximum absolute value of the rotateX value.
+    if (Math.abs(rotateX) > MAX_ROTATE_X) {
+      rotateX = rotateX < 0 ? -MAX_ROTATE_X : MAX_ROTATE_X;
+    }
+
+    return rotateX;
   }
-  function calcY(x, lx) {
-    return (x - lx - window.innerWidth / 2) / 20;
+
+  function calcY(px) {
+    // Calculate the rotation value based on the mouse position.
+    // This should be proportional to the mouse position.
+    const rotateY = px * ROTATE_Y_FACTOR;
+
+    // Cap the maximum absolute value of the rotateY value.
+    if (Math.abs(rotateY) > MAX_ROTATE_Y) {
+      rotateY = rotateY < 0 ? -MAX_ROTATE_Y : MAX_ROTATE_Y;
+    }
+
+    return rotateY;
   }
 }
