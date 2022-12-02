@@ -61,6 +61,7 @@ import { faFilePdf } from '@fortawesome/pro-solid-svg-icons/faFilePdf';
 import { faFileVideo } from '@fortawesome/pro-solid-svg-icons/faFileVideo';
 import { faFileWord } from '@fortawesome/pro-solid-svg-icons/faFileWord';
 import { faLink } from '@fortawesome/pro-solid-svg-icons/faLink';
+import { faFire } from '@fortawesome/pro-solid-svg-icons/faFire';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faLevelUp } from '@fortawesome/pro-solid-svg-icons/faLevelUp';
 import { faHeart } from '@fortawesome/pro-solid-svg-icons/faHeart';
@@ -95,6 +96,7 @@ import { faRocketLaunch } from '@fortawesome/pro-solid-svg-icons/faRocketLaunch'
 import { faSave } from '@fortawesome/pro-solid-svg-icons/faSave';
 import { faSearch } from '@fortawesome/pro-solid-svg-icons/faSearch';
 import { faSchool } from '@fortawesome/pro-solid-svg-icons/faSchool';
+import { faShoppingCart } from '@fortawesome/pro-solid-svg-icons/faShoppingCart';
 import { faShoppingBag } from '@fortawesome/pro-solid-svg-icons/faShoppingBag';
 import { faSignOutAlt } from '@fortawesome/pro-solid-svg-icons/faSignOutAlt';
 import { faSlidersH } from '@fortawesome/pro-solid-svg-icons/faSlidersH';
@@ -179,6 +181,7 @@ library.add(
   faFileVideo,
   faFileWord,
   faFilm,
+  faFire,
   faGithub,
   faHeart,
   faHeartSquare,
@@ -212,6 +215,7 @@ library.add(
   faRocketLaunch,
   faQuestion,
   faSchool,
+  faShoppingCart,
   faShoppingBag,
   faSave,
   faSearch,
