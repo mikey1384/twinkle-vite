@@ -16,8 +16,8 @@ const MAX_ROTATE_X = 15;
 const MAX_ROTATE_Y = 15;
 
 // Constants used to calculate the card's rotation.
-const ROTATE_X_FACTOR = 0.05;
-const ROTATE_Y_FACTOR = 0.05;
+const ROTATE_X_FACTOR = -0.05;
+const ROTATE_Y_FACTOR = 0.1;
 
 const $style = $('#animation');
 
@@ -34,7 +34,7 @@ export default function AICard({ animateOnMouseLeave, imagePath, quality }) {
     zoom: 0,
     x: 0,
     y: 0,
-    config: { mass: 5, tension: 350, friction: 40 }
+    config: { mass: 2, tension: 250, friction: 20 }
   }));
   const bind = useGesture({
     onMove: ({ xy: [px, py] }) => {
