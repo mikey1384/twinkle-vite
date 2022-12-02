@@ -129,7 +129,7 @@ export default function AICard({ animateOnMouseLeave, imagePath, quality }) {
   function calcX(py) {
     // Calculate the rotation value based on the mouse position.
     // This should be proportional to the mouse position.
-    const rotateX = py * ROTATE_X_FACTOR;
+    let rotateX = py * ROTATE_X_FACTOR;
 
     // Cap the maximum absolute value of the rotateX value.
     if (Math.abs(rotateX) > MAX_ROTATE_X) {
@@ -142,7 +142,7 @@ export default function AICard({ animateOnMouseLeave, imagePath, quality }) {
   function calcY(px) {
     // Calculate the rotation value based on the mouse position.
     // This should be proportional to the mouse position.
-    const rotateY = px * ROTATE_Y_FACTOR;
+    let rotateY = px * ROTATE_Y_FACTOR;
 
     // Cap the maximum absolute value of the rotateY value.
     if (Math.abs(rotateY) > MAX_ROTATE_Y) {
