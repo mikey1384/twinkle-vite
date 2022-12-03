@@ -1,9 +1,6 @@
 import parse from 'html-react-parser';
 import Link from '~/components/Link';
 import { charLimit } from '~/constants/defaultValues';
-/* eslint-disable no-useless-escape */
-
-// previously used urlRegex: /(((http[s]?:\/\/|ftp:\/\/)|www\.)+([0-9a-zA-Z\p{L}\-])+(\.[a-zA-Z]{1,3})+([0-9\p{L}.,;:?!&@%_\-\+~#=\/()\[\]])*[^.,;:?!"'\n\)\]<* ])/giu;
 
 const urlRegex =
   /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)/giu;
@@ -934,5 +931,3 @@ export function stringsAreCaseInsensitivelyEqual(string1, string2) {
   }
   return string1.toLowerCase() === string2.toLowerCase();
 }
-
-/* eslint-enable no-useless-escape */
