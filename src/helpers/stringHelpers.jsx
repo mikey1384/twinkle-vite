@@ -27,6 +27,7 @@ export function addCommasToNumber(number) {
 export function addEmoji(string) {
   const faceEmoticons = {
     ':)': '😊',
+    '(:': '🙃',
     ';)': '😉',
     ':P': '😛',
     ':(': '🙁',
@@ -110,50 +111,219 @@ export function addEmoji(string) {
     ':eyeglasses:': '👓',
     ':face:': '🤨',
     ':facepalm:': '🤦',
+    ':family:': '👪',
+    ':fear:': '😱',
     ':fire:': '🔥',
     ':fish:': '🐠',
+    ':flex:': '💪',
+    ':flower:': '🌸',
+    ':food:': '🍽',
+    ':fox:': '🦊',
     ':friedchicken:': '🍗',
+    ':friend:': '👫',
+    ':frog:': '🐸',
     ':ghost:': '👻',
+    ':gift:': '🎁',
+    ':good:': '👍',
+    ':goose:': '🦢',
+    ':grapes:': '🍇',
+    ':grin:': '😁',
+    ':gross:': '🤮',
     ':guitar:': '🎸',
+    ':hamburger:': '🍔',
+    ':hamster:': '🐹',
     ':hammer:': '🔨',
-    ':hello:': '👋',
+    ':hand:': '✋',
+    ':happy:': '😃',
     ':heart:': '❤️',
+    ':hello:': '👋',
+    ':help:': '🆘',
+    ':helpless:': '😩',
+    ':hen:': '🐔',
+    ':hi:': '👋',
+    ':highfive:': '🖐',
+    ':hmmm:': '🤔',
+    ':horror:': '😱',
     ':horse:': '🐴',
     ':house:': '🏠',
+    ':hug:': '🤗',
     ':icecream:': '🍨',
+    ':idea:': '💡',
+    ':infinity:': '∞',
+    ':japan:': '🇯🇵',
     ':joy:': '😂',
     ':key:': '🔑',
-    ':love:': '❤️',
+    ':korea:': '🇰🇷',
+    ':kiss:': '💋',
+    ':kissing:': '😗',
+    ':light:': '💡',
+    ':lightbulb:': '💡',
+    ':lion:': '🦁',
+    ':lock:': '🔒',
+    ':lol:': '🤣',
+    ':love:': '😍',
+    ':lucky:': '🍀',
+    ':mad:': '😡',
+    ':magic:': '🔮',
+    ':magnifying glass:': '🔍',
+    ':maple leaf:': '🍁',
+    ':mindblowing:': '🤯',
+    ':mindblown:': '🤯',
+    ':mind blown:': '🤯',
+    ':money:': '💰',
+    ':monkey:': '🐵',
+    ':monocle:': '🧐',
     ':moo:': '🐮',
+    ':moon:': '🌙',
+    ':moose:': '🦌',
+    ':mouse:': '🐭',
+    ':multiply:': '×',
     ':music:': '🎵',
     ':nerd:': '🤓',
+    ':neutral:': '😐',
+    ':nice:': '👍',
     ':no:': '🙅‍♂️',
     ':ok:': '👌',
+    ':okay:': '👌',
+    ':paint:': '🎨',
+    ':paintbrush:': '🖌',
+    ':palette:': '🎨',
     ':party:': '🎉',
-    ':peace:': '🕊',
+    ':peace:': '✌️',
+    ':peach:': '🍑',
+    ':pear:': '🍐',
+    ':pencil:': '✏️',
+    ':penguin:': '🐧',
+    ':pensive:': '😔',
+    ':perfect:': '👌',
+    ':person:': '👤',
+    ':phone:': '📱',
+    ':pi:': 'π',
     ':pig:': '🐷',
+    ':pineapple:': '🍍',
     ':pizza:': '🍕',
+    ':poo:': '💩',
     ':poop:': '💩',
+    ':potato:': '🥔',
     ':pray:': '🙏',
+    ':present:': '🎁',
     ':puke:': '🤮',
+    ':puppy:': '🐶',
+    ':question:': '❓',
+    ':rabbit:': '🐰',
     ':rainbow:': '🌈',
+    ':reindeer:': '🦌',
+    ':repeat:': '🔁',
+    ':restroom:': '🚻',
+    ':ribbon:': '🎀',
+    ':robot:': '🤖',
+    ':rocket:': '🚀',
+    ':rooster:': '🐓',
     ':sad:': '😢',
+    ':santa:': '🎅',
+    ':scared:': '😱',
+    ':scissors:': '✂️',
     ':scream:': '😱',
+    ':shock:': '😱',
+    ':shocked:': '😱',
     ':shit:': '💩',
+    ':shrug:': '🤷',
+    ':sick:': '🤒',
     ':skull:': '💀',
     ':sleep:': '😴',
+    ':smh:': '🤦',
     ':smile:': '😄',
+    ':smiley:': '😃',
+    ':smirk:': '😏',
+    ':snail:': '🐌',
+    ':snake:': '🐍',
+    ':snowman:': '⛄',
     ':spider:': '🕷',
+    ':spiderweb:': '🕸',
+    ':squared:': '²',
+    ':squid:': '🦑',
     ':star:': '⭐',
+    ':starstruck:': '🤩',
+    ':strawberry:': '🍓',
     ':sun:': '☀️',
+    ':sunglasses:': '😎',
+    ':swan:': '🦢',
+    ':sweat:': '😓',
+    ':taco:': '🌮',
+    ':task:': '📝',
+    ':tasty:': '🤤',
+    ':tea:': '🍵',
+    ':tear:': '😢',
+    ':tears:': '😢',
+    ':teeth:': '🦷',
+    ':telephone:': '☎️',
+    ':telescope:': '🔭',
+    ':thanks:': '🙏',
+    ':thankyou:': '🙏',
+    ':thank you:': '🙏',
+    ':thinking:': '🤔',
+    ':this:': '👆',
+    ':theta:': 'θ',
+    ':thumb:': '👍',
+    ':thumbs:': '👍',
     ':thumbsup:': '👍',
+    ':thumbs up:': '👍',
     ':thumbsdown:': '👎',
+    ':thumbs down:': '👎',
+    ':tiger:': '🐯',
+    ':tired:': '😫',
+    ':toilet:': '🚽',
+    ':tomato:': '🍅',
+    ':tongue:': '👅',
+    ':tooth:': '🦷',
+    ':tophat:': '🎩',
+    ':tornado:': '🌪',
+    ':tortoise:': '🐢',
+    ':traffic:': '🚦',
+    ':trafficlight:': '🚦',
+    ':traffic light:': '🚦',
+    ':train:': '🚂',
+    ':trash:': '🗑',
+    ':triangle:': '△',
     ':tree:': '🌳',
+    ':troll:': '🤬',
+    ':trophy:': '🏆',
+    ':turtle:': '🐢',
+    ':tv:': '📺',
+    ':twin:': '👯‍♂️',
+    ':twinkle:': '✨',
+    ':ufc:': '🥊',
+    ':ufo:': '🛸',
+    ':umbrella:': '☂️',
+    ':unamused:': '😒',
+    ':unicorn:': '🦄',
+    ':up:': '👆',
+    ':upsidedown:': '🙃',
+    ':upside down:': '🙃',
+    ':upside-down:': '🙃',
+    ':usa:': '🇺🇸',
+    ':vampire:': '🧛‍♂️',
+    ':volcano:': '🌋',
     ':vomit:': '🤮',
+    ':wait:': '⏳',
+    ':waiting:': '⏳',
+    ':warning:': '⚠️',
+    ':water:': '💧',
+    ':wave:': '👋',
+    ':weary:': '😩',
     ':wink:': '😉',
     ':wow:': '😮',
+    ':wtf:': '😱',
     ':wonder:': '😮',
-    ':zombie:': '🧟'
+    ':yep:': '👌',
+    ':yes:': '👍',
+    ':yum:': '😋',
+    ':yummy:': '😋',
+    ':zombie:': '🧟',
+    ':zipped:': '🤐',
+    ':zipper:': '🤐',
+    ':zzz:': '😴',
+    ':^^:': '😊'
   };
 
   const emoticonRegex = new RegExp(
@@ -179,132 +349,6 @@ export function addEmoji(string) {
     faceEmoticonRegex,
     (match) => faceEmoticons[match]
   );
-}
-
-export function addAdvancedLegacyEmoji(string) {
-  return string
-    .replace(/(\:fear\:)/gi, '😱')
-    .replace(/(\:fire\:)/gi, '🔥')
-    .replace(/(\:flex\:)/gi, '💪')
-    .replace(/(\:fox\:)/gi, '🦊')
-    .replace(/(\:food\:)/gi, '🍔')
-    .replace(/(\:friend\:)/gi, '👭')
-    .replace(/(\:ghost\:)/gi, '👻')
-    .replace(/(\:gift\:)/gi, '🎁')
-    .replace(/(\:good\:)/gi, '👍')
-    .replace(/(\:goose\:)/gi, '🦢')
-    .replace(/(\:gross\:)/gi, '🤢')
-    .replace(/(\:hamster\:)/gi, '🐹')
-    .replace(/(\:happy\:)/gi, '😄')
-    .replace(/(\:heart\:)/gi, '❤️')
-    .replace(/(\:hello\:)/gi, '👋')
-    .replace(/(\:hi\:)/gi, '👋')
-    .replace(/(\:helpless\:)/gi, '😣')
-    .replace(/(\:hen\:)/gi, '🐔')
-    .replace(/(\:hmmm\:)/gi, '🧐')
-    .replace(/(\:horror\:)/gi, '😱')
-    .replace(/(\:horse\:)/gi, '🐴')
-    .replace(/(\:hug\:)/gi, '🤗')
-    .replace(/(\:icecream\:)/gi, '🍦')
-    .replace(/(\:infinity\:)/gi, '∞')
-    .replace(/(\:japan\:)/gi, '🇯🇵')
-    .replace(/(\:korea\:)/gi, '🇰🇷')
-    .replace(/(\:light\:)/gi, '💡')
-    .replace(/(\:lightbulb\:)/gi, '💡')
-    .replace(/(\:lock\:)/gi, '🔒')
-    .replace(/(\:lol\:)/gi, '🤣')
-    .replace(/(\:love\:)/gi, '😍')
-    .replace(/(\:mad\:)/gi, '😡')
-    .replace(/(\:mindblown\:)/gi, '🤯')
-    .replace(/(\:mindblowing\:)/gi, '🤯')
-    .replace(/(\:money\:)/gi, '💰')
-    .replace(/(\:monkey\:)/gi, '🐵')
-    .replace(/(\:monocle\:)/gi, '🧐')
-    .replace(/(\:moo\:)/gi, '🐮')
-    .replace(/(\:moose\:)/gi, '🦌')
-    .replace(/(\:mouse\:)/gi, '🐭')
-    .replace(/(\:multiply\:)/gi, '×')
-    .replace(/(\:neutral\:)/gi, '😐')
-    .replace(/(\:nice\:)/gi, '👍')
-    .replace(/(\:ok\:)/gi, '👌')
-    .replace(/(\:okay\:)/gi, '👌')
-    .replace(/(\:paint\:)/gi, '🎨')
-    .replace(/(\:palette\:)/gi, '🎨')
-    .replace(/(\:party\:)/gi, '🎉')
-    .replace(/(\:peace\:)/gi, '✌️')
-    .replace(/(\:penguin\:)/gi, '🐧')
-    .replace(/(\:perfect\:)/gi, '💯')
-    .replace(/(\:pi\:)/gi, 'π')
-    .replace(/(\:pig\:)/gi, '🐷')
-    .replace(/(\:pineapple\:)/gi, '🍍')
-    .replace(/(\:pizza\:)/gi, '🍕')
-    .replace(/(\:poo\:)/gi, '💩')
-    .replace(/(\:poop\:)/gi, '💩')
-    .replace(/(\:potato\:)/gi, '🥔')
-    .replace(/(\:present\:)/gi, '🎁')
-    .replace(/(\:puke\:)/gi, '🤮')
-    .replace(/(\:puppy\:)/gi, '🐶')
-    .replace(/(\:question\:)/gi, '❓')
-    .replace(/(\:rainbow\:)/gi, '🌈')
-    .replace(/(\:rabbit\:)/gi, '🐰')
-    .replace(/(\:reindeer\:)/gi, '🦌')
-    .replace(/(\:repeat\:)/gi, '🔁')
-    .replace(/(\:restroom\:)/gi, '🚻')
-    .replace(/(\:ribbon\:)/gi, '🎀')
-    .replace(/(\:robot\:)/gi, '🤖')
-    .replace(/(\:rocket\:)/gi, '🚀')
-    .replace(/(\:rooster\:)/gi, '🐓')
-    .replace(/(\:sad\:)/gi, '😢')
-    .replace(/(\:santa\:)/gi, '🎅')
-    .replace(/(\:shock\:)/gi, '😱')
-    .replace(/(\:shocked\:)/gi, '😱')
-    .replace(/(\:sick\:)/gi, '🤒')
-    .replace(/(\:shrug\:)/gi, '🤷')
-    .replace(/(\:smh\:)/gi, '🤦')
-    .replace(/(\:smile\:)/gi, '😊')
-    .replace(/(\:smirk\:)/gi, '😏')
-    .replace(/(\:snail\:)/gi, '🐌')
-    .replace(/(\:spider\:)/gi, '🕷️')
-    .replace(/(\:squared\:)/gi, '²')
-    .replace(/(\:star\:)/gi, '⭐')
-    .replace(/(\:starstruck\:)/gi, '🤩')
-    .replace(/(\:strawberry\:)/gi, '🍓')
-    .replace(/(\:sunglasses\:)/gi, '😎')
-    .replace(/(\:swan\:)/gi, '🦢')
-    .replace(/(\:taco\:)/gi, '🌮')
-    .replace(/(\:tasty\:)/gi, '😋')
-    .replace(/(\:tears\:)/gi, '😢')
-    .replace(/(\:thanks\:)/gi, '🙏')
-    .replace(/(\:thank you\:)/gi, '🙏')
-    .replace(/(\:theta\:)/gi, '⍬')
-    .replace(/(\:thumb\:)/gi, '👍')
-    .replace(/(\:thumbs\:)/gi, '👍')
-    .replace(/(\:tup\:)/gi, '👍')
-    .replace(/(\:tdown\:)/gi, '👎')
-    .replace(/(\:tiger\:)/gi, '🐯')
-    .replace(/(\:traffic\:)/gi, '🚥')
-    .replace(/(\:trafficlight\:)/gi, '🚥')
-    .replace(/(\:trash\:)/gi, '🗑')
-    .replace(/(\:triangle\:)/gi, '△')
-    .replace(/(\:troll\:)/gi, '🤬')
-    .replace(/(\:turtle\:)/gi, '🐢')
-    .replace(/(\:twinkle\:)/gi, '✨')
-    .replace(/(\:ufo\:)/gi, '🛸')
-    .replace(/(\:usa\:)/gi, '🇺🇸')
-    .replace(/(\:volcano\:)/gi, '🌋')
-    .replace(/(\:vomit\:)/gi, '🤮')
-    .replace(/(\:wave\:)/gi, '👋')
-    .replace(/(\:weary\:)/gi, '😩')
-    .replace(/(\:wink\:)/gi, '😉')
-    .replace(/(\:wow\:)/gi, '😲')
-    .replace(/(\:yep\:)/gi, '👌')
-    .replace(/(\:yes\:)/gi, '👌')
-    .replace(/(\:yum\:)/gi, '😋')
-    .replace(/(\:yummy\:)/gi, '😋')
-    .replace(/(\:zombie\:)/gi, '🧟')
-    .replace(/(\:zipper\:)/gi, '🤐')
-    .replace(/(\:zzz\:)/gi, '💤')
-    .replace(/(\:\^\^\:)/gi, '😊');
 }
 
 export function capitalize(string = '') {
