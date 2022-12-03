@@ -6,6 +6,7 @@ import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
 import SanitizedHTML from 'react-sanitized-html';
 import Icon from '~/components/Icon';
+import SellModal from './SellModal';
 import { Color } from '~/constants/css';
 import { qualityProps } from '~/constants/defaultValues';
 
@@ -15,6 +16,7 @@ AICardModal.propTypes = {
 };
 
 export default function AICardModal({ card, onHide }) {
+  const [sellModalShown, setSellModalShown] = useState(false);
   const [isBurned, setIsBurned] = useState(false);
   const { cardCss, promptText } = useAICard(card);
 
@@ -134,7 +136,12 @@ export default function AICardModal({ card, onHide }) {
                 <p style={{ marginBottom: '2rem' }}>
                   {`List this card on the market so others can buy it. You can set the price and choose how long you want it to be listed for.`}
                 </p>
-                <Button color="oceanBlue" filled style={{ border: 'none' }}>
+                <Button
+                  onClick={() => setSellModalShown(true)}
+                  color="oceanBlue"
+                  filled
+                  style={{ border: 'none' }}
+                >
                   <Icon icon="shopping-cart" />
                   <span style={{ marginLeft: '0.7rem' }}>Sell</span>
                 </Button>
@@ -170,6 +177,7 @@ export default function AICardModal({ card, onHide }) {
           Close
         </Button>
       </footer>
+      {sellModalShown && <SellModal onHide={() => setSellModalShown(false)} />}
     </Modal>
   );
 }
