@@ -1,22 +1,29 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
 import Input from '~/components/Texts/Input';
+import { DayPicker } from 'react-day-picker';
+import { format, isValid } from 'date-fns';
+import 'react-day-picker/dist/style.css';
 
 SellModal.propTypes = {
   onHide: PropTypes.func.isRequired
 };
 
 export default function SellModal({ onHide }) {
+  const [selectedDay, setSelectedDay] = useState();
   const [amount, setAmount] = useState(0);
   const [selected, setSelected] = useState('fixed');
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
   const [errors, setErrors] = useState({});
-  const startDateInput = useRef(null);
-  const endDateInput = useRef(null);
+
+  const footer =
+    selectedDay && isValid(selectedDay) ? (
+      <p>You selected {format(selectedDay, 'PPP')}.</p>
+    ) : (
+      <p>Please pick a day.</p>
+    );
 
   return (
     <Modal large modalOverModal onHide={onHide}>
@@ -119,38 +126,22 @@ export default function SellModal({ onHide }) {
                 <span style={{ fontSize: '1.4rem', marginRight: '1rem' }}>
                   from:
                 </span>
-                <input
-                  ref={startDateInput}
-                  type="date"
-                  value={startDate}
-                  onChange={(event) => setStartDate(event.target.value)}
-                  max={endDate}
-                  onFocus={() => startDateInput.current.showPicker()}
-                  style={{
-                    fontSize: '1.4rem',
-                    padding: '0.5rem 1rem',
-                    border: '1px solid #333',
-                    borderRadius: '4px'
-                  }}
+                <DayPicker
+                  mode="single"
+                  selected={selectedDay}
+                  onSelect={setSelectedDay}
+                  footer={footer}
                 />
               </div>
               <div style={{ marginLeft: '2rem' }}>
                 <span style={{ fontSize: '1.4rem', margin: '0 1rem' }}>
                   to:
                 </span>
-                <input
-                  ref={endDateInput}
-                  type="date"
-                  value={endDate}
-                  onChange={(event) => setEndDate(event.target.value)}
-                  min={startDate}
-                  onFocus={() => endDateInput.current.showPicker()}
-                  style={{
-                    fontSize: '1.4rem',
-                    padding: '0.5rem 1rem',
-                    border: '1px solid #333',
-                    borderRadius: '4px'
-                  }}
+                <DayPicker
+                  mode="single"
+                  selected={selectedDay}
+                  onSelect={setSelectedDay}
+                  footer={footer}
                 />
               </div>
             </div>
