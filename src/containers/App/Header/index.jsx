@@ -956,8 +956,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         }`;
       } else if (chatType === AI_DRAWING_CHAT_TYPE) {
         document.title = `${`AI Cards | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
+      } else {
+        document.title = `${`Chat | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
       }
-      document.title = `${`Chat | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
     } else if (
       !['chat', 'comments', 'subjects'].includes(section) &&
       isSubsection &&
