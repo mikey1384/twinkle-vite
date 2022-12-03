@@ -915,18 +915,8 @@ export function truncateText({ text = '', limit }) {
   return text;
 }
 
-export function turnStringIntoQuestion(string) {
-  const toDelete = ['?', ' '];
-  while (toDelete.indexOf(string.charAt(string.length - 1)) !== -1) {
-    string = string.slice(0, -1);
-  }
-  return string + '?';
-}
-
 export function stringsAreCaseInsensitivelyEqual(string1, string2) {
-  const string1IsString = typeof string1 === 'string';
-  const string2IsString = typeof string2 === 'string';
-  if (!string1IsString || !string2IsString) {
+  if (typeof string1 !== 'string' || typeof string2 !== 'string') {
     return false;
   }
   return string1.toLowerCase() === string2.toLowerCase();
