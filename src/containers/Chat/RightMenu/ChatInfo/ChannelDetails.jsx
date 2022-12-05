@@ -29,6 +29,7 @@ export default function ChannelDetails({ channelId, channelName, style }) {
         font-size: 2.5rem;
         font-weight: bold;
         @media (max-width: ${mobileMaxWidth}) {
+          width: 100%;
           font-size: 1.7rem;
         }
       `}
