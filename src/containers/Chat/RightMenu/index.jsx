@@ -96,6 +96,7 @@ function RightMenu({
           overflow-y: scroll;
           -webkit-overflow-scrolling: touch;
           @media (max-width: ${mobileMaxWidth}) {
+            max-width: ${chatType === VOCAB_CHAT_TYPE ? '48vw' : '40vw'};
             width: ${chatType === VOCAB_CHAT_TYPE ? '48vw' : '40vw'};
           }
         `}
