@@ -148,7 +148,6 @@ export default function MobileMenu({ onClose }) {
 
   function handleLogout() {
     onLogout();
-    onSetUserState({ userId, newState: { online: false } });
     onResetChat();
   }
 }
