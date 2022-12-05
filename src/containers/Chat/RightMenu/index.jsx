@@ -89,6 +89,7 @@ function RightMenu({
         ref={MenuRef}
         className={css`
           flex-grow: 1;
+          max-width: 22vw;
           position: relative;
           background: #fff;
           border-left: 1px solid ${Color.borderGray()};
