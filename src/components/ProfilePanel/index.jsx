@@ -67,7 +67,6 @@ function ProfilePanel({ expandable, profileId, style }) {
   } = profilePanelState;
 
   const {
-    online,
     lastActive,
     loaded: profileLoaded,
     numMessages,
@@ -157,9 +156,6 @@ function ProfilePanel({ expandable, profileId, style }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const checkIfUserOnline = useAppContext(
-    (v) => v.requestHelpers.checkIfUserOnline
-  );
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
@@ -184,19 +180,20 @@ function ProfilePanel({ expandable, profileId, style }) {
   const FileInputRef = useRef(null);
   const loading = useRef(false);
 
+  const online = useMemo(
+    () =>
+      chatStatus[profile.id]?.isAway ||
+      chatStatus[profile.id]?.isOnline ||
+      chatStatus[profile.id]?.isBusy,
+    [chatStatus, profile.id]
+  );
+
   useEffect(() => {
-    setTimeout(() => {
-      handleCheckIfUserOnline();
-    }, 100);
     if (!profileLoaded && !loading.current && profileId) {
       handleInitProfile();
     }
     if (!commentsLoaded && !previewLoaded) {
       handleLoadComments();
-    }
-    async function handleCheckIfUserOnline() {
-      const online = await checkIfUserOnline(profileId);
-      onSetUserState({ userId: profileId, newState: { online } });
     }
     async function handleInitProfile() {
       loading.current = true;
@@ -351,11 +348,7 @@ function ProfilePanel({ expandable, profileId, style }) {
                             }}
                             userId={profileId}
                             profilePicUrl={profilePicUrl}
-                            online={
-                              chatStatus[profile.id]?.isAway ||
-                              chatStatus[profile.id]?.isOnline ||
-                              chatStatus[profile.id]?.isBusy
-                            }
+                            online={online}
                             statusShown
                             large
                           />

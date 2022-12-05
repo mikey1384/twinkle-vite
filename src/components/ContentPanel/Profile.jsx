@@ -4,13 +4,14 @@ import RankBar from '~/components/RankBar';
 import UserDetails from '~/components/UserDetails';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 
 Profile.propTypes = {
   profile: PropTypes.object.isRequired
 };
 
 export default function Profile({ profile }) {
+  const chatStatus = useChatContext((v) => v.state.chatStatus);
   const { userId } = useKeyContext((v) => v.myState);
   return (
     <div
@@ -38,7 +39,11 @@ export default function Profile({ profile }) {
             style={{ width: '15rem', cursor: 'pointer' }}
             userId={profile.id}
             profilePicUrl={profile.profilePicUrl}
-            online={userId === profile.id || !!profile.online}
+            online={
+              chatStatus[profile.id]?.isAway ||
+              chatStatus[profile.id]?.isOnline ||
+              chatStatus[profile.id]?.isBusy
+            }
             statusShown
             large
           />

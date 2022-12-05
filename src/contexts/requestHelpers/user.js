@@ -54,16 +54,6 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async checkIfUserOnline(userId) {
-      try {
-        const {
-          data: { online }
-        } = await request.get(`${URL}/user/online?userId=${userId}`);
-        return Promise.resolve(online);
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async changePassword({ userId, password }) {
       try {
         const { data } = await request.put(`${URL}/user/password`, {
