@@ -30,6 +30,7 @@ export default function UserListModal({
   title,
   users
 }) {
+  const chatStatus = useChatContext((v) => v.state.chatStatus);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const { userId, username, profilePicUrl, authLevel } = useKeyContext(
@@ -81,7 +82,11 @@ export default function UserListModal({
                         }}
                         userId={user.id}
                         profilePicUrl={user.profilePicUrl}
-                        online={!!user.online}
+                        online={
+                          chatStatus[user.id]?.isAway ||
+                          chatStatus[user.id]?.isOnline ||
+                          chatStatus[user.id]?.isBusy
+                        }
                         onClick={() => navigate(`/users/${user.username}`)}
                         statusShown
                       />

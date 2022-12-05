@@ -17,7 +17,12 @@ import request from 'axios';
 import URL from '~/constants/URL';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useInputContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useInputContext,
+  useKeyContext
+} from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import {
   addEmoji,
@@ -37,6 +42,7 @@ Intro.propTypes = {
 };
 
 export default function Intro({ profile, selectedTheme }) {
+  const chatStatus = useChatContext((v) => v.state.chatStatus);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const auth = useAppContext((v) => v.requestHelpers.auth);
   const uploadGreeting = useAppContext((v) => v.requestHelpers.uploadGreeting);
@@ -65,7 +71,6 @@ export default function Intro({ profile, selectedTheme }) {
     greeting,
     joinDate,
     lastActive,
-    online,
     profilePicUrl,
     profileTheme,
     profileFirstRow,
@@ -251,7 +256,11 @@ export default function Intro({ profile, selectedTheme }) {
               email={email}
               verifiedEmail={verifiedEmail}
               joinDate={joinDate}
-              online={online}
+              online={
+                chatStatus[profile.id]?.isAway ||
+                chatStatus[profile.id]?.isOnline ||
+                chatStatus[profile.id]?.isBusy
+              }
               lastActive={lastActive}
               profilePicUrl={profilePicUrl}
               userId={id}

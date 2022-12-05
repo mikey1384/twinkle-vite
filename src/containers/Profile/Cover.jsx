@@ -33,13 +33,9 @@ export default function Cover({
   selectedTheme
 }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
-  const checkIfUserOnline = useAppContext(
-    (v) => v.requestHelpers.checkIfUserOnline
-  );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const { userId } = useKeyContext((v) => v.myState);
   const {
-    id,
     profilePicUrl,
     profileTheme,
     realName,
@@ -56,13 +52,6 @@ export default function Cover({
 
   useEffect(() => {
     onSelectTheme(profileTheme || 'logoBlue');
-    if (id !== userId) {
-      handleCheckIfUserOnline();
-    }
-    async function handleCheckIfUserOnline() {
-      const online = await checkIfUserOnline(id);
-      onSetUserState({ userId: id, newState: { online } });
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
