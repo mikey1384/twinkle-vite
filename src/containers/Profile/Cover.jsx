@@ -11,7 +11,7 @@ import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { useTheme } from '~/helpers/hooks';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import localize from '~/constants/localize';
 
@@ -32,6 +32,7 @@ export default function Cover({
   profile,
   selectedTheme
 }) {
+  const chatStatus = useChatContext((v) => v.state.chatStatus);
   const checkIfUserOnline = useAppContext(
     (v) => v.requestHelpers.checkIfUserOnline
   );
@@ -40,7 +41,6 @@ export default function Cover({
   const {
     id,
     profilePicUrl,
-    online,
     profileTheme,
     realName,
     twinkleXP,
@@ -262,7 +262,11 @@ export default function Cover({
               : null
           }
           profilePicUrl={profilePicUrl}
-          online={!!online}
+          online={
+            chatStatus[profile.id]?.isAway ||
+            chatStatus[profile.id]?.isOnline ||
+            chatStatus[profile.id]?.isBusy
+          }
           large
           statusShown
         />

@@ -45,6 +45,7 @@ ProfilePanel.propTypes = {
 };
 
 function ProfilePanel({ expandable, profileId, style }) {
+  const chatStatus = useChatContext((v) => v.state.chatStatus);
   const [chatLoading, setChatLoading] = useState(false);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -350,7 +351,11 @@ function ProfilePanel({ expandable, profileId, style }) {
                             }}
                             userId={profileId}
                             profilePicUrl={profilePicUrl}
-                            online={!!online}
+                            online={
+                              chatStatus[profile.id]?.isAway ||
+                              chatStatus[profile.id]?.isOnline ||
+                              chatStatus[profile.id]?.isBusy
+                            }
                             statusShown
                             large
                           />
