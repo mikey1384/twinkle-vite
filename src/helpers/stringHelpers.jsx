@@ -621,10 +621,10 @@ export function processedStringWithURL(string) {
 }
 
 export function applyTextEffects(string, finalProcessing) {
-  const boldRegex =
-    /(((?![0-9\.])\*[^\s*]+\*(?![0-9]))|(((\*[^\s]){1}((?!(\*))[^\n])+([^\s]\*){1})(?![0-9\.])))/gi;
   const italicRegex =
     /(((?![0-9\.])\*\*[^\s*]+\*\*(?![0-9]))|(((\*\*[^\s]){1}((?!(\*\*))[^\n])+([^\s]\*\*){1})(?![0-9\.])))/gi;
+  const boldRegex =
+    /(((?![0-9\.])\*[^\s*]+\*(?![0-9]))|(((\*[^\s]){1}((?!(\*))[^\n])+([^\s]\*){1})(?![0-9\.])))/gi;
   const underlineRegex =
     /(((?![0-9\.])__[^\n_]+__(?![0-9]))|(((__[^_]){1}((?!(__))[^\n])+([^_]\__){1})(?![0-9\.])))/gi;
   const lineThroughRegex =
@@ -745,12 +745,12 @@ export function applyTextEffects(string, finalProcessing) {
         )}</span>`
     )
     .replace(
-      boldRegex,
-      (string) => `<b>${string.substring(1, string.length - 1)}</b>`
-    )
-    .replace(
       italicRegex,
       (string) => `<i>${string.substring(2, string.length - 2)}</i>`
+    )
+    .replace(
+      boldRegex,
+      (string) => `<b>${string.substring(1, string.length - 1)}</b>`
     )
     .replace(
       underlineRegex,
