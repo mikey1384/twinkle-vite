@@ -27,6 +27,7 @@ export function addEmoji(string) {
     '(:': '🙃',
     ';)': '😉',
     ':P': '😛',
+    ':p': '😛',
     ':(': '🙁',
     ':o': '😲',
     ':O': '😲',
@@ -332,7 +333,7 @@ export function addEmoji(string) {
 
   const emoticonProcessedString = string.replace(
     emoticonRegex,
-    (match) => emoticons[match]
+    (match) => emoticons[match] || match
   );
 
   const faceEmoticonRegex = new RegExp(
@@ -344,7 +345,7 @@ export function addEmoji(string) {
 
   return emoticonProcessedString.replace(
     faceEmoticonRegex,
-    (match) => faceEmoticons[match]
+    (match) => faceEmoticons[match] || match
   );
 }
 
