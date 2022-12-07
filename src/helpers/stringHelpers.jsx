@@ -22,28 +22,6 @@ export function addCommasToNumber(number) {
 }
 
 export function addEmoji(string) {
-  const faceEmoticons = {
-    ':)': '😊',
-    '(:': '🙃',
-    ';)': '😉',
-    ':P': '😛',
-    ':p': '😛',
-    ':(': '🙁',
-    ':o': '😲',
-    ':O': '😲',
-    '<3': '❤️',
-    ':-)': '😊',
-    ';-)': '😉',
-    'X-D': '😆',
-    XD: '😆',
-    xD: '😆',
-    ':D': '😄',
-    ':-D': '😄',
-    ':-P': '😛',
-    ':-(': '🙁',
-    ':-O': '😲',
-    O_O: '😳'
-  };
   const emoticons = {
     ':alien:': '👽',
     ':america:': '🇺🇸',
@@ -331,22 +309,7 @@ export function addEmoji(string) {
     'gi'
   );
 
-  const emoticonProcessedString = string.replace(
-    emoticonRegex,
-    (match) => emoticons[match] || match
-  );
-
-  const faceEmoticonRegex = new RegExp(
-    `(${Object.keys(faceEmoticons)
-      .map((key) => key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
-      .join('|')})`,
-    'gi'
-  );
-
-  return emoticonProcessedString.replace(
-    faceEmoticonRegex,
-    (match) => faceEmoticons[match] || match
-  );
+  return string.replace(emoticonRegex, (match) => emoticons[match] || match);
 }
 
 export function capitalize(string = '') {
