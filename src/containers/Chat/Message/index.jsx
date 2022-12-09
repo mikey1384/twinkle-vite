@@ -290,7 +290,7 @@ function Message({
       handleSaveMessage();
     }
     async function handleSaveMessage() {
-      const messageId = await saveChatMessage({
+      const { messageId, timeStamp } = await saveChatMessage({
         message: post,
         targetMessageId: targetMessage?.id,
         targetSubject
@@ -300,6 +300,7 @@ function Message({
         subchannelId,
         index,
         channelId,
+        timeStamp,
         tempMessageId
       });
       const messageToSendOverSocket = {

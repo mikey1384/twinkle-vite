@@ -505,6 +505,7 @@ export default function ChatActions(dispatch) {
       messageId,
       channelId,
       subchannelId,
+      timeStamp,
       tempMessageId
     }) {
       return dispatch({
@@ -513,6 +514,7 @@ export default function ChatActions(dispatch) {
         messageIndex: index,
         messageId,
         subchannelId,
+        timeStamp,
         tempMessageId
       });
     },
