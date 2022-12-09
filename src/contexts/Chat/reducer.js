@@ -24,7 +24,8 @@ export default function ChatReducer(state, action) {
         ...prevChannelObj?.messagesObj,
         [action.messageId]: {
           ...prevChannelObj?.messagesObj?.[action.tempMessageId],
-          id: action.messageId
+          id: action.messageId,
+          timeStamp: action.timeStamp
         }
       };
       const subchannelObj = action.subchannelId
@@ -45,7 +46,8 @@ export default function ChatReducer(state, action) {
                 [action.messageId]: {
                   ...prevChannelObj?.subchannelObj?.[action.subchannelId]
                     ?.messagesObj?.[action.tempMessageId],
-                  id: action.messageId
+                  id: action.messageId,
+                  timeStamp: action.timeStamp
                 }
               }
             }
