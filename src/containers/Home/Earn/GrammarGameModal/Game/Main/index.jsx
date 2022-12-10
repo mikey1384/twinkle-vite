@@ -63,8 +63,10 @@ export default function Main({
           }
         }));
         if (!correctSound.wasPlayed) {
-          correctSound.play();
-          correctSound.wasPlayed = true;
+          setTimeout(() => {
+            correctSound.play();
+            correctSound.wasPlayed = true;
+          }, 10);
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (currentIndex < questionIds.length - 1) {
