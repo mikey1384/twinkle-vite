@@ -23,7 +23,7 @@ import Incoming from '~/components/Stream/Incoming';
 import Outgoing from '~/components/Stream/Outgoing';
 import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useLocation, Routes, Route } from 'react-router-dom';
+import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
@@ -51,6 +51,7 @@ const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 function App() {
+  const navigate = useNavigate();
   const location = useLocation();
   const onCloseSigninModal = useAppContext(
     (v) => v.user.actions.onCloseSigninModal
@@ -446,6 +447,7 @@ function App() {
           pathId: channel.pathId,
           message
         });
+        navigate(`/chat/${channel.pathId}`, { replace: true });
       }
       function handleUploadProgress({ loaded, total }) {
         const userChanged = checkUserChange(userId);
