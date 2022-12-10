@@ -4,8 +4,8 @@ import Button from '~/components/Button';
 import AlertModal from '~/components/Modals/AlertModal';
 import Icon from '~/components/Icon';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
+import Tesseract from 'tesseract.js';
 import { mb, returnMaxUploadSize } from '~/constants/defaultValues';
-import { returnImageFileFromUrl } from '~/helpers';
 import {
   getFileInfoFromFileName,
   generateFileName
@@ -311,21 +311,9 @@ export default function TakeScreenshot({
         window.loadImage(
           payload,
           function (img) {
-            const imageUri = img.toDataURL('image/jpeg');
-            const file = returnImageFileFromUrl({
-              imageUrl: imageUri,
-              fileName: fileObj.name
-            });
-            onSetMissionState({
-              missionId,
-              newState: {
-                attachment: {
-                  ...attachment,
-                  file,
-                  preview: imageUri
-                }
-              }
-            });
+            Tesseract.recognize(img, 'eng').then(({ data: { text } }) =>
+              console.log(text, 'here')
+            );
           },
           { orientation: true, canvas: true }
         );
