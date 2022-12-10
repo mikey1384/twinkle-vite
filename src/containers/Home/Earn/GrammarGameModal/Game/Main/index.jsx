@@ -4,7 +4,6 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
-import { isMobile } from '~/helpers';
 
 Main.propTypes = {
   correctSound: PropTypes.object,
@@ -15,7 +14,6 @@ Main.propTypes = {
   questionObj: PropTypes.object
 };
 
-const deviceIsMobile = isMobile(navigator);
 const delay = 1000;
 let elapsedTime = 0;
 let timer = null;
@@ -63,7 +61,7 @@ export default function Main({
             selectedChoiceIndex: prev[currentIndex].answerIndex
           }
         }));
-        if (deviceIsMobile) correctSound.load();
+        correctSound.currentTime = 0;
         correctSound.play();
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (currentIndex < questionIds.length - 1) {
