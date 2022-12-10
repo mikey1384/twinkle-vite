@@ -1015,10 +1015,10 @@ function MessagesContainer({
 
   const handleMessageSubmit = useCallback(
     async ({ content, rewardAmount, rewardReason, target, subchannelId }) => {
+      setTextAreaHeight(0);
       if (chessTarget) {
         return handleSubmitChessTargetMessage(content);
       }
-      setTextAreaHeight(0);
       let isFirstDirectMessage = selectedChannelId === 0;
       if (isFirstDirectMessage) {
         if (creatingNewDMChannel) return;
