@@ -19,8 +19,15 @@ export default function renderEnglishMessage({
   uploader,
   userLinkColor
 }) {
-  const contentLabel =
+  let contentLabel =
     rootType === 'url' ? 'link' : rootType === 'subject' ? 'subject' : rootType;
+  const isSubjectComment =
+    contentType === 'comment' &&
+    targetObj?.subject &&
+    !targetObj?.subject?.notFound;
+  if (isSubjectComment) {
+    contentLabel = 'subject';
+  }
   const contentLinkColor = Color[contentColor]();
 
   switch (contentType) {
@@ -47,7 +54,11 @@ export default function renderEnglishMessage({
             theme={theme}
           />
           {renderTargetAction()} {contentLabel}:{' '}
-          <ContentLink content={rootObj} contentType={rootType} theme={theme} />{' '}
+          <ContentLink
+            content={isSubjectComment ? targetObj?.subject : rootObj}
+            contentType={isSubjectComment ? 'subject' : rootType}
+            theme={theme}
+          />{' '}
         </>
       );
     case 'url':
