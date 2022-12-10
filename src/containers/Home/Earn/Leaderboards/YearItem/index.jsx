@@ -86,7 +86,7 @@ export default function YearItem({ style, year, currentYear }) {
         {SELECTED_LANGUAGE === 'kr' ? '년' : ''} {leaderboardLabel}
       </p>
       {year === currentYear || leaderboardsObj?.[year]?.loaded ? (
-        <div style={{ marginTop: '2rem' }}>
+        <div style={{ marginTop: '2rem', position: 'relative' }}>
           {year === currentYear ? <CurrentMonth /> : null}
           {displayedLeaderBoards.map((leaderboard) => (
             <MonthItem
@@ -97,6 +97,9 @@ export default function YearItem({ style, year, currentYear }) {
               top30={leaderboard.rankings}
             />
           ))}
+          {!leaderboardsObj?.[year]?.loaded && (
+            <Loading style={{ position: 'absolute', height: '3rem' }} />
+          )}
           {showAllButtonShown && (
             <LoadMoreButton
               style={{ fontSize: '2rem', marginTop: '1rem' }}
