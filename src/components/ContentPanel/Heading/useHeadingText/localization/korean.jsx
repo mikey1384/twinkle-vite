@@ -20,7 +20,7 @@ export default function renderKoreanMessage({
   uploader,
   userLinkColor
 }) {
-  const contentLabel =
+  let contentLabel =
     rootType === 'url' ? 'link' : rootType === 'subject' ? 'subject' : rootType;
   const isSubjectComment =
     contentType === 'comment' &&
