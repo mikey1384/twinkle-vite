@@ -4,6 +4,7 @@ import Main from './Main';
 import correct from './correct_sound.mp3';
 
 const correctSound = new Audio(correct);
+correctSound.preload = 'auto';
 
 Game.propTypes = {
   isOnStreak: PropTypes.bool,
