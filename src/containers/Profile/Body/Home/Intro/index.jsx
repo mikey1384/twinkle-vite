@@ -256,11 +256,7 @@ export default function Intro({ profile, selectedTheme }) {
               email={email}
               verifiedEmail={verifiedEmail}
               joinDate={joinDate}
-              online={
-                chatStatus[profile.id]?.isAway ||
-                chatStatus[profile.id]?.isOnline ||
-                chatStatus[profile.id]?.isBusy
-              }
+              online={chatStatus[profile.id]?.isOnline}
               lastActive={lastActive}
               profilePicUrl={profilePicUrl}
               userId={id}

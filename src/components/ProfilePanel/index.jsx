@@ -180,14 +180,6 @@ function ProfilePanel({ expandable, profileId, style }) {
   const FileInputRef = useRef(null);
   const loading = useRef(false);
 
-  const online = useMemo(
-    () =>
-      chatStatus[profile.id]?.isAway ||
-      chatStatus[profile.id]?.isOnline ||
-      chatStatus[profile.id]?.isBusy,
-    [chatStatus, profile.id]
-  );
-
   useEffect(() => {
     if (!profileLoaded && !loading.current && profileId) {
       handleInitProfile();
@@ -348,7 +340,7 @@ function ProfilePanel({ expandable, profileId, style }) {
                             }}
                             userId={profileId}
                             profilePicUrl={profilePicUrl}
-                            online={online}
+                            online={chatStatus[profile.id]?.isOnline}
                             statusShown
                             large
                           />
@@ -492,19 +484,21 @@ function ProfilePanel({ expandable, profileId, style }) {
                         />
                       </div>
                     )}
-                    {lastActive && !online && profileId !== userId && (
-                      <div
-                        style={{
-                          marginTop: '1rem',
-                          fontSize: '1.5rem',
-                          color: Color.gray()
-                        }}
-                      >
-                        <p>
-                          {lastOnlineLabel} {timeSince(lastActive)}
-                        </p>
-                      </div>
-                    )}
+                    {lastActive &&
+                      !chatStatus[profile.id]?.isOnline &&
+                      profileId !== userId && (
+                        <div
+                          style={{
+                            marginTop: '1rem',
+                            fontSize: '1.5rem',
+                            color: Color.gray()
+                          }}
+                        >
+                          <p>
+                            {lastOnlineLabel} {timeSince(lastActive)}
+                          </p>
+                        </div>
+                      )}
                   </div>
                   <input
                     ref={FileInputRef}

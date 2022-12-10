@@ -39,11 +39,7 @@ export default function Profile({ profile }) {
             style={{ width: '15rem', cursor: 'pointer' }}
             userId={profile.id}
             profilePicUrl={profile.profilePicUrl}
-            online={
-              chatStatus[profile.id]?.isAway ||
-              chatStatus[profile.id]?.isOnline ||
-              chatStatus[profile.id]?.isBusy
-            }
+            online={chatStatus[profile.id]?.isOnline}
             statusShown
             large
           />
