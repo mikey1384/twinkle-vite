@@ -22,6 +22,13 @@ export default function renderKoreanMessage({
 }) {
   const contentLabel =
     rootType === 'url' ? 'link' : rootType === 'subject' ? 'subject' : rootType;
+  const isSubjectComment =
+    contentType === 'comment' &&
+    targetObj?.subject &&
+    !targetObj?.subject?.notFound;
+  if (isSubjectComment) {
+    contentLabel = 'subject';
+  }
   const contentLinkColor = Color[contentColor]();
 
   switch (contentType) {
@@ -42,7 +49,11 @@ export default function renderKoreanMessage({
         <>
           <UsernameText user={uploader} color={Color[linkColor]()} />
           님이{' '}
-          <ContentLink theme={theme} content={rootObj} contentType={rootType} />
+          <ContentLink
+            theme={theme}
+            content={isSubjectComment ? targetObj?.subject : rootObj}
+            contentType={isSubjectComment ? 'subject' : rootType}
+          />
           ({localize(contentLabel)})에 {renderTargetAction()}
           <ContentLink
             theme={theme}
