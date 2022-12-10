@@ -103,6 +103,12 @@ ul {
   user-select: none;
 }
 
+@keyframes dotdotdot {
+  to {
+    clip-path: inset(0 -1ch 0 0);
+  }
+}
+
 @keyframes fadeIn {
   0% {
     opacity: 0;

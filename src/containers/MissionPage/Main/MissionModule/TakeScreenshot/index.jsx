@@ -3,55 +3,46 @@ import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import AlertModal from '~/components/Modals/AlertModal';
 import Icon from '~/components/Icon';
-import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import Tesseract from 'tesseract.js';
 import { mb, returnMaxUploadSize } from '~/constants/defaultValues';
-import {
-  getFileInfoFromFileName,
-  generateFileName
-} from '~/helpers/stringHelpers';
-import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
-import { v1 as uuidv1 } from 'uuid';
+import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
+import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import SectionToScreenshot from './SectionToScreenshot';
 
-const BodyRef = document.scrollingElement || document.documentElement;
-
 TakeScreenshot.propTypes = {
   attachment: PropTypes.object,
-  fileUploadProgress: PropTypes.number,
   missionId: PropTypes.number,
-  onSetMissionState: PropTypes.func,
-  style: PropTypes.object,
-  uploadingFile: PropTypes.bool
+  style: PropTypes.object
 };
 
-export default function TakeScreenshot({
-  attachment,
-  fileUploadProgress,
-  missionId,
-  onSetMissionState,
-  style,
-  uploadingFile
-}) {
-  const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
+export default function TakeScreenshot({ attachment, missionId, style }) {
+  const [isReady, setIsReady] = useState(false);
+  const [buttonShown, setButtonShown] = useState(false);
   const uploadMissionAttempt = useAppContext(
     (v) => v.requestHelpers.uploadMissionAttempt
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
-  const [isReady, setIsReady] = useState(false);
-  const [screenshotTaken, setScreenshotTaken] = useState(false);
-  const [buttonShown, setButtonShown] = useState(false);
-  const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const { fileUploadLvl, username, userId } = useKeyContext((v) => v.myState);
+  const [isChecking, setIsChecking] = useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
+  const [isFailed, setIsFailed] = useState(false);
   const FileInputRef = useRef(null);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
+  );
+  const nowString = useMemo(() => {
+    const now = new Date(Date.now());
+    return now.toString();
+  }, []);
+  const expectedText = useMemo(
+    () => `${username} captured this screenshot`,
+    [username]
   );
 
   return (
@@ -93,21 +84,10 @@ export default function TakeScreenshot({
             <span style={{ marginLeft: '1rem' }}>I am ready</span>
           </Button>
         </div>
-      ) : uploadingFile ? (
-        <FileUploadStatusIndicator
-          style={{
-            fontSize: '1.7rem',
-            fontWeight: 'bold',
-            marginTop: 0,
-            paddingBottom: '1rem'
-          }}
-          fileName={attachment?.file?.name}
-          uploadProgress={fileUploadProgress}
-        />
       ) : (
         <>
           <div>
-            <b>1.</b> Take a screenshot of{' '}
+            Take a screenshot of{' '}
             <b style={{ color: Color.green() }}>
               this box <Icon icon="arrow-down" />
             </b>
@@ -128,31 +108,12 @@ export default function TakeScreenshot({
               }}
             >
               <SectionToScreenshot
+                nowString={nowString}
                 username={username}
                 onSetButtonShown={setButtonShown}
               />
             </div>
           </div>
-          {screenshotTaken && (
-            <p style={{ marginTop: '2rem' }}>
-              <b>2.</b>{' '}
-              {attachment?.preview ? (
-                <>
-                  Make sure {`you've`} selected the correct screenshot. It must
-                  have{' '}
-                  <b style={{ color: Color.green() }}>
-                    that <Icon icon="arrow-up" />
-                  </b>{' '}
-                  in it
-                </>
-              ) : (
-                <>
-                  Press this <b style={{ color: Color.logoBlue() }}>button</b>{' '}
-                  and select the screenshot image file you have just taken
-                </>
-              )}
-            </p>
-          )}
           {attachment?.preview && (
             <div style={{ marginTop: '1rem' }}>
               <img style={{ width: '100%' }} src={attachment?.preview} />
@@ -164,14 +125,15 @@ export default function TakeScreenshot({
           )}
         </>
       )}
-      {screenshotTaken ? (
+      {buttonShown && !isChecking && (
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            marginTop: '2rem'
+            marginTop: '2rem',
+            animation: 'fadeIn 3s'
           }}
         >
           {!attachment?.preview && (
@@ -181,47 +143,9 @@ export default function TakeScreenshot({
               style={{ fontSize: '2rem' }}
               onClick={() => FileInputRef.current.click()}
             >
-              <Icon icon="image" />
-              <span style={{ marginLeft: '1rem' }}>Select Screenshot</span>
+              <Icon icon="arrow-up" />
+              <span style={{ marginLeft: '1rem' }}>I took the screenshot</span>
             </Button>
-          )}
-          {attachment?.preview && !uploadingFile && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center'
-              }}
-            >
-              <Button
-                disabled={uploadingFile}
-                color="darkBlue"
-                skeuomorphic
-                style={{ fontSize: '2rem' }}
-                onClick={handleFileUpload}
-              >
-                <Icon icon="upload" />
-                <span style={{ marginLeft: '1rem' }}>Submit</span>
-              </Button>
-              <Button
-                disabled={uploadingFile}
-                color="darkerGray"
-                skeuomorphic
-                style={{ fontSize: '2rem', marginTop: '1rem' }}
-                onClick={() =>
-                  onSetMissionState({
-                    missionId,
-                    newState: {
-                      attachment: null
-                    }
-                  })
-                }
-              >
-                <span style={{ marginLeft: '1rem' }}>
-                  I selected a wrong file
-                </span>
-              </Button>
-            </div>
           )}
           <input
             ref={FileInputRef}
@@ -231,61 +155,50 @@ export default function TakeScreenshot({
             onChange={handleFileSelection}
           />
         </div>
-      ) : (
+      )}
+      {isChecking && (
         <div
           style={{
-            width: '100%',
             display: 'flex',
-            justifyContent: 'center',
-            flexDirection: 'column',
-            alignItems: 'center'
+            lineHeight: 1,
+            alignItems: 'center',
+            height: '7rem',
+            color: Color.darkerGray()
           }}
         >
-          {buttonShown && !uploadingFile && (
-            <div
-              className={css`
-                margin-top: 1rem;
-                width: 50%;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                animation: fadeIn 3s;
-              `}
-            >
-              <Button
-                skeuomorphic
-                color="logoBlue"
-                onClick={() => setScreenshotTaken(true)}
-              >
-                <div
-                  className={css`
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.3rem;
-                    }
-                  `}
-                >
-                  <Icon style={{ marginRight: '0.7rem' }} icon="arrow-up" />I
-                  took a screenshot of that box
-                </div>
-              </Button>
-            </div>
-          )}
-          <div style={{ marginTop: '5rem' }}>
-            <span>
-              <>
-                If you {`don't`} know what the word <b>{`"screenshot"`}</b>{' '}
-                means,{' '}
-              </>
-              press the <b style={{ color: Color.brownOrange() }}>button</b>{' '}
-              below
-            </span>
-            <Icon
-              style={{ marginLeft: '1rem', color: Color.brownOrange() }}
-              icon="arrow-down"
-            />
+          <div>Checking</div>
+          <div>
+            <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
           </div>
         </div>
       )}
+      {isFailed && (
+        <div style={{ marginTop: '2rem', color: 'red', fontWeight: 'bold' }}>
+          Your image did not include the yellow box above
+        </div>
+      )}
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}
+      >
+        <div style={{ marginTop: '5rem' }}>
+          <span>
+            <>
+              If you {`don't`} know what the word <b>{`"screenshot"`}</b> means,{' '}
+            </>
+            press the <b style={{ color: Color.magenta() }}>button</b> below
+          </span>
+          <Icon
+            style={{ marginLeft: '1rem', color: Color.magenta() }}
+            icon="arrow-down"
+          />
+        </div>
+      </div>
       {alertModalShown && (
         <AlertModal
           title="File is too large"
@@ -308,12 +221,45 @@ export default function TakeScreenshot({
       const reader = new FileReader();
       reader.onload = (upload) => {
         const payload = upload.target.result;
+        setIsFailed(false);
+        setIsChecking(true);
         window.loadImage(
           payload,
           function (img) {
-            Tesseract.recognize(img, 'eng').then(({ data: { text } }) =>
-              console.log(text, 'here')
-            );
+            Tesseract.recognize(img, 'eng').then(async ({ data: { text } }) => {
+              if (text.includes(expectedText)) {
+                const { success, newXpAndRank, newCoins } =
+                  await uploadMissionAttempt({
+                    missionId,
+                    attempt: { status: 'pass' }
+                  });
+                if (!success) {
+                  return setIsChecking(false);
+                }
+                if (newXpAndRank.xp) {
+                  onSetUserState({
+                    userId,
+                    newState: {
+                      twinkeXP: newXpAndRank.xp,
+                      rank: newXpAndRank.rank
+                    }
+                  });
+                }
+                if (newCoins.netCoins) {
+                  onSetUserState({
+                    userId,
+                    newState: { twinkleCoins: newCoins.netCoins }
+                  });
+                }
+                onUpdateMissionAttempt({
+                  missionId,
+                  newState: { status: 'pass' }
+                });
+              } else {
+                setIsChecking(false);
+                setIsFailed(true);
+              }
+            });
           },
           { orientation: true, canvas: true }
         );
@@ -321,77 +267,5 @@ export default function TakeScreenshot({
       reader.readAsDataURL(fileObj);
     }
     event.target.value = null;
-  }
-
-  async function handleFileUpload() {
-    onSetMissionState({
-      missionId,
-      newState: {
-        uploadingFile: true
-      }
-    });
-    const uploadedFilePath = await uploadFile({
-      context: 'mission',
-      filePath: uuidv1(),
-      fileName: generateFileName(attachment.file.name),
-      file: attachment.file,
-      onUploadProgress: handleUploadProgress
-    });
-    const userChanged = checkUserChange(userId);
-    if (userChanged) {
-      onSetMissionState({
-        missionId,
-        newState: {
-          uploadingFile: false
-        }
-      });
-      return;
-    }
-    const { success } = await uploadMissionAttempt({
-      missionId,
-      attempt: {
-        fileName: attachment.file.name,
-        fileSize: attachment.file.size,
-        filePath: uploadedFilePath
-      }
-    });
-
-    if (success) {
-      onSetMissionState({
-        missionId,
-        newState: {
-          attachment: null,
-          fileUploadProgress: null
-        }
-      });
-      onUpdateMissionAttempt({
-        missionId,
-        newState: {
-          status: 'pending',
-          tryingAgain: false
-        }
-      });
-      document.getElementById('App').scrollTop = 0;
-      BodyRef.scrollTop = 0;
-    }
-    onSetMissionState({
-      missionId,
-      newState: {
-        uploadingFile: false
-      }
-    });
-
-    function handleUploadProgress({ loaded, total }) {
-      const userChanged = checkUserChange(userId);
-      if (userChanged) {
-        return;
-      }
-      onSetMissionState({
-        missionId,
-        newState: {
-          fileUploadProgress: loaded / total
-        }
-      });
-    }
   }
 }

@@ -7,11 +7,16 @@ import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 
 SectionToScreenshot.propTypes = {
+  nowString: PropTypes.string.isRequired,
   onSetButtonShown: PropTypes.func.isRequired,
   username: PropTypes.string
 };
 
-export default function SectionToScreenshot({ username, onSetButtonShown }) {
+export default function SectionToScreenshot({
+  nowString,
+  username,
+  onSetButtonShown
+}) {
   const styles = useSpring({
     to: { marginLeft: '0' },
     from: { marginLeft: '-100%' }
@@ -59,15 +64,10 @@ export default function SectionToScreenshot({ username, onSetButtonShown }) {
           Screenshot this box
         </p>
         <p style={{ marginTop: '1.5rem' }}>
-          <b>{username}</b> captured this screenshot on {returnNow()}
+          <b>{username}</b> captured this screenshot on {nowString}
         </p>
       </div>
       <Icon icon="arrow-left" size="2x" />
     </animated.div>
   );
-
-  function returnNow() {
-    const now = new Date(Date.now());
-    return now.toString();
-  }
 }
