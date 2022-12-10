@@ -34,11 +34,6 @@ export default function StatusInterface({ posting, statusMessage }) {
                 animation: dotdotdot 1s steps(4) infinite;
               }
             }
-            @keyframes dotdotdot {
-              to {
-                clip-path: inset(0 -1ch 0 0);
-              }
-            }
           `}
           style={{
             textAlign: 'center',
