@@ -137,6 +137,7 @@ export function addEmoji(string) {
     ':lion:': '🦁',
     ':lock:': '🔒',
     ':lol:': '🤣',
+    ':LOL:': '🤣',
     ':love:': '😍',
     ':lucky:': '🍀',
     ':mad:': '😡',
@@ -448,10 +449,10 @@ export function isValidEmail(email = '') {
 export function isValidSpoiler(content = '') {
   let displayedContent = '';
   if (content.startsWith('/secret ')) {
-    displayedContent = content.substr(8);
+    displayedContent = content.substring(8);
   }
   if (content.startsWith('/spoiler ')) {
-    displayedContent = content.substr(9);
+    displayedContent = content.substring(9);
   }
   return !stringIsEmpty(displayedContent);
 }
