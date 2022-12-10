@@ -4,7 +4,6 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
-import { isMobile } from '~/helpers';
 
 Main.propTypes = {
   correctSound: PropTypes.object,
@@ -15,7 +14,6 @@ Main.propTypes = {
   questionObj: PropTypes.object
 };
 
-const deviceIsMobile = isMobile(navigator);
 const delay = 1000;
 let elapsedTime = 0;
 let timer = null;
@@ -63,9 +61,7 @@ export default function Main({
             selectedChoiceIndex: prev[currentIndex].answerIndex
           }
         }));
-        if (!deviceIsMobile) {
-          correctSound.play();
-        }
+        correctSound.play();
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (currentIndex < questionIds.length - 1) {
           setCurrentIndex((prev) => prev + 1);
@@ -109,40 +105,26 @@ export default function Main({
     }
 
     function handleReturnCalculatedScore(elapsedTime) {
-      const defaultBaseLetterLengthTime = 500;
-      let baseLetterLengthTime = defaultBaseLetterLengthTime;
+      // Calculate the number of letters and words in the task
+      let numLetters = 0;
+      let numWords = 0;
       if (questionObj[currentIndex]) {
-        const { choices, wasWrong } = questionObj[currentIndex];
-        let numLetters = 0;
+        const { choices } = questionObj[currentIndex];
         for (let choice of choices) {
           numLetters += choice.length;
-        }
-        baseLetterLengthTime = Math.max(
-          numLetters * 6,
-          defaultBaseLetterLengthTime
-        );
-        if (wasWrong) {
-          baseLetterLengthTime = Math.min(
-            baseLetterLengthTime,
-            defaultBaseLetterLengthTime
-          );
-        }
-      }
-      let baseNumWordsTime = baseLetterLengthTime;
-      if (questionObj[currentIndex]) {
-        const { choices, wasWrong } = questionObj[currentIndex];
-        let numWords = 0;
-        for (let choice of choices) {
           numWords += choice.split(' ').length;
         }
-        baseNumWordsTime = Math.max(numWords * 40, baseLetterLengthTime);
-        if (wasWrong) {
-          baseNumWordsTime = Math.min(baseNumWordsTime, baseLetterLengthTime);
-        }
       }
+
+      // Calculate the base time
+      const baseTime =
+        Math.max(numLetters * 6, 500) + Math.max(numWords * 40, 500);
+
+      // Apply penalty for wrong answers
       const measureTime =
-        Number(elapsedTime) + handleCalculatePenalty(numWrong.current);
-      const baseTime = baseLetterLengthTime + baseNumWordsTime;
+        elapsedTime + handleCalculatePenalty(numWrong.current);
+
+      // Return the grade
       if (measureTime < baseTime * 0.37) return 'S';
       if (measureTime < baseTime * 0.5) return 'A';
       if (measureTime < baseTime * 0.6) return 'B';
