@@ -235,7 +235,7 @@ export default function Body({
         : rootObj.rewardLevel;
     return contentObj.byUser
       ? 5
-      : targetObj.subject?.rewardLevel || rootRewardLevel;
+      : targetObj.subject?.rewardLevel || rootRewardLevel || 0;
   }, [contentObj.byUser, rootObj.rewardLevel, rootType, targetObj.subject]);
 
   const xpButtonDisabled = useMemo(
