@@ -251,11 +251,7 @@ export default function Cover({
               : null
           }
           profilePicUrl={profilePicUrl}
-          online={
-            chatStatus[profile.id]?.isAway ||
-            chatStatus[profile.id]?.isOnline ||
-            chatStatus[profile.id]?.isBusy
-          }
+          online={chatStatus[profile.id]?.isOnline}
           large
           statusShown
         />
