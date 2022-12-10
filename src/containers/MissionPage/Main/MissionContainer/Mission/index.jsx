@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import LongText from '~/components/Texts/LongText';
 import MissionModule from '../../MissionModule';
@@ -7,6 +7,7 @@ import RewardText from '~/components/Texts/RewardText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ApprovedStatus from '../../ApprovedStatus';
 import PendingStatus from '../../PendingStatus';
+import Loading from '~/components/Loading';
 import { panel } from '../../../Styles';
 import { returnMissionThumb } from '~/constants/defaultValues';
 import { mobileMaxWidth } from '~/constants/css';
@@ -42,6 +43,7 @@ export default function Mission({
   style,
   onSetMissionState
 }) {
+  const [loading, setLoading] = useState(false);
   const checkMissionStatus = useAppContext(
     (v) => v.requestHelpers.checkMissionStatus
   );
@@ -70,6 +72,7 @@ export default function Mission({
     }
 
     async function handleCheckMissionStatus() {
+      setLoading(true);
       const { filePath, feedback, status, reviewTimeStamp, reviewer } =
         await checkMissionStatus(missionId);
       if (status && !(status === 'fail' && myAttempt?.tryingAgain)) {
@@ -78,6 +81,7 @@ export default function Mission({
           newState: { filePath, feedback, reviewer, reviewTimeStamp, status }
         });
       }
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageVisible]);
@@ -187,7 +191,9 @@ export default function Mission({
           )}
         </div>
       )}
-      {myAttempt?.status === 'pending' ? (
+      {loading ? (
+        <Loading />
+      ) : myAttempt?.status === 'pending' ? (
         <PendingStatus style={{ marginTop: '7rem' }} />
       ) : (!mission.repeatable && myAttempt?.status === 'pass') ||
         (myAttempt?.status === 'fail' && !myAttempt?.tryingAgain) ? (
