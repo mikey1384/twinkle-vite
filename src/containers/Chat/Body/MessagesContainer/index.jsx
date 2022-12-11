@@ -614,11 +614,11 @@ function MessagesContainer({
   );
 
   const handleConfirmChessMove = useCallback(
-    async ({ state, isCheckmate, isStalemate, moveNumber }) => {
+    async ({ state, isCheckmate, isStalemate, moveNumber, previousState }) => {
       const gameWinnerId = isCheckmate ? userId : isStalemate ? 0 : null;
       const params = {
         userId,
-        chessState: state,
+        chessState: { ...state, previousState },
         isChessMsg: 1,
         gameWinnerId
       };

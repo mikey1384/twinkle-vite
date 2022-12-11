@@ -1,8 +1,7 @@
 import PropTypes from 'prop-types';
-import Chess from '../Chess';
-import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import Icon from '~/components/Icon';
+import Chess from '../../Chess';
+import { borderRadius, Color } from '~/constants/css';
+import ProposeButton from './ProposeButton';
 
 TargetChessPosition.propTypes = {
   chessState: PropTypes.object.isRequired,
@@ -62,50 +61,31 @@ export default function TargetChessPosition({
         senderName={username}
         style={{ width: '100%' }}
       />
-      {!chessState.isRewindRequest &&
-        Number(chessState.messageId) !== Number(lastChessMessageId) && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '1rem',
-              right: '1rem',
-              border: `1px solid ${Color.black()}`,
-              background: '#fff'
-            }}
-            className={`unselectable ${css`
-              cursor: pointer;
-              opacity: 0.8;
-              padding: 1rem;
-              color: ${Color.black()};
-              &:hover {
-                opacity: 1;
-                color: ${Color.vantaBlack()};
+      <div
+        style={{
+          bottom: 0,
+          right: '1rem',
+          position: 'absolute',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {!chessState.isRewindRequest &&
+          Number(chessState.messageId) !== Number(lastChessMessageId) &&
+          chessState.previousState && (
+            <ProposeButton
+              style={{ marginTop: '1rem', marginBottom: '1rem' }}
+              onClick={() =>
+                onRequestRewind({
+                  ...chessState.previousState,
+                  isRewindRequest: true,
+                  isDiscussion: true
+                })
               }
-              @media (max-width: ${mobileMaxWidth}) {
-                padding: 0.7rem;
-                opacity: 1;
-              }
-            `}`}
-            onClick={() =>
-              onRequestRewind({ ...chessState, isRewindRequest: true })
-            }
-          >
-            <span
-              className={css`
-                font-size: 1.7rem;
-                font-weight: bold;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.3rem;
-                }
-              `}
-            >
-              <Icon icon="clock-rotate-left" />
-              <span style={{ marginLeft: '1rem' }}>
-                Propose a new game from here
-              </span>
-            </span>
-          </div>
-        )}
+              label="Propose retrying this move"
+            />
+          )}
+      </div>
     </div>
   );
 }

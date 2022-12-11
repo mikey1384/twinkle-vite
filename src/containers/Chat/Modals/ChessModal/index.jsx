@@ -319,7 +319,10 @@ export default function ChessModal({
     if (!submittingRef.current) {
       submittingRef.current = true;
       setSubmitting(true);
-      await onConfirmChessMove(newChessState);
+      await onConfirmChessMove({
+        ...newChessState,
+        previousState: initialState
+      });
     }
   }
 
