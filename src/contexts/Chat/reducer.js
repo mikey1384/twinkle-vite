@@ -1204,6 +1204,7 @@ export default function ChatReducer(state, action) {
                 [action.subject.id]: {
                   id: action.subject.id,
                   channelId: action.channelId,
+                  subchannelId: action.subchannelId,
                   ...action.subject
                 }
               },
