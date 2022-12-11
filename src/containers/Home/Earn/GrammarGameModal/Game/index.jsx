@@ -1,10 +1,6 @@
 import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import Main from './Main';
-import correct from './correct_sound.mp3';
-
-const correctSound = new Audio(correct);
-correctSound.preload = 'auto';
 
 Game.propTypes = {
   isOnStreak: PropTypes.bool,
@@ -25,7 +21,6 @@ export default function Game({
     <div style={{ width: '100%', paddingTop: '3.5rem' }}>
       {questionIds.length > 0 ? (
         <Main
-          correctSound={correctSound}
           questionIds={questionIds}
           questionObj={questionObj}
           isOnStreak={isOnStreak}
