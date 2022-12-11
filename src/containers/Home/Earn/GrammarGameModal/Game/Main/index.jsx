@@ -4,10 +4,9 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
 import Loading from '~/components/Loading';
-import { isMobile } from '~/helpers';
+import correct from './correct_sound.mp3';
 
 Main.propTypes = {
-  correctSound: PropTypes.object,
   isOnStreak: PropTypes.bool,
   onGameFinish: PropTypes.func.isRequired,
   onSetQuestionObj: PropTypes.func.isRequired,
@@ -15,14 +14,12 @@ Main.propTypes = {
   questionObj: PropTypes.object
 };
 
-const deviceIsMobile = isMobile(navigator);
 const delay = 1000;
 let elapsedTime = 0;
 let timer = null;
 let gotWrongTimer = null;
 
 export default function Main({
-  correctSound,
   isOnStreak,
   onSetQuestionObj,
   onGameFinish,
@@ -32,6 +29,7 @@ export default function Main({
   const [isCompleted, setIsCompleted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
+  const correctSoundRef = useRef(null);
   const gotWrongRef = useRef(false);
   const loadingRef = useRef(false);
   const numWrong = useRef(0);
@@ -63,9 +61,7 @@ export default function Main({
             selectedChoiceIndex: prev[currentIndex].answerIndex
           }
         }));
-        if (!deviceIsMobile) {
-          correctSound.play();
-        }
+        correctSoundRef.current.play();
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (currentIndex < questionIds.length - 1) {
           setCurrentIndex((prev) => prev + 1);
@@ -137,7 +133,6 @@ export default function Main({
       return 'F';
     }
   }, [
-    correctSound,
     currentIndex,
     gotWrong,
     onGameFinish,
@@ -162,6 +157,7 @@ export default function Main({
       >
         {Slides || <Loading />}
       </SlideContainer>
+      <audio src={correct} ref={correctSoundRef} preload="auto" />
     </ErrorBoundary>
   );
 
