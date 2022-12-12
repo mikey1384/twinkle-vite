@@ -1,19 +1,10 @@
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
 import { useHomeContext } from '~/contexts';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
 
-const grammarGameLabel = localize('grammarGame');
-
-StartMenu.propTypes = {
-  onSetGrammarGameModalShown: PropTypes.func.isRequired
-};
-
-export default function StartMenu({ onSetGrammarGameModalShown }) {
+export default function StartMenu() {
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
   );
@@ -36,15 +27,6 @@ export default function StartMenu({ onSetGrammarGameModalShown }) {
       >
         <section>
           <p>Earn XP</p>
-          <GradientButton
-            style={{ marginTop: '0.7rem' }}
-            fontSize="1.5rem"
-            mobileFontSize="1.3rem"
-            onClick={onSetGrammarGameModalShown}
-          >
-            <Icon icon="spell-check" />
-            <span style={{ marginLeft: '0.7rem' }}>{grammarGameLabel}</span>
-          </GradientButton>
           <Button
             onClick={() => onSetTopMenuSectionSection('subject')}
             style={{ marginTop: '0.7rem' }}

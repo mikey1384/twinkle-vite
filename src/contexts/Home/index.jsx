@@ -12,6 +12,7 @@ export const initialHomeState = {
   feeds: [],
   feedsOutdated: false,
   fileUploadProgress: null,
+  aiStoriesModalShown: false,
   grammarGameModalShown: false,
   inputModalShown: false,
   secretAttachmentUploadProgress: null,

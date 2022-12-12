@@ -5,7 +5,7 @@ import ContentListItem from '~/components/ContentListItem';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import localize from '~/constants/localize';
-import { useKeyContext, useAppContext } from '~/contexts';
+import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const showMeAnotherSubjectLabel = localize('showMeAnotherSubject');
@@ -14,6 +14,9 @@ export default function EarnXPFromSubjects() {
   const {
     showMeAnotherSubjectButton: { color: showMeAnotherSubjectButtonColor }
   } = useKeyContext((v) => v.theme);
+  const onSetTopMenuSectionSection = useHomeContext(
+    (v) => v.actions.onSetTopMenuSectionSection
+  );
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const loadHighXPSubjects = useAppContext(
@@ -50,7 +53,8 @@ export default function EarnXPFromSubjects() {
               marginTop: '1.5rem',
               width: '100%',
               display: 'flex',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              marginBottom: '3rem'
             }}
           >
             <Button
@@ -65,10 +69,42 @@ export default function EarnXPFromSubjects() {
               </span>
             </Button>
           </div>
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <Button
+              onClick={() => handleSetTopMenuSection('recommend')}
+              style={{ width: '50%' }}
+              filled
+              color="brownOrange"
+            >
+              <Icon icon="heart" />
+              <span style={{ marginLeft: '0.7rem' }}>Recommend posts</span>
+            </Button>
+            <Button
+              onClick={() => handleSetTopMenuSection('reward')}
+              style={{ marginLeft: '1rem', width: '50%' }}
+              filled
+              color="pink"
+            >
+              <Icon icon="certificate" />
+              <span style={{ marginLeft: '0.7rem' }}>Reward posts</span>
+            </Button>
+          </div>
         </div>
       </div>
     </ErrorBoundary>
   );
+
+  function handleSetTopMenuSection(section) {
+    onSetTopMenuSectionSection(section);
+    document.getElementById('App').scrollTop = 0;
+    BodyRef.scrollTop = 0;
+  }
 
   async function handleLoadAnotherSubjectClick() {
     document.getElementById('App').scrollTop = 0;

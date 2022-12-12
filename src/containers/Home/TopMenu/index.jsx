@@ -18,12 +18,14 @@ const grammarGameLabel = localize('grammarGame');
 
 TopMenu.propTypes = {
   onInputModalButtonClick: PropTypes.func.isRequired,
+  onPlayAIStories: PropTypes.func.isRequired,
   onPlayGrammarGame: PropTypes.func.isRequired,
   style: PropTypes.object
 };
 
 export default function TopMenu({
   onInputModalButtonClick,
+  onPlayAIStories,
   onPlayGrammarGame,
   style
 }) {
@@ -93,7 +95,7 @@ export default function TopMenu({
             colorLeft={Color.darkBlue()}
             colorMiddle={Color.logoBlue()}
             colorRight={Color.darkBlue()}
-            onClick={() => console.log('pressed')}
+            onClick={onPlayAIStories}
           >
             AI Stories
           </TopButton>

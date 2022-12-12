@@ -94,8 +94,17 @@ export default function RewardPosts() {
           }}
         >
           <Button
+            onClick={() => handleSetTopMenuSection('subject')}
+            style={{ width: '50%' }}
+            filled
+            color="logoBlue"
+          >
+            <Icon icon="certificate" />
+            <span style={{ marginLeft: '0.7rem' }}>Answer subjects</span>
+          </Button>
+          <Button
             onClick={() => handleSetTopMenuSection('recommend')}
-            style={{ marginTop: '0.7rem', width: '100%' }}
+            style={{ marginLeft: '1rem', width: '50%' }}
             filled
             color="brownOrange"
           >

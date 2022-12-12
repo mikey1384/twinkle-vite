@@ -11,7 +11,8 @@ import Earn from './Earn';
 import Store from './Store';
 import Stories from './Stories';
 import LocalContext from './Context';
-import { useAppContext, useKeyContext } from '~/contexts';
+import GrammarGameModal from './GrammarGameModal';
+import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
 import { container, Left, Center, Right } from './Styles';
 
 Home.propTypes = {
@@ -22,6 +23,12 @@ Home.propTypes = {
 function Home({ onFileUpload, section }) {
   const { userId } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const grammarGameModalShown = useHomeContext(
+    (v) => v.state.grammarGameModalShown
+  );
+  const onSetGrammarGameModalShown = useHomeContext(
+    (v) => v.actions.onSetGrammarGameModalShown
+  );
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState(null);
@@ -69,6 +76,11 @@ function Home({ onFileUpload, section }) {
               title="Image is too large (limit: 10mb)"
               content="Please select a smaller image"
               onHide={() => setAlertModalShown(false)}
+            />
+          )}
+          {grammarGameModalShown && (
+            <GrammarGameModal
+              onHide={() => onSetGrammarGameModalShown(false)}
             />
           )}
         </div>
