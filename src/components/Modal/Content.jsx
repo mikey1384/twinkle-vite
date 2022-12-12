@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 Content.propTypes = {
+  closeColor: PropTypes.string,
   closeWhenClickedOutside: PropTypes.bool,
   onHide: PropTypes.func,
   className: PropTypes.string,
@@ -14,6 +15,7 @@ Content.propTypes = {
 };
 
 export default function Content({
+  closeColor,
   closeWhenClickedOutside,
   children,
   className,
@@ -41,7 +43,7 @@ export default function Content({
           height: 30px;
           cursor: pointer;
           .close {
-            color: ${Color.darkerGray()};
+            color: ${closeColor || Color.darkerGray()};
             opacity: 0.5;
           }
           &:hover {
