@@ -97,7 +97,7 @@ export default function TopMenu({
             colorRight={Color.darkBlue()}
             onClick={onPlayAIStories}
           >
-            AI Stories
+            A.I Stories
           </TopButton>
           <TopButton
             colorLeft={Color.rose()}
