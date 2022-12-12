@@ -7,6 +7,7 @@ import Content from './Content';
 
 Modal.propTypes = {
   className: PropTypes.string,
+  closeColor: PropTypes.string,
   children: PropTypes.node,
   closeWhenClickedOutside: PropTypes.bool,
   modalOverModal: PropTypes.bool,
@@ -19,6 +20,7 @@ Modal.propTypes = {
 
 export default function Modal({
   className,
+  closeColor,
   closeWhenClickedOutside = true,
   children,
   modalOverModal,
@@ -67,6 +69,7 @@ export default function Modal({
           style={style}
         >
           <Content
+            closeColor={closeColor}
             closeWhenClickedOutside={closeWhenClickedOutside}
             style={modalStyle}
             eventTypes={['mouseup']}
