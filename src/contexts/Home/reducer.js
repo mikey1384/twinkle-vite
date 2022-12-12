@@ -81,6 +81,11 @@ export default function HomeReducer(state, action) {
         ...state,
         feedsOutdated: action.outdated
       };
+    case 'SET_AI_STORIES_MODAL_SHOWN':
+      return {
+        ...state,
+        aiStoriesModalShown: action.shown
+      };
     case 'SET_GRAMMAR_GAME_MODAL_SHOWN':
       return {
         ...state,

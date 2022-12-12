@@ -70,6 +70,12 @@ export default function HomeActions(dispatch) {
         year
       });
     },
+    onSetAIStoriesModalShown(shown) {
+      return dispatch({
+        type: 'SET_AI_STORIES_MODAL_SHOWN',
+        shown
+      });
+    },
     onSetGrammarGameModalShown(shown) {
       return dispatch({
         type: 'SET_GRAMMAR_GAME_MODAL_SHOWN',

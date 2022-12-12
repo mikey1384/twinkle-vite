@@ -17,7 +17,6 @@ import {
   useNotiContext,
   useKeyContext
 } from '~/contexts';
-import { useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
 
 const hiThereLabel = localize('hiThere');
@@ -43,7 +42,6 @@ const categoryObj = {
 };
 
 export default function Stories() {
-  const navigate = useNavigate();
   const lastFeedRef = useRef(null);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
@@ -55,6 +53,9 @@ export default function Stories() {
   const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
   const onResetNumNewPosts = useNotiContext(
     (v) => v.actions.onResetNumNewPosts
+  );
+  const onSetAIStoriesModalShown = useHomeContext(
+    (v) => v.actions.onSetAIStoriesModalShown
   );
   const onSetGrammarGameModalShown = useHomeContext(
     (v) => v.actions.onSetGrammarGameModalShown
@@ -157,7 +158,8 @@ export default function Stories() {
       <div style={{ width: '100%' }} ref={ContainerRef}>
         <TopMenu
           onInputModalButtonClick={() => onSetInputModalShown(true)}
-          onPlayGrammarGame={handlePlayGrammarGame}
+          onPlayAIStories={() => onSetAIStoriesModalShown(true)}
+          onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
         />
         <HomeFilter
           category={category}
@@ -361,10 +363,5 @@ export default function Stories() {
       onSetDisplayOrder(newDisplayOrder);
       setLoadingFeeds(false);
     }
-  }
-
-  function handlePlayGrammarGame() {
-    navigate('/earn');
-    onSetGrammarGameModalShown(true);
   }
 }
