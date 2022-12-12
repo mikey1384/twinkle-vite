@@ -12,9 +12,6 @@ const leaderboardsLabel = localize('leaderboards');
 
 export default function Earn() {
   const navigate = useNavigate();
-  const onSetTopMenuSectionSection = useHomeContext(
-    (v) => v.actions.onSetTopMenuSectionSection
-  );
   const onSetGrammarGameModalShown = useHomeContext(
     (v) => v.actions.onSetGrammarGameModalShown
   );
@@ -26,11 +23,6 @@ export default function Earn() {
     <ErrorBoundary componentPath="Home/Earn/index">
       <TopMenu
         style={{ marginBottom: '3.5rem' }}
-        isEarnPage
-        onAnswerSubjectsButtonClick={() =>
-          onSetTopMenuSectionSection('subject')
-        }
-        onEarnKarmaButtonClick={() => onSetTopMenuSectionSection('karma')}
         onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
         onInputModalButtonClick={handleInputModalButtonClick}
       />

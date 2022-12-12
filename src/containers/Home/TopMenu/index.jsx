@@ -7,12 +7,7 @@ import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID
 } from '~/constants/defaultValues';
-import {
-  useChatContext,
-  useHomeContext,
-  useKeyContext,
-  useNotiContext
-} from '~/contexts';
+import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
@@ -22,21 +17,15 @@ import TopButton from './TopButton';
 const grammarGameLabel = localize('grammarGame');
 
 TopMenu.propTypes = {
-  isEarnPage: PropTypes.bool,
-  onAnswerSubjectsButtonClick: PropTypes.func,
-  onEarnKarmaButtonClick: PropTypes.func,
   onInputModalButtonClick: PropTypes.func.isRequired,
   onPlayGrammarGame: PropTypes.func.isRequired,
   style: PropTypes.object
 };
 
 export default function TopMenu({
-  onAnswerSubjectsButtonClick,
-  onEarnKarmaButtonClick,
   onInputModalButtonClick,
   onPlayGrammarGame,
-  style,
-  isEarnPage
+  style
 }) {
   const navigate = useNavigate();
   const chatLoadedRef = useRef(false);
@@ -45,7 +34,6 @@ export default function TopMenu({
     chatLoadedRef.current = chatLoaded;
   }, [chatLoaded]);
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  const topMenuSection = useHomeContext((v) => v.state.topMenuSection);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
@@ -102,51 +90,27 @@ export default function TopMenu({
           `}
         >
           <TopButton
-            colorLeft={Color.purple()}
-            colorMiddle={Color.redOrange()}
+            colorLeft={Color.darkBlue()}
+            colorMiddle={Color.logoBlue()}
+            colorRight={Color.darkBlue()}
+            onClick={() => console.log('pressed')}
+          >
+            AI Stories
+          </TopButton>
+          <TopButton
+            colorLeft={Color.rose()}
+            colorMiddle={Color.pastelPink()}
             colorRight={Color.rose()}
+            style={{ marginLeft: '1rem' }}
             onClick={onPlayGrammarGame}
           >
             {grammarGameLabel}
           </TopButton>
-          {isEarnPage && (
-            <TopButton
-              colorLeft={Color.passionFruit()}
-              colorMiddle={Color.passionFruit()}
-              colorRight={Color.lightOrange()}
-              style={{ marginLeft: '1rem' }}
-              onClick={() => navigate('/')}
-            >
-              Read Posts
-            </TopButton>
-          )}
-          {!(isEarnPage && topMenuSection === 'subject') && (
-            <TopButton
-              colorLeft={Color.logoBlue()}
-              colorMiddle={Color.logoBlue()}
-              colorRight={Color.lightBlue()}
-              style={{ marginLeft: '1rem' }}
-              onClick={onAnswerSubjectsButtonClick}
-            >
-              Answer Subjects
-            </TopButton>
-          )}
-          {!(isEarnPage && topMenuSection === 'karma') && (
-            <TopButton
-              colorLeft={Color.strongPink()}
-              colorMiddle={Color.strongPink()}
-              colorRight={Color.pastelPink()}
-              style={{ marginLeft: '1rem' }}
-              onClick={onEarnKarmaButtonClick}
-            >
-              Earn KP
-            </TopButton>
-          )}
           <TopButton
             loading={loadingWordle}
             colorLeft={Color.orange()}
             colorMiddle={Color.gold()}
-            colorRight={Color.magenta()}
+            colorRight={Color.orange()}
             style={{ marginLeft: '1rem' }}
             onClick={handleWordleButtonClick}
           >
@@ -155,9 +119,9 @@ export default function TopMenu({
           {todayStats.unansweredChessMsgChannelId && (
             <TopButton
               loading={loadingChess}
-              colorLeft={Color.pink()}
-              colorMiddle={Color.rose()}
-              colorRight={Color.brownOrange()}
+              colorLeft={Color.armyGreen()}
+              colorMiddle={Color.logoGreen()}
+              colorRight={Color.armyGreen()}
               style={{ marginLeft: '1rem' }}
               onClick={handleChessButtonClick}
             >
