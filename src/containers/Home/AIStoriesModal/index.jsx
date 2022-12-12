@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Loading from '~/components/Loading';
+import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -32,7 +33,6 @@ export default function AIStoriesModal({ onHide }) {
         height: '80vh'
       }}
       large
-      closeWhenClickedOutside={false}
       onHide={onHide}
     >
       <main
@@ -61,6 +61,17 @@ export default function AIStoriesModal({ onHide }) {
             }}
           >
             <div style={{ lineHeight: 3 }}>{storyObj?.story}</div>
+            <div
+              style={{
+                marginTop: '20rem',
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <Button transparent onClick={onHide}>
+                close
+              </Button>
+            </div>
           </div>
         )}
       </main>
