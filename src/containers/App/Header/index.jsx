@@ -171,7 +171,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
   );
-  const onResetChat = useChatContext((v) => v.actions.onResetChat);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
   const onSetMembersOnCall = useChatContext(
     (v) => v.actions.onSetMembersOnCall
@@ -212,7 +211,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     [notiObj, userId]
   );
   const versionMatch = useNotiContext((v) => v.state.versionMatch);
-  const prevUserId = useNotiContext((v) => v.state.prevUserId);
   const onChangeSocketStatus = useNotiContext(
     (v) => v.actions.onChangeSocketStatus
   );
@@ -260,13 +258,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const prevIncomingShown = useRef(false);
   const membersOnCall = useRef({});
   const receivedCallSignals = useRef([]);
-
-  useEffect(() => {
-    if (userId !== prevUserId) {
-      onResetChat();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevUserId, userId]);
 
   useEffect(() => {
     socket.disconnect();
