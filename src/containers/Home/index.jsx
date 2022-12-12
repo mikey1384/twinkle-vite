@@ -11,6 +11,7 @@ import Earn from './Earn';
 import Store from './Store';
 import Stories from './Stories';
 import LocalContext from './Context';
+import AIStoriesModal from './AIStoriesModal';
 import GrammarGameModal from './GrammarGameModal';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
 import { container, Left, Center, Right } from './Styles';
@@ -23,8 +24,14 @@ Home.propTypes = {
 function Home({ onFileUpload, section }) {
   const { userId } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const aiStoriesModalShown = useHomeContext(
+    (v) => v.state.aiStoriesModalShown
+  );
   const grammarGameModalShown = useHomeContext(
     (v) => v.state.grammarGameModalShown
+  );
+  const onSetAIStoriesModalShown = useHomeContext(
+    (v) => v.actions.onSetAIStoriesModalShown
   );
   const onSetGrammarGameModalShown = useHomeContext(
     (v) => v.actions.onSetGrammarGameModalShown
@@ -82,6 +89,9 @@ function Home({ onFileUpload, section }) {
             <GrammarGameModal
               onHide={() => onSetGrammarGameModalShown(false)}
             />
+          )}
+          {aiStoriesModalShown && (
+            <AIStoriesModal onHide={() => onSetAIStoriesModalShown(false)} />
           )}
         </div>
       </LocalContext.Provider>
