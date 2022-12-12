@@ -43,6 +43,7 @@ export default function Content({
           height: 30px;
           cursor: pointer;
           .close {
+            z-index: 100;
             color: ${closeColor || Color.darkerGray()};
             opacity: 0.5;
           }
