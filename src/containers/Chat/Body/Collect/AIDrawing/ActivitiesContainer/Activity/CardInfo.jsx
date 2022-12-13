@@ -10,7 +10,7 @@ export default function CardInfo({ quality, style }) {
   return (
     <div style={style}>
       <div>
-        created {quality === 'elite' ? 'an' : 'a'}{' '}
+        collected {quality === 'elite' ? 'an' : 'a'}{' '}
         <span style={{ ...qualityProps[quality] }}>{quality}</span> card
       </div>
     </div>
