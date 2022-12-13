@@ -102,9 +102,7 @@ function RightMenu({
         `}
       >
         {chatType === AI_DRAWING_CHAT_TYPE ? <AICardInfo /> : null}
-        {chatType === VOCAB_CHAT_TYPE || chatType === AI_DRAWING_CHAT_TYPE ? (
-          <VocabInfo />
-        ) : null}
+        {chatType === VOCAB_CHAT_TYPE ? <VocabInfo /> : null}
         {(!chatType || chatType === 'default') && (
           <ChatInfo
             channelName={channelName}

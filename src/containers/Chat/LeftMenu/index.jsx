@@ -58,7 +58,7 @@ function LeftMenu({
       ),
     [location.pathname]
   );
-  /* const aiCardMatch = useMemo(
+  const aiCardMatch = useMemo(
     () =>
       matchPath(
         {
@@ -68,7 +68,7 @@ function LeftMenu({
         location.pathname
       ),
     [location.pathname]
-  ); */
+  );
   const {
     chatFlatButton: {
       color: chatFlatButtonColor,
@@ -153,9 +153,9 @@ function LeftMenu({
           vocabSelected={chatType === VOCAB_CHAT_TYPE || loadingVocabulary}
           onClick={() => {
             if (vocabMatch && collectType === VOCAB_CHAT_TYPE) return null;
-            /* if (aiCardMatch && collectType === AI_DRAWING_CHAT_TYPE)
-              return null; */
-            navigate(`/chat/${VOCAB_CHAT_TYPE}`);
+            if (aiCardMatch && collectType === AI_DRAWING_CHAT_TYPE)
+              return null;
+            navigate(`/chat/${collectType}`);
           }}
         />
         <ChatSearchBox
