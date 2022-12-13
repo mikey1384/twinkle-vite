@@ -79,7 +79,7 @@ export default function PromptInput({
       <div style={{ display: 'flex' }}>
         <Input
           inputRef={innerRef}
-          placeholder="What do you want the AI to draw?"
+          placeholder="What do you want Zero to draw?"
           onKeyDown={handleKeyDown}
           value={text}
           onChange={handleChange}

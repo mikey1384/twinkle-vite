@@ -106,11 +106,11 @@ export default function AIDrawing({ loadingAIImageChat }) {
   async function handleSubmit(text) {
     try {
       onSetIsGeneratingAICard(true);
-      onSetAIImageStatusMessage('AI is processing your request...');
+      onSetAIImageStatusMessage('Zero is processing your request...');
       const { score, level, cardId, word } = await processAiCardScore(text);
-      onSetAIImageStatusMessage('The AI is thinking...');
+      onSetAIImageStatusMessage('Zero is thinking...');
       const { imageUrl, style } = await getOpenAiImage(text);
-      onSetAIImageStatusMessage('The AI is generating your card...');
+      onSetAIImageStatusMessage('Zero is generating your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
       const card = await postAiCard({ imagePath, cardId, style });
       onSetAIImageStatusMessage('Card Generated');
@@ -127,11 +127,11 @@ export default function AIDrawing({ loadingAIImageChat }) {
       onSetIsGeneratingAICard(false);
       if (error.data?.error?.status === 400) {
         return onSetAIImageStatusMessage(
-          `The AI refused to handle your request because it didn't like the words you used.`
+          `Zero refused to handle your request because it didn't like the words you used.`
         );
       }
       return onSetAIImageStatusMessage(
-        `The AI couldn't generate this card. There was an error.`
+        `Zero couldn't generate this card. There was an error.`
       );
     }
   }

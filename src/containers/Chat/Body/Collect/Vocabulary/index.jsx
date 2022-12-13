@@ -191,26 +191,24 @@ export default function Vocabulary({ loadingVocabulary }) {
         flexDirection: 'column'
       }}
     >
-      {false && (
-        <div
-          className={css`
-            z-index: 100;
-            box-shadow: 0 3px 5px -3px ${Color.black(0.6)};
-            width: 100%;
-          `}
+      <div
+        className={css`
+          z-index: 100;
+          box-shadow: 0 3px 5px -3px ${Color.black(0.6)};
+          width: 100%;
+        `}
+      >
+        <FilterBar
+          style={{
+            height: '4.5rem',
+            fontSize: '1.6rem',
+            marginBottom: 0
+          }}
         >
-          <FilterBar
-            style={{
-              height: '4.5rem',
-              fontSize: '1.6rem',
-              marginBottom: 0
-            }}
-          >
-            <nav className="active">Vocabulary</nav>
-            <nav onClick={handleFilterClick}>AI Cards</nav>
-          </FilterBar>
-        </div>
-      )}
+          <nav className="active">Vocabulary</nav>
+          <nav onClick={handleFilterClick}>AI Cards</nav>
+        </FilterBar>
+      </div>
       {loadingVocabulary ? (
         <div style={{ height: containerHeight }}>
           <Loading style={{ height: '50%' }} text="Loading Vocabulary" />
