@@ -550,21 +550,6 @@ function MessagesContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId]);
 
-  const handleChessSpoilerClick = useCallback(
-    (senderId) => {
-      socket.emit('start_chess_timer', {
-        currentChannel,
-        selectedChannelId,
-        targetUserId: userId,
-        winnerId: senderId,
-        isResign: false
-      });
-      onSetChessModalShown(true);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentChannel, selectedChannelId, userId]
-  );
-
   const handleSetChessTarget = useCallback(
     ({ channelId, messageId, chessState }) => {
       onSetChessTarget({ channelId, messageId, target: chessState });
@@ -1533,6 +1518,17 @@ function MessagesContainer({
       )}
     </ErrorBoundary>
   );
+
+  function handleChessSpoilerClick(senderId) {
+    socket.emit('start_chess_timer', {
+      currentChannel,
+      selectedChannelId,
+      targetUserId: userId,
+      winnerId: senderId,
+      isResign: false
+    });
+    onSetChessModalShown(true);
+  }
 
   function handleForceRefreshForMobile() {
     const currentScrollTop = (MessagesRef.current || {}).scrollTop || 0;
