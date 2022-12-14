@@ -21,33 +21,6 @@ export default function SellModal({ onHide }) {
           <p style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#333' }}>
             Set a price
           </p>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginTop: '1rem'
-            }}
-          >
-            <div
-              style={{
-                padding: '0.5rem 1rem',
-                marginRight: '1rem',
-                border: '1px solid #333',
-                borderRadius: '4px'
-              }}
-            >
-              floor price goes here.
-            </div>
-            <div
-              style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid #333',
-                borderRadius: '4px'
-              }}
-            >
-              recommended price goes here.
-            </div>
-          </div>
           <Input
             onChange={handleAmountChange}
             placeholder="Amount"
@@ -61,51 +34,6 @@ export default function SellModal({ onHide }) {
               marginTop: '1rem'
             }}
           />
-          <p
-            style={{
-              fontSize: '1.4rem',
-              fontWeight: 'bold',
-              color: '#333',
-              marginTop: '1rem'
-            }}
-          >
-            Summary
-          </p>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginTop: '1rem'
-            }}
-          >
-            <p style={{ fontSize: '1.4rem', marginRight: '1rem' }}>
-              Listing price:{' '}
-            </p>
-            <p style={{ fontSize: '1.4rem' }}>{/*listing price goes here*/}</p>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginTop: '1rem'
-            }}
-          >
-            <p style={{ fontSize: '1.4rem', marginRight: '1rem' }}>Fees: </p>
-            <p style={{ fontSize: '1.4rem' }}>{/*fee goes here*/}</p>
-          </div>
-          <p
-            style={{
-              fontSize: '1.4rem',
-              fontWeight: 'bold',
-              color: '#333',
-              marginTop: '1rem'
-            }}
-          >
-            Total potential Earnings
-          </p>
-          <p style={{ fontSize: '1.4rem', marginTop: '1rem' }}>
-            {/*earnings goes here*/}
-          </p>
           <Button
             filled
             onClick={handleCompleteListing}
@@ -115,7 +43,7 @@ export default function SellModal({ onHide }) {
               marginTop: '1rem'
             }}
           >
-            Complete listing
+            List for Sale
           </Button>
         </div>
       </main>
