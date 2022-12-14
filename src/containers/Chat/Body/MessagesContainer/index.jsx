@@ -1520,13 +1520,17 @@ function MessagesContainer({
   );
 
   function handleChessSpoilerClick(senderId) {
-    socket.emit('start_chess_timer', {
-      currentChannel,
-      selectedChannelId,
-      targetUserId: userId,
-      winnerId: senderId,
-      isResign: false
-    });
+    setTimeout(
+      () =>
+        socket.emit('start_chess_timer', {
+          currentChannel,
+          selectedChannelId,
+          targetUserId: userId,
+          winnerId: senderId,
+          isResign: false
+        }),
+      1000
+    );
     onSetChessModalShown(true);
   }
 
