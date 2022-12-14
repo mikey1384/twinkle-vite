@@ -1521,7 +1521,13 @@ function MessagesContainer({
 
   function handleChessSpoilerClick(senderId) {
     socket.emit('start_chess_timer', {
-      currentChannel,
+      currentChannel: {
+        id: selectedChannelId,
+        channelName,
+        members: currentChannel.members,
+        twoPeople: currentChannel.twoPeople,
+        pathId: currentChannel.pathId
+      },
       selectedChannelId,
       targetUserId: userId,
       winnerId: senderId,
