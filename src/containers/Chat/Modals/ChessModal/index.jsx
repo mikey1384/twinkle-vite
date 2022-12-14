@@ -321,7 +321,7 @@ export default function ChessModal({
       setSubmitting(true);
       await onConfirmChessMove({
         ...newChessState,
-        previousState: initialState
+        previousState: { ...initialState, previousState: null }
       });
     }
   }

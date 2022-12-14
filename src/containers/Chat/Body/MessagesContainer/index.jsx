@@ -603,7 +603,13 @@ function MessagesContainer({
       const gameWinnerId = isCheckmate ? userId : isStalemate ? 0 : null;
       const params = {
         userId,
-        chessState: { ...state, previousState },
+        chessState: {
+          ...state,
+          previousState: {
+            ...previousState,
+            previousState: null
+          }
+        },
         isChessMsg: 1,
         gameWinnerId
       };
