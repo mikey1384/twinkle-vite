@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
+import { AI_DRAWING_CHAT_TYPE } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import AICards from './AICards';
 import Vocabulary from './Vocabulary';
@@ -33,7 +33,7 @@ function Collect({ aiCardSelected, vocabSelected, onClick }) {
         `}`}
         onClick={onClick}
       >
-        {collectType === VOCAB_CHAT_TYPE ? <Vocabulary /> : <AICards />}
+        {collectType === AI_DRAWING_CHAT_TYPE ? <AICards /> : <Vocabulary />}
       </div>
     </ErrorBoundary>
   );

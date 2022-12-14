@@ -14,7 +14,7 @@ export default function AICards() {
     return aiImageRows?.[aiImageRows?.length - 1];
   }, [aiImageRows]);
 
-  return lastActivity ? (
+  return (
     <div style={{ height: '5rem', position: 'relative' }}>
       <div style={{ fontSize: '1.7rem' }}>
         <Icon icon="cards-blank" />
@@ -44,5 +44,5 @@ export default function AICards() {
         </div>
       )}
     </div>
-  ) : null;
+  );
 }
