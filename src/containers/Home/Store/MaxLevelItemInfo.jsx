@@ -6,7 +6,7 @@ import { mobileMaxWidth } from '~/constants/css';
 MaxLevelItemInfo.propTypes = {
   icon: PropTypes.string,
   title: PropTypes.string,
-  description: PropTypes.string
+  description: PropTypes.oneOfType([PropTypes.string, PropTypes.node])
 };
 
 export default function MaxLevelItemInfo({ icon, title, description }) {
