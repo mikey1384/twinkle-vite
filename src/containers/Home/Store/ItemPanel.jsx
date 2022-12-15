@@ -24,6 +24,7 @@ ItemPanel.propTypes = {
   requiredKarmaPoints: PropTypes.number,
   onUnlock: PropTypes.func,
   style: PropTypes.object,
+  unlocking: PropTypes.bool,
   upgradeIcon: PropTypes.node
 };
 
@@ -39,6 +40,7 @@ export default function ItemPanel({
   karmaPoints,
   onUnlock,
   requiredKarmaPoints,
+  unlocking,
   upgradeIcon
 }) {
   const [highlighted, setHighlighted] = useState(false);
@@ -153,6 +155,7 @@ export default function ItemPanel({
                 >
                   <Button
                     disabled={unlockProgress < 100}
+                    loading={unlocking}
                     skeuomorphic
                     color="green"
                     onClick={() => {
