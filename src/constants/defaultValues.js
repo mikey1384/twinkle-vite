@@ -100,6 +100,7 @@ export const expectedResponseLength = (rewardLevel) => {
 };
 
 export const karmaPointTable = {
+  aiCard: 10000,
   username: 50,
   file: {
     0: 500,
