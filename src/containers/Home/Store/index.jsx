@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import KarmaStatus from './KarmaStatus';
 import ItemPanel from './ItemPanel';
 import ChangePassword from './ChangePassword';
@@ -46,6 +46,7 @@ export default function Store() {
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
+  const [unlockingUsernameChange, setUnlockingUsernameChange] = useState(false);
   const { canChangeUsername, canGenerateAICard, karmaPoints, userId } =
     useKeyContext((v) => v.myState);
   const {
@@ -118,6 +119,7 @@ export default function Store() {
         itemName={changeUsernameLabel}
         itemDescription={changeUsernameDescriptionLabel}
         onUnlock={handleUnlockUsernameChange}
+        unlocking={unlockingUsernameChange}
         style={{ marginTop: '3rem' }}
       >
         <ChangeUsername style={{ marginTop: '1rem' }} />
@@ -127,7 +129,8 @@ export default function Store() {
       <ProfilePictureItem style={{ marginTop: '3rem' }} />
       <AICardItem
         style={{ marginTop: '3rem' }}
-        canGenerateAICard={canGenerateAICard}
+        userId={userId}
+        canGenerateAICard={!!canGenerateAICard}
         karmaPoints={karmaPoints}
       />
       <ItemPanel
@@ -141,9 +144,11 @@ export default function Store() {
   );
 
   async function handleUnlockUsernameChange() {
+    setUnlockingUsernameChange(true);
     const success = await unlockUsernameChange();
     if (success) {
       onSetUserState({ userId, newState: { canChangeUsername: true } });
     }
+    setUnlockingUsernameChange(false);
   }
 }

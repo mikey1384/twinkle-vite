@@ -657,6 +657,16 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
+    async unlockAICardGeneration() {
+      try {
+        const {
+          data: { success }
+        } = await request.put(`${URL}/user/unlock/aiCard`, null, auth());
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async unlockUsernameChange() {
       try {
         const {

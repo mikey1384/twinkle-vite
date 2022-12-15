@@ -1,16 +1,30 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import ItemPanel from './ItemPanel';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
 import { Link } from 'react-router-dom';
+import { useAppContext } from '~/contexts';
 import { karmaPointTable } from '~/constants/defaultValues';
 
 AICardItem.propTypes = {
   canGenerateAICard: PropTypes.bool,
   style: PropTypes.object,
-  karmaPoints: PropTypes.number
+  karmaPoints: PropTypes.number,
+  userId: PropTypes.number
 };
 
-export default function AICardItem({ canGenerateAICard, karmaPoints, style }) {
+export default function AICardItem({
+  canGenerateAICard,
+  karmaPoints,
+  style,
+  userId
+}) {
+  const [unlocking, setUnlocking] = useState(false);
+  const unlockAICardGeneration = useAppContext(
+    (v) => v.requestHelpers.unlockAICardGeneration
+  );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+
   return (
     <ItemPanel
       karmaPoints={karmaPoints}
@@ -18,7 +32,8 @@ export default function AICardItem({ canGenerateAICard, karmaPoints, style }) {
       locked={!canGenerateAICard}
       itemName="AI Card Summoner License"
       itemDescription="Become one of the special users who can summon AI Cards"
-      onUnlock={() => console.log('unlocking')}
+      onUnlock={handleUnlock}
+      unlocking={unlocking}
       style={style}
     >
       <MaxLevelItemInfo
@@ -37,4 +52,13 @@ export default function AICardItem({ canGenerateAICard, karmaPoints, style }) {
       />
     </ItemPanel>
   );
+
+  async function handleUnlock() {
+    setUnlocking(true);
+    const success = await unlockAICardGeneration();
+    if (success) {
+      onSetUserState({ userId, newState: { canGenerateAICard: true } });
+    }
+    setUnlocking(false);
+  }
 }
