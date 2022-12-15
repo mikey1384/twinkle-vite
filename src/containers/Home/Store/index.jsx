@@ -5,6 +5,7 @@ import ChangePassword from './ChangePassword';
 import ChangeUsername from './ChangeUsername';
 import FileSizeItem from './FileSizeItem';
 import ProfilePictureItem from './ProfilePictureItem';
+import AICardItem from './AICardItem';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
@@ -45,9 +46,8 @@ export default function Store() {
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
-  const { canChangeUsername, karmaPoints, userId } = useKeyContext(
-    (v) => v.myState
-  );
+  const { canChangeUsername, canGenerateAICard, karmaPoints, userId } =
+    useKeyContext((v) => v.myState);
   const {
     logoTwin: { color: twinColor },
     logoKle: { color: kleColor }
@@ -125,12 +125,10 @@ export default function Store() {
       <RewardBoostItem style={{ marginTop: '3rem' }} />
       <FileSizeItem style={{ marginTop: '3rem' }} />
       <ProfilePictureItem style={{ marginTop: '3rem' }} />
-      <ItemPanel
-        karmaPoints={karmaPoints}
-        requiredKarmaPoints={10_000}
-        locked
-        itemName={`${moreToComeLabel}...`}
+      <AICardItem
         style={{ marginTop: '3rem' }}
+        canGenerateAICard={canGenerateAICard}
+        karmaPoints={karmaPoints}
       />
       <ItemPanel
         karmaPoints={karmaPoints}
