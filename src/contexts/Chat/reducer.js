@@ -1393,7 +1393,7 @@ export default function ChatReducer(state, action) {
             ...prevChannelObj?.members,
             ...action.newMembers.filter(
               (newMember) =>
-                !prevChannelObj?.members
+                !(prevChannelObj?.members || [])
                   .map((member) => member.id)
                   .includes(newMember.id)
             )
