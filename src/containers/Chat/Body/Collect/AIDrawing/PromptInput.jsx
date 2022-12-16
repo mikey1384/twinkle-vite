@@ -9,7 +9,7 @@ import {
   exceedsCharLimit,
   truncateText
 } from '~/helpers/stringHelpers';
-import { useChatContext, useInputContext } from '~/contexts';
+import { useChatContext, useInputContext, useKeyContext } from '~/contexts';
 import { AI_DRAWING_CHAT_TYPE } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
@@ -29,6 +29,7 @@ export default function PromptInput({
   posting,
   registerButtonShown
 }) {
+  const { canGenerateAICard } = useKeyContext((v) => v.myState);
   const onSetAIImageStatusMessage = useChatContext(
     (v) => v.actions.onSetAIImageStatusMessage
   );
@@ -79,7 +80,12 @@ export default function PromptInput({
       <div style={{ display: 'flex' }}>
         <Input
           inputRef={innerRef}
-          placeholder="What do you want Zero to draw?"
+          disabled={!canGenerateAICard}
+          placeholder={
+            canGenerateAICard
+              ? 'What do you want Zero to draw?'
+              : 'You do not have the license to summon AI cards'
+          }
           onKeyDown={handleKeyDown}
           value={text}
           onChange={handleChange}
