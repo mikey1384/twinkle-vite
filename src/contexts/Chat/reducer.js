@@ -1390,10 +1390,10 @@ export default function ChatReducer(state, action) {
           };
       const members = action.newMembers
         ? [
-            ...prevChannelObj.members,
+            ...prevChannelObj?.members,
             ...action.newMembers.filter(
               (newMember) =>
-                !prevChannelObj.members
+                !(prevChannelObj?.members || [])
                   .map((member) => member.id)
                   .includes(newMember.id)
             )
