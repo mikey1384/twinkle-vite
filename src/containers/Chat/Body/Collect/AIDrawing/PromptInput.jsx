@@ -9,12 +9,13 @@ import {
   exceedsCharLimit,
   truncateText
 } from '~/helpers/stringHelpers';
-import { useChatContext, useInputContext, useKeyContext } from '~/contexts';
+import { useChatContext, useInputContext } from '~/contexts';
 import { AI_DRAWING_CHAT_TYPE } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
 
 PromptInput.propTypes = {
+  canGenerateAICard: PropTypes.bool,
   innerRef: PropTypes.object,
   loading: PropTypes.bool,
   posting: PropTypes.bool,
@@ -23,13 +24,13 @@ PromptInput.propTypes = {
 };
 
 export default function PromptInput({
+  canGenerateAICard,
   innerRef,
   loading,
   onSubmit,
   posting,
   registerButtonShown
 }) {
-  const { canGenerateAICard } = useKeyContext((v) => v.myState);
   const onSetAIImageStatusMessage = useChatContext(
     (v) => v.actions.onSetAIImageStatusMessage
   );

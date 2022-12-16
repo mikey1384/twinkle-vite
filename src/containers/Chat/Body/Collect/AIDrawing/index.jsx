@@ -4,10 +4,10 @@ import PromptInput from './PromptInput';
 import FilterBar from '~/components/FilterBar';
 import ActivitiesContainer from './ActivitiesContainer';
 import Loading from '~/components/Loading';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import StatusInterface from './StatusInterface';
 
@@ -16,6 +16,7 @@ AIDrawing.propTypes = {
 };
 
 export default function AIDrawing({ loadingAIImageChat }) {
+  const { canGenerateAICard } = useKeyContext((v) => v.myState);
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAiCard = useAppContext((v) => v.requestHelpers.postAiCard);
   const processAiCardScore = useAppContext(
@@ -81,6 +82,26 @@ export default function AIDrawing({ loadingAIImageChat }) {
         posting={isGeneratingAICard}
         statusMessage={aiImageStatusMessage}
       />
+      {!canGenerateAICard && (
+        <div
+          style={{
+            textAlign: 'center',
+            width: '100%',
+            color: '#fff',
+            background: Color.black(),
+            fontFamily: 'monospace',
+            padding: '1rem'
+          }}
+        >
+          You do not have the license to summon AI Cards. Unlock it from the{' '}
+          <Link
+            style={{ fontWeight: 'bold', color: Color.gold() }}
+            to={`/store`}
+          >
+            store
+          </Link>
+        </div>
+      )}
       <div
         style={{
           height: '6.5rem',
@@ -90,6 +111,7 @@ export default function AIDrawing({ loadingAIImageChat }) {
         }}
       >
         <PromptInput
+          canGenerateAICard={!!canGenerateAICard}
           onSubmit={handleSubmit}
           innerRef={inputRef}
           posting={isGeneratingAICard}
