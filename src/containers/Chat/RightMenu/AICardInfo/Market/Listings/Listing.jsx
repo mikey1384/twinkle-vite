@@ -129,7 +129,7 @@ export default function Listing({ card }) {
               }}
             >
               <Icon
-                style={{ color: Color.brownOrange(), fontWeight: 'bold' }}
+                style={{ color: Color.brownOrange() }}
                 icon={['far', 'badge-dollar']}
               />{' '}
               {addCommasToNumber(card.askPrice)}
