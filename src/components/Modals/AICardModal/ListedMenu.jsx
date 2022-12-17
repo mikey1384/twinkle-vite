@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import { Color } from '~/constants/css';
 
 ListedMenu.propTypes = {
-  askPrice: PropTypes.string.isRequired,
+  askPrice: PropTypes.number.isRequired,
   userIsOwner: PropTypes.bool.isRequired
 };
 
@@ -29,7 +29,7 @@ export default function ListedMenu({ userIsOwner, askPrice }) {
           flexDirection: 'column'
         }}
       >
-        <p style={{ marginBottom: '2rem' }}>
+        <div style={{ marginBottom: '2rem' }}>
           {userIsOwner ? (
             'Cancel Listing'
           ) : (
@@ -59,7 +59,7 @@ export default function ListedMenu({ userIsOwner, askPrice }) {
               </div>
             </div>
           )}
-        </p>
+        </div>
         <Button
           onClick={() => console.log('clicked')}
           color="oceanBlue"
