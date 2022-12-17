@@ -11,11 +11,11 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import StatusInterface from './StatusInterface';
 
-AIDrawing.propTypes = {
+AICards.propTypes = {
   loadingAIImageChat: PropTypes.bool
 };
 
-export default function AIDrawing({ loadingAIImageChat }) {
+export default function AICards({ loadingAIImageChat }) {
   const { canGenerateAICard } = useKeyContext((v) => v.myState);
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAiCard = useAppContext((v) => v.requestHelpers.postAiCard);
