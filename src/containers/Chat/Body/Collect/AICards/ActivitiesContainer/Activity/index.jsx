@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { useChatContext } from '~/contexts';
+import { css } from '@emotion/css';
 import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
 import UserInfo from './UserInfo';
@@ -103,7 +104,20 @@ export default function Activity({
             at {displayedTime}, {displayedDate}
           </div>
         </div>
-        <AICard card={card} quality={card.quality} imagePath={card.imagePath} />
+        <div
+          className={css`
+            width: 35rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 15rem;
+            }
+          `}
+        >
+          <AICard
+            card={card}
+            quality={card.quality}
+            imagePath={card.imagePath}
+          />
+        </div>
         <div
           style={{
             width: '35%',
@@ -123,10 +137,15 @@ export default function Activity({
             #{card.id}
           </div>
           <div
-            style={{
-              textAlign: 'center',
-              marginTop: '10rem'
-            }}
+            className={css`
+              text-align: center;
+              margin-top: 10rem;
+              font-size: 1.5rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-top: 5rem;
+                font-size: 1.2rem;
+              }
+            `}
           >
             <span
               style={{ fontFamily: 'Roboto Mono, monospace' }}
@@ -134,15 +153,19 @@ export default function Activity({
             />
           </div>
           <div
-            style={{
-              textAlign: 'center',
-              marginTop: '12rem',
-              fontSize: '1.2rem',
-              fontFamily: 'helvetica, sans-serif',
-              textTransform: 'capitalize',
-              fontWeight: 'bold',
-              color: Color.darkerGray()
-            }}
+            className={css`
+              text-align: center;
+              margin-top: 12rem;
+              font-size: 1.2rem;
+              font-family: helvetica, sans-serif;
+              text-transform: capitalize;
+              font-weight: bold;
+              color: ${Color.darkerGray()};
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-top: 5rem;
+                font-size: 1rem;
+              }
+            `}
           >
             {card.style}
           </div>
