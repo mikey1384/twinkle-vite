@@ -873,7 +873,10 @@ export default function ChatReducer(state, action) {
               }
             : state.lastSubchannelPaths,
         chatType: state.chatType ? state.chatType : action.data.chatType,
+        listedCards: state.listedCards,
+        listedCardsLoadMoreButton: state.listedCardsLoadMoreButton,
         myCards: state.myCards,
+        myCardsLoadMoreButton: state.myCardsLoadMoreButton,
         vocabActivities:
           state.chatType === VOCAB_CHAT_TYPE
             ? state.vocabActivities
@@ -1052,6 +1055,18 @@ export default function ChatReducer(state, action) {
         }
       };
     }
+    case 'LOAD_LISTED_AI_CARDS':
+      return {
+        ...state,
+        listedCards: action.cards,
+        listedCardsLoadMoreButton: action.loadMoreShown
+      };
+    case 'LOAD_MORE_LISTED_AI_CARDS':
+      return {
+        ...state,
+        listedCards: state.listedCards.concat(action.cards),
+        listedCardsLoadMoreButton: action.loadMoreShown
+      };
     case 'LOAD_MY_AI_CARDS':
       return {
         ...state,
