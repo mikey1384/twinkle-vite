@@ -123,10 +123,15 @@ export default function Listing({ card }) {
             <b
               style={{
                 marginTop: '0.5rem',
-                fontSize: '1.7rem',
                 fontFamily: 'helvetica, sans-serif',
                 color: Color.darkerGray()
               }}
+              className={css`
+                font-size: 1.7rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.3rem;
+                }
+              `}
             >
               <Icon
                 style={{ color: Color.brownOrange() }}
