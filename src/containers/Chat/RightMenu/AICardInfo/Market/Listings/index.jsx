@@ -8,6 +8,7 @@ import {
 import { Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import Listing from './Listing';
 import Loading from '~/components/Loading';
 
 export default function Listings() {
@@ -70,11 +71,7 @@ export default function Listings() {
             <b style={{ color: Color.darkerGray() }}>No cards collected</b>
           </div>
         ) : (
-          listedCards.map((card, index) => (
-            <div key={card.id}>
-              {index} {card.id}
-            </div>
-          ))
+          listedCards.map((card, index) => <Listing card={card} key={index} />)
         )}
         {loaded && listedCardsLoadMoreButton && (
           <LoadMoreButton
