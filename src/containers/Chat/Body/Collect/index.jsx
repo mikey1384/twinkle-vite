@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import AIDrawing from './AIDrawing';
+import AICards from './AICards';
 import Vocabulary from './Vocabulary';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 
@@ -17,6 +17,6 @@ export default function Collect({
   return chatType === VOCAB_CHAT_TYPE ? (
     <Vocabulary loadingVocabulary={loadingVocabulary} />
   ) : (
-    <AIDrawing loadingAIImageChat={loadingAIImageChat} />
+    <AICards loadingAIImageChat={loadingAIImageChat} />
   );
 }
