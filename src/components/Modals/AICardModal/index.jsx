@@ -156,7 +156,7 @@ export default function AICardModal({ card, onHide }) {
                 }}
               >
                 <p style={{ marginBottom: '2rem' }}>
-                  {`Destroy this card and receive XP based on its quality and color. The higher the quality and the more valuable the color, the more XP you will receive. This action is irreversible, so use it wisely."`}
+                  {`Destroy this card and receive XP based on its color and quality. The more valuable the color and the higher the quality, the more XP you will receive. This action is irreversible, so use it wisely.`}
                 </p>
                 <Button
                   onClick={() => setIsBurned(true)}
