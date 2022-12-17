@@ -7,10 +7,7 @@ import { matchPath } from 'react-router-dom';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { getSectionFromPathname } from '~/helpers';
-import {
-  AI_DRAWING_CHAT_TYPE,
-  VOCAB_CHAT_TYPE
-} from '~/constants/defaultValues';
+import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
 import {
   useAppContext,
@@ -297,8 +294,8 @@ function MainNavs({
       chatLoaded
         ? chatType === VOCAB_CHAT_TYPE
           ? `/${VOCAB_CHAT_TYPE}`
-          : chatType === AI_DRAWING_CHAT_TYPE
-          ? `/${AI_DRAWING_CHAT_TYPE}`
+          : chatType === AI_CARD_CHAT_TYPE
+          ? `/${AI_CARD_CHAT_TYPE}`
           : lastChatPath || ''
         : ''
     }`;

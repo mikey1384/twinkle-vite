@@ -25,7 +25,7 @@ import {
 import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
-  AI_DRAWING_CHAT_TYPE,
+  AI_CARD_CHAT_TYPE,
   VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -306,7 +306,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, []);
 
   useEffect(() => {
-    if (chatType === VOCAB_CHAT_TYPE || chatType === AI_DRAWING_CHAT_TYPE) {
+    if (chatType === VOCAB_CHAT_TYPE || chatType === AI_CARD_CHAT_TYPE) {
       updateCollectType(chatType);
       onSetCollectType(chatType);
     }
@@ -373,8 +373,7 @@ export default function Main({ currentPathId, onFileUpload }) {
 
   const isUsingCollect = useMemo(() => {
     return (
-      currentPathId === VOCAB_CHAT_TYPE ||
-      currentPathId === AI_DRAWING_CHAT_TYPE
+      currentPathId === VOCAB_CHAT_TYPE || currentPathId === AI_CARD_CHAT_TYPE
     );
   }, [currentPathId]);
 
@@ -537,11 +536,11 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [chatType]);
 
   const handleEnterAIImageChat = useCallback(async () => {
-    if (chatType === AI_DRAWING_CHAT_TYPE) return;
-    onUpdateChatType(AI_DRAWING_CHAT_TYPE);
+    if (chatType === AI_CARD_CHAT_TYPE) return;
+    onUpdateChatType(AI_CARD_CHAT_TYPE);
     onSetLoadingAIImageChat(true);
     const { cards, loadMoreShown } = await loadAIImageChat();
-    if (currentPathIdRef.current === AI_DRAWING_CHAT_TYPE) {
+    if (currentPathIdRef.current === AI_CARD_CHAT_TYPE) {
       onLoadAIImageChat({ cards, loadMoreShown });
     }
     onSetLoadingAIImageChat(false);

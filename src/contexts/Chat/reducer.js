@@ -2,7 +2,7 @@ import { initialChatState } from '.';
 import {
   defaultChatSubject,
   VOCAB_CHAT_TYPE,
-  AI_DRAWING_CHAT_TYPE
+  AI_CARD_CHAT_TYPE
 } from '~/constants/defaultValues';
 import { determineSelectedChatTab } from './helpers';
 import { v1 as uuidv1 } from 'uuid';
@@ -857,7 +857,7 @@ export default function ChatReducer(state, action) {
         ...state,
         ...initialChatState,
         aiImages:
-          state.chatType === AI_DRAWING_CHAT_TYPE
+          state.chatType === AI_CARD_CHAT_TYPE
             ? state.aiImages
             : action.data.aiImages || [],
         numUnreads: state.numUnreads,
@@ -882,7 +882,7 @@ export default function ChatReducer(state, action) {
             ? state.vocabActivities
             : action.data.vocabActivities,
         aiDrawingsLoadMoreButton:
-          state.chatType === AI_DRAWING_CHAT_TYPE
+          state.chatType === AI_CARD_CHAT_TYPE
             ? state.aiDrawingsLoadMoreButton
             : action.data.aiDrawingsLoadMoreButton,
         vocabActivitiesLoadMoreButton:
@@ -1129,7 +1129,7 @@ export default function ChatReducer(state, action) {
         },
         electedChannelId: null,
         selectedSubchannelId: null,
-        chatType: AI_DRAWING_CHAT_TYPE,
+        chatType: AI_CARD_CHAT_TYPE,
         aiImages: action.cards,
         aiDrawingsLoadMoreButton: action.loadMoreShown
       };

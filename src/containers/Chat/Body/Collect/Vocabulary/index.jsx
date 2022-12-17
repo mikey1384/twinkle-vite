@@ -19,7 +19,7 @@ import {
 import {
   SELECTED_LANGUAGE,
   VOCAB_CHAT_TYPE,
-  AI_DRAWING_CHAT_TYPE
+  AI_CARD_CHAT_TYPE
 } from '~/constants/defaultValues';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
@@ -381,7 +381,7 @@ export default function Vocabulary({ loadingVocabulary }) {
   );
 
   function handleFilterClick() {
-    onSetCollectType(AI_DRAWING_CHAT_TYPE);
-    navigate(`/chat/${AI_DRAWING_CHAT_TYPE}`);
+    onSetCollectType(AI_CARD_CHAT_TYPE);
+    navigate(`/chat/${AI_CARD_CHAT_TYPE}`);
   }
 }
