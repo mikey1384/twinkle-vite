@@ -80,7 +80,8 @@ export default function Activity({
       <div
         style={{
           display: 'flex',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}
       >
         <div
@@ -95,11 +96,14 @@ export default function Activity({
           <UserInfo style={{ marginTop: '3rem' }} user={card.creator} />
           <CardInfo quality={card.quality} style={{ marginTop: '3rem' }} />
           <div
-            style={{
-              color: Color.darkGray(),
-              marginTop: '0.5rem',
-              fontSize: '1.2rem'
-            }}
+            className={css`
+              font-size: 1.2rem;
+              margin-top: 0.5rem;
+              color: ${Color.darkGray()};
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 0.8rem;
+              }
+            `}
           >
             at {displayedTime}, {displayedDate}
           </div>
@@ -123,7 +127,8 @@ export default function Activity({
             width: '35%',
             padding: '1rem',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            justifyContent: 'center'
           }}
         >
           <div
@@ -133,6 +138,12 @@ export default function Activity({
               textAlign: 'center',
               fontWeight: 'bold'
             }}
+            className={css`
+              font-size: 1.6rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1rem;
+              }
+            `}
           >
             #{card.id}
           </div>
@@ -142,8 +153,8 @@ export default function Activity({
               margin-top: 10rem;
               font-size: 1.6rem;
               @media (max-width: ${mobileMaxWidth}) {
-                margin-top: 5rem;
-                font-size: 1.2rem;
+                margin-top: 4rem;
+                font-size: 1.1rem;
               }
             `}
           >
