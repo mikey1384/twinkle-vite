@@ -306,6 +306,20 @@ export default function ChatActions(dispatch) {
         loadMoreShown
       });
     },
+    onLoadListedAICards({ cards, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_LISTED_AI_CARDS',
+        cards,
+        loadMoreShown
+      });
+    },
+    onLoadMoreListedAICards({ cards, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_MORE_LISTED_AI_CARDS',
+        cards,
+        loadMoreShown
+      });
+    },
     onLoadMyAICards({ cards, loadMoreShown }) {
       return dispatch({
         type: 'LOAD_MY_AI_CARDS',
