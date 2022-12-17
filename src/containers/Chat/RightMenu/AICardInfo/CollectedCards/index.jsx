@@ -113,9 +113,7 @@ export default function CollectedCards() {
             <b style={{ color: Color.darkerGray() }}>No cards collected</b>
           </div>
         ) : (
-          myCards.map((card, index) => (
-            <CardItem key={card.id} index={index} card={card} />
-          ))
+          myCards.map((card) => <CardItem key={card.id} card={card} />)
         )}
         {loaded && myCardsLoadMoreButton && (
           <LoadMoreButton

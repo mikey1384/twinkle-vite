@@ -11,11 +11,11 @@ import {
 import AICardModal from '~/components/Modals/AICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-CardItem.propTypes = {
+Listing.propTypes = {
   card: PropTypes.object.isRequired
 };
 
-export default function CardItem({ card }) {
+export default function Listing({ card }) {
   const [cardModalShown, setCardModalShown] = useState(false);
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
   const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
