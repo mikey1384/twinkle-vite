@@ -7,7 +7,7 @@ import AICard from '~/components/AICard';
 import SanitizedHTML from 'react-sanitized-html';
 import SellModal from './SellModal';
 import { useKeyContext } from '~/contexts';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import UnlistedMenu from './UnlistedMenu';
@@ -77,6 +77,9 @@ export default function AICardModal({ card, onHide }) {
                     margin-bottom: 1rem;
                     font-size: 1.6rem;
                     font-family: Open Sans, sans-serif;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1rem;
+                    }
                   `}`}
                 >
                   <b
@@ -91,10 +94,13 @@ export default function AICardModal({ card, onHide }) {
                 </div>
                 <div style={{ marginBottom: '3rem' }}>
                   <span
-                    style={{
-                      fontFamily: 'Roboto Mono, monospace',
-                      fontSize: '1.5rem'
-                    }}
+                    className={css`
+                      font-family: Roboto Mono, monospace;
+                      font-size: 1.5rem;
+                      @media (max-width: ${mobileMaxWidth}) {
+                        font-size: 1.1rem;
+                      }
+                    `}
                   >
                     <SanitizedHTML
                       allowedAttributes={{ b: ['style'] }}
@@ -104,11 +110,14 @@ export default function AICardModal({ card, onHide }) {
                 </div>
                 <div>
                   <b
-                    style={{
-                      fontSize: '1.3rem',
-                      fontFamily: 'helvetica, sans-serif',
-                      color: Color.darkerGray()
-                    }}
+                    className={css`
+                      font-size: 1.3rem;
+                      font-family: helvetica, sans-serif;
+                      color: ${Color.darkerGray()};
+                      @media (max-width: ${mobileMaxWidth}) {
+                        font-size: 1rem;
+                      }
+                    `}
                   >
                     {card.style}
                   </b>
