@@ -140,7 +140,7 @@ export default function Activity({
             className={css`
               text-align: center;
               margin-top: 10rem;
-              font-size: 1.5rem;
+              font-size: 1.6rem;
               @media (max-width: ${mobileMaxWidth}) {
                 margin-top: 5rem;
                 font-size: 1.2rem;
