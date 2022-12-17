@@ -2,12 +2,14 @@ import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import {
   cardLevelHash,
   cloudFrontURL,
   cardProps,
   qualityProps
 } from '~/constants/defaultValues';
+import Icon from '~/components/Icon';
 import AICardModal from '~/components/Modals/AICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
@@ -120,13 +122,17 @@ export default function Listing({ card }) {
             />
             <b
               style={{
-                marginTop: '1rem',
-                fontSize: '1.1rem',
+                marginTop: '0.5rem',
+                fontSize: '1.7rem',
                 fontFamily: 'helvetica, sans-serif',
                 color: Color.darkerGray()
               }}
             >
-              {card.style}
+              <Icon
+                style={{ color: Color.brownOrange(), fontWeight: 'bold' }}
+                icon={['far', 'badge-dollar']}
+              />{' '}
+              {addCommasToNumber(card.askPrice)}
             </b>
           </div>
         </div>
