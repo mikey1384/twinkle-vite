@@ -873,6 +873,7 @@ export default function ChatReducer(state, action) {
               }
             : state.lastSubchannelPaths,
         chatType: state.chatType ? state.chatType : action.data.chatType,
+        myCards: state.myCards,
         vocabActivities:
           state.chatType === VOCAB_CHAT_TYPE
             ? state.vocabActivities
