@@ -21,9 +21,9 @@ export default function UserInfo({ user, style }) {
     >
       <div
         className={css`
-          width: 10rem;
-          @media (min-width: ${mobileMaxWidth}) {
-            width: 7rem;
+          width: 8rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            width: 5rem;
           }
         `}
       >
@@ -48,7 +48,7 @@ export default function UserInfo({ user, style }) {
               font-size: 1.7rem;
               line-height: 1;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.6rem;
+                font-size: 1.3rem;
               }
             `}
             user={{
