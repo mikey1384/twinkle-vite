@@ -6,9 +6,11 @@ import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
 import SanitizedHTML from 'react-sanitized-html';
 import SellModal from './SellModal';
+import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { qualityProps } from '~/constants/defaultValues';
 import UnlistedMenu from './UnlistedMenu';
+import ListedMenu from './ListedMenu';
 
 AICardModal.propTypes = {
   card: PropTypes.object.isRequired,
@@ -16,6 +18,7 @@ AICardModal.propTypes = {
 };
 
 export default function AICardModal({ card, onHide }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const [sellModalShown, setSellModalShown] = useState(false);
   const [isBurned, setIsBurned] = useState(false);
   const { cardCss, promptText } = useAICard(card);
@@ -114,10 +117,17 @@ export default function AICardModal({ card, onHide }) {
             </div>
           </div>
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
-            <UnlistedMenu
-              onSetSellModalShown={setSellModalShown}
-              onSetIsBurned={setIsBurned}
-            />
+            {card.isListed ? (
+              <ListedMenu
+                userIsOwner={card.ownerId === userId}
+                askPrice={card.askPrice}
+              />
+            ) : (
+              <UnlistedMenu
+                onSetSellModalShown={setSellModalShown}
+                onSetIsBurned={setIsBurned}
+              />
+            )}
           </div>
         </div>
       </main>
