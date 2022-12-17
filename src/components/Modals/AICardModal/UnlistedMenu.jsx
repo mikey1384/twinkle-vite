@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
+import { mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 
 UnlistedMenu.propTypes = {
   onSetSellModalShown: PropTypes.func.isRequired,
@@ -18,24 +20,35 @@ export default function UnlistedMenu({ onSetSellModalShown, onSetIsBurned }) {
         alignItems: 'center',
         flexDirection: 'column'
       }}
+      className={css`
+        font-size: 1.6rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          font-size: 1.1rem;
+        }
+      `}
     >
       <div
-        style={{
-          height: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column'
-        }}
+        className={css`
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+        `}
       >
-        <p style={{ marginBottom: '2rem' }}>
-          {`List this card on the market so others can buy it. You can set the price and choose how long you want it to be listed for.`}
+        <p
+          className={css`
+            margin-bottom: 2rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              margin-bottom: 1rem;
+            }
+          `}
+        >
+          {`List this card on the market so others can buy it.`}
         </p>
         <Button
           onClick={() => onSetSellModalShown(true)}
           color="oceanBlue"
           filled
-          style={{ border: 'none' }}
         >
           <Icon icon="shopping-cart" />
           <span style={{ marginLeft: '0.7rem' }}>Sell</span>
@@ -43,22 +56,24 @@ export default function UnlistedMenu({ onSetSellModalShown, onSetIsBurned }) {
       </div>
       <div
         style={{
-          height: '50%',
+          marginTop: '5rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexDirection: 'column'
         }}
       >
-        <p style={{ marginBottom: '2rem' }}>
+        <p
+          className={css`
+            margin-bottom: 2rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              margin-bottom: 1rem;
+            }
+          `}
+        >
           {`Destroy this card and receive XP based on its color and quality. The more valuable the color and the higher the quality, the more XP you will receive. This action is irreversible, so use it wisely.`}
         </p>
-        <Button
-          onClick={() => onSetIsBurned(true)}
-          color="redOrange"
-          filled
-          style={{ border: 'none' }}
-        >
+        <Button onClick={() => onSetIsBurned(true)} color="redOrange" filled>
           <Icon icon="fire" />
           <span style={{ marginLeft: '0.7rem' }}>Burn</span>
         </Button>

@@ -9,6 +9,7 @@ import SellModal from './SellModal';
 import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { qualityProps } from '~/constants/defaultValues';
+import { css } from '@emotion/css';
 import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
 
@@ -72,12 +73,11 @@ export default function AICardModal({ card, onHide }) {
                 }}
               >
                 <div
-                  className="card-quality"
-                  style={{
-                    marginBottom: '1rem',
-                    fontSize: '1.6rem',
-                    fontFamily: 'Open Sans, sans-serif'
-                  }}
+                  className={`card-quality ${css`
+                    margin-bottom: 1rem;
+                    font-size: 1.6rem;
+                    font-family: Open Sans, sans-serif;
+                  `}`}
                 >
                   <b
                     style={{
