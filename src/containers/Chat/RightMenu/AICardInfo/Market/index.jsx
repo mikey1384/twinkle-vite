@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Color } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
+import Listings from './Listings';
+import Offers from './Offers';
 
 export default function Market() {
   const [activeTab, setActiveTab] = useState('buy');
@@ -27,6 +29,7 @@ export default function Market() {
           Offers
         </nav>
       </FilterBar>
+      <div>{activeTab === 'buy' ? <Listings /> : <Offers />}</div>
     </div>
   );
 }
