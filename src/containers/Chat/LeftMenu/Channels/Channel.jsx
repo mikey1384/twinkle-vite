@@ -4,10 +4,7 @@ import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useKeyContext, useChatContext } from '~/contexts';
-import {
-  VOCAB_CHAT_TYPE,
-  AI_DRAWING_CHAT_TYPE
-} from '~/constants/defaultValues';
+import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
@@ -63,8 +60,8 @@ function Channel({
     if (
       currentPathId === VOCAB_CHAT_TYPE ||
       chatType === VOCAB_CHAT_TYPE ||
-      currentPathId === AI_DRAWING_CHAT_TYPE ||
-      chatType === AI_DRAWING_CHAT_TYPE
+      currentPathId === AI_CARD_CHAT_TYPE ||
+      chatType === AI_CARD_CHAT_TYPE
     ) {
       return false;
     }

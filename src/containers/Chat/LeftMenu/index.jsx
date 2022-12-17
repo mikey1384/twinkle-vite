@@ -9,10 +9,7 @@ import Subchannels from './Subchannels';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useChatContext, useKeyContext } from '~/contexts';
-import {
-  AI_DRAWING_CHAT_TYPE,
-  VOCAB_CHAT_TYPE
-} from '~/constants/defaultValues';
+import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import { matchPath, useNavigate, useLocation } from 'react-router-dom';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -62,7 +59,7 @@ function LeftMenu({
     () =>
       matchPath(
         {
-          path: `/chat/${AI_DRAWING_CHAT_TYPE}`,
+          path: `/chat/${AI_CARD_CHAT_TYPE}`,
           exact: true
         },
         location.pathname
@@ -147,14 +144,11 @@ function LeftMenu({
           </div>
         </div>
         <Collect
-          aiCardSelected={
-            chatType === AI_DRAWING_CHAT_TYPE || loadingAIImageChat
-          }
+          aiCardSelected={chatType === AI_CARD_CHAT_TYPE || loadingAIImageChat}
           vocabSelected={chatType === VOCAB_CHAT_TYPE || loadingVocabulary}
           onClick={() => {
             if (vocabMatch && collectType === VOCAB_CHAT_TYPE) return null;
-            if (aiCardMatch && collectType === AI_DRAWING_CHAT_TYPE)
-              return null;
+            if (aiCardMatch && collectType === AI_CARD_CHAT_TYPE) return null;
             navigate(`/chat/${collectType || VOCAB_CHAT_TYPE}`);
           }}
         />

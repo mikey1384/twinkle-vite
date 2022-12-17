@@ -27,7 +27,7 @@ import {
   TURN_USERNAME,
   TURN_PASSWORD,
   VOCAB_CHAT_TYPE,
-  AI_DRAWING_CHAT_TYPE
+  AI_CARD_CHAT_TYPE
 } from '~/constants/defaultValues';
 
 Header.propTypes = {
@@ -945,7 +945,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         document.title = `${`Vocabulary | Twinkle`}${
           newNotiNum > 0 ? ' *' : ''
         }`;
-      } else if (chatType === AI_DRAWING_CHAT_TYPE) {
+      } else if (chatType === AI_CARD_CHAT_TYPE) {
         document.title = `${`AI Cards | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
       } else {
         document.title = `${`Chat | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;

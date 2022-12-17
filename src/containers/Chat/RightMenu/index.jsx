@@ -6,10 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import {
-  AI_DRAWING_CHAT_TYPE,
-  VOCAB_CHAT_TYPE
-} from '~/constants/defaultValues';
+import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import LocalContext from '../Context';
 import AICardInfo from './AICardInfo';
 
@@ -96,12 +93,18 @@ function RightMenu({
           overflow-y: scroll;
           -webkit-overflow-scrolling: touch;
           @media (max-width: ${mobileMaxWidth}) {
-            max-width: ${chatType === VOCAB_CHAT_TYPE ? '48vw' : '40vw'};
-            width: ${chatType === VOCAB_CHAT_TYPE ? '48vw' : '40vw'};
+            max-width: ${chatType === VOCAB_CHAT_TYPE ||
+            chatType === AI_CARD_CHAT_TYPE
+              ? '48vw'
+              : '40vw'};
+            width: ${chatType === VOCAB_CHAT_TYPE ||
+            chatType === AI_CARD_CHAT_TYPE
+              ? '48vw'
+              : '40vw'};
           }
         `}
       >
-        {chatType === AI_DRAWING_CHAT_TYPE ? <AICardInfo /> : null}
+        {chatType === AI_CARD_CHAT_TYPE ? <AICardInfo /> : null}
         {chatType === VOCAB_CHAT_TYPE ? <VocabInfo /> : null}
         {(!chatType || chatType === 'default') && (
           <ChatInfo

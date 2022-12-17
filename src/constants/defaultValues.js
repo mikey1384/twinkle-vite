@@ -44,7 +44,7 @@ export const REWARD_VALUE = 200;
 export const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
 export const mb = 1000;
 export const VOCAB_CHAT_TYPE = 'vocabulary';
-export const AI_DRAWING_CHAT_TYPE = 'ai-image-cards';
+export const AI_CARD_CHAT_TYPE = 'ai-image-cards';
 
 export const charLimit = {
   chat: {

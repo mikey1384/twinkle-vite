@@ -10,7 +10,7 @@ import {
   truncateText
 } from '~/helpers/stringHelpers';
 import { useChatContext, useInputContext } from '~/contexts';
-import { AI_DRAWING_CHAT_TYPE } from '~/constants/defaultValues';
+import { AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -39,10 +39,7 @@ export default function PromptInput({
   );
   const state = useInputContext((v) => v.state);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
-  const prevText = useMemo(
-    () => state[AI_DRAWING_CHAT_TYPE]?.text || '',
-    [state]
-  );
+  const prevText = useMemo(() => state[AI_CARD_CHAT_TYPE]?.text || '', [state]);
   const [text, setText] = useState(prevText);
 
   useEffect(() => {
@@ -54,7 +51,7 @@ export default function PromptInput({
   useEffect(() => {
     return () => {
       onEnterComment({
-        contentType: AI_DRAWING_CHAT_TYPE,
+        contentType: AI_CARD_CHAT_TYPE,
         text
       });
     };
