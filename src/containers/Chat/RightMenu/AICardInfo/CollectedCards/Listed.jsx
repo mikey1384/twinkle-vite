@@ -85,10 +85,14 @@ export default function Listed({ loadMoreButtonColor }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            height: 'CALC(100% - 2rem)'
+            height: 'CALC(100% - 2rem)',
+            textAlign: 'center',
+            padding: '3rem'
           }}
         >
-          <b style={{ color: Color.darkerGray() }}>No cards collected</b>
+          <b style={{ color: Color.darkerGray() }}>
+            You have not listed any of your cards for sale
+          </b>
         </div>
       ) : (
         myListedCards.map((card) => <CardItem key={card.id} card={card} />)
