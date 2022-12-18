@@ -76,7 +76,7 @@ export default function Listings() {
               height: 'CALC(100% - 2rem)'
             }}
           >
-            <b style={{ color: Color.darkerGray() }}>No cards collected</b>
+            <b style={{ color: Color.darkerGray() }}>No cards to buy</b>
           </div>
         ) : (
           listedCards.map((card, index) => (

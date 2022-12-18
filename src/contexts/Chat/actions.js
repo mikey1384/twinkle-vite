@@ -278,6 +278,12 @@ export default function ChatActions(dispatch) {
         price
       });
     },
+    onUpdateListedAICards(card) {
+      return dispatch({
+        type: 'UPDATE_LISTED_AI_CARDS',
+        card
+      });
+    },
     onLoadChatSubject(data) {
       return dispatch({
         type: 'LOAD_SUBJECT',
