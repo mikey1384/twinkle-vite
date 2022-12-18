@@ -9,7 +9,7 @@ export default function Market() {
   return (
     <div
       style={{
-        height: '50%',
+        height: 'CALC(50% - 4.5rem)',
         borderBottom: `1px solid ${Color.borderGray()}`
       }}
     >
