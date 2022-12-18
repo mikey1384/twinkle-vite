@@ -191,9 +191,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onUpdateCollectorsRankings = useChatContext(
     (v) => v.actions.onUpdateCollectorsRankings
   );
-  const onAddListedAICards = useChatContext(
-    (v) => v.actions.onAddListedAICards
-  );
+  const onAddListedAICard = useChatContext((v) => v.actions.onAddListedAICard);
   const category = useHomeContext((v) => v.state.category);
   const feeds = useHomeContext((v) => v.state.feeds);
   const subFilter = useHomeContext((v) => v.state.subFilter);
@@ -382,7 +380,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
     function handleAICardListed(card) {
       if (card.ownerId !== userId) {
-        onAddListedAICards(card);
+        onAddListedAICard(card);
       }
     }
 
