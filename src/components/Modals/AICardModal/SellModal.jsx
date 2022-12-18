@@ -7,10 +7,11 @@ import Icon from '~/components/Icon';
 import { borderRadius, Color } from '~/constants/css';
 
 SellModal.propTypes = {
+  card: PropTypes.object.isRequired,
   onHide: PropTypes.func.isRequired
 };
 
-export default function SellModal({ onHide }) {
+export default function SellModal({ card, onHide }) {
   const [amount, setAmount] = useState(0);
 
   return (
@@ -35,7 +36,12 @@ export default function SellModal({ onHide }) {
               alignItems: 'center'
             }}
           >
-            Set a price (<Icon icon={['far', 'badge-dollar']} />)
+            Set the price (
+            <Icon
+              style={{ color: Color.brownOrange() }}
+              icon={['far', 'badge-dollar']}
+            />
+            )
           </div>
           <Input
             onChange={handleAmountChange}
@@ -79,6 +85,6 @@ export default function SellModal({ onHide }) {
   }
 
   function handleCompleteListing() {
-    console.log('listing');
+    console.log(card.id);
   }
 }
