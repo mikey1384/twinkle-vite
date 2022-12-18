@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { Color } from '~/constants/css';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 ListedMenu.propTypes = {
   askPrice: PropTypes.number.isRequired,
@@ -31,7 +32,24 @@ export default function ListedMenu({ userIsOwner, askPrice }) {
       >
         <div style={{ marginBottom: '2rem' }}>
           {userIsOwner ? (
-            'Cancel Listing'
+            <div style={{ textAlign: 'center' }}>
+              You listed this card for
+              <div style={{ marginTop: '0.5rem' }}>
+                <Icon
+                  style={{ color: Color.brownOrange() }}
+                  icon={['far', 'badge-dollar']}
+                />
+                <span
+                  style={{
+                    marginLeft: '0.3rem',
+                    fontWeight: 'bold',
+                    color: Color.darkerGray()
+                  }}
+                >
+                  {addCommasToNumber(askPrice)}
+                </span>
+              </div>
+            </div>
           ) : (
             <div style={{ textAlign: 'center' }}>
               Buy this card for
