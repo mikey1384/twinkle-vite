@@ -284,6 +284,12 @@ export default function ChatActions(dispatch) {
         card
       });
     },
+    onRemoveListedAICard(cardId) {
+      return dispatch({
+        type: 'REMOVE_LISTED_AI_CARD',
+        cardId
+      });
+    },
     onLoadChatSubject(data) {
       return dispatch({
         type: 'LOAD_SUBJECT',

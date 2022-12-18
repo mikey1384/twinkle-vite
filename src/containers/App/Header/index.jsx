@@ -192,6 +192,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     (v) => v.actions.onUpdateCollectorsRankings
   );
   const onAddListedAICard = useChatContext((v) => v.actions.onAddListedAICard);
+  const onRemoveListedAICard = useChatContext(
+    (v) => v.actions.onRemoveListedAICard
+  );
   const category = useHomeContext((v) => v.state.category);
   const feeds = useHomeContext((v) => v.state.feeds);
   const subFilter = useHomeContext((v) => v.state.subFilter);
@@ -269,6 +272,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
   useEffect(() => {
     socket.on('ai_card_listed', handleAICardListed);
+    socket.on('ai_card_delisted', handleAICardDelisted);
     socket.on('ban_status_updated', handleBanStatusUpdate);
     socket.on('signal_received', handleCallSignal);
     socket.on('online_status_changed', handleOnlineStatusChange);
@@ -312,6 +316,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
     return function cleanUp() {
       socket.removeListener('ai_card_listed', handleAICardListed);
+      socket.removeListener('ai_card_delisted', handleAICardDelisted);
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('signal_received', handleCallSignal);
       socket.removeListener('online_status_changed', handleOnlineStatusChange);
@@ -382,6 +387,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       if (card.ownerId !== userId) {
         onAddListedAICard(card);
       }
+    }
+
+    function handleAICardDelisted(cardId) {
+      onRemoveListedAICard(cardId);
     }
 
     function handleBanStatusUpdate(banStatus) {
