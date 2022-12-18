@@ -58,7 +58,7 @@ export default function ActivitiesContainer() {
       ? ActivitiesContainerRef.current?.offsetHeight -
         ContentRef.current?.offsetHeight
       : 20;
-  const aiImageRows = useChatContext((v) => v.state.aiImages);
+  const aiImageRows = useChatContext((v) => v.state.aiCards);
   return (
     <div
       ref={ActivitiesContainerRef}

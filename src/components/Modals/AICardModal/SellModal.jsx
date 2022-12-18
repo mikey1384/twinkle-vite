@@ -4,16 +4,17 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 
 SellModal.propTypes = {
-  cardId: PropTypes.number.isRequired,
+  card: PropTypes.object.isRequired,
   onHide: PropTypes.func.isRequired
 };
 
-export default function SellModal({ cardId, onHide }) {
+export default function SellModal({ card, onHide }) {
   const listAICard = useAppContext((v) => v.requestHelpers.listAICard);
+  const onListAICard = useChatContext((v) => v.actions.onListAICard);
   const [amount, setAmount] = useState(0);
 
   return (
@@ -87,7 +88,12 @@ export default function SellModal({ cardId, onHide }) {
   }
 
   async function handleCompleteListing() {
-    const data = await listAICard({ cardId, price: amount });
-    console.log(data);
+    const success = await listAICard({ cardId: card.id, price: amount });
+    if (success) {
+      onListAICard({
+        card,
+        price: amount
+      });
+    }
   }
 }

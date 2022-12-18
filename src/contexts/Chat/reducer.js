@@ -856,10 +856,10 @@ export default function ChatReducer(state, action) {
       return {
         ...state,
         ...initialChatState,
-        aiImages:
+        aiCards:
           state.chatType === AI_CARD_CHAT_TYPE
-            ? state.aiImages
-            : action.data.aiImages || [],
+            ? state.aiCards
+            : action.data.aiCards || [],
         numUnreads: state.numUnreads,
         chatStatus: state.chatStatus,
         allFavoriteChannelIds: action.data.allFavoriteChannelIds,
@@ -965,6 +965,28 @@ export default function ChatReducer(state, action) {
           (channelId) => channelId !== action.channelId
         )
       };
+    case 'LIST_AI_CARD': {
+      return {
+        ...state,
+        listedCards: [
+          {
+            ...action.card,
+            isListed: true,
+            askPrice: action.price || 0
+          }
+        ].concat(state.listedCards),
+        myCards: state.myCards.map((card) => ({
+          ...card,
+          isListed: true,
+          askPrice: action.price || 0
+        })),
+        aiCards: state.aiCards.map((card) => ({
+          ...card,
+          isListed: true,
+          askPrice: action.price || 0
+        }))
+      };
+    }
     case 'LOAD_MORE_CHANNELS': {
       let loadMoreButton = false;
       if (action.channelType === 'home') {
@@ -1130,21 +1152,21 @@ export default function ChatReducer(state, action) {
         electedChannelId: null,
         selectedSubchannelId: null,
         chatType: AI_CARD_CHAT_TYPE,
-        aiImages: action.cards,
+        aiCards: action.cards,
         aiDrawingsLoadMoreButton: action.loadMoreShown
       };
     }
     case 'LOAD_MORE_AI_IMAGES': {
       return {
         ...state,
-        aiImages: action.cards.concat(state.aiImages),
+        aiCards: action.cards.concat(state.aiCards),
         aiDrawingsLoadMoreButton: action.loadMoreShown
       };
     }
     case 'POST_AI_CARD': {
       return {
         ...state,
-        aiImages: state.aiImages.concat({
+        aiCards: state.aiCards.concat({
           ...action.card,
           isNewlyPosted: true
         })
@@ -1601,7 +1623,7 @@ export default function ChatReducer(state, action) {
     case 'RECEIVE_AI_CARD_ACTIVITY':
       return {
         ...state,
-        aiImages: state.aiImages.concat(action.card)
+        aiCards: state.aiCards.concat(action.card)
       };
     case 'RECEIVE_VOCAB_ACTIVITY':
       return {
@@ -1687,7 +1709,7 @@ export default function ChatReducer(state, action) {
     case 'REMOVE_NEWLY_POSTED_CARD_STATUS':
       return {
         ...state,
-        aiImages: state.aiImages.map((aiImage) => {
+        aiCards: state.aiCards.map((aiImage) => {
           if (aiImage.id === action.cardId) {
             return {
               ...aiImage,
