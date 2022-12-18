@@ -14,10 +14,11 @@ import AICardModal from '~/components/Modals/AICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 Listing.propTypes = {
-  card: PropTypes.object.isRequired
+  card: PropTypes.object.isRequired,
+  listedCards: PropTypes.array.isRequired
 };
 
-export default function Listing({ card }) {
+export default function Listing({ card, listedCards }) {
   const [cardModalShown, setCardModalShown] = useState(false);
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
   const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
@@ -54,7 +55,14 @@ export default function Listing({ card }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'flex-start',
-          borderBottom: `1px solid ${Color.borderGray()}`
+          borderBottom:
+            listedCards.length === 1
+              ? `1px solid ${Color.borderGray()}`
+              : 'none',
+          borderTop:
+            listedCards.length !== 1
+              ? `1px solid ${Color.borderGray()}`
+              : 'none'
         }}
         onClick={() => setCardModalShown(true)}
         key={card.id}

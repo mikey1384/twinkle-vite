@@ -9,8 +9,8 @@ export default function Market() {
   return (
     <div
       style={{
-        borderBottom: `1px solid ${Color.borderGray()}`,
-        height: '50%'
+        height: '50%',
+        borderBottom: `1px solid ${Color.borderGray()}`
       }}
     >
       <FilterBar
@@ -29,7 +29,9 @@ export default function Market() {
           Offers
         </nav>
       </FilterBar>
-      <div>{activeTab === 'buy' ? <Listings /> : <Offers />}</div>
+      <div style={{ height: '100%' }}>
+        {activeTab === 'buy' ? <Listings /> : <Offers />}
+      </div>
     </div>
   );
 }

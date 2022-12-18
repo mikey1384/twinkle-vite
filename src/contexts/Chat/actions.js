@@ -265,6 +265,13 @@ export default function ChatActions(dispatch) {
         userId
       });
     },
+    onListAICard({ card, price }) {
+      return dispatch({
+        type: 'LIST_AI_CARD',
+        card,
+        price
+      });
+    },
     onLoadChatSubject(data) {
       return dispatch({
         type: 'LOAD_SUBJECT',

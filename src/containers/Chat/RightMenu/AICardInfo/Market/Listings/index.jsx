@@ -52,7 +52,7 @@ export default function Listings() {
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Listings">
       <div
         style={{
-          height: 'CALC(100% - 5rem)',
+          height: 'CALC(100% - 45px)',
           overflow: 'scroll'
         }}
         ref={CardItemsRef}
@@ -71,7 +71,9 @@ export default function Listings() {
             <b style={{ color: Color.darkerGray() }}>No cards collected</b>
           </div>
         ) : (
-          listedCards.map((card, index) => <Listing card={card} key={index} />)
+          listedCards.map((card, index) => (
+            <Listing card={card} listedCards={listedCards} key={index} />
+          ))
         )}
         {loaded && listedCardsLoadMoreButton && (
           <LoadMoreButton

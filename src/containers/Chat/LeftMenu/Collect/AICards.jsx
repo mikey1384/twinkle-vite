@@ -8,7 +8,7 @@ const youLabel = localize('You');
 
 export default function AICards() {
   const { userId: myId } = useKeyContext((v) => v.myState);
-  const aiImageRows = useChatContext((v) => v.state.aiImages);
+  const aiImageRows = useChatContext((v) => v.state.aiCards);
 
   const lastActivity = useMemo(() => {
     return aiImageRows?.[aiImageRows?.length - 1];
