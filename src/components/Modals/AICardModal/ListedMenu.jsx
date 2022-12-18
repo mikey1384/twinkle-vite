@@ -9,16 +9,10 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 ListedMenu.propTypes = {
   askPrice: PropTypes.number.isRequired,
   cardId: PropTypes.number.isRequired,
-  userIsOwner: PropTypes.bool.isRequired,
-  onDelist: PropTypes.func
+  userIsOwner: PropTypes.bool.isRequired
 };
 
-export default function ListedMenu({
-  cardId,
-  userIsOwner,
-  askPrice,
-  onDelist
-}) {
+export default function ListedMenu({ cardId, userIsOwner, askPrice }) {
   const delistAICard = useAppContext((v) => v.requestHelpers.delistAICard);
   const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
   return (
@@ -168,7 +162,6 @@ export default function ListedMenu({
     const success = await delistAICard(cardId);
     if (success) {
       onDelistAICard(cardId);
-      onDelist();
     }
   }
 }

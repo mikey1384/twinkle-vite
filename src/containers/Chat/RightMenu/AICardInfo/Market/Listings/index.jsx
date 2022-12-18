@@ -107,13 +107,6 @@ export default function Listings() {
         <AICardModal
           card={cardModalCard}
           onHide={() => setCardModalCard(null)}
-          onDelist={() =>
-            setCardModalCard((card) => ({
-              ...card,
-              isListed: false,
-              askPrice: 0
-            }))
-          }
         />
       )}
     </ErrorBoundary>

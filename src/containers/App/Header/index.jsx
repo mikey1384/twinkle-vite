@@ -268,6 +268,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const currentPathIdRef = useRef(Number(currentPathId));
 
   useEffect(() => {
+    socket.on('ai_card_listed', handleAICardListed);
     socket.on('ban_status_updated', handleBanStatusUpdate);
     socket.on('signal_received', handleCallSignal);
     socket.on('online_status_changed', handleOnlineStatusChange);
@@ -310,6 +311,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('username_changed', handleUsernameChange);
 
     return function cleanUp() {
+      socket.removeListener('ai_card_listed', handleAICardListed);
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('signal_received', handleCallSignal);
       socket.removeListener('online_status_changed', handleOnlineStatusChange);
@@ -375,6 +377,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       socket.removeListener('user_type_updated', handleUserTypeUpdate);
       socket.removeListener('username_changed', handleUsernameChange);
     };
+
+    function handleAICardListed(card) {
+      console.log(card);
+    }
 
     function handleBanStatusUpdate(banStatus) {
       onSetUserState({ userId, newState: { banned: banStatus } });
