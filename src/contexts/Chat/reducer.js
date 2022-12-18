@@ -2277,6 +2277,12 @@ export default function ChatReducer(state, action) {
           }
         }
       };
+    case 'UPDATE_LISTED_AI_CARDS': {
+      return {
+        ...state,
+        listedCards: [action.card].concat(state.listedCards)
+      };
+    }
     case 'UPDATE_UPLOAD_PROGRESS': {
       const targetId =
         action.channelId +
