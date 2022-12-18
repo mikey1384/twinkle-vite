@@ -325,6 +325,19 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async delistAICard(cardId) {
+      try {
+        const {
+          data: { success }
+        } = await request.delete(
+          `${URL}/chat/aiImage/list?cardId=${cardId}`,
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadChat({ channelId, subchannelPath }) {
       try {
         const { data } = await request.get(

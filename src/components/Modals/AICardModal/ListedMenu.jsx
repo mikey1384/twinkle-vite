@@ -3,14 +3,24 @@ import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { useAppContext, useChatContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 ListedMenu.propTypes = {
   askPrice: PropTypes.number.isRequired,
-  userIsOwner: PropTypes.bool.isRequired
+  cardId: PropTypes.number.isRequired,
+  userIsOwner: PropTypes.bool.isRequired,
+  onDelist: PropTypes.func
 };
 
-export default function ListedMenu({ userIsOwner, askPrice }) {
+export default function ListedMenu({
+  cardId,
+  userIsOwner,
+  askPrice,
+  onDelist
+}) {
+  const delistAICard = useAppContext((v) => v.requestHelpers.delistAICard);
+  const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
   return (
     <div
       style={{
@@ -155,6 +165,10 @@ export default function ListedMenu({ userIsOwner, askPrice }) {
   );
 
   async function handleCancelListing() {
-    console.log('canceling');
+    const success = await delistAICard(cardId);
+    if (success) {
+      onDelistAICard(cardId);
+      onDelist();
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -10,16 +10,21 @@ import {
   qualityProps
 } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
-import AICardModal from '~/components/Modals/AICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 Listing.propTypes = {
   card: PropTypes.object.isRequired,
-  listedCards: PropTypes.array.isRequired
+  isOverflown: PropTypes.bool.isRequired,
+  isLast: PropTypes.bool.isRequired,
+  onSetCardModalCard: PropTypes.func.isRequired
 };
 
-export default function Listing({ card, listedCards }) {
-  const [cardModalShown, setCardModalShown] = useState(false);
+export default function Listing({
+  isOverflown,
+  isLast,
+  card,
+  onSetCardModalCard
+}) {
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
   const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
   const borderColor = useMemo(() => qualityProps[card.quality]?.color, [card]);
@@ -56,13 +61,9 @@ export default function Listing({ card, listedCards }) {
           alignItems: 'center',
           justifyContent: 'flex-start',
           borderBottom:
-            listedCards.length === 1
-              ? `1px solid ${Color.borderGray()}`
-              : 'none',
-          borderTop:
-            listedCards.length > 1 ? `1px solid ${Color.borderGray()}` : 'none'
+            isOverflown && isLast ? 'none' : `1px solid ${Color.borderGray()}`
         }}
-        onClick={() => setCardModalShown(true)}
+        onClick={() => onSetCardModalCard(card)}
         key={card.id}
       >
         <div
@@ -148,9 +149,6 @@ export default function Listing({ card, listedCards }) {
           </div>
         </div>
       </div>
-      {cardModalShown && (
-        <AICardModal card={card} onHide={() => setCardModalShown(false)} />
-      )}
     </ErrorBoundary>
   );
 }

@@ -15,10 +15,11 @@ import ListedMenu from './ListedMenu';
 
 AICardModal.propTypes = {
   card: PropTypes.object.isRequired,
-  onHide: PropTypes.func.isRequired
+  onHide: PropTypes.func.isRequired,
+  onDelist: PropTypes.func
 };
 
-export default function AICardModal({ card, onHide }) {
+export default function AICardModal({ card, onHide, onDelist }) {
   const { userId } = useKeyContext((v) => v.myState);
   const [sellModalShown, setSellModalShown] = useState(false);
   const [isBurned, setIsBurned] = useState(false);
@@ -128,8 +129,10 @@ export default function AICardModal({ card, onHide }) {
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
             {card.isListed ? (
               <ListedMenu
+                cardId={card.id}
                 userIsOwner={card.ownerId === userId}
                 askPrice={card.askPrice}
+                onDelist={onDelist}
               />
             ) : (
               <UnlistedMenu
