@@ -1026,15 +1026,21 @@ function Comment({
 
   async function handleReplyButtonClick() {
     if (numReplies > 0 && parent.contentType === 'comment') {
-      setLoadingReplies(true);
-      const { loadMoreButton, replies } = await loadReplies({ commentId });
-      onLoadReplies({
-        commentId,
-        loadMoreButton,
-        replies,
-        contentType: 'comment',
-        contentId: parent.contentId
-      });
+      try {
+        setLoadingReplies(true);
+        const { loadMoreButton, replies } = await loadReplies({
+          commentId
+        });
+        onLoadReplies({
+          commentId,
+          loadMoreButton,
+          replies,
+          contentType: 'comment',
+          contentId: parent.contentId
+        });
+      } catch (err) {
+        console.error(err);
+      }
       setLoadingReplies(false);
     }
     if (!isDeleteNotification) ReplyInputAreaRef.current.focus();
