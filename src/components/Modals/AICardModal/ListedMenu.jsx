@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 ListedMenu.propTypes = {
@@ -29,6 +30,12 @@ export default function ListedMenu({ userIsOwner, askPrice }) {
           justifyContent: 'center',
           flexDirection: 'column'
         }}
+        className={css`
+          font-size: 1.6rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 1.1rem;
+          }
+        `}
       >
         <div style={{ marginBottom: '2rem' }}>
           {userIsOwner ? (
@@ -78,18 +85,50 @@ export default function ListedMenu({ userIsOwner, askPrice }) {
             </div>
           )}
         </div>
-        <Button
-          onClick={() => console.log('clicked')}
-          color="oceanBlue"
-          filled
-          style={{ border: 'none' }}
-        >
-          <Icon icon="shopping-cart" />
-          <span style={{ marginLeft: '0.7rem' }}>
-            {userIsOwner ? 'Cancel Listing' : 'Buy'}
-          </span>
-        </Button>
+        {userIsOwner ? (
+          <Button onClick={handleCancelListing} color="rose" filled>
+            <Icon
+              className={css`
+                font-size: 1.6rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1rem;
+                }
+              `}
+              icon="redo"
+            />
+            <span
+              className={css`
+                font-size: 1.6rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1rem;
+                }
+              `}
+              style={{ marginLeft: '0.7rem' }}
+            >
+              Cancel Listing
+            </span>
+          </Button>
+        ) : (
+          <Button onClick={() => console.log('buy')} color="oceanBlue" filled>
+            <Icon icon="shopping-cart" />
+            <span
+              className={css`
+                font-size: 1.6rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1rem;
+                }
+              `}
+              style={{ marginLeft: '0.7rem' }}
+            >
+              Buy
+            </span>
+          </Button>
+        )}
       </div>
     </div>
   );
+
+  async function handleCancelListing() {
+    console.log('canceling');
+  }
 }
