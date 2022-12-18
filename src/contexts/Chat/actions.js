@@ -278,9 +278,9 @@ export default function ChatActions(dispatch) {
         price
       });
     },
-    onAddListedAICards(card) {
+    onAddListedAICard(card) {
       return dispatch({
-        type: 'ADD_LISTED_AI_CARDS',
+        type: 'ADD_LISTED_AI_CARD',
         card
       });
     },

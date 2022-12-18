@@ -70,6 +70,18 @@ export default function ChatReducer(state, action) {
         }
       };
     }
+    case 'ADD_LISTED_AI_CARD': {
+      return {
+        ...state,
+        aiCards: state.aiCards.map((card) => ({
+          ...card,
+          isListed: card.id === action.card.id ? true : card.isListed,
+          askPrice:
+            card.id === action.card.id ? action.price || 0 : card.askPrice
+        })),
+        listedCards: [action.card].concat(state.listedCards)
+      };
+    }
     case 'ADD_REACTION_TO_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const message =
@@ -2277,18 +2289,6 @@ export default function ChatReducer(state, action) {
           }
         }
       };
-    case 'ADD_LISTED_AI_CARDS': {
-      return {
-        ...state,
-        aiCards: state.aiCards.map((card) => ({
-          ...card,
-          isListed: card.id === action.card.id ? true : card.isListed,
-          askPrice:
-            card.id === action.card.id ? action.price || 0 : card.askPrice
-        })),
-        listedCards: [action.card].concat(state.listedCards)
-      };
-    }
     case 'UPDATE_UPLOAD_PROGRESS': {
       const targetId =
         action.channelId +
