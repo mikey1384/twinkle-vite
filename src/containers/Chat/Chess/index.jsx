@@ -681,7 +681,7 @@ export default function Chess({
             }}
           >
             <Icon icon="clock-rotate-left" />
-            <span style={{ marginLeft: '1rem' }}>Propose Rewind</span>
+            <span style={{ marginLeft: '1rem' }}>Propose Retry</span>
           </div>
         ),
         onClick: onRewindClick
