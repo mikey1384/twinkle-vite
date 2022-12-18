@@ -977,13 +977,33 @@ export default function ChatReducer(state, action) {
         ].concat(state.listedCards),
         myCards: state.myCards.map((card) => ({
           ...card,
-          isListed: true,
-          askPrice: action.price || 0
+          isListed: card.id === action.card.id ? true : card.isListed,
+          askPrice:
+            card.id === action.card.id ? action.price || 0 : card.askPrice
         })),
         aiCards: state.aiCards.map((card) => ({
           ...card,
-          isListed: true,
-          askPrice: action.price || 0
+          isListed: card.id === action.card.id ? true : card.isListed,
+          askPrice:
+            card.id === action.card.id ? action.price || 0 : card.askPrice
+        }))
+      };
+    }
+    case 'DELIST_AI_CARD': {
+      return {
+        ...state,
+        listedCards: state.listedCards.filter(
+          (card) => card.id !== action.cardId
+        ),
+        myCards: state.myCards.map((card) => ({
+          ...card,
+          isListed: card.id === action.cardId ? false : card.isListed,
+          askPrice: card.id === action.cardId ? 0 : card.askPrice
+        })),
+        aiCards: state.aiCards.map((card) => ({
+          ...card,
+          isListed: card.id === action.cardId ? false : card.isListed,
+          askPrice: card.id === action.cardId ? 0 : card.askPrice
         }))
       };
     }
