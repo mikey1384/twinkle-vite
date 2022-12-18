@@ -311,6 +311,20 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async listAICard({ card, price }) {
+      try {
+        const {
+          data: { result }
+        } = await request.post(
+          `${URL}/chat/aiImage/list`,
+          { card, price },
+          auth()
+        );
+        return Promise.resolve(result);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadChat({ channelId, subchannelPath }) {
       try {
         const { data } = await request.get(
