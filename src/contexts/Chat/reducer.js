@@ -82,6 +82,19 @@ export default function ChatReducer(state, action) {
         listedCards: [action.card].concat(state.listedCards)
       };
     }
+    case 'REMOVE_LISTED_AI_CARD': {
+      return {
+        ...state,
+        aiCards: state.aiCards.map((card) => ({
+          ...card,
+          isListed: card.id === action.cardId ? false : card.isListed,
+          askPrice: card.id === action.cardId ? 0 : card.askPrice
+        })),
+        listedCards: state.listedCards.filter(
+          (card) => card.id !== action.cardId
+        )
+      };
+    }
     case 'ADD_REACTION_TO_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const message =
