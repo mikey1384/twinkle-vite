@@ -94,6 +94,7 @@ export default function SellModal({ card, onHide }) {
         card,
         price: amount
       });
+      onHide();
     }
   }
 }
