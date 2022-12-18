@@ -974,6 +974,7 @@ export default function ChatReducer(state, action) {
           askPrice:
             card.id === action.card.id ? action.price || 0 : card.askPrice
         })),
+        myListedCards: [action.card].concat(state.myListedCards),
         aiCards: state.aiCards.map((card) => ({
           ...card,
           isListed: card.id === action.card.id ? true : card.isListed,
@@ -990,6 +991,9 @@ export default function ChatReducer(state, action) {
           isListed: card.id === action.cardId ? false : card.isListed,
           askPrice: card.id === action.cardId ? 0 : card.askPrice
         })),
+        myListedCards: state.myListedCards.filter(
+          (card) => card.id !== action.cardId
+        ),
         aiCards: state.aiCards.map((card) => ({
           ...card,
           isListed: card.id === action.cardId ? false : card.isListed,
