@@ -9,16 +9,17 @@ import {
 import CardItem from './CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
+import FilterBar from '~/components/FilterBar';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 export default function CollectedCards() {
+  const [activeTab, setActiveTab] = useState('myCollection');
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const CardItemsRef = useRef(null);
   const timeoutRef = useRef(null);
   const {
-    loadMoreButton: { color: loadMoreButtonColor },
-    myCollection: { color: myCollectionColor, shadow: myCollectionShadowColor }
+    loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
   const loadMyAICardCollections = useAppContext(
     (v) => v.requestHelpers.loadMyAICardCollections
@@ -70,28 +71,22 @@ export default function CollectedCards() {
 
   return (
     <div style={{ width: '100%', height: '50%' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1.5rem 0',
-          fontSize: '1.7rem',
-          height: '5rem',
-          borderBottom: `1px solid ${Color.borderGray()}`
-        }}
+      <FilterBar
+        style={{ height: '4.5rem', fontSize: '1.5rem', marginBottom: 0 }}
       >
-        <b
-          style={{
-            color: Color[myCollectionColor](),
-            textShadow: myCollectionShadowColor
-              ? `0 0.05rem ${Color[myCollectionShadowColor]()}`
-              : 'none'
-          }}
+        <nav
+          className={activeTab === 'myCollection' ? 'active' : ''}
+          onClick={() => setActiveTab('myCollection')}
         >
           My Collections
-        </b>
-      </div>
+        </nav>
+        <nav
+          className={activeTab === 'myListed' ? 'active' : ''}
+          onClick={() => setActiveTab('myListed')}
+        >
+          Listed
+        </nav>
+      </FilterBar>
       <div
         style={{
           height: 'CALC(100% - 5rem)',
