@@ -347,6 +347,20 @@ export default function ChatActions(dispatch) {
         loadMoreShown
       });
     },
+    onLoadMyListedAICards({ cards, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_MY_LISTED_AI_CARDS',
+        cards,
+        loadMoreShown
+      });
+    },
+    onLoadMoreMyListedAICards({ cards, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_MORE_MY_LISTED_AI_CARDS',
+        cards,
+        loadMoreShown
+      });
+    },
     onPostAICard(card) {
       return dispatch({
         type: 'POST_AI_CARD',
