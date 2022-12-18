@@ -86,7 +86,16 @@ export default function ListedMenu({ userIsOwner, askPrice }) {
           )}
         </div>
         {userIsOwner ? (
-          <Button onClick={handleCancelListing} color="rose" filled>
+          <Button
+            className={css`
+              @media (max-width: ${mobileMaxWidth}) {
+                padding: 0.7rem !important;
+              }
+            `}
+            onClick={handleCancelListing}
+            color="rose"
+            filled
+          >
             <Icon
               className={css`
                 font-size: 1.6rem;
@@ -109,8 +118,25 @@ export default function ListedMenu({ userIsOwner, askPrice }) {
             </span>
           </Button>
         ) : (
-          <Button onClick={() => console.log('buy')} color="oceanBlue" filled>
-            <Icon icon="shopping-cart" />
+          <Button
+            className={css`
+              @media (max-width: ${mobileMaxWidth}) {
+                padding: 0.7rem !important;
+              }
+            `}
+            onClick={() => console.log('buy')}
+            color="oceanBlue"
+            filled
+          >
+            <Icon
+              className={css`
+                font-size: 1.6rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1rem;
+                }
+              `}
+              icon="shopping-cart"
+            />
             <span
               className={css`
                 font-size: 1.6rem;
