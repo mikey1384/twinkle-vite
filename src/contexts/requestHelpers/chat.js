@@ -314,13 +314,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async listAICard({ cardId, price }) {
       try {
         const {
-          data: { result }
+          data: { success }
         } = await request.post(
           `${URL}/chat/aiImage/list`,
           { cardId, price },
           auth()
         );
-        return Promise.resolve(result);
+        return Promise.resolve(success);
       } catch (error) {
         return handleError(error);
       }
