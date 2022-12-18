@@ -32,7 +32,7 @@ export default function CollectedCards() {
         {activeTab === 'myCollection' ? (
           <MyCollection loadMoreButtonColor={loadMoreButtonColor} />
         ) : (
-          <Listed />
+          <Listed loadMoreButtonColor={loadMoreButtonColor} />
         )}
       </div>
     </div>
