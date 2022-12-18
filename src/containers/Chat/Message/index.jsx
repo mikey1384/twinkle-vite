@@ -750,7 +750,7 @@ function Message({
                     onBoardClick={onChessBoardClick}
                     onRewindClick={() =>
                       onRequestRewind({
-                        ...chessState,
+                        ...(chessState.previousState || chessState),
                         isDiscussion: true,
                         isRewindRequest: true
                       })
