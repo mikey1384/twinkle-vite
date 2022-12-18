@@ -2277,9 +2277,15 @@ export default function ChatReducer(state, action) {
           }
         }
       };
-    case 'UPDATE_LISTED_AI_CARDS': {
+    case 'ADD_LISTED_AI_CARDS': {
       return {
         ...state,
+        aiCards: state.aiCards.map((card) => ({
+          ...card,
+          isListed: card.id === action.card.id ? true : card.isListed,
+          askPrice:
+            card.id === action.card.id ? action.price || 0 : card.askPrice
+        })),
         listedCards: [action.card].concat(state.listedCards)
       };
     }
