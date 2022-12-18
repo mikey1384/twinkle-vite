@@ -60,9 +60,7 @@ export default function Listing({ card, listedCards }) {
               ? `1px solid ${Color.borderGray()}`
               : 'none',
           borderTop:
-            listedCards.length !== 1
-              ? `1px solid ${Color.borderGray()}`
-              : 'none'
+            listedCards.length > 1 ? `1px solid ${Color.borderGray()}` : 'none'
         }}
         onClick={() => setCardModalShown(true)}
         key={card.id}
