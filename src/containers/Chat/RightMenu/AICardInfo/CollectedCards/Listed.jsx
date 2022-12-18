@@ -16,27 +16,29 @@ export default function Listed({ loadMoreButtonColor }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const CardItemsRef = useRef(null);
   const timeoutRef = useRef(null);
-  const loadMyAICardCollections = useAppContext(
-    (v) => v.requestHelpers.loadMyAICardCollections
+  const loadMyListedAICards = useAppContext(
+    (v) => v.requestHelpers.loadMyListedAICards
   );
-  const myCards = useChatContext((v) => v.state.myCards);
+  const myListedCards = useChatContext((v) => v.state.myListedCards);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
-  const myCardsLoadMoreButton = useChatContext(
-    (v) => v.state.myCardsLoadMoreButton
+  const myListedCardsLoadMoreButton = useChatContext(
+    (v) => v.state.myListedCardsLoadMoreButton
   );
-  const onLoadMyAICards = useChatContext((v) => v.actions.onLoadMyAICards);
-  const onLoadMoreMyAICards = useChatContext(
-    (v) => v.actions.onLoadMoreMyAICards
+  const onLoadMyListedAICards = useChatContext(
+    (v) => v.actions.onLoadMyListedAICards
+  );
+  const onLoadMoreMyListedAICards = useChatContext(
+    (v) => v.actions.onLoadMoreMyListedAICards
   );
 
   useEffect(() => {
     init();
     async function init() {
       setLoaded(false);
-      const { myCards, myCardsLoadMoreShown } = await loadMyAICardCollections();
-      onLoadMyAICards({
-        cards: myCards,
-        loadMoreShown: myCardsLoadMoreShown
+      const { cards, loadMoreShown } = await loadMyListedAICards();
+      onLoadMyListedAICards({
+        cards,
+        loadMoreShown
       });
       setLoaded(true);
     }
@@ -51,7 +53,7 @@ export default function Listed({ loadMoreButtonColor }) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
         if (
-          myCardsLoadMoreButton &&
+          myListedCardsLoadMoreButton &&
           CardItemsRef.current.scrollTop >=
             (CardItemsRef.current.scrollHeight -
               CardItemsRef.current.offsetHeight) *
@@ -77,7 +79,7 @@ export default function Listed({ loadMoreButtonColor }) {
     >
       {!loaded ? (
         <Loading style={{ height: '100%' }} />
-      ) : myCards.length === 0 ? (
+      ) : myListedCards.length === 0 ? (
         <div
           style={{
             display: 'flex',
@@ -89,9 +91,9 @@ export default function Listed({ loadMoreButtonColor }) {
           <b style={{ color: Color.darkerGray() }}>No cards collected</b>
         </div>
       ) : (
-        myCards.map((card) => <CardItem key={card.id} card={card} />)
+        myListedCards.map((card) => <CardItem key={card.id} card={card} />)
       )}
-      {loaded && myCardsLoadMoreButton && (
+      {loaded && myListedCardsLoadMoreButton && (
         <LoadMoreButton
           filled
           color={loadMoreButtonColor}
@@ -109,12 +111,11 @@ export default function Listed({ loadMoreButtonColor }) {
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const lastId = myCards[myCards.length - 1].id;
-    const { myCards: loadedCards, myCardsLoadMoreShown } =
-      await loadMyAICardCollections(lastId);
-    onLoadMoreMyAICards({
-      cards: loadedCards,
-      loadMoreShown: myCardsLoadMoreShown
+    const lastId = myListedCards[myListedCards.length - 1].id;
+    const { cards, loadMoreShown } = await loadMyListedAICards(lastId);
+    onLoadMoreMyListedAICards({
+      cards,
+      loadMoreShown
     });
     setLoadingMore(false);
   }
