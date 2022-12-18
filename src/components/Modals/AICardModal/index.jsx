@@ -146,7 +146,7 @@ export default function AICardModal({ card, onHide }) {
         </Button>
       </footer>
       {sellModalShown && (
-        <SellModal card={card} onHide={() => setSellModalShown(false)} />
+        <SellModal cardId={card.id} onHide={() => setSellModalShown(false)} />
       )}
     </Modal>
   );
