@@ -115,6 +115,7 @@ export default function AICards({ loadingAIImageChat }) {
           onSubmit={handleSubmit}
           innerRef={inputRef}
           posting={isGeneratingAICard}
+          loading={loadingAIImageChat}
         />
       </div>
     </div>

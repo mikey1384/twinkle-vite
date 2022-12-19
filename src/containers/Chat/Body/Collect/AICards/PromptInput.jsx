@@ -19,7 +19,6 @@ PromptInput.propTypes = {
   innerRef: PropTypes.object,
   loading: PropTypes.bool,
   posting: PropTypes.bool,
-  registerButtonShown: PropTypes.bool,
   onSubmit: PropTypes.func.isRequired
 };
 
@@ -28,8 +27,7 @@ export default function PromptInput({
   innerRef,
   loading,
   onSubmit,
-  posting,
-  registerButtonShown
+  posting
 }) {
   const onSetAIImageStatusMessage = useChatContext(
     (v) => v.actions.onSetAIImageStatusMessage
@@ -58,10 +56,10 @@ export default function PromptInput({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text]);
 
-  const messageExceedsCharLimit = useMemo(
+  const promptExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
-        inputType: 'message',
+        inputType: 'aiCard',
         contentType: 'chat',
         text
       }),
@@ -88,21 +86,20 @@ export default function PromptInput({
           value={text}
           onChange={handleChange}
           style={{
-            ...(messageExceedsCharLimit?.style || {})
+            ...(promptExceedsCharLimit?.style || {})
           }}
         />
-        {registerButtonShown && (
-          <div style={{ height: '100%', margin: '0.5rem 0 0.2rem 1rem' }}>
-            <Button
-              filled
-              disabled={loading}
-              color="green"
-              onClick={handleSubmit}
-            >
-              <Icon icon="paper-plane" />
-            </Button>
-          </div>
-        )}
+        <div style={{ height: '100%', margin: '0.5rem 0 0.2rem 1rem' }}>
+          <Button
+            filled
+            loading={posting}
+            disabled={loading}
+            color="green"
+            onClick={handleSubmit}
+          >
+            <Icon icon="paper-plane" />
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -132,7 +129,7 @@ export default function PromptInput({
     if (
       enterKeyPressed &&
       !shiftKeyPressed &&
-      !messageExceedsCharLimit &&
+      !promptExceedsCharLimit &&
       !loading
     ) {
       event.preventDefault();
