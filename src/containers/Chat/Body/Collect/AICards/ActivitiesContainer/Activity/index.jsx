@@ -68,6 +68,7 @@ export default function Activity({
     <div
       style={{
         width: '100%',
+        height: '100%',
         padding: '1rem',
         display: 'flex',
         justifyContent: 'center',
@@ -81,7 +82,8 @@ export default function Activity({
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          height: '100%'
         }}
       >
         <div
@@ -125,6 +127,7 @@ export default function Activity({
         <div
           style={{
             width: '35%',
+            height: '100%',
             padding: '1rem',
             display: 'flex',
             flexDirection: 'column',
@@ -134,7 +137,6 @@ export default function Activity({
           <div
             style={{
               width: '100%',
-              marginTop: '3rem',
               textAlign: 'center',
               fontWeight: 'bold'
             }}
@@ -150,8 +152,8 @@ export default function Activity({
           <div
             className={css`
               text-align: center;
-              margin-top: 10rem;
               font-size: 1.6rem;
+              padding: 5rem 0 6rem 0;
               @media (max-width: ${mobileMaxWidth}) {
                 margin-top: 4rem;
                 font-size: 1.1rem;
@@ -166,7 +168,6 @@ export default function Activity({
           <div
             className={css`
               text-align: center;
-              margin-top: 12rem;
               font-size: 1.2rem;
               font-family: helvetica, sans-serif;
               text-transform: capitalize;
