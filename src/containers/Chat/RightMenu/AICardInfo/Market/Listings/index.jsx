@@ -73,10 +73,13 @@ export default function Listings() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              height: 'CALC(100% - 2rem)'
+              height: 'CALC(100% - 2rem)',
+              padding: '3rem'
             }}
           >
-            <b style={{ color: Color.darkerGray() }}>No cards to buy</b>
+            <b style={{ color: Color.darkerGray() }}>
+              There are no cards on sale at the moment
+            </b>
           </div>
         ) : (
           listedCards.map((card, index) => (
