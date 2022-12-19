@@ -78,7 +78,7 @@ export default function Listings() {
             }}
           >
             <b style={{ color: Color.darkerGray() }}>
-              There are no cards for sale at the moment
+              There are no cards you can buy at the moment
             </b>
           </div>
         ) : (
