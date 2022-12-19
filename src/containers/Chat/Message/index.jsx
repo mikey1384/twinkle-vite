@@ -549,27 +549,31 @@ function Message({
   const handleEditDone = useCallback(
     async (editedMessage) => {
       const messageIsSubject = !!isSubject || !!isReloadedSubject;
-      const subjectChanged = await editChatMessage({
-        editedMessage,
-        messageId,
-        isSubject: messageIsSubject,
-        subjectId
-      });
-      onEditMessage({
-        editedMessage,
-        channelId,
-        messageId,
-        isSubject: messageIsSubject,
-        subchannelId,
-        subjectChanged
-      });
-      socket.emit('edit_chat_message', {
-        channelId,
-        editedMessage,
-        subchannelId,
-        messageId,
-        isSubject: messageIsSubject
-      });
+      try {
+        const subjectChanged = await editChatMessage({
+          editedMessage,
+          messageId,
+          isSubject: messageIsSubject,
+          subjectId
+        });
+        onEditMessage({
+          editedMessage,
+          channelId,
+          messageId,
+          isSubject: messageIsSubject,
+          subchannelId,
+          subjectChanged
+        });
+        socket.emit('edit_chat_message', {
+          channelId,
+          editedMessage,
+          subchannelId,
+          messageId,
+          isSubject: messageIsSubject
+        });
+      } catch (error) {
+        console.error(error);
+      }
       onSetIsEditing({
         contentId: messageId,
         contentType: 'chat',
