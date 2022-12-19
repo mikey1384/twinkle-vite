@@ -181,6 +181,11 @@ export default function EditTextArea({
     });
     submitting.current = true;
     setIsEditing(true);
-    onEditDone(finalizeEmoji(editText));
+    try {
+      onEditDone(finalizeEmoji(editText));
+    } catch (error) {
+      console.error(error);
+      setIsEditing(false);
+    }
   }
 }
