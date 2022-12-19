@@ -48,6 +48,7 @@ export const AI_CARD_CHAT_TYPE = 'ai-image-cards';
 
 export const charLimit = {
   chat: {
+    aiCard: 250,
     subject: 200,
     message: 3500
   },
