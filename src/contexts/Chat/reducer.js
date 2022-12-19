@@ -1220,7 +1220,8 @@ export default function ChatReducer(state, action) {
         aiCards: state.aiCards.concat({
           ...action.card,
           isNewlyPosted: true
-        })
+        }),
+        myCards: [action.card].concat(state.myCards)
       };
     }
     case 'LOAD_VOCABULARY': {
