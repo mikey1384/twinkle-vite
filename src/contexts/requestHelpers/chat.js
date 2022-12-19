@@ -216,15 +216,12 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async processAiCardScore(prompt) {
+    async processAiCardQuality() {
       try {
         const {
-          data: { score, level, cardId, word }
-        } = await request.get(
-          `${URL}/chat/aiImage/score?prompt=${prompt}`,
-          auth()
-        );
-        return Promise.resolve({ score, level, cardId, word });
+          data: { quality, level, cardId, word, prompt }
+        } = await request.get(`${URL}/chat/aiImage/quality`, auth());
+        return Promise.resolve({ quality, level, cardId, word, prompt });
       } catch (error) {
         return handleError(error);
       }
