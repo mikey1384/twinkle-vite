@@ -1,6 +1,5 @@
-import { useRef } from 'react';
 import PropTypes from 'prop-types';
-import PromptInput from './PromptInput';
+import GenerateCardInterface from './GenerateCardInterface';
 import FilterBar from '~/components/FilterBar';
 import ActivitiesContainer from './ActivitiesContainer';
 import Loading from '~/components/Loading';
@@ -19,8 +18,8 @@ export default function AICards({ loadingAIImageChat }) {
   const { canGenerateAICard } = useKeyContext((v) => v.myState);
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAiCard = useAppContext((v) => v.requestHelpers.postAiCard);
-  const processAiCardScore = useAppContext(
-    (v) => v.requestHelpers.processAiCardScore
+  const processAiCardQuality = useAppContext(
+    (v) => v.requestHelpers.processAiCardQuality
   );
   const saveAIImageToS3 = useAppContext(
     (v) => v.requestHelpers.saveAIImageToS3
@@ -40,8 +39,6 @@ export default function AICards({ loadingAIImageChat }) {
   );
   const onPostAICard = useChatContext((v) => v.actions.onPostAICard);
   const navigate = useNavigate();
-
-  const inputRef = useRef(null);
 
   return (
     <div
@@ -110,10 +107,9 @@ export default function AICards({ loadingAIImageChat }) {
           borderTop: `1px solid ${Color.borderGray()}`
         }}
       >
-        <PromptInput
+        <GenerateCardInterface
           canGenerateAICard={!!canGenerateAICard}
-          onSubmit={handleSubmit}
-          innerRef={inputRef}
+          onGenerateAICard={handleGenerateCard}
           posting={isGeneratingAICard}
           loading={loadingAIImageChat}
         />
@@ -126,28 +122,27 @@ export default function AICards({ loadingAIImageChat }) {
     navigate(`/chat/${VOCAB_CHAT_TYPE}`);
   }
 
-  async function handleSubmit(text) {
+  async function handleGenerateCard() {
     try {
       onSetIsGeneratingAICard(true);
       onSetAIImageStatusMessage('Zero is processing your request...');
-      const { score, level, cardId, word } = await processAiCardScore(text);
+      const { quality, level, cardId, word, prompt } =
+        await processAiCardQuality();
       onSetAIImageStatusMessage('Zero is thinking...');
-      const { imageUrl, style } = await getOpenAiImage(text);
+      const { imageUrl, style } = await getOpenAiImage(prompt);
       onSetAIImageStatusMessage('Zero is generating your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
       const card = await postAiCard({ imagePath, cardId, style });
-      onSetAIImageStatusMessage('Card Generated');
+      onSetAIImageStatusMessage('Card Summoned');
       onPostAICard({
-        prompt: text,
+        prompt,
         id: cardId,
-        score,
+        quality,
         level,
         word,
         ...card
       });
-      onSetIsGeneratingAICard(false);
     } catch (error) {
-      onSetIsGeneratingAICard(false);
       if (error.data?.error?.status === 400) {
         return onSetAIImageStatusMessage(
           `Zero refused to handle your request because it didn't like the words you used.`
@@ -157,5 +152,6 @@ export default function AICards({ loadingAIImageChat }) {
         `Zero couldn't generate this card. There was an error.`
       );
     }
+    onSetIsGeneratingAICard(false);
   }
 }
