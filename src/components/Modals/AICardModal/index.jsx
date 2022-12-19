@@ -74,7 +74,6 @@ export default function AICardModal({ card, onHide }) {
               >
                 <div
                   className={`card-quality ${css`
-                    margin-bottom: 1rem;
                     font-size: 1.6rem;
                     font-family: Open Sans, sans-serif;
                     @media (max-width: ${mobileMaxWidth}) {
@@ -84,15 +83,21 @@ export default function AICardModal({ card, onHide }) {
                 >
                   <b
                     style={{
-                      ...qualityProps[card.quality],
-                      marginBottom: '1rem'
+                      ...qualityProps[card.quality]
                     }}
                   >
                     {card.quality}
                   </b>{' '}
                   card
                 </div>
-                <div style={{ marginBottom: '3rem' }}>
+                <div
+                  className={css`
+                    padding: 3rem 0 5rem 0;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      padding: 3rem 0 4rem 0;
+                    }
+                  `}
+                >
                   <span
                     className={css`
                       font-family: Roboto Mono, monospace;
