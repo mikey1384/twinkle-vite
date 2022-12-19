@@ -571,14 +571,15 @@ function Message({
           messageId,
           isSubject: messageIsSubject
         });
+        onSetIsEditing({
+          contentId: messageId,
+          contentType: 'chat',
+          isEditing: false
+        });
       } catch (error) {
         console.error(error);
+        return Promise.reject(error);
       }
-      onSetIsEditing({
-        contentId: messageId,
-        contentType: 'chat',
-        isEditing: false
-      });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [channelId, isReloadedSubject, isSubject, messageId, subjectId]
