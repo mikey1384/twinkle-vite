@@ -130,11 +130,15 @@ function ActivitiesContainer({ style }) {
       const prevContentHeight = ContentRef.current?.offsetHeight || 0;
       if (!loadingMore) {
         setLoadingMore(true);
-        const data = await loadVocabulary(wordsObj[vocabActivities[0]]?.id);
-        onLoadMoreVocabulary(data);
-        startTransition(() => {
-          setScrollHeight(prevContentHeight);
-        });
+        try {
+          const data = await loadVocabulary(wordsObj[vocabActivities[0]]?.id);
+          onLoadMoreVocabulary(data);
+          startTransition(() => {
+            setScrollHeight(prevContentHeight);
+          });
+        } catch (error) {
+          console.error(error);
+        }
         setLoadingMore(false);
       }
     }
