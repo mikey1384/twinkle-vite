@@ -163,15 +163,10 @@ export default function AICards({ loadingAIImageChat }) {
         ...card
       });
     } catch (error) {
-      onSetAIImageStatusMessage(
-        `Couldn't ${
-          isPurchased ? 'generate the image of' : 'purchase'
-        } this card due to an error. ${
-          isPurchased
-            ? 'You can generate the image again after reloading the website.'
-            : 'No payments were made. Try again.'
-        }`
-      );
+      const statusMessage = isPurchased
+        ? `Couldn't generate the card's image at this time. Reload the website and try again.`
+        : 'Payment failed. Try again.';
+      onSetAIImageStatusMessage(statusMessage);
     }
     onSetIsGeneratingAICard(false);
   }
