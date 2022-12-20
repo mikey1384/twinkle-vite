@@ -143,12 +143,6 @@ export default function AICards({ loadingAIImageChat }) {
         ...card
       });
     } catch (error) {
-      if (error.data?.error?.status === 400) {
-        onSetAIImageStatusMessage(
-          `Zero refused to handle your request because it didn't like the words you used.`
-        );
-        return onSetIsGeneratingAICard(false);
-      }
       onSetAIImageStatusMessage(
         `Zero couldn't generate this card. There was an error.`
       );
