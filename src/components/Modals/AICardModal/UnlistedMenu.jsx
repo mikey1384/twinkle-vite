@@ -2,8 +2,14 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
-import { mobileMaxWidth } from '~/constants/css';
+import { useKeyContext } from '~/contexts';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import {
+  returnCardBurnXP,
+  qualityProps,
+  cardLevelHash
+} from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 UnlistedMenu.propTypes = {
@@ -19,35 +25,11 @@ export default function UnlistedMenu({
   cardLevel,
   cardQuality
 }) {
+  const {
+    xpNumber: { color: xpNumberColor }
+  } = useKeyContext((v) => v.theme);
   const burnXP = useMemo(() => {
-    // base XP value
-    let xp = 150;
-
-    // color probabilities
-    const colorProbs = {
-      1: 0.5,
-      2: 0.2,
-      3: 0.15,
-      4: 0.1,
-      5: 0.05
-    };
-
-    // adjust XP based on color
-    xp *= 1 / colorProbs[cardLevel];
-
-    // quality probabilities
-    const qualityProbs = {
-      common: 0.5,
-      superior: 0.3,
-      rare: 0.13,
-      elite: 0.05,
-      legendary: 0.02
-    };
-
-    // adjust XP based on quality
-    xp *= 1 / qualityProbs[cardQuality];
-
-    return Math.round(xp);
+    return returnCardBurnXP({ cardLevel, cardQuality });
   }, [cardLevel, cardQuality]);
 
   return (
@@ -111,9 +93,22 @@ export default function UnlistedMenu({
             }
           `}
         >
-          {`Burn this card and earn ${addCommasToNumber(
-            burnXP
-          )} XP. The more valuable the color and the higher the quality of a card, the more XP you earn by burning it. This action is irreversible, so use it wisely.`}
+          Burn this card and earn{' '}
+          <b style={{ color: Color[xpNumberColor]() }}>
+            {addCommasToNumber(burnXP)}
+          </b>{' '}
+          <b style={{ color: Color.gold() }}>XP</b>. The more valuable the{' '}
+          <b style={{ color: Color[cardLevelHash[cardLevel].color]() }}>
+            color
+          </b>{' '}
+          and the higher the{' '}
+          {cardQuality === 'common' ? (
+            'quality'
+          ) : (
+            <b style={{ color: qualityProps[cardQuality].color }}>quality</b>
+          )}{' '}
+          of a card, the more <b style={{ color: Color.gold() }}>XP</b> you earn
+          by burning it. This action is irreversible, so use it wisely.
         </p>
         <Button onClick={() => onSetIsBurned(true)} color="redOrange" filled>
           <Icon icon="fire" />
