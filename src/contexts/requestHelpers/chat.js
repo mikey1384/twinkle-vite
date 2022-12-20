@@ -219,9 +219,9 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async processAiCardQuality() {
       try {
         const {
-          data: { quality, level, cardId, word, prompt }
+          data: { quality, level, cardId, word, prompt, coins }
         } = await request.get(`${URL}/chat/aiImage/quality`, auth());
-        return Promise.resolve({ quality, level, cardId, word, prompt });
+        return Promise.resolve({ quality, level, cardId, word, prompt, coins });
       } catch (error) {
         return handleError(error);
       }
