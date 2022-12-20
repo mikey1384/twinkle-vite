@@ -43,7 +43,7 @@ export default function AICardItem({
           <div style={{ marginTop: '1rem' }}>
             <div>You can now summon AI Cards from here:</div>
             <div style={{ marginTop: '1rem' }}>
-              <Link style={{ fontWeight: 'bold' }} to="/chat/ai-image-cards">
+              <Link style={{ fontWeight: 'bold' }} to="/chat/ai-cards">
                 AI Card Collector
               </Link>
             </div>
