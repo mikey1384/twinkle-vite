@@ -124,6 +124,7 @@ export default function AICards({ loadingAIImageChat }) {
   }
 
   async function handleGenerateCard() {
+    let isPurchased = false;
     try {
       onSetIsGeneratingAICard(true);
       onSetAIImageStatusMessage('Processing transaction...');
@@ -137,6 +138,7 @@ export default function AICards({ loadingAIImageChat }) {
         return onSetUserState({ userId, newState: { twinkleCoins: coins } });
       }
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
+      isPurchased = true;
       onSetAIImageStatusMessage('Purchase complete! Generating card...');
       const { imageUrl, style } = await getOpenAiImage(prompt);
       onSetAIImageStatusMessage('Finishing your card...');
@@ -153,7 +155,13 @@ export default function AICards({ loadingAIImageChat }) {
       });
     } catch (error) {
       onSetAIImageStatusMessage(
-        `Couldn't generate this card. There was an error.`
+        `Couldn't ${
+          isPurchased ? 'generate the image of' : 'purchase'
+        } this card due to an error. ${
+          isPurchased
+            ? 'You can generate the image again after reloading the website.'
+            : 'No payments were made. Try again.'
+        }`
       );
     }
     onSetIsGeneratingAICard(false);
