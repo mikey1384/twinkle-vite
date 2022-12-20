@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
+import GradientButton from '~/components/Buttons/GradientButton';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import useAICard from '~/helpers/hooks/useAICard';
@@ -21,6 +22,7 @@ AICardModal.propTypes = {
 export default function AICardModal({ card, onHide }) {
   const { userId } = useKeyContext((v) => v.myState);
   const [sellModalShown, setSellModalShown] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
   const [isBurned, setIsBurned] = useState(false);
   const { cardCss, promptText } = useAICard(card);
 
@@ -131,7 +133,27 @@ export default function AICardModal({ card, onHide }) {
             </div>
           </div>
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
-            {card.isListed ? (
+            {!card.imagePath ? (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexDirection: 'column'
+                }}
+              >
+                <GradientButton
+                  loading={generatingImage}
+                  onClick={handleGenerateImage}
+                  fontSize="1.5rem"
+                  mobileFontSize="1.1rem"
+                >
+                  Generate Image
+                </GradientButton>
+              </div>
+            ) : card.isListed ? (
               <ListedMenu
                 cardId={card.id}
                 userIsOwner={card.ownerId === userId}
@@ -156,4 +178,16 @@ export default function AICardModal({ card, onHide }) {
       )}
     </Modal>
   );
+
+  async function handleGenerateImage() {
+    setGeneratingImage(true);
+    try {
+      console.log('here');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      console.log('got here');
+      setGeneratingImage(false);
+    }
+  }
 }
