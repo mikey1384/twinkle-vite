@@ -126,7 +126,7 @@ export default function AICards({ loadingAIImageChat }) {
   async function handleGenerateCard() {
     try {
       onSetIsGeneratingAICard(true);
-      onSetAIImageStatusMessage('Processing your request...');
+      onSetAIImageStatusMessage('Processing transaction...');
       const { quality, level, cardId, word, prompt, coins } =
         await processAiCardQuality();
       if (!quality) {
@@ -137,9 +137,9 @@ export default function AICards({ loadingAIImageChat }) {
         return onSetUserState({ userId, newState: { twinkleCoins: coins } });
       }
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      onSetAIImageStatusMessage('Purchase complete! Preparing...');
+      onSetAIImageStatusMessage('Purchase complete! Generating card...');
       const { imageUrl, style } = await getOpenAiImage(prompt);
-      onSetAIImageStatusMessage('Generating your card...');
+      onSetAIImageStatusMessage('Finalizing your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
       const card = await postAICard({ imagePath, cardId, style });
       onSetAIImageStatusMessage('Card Summoned');
