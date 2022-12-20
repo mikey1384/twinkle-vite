@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { cardProps, cloudFrontURL } from '~/constants/defaultValues';
@@ -28,6 +28,7 @@ export default function AICard({
   quality,
   isBurned
 }) {
+  const imageExists = useMemo(() => !!imagePath, [imagePath]);
   const frontPicUrl = `${cloudFrontURL}${imagePath}`;
   const timerRef = useRef(null);
   const CardRef = useRef(null);
@@ -148,12 +149,14 @@ export default function AICard({
             width: 100%;
           `}
         >
-          <img
-            style={{
-              width: '100%'
-            }}
-            src={frontPicUrl}
-          />
+          {imageExists ? (
+            <img
+              style={{
+                width: '100%'
+              }}
+              src={frontPicUrl}
+            />
+          ) : null}
         </div>
       </animated.div>
     </div>
