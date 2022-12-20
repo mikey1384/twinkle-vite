@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import Button from '~/components/Button';
+import GradientButton from '~/components/Buttons/GradientButton';
 
 GenerateCardInterface.propTypes = {
   canGenerateAICard: PropTypes.bool,
@@ -22,15 +22,15 @@ export default function GenerateCardInterface({
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <Button
-          filled
+        <GradientButton
           loading={posting}
           disabled={loading || !canGenerateAICard}
-          color="green"
           onClick={onGenerateAICard}
+          fontSize="1.5rem"
+          mobileFontSize="1.1rem"
         >
-          Summon Card
-        </Button>
+          {posting ? 'Summoning...' : 'Summon Card'}
+        </GradientButton>
       </div>
     </div>
   );
