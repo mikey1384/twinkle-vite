@@ -15,7 +15,7 @@ AICards.propTypes = {
 };
 
 export default function AICards({ loadingAIImageChat }) {
-  const { canGenerateAICard } = useKeyContext((v) => v.myState);
+  const { userId, canGenerateAICard } = useKeyContext((v) => v.myState);
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
   const processAiCardQuality = useAppContext(
@@ -24,6 +24,7 @@ export default function AICards({ loadingAIImageChat }) {
   const saveAIImageToS3 = useAppContext(
     (v) => v.requestHelpers.saveAIImageToS3
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetCollectType = useAppContext(
     (v) => v.user.actions.onSetCollectType
   );
@@ -126,9 +127,17 @@ export default function AICards({ loadingAIImageChat }) {
     try {
       onSetIsGeneratingAICard(true);
       onSetAIImageStatusMessage('Processing your request...');
-      const { quality, level, cardId, word, prompt } =
+      const { quality, level, cardId, word, prompt, coins } =
         await processAiCardQuality();
-      onSetAIImageStatusMessage('Thinking...');
+      if (!quality) {
+        onSetAIImageStatusMessage(
+          `You don't have enough Twinkle Coins to summon a card.`
+        );
+        onSetIsGeneratingAICard(false);
+        return onSetUserState({ userId, newState: { twinkleCoins: coins } });
+      }
+      onSetUserState({ userId, newState: { twinkleCoins: coins } });
+      onSetAIImageStatusMessage('Purchase complete! Preparing...');
       const { imageUrl, style } = await getOpenAiImage(prompt);
       onSetAIImageStatusMessage('Generating your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
