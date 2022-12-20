@@ -125,12 +125,12 @@ export default function AICards({ loadingAIImageChat }) {
   async function handleGenerateCard() {
     try {
       onSetIsGeneratingAICard(true);
-      onSetAIImageStatusMessage('Zero is processing your request...');
+      onSetAIImageStatusMessage('Processing your request...');
       const { quality, level, cardId, word, prompt } =
         await processAiCardQuality();
-      onSetAIImageStatusMessage('Zero is thinking...');
+      onSetAIImageStatusMessage('Thinking...');
       const { imageUrl, style } = await getOpenAiImage(prompt);
-      onSetAIImageStatusMessage('Zero is generating your card...');
+      onSetAIImageStatusMessage('Generating your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
       const card = await postAICard({ imagePath, cardId, style });
       onSetAIImageStatusMessage('Card Summoned');
