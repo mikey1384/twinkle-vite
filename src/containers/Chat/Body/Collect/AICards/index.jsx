@@ -17,7 +17,7 @@ AICards.propTypes = {
 export default function AICards({ loadingAIImageChat }) {
   const { canGenerateAICard } = useKeyContext((v) => v.myState);
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
-  const postAiCard = useAppContext((v) => v.requestHelpers.postAiCard);
+  const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
   const processAiCardQuality = useAppContext(
     (v) => v.requestHelpers.processAiCardQuality
   );
@@ -132,7 +132,7 @@ export default function AICards({ loadingAIImageChat }) {
       const { imageUrl, style } = await getOpenAiImage(prompt);
       onSetAIImageStatusMessage('Zero is generating your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
-      const card = await postAiCard({ imagePath, cardId, style });
+      const card = await postAICard({ imagePath, cardId, style });
       onSetAIImageStatusMessage('Card Summoned');
       onPostAICard({
         prompt,
