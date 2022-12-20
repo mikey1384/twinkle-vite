@@ -353,7 +353,7 @@ export const rewardReasons = {
 
 export const returnCardBurnXP = ({ cardLevel, cardQuality }) => {
   // base XP value
-  let xp = 150;
+  let xp = 50;
 
   // color probabilities
   const colorProbs = {
@@ -365,7 +365,7 @@ export const returnCardBurnXP = ({ cardLevel, cardQuality }) => {
   };
 
   // adjust XP based on color
-  xp *= 1 / colorProbs[cardLevel];
+  xp *= 1 / colorProbs[cardLevel] ** 1.281774;
 
   // quality probabilities
   const qualityProbs = {
@@ -377,7 +377,7 @@ export const returnCardBurnXP = ({ cardLevel, cardQuality }) => {
   };
 
   // adjust XP based on quality
-  xp *= 1 / qualityProbs[cardQuality];
+  xp *= 1 / qualityProbs[cardQuality] ** 1.55;
 
   return Math.round(xp);
 };
