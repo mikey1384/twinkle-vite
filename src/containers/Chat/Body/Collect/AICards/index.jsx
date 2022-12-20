@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import GenerateCardInterface from './GenerateCardInterface';
 import FilterBar from '~/components/FilterBar';
 import ActivitiesContainer from './ActivitiesContainer';
 import Loading from '~/components/Loading';
+import AICardModal from '~/components/Modals/AICardModal';
 import { Link, useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
@@ -16,6 +18,7 @@ AICards.propTypes = {
 
 export default function AICards({ loadingAIImageChat }) {
   const { userId, canGenerateAICard } = useKeyContext((v) => v.myState);
+  const [aiCardModalCard, setAICardModalCard] = useState(null);
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
   const processAiCardQuality = useAppContext(
@@ -73,7 +76,7 @@ export default function AICards({ loadingAIImageChat }) {
           <Loading style={{ height: '50%' }} text="Loading AI Cards" />
         </div>
       ) : (
-        <ActivitiesContainer />
+        <ActivitiesContainer onSetAICardModalCard={setAICardModalCard} />
       )}
 
       <StatusInterface
@@ -115,6 +118,12 @@ export default function AICards({ loadingAIImageChat }) {
           loading={loadingAIImageChat}
         />
       </div>
+      {aiCardModalCard && (
+        <AICardModal
+          card={aiCardModalCard}
+          onHide={() => setAICardModalCard(null)}
+        />
+      )}
     </div>
   );
 

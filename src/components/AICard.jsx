@@ -10,7 +10,8 @@ AICard.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
   imagePath: PropTypes.string,
   quality: PropTypes.string,
-  isBurned: PropTypes.bool
+  isBurned: PropTypes.bool,
+  onClick: PropTypes.func
 };
 
 const MAX_ROTATE_X = 15;
@@ -26,7 +27,8 @@ export default function AICard({
   animateOnMouseLeave,
   imagePath,
   quality,
-  isBurned
+  isBurned,
+  onClick
 }) {
   const imageExists = useMemo(() => !!imagePath, [imagePath]);
   const frontPicUrl = `${cloudFrontURL}${imagePath}`;
@@ -67,7 +69,15 @@ export default function AICard({
   });
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        cursor: onClick ? 'pointer' : 'default'
+      }}
+      className="unselectable"
+      onClick={onClick}
+    >
       <animated.div
         {...bind()}
         ref={CardRef}

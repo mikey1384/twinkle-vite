@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState, startTransition } from 'react';
+import PropTypes from 'prop-types';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
 import Activity from './Activity';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-export default function ActivitiesContainer() {
+ActivitiesContainer.propTypes = {
+  onSetAICardModalCard: PropTypes.func.isRequired
+};
+
+export default function ActivitiesContainer({ onSetAICardModalCard }) {
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
@@ -114,6 +119,7 @@ export default function ActivitiesContainer() {
               isLastActivity={index === aiImageRows.length - 1}
               onReceiveNewActivity={handleReceiveNewActivity}
               onSetScrollToBottom={handleSetScrollToBottom}
+              onSetAICardModalCard={onSetAICardModalCard}
               myId={myId}
             />
           );
