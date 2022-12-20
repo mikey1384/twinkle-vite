@@ -351,6 +351,37 @@ export const rewardReasons = {
   }
 };
 
+export const returnCardBurnXP = ({ cardLevel, cardQuality }) => {
+  // base XP value
+  let xp = 150;
+
+  // color probabilities
+  const colorProbs = {
+    1: 0.5,
+    2: 0.2,
+    3: 0.15,
+    4: 0.1,
+    5: 0.05
+  };
+
+  // adjust XP based on color
+  xp *= 1 / colorProbs[cardLevel];
+
+  // quality probabilities
+  const qualityProbs = {
+    common: 0.5,
+    superior: 0.3,
+    rare: 0.13,
+    elite: 0.05,
+    legendary: 0.02
+  };
+
+  // adjust XP based on quality
+  xp *= 1 / qualityProbs[cardQuality];
+
+  return Math.round(xp);
+};
+
 export const returnMissionThumb = (missionType) =>
   `${cloudFrontURL}/missions/${missionType}/thumb.gif`;
 
