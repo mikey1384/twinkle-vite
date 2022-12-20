@@ -81,10 +81,12 @@ export default function Listing({
               : 'none'
           }}
         >
-          <img
-            style={{ width: '100%' }}
-            src={`${cloudFrontURL}${card.imagePath}`}
-          />
+          {card.imagePath && (
+            <img
+              style={{ width: '100%' }}
+              src={`${cloudFrontURL}${card.imagePath}`}
+            />
+          )}
         </div>
         <div
           style={{
