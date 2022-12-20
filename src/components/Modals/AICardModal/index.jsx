@@ -167,6 +167,8 @@ export default function AICardModal({ card, onHide }) {
               />
             ) : (
               <UnlistedMenu
+                cardLevel={card.level}
+                cardQuality={card.quality}
                 onSetSellModalShown={setSellModalShown}
                 onSetIsBurned={setIsBurned}
               />
