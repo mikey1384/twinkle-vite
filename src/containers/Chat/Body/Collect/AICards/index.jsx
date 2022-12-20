@@ -144,7 +144,7 @@ export default function AICards({ loadingAIImageChat }) {
       });
     } catch (error) {
       onSetAIImageStatusMessage(
-        `Zero couldn't generate this card. There was an error.`
+        `Couldn't generate this card. There was an error.`
       );
     }
     onSetIsGeneratingAICard(false);
