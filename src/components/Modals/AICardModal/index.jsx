@@ -7,7 +7,7 @@ import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
 import SanitizedHTML from 'react-sanitized-html';
 import SellModal from './SellModal';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
@@ -20,6 +20,12 @@ AICardModal.propTypes = {
 };
 
 export default function AICardModal({ card, onHide }) {
+  const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
+  const saveAIImageToS3 = useAppContext(
+    (v) => v.requestHelpers.saveAIImageToS3
+  );
+  const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
+  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const { userId } = useKeyContext((v) => v.myState);
   const [sellModalShown, setSellModalShown] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
@@ -150,7 +156,7 @@ export default function AICardModal({ card, onHide }) {
                   fontSize="1.5rem"
                   mobileFontSize="1.1rem"
                 >
-                  Generate Image
+                  {generatingImage ? 'Generating...' : 'Generate Image'}
                 </GradientButton>
               </div>
             ) : card.isListed ? (
@@ -182,11 +188,13 @@ export default function AICardModal({ card, onHide }) {
   async function handleGenerateImage() {
     setGeneratingImage(true);
     try {
-      console.log('here');
+      const { imageUrl, style } = await getOpenAiImage(card.prompt);
+      const imagePath = await saveAIImageToS3(imageUrl);
+      const newCard = await postAICard({ imagePath, cardId: card.id, style });
+      onUpdateAICard({ ...newCard, id: card.id });
     } catch (err) {
       console.error(err);
     } finally {
-      console.log('got here');
       setGeneratingImage(false);
     }
   }

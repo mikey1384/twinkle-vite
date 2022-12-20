@@ -236,7 +236,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async postAiCard({ cardId, imagePath, style }) {
+    async postAICard({ cardId, imagePath, style }) {
       try {
         const {
           data: { result }

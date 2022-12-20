@@ -1224,6 +1224,29 @@ export default function ChatReducer(state, action) {
         myCards: [action.card].concat(state.myCards)
       };
     }
+    case 'UPDATE_AI_CARD': {
+      return {
+        ...state,
+        aiCards: state.aiCards.map((card) => {
+          if (card.id === action.card.id) {
+            return {
+              ...card,
+              ...action.card
+            };
+          }
+          return card;
+        }),
+        myCards: state.myCards.map((card) => {
+          if (card.id === action.card.id) {
+            return {
+              ...card,
+              ...action.card
+            };
+          }
+          return card;
+        })
+      };
+    }
     case 'LOAD_VOCABULARY': {
       let vocabActivitiesLoadMoreButton = false;
       if (action.vocabActivities.length > 20) {
