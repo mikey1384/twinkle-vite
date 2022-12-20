@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { useKeyContext } from '~/contexts';
+import { priceTable } from '~/constants/defaultValues';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
 
@@ -16,9 +17,8 @@ export default function GenerateCardInterface({
   onGenerateAICard,
   posting
 }) {
-  const cardPrice = 100;
   const { twinkleCoins } = useKeyContext((v) => v.myState);
-  const hasEnoughTwinkleCoins = twinkleCoins >= cardPrice;
+  const hasEnoughTwinkleCoins = twinkleCoins >= priceTable.card;
   return (
     <div
       style={{
@@ -43,7 +43,7 @@ export default function GenerateCardInterface({
                 style={{ fontWeight: 'bold', marginRight: '0.2rem' }}
                 icon={['far', 'badge-dollar']}
               />
-              {cardPrice})
+              {priceTable.card})
             </div>
           ) : posting ? (
             'Summoning...'
@@ -54,7 +54,7 @@ export default function GenerateCardInterface({
                 style={{ fontWeight: 'bold', marginRight: '0.2rem' }}
                 icon={['far', 'badge-dollar']}
               />
-              {cardPrice})
+              {priceTable.card})
             </div>
           )}
         </GradientButton>
