@@ -103,6 +103,15 @@ export default function OwnerMenu({
           modalOverModal
           onHide={() => setConfirmModalShown(false)}
           title="Burn this card"
+          descriptionFontSize="1.6rem"
+          description={
+            <span>
+              Are you sure you want to burn this card? Once you do, it will be{' '}
+              <b>permanently</b> destroyed and you {`won't`} be able to use it
+              for collection missions. This action is irreversible, so make sure
+              this is what you really want to do before proceeding
+            </span>
+          }
           onConfirm={() => {
             onSetIsBurning(true);
             setConfirmModalShown(false);
