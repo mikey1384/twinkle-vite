@@ -199,6 +199,7 @@ export function addEmoji(string) {
     ':rooster:': '🐓',
     ':sad:': '😢',
     ':santa:': '🎅',
+    ':savor': '😋',
     ':scared:': '😱',
     ':scissors:': '✂️',
     ':scream:': '😱',
