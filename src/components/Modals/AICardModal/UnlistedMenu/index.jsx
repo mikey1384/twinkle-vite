@@ -56,6 +56,7 @@ export default function UnlistedMenu({
           cardQuality={cardQuality}
           onSetIsBurning={onSetIsBurning}
           onSetSellModalShown={onSetSellModalShown}
+          onBurnConfirm={() => onSetIsBurning(true)}
         />
       ) : (
         <NonOwnerMenu
