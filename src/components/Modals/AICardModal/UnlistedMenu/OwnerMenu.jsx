@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { cardLevelHash, qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
@@ -23,6 +25,7 @@ export default function OwnerMenu({
   onSetIsBurning,
   xpNumberColor
 }) {
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
   return (
     <div style={{ width: '100%' }}>
       <div
@@ -86,11 +89,26 @@ export default function OwnerMenu({
           of a card, the more <b style={{ color: Color.gold() }}>XP</b> you earn
           by burning it. This action is irreversible, so use it wisely.
         </p>
-        <Button onClick={() => onSetIsBurning(true)} color="redOrange" filled>
+        <Button
+          onClick={() => setConfirmModalShown(true)}
+          color="redOrange"
+          filled
+        >
           <Icon icon="fire" />
           <span style={{ marginLeft: '0.7rem' }}>Burn</span>
         </Button>
       </div>
+      {confirmModalShown && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setConfirmModalShown(false)}
+          title="Burn this card"
+          onConfirm={() => {
+            onSetIsBurning(true);
+            setConfirmModalShown(false);
+          }}
+        />
+      )}
     </div>
   );
 }
