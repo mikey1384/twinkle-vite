@@ -196,7 +196,7 @@ export default function AICardModal({ card, onHide }) {
       const { imageUrl, style } = await getOpenAiImage(card.prompt);
       const imagePath = await saveAIImageToS3(imageUrl);
       const newCard = await postAICard({ imagePath, cardId: card.id, style });
-      onUpdateAICard({ ...newCard, id: card.id });
+      onUpdateAICard({ cardId: card.id, newState: newCard });
     } catch (err) {
       console.error(err);
     } finally {
