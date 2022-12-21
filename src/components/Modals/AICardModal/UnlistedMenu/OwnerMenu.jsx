@@ -1,29 +1,29 @@
-import { useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
-import { useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
 import {
-  returnCardBurnXP,
+  cardLevelHash,
   qualityProps,
-  cardLevelHash
+  returnCardBurnXP
 } from '~/constants/defaultValues';
+import { css } from '@emotion/css';
+import { useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
-UnlistedMenu.propTypes = {
+OwnerMenu.propTypes = {
   cardLevel: PropTypes.number.isRequired,
   cardQuality: PropTypes.string.isRequired,
-  onSetSellModalShown: PropTypes.func.isRequired,
-  onSetIsBurned: PropTypes.func.isRequired
+  onSetIsBurned: PropTypes.func.isRequired,
+  onSetSellModalShown: PropTypes.func.isRequired
 };
 
-export default function UnlistedMenu({
-  onSetSellModalShown,
-  onSetIsBurned,
+export default function OwnerMenu({
   cardLevel,
-  cardQuality
+  cardQuality,
+  onSetSellModalShown,
+  onSetIsBurned
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -33,22 +33,7 @@ export default function UnlistedMenu({
   }, [cardLevel, cardQuality]);
 
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'column'
-      }}
-      className={css`
-        font-size: 1.6rem;
-        @media (max-width: ${mobileMaxWidth}) {
-          font-size: 1.1rem;
-        }
-      `}
-    >
+    <div style={{ width: '100%' }}>
       <div
         className={css`
           display: flex;
