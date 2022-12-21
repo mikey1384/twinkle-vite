@@ -13,7 +13,7 @@ OwnerMenu.propTypes = {
   xpNumberColor: PropTypes.string.isRequired,
   cardLevel: PropTypes.number.isRequired,
   cardQuality: PropTypes.string.isRequired,
-  onSetIsBurning: PropTypes.func.isRequired,
+  onBurnConfirm: PropTypes.func.isRequired,
   onSetSellModalShown: PropTypes.func.isRequired
 };
 
@@ -22,7 +22,7 @@ export default function OwnerMenu({
   cardLevel,
   cardQuality,
   onSetSellModalShown,
-  onSetIsBurning,
+  onBurnConfirm,
   xpNumberColor
 }) {
   const [confirmModalShown, setConfirmModalShown] = useState(false);
@@ -113,7 +113,7 @@ export default function OwnerMenu({
             </span>
           }
           onConfirm={() => {
-            onSetIsBurning(true);
+            onBurnConfirm();
             setConfirmModalShown(false);
           }}
         />
