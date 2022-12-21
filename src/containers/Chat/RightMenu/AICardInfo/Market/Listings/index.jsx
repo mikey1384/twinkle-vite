@@ -15,7 +15,7 @@ import Loading from '~/components/Loading';
 export default function Listings() {
   const CardItemsRef = useRef(null);
   const [overflown, setOverflown] = useState(false);
-  const [cardModalCard, setCardModalCard] = useState(null);
+  const [cardModalCardId, setCardModalCardId] = useState(null);
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
@@ -90,7 +90,7 @@ export default function Listings() {
           listedCards.map((card, index) => (
             <Listing
               card={card}
-              onSetCardModalCard={setCardModalCard}
+              onSetCardModalCardId={setCardModalCardId}
               isOverflown={overflown}
               isLast={index === listedCards.length - 1}
               key={index}
@@ -111,10 +111,10 @@ export default function Listings() {
           />
         )}
       </div>
-      {cardModalCard && (
+      {cardModalCardId && (
         <AICardModal
-          card={cardModalCard}
-          onHide={() => setCardModalCard(null)}
+          cardId={cardModalCardId}
+          onHide={() => setCardModalCardId(null)}
         />
       )}
     </ErrorBoundary>

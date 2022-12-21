@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -15,21 +15,23 @@ import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
 
 AICardModal.propTypes = {
-  card: PropTypes.object.isRequired,
+  cardId: PropTypes.number.isRequired,
   onHide: PropTypes.func.isRequired
 };
 
-export default function AICardModal({ card, onHide }) {
+export default function AICardModal({ cardId, onHide }) {
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const saveAIImageToS3 = useAppContext(
     (v) => v.requestHelpers.saveAIImageToS3
   );
   const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const cardObj = useChatContext((v) => v.state.cardObj);
   const { userId } = useKeyContext((v) => v.myState);
   const [sellModalShown, setSellModalShown] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [isBurning, setIsBurning] = useState(false);
+  const card = useMemo(() => cardObj[cardId], [cardId, cardObj]);
   const { cardCss, promptText } = useAICard(card);
 
   return (

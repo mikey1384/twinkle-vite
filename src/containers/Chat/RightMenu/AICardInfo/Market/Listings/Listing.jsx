@@ -16,14 +16,14 @@ Listing.propTypes = {
   card: PropTypes.object.isRequired,
   isOverflown: PropTypes.bool.isRequired,
   isLast: PropTypes.bool.isRequired,
-  onSetCardModalCard: PropTypes.func.isRequired
+  onSetCardModalCardId: PropTypes.func.isRequired
 };
 
 export default function Listing({
   isOverflown,
   isLast,
   card,
-  onSetCardModalCard
+  onSetCardModalCardId
 }) {
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
   const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
@@ -63,7 +63,7 @@ export default function Listing({
           borderBottom:
             isOverflown && isLast ? 'none' : `1px solid ${Color.borderGray()}`
         }}
-        onClick={() => onSetCardModalCard(card)}
+        onClick={() => onSetCardModalCardId(card.id)}
         key={card.id}
       >
         <div

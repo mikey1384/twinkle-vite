@@ -7,10 +7,10 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 ActivitiesContainer.propTypes = {
-  onSetAICardModalCard: PropTypes.func.isRequired
+  onSetAICardModalCardId: PropTypes.func.isRequired
 };
 
-export default function ActivitiesContainer({ onSetAICardModalCard }) {
+export default function ActivitiesContainer({ onSetAICardModalCardId }) {
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
@@ -125,7 +125,7 @@ export default function ActivitiesContainer({ onSetAICardModalCard }) {
               isLastActivity={index === aiCardIds.length - 1}
               onReceiveNewActivity={handleReceiveNewActivity}
               onSetScrollToBottom={handleSetScrollToBottom}
-              onSetAICardModalCard={onSetAICardModalCard}
+              onSetAICardModalCardId={onSetAICardModalCardId}
               myId={myId}
             />
           );
