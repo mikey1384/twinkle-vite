@@ -41,7 +41,7 @@ export default function AICardModal({ card, onHide }) {
             display: 'grid',
             minHeight: '100%',
             width: '100%',
-            gridTemplateColumns: '1fr 1fr 1fr',
+            gridTemplateColumns: '1fr 1.5fr 1fr',
             gridColumnGap: 'calc(5rem / 1600px * 100vw)',
             gridRowGap: '2rem'
           }}
@@ -100,9 +100,10 @@ export default function AICardModal({ card, onHide }) {
                 </div>
                 <div
                   className={css`
-                    padding: 3rem 0 5rem 0;
+                    padding: 3rem 5rem 5rem 5rem;
+                    text-align: center;
                     @media (max-width: ${mobileMaxWidth}) {
-                      padding: 3rem 0 4rem 0;
+                      padding: 3rem 2rem 4rem 2rem;
                     }
                   `}
                 >
