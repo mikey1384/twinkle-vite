@@ -168,6 +168,7 @@ export default function AICardModal({ card, onHide }) {
               />
             ) : (
               <UnlistedMenu
+                cardId={card.id}
                 cardLevel={card.level}
                 cardQuality={card.quality}
                 userIsOwner={card.ownerId === userId}
