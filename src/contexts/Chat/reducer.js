@@ -1228,19 +1228,37 @@ export default function ChatReducer(state, action) {
       return {
         ...state,
         aiCards: state.aiCards.map((card) => {
-          if (card.id === action.card.id) {
+          if (card.id === action.cardId) {
             return {
               ...card,
-              ...action.card
+              ...action.newState
+            };
+          }
+          return card;
+        }),
+        listedCards: state.listedCards.map((card) => {
+          if (card.id === action.cardId) {
+            return {
+              ...card,
+              ...action.newState
+            };
+          }
+          return card;
+        }),
+        myListedCards: state.myListedCards.map((card) => {
+          if (card.id === action.cardId) {
+            return {
+              ...card,
+              ...action.newState
             };
           }
           return card;
         }),
         myCards: state.myCards.map((card) => {
-          if (card.id === action.card.id) {
+          if (card.id === action.cardId) {
             return {
               ...card,
-              ...action.card
+              ...action.newState
             };
           }
           return card;

@@ -837,10 +837,11 @@ export default function ChatActions(dispatch) {
         channelId
       });
     },
-    onUpdateAICard(card) {
+    onUpdateAICard({ cardId, newState }) {
       return dispatch({
         type: 'UPDATE_AI_CARD',
-        card
+        cardId,
+        newState
       });
     },
     onUpdateChannelPathIdHash({ channelId, pathId }) {
