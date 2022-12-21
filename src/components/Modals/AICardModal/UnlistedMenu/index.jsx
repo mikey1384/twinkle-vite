@@ -71,13 +71,14 @@ export default function UnlistedMenu({
     </div>
   );
 
-  function handleBurnConfirm() {
+  async function handleBurnConfirm() {
+    onSetIsBurning(true);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     onUpdateAICard({
       cardId,
       newState: {
         isBurned: true
       }
     });
-    onSetIsBurning(true);
   }
 }
