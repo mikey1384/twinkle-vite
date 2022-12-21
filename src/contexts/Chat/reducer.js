@@ -1274,8 +1274,8 @@ export default function ChatReducer(state, action) {
         ...state,
         cardObj: {
           ...state.cardObj,
-          [action.card.id]: {
-            ...state.cardObj[action.card.id],
+          [action.cardId]: {
+            ...state.cardObj[action.cardId],
             ...action.newState
           }
         }
