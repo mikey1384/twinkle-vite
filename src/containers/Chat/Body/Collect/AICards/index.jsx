@@ -18,7 +18,7 @@ AICards.propTypes = {
 
 export default function AICards({ loadingAIImageChat }) {
   const { userId, canGenerateAICard } = useKeyContext((v) => v.myState);
-  const [aiCardModalCard, setAICardModalCard] = useState(null);
+  const [aiCardModalCardId, setAICardModalCardId] = useState(null);
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
   const processAiCardQuality = useAppContext(
@@ -76,7 +76,7 @@ export default function AICards({ loadingAIImageChat }) {
           <Loading style={{ height: '50%' }} text="Loading AI Cards" />
         </div>
       ) : (
-        <ActivitiesContainer onSetAICardModalCard={setAICardModalCard} />
+        <ActivitiesContainer onSetAICardModalCardId={setAICardModalCardId} />
       )}
 
       <StatusInterface
@@ -118,10 +118,10 @@ export default function AICards({ loadingAIImageChat }) {
           loading={loadingAIImageChat}
         />
       </div>
-      {aiCardModalCard && (
+      {aiCardModalCardId && (
         <AICardModal
-          card={aiCardModalCard}
-          onHide={() => setAICardModalCard(null)}
+          cardId={aiCardModalCardId}
+          onHide={() => setAICardModalCardId(null)}
         />
       )}
     </div>

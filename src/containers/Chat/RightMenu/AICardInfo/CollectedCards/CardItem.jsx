@@ -134,7 +134,7 @@ export default function CardItem({ card }) {
         </div>
       </div>
       {cardModalShown && (
-        <AICardModal card={card} onHide={() => setCardModalShown(false)} />
+        <AICardModal cardId={card.id} onHide={() => setCardModalShown(false)} />
       )}
     </ErrorBoundary>
   );

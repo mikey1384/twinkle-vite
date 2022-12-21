@@ -17,7 +17,7 @@ Activity.propTypes = {
   myId: PropTypes.number,
   onReceiveNewActivity: PropTypes.func.isRequired,
   onSetScrollToBottom: PropTypes.func.isRequired,
-  onSetAICardModalCard: PropTypes.func.isRequired
+  onSetAICardModalCardId: PropTypes.func.isRequired
 };
 
 export default function Activity({
@@ -26,7 +26,7 @@ export default function Activity({
   myId,
   onReceiveNewActivity,
   onSetScrollToBottom,
-  onSetAICardModalCard
+  onSetAICardModalCardId
 }) {
   const { cardCss, promptText } = useAICard(card);
   const onRemoveNewlyPostedCardStatus = useChatContext(
@@ -126,7 +126,7 @@ export default function Activity({
               card={card}
               quality={card.quality}
               imagePath={card.imagePath}
-              onClick={() => onSetAICardModalCard(card)}
+              onClick={() => onSetAICardModalCardId(card.id)}
             />
           </div>
           <div
