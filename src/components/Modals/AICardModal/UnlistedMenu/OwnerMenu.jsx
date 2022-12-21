@@ -1,18 +1,14 @@
 import PropTypes from 'prop-types';
-import { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import {
-  cardLevelHash,
-  qualityProps,
-  returnCardBurnXP
-} from '~/constants/defaultValues';
+import { cardLevelHash, qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 OwnerMenu.propTypes = {
+  burnXP: PropTypes.number.isRequired,
+  xpNumberColor: PropTypes.string.isRequired,
   cardLevel: PropTypes.number.isRequired,
   cardQuality: PropTypes.string.isRequired,
   onSetIsBurned: PropTypes.func.isRequired,
@@ -20,18 +16,13 @@ OwnerMenu.propTypes = {
 };
 
 export default function OwnerMenu({
+  burnXP,
   cardLevel,
   cardQuality,
   onSetSellModalShown,
-  onSetIsBurned
+  onSetIsBurned,
+  xpNumberColor
 }) {
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
-  const burnXP = useMemo(() => {
-    return returnCardBurnXP({ cardLevel, cardQuality });
-  }, [cardLevel, cardQuality]);
-
   return (
     <div style={{ width: '100%' }}>
       <div
