@@ -73,7 +73,7 @@ export default function UnlistedMenu({
 
   async function handleBurnConfirm() {
     onSetIsBurning(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     onUpdateAICard({
       cardId,
       newState: {
