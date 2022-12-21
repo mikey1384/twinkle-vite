@@ -29,7 +29,7 @@ export default function AICardModal({ card, onHide }) {
   const { userId } = useKeyContext((v) => v.myState);
   const [sellModalShown, setSellModalShown] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
-  const [isBurned, setIsBurned] = useState(false);
+  const [isBurning, setIsBurning] = useState(false);
   const { cardCss, promptText } = useAICard(card);
 
   return (
@@ -49,7 +49,7 @@ export default function AICardModal({ card, onHide }) {
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
             <div className={cardCss}>
               <AICard
-                isBurned={isBurned}
+                isBurning={isBurning}
                 card={card}
                 quality={card.quality}
                 imagePath={card.imagePath}
@@ -173,7 +173,7 @@ export default function AICardModal({ card, onHide }) {
                 userIsOwner={card.ownerId === userId}
                 onSetSellModalShown={setSellModalShown}
                 owner={card.owner}
-                onSetIsBurned={setIsBurned}
+                onSetIsBurning={setIsBurning}
               />
             )}
           </div>

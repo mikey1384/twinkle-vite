@@ -10,7 +10,7 @@ AICard.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
   imagePath: PropTypes.string,
   quality: PropTypes.string,
-  isBurned: PropTypes.bool,
+  isBurning: PropTypes.bool,
   onClick: PropTypes.func
 };
 
@@ -27,7 +27,7 @@ export default function AICard({
   animateOnMouseLeave,
   imagePath,
   quality,
-  isBurned,
+  isBurning,
   onClick
 }) {
   const imageExists = useMemo(() => !!imagePath, [imagePath]);
@@ -126,7 +126,7 @@ export default function AICard({
           alignItems: 'center'
         }}
         className={`card${isAnimated ? ' animated' : ''} ${
-          isBurned
+          isBurning
             ? css`
                 animation: burning 2s linear;
                 animation-fill-mode: forwards;
