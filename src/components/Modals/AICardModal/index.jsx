@@ -50,7 +50,7 @@ export default function AICardModal({ card, onHide }) {
             <div className={cardCss}>
               <AICard
                 isBurning={isBurning}
-                card={card}
+                isBurned={!!card.isBurned}
                 quality={card.quality}
                 imagePath={card.imagePath}
               />

@@ -10,6 +10,7 @@ AICard.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
   imagePath: PropTypes.string,
   quality: PropTypes.string,
+  isBurned: PropTypes.bool,
   isBurning: PropTypes.bool,
   onClick: PropTypes.func
 };
