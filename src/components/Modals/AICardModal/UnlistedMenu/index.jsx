@@ -12,6 +12,7 @@ UnlistedMenu.propTypes = {
   cardQuality: PropTypes.string.isRequired,
   onSetSellModalShown: PropTypes.func.isRequired,
   onSetIsBurned: PropTypes.func.isRequired,
+  owner: PropTypes.object.isRequired,
   userIsOwner: PropTypes.bool.isRequired
 };
 
@@ -20,6 +21,7 @@ export default function UnlistedMenu({
   onSetIsBurned,
   cardLevel,
   cardQuality,
+  owner,
   userIsOwner
 }) {
   const {
@@ -56,7 +58,11 @@ export default function UnlistedMenu({
           onSetSellModalShown={onSetSellModalShown}
         />
       ) : (
-        <NonOwnerMenu burnXP={burnXP} xpNumberColor={xpNumberColor} />
+        <NonOwnerMenu
+          owner={owner}
+          burnXP={burnXP}
+          xpNumberColor={xpNumberColor}
+        />
       )}
     </div>
   );

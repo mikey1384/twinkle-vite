@@ -172,6 +172,7 @@ export default function AICardModal({ card, onHide }) {
                 cardQuality={card.quality}
                 userIsOwner={card.ownerId === userId}
                 onSetSellModalShown={setSellModalShown}
+                owner={card.owner}
                 onSetIsBurned={setIsBurned}
               />
             )}
