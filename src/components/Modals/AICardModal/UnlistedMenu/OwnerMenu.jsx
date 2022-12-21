@@ -11,7 +11,7 @@ OwnerMenu.propTypes = {
   xpNumberColor: PropTypes.string.isRequired,
   cardLevel: PropTypes.number.isRequired,
   cardQuality: PropTypes.string.isRequired,
-  onSetIsBurned: PropTypes.func.isRequired,
+  onSetIsBurning: PropTypes.func.isRequired,
   onSetSellModalShown: PropTypes.func.isRequired
 };
 
@@ -20,7 +20,7 @@ export default function OwnerMenu({
   cardLevel,
   cardQuality,
   onSetSellModalShown,
-  onSetIsBurned,
+  onSetIsBurning,
   xpNumberColor
 }) {
   return (
@@ -86,7 +86,7 @@ export default function OwnerMenu({
           of a card, the more <b style={{ color: Color.gold() }}>XP</b> you earn
           by burning it. This action is irreversible, so use it wisely.
         </p>
-        <Button onClick={() => onSetIsBurned(true)} color="redOrange" filled>
+        <Button onClick={() => onSetIsBurning(true)} color="redOrange" filled>
           <Icon icon="fire" />
           <span style={{ marginLeft: '0.7rem' }}>Burn</span>
         </Button>
