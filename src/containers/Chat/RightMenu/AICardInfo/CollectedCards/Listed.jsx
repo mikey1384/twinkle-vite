@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import CardItem from './CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -19,7 +19,12 @@ export default function Listed({ loadMoreButtonColor }) {
   const loadMyListedAICards = useAppContext(
     (v) => v.requestHelpers.loadMyListedAICards
   );
-  const myListedCards = useChatContext((v) => v.state.myListedCards);
+  const myListedCardIds = useChatContext((v) => v.state.myListedCardIds);
+  const cardObj = useChatContext((v) => v.state.cardObj);
+  const myListedCards = useMemo(
+    () => myListedCardIds.map((id) => cardObj[id]),
+    [myListedCardIds, cardObj]
+  );
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const myListedCardsLoadMoreButton = useChatContext(
     (v) => v.state.myListedCardsLoadMoreButton

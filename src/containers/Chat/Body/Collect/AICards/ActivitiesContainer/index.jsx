@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, startTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import PropTypes from 'prop-types';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
@@ -63,7 +63,13 @@ export default function ActivitiesContainer({ onSetAICardModalCard }) {
       ? ActivitiesContainerRef.current?.offsetHeight -
         ContentRef.current?.offsetHeight
       : 20;
-  const aiImageRows = useChatContext((v) => v.state.aiCards);
+  const aiCardIds = useChatContext((v) => v.state.aiCardIds);
+  const cardObj = useChatContext((v) => v.state.cardObj);
+  const aiCards = useMemo(
+    () => aiCardIds.map((id) => cardObj[id]),
+    [aiCardIds, cardObj]
+  );
+
   return (
     <div
       ref={ActivitiesContainerRef}
@@ -111,12 +117,12 @@ export default function ActivitiesContainer({ onSetAICardModalCard }) {
         />
       )}
       <div style={{ position: 'relative' }} ref={ContentRef}>
-        {aiImageRows.map((row, index) => {
+        {aiCards.map((row, index) => {
           return (
             <Activity
               key={row.id}
               card={row}
-              isLastActivity={index === aiImageRows.length - 1}
+              isLastActivity={index === aiCardIds.length - 1}
               onReceiveNewActivity={handleReceiveNewActivity}
               onSetScrollToBottom={handleSetScrollToBottom}
               onSetAICardModalCard={onSetAICardModalCard}
@@ -133,9 +139,7 @@ export default function ActivitiesContainer({ onSetAICardModalCard }) {
       const prevContentHeight = ContentRef.current?.offsetHeight || 0;
       if (!loadingMore) {
         setLoadingMore(true);
-        const { cards, loadMoreShown } = await loadAIImageChat(
-          aiImageRows[0].id
-        );
+        const { cards, loadMoreShown } = await loadAIImageChat(aiCardIds[0]);
         onLoadMoreAIImages({ cards, loadMoreShown });
         startTransition(() => {
           setScrollHeight(prevContentHeight);

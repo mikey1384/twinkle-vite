@@ -7,7 +7,7 @@ import ChatReducer from './reducer';
 export const ChatContext = createContext();
 
 export const initialChatState = {
-  aiCards: [],
+  aiCardIds: [],
   allFavoriteChannelIds: {},
   classLoadMoreButton: false,
   chatStatus: {},
@@ -33,11 +33,12 @@ export const initialChatState = {
   loadingVocabulary: false,
   loaded: false,
   messages: [],
-  listedCards: [],
+  cardObj: {},
+  listedCardIds: [],
   listedCardsLoadMoreButton: false,
-  myCards: [],
+  myCardIds: [],
   myCardsLoadMoreButton: false,
-  myListedCards: [],
+  myListedCardIds: [],
   myListedCardsLoadMoreButton: false,
   numUnreads: 0,
   peerStreams: {},

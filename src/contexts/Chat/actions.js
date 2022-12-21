@@ -326,7 +326,7 @@ export default function ChatActions(dispatch) {
     },
     onLoadMoreAIImages({ cards, loadMoreShown }) {
       return dispatch({
-        type: 'LOAD_MORE_AI_IMAGES',
+        type: 'LOAD_MORE_AI_CARDS',
         cards,
         loadMoreShown
       });

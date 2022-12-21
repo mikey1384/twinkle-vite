@@ -5,6 +5,7 @@ import {
   AI_CARD_CHAT_TYPE
 } from '~/constants/defaultValues';
 import { determineSelectedChatTab } from './helpers';
+import { objectify } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 
 const chatTabHash = {
@@ -73,25 +74,26 @@ export default function ChatReducer(state, action) {
     case 'ADD_LISTED_AI_CARD': {
       return {
         ...state,
-        aiCards: state.aiCards.map((card) => ({
-          ...card,
-          isListed: card.id === action.card.id ? true : card.isListed,
-          askPrice:
-            card.id === action.card.id ? action.price || 0 : card.askPrice
-        })),
-        listedCards: [action.card].concat(state.listedCards)
+        cardObj: {
+          ...state.cardObj,
+          [action.card.id]: action.card
+        },
+        listedCardIds: [action.card.id].concat(state.listedCardIds)
       };
     }
     case 'REMOVE_LISTED_AI_CARD': {
       return {
         ...state,
-        aiCards: state.aiCards.map((card) => ({
-          ...card,
-          isListed: card.id === action.cardId ? false : card.isListed,
-          askPrice: card.id === action.cardId ? 0 : card.askPrice
-        })),
-        listedCards: state.listedCards.filter(
-          (card) => card.id !== action.cardId
+        cardObj: {
+          ...state.cardObj,
+          [action.cardId]: {
+            ...state.cardObj[action.cardId],
+            isListed: false,
+            askPrice: 0
+          }
+        },
+        listedCardIds: state.listedCardIds.filter(
+          (cardId) => cardId !== action.cardId
         )
       };
     }
@@ -881,10 +883,18 @@ export default function ChatReducer(state, action) {
       return {
         ...state,
         ...initialChatState,
-        aiCards:
+        cardObj:
           state.chatType === AI_CARD_CHAT_TYPE
-            ? state.aiCards
-            : action.data.aiCards || [],
+            ? state.cardObj
+            : action.data.aiCards
+            ? objectify(action.data.aiCards)
+            : {},
+        aiCardIds:
+          state.chatType === AI_CARD_CHAT_TYPE
+            ? state.aiCardIds
+            : action.data.aiCards
+            ? action.data.aiCards.map((card) => card.id)
+            : [],
         numUnreads: state.numUnreads,
         chatStatus: state.chatStatus,
         allFavoriteChannelIds: action.data.allFavoriteChannelIds,
@@ -898,9 +908,9 @@ export default function ChatReducer(state, action) {
               }
             : state.lastSubchannelPaths,
         chatType: state.chatType ? state.chatType : action.data.chatType,
-        listedCards: state.listedCards,
+        listedCardIds: state.listedCardIds,
         listedCardsLoadMoreButton: state.listedCardsLoadMoreButton,
-        myCards: state.myCards,
+        myCardIds: state.myCardIds,
         myCardsLoadMoreButton: state.myCardsLoadMoreButton,
         vocabActivities:
           state.chatType === VOCAB_CHAT_TYPE
@@ -993,37 +1003,32 @@ export default function ChatReducer(state, action) {
     case 'LIST_AI_CARD': {
       return {
         ...state,
-        myCards: state.myCards.map((card) => ({
-          ...card,
-          isListed: card.id === action.card.id ? true : card.isListed,
-          askPrice:
-            card.id === action.card.id ? action.price || 0 : card.askPrice
-        })),
-        myListedCards: [action.card].concat(state.myListedCards),
-        aiCards: state.aiCards.map((card) => ({
-          ...card,
-          isListed: card.id === action.card.id ? true : card.isListed,
-          askPrice:
-            card.id === action.card.id ? action.price || 0 : card.askPrice
-        }))
+        cardObj: {
+          ...state.cardObj,
+          [action.card.id]: {
+            ...state.cardObj[action.card.id],
+            ...action.card,
+            isListed: true,
+            askPrice: action.price || 0
+          }
+        },
+        myListedCardIds: [action.card.id].concat(state.myListedCardIds)
       };
     }
     case 'DELIST_AI_CARD': {
       return {
         ...state,
-        myCards: state.myCards.map((card) => ({
-          ...card,
-          isListed: card.id === action.cardId ? false : card.isListed,
-          askPrice: card.id === action.cardId ? 0 : card.askPrice
-        })),
-        myListedCards: state.myListedCards.filter(
-          (card) => card.id !== action.cardId
-        ),
-        aiCards: state.aiCards.map((card) => ({
-          ...card,
-          isListed: card.id === action.cardId ? false : card.isListed,
-          askPrice: card.id === action.cardId ? 0 : card.askPrice
-        }))
+        cardObj: {
+          ...state.cardObj,
+          [action.cardId]: {
+            ...state.cardObj[action.cardId],
+            isListed: false,
+            askPrice: 0
+          }
+        },
+        myListedCardIds: state.myListedCardIds.filter(
+          (cardId) => cardId !== action.cardId
+        )
       };
     }
     case 'LOAD_MORE_CHANNELS': {
@@ -1119,37 +1124,65 @@ export default function ChatReducer(state, action) {
     case 'LOAD_LISTED_AI_CARDS':
       return {
         ...state,
-        listedCards: action.cards,
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.cards)
+        },
+        listedCardIds: action.cards.map((card) => card.id),
         listedCardsLoadMoreButton: action.loadMoreShown
       };
     case 'LOAD_MORE_LISTED_AI_CARDS':
       return {
         ...state,
-        listedCards: state.listedCards.concat(action.cards),
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.cards)
+        },
+        listedCardIds: state.listedCardIds.concat(
+          action.cards.map((card) => card.id)
+        ),
         listedCardsLoadMoreButton: action.loadMoreShown
       };
     case 'LOAD_MY_AI_CARDS':
       return {
         ...state,
-        myCards: action.cards,
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.cards)
+        },
+        myCardIds: action.cards.map((card) => card.id),
         myCardsLoadMoreButton: action.loadMoreShown
       };
     case 'LOAD_MORE_MY_AI_CARDS':
       return {
         ...state,
-        myCards: state.myCards.concat(action.cards),
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.cards)
+        },
+        myCardIds: state.myCardIds.concat(action.cards.map((card) => card.id)),
         myCardsLoadMoreButton: action.loadMoreShown
       };
     case 'LOAD_MY_LISTED_AI_CARDS':
       return {
         ...state,
-        myListedCards: action.cards,
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.cards)
+        },
+        myListedCardIds: action.cards.map((card) => card.id),
         myListedCardsLoadMoreButton: action.loadMoreShown
       };
     case 'LOAD_MORE_MY_LISTED_AI_CARDS':
       return {
         ...state,
-        myListedCards: state.myListedCards.concat(action.cards),
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.cards)
+        },
+        myListedCardIds: state.myListedCardIds.concat(
+          action.cards.map((card) => card.id)
+        ),
         myListedCardsLoadMoreButton: action.loadMoreShown
       };
     case 'LOAD_SUBJECT': {
@@ -1203,66 +1236,49 @@ export default function ChatReducer(state, action) {
         electedChannelId: null,
         selectedSubchannelId: null,
         chatType: AI_CARD_CHAT_TYPE,
-        aiCards: action.cards,
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.cards)
+        },
+        aiCardIds: action.cards.map((card) => card.id),
         aiDrawingsLoadMoreButton: action.loadMoreShown
       };
     }
-    case 'LOAD_MORE_AI_IMAGES': {
+    case 'LOAD_MORE_AI_CARDS': {
       return {
         ...state,
-        aiCards: action.cards.concat(state.aiCards),
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.cards)
+        },
+        aiCardIds: action.cards.map((card) => card.id).concat(state.aiCardIds),
         aiDrawingsLoadMoreButton: action.loadMoreShown
       };
     }
     case 'POST_AI_CARD': {
       return {
         ...state,
-        aiCards: state.aiCards.concat({
-          ...action.card,
-          isNewlyPosted: true
-        }),
-        myCards: [action.card].concat(state.myCards)
+        cardObj: {
+          ...state.cardObj,
+          [action.card.id]: {
+            ...action.card,
+            isNewlyPosted: true
+          }
+        },
+        aiCardIds: state.aiCardIds.concat(action.card.id),
+        myCardIds: [action.card.id].concat(state.myCardIds)
       };
     }
     case 'UPDATE_AI_CARD': {
       return {
         ...state,
-        aiCards: state.aiCards.map((card) => {
-          if (card.id === action.cardId) {
-            return {
-              ...card,
-              ...action.newState
-            };
+        cardObj: {
+          ...state.cardObj,
+          [action.card.id]: {
+            ...state.cardObj[action.card.id],
+            ...action.newState
           }
-          return card;
-        }),
-        listedCards: state.listedCards.map((card) => {
-          if (card.id === action.cardId) {
-            return {
-              ...card,
-              ...action.newState
-            };
-          }
-          return card;
-        }),
-        myListedCards: state.myListedCards.map((card) => {
-          if (card.id === action.cardId) {
-            return {
-              ...card,
-              ...action.newState
-            };
-          }
-          return card;
-        }),
-        myCards: state.myCards.map((card) => {
-          if (card.id === action.cardId) {
-            return {
-              ...card,
-              ...action.newState
-            };
-          }
-          return card;
-        })
+        }
       };
     }
     case 'LOAD_VOCABULARY': {
@@ -1716,7 +1732,11 @@ export default function ChatReducer(state, action) {
     case 'RECEIVE_AI_CARD_ACTIVITY':
       return {
         ...state,
-        aiCards: state.aiCards.concat(action.card)
+        cardObj: {
+          ...state.cardObj,
+          [action.card.id]: action.card
+        },
+        aiCardIds: state.aiCardIds.concat(action.card.id)
       };
     case 'RECEIVE_VOCAB_ACTIVITY':
       return {
@@ -1802,15 +1822,13 @@ export default function ChatReducer(state, action) {
     case 'REMOVE_NEWLY_POSTED_CARD_STATUS':
       return {
         ...state,
-        aiCards: state.aiCards.map((aiImage) => {
-          if (aiImage.id === action.cardId) {
-            return {
-              ...aiImage,
-              isNewlyPosted: false
-            };
+        cardObj: {
+          ...state.cardObj,
+          [action.cardId]: {
+            ...state.cardObj[action.cardId],
+            isNewlyPosted: false
           }
-          return aiImage;
-        })
+        }
       };
     case 'RESET_CHAT':
       return initialChatState;

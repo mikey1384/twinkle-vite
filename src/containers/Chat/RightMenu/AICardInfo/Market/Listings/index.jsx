@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useAppContext,
   useChatContext,
@@ -31,7 +31,12 @@ export default function Listings() {
   const onLoadMoreListedAICards = useChatContext(
     (v) => v.actions.onLoadMoreListedAICards
   );
-  const listedCards = useChatContext((v) => v.state.listedCards);
+  const listedCardIds = useChatContext((v) => v.state.listedCardIds);
+  const cardObj = useChatContext((v) => v.state.cardObj);
+  const listedCards = useMemo(
+    () => listedCardIds.map((id) => cardObj[id]),
+    [listedCardIds, cardObj]
+  );
   const listedCardsLoadMoreButton = useChatContext(
     (v) => v.state.listedCardsLoadMoreButton
   );
