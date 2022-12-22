@@ -17,7 +17,10 @@ const sparklesUrl = 'https://assets.codepen.io/13471/sparkles.gif';
 
 export default function useAICard(card) {
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
-  const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
+  const cardColor = useMemo(
+    () => Color[card.isBurned ? 'black' : cardObj?.color](),
+    [card.isBurned, cardObj?.color]
+  );
   const promptText = useMemo(() => {
     if (card.word) {
       const prompt = card.prompt;
@@ -46,7 +49,8 @@ export default function useAICard(card) {
         z-index: 10;
         touch-action: none;
         border-radius: 5% / 3.5%;
-        box-shadow: ${cardProps[card.quality].includes('glowy')
+        box-shadow: ${cardProps[card.quality].includes('glowy') &&
+        !card.isBurned
           ? `0px 0px
                   7px ${qualityProps[card.quality].color},
                 0px 0px 7px ${qualityProps[card.quality].color}, 0 0 7px ${
@@ -65,7 +69,7 @@ export default function useAICard(card) {
         transform-origin: center;
 
         &:hover {
-          ${cardProps[card.quality].includes('glowy')
+          ${cardProps[card.quality].includes('glowy') && !card.isBurned
             ? `box-shadow: -20px -20px
                   30px -25px ${cardColor},
                 20px 20px 30px -25px ${cardColor}, -7px -7px 10px -5px ${cardColor},
@@ -73,7 +77,7 @@ export default function useAICard(card) {
                 0 0 13px 4px rgba(255, 255, 255, 0.3),
                 0 55px 35px -20px rgba(0, 0, 0, 0.5);`
             : ''} {
-            ${cardProps[card.quality].includes('grad')
+            ${cardProps[card.quality].includes('grad') && !card.isBurned
               ? `background-image: linear-gradient(
               115deg,
               transparent 20%,
@@ -106,7 +110,9 @@ export default function useAICard(card) {
         &:before {
           background-position: 50% 50%;
           background-size: 300% 300%;
-          background-image: linear-gradient(
+          ${card.isBurned
+            ? ''
+            : `background-image: linear-gradient(
             115deg,
             transparent 0%,
             ${color1} 25%,
@@ -114,11 +120,11 @@ export default function useAICard(card) {
             transparent 53%,
             ${cardColor} 75%,
             transparent 100%
-          );
-          opacity: 0.5;
-          filter: brightness(0.5) contrast(1);
+          );`}
+          opacity: ${card.isBurned ? '1' : '0.5'};
+          ${card.isBurned ? '' : 'filter: brightness(0.5) contrast(1);'}
           z-index: 1;
-          ${cardProps[card.quality].includes('glossy')
+          ${cardProps[card.quality].includes('glossy') && !card.isBurned
             ? `
                   transition: none;
                   animation: gloss 7s infinite;
@@ -126,7 +132,7 @@ export default function useAICard(card) {
             : ''}
         }
 
-        ${cardProps[card.quality].includes('sparky')
+        ${cardProps[card.quality].includes('sparky') && !card.isBurned
           ? `&:after {
             background-image: url(${sparklesUrl}), url(${holoUrl}),
               linear-gradient(
@@ -149,7 +155,7 @@ export default function useAICard(card) {
           : ''}
 
         &:hover:after {
-          filter: brightness(1) contrast(1);
+          ${card.isBurned ? '' : 'filter: brightness(1) contrast(1);'}
           opacity: 1;
         }
 
@@ -160,7 +166,7 @@ export default function useAICard(card) {
 
         &:hover:before {
           animation: none;
-          ${cardProps[card.quality].includes('grad')
+          ${cardProps[card.quality].includes('grad') && !card.isBurned
             ? `background-image: linear-gradient(
               110deg,
               transparent 25%,
@@ -172,7 +178,7 @@ export default function useAICard(card) {
           background-position: 50% 50%;
           background-size: 250% 250%;
           opacity: 0.88;
-          filter: brightness(0.66) contrast(1.33);
+          ${card.isBurned ? '' : 'filter: brightness(0.66) contrast(1.33);'}
           transition: none;
         }
 
@@ -244,7 +250,7 @@ export default function useAICard(card) {
         75%,
         87.5%,
         100% {
-          ${cardProps[card.quality].includes('grad')
+          ${cardProps[card.quality].includes('grad') && !card.isBurned
             ? `background-image: linear-gradient(
               115deg,
               transparent 20%,
@@ -259,7 +265,7 @@ export default function useAICard(card) {
           background-position: 50% 50%;
         }
         12.5% {
-          ${cardProps[card.quality].includes('grad')
+          ${cardProps[card.quality].includes('grad') && !card.isBurned
             ? `background-image: linear-gradient(
               115deg,
               transparent 10%,

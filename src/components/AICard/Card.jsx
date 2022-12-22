@@ -38,7 +38,7 @@ export default function LiveCard({
         onMouseLeave={onMouseLeave}
         style={cardStyle}
         className={`card${isAnimated ? ' animated' : ''} ${
-          card.isBurning
+          card.isBurning && !card.isBurned
             ? css`
                 animation: burning 2s linear;
                 animation-fill-mode: forwards;
@@ -71,7 +71,7 @@ export default function LiveCard({
             width: 100%;
           `}
         >
-          {imageExists ? (
+          {imageExists && !card.isBurned ? (
             <img
               style={{
                 width: '100%'
