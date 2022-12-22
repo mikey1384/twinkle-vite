@@ -69,103 +69,105 @@ export default function AICard({ animateOnMouseLeave, card, onClick }) {
         justifyContent: 'center',
         cursor: onClick ? 'pointer' : 'default'
       }}
-      className={`unselectable ${cardCss}`}
+      className={`unselectable`}
       onClick={onClick}
     >
       {card.isBurned ? (
         <div>burned</div>
       ) : (
-        <animated.div
-          {...bind()}
-          ref={CardRef}
-          onMouseMove={(event) => {
-            const { left, top, width, height } =
-              CardRef.current.getBoundingClientRect();
-            const px = event.clientX - left;
-            const py = event.clientY - top;
-            const percentageX = 50 - (px / width) * 100;
-            const percentageY = 50 - (py / height) * 100;
-            let grad_pos = `background-position: ${
-              50 + (percentageX - 50) / 3
-            }% ${50 + (percentageY - 50) / 2}% !important;`;
-            const sprk_pos = `background-position: ${
-              50 + (percentageX - 50) / 15
-            }% ${50 + (percentageY - 50) / 15}% !important;`;
-            const pa = 50 - px + (50 - py);
-            const p_opc = 20 + Math.abs(pa) * 1.5;
-            const opc = `opacity: ${p_opc / 100} !important;`;
-            const style = `
+        <div className={cardCss}>
+          <animated.div
+            {...bind()}
+            ref={CardRef}
+            onMouseMove={(event) => {
+              const { left, top, width, height } =
+                CardRef.current.getBoundingClientRect();
+              const px = event.clientX - left;
+              const py = event.clientY - top;
+              const percentageX = 50 - (px / width) * 100;
+              const percentageY = 50 - (py / height) * 100;
+              let grad_pos = `background-position: ${
+                50 + (percentageX - 50) / 3
+              }% ${50 + (percentageY - 50) / 2}% !important;`;
+              const sprk_pos = `background-position: ${
+                50 + (percentageX - 50) / 15
+              }% ${50 + (percentageY - 50) / 15}% !important;`;
+              const pa = 50 - px + (50 - py);
+              const p_opc = 20 + Math.abs(pa) * 1.5;
+              const opc = `opacity: ${p_opc / 100} !important;`;
+              const style = `
           .card:hover:before { ${grad_pos} }
           .card:hover:after { ${sprk_pos} ${opc} }
         `;
-            if (cardProps[card.quality].includes('glossy')) {
-              $style.html(style);
-            }
-            clearTimeout(timerRef.current);
-            setIsAnimated(false);
-          }}
-          onMouseLeave={() => {
-            $style.html('');
-            if (animateOnMouseLeave) {
-              timerRef.current = setTimeout(() => {
-                setIsAnimated(true);
-              }, 500);
-            }
-          }}
-          style={{
-            transform: 'perspective(600px)',
-            x,
-            y,
-            rotateX,
-            rotateY,
-            rotateZ,
-            display: 'flex',
-            alignItems: 'center'
-          }}
-          className={`card${isAnimated ? ' animated' : ''} ${
-            card.isBurning
-              ? css`
-                  animation: burning 2s linear;
-                  animation-fill-mode: forwards;
-                  @keyframes burning {
-                    0% {
-                      background-color: red;
-                      box-shadow: 0 0 10px red;
-                      filter: blur(0);
-                    }
+              if (cardProps[card.quality].includes('glossy')) {
+                $style.html(style);
+              }
+              clearTimeout(timerRef.current);
+              setIsAnimated(false);
+            }}
+            onMouseLeave={() => {
+              $style.html('');
+              if (animateOnMouseLeave) {
+                timerRef.current = setTimeout(() => {
+                  setIsAnimated(true);
+                }, 500);
+              }
+            }}
+            style={{
+              transform: 'perspective(600px)',
+              x,
+              y,
+              rotateX,
+              rotateY,
+              rotateZ,
+              display: 'flex',
+              alignItems: 'center'
+            }}
+            className={`card${isAnimated ? ' animated' : ''} ${
+              card.isBurning
+                ? css`
+                    animation: burning 2s linear;
+                    animation-fill-mode: forwards;
+                    @keyframes burning {
+                      0% {
+                        background-color: red;
+                        box-shadow: 0 0 10px red;
+                        filter: blur(0);
+                      }
 
-                    50% {
-                      background-color: yellow;
-                      box-shadow: 0 0 10px yellow;
-                      filter: blur(5px);
-                    }
+                      50% {
+                        background-color: yellow;
+                        box-shadow: 0 0 10px yellow;
+                        filter: blur(5px);
+                      }
 
-                    100% {
-                      background-color: red;
-                      box-shadow: 0 0 10px red;
-                      filter: blur(10px);
-                      opacity: 0;
+                      100% {
+                        background-color: red;
+                        box-shadow: 0 0 10px red;
+                        filter: blur(10px);
+                        opacity: 0;
+                      }
                     }
-                  }
-                `
-              : ''
-          }`}
-        >
-          <div
-            className={css`
-              width: 100%;
-            `}
+                  `
+                : ''
+            }`}
           >
-            {imageExists ? (
-              <img
-                style={{
-                  width: '100%'
-                }}
-                src={frontPicUrl}
-              />
-            ) : null}
-          </div>
-        </animated.div>
+            <div
+              className={css`
+                width: 100%;
+              `}
+            >
+              {imageExists ? (
+                <img
+                  style={{
+                    width: '100%'
+                  }}
+                  src={frontPicUrl}
+                />
+              ) : null}
+            </div>
+          </animated.div>
+        </div>
       )}
     </div>
   );
