@@ -13,6 +13,7 @@ import { qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
+import BurnStatus from './BurnStatus';
 
 AICardModal.propTypes = {
   cardId: PropTypes.number.isRequired,
@@ -154,6 +155,8 @@ export default function AICardModal({ cardId, onHide }) {
                   {generatingImage ? 'Generating...' : 'Generate Image'}
                 </GradientButton>
               </div>
+            ) : card.isBurned ? (
+              <BurnStatus />
             ) : card.isListed ? (
               <ListedMenu
                 cardId={card.id}
