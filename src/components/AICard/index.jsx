@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import LiveCard from './LiveCard';
+import BurnedCard from './BurnedCard';
 import { useGesture } from '@use-gesture/react';
 import { cardProps } from '~/constants/defaultValues';
 import { useSpring } from 'react-spring';
@@ -79,7 +80,7 @@ export default function AICard({ animateOnMouseLeave, card, onClick }) {
       onClick={onClick}
     >
       {card.isBurned ? (
-        <div>burned</div>
+        <BurnedCard />
       ) : (
         <LiveCard
           card={card}
