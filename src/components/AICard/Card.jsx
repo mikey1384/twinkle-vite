@@ -93,7 +93,7 @@ export default function LiveCard({
               src={frontPicUrl}
             />
           ) : null}
-          {card.isBurned && (
+          {!!card.isBurned && (
             <div
               style={{
                 background: '#fff',
