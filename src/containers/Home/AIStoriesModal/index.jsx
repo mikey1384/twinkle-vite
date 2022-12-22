@@ -1,34 +1,41 @@
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
-import Loading from '~/components/Loading';
-import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
-import { mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
+import Button from '~/components/Button';
+import ContentGenerator from './ContentGenerator';
+import DropdownButton from '~/components/Buttons/DropdownButton';
+import GradientButton from '~/components/Buttons/GradientButton';
 
 AIStoriesModal.propTypes = {
   onHide: PropTypes.func.isRequired
 };
 
+const levelHash = {
+  1: 'Level 1',
+  2: 'Level 2',
+  3: 'Level 3',
+  4: 'Level 4',
+  5: 'Level 5'
+};
+
 export default function AIStoriesModal({ onHide }) {
   const [loading, setLoading] = useState(true);
+  const loadedDifficulty = localStorage.getItem('story-difficulty');
+  const [difficulty, setDifficulty] = useState(loadedDifficulty || 2);
+  const [loadComplete, setLoadComplete] = useState(false);
+  const [dropdownShown, setDropdownShown] = useState(false);
+  const [generateButtonPressed, setGenerateButtonPressed] = useState(false);
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
   const [storyObj, setStoryObj] = useState({});
 
   useEffect(() => {
-    init();
-    async function init() {
-      setLoading(true);
-      const { storyObj } = await loadAIStory();
-      setStoryObj(storyObj);
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    localStorage.setItem('story-difficulty', difficulty);
+  }, [difficulty]);
 
   return (
     <Modal
+      closeWhenClickedOutside={!dropdownShown}
       modalStyle={{
         height: '80vh'
       }}
@@ -37,47 +44,91 @@ export default function AIStoriesModal({ onHide }) {
     >
       <main
         style={{
+          height: '100%',
           overflow: 'scroll',
           scrollBehavior: 'smooth',
           justifyContent: 'flex-start',
           alignItems: 'center'
         }}
       >
-        {loading ? (
-          <Loading style={{ marginTop: '20vh' }} text="Generating a Story..." />
+        {generateButtonPressed ? (
+          <ContentGenerator
+            loading={loading}
+            loadComplete={loadComplete}
+            storyObj={storyObj}
+          />
         ) : (
           <div
-            className={css`
-              width: 50%;
-              @media (max-width: ${mobileMaxWidth}) {
-                width: 100%;
-              }
-            `}
             style={{
-              marginTop: '60vh',
-              marginBottom: '60vh',
-              padding: '2rem',
-              fontSize: '1.7rem'
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              height: '100%',
+              justifyContent: 'center',
+              alignItems: 'center'
             }}
           >
-            <div
-              dangerouslySetInnerHTML={{ __html: storyObj?.story }}
-              style={{ lineHeight: 3 }}
+            <DropdownButton
+              skeuomorphic
+              color="darkerGray"
+              icon="caret-down"
+              text={levelHash[difficulty]}
+              onDropdownShown={setDropdownShown}
+              menuProps={[
+                {
+                  label: levelHash[1],
+                  onClick: () => setDifficulty(1)
+                },
+                {
+                  label: levelHash[2],
+                  onClick: () => setDifficulty(2)
+                },
+                {
+                  label: levelHash[3],
+                  onClick: () => setDifficulty(3)
+                },
+                {
+                  label: levelHash[4],
+                  onClick: () => setDifficulty(4)
+                },
+                {
+                  label: levelHash[5],
+                  onClick: () => setDifficulty(5)
+                }
+              ]}
             />
-            <div
-              style={{
-                marginTop: '20rem',
-                display: 'flex',
-                justifyContent: 'center'
-              }}
+            <GradientButton
+              style={{ marginTop: '2rem' }}
+              onClick={handleGenerate}
             >
-              <Button transparent onClick={onHide}>
-                close
-              </Button>
-            </div>
+              Generate a Story
+            </GradientButton>
+          </div>
+        )}
+        {generateButtonPressed && (
+          <div
+            style={{
+              marginTop: '20rem',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <Button transparent onClick={onHide}>
+              close
+            </Button>
           </div>
         )}
       </main>
     </Modal>
   );
+
+  async function handleGenerate() {
+    setGenerateButtonPressed(true);
+    setLoading(true);
+    const { storyObj } = await loadAIStory(difficulty);
+    setStoryObj(storyObj);
+    setLoadComplete(true);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    setLoading(false);
+  }
 }

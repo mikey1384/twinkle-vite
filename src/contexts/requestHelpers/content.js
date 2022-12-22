@@ -315,11 +315,14 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadAIStory() {
+    async loadAIStory(difficulty) {
       try {
         const {
           data: { imageUrl, storyObj }
-        } = await request.get(`${URL}/content/game/story`, auth());
+        } = await request.get(
+          `${URL}/content/game/story?difficulty=${difficulty}`,
+          auth()
+        );
         return Promise.resolve({ imageUrl, storyObj });
       } catch (error) {
         return handleError(error);
