@@ -8,11 +8,16 @@ const youLabel = localize('You');
 
 export default function AICards() {
   const { userId: myId } = useKeyContext((v) => v.myState);
-  const aiImageRows = useChatContext((v) => v.state.aiCards);
+  const aiCardIds = useChatContext((v) => v.state.aiCardIds);
+  const cardObj = useChatContext((v) => v.state.cardObj);
+  const aiCards = useMemo(
+    () => aiCardIds.map((id) => cardObj[id]),
+    [aiCardIds, cardObj]
+  );
 
   const lastActivity = useMemo(() => {
-    return aiImageRows?.[aiImageRows?.length - 1];
-  }, [aiImageRows]);
+    return aiCards?.[aiCards?.length - 1];
+  }, [aiCards]);
 
   return (
     <div style={{ height: '5rem', position: 'relative' }}>
