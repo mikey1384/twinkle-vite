@@ -32,7 +32,7 @@ export default function AICardModal({ cardId, onHide }) {
   const [generatingImage, setGeneratingImage] = useState(false);
   const [isBurning, setIsBurning] = useState(false);
   const card = useMemo(() => cardObj[cardId], [cardId, cardObj]);
-  const { cardCss, promptText } = useAICard(card);
+  const { promptText } = useAICard(card);
 
   return (
     <Modal large modalOverModal onHide={onHide}>
@@ -49,9 +49,7 @@ export default function AICardModal({ cardId, onHide }) {
           }}
         >
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
-            <div className={cardCss}>
-              <AICard card={card} isBurning={isBurning} />
-            </div>
+            <AICard card={card} isBurning={isBurning} />
           </div>
           <div
             style={{
