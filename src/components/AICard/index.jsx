@@ -10,7 +10,6 @@ import $ from 'jquery';
 AICard.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
   card: PropTypes.object.isRequired,
-  isBurning: PropTypes.bool,
   onClick: PropTypes.func
 };
 
@@ -23,12 +22,7 @@ const ROTATE_Y_FACTOR = 0.1;
 
 const $style = $('#animation');
 
-export default function AICard({
-  animateOnMouseLeave,
-  card,
-  isBurning,
-  onClick
-}) {
+export default function AICard({ animateOnMouseLeave, card, onClick }) {
   const imageExists = useMemo(() => !!card.imagePath, [card.imagePath]);
   const frontPicUrl = `${cloudFrontURL}${card.imagePath}`;
   const timerRef = useRef(null);
@@ -129,7 +123,7 @@ export default function AICard({
             alignItems: 'center'
           }}
           className={`card${isAnimated ? ' animated' : ''} ${
-            isBurning
+            card.isBurning
               ? css`
                   animation: burning 2s linear;
                   animation-fill-mode: forwards;
