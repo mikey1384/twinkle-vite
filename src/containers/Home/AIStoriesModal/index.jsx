@@ -60,7 +60,10 @@ export default function AIStoriesModal({ onHide }) {
               fontSize: '1.7rem'
             }}
           >
-            <div style={{ lineHeight: 3 }}>{storyObj?.story}</div>
+            <div
+              dangerouslySetInnerHTML={{ __html: storyObj?.story }}
+              style={{ lineHeight: 3 }}
+            />
             <div
               style={{
                 marginTop: '20rem',
