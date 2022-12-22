@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import { useAppContext } from '~/contexts';
@@ -21,12 +21,17 @@ const levelHash = {
 
 export default function AIStoriesModal({ onHide }) {
   const [loading, setLoading] = useState(true);
-  const [difficulty, setDifficulty] = useState(2);
+  const loadedDifficulty = localStorage.getItem('story-difficulty');
+  const [difficulty, setDifficulty] = useState(loadedDifficulty || 2);
   const [loadComplete, setLoadComplete] = useState(false);
   const [dropdownShown, setDropdownShown] = useState(false);
   const [generateButtonPressed, setGenerateButtonPressed] = useState(false);
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
   const [storyObj, setStoryObj] = useState({});
+
+  useEffect(() => {
+    localStorage.setItem('story-difficulty', difficulty);
+  }, [difficulty]);
 
   return (
     <Modal
