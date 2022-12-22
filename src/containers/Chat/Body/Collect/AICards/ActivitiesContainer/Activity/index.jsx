@@ -4,10 +4,10 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
-import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
 import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
+import useAICard from '~/helpers/hooks/useAICard';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import moment from 'moment';
 
@@ -28,7 +28,7 @@ export default function Activity({
   onSetScrollToBottom,
   onSetAICardModalCardId
 }) {
-  const { cardCss, promptText } = useAICard(card);
+  const { promptText } = useAICard(card);
   const onRemoveNewlyPostedCardStatus = useChatContext(
     (v) => v.actions.onRemoveNewlyPostedCardStatus
   );
@@ -80,7 +80,6 @@ export default function Activity({
           marginTop: '2rem',
           marginBottom: '5rem'
         }}
-        className={cardCss}
       >
         <div
           style={{
@@ -124,8 +123,6 @@ export default function Activity({
           >
             <AICard
               card={card}
-              quality={card.quality}
-              imagePath={card.imagePath}
               onClick={() => onSetAICardModalCardId(card.id)}
             />
           </div>
