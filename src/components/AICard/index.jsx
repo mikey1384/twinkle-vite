@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import LiveCard from './LiveCard';
-import BurnedCard from './BurnedCard';
+import Card from './Card';
 import { useGesture } from '@use-gesture/react';
 import { cardProps } from '~/constants/defaultValues';
 import { useSpring } from 'react-spring';
@@ -79,20 +78,16 @@ export default function AICard({ animateOnMouseLeave, card, onClick }) {
       className={`unselectable`}
       onClick={onClick}
     >
-      {card.isBurned ? (
-        <BurnedCard />
-      ) : (
-        <LiveCard
-          card={card}
-          bind={bind}
-          innerRef={CardRef}
-          isAnimated={isAnimated}
-          cardStyle={cardStyle}
-          animateOnMouseLeave={animateOnMouseLeave}
-          onMouseLeave={handleMouseLeave}
-          onMouseMove={handleMouseMove}
-        />
-      )}
+      <Card
+        card={card}
+        bind={bind}
+        innerRef={CardRef}
+        isAnimated={isAnimated}
+        cardStyle={cardStyle}
+        animateOnMouseLeave={animateOnMouseLeave}
+        onMouseLeave={handleMouseLeave}
+        onMouseMove={handleMouseMove}
+      />
     </div>
   );
 
@@ -124,7 +119,7 @@ export default function AICard({ animateOnMouseLeave, card, onClick }) {
 
   function handleMouseLeave() {
     $style.html('');
-    if (animateOnMouseLeave) {
+    if (animateOnMouseLeave && !card.isBurned) {
       timerRef.current = setTimeout(() => {
         setIsAnimated(true);
       }, 500);
