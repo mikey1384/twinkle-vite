@@ -50,12 +50,7 @@ export default function AICardModal({ cardId, onHide }) {
         >
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
             <div className={cardCss}>
-              <AICard
-                isBurning={isBurning}
-                isBurned={!!card.isBurned}
-                quality={card.quality}
-                imagePath={card.imagePath}
-              />
+              <AICard card={card} isBurning={isBurning} />
             </div>
           </div>
           <div

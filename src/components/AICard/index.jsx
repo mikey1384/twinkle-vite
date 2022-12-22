@@ -4,13 +4,12 @@ import { css } from '@emotion/css';
 import { cardProps, cloudFrontURL } from '~/constants/defaultValues';
 import { useSpring, animated } from 'react-spring';
 import { useGesture } from '@use-gesture/react';
+import useAICard from '~/helpers/hooks/useAICard';
 import $ from 'jquery';
 
 AICard.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
-  imagePath: PropTypes.string,
-  quality: PropTypes.string,
-  isBurned: PropTypes.bool,
+  card: PropTypes.object.isRequired,
   isBurning: PropTypes.bool,
   onClick: PropTypes.func
 };
@@ -26,17 +25,16 @@ const $style = $('#animation');
 
 export default function AICard({
   animateOnMouseLeave,
-  imagePath,
-  quality,
-  isBurned,
+  card,
   isBurning,
   onClick
 }) {
-  const imageExists = useMemo(() => !!imagePath, [imagePath]);
-  const frontPicUrl = `${cloudFrontURL}${imagePath}`;
+  const imageExists = useMemo(() => !!card.imagePath, [card.imagePath]);
+  const frontPicUrl = `${cloudFrontURL}${card.imagePath}`;
   const timerRef = useRef(null);
   const CardRef = useRef(null);
   const [isAnimated, setIsAnimated] = useState(false);
+  const { cardCss } = useAICard(card);
   const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
     rotateX: 0,
     rotateY: 0,
@@ -77,10 +75,10 @@ export default function AICard({
         justifyContent: 'center',
         cursor: onClick ? 'pointer' : 'default'
       }}
-      className="unselectable"
+      className={`unselectable ${cardCss}`}
       onClick={onClick}
     >
-      {isBurned ? (
+      {card.isBurned ? (
         <div>burned</div>
       ) : (
         <animated.div
@@ -106,7 +104,7 @@ export default function AICard({
           .card:hover:before { ${grad_pos} }
           .card:hover:after { ${sprk_pos} ${opc} }
         `;
-            if (cardProps[quality].includes('glossy')) {
+            if (cardProps[card.quality].includes('glossy')) {
               $style.html(style);
             }
             clearTimeout(timerRef.current);
