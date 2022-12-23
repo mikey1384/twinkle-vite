@@ -2,12 +2,15 @@ import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { useKeyContext } from '~/contexts';
 import {
   cardLevelHash,
   cloudFrontURL,
+  returnCardBurnXP,
   cardProps,
   qualityProps
 } from '~/constants/defaultValues';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import AICardModal from '~/components/Modals/AICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
@@ -16,9 +19,21 @@ CardItem.propTypes = {
 };
 
 export default function CardItem({ card }) {
+  const {
+    xpNumber: { color: xpNumberColor }
+  } = useKeyContext((v) => v.theme);
+  const burnXP = useMemo(() => {
+    return returnCardBurnXP({
+      cardLevel: card.level,
+      cardQuality: card.quality
+    });
+  }, [card.level, card.quality]);
   const [cardModalShown, setCardModalShown] = useState(false);
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
-  const cardColor = useMemo(() => Color[cardObj?.color](), [cardObj?.color]);
+  const cardColor = useMemo(
+    () => Color[card.isBurned ? 'black' : cardObj?.color](),
+    [card.isBurned, cardObj?.color]
+  );
   const borderColor = useMemo(() => qualityProps[card.quality]?.color, [card]);
   const promptText = useMemo(() => {
     if (card.word) {
@@ -72,11 +87,30 @@ export default function CardItem({ card }) {
               : 'none'
           }}
         >
-          {card.imagePath && (
+          {card.imagePath && !card.isBurned && (
             <img
               style={{ width: '100%' }}
               src={`${cloudFrontURL}${card.imagePath}`}
             />
+          )}
+          {!!card.isBurned && (
+            <div
+              className={css`
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 0.5rem 0;
+                font-size: 0.7rem;
+              `}
+              style={{
+                background: '#fff'
+              }}
+            >
+              <b style={{ color: Color[xpNumberColor]() }}>
+                {addCommasToNumber(burnXP)}
+              </b>
+              <b style={{ color: Color.gold(), marginLeft: '2px' }}>XP</b>
+            </div>
           )}
         </div>
         <div
