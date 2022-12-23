@@ -103,9 +103,6 @@ export default function CardItem({ card }) {
                 padding: 0.5rem 0;
                 font-size: 0.7rem;
               `}
-              style={{
-                background: '#fff'
-              }}
             >
               <b style={{ color: Color[xpNumberColor]() }}>
                 {addCommasToNumber(burnXP)}
