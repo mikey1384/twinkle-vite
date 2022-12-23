@@ -82,9 +82,10 @@ export default function CardItem({ card }) {
             flexDirection: 'column',
             justifyContent: 'center',
             backgroundColor: cardColor,
-            border: cardProps[card.quality]?.includes('glowy')
-              ? `3px solid ${borderColor}`
-              : 'none'
+            border:
+              cardProps[card.quality]?.includes('glowy') && !card.isBurned
+                ? `3px solid ${borderColor}`
+                : 'none'
           }}
         >
           {card.imagePath && !card.isBurned && (
