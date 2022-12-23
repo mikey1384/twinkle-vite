@@ -11,7 +11,7 @@ import { animated } from 'react-spring';
 
 LiveCard.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
-  bind: PropTypes.object.isRequired,
+  bind: PropTypes.func.isRequired,
   card: PropTypes.object.isRequired,
   cardStyle: PropTypes.object.isRequired,
   innerRef: PropTypes.object.isRequired,
