@@ -3,7 +3,7 @@ import OwnerMenu from './OwnerMenu';
 import NonOwnerMenu from './NonOwnerMenu';
 import { useMemo } from 'react';
 import { mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { returnCardBurnXP } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 
@@ -28,7 +28,6 @@ export default function UnlistedMenu({
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
   const burnAICard = useAppContext((v) => v.requestHelpers.burnAICard);
-  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const burnXP = useMemo(() => {
     return returnCardBurnXP({ cardLevel, cardQuality });
   }, [cardLevel, cardQuality]);
@@ -57,7 +56,7 @@ export default function UnlistedMenu({
           cardLevel={cardLevel}
           cardQuality={cardQuality}
           onSetSellModalShown={onSetSellModalShown}
-          onBurnConfirm={handleBurnConfirm}
+          onBurnConfirm={() => burnAICard(cardId)}
         />
       ) : (
         <NonOwnerMenu
@@ -68,16 +67,4 @@ export default function UnlistedMenu({
       )}
     </div>
   );
-
-  async function handleBurnConfirm() {
-    await burnAICard(cardId);
-    onUpdateAICard({ cardId, newState: { isBurning: true } });
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    onUpdateAICard({
-      cardId,
-      newState: {
-        isBurned: true
-      }
-    });
-  }
 }

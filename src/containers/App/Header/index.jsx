@@ -116,7 +116,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const myStream = useChatContext((v) => v.state.myStream);
   const numUnreads = useChatContext((v) => v.state.numUnreads);
   const chatStatus = useChatContext((v) => v.state.chatStatus);
-  const cardObj = useChatContext((v) => v.state.cardObj);
   const onAddReactionToMessage = useChatContext(
     (v) => v.actions.onAddReactionToMessage
   );
@@ -388,16 +387,14 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     };
 
     async function handleAICardBurned(cardId) {
-      if (cardObj[cardId]?.ownerId !== userId) {
-        onUpdateAICard({ cardId, newState: { isBurning: true } });
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        onUpdateAICard({
-          cardId,
-          newState: {
-            isBurned: true
-          }
-        });
-      }
+      onUpdateAICard({ cardId, newState: { isBurning: true } });
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      onUpdateAICard({
+        cardId,
+        newState: {
+          isBurned: true
+        }
+      });
     }
 
     function handleAICardListed(card) {
