@@ -12,7 +12,6 @@ UnlistedMenu.propTypes = {
   cardLevel: PropTypes.number.isRequired,
   cardQuality: PropTypes.string.isRequired,
   onSetSellModalShown: PropTypes.func.isRequired,
-  onSetIsBurning: PropTypes.func.isRequired,
   owner: PropTypes.object.isRequired,
   userIsOwner: PropTypes.bool.isRequired
 };
@@ -20,7 +19,6 @@ UnlistedMenu.propTypes = {
 export default function UnlistedMenu({
   cardId,
   onSetSellModalShown,
-  onSetIsBurning,
   cardLevel,
   cardQuality,
   owner,
@@ -58,7 +56,6 @@ export default function UnlistedMenu({
           xpNumberColor={xpNumberColor}
           cardLevel={cardLevel}
           cardQuality={cardQuality}
-          onSetIsBurning={onSetIsBurning}
           onSetSellModalShown={onSetSellModalShown}
           onBurnConfirm={handleBurnConfirm}
         />
@@ -74,7 +71,7 @@ export default function UnlistedMenu({
 
   async function handleBurnConfirm() {
     await burnAICard(cardId);
-    onSetIsBurning(true);
+    onUpdateAICard({ cardId, newState: { isBurning: true } });
     await new Promise((resolve) => setTimeout(resolve, 2000));
     onUpdateAICard({
       cardId,

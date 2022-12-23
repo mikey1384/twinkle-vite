@@ -171,9 +171,6 @@ export default function AICardModal({ cardId, onHide }) {
                 userIsOwner={card.ownerId === userId}
                 onSetSellModalShown={setSellModalShown}
                 owner={card.owner}
-                onSetIsBurning={() =>
-                  onUpdateAICard({ cardId, newState: { isBurning: true } })
-                }
               />
             )}
           </div>

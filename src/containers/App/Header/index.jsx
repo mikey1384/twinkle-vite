@@ -116,6 +116,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const myStream = useChatContext((v) => v.state.myStream);
   const numUnreads = useChatContext((v) => v.state.numUnreads);
   const chatStatus = useChatContext((v) => v.state.chatStatus);
+  const cardObj = useChatContext((v) => v.state.cardObj);
   const onAddReactionToMessage = useChatContext(
     (v) => v.actions.onAddReactionToMessage
   );
@@ -188,6 +189,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
+  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const onUpdateCollectorsRankings = useChatContext(
     (v) => v.actions.onUpdateCollectorsRankings
   );
@@ -271,6 +273,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const currentPathIdRef = useRef(Number(currentPathId));
 
   useEffect(() => {
+    socket.on('ai_card_burned', handleAICardBurned);
     socket.on('ai_card_listed', handleAICardListed);
     socket.on('ai_card_delisted', handleAICardDelisted);
     socket.on('ban_status_updated', handleBanStatusUpdate);
@@ -315,6 +318,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('username_changed', handleUsernameChange);
 
     return function cleanUp() {
+      socket.removeListener('ai_card_burned', handleAICardBurned);
       socket.removeListener('ai_card_listed', handleAICardListed);
       socket.removeListener('ai_card_delisted', handleAICardDelisted);
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
@@ -382,6 +386,19 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       socket.removeListener('user_type_updated', handleUserTypeUpdate);
       socket.removeListener('username_changed', handleUsernameChange);
     };
+
+    async function handleAICardBurned(cardId) {
+      if (cardObj[cardId]?.ownerId !== userId) {
+        onUpdateAICard({ cardId, newState: { isBurning: true } });
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        onUpdateAICard({
+          cardId,
+          newState: {
+            isBurned: true
+          }
+        });
+      }
+    }
 
     function handleAICardListed(card) {
       if (card.ownerId !== userId) {
