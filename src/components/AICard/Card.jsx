@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import useAICard from '~/helpers/hooks/useAICard';
 import UsernameText from '~/components/Texts/UsernameText';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { cloudFrontURL, returnCardBurnXP } from '~/constants/defaultValues';
@@ -95,11 +95,16 @@ export default function LiveCard({
           ) : null}
           {!!card.isBurned && (
             <div
+              className={css`
+                font-size: 1.6rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.2rem;
+                }
+              `}
               style={{
                 background: '#fff',
                 textAlign: 'center',
-                padding: '5rem 0',
-                lineHeight: 1.7
+                padding: '1rem'
               }}
             >
               <div>
@@ -111,11 +116,15 @@ export default function LiveCard({
                   }}
                 />
               </div>
-              <div>burned this card and earned</div>
-              <b style={{ color: Color[xpNumberColor]() }}>
-                {addCommasToNumber(burnXP)}
-              </b>{' '}
-              <b style={{ color: Color.gold() }}>XP</b>
+              <div style={{ marginTop: '0.5rem' }}>
+                burned this card and earned
+              </div>
+              <div style={{ marginTop: '0.5rem' }}>
+                <b style={{ color: Color[xpNumberColor]() }}>
+                  {addCommasToNumber(burnXP)}
+                </b>{' '}
+                <b style={{ color: Color.gold() }}>XP</b>
+              </div>
             </div>
           )}
         </div>
