@@ -4,22 +4,25 @@ import Button from '~/components/Button';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
 
 NonOwnerMenu.propTypes = {
   burnXP: PropTypes.number.isRequired,
-  cardId: PropTypes.number.isRequired,
   xpNumberColor: PropTypes.string.isRequired,
-  owner: PropTypes.object.isRequired
+  owner: PropTypes.object.isRequired,
+  onSetOfferModalShown: PropTypes.func.isRequired
 };
 
-export default function NonOwnerMenu({ burnXP, cardId, xpNumberColor, owner }) {
+export default function NonOwnerMenu({
+  burnXP,
+  xpNumberColor,
+  owner,
+  onSetOfferModalShown
+}) {
   const {
     userLink: { color: userLinkColor }
   } = useKeyContext((v) => v.theme);
-  const postAICardOffer = useAppContext(
-    (v) => v.requestHelpers.postAICardOffer
-  );
+
   return (
     <div
       className={css`
@@ -87,7 +90,7 @@ export default function NonOwnerMenu({ burnXP, cardId, xpNumberColor, owner }) {
                 padding: 0.7rem !important;
               }
             `}
-            onClick={handleMakeOffer}
+            onClick={() => onSetOfferModalShown(true)}
             color="oceanBlue"
             filled
           >
@@ -106,9 +109,4 @@ export default function NonOwnerMenu({ burnXP, cardId, xpNumberColor, owner }) {
       </div>
     </div>
   );
-
-  async function handleMakeOffer() {
-    const result = await postAICardOffer({ cardId, price: 100 });
-    console.log(result);
-  }
 }

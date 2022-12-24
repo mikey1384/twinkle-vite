@@ -6,6 +6,7 @@ import Button from '~/components/Button';
 import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
 import SanitizedHTML from 'react-sanitized-html';
+import OfferModal from './OfferModal';
 import SellModal from './SellModal';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -29,6 +30,7 @@ export default function AICardModal({ cardId, onHide }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const { userId } = useKeyContext((v) => v.myState);
+  const [offerModalShown, setOfferModalShown] = useState(false);
   const [sellModalShown, setSellModalShown] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const card = useMemo(() => cardObj[cardId], [cardId, cardObj]);
@@ -171,6 +173,7 @@ export default function AICardModal({ cardId, onHide }) {
                 userIsOwner={card.ownerId === userId}
                 onSetSellModalShown={setSellModalShown}
                 owner={card.owner}
+                onSetOfferModalShown={setOfferModalShown}
               />
             )}
           </div>
@@ -181,6 +184,9 @@ export default function AICardModal({ cardId, onHide }) {
           Close
         </Button>
       </footer>
+      {offerModalShown && (
+        <OfferModal cardId={card.id} onHide={() => setOfferModalShown(false)} />
+      )}
       {sellModalShown && (
         <SellModal card={card} onHide={() => setSellModalShown(false)} />
       )}

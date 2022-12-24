@@ -4,22 +4,23 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 
-SellModal.propTypes = {
-  card: PropTypes.object.isRequired,
+OfferModal.propTypes = {
+  cardId: PropTypes.number.isRequired,
   onHide: PropTypes.func.isRequired
 };
 
-export default function SellModal({ card, onHide }) {
-  const listAICard = useAppContext((v) => v.requestHelpers.listAICard);
-  const onListAICard = useChatContext((v) => v.actions.onListAICard);
+export default function OfferModal({ cardId, onHide }) {
   const [amount, setAmount] = useState(0);
+  const postAICardOffer = useAppContext(
+    (v) => v.requestHelpers.postAICardOffer
+  );
 
   return (
     <Modal large modalOverModal onHide={onHide}>
-      <header>List for Sale</header>
+      <header>Make an Offer</header>
       <main>
         <div
           style={{
@@ -61,14 +62,14 @@ export default function SellModal({ card, onHide }) {
           <Button
             filled
             color="oceanBlue"
-            onClick={handleCompleteListing}
+            onClick={handlePostOffer}
             disabled={!amount}
             style={{
               fontSize: '1.4rem',
               marginTop: '2rem'
             }}
           >
-            List for Sale
+            Make Offer
           </Button>
         </div>
       </main>
@@ -87,14 +88,8 @@ export default function SellModal({ card, onHide }) {
     setAmount(newAmount);
   }
 
-  async function handleCompleteListing() {
-    const success = await listAICard({ cardId: card.id, price: amount });
-    if (success) {
-      onListAICard({
-        card,
-        price: amount
-      });
-      onHide();
-    }
+  async function handlePostOffer() {
+    await postAICardOffer({ cardId, price: amount });
+    onHide();
   }
 }
