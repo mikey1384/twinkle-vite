@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import CardItem from './CardItem';
+import CardItem from '../CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
@@ -13,6 +13,7 @@ Listed.propTypes = {
 
 export default function Listed({ loadMoreButtonColor }) {
   const [loaded, setLoaded] = useState(false);
+  const [overflown, setOverflown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const CardItemsRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -49,6 +50,11 @@ export default function Listed({ loadMoreButtonColor }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socketConnected]);
+
+  useEffect(() => {
+    const container = CardItemsRef.current;
+    setOverflown(container.offsetHeight < container.scrollHeight);
+  }, [myListedCards]);
 
   useEffect(() => {
     const CardItems = CardItemsRef.current;
@@ -100,7 +106,14 @@ export default function Listed({ loadMoreButtonColor }) {
           </b>
         </div>
       ) : (
-        myListedCards.map((card) => <CardItem key={card.id} card={card} />)
+        myListedCards.map((card, index) => (
+          <CardItem
+            isOverflown={overflown}
+            isLast={index === myListedCards.length - 1}
+            key={card.id}
+            card={card}
+          />
+        ))
       )}
       {loaded && myListedCardsLoadMoreButton && (
         <LoadMoreButton

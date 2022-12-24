@@ -15,10 +15,12 @@ import AICardModal from '~/components/Modals/AICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 CardItem.propTypes = {
-  card: PropTypes.object.isRequired
+  card: PropTypes.object.isRequired,
+  isOverflown: PropTypes.bool.isRequired,
+  isLast: PropTypes.bool.isRequired
 };
 
-export default function CardItem({ card }) {
+export default function CardItem({ card, isOverflown, isLast }) {
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
@@ -54,7 +56,7 @@ export default function CardItem({ card }) {
     return card.prompt;
   }, [card.prompt, card.word, cardObj?.color]);
   return (
-    <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/CollectedCards/CardItem">
+    <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/CardItem">
       <div
         className={`unselectable ${css`
           &:hover {
@@ -67,7 +69,8 @@ export default function CardItem({ card }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'flex-start',
-          borderBottom: `1px solid ${Color.borderGray()}`
+          borderBottom:
+            isOverflown && isLast ? 'none' : `1px solid ${Color.borderGray()}`
         }}
         onClick={() => setCardModalShown(true)}
         key={card.id}
