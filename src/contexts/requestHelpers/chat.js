@@ -18,7 +18,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async burnAICard(cardId) {
       try {
         const { data } = await request.delete(
-          `${URL}/chat/aiImage/burn?cardId=${cardId}`,
+          `${URL}/chat/aiCard/burn?cardId=${cardId}`,
           auth()
         );
         return Promise.resolve(data);
@@ -231,7 +231,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
       try {
         const {
           data: { quality, level, cardId, word, prompt, coins }
-        } = await request.get(`${URL}/chat/aiImage/quality`, auth());
+        } = await request.get(`${URL}/chat/aiCard/quality`, auth());
         return Promise.resolve({ quality, level, cardId, word, prompt, coins });
       } catch (error) {
         return handleError(error);
@@ -241,7 +241,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
       try {
         const {
           data: { imagePath }
-        } = await request.post(`${URL}/chat/aiImage/s3`, { imageUrl }, auth());
+        } = await request.post(`${URL}/chat/aiCard/s3`, { imageUrl }, auth());
         return Promise.resolve(imagePath);
       } catch (error) {
         return handleError(error);
@@ -252,7 +252,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         const {
           data: { result }
         } = await request.post(
-          `${URL}/chat/aiImage`,
+          `${URL}/chat/aiCard`,
           { cardId, imagePath, style },
           auth()
         );
@@ -324,7 +324,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         const {
           data: { success }
         } = await request.post(
-          `${URL}/chat/aiImage/list`,
+          `${URL}/chat/aiCard/list`,
           { cardId, price },
           auth()
         );
@@ -338,7 +338,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         const {
           data: { success }
         } = await request.delete(
-          `${URL}/chat/aiImage/list?cardId=${cardId}`,
+          `${URL}/chat/aiCard/list?cardId=${cardId}`,
           auth()
         );
         return Promise.resolve(success);
@@ -477,7 +477,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         const {
           data: { cards, loadMoreShown }
         } = await request.get(
-          `${URL}/chat/aiImage/listed${lastId ? `?lastId=${lastId}` : ''}`,
+          `${URL}/chat/aiCard/listed${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
         );
         return Promise.resolve({ cards, loadMoreShown });
@@ -490,7 +490,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         const {
           data: { cards, loadMoreShown }
         } = await request.get(
-          `${URL}/chat/aiImage/listed/my${lastId ? `?lastId=${lastId}` : ''}`,
+          `${URL}/chat/aiCard/listed/my${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
         );
         return Promise.resolve({ cards, loadMoreShown });
@@ -503,7 +503,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         const {
           data: { cards, loadMoreShown }
         } = await request.get(
-          `${URL}/chat/aiImage/myCollections${
+          `${URL}/chat/aiCard/myCollections${
             lastId ? `?lastId=${lastId}` : ''
           }`,
           auth()
@@ -521,7 +521,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         const {
           data: { cards, loadMoreShown }
         } = await request.get(
-          `${URL}/chat/aiImage${lastId ? `?lastId=${lastId}` : ''}`,
+          `${URL}/chat/aiCard${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
         );
         return Promise.resolve({ cards, loadMoreShown });
