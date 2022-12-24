@@ -227,6 +227,16 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async getMyAICardOffers() {
+      try {
+        const {
+          data: { offers, loadMoreShown }
+        } = await request.get(`${URL}/chat/aiCard/offer/outgoing`, auth());
+        return Promise.resolve({ offers, loadMoreShown });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async postAICardOffer({ cardId, price }) {
       try {
         const {
