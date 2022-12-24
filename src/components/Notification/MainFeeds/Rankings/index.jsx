@@ -4,9 +4,9 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import ThisMonth from './ThisMonth';
 import AllTime from './AllTime';
-import { useKeyContext, useNotiContext } from '~/contexts';
 import localize from '~/constants/localize';
 import moment from 'moment';
+import { useKeyContext, useNotiContext } from '~/contexts';
 
 const monthLabel = moment().utc().format('MMMM');
 const allTimeLabel = localize('allTime');
