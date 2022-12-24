@@ -61,6 +61,7 @@ export default function UnlistedMenu({
       ) : (
         <NonOwnerMenu
           owner={owner}
+          cardId={cardId}
           burnXP={burnXP}
           xpNumberColor={xpNumberColor}
         />
