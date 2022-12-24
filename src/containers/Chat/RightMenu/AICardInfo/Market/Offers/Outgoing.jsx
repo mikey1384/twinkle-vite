@@ -1,23 +1,119 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useAppContext } from '~/contexts';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import CardItem from '../../CardItem';
+import Loading from '~/components/Loading';
+import { Color } from '~/constants/css';
+import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
 
-export default function Outgoing() {
+Outgoing.propTypes = {
+  loadMoreButtonColor: PropTypes.string
+};
+
+export default function Outgoing({ loadMoreButtonColor }) {
+  const CardItemsRef = useRef(null);
+  const [loaded, setLoaded] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [overflown, setOverflown] = useState(false);
+  const socketConnected = useNotiContext((v) => v.state.socketConnected);
+  const outgoingOfferCardIds = useChatContext(
+    (v) => v.state.outgoingOfferCardIds
+  );
+  const onLoadOutgoingOffers = useChatContext(
+    (v) => v.actions.onLoadOutgoingOffers
+  );
+  const onLoadMoreOutgoingOffers = useChatContext(
+    (v) => v.actions.onLoadMoreOutgoingOffers
+  );
+  const cardObj = useChatContext((v) => v.state.cardObj);
+  const outgoingOffers = useMemo(
+    () => outgoingOfferCardIds.map((id) => cardObj[id]),
+    [outgoingOfferCardIds, cardObj]
+  );
+  const outgoingOffersLoadMoreButton = useChatContext(
+    (v) => v.state.outgoingOffersLoadMoreButton
+  );
   const getMyAICardOffers = useAppContext(
     (v) => v.requestHelpers.getMyAICardOffers
   );
+
+  useEffect(() => {
+    const container = CardItemsRef.current;
+    setOverflown(container.offsetHeight < container.scrollHeight);
+  }, [outgoingOffers]);
+
   useEffect(() => {
     init();
     async function init() {
+      setLoaded(false);
       const { offers, loadMoreShown } = await getMyAICardOffers();
-      console.log(offers, loadMoreShown);
+      onLoadOutgoingOffers({ offers, loadMoreShown });
+      setLoaded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [socketConnected]);
 
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Offers/Outgoing">
-      <div>Outgoing</div>
+      <div
+        style={{
+          height: 'CALC(100% - 75px)',
+          overflow: 'scroll'
+        }}
+        ref={CardItemsRef}
+      >
+        {!loaded ? (
+          <Loading style={{ height: '100%' }} />
+        ) : outgoingOffers.length === 0 ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 'CALC(100% - 2rem)',
+              padding: '3rem'
+            }}
+          >
+            <b style={{ color: Color.darkerGray() }}>
+              You have not made any offers yet
+            </b>
+          </div>
+        ) : (
+          outgoingOffers.map((card, index) => (
+            <CardItem
+              isOverflown={overflown}
+              isLast={index === outgoingOffers.length - 1}
+              card={card}
+              key={index}
+            />
+          ))
+        )}
+        {loaded && outgoingOffersLoadMoreButton && (
+          <LoadMoreButton
+            filled
+            color={loadMoreButtonColor}
+            loading={loadingMore}
+            onClick={handleLoadMore}
+            style={{
+              width: '100%',
+              borderRadius: 0,
+              border: 0
+            }}
+          />
+        )}
+      </div>
     </ErrorBoundary>
   );
+
+  async function handleLoadMore() {
+    setLoadingMore(true);
+    const lastId = outgoingOffers[outgoingOffers.length - 1].id;
+    const { cards: offers, loadMoreShown } = await getMyAICardOffers(lastId);
+    onLoadMoreOutgoingOffers({
+      cards: offers,
+      loadMoreShown
+    });
+    setLoadingMore(false);
+  }
 }

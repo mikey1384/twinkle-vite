@@ -1,21 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  useAppContext,
-  useChatContext,
-  useNotiContext,
-  useKeyContext
-} from '~/contexts';
+import PropTypes from 'prop-types';
+import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CardItem from '../CardItem';
 import Loading from '~/components/Loading';
 
-export default function Listings() {
+Listings.propTypes = {
+  loadMoreButtonColor: PropTypes.string
+};
+
+export default function Listings({ loadMoreButtonColor }) {
   const CardItemsRef = useRef(null);
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);

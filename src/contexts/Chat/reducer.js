@@ -916,10 +916,10 @@ export default function ChatReducer(state, action) {
           state.chatType === VOCAB_CHAT_TYPE
             ? state.vocabActivities
             : action.data.vocabActivities,
-        aiDrawingsLoadMoreButton:
+        aiCardsLoadMoreButton:
           state.chatType === AI_CARD_CHAT_TYPE
-            ? state.aiDrawingsLoadMoreButton
-            : action.data.aiDrawingsLoadMoreButton,
+            ? state.aiCardsLoadMoreButton
+            : action.data.aiCardsLoadMoreButton,
         vocabActivitiesLoadMoreButton:
           state.chatType === VOCAB_CHAT_TYPE
             ? state.vocabActivitiesLoadMoreButton
@@ -1185,6 +1185,30 @@ export default function ChatReducer(state, action) {
         ),
         myListedCardsLoadMoreButton: action.loadMoreShown
       };
+    case 'LOAD_OUTGOING_OFFERS': {
+      return {
+        ...state,
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.offers.map((offer) => offer.card))
+        },
+        outgoingOfferCardIds: action.offers.map((offer) => offer.card.id),
+        outgoingOffersLoadMoreButton: action.loadMoreShown
+      };
+    }
+    case 'LOAD_MORE_OUTGOING_OFFERS': {
+      return {
+        ...state,
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.offers)
+        },
+        outgoingOfferCardIds: state.outgoingOfferCardIds.concat(
+          action.offers.map((offer) => offer.id)
+        ),
+        outgoingOffersLoadMoreButton: action.loadMoreShown
+      };
+    }
     case 'LOAD_SUBJECT': {
       const prevChannelObj = state.channelsObj[action.data.channelId];
       const subchannelObj = action.data.subchannelId
@@ -1241,7 +1265,7 @@ export default function ChatReducer(state, action) {
           ...objectify(action.cards)
         },
         aiCardIds: action.cards.map((card) => card.id),
-        aiDrawingsLoadMoreButton: action.loadMoreShown
+        aiCardsLoadMoreButton: action.loadMoreShown
       };
     }
     case 'LOAD_MORE_AI_CARDS': {
@@ -1252,7 +1276,7 @@ export default function ChatReducer(state, action) {
           ...objectify(action.cards)
         },
         aiCardIds: action.cards.map((card) => card.id).concat(state.aiCardIds),
-        aiDrawingsLoadMoreButton: action.loadMoreShown
+        aiCardsLoadMoreButton: action.loadMoreShown
       };
     }
     case 'POST_AI_CARD': {

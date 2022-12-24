@@ -331,6 +331,20 @@ export default function ChatActions(dispatch) {
         loadMoreShown
       });
     },
+    onLoadOutgoingOffers({ offers, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_OUTGOING_OFFERS',
+        offers,
+        loadMoreShown
+      });
+    },
+    onLoadMoreOutgoingOffers({ offers, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_MORE_OUTGOING_OFFERS',
+        offers,
+        loadMoreShown
+      });
+    },
     onLoadListedAICards({ cards, loadMoreShown }) {
       return dispatch({
         type: 'LOAD_LISTED_AI_CARDS',

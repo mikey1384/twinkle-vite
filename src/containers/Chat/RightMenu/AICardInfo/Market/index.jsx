@@ -3,8 +3,12 @@ import { Color } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
 import Listings from './Listings';
 import Offers from './Offers';
+import { useKeyContext } from '~/contexts';
 
 export default function Market() {
+  const {
+    loadMoreButton: { color: loadMoreButtonColor }
+  } = useKeyContext((v) => v.theme);
   const [activeTab, setActiveTab] = useState('buy');
   return (
     <div
@@ -30,7 +34,11 @@ export default function Market() {
         </nav>
       </FilterBar>
       <div style={{ height: '100%' }}>
-        {activeTab === 'buy' ? <Listings /> : <Offers />}
+        {activeTab === 'buy' ? (
+          <Listings loadMoreButtonColor={loadMoreButtonColor} />
+        ) : (
+          <Offers loadMoreButtonColor={loadMoreButtonColor} />
+        )}
       </div>
     </div>
   );
