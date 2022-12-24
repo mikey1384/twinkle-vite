@@ -83,7 +83,7 @@ export default function NonOwnerMenu({ burnXP, xpNumberColor, owner }) {
                 padding: 0.7rem !important;
               }
             `}
-            onClick={() => console.log('buy')}
+            onClick={handleMakeOffer}
             color="oceanBlue"
             filled
           >
@@ -102,4 +102,8 @@ export default function NonOwnerMenu({ burnXP, xpNumberColor, owner }) {
       </div>
     </div>
   );
+
+  function handleMakeOffer() {
+    console.log('make offer');
+  }
 }
