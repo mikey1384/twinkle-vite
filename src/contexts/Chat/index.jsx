@@ -8,6 +8,7 @@ export const ChatContext = createContext();
 
 export const initialChatState = {
   aiCardIds: [],
+  aiCardsLoadMoreButton: false,
   allFavoriteChannelIds: {},
   classLoadMoreButton: false,
   chatStatus: {},
@@ -41,6 +42,8 @@ export const initialChatState = {
   myListedCardIds: [],
   myListedCardsLoadMoreButton: false,
   numUnreads: 0,
+  outgoingOfferCardIds: [],
+  outgoingOffersLoadMoreButton: false,
   peerStreams: {},
   recepientId: null,
   replyTarget: null,
@@ -58,7 +61,6 @@ export const initialChatState = {
   wordsObj: {},
   userSearchResults: [],
   vocabActivities: [],
-  aiDrawingsLoadMoreButton: false,
   vocabActivitiesLoadMoreButton: false
 };
 
