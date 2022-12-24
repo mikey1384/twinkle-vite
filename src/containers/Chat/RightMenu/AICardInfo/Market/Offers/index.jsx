@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
+import Incoming from './Incoming';
+import Outgoing from './Outgoing';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
@@ -30,6 +32,7 @@ export default function Offers() {
           My Offers
         </nav>
       </FilterBar>
+      {selectedTab === 'incoming' ? <Incoming /> : <Outgoing />}
     </ErrorBoundary>
   );
 }
