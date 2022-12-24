@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import CardItem from './CardItem';
+import CardItem from '../CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
@@ -14,6 +14,7 @@ MyCollection.propTypes = {
 export default function MyCollection({ loadMoreButtonColor }) {
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [overflown, setOverflown] = useState(false);
   const CardItemsRef = useRef(null);
   const timeoutRef = useRef(null);
   const loadMyAICardCollections = useAppContext(
@@ -47,6 +48,11 @@ export default function MyCollection({ loadMoreButtonColor }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socketConnected]);
+
+  useEffect(() => {
+    const container = CardItemsRef.current;
+    setOverflown(container.offsetHeight < container.scrollHeight);
+  }, [myCards]);
 
   useEffect(() => {
     const CardItems = CardItemsRef.current;
@@ -94,7 +100,14 @@ export default function MyCollection({ loadMoreButtonColor }) {
           <b style={{ color: Color.darkerGray() }}>No cards collected</b>
         </div>
       ) : (
-        myCards.map((card) => <CardItem key={card.id} card={card} />)
+        myCards.map((card, index) => (
+          <CardItem
+            isOverflown={overflown}
+            isLast={index === myCards.length - 1}
+            key={card.id}
+            card={card}
+          />
+        ))
       )}
       {loaded && myCardsLoadMoreButton && (
         <LoadMoreButton
