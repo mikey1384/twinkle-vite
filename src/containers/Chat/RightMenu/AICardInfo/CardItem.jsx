@@ -160,7 +160,13 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
               dangerouslySetInnerHTML={{ __html: promptText }}
             />
             {offerObj ? (
-              <div style={{ marginTop: '0.5rem' }}>
+              <div
+                style={{
+                  marginTop: '0.7rem',
+                  fontSize: '1.2rem',
+                  textAlign: 'center'
+                }}
+              >
                 <UsernameText
                   color={Color[userLinkColor]()}
                   user={{
@@ -168,14 +174,16 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                     id: offerObj.user.id
                   }}
                 />{' '}
-                offers{' '}
-                <Icon
-                  style={{ color: Color.brownOrange() }}
-                  icon={['far', 'badge-dollar']}
-                />
-                <span style={{ marginLeft: '0.1rem' }}>
-                  {addCommasToNumber(offerObj.price)}
-                </span>
+                offers
+                <p>
+                  <Icon
+                    style={{ color: Color.brownOrange() }}
+                    icon={['far', 'badge-dollar']}
+                  />
+                  <span style={{ marginLeft: '0.1rem' }}>
+                    {addCommasToNumber(offerObj.price)}
+                  </span>
+                </p>
               </div>
             ) : (
               <b
