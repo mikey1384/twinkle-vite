@@ -17,10 +17,11 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 CardItem.propTypes = {
   card: PropTypes.object.isRequired,
   isOverflown: PropTypes.bool.isRequired,
-  isLast: PropTypes.bool.isRequired
+  isLast: PropTypes.bool.isRequired,
+  offerObj: PropTypes.object
 };
 
-export default function CardItem({ card, isOverflown, isLast }) {
+export default function CardItem({ card, isOverflown, isLast, offerObj }) {
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
@@ -155,16 +156,20 @@ export default function CardItem({ card, isOverflown, isLast }) {
               }}
               dangerouslySetInnerHTML={{ __html: promptText }}
             />
-            <b
-              style={{
-                marginTop: '1rem',
-                fontSize: '1.1rem',
-                fontFamily: 'helvetica, sans-serif',
-                color: Color.darkerGray()
-              }}
-            >
-              {card.style}
-            </b>
+            {offerObj ? (
+              <div>{offerObj.price}</div>
+            ) : (
+              <b
+                style={{
+                  marginTop: '1rem',
+                  fontSize: '1.1rem',
+                  fontFamily: 'helvetica, sans-serif',
+                  color: Color.darkerGray()
+                }}
+              >
+                {card.style}
+              </b>
+            )}
           </div>
         </div>
       </div>
