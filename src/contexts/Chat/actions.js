@@ -331,9 +331,23 @@ export default function ChatActions(dispatch) {
         loadMoreShown
       });
     },
+    onLoadIncomingOffers({ offers, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_INCOMING_OFFERS',
+        offers,
+        loadMoreShown
+      });
+    },
     onLoadOutgoingOffers({ offers, loadMoreShown }) {
       return dispatch({
         type: 'LOAD_OUTGOING_OFFERS',
+        offers,
+        loadMoreShown
+      });
+    },
+    onLoadMoreIncomingOffers({ offers, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_MORE_INCOMING_OFFERS',
         offers,
         loadMoreShown
       });
