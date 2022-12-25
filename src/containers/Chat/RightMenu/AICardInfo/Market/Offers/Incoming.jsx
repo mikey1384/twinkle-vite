@@ -58,7 +58,7 @@ export default function Incoming({ loadMoreButtonColor }) {
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Offers/Outgoing">
       <div
         style={{
-          height: 'CALC(100% - 75px)',
+          height: 'CALC(100% - 80px)',
           overflow: 'scroll'
         }}
         ref={CardItemsRef}
