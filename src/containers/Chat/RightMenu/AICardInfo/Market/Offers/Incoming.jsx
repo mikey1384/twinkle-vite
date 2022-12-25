@@ -17,9 +17,7 @@ export default function Incoming({ loadMoreButtonColor }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
-  const incomingOfferCardIds = useChatContext(
-    (v) => v.state.incomingOfferCardIds
-  );
+  const incomingOffers = useChatContext((v) => v.state.incomingOffers);
   const onLoadIncomingOffers = useChatContext(
     (v) => v.actions.onLoadIncomingOffers
   );
@@ -27,10 +25,12 @@ export default function Incoming({ loadMoreButtonColor }) {
     (v) => v.actions.onLoadMoreIncomingOffers
   );
   const cardObj = useChatContext((v) => v.state.cardObj);
-  const incomingOffers = useMemo(
-    () => incomingOfferCardIds.map((id) => cardObj[id]),
-    [incomingOfferCardIds, cardObj]
-  );
+  const displayedIncomingOffers = useMemo(() => {
+    return incomingOffers.map((offer) => ({
+      ...offer,
+      card: cardObj[offer.card.id]
+    }));
+  });
   const incomingOffersLoadMoreButton = useChatContext(
     (v) => v.state.incomingOffersLoadMoreButton
   );
@@ -41,7 +41,7 @@ export default function Incoming({ loadMoreButtonColor }) {
   useEffect(() => {
     const container = CardItemsRef.current;
     setOverflown(container.offsetHeight < container.scrollHeight);
-  }, [incomingOffers]);
+  }, [displayedIncomingOffers]);
 
   useEffect(() => {
     init();
@@ -65,7 +65,7 @@ export default function Incoming({ loadMoreButtonColor }) {
       >
         {!loaded ? (
           <Loading style={{ height: '100%' }} />
-        ) : incomingOffers.length === 0 ? (
+        ) : displayedIncomingOffers.length === 0 ? (
           <div
             style={{
               display: 'flex',
@@ -78,12 +78,12 @@ export default function Incoming({ loadMoreButtonColor }) {
             <b style={{ color: Color.darkerGray() }}>{`No incoming offers`}</b>
           </div>
         ) : (
-          incomingOffers.map((card, index) => (
+          displayedIncomingOffers.map((offer, index) => (
             <CardItem
               isOverflown={overflown}
-              isLast={index === incomingOffers.length - 1}
-              card={card}
-              key={index}
+              isLast={index === displayedIncomingOffers.length - 1}
+              card={offer.card}
+              key={offer.id}
             />
           ))
         )}
@@ -106,7 +106,8 @@ export default function Incoming({ loadMoreButtonColor }) {
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const lastId = incomingOffers[incomingOffers.length - 1].id;
+    const lastId =
+      displayedIncomingOffers[displayedIncomingOffers.length - 1].id;
     const { cards: offers, loadMoreShown } = await getIncomingCardOffers(
       lastId
     );

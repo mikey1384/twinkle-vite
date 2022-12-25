@@ -1192,7 +1192,7 @@ export default function ChatReducer(state, action) {
           ...state.cardObj,
           ...objectify(action.offers.map((offer) => offer.card))
         },
-        incomingOfferCardIds: action.offers.map((offer) => offer.card.id),
+        incomingOffers: action.offers,
         incomingOffersLoadMoreButton: action.loadMoreShown
       };
     }
@@ -1203,7 +1203,7 @@ export default function ChatReducer(state, action) {
           ...state.cardObj,
           ...objectify(action.offers.map((offer) => offer.card))
         },
-        outgoingOfferCardIds: action.offers.map((offer) => offer.card.id),
+        outgoingOffers: action.offers,
         outgoingOffersLoadMoreButton: action.loadMoreShown
       };
     }
@@ -1214,9 +1214,7 @@ export default function ChatReducer(state, action) {
           ...state.cardObj,
           ...objectify(action.offers)
         },
-        incomingOfferCardIds: state.incomingOfferCardIds.concat(
-          action.offers.map((offer) => offer.id)
-        ),
+        incomingOffers: state.incomingOffers.concat(action.offers),
         incomingOffersLoadMoreButton: action.loadMoreShown
       };
     }
@@ -1227,9 +1225,7 @@ export default function ChatReducer(state, action) {
           ...state.cardObj,
           ...objectify(action.offers)
         },
-        outgoingOfferCardIds: state.outgoingOfferCardIds.concat(
-          action.offers.map((offer) => offer.id)
-        ),
+        outgoingOffers: state.outgoingOffers.concat(action.offers),
         outgoingOffersLoadMoreButton: action.loadMoreShown
       };
     }

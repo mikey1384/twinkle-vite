@@ -17,9 +17,7 @@ export default function Outgoing({ loadMoreButtonColor }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
-  const outgoingOfferCardIds = useChatContext(
-    (v) => v.state.outgoingOfferCardIds
-  );
+  const outgoingOffers = useChatContext((v) => v.state.outgoingOffers);
   const onLoadOutgoingOffers = useChatContext(
     (v) => v.actions.onLoadOutgoingOffers
   );
@@ -27,9 +25,13 @@ export default function Outgoing({ loadMoreButtonColor }) {
     (v) => v.actions.onLoadMoreOutgoingOffers
   );
   const cardObj = useChatContext((v) => v.state.cardObj);
-  const outgoingOffers = useMemo(
-    () => outgoingOfferCardIds.map((id) => cardObj[id]),
-    [outgoingOfferCardIds, cardObj]
+  const displayedOutgoingOffers = useMemo(
+    () =>
+      outgoingOffers.map((offer) => ({
+        ...offer,
+        card: cardObj[offer.card.id]
+      })),
+    [outgoingOffers, cardObj]
   );
   const outgoingOffersLoadMoreButton = useChatContext(
     (v) => v.state.outgoingOffersLoadMoreButton
@@ -65,7 +67,7 @@ export default function Outgoing({ loadMoreButtonColor }) {
       >
         {!loaded ? (
           <Loading style={{ height: '100%' }} />
-        ) : outgoingOffers.length === 0 ? (
+        ) : displayedOutgoingOffers.length === 0 ? (
           <div
             style={{
               display: 'flex',
@@ -80,12 +82,12 @@ export default function Outgoing({ loadMoreButtonColor }) {
             </b>
           </div>
         ) : (
-          outgoingOffers.map((card, index) => (
+          displayedOutgoingOffers.map((offer, index) => (
             <CardItem
               isOverflown={overflown}
-              isLast={index === outgoingOffers.length - 1}
-              card={card}
-              key={index}
+              isLast={index === displayedOutgoingOffers.length - 1}
+              card={offer.card}
+              key={offer.id}
             />
           ))
         )}
@@ -108,7 +110,8 @@ export default function Outgoing({ loadMoreButtonColor }) {
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const lastId = outgoingOffers[outgoingOffers.length - 1].id;
+    const lastId =
+      displayedOutgoingOffers[displayedOutgoingOffers.length - 1].id;
     const { cards: offers, loadMoreShown } = await getMyAICardOffers(lastId);
     onLoadMoreOutgoingOffers({
       cards: offers,
