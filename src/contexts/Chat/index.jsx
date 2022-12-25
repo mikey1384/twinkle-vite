@@ -42,6 +42,8 @@ export const initialChatState = {
   myListedCardIds: [],
   myListedCardsLoadMoreButton: false,
   numUnreads: 0,
+  incomingOfferCardIds: [],
+  incomingOffersLoadMoreButton: false,
   outgoingOfferCardIds: [],
   outgoingOffersLoadMoreButton: false,
   peerStreams: {},

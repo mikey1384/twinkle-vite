@@ -1185,6 +1185,17 @@ export default function ChatReducer(state, action) {
         ),
         myListedCardsLoadMoreButton: action.loadMoreShown
       };
+    case 'LOAD_INCOMING_OFFERS': {
+      return {
+        ...state,
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.offers.map((offer) => offer.card))
+        },
+        incomingOfferCardIds: action.offers.map((offer) => offer.card.id),
+        incomingOffersLoadMoreButton: action.loadMoreShown
+      };
+    }
     case 'LOAD_OUTGOING_OFFERS': {
       return {
         ...state,
@@ -1194,6 +1205,19 @@ export default function ChatReducer(state, action) {
         },
         outgoingOfferCardIds: action.offers.map((offer) => offer.card.id),
         outgoingOffersLoadMoreButton: action.loadMoreShown
+      };
+    }
+    case 'LOAD_MORE_INCOMING_OFFERS': {
+      return {
+        ...state,
+        cardObj: {
+          ...state.cardObj,
+          ...objectify(action.offers)
+        },
+        incomingOfferCardIds: state.incomingOfferCardIds.concat(
+          action.offers.map((offer) => offer.id)
+        ),
+        incomingOffersLoadMoreButton: action.loadMoreShown
       };
     }
     case 'LOAD_MORE_OUTGOING_OFFERS': {
