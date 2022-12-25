@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
+import UsernameText from '~/components/Texts/UsernameText';
+import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
@@ -23,6 +25,7 @@ CardItem.propTypes = {
 
 export default function CardItem({ card, isOverflown, isLast, offerObj }) {
   const {
+    userLink: { color: userLinkColor },
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
   const burnXP = useMemo(() => {
@@ -157,7 +160,23 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
               dangerouslySetInnerHTML={{ __html: promptText }}
             />
             {offerObj ? (
-              <div>{offerObj.price}</div>
+              <div style={{ marginTop: '0.5rem' }}>
+                <UsernameText
+                  color={Color[userLinkColor]()}
+                  user={{
+                    username: offerObj.user.username,
+                    id: offerObj.user.id
+                  }}
+                />{' '}
+                offers{' '}
+                <Icon
+                  style={{ color: Color.brownOrange() }}
+                  icon={['far', 'badge-dollar']}
+                />
+                <span style={{ marginLeft: '0.1rem' }}>
+                  {addCommasToNumber(offerObj.price)}
+                </span>
+              </div>
             ) : (
               <b
                 style={{
