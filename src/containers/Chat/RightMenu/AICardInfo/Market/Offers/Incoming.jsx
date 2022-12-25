@@ -30,7 +30,7 @@ export default function Incoming({ loadMoreButtonColor }) {
       ...offer,
       card: cardObj[offer.card.id]
     }));
-  });
+  }, [incomingOffers, cardObj]);
   const incomingOffersLoadMoreButton = useChatContext(
     (v) => v.state.incomingOffersLoadMoreButton
   );
