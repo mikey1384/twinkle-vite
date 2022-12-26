@@ -179,7 +179,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                   offer{offerObj.user.id === userId ? 'ed' : ''}
                 </p>
                 {offerObj.user.id !== userId && (
-                  <p>
+                  <div>
                     from{' '}
                     <UsernameText
                       color={Color[userLinkColor]()}
@@ -188,7 +188,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                         id: offerObj.user.id
                       }}
                     />
-                  </p>
+                  </div>
                 )}
               </div>
             ) : (
