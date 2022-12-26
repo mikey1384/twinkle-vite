@@ -69,13 +69,6 @@ function AccountMenu({ className }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [managementLevel, username]);
 
-  const displayedTwinkleCoins = useMemo(() => {
-    if (twinkleCoins > 999) {
-      return '999+';
-    }
-    return twinkleCoins;
-  }, [twinkleCoins]);
-
   const fullTwinkleCoins = useMemo(
     () => addCommasToNumber(twinkleCoins),
     [twinkleCoins]
@@ -90,7 +83,8 @@ function AccountMenu({ className }) {
           onClick={() => setTwinkleCoinsHovered((hovered) => !hovered)}
           style={{ marginRight: '1rem', cursor: 'pointer' }}
         >
-          <Icon icon={['far', 'badge-dollar']} /> {displayedTwinkleCoins}
+          <Icon icon={['far', 'badge-dollar']} />{' '}
+          {addCommasToNumber(twinkleCoins)}
           <FullTextReveal
             direction="left"
             className="desktop"
