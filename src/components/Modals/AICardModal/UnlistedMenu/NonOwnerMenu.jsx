@@ -102,7 +102,7 @@ export default function NonOwnerMenu({
                 }
               `}
             >
-              Make an offer
+              Make offer
             </span>
           </Button>
         </div>
