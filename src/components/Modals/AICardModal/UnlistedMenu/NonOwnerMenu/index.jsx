@@ -3,7 +3,9 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
+import UsernameText from '~/components/Texts/UsernameText';
 import MakeOffer from './MakeOffer';
+import MyOffer from './MyOffer';
 
 NonOwnerMenu.propTypes = {
   burnXP: PropTypes.number.isRequired,
@@ -59,16 +61,41 @@ export default function NonOwnerMenu({
           <b style={{ color: Color.gold() }}>XP</b>)
         </p>
       </div>
-      {myOffer ? (
-        <div>my outstanding offer</div>
-      ) : (
-        <MakeOffer
-          owner={owner}
-          onSetOfferModalShown={onSetOfferModalShown}
-          userLinkColor={userLinkColor}
-          style={{ width: '100%', marginTop: '3rem', textAlign: 'center' }}
-        />
-      )}
+      <div style={{ width: '100%', marginTop: '3rem', textAlign: 'center' }}>
+        <div>
+          Owned by
+          <div>
+            <UsernameText
+              color={Color[userLinkColor]()}
+              user={{
+                username: owner.username,
+                id: owner.id
+              }}
+            />
+          </div>
+        </div>
+        {myOffer ? (
+          <MyOffer
+            className={css`
+              margin-top: 3rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-top: 1.5rem;
+              }
+            `}
+            myOffer={myOffer}
+          />
+        ) : (
+          <MakeOffer
+            className={css`
+              margin-top: 1.7rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-top: 1rem;
+              }
+            `}
+            onSetOfferModalShown={onSetOfferModalShown}
+          />
+        )}
+      </div>
     </div>
   );
 }

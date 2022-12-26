@@ -1,71 +1,46 @@
 import PropTypes from 'prop-types';
-import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 MakeOffer.propTypes = {
-  style: PropTypes.object,
-  owner: PropTypes.object.isRequired,
+  className: PropTypes.string,
   onSetOfferModalShown: PropTypes.func.isRequired,
-  userLinkColor: PropTypes.string.isRequired
+  style: PropTypes.object
 };
 
-export default function MakeOffer({
-  style,
-  owner,
-  onSetOfferModalShown,
-  userLinkColor
-}) {
+export default function MakeOffer({ className, onSetOfferModalShown, style }) {
   return (
-    <div style={style}>
-      <div>
-        Owned by
-        <div>
-          <UsernameText
-            color={Color[userLinkColor]()}
-            user={{
-              username: owner.username,
-              id: owner.id
-            }}
-          />
-        </div>
-      </div>
-      <div
+    <div
+      className={className}
+      style={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        ...style
+      }}
+    >
+      <Button
         className={css`
-          margin-top: 1.7rem;
           @media (max-width: ${mobileMaxWidth}) {
-            margin-top: 1rem;
+            padding: 0.7rem !important;
           }
         `}
-        style={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'center'
-        }}
+        onClick={() => onSetOfferModalShown(true)}
+        color="oceanBlue"
+        filled
       >
-        <Button
+        <span
           className={css`
+            font-size: 1.6rem;
             @media (max-width: ${mobileMaxWidth}) {
-              padding: 0.7rem !important;
+              font-size: 1rem;
             }
           `}
-          onClick={() => onSetOfferModalShown(true)}
-          color="oceanBlue"
-          filled
         >
-          <span
-            className={css`
-              font-size: 1.6rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1rem;
-              }
-            `}
-          >
-            Make offer
-          </span>
-        </Button>
-      </div>
+          Make offer
+        </span>
+      </Button>
     </div>
   );
 }
