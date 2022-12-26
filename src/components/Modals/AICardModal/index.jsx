@@ -7,14 +7,15 @@ import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
 import SanitizedHTML from 'react-sanitized-html';
 import OfferModal from './OfferModal';
+import FilterBar from '~/components/FilterBar';
 import SellModal from './SellModal';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
+import Offers from './Offers';
 import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
-import BurnStatus from './BurnStatus';
 
 AICardModal.propTypes = {
   cardId: PropTypes.number.isRequired,
@@ -30,6 +31,7 @@ export default function AICardModal({ cardId, onHide }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const { userId } = useKeyContext((v) => v.myState);
+  const [activeTab, setActiveTab] = useState('myMenu');
   const [offerModalShown, setOfferModalShown] = useState(false);
   const [sellModalShown, setSellModalShown] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
@@ -137,45 +139,72 @@ export default function AICardModal({ cardId, onHide }) {
             </div>
           </div>
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
-            {!card.imagePath ? (
+            {!card.isBurned ? (
+              <FilterBar style={{ height: '4.5rem', fontSize: '1.5rem' }}>
+                <nav
+                  className={activeTab === 'myMenu' ? 'active' : ''}
+                  onClick={() => setActiveTab('myMenu')}
+                >
+                  Menu
+                </nav>
+                <nav
+                  className={activeTab === 'offers' ? 'active' : ''}
+                  onClick={() => setActiveTab('offers')}
+                >
+                  Offers
+                </nav>
+              </FilterBar>
+            ) : null}
+            {activeTab === 'offers' ? (
+              <Offers cardId={cardId} />
+            ) : (
               <div
                 style={{
                   width: '100%',
-                  height: '100%',
+                  height: card.isBurned ? '100%' : 'CALC(100% - 4.5rem)',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
                   flexDirection: 'column'
                 }}
               >
-                <GradientButton
-                  loading={generatingImage}
-                  onClick={handleGenerateImage}
-                  fontSize="1.5rem"
-                  mobileFontSize="1.1rem"
-                >
-                  {generatingImage ? 'Generating...' : 'Generate Image'}
-                </GradientButton>
+                {!card.imagePath ? (
+                  <GradientButton
+                    loading={generatingImage}
+                    onClick={handleGenerateImage}
+                    fontSize="1.5rem"
+                    mobileFontSize="1.1rem"
+                  >
+                    {generatingImage ? 'Generating...' : 'Generate Image'}
+                  </GradientButton>
+                ) : card.isBurned ? (
+                  <div
+                    style={{
+                      fontWeight: 'bold',
+                      color: Color.darkerGray()
+                    }}
+                  >
+                    This card was burned
+                  </div>
+                ) : card.isListed ? (
+                  <ListedMenu
+                    cardId={card.id}
+                    userIsOwner={card.ownerId === userId}
+                    askPrice={card.askPrice}
+                  />
+                ) : (
+                  <UnlistedMenu
+                    cardId={card.id}
+                    cardLevel={card.level}
+                    cardQuality={card.quality}
+                    userIsOwner={card.ownerId === userId}
+                    myOffer={card.myOffer}
+                    onSetSellModalShown={setSellModalShown}
+                    owner={card.owner}
+                    onSetOfferModalShown={setOfferModalShown}
+                  />
+                )}
               </div>
-            ) : card.isBurned ? (
-              <BurnStatus />
-            ) : card.isListed ? (
-              <ListedMenu
-                cardId={card.id}
-                userIsOwner={card.ownerId === userId}
-                askPrice={card.askPrice}
-              />
-            ) : (
-              <UnlistedMenu
-                cardId={card.id}
-                cardLevel={card.level}
-                cardQuality={card.quality}
-                userIsOwner={card.ownerId === userId}
-                myOffer={card.myOffer}
-                onSetSellModalShown={setSellModalShown}
-                owner={card.owner}
-                onSetOfferModalShown={setOfferModalShown}
-              />
             )}
           </div>
         </div>

@@ -31,7 +31,7 @@ export default function ListedMenu({ cardId, userIsOwner, askPrice }) {
           height: '50%',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'flex-start',
           flexDirection: 'column'
         }}
         className={css`

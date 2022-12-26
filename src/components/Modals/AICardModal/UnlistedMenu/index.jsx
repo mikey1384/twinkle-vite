@@ -57,7 +57,6 @@ export default function UnlistedMenu({
         <OwnerMenu
           burnXP={burnXP}
           xpNumberColor={xpNumberColor}
-          cardId={cardId}
           cardLevel={cardLevel}
           cardQuality={cardQuality}
           onSetSellModalShown={onSetSellModalShown}
