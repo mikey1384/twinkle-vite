@@ -30,9 +30,7 @@ export default function OwnerMenu({
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   return (
     <div style={{ width: '100%', marginTop: '-3rem' }}>
-      <FilterBar
-        style={{ height: '4.5rem', fontSize: '1.5rem', marginBottom: '2rem' }}
-      >
+      <FilterBar style={{ height: '4.5rem', fontSize: '1.5rem' }}>
         <nav
           className={activeTab === 'myMenu' ? 'active' : ''}
           onClick={() => setActiveTab('myMenu')}
