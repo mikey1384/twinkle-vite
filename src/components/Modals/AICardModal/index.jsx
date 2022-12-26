@@ -171,6 +171,7 @@ export default function AICardModal({ cardId, onHide }) {
                 cardLevel={card.level}
                 cardQuality={card.quality}
                 userIsOwner={card.ownerId === userId}
+                myOffer={card.myOffer}
                 onSetSellModalShown={setSellModalShown}
                 owner={card.owner}
                 onSetOfferModalShown={setOfferModalShown}

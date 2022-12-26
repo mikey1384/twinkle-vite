@@ -11,6 +11,7 @@ UnlistedMenu.propTypes = {
   cardId: PropTypes.number.isRequired,
   cardLevel: PropTypes.number.isRequired,
   cardQuality: PropTypes.string.isRequired,
+  myOffer: PropTypes.object,
   onSetSellModalShown: PropTypes.func.isRequired,
   owner: PropTypes.object.isRequired,
   userIsOwner: PropTypes.bool.isRequired,
@@ -22,6 +23,7 @@ export default function UnlistedMenu({
   onSetSellModalShown,
   cardLevel,
   cardQuality,
+  myOffer,
   owner,
   userIsOwner,
   onSetOfferModalShown
@@ -65,6 +67,7 @@ export default function UnlistedMenu({
           owner={owner}
           burnXP={burnXP}
           xpNumberColor={xpNumberColor}
+          myOffer={myOffer}
           onSetOfferModalShown={onSetOfferModalShown}
         />
       )}
