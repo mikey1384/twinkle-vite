@@ -178,19 +178,18 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                   </span>{' '}
                   bid
                 </p>
-                <p>
-                  by{' '}
-                  <UsernameText
-                    color={Color[userLinkColor]()}
-                    user={{
-                      username:
-                        offerObj.user.id === userId
-                          ? 'You'
-                          : offerObj.user.username,
-                      id: offerObj.user.id
-                    }}
-                  />
-                </p>
+                {offerObj.user.id !== userId && (
+                  <p>
+                    by{' '}
+                    <UsernameText
+                      color={Color[userLinkColor]()}
+                      user={{
+                        username: offerObj.user.username,
+                        id: offerObj.user.id
+                      }}
+                    />
+                  </p>
+                )}
               </div>
             ) : (
               <b
