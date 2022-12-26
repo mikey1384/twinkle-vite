@@ -9,14 +9,16 @@ NonOwnerMenu.propTypes = {
   burnXP: PropTypes.number.isRequired,
   xpNumberColor: PropTypes.string.isRequired,
   owner: PropTypes.object.isRequired,
-  onSetOfferModalShown: PropTypes.func.isRequired
+  onSetOfferModalShown: PropTypes.func.isRequired,
+  myOffer: PropTypes.object
 };
 
 export default function NonOwnerMenu({
   burnXP,
   xpNumberColor,
   owner,
-  onSetOfferModalShown
+  onSetOfferModalShown,
+  myOffer
 }) {
   const {
     userLink: { color: userLinkColor }
@@ -57,12 +59,16 @@ export default function NonOwnerMenu({
           <b style={{ color: Color.gold() }}>XP</b>)
         </p>
       </div>
-      <MakeOffer
-        owner={owner}
-        onSetOfferModalShown={onSetOfferModalShown}
-        userLinkColor={userLinkColor}
-        style={{ width: '100%', marginTop: '3rem', textAlign: 'center' }}
-      />
+      {myOffer ? (
+        <div>my outstanding offer</div>
+      ) : (
+        <MakeOffer
+          owner={owner}
+          onSetOfferModalShown={onSetOfferModalShown}
+          userLinkColor={userLinkColor}
+          style={{ width: '100%', marginTop: '3rem', textAlign: 'center' }}
+        />
+      )}
     </div>
   );
 }
