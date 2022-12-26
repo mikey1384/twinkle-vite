@@ -29,7 +29,7 @@ export default function OwnerMenu({
   const [activeTab, setActiveTab] = useState('myMenu');
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   return (
-    <div style={{ width: '100%', marginTop: '-5rem' }}>
+    <div style={{ width: '100%', marginTop: '-3rem' }}>
       <FilterBar
         style={{ height: '4.5rem', fontSize: '1.5rem', marginBottom: '2rem' }}
       >
