@@ -30,7 +30,7 @@ export default function Market() {
           className={activeTab === 'sell' ? 'active' : ''}
           onClick={() => setActiveTab('sell')}
         >
-          Bids
+          Offers
         </nav>
       </FilterBar>
       <div style={{ height: '100%' }}>
