@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import FilterBar from '~/components/FilterBar';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { cardLevelHash, qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
@@ -25,9 +26,26 @@ export default function OwnerMenu({
   onBurnConfirm,
   xpNumberColor
 }) {
+  const [activeTab, setActiveTab] = useState('myMenu');
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ width: '100%', marginTop: '-5rem' }}>
+      <FilterBar
+        style={{ height: '4.5rem', fontSize: '1.5rem', marginBottom: '2rem' }}
+      >
+        <nav
+          className={activeTab === 'myMenu' ? 'active' : ''}
+          onClick={() => setActiveTab('myMenu')}
+        >
+          Menu
+        </nav>
+        <nav
+          className={activeTab === 'offers' ? 'active' : ''}
+          onClick={() => setActiveTab('offers')}
+        >
+          Offers
+        </nav>
+      </FilterBar>
       <div
         className={css`
           display: flex;
