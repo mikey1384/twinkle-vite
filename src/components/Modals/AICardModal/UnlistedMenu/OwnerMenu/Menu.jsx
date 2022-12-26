@@ -57,7 +57,7 @@ export default function Menu({
       </div>
       <div
         style={{
-          marginTop: '5rem',
+          marginTop: '3rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
