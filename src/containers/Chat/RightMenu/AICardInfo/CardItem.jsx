@@ -28,6 +28,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
     userLink: { color: userLinkColor },
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
+  const { userId } = useKeyContext((v) => v.myState);
   const burnXP = useMemo(() => {
     return returnCardBurnXP({
       cardLevel: card.level,
@@ -167,14 +168,6 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                   textAlign: 'center'
                 }}
               >
-                <UsernameText
-                  color={Color[userLinkColor]()}
-                  user={{
-                    username: offerObj.user.username,
-                    id: offerObj.user.id
-                  }}
-                />{' '}
-                offers
                 <p>
                   <Icon
                     style={{ color: Color.brownOrange() }}
@@ -182,7 +175,21 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                   />
                   <span style={{ marginLeft: '0.1rem' }}>
                     {addCommasToNumber(offerObj.price)}
-                  </span>
+                  </span>{' '}
+                  bid
+                </p>
+                <p>
+                  by{' '}
+                  <UsernameText
+                    color={Color[userLinkColor]()}
+                    user={{
+                      username:
+                        offerObj.user.id === userId
+                          ? 'You'
+                          : offerObj.user.username,
+                      id: offerObj.user.id
+                    }}
+                  />
                 </p>
               </div>
             ) : (

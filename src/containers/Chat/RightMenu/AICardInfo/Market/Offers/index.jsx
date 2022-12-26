@@ -7,21 +7,21 @@ import Outgoing from './Outgoing';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
-Offers.propTypes = {
+Bids.propTypes = {
   loadMoreButtonColor: PropTypes.string
 };
 
-export default function Offers({ loadMoreButtonColor }) {
+export default function Bids({ loadMoreButtonColor }) {
   const [selectedTab, setSelectedTab] = useState('outgoing');
   return (
-    <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Offers">
+    <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Bids">
       <FilterBar
         style={{ marginBottom: 0 }}
         className={css`
-          height: 3.5rem;
-          font-size: 1.3rem;
+          height: 3.5rem !important;
+          font-size: 1.3rem !important;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1.2rem;
+            font-size: 1.2rem !important;
           }
         `}
       >
@@ -29,13 +29,13 @@ export default function Offers({ loadMoreButtonColor }) {
           className={selectedTab === 'incoming' ? 'active' : ''}
           onClick={() => setSelectedTab('incoming')}
         >
-          Incoming Offers
+          Incoming Bids
         </nav>
         <nav
           className={selectedTab === 'outgoing' ? 'active' : ''}
           onClick={() => setSelectedTab('outgoing')}
         >
-          My Offers
+          My Bids
         </nav>
       </FilterBar>
       {selectedTab === 'incoming' ? (
