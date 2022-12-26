@@ -12,7 +12,7 @@ InputModal.propTypes = {
 export default function InputModal({ onHide }) {
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel/InputModal">
-      <Modal onHide={onHide}>
+      <Modal closeWhenClickedOutside={false} onHide={onHide}>
         <header>Post Something</header>
         <main>
           <div style={{ width: '100%' }}>
