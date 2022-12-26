@@ -37,14 +37,18 @@ export default function OwnerMenu({
           Offers
         </nav>
       </FilterBar>
-      <Menu
-        burnXP={burnXP}
-        cardLevel={cardLevel}
-        cardQuality={cardQuality}
-        xpNumberColor={xpNumberColor}
-        onBurnConfirm={onBurnConfirm}
-        onSetSellModalShown={onSetSellModalShown}
-      />
+      {activeTab === 'myMenu' ? (
+        <Menu
+          burnXP={burnXP}
+          cardLevel={cardLevel}
+          cardQuality={cardQuality}
+          xpNumberColor={xpNumberColor}
+          onBurnConfirm={onBurnConfirm}
+          onSetSellModalShown={onSetSellModalShown}
+        />
+      ) : (
+        <div>Offers</div>
+      )}
     </div>
   );
 }
