@@ -88,6 +88,10 @@ export default function Outgoing({ loadMoreButtonColor }) {
               isLast={index === displayedOutgoingOffers.length - 1}
               card={offer.card}
               key={offer.id}
+              offerObj={{
+                user: offer.user,
+                price: offer.offerPrice
+              }}
             />
           ))
         )}
