@@ -47,7 +47,17 @@ export default function MyOffer({ myOffer, style, className }) {
           color="orange"
           filled
         >
+          <Icon
+            className={css`
+              font-size: 1.6rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1rem;
+              }
+            `}
+            icon="redo"
+          />
           <span
+            style={{ marginLeft: '0.7rem' }}
             className={css`
               font-size: 1.6rem;
               @media (max-width: ${mobileMaxWidth}) {
