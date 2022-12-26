@@ -1,9 +1,8 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
-import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/io';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -21,7 +20,6 @@ AccountMenu.propTypes = {
 
 function AccountMenu({ className }) {
   const navigate = useNavigate();
-  const [twinkleCoinsHovered, setTwinkleCoinsHovered] = useState(false);
   const { loggedIn, username, userId, managementLevel, twinkleCoins } =
     useKeyContext((v) => v.myState);
   const {
@@ -69,35 +67,12 @@ function AccountMenu({ className }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [managementLevel, username]);
 
-  const fullTwinkleCoins = useMemo(
-    () => addCommasToNumber(twinkleCoins),
-    [twinkleCoins]
-  );
-
   return (
     <div className="desktop" style={{ display: 'flex', alignItems: 'center' }}>
       {loggedIn && (
-        <div
-          onMouseEnter={() => setTwinkleCoinsHovered(twinkleCoins > 999)}
-          onMouseLeave={() => setTwinkleCoinsHovered(false)}
-          onClick={() => setTwinkleCoinsHovered((hovered) => !hovered)}
-          style={{ marginRight: '1rem', cursor: 'pointer' }}
-        >
+        <div style={{ marginRight: '1rem' }}>
           <Icon icon={['far', 'badge-dollar']} />{' '}
           {addCommasToNumber(twinkleCoins)}
-          <FullTextReveal
-            direction="left"
-            className="desktop"
-            show={twinkleCoinsHovered}
-            text={fullTwinkleCoins}
-            style={{
-              fontSize: '1.3rem',
-              width: 'auto',
-              minWidth: null,
-              maxWidth: null,
-              padding: '1rem'
-            }}
-          />
         </div>
       )}
       {loggedIn ? (
