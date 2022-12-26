@@ -227,6 +227,21 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async getOffersForCard({ cardId, lastId }) {
+      try {
+        const {
+          data: { offers, loadMoreShown }
+        } = await request.get(
+          `${URL}/chat/aiCard/offer/card?cardId=${cardId}${
+            lastId ? `&lastId=${lastId}` : ''
+          }`,
+          auth()
+        );
+        return Promise.resolve({ offers, loadMoreShown });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async getIncomingCardOffers(lastId) {
       try {
         const {

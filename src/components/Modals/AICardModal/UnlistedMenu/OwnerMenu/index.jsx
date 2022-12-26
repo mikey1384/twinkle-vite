@@ -6,6 +6,7 @@ import Offers from './Offers';
 
 OwnerMenu.propTypes = {
   burnXP: PropTypes.number.isRequired,
+  cardId: PropTypes.number.isRequired,
   xpNumberColor: PropTypes.string.isRequired,
   cardLevel: PropTypes.number.isRequired,
   cardQuality: PropTypes.string.isRequired,
@@ -15,6 +16,7 @@ OwnerMenu.propTypes = {
 
 export default function OwnerMenu({
   burnXP,
+  cardId,
   cardLevel,
   cardQuality,
   onSetSellModalShown,
@@ -48,7 +50,7 @@ export default function OwnerMenu({
           onSetSellModalShown={onSetSellModalShown}
         />
       ) : (
-        <Offers />
+        <Offers cardId={cardId} />
       )}
     </div>
   );
