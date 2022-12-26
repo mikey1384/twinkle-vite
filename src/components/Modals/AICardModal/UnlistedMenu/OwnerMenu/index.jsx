@@ -2,6 +2,7 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import Menu from './Menu';
+import Offers from './Offers';
 
 OwnerMenu.propTypes = {
   burnXP: PropTypes.number.isRequired,
@@ -47,7 +48,7 @@ export default function OwnerMenu({
           onSetSellModalShown={onSetSellModalShown}
         />
       ) : (
-        <div>Offers</div>
+        <Offers />
       )}
     </div>
   );
