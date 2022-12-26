@@ -176,7 +176,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                   <span style={{ marginLeft: '0.1rem' }}>
                     {addCommasToNumber(offerObj.price)}
                   </span>{' '}
-                  offer
+                  offer{offerObj.user.id === userId ? 'ed' : ''}
                 </p>
                 {offerObj.user.id !== userId && (
                   <p>
