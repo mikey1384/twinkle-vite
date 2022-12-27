@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useAppContext } from '~/contexts';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { useAppContext } from '~/contexts';
+import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 Offers.propTypes = {
   cardId: PropTypes.number.isRequired
@@ -29,7 +31,16 @@ export default function Offers({ cardId }) {
       <div>
         {offers.map((offer) => {
           return (
-            <div key={offer.id} style={{ marginBottom: '1rem' }}>
+            <div
+              className={css`
+                font-size: 1.6rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.1rem;
+                }
+              `}
+              key={offer.id}
+              style={{ marginBottom: '1rem' }}
+            >
               {offer.user.username}
             </div>
           );
