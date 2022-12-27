@@ -23,6 +23,7 @@ export default function Offers({
     userLink: { color: userLinkColor }
   } = useKeyContext((v) => v.theme);
   const [offers, setOffers] = useState([]);
+  const [loaded, setLoaded] = useState(false);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const getOffersForCard = useAppContext(
@@ -35,6 +36,7 @@ export default function Offers({
         cardId
       });
       setOffers(loadedOffers);
+      setLoaded(true);
       setLoadMoreShown(loadMoreShown);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -42,7 +44,25 @@ export default function Offers({
 
   return (
     <ErrorBoundary componentPath="components/Modals/AICardModal/UnlistedMenu/OwnerMenu/Offers">
-      <div>
+      <div
+        style={{
+          height: 'CALC(100% - 4.5rem)',
+          overflow: 'scroll'
+        }}
+      >
+        {loaded && offers.length === 0 && (
+          <div
+            style={{
+              width: '100%',
+              height: 'CALC(100% - 5rem)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            There is no offer for this card yet
+          </div>
+        )}
         {offers.map((offer) => {
           return (
             <nav
