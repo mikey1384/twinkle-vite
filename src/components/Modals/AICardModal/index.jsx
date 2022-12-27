@@ -28,6 +28,9 @@ export default function AICardModal({ cardId, onHide }) {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
   const { userId } = useKeyContext((v) => v.myState);
+  const deleteAICardOffer = useAppContext(
+    (v) => v.requestHelpers.deleteAICardOffer
+  );
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const saveAIImageToS3 = useAppContext(
     (v) => v.requestHelpers.saveAIImageToS3
@@ -253,11 +256,15 @@ export default function AICardModal({ cardId, onHide }) {
           modalOverModal
           onHide={() => setWithdrawOfferModalShown(false)}
           title={`Withdraw offer for card #${card.id}`}
-          onConfirm={() => console.log('confirmed')}
+          onConfirm={handleWithdrawOffer}
         />
       )}
     </Modal>
   );
+
+  async function handleWithdrawOffer() {
+    await deleteAICardOffer(card.myOffer.id);
+  }
 
   async function handleGenerateImage() {
     setGeneratingImage(true);
