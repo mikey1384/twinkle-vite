@@ -27,7 +27,7 @@ export default function MakeOffer({ className, onSetOfferModalShown, style }) {
           }
         `}
         onClick={() => onSetOfferModalShown(true)}
-        color="oceanBlue"
+        color="green"
         filled
       >
         <span

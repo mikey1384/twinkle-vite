@@ -24,14 +24,20 @@ export default function MyOffer({ myOffer, style, className }) {
         ...style
       }}
     >
-      <div>
+      <div style={{ textAlign: 'center' }}>
         <p>You offered</p>
         <p>
           <Icon
             style={{ color: Color.brownOrange() }}
             icon={['far', 'badge-dollar']}
           />
-          <span style={{ marginLeft: '0.1rem' }}>
+          <span
+            style={{
+              marginLeft: '0.3rem',
+              color: Color.darkerGray(),
+              fontWeight: 'bold'
+            }}
+          >
             {addCommasToNumber(myOffer.offerPrice)}
           </span>
         </p>

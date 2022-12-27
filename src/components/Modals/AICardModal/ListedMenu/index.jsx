@@ -9,12 +9,14 @@ import NonOwnerMenu from './NonOwnerMenu';
 ListedMenu.propTypes = {
   askPrice: PropTypes.number.isRequired,
   cardId: PropTypes.number.isRequired,
+  myOffer: PropTypes.object,
   onSetOfferModalShown: PropTypes.func.isRequired,
   userIsOwner: PropTypes.bool.isRequired
 };
 
 export default function ListedMenu({
   cardId,
+  myOffer,
   onSetOfferModalShown,
   userIsOwner,
   askPrice
@@ -96,7 +98,10 @@ export default function ListedMenu({
         {userIsOwner ? (
           <OwnerMenu cardId={cardId} />
         ) : (
-          <NonOwnerMenu onSetOfferModalShown={onSetOfferModalShown} />
+          <NonOwnerMenu
+            myOffer={myOffer}
+            onSetOfferModalShown={onSetOfferModalShown}
+          />
         )}
       </div>
     </div>
