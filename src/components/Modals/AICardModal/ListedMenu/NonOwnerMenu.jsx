@@ -5,7 +5,14 @@ import { mobileMaxWidth } from '~/constants/css';
 
 export default function NonOwnerMenu() {
   return (
-    <div>
+    <div
+      style={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        flexDirection: 'column'
+      }}
+    >
       <Button
         className={css`
           @media (max-width: ${mobileMaxWidth}) {
