@@ -105,7 +105,7 @@ export default function FilterBar({
           @media (max-width: ${mobileMaxWidth}) {
             border-bottom: ${inverted
               ? ''
-              : `4px solid ${Color[filterActiveColor]()}`};
+              : `2px solid ${Color[filterActiveColor]()}`};
           }
         }
         > nav.active.alert {
