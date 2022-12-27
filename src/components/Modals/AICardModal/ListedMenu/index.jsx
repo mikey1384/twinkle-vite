@@ -3,8 +3,8 @@ import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useAppContext, useChatContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import OwnerMenu from './OwnerMenu';
 
 ListedMenu.propTypes = {
   askPrice: PropTypes.number.isRequired,
@@ -13,8 +13,6 @@ ListedMenu.propTypes = {
 };
 
 export default function ListedMenu({ cardId, userIsOwner, askPrice }) {
-  const delistAICard = useAppContext((v) => v.requestHelpers.delistAICard);
-  const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
   return (
     <div
       style={{
@@ -90,37 +88,7 @@ export default function ListedMenu({ cardId, userIsOwner, askPrice }) {
           )}
         </div>
         {userIsOwner ? (
-          <Button
-            className={css`
-              @media (max-width: ${mobileMaxWidth}) {
-                padding: 0.7rem !important;
-              }
-            `}
-            onClick={handleCancelListing}
-            color="rose"
-            filled
-          >
-            <Icon
-              className={css`
-                font-size: 1.6rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1rem;
-                }
-              `}
-              icon="redo"
-            />
-            <span
-              className={css`
-                font-size: 1.6rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1rem;
-                }
-              `}
-              style={{ marginLeft: '0.7rem' }}
-            >
-              Cancel Listing
-            </span>
-          </Button>
+          <OwnerMenu cardId={cardId} />
         ) : (
           <Button
             className={css`
@@ -157,11 +125,4 @@ export default function ListedMenu({ cardId, userIsOwner, askPrice }) {
       </div>
     </div>
   );
-
-  async function handleCancelListing() {
-    const success = await delistAICard(cardId);
-    if (success) {
-      onDelistAICard(cardId);
-    }
-  }
 }
