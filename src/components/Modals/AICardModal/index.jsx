@@ -264,6 +264,8 @@ export default function AICardModal({ cardId, onHide }) {
 
   async function handleWithdrawOffer() {
     await deleteAICardOffer(card.myOffer.id);
+    onUpdateAICard({ cardId: card.id, newState: { myOffer: null } });
+    setWithdrawOfferModalShown(false);
   }
 
   async function handleGenerateImage() {
