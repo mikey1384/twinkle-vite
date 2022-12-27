@@ -61,25 +61,30 @@ export default function Offers({
                   font-size: 1.1rem;
                 }
               `}
-              key={offer.id}
+              key={offer.price}
             >
               <Icon
                 style={{ color: Color.brownOrange() }}
                 icon={['far', 'badge-dollar']}
               />
               <span style={{ marginLeft: '0.2rem' }}>
-                <b style={{ color: Color.darkerGray() }}>{offer.offerPrice}</b>{' '}
-                offer from
+                <b style={{ color: Color.darkerGray() }}>{offer.price}</b> offer
+                from
               </span>
               <UsernameText
                 onMenuShownChange={onUserMenuShown}
                 style={{ marginLeft: '0.5rem' }}
                 color={Color[userLinkColor]()}
                 user={{
-                  username: offer.user.username,
-                  id: offer.user.id
+                  username: offer.users[0].username,
+                  id: offer.users[0].id
                 }}
               />
+              {offer.users.length > 1 ? (
+                <span style={{ marginLeft: '0.5rem' }}>
+                  and {offer.users.length - 1} others
+                </span>
+              ) : null}
             </nav>
           );
         })}

@@ -227,13 +227,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async getOffersForCard({ cardId, lastId }) {
+    async getOffersForCard({ cardId, lastPrice }) {
       try {
         const {
           data: { offers, loadMoreShown }
         } = await request.get(
           `${URL}/chat/aiCard/offer/card?cardId=${cardId}${
-            lastId ? `&lastId=${lastId}` : ''
+            lastPrice ? `&lastPrice=${lastPrice}` : ''
           }`,
           auth()
         );
