@@ -15,9 +15,7 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
   const { userId: myId } = useKeyContext((v) => v.myState);
-  const loadAIImageChat = useAppContext(
-    (v) => v.requestHelpers.loadAIImageChat
-  );
+  const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const aiCardsLoadMoreButton = useChatContext(
     (v) => v.state.aiCardsLoadMoreButton
   );
@@ -139,7 +137,7 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
       const prevContentHeight = ContentRef.current?.offsetHeight || 0;
       if (!loadingMore) {
         setLoadingMore(true);
-        const { cards, loadMoreShown } = await loadAIImageChat(aiCardIds[0]);
+        const { cards, loadMoreShown } = await loadAICards(aiCardIds[0]);
         onLoadMoreAIImages({ cards, loadMoreShown });
         startTransition(() => {
           setScrollHeight(prevContentHeight);

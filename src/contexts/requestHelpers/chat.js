@@ -575,7 +575,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadAIImageChat(lastId) {
+    async loadAICards(lastId) {
       try {
         const {
           data: { cards, loadMoreShown }

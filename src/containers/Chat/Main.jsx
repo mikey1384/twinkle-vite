@@ -79,9 +79,7 @@ export default function Main({ currentPathId, onFileUpload }) {
     (v) => v.requestHelpers.loadMoreChatMessages
   );
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
-  const loadAIImageChat = useAppContext(
-    (v) => v.requestHelpers.loadAIImageChat
-  );
+  const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
   const postChatReaction = useAppContext(
     (v) => v.requestHelpers.postChatReaction
@@ -539,7 +537,7 @@ export default function Main({ currentPathId, onFileUpload }) {
     if (chatType === AI_CARD_CHAT_TYPE) return;
     onUpdateChatType(AI_CARD_CHAT_TYPE);
     onSetLoadingAIImageChat(true);
-    const { cards, loadMoreShown } = await loadAIImageChat();
+    const { cards, loadMoreShown } = await loadAICards();
     if (currentPathIdRef.current === AI_CARD_CHAT_TYPE) {
       onLoadAIImageChat({ cards, loadMoreShown });
     }
