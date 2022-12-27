@@ -52,7 +52,7 @@ export default function Menu({
           filled
         >
           <Icon icon="shopping-cart" />
-          <span style={{ marginLeft: '0.7rem' }}>Sell</span>
+          <span style={{ marginLeft: '0.7rem' }}>List for sale</span>
         </Button>
       </div>
       <div
