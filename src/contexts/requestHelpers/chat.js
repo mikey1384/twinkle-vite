@@ -286,6 +286,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async deleteAICardOffer(offerId) {
+      try {
+        await request.delete(
+          `${URL}/chat/aiCard/offer?offerId=${offerId}`,
+          auth()
+        );
+        return Promise.resolve();
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async processAiCardQuality() {
       try {
         const {
