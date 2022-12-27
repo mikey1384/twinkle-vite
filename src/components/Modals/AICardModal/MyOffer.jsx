@@ -8,10 +8,16 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 MyOffer.propTypes = {
   className: PropTypes.string,
   myOffer: PropTypes.object,
+  onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
   style: PropTypes.object
 };
 
-export default function MyOffer({ myOffer, style, className }) {
+export default function MyOffer({
+  myOffer,
+  style,
+  className,
+  onSetWithdrawOfferModalShown
+}) {
   return (
     <div
       className={className}
@@ -49,7 +55,7 @@ export default function MyOffer({ myOffer, style, className }) {
               padding: 0.7rem !important;
             }
           `}
-          onClick={() => console.log('change')}
+          onClick={() => onSetWithdrawOfferModalShown(true)}
           color="orange"
           filled
         >

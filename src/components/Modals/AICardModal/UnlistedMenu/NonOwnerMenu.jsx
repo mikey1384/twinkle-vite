@@ -11,6 +11,7 @@ NonOwnerMenu.propTypes = {
   burnXP: PropTypes.number.isRequired,
   xpNumberColor: PropTypes.string.isRequired,
   owner: PropTypes.object.isRequired,
+  onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
   onSetOfferModalShown: PropTypes.func.isRequired,
   myOffer: PropTypes.object
 };
@@ -19,6 +20,7 @@ export default function NonOwnerMenu({
   burnXP,
   xpNumberColor,
   owner,
+  onSetWithdrawOfferModalShown,
   onSetOfferModalShown,
   myOffer
 }) {
@@ -82,6 +84,7 @@ export default function NonOwnerMenu({
                 margin-top: 1.5rem;
               }
             `}
+            onSetWithdrawOfferModalShown={onSetWithdrawOfferModalShown}
             myOffer={myOffer}
           />
         ) : (

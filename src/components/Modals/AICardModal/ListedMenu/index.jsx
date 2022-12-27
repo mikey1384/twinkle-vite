@@ -10,6 +10,7 @@ ListedMenu.propTypes = {
   askPrice: PropTypes.number.isRequired,
   cardId: PropTypes.number.isRequired,
   myOffer: PropTypes.object,
+  onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
   onSetOfferModalShown: PropTypes.func.isRequired,
   userIsOwner: PropTypes.bool.isRequired
 };
@@ -17,6 +18,7 @@ ListedMenu.propTypes = {
 export default function ListedMenu({
   cardId,
   myOffer,
+  onSetWithdrawOfferModalShown,
   onSetOfferModalShown,
   userIsOwner,
   askPrice
@@ -98,6 +100,7 @@ export default function ListedMenu({
         <NonOwnerMenu
           myOffer={myOffer}
           onSetOfferModalShown={onSetOfferModalShown}
+          onSetWithdrawOfferModalShown={onSetWithdrawOfferModalShown}
           style={{ marginTop: '1rem' }}
         />
       )}
