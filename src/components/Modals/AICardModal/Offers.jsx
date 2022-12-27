@@ -71,7 +71,7 @@ export default function Offers({
             `}
             style={{
               width: '100%',
-              height: 'CALC(100% - 5rem)',
+              height: '100%',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center'
