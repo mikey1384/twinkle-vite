@@ -200,6 +200,7 @@ export default function AICardModal({ cardId, onHide }) {
                     cardId={card.id}
                     userIsOwner={card.ownerId === userId}
                     askPrice={card.askPrice}
+                    onSetOfferModalShown={setOfferModalShown}
                   />
                 ) : (
                   <UnlistedMenu
