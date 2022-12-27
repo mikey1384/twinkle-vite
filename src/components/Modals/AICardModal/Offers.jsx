@@ -52,6 +52,12 @@ export default function Offers({
       >
         {loaded && offers.length === 0 && (
           <div
+            className={css`
+              font-size: 1.6rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.1rem;
+              }
+            `}
             style={{
               width: '100%',
               height: 'CALC(100% - 5rem)',
