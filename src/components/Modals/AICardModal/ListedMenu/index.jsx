@@ -1,10 +1,10 @@
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
-import Button from '~/components/Button';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import OwnerMenu from './OwnerMenu';
+import NonOwnerMenu from './NonOwnerMenu';
 
 ListedMenu.propTypes = {
   askPrice: PropTypes.number.isRequired,
@@ -87,41 +87,7 @@ export default function ListedMenu({ cardId, userIsOwner, askPrice }) {
             </div>
           )}
         </div>
-        {userIsOwner ? (
-          <OwnerMenu cardId={cardId} />
-        ) : (
-          <Button
-            className={css`
-              @media (max-width: ${mobileMaxWidth}) {
-                padding: 0.7rem !important;
-              }
-            `}
-            onClick={() => console.log('buy')}
-            color="oceanBlue"
-            filled
-          >
-            <Icon
-              className={css`
-                font-size: 1.6rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1rem;
-                }
-              `}
-              icon="shopping-cart"
-            />
-            <span
-              className={css`
-                font-size: 1.6rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1rem;
-                }
-              `}
-              style={{ marginLeft: '0.7rem' }}
-            >
-              Buy
-            </span>
-          </Button>
-        )}
+        {userIsOwner ? <OwnerMenu cardId={cardId} /> : <NonOwnerMenu />}
       </div>
     </div>
   );
