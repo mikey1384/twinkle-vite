@@ -140,7 +140,16 @@ export default function AICardModal({ cardId, onHide }) {
           </div>
           <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
             {!card.isBurned ? (
-              <FilterBar style={{ height: '4.5rem', fontSize: '1.5rem' }}>
+              <FilterBar
+                className={css`
+                  font-size: 1.5rem !important;
+                  height: 4.5rem !important;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.1rem !important;
+                    height: 3rem !important;
+                  }
+                `}
+              >
                 <nav
                   className={activeTab === 'myMenu' ? 'active' : ''}
                   onClick={() => setActiveTab('myMenu')}
