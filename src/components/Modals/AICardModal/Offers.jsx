@@ -22,6 +22,7 @@ export default function Offers({
   const {
     userLink: { color: userLinkColor }
   } = useKeyContext((v) => v.theme);
+  const { userId } = useKeyContext((v) => v.myState);
   const [offers, setOffers] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
@@ -101,6 +102,9 @@ export default function Offers({
                 onMenuShownChange={onUserMenuShown}
                 style={{ marginLeft: '0.5rem' }}
                 color={Color[userLinkColor]()}
+                displayedName={
+                  offer.users[0].id === userId ? 'you' : offer.users[0].username
+                }
                 user={{
                   username: offer.users[0].username,
                   id: offer.users[0].id
