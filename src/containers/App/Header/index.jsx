@@ -275,6 +275,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('ai_card_burned', handleAICardBurned);
     socket.on('ai_card_listed', handleAICardListed);
     socket.on('ai_card_delisted', handleAICardDelisted);
+    socket.on('ai_card_offer_posted', handleAICardOfferPosted);
     socket.on('ban_status_updated', handleBanStatusUpdate);
     socket.on('signal_received', handleCallSignal);
     socket.on('online_status_changed', handleOnlineStatusChange);
@@ -320,6 +321,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       socket.removeListener('ai_card_burned', handleAICardBurned);
       socket.removeListener('ai_card_listed', handleAICardListed);
       socket.removeListener('ai_card_delisted', handleAICardDelisted);
+      socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('signal_received', handleCallSignal);
       socket.removeListener('online_status_changed', handleOnlineStatusChange);
@@ -405,6 +407,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
     function handleAICardDelisted(cardId) {
       onRemoveListedAICard(cardId);
+    }
+
+    function handleAICardOfferPosted({ cardId, offer }) {
+      if (offer.user.userId === userId) {
+        onUpdateAICard({ cardId, newState: { myOffer: offer } });
+      }
     }
 
     function handleBanStatusUpdate(banStatus) {
