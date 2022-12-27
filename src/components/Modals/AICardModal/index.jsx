@@ -23,6 +23,10 @@ AICardModal.propTypes = {
 };
 
 export default function AICardModal({ cardId, onHide }) {
+  const {
+    loadMoreButton: { color: loadMoreButtonColor }
+  } = useKeyContext((v) => v.theme);
+  const { userId } = useKeyContext((v) => v.myState);
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const saveAIImageToS3 = useAppContext(
     (v) => v.requestHelpers.saveAIImageToS3
@@ -30,7 +34,7 @@ export default function AICardModal({ cardId, onHide }) {
   const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
-  const { userId } = useKeyContext((v) => v.myState);
+  const [usermenuShown, setUsermenuShown] = useState(false);
   const [activeTab, setActiveTab] = useState('myMenu');
   const [offerModalShown, setOfferModalShown] = useState(false);
   const [sellModalShown, setSellModalShown] = useState(false);
@@ -39,7 +43,12 @@ export default function AICardModal({ cardId, onHide }) {
   const { promptText } = useAICard(card);
 
   return (
-    <Modal large modalOverModal onHide={onHide}>
+    <Modal
+      closeWhenClickedOutside={!usermenuShown}
+      large
+      modalOverModal
+      onHide={onHide}
+    >
       <header>#{card.id}</header>
       <main>
         <div
@@ -165,7 +174,11 @@ export default function AICardModal({ cardId, onHide }) {
               </FilterBar>
             ) : null}
             {activeTab === 'offers' ? (
-              <Offers cardId={cardId} />
+              <Offers
+                cardId={cardId}
+                loadMoreButtonColor={loadMoreButtonColor}
+                onUserMenuShown={setUsermenuShown}
+              />
             ) : (
               <div
                 style={{
