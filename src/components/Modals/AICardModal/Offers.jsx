@@ -6,7 +6,10 @@ import Icon from '~/components/Icon';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { isMobile } from '~/helpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
+
+const deviceIsMobile = isMobile(navigator);
 
 Offers.propTypes = {
   cardId: PropTypes.number.isRequired,
@@ -46,8 +49,15 @@ export default function Offers({
   return (
     <ErrorBoundary componentPath="components/Modals/AICardModal/UnlistedMenu/OwnerMenu/Offers">
       <div
+        className={css`
+          height: 37vh;
+          border: 1px solid ${Color.borderGray()};
+          @media (max-width: ${mobileMaxWidth}) {
+            height: 20vh;
+          }
+        `}
         style={{
-          height: 'CALC(100% - 4.5rem)',
+          width: '100%',
           overflow: 'scroll'
         }}
       >
@@ -92,37 +102,40 @@ export default function Offers({
                   background-color: ${Color.highlightGray()};
                 }
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.1rem;
+                  height: 3rem;
+                  font-size: 0.8rem;
                 }
               `}
               key={offer.price}
             >
-              <Icon
-                style={{ color: Color.brownOrange() }}
-                icon={['far', 'badge-dollar']}
-              />
-              <span style={{ marginLeft: '0.2rem' }}>
-                <b style={{ color: Color.darkerGray() }}>{offer.price}</b> offer
-                from
-              </span>
-              <UsernameText
-                onMenuShownChange={onUserMenuShown}
-                style={{ marginLeft: '0.5rem' }}
-                color={Color[userLinkColor]()}
-                displayedName={
-                  offerers[0].id === userId ? 'you' : offerers[0].username
-                }
-                user={{
-                  username: offerers[0].username,
-                  id: offerers[0].id
-                }}
-              />
-              {offerers.length > 1 ? (
-                <span style={{ marginLeft: '0.5rem' }}>
-                  and {offerers.length - 1} other
-                  {offerers.length - 1 > 1 ? 's' : ''}
+              <div>
+                <Icon
+                  style={{ color: Color.brownOrange() }}
+                  icon={['far', 'badge-dollar']}
+                />
+                <span style={{ marginLeft: '0.2rem' }}>
+                  <b style={{ color: Color.darkerGray() }}>{offer.price}</b>
+                  {deviceIsMobile ? '' : <span> offer </span>} from{' '}
                 </span>
-              ) : null}
+                <UsernameText
+                  onMenuShownChange={onUserMenuShown}
+                  color={Color[userLinkColor]()}
+                  displayedName={
+                    offerers[0].id === userId ? 'you' : offerers[0].username
+                  }
+                  user={{
+                    username: offerers[0].username,
+                    id: offerers[0].id
+                  }}
+                />
+                {offerers.length > 1 ? (
+                  <span>
+                    {' '}
+                    and {offerers.length - 1} other
+                    {offerers.length - 1 > 1 ? 's' : ''}
+                  </span>
+                ) : null}
+              </div>
             </nav>
           );
         })}
