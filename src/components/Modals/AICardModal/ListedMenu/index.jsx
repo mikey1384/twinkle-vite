@@ -34,7 +34,8 @@ export default function ListedMenu({
     >
       <div
         style={{
-          height: '50%',
+          height: '100%',
+          padding: '3rem 1rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'flex-start',
@@ -47,7 +48,7 @@ export default function ListedMenu({
           }
         `}
       >
-        <div style={{ marginBottom: '2rem' }}>
+        <div>
           {userIsOwner ? (
             <div style={{ textAlign: 'center' }}>
               You listed this card for
@@ -101,6 +102,7 @@ export default function ListedMenu({
           <NonOwnerMenu
             myOffer={myOffer}
             onSetOfferModalShown={onSetOfferModalShown}
+            style={{ marginTop: '1rem' }}
           />
         )}
       </div>
