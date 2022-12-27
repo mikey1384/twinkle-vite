@@ -8,11 +8,17 @@ import { mobileMaxWidth } from '~/constants/css';
 
 NonOwnerMenu.propTypes = {
   myOffer: PropTypes.object,
+  onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
   onSetOfferModalShown: PropTypes.func.isRequired,
   style: PropTypes.object
 };
 
-export default function NonOwnerMenu({ myOffer, onSetOfferModalShown, style }) {
+export default function NonOwnerMenu({
+  myOffer,
+  onSetWithdrawOfferModalShown,
+  onSetOfferModalShown,
+  style
+}) {
   return (
     <div
       style={{
@@ -66,6 +72,7 @@ export default function NonOwnerMenu({ myOffer, onSetOfferModalShown, style }) {
                 margin-top: 1.5rem;
               }
             `}
+            onSetWithdrawOfferModalShown={onSetWithdrawOfferModalShown}
             myOffer={myOffer}
           />
         ) : (

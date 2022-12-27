@@ -9,6 +9,7 @@ import SanitizedHTML from 'react-sanitized-html';
 import OfferModal from './OfferModal';
 import FilterBar from '~/components/FilterBar';
 import SellModal from './SellModal';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { qualityProps } from '~/constants/defaultValues';
@@ -34,6 +35,7 @@ export default function AICardModal({ cardId, onHide }) {
   const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const [withdrawOfferModalShown, setWithdrawOfferModalShown] = useState(false);
   const [usermenuShown, setUsermenuShown] = useState(false);
   const [activeTab, setActiveTab] = useState('myMenu');
   const [offerModalShown, setOfferModalShown] = useState(false);
@@ -214,6 +216,7 @@ export default function AICardModal({ cardId, onHide }) {
                     myOffer={card.myOffer}
                     userIsOwner={card.ownerId === userId}
                     askPrice={card.askPrice}
+                    onSetWithdrawOfferModalShown={setWithdrawOfferModalShown}
                     onSetOfferModalShown={setOfferModalShown}
                   />
                 ) : (
@@ -225,6 +228,7 @@ export default function AICardModal({ cardId, onHide }) {
                     myOffer={card.myOffer}
                     onSetSellModalShown={setSellModalShown}
                     owner={card.owner}
+                    onSetWithdrawOfferModalShown={setWithdrawOfferModalShown}
                     onSetOfferModalShown={setOfferModalShown}
                   />
                 )}
@@ -243,6 +247,14 @@ export default function AICardModal({ cardId, onHide }) {
       )}
       {sellModalShown && (
         <SellModal card={card} onHide={() => setSellModalShown(false)} />
+      )}
+      {withdrawOfferModalShown && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setWithdrawOfferModalShown(false)}
+          title={`Withdraw offer for card #${card.id}`}
+          onConfirm={() => console.log('confirmed')}
+        />
       )}
     </Modal>
   );
