@@ -43,13 +43,16 @@ export default function Offers({ cardId }) {
                 justify-content: center;
                 align-items: center;
                 font-size: 1.6rem;
+                cursor: pointer;
                 border-bottom: 1px solid ${Color.borderGray()};
+                &:hover {
+                  background-color: ${Color.wellGray()};
+                }
                 @media (max-width: ${mobileMaxWidth}) {
                   font-size: 1.1rem;
                 }
               `}
               key={offer.id}
-              style={{ marginBottom: '1rem' }}
             >
               <Icon
                 style={{ color: Color.brownOrange() }}
