@@ -5,36 +5,38 @@ import { mobileMaxWidth } from '~/constants/css';
 
 export default function NonOwnerMenu() {
   return (
-    <Button
-      className={css`
-        @media (max-width: ${mobileMaxWidth}) {
-          padding: 0.7rem !important;
-        }
-      `}
-      onClick={() => console.log('buy')}
-      color="oceanBlue"
-      filled
-    >
-      <Icon
+    <div>
+      <Button
         className={css`
-          font-size: 1.6rem;
           @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1rem;
+            padding: 0.7rem !important;
           }
         `}
-        icon="shopping-cart"
-      />
-      <span
-        className={css`
-          font-size: 1.6rem;
-          @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1rem;
-          }
-        `}
-        style={{ marginLeft: '0.7rem' }}
+        onClick={() => console.log('buy')}
+        color="oceanBlue"
+        filled
       >
-        Buy
-      </span>
-    </Button>
+        <Icon
+          className={css`
+            font-size: 1.6rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1rem;
+            }
+          `}
+          icon="shopping-cart"
+        />
+        <span
+          className={css`
+            font-size: 1.6rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1rem;
+            }
+          `}
+          style={{ marginLeft: '0.7rem' }}
+        >
+          Buy
+        </span>
+      </Button>
+    </div>
   );
 }
