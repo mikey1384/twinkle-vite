@@ -25,8 +25,9 @@ export default function ListedMenu({
     <div
       style={{
         width: '100%',
-        height: '100%',
+        height: '100% ',
         display: 'flex',
+        marginTop: '-5rem',
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column'
@@ -34,11 +35,7 @@ export default function ListedMenu({
     >
       <div
         style={{
-          height: '100%',
-          padding: '3rem 1rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
+          padding: '1rem',
           flexDirection: 'column'
         }}
         className={css`
@@ -48,64 +45,62 @@ export default function ListedMenu({
           }
         `}
       >
-        <div>
-          {userIsOwner ? (
-            <div style={{ textAlign: 'center' }}>
-              You listed this card for
-              <div style={{ marginTop: '0.5rem' }}>
-                <Icon
-                  style={{ color: Color.brownOrange() }}
-                  icon={['far', 'badge-dollar']}
-                />
-                <span
-                  style={{
-                    marginLeft: '0.3rem',
-                    fontWeight: 'bold',
-                    color: Color.darkerGray()
-                  }}
-                >
-                  {addCommasToNumber(askPrice)}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center' }}>
-              Buy this card for
-              <div
+        {userIsOwner ? (
+          <div style={{ textAlign: 'center' }}>
+            You listed this card for
+            <div style={{ marginTop: '0.5rem' }}>
+              <Icon
+                style={{ color: Color.brownOrange() }}
+                icon={['far', 'badge-dollar']}
+              />
+              <span
                 style={{
-                  marginTop: '0.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                  marginLeft: '0.3rem',
+                  fontWeight: 'bold',
+                  color: Color.darkerGray()
                 }}
               >
-                <Icon
-                  style={{ color: Color.brownOrange() }}
-                  icon={['far', 'badge-dollar']}
-                />
-                <span
-                  style={{
-                    marginLeft: '0.2rem',
-                    color: Color.darkerGray(),
-                    fontWeight: 'bold'
-                  }}
-                >
-                  {askPrice}
-                </span>
-              </div>
+                {addCommasToNumber(askPrice)}
+              </span>
             </div>
-          )}
-        </div>
-        {userIsOwner ? (
-          <OwnerMenu cardId={cardId} />
+          </div>
         ) : (
-          <NonOwnerMenu
-            myOffer={myOffer}
-            onSetOfferModalShown={onSetOfferModalShown}
-            style={{ marginTop: '1rem' }}
-          />
+          <div style={{ textAlign: 'center' }}>
+            Buy this card for
+            <div
+              style={{
+                marginTop: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <Icon
+                style={{ color: Color.brownOrange() }}
+                icon={['far', 'badge-dollar']}
+              />
+              <span
+                style={{
+                  marginLeft: '0.2rem',
+                  color: Color.darkerGray(),
+                  fontWeight: 'bold'
+                }}
+              >
+                {askPrice}
+              </span>
+            </div>
+          </div>
         )}
       </div>
+      {userIsOwner ? (
+        <OwnerMenu style={{ marginTop: '1rem' }} cardId={cardId} />
+      ) : (
+        <NonOwnerMenu
+          myOffer={myOffer}
+          onSetOfferModalShown={onSetOfferModalShown}
+          style={{ marginTop: '1rem' }}
+        />
+      )}
     </div>
   );
 }
