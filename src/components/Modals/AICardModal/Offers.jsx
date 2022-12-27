@@ -56,7 +56,8 @@ export default function Offers({ cardId }) {
                 icon={['far', 'badge-dollar']}
               />
               <span style={{ marginLeft: '0.2rem' }}>
-                {offer.offerPrice} offer from
+                <b style={{ color: Color.darkerGray() }}>{offer.offerPrice}</b>{' '}
+                offer from
               </span>
               <UsernameText
                 style={{ marginLeft: '0.5rem' }}

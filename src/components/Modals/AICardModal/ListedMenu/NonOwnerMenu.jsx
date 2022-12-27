@@ -1,76 +1,83 @@
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import MyOffer from '../MyOffer';
+import MakeOffer from '../MakeOffer';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
 NonOwnerMenu.propTypes = {
+  myOffer: PropTypes.object,
   onSetOfferModalShown: PropTypes.func.isRequired
 };
 
-export default function NonOwnerMenu({ onSetOfferModalShown }) {
+export default function NonOwnerMenu({ myOffer, onSetOfferModalShown }) {
   return (
     <div
       style={{
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
+        alignItems: 'center',
         flexDirection: 'column'
       }}
     >
-      <Button
-        className={css`
-          @media (max-width: ${mobileMaxWidth}) {
-            padding: 0.7rem !important;
-          }
-        `}
-        onClick={() => console.log('buy')}
-        color="oceanBlue"
-        filled
-      >
-        <Icon
+      <div>
+        <Button
           className={css`
-            font-size: 1.6rem;
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
+              padding: 0.7rem !important;
             }
           `}
-          icon="shopping-cart"
-        />
-        <span
-          className={css`
-            font-size: 1.6rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
-            }
-          `}
-          style={{ marginLeft: '0.7rem' }}
+          onClick={() => console.log('buy')}
+          color="oceanBlue"
+          filled
         >
-          Buy
-        </span>
-      </Button>
-      <Button
-        className={css`
-          margin-top: 3rem;
-          @media (max-width: ${mobileMaxWidth}) {
-            padding: 0.7rem !important;
-          }
-        `}
-        onClick={() => onSetOfferModalShown(true)}
-        color="green"
-        filled
-      >
-        <span
-          className={css`
-            font-size: 1.6rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1rem;
-            }
-          `}
-        >
-          Make offer
-        </span>
-      </Button>
+          <Icon
+            className={css`
+              font-size: 1.6rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1rem;
+              }
+            `}
+            icon="shopping-cart"
+          />
+          <span
+            className={css`
+              font-size: 1.6rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1rem;
+              }
+            `}
+            style={{ marginLeft: '0.7rem' }}
+          >
+            Buy
+          </span>
+        </Button>
+      </div>
+      <div>
+        {myOffer ? (
+          <MyOffer
+            className={css`
+              margin-top: 3rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-top: 1.5rem;
+              }
+            `}
+            myOffer={myOffer}
+          />
+        ) : (
+          <MakeOffer
+            className={css`
+              margin-top: 1.7rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-top: 1rem;
+              }
+            `}
+            onSetOfferModalShown={onSetOfferModalShown}
+          />
+        )}
+      </div>
     </div>
   );
 }

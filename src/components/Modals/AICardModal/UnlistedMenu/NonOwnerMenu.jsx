@@ -4,8 +4,8 @@ import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 import UsernameText from '~/components/Texts/UsernameText';
-import MakeOffer from './MakeOffer';
-import MyOffer from './MyOffer';
+import MakeOffer from '../MakeOffer';
+import MyOffer from '../MyOffer';
 
 NonOwnerMenu.propTypes = {
   burnXP: PropTypes.number.isRequired,
