@@ -8,10 +8,11 @@ import { mobileMaxWidth } from '~/constants/css';
 
 NonOwnerMenu.propTypes = {
   myOffer: PropTypes.object,
-  onSetOfferModalShown: PropTypes.func.isRequired
+  onSetOfferModalShown: PropTypes.func.isRequired,
+  style: PropTypes.object
 };
 
-export default function NonOwnerMenu({ myOffer, onSetOfferModalShown }) {
+export default function NonOwnerMenu({ myOffer, onSetOfferModalShown, style }) {
   return (
     <div
       style={{
@@ -19,7 +20,8 @@ export default function NonOwnerMenu({ myOffer, onSetOfferModalShown }) {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        ...style
       }}
     >
       <div>
