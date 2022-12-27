@@ -71,6 +71,13 @@ export default function Offers({
           </div>
         )}
         {offers.map((offer) => {
+          let offerers = offer.users;
+          const myOffer = offerers.find((offerer) => offerer.id === userId);
+          if (myOffer) {
+            offerers = [myOffer].concat(
+              offerers.filter((offerer) => offerer.id !== userId)
+            );
+          }
           return (
             <nav
               className={css`
@@ -103,16 +110,17 @@ export default function Offers({
                 style={{ marginLeft: '0.5rem' }}
                 color={Color[userLinkColor]()}
                 displayedName={
-                  offer.users[0].id === userId ? 'you' : offer.users[0].username
+                  offerers[0].id === userId ? 'you' : offerers[0].username
                 }
                 user={{
-                  username: offer.users[0].username,
-                  id: offer.users[0].id
+                  username: offerers[0].username,
+                  id: offerers[0].id
                 }}
               />
-              {offer.users.length > 1 ? (
+              {offerers.length > 1 ? (
                 <span style={{ marginLeft: '0.5rem' }}>
-                  and {offer.users.length - 1} others
+                  and {offerers.length - 1} other
+                  {offerers.length - 1 > 1 ? 's' : ''}
                 </span>
               ) : null}
             </nav>
