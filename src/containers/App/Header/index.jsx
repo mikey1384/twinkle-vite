@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import AccountMenu from './AccountMenu';
 import MainNavs from './MainNavs';
 import TwinkleLogo from './TwinkleLogo';
+import BalanceModal from './BalanceModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Peer from 'simple-peer';
 import { css } from '@emotion/css';
@@ -1095,7 +1096,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           />
         </div>
       </nav>
-      {balanceModalShown && <div>balance modal goes here</div>}
+      {balanceModalShown && (
+        <BalanceModal onHide={() => setBalanceModalShown(false)} />
+      )}
     </ErrorBoundary>
   );
 
