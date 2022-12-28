@@ -37,14 +37,14 @@ export default function BalanceModal({ onHide }) {
 
   return (
     <Modal onHide={onHide}>
-      <header>Your Twinkle Coins</header>
+      <header>Transaction History</header>
       <main>
         <div
           className={css`
             text-align: center;
             font-weight: bold;
             font-size: 2rem;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.5rem;
             }
@@ -55,12 +55,29 @@ export default function BalanceModal({ onHide }) {
             {addCommasToNumber(twinkleCoins)}
           </p>
         </div>
-        {changes.map((change) => (
-          <ChangeListItem key={change.id} change={change} />
-        ))}
+        <div
+          className={css`
+            height: 50vh;
+            overflow: scroll;
+            border: 1px solid ${Color.borderGray()};
+            nav {
+              padding: 1.5rem;
+              border-bottom: 1px solid ${Color.borderGray()};
+              border-left: none;
+              border-right: none;
+              &:last-child {
+                border-bottom: none;
+              }
+            }
+          `}
+        >
+          {changes.map((change) => (
+            <ChangeListItem key={change.id} change={change} />
+          ))}
+        </div>
         {loadMoreShown && (
           <LoadMoreButton
-            style={{ marginTop: '1.5em' }}
+            style={{ marginTop: '1.5rem' }}
             loading={loadingMore}
             filled
             color={loadMoreButtonColor}
