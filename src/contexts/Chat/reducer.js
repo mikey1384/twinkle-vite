@@ -893,7 +893,10 @@ export default function ChatReducer(state, action) {
             : action.data.aiCardLoadMoreButton,
         allFavoriteChannelIds: action.data.allFavoriteChannelIds,
         cardObj: action.data.aiCards
-          ? objectify(action.data.aiCards)
+          ? {
+              ...state.cardObj,
+              ...objectify(action.data.aiCards)
+            }
           : state.cardObj,
         channelsObj: newChannelsObj,
         chatStatus: state.chatStatus,

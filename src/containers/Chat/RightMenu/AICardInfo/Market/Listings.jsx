@@ -29,7 +29,7 @@ export default function Listings({ loadMoreButtonColor }) {
   const listedCardIds = useChatContext((v) => v.state.listedCardIds);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const listedCards = useMemo(
-    () => listedCardIds.map((id) => cardObj[id]),
+    () => listedCardIds.filter((id) => !!cardObj[id]).map((id) => cardObj[id]),
     [listedCardIds, cardObj]
   );
   const listedCardsLoadMoreButton = useChatContext(
