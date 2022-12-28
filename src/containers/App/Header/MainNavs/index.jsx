@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Nav from './Nav';
 import MobileSideMenuNav from './MobileSideMenuNav';
@@ -8,7 +8,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { getSectionFromPathname } from '~/helpers';
 import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
-import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
+import { truncateText } from '~/helpers/stringHelpers';
 import {
   useAppContext,
   useChatContext,
@@ -47,7 +47,6 @@ function MainNavs({
   defaultSearchFilter,
   totalRewardAmount
 }) {
-  const [twinkleCoinsHovered, setTwinkleCoinsHovered] = useState(false);
   const { twinkleCoins, userId, banned, lastChatPath } = useKeyContext(
     (v) => v.myState
   );
@@ -71,7 +70,6 @@ function MainNavs({
   const chatType = useChatContext((v) => v.state.chatType);
   const chatLoaded = useChatContext((v) => v.state.loaded);
   const loaded = useRef(false);
-  const timerRef = useRef(null);
 
   const contentLabel = useMemo(() => {
     if (!contentNav) return null;
@@ -80,17 +78,13 @@ function MainNavs({
 
   const displayedTwinkleCoins = useMemo(() => {
     if (twinkleCoins > 999) {
-      if (twinkleCoinsHovered) {
-        clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => {
-          setTwinkleCoinsHovered(false);
-        }, 1500);
-        return addCommasToNumber(twinkleCoins);
+      if (twinkleCoins > 999999) {
+        return `${(twinkleCoins / 1000000).toFixed(1)}M`;
       }
-      return '999+';
+      return `${(twinkleCoins / 1000).toFixed(1)}K`;
     }
     return twinkleCoins;
-  }, [twinkleCoins, twinkleCoinsHovered]);
+  }, [twinkleCoins]);
 
   const chatMatch = useMemo(
     () =>
@@ -451,7 +445,6 @@ function MainNavs({
             alignItems: 'center',
             paddingRight: '1rem'
           }}
-          onClick={() => setTwinkleCoinsHovered(true)}
         >
           <Icon
             style={{ marginRight: '0.5rem' }}
