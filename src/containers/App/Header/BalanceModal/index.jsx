@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ChangeListItem from './ChangeListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -24,6 +25,8 @@ export default function BalanceModal({ onHide }) {
   const [changes, setChanges] = useState([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const ListRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     init();
@@ -34,6 +37,28 @@ export default function BalanceModal({ onHide }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const CardItems = ListRef.current;
+    addEvent(CardItems, 'scroll', onListScroll);
+
+    function onListScroll() {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        if (
+          loadMoreShown &&
+          ListRef.current.scrollTop >=
+            (ListRef.current.scrollHeight - ListRef.current.offsetHeight) * 0.7
+        ) {
+          handleLoadMore();
+        }
+      }, 250);
+    }
+
+    return function cleanUp() {
+      removeEvent(CardItems, 'scroll', onListScroll);
+    };
+  });
 
   return (
     <Modal onHide={onHide}>
@@ -56,6 +81,7 @@ export default function BalanceModal({ onHide }) {
           </p>
         </div>
         <div
+          ref={ListRef}
           className={css`
             height: 50vh;
             overflow: scroll;
