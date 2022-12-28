@@ -28,6 +28,7 @@ MainNavs.propTypes = {
   pathname: PropTypes.string,
   search: PropTypes.string,
   defaultSearchFilter: PropTypes.string,
+  onSetBalanceModalShown: PropTypes.func.isRequired,
   totalRewardAmount: PropTypes.number
 };
 
@@ -45,7 +46,8 @@ function MainNavs({
   pathname,
   search,
   defaultSearchFilter,
-  totalRewardAmount
+  totalRewardAmount,
+  onSetBalanceModalShown
 }) {
   const { twinkleCoins, userId, banned, lastChatPath } = useKeyContext(
     (v) => v.myState
@@ -433,7 +435,7 @@ function MainNavs({
           </Nav>
         )}
       </div>
-      {userId && typeof twinkleCoins === 'number' && (
+      {userId && (
         <div
           className={`mobile ${css`
             @media (max-width: ${mobileMaxWidth}) {
@@ -445,6 +447,7 @@ function MainNavs({
             alignItems: 'center',
             paddingRight: '1rem'
           }}
+          onClick={onSetBalanceModalShown}
         >
           <Icon
             style={{ marginRight: '0.5rem' }}

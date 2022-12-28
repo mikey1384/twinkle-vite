@@ -23,7 +23,7 @@ export default function MyCollection({ loadMoreButtonColor }) {
   const myCardIds = useChatContext((v) => v.state.myCardIds);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const myCards = useMemo(
-    () => myCardIds.map((id) => cardObj[id]),
+    () => myCardIds.filter((id) => !!cardObj[id]).map((id) => cardObj[id]),
     [myCardIds, cardObj]
   );
   const socketConnected = useNotiContext((v) => v.state.socketConnected);

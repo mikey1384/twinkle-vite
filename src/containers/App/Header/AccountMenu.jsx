@@ -15,10 +15,11 @@ const managementLabel = localize('management');
 const logOutLabel = localize('logOut');
 
 AccountMenu.propTypes = {
-  className: PropTypes.string
+  className: PropTypes.string,
+  onSetBalanceModalShown: PropTypes.func.isRequired
 };
 
-function AccountMenu({ className }) {
+function AccountMenu({ className, onSetBalanceModalShown }) {
   const navigate = useNavigate();
   const { loggedIn, username, userId, managementLevel, twinkleCoins } =
     useKeyContext((v) => v.myState);
@@ -70,7 +71,10 @@ function AccountMenu({ className }) {
   return (
     <div className="desktop" style={{ display: 'flex', alignItems: 'center' }}>
       {loggedIn && (
-        <div style={{ marginRight: '1rem' }}>
+        <div
+          style={{ marginRight: '1rem', cursor: 'pointer' }}
+          onClick={onSetBalanceModalShown}
+        >
           <Icon icon={['far', 'badge-dollar']} />{' '}
           {addCommasToNumber(twinkleCoins)}
         </div>
