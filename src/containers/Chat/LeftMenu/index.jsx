@@ -21,7 +21,7 @@ LeftMenu.propTypes = {
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   displayedThemeColor: PropTypes.string,
   loadingVocabulary: PropTypes.bool,
-  loadingAIImageChat: PropTypes.bool,
+  loadingAICardChat: PropTypes.bool,
   onNewButtonClick: PropTypes.func.isRequired,
   selectedChannelId: PropTypes.number,
   subchannelIds: PropTypes.arrayOf(PropTypes.number),
@@ -34,7 +34,7 @@ function LeftMenu({
   currentPathId,
   displayedThemeColor,
   loadingVocabulary,
-  loadingAIImageChat,
+  loadingAICardChat,
   onNewButtonClick,
   selectedChannelId,
   subchannelIds,
@@ -90,9 +90,9 @@ function LeftMenu({
     return (
       !!subchannelIds?.length &&
       chatType === 'default' &&
-      !(loadingVocabulary || loadingAIImageChat)
+      !(loadingVocabulary || loadingAICardChat)
     );
-  }, [chatType, loadingVocabulary, loadingAIImageChat, subchannelIds?.length]);
+  }, [chatType, loadingVocabulary, loadingAICardChat, subchannelIds?.length]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu">
@@ -144,7 +144,7 @@ function LeftMenu({
           </div>
         </div>
         <Collect
-          aiCardSelected={chatType === AI_CARD_CHAT_TYPE || loadingAIImageChat}
+          aiCardSelected={chatType === AI_CARD_CHAT_TYPE || loadingAICardChat}
           vocabSelected={chatType === VOCAB_CHAT_TYPE || loadingVocabulary}
           onClick={() => {
             if (vocabMatch && collectType === VOCAB_CHAT_TYPE) return null;

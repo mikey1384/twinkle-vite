@@ -13,10 +13,10 @@ import { css } from '@emotion/css';
 import StatusInterface from './StatusInterface';
 
 AICards.propTypes = {
-  loadingAIImageChat: PropTypes.bool
+  loadingAICardChat: PropTypes.bool
 };
 
-export default function AICards({ loadingAIImageChat }) {
+export default function AICards({ loadingAICardChat }) {
   const { userId, canGenerateAICard } = useKeyContext((v) => v.myState);
   const [aiCardModalCardId, setAICardModalCardId] = useState(null);
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
@@ -31,15 +31,15 @@ export default function AICards({ loadingAIImageChat }) {
   const onSetCollectType = useAppContext(
     (v) => v.user.actions.onSetCollectType
   );
-  const aiImageStatusMessage = useChatContext(
-    (v) => v.state.aiImageStatusMessage
+  const aiCardStatusMessage = useChatContext(
+    (v) => v.state.aiCardStatusMessage
   );
   const isGeneratingAICard = useChatContext((v) => v.state.isGeneratingAICard);
   const onSetIsGeneratingAICard = useChatContext(
     (v) => v.actions.onSetIsGeneratingAICard
   );
-  const onSetAIImageStatusMessage = useChatContext(
-    (v) => v.actions.onSetAIImageStatusMessage
+  const onSetaiCardStatusMessage = useChatContext(
+    (v) => v.actions.onSetaiCardStatusMessage
   );
   const onPostAICard = useChatContext((v) => v.actions.onPostAICard);
   const navigate = useNavigate();
@@ -71,7 +71,7 @@ export default function AICards({ loadingAIImageChat }) {
           <nav className="active">AI Cards</nav>
         </FilterBar>
       </div>
-      {loadingAIImageChat ? (
+      {loadingAICardChat ? (
         <div style={{ height: 'CALC(100% - 6.5rem)' }}>
           <Loading style={{ height: '50%' }} text="Loading AI Cards" />
         </div>
@@ -81,7 +81,7 @@ export default function AICards({ loadingAIImageChat }) {
 
       <StatusInterface
         posting={isGeneratingAICard}
-        statusMessage={aiImageStatusMessage}
+        statusMessage={aiCardStatusMessage}
       />
       {!canGenerateAICard && (
         <div
@@ -115,7 +115,7 @@ export default function AICards({ loadingAIImageChat }) {
           canGenerateAICard={!!canGenerateAICard}
           onGenerateAICard={handleGenerateCard}
           posting={isGeneratingAICard}
-          loading={loadingAIImageChat}
+          loading={loadingAICardChat}
         />
       </div>
       {aiCardModalCardId && (
@@ -136,11 +136,11 @@ export default function AICards({ loadingAIImageChat }) {
     let isPurchased = false;
     try {
       onSetIsGeneratingAICard(true);
-      onSetAIImageStatusMessage('Processing transaction...');
+      onSetaiCardStatusMessage('Processing transaction...');
       const { quality, level, cardId, word, prompt, coins } =
         await processAiCardQuality();
       if (!quality) {
-        onSetAIImageStatusMessage(
+        onSetaiCardStatusMessage(
           `You don't have enough Twinkle Coins to summon a card.`
         );
         onSetIsGeneratingAICard(false);
@@ -148,12 +148,12 @@ export default function AICards({ loadingAIImageChat }) {
       }
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       isPurchased = true;
-      onSetAIImageStatusMessage('Purchase complete! Generating card...');
+      onSetaiCardStatusMessage('Purchase complete! Generating card...');
       const { imageUrl, style } = await getOpenAiImage(prompt);
-      onSetAIImageStatusMessage('Finishing your card...');
+      onSetaiCardStatusMessage('Finishing your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
       const card = await postAICard({ imagePath, cardId, style });
-      onSetAIImageStatusMessage('Card Summoned');
+      onSetaiCardStatusMessage('Card Summoned');
       onPostAICard({
         prompt,
         id: cardId,
@@ -166,7 +166,7 @@ export default function AICards({ loadingAIImageChat }) {
       const statusMessage = isPurchased
         ? `Couldn't generate the card's image at this time. Reload the website and try again.`
         : 'Payment failed. Try again.';
-      onSetAIImageStatusMessage(statusMessage);
+      onSetaiCardStatusMessage(statusMessage);
     }
     onSetIsGeneratingAICard(false);
   }

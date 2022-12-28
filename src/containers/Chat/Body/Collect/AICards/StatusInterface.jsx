@@ -10,9 +10,7 @@ StatusInterface.propTypes = {
 };
 
 export default function StatusInterface({ posting, statusMessage }) {
-  const aiImageErrorMessage = useChatContext(
-    (v) => v.state.aiImageErrorMessage
-  );
+  const aiCardErrorMessage = useChatContext((v) => v.state.aiCardErrorMessage);
   return (
     <div
       style={{
@@ -23,7 +21,7 @@ export default function StatusInterface({ posting, statusMessage }) {
       }}
     >
       {(!stringIsEmpty(statusMessage) ||
-        !stringIsEmpty(aiImageErrorMessage)) && (
+        !stringIsEmpty(aiCardErrorMessage)) && (
         <div
           className={css`
             p {
@@ -39,12 +37,12 @@ export default function StatusInterface({ posting, statusMessage }) {
             textAlign: 'center',
             width: '100%',
             color: '#fff',
-            background: Color[aiImageErrorMessage ? 'rose' : 'black'](),
+            background: Color[aiCardErrorMessage ? 'rose' : 'black'](),
             padding: '1rem'
           }}
         >
           <p className={posting ? 'posting' : ''}>
-            {aiImageErrorMessage || statusMessage}
+            {aiCardErrorMessage || statusMessage}
           </p>
         </div>
       )}

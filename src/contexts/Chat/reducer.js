@@ -880,24 +880,35 @@ export default function ChatReducer(state, action) {
           newChannelsObj[channelId].loaded = false;
         }
       }
+
       return {
         ...state,
         ...initialChatState,
-        cardObj:
+        aiCardIds: action.data.aiCards
+          ? action.data.aiCards.map((card) => card.id)
+          : state.aiCardIds,
+        aiCardsLoadMoreButton:
           state.chatType === AI_CARD_CHAT_TYPE
-            ? state.cardObj
-            : action.data.aiCards
-            ? objectify(action.data.aiCards)
-            : {},
-        aiCardIds:
-          state.chatType === AI_CARD_CHAT_TYPE
-            ? state.aiCardIds
-            : action.data.aiCards
-            ? action.data.aiCards.map((card) => card.id)
-            : [],
-        numUnreads: state.numUnreads,
-        chatStatus: state.chatStatus,
+            ? state.aiCardsLoadMoreButton
+            : action.data.aiCardsLoadMoreButton,
         allFavoriteChannelIds: action.data.allFavoriteChannelIds,
+        cardObj: action.data.aiCards
+          ? objectify(action.data.aiCards)
+          : state.cardObj,
+        channelsObj: newChannelsObj,
+        chatStatus: state.chatStatus,
+        chatType: state.chatType ? state.chatType : action.data.chatType,
+        classChannelIds: action.data.classChannelIds,
+        classLoadMoreButton,
+        customChannelNames: action.data.customChannelNames,
+        favoriteChannelIds: action.data.favoriteChannelIds,
+        favoriteLoadMoreButton,
+        homeChannelIds: action.data.homeChannelIds,
+        homeLoadMoreButton: alreadyUsingChat
+          ? state.homeLoadMoreButton
+          : homeLoadMoreButton,
+        incomingOffers: state.incomingOffers,
+        incomingOffersLoadMoreButton: state.incomingOffersLoadMoreButton,
         lastSubchannelPaths:
           action.data.currentSubchannelId &&
           action.data.currentChannelId === state.selectedChannelId
@@ -907,47 +918,38 @@ export default function ChatReducer(state, action) {
                   newSubchannelObj[action.data.currentSubchannelId].path
               }
             : state.lastSubchannelPaths,
-        chatType: state.chatType ? state.chatType : action.data.chatType,
+        loaded: true,
         listedCardIds: state.listedCardIds,
         listedCardsLoadMoreButton: state.listedCardsLoadMoreButton,
         myCardIds: state.myCardIds,
         myCardsLoadMoreButton: state.myCardsLoadMoreButton,
-        vocabActivities:
-          state.chatType === VOCAB_CHAT_TYPE
-            ? state.vocabActivities
-            : action.data.vocabActivities,
-        aiCardsLoadMoreButton:
-          state.chatType === AI_CARD_CHAT_TYPE
-            ? state.aiCardsLoadMoreButton
-            : action.data.aiCardsLoadMoreButton,
-        vocabActivitiesLoadMoreButton:
-          state.chatType === VOCAB_CHAT_TYPE
-            ? state.vocabActivitiesLoadMoreButton
-            : vocabActivitiesLoadMoreButton,
-        wordsObj: {
-          ...state.wordsObj,
-          ...action.data.wordsObj
-        },
-        wordCollectors: action.data.wordCollectors,
-        loaded: true,
-        classChannelIds: action.data.classChannelIds,
-        favoriteChannelIds: action.data.favoriteChannelIds,
-        homeChannelIds: action.data.homeChannelIds,
-        channelsObj: newChannelsObj,
-        classLoadMoreButton,
-        favoriteLoadMoreButton,
-        homeLoadMoreButton: alreadyUsingChat
-          ? state.homeLoadMoreButton
-          : homeLoadMoreButton,
-        customChannelNames: action.data.customChannelNames,
+        myListedCardIds: state.myListedCardIds,
+        myListedCardsLoadMoreButton: state.myListedCardsLoadMoreButton,
+        numUnreads: state.numUnreads,
+        outgoingOffers: state.outgoingOffers,
+        outgoingOffersLoadMoreButton: state.outgoingOffersLoadMoreButton,
         reconnecting: false,
         recepientId: state.recepientId,
         selectedChannelId:
           state.selectedChannelId || state.selectedChannelId === 0
             ? state.selectedChannelId
-            : action.data.currentChannelId
+            : action.data.currentChannelId,
+        vocabActivities:
+          state.chatType === VOCAB_CHAT_TYPE
+            ? state.vocabActivities
+            : action.data.vocabActivities,
+        vocabActivitiesLoadMoreButton:
+          state.chatType === VOCAB_CHAT_TYPE
+            ? state.vocabActivitiesLoadMoreButton
+            : vocabActivitiesLoadMoreButton,
+        wordCollectors: action.data.wordCollectors,
+        wordsObj: {
+          ...state.wordsObj,
+          ...action.data.wordsObj
+        }
       };
     }
+
     case 'INVITE_USERS_TO_CHANNEL':
       return {
         ...state,
@@ -2186,13 +2188,13 @@ export default function ChatReducer(state, action) {
     case 'SET_AI_IMAGE_ERROR_MESSAGE': {
       return {
         ...state,
-        aiImageErrorMessage: action.message
+        aiCardErrorMessage: action.message
       };
     }
     case 'SET_AI_IMAGE_STATUS_MESSAGE': {
       return {
         ...state,
-        aiImageStatusMessage: action.message
+        aiCardStatusMessage: action.message
       };
     }
     case 'SET_IS_GENERATING_AI_CARD': {

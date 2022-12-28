@@ -149,7 +149,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   const filesBeingUploaded = useChatContext((v) => v.state.filesBeingUploaded);
   const homeChannelIds = useChatContext((v) => v.state.homeChannelIds);
   const loadingVocabulary = useChatContext((v) => v.state.loadingVocabulary);
-  const loadingAIImageChat = useChatContext((v) => v.state.loadingAIImageChat);
+  const loadingAICardChat = useChatContext((v) => v.state.loadingAICardChat);
   const loaded = useChatContext((v) => v.state.loaded);
   const recepientId = useChatContext((v) => v.state.recepientId);
   const reconnecting = useChatContext((v) => v.state.reconnecting);
@@ -780,7 +780,7 @@ export default function Main({ currentPathId, onFileUpload }) {
           creatingNewDMChannel,
           filesBeingUploaded,
           lastSubchannelPaths,
-          loadingAIImageChat,
+          loadingAICardChat,
           loadingVocabulary,
           recepientId,
           reconnecting,
@@ -821,7 +821,7 @@ export default function Main({ currentPathId, onFileUpload }) {
                 currentChannel={currentChannel}
                 displayedThemeColor={displayedThemeColor}
                 loadingVocabulary={loadingVocabulary}
-                loadingAIImageChat={loadingAIImageChat}
+                loadingAICardChat={loadingAICardChat}
                 onNewButtonClick={() => setCreateNewChatModalShown(true)}
                 selectedChannelId={selectedChannelId}
                 subchannelIds={currentChannel.subchannelIds}
