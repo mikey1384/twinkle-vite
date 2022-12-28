@@ -34,7 +34,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
       cardLevel: card.level,
       cardQuality: card.quality
     });
-  }, [card.level, card.quality]);
+  }, [card?.level, card?.quality]);
   const [cardModalShown, setCardModalShown] = useState(false);
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
   const cardColor = useMemo(
