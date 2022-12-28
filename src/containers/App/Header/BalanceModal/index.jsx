@@ -101,9 +101,24 @@ export default function BalanceModal({ onHide }) {
             }
           `}
         >
-          {changes.map((change) => (
-            <ChangeListItem key={change.id} change={change} />
-          ))}
+          {changes.map((change) => {
+            const accumulatedChanges = changes
+              .filter((v) => v.id > change.id)
+              .reduce((acc, v) => {
+                if (v.type === 'increase') {
+                  return acc - v.amount;
+                } else {
+                  return acc + v.amount;
+                }
+              }, 0);
+            return (
+              <ChangeListItem
+                key={change.id}
+                change={change}
+                balance={twinkleCoins + accumulatedChanges}
+              />
+            );
+          })}
           {loadMoreShown && (
             <LoadMoreButton
               filled
