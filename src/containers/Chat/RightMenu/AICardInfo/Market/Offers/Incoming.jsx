@@ -4,6 +4,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CardItem from '../../CardItem';
 import Loading from '~/components/Loading';
+import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { Color } from '~/constants/css';
 import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
 
@@ -13,6 +14,7 @@ Incoming.propTypes = {
 
 export default function Incoming({ loadMoreButtonColor }) {
   const CardItemsRef = useRef(null);
+  const timeoutRef = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
@@ -53,6 +55,30 @@ export default function Incoming({ loadMoreButtonColor }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socketConnected]);
+
+  useEffect(() => {
+    const CardItems = CardItemsRef.current;
+    addEvent(CardItems, 'scroll', onListScroll);
+
+    function onListScroll() {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        if (
+          incomingOffersLoadMoreButton &&
+          CardItemsRef.current.scrollTop >=
+            (CardItemsRef.current.scrollHeight -
+              CardItemsRef.current.offsetHeight) *
+              0.7
+        ) {
+          handleLoadMore();
+        }
+      }, 250);
+    }
+
+    return function cleanUp() {
+      removeEvent(CardItems, 'scroll', onListScroll);
+    };
+  });
 
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Offers/Outgoing">
