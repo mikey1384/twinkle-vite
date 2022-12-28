@@ -83,6 +83,7 @@ export default function BalanceModal({ onHide }) {
         <div
           ref={ListRef}
           className={css`
+            width: 80%;
             height: 50vh;
             overflow: scroll;
             border: 1px solid ${Color.borderGray()};
@@ -94,6 +95,9 @@ export default function BalanceModal({ onHide }) {
               &:last-of-type {
                 border-bottom: none;
               }
+            }
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 100%;
             }
           `}
         >
@@ -126,7 +130,6 @@ export default function BalanceModal({ onHide }) {
   async function handleLoadMore() {
     setLoadingMore(true);
     const lastId = changes[changes.length - 1].id;
-    console.log(changes);
     const { changes: loadedChanges, loadMoreShown } = await loadCoinHistory(
       lastId
     );
