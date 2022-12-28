@@ -204,6 +204,19 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
+    async loadCoinHistory(lastId) {
+      try {
+        const {
+          data: { changes, loadMoreShown }
+        } = await request.get(
+          `${URL}/user/coin/history${lastId ? `?lastId=${lastId}` : ''}`,
+          auth()
+        );
+        return Promise.resolve({ changes, loadMoreShown });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMyData() {
       try {
         const { data } = await request.get(`${URL}/user/session`, auth());
