@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import ActionBlock from './ActionBlock';
 
 ChangeListItem.propTypes = {
   change: PropTypes.object.isRequired
@@ -33,9 +34,11 @@ export default function ChangeListItem({ change }) {
       >
         {displayedTimeStamp}
       </div>
-      <div style={{ marginLeft: '2rem' }}>
-        {change.action} {change.target}
-      </div>
+      <ActionBlock
+        style={{ marginLeft: '2rem' }}
+        action={change.action}
+        target={change.target}
+      />
       <div style={{ marginLeft: '2rem' }}>
         {change.type}
         {change.amount}
