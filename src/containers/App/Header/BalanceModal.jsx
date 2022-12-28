@@ -1,12 +1,25 @@
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
+import { useAppContext } from '~/contexts';
 
 BalanceModal.propTypes = {
   onHide: PropTypes.func.isRequired
 };
 
 export default function BalanceModal({ onHide }) {
+  const loadCoinHistory = useAppContext(
+    (v) => v.requestHelpers.loadCoinHistory
+  );
+  useEffect(() => {
+    init();
+    async function init() {
+      await loadCoinHistory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Modal onHide={onHide}>
       <header>Your Twinkle Coins</header>
