@@ -39,8 +39,14 @@ export default function ChangeListItem({ change }) {
         action={change.action}
         target={change.target}
       />
-      <div style={{ marginLeft: '2rem' }}>
-        {change.type}
+      <div
+        style={{
+          marginLeft: '2rem',
+          fontFamily: 'monospace',
+          color: change.type === 'increase' ? Color.green() : Color.red()
+        }}
+      >
+        {change.type === 'increase' ? '+' : '-'}
         {change.amount}
       </div>
     </nav>
