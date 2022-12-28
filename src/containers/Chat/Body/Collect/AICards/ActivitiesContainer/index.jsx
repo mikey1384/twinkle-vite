@@ -16,8 +16,8 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
   } = useKeyContext((v) => v.theme);
   const { userId: myId } = useKeyContext((v) => v.myState);
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
-  const aiCardsLoadMoreButton = useChatContext(
-    (v) => v.state.aiCardsLoadMoreButton
+  const aiCardLoadMoreButton = useChatContext(
+    (v) => v.state.aiCardLoadMoreButton
   );
   const onLoadMoreAIImages = useChatContext(
     (v) => v.actions.onLoadMoreAIImages
@@ -90,7 +90,7 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
         overflow: 'scroll'
       }}
     >
-      {aiCardsLoadMoreButton ? (
+      {aiCardLoadMoreButton ? (
         <div
           style={{
             marginTop: '1rem',
@@ -133,7 +133,7 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
   );
 
   async function handleLoadMore() {
-    if (aiCardsLoadMoreButton) {
+    if (aiCardLoadMoreButton) {
       const prevContentHeight = ContentRef.current?.offsetHeight || 0;
       if (!loadingMore) {
         setLoadingMore(true);

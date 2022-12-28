@@ -887,10 +887,10 @@ export default function ChatReducer(state, action) {
         aiCardIds: action.data.aiCards
           ? action.data.aiCards.map((card) => card.id)
           : state.aiCardIds,
-        aiCardsLoadMoreButton:
+        aiCardLoadMoreButton:
           state.chatType === AI_CARD_CHAT_TYPE
-            ? state.aiCardsLoadMoreButton
-            : action.data.aiCardsLoadMoreButton,
+            ? state.aiCardLoadMoreButton
+            : action.data.aiCardLoadMoreButton,
         allFavoriteChannelIds: action.data.allFavoriteChannelIds,
         cardObj: action.data.aiCards
           ? objectify(action.data.aiCards)
@@ -1287,7 +1287,7 @@ export default function ChatReducer(state, action) {
           ...objectify(action.cards)
         },
         aiCardIds: action.cards.map((card) => card.id),
-        aiCardsLoadMoreButton: action.loadMoreShown
+        aiCardLoadMoreButton: action.loadMoreShown
       };
     }
     case 'LOAD_MORE_AI_CARDS': {
@@ -1298,7 +1298,7 @@ export default function ChatReducer(state, action) {
           ...objectify(action.cards)
         },
         aiCardIds: action.cards.map((card) => card.id).concat(state.aiCardIds),
-        aiCardsLoadMoreButton: action.loadMoreShown
+        aiCardLoadMoreButton: action.loadMoreShown
       };
     }
     case 'POST_AI_CARD': {
