@@ -10,7 +10,7 @@ export const initialChatState = {
   aiCardErrorMessage: '',
   aiCardIds: [],
   aiCardStatusMessage: '',
-  aiCardsLoadMoreButton: false,
+  aiCardLoadMoreButton: false,
   allFavoriteChannelIds: {},
   cardObj: {},
   channelLoading: false,
