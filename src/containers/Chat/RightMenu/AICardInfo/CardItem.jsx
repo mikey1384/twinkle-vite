@@ -152,7 +152,8 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                   textAlign: 'center'
                 }}
               >
-                <b>Card #{card.id}</b> received
+                <b>Card #{card.id}</b>
+                {offerObj.user.id === userId ? '' : ' received'}
                 <p>
                   <Icon
                     style={{ color: Color.brownOrange() }}
@@ -180,7 +181,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
               </div>
             )}
             {!offerObj && <b>#{card.id}</b>}
-            {!offerObj && (
+            {(!offerObj || offerObj.user.id === userId) && (
               <div
                 style={{
                   fontSize: '1.2rem',
