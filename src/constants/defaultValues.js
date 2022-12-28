@@ -146,7 +146,7 @@ export const karmaMultiplier = {
 export const mobileFullTextRevealShowDuration = 2000;
 
 export const priceTable = {
-  card: 25,
+  card: 100,
   chatSubject: 20,
   chatTheme: 30,
   username: 10,
