@@ -50,7 +50,7 @@ export default function MyCollection({ loadMoreButtonColor }) {
   }, [socketConnected]);
 
   useEffect(() => {
-    const container = CardItemsRef.current;
+    const container = CardItemsRef.current || {};
     setOverflown(container.offsetHeight < container.scrollHeight);
   }, [myCards]);
 

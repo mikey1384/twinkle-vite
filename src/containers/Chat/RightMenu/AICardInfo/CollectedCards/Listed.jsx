@@ -52,7 +52,7 @@ export default function Listed({ loadMoreButtonColor }) {
   }, [socketConnected]);
 
   useEffect(() => {
-    const container = CardItemsRef.current;
+    const container = CardItemsRef.current || {};
     setOverflown(container.offsetHeight < container.scrollHeight);
   }, [myListedCards]);
 

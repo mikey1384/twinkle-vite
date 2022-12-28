@@ -39,7 +39,7 @@ export default function Incoming({ loadMoreButtonColor }) {
   );
 
   useEffect(() => {
-    const container = CardItemsRef.current;
+    const container = CardItemsRef.current || {};
     setOverflown(container.offsetHeight < container.scrollHeight);
   }, [displayedIncomingOffers]);
 
