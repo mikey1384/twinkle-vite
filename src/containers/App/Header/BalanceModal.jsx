@@ -15,7 +15,8 @@ export default function BalanceModal({ onHide }) {
   useEffect(() => {
     init();
     async function init() {
-      await loadCoinHistory();
+      const { changes, loadMoreShown } = await loadCoinHistory();
+      console.log(changes, loadMoreShown);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
