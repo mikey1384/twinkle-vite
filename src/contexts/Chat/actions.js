@@ -777,13 +777,13 @@ export default function ChatActions(dispatch) {
         subchannelId
       });
     },
-    onSetAIImageErrorMessage(message) {
+    onSetaiCardErrorMessage(message) {
       return dispatch({
         type: 'SET_AI_IMAGE_ERROR_MESSAGE',
         message
       });
     },
-    onSetAIImageStatusMessage(message) {
+    onSetaiCardStatusMessage(message) {
       return dispatch({
         type: 'SET_AI_IMAGE_STATUS_MESSAGE',
         message

@@ -28,7 +28,7 @@ export default function Body({
   subchannelPath
 }) {
   const {
-    state: { chatType, loadingVocabulary, loadingAIImageChat }
+    state: { chatType, loadingVocabulary, loadingAICardChat }
   } = useContext(LocalContext);
   const isUsingCollectSection = useMemo(
     () => chatType === VOCAB_CHAT_TYPE || chatType === AI_CARD_CHAT_TYPE,
@@ -53,7 +53,7 @@ export default function Body({
         {isUsingCollectSection ? (
           <Collect
             loadingVocabulary={loadingVocabulary}
-            loadingAIImageChat={loadingAIImageChat}
+            loadingAICardChat={loadingAICardChat}
             chatType={chatType}
           />
         ) : (
