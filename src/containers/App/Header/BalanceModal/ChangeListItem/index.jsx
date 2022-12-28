@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ActionBlock from './ActionBlock';
 
 ChangeListItem.propTypes = {
@@ -38,6 +39,7 @@ export default function ChangeListItem({ change }) {
         style={{ marginLeft: '2rem' }}
         action={change.action}
         target={change.target}
+        type={change.type}
       />
       <div
         style={{
@@ -47,7 +49,7 @@ export default function ChangeListItem({ change }) {
         }}
       >
         {change.type === 'increase' ? '+' : '-'}
-        {change.amount}
+        {addCommasToNumber(change.amount)}
       </div>
     </nav>
   );

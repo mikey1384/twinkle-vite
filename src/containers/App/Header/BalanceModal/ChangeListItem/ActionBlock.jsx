@@ -4,10 +4,11 @@ import PropTypes from 'prop-types';
 ActionBlock.propTypes = {
   action: PropTypes.string.isRequired,
   target: PropTypes.string.isRequired,
-  style: PropTypes.object
+  style: PropTypes.object,
+  type: PropTypes.string.isRequired
 };
 
-export default function ActionBlock({ action, target, style }) {
+export default function ActionBlock({ action, target, style, type }) {
   const displayedAction = useMemo(() => {
     if (action === 'generate') {
       return 'summoned a card';
@@ -46,9 +47,13 @@ export default function ActionBlock({ action, target, style }) {
       return 'collected a vocabulary';
     }
     if (action === 'reward') {
-      return 'rewarded twinkles';
+      if (type === 'decrease') {
+        return 'rewarded twinkles';
+      } else {
+        return 'received rewards for recommending a post';
+      }
     }
     return `${action} ${target}`;
-  }, [action, target]);
+  }, [action, target, type]);
   return <div style={style}>{displayedAction}</div>;
 }

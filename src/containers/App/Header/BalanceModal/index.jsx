@@ -84,7 +84,7 @@ export default function BalanceModal({ onHide }) {
               }}
               loading={loadingMore}
               color={loadMoreButtonColor}
-              onClick={() => setLoadingMore(true)}
+              onClick={handleLoadMore}
             />
           )}
         </div>
@@ -96,4 +96,16 @@ export default function BalanceModal({ onHide }) {
       </footer>
     </Modal>
   );
+
+  async function handleLoadMore() {
+    setLoadingMore(true);
+    const lastId = changes[changes.length - 1].id;
+    console.log(changes);
+    const { changes: loadedChanges, loadMoreShown } = await loadCoinHistory(
+      lastId
+    );
+    setChanges((v) => [...v, ...loadedChanges]);
+    setLoadMoreShown(loadMoreShown);
+    setLoadingMore(false);
+  }
 }
