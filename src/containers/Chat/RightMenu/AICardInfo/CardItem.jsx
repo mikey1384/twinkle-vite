@@ -144,38 +144,25 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
               }
             `}
           >
-            <b>#{card.id}</b>
-            <div
-              style={{
-                fontSize: '1.2rem',
-                display: '-webkit-box',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflowWrap: 'break-word',
-                wordBreak: 'break-word',
-                overflow: 'hidden',
-                WebkitBoxOrient: 'vertical',
-                fontFamily: 'Roboto Mono, monospace',
-                WebkitLineClamp: 1
-              }}
-              dangerouslySetInnerHTML={{ __html: promptText }}
-            />
-            {offerObj ? (
+            {offerObj && (
               <div
                 style={{
-                  marginTop: '0.7rem',
                   fontSize: '1.2rem',
+                  lineHeight: 1.7,
                   textAlign: 'center'
                 }}
               >
+                <b>Card #{card.id}</b> received
                 <p>
                   <Icon
                     style={{ color: Color.brownOrange() }}
                     icon={['far', 'badge-dollar']}
                   />
-                  <span style={{ marginLeft: '0.1rem' }}>
+                  <b
+                    style={{ marginLeft: '0.1rem', color: Color.darkerGray() }}
+                  >
                     {addCommasToNumber(offerObj.price)}
-                  </span>{' '}
+                  </b>{' '}
                   offer{offerObj.user.id === userId ? 'ed' : ''}
                 </p>
                 {offerObj.user.id !== userId && (
@@ -191,7 +178,26 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                   </div>
                 )}
               </div>
-            ) : (
+            )}
+            {!offerObj && <b>#{card.id}</b>}
+            {!offerObj && (
+              <div
+                style={{
+                  fontSize: '1.2rem',
+                  display: '-webkit-box',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflowWrap: 'break-word',
+                  wordBreak: 'break-word',
+                  overflow: 'hidden',
+                  WebkitBoxOrient: 'vertical',
+                  fontFamily: 'Roboto Mono, monospace',
+                  WebkitLineClamp: 1
+                }}
+                dangerouslySetInnerHTML={{ __html: promptText }}
+              />
+            )}
+            {!offerObj && (
               <b
                 style={{
                   marginTop: '1rem',
