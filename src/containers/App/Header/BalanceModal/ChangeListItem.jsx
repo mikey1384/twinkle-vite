@@ -6,10 +6,11 @@ ChangeListItem.propTypes = {
 
 export default function ChangeListItem({ change }) {
   return (
-    <div>
+    <nav>
       <div>
-        {change.action} {change.target} {change.type} {change.amount}
+        {change.timeStamp} {change.action} {change.target} {change.type}{' '}
+        {change.amount}
       </div>
-    </div>
+    </nav>
   );
 }
