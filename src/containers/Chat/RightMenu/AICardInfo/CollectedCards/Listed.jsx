@@ -102,7 +102,7 @@ export default function Listed({ loadMoreButtonColor }) {
           }}
         >
           <b style={{ color: Color.darkerGray() }}>
-            You have not listed any of your cards for sale
+            You have not listed any cards for sale
           </b>
         </div>
       ) : (
