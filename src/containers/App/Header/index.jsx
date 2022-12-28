@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import AccountMenu from './AccountMenu';
 import MainNavs from './MainNavs';
@@ -36,6 +36,7 @@ Header.propTypes = {
 };
 
 export default function Header({ onMobileMenuOpen, style = {} }) {
+  const [balanceModalShown, setBalanceModalShown] = useState(false);
   const { pathname, search } = useLocation();
   const navigate = useNavigate();
   const currentPathId = useMemo(
@@ -1078,11 +1079,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
             onMobileMenuOpen={onMobileMenuOpen}
             pathname={pathname}
             search={search}
+            onSetBalanceModalShown={() => setBalanceModalShown(true)}
             totalRewardAmount={
               totalRewardedTwinkles + totalRewardedTwinkleCoins
             }
           />
           <AccountMenu
+            onSetBalanceModalShown={() => setBalanceModalShown(true)}
             className={css`
               margin-right: 3rem;
               @media (max-width: ${mobileMaxWidth}) {
@@ -1092,6 +1095,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           />
         </div>
       </nav>
+      {balanceModalShown && <div>balance modal goes here</div>}
     </ErrorBoundary>
   );
 
