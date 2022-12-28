@@ -6,14 +6,14 @@ import {
   qualityProps
 } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
+import holoUrl from './holo.webp';
+import sparklesUrl from './sparkles.gif';
 
 const color1 = '#ec9bb6';
 const color2 = '#ccac6f';
 const color3 = '#69e4a5';
 const color4 = '#8ec5d6';
 const color5 = '#b98cce';
-const holoUrl = 'https://assets.codepen.io/13471/holo.png';
-const sparklesUrl = 'https://assets.codepen.io/13471/sparkles.gif';
 
 export default function useAICard(card) {
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
