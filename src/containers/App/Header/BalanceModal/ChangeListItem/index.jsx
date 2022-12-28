@@ -7,10 +7,11 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ActionBlock from './ActionBlock';
 
 ChangeListItem.propTypes = {
-  change: PropTypes.object.isRequired
+  change: PropTypes.object.isRequired,
+  balance: PropTypes.number.isRequired
 };
 
-export default function ChangeListItem({ change }) {
+export default function ChangeListItem({ change, balance }) {
   const displayedTimeStamp = useMemo(
     () => moment.unix(change.timeStamp).format('lll'),
     [change?.timeStamp]
@@ -51,6 +52,16 @@ export default function ChangeListItem({ change }) {
       >
         {change.type === 'increase' ? '+' : '-'}
         {addCommasToNumber(change.amount)}
+      </div>
+      <div
+        style={{
+          marginLeft: '2rem',
+          fontFamily: 'monospace',
+          color: Color.darkerGray(),
+          fontWeight: 'bold'
+        }}
+      >
+        {addCommasToNumber(balance)}
       </div>
     </nav>
   );
