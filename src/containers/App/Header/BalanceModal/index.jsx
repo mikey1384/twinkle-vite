@@ -65,7 +65,7 @@ export default function BalanceModal({ onHide }) {
               border-bottom: 1px solid ${Color.borderGray()};
               border-left: none;
               border-right: none;
-              &:last-child {
+              &:last-of-type {
                 border-bottom: none;
               }
             }
@@ -74,16 +74,20 @@ export default function BalanceModal({ onHide }) {
           {changes.map((change) => (
             <ChangeListItem key={change.id} change={change} />
           ))}
+          {loadMoreShown && (
+            <LoadMoreButton
+              filled
+              style={{
+                width: '100%',
+                borderRadius: 0,
+                border: 0
+              }}
+              loading={loadingMore}
+              color={loadMoreButtonColor}
+              onClick={() => setLoadingMore(true)}
+            />
+          )}
         </div>
-        {loadMoreShown && (
-          <LoadMoreButton
-            style={{ marginTop: '1.5rem' }}
-            loading={loadingMore}
-            filled
-            color={loadMoreButtonColor}
-            onClick={() => setLoadingMore(true)}
-          />
-        )}
       </main>
       <footer>
         <Button transparent onClick={onHide}>
