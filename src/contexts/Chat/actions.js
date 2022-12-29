@@ -317,17 +317,19 @@ export default function ChatActions(dispatch) {
         loadedSubchannelId
       });
     },
-    onLoadAIImageChat({ cards, loadMoreShown }) {
+    onLoadAIImageChat({ cardFeeds, cardObj, loadMoreShown }) {
       return dispatch({
         type: 'LOAD_AI_IMAGE_CHAT',
-        cards,
+        cardFeeds,
+        cardObj,
         loadMoreShown
       });
     },
-    onLoadMoreAIImages({ cards, loadMoreShown }) {
+    onLoadMoreAIImages({ cardFeeds, cardObj, loadMoreShown }) {
       return dispatch({
         type: 'LOAD_MORE_AI_CARDS',
-        cards,
+        cardFeeds,
+        cardObj,
         loadMoreShown
       });
     },

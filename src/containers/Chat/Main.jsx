@@ -79,7 +79,9 @@ export default function Main({ currentPathId, onFileUpload }) {
     (v) => v.requestHelpers.loadMoreChatMessages
   );
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
-  const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
+  const loadAICardFeeds = useAppContext(
+    (v) => v.requestHelpers.loadAICardFeeds
+  );
   const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
   const postChatReaction = useAppContext(
     (v) => v.requestHelpers.postChatReaction
@@ -537,9 +539,9 @@ export default function Main({ currentPathId, onFileUpload }) {
     if (chatType === AI_CARD_CHAT_TYPE) return;
     onUpdateChatType(AI_CARD_CHAT_TYPE);
     onSetLoadingAIImageChat(true);
-    const { cards, loadMoreShown } = await loadAICards();
+    const { cardFeeds, cardObj, loadMoreShown } = await loadAICardFeeds();
     if (currentPathIdRef.current === AI_CARD_CHAT_TYPE) {
-      onLoadAIImageChat({ cards, loadMoreShown });
+      onLoadAIImageChat({ cardFeeds, cardObj, loadMoreShown });
     }
     onSetLoadingAIImageChat(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
