@@ -13,6 +13,7 @@ import moment from 'moment';
 
 Activity.propTypes = {
   card: PropTypes.object.isRequired,
+  feed: PropTypes.object.isRequired,
   isLastActivity: PropTypes.bool,
   myId: PropTypes.number,
   onReceiveNewActivity: PropTypes.func.isRequired,
@@ -23,6 +24,7 @@ Activity.propTypes = {
 export default function Activity({
   isLastActivity,
   card,
+  feed,
   myId,
   onReceiveNewActivity,
   onSetScrollToBottom,
@@ -53,7 +55,7 @@ export default function Activity({
       handleSendActivity();
     }
     async function handleSendActivity() {
-      socket.emit('new_ai_card_activity', card);
+      socket.emit('new_ai_card_summon', { feed, card });
       onRemoveNewlyPostedCardStatus(card.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

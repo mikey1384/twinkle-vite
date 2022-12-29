@@ -1784,14 +1784,14 @@ export default function ChatReducer(state, action) {
         )
       };
     }
-    case 'RECEIVE_AI_CARD_ACTIVITY':
+    case 'RECEIVE_AI_CARD_SUMMON':
       return {
         ...state,
         cardObj: {
           ...state.cardObj,
           [action.card.id]: action.card
         },
-        aiCardFeeds: state.aiCardFeeds.concat(action.card.id)
+        aiCardFeeds: state.aiCardFeeds.concat(action.feed)
       };
     case 'RECEIVE_VOCAB_ACTIVITY':
       return {

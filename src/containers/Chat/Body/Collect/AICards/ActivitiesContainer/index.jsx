@@ -117,6 +117,7 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
           return (
             <Activity
               key={feed.id}
+              feed={feed}
               card={cardObj[feed.contentId]}
               isLastActivity={index === aiCardFeeds.length - 1}
               onReceiveNewActivity={handleReceiveNewActivity}

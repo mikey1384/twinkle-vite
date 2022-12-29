@@ -10,14 +10,10 @@ export default function AICards() {
   const { userId: myId } = useKeyContext((v) => v.myState);
   const aiCardFeeds = useChatContext((v) => v.state.aiCardFeeds);
   const cardObj = useChatContext((v) => v.state.cardObj);
-  const aiCards = useMemo(
-    () => aiCardFeeds.map((id) => cardObj[id]),
-    [aiCardFeeds, cardObj]
-  );
 
   const lastActivity = useMemo(() => {
-    return aiCards?.[aiCards?.length - 1];
-  }, [aiCards]);
+    return cardObj[aiCardFeeds?.[aiCardFeeds?.length - 1]?.contentId];
+  }, [aiCardFeeds, cardObj]);
 
   return (
     <div style={{ height: '5rem', position: 'relative' }}>
