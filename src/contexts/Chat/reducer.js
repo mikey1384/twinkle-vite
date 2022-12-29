@@ -1319,7 +1319,7 @@ export default function ChatReducer(state, action) {
           userId: action.card.creatorId,
           type: 'summon',
           contentId: action.card.id,
-          timeStamp: action.card.timestamp
+          timeStamp: action.card.timeStamp
         }),
         myCardIds: [action.card.id].concat(state.myCardIds)
       };
