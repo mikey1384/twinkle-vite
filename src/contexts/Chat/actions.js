@@ -403,9 +403,10 @@ export default function ChatActions(dispatch) {
         loadMoreShown
       });
     },
-    onPostAICard(card) {
+    onPostAICard({ feedId, card }) {
       return dispatch({
         type: 'POST_AI_CARD',
+        feedId,
         card: card
       });
     },

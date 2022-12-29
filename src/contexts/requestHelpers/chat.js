@@ -320,13 +320,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async postAICard({ cardId, imagePath, style }) {
       try {
         const {
-          data: { result }
+          data: { feedId, card }
         } = await request.post(
           `${URL}/chat/aiCard`,
           { cardId, imagePath, style },
           auth()
         );
-        return Promise.resolve(result);
+        return Promise.resolve({ feedId, card });
       } catch (error) {
         return handleError(error);
       }
