@@ -42,10 +42,9 @@ function XPBar({
   videoId,
   xpWarningShown
 }) {
-  const [coinHovered, setCoinHovered] = useState(false);
   const [xpHovered, setXPHovered] = useState(false);
   const watching = startingPosition > 0;
-  const { rewardBoostLvl, twinkleCoins } = useKeyContext((v) => v.myState);
+  const { rewardBoostLvl } = useKeyContext((v) => v.myState);
   const theme = useKeyContext((v) => v.theme);
   const xpLevelColor = useMemo(
     () => theme[`level${rewardLevel}`]?.color,
@@ -286,13 +285,6 @@ function XPBar({
             {canEarnCoins && (
               <div>
                 <div
-                  onClick={() =>
-                    deviceIsMobile ? setCoinHovered((hovered) => !hovered) : {}
-                  }
-                  onMouseEnter={
-                    twinkleCoins > 1000 ? () => setCoinHovered(true) : () => {}
-                  }
-                  onMouseLeave={() => setCoinHovered(false)}
                   className={css`
                     height: 100%;
                     position: relative;
@@ -303,38 +295,20 @@ function XPBar({
                     font-weight: bold;
                     color: #fff;
                     font-size: ${numCoinsEarned > 0 ? '1.3rem' : '1.5rem'};
-                    background: ${Color.brownOrange(
-                      twinkleCoins > 1000 ? 0.3 : 1
-                    )};
+                    background: ${Color.brownOrange()};
                     @media (max-width: ${mobileMaxWidth}) {
                       flex-grow: 1;
                       min-width: 3.5rem;
-                      font-size: ${numCoinsEarned > 0 && twinkleCoins <= 1000
-                        ? '0.7rem'
-                        : '1.2rem'};
+                      font-size: ${numCoinsEarned > 0 ? '0.7rem' : '1.2rem'};
                     }
                   `}
                 >
-                  {numCoinsEarned > 0 && twinkleCoins <= 1000 ? (
+                  {numCoinsEarned > 0 ? (
                     `+ ${numCoinsEarnedWithComma}`
                   ) : (
                     <Icon size="lg" icon={['far', 'badge-dollar']} />
                   )}
                 </div>
-                {coinHovered && (
-                  <FullTextReveal
-                    show
-                    direction="left"
-                    style={{
-                      marginTop: '0.5rem',
-                      color: '#000',
-                      width: '30rem',
-                      fontSize: '1.2rem',
-                      position: 'absolute'
-                    }}
-                    text={`You can no longer earn Twinkle Coins by watching videos because you have more than 1,000 coins`}
-                  />
-                )}
               </div>
             )}
           </div>
