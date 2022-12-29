@@ -523,10 +523,11 @@ export default function ChatActions(dispatch) {
         newMembers
       });
     },
-    onReceiveAICardActivity(card) {
+    onNewAICardSummon({ card, feed }) {
       return dispatch({
-        type: 'RECEIVE_AI_CARD_ACTIVITY',
-        card
+        type: 'RECEIVE_AI_CARD_SUMMON',
+        card,
+        feed
       });
     },
     onReceiveVocabActivity({ activity, usingVocabSection }) {
