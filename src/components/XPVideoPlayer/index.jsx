@@ -251,15 +251,19 @@ function XPVideoPlayer({
         if (rewardLevel > 2 && !rewardingCoin.current) {
           rewardingCoin.current = true;
           try {
-            const coins = await updateUserCoins({
+            const { alreadyDone, coins } = await updateUserCoins({
               action: 'watch',
               target: 'video',
               amount: coinRewardAmountRef.current,
               targetId: videoId,
+              totalDuration: totalDurationRef.current,
               type: 'increase'
             });
-            console.log(coins);
-            onSetUserState({ userId, newState: { twinkleCoins: coins } });
+            if (alreadyDone) {
+              setReachedMaxWatchDuration(true);
+            } else {
+              onSetUserState({ userId, newState: { twinkleCoins: coins } });
+            }
             rewardingCoin.current = false;
           } catch (error) {
             console.error(error.response || error);

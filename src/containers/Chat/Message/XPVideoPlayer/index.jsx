@@ -241,7 +241,7 @@ function XPVideoPlayer({
         ) {
           rewardingCoin.current = true;
           try {
-            const coins = await updateUserCoins({
+            const { coins } = await updateUserCoins({
               action: 'watch',
               target: 'video',
               amount: coinRewardAmountRef.current,
