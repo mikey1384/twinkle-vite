@@ -1314,7 +1314,13 @@ export default function ChatReducer(state, action) {
             isNewlyPosted: true
           }
         },
-        aiCardFeeds: state.aiCardFeeds.concat(action.card.id),
+        aiCardFeeds: state.aiCardFeeds.concat({
+          id: action.feedId,
+          userId: action.card.creatorId,
+          type: 'summon',
+          contentId: action.card.id,
+          timeStamp: action.card.timestamp
+        }),
         myCardIds: [action.card.id].concat(state.myCardIds)
       };
     }
