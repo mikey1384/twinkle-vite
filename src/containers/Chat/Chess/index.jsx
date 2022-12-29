@@ -707,6 +707,7 @@ export default function Chess({
       onDiscussClick();
     }
   }, [
+    initialState?.previousState,
     isCheckmate,
     isDiscussion,
     isDraw,
