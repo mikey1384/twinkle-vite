@@ -142,7 +142,10 @@ export default function Chess({
     [userId, boardState]
   );
 
-  const userMadeLastMove = useMemo(() => move.by === userId, [move.by, userId]);
+  const userMadeLastMove = useMemo(
+    () => move?.by === userId,
+    [move?.by, userId]
+  );
   const isCheck = boardState?.isCheck;
   const isCheckmate = boardState?.isCheckmate;
   const isStalemate = boardState?.isStalemate;
