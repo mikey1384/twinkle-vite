@@ -601,16 +601,23 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async updateUserCoins({ action, type, amount, target, targetId }) {
+    async updateUserCoins({
+      action,
+      type,
+      amount,
+      target,
+      targetId,
+      totalDuration
+    }) {
       try {
         const {
-          data: { coins }
+          data: { alreadyDone, coins }
         } = await request.post(
           `${URL}/user/coin`,
-          { amount, action, target, targetId, type },
+          { amount, action, target, targetId, totalDuration, type },
           auth()
         );
-        return Promise.resolve(coins);
+        return Promise.resolve({ alreadyDone, coins });
       } catch (error) {
         return handleError(error);
       }

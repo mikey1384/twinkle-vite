@@ -26,14 +26,12 @@ export default function RewardLevelInfo({
   videoId,
   xpWarningShown
 }) {
-  const { twinkleCoins } = useKeyContext((v) => v.myState);
   const theme = useKeyContext((v) => v.theme);
   const { numCoinsEarned = 0, numXpEarned = 0 } = useContentState({
     contentType: 'video',
     contentId: videoId
   });
   const [xpHovered, setXPHovered] = useState(false);
-  const [coinHovered, setCoinHovered] = useState(false);
   const canEarnCoins = rewardLevel >= 3;
   const numXpEarnedWithComma = useMemo(
     () => addCommasToNumber(numXpEarned),
@@ -68,6 +66,17 @@ export default function RewardLevelInfo({
           height: 2rem;
         }
       `}
+      onClick={
+        deviceIsMobile && reachedMaxWatchDuration
+          ? () => setXPHovered((hovered) => !hovered)
+          : () => {}
+      }
+      onMouseEnter={
+        !deviceIsMobile && reachedMaxWatchDuration
+          ? () => setXPHovered(true)
+          : () => {}
+      }
+      onMouseLeave={() => setXPHovered(false)}
     >
       <div
         className={css`
@@ -98,10 +107,6 @@ export default function RewardLevelInfo({
               font-size: ${numXpEarned > 0 ? '0.7rem' : '1rem'};
             }
           `}
-          onMouseEnter={
-            reachedMaxWatchDuration ? () => setXPHovered(true) : () => {}
-          }
-          onMouseLeave={() => setXPHovered(false)}
         >
           {numXpEarned > 0 && !reachedMaxWatchDuration
             ? `+ ${numXpEarnedWithComma}`
@@ -109,31 +114,10 @@ export default function RewardLevelInfo({
             ? `${rewardLevel}-STAR`
             : Stars}
         </div>
-        {xpHovered ? (
-          <FullTextReveal
-            show
-            direction="left"
-            style={{
-              marginTop: '0.5rem',
-              color: '#000',
-              width: '30rem',
-              fontSize: '1.2rem',
-              position: 'absolute'
-            }}
-            text={`You have earned all the XP you can earn from this video`}
-          />
-        ) : null}
       </div>
       {canEarnCoins && (
         <div>
           <div
-            onClick={() =>
-              deviceIsMobile ? setCoinHovered((hovered) => !hovered) : {}
-            }
-            onMouseEnter={
-              twinkleCoins > 1000 ? () => setCoinHovered(true) : () => {}
-            }
-            onMouseLeave={() => setCoinHovered(false)}
             className={css`
               height: 100%;
               position: relative;
@@ -144,38 +128,40 @@ export default function RewardLevelInfo({
               font-weight: bold;
               color: #fff;
               font-size: ${numCoinsEarned > 0 ? '1.3rem' : '1.5rem'};
-              background: ${Color.brownOrange(twinkleCoins > 1000 ? 0.3 : 1)};
+              background: ${Color.brownOrange(
+                reachedMaxWatchDuration ? 0.3 : 1
+              )};
               @media (max-width: ${mobileMaxWidth}) {
                 flex-grow: 1;
                 min-width: 3.5rem;
-                font-size: ${numCoinsEarned > 0 && twinkleCoins <= 1000
+                font-size: ${numCoinsEarned > 0 && !reachedMaxWatchDuration
                   ? '0.7rem'
                   : '1.2rem'};
               }
             `}
           >
-            {numCoinsEarned > 0 && twinkleCoins <= 1000 ? (
+            {numCoinsEarned > 0 && !reachedMaxWatchDuration ? (
               `+ ${numCoinsEarnedWithComma}`
             ) : (
               <Icon size="lg" icon={['far', 'badge-dollar']} />
             )}
           </div>
-          {coinHovered && (
-            <FullTextReveal
-              show
-              direction="left"
-              style={{
-                marginTop: '0.5rem',
-                color: '#000',
-                width: '30rem',
-                fontSize: '1.2rem',
-                position: 'absolute'
-              }}
-              text={`You can no longer earn Twinkle Coins by watching videos because you have more than 1,000 coins`}
-            />
-          )}
         </div>
       )}
+      {xpHovered ? (
+        <FullTextReveal
+          show
+          direction="left"
+          style={{
+            marginTop: '0.5rem',
+            color: '#000',
+            width: '30rem',
+            fontSize: '1.2rem',
+            position: 'absolute'
+          }}
+          text={`You have earned all the XP and Coins you can earn from this video`}
+        />
+      ) : null}
     </div>
   ) : null;
 }

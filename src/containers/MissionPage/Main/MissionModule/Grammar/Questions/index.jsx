@@ -166,7 +166,7 @@ export default function Questions({ isRepeating, mission }) {
     setSubmitDisabled(true);
     try {
       if (isRepeating) {
-        const coins = await updateUserCoins({
+        const { coins } = await updateUserCoins({
           action: 'repeat',
           target: 'mission',
           amount: mission.repeatCoinReward,

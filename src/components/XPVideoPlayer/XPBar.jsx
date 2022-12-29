@@ -211,9 +211,21 @@ function XPBar({
           display: flex;
           margin-top: 1rem;
           align-items: center;
+          position: relative;
           width: 100%;
           justify-content: space-between;
         `}
+        onClick={
+          deviceIsMobile && reachedMaxWatchDuration
+            ? () => setXPHovered((hovered) => !hovered)
+            : () => {}
+        }
+        onMouseEnter={
+          !deviceIsMobile && reachedMaxWatchDuration
+            ? () => setXPHovered(true)
+            : () => {}
+        }
+        onMouseLeave={() => setXPHovered(false)}
       >
         {Bar}
         {rewardLevel ? (
@@ -256,10 +268,6 @@ function XPBar({
                     font-size: ${numXpEarned > 0 ? '0.7rem' : '1rem'};
                   }
                 `}
-                onMouseEnter={
-                  reachedMaxWatchDuration ? () => setXPHovered(true) : () => {}
-                }
-                onMouseLeave={() => setXPHovered(false)}
               >
                 {numXpEarned > 0 && !reachedMaxWatchDuration
                   ? `+ ${numXpEarnedWithComma}`
@@ -267,20 +275,6 @@ function XPBar({
                   ? `${rewardLevel}-STAR`
                   : Stars}
               </div>
-              {xpHovered ? (
-                <FullTextReveal
-                  show
-                  direction="left"
-                  style={{
-                    marginTop: '0.5rem',
-                    color: '#000',
-                    width: '30rem',
-                    fontSize: '1.2rem',
-                    position: 'absolute'
-                  }}
-                  text={`You have earned all the XP you can earn from this video`}
-                />
-              ) : null}
             </div>
             {canEarnCoins && (
               <div>
@@ -294,16 +288,23 @@ function XPBar({
                     justify-content: center;
                     font-weight: bold;
                     color: #fff;
-                    font-size: ${numCoinsEarned > 0 ? '1.3rem' : '1.5rem'};
-                    background: ${Color.brownOrange()};
+                    font-size: ${numCoinsEarned > 0 && !reachedMaxWatchDuration
+                      ? '1.3rem'
+                      : '1.5rem'};
+                    background: ${Color.brownOrange(
+                      reachedMaxWatchDuration ? 0.3 : 1
+                    )};
                     @media (max-width: ${mobileMaxWidth}) {
                       flex-grow: 1;
                       min-width: 3.5rem;
-                      font-size: ${numCoinsEarned > 0 ? '0.7rem' : '1.2rem'};
+                      font-size: ${numCoinsEarned > 0 &&
+                      !reachedMaxWatchDuration
+                        ? '0.7rem'
+                        : '1.2rem'};
                     }
                   `}
                 >
-                  {numCoinsEarned > 0 ? (
+                  {numCoinsEarned > 0 && !reachedMaxWatchDuration ? (
                     `+ ${numCoinsEarnedWithComma}`
                   ) : (
                     <Icon size="lg" icon={['far', 'badge-dollar']} />
@@ -312,6 +313,20 @@ function XPBar({
               </div>
             )}
           </div>
+        ) : null}
+        {xpHovered ? (
+          <FullTextReveal
+            show
+            direction="left"
+            style={{
+              marginTop: '1.5rem',
+              color: '#000',
+              width: '30rem',
+              fontSize: '1.2rem',
+              position: 'absolute'
+            }}
+            text={`You have earned all the XP and Coins you can earn from this video`}
+          />
         ) : null}
       </div>
     </ErrorBoundary>
