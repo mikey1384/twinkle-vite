@@ -673,7 +673,7 @@ export default function Chess({
         onClick: handleDiscussClick
       }
     ];
-    if (lastChessMessageId !== messageId) {
+    if (lastChessMessageId !== messageId && !!initialState?.previousState) {
       result.push({
         label: (
           <div
@@ -707,6 +707,7 @@ export default function Chess({
       onDiscussClick();
     }
   }, [
+    initialState?.previousState,
     isCheckmate,
     isDiscussion,
     isDraw,
