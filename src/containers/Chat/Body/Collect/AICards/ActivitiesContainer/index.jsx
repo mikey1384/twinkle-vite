@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
+import { useEffect, useRef, useState, startTransition } from 'react';
 import PropTypes from 'prop-types';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { checkScrollIsAtTheBottom } from '~/helpers';
@@ -15,7 +15,9 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
   const { userId: myId } = useKeyContext((v) => v.myState);
-  const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
+  const loadAICardFeeds = useAppContext(
+    (v) => v.requestHelpers.loadAICardFeeds
+  );
   const aiCardLoadMoreButton = useChatContext(
     (v) => v.state.aiCardLoadMoreButton
   );
@@ -61,12 +63,8 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
       ? ActivitiesContainerRef.current?.offsetHeight -
         ContentRef.current?.offsetHeight
       : 20;
-  const aiCardIds = useChatContext((v) => v.state.aiCardIds);
+  const aiCardFeeds = useChatContext((v) => v.state.aiCardFeeds);
   const cardObj = useChatContext((v) => v.state.cardObj);
-  const aiCards = useMemo(
-    () => aiCardIds.map((id) => cardObj[id]),
-    [aiCardIds, cardObj]
-  );
 
   return (
     <div
@@ -115,12 +113,12 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
         />
       )}
       <div style={{ position: 'relative' }} ref={ContentRef}>
-        {aiCards.map((row, index) => {
+        {aiCardFeeds.map((feed, index) => {
           return (
             <Activity
-              key={row.id}
-              card={row}
-              isLastActivity={index === aiCardIds.length - 1}
+              key={feed.id}
+              card={cardObj[feed.contentId]}
+              isLastActivity={index === aiCardFeeds.length - 1}
               onReceiveNewActivity={handleReceiveNewActivity}
               onSetScrollToBottom={handleSetScrollToBottom}
               onSetAICardModalCardId={onSetAICardModalCardId}
@@ -137,8 +135,10 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
       const prevContentHeight = ContentRef.current?.offsetHeight || 0;
       if (!loadingMore) {
         setLoadingMore(true);
-        const { cards, loadMoreShown } = await loadAICards(aiCardIds[0]);
-        onLoadMoreAIImages({ cards, loadMoreShown });
+        const { cardFeeds, cardObj, loadMoreShown } = await loadAICardFeeds(
+          aiCardFeeds[0].id
+        );
+        onLoadMoreAIImages({ cardFeeds, cardObj, loadMoreShown });
         startTransition(() => {
           setScrollHeight(prevContentHeight);
         });

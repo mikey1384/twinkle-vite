@@ -8,7 +8,7 @@ export const ChatContext = createContext();
 
 export const initialChatState = {
   aiCardErrorMessage: '',
-  aiCardIds: [],
+  aiCardFeeds: [],
   aiCardStatusMessage: '',
   aiCardLoadMoreButton: false,
   allFavoriteChannelIds: {},

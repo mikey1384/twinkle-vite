@@ -884,18 +884,18 @@ export default function ChatReducer(state, action) {
       return {
         ...state,
         ...initialChatState,
-        aiCardIds: action.data.aiCards
-          ? action.data.aiCards.map((card) => card.id)
-          : state.aiCardIds,
+        aiCardFeeds: action.data.cardFeeds
+          ? action.data.cardFeeds
+          : state.aiCardFeeds,
         aiCardLoadMoreButton:
           state.chatType === AI_CARD_CHAT_TYPE
             ? state.aiCardLoadMoreButton
             : action.data.aiCardLoadMoreButton,
         allFavoriteChannelIds: action.data.allFavoriteChannelIds,
-        cardObj: action.data.aiCards
+        cardObj: action.data.cardObj
           ? {
               ...state.cardObj,
-              ...objectify(action.data.aiCards)
+              ...action.data.cardObj
             }
           : state.cardObj,
         channelsObj: newChannelsObj,
@@ -1287,9 +1287,9 @@ export default function ChatReducer(state, action) {
         chatType: AI_CARD_CHAT_TYPE,
         cardObj: {
           ...state.cardObj,
-          ...objectify(action.cards)
+          ...action.cardObj
         },
-        aiCardIds: action.cards.map((card) => card.id),
+        aiCardFeeds: action.cardFeeds,
         aiCardLoadMoreButton: action.loadMoreShown
       };
     }
@@ -1298,9 +1298,9 @@ export default function ChatReducer(state, action) {
         ...state,
         cardObj: {
           ...state.cardObj,
-          ...objectify(action.cards)
+          ...action.cardObj
         },
-        aiCardIds: action.cards.map((card) => card.id).concat(state.aiCardIds),
+        aiCardFeeds: action.cardFeeds.concat(state.aiCardFeeds),
         aiCardLoadMoreButton: action.loadMoreShown
       };
     }
@@ -1314,7 +1314,7 @@ export default function ChatReducer(state, action) {
             isNewlyPosted: true
           }
         },
-        aiCardIds: state.aiCardIds.concat(action.card.id),
+        aiCardFeeds: state.aiCardFeeds.concat(action.card.id),
         myCardIds: [action.card.id].concat(state.myCardIds)
       };
     }
@@ -1785,7 +1785,7 @@ export default function ChatReducer(state, action) {
           ...state.cardObj,
           [action.card.id]: action.card
         },
-        aiCardIds: state.aiCardIds.concat(action.card.id)
+        aiCardFeeds: state.aiCardFeeds.concat(action.card.id)
       };
     case 'RECEIVE_VOCAB_ACTIVITY':
       return {

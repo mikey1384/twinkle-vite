@@ -8,11 +8,11 @@ const youLabel = localize('You');
 
 export default function AICards() {
   const { userId: myId } = useKeyContext((v) => v.myState);
-  const aiCardIds = useChatContext((v) => v.state.aiCardIds);
+  const aiCardFeeds = useChatContext((v) => v.state.aiCardFeeds);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const aiCards = useMemo(
-    () => aiCardIds.map((id) => cardObj[id]),
-    [aiCardIds, cardObj]
+    () => aiCardFeeds.map((id) => cardObj[id]),
+    [aiCardFeeds, cardObj]
   );
 
   const lastActivity = useMemo(() => {

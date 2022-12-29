@@ -586,15 +586,15 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadAICards(lastId) {
+    async loadAICardFeeds(lastId) {
       try {
         const {
-          data: { cards, loadMoreShown }
+          data: { cardFeeds, cardObj, loadMoreShown }
         } = await request.get(
           `${URL}/chat/aiCard${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
         );
-        return Promise.resolve({ cards, loadMoreShown });
+        return Promise.resolve({ cardFeeds, cardObj, loadMoreShown });
       } catch (error) {
         return handleError(error);
       }
