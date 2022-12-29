@@ -321,10 +321,12 @@ export default function ChessModal({
       setSubmitting(true);
       await onConfirmChessMove({
         ...newChessState,
-        previousState: {
-          ...initialState,
-          previousState: null
-        }
+        previousState: initialState
+          ? {
+              ...initialState,
+              previousState: null
+            }
+          : null
       });
     }
   }
