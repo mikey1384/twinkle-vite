@@ -258,6 +258,7 @@ function XPVideoPlayer({
               targetId: videoId,
               type: 'increase'
             });
+            console.log(coins);
             onSetUserState({ userId, newState: { twinkleCoins: coins } });
             rewardingCoin.current = false;
           } catch (error) {
