@@ -605,10 +605,12 @@ function MessagesContainer({
         userId,
         chessState: {
           ...state,
-          previousState: {
-            ...previousState,
-            previousState: null
-          }
+          previousState: previousState
+            ? {
+                ...previousState,
+                previousState: null
+              }
+            : null
         },
         isChessMsg: 1,
         gameWinnerId
