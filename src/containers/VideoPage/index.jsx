@@ -274,7 +274,7 @@ export default function VideoPage() {
                   <Content
                     byUser={!!byUser}
                     content={content}
-                    isContinuing={isContinuing}
+                    isContinuing={!!isContinuing}
                     questions={questions}
                     rewardLevel={rewardLevel}
                     title={title}
@@ -291,7 +291,7 @@ export default function VideoPage() {
                   <Content
                     byUser={!!byUser}
                     content={content}
-                    isContinuing={isContinuing}
+                    isContinuing={!!isContinuing}
                     questions={questions}
                     rewardLevel={rewardLevel}
                     title={title}
