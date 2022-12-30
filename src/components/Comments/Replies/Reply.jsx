@@ -417,6 +417,7 @@ function Reply({
                   </ErrorBoundary>
                 )}
               {filePath &&
+                !isDeleteNotification &&
                 (userId ? (
                   <div style={{ width: '100%', paddingTop: '2rem' }}>
                     <ContentFileViewer
