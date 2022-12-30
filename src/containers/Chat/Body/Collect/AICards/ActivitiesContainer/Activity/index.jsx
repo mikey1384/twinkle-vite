@@ -58,7 +58,7 @@ export default function Activity({
             onSetScrollToBottom={onSetScrollToBottom}
           />
         )}
-        {feed.type === 'offer' && <OfferActivity />}
+        {feed.type === 'offer' && <OfferActivity card={card} />}
       </div>
     </ErrorBoundary>
   );
