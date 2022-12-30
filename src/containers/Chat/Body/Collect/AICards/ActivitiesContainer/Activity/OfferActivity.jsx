@@ -7,13 +7,15 @@ import CardThumb from '../../../../../CardThumb';
 
 OfferActivity.propTypes = {
   card: PropTypes.object.isRequired,
-  feed: PropTypes.object.isRequired
+  feed: PropTypes.object.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired
 };
 
-export default function OfferActivity({ card, feed }) {
+export default function OfferActivity({ card, feed, onSetAICardModalCardId }) {
   const offer = feed.offer;
   return (
     <div
+      onClick={() => onSetAICardModalCardId(card.id)}
       style={{
         cursor: 'pointer',
         display: 'flex',
