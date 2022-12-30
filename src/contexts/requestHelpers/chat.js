@@ -275,13 +275,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async postAICardOffer({ cardId, price }) {
       try {
         const {
-          data: { offerId }
+          data: { offerId, coins }
         } = await request.post(
           `${URL}/chat/aiCard/offer`,
           { cardId, price },
           auth()
         );
-        return Promise.resolve(offerId);
+        return Promise.resolve({ offerId, coins });
       } catch (error) {
         return handleError(error);
       }

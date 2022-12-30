@@ -251,6 +251,7 @@ export default function AICardModal({ cardId, onHide }) {
       {offerModalShown && (
         <OfferModal
           cardId={card.id}
+          myId={userId}
           twinkleCoins={twinkleCoins}
           onHide={() => setOfferModalShown(false)}
         />
