@@ -10,14 +10,16 @@ import { borderRadius, Color } from '~/constants/css';
 OfferModal.propTypes = {
   cardId: PropTypes.number.isRequired,
   onHide: PropTypes.func.isRequired,
+  myId: PropTypes.number.isRequired,
   twinkleCoins: PropTypes.number.isRequired
 };
 
-export default function OfferModal({ cardId, onHide, twinkleCoins }) {
+export default function OfferModal({ cardId, onHide, myId, twinkleCoins }) {
   const [amount, setAmount] = useState(0);
   const postAICardOffer = useAppContext(
     (v) => v.requestHelpers.postAICardOffer
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   return (
     <Modal large modalOverModal onHide={onHide}>
@@ -90,7 +92,8 @@ export default function OfferModal({ cardId, onHide, twinkleCoins }) {
   }
 
   async function handlePostOffer() {
-    await postAICardOffer({ cardId, price: amount });
+    const { coins } = await postAICardOffer({ cardId, price: amount });
+    onSetUserState({ userId: myId, newState: { twinkleCoins: coins } });
     onHide();
   }
 }

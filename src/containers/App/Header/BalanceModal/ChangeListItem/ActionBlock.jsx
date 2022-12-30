@@ -13,6 +13,9 @@ export default function ActionBlock({ action, target, style, type }) {
     if (action === 'generate') {
       return 'summoned a card';
     }
+    if (action === 'offer') {
+      return 'made an offer (on hold)';
+    }
     if (action === 'repeat') {
       return 'completed a repeatable mission';
     }
