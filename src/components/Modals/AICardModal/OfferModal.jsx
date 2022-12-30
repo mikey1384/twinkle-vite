@@ -9,10 +9,11 @@ import { borderRadius, Color } from '~/constants/css';
 
 OfferModal.propTypes = {
   cardId: PropTypes.number.isRequired,
-  onHide: PropTypes.func.isRequired
+  onHide: PropTypes.func.isRequired,
+  twinkleCoins: PropTypes.number.isRequired
 };
 
-export default function OfferModal({ cardId, onHide }) {
+export default function OfferModal({ cardId, onHide, twinkleCoins }) {
   const [amount, setAmount] = useState(0);
   const postAICardOffer = useAppContext(
     (v) => v.requestHelpers.postAICardOffer
@@ -85,7 +86,7 @@ export default function OfferModal({ cardId, onHide }) {
     const newAmount = Number(
       amount.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1')
     );
-    setAmount(newAmount);
+    setAmount(Math.min(Number(newAmount), twinkleCoins));
   }
 
   async function handlePostOffer() {
