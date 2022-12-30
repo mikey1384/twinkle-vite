@@ -182,6 +182,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onSetOnlineMembers = useChatContext(
     (v) => v.actions.onSetOnlineMembers
   );
+  const onPostAICardFeed = useChatContext((v) => v.actions.onPostAICardFeed);
   const onSetPeerStreams = useChatContext((v) => v.actions.onSetPeerStreams);
   const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
   const onShowOutgoing = useChatContext((v) => v.actions.onShowOutgoing);
@@ -406,10 +407,15 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       onRemoveListedAICard(cardId);
     }
 
-    function handleAICardOfferPosted({ cardId, offer }) {
-      if (offer.user.userId === userId) {
-        onUpdateAICard({ cardId, newState: { myOffer: offer } });
-      }
+    function handleAICardOfferPosted({ card, feed }) {
+      onUpdateAICard({
+        cardId: card.id,
+        newState: { myOffer: feed.offer }
+      });
+      onPostAICardFeed({
+        feed,
+        card
+      });
     }
 
     function handleBanStatusUpdate(banStatus) {

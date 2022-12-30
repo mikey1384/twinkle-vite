@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import { css } from '@emotion/css';
@@ -8,10 +9,36 @@ import CardThumb from '../../../../../CardThumb';
 OfferActivity.propTypes = {
   card: PropTypes.object.isRequired,
   feed: PropTypes.object.isRequired,
+  myId: PropTypes.number,
+  onReceiveNewActivity: PropTypes.func.isRequired,
+  onSetScrollToBottom: PropTypes.func.isRequired,
+  isLastActivity: PropTypes.bool,
   onSetAICardModalCardId: PropTypes.func.isRequired
 };
 
-export default function OfferActivity({ card, feed, onSetAICardModalCardId }) {
+export default function OfferActivity({
+  card,
+  feed,
+  myId,
+  onReceiveNewActivity,
+  onSetScrollToBottom,
+  isLastActivity,
+  onSetAICardModalCardId
+}) {
+  useEffect(() => {
+    if (isLastActivity && myId === feed.offer.user.id) {
+      onSetScrollToBottom();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (isLastActivity && myId !== feed.offer.user.id) {
+      onReceiveNewActivity();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const offer = feed.offer;
   return (
     <div

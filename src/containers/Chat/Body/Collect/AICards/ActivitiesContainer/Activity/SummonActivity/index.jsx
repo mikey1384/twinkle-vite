@@ -5,7 +5,6 @@ import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
 import useAICard from '~/helpers/hooks/useAICard';
 import moment from 'moment';
-import { useChatContext } from '~/contexts';
 import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -37,22 +36,17 @@ export default function SummonActivity({
     () => moment.unix(card.timeStamp).format('MMM D'),
     [card.timeStamp]
   );
-  const onRemoveNewlyPostedCardStatus = useChatContext(
-    (v) => v.actions.onRemoveNewlyPostedCardStatus
-  );
   useEffect(() => {
-    if (card.isNewlyPosted && isLastActivity && userIsCreator) {
+    if (isLastActivity && userIsCreator) {
       handleSendActivity();
     }
-    async function handleSendActivity() {
+    function handleSendActivity() {
       socket.emit('new_ai_card_summon', { feed, card });
-      onRemoveNewlyPostedCardStatus(card.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    if (isLastActivity && card.isNewlyPosted && !userIsCreator) {
-      onRemoveNewlyPostedCardStatus(card.id);
+    if (isLastActivity && !userIsCreator) {
       onReceiveNewActivity();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
