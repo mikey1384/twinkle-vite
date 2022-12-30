@@ -43,7 +43,8 @@ export default function Activity({
           justifyContent: 'center',
           flexDirection: 'column',
           marginTop: '2rem',
-          marginBottom: isLastActivity ? '3rem' : '5rem'
+          marginBottom:
+            feed.type === 'offer' && isLastActivity ? '3rem' : '5rem'
         }}
       >
         {feed.type === 'summon' && (
