@@ -2510,6 +2510,14 @@ export default function ChatReducer(state, action) {
         }
       };
     }
+    case 'WITHDRAW_OUTGOING_OFFER': {
+      return {
+        ...state,
+        outgoingOffers: state.outgoingOffers.filter(
+          (offer) => offer.id !== action.offerId
+        )
+      };
+    }
     default:
       return state;
   }

@@ -37,6 +37,9 @@ export default function AICardModal({ cardId, onHide }) {
   );
   const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const onWithdrawOutgoingOffer = useChatContext(
+    (v) => v.actions.onWithdrawOutgoingOffer
+  );
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [withdrawOfferModalShown, setWithdrawOfferModalShown] = useState(false);
   const [usermenuShown, setUsermenuShown] = useState(false);
@@ -269,6 +272,7 @@ export default function AICardModal({ cardId, onHide }) {
   async function handleWithdrawOffer() {
     await deleteAICardOffer(card.myOffer.id);
     onUpdateAICard({ cardId: card.id, newState: { myOffer: null } });
+    onWithdrawOutgoingOffer(card.myOffer.id);
     setWithdrawOfferModalShown(false);
   }
 
