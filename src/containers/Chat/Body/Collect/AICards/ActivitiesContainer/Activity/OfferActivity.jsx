@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
-import ProfilePic from '~/components/ProfilePic';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import CardThumb from '../../../../../CardThumb';
@@ -13,12 +12,17 @@ OfferActivity.propTypes = {
 export default function OfferActivity({ card, feed }) {
   const offer = feed.offer;
   return (
-    <div>
-      <ProfilePic
-        style={{ width: '100%' }}
-        profilePicUrl={offer.user.profilePicUrl}
-        userId={offer.user.id}
-      />
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: '7rem',
+          textAlign: 'center'
+        }}
+      >
+        <CardThumb card={card} />
+      </div>
       <div>
         <UsernameText
           className={css`
@@ -33,9 +37,7 @@ export default function OfferActivity({ card, feed }) {
             username: offer.user.username
           }}
         />
-      </div>
-      <div>
-        <CardThumb card={card} />
+        something somethingsomethingsomethingsomethingsomethingsomething
       </div>
     </div>
   );
