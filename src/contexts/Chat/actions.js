@@ -947,6 +947,12 @@ export default function ChatActions(dispatch) {
         channelId,
         subchannelId
       });
+    },
+    onWithdrawOutgoingOffer(offerId) {
+      return dispatch({
+        type: 'WITHDRAW_OUTGOING_OFFER',
+        offerId
+      });
     }
   };
 }
