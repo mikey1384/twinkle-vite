@@ -14,7 +14,11 @@ export default function ActionBlock({ action, target, style, type }) {
       return 'summoned a card';
     }
     if (action === 'offer') {
-      return 'made an offer (on hold)';
+      if (type === 'decrease') {
+        return 'made an offer (on hold)';
+      } else {
+        return 'withdrew an offer';
+      }
     }
     if (action === 'repeat') {
       return 'completed a repeatable mission';

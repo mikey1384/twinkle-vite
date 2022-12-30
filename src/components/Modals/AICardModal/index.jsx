@@ -40,6 +40,7 @@ export default function AICardModal({ cardId, onHide }) {
   const onWithdrawOutgoingOffer = useChatContext(
     (v) => v.actions.onWithdrawOutgoingOffer
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [withdrawOfferModalShown, setWithdrawOfferModalShown] = useState(false);
   const [usermenuShown, setUsermenuShown] = useState(false);
@@ -271,9 +272,10 @@ export default function AICardModal({ cardId, onHide }) {
   );
 
   async function handleWithdrawOffer() {
-    await deleteAICardOffer(card.myOffer.id);
+    const coins = await deleteAICardOffer(card.myOffer.id);
     onUpdateAICard({ cardId: card.id, newState: { myOffer: null } });
     onWithdrawOutgoingOffer(card.myOffer.id);
+    onSetUserState({ userId, newState: { twinkleCoins: coins } });
     setWithdrawOfferModalShown(false);
   }
 
