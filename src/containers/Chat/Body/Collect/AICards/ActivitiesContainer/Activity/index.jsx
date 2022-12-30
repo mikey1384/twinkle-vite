@@ -38,13 +38,12 @@ export default function Activity({
       <div
         style={{
           width: '100%',
-          height: '100%',
           padding: '1rem',
           display: 'flex',
           justifyContent: 'center',
           flexDirection: 'column',
           marginTop: '2rem',
-          marginBottom: '5rem'
+          marginBottom: isLastActivity ? '3rem' : '5rem'
         }}
       >
         {feed.type === 'summon' && (

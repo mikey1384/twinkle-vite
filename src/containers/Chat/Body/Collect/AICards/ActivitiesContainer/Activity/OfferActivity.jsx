@@ -12,13 +12,18 @@ OfferActivity.propTypes = {
 export default function OfferActivity({ card, feed }) {
   const offer = feed.offer;
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+    <div
+      style={{
+        display: 'flex',
+        width: '100%',
+        height: '100%'
+      }}
+    >
       <div
         style={{
           display: 'flex',
-          flexDirection: 'column',
-          width: '7rem',
-          textAlign: 'center'
+          justifyContent: 'center',
+          alignItems: 'center'
         }}
       >
         <CardThumb card={card} />

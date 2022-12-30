@@ -112,7 +112,12 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
           }}
         />
       )}
-      <div style={{ position: 'relative' }} ref={ContentRef}>
+      <div
+        style={{
+          position: 'relative'
+        }}
+        ref={ContentRef}
+      >
         {aiCardFeeds.map((feed, index) => {
           return (
             <Activity
