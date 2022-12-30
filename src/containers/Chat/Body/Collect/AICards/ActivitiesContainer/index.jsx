@@ -118,7 +118,7 @@ export default function ActivitiesContainer({ onSetAICardModalCardId }) {
             <Activity
               key={feed.id}
               feed={feed}
-              card={cardObj[feed.contentId]}
+              cardObj={cardObj}
               isLastActivity={index === aiCardFeeds.length - 1}
               onReceiveNewActivity={handleReceiveNewActivity}
               onSetScrollToBottom={handleSetScrollToBottom}
