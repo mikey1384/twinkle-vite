@@ -43,12 +43,17 @@ export default function OfferActivity({
   return (
     <div
       onClick={() => onSetAICardModalCardId(card.id)}
+      className={css`
+        padding: 0 3rem 0 2rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          padding: 0 1rem 0 0.5rem;
+        }
+      `}
       style={{
         cursor: 'pointer',
         display: 'flex',
         width: '100%',
-        height: '100%',
-        padding: '0 3rem 0 2rem'
+        height: '100%'
       }}
     >
       <div
@@ -70,16 +75,17 @@ export default function OfferActivity({
           alignItems: 'center'
         }}
       >
-        <div>
+        <div
+          className={css`
+            font-size: 1.7rem;
+            line-height: 1;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.2rem;
+            }
+          `}
+        >
           <UsernameText
             color={Color.black()}
-            className={css`
-              font-size: 1.7rem;
-              line-height: 1;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.3rem;
-              }
-            `}
             user={{
               id: offer.user.id,
               username: offer.user.username
