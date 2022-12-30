@@ -41,7 +41,7 @@ export default function AICards({ loadingAICardChat }) {
   const onSetaiCardStatusMessage = useChatContext(
     (v) => v.actions.onSetaiCardStatusMessage
   );
-  const onPostAICard = useChatContext((v) => v.actions.onPostAICard);
+  const onPostAICardFeed = useChatContext((v) => v.actions.onPostAICardFeed);
   const navigate = useNavigate();
 
   return (
@@ -152,10 +152,11 @@ export default function AICards({ loadingAICardChat }) {
       const { imageUrl, style } = await getOpenAiImage(prompt);
       onSetaiCardStatusMessage('Finishing your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
-      const { feedId, card } = await postAICard({ imagePath, cardId, style });
+      const { feed, card } = await postAICard({ imagePath, cardId, style });
       onSetaiCardStatusMessage('Card Summoned');
-      onPostAICard({
-        feedId,
+      onPostAICardFeed({
+        feed,
+        isSummon: true,
         card: {
           prompt,
           id: cardId,

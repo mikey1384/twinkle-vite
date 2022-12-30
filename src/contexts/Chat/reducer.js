@@ -1304,24 +1304,17 @@ export default function ChatReducer(state, action) {
         aiCardLoadMoreButton: action.loadMoreShown
       };
     }
-    case 'POST_AI_CARD': {
+    case 'POST_AI_CARD_FEED': {
       return {
         ...state,
         cardObj: {
           ...state.cardObj,
-          [action.card.id]: {
-            ...action.card,
-            isNewlyPosted: true
-          }
+          [action.card.id]: action.card
         },
-        aiCardFeeds: state.aiCardFeeds.concat({
-          id: action.feedId,
-          userId: action.card.creatorId,
-          type: 'summon',
-          contentId: action.card.id,
-          timeStamp: action.card.timeStamp
-        }),
-        myCardIds: [action.card.id].concat(state.myCardIds)
+        aiCardFeeds: state.aiCardFeeds.concat(action.feed),
+        myCardIds: action.isSummon
+          ? [action.card.id].concat(state.myCardIds)
+          : state.myCardIds
       };
     }
     case 'UPDATE_AI_CARD': {
@@ -1871,17 +1864,6 @@ export default function ChatReducer(state, action) {
           [action.word]: {
             ...state.wordsObj[action.word],
             isNewActivity: false
-          }
-        }
-      };
-    case 'REMOVE_NEWLY_POSTED_CARD_STATUS':
-      return {
-        ...state,
-        cardObj: {
-          ...state.cardObj,
-          [action.cardId]: {
-            ...state.cardObj[action.cardId],
-            isNewlyPosted: false
           }
         }
       };

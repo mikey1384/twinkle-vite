@@ -71,7 +71,11 @@ export default function Activity({
           <OfferActivity
             feed={feed}
             card={card}
+            myId={myId}
+            isLastActivity={isLastActivity}
+            onReceiveNewActivity={onReceiveNewActivity}
             onSetAICardModalCardId={onSetAICardModalCardId}
+            onSetScrollToBottom={onSetScrollToBottom}
           />
         )}
       </div>
