@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SummonActivity from './SummonActivity';
 import OfferActivity from './OfferActivity';
+import { Color } from '~/constants/css';
+import { css } from '@emotion/css';
 
 Activity.propTypes = {
   cardObj: PropTypes.object.isRequired,
@@ -38,14 +40,21 @@ export default function Activity({
       <div
         style={{
           width: '100%',
-          padding: '1rem',
+          padding: '2rem 1rem',
           display: 'flex',
           justifyContent: 'center',
           flexDirection: 'column',
           marginTop: '2rem',
-          marginBottom:
-            feed.type === 'offer' && isLastActivity ? '3rem' : '5rem'
+          marginBottom: '5rem'
         }}
+        className={css`
+          background: ${Color.whiteGray()};
+          &:hover {
+            background: ${feed.type === 'offer'
+              ? Color.highlightGray()
+              : Color.whiteGray()};
+          }
+        `}
       >
         {feed.type === 'summon' && (
           <SummonActivity
