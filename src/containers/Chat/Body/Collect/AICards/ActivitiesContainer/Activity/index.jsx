@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SummonActivity from './SummonActivity';
+import OfferActivity from './OfferActivity';
 
 Activity.propTypes = {
   cardObj: PropTypes.object.isRequired,
@@ -46,15 +47,18 @@ export default function Activity({
           marginBottom: '5rem'
         }}
       >
-        <SummonActivity
-          card={card}
-          feed={feed}
-          isLastActivity={isLastActivity}
-          myId={myId}
-          onReceiveNewActivity={onReceiveNewActivity}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          onSetScrollToBottom={onSetScrollToBottom}
-        />
+        {feed.type === 'summon' && (
+          <SummonActivity
+            card={card}
+            feed={feed}
+            isLastActivity={isLastActivity}
+            myId={myId}
+            onReceiveNewActivity={onReceiveNewActivity}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            onSetScrollToBottom={onSetScrollToBottom}
+          />
+        )}
+        {feed.type === 'offer' && <OfferActivity />}
       </div>
     </ErrorBoundary>
   );
