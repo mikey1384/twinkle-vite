@@ -5,16 +5,11 @@ import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
-import {
-  cardLevelHash,
-  cloudFrontURL,
-  returnCardBurnXP,
-  cardProps,
-  qualityProps
-} from '~/constants/defaultValues';
+import { cardLevelHash } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import AICardModal from '~/components/Modals/AICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import CardThumb from '../../CardThumb';
 
 CardItem.propTypes = {
   card: PropTypes.object.isRequired,
@@ -25,23 +20,14 @@ CardItem.propTypes = {
 
 export default function CardItem({ card, isOverflown, isLast, offerObj }) {
   const {
-    userLink: { color: userLinkColor },
-    xpNumber: { color: xpNumberColor }
+    userLink: { color: userLinkColor }
   } = useKeyContext((v) => v.theme);
   const { userId } = useKeyContext((v) => v.myState);
-  const burnXP = useMemo(() => {
-    return returnCardBurnXP({
-      cardLevel: card.level,
-      cardQuality: card.quality
-    });
-  }, [card?.level, card?.quality]);
   const [cardModalShown, setCardModalShown] = useState(false);
-  const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
-  const cardColor = useMemo(
-    () => Color[card.isBurned ? 'black' : cardObj?.color](),
-    [card.isBurned, cardObj?.color]
+  const cardDetailObj = useMemo(
+    () => cardLevelHash[card?.level],
+    [card?.level]
   );
-  const borderColor = useMemo(() => qualityProps[card.quality]?.color, [card]);
   const promptText = useMemo(() => {
     if (card.word) {
       const prompt = card.prompt;
@@ -54,12 +40,14 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
         : word;
       const promptToDisplay =
         prompt.slice(0, wordIndex) +
-        `<b style="color:${Color[cardObj?.color]()}">${wordToDisplay}</b>` +
+        `<b style="color:${Color[
+          cardDetailObj?.color
+        ]()}">${wordToDisplay}</b>` +
         prompt.slice(wordIndex + word.length);
       return promptToDisplay;
     }
     return card.prompt;
-  }, [card.prompt, card.word, cardObj?.color]);
+  }, [card.prompt, card.word, cardDetailObj?.color]);
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/CardItem">
       <div
@@ -80,45 +68,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
         onClick={() => setCardModalShown(true)}
         key={card.id}
       >
-        <div
-          style={{
-            marginLeft: '0.5rem',
-            borderRadius: '3px',
-            width: '5rem',
-            height: '7rem',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            backgroundColor: cardColor,
-            border:
-              cardProps[card.quality]?.includes('glowy') && !card.isBurned
-                ? `3px solid ${borderColor}`
-                : 'none'
-          }}
-        >
-          {card.imagePath && !card.isBurned && (
-            <img
-              style={{ width: '100%' }}
-              src={`${cloudFrontURL}${card.imagePath}`}
-            />
-          )}
-          {!!card.isBurned && (
-            <div
-              className={css`
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                padding: 0.5rem 0;
-                font-size: 0.7rem;
-              `}
-            >
-              <b style={{ color: Color[xpNumberColor]() }}>
-                {addCommasToNumber(burnXP)}
-              </b>
-              <b style={{ color: Color.gold(), marginLeft: '2px' }}>XP</b>
-            </div>
-          )}
-        </div>
+        <CardThumb card={card} />
         <div
           style={{
             flexGrow: 1,
