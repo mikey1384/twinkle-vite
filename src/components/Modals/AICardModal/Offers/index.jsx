@@ -4,6 +4,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import OfferDetailModal from './OfferDetailModal';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
@@ -26,6 +27,7 @@ export default function Offers({
     userLink: { color: userLinkColor }
   } = useKeyContext((v) => v.theme);
   const { userId } = useKeyContext((v) => v.myState);
+  const [offerDetailModalShown, setOfferDetailModalShown] = useState(false);
   const [offers, setOffers] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
@@ -107,6 +109,7 @@ export default function Offers({
                 }
               `}
               key={offer.price}
+              onClick={() => setOfferDetailModalShown(true)}
             >
               <div>
                 <Icon
@@ -153,6 +156,9 @@ export default function Offers({
           />
         )}
       </div>
+      {offerDetailModalShown && (
+        <OfferDetailModal onHide={() => setOfferDetailModalShown(false)} />
+      )}
     </ErrorBoundary>
   );
 
