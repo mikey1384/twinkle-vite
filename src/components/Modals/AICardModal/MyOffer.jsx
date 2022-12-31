@@ -30,7 +30,15 @@ export default function MyOffer({
         ...style
       }}
     >
-      <div style={{ textAlign: 'center' }}>
+      <div
+        className={css`
+          font-size: 1.6rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 1rem;
+          }
+        `}
+        style={{ textAlign: 'center' }}
+      >
         <p>You offered</p>
         <p>
           <Icon
@@ -48,7 +56,14 @@ export default function MyOffer({
           </span>
         </p>
       </div>
-      <div style={{ marginTop: '1.3rem' }}>
+      <div
+        className={css`
+          margin-top: 1.3rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            margin-top: 0.7rem;
+          }
+        `}
+      >
         <Button
           className={css`
             @media (max-width: ${mobileMaxWidth}) {
@@ -63,7 +78,7 @@ export default function MyOffer({
             className={css`
               font-size: 1.6rem;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1rem;
+                font-size: 0.8rem !important;
               }
             `}
             icon="redo"
@@ -73,7 +88,7 @@ export default function MyOffer({
             className={css`
               font-size: 1.6rem;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1rem;
+                font-size: 0.8rem !important;
               }
             `}
           >

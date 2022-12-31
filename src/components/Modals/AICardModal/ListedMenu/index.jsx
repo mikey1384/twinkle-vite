@@ -37,12 +37,13 @@ export default function ListedMenu({
     >
       <div
         style={{
-          padding: '1rem',
           flexDirection: 'column'
         }}
         className={css`
+          padding: 1rem;
           font-size: 1.6rem;
           @media (max-width: ${mobileMaxWidth}) {
+            padding: 0.5rem;
             font-size: 1.1rem;
           }
         `}
@@ -101,7 +102,12 @@ export default function ListedMenu({
           myOffer={myOffer}
           onSetOfferModalShown={onSetOfferModalShown}
           onSetWithdrawOfferModalShown={onSetWithdrawOfferModalShown}
-          style={{ marginTop: '1rem' }}
+          className={css`
+            margin-top: 1rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              margin-top: 0;
+            }
+          `}
         />
       )}
     </div>

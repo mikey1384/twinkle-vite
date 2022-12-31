@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
 NonOwnerMenu.propTypes = {
+  className: PropTypes.string,
   myOffer: PropTypes.object,
   onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
   onSetOfferModalShown: PropTypes.func.isRequired,
@@ -14,6 +15,7 @@ NonOwnerMenu.propTypes = {
 };
 
 export default function NonOwnerMenu({
+  className,
   myOffer,
   onSetWithdrawOfferModalShown,
   onSetOfferModalShown,
@@ -29,6 +31,7 @@ export default function NonOwnerMenu({
         flexDirection: 'column',
         ...style
       }}
+      className={className}
     >
       <div>
         <Button
@@ -45,7 +48,7 @@ export default function NonOwnerMenu({
             className={css`
               font-size: 1.6rem;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1rem;
+                font-size: 0.8rem !important;
               }
             `}
             icon="shopping-cart"
@@ -59,7 +62,16 @@ export default function NonOwnerMenu({
             `}
             style={{ marginLeft: '0.7rem' }}
           >
-            Buy
+            <span
+              className={css`
+                font-size: 1.6rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 0.8rem !important;
+                }
+              `}
+            >
+              Buy
+            </span>
           </span>
         </Button>
       </div>
