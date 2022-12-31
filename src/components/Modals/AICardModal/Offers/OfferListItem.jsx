@@ -81,7 +81,10 @@ export default function OfferListItem({
         </div>
       </nav>
       {offerDetailModalShown && (
-        <OfferDetailModal onHide={() => setOfferDetailModalShown(false)} />
+        <OfferDetailModal
+          price={offer.price}
+          onHide={() => setOfferDetailModalShown(false)}
+        />
       )}
     </ErrorBoundary>
   );
