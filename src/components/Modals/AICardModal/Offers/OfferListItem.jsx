@@ -12,6 +12,7 @@ import { css } from '@emotion/css';
 const deviceIsMobile = isMobile(navigator);
 
 OfferListItem.propTypes = {
+  cardId: PropTypes.number.isRequired,
   offer: PropTypes.object.isRequired,
   offerers: PropTypes.array.isRequired,
   onUserMenuShown: PropTypes.func.isRequired,
@@ -19,6 +20,7 @@ OfferListItem.propTypes = {
 };
 
 export default function OfferListItem({
+  cardId,
   offer,
   offerers,
   onUserMenuShown,
@@ -83,6 +85,7 @@ export default function OfferListItem({
       {offerDetailModalShown && (
         <OfferDetailModal
           price={offer.price}
+          cardId={cardId}
           onHide={() => setOfferDetailModalShown(false)}
         />
       )}

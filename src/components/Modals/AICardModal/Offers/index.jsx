@@ -84,6 +84,7 @@ export default function Offers({
           return (
             <OfferListItem
               key={offer.price}
+              cardId={cardId}
               offer={offer}
               offerers={offerers}
               onUserMenuShown={onUserMenuShown}
