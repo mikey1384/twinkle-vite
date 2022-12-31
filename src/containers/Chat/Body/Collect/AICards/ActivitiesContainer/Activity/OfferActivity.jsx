@@ -53,7 +53,6 @@ export default function OfferActivity({
         }
       `}
       style={{
-        cursor: 'pointer',
         display: 'flex',
         width: '100%',
         height: '100%'
@@ -81,8 +80,9 @@ export default function OfferActivity({
       >
         <div
           className={css`
+            padding-right: 1rem;
             font-size: 1.7rem;
-            line-height: 1;
+            line-height: 1.5;
             ${offer.isCancelled ? `color: ${Color.lightGray()};` : ''};
             ${offer.isCancelled ? 'text-decoration: line-through;' : ''};
             @media (max-width: ${mobileMaxWidth}) {

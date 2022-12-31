@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
-import { Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CardItem from '../CardItem';
 import Loading from '~/components/Loading';
+import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 
 Listings.propTypes = {
   loadMoreButtonColor: PropTypes.string
@@ -59,10 +60,13 @@ export default function Listings({ loadMoreButtonColor }) {
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Listings">
       <div
-        style={{
-          height: 'CALC(100% - 45px)',
-          overflow: 'scroll'
-        }}
+        className={css`
+          height: CALC(100% - 45px);
+          overflow: scroll;
+          @media (max-width: ${mobileMaxWidth}) {
+            height: CALC(100% - 36px);
+          }
+        `}
         ref={CardItemsRef}
       >
         {!loaded ? (

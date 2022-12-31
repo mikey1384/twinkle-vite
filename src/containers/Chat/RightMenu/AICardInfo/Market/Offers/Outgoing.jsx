@@ -5,7 +5,8 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CardItem from '../../CardItem';
 import Loading from '~/components/Loading';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
-import { Color } from '~/constants/css';
+import { css } from '@emotion/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
 
 Outgoing.propTypes = {
@@ -85,10 +86,13 @@ export default function Outgoing({ loadMoreButtonColor }) {
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Offers/Outgoing">
       <div
-        style={{
-          height: 'CALC(100% - 80px)',
-          overflow: 'scroll'
-        }}
+        className={css`
+          height: CALC(100% - 80px);
+          overflow: scroll;
+          @media (max-width: ${mobileMaxWidth}) {
+            height: CALC(100% - 71px);
+          }
+        `}
         ref={CardItemsRef}
       >
         {!loaded ? (
