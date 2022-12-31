@@ -27,7 +27,6 @@ export default function ListedMenu({
     <div
       style={{
         width: '100%',
-        height: '100% ',
         display: 'flex',
         marginTop: '-5rem',
         justifyContent: 'center',
