@@ -914,7 +914,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     }
 
     function handleNewAICardSummon({ feed, card }) {
-      console.log(feed, card);
       const senderIsNotTheUser = card.creator.id !== userId;
       if (senderIsNotTheUser) {
         onNewAICardSummon({ card, feed });
