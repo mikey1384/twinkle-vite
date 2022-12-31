@@ -194,6 +194,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     (v) => v.actions.onUpdateCollectorsRankings
   );
   const onAddListedAICard = useChatContext((v) => v.actions.onAddListedAICard);
+  const onWithdrawOutgoingOffer = useChatContext(
+    (v) => v.actions.onWithdrawOutgoingOffer
+  );
   const onRemoveListedAICard = useChatContext(
     (v) => v.actions.onRemoveListedAICard
   );
@@ -412,9 +415,17 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       onRemoveListedAICard(cardId);
     }
 
-    function handleAICardOfferCancel({ cardId, feedId, offererId }) {
+    function handleAICardOfferCancel({
+      cardId,
+      coins,
+      feedId,
+      offerId,
+      offererId
+    }) {
       onAICardOfferWithdrawal(feedId);
       if (offererId === userId) {
+        onWithdrawOutgoingOffer(offerId);
+        onSetUserState({ userId, newState: { twinkleCoins: coins } });
         onUpdateAICard({ cardId, newState: { myOffer: null } });
       }
     }

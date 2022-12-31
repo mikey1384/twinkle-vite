@@ -132,7 +132,7 @@ export default function SummonActivity({
           className={css`
             text-align: center;
             font-size: 1.6rem;
-            padding: 5rem 0 6rem 0;
+            padding: 5rem 0 6rem 1rem;
             @media (max-width: ${mobileMaxWidth}) {
               margin-top: 4rem;
               font-size: 1.1rem;

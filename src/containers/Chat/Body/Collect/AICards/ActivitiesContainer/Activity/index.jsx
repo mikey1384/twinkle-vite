@@ -48,6 +48,7 @@ export default function Activity({
           marginBottom: '5rem'
         }}
         className={css`
+          cursor: ${feed.type === 'offer' ? 'pointer' : 'default'};
           background: ${Color.whiteGray()};
           &:hover {
             background: ${feed.type === 'offer'
