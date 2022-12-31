@@ -5,13 +5,11 @@ import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
 import useAICard from '~/helpers/hooks/useAICard';
 import moment from 'moment';
-import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
 SummonActivity.propTypes = {
   card: PropTypes.object.isRequired,
-  feed: PropTypes.object.isRequired,
   isLastActivity: PropTypes.bool,
   myId: PropTypes.number,
   onReceiveNewActivity: PropTypes.func.isRequired,
@@ -21,7 +19,6 @@ SummonActivity.propTypes = {
 
 export default function SummonActivity({
   card,
-  feed,
   isLastActivity,
   myId,
   onReceiveNewActivity,
@@ -36,15 +33,6 @@ export default function SummonActivity({
     () => moment.unix(card.timeStamp).format('MMM D'),
     [card.timeStamp]
   );
-  useEffect(() => {
-    if (isLastActivity && userIsCreator) {
-      handleSendActivity();
-    }
-    function handleSendActivity() {
-      socket.emit('new_ai_card_summon', { feed, card });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   useEffect(() => {
     if (isLastActivity && !userIsCreator) {
       onReceiveNewActivity();
@@ -134,7 +122,6 @@ export default function SummonActivity({
             font-size: 1.6rem;
             padding: 5rem 0 6rem 1rem;
             @media (max-width: ${mobileMaxWidth}) {
-              margin-top: 4rem;
               font-size: 1.1rem;
             }
           `}
@@ -153,7 +140,6 @@ export default function SummonActivity({
             font-weight: bold;
             color: ${Color.darkerGray()};
             @media (max-width: ${mobileMaxWidth}) {
-              margin-top: 5rem;
               font-size: 1rem;
             }
           `}

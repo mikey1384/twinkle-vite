@@ -60,7 +60,6 @@ export default function Activity({
         {feed.type === 'summon' && (
           <SummonActivity
             card={card}
-            feed={feed}
             isLastActivity={isLastActivity}
             myId={myId}
             onReceiveNewActivity={onReceiveNewActivity}

@@ -319,13 +319,21 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async postAICard({ cardId, imagePath, style }) {
+    async postAICard({
+      cardId,
+      imagePath,
+      style,
+      quality,
+      level,
+      word,
+      prompt
+    }) {
       try {
         const {
           data: { feed, card }
         } = await request.post(
           `${URL}/chat/aiCard`,
-          { cardId, imagePath, style },
+          { cardId, imagePath, style, quality, level, word, prompt },
           auth()
         );
         return Promise.resolve({ feed, card });

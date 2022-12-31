@@ -152,7 +152,15 @@ export default function AICards({ loadingAICardChat }) {
       const { imageUrl, style } = await getOpenAiImage(prompt);
       onSetaiCardStatusMessage('Finishing your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
-      const { feed, card } = await postAICard({ imagePath, cardId, style });
+      const { feed, card } = await postAICard({
+        imagePath,
+        cardId,
+        style,
+        quality,
+        level,
+        word,
+        prompt
+      });
       onSetaiCardStatusMessage('Card Summoned');
       onPostAICardFeed({
         feed,
