@@ -16,6 +16,12 @@ export default function ChatActions(dispatch) {
         userId
       });
     },
+    onAICardOfferWithdrawal(feedId) {
+      return dispatch({
+        type: 'AI_CARD_OFFER_WITHDRAWAL',
+        feedId
+      });
+    },
     onCallReceptionConfirm(channelId) {
       return dispatch({
         type: 'CONFIRM_CALL_RECEPTION',

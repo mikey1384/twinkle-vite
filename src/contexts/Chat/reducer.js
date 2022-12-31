@@ -16,6 +16,23 @@ const chatTabHash = {
 
 export default function ChatReducer(state, action) {
   switch (action.type) {
+    case 'AI_CARD_OFFER_WITHDRAWAL': {
+      return {
+        ...state,
+        aiCardFeeds: state.aiCardFeeds.map((feed) => {
+          if (feed.id === action.feedId) {
+            return {
+              ...feed,
+              offer: {
+                ...feed.offer,
+                isCancelled: true
+              }
+            };
+          }
+          return feed;
+        })
+      };
+    }
     case 'ADD_ID_TO_NEW_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const messageIds = prevChannelObj?.messageIds?.map((messageId) =>

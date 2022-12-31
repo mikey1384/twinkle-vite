@@ -286,12 +286,12 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async deleteAICardOffer(offerId) {
+    async deleteAICardOffer({ cardId, offerId }) {
       try {
         const {
           data: { coins }
         } = await request.delete(
-          `${URL}/chat/aiCard/offer?offerId=${offerId}`,
+          `${URL}/chat/aiCard/offer?offerId=${offerId}&cardId=${cardId}`,
           auth()
         );
         return Promise.resolve(coins);

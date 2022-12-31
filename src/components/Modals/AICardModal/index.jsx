@@ -272,8 +272,10 @@ export default function AICardModal({ cardId, onHide }) {
   );
 
   async function handleWithdrawOffer() {
-    const coins = await deleteAICardOffer(card.myOffer.id);
-    onUpdateAICard({ cardId: card.id, newState: { myOffer: null } });
+    const coins = await deleteAICardOffer({
+      offerId: card.myOffer.id,
+      cardId: card.id
+    });
     onWithdrawOutgoingOffer(card.myOffer.id);
     onSetUserState({ userId, newState: { twinkleCoins: coins } });
     setWithdrawOfferModalShown(false);

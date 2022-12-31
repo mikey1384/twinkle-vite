@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import { css } from '@emotion/css';
@@ -39,7 +39,10 @@ export default function OfferActivity({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const offer = feed.offer;
+  const offer = useMemo(() => {
+    return feed.offer;
+  }, [feed]);
+
   return (
     <div
       onClick={() => onSetAICardModalCardId(card.id)}
@@ -71,6 +74,7 @@ export default function OfferActivity({
           width: 'CALC(100% - 5rem)',
           marginLeft: '3rem',
           display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center'
         }}
@@ -79,25 +83,51 @@ export default function OfferActivity({
           className={css`
             font-size: 1.7rem;
             line-height: 1;
+            ${offer.isCancelled ? `color: ${Color.lightGray()};` : ''};
+            ${offer.isCancelled ? 'text-decoration: line-through;' : ''};
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.2rem;
             }
           `}
         >
           <UsernameText
-            color={Color.black()}
+            color={Color[offer.isCancelled ? 'lightGray' : 'black']()}
             user={{
               id: offer.user.id,
               username: offer.user.username
             }}
           />{' '}
           offered{' '}
-          <b style={{ color: Color.black() }}>
+          <b
+            style={{
+              color: Color[offer.isCancelled ? 'lightGray' : 'black']()
+            }}
+          >
             {addCommasToNumber(offer.offerPrice)}
           </b>{' '}
           Twinkle {offer.offerPrice === 1 ? 'Coin' : 'Coins'} for{' '}
-          <b style={{ color: Color.black() }}>Card #{card.id}</b>
+          <b
+            style={{
+              color: Color[offer.isCancelled ? 'lightGray' : 'black']()
+            }}
+          >
+            Card #{card.id}
+          </b>
         </div>
+        {!!offer.isCancelled && (
+          <div
+            className={css`
+              margin-top: 1.5rem;
+              font-size: 1.7rem;
+              line-height: 1;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.2rem;
+              }
+            `}
+          >
+            This offer was revoked
+          </div>
+        )}
       </div>
       <div
         style={{
