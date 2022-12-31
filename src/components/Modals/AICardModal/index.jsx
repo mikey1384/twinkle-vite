@@ -7,6 +7,7 @@ import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
 import SanitizedHTML from 'react-sanitized-html';
 import OfferModal from './OfferModal';
+import UsernameText from '~/components/Texts/UsernameText';
 import FilterBar from '~/components/FilterBar';
 import SellModal from './SellModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -25,6 +26,7 @@ AICardModal.propTypes = {
 
 export default function AICardModal({ cardId, onHide }) {
   const {
+    userLink: { color: userLinkColor },
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
   const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
@@ -58,7 +60,28 @@ export default function AICardModal({ cardId, onHide }) {
       modalOverModal
       onHide={onHide}
     >
-      <header>#{card.id}</header>
+      <header>
+        <div>
+          Card #{card.id}{' '}
+          <div
+            style={{
+              display: 'inline',
+              fontWeight: 'normal',
+              fontSize: '1.3rem'
+            }}
+          >
+            (owned by{' '}
+            <UsernameText
+              color={Color[userLinkColor]()}
+              user={{
+                username: card.owner.username,
+                id: card.owner.id
+              }}
+            />
+            )
+          </div>
+        </div>
+      </header>
       <main>
         <div
           style={{
