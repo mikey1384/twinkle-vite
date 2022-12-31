@@ -408,14 +408,16 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     }
 
     function handleAICardOfferPosted({ card, feed }) {
-      onUpdateAICard({
-        cardId: card.id,
-        newState: { myOffer: feed.offer }
-      });
       onPostAICardFeed({
         feed,
         card
       });
+      if (feed.offer?.user?.id === userId) {
+        onUpdateAICard({
+          cardId: card.id,
+          newState: { myOffer: feed.offer }
+        });
+      }
     }
 
     function handleBanStatusUpdate(banStatus) {
