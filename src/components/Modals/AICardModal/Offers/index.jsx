@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import OfferDetailModal from './OfferDetailModal';
 import OfferListItem from './OfferListItem';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -20,7 +19,6 @@ export default function Offers({
   loadMoreButtonColor
 }) {
   const { userId } = useKeyContext((v) => v.myState);
-  const [offerDetailModalShown, setOfferDetailModalShown] = useState(false);
   const [offers, setOffers] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
@@ -88,7 +86,6 @@ export default function Offers({
               key={offer.price}
               offer={offer}
               offerers={offerers}
-              onSetOfferDetailModalShown={setOfferDetailModalShown}
               onUserMenuShown={onUserMenuShown}
               userId={userId}
             />
@@ -108,9 +105,6 @@ export default function Offers({
           />
         )}
       </div>
-      {offerDetailModalShown && (
-        <OfferDetailModal onHide={() => setOfferDetailModalShown(false)} />
-      )}
     </ErrorBoundary>
   );
 
