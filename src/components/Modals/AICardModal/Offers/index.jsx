@@ -1,16 +1,12 @@
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Icon from '~/components/Icon';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import OfferDetailModal from './OfferDetailModal';
+import OfferListItem from './OfferListItem';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { isMobile } from '~/helpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
-
-const deviceIsMobile = isMobile(navigator);
 
 Offers.propTypes = {
   cardId: PropTypes.number.isRequired,
@@ -23,9 +19,6 @@ export default function Offers({
   onUserMenuShown,
   loadMoreButtonColor
 }) {
-  const {
-    userLink: { color: userLinkColor }
-  } = useKeyContext((v) => v.theme);
   const { userId } = useKeyContext((v) => v.myState);
   const [offerDetailModalShown, setOfferDetailModalShown] = useState(false);
   const [offers, setOffers] = useState([]);
@@ -91,55 +84,14 @@ export default function Offers({
             );
           }
           return (
-            <nav
-              className={css`
-                height: 7rem;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                font-size: 1.6rem;
-                cursor: pointer;
-                border-bottom: 1px solid ${Color.borderGray()};
-                &:hover {
-                  background-color: ${Color.highlightGray()};
-                }
-                @media (max-width: ${mobileMaxWidth}) {
-                  height: 3rem;
-                  font-size: 0.8rem;
-                }
-              `}
+            <OfferListItem
               key={offer.price}
-              onClick={() => setOfferDetailModalShown(true)}
-            >
-              <div>
-                <Icon
-                  style={{ color: Color.brownOrange() }}
-                  icon={['far', 'badge-dollar']}
-                />
-                <span style={{ marginLeft: '0.2rem' }}>
-                  <b style={{ color: Color.darkerGray() }}>{offer.price}</b>
-                  {deviceIsMobile ? '' : <span> offer </span>} from{' '}
-                </span>
-                <UsernameText
-                  onMenuShownChange={onUserMenuShown}
-                  color={Color[userLinkColor]()}
-                  displayedName={
-                    offerers[0].id === userId ? 'you' : offerers[0].username
-                  }
-                  user={{
-                    username: offerers[0].username,
-                    id: offerers[0].id
-                  }}
-                />
-                {offerers.length > 1 ? (
-                  <span>
-                    {' '}
-                    and {offerers.length - 1} other
-                    {offerers.length - 1 > 1 ? 's' : ''}
-                  </span>
-                ) : null}
-              </div>
-            </nav>
+              offer={offer}
+              offerers={offerers}
+              onSetOfferDetailModalShown={setOfferDetailModalShown}
+              onUserMenuShown={onUserMenuShown}
+              userId={userId}
+            />
           );
         })}
         {loadMoreShown && (
