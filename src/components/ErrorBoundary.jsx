@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import PropTypes from 'prop-types';
 import StackTrace from 'stacktrace-js';
+import SourceMap from 'source-map';
 import UsernameText from '~/components/Texts/UsernameText';
 import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
@@ -33,6 +34,16 @@ export default class ErrorBoundary extends Component {
     const errorStack = await StackTrace.fromError(error);
     errorStack.forEach(async function (frame) {
       const map = await retrieveSourceMap(frame.fileName);
+      if (map) {
+        const consumer = await new SourceMap.SourceMapConsumer(map.map);
+        const { source, line, column } = consumer.originalPositionFor({
+          line: frame.lineNumber,
+          column: frame.columnNumber
+        });
+        frame.fileName = source;
+        frame.lineNumber = line;
+        frame.columnNumber = column;
+      }
       if (map) {
         const { source, line, column } = map.originalPositionFor({
           line: frame.lineNumber,
