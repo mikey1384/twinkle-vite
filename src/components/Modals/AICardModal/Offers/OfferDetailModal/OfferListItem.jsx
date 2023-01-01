@@ -1,8 +1,23 @@
+import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Icon from '~/components/Icon';
+import UsernameText from '~/components/Texts/UsernameText';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-export default function OfferListItem() {
+OfferListItem.propTypes = {
+  offer: PropTypes.object.isRequired,
+  userLinkColor: PropTypes.string.isRequired,
+  onUserMenuShown: PropTypes.func.isRequired,
+  userId: PropTypes.number.isRequired
+};
+
+export default function OfferListItem({
+  offer,
+  onUserMenuShown,
+  userLinkColor,
+  userId
+}) {
   return (
     <ErrorBoundary componentPath="components/Modals/AICardModal/Offers/OfferListItem">
       <nav
@@ -21,9 +36,26 @@ export default function OfferListItem() {
             font-size: 0.8rem;
           }
         `}
-        onClick={() => console.log('clicked')}
       >
-        item
+        <div>
+          <Icon
+            style={{ color: Color.brownOrange() }}
+            icon={['far', 'badge-dollar']}
+          />
+          <span style={{ marginLeft: '0.2rem' }}>
+            <b style={{ color: Color.darkerGray() }}>{offer.offerPrice}</b>
+            <span> offer </span> from{' '}
+          </span>
+          <UsernameText
+            onMenuShownChange={onUserMenuShown}
+            color={Color[userLinkColor]()}
+            displayedName={offer.userId === userId ? 'you' : offer.username}
+            user={{
+              username: offer.username,
+              id: offer.userId
+            }}
+          />
+        </div>
       </nav>
     </ErrorBoundary>
   );

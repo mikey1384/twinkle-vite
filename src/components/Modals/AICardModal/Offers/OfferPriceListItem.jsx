@@ -16,7 +16,8 @@ OfferPriceListItem.propTypes = {
   offer: PropTypes.object.isRequired,
   offerers: PropTypes.array.isRequired,
   onUserMenuShown: PropTypes.func.isRequired,
-  userId: PropTypes.number.isRequired
+  userId: PropTypes.number.isRequired,
+  usermenuShown: PropTypes.bool
 };
 
 export default function OfferPriceListItem({
@@ -24,6 +25,7 @@ export default function OfferPriceListItem({
   offer,
   offerers,
   onUserMenuShown,
+  usermenuShown,
   userId
 }) {
   const [offerDetailModalShown, setOfferDetailModalShown] = useState(false);
@@ -87,6 +89,10 @@ export default function OfferPriceListItem({
           price={offer.price}
           cardId={cardId}
           onHide={() => setOfferDetailModalShown(false)}
+          onUserMenuShown={onUserMenuShown}
+          userLinkColor={userLinkColor}
+          usermenuShown={usermenuShown}
+          userId={userId}
         />
       )}
     </ErrorBoundary>

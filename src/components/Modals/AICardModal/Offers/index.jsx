@@ -10,13 +10,15 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 Offers.propTypes = {
   cardId: PropTypes.number.isRequired,
   onUserMenuShown: PropTypes.func.isRequired,
-  loadMoreButtonColor: PropTypes.string
+  loadMoreButtonColor: PropTypes.string,
+  usermenuShown: PropTypes.bool
 };
 
 export default function Offers({
   cardId,
   onUserMenuShown,
-  loadMoreButtonColor
+  loadMoreButtonColor,
+  usermenuShown
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const [offers, setOffers] = useState([]);
@@ -89,6 +91,7 @@ export default function Offers({
               offerers={offerers}
               onUserMenuShown={onUserMenuShown}
               userId={userId}
+              usermenuShown={usermenuShown}
             />
           );
         })}

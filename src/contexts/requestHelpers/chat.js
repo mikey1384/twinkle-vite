@@ -247,7 +247,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         const {
           data: { offers, loadMoreShown }
         } = await request.get(
-          `${URL}/chat/aiCard/offer/card?cardId=${cardId}&price=${price}${
+          `${URL}/chat/aiCard/offer/card/price?cardId=${cardId}&price=${price}${
             lastTimeStamp ? `&lastTimeStamp=${lastTimeStamp}` : ''
           }`,
           auth()
