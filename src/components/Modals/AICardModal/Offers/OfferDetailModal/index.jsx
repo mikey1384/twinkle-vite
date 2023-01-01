@@ -1,12 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import OfferListItem from './OfferListItem';
 import RoundList from '~/components/RoundList';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { Color } from '~/constants/css';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 OfferDetailModal.propTypes = {
@@ -16,14 +17,24 @@ OfferDetailModal.propTypes = {
 };
 
 export default function OfferDetailModal({ onHide, cardId, price }) {
+  const {
+    loadMoreButton: { color: loadMoreButtonColor }
+  } = useKeyContext((v) => v.theme);
+  const [offers, setOffers] = useState([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreShown, setLoadMoreShown] = useState(false);
   const getOffersForCardByPrice = useAppContext(
     (v) => v.requestHelpers.getOffersForCardByPrice
   );
   useEffect(() => {
     init();
     async function init() {
-      const data = await getOffersForCardByPrice({ cardId, price });
-      console.log(data);
+      const { offers, loadMoreShown } = await getOffersForCardByPrice({
+        cardId,
+        price
+      });
+      setOffers(offers);
+      setLoadMoreShown(loadMoreShown);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -41,8 +52,19 @@ export default function OfferDetailModal({ onHide, cardId, price }) {
       </header>
       <main>
         <RoundList>
-          <OfferListItem />
+          {offers.map((offer) => (
+            <OfferListItem key={offer.id} />
+          ))}
         </RoundList>
+        {loadMoreShown && (
+          <LoadMoreButton
+            style={{ marginTop: '1.5em' }}
+            loading={loadingMore}
+            filled
+            color={loadMoreButtonColor}
+            onClick={handleLoadMoreoffers}
+          />
+        )}
       </main>
       <footer>
         <Button transparent onClick={onHide}>
@@ -51,4 +73,17 @@ export default function OfferDetailModal({ onHide, cardId, price }) {
       </footer>
     </Modal>
   );
+
+  async function handleLoadMoreoffers() {
+    setLoadingMore(true);
+    const { offers: loadedOffers, loadMoreShown } =
+      await getOffersForCardByPrice({
+        cardId,
+        price,
+        lastId: offers[offers.length - 1].id
+      });
+    setOffers((v) => [...v, ...loadedOffers]);
+    setLoadMoreShown(loadMoreShown);
+    setLoadingMore(false);
+  }
 }
