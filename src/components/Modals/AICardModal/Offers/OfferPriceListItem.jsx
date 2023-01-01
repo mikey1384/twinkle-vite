@@ -11,7 +11,7 @@ import { css } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);
 
-OfferListItem.propTypes = {
+OfferPriceListItem.propTypes = {
   cardId: PropTypes.number.isRequired,
   offer: PropTypes.object.isRequired,
   offerers: PropTypes.array.isRequired,
@@ -19,7 +19,7 @@ OfferListItem.propTypes = {
   userId: PropTypes.number.isRequired
 };
 
-export default function OfferListItem({
+export default function OfferPriceListItem({
   cardId,
   offer,
   offerers,

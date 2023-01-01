@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import OfferListItem from './OfferListItem';
+import OfferPriceListItem from './OfferPriceListItem';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -82,7 +82,7 @@ export default function Offers({
             );
           }
           return (
-            <OfferListItem
+            <OfferPriceListItem
               key={offer.price}
               cardId={cardId}
               offer={offer}
