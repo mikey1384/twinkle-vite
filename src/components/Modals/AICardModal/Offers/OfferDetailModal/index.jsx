@@ -6,6 +6,7 @@ import Icon from '~/components/Icon';
 import OfferListItem from './OfferListItem';
 import RoundList from '~/components/RoundList';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import Loading from '~/components/Loading';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -13,14 +14,27 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 OfferDetailModal.propTypes = {
   cardId: PropTypes.number.isRequired,
   onHide: PropTypes.func.isRequired,
-  price: PropTypes.number.isRequired
+  price: PropTypes.number.isRequired,
+  onUserMenuShown: PropTypes.func.isRequired,
+  userLinkColor: PropTypes.string.isRequired,
+  usermenuShown: PropTypes.bool,
+  userId: PropTypes.number.isRequired
 };
 
-export default function OfferDetailModal({ onHide, cardId, price }) {
+export default function OfferDetailModal({
+  onHide,
+  cardId,
+  onUserMenuShown,
+  price,
+  userLinkColor,
+  usermenuShown,
+  userId
+}) {
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
   const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const getOffersForCardByPrice = useAppContext(
@@ -29,18 +43,25 @@ export default function OfferDetailModal({ onHide, cardId, price }) {
   useEffect(() => {
     init();
     async function init() {
+      setLoading(true);
       const { offers, loadMoreShown } = await getOffersForCardByPrice({
         cardId,
         price
       });
       setOffers(offers);
       setLoadMoreShown(loadMoreShown);
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <Modal medium modalOverModal onHide={onHide}>
+    <Modal
+      medium
+      modalOverModal
+      closeWhenClickedOutside={!usermenuShown}
+      onHide={onHide}
+    >
       <header>
         <div>
           <Icon
@@ -52,11 +73,21 @@ export default function OfferDetailModal({ onHide, cardId, price }) {
       </header>
       <main>
         <RoundList>
-          {offers.map((offer) => (
-            <OfferListItem key={offer.id} />
-          ))}
+          {loading ? (
+            <Loading />
+          ) : (
+            offers.map((offer) => (
+              <OfferListItem
+                key={offer.id}
+                offer={offer}
+                userLinkColor={userLinkColor}
+                onUserMenuShown={onUserMenuShown}
+                userId={userId}
+              />
+            ))
+          )}
         </RoundList>
-        {loadMoreShown && (
+        {!loading && loadMoreShown && (
           <LoadMoreButton
             style={{ marginTop: '1.5em' }}
             loading={loadingMore}

@@ -210,6 +210,7 @@ export default function AICardModal({ cardId, onHide }) {
                 cardId={cardId}
                 loadMoreButtonColor={loadMoreButtonColor}
                 onUserMenuShown={setUsermenuShown}
+                usermenuShown={usermenuShown}
               />
             ) : (
               <div
