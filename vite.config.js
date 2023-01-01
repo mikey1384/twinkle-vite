@@ -35,6 +35,6 @@ export default defineConfig({
     rollupOptions: {
       plugins: [inject({ Buffer: ['buffer', 'Buffer'], process: 'process' })]
     },
-    sourcemap: true
+    sourcemap: 'inline'
   }
 });
