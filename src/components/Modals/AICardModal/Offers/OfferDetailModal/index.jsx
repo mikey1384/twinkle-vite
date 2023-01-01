@@ -80,7 +80,7 @@ export default function OfferDetailModal({ onHide, cardId, price }) {
       await getOffersForCardByPrice({
         cardId,
         price,
-        lastId: offers[offers.length - 1].id
+        lastTimeStamp: offers[offers.length - 1].timeStamp
       });
     setOffers((v) => [...v, ...loadedOffers]);
     setLoadMoreShown(loadMoreShown);
