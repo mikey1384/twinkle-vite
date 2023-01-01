@@ -122,6 +122,7 @@ export default class ErrorBoundary extends Component {
 async function mapStackTrace(stackTrace) {
   const mappedStackTrace = [];
   for (const callSite of stackTrace) {
+    console.log(callSite);
     const { file } = callSite;
     // Only map the stack trace if the source map exists
     if (file && file.endsWith('.map')) {
