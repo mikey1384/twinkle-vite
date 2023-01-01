@@ -144,9 +144,9 @@ export default function StatusMessage({
             <span
               style={{ marginLeft: '1.5rem', fontSize: '1.7rem' }}
               dangerouslySetInnerHTML={{
-                __html: applyTextEffects(
-                  status === 'pass' ? passMessage : failMessage
-                )
+                __html: applyTextEffects({
+                  string: status === 'pass' ? passMessage : failMessage
+                })
               }}
             />
           </div>
