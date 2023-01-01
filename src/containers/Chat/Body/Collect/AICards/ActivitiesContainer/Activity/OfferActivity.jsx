@@ -12,8 +12,7 @@ OfferActivity.propTypes = {
   myId: PropTypes.number,
   onReceiveNewActivity: PropTypes.func.isRequired,
   onSetScrollToBottom: PropTypes.func.isRequired,
-  isLastActivity: PropTypes.bool,
-  onSetAICardModalCardId: PropTypes.func.isRequired
+  isLastActivity: PropTypes.bool
 };
 
 export default function OfferActivity({
@@ -22,8 +21,7 @@ export default function OfferActivity({
   myId,
   onReceiveNewActivity,
   onSetScrollToBottom,
-  isLastActivity,
-  onSetAICardModalCardId
+  isLastActivity
 }) {
   useEffect(() => {
     if (isLastActivity && myId === feed.offer.user.id) {
@@ -45,7 +43,6 @@ export default function OfferActivity({
 
   return (
     <div
-      onClick={() => onSetAICardModalCardId(card.id)}
       className={css`
         padding: 0 3rem 0 2rem;
         @media (max-width: ${mobileMaxWidth}) {
