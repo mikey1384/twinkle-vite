@@ -1,21 +1,8 @@
 import { Component } from 'react';
 import PropTypes from 'prop-types';
-import StackTrace from 'stacktrace-js';
 import UsernameText from '~/components/Texts/UsernameText';
 import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
-import { clientVersion } from '~/constants/defaultValues';
-import { SourceMapConsumer } from 'source-map';
-import URL from '~/constants/URL';
-
-const token = () =>
-  typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
-
-const auth = () => ({
-  headers: {
-    authorization: token()
-  }
-});
 
 export default class ErrorBoundary extends Component {
   static propTypes = {
@@ -30,15 +17,7 @@ export default class ErrorBoundary extends Component {
 
   async componentDidCatch(error, info) {
     this.setState({ hasError: true });
-    const errorStack = await StackTrace.fromError(error);
-    const mappedErrorStack = await mapStackTrace(errorStack);
-    await StackTrace.report(mappedErrorStack, `${URL}/user/error`, {
-      clientVersion,
-      message: error.message,
-      componentPath: this.props.componentPath,
-      info: info?.componentStack,
-      token: auth()?.headers?.authorization
-    });
+    console.log(info);
     console.log(error);
   }
 
@@ -117,26 +96,4 @@ export default class ErrorBoundary extends Component {
       <>{children}</>
     );
   }
-}
-
-async function mapStackTrace(stackTrace) {
-  const mappedStackTrace = [];
-  for (const callSite of stackTrace) {
-    console.log(callSite);
-    const { file } = callSite;
-    // Only map the stack trace if the source map exists
-    if (file && file.endsWith('.map')) {
-      const sourceMap = await new SourceMapConsumer(file);
-      const originalPosition = sourceMap.originalPositionFor(callSite);
-      mappedStackTrace.push({
-        ...callSite,
-        file: originalPosition.source,
-        lineNumber: originalPosition.line,
-        columnNumber: originalPosition.column
-      });
-    } else {
-      mappedStackTrace.push(callSite);
-    }
-  }
-  return mappedStackTrace;
 }
