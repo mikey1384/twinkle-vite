@@ -1,12 +1,11 @@
 import { Component } from 'react';
 import PropTypes from 'prop-types';
 import StackTrace from 'stacktrace-js';
-import SourceMap from 'source-map';
 import UsernameText from '~/components/Texts/UsernameText';
 import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
 import { clientVersion } from '~/constants/defaultValues';
-import { retrieveSourceMap } from 'source-map-support';
+import { SourceMapConsumer } from 'source-map';
 import URL from '~/constants/URL';
 
 const token = () =>
@@ -32,20 +31,8 @@ export default class ErrorBoundary extends Component {
   async componentDidCatch(error, info) {
     this.setState({ hasError: true });
     const errorStack = await StackTrace.fromError(error);
-    errorStack.forEach(async function (frame) {
-      const map = await retrieveSourceMap(frame.fileName);
-      if (map) {
-        const consumer = await new SourceMap.SourceMapConsumer(map.map);
-        const { source, line, column } = consumer.originalPositionFor({
-          line: frame.lineNumber,
-          column: frame.columnNumber
-        });
-        frame.fileName = source;
-        frame.lineNumber = line;
-        frame.columnNumber = column;
-      }
-    });
-    await StackTrace.report(errorStack, `${URL}/user/error`, {
+    const mappedErrorStack = await mapStackTrace(errorStack);
+    await StackTrace.report(mappedErrorStack, `${URL}/user/error`, {
       clientVersion,
       message: error.message,
       componentPath: this.props.componentPath,
@@ -130,4 +117,25 @@ export default class ErrorBoundary extends Component {
       <>{children}</>
     );
   }
+}
+
+async function mapStackTrace(stackTrace) {
+  const mappedStackTrace = [];
+  for (const callSite of stackTrace) {
+    const { file } = callSite;
+    // Only map the stack trace if the source map exists
+    if (file && file.endsWith('.map')) {
+      const sourceMap = await new SourceMapConsumer(file);
+      const originalPosition = sourceMap.originalPositionFor(callSite);
+      mappedStackTrace.push({
+        ...callSite,
+        file: originalPosition.source,
+        lineNumber: originalPosition.line,
+        columnNumber: originalPosition.column
+      });
+    } else {
+      mappedStackTrace.push(callSite);
+    }
+  }
+  return mappedStackTrace;
 }
