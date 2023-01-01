@@ -26,7 +26,6 @@ export default function StatusMessage({
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
-  const { userId } = useKeyContext((v) => v.myState);
 
   const rewardDetails = useMemo(() => {
     return (
@@ -145,14 +144,9 @@ export default function StatusMessage({
             <span
               style={{ marginLeft: '1.5rem', fontSize: '1.7rem' }}
               dangerouslySetInnerHTML={{
-                __html:
-                  userId === 5
-                    ? applyTextEffects(
-                        status === 'pass' ? passMessage : failMessage
-                      )
-                    : applyTextEffects({
-                        string: status === 'pass' ? passMessage : failMessage
-                      })
+                __html: applyTextEffects({
+                  string: status === 'pass' ? passMessage : failMessage
+                })
               }}
             />
           </div>
