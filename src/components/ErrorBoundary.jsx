@@ -44,15 +44,6 @@ export default class ErrorBoundary extends Component {
         frame.lineNumber = line;
         frame.columnNumber = column;
       }
-      if (map) {
-        const { source, line, column } = map.originalPositionFor({
-          line: frame.lineNumber,
-          column: frame.columnNumber
-        });
-        frame.fileName = source;
-        frame.lineNumber = line;
-        frame.columnNumber = column;
-      }
     });
     await StackTrace.report(errorStack, `${URL}/user/error`, {
       clientVersion,
