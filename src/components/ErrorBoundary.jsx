@@ -1,21 +1,17 @@
 import { Component } from 'react';
 import PropTypes from 'prop-types';
-import StackTrace from 'stacktrace-js';
 import UsernameText from '~/components/Texts/UsernameText';
-import { css } from '@emotion/css';
-import { Color, borderRadius } from '~/constants/css';
 import { clientVersion } from '~/constants/defaultValues';
-import { retrieveSourceMap } from 'source-map-support';
+import { css } from '@emotion/css';
 import URL from '~/constants/URL';
+import request from 'axios';
+import { Color, borderRadius } from '~/constants/css';
+import { install } from 'source-map-support';
+
+install();
 
 const token = () =>
   typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
-
-const auth = () => ({
-  headers: {
-    authorization: token()
-  }
-});
 
 export default class ErrorBoundary extends Component {
   static propTypes = {
@@ -28,29 +24,12 @@ export default class ErrorBoundary extends Component {
 
   state = { hasError: false };
 
-  async componentDidCatch(error, info) {
+  async componentDidCatch(error) {
     this.setState({ hasError: true });
-    const errorStack = await StackTrace.fromError(error);
-    errorStack.forEach(async function (frame) {
-      const map = await retrieveSourceMap(frame.fileName);
-      if (map) {
-        const { source, line, column } = map.originalPositionFor({
-          line: frame.lineNumber,
-          column: frame.columnNumber
-        });
-        frame.fileName = source;
-        frame.lineNumber = line;
-        frame.columnNumber = column;
-      }
-    });
-    await StackTrace.report(errorStack, `${URL}/user/error`, {
-      clientVersion,
-      message: error.message,
+    reportError({
       componentPath: this.props.componentPath,
-      info: info?.componentStack,
-      token: auth()?.headers?.authorization
+      message: error.stack
     });
-    console.log(error);
   }
 
   render() {
@@ -127,5 +106,24 @@ export default class ErrorBoundary extends Component {
     ) : (
       <>{children}</>
     );
+  }
+}
+
+async function reportError({ componentPath, info, message }) {
+  try {
+    const {
+      data: { success }
+    } = await request.post(
+      `${URL}/user/error`,
+      { componentPath, info, message, clientVersion },
+      {
+        headers: {
+          authorization: token()
+        }
+      }
+    );
+    return Promise.resolve(success);
+  } catch (error) {
+    return console.log(error);
   }
 }
