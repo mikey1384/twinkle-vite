@@ -4,8 +4,11 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { clientVersion } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import URL from '~/constants/URL';
-import { Color, borderRadius } from '~/constants/css';
 import request from 'axios';
+import { Color, borderRadius } from '~/constants/css';
+import { install } from 'source-map-support';
+
+install();
 
 const token = () =>
   typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
