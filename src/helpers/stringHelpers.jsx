@@ -778,13 +778,13 @@ export function applyTextEffects({
     );
 
   if (hasMention) {
-    result = result.replace(mentionRegex, (string) => {
+    result = (result || '').replace(mentionRegex, (string) => {
       const path = string.split('@')?.[1];
       const firstChar = string.split('@')?.[0];
       return `${firstChar}<a class="mention" href="/users/${path}">@${path}</a>`;
     });
   }
-  result = result.replace(/\n/g, '<br>');
+  result = (result || '').replace(/\n/g, '<br>');
   return isFinalProcessing ? result.replace(fakeAtSymbolRegex, '@') : result;
 }
 
