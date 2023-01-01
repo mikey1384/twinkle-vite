@@ -12,7 +12,7 @@ Offers.propTypes = {
 };
 
 export default function Offers({ loadMoreButtonColor }) {
-  const [selectedTab, setSelectedTab] = useState('outgoing');
+  const [selectedTab, setSelectedTab] = useState('incoming');
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Bids">
       <FilterBar
