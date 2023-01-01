@@ -5,6 +5,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
 import { clientVersion } from '~/constants/defaultValues';
+import { retrieveSourceMap } from 'source-map-support';
 import URL from '~/constants/URL';
 
 const token = () =>
@@ -30,6 +31,18 @@ export default class ErrorBoundary extends Component {
   async componentDidCatch(error, info) {
     this.setState({ hasError: true });
     const errorStack = await StackTrace.fromError(error);
+    errorStack.forEach(async function (frame) {
+      const map = await retrieveSourceMap(frame.fileName);
+      if (map) {
+        const { source, line, column } = map.originalPositionFor({
+          line: frame.lineNumber,
+          column: frame.columnNumber
+        });
+        frame.fileName = source;
+        frame.lineNumber = line;
+        frame.columnNumber = column;
+      }
+    });
     await StackTrace.report(errorStack, `${URL}/user/error`, {
       clientVersion,
       message: error.message,
