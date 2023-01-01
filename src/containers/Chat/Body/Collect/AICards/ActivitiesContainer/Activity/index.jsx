@@ -56,6 +56,7 @@ export default function Activity({
               : Color.whiteGray()};
           }
         `}
+        onClick={handleActivityClick}
       >
         {feed.type === 'summon' && (
           <SummonActivity
@@ -81,4 +82,10 @@ export default function Activity({
       </div>
     </ErrorBoundary>
   );
+
+  function handleActivityClick() {
+    if (feed.type === 'offer') {
+      onSetAICardModalCardId(feed.offer.cardId);
+    }
+  }
 }
