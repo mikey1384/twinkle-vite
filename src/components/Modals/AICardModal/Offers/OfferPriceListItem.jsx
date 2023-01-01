@@ -40,6 +40,7 @@ export default function OfferPriceListItem({
       <nav
         className={css`
           height: 7rem;
+          padding: 0 1rem;
           display: flex;
           justify-content: center;
           align-items: center;

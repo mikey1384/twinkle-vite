@@ -92,7 +92,7 @@ export default function OfferDetailModal({
         </RoundList>
         {!loading && loadMoreShown && (
           <LoadMoreButton
-            style={{ marginTop: '1.5em' }}
+            style={{ marginTop: '1rem' }}
             loading={loadingMore}
             filled
             color={loadMoreButtonColor}
