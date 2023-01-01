@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import OfferListItem from './OfferListItem';
+import RoundList from '~/components/RoundList';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -38,27 +40,9 @@ export default function OfferDetailModal({ onHide, cardId, price }) {
         </div>
       </header>
       <main>
-        <div
-          style={{
-            height: '30rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column'
-          }}
-        >
-          <Button
-            filled
-            color="oceanBlue"
-            onClick={() => console.log('clicked')}
-            style={{
-              fontSize: '1.4rem',
-              marginTop: '2rem'
-            }}
-          >
-            Accept
-          </Button>
-        </div>
+        <RoundList>
+          <OfferListItem />
+        </RoundList>
       </main>
       <footer>
         <Button transparent onClick={onHide}>
