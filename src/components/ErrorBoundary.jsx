@@ -24,11 +24,10 @@ export default class ErrorBoundary extends Component {
 
   state = { hasError: false };
 
-  async componentDidCatch(error, info) {
+  async componentDidCatch(error) {
     this.setState({ hasError: true });
     reportError({
       componentPath: this.props.componentPath,
-      info: JSON.stringify(info),
       message: error.stack
     });
   }
