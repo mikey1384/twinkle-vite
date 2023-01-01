@@ -8,6 +8,7 @@ import { css } from '@emotion/css';
 
 OfferListItem.propTypes = {
   offer: PropTypes.object.isRequired,
+  ownerId: PropTypes.number.isRequired,
   userLinkColor: PropTypes.string.isRequired,
   onUserMenuShown: PropTypes.func.isRequired,
   userId: PropTypes.number.isRequired
@@ -16,6 +17,7 @@ OfferListItem.propTypes = {
 export default function OfferListItem({
   offer,
   onUserMenuShown,
+  ownerId,
   userLinkColor,
   userId
 }) {
@@ -70,11 +72,13 @@ export default function OfferListItem({
               />
             </div>
           </div>
-          <div>
-            <Button color="oceanBlue" filled>
-              Accept
-            </Button>
-          </div>
+          {ownerId === userId && (
+            <div>
+              <Button color="oceanBlue" filled>
+                Accept
+              </Button>
+            </div>
+          )}
         </div>
       </nav>
     </ErrorBoundary>

@@ -14,6 +14,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 OfferDetailModal.propTypes = {
   cardId: PropTypes.number.isRequired,
   onHide: PropTypes.func.isRequired,
+  ownerId: PropTypes.number.isRequired,
   price: PropTypes.number.isRequired,
   onUserMenuShown: PropTypes.func.isRequired,
   userLinkColor: PropTypes.string.isRequired,
@@ -25,6 +26,7 @@ export default function OfferDetailModal({
   onHide,
   cardId,
   onUserMenuShown,
+  ownerId,
   price,
   userLinkColor,
   usermenuShown,
@@ -79,6 +81,7 @@ export default function OfferDetailModal({
             offers.map((offer) => (
               <OfferListItem
                 key={offer.id}
+                ownerId={ownerId}
                 offer={offer}
                 userLinkColor={userLinkColor}
                 onUserMenuShown={onUserMenuShown}

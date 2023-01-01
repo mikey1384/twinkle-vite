@@ -208,6 +208,7 @@ export default function AICardModal({ cardId, onHide }) {
             {activeTab === 'offers' ? (
               <Offers
                 cardId={cardId}
+                ownerId={card.owner.id}
                 loadMoreButtonColor={loadMoreButtonColor}
                 onUserMenuShown={setUsermenuShown}
                 usermenuShown={usermenuShown}

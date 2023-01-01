@@ -11,6 +11,7 @@ Offers.propTypes = {
   cardId: PropTypes.number.isRequired,
   onUserMenuShown: PropTypes.func.isRequired,
   loadMoreButtonColor: PropTypes.string,
+  ownerId: PropTypes.number.isRequired,
   usermenuShown: PropTypes.bool
 };
 
@@ -18,6 +19,7 @@ export default function Offers({
   cardId,
   onUserMenuShown,
   loadMoreButtonColor,
+  ownerId,
   usermenuShown
 }) {
   const { userId } = useKeyContext((v) => v.myState);
@@ -90,6 +92,7 @@ export default function Offers({
               offer={offer}
               offerers={offerers}
               onUserMenuShown={onUserMenuShown}
+              ownerId={ownerId}
               userId={userId}
               usermenuShown={usermenuShown}
             />
