@@ -568,11 +568,21 @@ export function processedStringWithURL(string) {
   const splitNewStringWithTextEffects = splitNewString.map((part) => {
     const splitPart = part.split('</a>');
     if (splitPart.length === 1) {
-      return applyTextEffects(splitPart[0]);
+      return applyTextEffects({
+        string: splitPart[0],
+        isFinalProcessing: false,
+        hasMention: !part.includes('</a>')
+      });
     }
-    return [splitPart[0], applyTextEffects(splitPart[1])].join('</a>');
+    return [splitPart[0], applyTextEffects({ string: splitPart[1] })].join(
+      '</a>'
+    );
   });
-  return applyTextEffects(splitNewStringWithTextEffects.join('<a href'), true);
+  return applyTextEffects({
+    string: splitNewStringWithTextEffects.join('<a href'),
+    isFinalProcessing: true,
+    hasMention: false
+  });
 
   function applyTextSize(string) {
     const wordRegex = {
@@ -622,7 +632,11 @@ export function processedStringWithURL(string) {
   }
 }
 
-export function applyTextEffects(string, finalProcessing) {
+export function applyTextEffects({
+  string,
+  isFinalProcessing,
+  hasMention = true
+}) {
   const italicRegex =
     /(((?![0-9\.])\*\*[^\s*]+\*\*(?![0-9]))|(((\*\*[^\s]){1}((?!(\*\*))[^\n])+([^\s]\*\*){1})(?![0-9\.])))/gi;
   const boldRegex =
@@ -656,7 +670,7 @@ export function applyTextEffects(string, finalProcessing) {
   const fakeAtSymbolRegex = /＠/gi;
   const mentionRegex = /((?!([a-zA-Z1-9])).|^|\n)@[a-zA-Z0-9_]{3,}/gi;
 
-  const result = string
+  let result = string
     .replace(/(<br>)/gi, '\n')
     .replace(
       blueRegex,
@@ -761,14 +775,17 @@ export function applyTextEffects(string, finalProcessing) {
     .replace(
       lineThroughRegex,
       (string) => `<s>${string.substring(2, string.length - 2)}</s>`
-    )
-    .replace(mentionRegex, (string) => {
+    );
+
+  if (hasMention) {
+    result = result.replace(mentionRegex, (string) => {
       const path = string.split('@')?.[1];
       const firstChar = string.split('@')?.[0];
       return `${firstChar}<a class="mention" href="/users/${path}">@${path}</a>`;
-    })
-    .replace(/\n/g, '<br>');
-  return finalProcessing ? result.replace(fakeAtSymbolRegex, '@') : result;
+    });
+  }
+  result = result.replace(/\n/g, '<br>');
+  return isFinalProcessing ? result.replace(fakeAtSymbolRegex, '@') : result;
 }
 
 export function processedURL(url) {
