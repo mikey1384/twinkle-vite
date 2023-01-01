@@ -11,6 +11,7 @@ Modal.propTypes = {
   children: PropTypes.node,
   closeWhenClickedOutside: PropTypes.bool,
   modalOverModal: PropTypes.bool,
+  medium: PropTypes.bool,
   onHide: PropTypes.func,
   small: PropTypes.bool,
   large: PropTypes.bool,
@@ -26,21 +27,30 @@ export default function Modal({
   modalOverModal,
   onHide,
   small,
+  medium,
   large,
   modalStyle,
   style
 }) {
   const modalWidth = {
-    default: '50%',
     small: '26%',
+    medium: '35%',
+    default: '50%',
     large: '80%'
   };
   const marginLeft = {
-    default: '25%',
     small: '37%',
+    medium: '31%',
+    default: '25%',
     large: '10%'
   };
-  const widthKey = small ? 'small' : large ? 'large' : 'default';
+  const widthKey = small
+    ? 'small'
+    : medium
+    ? 'medium'
+    : large
+    ? 'large'
+    : 'default';
   const Modal = (
     <ErrorBoundary componentPath="Modal/index">
       <div

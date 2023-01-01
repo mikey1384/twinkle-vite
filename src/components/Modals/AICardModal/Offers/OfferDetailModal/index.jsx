@@ -29,7 +29,7 @@ export default function OfferDetailModal({ onHide, cardId, price }) {
   }, []);
 
   return (
-    <Modal modalOverModal onHide={onHide}>
+    <Modal medium modalOverModal onHide={onHide}>
       <header>
         <div>
           <Icon
