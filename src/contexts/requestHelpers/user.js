@@ -410,13 +410,13 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async reportError({ componentPath, message }) {
+    async reportError({ componentPath, info, message }) {
       try {
         const {
           data: { success }
         } = await request.post(
-          `${URL}/user/error/manual`,
-          { componentPath, message, clientVersion },
+          `${URL}/user/error`,
+          { componentPath, info, message, clientVersion },
           auth()
         );
         return Promise.resolve(success);

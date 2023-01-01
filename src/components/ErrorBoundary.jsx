@@ -1,8 +1,14 @@
 import { Component } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
+import { clientVersion } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
+import URL from '~/constants/URL';
 import { Color, borderRadius } from '~/constants/css';
+import request from 'axios';
+
+const token = () =>
+  typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
 
 export default class ErrorBoundary extends Component {
   static propTypes = {
@@ -17,8 +23,11 @@ export default class ErrorBoundary extends Component {
 
   async componentDidCatch(error, info) {
     this.setState({ hasError: true });
-    console.log(info);
-    console.log(error);
+    reportError({
+      componentPath: this.props.componentPath,
+      info: JSON.stringify(info),
+      message: error.stack
+    });
   }
 
   render() {
@@ -95,5 +104,24 @@ export default class ErrorBoundary extends Component {
     ) : (
       <>{children}</>
     );
+  }
+}
+
+async function reportError({ componentPath, info, message }) {
+  try {
+    const {
+      data: { success }
+    } = await request.post(
+      `${URL}/user/error`,
+      { componentPath, info, message, clientVersion },
+      {
+        headers: {
+          authorization: token()
+        }
+      }
+    );
+    return Promise.resolve(success);
+  } catch (error) {
+    return console.log(error);
   }
 }
