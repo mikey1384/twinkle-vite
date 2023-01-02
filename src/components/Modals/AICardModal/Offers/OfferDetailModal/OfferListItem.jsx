@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
+import moment from 'moment';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -21,6 +23,10 @@ export default function OfferListItem({
   userLinkColor,
   userId
 }) {
+  const displayedTimeStamp = useMemo(
+    () => moment.unix(offer.timeStamp).format('lll'),
+    [offer.timeStamp]
+  );
   return (
     <ErrorBoundary componentPath="components/Modals/AICardModal/Offers/OfferListItem">
       <nav
@@ -32,7 +38,7 @@ export default function OfferListItem({
           font-size: 1.6rem;
           @media (max-width: ${mobileMaxWidth}) {
             height: 3rem;
-            font-size: 0.8rem;
+            font-size: 1rem;
           }
         `}
       >
@@ -69,7 +75,18 @@ export default function OfferListItem({
                   username: offer.username,
                   id: offer.userId
                 }}
-              />
+              />{' '}
+              <span
+                className={css`
+                  font-size: 1.2rem;
+                  color: ${Color.darkGray()};
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 0.7rem;
+                  }
+                `}
+              >
+                ({displayedTimeStamp})
+              </span>
             </div>
           </div>
           {ownerId === userId && (
