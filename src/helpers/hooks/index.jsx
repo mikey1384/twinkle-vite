@@ -260,18 +260,20 @@ export function useScrollPosition({
   scrollPositions = {}
 }) {
   useEffect(() => {
-    document.getElementById('App').scrollTop = scrollPositions[pathname] || 0;
-    BodyRef.scrollTop = scrollPositions[pathname] || 0;
+    (document.getElementById('App') || {}).scrollTop =
+      scrollPositions[pathname] || 0;
+    (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
     setTimeout(() => {
-      document.getElementById('App').scrollTop = scrollPositions[pathname] || 0;
-      BodyRef.scrollTop = scrollPositions[pathname] || 0;
+      (document.getElementById('App') || {}).scrollTop =
+        scrollPositions[pathname] || 0;
+      (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
     }, 0);
     // prevents bug on mobile devices where tapping stops working after user swipes left to go to previous page
     if (isMobile) {
       setTimeout(() => {
-        document.getElementById('App').scrollTop =
+        (document.getElementById('App') || {}).scrollTop =
           scrollPositions[pathname] || 0;
-        BodyRef.scrollTop = scrollPositions[pathname] || 0;
+        (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
       }, 500);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -288,8 +290,8 @@ export function useScrollPosition({
 
     function handleScroll() {
       const position = Math.max(
-        document.getElementById('App').scrollTop,
-        BodyRef.scrollTop
+        (document.getElementById('App') || {}).scrollTop,
+        (BodyRef || {}).scrollTop
       );
       onRecordScrollPosition({ section: pathname, position });
     }
