@@ -1,13 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
+import LocalContext from '../../Context';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import { cardLevelHash } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import AICardModal from '~/components/Modals/AICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CardThumb from '../../CardThumb';
 
@@ -23,7 +23,9 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
     userLink: { color: userLinkColor }
   } = useKeyContext((v) => v.theme);
   const { userId } = useKeyContext((v) => v.myState);
-  const [cardModalShown, setCardModalShown] = useState(false);
+  const {
+    actions: { onSetAICardModalCardId }
+  } = useContext(LocalContext);
   const cardDetailObj = useMemo(
     () => cardLevelHash[card?.level],
     [card?.level]
@@ -65,7 +67,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
           borderBottom:
             isOverflown && isLast ? 'none' : `1px solid ${Color.borderGray()}`
         }}
-        onClick={() => setCardModalShown(true)}
+        onClick={() => onSetAICardModalCardId(card.id)}
         key={card.id}
       >
         <CardThumb card={card} />
@@ -163,9 +165,6 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
           </div>
         </div>
       </div>
-      {cardModalShown && (
-        <AICardModal cardId={card.id} onHide={() => setCardModalShown(false)} />
-      )}
     </ErrorBoundary>
   );
 }
