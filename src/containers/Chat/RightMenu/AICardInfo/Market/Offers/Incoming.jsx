@@ -116,7 +116,7 @@ export default function Incoming({ loadMoreButtonColor }) {
               key={offer.id}
               offerObj={{
                 user: offer.user,
-                price: offer.offerPrice
+                price: offer.price
               }}
             />
           ))
