@@ -7,6 +7,7 @@ import Body from './Body';
 import Loading from '~/components/Loading';
 import PleaseLogIn from './PleaseLogIn';
 import LocalContext from './Context';
+import AICardModal from '~/components/Modals/AICardModal';
 import { parseChannelPath } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
@@ -284,6 +285,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   const allRanks = useNotiContext((v) => v.state.allRanks);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
+  const [aiCardModalCardId, setAICardModalCardId] = useState(null);
   const [creatingChat, setCreatingChat] = useState(false);
   const [createNewChatModalShown, setCreateNewChatModalShown] = useState(false);
   const loadingRef = useRef(false);
@@ -734,6 +736,7 @@ export default function Main({ currentPathId, onFileUpload }) {
           onSetSiteUrl,
           onSetThumbUrl,
           onSetUserState,
+          onSetAICardModalCardId: setAICardModalCardId,
           onSetWordleModalShown,
           onShowIncoming,
           onSubmitMessage,
@@ -853,6 +856,12 @@ export default function Main({ currentPathId, onFileUpload }) {
           )
         ) : (
           <PleaseLogIn />
+        )}
+        {aiCardModalCardId && (
+          <AICardModal
+            cardId={aiCardModalCardId}
+            onHide={() => setAICardModalCardId(null)}
+          />
         )}
       </ErrorBoundary>
     </LocalContext.Provider>
