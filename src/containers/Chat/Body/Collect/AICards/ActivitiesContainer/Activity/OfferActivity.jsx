@@ -100,9 +100,9 @@ export default function OfferActivity({
               color: Color[offer.isCancelled ? 'lightGray' : 'black']()
             }}
           >
-            {addCommasToNumber(offer.offerPrice)}
+            {addCommasToNumber(offer.price)}
           </b>{' '}
-          Twinkle {offer.offerPrice === 1 ? 'Coin' : 'Coins'} for{' '}
+          Twinkle {offer.price === 1 ? 'Coin' : 'Coins'} for{' '}
           <b
             style={{
               color: Color[offer.isCancelled ? 'lightGray' : 'black']()

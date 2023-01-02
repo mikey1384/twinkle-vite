@@ -28,9 +28,9 @@ export default function AICards() {
   const action = useMemo(() => {
     const lastActivity = aiCardFeeds?.[aiCardFeeds?.length - 1];
     if (lastActivity?.type === 'offer')
-      return `offered ${addCommasToNumber(
-        lastActivity?.offer?.offerPrice
-      )} coin${lastActivity?.offer?.offerPrice > 1 ? 's' : ''} for a`;
+      return `offered ${addCommasToNumber(lastActivity?.offer?.price)} coin${
+        lastActivity?.offer?.price > 1 ? 's' : ''
+      } for a`;
     return 'summoned a';
   }, [aiCardFeeds]);
 

@@ -52,7 +52,7 @@ export default function MyOffer({
               fontWeight: 'bold'
             }}
           >
-            {addCommasToNumber(myOffer.offerPrice)}
+            {addCommasToNumber(myOffer.price)}
           </span>
         </p>
       </div>

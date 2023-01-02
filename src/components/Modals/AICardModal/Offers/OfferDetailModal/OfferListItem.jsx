@@ -64,7 +64,7 @@ export default function OfferListItem({
                 icon={['far', 'badge-dollar']}
               />
               <span style={{ marginLeft: '0.2rem' }}>
-                <b style={{ color: Color.darkerGray() }}>{offer.offerPrice}</b>
+                <b style={{ color: Color.darkerGray() }}>{offer.price}</b>
                 <span> offer </span> from{' '}
               </span>
               <UsernameText
