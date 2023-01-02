@@ -8,18 +8,26 @@ import { useAppContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 
 OfferModal.propTypes = {
+  askPrice: PropTypes.number,
   cardId: PropTypes.number.isRequired,
   onHide: PropTypes.func.isRequired,
   myId: PropTypes.number.isRequired,
   twinkleCoins: PropTypes.number.isRequired
 };
 
-export default function OfferModal({ cardId, onHide, myId, twinkleCoins }) {
+export default function OfferModal({
+  askPrice,
+  cardId,
+  onHide,
+  myId,
+  twinkleCoins
+}) {
   const [amount, setAmount] = useState(0);
   const postAICardOffer = useAppContext(
     (v) => v.requestHelpers.postAICardOffer
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const askPriceIsLargerThanOne = askPrice > 1;
 
   return (
     <Modal large modalOverModal onHide={onHide}>
@@ -88,7 +96,11 @@ export default function OfferModal({ cardId, onHide, myId, twinkleCoins }) {
     const newAmount = Number(
       amount.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1')
     );
-    setAmount(Math.min(Number(newAmount), twinkleCoins));
+    const amounts = [newAmount, twinkleCoins];
+    if (askPriceIsLargerThanOne) {
+      amounts.push(askPrice - 1);
+    }
+    setAmount(Math.min(...amounts));
   }
 
   async function handlePostOffer() {
