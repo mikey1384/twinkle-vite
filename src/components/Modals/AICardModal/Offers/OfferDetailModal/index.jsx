@@ -59,7 +59,6 @@ export default function OfferDetailModal({
 
   return (
     <Modal
-      medium
       modalOverModal
       closeWhenClickedOutside={!usermenuShown}
       onHide={onHide}
