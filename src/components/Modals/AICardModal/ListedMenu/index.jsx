@@ -88,7 +88,7 @@ export default function ListedMenu({
                   fontWeight: 'bold'
                 }}
               >
-                {askPrice}
+                {addCommasToNumber(askPrice)}
               </span>
             </div>
           </div>
@@ -99,6 +99,8 @@ export default function ListedMenu({
       ) : (
         <NonOwnerMenu
           myOffer={myOffer}
+          cardId={cardId}
+          price={askPrice}
           onSetOfferModalShown={onSetOfferModalShown}
           onSetWithdrawOfferModalShown={onSetWithdrawOfferModalShown}
           className={css`

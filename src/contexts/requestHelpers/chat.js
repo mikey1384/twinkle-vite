@@ -26,6 +26,16 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async buyAICard(cardId) {
+      try {
+        const {
+          data: { feed, coins }
+        } = await request.put(`${URL}/chat/aiCard/buy`, { cardId }, auth());
+        return Promise.resolve({ feed, coins });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async buyChatSubject(channelId) {
       try {
         const { data } = await request.put(
