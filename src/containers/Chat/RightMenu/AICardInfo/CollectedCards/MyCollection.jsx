@@ -40,6 +40,7 @@ export default function MyCollection({ loadMoreButtonColor }) {
     async function init() {
       setLoaded(false);
       const { myCards, myCardsLoadMoreShown } = await loadMyAICardCollections();
+      console.log(myCards);
       onLoadMyAICards({
         cards: myCards,
         loadMoreShown: myCardsLoadMoreShown
@@ -127,9 +128,9 @@ export default function MyCollection({ loadMoreButtonColor }) {
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const lastId = myCards[myCards.length - 1].id;
+    const lastTimeStamp = myCards[myCards.length - 1].lastInteraction;
     const { myCards: loadedCards, myCardsLoadMoreShown } =
-      await loadMyAICardCollections(lastId);
+      await loadMyAICardCollections(lastTimeStamp);
     onLoadMoreMyAICards({
       cards: loadedCards,
       loadMoreShown: myCardsLoadMoreShown

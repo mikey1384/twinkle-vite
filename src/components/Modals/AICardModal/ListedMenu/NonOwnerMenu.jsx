@@ -130,7 +130,7 @@ export default function NonOwnerMenu({
   );
 
   async function handleConfirmBuy() {
-    const data = await buyAICard(cardId);
-    console.log(data);
+    const { feed, coins } = await buyAICard(cardId);
+    console.log(feed, coins);
   }
 }

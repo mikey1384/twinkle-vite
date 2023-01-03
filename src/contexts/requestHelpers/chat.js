@@ -603,13 +603,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMyAICardCollections(lastId) {
+    async loadMyAICardCollections(lastTimeStamp) {
       try {
         const {
           data: { cards, loadMoreShown }
         } = await request.get(
           `${URL}/chat/aiCard/myCollections${
-            lastId ? `?lastId=${lastId}` : ''
+            lastTimeStamp ? `?lastTimeStamp=${lastTimeStamp}` : ''
           }`,
           auth()
         );
