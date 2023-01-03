@@ -20,7 +20,9 @@ Cover.propTypes = {
 
 export default function Cover({ missionIds, missionObj, myAttempts }) {
   const navigate = useNavigate();
-  const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
+  const { profilePicUrl, userId, username, profileTheme } = useKeyContext(
+    (v) => v.myState
+  );
   const {
     cover: { color: coverColor },
     coverText: { color: coverTextColor, shadow: coverTextShadowColor }
@@ -165,7 +167,12 @@ export default function Cover({ missionIds, missionObj, myAttempts }) {
               }
             `}
             onClick={() => navigate('/missions/grammar')}
-            style={{ color: myGrammarRank === 1 ? Color.gold() : '#fff' }}
+            style={{
+              color:
+                myGrammarRank === 1 && profileTheme !== 'gold'
+                  ? Color.gold()
+                  : '#fff'
+            }}
           >
             {grammarRankLabel} #{myGrammarRank}
           </div>
