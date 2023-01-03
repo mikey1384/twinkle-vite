@@ -5,6 +5,7 @@ import Icon from '~/components/Icon';
 import MyOffer from '../MyOffer';
 import MakeOffer from '../MakeOffer';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import { useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -28,7 +29,9 @@ export default function NonOwnerMenu({
   price,
   style
 }) {
+  const { twinkleCoins } = useKeyContext((v) => v.myState);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const notEnoughTwinkleCoins = twinkleCoins < price;
   return (
     <div
       style={{
@@ -48,6 +51,7 @@ export default function NonOwnerMenu({
               padding: 0.7rem !important;
             }
           `}
+          disabled={notEnoughTwinkleCoins}
           onClick={() => setConfirmModalShown(true)}
           color="oceanBlue"
           filled
@@ -78,7 +82,7 @@ export default function NonOwnerMenu({
                 }
               `}
             >
-              Buy
+              {notEnoughTwinkleCoins ? 'Not enough coins' : 'Buy'}
             </span>
           </span>
         </Button>
