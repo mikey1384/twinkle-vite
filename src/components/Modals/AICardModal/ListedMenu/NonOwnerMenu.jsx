@@ -1,26 +1,34 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import MyOffer from '../MyOffer';
 import MakeOffer from '../MakeOffer';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
 NonOwnerMenu.propTypes = {
+  cardId: PropTypes.number.isRequired,
   className: PropTypes.string,
   myOffer: PropTypes.object,
   onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
   onSetOfferModalShown: PropTypes.func.isRequired,
+  price: PropTypes.number.isRequired,
   style: PropTypes.object
 };
 
 export default function NonOwnerMenu({
+  cardId,
   className,
   myOffer,
   onSetWithdrawOfferModalShown,
   onSetOfferModalShown,
+  price,
   style
 }) {
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
   return (
     <div
       style={{
@@ -40,7 +48,7 @@ export default function NonOwnerMenu({
               padding: 0.7rem !important;
             }
           `}
-          onClick={() => console.log('buy')}
+          onClick={() => setConfirmModalShown(true)}
           color="oceanBlue"
           filled
         >
@@ -99,6 +107,20 @@ export default function NonOwnerMenu({
           />
         )}
       </div>
+      {confirmModalShown && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setConfirmModalShown(false)}
+          descriptionFontSize="1.7rem"
+          title={`Buy Card #${cardId}`}
+          description={
+            <span>
+              Buy this card for <b>{addCommasToNumber(price)}</b> coins?
+            </span>
+          }
+          onConfirm={() => console.log('confirming')}
+        />
+      )}
     </div>
   );
 }
