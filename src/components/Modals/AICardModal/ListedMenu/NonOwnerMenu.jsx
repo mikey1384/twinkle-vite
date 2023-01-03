@@ -5,7 +5,7 @@ import Icon from '~/components/Icon';
 import MyOffer from '../MyOffer';
 import MakeOffer from '../MakeOffer';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -29,6 +29,7 @@ export default function NonOwnerMenu({
   price,
   style
 }) {
+  const buyAICard = useAppContext((v) => v.requestHelpers.buyAICard);
   const { twinkleCoins } = useKeyContext((v) => v.myState);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const notEnoughTwinkleCoins = twinkleCoins < price;
@@ -122,9 +123,14 @@ export default function NonOwnerMenu({
               Buy this card for <b>{addCommasToNumber(price)}</b> coins?
             </span>
           }
-          onConfirm={() => console.log('confirming')}
+          onConfirm={handleConfirmBuy}
         />
       )}
     </div>
   );
+
+  async function handleConfirmBuy() {
+    const data = await buyAICard(cardId);
+    console.log(data);
+  }
 }
