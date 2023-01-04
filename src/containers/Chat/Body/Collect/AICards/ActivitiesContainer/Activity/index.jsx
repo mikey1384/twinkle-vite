@@ -5,6 +5,7 @@ import SummonActivity from './SummonActivity';
 import OfferActivity from './OfferActivity';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import TransferActivity from './TransferActivity';
 
 Activity.propTypes = {
   cardObj: PropTypes.object.isRequired,
@@ -32,6 +33,9 @@ export default function Activity({
     if (feed.type === 'offer') {
       return cardObj[feed.offer?.cardId];
     }
+    if (feed.type === 'transfer') {
+      return cardObj[feed.transfer?.cardId];
+    }
     return null;
   }, [cardObj, feed]);
 
@@ -48,7 +52,7 @@ export default function Activity({
           marginBottom: '5rem'
         }}
         className={css`
-          cursor: ${feed.type === 'offer' ? 'pointer' : 'default'};
+          cursor: ${feed.type !== 'summon' ? 'pointer' : 'default'};
           background: ${Color.whiteGray()};
           &:hover {
             background: ${feed.type === 'offer'
@@ -79,6 +83,17 @@ export default function Activity({
             onSetScrollToBottom={onSetScrollToBottom}
           />
         )}
+        {feed.type === 'transfer' && (
+          <TransferActivity
+            feed={feed}
+            card={card}
+            myId={myId}
+            isLastActivity={isLastActivity}
+            onReceiveNewActivity={onReceiveNewActivity}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            onSetScrollToBottom={onSetScrollToBottom}
+          />
+        )}
       </div>
     </ErrorBoundary>
   );
@@ -86,6 +101,9 @@ export default function Activity({
   function handleActivityClick() {
     if (feed.type === 'offer') {
       onSetAICardModalCardId(feed.offer.cardId);
+    }
+    if (feed.type === 'transfer') {
+      onSetAICardModalCardId(feed.transfer.cardId);
     }
   }
 }
