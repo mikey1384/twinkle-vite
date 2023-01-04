@@ -97,6 +97,10 @@ export default function AICardModal({ cardId, onHide }) {
             (owned by{' '}
             <UsernameText
               color={Color[userLinkColor]()}
+              onMenuShownChange={setUsermenuShown}
+              displayedName={
+                card.owner.id === userId ? 'you' : card.owner.username
+              }
               user={{
                 username: card.owner.username,
                 id: card.owner.id
