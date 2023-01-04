@@ -30,6 +30,11 @@ export default function CardThumb({ card }) {
       cardQuality: card.quality
     });
   }, [card?.level, card?.quality]);
+  const displayedBurnXP = useMemo(() => {
+    if (burnXP < 1000) return burnXP;
+    if (burnXP < 1000000) return `${(burnXP / 1000).toFixed(1)}K`;
+    return `${(burnXP / 1000000).toFixed(1)}M`;
+  }, [burnXP]);
   const cardColor = useMemo(
     () => Color[card.isBurned ? 'black' : cardDetailObj?.color](),
     [card.isBurned, cardDetailObj?.color]
@@ -69,9 +74,7 @@ export default function CardThumb({ card }) {
             font-size: 0.7rem;
           `}
         >
-          <b style={{ color: Color[xpNumberColor]() }}>
-            {addCommasToNumber(burnXP)}
-          </b>
+          <b style={{ color: Color[xpNumberColor]() }}>{displayedBurnXP}</b>
           <b style={{ color: Color.gold(), marginLeft: '2px' }}>XP</b>
         </div>
       )}
