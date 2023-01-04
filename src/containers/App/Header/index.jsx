@@ -169,6 +169,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onReceiveVocabActivity = useChatContext(
     (v) => v.actions.onReceiveVocabActivity
   );
+  const onAddMyAICard = useChatContext((v) => v.actions.onAddMyAICard);
   const onRemoveMyAICard = useChatContext((v) => v.actions.onRemoveMyAICard);
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
@@ -398,7 +399,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       socket.removeListener('username_changed', handleUsernameChange);
     };
 
-    async function handleAICardBought({ feed, card, sellerCoins, sellerId }) {
+    async function handleAICardBought({
+      feed,
+      card,
+      sellerCoins,
+      buyerId,
+      sellerId
+    }) {
       onRemoveListedAICard(card.id);
       onUpdateAICard({
         cardId: card.id,
@@ -408,6 +415,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         feed,
         card
       });
+      if (buyerId === userId) {
+        onAddMyAICard(card.id);
+      }
       if (sellerId === userId) {
         onDelistAICard(card.id);
         onRemoveMyAICard(card.id);

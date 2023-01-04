@@ -98,6 +98,12 @@ export default function ChatReducer(state, action) {
         listedCardIds: [action.card.id].concat(state.listedCardIds)
       };
     }
+    case 'ADD_MY_AI_CARD': {
+      return {
+        ...state,
+        myCardIds: [action.cardId].concat(state.myCardIds)
+      };
+    }
     case 'REMOVE_MY_AI_CARD': {
       return {
         ...state,
