@@ -40,7 +40,6 @@ export default function MyCollection({ loadMoreButtonColor }) {
     async function init() {
       setLoaded(false);
       const { myCards, myCardsLoadMoreShown } = await loadMyAICardCollections();
-      console.log(myCards);
       onLoadMyAICards({
         cards: myCards,
         loadMoreShown: myCardsLoadMoreShown
