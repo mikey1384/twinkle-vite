@@ -559,6 +559,12 @@ export default function ChatActions(dispatch) {
         message
       });
     },
+    onRemoveMyAICard(cardId) {
+      return dispatch({
+        type: 'REMOVE_MY_AI_CARD',
+        cardId
+      });
+    },
     onRemoveReactionFromMessage({
       channelId,
       messageId,
