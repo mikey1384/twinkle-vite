@@ -152,6 +152,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     (v) => v.actions.onCallReceptionConfirm
   );
   const onDeleteMessage = useChatContext((v) => v.actions.onDeleteMessage);
+  const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
   const onEditMessage = useChatContext((v) => v.actions.onEditMessage);
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
   const onGetNumberOfUnreadMessages = useChatContext(
@@ -168,6 +169,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onReceiveVocabActivity = useChatContext(
     (v) => v.actions.onReceiveVocabActivity
   );
+  const onRemoveMyAICard = useChatContext((v) => v.actions.onRemoveMyAICard);
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
   );
@@ -407,6 +409,8 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         card
       });
       if (sellerId === userId) {
+        onDelistAICard(card.id);
+        onRemoveMyAICard(card.id);
         onSetUserState({ userId, newState: { twinkleCoins: sellerCoins } });
       }
     }

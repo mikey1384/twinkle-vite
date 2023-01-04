@@ -98,6 +98,20 @@ export default function ChatReducer(state, action) {
         listedCardIds: [action.card.id].concat(state.listedCardIds)
       };
     }
+    case 'REMOVE_MY_AI_CARD': {
+      return {
+        ...state,
+        cardObj: {
+          ...state.cardObj,
+          [action.cardId]: {
+            ...state.cardObj[action.cardId],
+            isListed: false,
+            askPrice: null
+          }
+        },
+        myCardIds: state.myCardIds.filter((cardId) => cardId !== action.cardId)
+      };
+    }
     case 'REMOVE_LISTED_AI_CARD': {
       return {
         ...state,
