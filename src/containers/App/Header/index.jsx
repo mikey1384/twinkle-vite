@@ -401,6 +401,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         feed,
         card
       });
+      onUpdateAICard({
+        cardId: card.id,
+        newState: card
+      });
       if (sellerId === userId) {
         onSetUserState({ userId, newState: { twinkleCoins: sellerCoins } });
       }
