@@ -290,9 +290,21 @@ export default function ChatActions(dispatch) {
         card
       });
     },
+    onAddMyAICard(cardId) {
+      return dispatch({
+        type: 'ADD_MY_AI_CARD',
+        cardId
+      });
+    },
     onRemoveListedAICard(cardId) {
       return dispatch({
         type: 'REMOVE_LISTED_AI_CARD',
+        cardId
+      });
+    },
+    onRemoveMyAICard(cardId) {
+      return dispatch({
+        type: 'REMOVE_MY_AI_CARD',
         cardId
       });
     },
@@ -557,12 +569,6 @@ export default function ChatActions(dispatch) {
         subchannelId,
         subject,
         message
-      });
-    },
-    onRemoveMyAICard(cardId) {
-      return dispatch({
-        type: 'REMOVE_MY_AI_CARD',
-        cardId
       });
     },
     onRemoveReactionFromMessage({
