@@ -55,7 +55,7 @@ export default function Activity({
           cursor: ${feed.type !== 'summon' ? 'pointer' : 'default'};
           background: ${Color.whiteGray()};
           &:hover {
-            background: ${feed.type === 'offer'
+            background: ${feed.type !== 'summon'
               ? Color.highlightGray()
               : Color.whiteGray()};
           }
