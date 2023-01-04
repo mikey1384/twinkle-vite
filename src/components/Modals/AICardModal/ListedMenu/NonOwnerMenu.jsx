@@ -13,6 +13,7 @@ import { mobileMaxWidth } from '~/constants/css';
 NonOwnerMenu.propTypes = {
   cardId: PropTypes.number.isRequired,
   className: PropTypes.string,
+  myId: PropTypes.number.isRequired,
   myOffer: PropTypes.object,
   onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
   onSetOfferModalShown: PropTypes.func.isRequired,
@@ -23,6 +24,7 @@ NonOwnerMenu.propTypes = {
 export default function NonOwnerMenu({
   cardId,
   className,
+  myId,
   myOffer,
   onSetWithdrawOfferModalShown,
   onSetOfferModalShown,
@@ -30,6 +32,7 @@ export default function NonOwnerMenu({
   style
 }) {
   const buyAICard = useAppContext((v) => v.requestHelpers.buyAICard);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const { twinkleCoins } = useKeyContext((v) => v.myState);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const notEnoughTwinkleCoins = twinkleCoins < price;
@@ -130,7 +133,8 @@ export default function NonOwnerMenu({
   );
 
   async function handleConfirmBuy() {
-    const { feed, coins } = await buyAICard(cardId);
-    console.log(feed, coins);
+    const coins = await buyAICard(cardId);
+    onSetUserState({ userId: myId, newState: { twinkleCoins: coins } });
+    setConfirmModalShown(false);
   }
 }

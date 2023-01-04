@@ -9,6 +9,7 @@ import NonOwnerMenu from './NonOwnerMenu';
 ListedMenu.propTypes = {
   askPrice: PropTypes.number.isRequired,
   cardId: PropTypes.number.isRequired,
+  myId: PropTypes.number.isRequired,
   myOffer: PropTypes.object,
   onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
   onSetOfferModalShown: PropTypes.func.isRequired,
@@ -17,6 +18,7 @@ ListedMenu.propTypes = {
 
 export default function ListedMenu({
   cardId,
+  myId,
   myOffer,
   onSetWithdrawOfferModalShown,
   onSetOfferModalShown,
@@ -98,6 +100,7 @@ export default function ListedMenu({
         <OwnerMenu style={{ marginTop: '1rem' }} cardId={cardId} />
       ) : (
         <NonOwnerMenu
+          myId={myId}
           myOffer={myOffer}
           cardId={cardId}
           price={askPrice}

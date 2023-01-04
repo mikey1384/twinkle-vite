@@ -29,9 +29,9 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async buyAICard(cardId) {
       try {
         const {
-          data: { feed, coins }
+          data: { coins }
         } = await request.put(`${URL}/chat/aiCard/buy`, { cardId }, auth());
-        return Promise.resolve({ feed, coins });
+        return Promise.resolve(coins);
       } catch (error) {
         return handleError(error);
       }
@@ -300,13 +300,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async postAICardOffer({ cardId, price }) {
       try {
         const {
-          data: { feedId, offerId, coins }
+          data: { coins }
         } = await request.post(
           `${URL}/chat/aiCard/offer`,
           { cardId, price },
           auth()
         );
-        return Promise.resolve({ feedId, offerId, coins });
+        return Promise.resolve(coins);
       } catch (error) {
         return handleError(error);
       }

@@ -245,6 +245,7 @@ export default function AICardModal({ cardId, onHide }) {
                 ) : card.isListed ? (
                   <ListedMenu
                     cardId={card.id}
+                    myId={userId}
                     myOffer={card.myOffer}
                     userIsOwner={card.ownerId === userId}
                     askPrice={card.askPrice}

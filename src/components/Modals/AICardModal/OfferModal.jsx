@@ -104,7 +104,7 @@ export default function OfferModal({
   }
 
   async function handlePostOffer() {
-    const { coins } = await postAICardOffer({ cardId, price: amount });
+    const coins = await postAICardOffer({ cardId, price: amount });
     onSetUserState({ userId: myId, newState: { twinkleCoins: coins } });
     onHide();
   }
