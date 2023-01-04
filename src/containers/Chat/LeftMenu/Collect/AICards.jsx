@@ -16,21 +16,42 @@ export default function AICards() {
     const lastActivity = aiCardFeeds?.[aiCardFeeds?.length - 1];
     let cardId = lastActivity?.contentId;
     if (lastActivity?.type === 'offer') cardId = lastActivity?.offer?.cardId;
+    if (lastActivity?.type === 'transfer')
+      cardId = lastActivity?.transfer?.cardId;
     return cardObj[cardId];
   }, [aiCardFeeds, cardObj]);
 
   const user = useMemo(() => {
     const lastActivity = aiCardFeeds?.[aiCardFeeds?.length - 1];
-    if (lastActivity?.type === 'offer') return lastActivity?.offer?.user;
+    if (lastActivity?.type === 'offer') {
+      return lastActivity?.offer?.user;
+    }
+    if (lastActivity?.type === 'transfer') {
+      if (!!lastActivity?.transfer?.askId) {
+        return lastActivity?.transfer?.to;
+      }
+      if (!!lastActivity?.transfer?.offerId) {
+        return lastActivity?.transfer?.from;
+      }
+    }
     return card?.creator;
   }, [aiCardFeeds, card]);
 
   const action = useMemo(() => {
     const lastActivity = aiCardFeeds?.[aiCardFeeds?.length - 1];
-    if (lastActivity?.type === 'offer')
+    if (lastActivity?.type === 'offer') {
       return `offered ${addCommasToNumber(lastActivity?.offer?.price)} coin${
         lastActivity?.offer?.price > 1 ? 's' : ''
       } for a`;
+    }
+    if (lastActivity?.type === 'transfer') {
+      if (!!lastActivity?.transfer?.askId) {
+        return 'bought a';
+      }
+      if (!!lastActivity?.transfer?.offerId) {
+        return 'sold a';
+      }
+    }
     return 'summoned a';
   }, [aiCardFeeds]);
 
