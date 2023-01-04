@@ -8,7 +8,6 @@ import {
   returnCardBurnXP,
   qualityProps
 } from '~/constants/defaultValues';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 
