@@ -279,6 +279,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const currentPathIdRef = useRef(Number(currentPathId));
 
   useEffect(() => {
+    socket.on('ai_card_bought', handleAICardBought);
     socket.on('ai_card_burned', handleAICardBurned);
     socket.on('ai_card_listed', handleAICardListed);
     socket.on('ai_card_delisted', handleAICardDelisted);
@@ -326,6 +327,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('username_changed', handleUsernameChange);
 
     return function cleanUp() {
+      socket.removeListener('ai_card_bought', handleAICardBought);
       socket.removeListener('ai_card_burned', handleAICardBurned);
       socket.removeListener('ai_card_listed', handleAICardListed);
       socket.removeListener('ai_card_delisted', handleAICardDelisted);
@@ -393,6 +395,16 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       socket.removeListener('user_type_updated', handleUserTypeUpdate);
       socket.removeListener('username_changed', handleUsernameChange);
     };
+
+    async function handleAICardBought({ feed, card, sellerCoins, sellerId }) {
+      onPostAICardFeed({
+        feed,
+        card
+      });
+      if (sellerId === userId) {
+        onSetUserState({ userId, newState: { twinkleCoins: sellerCoins } });
+      }
+    }
 
     async function handleAICardBurned(cardId) {
       onUpdateAICard({ cardId, newState: { isBurning: true } });
