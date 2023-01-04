@@ -36,6 +36,7 @@ export default function NonOwnerMenu({
   const { twinkleCoins } = useKeyContext((v) => v.myState);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const notEnoughTwinkleCoins = twinkleCoins < price;
+  const disabled = notEnoughTwinkleCoins || !!myOffer;
   return (
     <div
       style={{
@@ -55,20 +56,22 @@ export default function NonOwnerMenu({
               padding: 0.7rem !important;
             }
           `}
-          disabled={notEnoughTwinkleCoins}
+          disabled={disabled}
           onClick={() => setConfirmModalShown(true)}
           color="oceanBlue"
           filled
         >
-          <Icon
-            className={css`
-              font-size: 1.6rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 0.8rem !important;
-              }
-            `}
-            icon="shopping-cart"
-          />
+          {!disabled && (
+            <Icon
+              className={css`
+                font-size: 1.6rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 0.8rem !important;
+                }
+              `}
+              icon="shopping-cart"
+            />
+          )}
           <span
             className={css`
               font-size: 1.6rem;
@@ -86,7 +89,11 @@ export default function NonOwnerMenu({
                 }
               `}
             >
-              {notEnoughTwinkleCoins ? 'Not enough coins' : 'Buy'}
+              {notEnoughTwinkleCoins
+                ? 'Not enough coins'
+                : myOffer
+                ? 'Withdraw offer first'
+                : 'Buy'}
             </span>
           </span>
         </Button>
