@@ -71,11 +71,10 @@ function LikeButton({
               onLikeContent({ likes: newLikes, contentType, contentId });
               onClick({ likes: newLikes, isUnlike: liked });
             }
-            setLoading(false);
           } catch (error) {
-            setLoading(false);
-            return console.error(error);
+            console.error(error);
           }
+          setLoading(false);
         }}
       >
         <Icon icon="thumbs-up" />
