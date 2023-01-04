@@ -397,13 +397,14 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     };
 
     async function handleAICardBought({ feed, card, sellerCoins, sellerId }) {
-      onPostAICardFeed({
-        feed,
-        card
-      });
+      onRemoveListedAICard(card.id);
       onUpdateAICard({
         cardId: card.id,
         newState: card
+      });
+      onPostAICardFeed({
+        feed,
+        card
       });
       if (sellerId === userId) {
         onSetUserState({ userId, newState: { twinkleCoins: sellerCoins } });
