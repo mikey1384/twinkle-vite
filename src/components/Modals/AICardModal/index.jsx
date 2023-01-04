@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -38,6 +38,9 @@ export default function AICardModal({ cardId, onHide }) {
     (v) => v.requestHelpers.saveAIImageToS3
   );
   const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
+  const getOffersForCard = useAppContext(
+    (v) => v.requestHelpers.getOffersForCard
+  );
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const onWithdrawOutgoingOffer = useChatContext(
     (v) => v.actions.onWithdrawOutgoingOffer
@@ -50,8 +53,29 @@ export default function AICardModal({ cardId, onHide }) {
   const [offerModalShown, setOfferModalShown] = useState(false);
   const [sellModalShown, setSellModalShown] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [offers, setOffers] = useState([]);
+  const [offersLoaded, setOffersLoaded] = useState(false);
+  const [offersLoadMoreShown, setOffersLoadMoreShown] = useState(false);
+  const [offerPrice, setOfferPrice] = useState(0);
   const card = useMemo(() => cardObj[cardId], [cardId, cardObj]);
   const { promptText } = useAICard(card);
+
+  useEffect(() => {
+    init();
+    async function init() {
+      const { offers: loadedOffers, loadMoreShown } = await getOffersForCard({
+        cardId
+      });
+      setOfferPrice(loadedOffers.length ? loadedOffers[0].price : 0);
+      setActiveTab(
+        card.owner.id === userId && loadedOffers.length ? 'offers' : 'myMenu'
+      );
+      setOffers(loadedOffers);
+      setOffersLoaded(true);
+      setOffersLoadMoreShown(loadMoreShown);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Modal
@@ -208,7 +232,13 @@ export default function AICardModal({ cardId, onHide }) {
             {activeTab === 'offers' ? (
               <Offers
                 cardId={cardId}
+                getOffersForCard={getOffersForCard}
+                offers={offers}
+                onSetOffers={setOffers}
+                onSetLoadMoreShown={setOffersLoadMoreShown}
                 ownerId={card.owner.id}
+                loaded={offersLoaded}
+                loadMoreShown={offersLoadMoreShown}
                 loadMoreButtonColor={loadMoreButtonColor}
                 onUserMenuShown={setUsermenuShown}
                 usermenuShown={usermenuShown}
@@ -285,7 +315,13 @@ export default function AICardModal({ cardId, onHide }) {
         />
       )}
       {sellModalShown && (
-        <SellModal card={card} onHide={() => setSellModalShown(false)} />
+        <SellModal
+          card={card}
+          offerPrice={offerPrice}
+          offers={offers}
+          offersLoaded={offersLoaded}
+          onHide={() => setSellModalShown(false)}
+        />
       )}
       {withdrawOfferModalShown && (
         <ConfirmModal

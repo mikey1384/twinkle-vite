@@ -1,15 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import OfferPriceListItem from './OfferPriceListItem';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
 Offers.propTypes = {
   cardId: PropTypes.number.isRequired,
+  getOffersForCard: PropTypes.func.isRequired,
+  offers: PropTypes.array.isRequired,
   onUserMenuShown: PropTypes.func.isRequired,
+  onSetOffers: PropTypes.func.isRequired,
+  onSetLoadMoreShown: PropTypes.func.isRequired,
+  loaded: PropTypes.bool.isRequired,
+  loadMoreShown: PropTypes.bool.isRequired,
   loadMoreButtonColor: PropTypes.string,
   ownerId: PropTypes.number.isRequired,
   usermenuShown: PropTypes.bool
@@ -17,31 +23,19 @@ Offers.propTypes = {
 
 export default function Offers({
   cardId,
+  getOffersForCard,
+  offers,
+  onSetOffers,
+  onSetLoadMoreShown,
   onUserMenuShown,
+  loaded,
+  loadMoreShown,
   loadMoreButtonColor,
   ownerId,
   usermenuShown
 }) {
   const { userId } = useKeyContext((v) => v.myState);
-  const [offers, setOffers] = useState([]);
-  const [loaded, setLoaded] = useState(false);
-  const [loadMoreShown, setLoadMoreShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const getOffersForCard = useAppContext(
-    (v) => v.requestHelpers.getOffersForCard
-  );
-  useEffect(() => {
-    init();
-    async function init() {
-      const { offers: loadedOffers, loadMoreShown } = await getOffersForCard({
-        cardId
-      });
-      setOffers(loadedOffers);
-      setLoaded(true);
-      setLoadMoreShown(loadMoreShown);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <ErrorBoundary componentPath="components/Modals/AICardModal/UnlistedMenu/OwnerMenu/Offers">
@@ -122,7 +116,7 @@ export default function Offers({
       cardId,
       lastId
     });
-    setOffers((prevOffers) => [...prevOffers, ...loadedOffers]);
-    setLoadMoreShown(loadMoreShown);
+    onSetOffers((prevOffers) => [...prevOffers, ...loadedOffers]);
+    onSetLoadMoreShown(loadMoreShown);
   }
 }
