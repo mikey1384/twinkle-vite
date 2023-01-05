@@ -75,7 +75,7 @@ export default function Offers({
             }}
           >
             There is no offer for this card, yet
-            <Button
+            {ownerId !== userId && <Button
               style={{ marginTop: '2rem' }}
               className={css`
                 @media (max-width: ${mobileMaxWidth}) {
@@ -96,7 +96,7 @@ export default function Offers({
               >
                 Make offer
               </span>
-            </Button>
+            </Button>}
           </div>
         )}
         {offers.map((offer) => {
