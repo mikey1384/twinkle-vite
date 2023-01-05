@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import OfferPriceListItem from './OfferPriceListItem';
+import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -17,6 +18,7 @@ Offers.propTypes = {
   loaded: PropTypes.bool.isRequired,
   loadMoreShown: PropTypes.bool.isRequired,
   loadMoreButtonColor: PropTypes.string,
+  onSetOfferModalShown: PropTypes.func.isRequired,
   ownerId: PropTypes.number.isRequired,
   usermenuShown: PropTypes.bool
 };
@@ -31,6 +33,7 @@ export default function Offers({
   loaded,
   loadMoreShown,
   loadMoreButtonColor,
+  onSetOfferModalShown,
   ownerId,
   usermenuShown
 }) {
@@ -63,12 +66,37 @@ export default function Offers({
             style={{
               width: '100%',
               height: '100%',
+              padding: '0 0.5rem',
               display: 'flex',
+              flexDirection: 'column',
               justifyContent: 'center',
-              alignItems: 'center'
+              alignItems: 'center',
+              textAlign: 'center'
             }}
           >
-            There is no offer for this card yet
+            There is no offer for this card, yet
+            <Button
+              style={{ marginTop: '2rem' }}
+              className={css`
+                @media (max-width: ${mobileMaxWidth}) {
+                  padding: 0.7rem !important;
+                }
+              `}
+              onClick={() => onSetOfferModalShown(true)}
+              color="green"
+              filled
+            >
+              <span
+                className={css`
+                  font-size: 1.6rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1rem;
+                  }
+                `}
+              >
+                Make offer
+              </span>
+            </Button>
           </div>
         )}
         {offers.map((offer) => {
