@@ -12,6 +12,8 @@ OfferModal.propTypes = {
   cardId: PropTypes.number.isRequired,
   onHide: PropTypes.func.isRequired,
   myId: PropTypes.number.isRequired,
+  myUsername: PropTypes.string.isRequired,
+  onSetOffers: PropTypes.func.isRequired,
   twinkleCoins: PropTypes.number.isRequired
 };
 
@@ -20,6 +22,8 @@ export default function OfferModal({
   cardId,
   onHide,
   myId,
+  myUsername,
+  onSetOffers,
   twinkleCoins
 }) {
   const [amount, setAmount] = useState(0);
@@ -105,6 +109,25 @@ export default function OfferModal({
 
   async function handlePostOffer() {
     const coins = await postAICardOffer({ cardId, price: amount });
+    onSetOffers((prevOffers) => {
+      const result = [];
+      let found = false;
+      for (let offer of prevOffers) {
+        const newOffer = { ...offer };
+        if (offer.price === amount) {
+          found = true;
+          newOffer.users = [...offer.users, { id: myId, username: myUsername }];
+        }
+        result.push(newOffer);
+      }
+      if (!found) {
+        result.unshift({
+          price: amount,
+          users: [{ id: myId, username: myUsername }]
+        });
+      }
+      return result;
+    });
     onSetUserState({ userId: myId, newState: { twinkleCoins: coins } });
     onHide();
   }
