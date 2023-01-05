@@ -97,9 +97,7 @@ export default function OfferModal({
   );
 
   function handleAmountChange(amount) {
-    const newAmount = Number(
-      amount.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1')
-    );
+    const newAmount = Number(amount.replace(/[^0-9]/g, ''));
     const amounts = [newAmount, twinkleCoins];
     if (askPriceIsLargerThanOne) {
       amounts.push(askPrice - 1);
