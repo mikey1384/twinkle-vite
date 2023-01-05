@@ -11,6 +11,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import FilterBar from '~/components/FilterBar';
 import SellModal from './SellModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import { socket } from '~/constants/io';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { qualityProps } from '~/constants/defaultValues';
@@ -76,6 +77,46 @@ export default function AICardModal({ cardId, onHide }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    socket.on('ai_card_offer_posted', handleAICardOfferPosted);
+    socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
+
+    function handleAICardOfferPosted({ card, feed }) {
+      const { offer: incomingOffer } = feed;
+      if (card.id === cardId) {
+        setOffers((prevOffers) => {
+          const result = [];
+          let found = false;
+          for (let offer of prevOffers) {
+            const newOffer = { ...offer };
+            if (offer.price === incomingOffer.price) {
+              found = true;
+              newOffer.users = [...offer.users, incomingOffer.user];
+            }
+            result.push(newOffer);
+          }
+          if (!found) {
+            result.unshift({
+              price: incomingOffer.price,
+              users: [incomingOffer.user]
+            });
+          }
+          return result;
+        });
+      }
+    }
+    function handleAICardOfferCancel({ card }) {
+      if (card.id === cardId) {
+        console.log('offer cancelled');
+      }
+    }
+
+    return function cleanUp() {
+      socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
+      socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
+    };
+  });
 
   return (
     <Modal
