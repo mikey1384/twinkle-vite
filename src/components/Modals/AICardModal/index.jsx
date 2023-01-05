@@ -29,7 +29,7 @@ export default function AICardModal({ cardId, onHide }) {
     userLink: { color: userLinkColor },
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
-  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
+  const { userId, username, twinkleCoins } = useKeyContext((v) => v.myState);
   const deleteAICardOffer = useAppContext(
     (v) => v.requestHelpers.deleteAICardOffer
   );
@@ -315,7 +315,9 @@ export default function AICardModal({ cardId, onHide }) {
           cardId={card.id}
           askPrice={card.askPrice}
           myId={userId}
+          myUsername={username}
           twinkleCoins={twinkleCoins}
+          onSetOffers={setOffers}
           onHide={() => setOfferModalShown(false)}
         />
       )}
