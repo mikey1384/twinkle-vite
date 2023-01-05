@@ -82,6 +82,7 @@ export default function OfferDetailModal({
                 key={offer.id}
                 ownerId={ownerId}
                 offer={offer}
+                onAcceptClick={handleAcceptClick}
                 userLinkColor={userLinkColor}
                 onUserMenuShown={onUserMenuShown}
                 userId={userId}
@@ -106,6 +107,10 @@ export default function OfferDetailModal({
       </footer>
     </Modal>
   );
+
+  function handleAcceptClick(offer) {
+    console.log(offer);
+  }
 
   async function handleLoadMoreoffers() {
     setLoadingMore(true);
