@@ -96,7 +96,7 @@ export default function AICards({ loadingAICardChat }) {
             padding: '1rem'
           }}
         >
-          You do not have the license to summon AI Cards. Unlock it from the{' '}
+          You do not have the license to summon AI Cards. Get it from the{' '}
           <Link
             style={{ fontWeight: 'bold', color: Color.gold() }}
             to={`/store`}
