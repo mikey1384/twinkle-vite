@@ -240,6 +240,7 @@ export default function AICardModal({ cardId, onHide }) {
                 offers={offers}
                 onSetOffers={setOffers}
                 onSetLoadMoreShown={setOffersLoadMoreShown}
+                onSetOfferModalShown={setOfferModalShown}
                 ownerId={card.owner.id}
                 loaded={offersLoaded}
                 loadMoreShown={offersLoadMoreShown}
