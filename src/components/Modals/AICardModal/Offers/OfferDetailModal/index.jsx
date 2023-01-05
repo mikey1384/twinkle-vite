@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import OfferListItem from './OfferListItem';
 import RoundList from '~/components/RoundList';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import { Color } from '~/constants/css';
@@ -35,6 +36,7 @@ export default function OfferDetailModal({
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
+  const [offerAcceptModalObj, setOfferAcceptModalObj] = useState(null);
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -105,11 +107,34 @@ export default function OfferDetailModal({
           Close
         </Button>
       </footer>
+      {!!offerAcceptModalObj && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setOfferAcceptModalObj(null)}
+          title={<div>Accept offer for card #{cardId}</div>}
+          description={
+            <div>
+              Accept{' '}
+              <Icon
+                style={{ color: Color.brownOrange() }}
+                icon={['far', 'badge-dollar']}
+              />
+              <b style={{ color: Color.darkerGray(), marginLeft: '2px' }}>
+                {addCommasToNumber(price)}
+              </b>{' '}
+              offer for <b>Card #{cardId}</b> from{' '}
+              <b>{offerAcceptModalObj.username}</b>?
+            </div>
+          }
+          descriptionFontSize="1.7rem"
+          onConfirm={() => setOfferAcceptModalObj(null)}
+        />
+      )}
     </Modal>
   );
 
   function handleAcceptClick(offer) {
-    console.log(offer);
+    setOfferAcceptModalObj(offer);
   }
 
   async function handleLoadMoreoffers() {
