@@ -106,9 +106,23 @@ export default function AICardModal({ cardId, onHide }) {
         });
       }
     }
-    function handleAICardOfferCancel({ card }) {
+    function handleAICardOfferCancel({ cardId, price, offererId }) {
       if (card.id === cardId) {
-        console.log('offer cancelled');
+        setOffers((prevOffers) => {
+          const result = [];
+          for (let offer of prevOffers) {
+            const newOffer = { ...offer };
+            if (offer.price === price) {
+              newOffer.users = offer.users.filter(
+                (user) => user.id !== offererId
+              );
+            }
+            if (newOffer.users.length) {
+              result.push(newOffer);
+            }
+          }
+          return result;
+        });
       }
     }
 
@@ -395,11 +409,11 @@ export default function AICardModal({ cardId, onHide }) {
           let newUsers = offer.users.filter((user) => user.id !== userId);
           if (newUsers.length > 0) {
             acc.push({ ...offer, users: newUsers });
-          } else {
-            return acc;
           }
+          return acc;
         } else {
           acc.push(offer);
+          return acc;
         }
       }, []);
     });
