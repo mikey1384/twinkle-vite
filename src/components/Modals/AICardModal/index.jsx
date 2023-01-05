@@ -346,6 +346,20 @@ export default function AICardModal({ cardId, onHide }) {
     });
     // the following three lines are redundant with the websocket but are here in case the websocket fails
     onWithdrawOutgoingOffer(card.myOffer.id);
+    setOffers((prevOffers) => {
+      return prevOffers.reduce((acc, offer) => {
+        if (offer.price === card.myOffer.price) {
+          let newUsers = offer.users.filter((user) => user.id !== userId);
+          if (newUsers.length > 0) {
+            acc.push({ ...offer, users: newUsers });
+          } else {
+            return acc;
+          }
+        } else {
+          acc.push(offer);
+        }
+      }, []);
+    });
     onSetUserState({ userId, newState: { twinkleCoins: coins } });
     onUpdateAICard({ cardId, newState: { myOffer: null } });
 
