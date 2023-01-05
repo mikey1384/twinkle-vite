@@ -140,13 +140,11 @@ export default function Incoming({ loadMoreButtonColor }) {
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const lastId =
-      displayedIncomingOffers[displayedIncomingOffers.length - 1].id;
-    const { cards: offers, loadMoreShown } = await getIncomingCardOffers(
-      lastId
-    );
+    const lastPrice =
+      displayedIncomingOffers[displayedIncomingOffers.length - 1].price;
+    const { offers, loadMoreShown } = await getIncomingCardOffers(lastPrice);
     onLoadMoreIncomingOffers({
-      cards: offers,
+      offers,
       loadMoreShown
     });
     setLoadingMore(false);
