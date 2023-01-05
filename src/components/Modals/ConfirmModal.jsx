@@ -18,7 +18,7 @@ ConfirmModal.propTypes = {
   ]),
   modalOverModal: PropTypes.bool,
   onHide: PropTypes.func.isRequired,
-  title: PropTypes.string.isRequired,
+  title: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
   onConfirm: PropTypes.func.isRequired
 };
 
