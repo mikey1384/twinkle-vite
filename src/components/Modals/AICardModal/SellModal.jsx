@@ -125,7 +125,7 @@ export default function SellModal({
     const newAmount = Number(
       amount.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1')
     );
-    setAmount(newAmount);
+    setAmount(Math.min(newAmount, 999_999_999));
   }
 
   async function handleCompleteListing() {
