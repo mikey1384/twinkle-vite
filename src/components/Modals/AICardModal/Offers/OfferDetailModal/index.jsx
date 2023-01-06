@@ -127,11 +127,17 @@ export default function OfferDetailModal({
             </div>
           }
           descriptionFontSize="1.7rem"
-          onConfirm={() => setOfferAcceptModalObj(null)}
+          onConfirm={handleConfirmAcceptOffer}
         />
       )}
     </Modal>
   );
+
+  async function handleConfirmAcceptOffer() {
+    console.log('accepted');
+    setOfferAcceptModalObj(null);
+    onHide();
+  }
 
   async function handleLoadMoreoffers() {
     setLoadingMore(true);
