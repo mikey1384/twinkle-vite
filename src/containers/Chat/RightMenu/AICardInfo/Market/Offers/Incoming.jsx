@@ -5,15 +5,22 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CardItem from '../../CardItem';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
+import { socket } from '~/constants/io';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 
 Incoming.propTypes = {
   loadMoreButtonColor: PropTypes.string
 };
 
 export default function Incoming({ loadMoreButtonColor }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const CardItemsRef = useRef(null);
   const timeoutRef = useRef(null);
   const [loaded, setLoaded] = useState(false);
@@ -56,6 +63,41 @@ export default function Incoming({ loadMoreButtonColor }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socketConnected]);
+
+  useEffect(() => {
+    socket.on('ai_card_offer_posted', handleAICardOfferPosted);
+    socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
+    socket.on('ai_card_sold', handleAICardSold);
+
+    function handleAICardOfferPosted({ card }) {
+      if (card.ownerId === userId) {
+        init();
+      }
+    }
+    function handleAICardOfferCancel({ ownerId }) {
+      if (ownerId === userId) {
+        init();
+      }
+    }
+    function handleAICardSold({ card }) {
+      if (card.ownerId === userId) {
+        init();
+      }
+    }
+
+    async function init() {
+      setLoaded(false);
+      const { offers, loadMoreShown } = await getIncomingCardOffers();
+      onLoadIncomingOffers({ offers, loadMoreShown });
+      setLoaded(true);
+    }
+
+    return function cleanUp() {
+      socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
+      socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
+      socket.removeListener('ai_card_sold', handleAICardSold);
+    };
+  });
 
   useEffect(() => {
     const CardItems = CardItemsRef.current;
