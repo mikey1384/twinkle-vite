@@ -18,6 +18,7 @@ Offers.propTypes = {
   loaded: PropTypes.bool.isRequired,
   loadMoreShown: PropTypes.bool.isRequired,
   loadMoreButtonColor: PropTypes.string,
+  onSetActiveTab: PropTypes.func.isRequired,
   onSetOfferModalShown: PropTypes.func.isRequired,
   ownerId: PropTypes.number.isRequired,
   usermenuShown: PropTypes.bool
@@ -33,6 +34,7 @@ export default function Offers({
   loaded,
   loadMoreShown,
   loadMoreButtonColor,
+  onSetActiveTab,
   onSetOfferModalShown,
   ownerId,
   usermenuShown
@@ -116,6 +118,7 @@ export default function Offers({
               cardId={cardId}
               offer={offer}
               offerers={offerers}
+              onSetActiveTab={onSetActiveTab}
               onUserMenuShownChange={onUserMenuShownChange}
               ownerId={ownerId}
               userId={userId}

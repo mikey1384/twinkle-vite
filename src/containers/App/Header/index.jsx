@@ -283,6 +283,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
   useEffect(() => {
     socket.on('ai_card_bought', handleAICardBought);
+    socket.on('ai_card_sold', handleAICardSold);
     socket.on('ai_card_burned', handleAICardBurned);
     socket.on('ai_card_listed', handleAICardListed);
     socket.on('ai_card_delisted', handleAICardDelisted);
@@ -331,6 +332,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
     return function cleanUp() {
       socket.removeListener('ai_card_bought', handleAICardBought);
+      socket.removeListener('ai_card_sold', handleAICardSold);
       socket.removeListener('ai_card_burned', handleAICardBurned);
       socket.removeListener('ai_card_listed', handleAICardListed);
       socket.removeListener('ai_card_delisted', handleAICardDelisted);
@@ -423,6 +425,18 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         onRemoveMyAICard(card.id);
         onSetUserState({ userId, newState: { twinkleCoins: sellerCoins } });
       }
+    }
+
+    async function handleAICardSold({ feed, card }) {
+      onRemoveListedAICard(card.id);
+      onUpdateAICard({
+        cardId: card.id,
+        newState: card
+      });
+      onPostAICardFeed({
+        feed,
+        card
+      });
     }
 
     async function handleAICardBurned(cardId) {

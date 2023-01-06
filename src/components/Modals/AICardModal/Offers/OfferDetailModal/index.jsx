@@ -17,6 +17,7 @@ OfferDetailModal.propTypes = {
   onHide: PropTypes.func.isRequired,
   ownerId: PropTypes.number.isRequired,
   price: PropTypes.number.isRequired,
+  onSetActiveTab: PropTypes.func.isRequired,
   onUserMenuShownChange: PropTypes.func.isRequired,
   userLinkColor: PropTypes.string.isRequired,
   usermenuShown: PropTypes.bool,
@@ -27,6 +28,7 @@ export default function OfferDetailModal({
   onHide,
   cardId,
   onUserMenuShownChange,
+  onSetActiveTab,
   ownerId,
   price,
   userLinkColor,
@@ -144,6 +146,7 @@ export default function OfferDetailModal({
     });
     onSetUserState({ userId, newState: { twinkleCoins: coins } });
     setOfferAcceptModalObj(null);
+    onSetActiveTab('myMenu');
     onHide();
   }
 

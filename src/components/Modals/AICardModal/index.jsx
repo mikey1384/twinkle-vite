@@ -107,6 +107,7 @@ export default function AICardModal({ cardId, onHide }) {
   useEffect(() => {
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
+    socket.on('ai_card_sold', handleAICardSold);
 
     function handleAICardOfferPosted({ card, feed }) {
       const { offer: incomingOffer } = feed;
@@ -152,9 +153,32 @@ export default function AICardModal({ cardId, onHide }) {
       }
     }
 
+    function handleAICardSold({ card, feed }) {
+      if (card.id === cardId) {
+        setOffers((prevOffers) => {
+          const result = [];
+          for (let offer of prevOffers) {
+            const newOffer = { ...offer };
+            const { transfer } = feed;
+            const { offer: acceptedOffer } = transfer;
+            if (offer.price === acceptedOffer.price) {
+              newOffer.users = offer.users.filter(
+                (user) => user.id !== acceptedOffer.userId
+              );
+            }
+            if (newOffer.users.length) {
+              result.push(newOffer);
+            }
+          }
+          return result;
+        });
+      }
+    }
+
     return function cleanUp() {
       socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
       socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
+      socket.removeListener('ai_card_sold', handleAICardSold);
     };
   });
 
@@ -326,6 +350,7 @@ export default function AICardModal({ cardId, onHide }) {
                   onSetLoadMoreShown={setOffersLoadMoreShown}
                   onSetOfferModalShown={setOfferModalShown}
                   ownerId={card.owner.id}
+                  onSetActiveTab={setActiveTab}
                   loaded={offersLoaded}
                   loadMoreShown={offersLoadMoreShown}
                   loadMoreButtonColor={loadMoreButtonColor}

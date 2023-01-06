@@ -17,6 +17,7 @@ OfferPriceListItem.propTypes = {
   offer: PropTypes.object.isRequired,
   offerers: PropTypes.array.isRequired,
   ownerId: PropTypes.number.isRequired,
+  onSetActiveTab: PropTypes.func.isRequired,
   onUserMenuShownChange: PropTypes.func.isRequired,
   userId: PropTypes.number,
   usermenuShown: PropTypes.bool
@@ -27,6 +28,7 @@ export default function OfferPriceListItem({
   offer,
   offerers,
   ownerId,
+  onSetActiveTab,
   onUserMenuShownChange,
   usermenuShown,
   userId
@@ -96,6 +98,7 @@ export default function OfferPriceListItem({
           cardId={cardId}
           onHide={() => setOfferDetailModalShown(false)}
           ownerId={ownerId}
+          onSetActiveTab={onSetActiveTab}
           onUserMenuShownChange={onUserMenuShownChange}
           userLinkColor={userLinkColor}
           usermenuShown={usermenuShown}
