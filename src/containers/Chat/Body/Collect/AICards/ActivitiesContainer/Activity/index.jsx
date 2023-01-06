@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SummonActivity from './SummonActivity';
@@ -25,6 +25,7 @@ export default function Activity({
   onReceiveNewActivity,
   onSetScrollToBottom
 }) {
+  const [usermenuShown, setUsermenuShown] = useState(false);
   const navigate = useNavigate();
   const card = useMemo(() => {
     if (feed.type === 'summon') {
@@ -76,6 +77,7 @@ export default function Activity({
             feed={feed}
             card={card}
             myId={myId}
+            onSetUsermenuShown={setUsermenuShown}
             isLastActivity={isLastActivity}
             onReceiveNewActivity={onReceiveNewActivity}
             onSetScrollToBottom={onSetScrollToBottom}
@@ -86,6 +88,7 @@ export default function Activity({
             feed={feed}
             card={card}
             myId={myId}
+            onSetUsermenuShown={setUsermenuShown}
             isLastActivity={isLastActivity}
             onReceiveNewActivity={onReceiveNewActivity}
             onSetScrollToBottom={onSetScrollToBottom}
@@ -96,6 +99,9 @@ export default function Activity({
   );
 
   function handleActivityClick() {
+    if (usermenuShown) {
+      return;
+    }
     if (feed.type === 'offer') {
       navigate(`./?cardId=${feed.offer.cardId}`);
     }
