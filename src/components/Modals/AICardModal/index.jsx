@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -43,12 +43,14 @@ export default function AICardModal({ cardId, onHide }) {
   const getOffersForCard = useAppContext(
     (v) => v.requestHelpers.getOffersForCard
   );
+  const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const onWithdrawOutgoingOffer = useChatContext(
     (v) => v.actions.onWithdrawOutgoingOffer
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const [cardNotFound, setCardNotFound] = useState(false);
   const [withdrawOfferModalShown, setWithdrawOfferModalShown] = useState(false);
   const [usermenuShown, setUsermenuShown] = useState(false);
   const [activeTab, setActiveTab] = useState('myMenu');
@@ -59,12 +61,33 @@ export default function AICardModal({ cardId, onHide }) {
   const [offersLoaded, setOffersLoaded] = useState(false);
   const [offersLoadMoreShown, setOffersLoadMoreShown] = useState(false);
   const [offerPrice, setOfferPrice] = useState(0);
-  const card = useMemo(() => cardObj[cardId], [cardId, cardObj]);
+  const card = cardObj[cardId];
+  const loadingRef = useRef(false);
+
+  useEffect(() => {
+    if (!card && !loadingRef.current) {
+      init();
+    }
+    async function init() {
+      loadingRef.current = true;
+      const card = await loadAICard(cardId);
+      if (card) {
+        onUpdateAICard({
+          cardId: card.id,
+          newState: card
+        });
+      } else {
+        setCardNotFound(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const { promptText } = useAICard(card);
 
   useEffect(() => {
-    init();
-    async function init() {
+    loadOffers();
+    async function loadOffers() {
       const { offers: loadedOffers, loadMoreShown } = await getOffersForCard({
         cardId
       });
@@ -362,6 +385,10 @@ export default function AICardModal({ cardId, onHide }) {
                 </div>
               )}
             </div>
+          </div>
+        ) : cardNotFound ? (
+          <div>
+            <h3>This card does not exist</h3>
           </div>
         ) : (
           <Loading />

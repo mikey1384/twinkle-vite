@@ -794,13 +794,7 @@ export default function ChatActions(dispatch) {
         subchannelId
       });
     },
-    onSetaiCardErrorMessage(message) {
-      return dispatch({
-        type: 'SET_AI_IMAGE_ERROR_MESSAGE',
-        message
-      });
-    },
-    onSetaiCardStatusMessage(message) {
+    onSetAICardStatusMessage(message) {
       return dispatch({
         type: 'SET_AI_IMAGE_STATUS_MESSAGE',
         message

@@ -621,6 +621,16 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async loadAICard(cardId) {
+      try {
+        const {
+          data: { card }
+        } = await request.get(`${URL}/chat/aiCard/card?cardId=${cardId}`);
+        return Promise.resolve(card);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadAICardFeeds(lastId) {
       try {
         const {
