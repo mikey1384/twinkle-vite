@@ -31,7 +31,9 @@ export default function AICardModal({ cardId, onHide }) {
     userLink: { color: userLinkColor },
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
-  const { userId, username, twinkleCoins } = useKeyContext((v) => v.myState);
+  const { userId, username, twinkleCoins, signinModalShown } = useKeyContext(
+    (v) => v.myState
+  );
   const deleteAICardOffer = useAppContext(
     (v) => v.requestHelpers.deleteAICardOffer
   );
@@ -158,7 +160,7 @@ export default function AICardModal({ cardId, onHide }) {
 
   return (
     <Modal
-      closeWhenClickedOutside={!usermenuShown}
+      closeWhenClickedOutside={!(usermenuShown || signinModalShown)}
       large
       modalOverModal
       onHide={onHide}
@@ -375,6 +377,7 @@ export default function AICardModal({ cardId, onHide }) {
                       cardLevel={card.level}
                       cardQuality={card.quality}
                       userIsOwner={card.ownerId === userId}
+                      myId={userId}
                       myOffer={card.myOffer}
                       onSetSellModalShown={setSellModalShown}
                       owner={card.owner}

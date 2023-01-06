@@ -112,6 +112,7 @@ export default function NonOwnerMenu({
           />
         ) : (
           <MakeOffer
+            myId={myId}
             className={css`
               margin-top: 1.7rem;
               @media (max-width: ${mobileMaxWidth}) {

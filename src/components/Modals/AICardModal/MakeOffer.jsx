@@ -4,12 +4,18 @@ import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 MakeOffer.propTypes = {
+  myId: PropTypes.number,
   className: PropTypes.string,
   onSetOfferModalShown: PropTypes.func.isRequired,
   style: PropTypes.object
 };
 
-export default function MakeOffer({ className, onSetOfferModalShown, style }) {
+export default function MakeOffer({
+  myId,
+  className,
+  onSetOfferModalShown,
+  style
+}) {
   return (
     <div
       className={className}
@@ -28,6 +34,7 @@ export default function MakeOffer({ className, onSetOfferModalShown, style }) {
         `}
         onClick={() => onSetOfferModalShown(true)}
         color="green"
+        disabled={!myId}
         filled
       >
         <span

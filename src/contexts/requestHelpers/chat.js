@@ -244,8 +244,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         } = await request.get(
           `${URL}/chat/aiCard/offer/card?cardId=${cardId}${
             lastPrice ? `&lastPrice=${lastPrice}` : ''
-          }`,
-          auth()
+          }`
         );
         return Promise.resolve({ offers, loadMoreShown });
       } catch (error) {

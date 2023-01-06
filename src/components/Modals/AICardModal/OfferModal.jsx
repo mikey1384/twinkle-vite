@@ -78,7 +78,7 @@ export default function OfferModal({
             filled
             color="oceanBlue"
             onClick={handlePostOffer}
-            disabled={!amount}
+            disabled={!(amount || myId)}
             style={{
               fontSize: '1.4rem',
               marginTop: '2rem'
