@@ -13,6 +13,7 @@ NonOwnerMenu.propTypes = {
   owner: PropTypes.object.isRequired,
   onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
   onSetOfferModalShown: PropTypes.func.isRequired,
+  onUserMenuShownChange: PropTypes.func.isRequired,
   myId: PropTypes.number,
   myOffer: PropTypes.object
 };
@@ -23,6 +24,7 @@ export default function NonOwnerMenu({
   owner,
   onSetWithdrawOfferModalShown,
   onSetOfferModalShown,
+  onUserMenuShownChange,
   myId,
   myOffer
 }) {
@@ -70,6 +72,7 @@ export default function NonOwnerMenu({
           Owned by
           <div>
             <UsernameText
+              onMenuShownChange={onUserMenuShownChange}
               color={Color[userLinkColor]()}
               user={{
                 username: owner.username,

@@ -17,7 +17,7 @@ OfferDetailModal.propTypes = {
   onHide: PropTypes.func.isRequired,
   ownerId: PropTypes.number.isRequired,
   price: PropTypes.number.isRequired,
-  onUserMenuShown: PropTypes.func.isRequired,
+  onUserMenuShownChange: PropTypes.func.isRequired,
   userLinkColor: PropTypes.string.isRequired,
   usermenuShown: PropTypes.bool,
   userId: PropTypes.number
@@ -26,7 +26,7 @@ OfferDetailModal.propTypes = {
 export default function OfferDetailModal({
   onHide,
   cardId,
-  onUserMenuShown,
+  onUserMenuShownChange,
   ownerId,
   price,
   userLinkColor,
@@ -87,7 +87,7 @@ export default function OfferDetailModal({
                 offer={offer}
                 onAcceptClick={(offer) => setOfferAcceptModalObj(offer)}
                 userLinkColor={userLinkColor}
-                onUserMenuShown={onUserMenuShown}
+                onUserMenuShownChange={onUserMenuShownChange}
                 userId={userId}
               />
             ))

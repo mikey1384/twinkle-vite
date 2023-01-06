@@ -329,7 +329,7 @@ export default function AICardModal({ cardId, onHide }) {
                   loaded={offersLoaded}
                   loadMoreShown={offersLoadMoreShown}
                   loadMoreButtonColor={loadMoreButtonColor}
-                  onUserMenuShown={setUsermenuShown}
+                  onUserMenuShownChange={setUsermenuShown}
                   usermenuShown={usermenuShown}
                 />
               ) : (
@@ -381,6 +381,7 @@ export default function AICardModal({ cardId, onHide }) {
                       myOffer={card.myOffer}
                       onSetSellModalShown={setSellModalShown}
                       owner={card.owner}
+                      onUserMenuShownChange={setUsermenuShown}
                       onSetWithdrawOfferModalShown={setWithdrawOfferModalShown}
                       onSetOfferModalShown={setOfferModalShown}
                     />

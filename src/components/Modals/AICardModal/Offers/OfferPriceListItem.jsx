@@ -17,7 +17,7 @@ OfferPriceListItem.propTypes = {
   offer: PropTypes.object.isRequired,
   offerers: PropTypes.array.isRequired,
   ownerId: PropTypes.number.isRequired,
-  onUserMenuShown: PropTypes.func.isRequired,
+  onUserMenuShownChange: PropTypes.func.isRequired,
   userId: PropTypes.number,
   usermenuShown: PropTypes.bool
 };
@@ -27,7 +27,7 @@ export default function OfferPriceListItem({
   offer,
   offerers,
   ownerId,
-  onUserMenuShown,
+  onUserMenuShownChange,
   usermenuShown,
   userId
 }) {
@@ -71,7 +71,7 @@ export default function OfferPriceListItem({
             {deviceIsMobile ? '' : <span> offer </span>} from{' '}
           </span>
           <UsernameText
-            onMenuShownChange={onUserMenuShown}
+            onMenuShownChange={onUserMenuShownChange}
             color={Color[userLinkColor]()}
             displayedName={
               offerers[0].id === userId ? 'you' : offerers[0].username
@@ -96,7 +96,7 @@ export default function OfferPriceListItem({
           cardId={cardId}
           onHide={() => setOfferDetailModalShown(false)}
           ownerId={ownerId}
-          onUserMenuShown={onUserMenuShown}
+          onUserMenuShownChange={onUserMenuShownChange}
           userLinkColor={userLinkColor}
           usermenuShown={usermenuShown}
           userId={userId}
