@@ -36,6 +36,7 @@ export default function OfferDetailModal({
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [offerAcceptModalObj, setOfferAcceptModalObj] = useState(null);
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +142,7 @@ export default function OfferDetailModal({
       price: offerAcceptModalObj.price,
       offererId: offerAcceptModalObj.userId
     });
-    console.log(coins);
+    onSetUserState({ userId, newState: { twinkleCoins: coins } });
     setOfferAcceptModalObj(null);
     onHide();
   }
