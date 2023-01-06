@@ -11,6 +11,7 @@ OfferActivity.propTypes = {
   feed: PropTypes.object.isRequired,
   myId: PropTypes.number,
   onReceiveNewActivity: PropTypes.func.isRequired,
+  onSetUsermenuShown: PropTypes.func.isRequired,
   onSetScrollToBottom: PropTypes.func.isRequired,
   isLastActivity: PropTypes.bool
 };
@@ -20,6 +21,7 @@ export default function OfferActivity({
   feed,
   myId,
   onReceiveNewActivity,
+  onSetUsermenuShown,
   onSetScrollToBottom,
   isLastActivity
 }) {
@@ -88,6 +90,7 @@ export default function OfferActivity({
           `}
         >
           <UsernameText
+            onMenuShownChange={onSetUsermenuShown}
             color={Color[offer.isCancelled ? 'lightGray' : 'black']()}
             user={{
               id: offer.user.id,

@@ -11,6 +11,7 @@ TransferActivity.propTypes = {
   feed: PropTypes.object.isRequired,
   myId: PropTypes.number,
   onReceiveNewActivity: PropTypes.func.isRequired,
+  onSetUsermenuShown: PropTypes.func.isRequired,
   onSetScrollToBottom: PropTypes.func.isRequired,
   isLastActivity: PropTypes.bool
 };
@@ -20,6 +21,7 @@ export default function TransferActivity({
   feed,
   myId,
   onReceiveNewActivity,
+  onSetUsermenuShown,
   onSetScrollToBottom,
   isLastActivity
 }) {
@@ -100,6 +102,7 @@ export default function TransferActivity({
       return (
         <div>
           <UsernameText
+            onMenuShownChange={onSetUsermenuShown}
             color={Color.black()}
             user={{
               id: transfer.from.id,
@@ -116,6 +119,7 @@ export default function TransferActivity({
           </b>{' '}
           to{' '}
           <UsernameText
+            onMenuShownChange={onSetUsermenuShown}
             color={Color.black()}
             user={{
               id: transfer.to.id,
@@ -139,6 +143,7 @@ export default function TransferActivity({
     card.id,
     isPurchase,
     isSale,
+    onSetUsermenuShown,
     price,
     transfer.from.id,
     transfer.from.username,
