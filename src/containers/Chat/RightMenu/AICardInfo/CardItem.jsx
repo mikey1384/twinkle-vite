@@ -1,11 +1,11 @@
-import { useMemo, useContext } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
-import LocalContext from '../../Context';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
+import { useNavigate } from 'react-router-dom';
 import { cardLevelHash } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -22,10 +22,8 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
   const {
     userLink: { color: userLinkColor }
   } = useKeyContext((v) => v.theme);
+  const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
-  const {
-    actions: { onSetAICardModalCardId }
-  } = useContext(LocalContext);
   const cardDetailObj = useMemo(
     () => cardLevelHash[card?.level],
     [card?.level]
@@ -67,7 +65,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
           borderBottom:
             isOverflown && isLast ? 'none' : `1px solid ${Color.borderGray()}`
         }}
-        onClick={() => onSetAICardModalCardId(card.id)}
+        onClick={() => navigate(`./?cardId=${card.id}`)}
         key={card.id}
       >
         <CardThumb card={card} />

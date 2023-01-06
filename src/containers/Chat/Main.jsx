@@ -745,7 +745,6 @@ export default function Main({ currentPathId, onFileUpload }) {
           onSetSiteUrl,
           onSetThumbUrl,
           onSetUserState,
-          onSetAICardModalCardId: setAICardModalCardId,
           onSetWordleModalShown,
           onShowIncoming,
           onSubmitMessage,
@@ -869,7 +868,10 @@ export default function Main({ currentPathId, onFileUpload }) {
         {aiCardModalCardId && (
           <AICardModal
             cardId={aiCardModalCardId}
-            onHide={() => setAICardModalCardId(null)}
+            onHide={() => {
+              navigate('..');
+              setAICardModalCardId(null);
+            }}
           />
         )}
       </ErrorBoundary>
