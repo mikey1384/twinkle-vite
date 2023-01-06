@@ -65,6 +65,87 @@ export default function TransferActivity({
     return isPurchase ? transfer?.ask?.price : transfer?.offer?.price;
   }, [isPurchase, isTransaction, transfer?.ask?.price, transfer?.offer?.price]);
 
+  const actionDescription = useMemo(() => {
+    if (isPurchase) {
+      return (
+        <div>
+          <UsernameText
+            color={Color.black()}
+            user={{
+              id: transfer.to.id,
+              username: transfer.to.username
+            }}
+          />{' '}
+          bought{' '}
+          <b
+            style={{
+              color: Color.black()
+            }}
+          >
+            Card #{card.id}
+          </b>{' '}
+          for{' '}
+          <b
+            style={{
+              color: Color.black()
+            }}
+          >
+            {addCommasToNumber(price)}
+          </b>{' '}
+          Twinkle {price === 1 ? 'Coin' : 'Coins'}
+        </div>
+      );
+    }
+    if (isSale) {
+      return (
+        <div>
+          <UsernameText
+            color={Color.black()}
+            user={{
+              id: transfer.from.id,
+              username: transfer.from.username
+            }}
+          />{' '}
+          sold{' '}
+          <b
+            style={{
+              color: Color.black()
+            }}
+          >
+            Card #{card.id}
+          </b>{' '}
+          to{' '}
+          <UsernameText
+            color={Color.black()}
+            user={{
+              id: transfer.to.id,
+              username: transfer.to.username
+            }}
+          />{' '}
+          for{' '}
+          <b
+            style={{
+              color: Color.black()
+            }}
+          >
+            {addCommasToNumber(price)}
+          </b>{' '}
+          Twinkle {price === 1 ? 'Coin' : 'Coins'}
+        </div>
+      );
+    }
+    return '';
+  }, [
+    card.id,
+    isPurchase,
+    isSale,
+    price,
+    transfer.from.id,
+    transfer.from.username,
+    transfer.to.id,
+    transfer.to.username
+  ]);
+
   return (
     <div
       className={css`
@@ -109,30 +190,7 @@ export default function TransferActivity({
             }
           `}
         >
-          <UsernameText
-            color={Color.black()}
-            user={{
-              id: transfer.to.id,
-              username: transfer.to.username
-            }}
-          />{' '}
-          bought{' '}
-          <b
-            style={{
-              color: Color.black()
-            }}
-          >
-            Card #{card.id}
-          </b>{' '}
-          for{' '}
-          <b
-            style={{
-              color: Color.black()
-            }}
-          >
-            {addCommasToNumber(price)}
-          </b>{' '}
-          Twinkle {price === 1 ? 'Coin' : 'Coins'}
+          {actionDescription}
         </div>
       </div>
       <div
