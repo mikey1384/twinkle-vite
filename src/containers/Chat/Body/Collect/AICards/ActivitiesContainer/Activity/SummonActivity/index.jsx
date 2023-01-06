@@ -5,6 +5,7 @@ import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
 import useAICard from '~/helpers/hooks/useAICard';
 import moment from 'moment';
+import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
@@ -13,7 +14,6 @@ SummonActivity.propTypes = {
   isLastActivity: PropTypes.bool,
   myId: PropTypes.number,
   onReceiveNewActivity: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
   onSetScrollToBottom: PropTypes.func.isRequired
 };
 
@@ -22,9 +22,9 @@ export default function SummonActivity({
   isLastActivity,
   myId,
   onReceiveNewActivity,
-  onSetAICardModalCardId,
   onSetScrollToBottom
 }) {
+  const navigate = useNavigate();
   const displayedTime = useMemo(
     () => moment.unix(card.timeStamp).format('hh:mm a'),
     [card.timeStamp]
@@ -89,7 +89,7 @@ export default function SummonActivity({
           }
         `}
       >
-        <AICard card={card} onClick={() => onSetAICardModalCardId(card.id)} />
+        <AICard card={card} onClick={() => navigate(`./?cardId=${card.id}`)} />
       </div>
       <div
         style={{

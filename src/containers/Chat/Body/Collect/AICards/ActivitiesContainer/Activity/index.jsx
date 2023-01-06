@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SummonActivity from './SummonActivity';
 import OfferActivity from './OfferActivity';
+import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import TransferActivity from './TransferActivity';
@@ -13,8 +14,7 @@ Activity.propTypes = {
   isLastActivity: PropTypes.bool,
   myId: PropTypes.number,
   onReceiveNewActivity: PropTypes.func.isRequired,
-  onSetScrollToBottom: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired
+  onSetScrollToBottom: PropTypes.func.isRequired
 };
 
 export default function Activity({
@@ -23,9 +23,9 @@ export default function Activity({
   feed,
   myId,
   onReceiveNewActivity,
-  onSetScrollToBottom,
-  onSetAICardModalCardId
+  onSetScrollToBottom
 }) {
+  const navigate = useNavigate();
   const card = useMemo(() => {
     if (feed.type === 'summon') {
       return cardObj[feed.contentId];
@@ -68,7 +68,6 @@ export default function Activity({
             isLastActivity={isLastActivity}
             myId={myId}
             onReceiveNewActivity={onReceiveNewActivity}
-            onSetAICardModalCardId={onSetAICardModalCardId}
             onSetScrollToBottom={onSetScrollToBottom}
           />
         )}
@@ -79,7 +78,6 @@ export default function Activity({
             myId={myId}
             isLastActivity={isLastActivity}
             onReceiveNewActivity={onReceiveNewActivity}
-            onSetAICardModalCardId={onSetAICardModalCardId}
             onSetScrollToBottom={onSetScrollToBottom}
           />
         )}
@@ -90,7 +88,6 @@ export default function Activity({
             myId={myId}
             isLastActivity={isLastActivity}
             onReceiveNewActivity={onReceiveNewActivity}
-            onSetAICardModalCardId={onSetAICardModalCardId}
             onSetScrollToBottom={onSetScrollToBottom}
           />
         )}
@@ -100,10 +97,10 @@ export default function Activity({
 
   function handleActivityClick() {
     if (feed.type === 'offer') {
-      onSetAICardModalCardId(feed.offer.cardId);
+      navigate(`./?cardId=${feed.offer.cardId}`);
     }
     if (feed.type === 'transfer') {
-      onSetAICardModalCardId(feed.transfer.cardId);
+      navigate(`./?cardId=${feed.transfer.cardId}`);
     }
   }
 }
