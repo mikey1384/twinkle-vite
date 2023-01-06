@@ -171,6 +171,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   );
   const onAddMyAICard = useChatContext((v) => v.actions.onAddMyAICard);
   const onRemoveMyAICard = useChatContext((v) => v.actions.onRemoveMyAICard);
+  const onRemoveIncomingOfferForAICard = useChatContext(
+    (v) => v.actions.onRemoveIncomingOfferForAICard
+  );
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
   );
@@ -437,6 +440,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         feed,
         card
       });
+      if (feed.transfer.from.id === userId) {
+        onRemoveIncomingOfferForAICard(card.id);
+      }
     }
 
     async function handleAICardBurned(cardId) {
