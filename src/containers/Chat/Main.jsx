@@ -8,6 +8,7 @@ import Loading from '~/components/Loading';
 import PleaseLogIn from './PleaseLogIn';
 import LocalContext from './Context';
 import AICardModal from '~/components/Modals/AICardModal';
+import queryString from 'query-string';
 import { parseChannelPath } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
@@ -38,6 +39,7 @@ Main.propTypes = {
 
 export default function Main({ currentPathId, onFileUpload }) {
   const { subchannelPath } = useParams();
+  const { search } = useLocation();
   const { pathname } = useLocation();
   const { lastChatPath, userId, profileTheme } = useKeyContext(
     (v) => v.myState
@@ -298,6 +300,13 @@ export default function Main({ currentPathId, onFileUpload }) {
     [channelsObj, selectedChannelId]
   );
   const prevSubchannelPath = useRef(subchannelPath);
+
+  useEffect(() => {
+    const { cardId } = queryString.parse(search);
+    if (cardId) {
+      setAICardModalCardId(Number(cardId));
+    }
+  }, [search]);
 
   useEffect(() => {
     return function cleanUp() {

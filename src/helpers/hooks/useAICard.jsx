@@ -16,6 +16,9 @@ const color4 = '#8ec5d6';
 const color5 = '#b98cce';
 
 export default function useAICard(card) {
+  if (!card) {
+    return {};
+  }
   const cardObj = useMemo(() => cardLevelHash[card?.level], [card?.level]);
   const cardColor = useMemo(
     () => Color[card.isBurned ? 'black' : cardObj?.color](),

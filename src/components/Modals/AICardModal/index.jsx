@@ -11,6 +11,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import FilterBar from '~/components/FilterBar';
 import SellModal from './SellModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import Loading from '~/components/Loading';
 import { socket } from '~/constants/io';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -69,7 +70,7 @@ export default function AICardModal({ cardId, onHide }) {
       });
       setOfferPrice(loadedOffers.length ? loadedOffers[0].price : 0);
       setActiveTab(
-        card.owner.id === userId && loadedOffers.length ? 'offers' : 'myMenu'
+        card?.owner.id === userId && loadedOffers.length ? 'offers' : 'myMenu'
       );
       setOffers(loadedOffers);
       setOffersLoaded(true);
@@ -141,224 +142,230 @@ export default function AICardModal({ cardId, onHide }) {
     >
       <header>
         <div>
-          Card #{card.id}{' '}
-          <div
-            style={{
-              display: 'inline',
-              fontWeight: 'normal',
-              fontSize: '1.3rem'
-            }}
-          >
-            (owned by{' '}
-            <UsernameText
-              color={Color[userLinkColor]()}
-              onMenuShownChange={setUsermenuShown}
-              displayedName={
-                card.owner.id === userId ? 'you' : card.owner.username
-              }
-              user={{
-                username: card.owner.username,
-                id: card.owner.id
+          Card #{cardId}{' '}
+          {card && (
+            <div
+              style={{
+                display: 'inline',
+                fontWeight: 'normal',
+                fontSize: '1.3rem'
               }}
-            />
-            )
-          </div>
+            >
+              (owned by{' '}
+              <UsernameText
+                color={Color[userLinkColor]()}
+                onMenuShownChange={setUsermenuShown}
+                displayedName={
+                  card.owner.id === userId ? 'you' : card.owner.username
+                }
+                user={{
+                  username: card.owner.username,
+                  id: card.owner.id
+                }}
+              />
+              )
+            </div>
+          )}
         </div>
       </header>
       <main>
-        <div
-          style={{
-            display: 'grid',
-            minHeight: '100%',
-            width: '100%',
-            gridTemplateColumns: '1fr 1.5fr 1fr',
-            gridColumnGap: 'calc(5rem / 1600px * 100vw)',
-            gridRowGap: '2rem'
-          }}
-        >
-          <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
-            <AICard card={card} />
-          </div>
+        {card ? (
           <div
             style={{
-              gridColumn: 'span 1',
-              gridRow: 'span 1',
-              minHeight: '100%'
+              display: 'grid',
+              minHeight: '100%',
+              width: '100%',
+              gridTemplateColumns: '1fr 1.5fr 1fr',
+              gridColumnGap: 'calc(5rem / 1600px * 100vw)',
+              gridRowGap: '2rem'
             }}
           >
+            <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
+              <AICard card={card} />
+            </div>
             <div
               style={{
                 gridColumn: 'span 1',
                 gridRow: 'span 1',
-                height: '100%'
+                minHeight: '100%'
               }}
             >
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  minHeight: '100%',
-                  padding: '0 1rem'
+                  gridColumn: 'span 1',
+                  gridRow: 'span 1',
+                  height: '100%'
                 }}
               >
                 <div
-                  className={`card-quality ${css`
-                    font-size: 1.6rem;
-                    font-family: Open Sans, sans-serif;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1rem;
-                    }
-                  `}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    minHeight: '100%',
+                    padding: '0 1rem'
+                  }}
                 >
-                  <b
-                    style={{
-                      ...qualityProps[card.quality]
-                    }}
-                  >
-                    {card.quality}
-                  </b>{' '}
-                  card
-                </div>
-                <div
-                  className={css`
-                    padding: 3rem 5rem 5rem 5rem;
-                    text-align: center;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      padding: 3rem 2rem 4rem 2rem;
-                    }
-                  `}
-                >
-                  <span
-                    className={css`
-                      font-family: Roboto Mono, monospace;
-                      font-size: 1.5rem;
-                      @media (max-width: ${mobileMaxWidth}) {
-                        font-size: 1.1rem;
-                      }
-                    `}
-                  >
-                    <SanitizedHTML
-                      allowedAttributes={{ b: ['style'] }}
-                      html={`"${promptText}"`}
-                    />
-                  </span>
-                </div>
-                <div>
-                  <b
-                    className={css`
-                      font-size: 1.3rem;
-                      font-family: helvetica, sans-serif;
-                      color: ${Color.darkerGray()};
+                  <div
+                    className={`card-quality ${css`
+                      font-size: 1.6rem;
+                      font-family: Open Sans, sans-serif;
                       @media (max-width: ${mobileMaxWidth}) {
                         font-size: 1rem;
                       }
+                    `}`}
+                  >
+                    <b
+                      style={{
+                        ...qualityProps[card.quality]
+                      }}
+                    >
+                      {card.quality}
+                    </b>{' '}
+                    card
+                  </div>
+                  <div
+                    className={css`
+                      padding: 3rem 5rem 5rem 5rem;
+                      text-align: center;
+                      @media (max-width: ${mobileMaxWidth}) {
+                        padding: 3rem 2rem 4rem 2rem;
+                      }
                     `}
                   >
-                    {card.style}
-                  </b>
+                    <span
+                      className={css`
+                        font-family: Roboto Mono, monospace;
+                        font-size: 1.5rem;
+                        @media (max-width: ${mobileMaxWidth}) {
+                          font-size: 1.1rem;
+                        }
+                      `}
+                    >
+                      <SanitizedHTML
+                        allowedAttributes={{ b: ['style'] }}
+                        html={`"${promptText}"`}
+                      />
+                    </span>
+                  </div>
+                  <div>
+                    <b
+                      className={css`
+                        font-size: 1.3rem;
+                        font-family: helvetica, sans-serif;
+                        color: ${Color.darkerGray()};
+                        @media (max-width: ${mobileMaxWidth}) {
+                          font-size: 1rem;
+                        }
+                      `}
+                    >
+                      {card.style}
+                    </b>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
-            {!card.isBurned ? (
-              <FilterBar
-                className={css`
-                  font-size: 1.5rem !important;
-                  height: 4.5rem !important;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.1rem !important;
-                    height: 3rem !important;
-                  }
-                `}
-              >
-                <nav
-                  className={activeTab === 'myMenu' ? 'active' : ''}
-                  onClick={() => setActiveTab('myMenu')}
+            <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
+              {!card.isBurned ? (
+                <FilterBar
+                  className={css`
+                    font-size: 1.5rem !important;
+                    height: 4.5rem !important;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1.1rem !important;
+                      height: 3rem !important;
+                    }
+                  `}
                 >
-                  Menu
-                </nav>
-                <nav
-                  className={activeTab === 'offers' ? 'active' : ''}
-                  onClick={() => setActiveTab('offers')}
+                  <nav
+                    className={activeTab === 'myMenu' ? 'active' : ''}
+                    onClick={() => setActiveTab('myMenu')}
+                  >
+                    Menu
+                  </nav>
+                  <nav
+                    className={activeTab === 'offers' ? 'active' : ''}
+                    onClick={() => setActiveTab('offers')}
+                  >
+                    Offers
+                  </nav>
+                </FilterBar>
+              ) : null}
+              {activeTab === 'offers' ? (
+                <Offers
+                  cardId={cardId}
+                  getOffersForCard={getOffersForCard}
+                  offers={offers}
+                  onSetOffers={setOffers}
+                  onSetLoadMoreShown={setOffersLoadMoreShown}
+                  onSetOfferModalShown={setOfferModalShown}
+                  ownerId={card.owner.id}
+                  loaded={offersLoaded}
+                  loadMoreShown={offersLoadMoreShown}
+                  loadMoreButtonColor={loadMoreButtonColor}
+                  onUserMenuShown={setUsermenuShown}
+                  usermenuShown={usermenuShown}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '100%',
+                    height: card.isBurned ? '100%' : 'CALC(100% - 4.5rem)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    flexDirection: 'column'
+                  }}
                 >
-                  Offers
-                </nav>
-              </FilterBar>
-            ) : null}
-            {activeTab === 'offers' ? (
-              <Offers
-                cardId={cardId}
-                getOffersForCard={getOffersForCard}
-                offers={offers}
-                onSetOffers={setOffers}
-                onSetLoadMoreShown={setOffersLoadMoreShown}
-                onSetOfferModalShown={setOfferModalShown}
-                ownerId={card.owner.id}
-                loaded={offersLoaded}
-                loadMoreShown={offersLoadMoreShown}
-                loadMoreButtonColor={loadMoreButtonColor}
-                onUserMenuShown={setUsermenuShown}
-                usermenuShown={usermenuShown}
-              />
-            ) : (
-              <div
-                style={{
-                  width: '100%',
-                  height: card.isBurned ? '100%' : 'CALC(100% - 4.5rem)',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  flexDirection: 'column'
-                }}
-              >
-                {!card.imagePath ? (
-                  <GradientButton
-                    loading={generatingImage}
-                    onClick={handleGenerateImage}
-                    fontSize="1.5rem"
-                    mobileFontSize="1.1rem"
-                  >
-                    {generatingImage ? 'Generating...' : 'Generate Image'}
-                  </GradientButton>
-                ) : card.isBurned ? (
-                  <div
-                    style={{
-                      fontWeight: 'bold',
-                      color: Color.darkerGray()
-                    }}
-                  >
-                    This card was burned
-                  </div>
-                ) : card.isListed ? (
-                  <ListedMenu
-                    cardId={card.id}
-                    myId={userId}
-                    myOffer={card.myOffer}
-                    userIsOwner={card.ownerId === userId}
-                    askPrice={card.askPrice}
-                    onSetWithdrawOfferModalShown={setWithdrawOfferModalShown}
-                    onSetOfferModalShown={setOfferModalShown}
-                  />
-                ) : (
-                  <UnlistedMenu
-                    cardId={card.id}
-                    cardLevel={card.level}
-                    cardQuality={card.quality}
-                    userIsOwner={card.ownerId === userId}
-                    myOffer={card.myOffer}
-                    onSetSellModalShown={setSellModalShown}
-                    owner={card.owner}
-                    onSetWithdrawOfferModalShown={setWithdrawOfferModalShown}
-                    onSetOfferModalShown={setOfferModalShown}
-                  />
-                )}
-              </div>
-            )}
+                  {!card.imagePath ? (
+                    <GradientButton
+                      loading={generatingImage}
+                      onClick={handleGenerateImage}
+                      fontSize="1.5rem"
+                      mobileFontSize="1.1rem"
+                    >
+                      {generatingImage ? 'Generating...' : 'Generate Image'}
+                    </GradientButton>
+                  ) : card.isBurned ? (
+                    <div
+                      style={{
+                        fontWeight: 'bold',
+                        color: Color.darkerGray()
+                      }}
+                    >
+                      This card was burned
+                    </div>
+                  ) : card.isListed ? (
+                    <ListedMenu
+                      cardId={card.id}
+                      myId={userId}
+                      myOffer={card.myOffer}
+                      userIsOwner={card.ownerId === userId}
+                      askPrice={card.askPrice}
+                      onSetWithdrawOfferModalShown={setWithdrawOfferModalShown}
+                      onSetOfferModalShown={setOfferModalShown}
+                    />
+                  ) : (
+                    <UnlistedMenu
+                      cardId={card.id}
+                      cardLevel={card.level}
+                      cardQuality={card.quality}
+                      userIsOwner={card.ownerId === userId}
+                      myOffer={card.myOffer}
+                      onSetSellModalShown={setSellModalShown}
+                      owner={card.owner}
+                      onSetWithdrawOfferModalShown={setWithdrawOfferModalShown}
+                      onSetOfferModalShown={setOfferModalShown}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <Loading />
+        )}
       </main>
       <footer>
         <Button transparent onClick={onHide}>
