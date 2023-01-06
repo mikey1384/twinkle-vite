@@ -104,6 +104,14 @@ export default function ChatReducer(state, action) {
         myCardIds: [action.cardId].concat(state.myCardIds)
       };
     }
+    case 'REMOVE_INCOMING_OFFER_FOR_AI_CARD': {
+      return {
+        ...state,
+        incomingOffers: state.incomingOffers.filter(
+          (offer) => offer.cardId !== action.cardId
+        )
+      };
+    }
     case 'REMOVE_MY_AI_CARD': {
       return {
         ...state,

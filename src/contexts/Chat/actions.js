@@ -296,6 +296,12 @@ export default function ChatActions(dispatch) {
         cardId
       });
     },
+    onRemoveIncomingOfferForAICard(cardId) {
+      return dispatch({
+        type: 'REMOVE_INCOMING_OFFER_FOR_AI_CARD',
+        cardId
+      });
+    },
     onRemoveListedAICard(cardId) {
       return dispatch({
         type: 'REMOVE_LISTED_AI_CARD',
