@@ -75,28 +75,31 @@ export default function Offers({
             }}
           >
             There is no offer for this card, yet
-            {ownerId !== userId && <Button
-              style={{ marginTop: '2rem' }}
-              className={css`
-                @media (max-width: ${mobileMaxWidth}) {
-                  padding: 0.7rem !important;
-                }
-              `}
-              onClick={() => onSetOfferModalShown(true)}
-              color="green"
-              filled
-            >
-              <span
+            {ownerId !== userId && (
+              <Button
+                style={{ marginTop: '2rem' }}
                 className={css`
-                  font-size: 1.6rem;
                   @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1rem;
+                    padding: 0.7rem !important;
                   }
                 `}
+                onClick={() => onSetOfferModalShown(true)}
+                color="green"
+                disabled={!userId}
+                filled
               >
-                Make offer
-              </span>
-            </Button>}
+                <span
+                  className={css`
+                    font-size: 1.6rem;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1rem;
+                    }
+                  `}
+                >
+                  Make offer
+                </span>
+              </Button>
+            )}
           </div>
         )}
         {offers.map((offer) => {

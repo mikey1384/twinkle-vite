@@ -13,6 +13,7 @@ NonOwnerMenu.propTypes = {
   owner: PropTypes.object.isRequired,
   onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
   onSetOfferModalShown: PropTypes.func.isRequired,
+  myId: PropTypes.number,
   myOffer: PropTypes.object
 };
 
@@ -22,6 +23,7 @@ export default function NonOwnerMenu({
   owner,
   onSetWithdrawOfferModalShown,
   onSetOfferModalShown,
+  myId,
   myOffer
 }) {
   const {
@@ -89,6 +91,7 @@ export default function NonOwnerMenu({
           />
         ) : (
           <MakeOffer
+            myId={myId}
             className={css`
               margin-top: 1.7rem;
               @media (max-width: ${mobileMaxWidth}) {
