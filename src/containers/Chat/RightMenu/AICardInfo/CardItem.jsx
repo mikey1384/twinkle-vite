@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -19,6 +19,7 @@ CardItem.propTypes = {
 };
 
 export default function CardItem({ card, isOverflown, isLast, offerObj }) {
+  const [userMenuShown, setUserMenuShown] = useState(false);
   const {
     userLink: { color: userLinkColor }
   } = useKeyContext((v) => v.theme);
@@ -65,7 +66,9 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
           borderBottom:
             isOverflown && isLast ? 'none' : `1px solid ${Color.borderGray()}`
         }}
-        onClick={() => navigate(`./?cardId=${card.id}`)}
+        onClick={() =>
+          userMenuShown ? null : navigate(`./?cardId=${card.id}`)
+        }
         key={card.id}
       >
         <CardThumb card={card} />
@@ -121,6 +124,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                   <div>
                     from{' '}
                     <UsernameText
+                      onMenuShownChange={(shown) => setUserMenuShown(shown)}
                       color={Color[userLinkColor]()}
                       user={{
                         username: offerObj.user.username,
