@@ -889,6 +889,20 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async sellAICard({ cardId, price, offererId }) {
+      try {
+        const {
+          data: { coins }
+        } = await request.put(
+          `${URL}/chat/aicard/sell`,
+          { cardId, price, offererId },
+          auth()
+        );
+        return Promise.resolve(coins);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async sendInvitationMessage({ origin, recepients }) {
       try {
         const {

@@ -15,7 +15,7 @@ OfferListItem.propTypes = {
   ownerId: PropTypes.number.isRequired,
   userLinkColor: PropTypes.string.isRequired,
   onUserMenuShown: PropTypes.func.isRequired,
-  userId: PropTypes.number.isRequired
+  userId: PropTypes.number
 };
 
 export default function OfferListItem({
