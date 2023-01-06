@@ -105,6 +105,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                 <b>Card #{card.id}</b>
                 {offerObj.user.id === userId ? '' : ' received'}
                 <p>
+                  {offerObj.user.id === userId ? 'offered ' : ''}
                   <Icon
                     style={{ color: Color.brownOrange() }}
                     icon={['far', 'badge-dollar']}
@@ -113,8 +114,8 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                     style={{ marginLeft: '0.1rem', color: Color.darkerGray() }}
                   >
                     {addCommasToNumber(offerObj.price)}
-                  </b>{' '}
-                  offer{offerObj.user.id === userId ? 'ed' : ''}
+                  </b>
+                  {offerObj.user.id === userId ? '' : ' offer'}
                 </p>
                 {offerObj.user.id !== userId && (
                   <div>
