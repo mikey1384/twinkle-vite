@@ -40,8 +40,8 @@ export default function AICards({ loadingAICardChat }) {
   const onSetIsGeneratingAICard = useChatContext(
     (v) => v.actions.onSetIsGeneratingAICard
   );
-  const onSetaiCardStatusMessage = useChatContext(
-    (v) => v.actions.onSetaiCardStatusMessage
+  const onSetAICardStatusMessage = useChatContext(
+    (v) => v.actions.onSetAICardStatusMessage
   );
   const onPostAICardFeed = useChatContext((v) => v.actions.onPostAICardFeed);
   const navigate = useNavigate();
@@ -132,11 +132,11 @@ export default function AICards({ loadingAICardChat }) {
     let isPurchased = false;
     try {
       onSetIsGeneratingAICard(true);
-      onSetaiCardStatusMessage('Processing transaction...');
+      onSetAICardStatusMessage('Processing transaction...');
       const { quality, level, cardId, word, prompt, coins } =
         await processAiCardQuality();
       if (!quality) {
-        onSetaiCardStatusMessage(
+        onSetAICardStatusMessage(
           `You don't have enough Twinkle Coins to summon a card.`
         );
         onSetIsGeneratingAICard(false);
@@ -144,9 +144,9 @@ export default function AICards({ loadingAICardChat }) {
       }
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       isPurchased = true;
-      onSetaiCardStatusMessage('Purchase complete! Generating card...');
+      onSetAICardStatusMessage('Purchase complete! Generating card...');
       const { imageUrl, style } = await getOpenAiImage(prompt);
-      onSetaiCardStatusMessage('Finishing your card...');
+      onSetAICardStatusMessage('Finishing your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
       const { feed, card } = await postAICard({
         imagePath,
@@ -157,7 +157,7 @@ export default function AICards({ loadingAICardChat }) {
         word,
         prompt
       });
-      onSetaiCardStatusMessage('Card Summoned');
+      onSetAICardStatusMessage('Card Summoned');
       onPostAICardFeed({
         feed,
         isSummon: true,
@@ -174,7 +174,7 @@ export default function AICards({ loadingAICardChat }) {
       const statusMessage = isPurchased
         ? `Couldn't generate the card's image at this time. Reload the website and try again.`
         : 'Payment failed. Try again.';
-      onSetaiCardStatusMessage(statusMessage);
+      onSetAICardStatusMessage(statusMessage);
     }
     onSetIsGeneratingAICard(false);
   }
