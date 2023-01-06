@@ -18,11 +18,16 @@ export default function ActionBlock({ action, target, style, type }) {
     if (action === 'generate') {
       return 'summoned a card';
     }
-    if (action === 'offer') {
+    if (action === 'offerPending') {
       if (type === 'decrease') {
         return 'made an offer (on hold)';
       } else {
         return 'withdrew an offer';
+      }
+    }
+    if (action === 'offerAccepted') {
+      if (type === 'decrease') {
+        return 'made an offer (accepted)';
       }
     }
     if (action === 'purchase') {
@@ -61,7 +66,7 @@ export default function ActionBlock({ action, target, style, type }) {
       }
     }
     if (action === 'sell') {
-      if (target === 'aiCardAsk') {
+      if (target === 'aiCardAsk' || target === 'aiCardOffer') {
         return 'sold an AI card';
       }
     }
