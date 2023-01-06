@@ -6,6 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import OfferDetailModal from './OfferDetailModal';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
@@ -64,7 +65,9 @@ export default function OfferPriceListItem({
             icon={['far', 'badge-dollar']}
           />
           <span style={{ marginLeft: '0.2rem' }}>
-            <b style={{ color: Color.darkerGray() }}>{offer.price}</b>
+            <b style={{ color: Color.darkerGray() }}>
+              {addCommasToNumber(offer.price)}
+            </b>
             {deviceIsMobile ? '' : <span> offer </span>} from{' '}
           </span>
           <UsernameText

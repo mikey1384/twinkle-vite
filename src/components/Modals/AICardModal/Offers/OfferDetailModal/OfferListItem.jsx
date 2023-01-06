@@ -5,6 +5,7 @@ import Icon from '~/components/Icon';
 import moment from 'moment';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -66,7 +67,9 @@ export default function OfferListItem({
                 icon={['far', 'badge-dollar']}
               />
               <span style={{ marginLeft: '0.2rem' }}>
-                <b style={{ color: Color.darkerGray() }}>{offer.price}</b>
+                <b style={{ color: Color.darkerGray() }}>
+                  {addCommasToNumber(offer.price)}
+                </b>
                 <span> offer </span> from{' '}
               </span>
               <UsernameText
