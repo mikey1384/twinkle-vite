@@ -44,6 +44,7 @@ export default function OfferDetailModal({
   const getOffersForCardByPrice = useAppContext(
     (v) => v.requestHelpers.getOffersForCardByPrice
   );
+  const sellAICard = useAppContext((v) => v.requestHelpers.sellAICard);
   useEffect(() => {
     init();
     async function init() {
@@ -134,7 +135,13 @@ export default function OfferDetailModal({
   );
 
   async function handleConfirmAcceptOffer() {
-    console.log('accepted');
+    const coins = await sellAICard({
+      offerId: offerAcceptModalObj.id,
+      cardId,
+      price: offerAcceptModalObj.price,
+      offererId: offerAcceptModalObj.userId
+    });
+    console.log(coins);
     setOfferAcceptModalObj(null);
     onHide();
   }
