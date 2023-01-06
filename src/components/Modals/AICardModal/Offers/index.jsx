@@ -12,7 +12,7 @@ Offers.propTypes = {
   cardId: PropTypes.number.isRequired,
   getOffersForCard: PropTypes.func.isRequired,
   offers: PropTypes.array.isRequired,
-  onUserMenuShown: PropTypes.func.isRequired,
+  onUserMenuShownChange: PropTypes.func.isRequired,
   onSetOffers: PropTypes.func.isRequired,
   onSetLoadMoreShown: PropTypes.func.isRequired,
   loaded: PropTypes.bool.isRequired,
@@ -29,7 +29,7 @@ export default function Offers({
   offers,
   onSetOffers,
   onSetLoadMoreShown,
-  onUserMenuShown,
+  onUserMenuShownChange,
   loaded,
   loadMoreShown,
   loadMoreButtonColor,
@@ -116,7 +116,7 @@ export default function Offers({
               cardId={cardId}
               offer={offer}
               offerers={offerers}
-              onUserMenuShown={onUserMenuShown}
+              onUserMenuShownChange={onUserMenuShownChange}
               ownerId={ownerId}
               userId={userId}
               usermenuShown={usermenuShown}

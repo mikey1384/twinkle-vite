@@ -14,6 +14,7 @@ UnlistedMenu.propTypes = {
   myId: PropTypes.number,
   myOffer: PropTypes.object,
   onSetSellModalShown: PropTypes.func.isRequired,
+  onUserMenuShownChange: PropTypes.func.isRequired,
   owner: PropTypes.object.isRequired,
   userIsOwner: PropTypes.bool.isRequired,
   onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
@@ -30,7 +31,8 @@ export default function UnlistedMenu({
   owner,
   userIsOwner,
   onSetWithdrawOfferModalShown,
-  onSetOfferModalShown
+  onSetOfferModalShown,
+  onUserMenuShownChange
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -72,6 +74,7 @@ export default function UnlistedMenu({
           xpNumberColor={xpNumberColor}
           myOffer={myOffer}
           myId={myId}
+          onUserMenuShownChange={onUserMenuShownChange}
           onSetWithdrawOfferModalShown={onSetWithdrawOfferModalShown}
           onSetOfferModalShown={onSetOfferModalShown}
         />

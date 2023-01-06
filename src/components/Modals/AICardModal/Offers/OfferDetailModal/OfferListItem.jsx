@@ -14,13 +14,13 @@ OfferListItem.propTypes = {
   onAcceptClick: PropTypes.func.isRequired,
   ownerId: PropTypes.number.isRequired,
   userLinkColor: PropTypes.string.isRequired,
-  onUserMenuShown: PropTypes.func.isRequired,
+  onUserMenuShownChange: PropTypes.func.isRequired,
   userId: PropTypes.number
 };
 
 export default function OfferListItem({
   offer,
-  onUserMenuShown,
+  onUserMenuShownChange,
   onAcceptClick,
   ownerId,
   userLinkColor,
@@ -73,7 +73,7 @@ export default function OfferListItem({
                 <span> offer </span> from{' '}
               </span>
               <UsernameText
-                onMenuShownChange={onUserMenuShown}
+                onMenuShownChange={onUserMenuShownChange}
                 color={Color[userLinkColor]()}
                 displayedName={offer.userId === userId ? 'you' : offer.username}
                 user={{
