@@ -18,7 +18,7 @@ OfferPriceListItem.propTypes = {
   offerers: PropTypes.array.isRequired,
   ownerId: PropTypes.number.isRequired,
   onUserMenuShown: PropTypes.func.isRequired,
-  userId: PropTypes.number.isRequired,
+  userId: PropTypes.number,
   usermenuShown: PropTypes.bool
 };
 

@@ -20,7 +20,7 @@ OfferDetailModal.propTypes = {
   onUserMenuShown: PropTypes.func.isRequired,
   userLinkColor: PropTypes.string.isRequired,
   usermenuShown: PropTypes.bool,
-  userId: PropTypes.number.isRequired
+  userId: PropTypes.number
 };
 
 export default function OfferDetailModal({
