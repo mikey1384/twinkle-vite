@@ -153,36 +153,39 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
                 dangerouslySetInnerHTML={{ __html: promptText }}
               />
             )}
-            {!offerObj && card.isListed ? (
-              <div
-                className={css`
-                  margin-top: 0.5rem;
-                  font-size: 1.2rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.1rem;
-                  }
-                `}
-              >
-                <Icon
-                  style={{ color: Color.brownOrange() }}
-                  icon={['far', 'badge-dollar']}
-                />
-                <b style={{ marginLeft: '0.2rem', color: Color.darkerGray() }}>
-                  {addCommasToNumber(card.askPrice)}
+            {!offerObj &&
+              (card.isListed ? (
+                <div
+                  className={css`
+                    margin-top: 0.5rem;
+                    font-size: 1.2rem;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1.1rem;
+                    }
+                  `}
+                >
+                  <Icon
+                    style={{ color: Color.brownOrange() }}
+                    icon={['far', 'badge-dollar']}
+                  />
+                  <b
+                    style={{ marginLeft: '0.2rem', color: Color.darkerGray() }}
+                  >
+                    {addCommasToNumber(card.askPrice)}
+                  </b>
+                </div>
+              ) : (
+                <b
+                  style={{
+                    marginTop: '1rem',
+                    fontSize: '1.1rem',
+                    fontFamily: 'helvetica, sans-serif',
+                    color: Color.darkerGray()
+                  }}
+                >
+                  {card.style}
                 </b>
-              </div>
-            ) : (
-              <b
-                style={{
-                  marginTop: '1rem',
-                  fontSize: '1.1rem',
-                  fontFamily: 'helvetica, sans-serif',
-                  color: Color.darkerGray()
-                }}
-              >
-                {card.style}
-              </b>
-            )}
+              ))}
           </div>
         </div>
       </div>

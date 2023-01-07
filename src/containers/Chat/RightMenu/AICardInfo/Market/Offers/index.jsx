@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
@@ -8,11 +7,16 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
 Offers.propTypes = {
-  loadMoreButtonColor: PropTypes.string
+  loadMoreButtonColor: PropTypes.string,
+  onSetSelectedSubTab: PropTypes.func,
+  selectedSubTab: PropTypes.string
 };
 
-export default function Offers({ loadMoreButtonColor }) {
-  const [selectedTab, setSelectedTab] = useState('incoming');
+export default function Offers({
+  loadMoreButtonColor,
+  onSetSelectedSubTab,
+  selectedSubTab
+}) {
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Bids">
       <FilterBar
@@ -26,19 +30,19 @@ export default function Offers({ loadMoreButtonColor }) {
         `}
       >
         <nav
-          className={selectedTab === 'incoming' ? 'active' : ''}
-          onClick={() => setSelectedTab('incoming')}
+          className={selectedSubTab === 'incoming' ? 'active' : ''}
+          onClick={() => onSetSelectedSubTab('incoming')}
         >
           Incoming Offers
         </nav>
         <nav
-          className={selectedTab === 'outgoing' ? 'active' : ''}
-          onClick={() => setSelectedTab('outgoing')}
+          className={selectedSubTab === 'outgoing' ? 'active' : ''}
+          onClick={() => onSetSelectedSubTab('outgoing')}
         >
           My offers
         </nav>
       </FilterBar>
-      {selectedTab === 'incoming' ? (
+      {selectedSubTab === 'incoming' ? (
         <Incoming loadMoreButtonColor={loadMoreButtonColor} />
       ) : (
         <Outgoing loadMoreButtonColor={loadMoreButtonColor} />
