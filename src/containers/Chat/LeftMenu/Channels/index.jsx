@@ -157,7 +157,7 @@ function Channels({ currentPathId }) {
       >
         {channelIds
           ?.map((channelId) => channelsObj[channelId])
-          .filter((channel) => !channel?.isHidden)
+          .filter((channel) => !!channel && !channel?.isHidden)
           .map((channel) => (
             <Channel
               key={selectedChatTab + channel.id}
