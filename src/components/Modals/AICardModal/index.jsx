@@ -192,7 +192,7 @@ export default function AICardModal({ cardId, onHide }) {
       <header>
         <div>
           Card #{cardId}{' '}
-          {card && (
+          {card && !card.isBurned && (
             <div
               style={{
                 display: 'inline',
