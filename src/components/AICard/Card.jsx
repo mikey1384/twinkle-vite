@@ -56,6 +56,10 @@ export default function LiveCard({
             ? css`
                 animation: burning 2s linear;
                 animation-fill-mode: forwards;
+                &:hover {
+                  animation: burning 2s linear !important;
+                  animation-fill-mode: forwards !important;
+                }
                 @keyframes burning {
                   0% {
                     background-color: red;
