@@ -1,15 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Color } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
 import Listings from './Listings';
 import Offers from './Offers';
+import { socket } from '~/constants/io';
 import { useKeyContext } from '~/contexts';
 
 export default function Market() {
+  const { userId } = useKeyContext((v) => v.myState);
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
+
+  useEffect(() => {
+    socket.on('ai_card_offer_posted', handleAICardOfferPosted);
+    function handleAICardOfferPosted({ card }) {
+      if (card.ownerId === userId) {
+        setActiveTab('sell');
+        setSelectedSubTab('incoming');
+      }
+    }
+    return function cleanUp() {
+      socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
+    };
+  });
   const [activeTab, setActiveTab] = useState('buy');
+  const [selectedSubTab, setSelectedSubTab] = useState('incoming');
+
   return (
     <div
       style={{
@@ -37,7 +54,11 @@ export default function Market() {
         {activeTab === 'buy' ? (
           <Listings loadMoreButtonColor={loadMoreButtonColor} />
         ) : (
-          <Offers loadMoreButtonColor={loadMoreButtonColor} />
+          <Offers
+            onSetSelectedSubTab={setSelectedSubTab}
+            selectedSubTab={selectedSubTab}
+            loadMoreButtonColor={loadMoreButtonColor}
+          />
         )}
       </div>
     </div>
