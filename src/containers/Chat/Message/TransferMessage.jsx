@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Color } from '~/constants/css';
 import UsernameText from '~/components/Texts/UsernameText';
+import CardThumb from '~/components/CardThumb';
+import { css } from '@emotion/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 TransferMessage.propTypes = {
@@ -144,8 +146,63 @@ export default function TransferMessage({
   ]);
 
   return (
-    <div onClick={() => console.log(usermenuShown)}>
-      <div>{actionDescription}</div>
+    <div
+      className={css`
+        padding: 0 3rem 0 2rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          padding: 0 1rem 0 0.5rem;
+        }
+      `}
+      style={{
+        display: 'flex',
+        width: '100%',
+        height: '100%'
+      }}
+      onClick={() => console.log(usermenuShown)}
+    >
+      <div
+        style={{
+          width: '5rem',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
+        <CardThumb card={card} />
+      </div>
+      <div
+        style={{
+          width: 'CALC(100% - 5rem)',
+          marginLeft: '3rem',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
+        <div
+          className={css`
+            padding-right: 1rem;
+            font-size: 1.7rem;
+            line-height: 1.5;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.2rem;
+            }
+          `}
+        >
+          {actionDescription}
+        </div>
+      </div>
+      <div
+        style={{
+          width: '5rem',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
+        <CardThumb card={card} />
+      </div>
     </div>
   );
 }
