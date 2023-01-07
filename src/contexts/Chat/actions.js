@@ -290,10 +290,10 @@ export default function ChatActions(dispatch) {
         card
       });
     },
-    onAddMyAICard(cardId) {
+    onAddMyAICard(card) {
       return dispatch({
         type: 'ADD_MY_AI_CARD',
-        cardId
+        card
       });
     },
     onRemoveListedAICard(cardId) {

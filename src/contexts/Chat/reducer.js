@@ -101,7 +101,15 @@ export default function ChatReducer(state, action) {
     case 'ADD_MY_AI_CARD': {
       return {
         ...state,
-        myCardIds: [action.cardId].concat(state.myCardIds)
+        cardObj: {
+          ...state.cardObj,
+          [action.card.id]: {
+            ...action.card,
+            isListed: false,
+            askPrice: null
+          }
+        },
+        myCardIds: [action.card.id].concat(state.myCardIds)
       };
     }
     case 'REMOVE_MY_AI_CARD': {
