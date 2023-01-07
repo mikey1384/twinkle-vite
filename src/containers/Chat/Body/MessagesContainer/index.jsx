@@ -60,7 +60,7 @@ const settingsLabel = localize('settings');
 
 MessagesContainer.propTypes = {
   channelName: PropTypes.string,
-  chessOpponent: PropTypes.object,
+  partner: PropTypes.object,
   currentChannel: PropTypes.object.isRequired,
   currentPathId: PropTypes.string,
   displayedThemeColor: PropTypes.string,
@@ -70,7 +70,7 @@ MessagesContainer.propTypes = {
 
 function MessagesContainer({
   channelName,
-  chessOpponent,
+  partner,
   currentChannel,
   currentPathId,
   displayedThemeColor,
@@ -1298,7 +1298,7 @@ function MessagesContainer({
                   channelId={selectedChannelId}
                   channelName={channelName}
                   chessCountdownNumber={chessCountdownNumber}
-                  chessOpponent={chessOpponent}
+                  partner={partner}
                   currentChannel={currentChannel}
                   displayedThemeColor={displayedThemeColor}
                   forceRefreshForMobile={handleForceRefreshForMobile}
@@ -1443,8 +1443,8 @@ function MessagesContainer({
           onDeclineRewind={handleDeclineRewind}
           onSetChessCountdownObj={setChessCountdownObj}
           onSpoilerClick={handleChessSpoilerClick}
-          opponentId={chessOpponent?.id}
-          opponentName={chessOpponent?.username}
+          opponentId={partner?.id}
+          opponentName={partner?.username}
           socketConnected={socketConnected}
         />
       )}

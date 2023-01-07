@@ -854,7 +854,7 @@ export default function Main({ currentPathId, onFileUpload }) {
               <Body
                 displayedThemeColor={displayedThemeColor}
                 channelName={currentChannelName}
-                chessOpponent={partner}
+                partner={partner}
                 currentChannel={currentChannel}
                 currentPathId={currentPathId}
                 subchannelId={selectedSubchannelId}
