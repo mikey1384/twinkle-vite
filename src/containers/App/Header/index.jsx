@@ -418,7 +418,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         card
       });
       if (buyerId === userId) {
-        onAddMyAICard(card.id);
+        onAddMyAICard(card);
       }
       if (sellerId === userId) {
         onDelistAICard(card.id);
@@ -427,7 +427,15 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    async function handleAICardSold({ feed, card }) {
+    async function handleAICardSold({ feed, card, offerId, sellerId }) {
+      if (card.ownerId === userId) {
+        onWithdrawOutgoingOffer(offerId);
+        onAddMyAICard(card);
+      }
+      if (sellerId === userId) {
+        onDelistAICard(card.id);
+        onRemoveMyAICard(card.id);
+      }
       onRemoveListedAICard(card.id);
       onUpdateAICard({
         cardId: card.id,

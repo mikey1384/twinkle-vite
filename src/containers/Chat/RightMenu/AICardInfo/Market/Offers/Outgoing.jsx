@@ -108,7 +108,7 @@ export default function Outgoing({ loadMoreButtonColor }) {
             }}
           >
             <b style={{ color: Color.darkerGray() }}>
-              You have not made any offers yet
+              You have no outgoing offers
             </b>
           </div>
         ) : (
