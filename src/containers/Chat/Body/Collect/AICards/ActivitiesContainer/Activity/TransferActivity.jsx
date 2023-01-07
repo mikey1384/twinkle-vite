@@ -72,6 +72,7 @@ export default function TransferActivity({
       return (
         <div>
           <UsernameText
+            onMenuShownChange={onSetUsermenuShown}
             color={Color.black()}
             user={{
               id: transfer.to.id,

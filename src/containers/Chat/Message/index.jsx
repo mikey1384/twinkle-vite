@@ -31,6 +31,7 @@ import localize from '~/constants/localize';
 import moment from 'moment';
 import FileAttachment from './FileAttachment';
 import TargetChessPosition from './TargetChessPosition';
+import TransferMessage from './TransferMessage';
 import { useInView } from 'react-intersection-observer';
 import { socket } from '~/constants/io';
 import { MessageStyle } from '../Styles';
@@ -49,7 +50,7 @@ const editLabel = localize('edit');
 
 Message.propTypes = {
   chessCountdownNumber: PropTypes.number,
-  chessOpponent: PropTypes.object,
+  partner: PropTypes.object,
   channelId: PropTypes.number,
   currentChannel: PropTypes.object,
   displayedThemeColor: PropTypes.string,
@@ -81,7 +82,7 @@ Message.propTypes = {
 function Message({
   channelId,
   chessCountdownNumber,
-  chessOpponent,
+  partner,
   currentChannel,
   displayedThemeColor,
   forceRefreshForMobile,
@@ -124,6 +125,7 @@ function Message({
     timeStamp,
     uploaderAuthLevel,
     userId,
+    transferDetails,
     wordleResult,
     isResign
   },
@@ -622,11 +624,22 @@ function Message({
     [channelId, messageId, myId]
   );
 
+  if (transferDetails) {
+    return (
+      <TransferMessage
+        myId={myId}
+        myUsername={myUsername}
+        partner={partner}
+        transferDetails={transferDetails}
+      />
+    );
+  }
+
   if (!chessState && (gameWinnerId || isDraw || isAbort)) {
     return (
       <GameOverMessage
         winnerId={gameWinnerId}
-        opponentName={chessOpponent?.username}
+        opponentName={partner?.username}
         myId={myId}
         isAbort={!!isAbort}
         isResign={!!isResign}
@@ -764,8 +777,8 @@ function Message({
                       onSetChessTarget({ chessState, messageId, channelId })
                     }
                     onSpoilerClick={handleChessSpoilerClick}
-                    opponentId={chessOpponent?.id}
-                    opponentName={chessOpponent?.username}
+                    opponentId={partner?.id}
+                    opponentName={partner?.username}
                     senderId={userId}
                     style={{ marginTop: '1rem', width: '100%' }}
                   />

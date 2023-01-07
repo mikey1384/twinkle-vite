@@ -10,7 +10,7 @@ import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 
 Body.propTypes = {
   channelName: PropTypes.string,
-  chessOpponent: PropTypes.object,
+  partner: PropTypes.object,
   currentChannel: PropTypes.object,
   currentPathId: PropTypes.string,
   displayedThemeColor: PropTypes.string,
@@ -20,7 +20,7 @@ Body.propTypes = {
 
 export default function Body({
   channelName,
-  chessOpponent,
+  partner,
   currentChannel,
   currentPathId,
   displayedThemeColor,
@@ -62,7 +62,7 @@ export default function Body({
             currentPathId={currentPathId}
             displayedThemeColor={displayedThemeColor}
             channelName={channelName}
-            chessOpponent={chessOpponent}
+            partner={partner}
             currentChannel={currentChannel}
             subchannelId={subchannelId}
             subchannelPath={subchannelPath}
