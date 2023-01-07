@@ -502,6 +502,13 @@ export default function Main({ currentPathId, onFileUpload }) {
       currentPathId !== VOCAB_CHAT_TYPE
     ) {
       navigate(`/chat/${VOCAB_CHAT_TYPE}`, { replace: true });
+    } else if (
+      chatType === AI_CARD_CHAT_TYPE &&
+      !prevPathId.current &&
+      !!currentPathId &&
+      currentPathId !== AI_CARD_CHAT_TYPE
+    ) {
+      navigate(`/chat/${AI_CARD_CHAT_TYPE}`, { replace: true });
     }
   }, [chatType, currentPathId, navigate]);
 
@@ -510,6 +517,9 @@ export default function Main({ currentPathId, onFileUpload }) {
       if (chatType === VOCAB_CHAT_TYPE) {
         prevPathId.current = VOCAB_CHAT_TYPE;
         navigate(`/chat/${VOCAB_CHAT_TYPE}`, { replace: true });
+      } else if (chatType === AI_CARD_CHAT_TYPE) {
+        prevPathId.current = AI_CARD_CHAT_TYPE;
+        navigate(`/chat/${AI_CARD_CHAT_TYPE}`, { replace: true });
       } else if (!isNaN(currentChannel.pathId)) {
         prevPathId.current = currentChannel.pathId;
         navigate(`/chat/${currentChannel.pathId}`, { replace: true });
