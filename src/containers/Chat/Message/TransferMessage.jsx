@@ -58,6 +58,7 @@ export default function TransferMessage({
       return (
         <div>
           <UsernameText
+            displayedName={buyer.id === myId ? 'You' : buyer.username}
             color={Color.black()}
             user={{
               id: buyer.id,
@@ -74,6 +75,7 @@ export default function TransferMessage({
           </b>{' '}
           from{' '}
           <UsernameText
+            displayedName={seller.id === myId ? 'you' : seller.username}
             color={Color.black()}
             user={{
               id: seller.id,
@@ -96,6 +98,7 @@ export default function TransferMessage({
       return (
         <div>
           <UsernameText
+            displayedName={seller.id === myId ? 'You' : seller.username}
             onMenuShownChange={setUsermenuShown}
             color={Color.black()}
             user={{
@@ -113,6 +116,7 @@ export default function TransferMessage({
           </b>{' '}
           to{' '}
           <UsernameText
+            displayedName={buyer.id === myId ? 'you' : buyer.username}
             onMenuShownChange={setUsermenuShown}
             color={Color.black()}
             user={{
@@ -147,61 +151,80 @@ export default function TransferMessage({
 
   return (
     <div
+      style={{
+        width: '100%',
+        padding: '2rem 1rem',
+        display: 'flex',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        marginTop: '3rem',
+        marginBottom: '3rem'
+      }}
       className={css`
-        padding: 0 3rem 0 2rem;
-        @media (max-width: ${mobileMaxWidth}) {
-          padding: 0 1rem 0 0.5rem;
+        cursor: pointer;
+        background: ${Color.whiteGray()};
+        &:hover {
+          background: ${Color.highlightGray()};
         }
       `}
-      style={{
-        display: 'flex',
-        width: '100%',
-        height: '100%'
-      }}
       onClick={() => console.log(usermenuShown)}
     >
       <div
+        className={css`
+          padding: 0 3rem 0 2rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 0 1rem 0 0.5rem;
+          }
+        `}
         style={{
-          width: '5rem',
           display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
-      >
-        <CardThumb card={card} />
-      </div>
-      <div
-        style={{
-          width: 'CALC(100% - 5rem)',
-          marginLeft: '3rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center'
+          width: '100%',
+          height: '100%'
         }}
       >
         <div
-          className={css`
-            padding-right: 1rem;
-            font-size: 1.7rem;
-            line-height: 1.5;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.2rem;
-            }
-          `}
+          style={{
+            width: '5rem',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
         >
-          {actionDescription}
+          <CardThumb card={card} />
         </div>
-      </div>
-      <div
-        style={{
-          width: '5rem',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
-      >
-        <CardThumb card={card} />
+        <div
+          style={{
+            width: 'CALC(100% - 5rem)',
+            marginLeft: '3rem',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <div
+            className={css`
+              padding-right: 1rem;
+              font-size: 1.7rem;
+              line-height: 1.5;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.2rem;
+              }
+            `}
+          >
+            {actionDescription}
+          </div>
+        </div>
+        <div
+          style={{
+            width: '5rem',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <CardThumb card={card} />
+        </div>
       </div>
     </div>
   );
