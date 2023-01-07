@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   cardLevelHash,
   cloudFrontURL,
@@ -42,11 +42,18 @@ export default function CardThumb({ card }) {
 
   return (
     <div
+      className={css`
+        width: 5rem;
+        height: 7rem;
+        border-radius: 3px;
+        @media (max-width: ${mobileMaxWidth}) {
+          width: 3.5rem;
+          height: 5.5rem;
+          border-radius: 2px;
+        }
+      `}
       style={{
         marginLeft: '0.5rem',
-        borderRadius: '3px',
-        width: '5rem',
-        height: '7rem',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
