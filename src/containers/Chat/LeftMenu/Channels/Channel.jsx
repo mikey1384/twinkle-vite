@@ -17,6 +17,7 @@ Channel.propTypes = {
   chatType: PropTypes.string,
   currentPathId: PropTypes.string,
   customChannelNames: PropTypes.object.isRequired,
+  partner: PropTypes.object,
   selectedChannelId: PropTypes.number
 };
 
@@ -35,6 +36,7 @@ function Channel({
     subchannelObj = {}
   },
   chatType,
+  partner,
   selectedChannelId
 }) {
   const {
@@ -100,7 +102,8 @@ function Channel({
       userId: senderId,
       username: senderName,
       isAbort,
-      isDraw
+      isDraw,
+      transferDetails
     }) {
       const messageSender = senderId
         ? senderId === userId
@@ -130,6 +133,23 @@ function Channel({
           <span>You lost the chess match</span>
         );
       }
+      if (transferDetails) {
+        const isPurchase = !!transferDetails?.askId;
+        const isSale = !!transferDetails?.offerId;
+        const buyer = transferDetails.to === userId ? 'You' : partner?.username;
+        const seller =
+          transferDetails.from === userId ? 'You' : partner?.username;
+        if (isPurchase) {
+          return (
+            <span>{`${buyer}: bought Card #${transferDetails?.card?.id}`}</span>
+          );
+        }
+        if (isSale) {
+          return (
+            <span>{`${seller}: sold Card #${transferDetails?.card?.id}`}</span>
+          );
+        }
+      }
       if (messageSender && content) {
         const truncatedContent =
           content.startsWith('/spoiler ') || content.startsWith('/secret ')
@@ -144,7 +164,7 @@ function Channel({
       }
       return '\u00a0';
     }
-  }, [lastMessage, userId]);
+  }, [lastMessage, partner?.username, userId]);
 
   const totalNumUnreads = useMemo(() => {
     let result = Number(numUnreads);

@@ -846,6 +846,7 @@ export default function Main({ currentPathId, onFileUpload }) {
                 loadingVocabulary={loadingVocabulary}
                 loadingAICardChat={loadingAICardChat}
                 onNewButtonClick={() => setCreateNewChatModalShown(true)}
+                partner={partner}
                 selectedChannelId={selectedChannelId}
                 subchannelIds={currentChannel.subchannelIds}
                 subchannelObj={currentChannel.subchannelObj}
