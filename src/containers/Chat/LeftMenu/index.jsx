@@ -23,7 +23,6 @@ LeftMenu.propTypes = {
   loadingVocabulary: PropTypes.bool,
   loadingAICardChat: PropTypes.bool,
   onNewButtonClick: PropTypes.func.isRequired,
-  partner: PropTypes.object,
   selectedChannelId: PropTypes.number,
   subchannelIds: PropTypes.arrayOf(PropTypes.number),
   subchannelObj: PropTypes.object,
@@ -37,7 +36,6 @@ function LeftMenu({
   loadingVocabulary,
   loadingAICardChat,
   onNewButtonClick,
-  partner,
   selectedChannelId,
   subchannelIds,
   subchannelObj,
@@ -174,7 +172,7 @@ function LeftMenu({
             subchannelPath={subchannelPath}
           />
         ) : null}
-        <Channels partner={partner} currentPathId={currentPathId} />
+        <Channels currentPathId={currentPathId} />
       </div>
     </ErrorBoundary>
   );

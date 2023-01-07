@@ -17,7 +17,6 @@ Channel.propTypes = {
   chatType: PropTypes.string,
   currentPathId: PropTypes.string,
   customChannelNames: PropTypes.object.isRequired,
-  partner: PropTypes.object,
   selectedChannelId: PropTypes.number
 };
 
@@ -36,7 +35,6 @@ function Channel({
     subchannelObj = {}
   },
   chatType,
-  partner,
   selectedChannelId
 }) {
   const {
@@ -93,6 +91,13 @@ function Channel({
     }
     return mostRecentMessage;
   }, [messageIds, messagesObj, subchannelObj]);
+
+  const otherMember = twoPeople
+    ? members
+        ?.filter(({ id: memberId }) => memberId !== userId)
+        ?.map(({ username }) => username)?.[0]
+    : undefined;
+
   const PreviewMessage = useMemo(() => {
     return renderPreviewMessage(lastMessage || {});
     function renderPreviewMessage({
@@ -136,9 +141,8 @@ function Channel({
       if (transferDetails) {
         const isPurchase = !!transferDetails?.askId;
         const isSale = !!transferDetails?.offerId;
-        const buyer = transferDetails.to === userId ? 'You' : partner?.username;
-        const seller =
-          transferDetails.from === userId ? 'You' : partner?.username;
+        const buyer = transferDetails.to === userId ? 'You' : otherMember;
+        const seller = transferDetails.from === userId ? 'You' : otherMember;
         if (isPurchase) {
           return (
             <span>{`${buyer}: bought Card #${transferDetails?.card?.id}`}</span>
@@ -164,7 +168,7 @@ function Channel({
       }
       return '\u00a0';
     }
-  }, [lastMessage, partner?.username, userId]);
+  }, [lastMessage, otherMember, userId]);
 
   const totalNumUnreads = useMemo(() => {
     let result = Number(numUnreads);
@@ -173,12 +177,6 @@ function Channel({
     }
     return result;
   }, [numUnreads, subchannelObj]);
-
-  const otherMember = twoPeople
-    ? members
-        ?.filter(({ id: memberId }) => memberId !== userId)
-        ?.map(({ username }) => username)?.[0]
-    : undefined;
 
   const ChannelName = useMemo(
     () => otherMember || effectiveChannelName || `(${deletedLabel})`,
