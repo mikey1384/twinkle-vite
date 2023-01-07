@@ -4,7 +4,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import CardThumb from '../../../../../CardThumb';
+import CardThumb from '~/components/CardThumb';
 
 TransferActivity.propTypes = {
   card: PropTypes.object.isRequired,

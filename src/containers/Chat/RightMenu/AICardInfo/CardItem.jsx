@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { cardLevelHash } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import CardThumb from '../../CardThumb';
+import CardThumb from '~/components/CardThumb';
 
 CardItem.propTypes = {
   card: PropTypes.object.isRequired,
