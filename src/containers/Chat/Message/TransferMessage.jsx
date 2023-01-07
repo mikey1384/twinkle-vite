@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import CardThumb from '~/components/CardThumb';
+import AICardModal from '~/components/Modals/AICardModal';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -23,6 +24,7 @@ export default function TransferMessage({
   transferDetails
 }) {
   const [usermenuShown, setUsermenuShown] = useState(false);
+  const [cardModalShown, setCardModalShown] = useState(false);
   const isPurchase = useMemo(() => !!transferDetails?.askId, [transferDetails]);
   const isSale = useMemo(() => !!transferDetails?.offerId, [transferDetails]);
   const isTransaction = useMemo(
@@ -167,7 +169,9 @@ export default function TransferMessage({
           background: ${Color.highlightGray()};
         }
       `}
-      onClick={() => console.log(usermenuShown)}
+      onClick={() => {
+        if (!usermenuShown && !cardModalShown) setCardModalShown(true);
+      }}
     >
       <div
         className={css`
@@ -226,6 +230,9 @@ export default function TransferMessage({
           <CardThumb card={card} />
         </div>
       </div>
+      {cardModalShown && (
+        <AICardModal cardId={card.id} onHide={() => setCardModalShown(false)} />
+      )}
     </div>
   );
 }
