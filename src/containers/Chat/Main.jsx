@@ -397,7 +397,7 @@ export default function Main({ currentPathId, onFileUpload }) {
       if (currentPathId === VOCAB_CHAT_TYPE) {
         handleEnterVocabulary();
       } else {
-        handleEnterAIImageChat();
+        handleEnterAICardChat();
       }
     } else {
       isUsingCollectRef.current = false;
@@ -556,7 +556,7 @@ export default function Main({ currentPathId, onFileUpload }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatType]);
 
-  const handleEnterAIImageChat = useCallback(async () => {
+  const handleEnterAICardChat = useCallback(async () => {
     if (chatType === AI_CARD_CHAT_TYPE) return;
     onUpdateChatType(AI_CARD_CHAT_TYPE);
     onSetLoadingAIImageChat(true);
