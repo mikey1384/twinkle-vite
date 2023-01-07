@@ -157,7 +157,10 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
               <div
                 className={css`
                   margin-top: 0.5rem;
-                  font-size: 1.1rem;
+                  font-size: 1.2rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.1rem;
+                  }
                 `}
               >
                 <Icon
