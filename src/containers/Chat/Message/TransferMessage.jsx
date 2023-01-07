@@ -70,6 +70,14 @@ export default function TransferMessage({
           >
             Card #{card.id}
           </b>{' '}
+          from{' '}
+          <UsernameText
+            color={Color.black()}
+            user={{
+              id: seller.id,
+              username: seller.username
+            }}
+          />{' '}
           for{' '}
           <b
             style={{
@@ -78,14 +86,7 @@ export default function TransferMessage({
           >
             {addCommasToNumber(price)}
           </b>{' '}
-          Twinkle {price === 1 ? 'Coin' : 'Coins'} from{' '}
-          <UsernameText
-            color={Color.black()}
-            user={{
-              id: seller.id,
-              username: seller.username
-            }}
-          />
+          Twinkle {price === 1 ? 'Coin' : 'Coins'}
         </div>
       );
     }
