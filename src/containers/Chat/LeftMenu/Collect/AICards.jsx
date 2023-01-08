@@ -42,18 +42,18 @@ export default function AICards() {
     if (lastActivity?.type === 'offer') {
       return `offered ${addCommasToNumber(lastActivity?.offer?.price)} coin${
         lastActivity?.offer?.price > 1 ? 's' : ''
-      } for a${card.quality === 'elite' ? 'n' : ''}`;
+      } for a${card?.quality === 'elite' ? 'n' : ''}`;
     }
     if (lastActivity?.type === 'transfer') {
       if (!!lastActivity?.transfer?.askId) {
-        return `bought a${card.quality === 'elite' ? 'n' : ''}`;
+        return `bought a${card?.quality === 'elite' ? 'n' : ''}`;
       }
       if (!!lastActivity?.transfer?.offerId) {
-        return `sold a${card.quality === 'elite' ? 'n' : ''}`;
+        return `sold a${card?.quality === 'elite' ? 'n' : ''}`;
       }
     }
-    return `summoned a${card.quality === 'elite' ? 'n' : ''}`;
-  }, [aiCardFeeds, card.quality]);
+    return `summoned a${card?.quality === 'elite' ? 'n' : ''}`;
+  }, [aiCardFeeds, card?.quality]);
 
   return (
     <div style={{ height: '5rem', position: 'relative' }}>
