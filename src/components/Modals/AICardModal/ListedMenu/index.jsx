@@ -5,6 +5,7 @@ import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import OwnerMenu from './OwnerMenu';
 import NonOwnerMenu from './NonOwnerMenu';
+import { useKeyContext } from '~/contexts';
 
 ListedMenu.propTypes = {
   askPrice: PropTypes.number.isRequired,
@@ -27,12 +28,15 @@ export default function ListedMenu({
   userIsOwner,
   askPrice
 }) {
+  const {
+    xpNumber: { color: xpNumberColor }
+  } = useKeyContext((v) => v.theme);
   return (
     <div
       style={{
         width: '100%',
         display: 'flex',
-        marginTop: '-5rem',
+        marginTop: '-1rem',
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column'
@@ -51,6 +55,33 @@ export default function ListedMenu({
           }
         `}
       >
+        <div
+          style={{ width: '100%', textAlign: 'center', marginBottom: '1rem' }}
+        >
+          <b style={{ color: Color.redOrange() }}>Burn</b> value
+          <div style={{ marginTop: '0.5rem' }}>
+            <b style={{ color: Color[xpNumberColor]() }}>
+              {addCommasToNumber(burnXP)}
+            </b>{' '}
+            <b style={{ color: Color.gold() }}>XP</b>
+          </div>
+          <p
+            className={css`
+              margin-top: 0.5rem;
+              font-size: 1.1rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-top: 0.3rem;
+                font-size: 0.8rem;
+              }
+            `}
+          >
+            (Burning this card yields{' '}
+            <b style={{ color: Color[xpNumberColor]() }}>
+              {addCommasToNumber(burnXP)}
+            </b>{' '}
+            <b style={{ color: Color.gold() }}>XP</b>)
+          </p>
+        </div>
         {userIsOwner ? (
           <div style={{ textAlign: 'center' }}>
             You listed this card for
