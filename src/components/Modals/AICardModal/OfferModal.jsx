@@ -26,6 +26,7 @@ export default function OfferModal({
   onSetOffers,
   twinkleCoins
 }) {
+  const [posting, setPosting] = useState(false);
   const [amount, setAmount] = useState(0);
   const postAICardOffer = useAppContext(
     (v) => v.requestHelpers.postAICardOffer
@@ -77,6 +78,7 @@ export default function OfferModal({
           <Button
             filled
             color="oceanBlue"
+            loading={posting}
             onClick={handlePostOffer}
             disabled={!(amount || myId)}
             style={{
@@ -106,6 +108,7 @@ export default function OfferModal({
   }
 
   async function handlePostOffer() {
+    setPosting(true);
     const coins = await postAICardOffer({ cardId, price: amount });
     onSetOffers((prevOffers) => {
       const result = [];
