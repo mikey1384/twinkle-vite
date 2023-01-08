@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import CardThumb from '~/components/CardThumb';
-import AICardModal from '~/components/Modals/AICardModal';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -14,17 +13,18 @@ TransferMessage.propTypes = {
     id: PropTypes.number.isRequired,
     username: PropTypes.string.isRequired
   }).isRequired,
-  transferDetails: PropTypes.object.isRequired
+  transferDetails: PropTypes.object.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired
 };
 
 export default function TransferMessage({
   myId,
   myUsername,
   partner,
-  transferDetails
+  transferDetails,
+  onSetAICardModalCardId
 }) {
   const [usermenuShown, setUsermenuShown] = useState(false);
-  const [cardModalShown, setCardModalShown] = useState(false);
   const isPurchase = useMemo(() => !!transferDetails?.askId, [transferDetails]);
   const isSale = useMemo(() => !!transferDetails?.offerId, [transferDetails]);
   const isTransaction = useMemo(
@@ -163,14 +163,14 @@ export default function TransferMessage({
         marginBottom: '3rem'
       }}
       className={css`
-        ${cardModalShown ? '' : 'cursor: pointer;'}
+        cursor: pointer;
         background: ${Color.whiteGray()};
         &:hover {
           background: ${Color.highlightGray()};
         }
       `}
       onClick={() => {
-        if (!usermenuShown && !cardModalShown) setCardModalShown(true);
+        if (!usermenuShown) onSetAICardModalCardId(card.id);
       }}
     >
       <div
@@ -230,9 +230,6 @@ export default function TransferMessage({
           <CardThumb card={card} />
         </div>
       </div>
-      {cardModalShown && (
-        <AICardModal cardId={card.id} onHide={() => setCardModalShown(false)} />
-      )}
     </div>
   );
 }

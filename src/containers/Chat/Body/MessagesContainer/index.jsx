@@ -64,6 +64,7 @@ MessagesContainer.propTypes = {
   currentChannel: PropTypes.object.isRequired,
   currentPathId: PropTypes.string,
   displayedThemeColor: PropTypes.string,
+  onSetAICardModalCardId: PropTypes.func,
   subchannelId: PropTypes.number,
   subchannelPath: PropTypes.string
 };
@@ -74,6 +75,7 @@ function MessagesContainer({
   currentChannel,
   currentPathId,
   displayedThemeColor,
+  onSetAICardModalCardId,
   subchannelId,
   subchannelPath
 }) {
@@ -1320,6 +1322,7 @@ function MessagesContainer({
                   onReplyClick={() => ChatInputRef.current.focus()}
                   onRequestRewind={handleRequestChessRewind}
                   onRewardMessageSubmit={handleRewardMessageSubmit}
+                  onSetAICardModalCardId={onSetAICardModalCardId}
                   onSetChessTarget={handleSetChessTarget}
                   onScrollToBottom={handleScrollToBottom}
                   recipientId={recipientId}

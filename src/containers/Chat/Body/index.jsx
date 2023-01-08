@@ -14,6 +14,7 @@ Body.propTypes = {
   currentChannel: PropTypes.object,
   currentPathId: PropTypes.string,
   displayedThemeColor: PropTypes.string,
+  onSetAICardModalCardId: PropTypes.func,
   subchannelId: PropTypes.number,
   subchannelPath: PropTypes.string
 };
@@ -24,6 +25,7 @@ export default function Body({
   currentChannel,
   currentPathId,
   displayedThemeColor,
+  onSetAICardModalCardId,
   subchannelId,
   subchannelPath
 }) {
@@ -64,6 +66,7 @@ export default function Body({
             channelName={channelName}
             partner={partner}
             currentChannel={currentChannel}
+            onSetAICardModalCardId={onSetAICardModalCardId}
             subchannelId={subchannelId}
             subchannelPath={subchannelPath}
           />

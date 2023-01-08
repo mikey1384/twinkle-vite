@@ -859,6 +859,7 @@ export default function Main({ currentPathId, onFileUpload }) {
                 currentPathId={currentPathId}
                 subchannelId={selectedSubchannelId}
                 subchannelPath={subchannelPath}
+                onSetAICardModalCardId={setAICardModalCardId}
               />
               <RightMenu
                 channelOnCall={channelOnCall}
