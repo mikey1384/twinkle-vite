@@ -1,7 +1,7 @@
 import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 
-export const clientVersion = '1.7.9';
+export const clientVersion = '1.7.10';
 export const defaultChatSubject = 'Welcome!';
 export const defaultContentState = {
   isEditing: false,
@@ -297,31 +297,31 @@ export const wordLevelHash = {
   1: {
     label: 'basic',
     rewardAmount: 10,
-    coinAmount: 100,
+    coinAmount: 50,
     color: 'logoBlue'
   },
   2: {
     label: 'elementary',
     rewardAmount: 25,
-    coinAmount: 250,
+    coinAmount: 125,
     color: 'pink'
   },
   3: {
     label: 'intermediate',
     rewardAmount: 50,
-    coinAmount: 500,
+    coinAmount: 250,
     color: 'orange'
   },
   4: {
     label: 'advanced',
     rewardAmount: 100,
-    coinAmount: 1000,
+    coinAmount: 500,
     color: 'red'
   },
   5: {
     label: 'epic',
     rewardAmount: 500,
-    coinAmount: 5000,
+    coinAmount: 1000,
     color: 'gold'
   }
 };
