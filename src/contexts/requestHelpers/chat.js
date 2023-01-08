@@ -624,7 +624,10 @@ export default function chatRequestHelpers({ auth, handleError }) {
       try {
         const {
           data: { card }
-        } = await request.get(`${URL}/chat/aiCard/card?cardId=${cardId}`);
+        } = await request.get(
+          `${URL}/chat/aiCard/card?cardId=${cardId}`,
+          auth()
+        );
         return Promise.resolve(card);
       } catch (error) {
         return handleError(error);
