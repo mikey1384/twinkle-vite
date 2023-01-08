@@ -4,6 +4,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ChangeListItem from './ChangeListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import Loading from '~/components/Loading';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -24,6 +25,7 @@ export default function BalanceModal({ onHide }) {
   );
   const [changes, setChanges] = useState([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const ListRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -31,9 +33,11 @@ export default function BalanceModal({ onHide }) {
   useEffect(() => {
     init();
     async function init() {
+      setLoading(true);
       const { changes, loadMoreShown } = await loadCoinHistory();
       setChanges(changes);
       setLoadMoreShown(loadMoreShown);
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -80,59 +84,63 @@ export default function BalanceModal({ onHide }) {
             {addCommasToNumber(twinkleCoins)}
           </p>
         </div>
-        <div
-          ref={ListRef}
-          className={css`
-            width: 80%;
-            height: 50vh;
-            overflow: scroll;
-            border: 1px solid ${Color.borderGray()};
-            nav {
-              padding: 1.5rem;
-              border-bottom: 1px solid ${Color.borderGray()};
-              border-left: none;
-              border-right: none;
-              &:last-of-type {
-                border-bottom: none;
-              }
-            }
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 100%;
-            }
-          `}
-        >
-          {changes.map((change) => {
-            const accumulatedChanges = changes
-              .filter((v) => v.id > change.id)
-              .reduce((acc, v) => {
-                if (v.type === 'increase') {
-                  return acc - v.amount;
-                } else {
-                  return acc + v.amount;
+        {loading ? (
+          <Loading />
+        ) : (
+          <div
+            ref={ListRef}
+            className={css`
+              width: 80%;
+              height: 50vh;
+              overflow: scroll;
+              border: 1px solid ${Color.borderGray()};
+              nav {
+                padding: 1.5rem;
+                border-bottom: 1px solid ${Color.borderGray()};
+                border-left: none;
+                border-right: none;
+                &:last-of-type {
+                  border-bottom: none;
                 }
-              }, 0);
-            return (
-              <ChangeListItem
-                key={change.id}
-                change={change}
-                balance={twinkleCoins + accumulatedChanges}
+              }
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 100%;
+              }
+            `}
+          >
+            {changes.map((change) => {
+              const accumulatedChanges = changes
+                .filter((v) => v.id > change.id)
+                .reduce((acc, v) => {
+                  if (v.type === 'increase') {
+                    return acc - v.amount;
+                  } else {
+                    return acc + v.amount;
+                  }
+                }, 0);
+              return (
+                <ChangeListItem
+                  key={change.id}
+                  change={change}
+                  balance={twinkleCoins + accumulatedChanges}
+                />
+              );
+            })}
+            {loadMoreShown && (
+              <LoadMoreButton
+                filled
+                style={{
+                  width: '100%',
+                  borderRadius: 0,
+                  border: 0
+                }}
+                loading={loadingMore}
+                color={loadMoreButtonColor}
+                onClick={handleLoadMore}
               />
-            );
-          })}
-          {loadMoreShown && (
-            <LoadMoreButton
-              filled
-              style={{
-                width: '100%',
-                borderRadius: 0,
-                border: 0
-              }}
-              loading={loadingMore}
-              color={loadMoreButtonColor}
-              onClick={handleLoadMore}
-            />
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </main>
       <footer>
         <Button transparent onClick={onHide}>
