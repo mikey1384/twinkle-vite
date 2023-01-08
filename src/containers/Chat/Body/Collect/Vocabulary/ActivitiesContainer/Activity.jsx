@@ -138,32 +138,26 @@ export default function Activity({
             </span>{' '}
             <span style={{ color: Color.gold() }}>XP</span>
           </b>
-          {wordLevel > 3 && (
-            <>
-              <span>와</span>{' '}
-              <b
-                className={css`
-                  margin-left: 0.3rem;
-                  font-size: ${wordLevel === 5 ? '2.5rem' : '2.3rem'};
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: ${wordLevel === 5 ? '1.7rem' : '1.5rem'};
-                  }
-                `}
-              >
-                <Icon
-                  icon={['far', 'badge-dollar']}
-                  style={{
-                    color: Color.brownOrange()
-                  }}
-                />
-                <span
-                  style={{ color: Color.brownOrange(), marginLeft: '0.3rem' }}
-                >
-                  {addCommasToNumber(wordLevelHash[wordLevel].coinAmount)}
-                </span>
-              </b>
-            </>
-          )}
+          <span>와</span>{' '}
+          <b
+            className={css`
+              margin-left: 0.3rem;
+              font-size: ${wordLevel === 5 ? '2.5rem' : '2.3rem'};
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: ${wordLevel === 5 ? '1.7rem' : '1.5rem'};
+              }
+            `}
+          >
+            <Icon
+              icon={['far', 'badge-dollar']}
+              style={{
+                color: Color.brownOrange()
+              }}
+            />
+            <span style={{ color: Color.brownOrange(), marginLeft: '0.3rem' }}>
+              {addCommasToNumber(wordLevelHash[wordLevel].coinAmount)}
+            </span>
+          </b>
           를 지급 받았습니다:{' '}
           <span
             className={css`
@@ -238,34 +232,27 @@ export default function Activity({
             {addCommasToNumber(wordLevelHash[wordLevel].rewardAmount)}
           </span>{' '}
           <span style={{ color: Color.gold() }}>XP</span>
+        </b>{' '}
+        <span>and</span>{' '}
+        <b
+          className={css`
+            margin-left: 0.3rem;
+            font-size: ${wordLevel === 5 ? '2.5rem' : '2.3rem'};
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: ${wordLevel === 5 ? '1.7rem' : '1.5rem'};
+            }
+          `}
+        >
+          <Icon
+            icon={['far', 'badge-dollar']}
+            style={{
+              color: Color.brownOrange()
+            }}
+          />
+          <span style={{ color: Color.brownOrange(), marginLeft: '0.3rem' }}>
+            {addCommasToNumber(wordLevelHash[wordLevel].coinAmount)}
+          </span>
         </b>
-        {wordLevel > 3 && (
-          <>
-            {' '}
-            <span>and</span>{' '}
-            <b
-              className={css`
-                margin-left: 0.3rem;
-                font-size: ${wordLevel === 5 ? '2.5rem' : '2.3rem'};
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: ${wordLevel === 5 ? '1.7rem' : '1.5rem'};
-                }
-              `}
-            >
-              <Icon
-                icon={['far', 'badge-dollar']}
-                style={{
-                  color: Color.brownOrange()
-                }}
-              />
-              <span
-                style={{ color: Color.brownOrange(), marginLeft: '0.3rem' }}
-              >
-                {addCommasToNumber(wordLevelHash[wordLevel].coinAmount)}
-              </span>
-            </b>
-          </>
-        )}
       </div>
     );
   }, [content, linkColor, wordLabel, wordLevel, xpNumberColor]);

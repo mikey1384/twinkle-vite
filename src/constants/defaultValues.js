@@ -297,28 +297,31 @@ export const wordLevelHash = {
   1: {
     label: 'basic',
     rewardAmount: 10,
+    coinAmount: 100,
     color: 'logoBlue'
   },
   2: {
     label: 'elementary',
     rewardAmount: 25,
+    coinAmount: 250,
     color: 'pink'
   },
   3: {
     label: 'intermediate',
     rewardAmount: 50,
+    coinAmount: 500,
     color: 'orange'
   },
   4: {
     label: 'advanced',
     rewardAmount: 100,
-    coinAmount: 5,
+    coinAmount: 1000,
     color: 'red'
   },
   5: {
     label: 'epic',
     rewardAmount: 500,
-    coinAmount: 100,
+    coinAmount: 5000,
     color: 'gold'
   }
 };
