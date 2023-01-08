@@ -16,13 +16,12 @@ export default function ActivitiesContainer() {
   const aiCardLoadMoreButton = useChatContext(
     (v) => v.state.aiCardLoadMoreButton
   );
-  const onLoadMoreAIImages = useChatContext(
-    (v) => v.actions.onLoadMoreAIImages
-  );
+  const onLoadMoreAICards = useChatContext((v) => v.actions.onLoadMoreAICards);
   const [loadingMore, setLoadingMore] = useState(false);
   const [scrollAtBottom, setScrollAtBottom] = useState(false);
   const [scrollHeight, setScrollHeight] = useState(0);
   const timerRef = useRef(null);
+  const loadingMoreRef = useRef(false);
   const ActivitiesContainerRef = useRef(null);
   const ContentRef = useRef(null);
   useEffect(() => {
@@ -133,16 +132,18 @@ export default function ActivitiesContainer() {
   async function handleLoadMore() {
     if (aiCardLoadMoreButton) {
       const prevContentHeight = ContentRef.current?.offsetHeight || 0;
-      if (!loadingMore) {
+      if (!loadingMore && !loadingMoreRef.current) {
+        loadingMoreRef.current = true;
         setLoadingMore(true);
         const { cardFeeds, cardObj, loadMoreShown } = await loadAICardFeeds(
           aiCardFeeds[0].id
         );
-        onLoadMoreAIImages({ cardFeeds, cardObj, loadMoreShown });
+        onLoadMoreAICards({ cardFeeds, cardObj, loadMoreShown });
         startTransition(() => {
           setScrollHeight(prevContentHeight);
+          setLoadingMore(false);
+          loadingMoreRef.current = false;
         });
-        setLoadingMore(false);
       }
     }
   }
