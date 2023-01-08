@@ -36,7 +36,6 @@ export default function ListedMenu({
       style={{
         width: '100%',
         display: 'flex',
-        marginTop: '-1rem',
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column'
