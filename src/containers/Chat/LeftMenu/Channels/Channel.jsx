@@ -92,11 +92,13 @@ function Channel({
     return mostRecentMessage;
   }, [messageIds, messagesObj, subchannelObj]);
 
-  const otherMember = twoPeople
-    ? members
-        ?.filter(({ id: memberId }) => memberId !== userId)
-        ?.map(({ username }) => username)?.[0]
-    : undefined;
+  const otherMember = useMemo(() => {
+    return twoPeople
+      ? members
+          ?.filter(({ id: memberId }) => memberId !== userId)
+          ?.map(({ username }) => username)?.[0]
+      : undefined;
+  }, [members, twoPeople, userId]);
 
   const PreviewMessage = useMemo(() => {
     return renderPreviewMessage(lastMessage || {});

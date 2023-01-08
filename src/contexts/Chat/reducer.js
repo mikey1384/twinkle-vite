@@ -1723,6 +1723,7 @@ export default function ChatReducer(state, action) {
                 ...action.message
               }
             },
+            twoPeople: action.isTwoPeople,
             pathId: action.pathId,
             messageIds: [messageId],
             isClass: action.isClass,
