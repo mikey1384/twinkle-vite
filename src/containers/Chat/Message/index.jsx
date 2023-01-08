@@ -72,6 +72,7 @@ Message.propTypes = {
   onReceiveNewMessage: PropTypes.func,
   onReplyClick: PropTypes.func,
   onRequestRewind: PropTypes.func,
+  onSetAICardModalCardId: PropTypes.func,
   onSetChessTarget: PropTypes.func,
   onRewardMessageSubmit: PropTypes.func.isRequired,
   onScrollToBottom: PropTypes.func.isRequired,
@@ -140,6 +141,7 @@ function Message({
   onReplyClick,
   onRequestRewind,
   onRewardMessageSubmit,
+  onSetAICardModalCardId,
   onSetChessTarget,
   onScrollToBottom,
   onShowSubjectMsgsModal,
@@ -631,6 +633,7 @@ function Message({
         myUsername={myUsername}
         partner={partner}
         transferDetails={transferDetails}
+        onSetAICardModalCardId={onSetAICardModalCardId}
       />
     );
   }
