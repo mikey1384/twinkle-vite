@@ -24,11 +24,12 @@ export default function CardThumb({ card }) {
     [card?.level]
   );
   const burnXP = useMemo(() => {
+    if (!card) return 0;
     return returnCardBurnXP({
       cardLevel: card.level,
       cardQuality: card.quality
     });
-  }, [card?.level, card?.quality]);
+  }, [card]);
   const displayedBurnXP = useMemo(() => {
     if (burnXP < 1000) return burnXP;
     if (burnXP < 1000000) return `${(burnXP / 1000).toFixed(1)}K`;
