@@ -23,10 +23,11 @@ import ListedMenu from './ListedMenu';
 
 AICardModal.propTypes = {
   cardId: PropTypes.number.isRequired,
+  modalOverModal: PropTypes.bool,
   onHide: PropTypes.func.isRequired
 };
 
-export default function AICardModal({ cardId, onHide }) {
+export default function AICardModal({ cardId, modalOverModal, onHide }) {
   const {
     userLink: { color: userLinkColor },
     loadMoreButton: { color: loadMoreButtonColor }
@@ -194,7 +195,7 @@ export default function AICardModal({ cardId, onHide }) {
     <Modal
       closeWhenClickedOutside={!(usermenuShown || signinModalShown)}
       large
-      modalOverModal
+      modalOverModal={modalOverModal}
       onHide={onHide}
     >
       <header>
