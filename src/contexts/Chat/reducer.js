@@ -1263,7 +1263,7 @@ export default function ChatReducer(state, action) {
         ...state,
         cardObj: {
           ...state.cardObj,
-          ...objectify(action.offers)
+          ...objectify(action.offers.map((offer) => offer.card))
         },
         incomingOffers: state.incomingOffers.concat(action.offers),
         incomingOffersLoadMoreButton: action.loadMoreShown
@@ -1274,7 +1274,7 @@ export default function ChatReducer(state, action) {
         ...state,
         cardObj: {
           ...state.cardObj,
-          ...objectify(action.offers)
+          ...objectify(action.offers.map((offer) => offer.card))
         },
         outgoingOffers: state.outgoingOffers.concat(action.offers),
         outgoingOffersLoadMoreButton: action.loadMoreShown
