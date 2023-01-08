@@ -50,7 +50,7 @@ export const initialChatState = {
   outgoingOffers: [],
   outgoingOffersLoadMoreButton: false,
   peerStreams: {},
-  recepientId: null,
+  recipientId: null,
   replyTarget: null,
   selectedChannelId: null,
   selectedChatTab: 'home',

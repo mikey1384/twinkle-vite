@@ -52,7 +52,7 @@ MessageInput.propTypes = {
   onSetTextAreaHeight: PropTypes.func.isRequired,
   chessTarget: PropTypes.object,
   replyTarget: PropTypes.object,
-  recepientId: PropTypes.number,
+  recipientId: PropTypes.number,
   socketConnected: PropTypes.bool,
   subchannelId: PropTypes.number,
   subjectId: PropTypes.number,
@@ -78,7 +78,7 @@ export default function MessageInput({
   onSetTextAreaHeight,
   chessTarget,
   replyTarget,
-  recepientId,
+  recipientId,
   socketConnected,
   subchannelId,
   subjectId,
@@ -504,7 +504,7 @@ export default function MessageInput({
         <UploadModal
           initialCaption={inputText}
           isRespondingToSubject={isRespondingToSubject}
-          recepientId={recepientId}
+          recipientId={recipientId}
           subjectId={subjectId}
           channelId={selectedChannelId}
           fileObj={fileObj}

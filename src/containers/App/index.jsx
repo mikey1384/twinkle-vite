@@ -324,17 +324,17 @@ function App() {
       fileName,
       filePath,
       fileToUpload,
-      recepientId,
+      recipientId,
       messageId: tempMessageId,
       targetMessageId,
       subchannelId,
       subjectId,
       thumbnail
     }) => {
-      if (channelId === 0 && !recepientId) {
+      if (channelId === 0 && !recipientId) {
         reportError({
           componentPath: 'App/index',
-          message: `handleFileUploadOnChat: User is trying to send the first file message to someone but recepient ID is missing`
+          message: `handleFileUploadOnChat: User is trying to send the first file message to someone but recipient ID is missing`
         });
         return window.location.reload();
       }
@@ -347,7 +347,7 @@ function App() {
         fileName,
         filePath,
         fileToUpload,
-        recepientId,
+        recipientId,
         subchannelId
       });
       promises.push(
@@ -386,7 +386,7 @@ function App() {
           fileName,
           fileSize: fileToUpload.size,
           path: filePath,
-          recepientId,
+          recipientId,
           targetMessageId,
           chessState: currentChannel.chessTarget,
           thumbUrl,
@@ -442,7 +442,7 @@ function App() {
         onSendFirstDirectMessage({ channel, message });
         socket.emit('join_chat_group', message.channelId);
         socket.emit('send_bi_chat_invitation', {
-          userId: recepientId,
+          userId: recipientId,
           members: currentChannel.members,
           pathId: channel.pathId,
           message

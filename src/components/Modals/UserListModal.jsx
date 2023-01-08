@@ -131,19 +131,19 @@ export default function UserListModal({
 
   async function handleTalkClick(user) {
     if (user.id !== userId) {
-      const { channelId, pathId } = await loadDMChannel({ recepient: user });
+      const { channelId, pathId } = await loadDMChannel({ recipient: user });
       if (!pathId) {
         if (!user?.id) {
           return reportError({
             componentPath: 'Modals/UserListModal',
-            message: `handleTalkClick: recepient userId is null. recepient: ${JSON.stringify(
+            message: `handleTalkClick: recipient userId is null. recipient: ${JSON.stringify(
               user
             )}`
           });
         }
         onOpenNewChatTab({
           user: { username, id: userId, profilePicUrl, authLevel },
-          recepient: {
+          recipient: {
             username: user.username,
             id: user.id,
             profilePicUrl: user.profilePicUrl,
