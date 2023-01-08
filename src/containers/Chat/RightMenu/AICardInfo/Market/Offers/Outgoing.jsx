@@ -148,7 +148,7 @@ export default function Outgoing({ loadMoreButtonColor }) {
       displayedOutgoingOffers[displayedOutgoingOffers.length - 1].id;
     const { cards: offers, loadMoreShown } = await getMyAICardOffers(lastId);
     onLoadMoreOutgoingOffers({
-      cards: offers,
+      offers,
       loadMoreShown
     });
     setLoadingMore(false);
