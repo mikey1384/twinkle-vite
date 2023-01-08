@@ -8,6 +8,7 @@ import NonOwnerMenu from './NonOwnerMenu';
 
 ListedMenu.propTypes = {
   askPrice: PropTypes.number.isRequired,
+  burnXP: PropTypes.number.isRequired,
   cardId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
   myOffer: PropTypes.object,
@@ -17,6 +18,7 @@ ListedMenu.propTypes = {
 };
 
 export default function ListedMenu({
+  burnXP,
   cardId,
   myId,
   myOffer,
@@ -97,7 +99,11 @@ export default function ListedMenu({
         )}
       </div>
       {userIsOwner ? (
-        <OwnerMenu style={{ marginTop: '1rem' }} cardId={cardId} />
+        <OwnerMenu
+          burnXP={burnXP}
+          style={{ marginTop: '1rem' }}
+          cardId={cardId}
+        />
       ) : (
         <NonOwnerMenu
           myId={myId}

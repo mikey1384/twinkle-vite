@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -15,7 +15,7 @@ import Loading from '~/components/Loading';
 import { socket } from '~/constants/io';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { qualityProps } from '~/constants/defaultValues';
+import { qualityProps, returnCardBurnXP } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import Offers from './Offers';
 import UnlistedMenu from './UnlistedMenu';
@@ -65,6 +65,13 @@ export default function AICardModal({ cardId, onHide }) {
   const [offerPrice, setOfferPrice] = useState(0);
   const card = cardObj[cardId];
   const loadingRef = useRef(false);
+
+  const burnXP = useMemo(() => {
+    return returnCardBurnXP({
+      cardLevel: card.level,
+      cardQuality: card.quality
+    });
+  }, [card.level, card.quality]);
 
   useEffect(() => {
     if (!card && !loadingRef.current) {
@@ -388,6 +395,7 @@ export default function AICardModal({ cardId, onHide }) {
                     </div>
                   ) : card.isListed ? (
                     <ListedMenu
+                      burnXP={burnXP}
                       cardId={card.id}
                       myId={userId}
                       myOffer={card.myOffer}
