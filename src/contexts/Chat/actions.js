@@ -343,7 +343,7 @@ export default function ChatActions(dispatch) {
         loadMoreShown
       });
     },
-    onLoadMoreAIImages({ cardFeeds, cardObj, loadMoreShown }) {
+    onLoadMoreAICards({ cardFeeds, cardObj, loadMoreShown }) {
       return dispatch({
         type: 'LOAD_MORE_AI_CARDS',
         cardFeeds,
