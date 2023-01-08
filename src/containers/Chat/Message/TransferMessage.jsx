@@ -163,7 +163,7 @@ export default function TransferMessage({
         marginBottom: '3rem'
       }}
       className={css`
-        cursor: pointer;
+        ${cardModalShown ? '' : 'cursor: pointer;'}
         background: ${Color.whiteGray()};
         &:hover {
           background: ${Color.highlightGray()};
