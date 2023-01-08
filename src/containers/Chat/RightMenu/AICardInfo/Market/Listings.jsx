@@ -115,10 +115,10 @@ export default function Listings({ loadMoreButtonColor }) {
   async function handleLoadMore() {
     setLoadingMore(true);
     const lastId = listedCards[listedCards.length - 1].id;
-    const { cards: listedCards, loadMoreShown: listedCardsLoadMoreShown } =
+    const { cards: newListedCards, loadMoreShown: listedCardsLoadMoreShown } =
       await loadListedAICards(lastId);
     onLoadMoreListedAICards({
-      cards: listedCards,
+      cards: newListedCards,
       loadMoreShown: listedCardsLoadMoreShown
     });
     setLoadingMore(false);
