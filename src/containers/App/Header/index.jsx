@@ -696,7 +696,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleChatInvitation({ message, members, isClass, pathId }) {
+    function handleChatInvitation({
+      message,
+      members,
+      isTwoPeople,
+      isClass,
+      pathId
+    }) {
       let duplicate = false;
       if (selectedChannelId === 0) {
         if (
@@ -709,7 +715,14 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         }
       }
       socket.emit('join_chat_group', message.channelId);
-      onReceiveFirstMsg({ message, duplicate, isClass, pageVisible, pathId });
+      onReceiveFirstMsg({
+        message,
+        duplicate,
+        isTwoPeople,
+        isClass,
+        pageVisible,
+        pathId
+      });
     }
 
     function handleDisconnect(reason) {
