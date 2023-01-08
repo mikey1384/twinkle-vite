@@ -79,8 +79,8 @@ export default function Incoming({ loadMoreButtonColor }) {
         init();
       }
     }
-    function handleAICardSold({ card }) {
-      if (card.ownerId === userId) {
+    function handleAICardSold({ card, sellerId }) {
+      if (card.ownerId === userId || sellerId === userId) {
         init();
       }
     }
