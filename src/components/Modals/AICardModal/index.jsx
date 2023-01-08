@@ -406,6 +406,7 @@ export default function AICardModal({ cardId, onHide }) {
                     />
                   ) : (
                     <UnlistedMenu
+                      burnXP={burnXP}
                       cardId={card.id}
                       cardLevel={card.level}
                       cardQuality={card.quality}
