@@ -73,10 +73,10 @@ export default function FinalStep({ mission, style, userId }) {
           newState: { xp: newXpAndRank.xp, rank: newXpAndRank.rank }
         });
       }
-      if (newCoins.netCoins) {
+      if (newCoins) {
         onSetUserState({
           userId,
-          newState: { twinkleCoins: newCoins.netCoins }
+          newState: { twinkleCoins: newCoins }
         });
       }
       onUpdateMissionAttempt({

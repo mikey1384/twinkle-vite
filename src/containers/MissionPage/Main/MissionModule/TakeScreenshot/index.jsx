@@ -245,10 +245,10 @@ export default function TakeScreenshot({ attachment, missionId, style }) {
                     }
                   });
                 }
-                if (newCoins.netCoins) {
+                if (newCoins) {
                   onSetUserState({
                     userId,
-                    newState: { twinkleCoins: newCoins.netCoins }
+                    newState: { twinkleCoins: newCoins }
                   });
                 }
                 onUpdateMissionAttempt({

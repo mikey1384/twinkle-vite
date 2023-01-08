@@ -131,10 +131,10 @@ export default function CopyAndPaste({ mission, onSetMissionState, style }) {
           newState: { twinkeXP: newXpAndRank.xp, rank: newXpAndRank.rank }
         });
       }
-      if (newCoins.netCoins) {
+      if (newCoins) {
         onSetUserState({
           userId,
-          newState: { twinkleCoins: newCoins.netCoins }
+          newState: { twinkleCoins: newCoins }
         });
       }
       onUpdateMissionAttempt({
