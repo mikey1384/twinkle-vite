@@ -237,9 +237,17 @@ export default function Activity({
         <b
           className={css`
             margin-left: 0.3rem;
-            font-size: ${wordLevel === 5 ? '2.5rem' : '2.3rem'};
+            font-size: ${wordLevel === 5
+              ? '2.5rem'
+              : wordLevel === 4
+              ? '2.3rem'
+              : '2rem'};
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: ${wordLevel === 5 ? '1.7rem' : '1.5rem'};
+              font-size: ${wordLevel === 5
+                ? '1.7rem'
+                : wordLevel === 4
+                ? '1.5rem'
+                : '1.3rem'};
             }
           `}
         >
