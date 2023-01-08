@@ -95,30 +95,23 @@ export default function WordRegisterStatus() {
           {deviceIsMobile ? <span>Earned </span> : <span>You earned </span>}
           <b style={{ color: Color[wordLevelHash[wordLevel].color]() }}>
             {addCommasToNumber(wordLevelHash[wordLevel].rewardAmount)} XP
+          </b>{' '}
+          <span>and</span>{' '}
+          <b
+            style={{
+              marginLeft: '0.3rem'
+            }}
+          >
+            <Icon
+              icon={['far', 'badge-dollar']}
+              style={{
+                color: Color.brownOrange()
+              }}
+            />
+            <span style={{ color: Color.brownOrange(), marginLeft: '0.3rem' }}>
+              {addCommasToNumber(wordLevelHash[wordLevel].coinAmount)}
+            </span>
           </b>
-          {wordLevel > 3 && (
-            <>
-              {' '}
-              <span>and</span>{' '}
-              <b
-                style={{
-                  marginLeft: '0.3rem'
-                }}
-              >
-                <Icon
-                  icon={['far', 'badge-dollar']}
-                  style={{
-                    color: Color.brownOrange()
-                  }}
-                />
-                <span
-                  style={{ color: Color.brownOrange(), marginLeft: '0.3rem' }}
-                >
-                  {addCommasToNumber(wordLevelHash[wordLevel].coinAmount)}
-                </span>
-              </b>
-            </>
-          )}
         </div>
       </div>
       <div
