@@ -51,7 +51,6 @@ export default function useAICard(card) {
           .card {
             position: relative;
             overflow: hidden;
-            z-index: 10;
             touch-action: none;
             border-radius: 5% / 3.5%;
             box-shadow: ${cardProps[card.quality].includes('glowy') &&
@@ -128,7 +127,6 @@ export default function useAICard(card) {
           );`}
               opacity: ${card.isBurned ? '1' : '0.5'};
               ${card.isBurned ? '' : 'filter: brightness(0.5) contrast(1);'}
-              z-index: 1;
               ${cardProps[card.quality].includes('glossy') && !card.isBurned
                 ? `
                   transition: none;
@@ -152,7 +150,6 @@ export default function useAICard(card) {
             background-position: 50% 50%;
             background-size: 160%;
             background-blend-mode: overlay;
-            z-index: 3;
             filter: brightness(1) contrast(1);
             transition: all 0.33s ease;
             opacity: 0.75;
