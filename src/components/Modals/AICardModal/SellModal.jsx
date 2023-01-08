@@ -22,6 +22,7 @@ export default function SellModal({
   offersLoaded,
   onHide
 }) {
+  const [posting, setPosting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const listAICard = useAppContext((v) => v.requestHelpers.listAICard);
   const onListAICard = useChatContext((v) => v.actions.onListAICard);
@@ -88,6 +89,7 @@ export default function SellModal({
             filled
             color="oceanBlue"
             onClick={handleCompleteListing}
+            loading={posting}
             disabled={!amount || !offersLoaded}
             style={{
               fontSize: '1.4rem',
@@ -131,6 +133,7 @@ export default function SellModal({
       setErrorMessage(`The minimum price is ${offerPrice + 1}`);
       return;
     }
+    setPosting(true);
     const success = await listAICard({ cardId: card.id, price: amount });
     if (success) {
       onListAICard({
