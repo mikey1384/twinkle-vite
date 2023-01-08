@@ -17,6 +17,7 @@ export default function GenerateCardInterface({
   onGenerateAICard,
   posting
 }) {
+  const disabledForMaintenance = true;
   const { twinkleCoins } = useKeyContext((v) => v.myState);
   const hasEnoughTwinkleCoins = twinkleCoins >= priceTable.card;
   return (
@@ -29,7 +30,12 @@ export default function GenerateCardInterface({
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <GradientButton
           loading={posting}
-          disabled={!hasEnoughTwinkleCoins || loading || !canGenerateAICard}
+          disabled={
+            disabledForMaintenance ||
+            !hasEnoughTwinkleCoins ||
+            loading ||
+            !canGenerateAICard
+          }
           onClick={onGenerateAICard}
           fontSize="1.5rem"
           mobileFontSize="1.1rem"
