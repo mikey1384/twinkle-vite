@@ -869,21 +869,21 @@ export default function Main({ currentPathId, onFileUpload }) {
                 displayedThemeColor={displayedThemeColor}
                 selectedChannelId={selectedChannelId}
               />
+              {aiCardModalCardId && (
+                <AICardModal
+                  cardId={aiCardModalCardId}
+                  onHide={() => {
+                    navigate('..');
+                    setAICardModalCardId(null);
+                  }}
+                />
+              )}
             </div>
           ) : (
             <Loading text="Loading Twinkle Chat" />
           )
         ) : (
           <PleaseLogIn />
-        )}
-        {aiCardModalCardId && (
-          <AICardModal
-            cardId={aiCardModalCardId}
-            onHide={() => {
-              navigate('..');
-              setAICardModalCardId(null);
-            }}
-          />
         )}
       </ErrorBoundary>
     </LocalContext.Provider>
