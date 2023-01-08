@@ -1,13 +1,12 @@
 import PropTypes from 'prop-types';
 import OwnerMenu from './OwnerMenu';
 import NonOwnerMenu from './NonOwnerMenu';
-import { useMemo } from 'react';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { returnCardBurnXP } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 
 UnlistedMenu.propTypes = {
+  burnXP: PropTypes.number.isRequired,
   cardId: PropTypes.number.isRequired,
   cardLevel: PropTypes.number.isRequired,
   cardQuality: PropTypes.string.isRequired,
@@ -22,6 +21,7 @@ UnlistedMenu.propTypes = {
 };
 
 export default function UnlistedMenu({
+  burnXP,
   cardId,
   onSetSellModalShown,
   cardLevel,
@@ -38,9 +38,6 @@ export default function UnlistedMenu({
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
   const burnAICard = useAppContext((v) => v.requestHelpers.burnAICard);
-  const burnXP = useMemo(() => {
-    return returnCardBurnXP({ cardLevel, cardQuality });
-  }, [cardLevel, cardQuality]);
 
   return (
     <div
