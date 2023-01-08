@@ -34,11 +34,12 @@ export default function LiveCard({
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
   const burnXP = useMemo(() => {
+    if (!card) return 0;
     return returnCardBurnXP({
-      cardLevel: card.level,
-      cardQuality: card.quality
+      cardLevel: card?.level,
+      cardQuality: card?.quality
     });
-  }, [card.level, card.quality]);
+  }, [card]);
   const imageExists = useMemo(() => !!card.imagePath, [card.imagePath]);
   const frontPicUrl = `${cloudFrontURL}${card.imagePath}`;
   const { cardCss } = useAICard(card);
