@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -65,7 +65,6 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
   const [offersLoadMoreShown, setOffersLoadMoreShown] = useState(false);
   const [offerPrice, setOfferPrice] = useState(0);
   const card = cardObj[cardId];
-  const loadingRef = useRef(false);
 
   const burnXP = useMemo(() => {
     if (!card) return 0;
@@ -76,11 +75,8 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
   }, [card]);
 
   useEffect(() => {
-    if (!card && !loadingRef.current) {
-      init();
-    }
+    init();
     async function init() {
-      loadingRef.current = true;
       const card = await loadAICard(cardId);
       if (card) {
         onUpdateAICard({
