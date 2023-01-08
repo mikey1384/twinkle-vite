@@ -924,10 +924,15 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       onSetUserState({ userId, newState: { profilePicUrl } });
     }
 
-    async function handleReceiveMessage({ message, channel, newMembers }) {
+    async function handleReceiveMessage({
+      message,
+      channel,
+      newMembers,
+      isNotification
+    }) {
       const messageIsForCurrentChannel =
         message.channelId === selectedChannelId;
-      const senderIsUser = message.userId === userId;
+      const senderIsUser = message.userId === userId && !isNotification;
       if (senderIsUser && pageVisible) return;
       if (messageIsForCurrentChannel) {
         if (usingChat) {
