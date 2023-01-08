@@ -228,30 +228,43 @@ export default function AICardModal({ cardId, onHide }) {
       <main>
         {card ? (
           <div
-            style={{
-              display: 'grid',
-              minHeight: '100%',
-              width: '100%',
-              gridTemplateColumns: '1fr 1.5fr 1fr',
-              gridColumnGap: 'calc(5rem / 1600px * 100vw)',
-              gridRowGap: '2rem'
-            }}
+            className={css`
+              display: grid;
+              height: auto;
+              width: 100%;
+              grid-template-columns: 1fr 1.5fr 1fr;
+              grid-row-gap: 2rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                grid-template-columns: 1fr 2fr 1fr;
+              }
+            `}
           >
-            <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
+            <div
+              style={{
+                gridColumn: 'span 1',
+                gridRow: 'span 1',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
               <AICard card={card} />
             </div>
             <div
               style={{
                 gridColumn: 'span 1',
-                gridRow: 'span 1',
-                minHeight: '100%'
+                gridRow: 'span 1'
               }}
             >
               <div
                 style={{
                   gridColumn: 'span 1',
                   gridRow: 'span 1',
-                  height: '100%'
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  height: '100%',
+                  alignItems: 'center'
                 }}
               >
                 <div
