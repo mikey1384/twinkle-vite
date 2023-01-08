@@ -609,19 +609,19 @@ function ProfilePanel({ expandable, profileId, style }) {
 
   async function handleTalkClick() {
     setChatLoading(true);
-    const { channelId, pathId } = await loadDMChannel({ recepient: profile });
+    const { channelId, pathId } = await loadDMChannel({ recipient: profile });
     if (!pathId) {
       if (!profile?.id) {
         return reportError({
           componentPath: 'ProfilePanel/index',
-          message: `handleTalkClick: recepient userId is null. recepient: ${JSON.stringify(
+          message: `handleTalkClick: recipient userId is null. recipient: ${JSON.stringify(
             profile
           )}`
         });
       }
       onOpenNewChatTab({
         user: { username, id: userId, profilePicUrl, authLevel },
-        recepient: {
+        recipient: {
           username: profile.username,
           id: profile.id,
           profilePicUrl: profile.profilePicUrl,

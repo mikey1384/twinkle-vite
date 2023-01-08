@@ -49,14 +49,14 @@ function ChatSearchBox({ style }) {
         if (!item?.id) {
           return reportError({
             componentPath: 'Chat/LeftMenu/ChatSearchBox',
-            message: `handleSelect: recepient userId is null. recepient: ${JSON.stringify(
+            message: `handleSelect: recipient userId is null. recipient: ${JSON.stringify(
               item
             )}`
           });
         }
         onOpenNewChatTab({
           user: { username, id: userId, profilePicUrl, authLevel },
-          recepient: {
+          recipient: {
             username: item.label,
             id: item.id,
             profilePicUrl: item.profilePicUrl,

@@ -132,7 +132,7 @@ function MessagesContainer({
       channelOnCall,
       chessModalShown,
       creatingNewDMChannel,
-      recepientId,
+      recipientId,
       reconnecting,
       selectedChannelId,
       socketConnected,
@@ -644,10 +644,10 @@ function MessagesContainer({
             }
           );
         } else {
-          if (selectedChannelId === 0 && !recepientId) {
+          if (selectedChannelId === 0 && !recipientId) {
             reportError({
               componentPath: 'MessagesContainer/index',
-              message: `handleConfirmChessMove: User is trying to send the first chess message to someone but recepient ID is missing`
+              message: `handleConfirmChessMove: User is trying to send the first chess message to someone but recipient ID is missing`
             });
             return window.location.reload();
           }
@@ -655,14 +655,14 @@ function MessagesContainer({
             await startNewDMChannel({
               ...params,
               content,
-              recepientId
+              recipientId
             });
           if (alreadyExists) {
             return window.location.reload();
           }
           socket.emit('join_chat_group', message.channelId);
           socket.emit('send_bi_chat_invitation', {
-            userId: recepientId,
+            userId: recipientId,
             members: currentChannel.members,
             pathId,
             message
@@ -678,7 +678,7 @@ function MessagesContainer({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [profilePicUrl, recepientId, selectedChannelId, userId, username]
+    [profilePicUrl, recipientId, selectedChannelId, userId, username]
   );
 
   const handleDelete = useCallback(async () => {
@@ -765,7 +765,7 @@ function MessagesContainer({
           }
         );
       } else {
-        const recepientIds = [];
+        const recipientIds = [];
         for (let user of users) {
           if (!user.id) {
             reportError({
@@ -774,10 +774,10 @@ function MessagesContainer({
             });
             return window.location.reload();
           }
-          recepientIds.push(user.id);
+          recipientIds.push(user.id);
         }
         const { channels, messages } = await sendInvitationMessage({
-          recepients: recepientIds,
+          recipients: recipientIds,
           origin: selectedChannelId
         });
         for (let i = 0; i < channels.length; i++) {
@@ -1016,10 +1016,10 @@ function MessagesContainer({
       let isFirstDirectMessage = selectedChannelId === 0;
       if (isFirstDirectMessage) {
         if (creatingNewDMChannel) return;
-        if (!recepientId) {
+        if (!recipientId) {
           reportError({
             componentPath: 'MessagesContainer/index',
-            message: `handleMessageSubmit: User is trying to send the first message to someone but recepient ID is missing. Content of the message was "${content}," and pathId was ${
+            message: `handleMessageSubmit: User is trying to send the first message to someone but recipient ID is missing. Content of the message was "${content}," and pathId was ${
               currentPathId ? `"${currentPathId}"` : 'empty'
             }`
           });
@@ -1031,14 +1031,14 @@ function MessagesContainer({
             await startNewDMChannel({
               content,
               userId,
-              recepientId
+              recipientId
             });
           if (alreadyExists) {
             return window.location.reload();
           }
           socket.emit('join_chat_group', message.channelId);
           socket.emit('send_bi_chat_invitation', {
-            userId: recepientId,
+            userId: recipientId,
             members: currentChannel.members,
             pathId,
             message
@@ -1083,7 +1083,7 @@ function MessagesContainer({
       creatingNewDMChannel,
       appliedIsRespondingToSubject,
       profilePicUrl,
-      recepientId,
+      recipientId,
       selectedChannelId,
       subjectId,
       userId,
@@ -1322,7 +1322,7 @@ function MessagesContainer({
                   onRewardMessageSubmit={handleRewardMessageSubmit}
                   onSetChessTarget={handleSetChessTarget}
                   onScrollToBottom={handleScrollToBottom}
-                  recepientId={recepientId}
+                  recipientId={recipientId}
                   onShowSubjectMsgsModal={({ subjectId, content }) =>
                     setSubjectMsgsModal({ shown: true, subjectId, content })
                   }
@@ -1422,7 +1422,7 @@ function MessagesContainer({
           }}
           onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
           onSetTextAreaHeight={setTextAreaHeight}
-          recepientId={recepientId}
+          recipientId={recipientId}
           chessTarget={chessTarget}
           replyTarget={replyTarget}
           subchannelId={subchannel?.id}

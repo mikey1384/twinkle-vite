@@ -156,7 +156,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   const loadingVocabulary = useChatContext((v) => v.state.loadingVocabulary);
   const loadingAICardChat = useChatContext((v) => v.state.loadingAICardChat);
   const loaded = useChatContext((v) => v.state.loaded);
-  const recepientId = useChatContext((v) => v.state.recepientId);
+  const recipientId = useChatContext((v) => v.state.recipientId);
   const reconnecting = useChatContext((v) => v.state.reconnecting);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const selectedSubchannelId = useChatContext(
@@ -805,7 +805,7 @@ export default function Main({ currentPathId, onFileUpload }) {
           lastSubchannelPaths,
           loadingAICardChat,
           loadingVocabulary,
-          recepientId,
+          recipientId,
           reconnecting,
           selectedChannelId,
           socketConnected,

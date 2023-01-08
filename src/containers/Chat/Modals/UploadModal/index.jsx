@@ -30,7 +30,7 @@ UploadModal.propTypes = {
   fileObj: PropTypes.object,
   onHide: PropTypes.func.isRequired,
   onUpload: PropTypes.func.isRequired,
-  recepientId: PropTypes.number,
+  recipientId: PropTypes.number,
   replyTarget: PropTypes.object,
   subjectId: PropTypes.number,
   subchannelId: PropTypes.number
@@ -44,7 +44,7 @@ function UploadModal({
   onHide,
   onUpload,
   replyTarget,
-  recepientId,
+  recipientId,
   subjectId,
   subchannelId
 }) {
@@ -128,7 +128,7 @@ function UploadModal({
         filePath,
         fileToUpload: selectedFile,
         userId,
-        recepientId,
+        recipientId,
         messageId,
         subchannelId,
         targetMessageId: replyTarget?.id,
@@ -160,7 +160,7 @@ function UploadModal({
     isRespondingToSubject,
     onUpload,
     profilePicUrl,
-    recepientId,
+    recipientId,
     replyTarget,
     selectedFile,
     subjectId,

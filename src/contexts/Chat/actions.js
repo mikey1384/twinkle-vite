@@ -450,11 +450,11 @@ export default function ChatActions(dispatch) {
         data
       });
     },
-    onOpenNewChatTab({ user, recepient }) {
+    onOpenNewChatTab({ user, recipient }) {
       return dispatch({
         type: 'OPEN_NEW_TAB',
         user,
-        recepient
+        recipient
       });
     },
     onPostFileUploadStatus({

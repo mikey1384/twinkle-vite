@@ -343,13 +343,13 @@ export default function BasicInfos({
 
   async function handleTalkButtonClick() {
     const { pathId } = await loadDMChannel({
-      recepient: { id: userId, username }
+      recipient: { id: userId, username }
     });
     if (!pathId) {
       if (!userId) {
         return reportError({
           componentPath: 'Profile/Body/Home/Intro/BasicInfos/index',
-          message: `handleTalkButtonClick: recepient userId is null. recepient: ${JSON.stringify(
+          message: `handleTalkButtonClick: recipient userId is null. recipient: ${JSON.stringify(
             {
               userId,
               username
@@ -364,7 +364,7 @@ export default function BasicInfos({
           profilePicUrl,
           authLevel: myAuthLevel
         },
-        recepient: {
+        recipient: {
           username: username,
           id: userId,
           profilePicUrl: profilePicUrl,

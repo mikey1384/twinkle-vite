@@ -506,10 +506,10 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadDMChannel({ recepient }) {
+    async loadDMChannel({ recipient }) {
       try {
         const { data } = await request.get(
-          `${URL}/chat/channel/check?partnerId=${recepient.id}`,
+          `${URL}/chat/channel/check?partnerId=${recipient.id}`,
           auth()
         );
         return Promise.resolve(data);
@@ -903,13 +903,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async sendInvitationMessage({ origin, recepients }) {
+    async sendInvitationMessage({ origin, recipients }) {
       try {
         const {
           data: { invitationMessage, channels, messages }
         } = await request.post(
           `${URL}/chat/invitation`,
-          { origin, recepients },
+          { origin, recipients },
           auth()
         );
         return Promise.resolve({ invitationMessage, channels, messages });
@@ -1005,7 +1005,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
       fileName,
       fileSize,
       path,
-      recepientId,
+      recipientId,
       targetMessageId,
       subchannelId,
       subjectId,
@@ -1022,7 +1022,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
           channelId,
           content,
           chessState,
-          recepientId,
+          recipientId,
           targetMessageId,
           subchannelId,
           subjectId,

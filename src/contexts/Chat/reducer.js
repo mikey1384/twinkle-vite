@@ -977,7 +977,7 @@ export default function ChatReducer(state, action) {
         outgoingOffers: state.outgoingOffers,
         outgoingOffersLoadMoreButton: state.outgoingOffersLoadMoreButton,
         reconnecting: false,
-        recepientId: state.recepientId,
+        recipientId: state.recipientId,
         selectedChannelId:
           state.selectedChannelId || state.selectedChannelId === 0
             ? state.selectedChannelId
@@ -1539,14 +1539,14 @@ export default function ChatReducer(state, action) {
           0: {
             id: 0,
             pathId: '',
-            channelName: action.recepient.username,
-            members: [action.user, action.recepient],
+            channelName: action.recipient.username,
+            members: [action.user, action.recipient],
             numUnreads: 0,
             twoPeople: true,
             loaded: true
           }
         },
-        recepientId: action.recepient.id
+        recipientId: action.recipient.id
       };
     case 'POST_FILE_UPLOAD_STATUS': {
       const targetId =
