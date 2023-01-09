@@ -100,8 +100,19 @@ export default function OfferListItem({
                 onClick={() => onAcceptClick(offer)}
                 color="oceanBlue"
                 filled
+                mobilePadding="0.5rem"
+                mobileBorderRadius="3px"
               >
-                Accept
+                <span
+                  className={css`
+                    font-size: 1.5rem;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 0.8rem;
+                    }
+                  `}
+                >
+                  Accept
+                </span>
               </Button>
             </div>
           )}
