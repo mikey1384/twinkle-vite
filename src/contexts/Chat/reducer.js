@@ -1313,7 +1313,7 @@ export default function ChatReducer(state, action) {
         }
       };
     }
-    case 'LOAD_AI_IMAGE_CHAT': {
+    case 'LOAD_AI_CARD_CHAT': {
       return {
         ...state,
         channelsObj: {
@@ -1328,7 +1328,7 @@ export default function ChatReducer(state, action) {
               }
             : {})
         },
-        electedChannelId: null,
+        selectedChannelId: null,
         selectedSubchannelId: null,
         chatType: AI_CARD_CHAT_TYPE,
         cardObj: {
