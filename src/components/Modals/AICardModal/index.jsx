@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -64,6 +64,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
   const [offersLoaded, setOffersLoaded] = useState(false);
   const [offersLoadMoreShown, setOffersLoadMoreShown] = useState(false);
   const [offerPrice, setOfferPrice] = useState(0);
+  const userSwitchedTab = useRef(false);
   const card = cardObj[cardId];
 
   const burnXP = useMemo(() => {
@@ -99,9 +100,11 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
         cardId
       });
       setOfferPrice(loadedOffers.length ? loadedOffers[0].price : 0);
-      setActiveTab(
-        card?.owner.id === userId && loadedOffers.length ? 'offers' : 'myMenu'
-      );
+      if (!userSwitchedTab.current) {
+        setActiveTab(
+          card?.owner.id === userId && loadedOffers.length ? 'offers' : 'myMenu'
+        );
+      }
       setOffers(loadedOffers);
       setOffersLoaded(true);
       setOffersLoadMoreShown(loadMoreShown);
@@ -347,13 +350,19 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
                 >
                   <nav
                     className={activeTab === 'myMenu' ? 'active' : ''}
-                    onClick={() => setActiveTab('myMenu')}
+                    onClick={() => {
+                      userSwitchedTab.current = true;
+                      setActiveTab('myMenu');
+                    }}
                   >
                     Menu
                   </nav>
                   <nav
                     className={activeTab === 'offers' ? 'active' : ''}
-                    onClick={() => setActiveTab('offers')}
+                    onClick={() => {
+                      userSwitchedTab.current = true;
+                      setActiveTab('offers');
+                    }}
                   >
                     Offers
                   </nav>
