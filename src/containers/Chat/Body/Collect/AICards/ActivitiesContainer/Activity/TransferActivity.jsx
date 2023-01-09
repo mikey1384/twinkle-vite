@@ -72,6 +72,9 @@ export default function TransferActivity({
       return (
         <div>
           <UsernameText
+            displayedName={
+              transfer.to.id === myId ? 'You' : transfer.to.username
+            }
             onMenuShownChange={onSetUsermenuShown}
             color={Color.black()}
             user={{
@@ -87,6 +90,18 @@ export default function TransferActivity({
           >
             Card #{card.id}
           </b>{' '}
+          from{' '}
+          <UsernameText
+            displayedName={
+              transfer.from.id === myId ? 'you' : transfer.from.username
+            }
+            onMenuShownChange={onSetUsermenuShown}
+            color={Color.black()}
+            user={{
+              id: transfer.from.id,
+              username: transfer.from.username
+            }}
+          />{' '}
           for{' '}
           <b
             style={{
@@ -103,6 +118,9 @@ export default function TransferActivity({
       return (
         <div>
           <UsernameText
+            displayedName={
+              transfer.from.id === myId ? 'You' : transfer.from.username
+            }
             onMenuShownChange={onSetUsermenuShown}
             color={Color.black()}
             user={{
@@ -120,6 +138,9 @@ export default function TransferActivity({
           </b>{' '}
           to{' '}
           <UsernameText
+            displayedName={
+              transfer.to.id === myId ? 'you' : transfer.to.username
+            }
             onMenuShownChange={onSetUsermenuShown}
             color={Color.black()}
             user={{
@@ -144,6 +165,7 @@ export default function TransferActivity({
     card.id,
     isPurchase,
     isSale,
+    myId,
     onSetUsermenuShown,
     price,
     transfer.from.id,
