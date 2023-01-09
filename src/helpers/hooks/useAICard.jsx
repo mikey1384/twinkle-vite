@@ -53,7 +53,7 @@ export default function useAICard(card) {
             overflow: hidden;
             touch-action: none;
             border-radius: 5% / 3.5%;
-            box-shadow: ${cardProps[card.quality].includes('glowy') &&
+            box-shadow: ${cardProps[card.quality]?.includes('glowy') &&
             !card.isBurned
               ? `0px 0px
                   7px ${qualityProps[card.quality].color},
@@ -73,7 +73,7 @@ export default function useAICard(card) {
             transform-origin: center;
 
             &:hover {
-              ${cardProps[card.quality].includes('glowy') && !card.isBurned
+              ${cardProps[card.quality]?.includes('glowy') && !card.isBurned
                 ? `box-shadow: -20px -20px
                   30px -25px ${cardColor},
                 20px 20px 30px -25px ${cardColor}, -7px -7px 10px -5px ${cardColor},
@@ -81,7 +81,7 @@ export default function useAICard(card) {
                 0 0 13px 4px rgba(255, 255, 255, 0.3),
                 0 55px 35px -20px rgba(0, 0, 0, 0.5);`
                 : ''} {
-                ${cardProps[card.quality].includes('grad') && !card.isBurned
+                ${cardProps[card.quality]?.includes('grad') && !card.isBurned
                   ? `background-image: linear-gradient(
               115deg,
               transparent 20%,
