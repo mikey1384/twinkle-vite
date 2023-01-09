@@ -92,7 +92,7 @@ export default function YearItem({ style, year, currentYear }) {
             <MonthItem
               key={leaderboard.id}
               style={{ marginTop: '1rem' }}
-              monthLabel={months[leaderboard.month - 1]}
+              monthLabel={months?.[leaderboard.month - 1]}
               yearLabel={String(leaderboard.year)}
               top30={leaderboard.rankings}
             />
