@@ -13,7 +13,8 @@ const colors = {
   watching: Color.passionFruit(),
   vocabulary: Color.orange(),
   missions: Color.green(),
-  grammar: Color.purple()
+  grammar: Color.purple(),
+  cards: Color.magenta()
 };
 
 AcquisitionPieChart.propTypes = {
