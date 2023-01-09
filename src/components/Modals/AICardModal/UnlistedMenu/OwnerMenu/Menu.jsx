@@ -112,8 +112,8 @@ export default function Menu({
               make sure this is what you really want to do before proceeding
             </span>
           }
-          onConfirm={() => {
-            onBurnConfirm();
+          onConfirm={async () => {
+            await onBurnConfirm();
             setConfirmModalShown(false);
           }}
         />
