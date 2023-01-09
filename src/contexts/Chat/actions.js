@@ -335,9 +335,9 @@ export default function ChatActions(dispatch) {
         loadedSubchannelId
       });
     },
-    onLoadAIImageChat({ cardFeeds, cardObj, loadMoreShown }) {
+    onLoadAICardChat({ cardFeeds, cardObj, loadMoreShown }) {
       return dispatch({
-        type: 'LOAD_AI_IMAGE_CHAT',
+        type: 'LOAD_AI_CARD_CHAT',
         cardFeeds,
         cardObj,
         loadMoreShown
