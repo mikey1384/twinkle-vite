@@ -20,7 +20,9 @@ Button.propTypes = {
   opacity: PropTypes.number,
   skeuomorphic: PropTypes.bool,
   style: PropTypes.object,
-  transparent: PropTypes.bool
+  transparent: PropTypes.bool,
+  mobilePadding: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  mobileBorderRadius: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
 };
 
 function Button({
@@ -39,7 +41,9 @@ function Button({
   onMouseLeave = () => {},
   skeuomorphic,
   style = {},
-  transparent
+  transparent,
+  mobilePadding,
+  mobileBorderRadius
 }) {
   const isDisabled = useMemo(() => disabled || loading, [disabled, loading]);
   const ButtonStyle = useMemo(() => {
@@ -107,6 +111,8 @@ function Button({
       }
       @media (max-width: ${mobileMaxWidth}) {
         font-size: 1.3rem;
+        padding: ${mobilePadding || '1rem'};
+        border-radius: ${mobileBorderRadius || borderRadius};
         &:hover {
           background: ${skeuomorphic
             ? '#fff'
@@ -142,16 +148,18 @@ function Button({
       return '#fff';
     }
   }, [
-    className,
-    color,
-    isDisabled,
-    filled,
-    hoverColor,
     onHover,
+    hoverColor,
+    color,
     opacity,
+    filled,
     skeuomorphic,
+    transparent,
+    isDisabled,
+    mobilePadding,
+    mobileBorderRadius,
     stretch,
-    transparent
+    className
   ]);
   return (
     <button
