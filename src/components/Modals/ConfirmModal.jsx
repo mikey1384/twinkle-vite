@@ -46,7 +46,8 @@ export default function ConfirmModal({
           {cancelLabel}
         </Button>
         <Button
-          disabled={submitting || disabled}
+          loading={submitting}
+          disabled={disabled}
           color={doneColor}
           onClick={handleConfirm}
         >
