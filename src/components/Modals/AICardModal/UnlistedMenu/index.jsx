@@ -62,7 +62,10 @@ export default function UnlistedMenu({
           cardLevel={cardLevel}
           cardQuality={cardQuality}
           onSetSellModalShown={onSetSellModalShown}
-          onBurnConfirm={() => burnAICard(cardId)}
+          onBurnConfirm={async () => {
+            const data = await burnAICard(cardId);
+            return Promise.resolve(data);
+          }}
         />
       ) : (
         <NonOwnerMenu
