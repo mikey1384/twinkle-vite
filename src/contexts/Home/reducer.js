@@ -97,7 +97,7 @@ export default function HomeReducer(state, action) {
         leaderboardsObj: {
           ...state.leaderboardsObj,
           [action.year]: {
-            ...state.leaderboardsObj[action.year],
+            ...state.leaderboardsObj?.[action.year],
             expanded: action.expanded
           }
         }
