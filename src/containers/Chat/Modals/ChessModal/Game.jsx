@@ -20,7 +20,6 @@ Game.propTypes = {
   onUpdateLastChessMoveViewerId: PropTypes.func,
   opponentId: PropTypes.number,
   opponentName: PropTypes.string,
-  rewindRequestId: PropTypes.number,
   setChessMoveViewTimeStamp: PropTypes.func,
   userMadeLastMove: PropTypes.bool
 };
@@ -42,7 +41,6 @@ export default function Game({
   onUpdateLastChessMoveViewerId,
   opponentId,
   opponentName,
-  rewindRequestId,
   setChessMoveViewTimeStamp,
   userMadeLastMove
 }) {
@@ -68,7 +66,7 @@ export default function Game({
       setLoaded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rewindRequestId]);
+  }, []);
 
   const spoilerOff = useMemo(() => {
     if (typeof countdownNumber === 'number') {

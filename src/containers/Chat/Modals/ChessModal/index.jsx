@@ -199,7 +199,6 @@ export default function ChessModal({
                 onSpoilerClick={onSpoilerClick}
                 opponentId={opponentId}
                 opponentName={opponentName}
-                rewindRequestId={rewindRequestId}
                 setChessMoveViewTimeStamp={setChessMoveViewTimeStamp}
                 userMadeLastMove={userMadeLastMove}
               />
