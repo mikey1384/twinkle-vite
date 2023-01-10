@@ -28,10 +28,16 @@ export default function AICards({ loadingAICardChat }) {
   const onSetCollectType = useAppContext(
     (v) => v.user.actions.onSetCollectType
   );
+  const onUpdateNumSummoned = useChatContext(
+    (v) => v.actions.onUpdateNumSummoned
+  );
   const aiCardStatusMessage = useChatContext(
     (v) => v.state.aiCardStatusMessage
   );
   const isGeneratingAICard = useChatContext((v) => v.state.isGeneratingAICard);
+  const numCardSummonedToday = useChatContext(
+    (v) => v.state.numCardSummonedToday
+  );
   const onSetIsGeneratingAICard = useChatContext(
     (v) => v.actions.onSetIsGeneratingAICard
   );
@@ -110,6 +116,7 @@ export default function AICards({ loadingAICardChat }) {
       >
         <GenerateCardInterface
           canGenerateAICard={!!canGenerateAICard}
+          numSummoned={numCardSummonedToday}
           onGenerateAICard={handleGenerateCard}
           posting={isGeneratingAICard}
           loading={loadingAICardChat}
@@ -143,7 +150,7 @@ export default function AICards({ loadingAICardChat }) {
       const { imageUrl, style } = await getOpenAiImage(prompt);
       onSetAICardStatusMessage('Finishing your card...');
       const imagePath = await saveAIImageToS3(imageUrl);
-      const { feed, card } = await postAICard({
+      const { feed, card, numCardSummoned } = await postAICard({
         imagePath,
         cardId,
         style,
@@ -152,6 +159,7 @@ export default function AICards({ loadingAICardChat }) {
         word,
         prompt
       });
+      onUpdateNumSummoned(numCardSummoned);
       onSetAICardStatusMessage('Card Summoned');
       onPostAICardFeed({
         feed,
@@ -166,6 +174,7 @@ export default function AICards({ loadingAICardChat }) {
         }
       });
     } catch (error) {
+      console.error(error);
       const statusMessage = isPurchased
         ? `Couldn't generate the card's image at this time. Reload the website and try again.`
         : 'Payment failed. Try again.';

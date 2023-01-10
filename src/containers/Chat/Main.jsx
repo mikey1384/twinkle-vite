@@ -560,9 +560,15 @@ export default function Main({ currentPathId, onFileUpload }) {
     if (chatType === AI_CARD_CHAT_TYPE) return;
     onUpdateChatType(AI_CARD_CHAT_TYPE);
     onSetLoadingAIImageChat(true);
-    const { cardFeeds, cardObj, loadMoreShown } = await loadAICardFeeds();
+    const { cardFeeds, cardObj, loadMoreShown, numCardSummonedToday } =
+      await loadAICardFeeds();
     if (currentPathIdRef.current === AI_CARD_CHAT_TYPE) {
-      onLoadAICardChat({ cardFeeds, cardObj, loadMoreShown });
+      onLoadAICardChat({
+        cardFeeds,
+        cardObj,
+        loadMoreShown,
+        numCardSummonedToday
+      });
     }
     onSetLoadingAIImageChat(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps

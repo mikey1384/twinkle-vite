@@ -354,13 +354,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
     }) {
       try {
         const {
-          data: { feed, card }
+          data: { feed, card, numCardSummoned }
         } = await request.post(
           `${URL}/chat/aiCard`,
           { cardId, imagePath, style, quality, level, word, prompt },
           auth()
         );
-        return Promise.resolve({ feed, card });
+        return Promise.resolve({ feed, card, numCardSummoned });
       } catch (error) {
         return handleError(error);
       }
@@ -636,12 +636,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async loadAICardFeeds(lastId) {
       try {
         const {
-          data: { cardFeeds, cardObj, loadMoreShown }
+          data: { cardFeeds, cardObj, loadMoreShown, numCardSummonedToday }
         } = await request.get(
           `${URL}/chat/aiCard${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
         );
-        return Promise.resolve({ cardFeeds, cardObj, loadMoreShown });
+        return Promise.resolve({
+          cardFeeds,
+          cardObj,
+          loadMoreShown,
+          numCardSummonedToday
+        });
       } catch (error) {
         return handleError(error);
       }

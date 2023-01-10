@@ -335,12 +335,18 @@ export default function ChatActions(dispatch) {
         loadedSubchannelId
       });
     },
-    onLoadAICardChat({ cardFeeds, cardObj, loadMoreShown }) {
+    onLoadAICardChat({
+      cardFeeds,
+      cardObj,
+      loadMoreShown,
+      numCardSummonedToday
+    }) {
       return dispatch({
         type: 'LOAD_AI_CARD_CHAT',
         cardFeeds,
         cardObj,
-        loadMoreShown
+        loadMoreShown,
+        numCardSummonedToday
       });
     },
     onLoadMoreAICards({ cardFeeds, cardObj, loadMoreShown }) {
@@ -939,6 +945,12 @@ export default function ChatActions(dispatch) {
         channelId,
         subchannelId,
         path
+      });
+    },
+    onUpdateNumSummoned(numSummoned) {
+      return dispatch({
+        type: 'UPDATE_NUM_SUMMONED',
+        numSummoned
       });
     },
     onUpdateRecentChessMessage({ channelId, message }) {
