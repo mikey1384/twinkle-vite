@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useKeyContext } from '~/contexts';
 import { priceTable } from '~/constants/defaultValues';
@@ -5,6 +6,7 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
 
 GenerateCardInterface.propTypes = {
+  numSummoned: PropTypes.number.isRequired,
   canGenerateAICard: PropTypes.bool,
   loading: PropTypes.bool,
   posting: PropTypes.bool,
@@ -12,11 +14,13 @@ GenerateCardInterface.propTypes = {
 };
 
 export default function GenerateCardInterface({
+  numSummoned,
   canGenerateAICard,
   loading,
   onGenerateAICard,
   posting
 }) {
+  const maxSummoned = useMemo(() => numSummoned >= 35, [numSummoned]);
   const { twinkleCoins } = useKeyContext((v) => v.myState);
   const hasEnoughTwinkleCoins = twinkleCoins >= priceTable.card;
   return (
@@ -29,13 +33,20 @@ export default function GenerateCardInterface({
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <GradientButton
           loading={posting}
-          disabled={!hasEnoughTwinkleCoins || loading || !canGenerateAICard}
+          disabled={
+            !hasEnoughTwinkleCoins ||
+            loading ||
+            !canGenerateAICard ||
+            maxSummoned
+          }
           onClick={onGenerateAICard}
           fontSize="1.5rem"
           mobileFontSize="1.1rem"
         >
           {!canGenerateAICard ? (
             'Need License'
+          ) : maxSummoned ? (
+            'Daily Maximum Reached'
           ) : !hasEnoughTwinkleCoins ? (
             <div>
               <span style={{ marginRight: '0.7rem' }}>Not Enough Coins</span>(

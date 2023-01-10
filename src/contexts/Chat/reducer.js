@@ -974,6 +974,7 @@ export default function ChatReducer(state, action) {
         myCardsLoadMoreButton: state.myCardsLoadMoreButton,
         myListedCardIds: state.myListedCardIds,
         myListedCardsLoadMoreButton: state.myListedCardsLoadMoreButton,
+        numCardSummonedToday: action.data.numCardSummonedToday,
         numUnreads: state.numUnreads,
         outgoingOffers: state.outgoingOffers,
         outgoingOffersLoadMoreButton: state.outgoingOffersLoadMoreButton,
@@ -1328,6 +1329,7 @@ export default function ChatReducer(state, action) {
               }
             : {})
         },
+        numCardSummonedToday: action.numCardSummonedToday,
         selectedChannelId: null,
         selectedSubchannelId: null,
         chatType: AI_CARD_CHAT_TYPE,
@@ -2513,6 +2515,12 @@ export default function ChatReducer(state, action) {
           }
         }
       };
+    case 'UPDATE_NUM_SUMMONED': {
+      return {
+        ...state,
+        numCardSummonedToday: action.numSummoned
+      };
+    }
     case 'UPDATE_CHAT_TYPE': {
       return {
         ...state,
