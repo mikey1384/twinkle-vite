@@ -544,7 +544,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [userId]);
 
   const handleEnterVocabulary = useCallback(async () => {
-    if (chatType === VOCAB_CHAT_TYPE) return;
+    if (chatType === VOCAB_CHAT_TYPE || !loaded) return;
     onUpdateChatType(VOCAB_CHAT_TYPE);
     onSetLoadingVocabulary(true);
     const { vocabActivities, wordsObj, wordCollectors } =
@@ -557,7 +557,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [chatType]);
 
   const handleEnterAICardChat = useCallback(async () => {
-    if (chatType === AI_CARD_CHAT_TYPE) return;
+    if (chatType === AI_CARD_CHAT_TYPE || !loaded) return;
     onUpdateChatType(AI_CARD_CHAT_TYPE);
     onSetLoadingAIImageChat(true);
     const { cardFeeds, cardObj, loadMoreShown } = await loadAICardFeeds();
