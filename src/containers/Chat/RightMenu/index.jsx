@@ -37,7 +37,7 @@ function RightMenu({
   const prevTwinkleXP = useRef(twinkleXP);
 
   useEffect(() => {
-    MenuRef.current.scrollTop = 0;
+    (MenuRef.current || {}).scrollTop = 0;
   }, [currentChannel?.id]);
 
   useEffect(() => {
