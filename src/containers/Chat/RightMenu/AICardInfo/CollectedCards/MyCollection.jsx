@@ -15,6 +15,7 @@ export default function MyCollection({ loadMoreButtonColor }) {
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
+  const loadingMoreRef = useRef(false);
   const CardItemsRef = useRef(null);
   const timeoutRef = useRef(null);
   const loadMyAICardCollections = useAppContext(
@@ -126,14 +127,23 @@ export default function MyCollection({ loadMoreButtonColor }) {
   );
 
   async function handleLoadMore() {
-    setLoadingMore(true);
-    const lastTimeStamp = myCards[myCards.length - 1].lastInteraction;
-    const { myCards: loadedCards, myCardsLoadMoreShown } =
-      await loadMyAICardCollections(lastTimeStamp);
-    onLoadMoreMyAICards({
-      cards: loadedCards,
-      loadMoreShown: myCardsLoadMoreShown
-    });
-    setLoadingMore(false);
+    if (loadingMore || loadingMoreRef.current) return;
+    try {
+      setLoadingMore(true);
+      loadingMoreRef.current = true;
+      const lastTimeStamp = myCards[myCards.length - 1].lastInteraction;
+      const { myCards: loadedCards, myCardsLoadMoreShown } =
+        await loadMyAICardCollections(lastTimeStamp);
+      onLoadMoreMyAICards({
+        cards: loadedCards,
+        loadMoreShown: myCardsLoadMoreShown
+      });
+      setLoadingMore(false);
+      loadingMoreRef.current = false;
+    } catch (error) {
+      console.error(error);
+      setLoadingMore(false);
+      loadingMoreRef.current = false;
+    }
   }
 }
