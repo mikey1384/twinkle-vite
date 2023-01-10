@@ -18,6 +18,7 @@ export default function Listings({ loadMoreButtonColor }) {
   const timeoutRef = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
   const [overflown, setOverflown] = useState(false);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const loadListedAICards = useAppContext(
@@ -139,14 +140,22 @@ export default function Listings({ loadMoreButtonColor }) {
   );
 
   async function handleLoadMore() {
-    setLoadingMore(true);
-    const lastId = listedCards[listedCards.length - 1].id;
-    const { cards: newListedCards, loadMoreShown: listedCardsLoadMoreShown } =
-      await loadListedAICards(lastId);
-    onLoadMoreListedAICards({
-      cards: newListedCards,
-      loadMoreShown: listedCardsLoadMoreShown
-    });
-    setLoadingMore(false);
+    if (loadingMore || loadingMoreRef.current) return;
+    try {
+      setLoadingMore(true);
+      loadingMoreRef.current = true;
+      const lastId = listedCards[listedCards.length - 1].id;
+      const { cards: newListedCards, loadMoreShown: listedCardsLoadMoreShown } =
+        await loadListedAICards(lastId);
+      onLoadMoreListedAICards({
+        cards: newListedCards,
+        loadMoreShown: listedCardsLoadMoreShown
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingMore(false);
+      loadingMoreRef.current = false;
+    }
   }
 }
