@@ -149,7 +149,6 @@ export default function ActivitiesContainer() {
       }
     } catch (error) {
       console.error(error);
-    } finally {
       setLoadingMore(false);
       loadingMoreRef.current = false;
     }
