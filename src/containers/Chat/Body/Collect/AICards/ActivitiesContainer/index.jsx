@@ -130,21 +130,28 @@ export default function ActivitiesContainer() {
   );
 
   async function handleLoadMore() {
-    if (aiCardLoadMoreButton) {
-      const prevContentHeight = ContentRef.current?.offsetHeight || 0;
-      if (!loadingMore && !loadingMoreRef.current) {
-        loadingMoreRef.current = true;
-        setLoadingMore(true);
-        const { cardFeeds, cardObj, loadMoreShown } = await loadAICardFeeds(
-          aiCardFeeds[0].id
-        );
-        onLoadMoreAICards({ cardFeeds, cardObj, loadMoreShown });
-        startTransition(() => {
-          setScrollHeight(prevContentHeight);
-          setLoadingMore(false);
-          loadingMoreRef.current = false;
-        });
+    try {
+      if (aiCardLoadMoreButton) {
+        const prevContentHeight = ContentRef.current?.offsetHeight || 0;
+        if (!loadingMore && !loadingMoreRef.current) {
+          loadingMoreRef.current = true;
+          setLoadingMore(true);
+          const { cardFeeds, cardObj, loadMoreShown } = await loadAICardFeeds(
+            aiCardFeeds[0].id
+          );
+          onLoadMoreAICards({ cardFeeds, cardObj, loadMoreShown });
+          startTransition(() => {
+            setScrollHeight(prevContentHeight);
+            setLoadingMore(false);
+            loadingMoreRef.current = false;
+          });
+        }
       }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingMore(false);
+      loadingMoreRef.current = false;
     }
   }
 
