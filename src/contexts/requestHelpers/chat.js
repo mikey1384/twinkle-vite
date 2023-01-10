@@ -623,12 +623,12 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async loadAICard(cardId) {
       try {
         const {
-          data: { card }
+          data: { card, prevCardId, nextCardId }
         } = await request.get(
           `${URL}/chat/aiCard/card?cardId=${cardId}`,
           auth()
         );
-        return Promise.resolve(card);
+        return Promise.resolve({ card, prevCardId, nextCardId });
       } catch (error) {
         return handleError(error);
       }

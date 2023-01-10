@@ -17,6 +17,8 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { qualityProps, returnCardBurnXP } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
+import { Link } from 'react-router-dom';
+import Icon from '~/components/Icon';
 import Offers from './Offers';
 import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
@@ -29,6 +31,7 @@ AICardModal.propTypes = {
 
 export default function AICardModal({ cardId, modalOverModal, onHide }) {
   const {
+    link: { color: linkColor },
     userLink: { color: userLinkColor },
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
@@ -60,6 +63,8 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
   const [offerModalShown, setOfferModalShown] = useState(false);
   const [sellModalShown, setSellModalShown] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [prevCardId, setPrevCardId] = useState(null);
+  const [nextCardId, setNextCardId] = useState(null);
   const [offers, setOffers] = useState([]);
   const [offersLoaded, setOffersLoaded] = useState(false);
   const [offersLoadMoreShown, setOffersLoadMoreShown] = useState(false);
@@ -78,7 +83,9 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
   useEffect(() => {
     init();
     async function init() {
-      const card = await loadAICard(cardId);
+      const { card, prevCardId, nextCardId } = await loadAICard(cardId);
+      setPrevCardId(prevCardId);
+      setNextCardId(nextCardId);
       if (card) {
         onUpdateAICard({
           cardId: card.id,
@@ -89,7 +96,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [cardId, userId]);
 
   const { promptText } = useAICard(card);
 
@@ -453,6 +460,44 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
         )}
       </main>
       <footer>
+        <div
+          className={css`
+            font-size: 1.5rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.2rem;
+            }
+          `}
+          style={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}
+        >
+          <div>
+            {prevCardId && (
+              <Link
+                style={{
+                  marginLeft: '7rem',
+                  fontWeight: 'bold',
+                  color: Color[linkColor]()
+                }}
+                to={`./?cardId=${prevCardId}`}
+              >
+                <Icon style={{ marginRight: '1rem' }} icon="chevron-left" />
+                Prev
+              </Link>
+            )}
+            {nextCardId && (
+              <Link
+                style={{
+                  marginLeft: '5rem',
+                  fontWeight: 'bold',
+                  color: Color[linkColor]()
+                }}
+                to={`./?cardId=${nextCardId}`}
+              >
+                Next
+                <Icon style={{ marginLeft: '1rem' }} icon="chevron-right" />
+              </Link>
+            )}
+          </div>
+        </div>
         <Button transparent onClick={onHide}>
           Close
         </Button>
