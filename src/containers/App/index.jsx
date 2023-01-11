@@ -692,6 +692,7 @@ function App() {
             <Route path="/videos/:videoId/*" element={<VideoPage />} />
             <Route path="/links/:linkId" element={<LinkPage />} />
             <Route path="/subjects/:contentId" element={<ContentPage />} />
+            <Route path="/ai-cards" element={<Explore category="ai-cards" />} />
             <Route path="/videos" element={<Explore category="videos" />} />
             <Route path="/links" element={<Explore category="links" />} />
             <Route path="/subjects" element={<Explore category="subjects" />} />
