@@ -222,6 +222,14 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async loadAICards() {
+      try {
+        const { data } = await request.get(`${URL}/ai-card`);
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadComments({
       contentId,
       contentType,
