@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import AICards from './AICards';
 import Videos from './Videos';
 import Links from './Links';
 import Subjects from './Subjects';
@@ -8,6 +9,9 @@ DisplayedContent.propTypes = {
 };
 
 export default function DisplayedContent({ category }) {
+  if (category === 'ai-cards') {
+    return <AICards />;
+  }
   if (category === 'videos') {
     return <Videos />;
   }
