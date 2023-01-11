@@ -88,17 +88,21 @@ export default function Categories({
           }
         `}
       >
-        {['subjects', 'videos', 'links'].map((contentType) => {
+        {['ai-cards', 'subjects', 'videos', 'links'].map((contentType) => {
+          const displayedContentType =
+            contentType === 'ai-cards' ? 'AI Cards' : contentType;
           const exploreLabel =
             SELECTED_LANGUAGE === 'kr' ? (
-              <>{localize(contentType.slice(0, -1))} 탐색</>
+              <>{localize(displayedContentType.slice(0, -1))} 탐색</>
             ) : (
-              <>Explore {contentType}</>
+              <>Explore {displayedContentType}</>
             );
           const alwaysExploreFirstLabel =
             SELECTED_LANGUAGE === 'kr'
-              ? `항상 ${localize(contentType.slice(0, -1))} 먼저 탐색하기:`
-              : `Always explore ${contentType} first:`;
+              ? `항상 ${localize(
+                  displayedContentType.slice(0, -1)
+                )} 먼저 탐색하기:`
+              : `Always explore ${displayedContentType} first:`;
 
           return filter === contentType ? (
             <nav
@@ -172,6 +176,9 @@ export default function Categories({
 
   function returnIcon(contentType) {
     let icon = '';
+    if (contentType === 'ai-cards') {
+      icon = 'cards-blank';
+    }
     if (contentType === 'subjects') {
       icon = 'bolt';
     }
