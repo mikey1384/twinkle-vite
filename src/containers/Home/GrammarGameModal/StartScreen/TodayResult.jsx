@@ -4,17 +4,21 @@ import Marble from './Marble';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { priceTable } from '~/constants/defaultValues';
 import { scoreTable, perfectScoreBonus } from '../constants';
 import { css } from '@emotion/css';
 
 const xpFontSize = '1.7rem';
 const mobileXpFontSize = '1.5rem';
+const coinFontSize = '1.5rem';
+const mobileCoinFontSize = '1.3rem';
 
 TodayResult.propTypes = {
+  earnedCoins: PropTypes.number.isRequired,
   results: PropTypes.array.isRequired
 };
 
-export default function TodayResult({ results }) {
+export default function TodayResult({ earnedCoins, results }) {
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
@@ -144,11 +148,17 @@ export default function TodayResult({ results }) {
       <div
         className={css`
           margin-top: 1rem;
-          margin-bottom: 1.7rem;
+          margin-bottom: ${earnedCoins ? 2.7 : 1.7}rem;
           font-weight: bold;
           font-size: ${xpFontSize};
+          > p {
+            font-size: ${coinFontSize};
+          }
           @media (max-width: ${mobileMaxWidth}) {
             font-size: ${mobileXpFontSize};
+            > p {
+              font-size: ${mobileCoinFontSize};
+            }
           }
         `}
       >
@@ -156,6 +166,11 @@ export default function TodayResult({ results }) {
           {addCommasToNumber(todaysScore)}
         </span>{' '}
         <span style={{ color: Color.gold() }}>XP</span>
+        {earnedCoins ? (
+          <p style={{ color: Color.brownOrange() }}>
+            ...and {priceTable.grammarbles} coins for finishing 5 games!
+          </p>
+        ) : null}
       </div>
       <div>{firstRow}</div>
       <div style={{ marginTop: '3px' }}>{secondRow}</div>

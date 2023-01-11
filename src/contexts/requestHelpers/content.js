@@ -69,7 +69,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
     async checkNumGrammarGamesPlayedToday() {
       try {
         const {
-          data: { attemptResults, attemptNumber, nextDayTimeStamp }
+          data: { attemptResults, attemptNumber, earnedCoins, nextDayTimeStamp }
         } = await request.get(
           `${URL}/content/game/grammar/gamesPlayedToday`,
           auth()
@@ -77,6 +77,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return Promise.resolve({
           attemptResults,
           attemptNumber,
+          earnedCoins,
           nextDayTimeStamp
         });
       } catch (error) {
