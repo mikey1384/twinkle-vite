@@ -15,6 +15,7 @@ import Categories from './Categories';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
 
+const aiCardsLabel = localize('aiCards');
 const subjectsLabel = localize('subjects');
 const videosLabel = localize('videos2');
 const linksLabel = localize('links');
@@ -64,6 +65,13 @@ export default function Explore({ category }) {
         `}
       >
         <SideMenu>
+          <NavLink
+            to="/ai-cards"
+            className={(navData) => (navData.isActive ? 'active' : '')}
+          >
+            <Icon icon="cards-blank" />
+            <span style={{ marginLeft: '1.1rem' }}>{aiCardsLabel}</span>
+          </NavLink>
           <NavLink
             to="/subjects"
             className={(navData) => (navData.isActive ? 'active' : '')}
