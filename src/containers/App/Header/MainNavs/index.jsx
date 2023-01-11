@@ -148,6 +148,13 @@ function MainNavs({
   );
 
   const contentPageMatch = useMemo(() => {
+    const cardPageMatch = matchPath(
+      {
+        path: '/ai-cards/:id',
+        exact: true
+      },
+      pathname
+    );
     const subjectPageMatch = matchPath(
       {
         path: '/subjects/:id',
@@ -198,6 +205,7 @@ function MainNavs({
     );
 
     return (
+      !!cardPageMatch ||
       !!subjectPageMatch ||
       !!playlistsMatch ||
       !!videoPageMatch ||
@@ -244,12 +252,14 @@ function MainNavs({
       onSetProfileNav(pathname);
     }
 
-    if (['links', 'videos', 'subjects'].includes(section)) {
+    if (['links', 'videos', 'subjects', 'ai-cards'].includes(section)) {
       onSetExploreCategory(section);
       loaded.current = true;
     } else if (!loaded.current && defaultSearchFilter) {
       onSetExploreCategory(
-        ['videos', 'subjects', 'links'].includes(defaultSearchFilter)
+        ['videos', 'subjects', 'links', 'ai-cards'].includes(
+          defaultSearchFilter
+        )
           ? defaultSearchFilter
           : 'subjects'
       );
@@ -261,6 +271,8 @@ function MainNavs({
     () =>
       contentNav === 'videos' || contentNav === 'playlists'
         ? 'film'
+        : contentNav === 'ai-cards'
+        ? 'cards-blank'
         : contentNav === 'links'
         ? 'book'
         : contentNav === 'subjects'

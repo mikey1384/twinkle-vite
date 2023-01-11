@@ -1089,7 +1089,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         document.title = `${`Chat | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
       }
     } else if (
-      !['chat', 'comments', 'subjects'].includes(section) &&
+      !['chat', 'comments', 'subjects', 'ai-cards'].includes(section) &&
       isSubsection &&
       !!pageTitle
     ) {
@@ -1097,7 +1097,11 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     } else {
       let currentPageTitle = 'Twinkle';
       if (section !== 'home') {
-        currentPageTitle = `${capitalize(section)} | ${currentPageTitle}`;
+        const displayedSection =
+          section === 'ai-cards' ? 'Explore AI Cards' : section;
+        currentPageTitle = `${capitalize(
+          displayedSection
+        )} | ${currentPageTitle}`;
       }
       document.title = `${currentPageTitle}${newNotiNum > 0 ? ' *' : ''}`;
     }
