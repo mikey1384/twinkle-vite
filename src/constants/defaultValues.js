@@ -149,6 +149,7 @@ export const priceTable = {
   card: 100,
   chatSubject: 20,
   chatTheme: 30,
+  grammarbles: 250,
   username: 10,
   recommendation: 2,
   reward: 2

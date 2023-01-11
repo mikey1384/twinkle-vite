@@ -160,16 +160,20 @@ export default function GrammarGameModal({ onHide }) {
   async function handleGameFinish() {
     const promises = [
       (async () => {
-        const { isDuplicate, newXp } = await uploadGrammarGameResult({
+        const { isDuplicate, newXp, newCoins } = await uploadGrammarGameResult({
           attemptNumber: timesPlayedToday + 1,
           scoreArray: scoreArrayRef.current
         });
         if (isDuplicate) {
           return window.location.reload();
         }
+        const newState = { twinkleXP: newXp };
+        if (newCoins) {
+          newState.twinkleCoins = newCoins;
+        }
         onSetUserState({
           userId,
-          newState: { twinkleXP: newXp }
+          newState
         });
       })(),
       (async () => {
