@@ -46,7 +46,7 @@ export default function GenerateCardInterface({
           {!canGenerateAICard ? (
             'Need License'
           ) : maxSummoned ? (
-            'Daily Maximum Reached'
+            'Daily Limit Reached'
           ) : !hasEnoughTwinkleCoins ? (
             <div>
               <span style={{ marginRight: '0.7rem' }}>Not Enough Coins</span>(
