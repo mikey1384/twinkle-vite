@@ -57,6 +57,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [cardNotFound, setCardNotFound] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [withdrawOfferModalShown, setWithdrawOfferModalShown] = useState(false);
   const [usermenuShown, setUsermenuShown] = useState(false);
   const [activeTab, setActiveTab] = useState('myMenu');
@@ -83,6 +84,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
   useEffect(() => {
     init();
     async function init() {
+      setLoading(true);
       const { card, prevCardId, nextCardId } = await loadAICard(cardId);
       setPrevCardId(prevCardId);
       setNextCardId(nextCardId);
@@ -94,6 +96,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
       } else {
         setCardNotFound(true);
       }
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardId, userId]);
@@ -473,6 +476,8 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
             {prevCardId && (
               <Link
                 style={{
+                  opacity: loading ? 0.5 : 1,
+                  textDecoration: 'none',
                   marginLeft: '7rem',
                   fontWeight: 'bold',
                   color: Color[linkColor]()
@@ -486,6 +491,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
             {nextCardId && (
               <Link
                 style={{
+                  opacity: loading ? 0.5 : 1,
                   marginLeft: '5rem',
                   fontWeight: 'bold',
                   color: Color[linkColor]()
