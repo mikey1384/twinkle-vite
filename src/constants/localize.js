@@ -68,6 +68,10 @@ const languageObj = {
     en: 'advanced',
     kr: '고급'
   },
+  aiCards: {
+    en: 'AI Cards',
+    kr: 'AI 카드'
+  },
   allLinks: {
     en: 'All Links',
     kr: '모든 링크'
