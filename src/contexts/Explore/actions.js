@@ -93,6 +93,12 @@ export default function ExploreActions(dispatch) {
         params
       });
     },
+    onLoadAICards({ cards }) {
+      return dispatch({
+        type: 'LOAD_AI_CARDS',
+        cards
+      });
+    },
     onLoadContinueWatching({
       videos,
       loadMoreButton,

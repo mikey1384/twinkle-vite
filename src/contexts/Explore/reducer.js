@@ -383,6 +383,15 @@ export default function ExploreReducer(state, action) {
           }))
         }
       };
+    case 'LOAD_AI_CARDS':
+      return {
+        ...state,
+        aiCards: {
+          ...state.aiCards,
+          cards: action.cards,
+          loaded: true
+        }
+      };
     case 'LOAD_LINKS':
       return {
         ...state,

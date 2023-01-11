@@ -6,6 +6,10 @@ import ExploreReducer from './reducer';
 
 export const ExploreContext = createContext();
 export const initialExploreState = {
+  aiCards: {
+    cards: [],
+    loaded: false
+  },
   links: {
     byUserLoaded: false,
     byUserLinks: [],
