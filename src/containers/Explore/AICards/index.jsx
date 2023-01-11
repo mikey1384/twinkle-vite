@@ -7,8 +7,8 @@ export default function AICards() {
   useEffect(() => {
     init();
     async function init() {
-      const data = await loadAICards();
-      console.log(data);
+      const cards = await loadAICards();
+      console.log(cards);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -224,8 +224,10 @@ export default function contentRequestHelpers({ auth, handleError }) {
     },
     async loadAICards() {
       try {
-        const { data } = await request.get(`${URL}/ai-card`);
-        return Promise.resolve(data);
+        const {
+          data: { cards }
+        } = await request.get(`${URL}/ai-card`);
+        return Promise.resolve(cards);
       } catch (error) {
         return handleError(error);
       }
