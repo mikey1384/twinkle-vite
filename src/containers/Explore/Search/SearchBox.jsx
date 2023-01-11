@@ -21,11 +21,12 @@ export default function SearchBox({ category, className, innerRef, style }) {
     (v) => v.actions.onChangeSearchInput
   );
   const placeholderLabel = useMemo(() => {
+    const displayedCategory = category === 'ai-cards' ? 'AI Cards' : category;
     return SELECTED_LANGUAGE === 'kr'
-      ? `${localize(category.slice(0, -1))}${
-          category === 'videos' ? '을' : '를'
+      ? `${localize(displayedCategory.slice(0, -1))}${
+          displayedCategory === 'videos' ? '을' : '를'
         } 검색하세요...`
-      : `Search ${category}...`;
+      : `Search ${displayedCategory}...`;
   }, [category]);
 
   return (
