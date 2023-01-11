@@ -934,13 +934,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
     async uploadGrammarGameResult({ attemptNumber, scoreArray }) {
       try {
         const {
-          data: { newXp, isDuplicate }
+          data: { newXp, newCoins, isDuplicate }
         } = await request.post(
           `${URL}/content/game/grammar`,
           { attemptNumber, scoreArray },
           auth()
         );
-        return Promise.resolve({ isDuplicate, newXp });
+        return Promise.resolve({ isDuplicate, newXp, newCoins });
       } catch (error) {
         return handleError(error);
       }
