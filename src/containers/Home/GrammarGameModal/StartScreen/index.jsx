@@ -35,6 +35,7 @@ export default function StartScreen({
   const navigate = useNavigate();
   const [results, setResults] = useState([]);
   const [nextDayTimeStamp, setNextDayTimeStamp] = useState(null);
+  const [earnedCoins, setEarnedCoins] = useState(false);
   const {
     fail: { color: failColor },
     success: { color: successColor }
@@ -47,8 +48,9 @@ export default function StartScreen({
   useEffect(() => {
     init();
     async function init() {
-      const { attemptResults, attemptNumber, nextDayTimeStamp } =
+      const { attemptResults, attemptNumber, earnedCoins, nextDayTimeStamp } =
         await checkNumGrammarGamesPlayedToday();
+      setEarnedCoins(earnedCoins);
       setResults(attemptResults);
       setNextDayTimeStamp(nextDayTimeStamp);
       onSetTimesPlayedToday(attemptNumber);
@@ -132,7 +134,7 @@ export default function StartScreen({
                 )}
               </div>
             ) : (
-              <TodayResult results={results} />
+              <TodayResult results={results} earnedCoins={earnedCoins} />
             )}
             <div style={{ marginTop: '3rem' }}>
               <div>
