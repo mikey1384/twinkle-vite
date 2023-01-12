@@ -305,6 +305,8 @@ export default function Main({ currentPathId, onFileUpload }) {
     const { cardId } = queryString.parse(search);
     if (cardId) {
       setAICardModalCardId(Number(cardId));
+    } else {
+      setAICardModalCardId(null);
     }
   }, [search]);
 
