@@ -68,21 +68,23 @@ export default function AllTime({
         <MyRank myId={myId} rank={myAllTimeRank} twinkleXP={myAllTimeXP} />
       )}
       {users.length === 0 || (allSelected && loggedIn && myAllTimeXP === 0) ? (
-        <div
-          className={css`
-            border-radius: ${borderRadius};
-            border: 1px solid ${Color.borderGray()};
-            background: #fff;
-            padding: 1rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              border-radius: 0;
-              border-left: none;
-              border-right: none;
-            }
-          `}
-        >
-          {notRankedDescriptionLabel}
-        </div>
+        !myId ? null : (
+          <div
+            className={css`
+              border-radius: ${borderRadius};
+              border: 1px solid ${Color.borderGray()};
+              background: #fff;
+              padding: 1rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+              }
+            `}
+          >
+            {notRankedDescriptionLabel}
+          </div>
+        )
       ) : (
         <RoundList style={{ marginTop: 0 }}>
           {users.map((user) => (

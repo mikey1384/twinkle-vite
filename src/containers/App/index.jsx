@@ -192,8 +192,9 @@ function App() {
 
   useEffect(() => {
     if (
-      typeof twinkleXP === 'number' &&
-      twinkleXP > (prevTwinkleXP.current || 0)
+      !userId ||
+      (typeof twinkleXP === 'number' &&
+        twinkleXP > (prevTwinkleXP.current || 0))
     ) {
       handleLoadRankings();
     }

@@ -68,7 +68,8 @@ export default function ThisMonth({
       {loggedIn && allSelected && (
         <MyRank myId={myId} rank={myMonthlyRank} twinkleXP={myMonthlyXP} />
       )}
-      {users.length === 0 || (allSelected && myMonthlyXP === 0) ? (
+      {!myId ? null : users.length === 0 ||
+        (allSelected && myMonthlyXP === 0) ? (
         <div
           className={css`
             border-radius: ${borderRadius};
