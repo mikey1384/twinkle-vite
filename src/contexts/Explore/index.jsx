@@ -8,7 +8,8 @@ export const ExploreContext = createContext();
 export const initialExploreState = {
   aiCards: {
     cards: [],
-    loaded: false
+    loaded: false,
+    loadMoreShown: false
   },
   links: {
     byUserLoaded: false,

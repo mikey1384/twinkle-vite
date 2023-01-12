@@ -389,7 +389,17 @@ export default function ExploreReducer(state, action) {
         aiCards: {
           ...state.aiCards,
           cards: action.cards,
-          loaded: true
+          loaded: true,
+          loadMoreShown: action.loadMoreShown
+        }
+      };
+    case 'LOAD_MORE_AI_CARDS':
+      return {
+        ...state,
+        aiCards: {
+          ...state.aiCards,
+          cards: state.aiCards.cards.concat(action.cards),
+          loadMoreShown: action.loadMoreShown
         }
       };
     case 'LOAD_LINKS':

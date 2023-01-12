@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import useAICard from '~/helpers/hooks/useAICard';
 import UsernameText from '~/components/Texts/UsernameText';
+import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
@@ -150,12 +151,30 @@ export default function LiveCard({
               position: 'absolute',
               background: Color.black(0.9),
               height: '30%',
-              width: '100%'
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column'
             }}
           >
             <div>
               #{card.id} <b style={{ color: cardColor }}>{card.word}</b>
             </div>
+            <div>
+              Owned by <UsernameText color="#fff" user={card.owner} />
+            </div>
+            {card.askPrice ? (
+              <div>
+                price:{' '}
+                <b style={{ color: Color.gold() }}>
+                  <Icon icon={['far', 'badge-dollar']} />
+                  <span style={{ marginLeft: '2px' }}>
+                    {addCommasToNumber(card.askPrice)}
+                  </span>
+                </b>
+              </div>
+            ) : null}
           </div>
         )}
       </animated.div>
