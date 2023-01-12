@@ -11,10 +11,10 @@ import AICard from '~/components/AICard';
 import queryString from 'query-string';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
-import CardSearchPanel from './CardSearchPanel';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function AICards() {
+  const navigate = useNavigate();
   const { search } = useLocation();
   const {
     loadMoreButton: { color: loadMoreButtonColor }
@@ -35,6 +35,8 @@ export default function AICards() {
     const { cardId } = queryString.parse(search);
     if (cardId) {
       setAICardModalCardId(Number(cardId));
+    } else {
+      setAICardModalCardId(null);
     }
   }, [search]);
   useEffect(() => {
@@ -51,7 +53,6 @@ export default function AICards() {
   return (
     <ErrorBoundary componentPath="Explore/AICards">
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-        <CardSearchPanel />
         <div
           style={{
             display: 'flex',
@@ -66,7 +67,7 @@ export default function AICards() {
               <div key={card.id} style={{ margin: '1rem' }}>
                 <AICard
                   card={cardObj[card.id] ? cardObj[card.id] : card}
-                  onClick={() => setAICardModalCardId(card.id)}
+                  onClick={() => navigate(`./?cardId=${card.id}`)}
                   detailShown
                 />
               </div>
@@ -77,6 +78,7 @@ export default function AICards() {
           <AICardModal
             cardId={aiCardModalCardId}
             onHide={() => {
+              navigate('../ai-cards');
               setAICardModalCardId(null);
             }}
           />
