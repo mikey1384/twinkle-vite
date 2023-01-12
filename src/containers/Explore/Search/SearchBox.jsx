@@ -29,7 +29,7 @@ export default function SearchBox({ category, className, innerRef, style }) {
       : `Search ${displayedCategory}...`;
   }, [category]);
 
-  return (
+  return category === 'ai-cards' ? null : (
     <SearchInput
       className={className}
       style={style}
