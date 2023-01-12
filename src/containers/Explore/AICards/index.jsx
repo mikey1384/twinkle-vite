@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useExploreContext,
+  useKeyContext
+} from '~/contexts';
 import AICardModal from '~/components/Modals/AICardModal';
 import AICard from '~/components/AICard';
 import queryString from 'query-string';
@@ -20,6 +25,7 @@ export default function AICards() {
   const cards = useExploreContext((v) => v.state.aiCards.cards);
   const loadMoreShown = useExploreContext((v) => v.state.aiCards.loadMoreShown);
   const onLoadAICards = useExploreContext((v) => v.actions.onLoadAICards);
+  const cardObj = useChatContext((v) => v.state.cardObj);
   const onLoadMoreAICards = useExploreContext(
     (v) => v.actions.onLoadMoreAICards
   );
@@ -55,7 +61,7 @@ export default function AICards() {
           cards.map((card) => (
             <div key={card.id} style={{ margin: '1rem' }}>
               <AICard
-                card={card}
+                card={cardObj[card.id] ? cardObj[card.id] : card}
                 onClick={() => setAICardModalCardId(card.id)}
                 detailShown
               />
