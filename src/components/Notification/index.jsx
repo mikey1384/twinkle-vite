@@ -28,7 +28,6 @@ Notification.propTypes = {
 
 function Notification({ className, location, style, trackScrollPosition }) {
   const ContainerRef = useRef(null);
-  const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
   );
@@ -38,13 +37,11 @@ function Notification({ className, location, style, trackScrollPosition }) {
   const notificationsLoaded = useNotiContext(
     (v) => v.state.notificationsLoaded
   );
-  const rankingsLoaded = useNotiContext((v) => v.state.rankingsLoaded);
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const onLoadNotifications = useNotiContext(
     (v) => v.actions.onLoadNotifications
   );
   const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
-  const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
   const onClearRewards = useNotiContext((v) => v.actions.onClearRewards);
   const scrollPositions = useViewContext((v) => v.state.scrollPositions);
   const onRecordScrollPosition = useViewContext(
@@ -102,13 +99,6 @@ function Notification({ className, location, style, trackScrollPosition }) {
   }, [userId, notifications, rewards.length, activeTab, location, numNewNotis]);
 
   useEffect(() => {
-    if (!userId) {
-      fetchRankings();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     userChangedTab.current = false;
     if (activeTab === 'reward') {
       setActiveTab('notification');
@@ -121,7 +111,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
   }, [userId]);
 
   useEffect(() => {
-    if (rankingsLoaded && !notificationsLoaded) {
+    if (!notificationsLoaded) {
       handleFetchNews();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -277,30 +267,6 @@ function Notification({ className, location, style, trackScrollPosition }) {
       setLoadingNotifications(false);
       loadingNotificationRef.current = false;
     }
-  }
-  async function fetchRankings() {
-    const {
-      all,
-      top30s,
-      allMonthly,
-      top30sMonthly,
-      myMonthlyRank,
-      myAllTimeRank,
-      myAllTimeXP,
-      myMonthlyXP
-    } = await loadRankings();
-
-    onGetRanks({
-      all,
-      top30s,
-      allMonthly,
-      top30sMonthly,
-      myMonthlyRank,
-      myAllTimeRank,
-      myAllTimeXP,
-      myMonthlyXP
-    });
-    return Promise.resolve();
   }
 
   function handleScroll(event) {
