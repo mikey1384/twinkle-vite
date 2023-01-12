@@ -43,6 +43,9 @@ function Nav({
   const onResetProfile = useProfileContext((v) => v.actions.onResetProfile);
   const profileState = useProfileContext((v) => v.state) || {};
   const onReloadContent = useContentContext((v) => v.actions.onReloadContent);
+  const onClearAICardsLoaded = useExploreContext(
+    (v) => v.actions.onClearAICardsLoaded
+  );
   const onClearLinksLoaded = useExploreContext(
     (v) => v.actions.onClearLinksLoaded
   );
@@ -167,9 +170,10 @@ function Nav({
       onSetProfilesLoaded(false);
     }
     if (
-      ['/videos', '/links', '/subjects'].includes(to) &&
-      ['/videos', '/links', '/subjects'].includes(pathname)
+      ['/videos', '/links', '/subjects', '/ai-cards'].includes(to) &&
+      ['/videos', '/links', '/subjects', '/ai-cards'].includes(pathname)
     ) {
+      onClearAICardsLoaded();
       onClearLinksLoaded();
       onSetSubjectsLoaded(false);
       onClearVideosLoaded();
