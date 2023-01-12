@@ -160,18 +160,19 @@ function MainFeeds({
 
   return (
     <ErrorBoundary componentPath="Notification/MainFeeds/index" style={style}>
-      {numNewNotis > 0 && !(activeTab === 'reward' && totalRewardAmount > 0) && (
-        <Banner
-          loading={loadingNewFeeds}
-          color={alertColor}
-          style={{ marginBottom: '1rem' }}
-          onClick={handleNewNotiAlertClick}
-          spinnerDelay={100}
-        >
-          Tap to See {numNewNotis} New Notification
-          {numNewNotis > 1 ? 's' : ''}
-        </Banner>
-      )}
+      {numNewNotis > 0 &&
+        !(activeTab === 'reward' && totalRewardAmount > 0) && (
+          <Banner
+            loading={loadingNewFeeds}
+            color={alertColor}
+            style={{ marginBottom: '1rem' }}
+            onClick={handleNewNotiAlertClick}
+            spinnerDelay={100}
+          >
+            Tap to See {numNewNotis} New Notification
+            {numNewNotis > 1 ? 's' : ''}
+          </Banner>
+        )}
       {activeTab === 'reward' && !loadingNotifications && (
         <ErrorBoundary componentPath="Notification/MainFeeds/RewardNotification">
           {totalRewardAmount > 0 ? (
@@ -243,7 +244,7 @@ function MainFeeds({
       {userId && activeTab === 'notification' && notifications.length > 0 && (
         <RoundList style={{ marginTop: 0 }}>{NotificationsItems}</RoundList>
       )}
-      {activeTab === 'rankings' && <Rankings />}
+      {activeTab === 'rankings' && <Rankings loadingFeeds={loadingNewFeeds} />}
       {activeTab === 'reward' && rewards.length > 0 && (
         <RoundList style={{ marginTop: 0 }}>{RewardListItems}</RoundList>
       )}

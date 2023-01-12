@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import ThisMonth from './ThisMonth';
@@ -10,7 +11,11 @@ import { useKeyContext, useNotiContext } from '~/contexts';
 const monthLabel = moment().utc().format('MMMM');
 const allTimeLabel = localize('allTime');
 
-export default function Rankings() {
+Rankings.propTypes = {
+  loadingFeeds: PropTypes.bool
+};
+
+export default function Rankings({ loadingFeeds }) {
   const { userId } = useKeyContext((v) => v.myState);
   const [thisMonthSelected, setThisMonthSelected] = useState(!!userId);
   const allRanks = useNotiContext((v) => v.state.allRanks);
@@ -59,6 +64,7 @@ export default function Rankings() {
         {thisMonthSelected ? (
           <ThisMonth
             allMonthly={allMonthly}
+            loading={loadingFeeds}
             top30sMonthly={top30sMonthly}
             myMonthlyRank={myMonthlyRank}
             myMonthlyXP={myMonthlyXP}
@@ -66,6 +72,7 @@ export default function Rankings() {
           />
         ) : (
           <AllTime
+            loading={loadingFeeds}
             allRanks={allRanks}
             top30s={top30s}
             myAllTimeRank={myAllTimeRank}

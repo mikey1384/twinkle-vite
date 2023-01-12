@@ -6,6 +6,7 @@ import localize from '~/constants/localize';
 import FilterBar from '~/components/FilterBar';
 import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 
@@ -15,6 +16,7 @@ const notRankedDescriptionLabel = localize('notRankedDescription');
 
 AllTime.propTypes = {
   allRanks: PropTypes.array,
+  loading: PropTypes.bool,
   top30s: PropTypes.array,
   myId: PropTypes.number,
   myAllTimeRank: PropTypes.number,
@@ -23,6 +25,7 @@ AllTime.propTypes = {
 
 export default function AllTime({
   allRanks,
+  loading,
   myId,
   myAllTimeRank,
   myAllTimeXP,
@@ -68,7 +71,11 @@ export default function AllTime({
         <MyRank myId={myId} rank={myAllTimeRank} twinkleXP={myAllTimeXP} />
       )}
       {users.length === 0 || (allSelected && loggedIn && myAllTimeXP === 0) ? (
-        !myId ? null : (
+        !myId ? (
+          loading ? (
+            <Loading />
+          ) : null
+        ) : (
           <div
             className={css`
               border-radius: ${borderRadius};
