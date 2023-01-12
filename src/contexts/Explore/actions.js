@@ -6,6 +6,11 @@ export default function ExploreActions(dispatch) {
         text
       });
     },
+    onClearAICardsLoaded() {
+      return dispatch({
+        type: 'CLEAR_AI_CARDS_LOADED'
+      });
+    },
     onClearLinksLoaded() {
       return dispatch({
         type: 'CLEAR_LINKS_LOADED'

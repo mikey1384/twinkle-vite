@@ -78,6 +78,14 @@ export default function ExploreReducer(state, action) {
           }))
         }
       };
+    case 'CLEAR_AI_CARDS_LOADED':
+      return {
+        ...state,
+        aiCards: {
+          ...state.aiCards,
+          loaded: false
+        }
+      };
     case 'CLEAR_LINKS_LOADED':
       return {
         ...state,
