@@ -49,7 +49,7 @@ export default function AICards() {
 
   return (
     <ErrorBoundary componentPath="Explore/AICards">
-      <div style={{ width: '100%' }}>
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
         <div
           style={{
             display: 'flex',
