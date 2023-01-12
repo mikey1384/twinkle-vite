@@ -11,6 +11,7 @@ import AICard from '~/components/AICard';
 import queryString from 'query-string';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
+import CardSearchPanel from './CardSearchPanel';
 import { useLocation } from 'react-router-dom';
 
 export default function AICards() {
@@ -50,6 +51,7 @@ export default function AICards() {
   return (
     <ErrorBoundary componentPath="Explore/AICards">
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+        <CardSearchPanel />
         <div
           style={{
             display: 'flex',
