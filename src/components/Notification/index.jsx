@@ -243,7 +243,6 @@ function Notification({ className, location, style, trackScrollPosition }) {
   );
 
   async function handleFetchNotifications(userId) {
-    await fetchRankings();
     if (notifications.length === 0 && userId) {
       handleFetchNews(userId);
     }
