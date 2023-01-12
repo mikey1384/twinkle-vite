@@ -14,6 +14,7 @@ LiveCard.propTypes = {
   bind: PropTypes.func.isRequired,
   card: PropTypes.object.isRequired,
   cardStyle: PropTypes.object.isRequired,
+  detailShown: PropTypes.bool,
   innerRef: PropTypes.object.isRequired,
   isAnimated: PropTypes.bool.isRequired,
   onMouseLeave: PropTypes.func.isRequired,
@@ -24,6 +25,7 @@ export default function LiveCard({
   bind,
   card,
   cardStyle,
+  detailShown,
   innerRef,
   isAnimated,
   onMouseLeave,
@@ -42,7 +44,7 @@ export default function LiveCard({
   }, [card]);
   const imageExists = useMemo(() => !!card.imagePath, [card.imagePath]);
   const frontPicUrl = `${cloudFrontURL}${card.imagePath}`;
-  const { cardCss } = useAICard(card);
+  const { cardCss, cardColor } = useAICard(card);
 
   return (
     <div className={cardCss}>
@@ -133,6 +135,29 @@ export default function LiveCard({
             </div>
           )}
         </div>
+        {detailShown && (
+          <div
+            className={css`
+              font-size: 1.5rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.2rem;
+              }
+            `}
+            style={{
+              color: '#fff',
+              padding: '1rem',
+              bottom: 0,
+              position: 'absolute',
+              background: Color.black(0.9),
+              height: '30%',
+              width: '100%'
+            }}
+          >
+            <div>
+              #{card.id} <b style={{ color: cardColor }}>{card.word}</b>
+            </div>
+          </div>
+        )}
       </animated.div>
     </div>
   );

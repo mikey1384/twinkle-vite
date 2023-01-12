@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useExploreContext } from '~/contexts';
+import AICard from '~/components/AICard';
 
 export default function AICards() {
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
@@ -17,7 +18,19 @@ export default function AICards() {
 
   return (
     <ErrorBoundary componentPath="Explore/AICards">
-      <div>{cards.map((card) => card.id)}</div>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center'
+        }}
+      >
+        {cards.map((card) => (
+          <div key={card.id} style={{ margin: '1rem' }}>
+            <AICard card={card} detailShown />
+          </div>
+        ))}
+      </div>
     </ErrorBoundary>
   );
 }

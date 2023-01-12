@@ -47,6 +47,7 @@ export default function useAICard(card) {
   return card
     ? {
         promptText,
+        cardColor,
         cardCss: css`
           .card {
             position: relative;

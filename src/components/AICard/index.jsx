@@ -9,6 +9,7 @@ import $ from 'jquery';
 AICard.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
   card: PropTypes.object.isRequired,
+  detailShown: PropTypes.bool,
   onClick: PropTypes.func
 };
 
@@ -20,7 +21,12 @@ const MAX_ROTATE_Y = 15;
 const ROTATE_X_FACTOR = -0.05;
 const ROTATE_Y_FACTOR = 0.1;
 
-export default function AICard({ animateOnMouseLeave, card, onClick }) {
+export default function AICard({
+  animateOnMouseLeave,
+  card,
+  detailShown,
+  onClick
+}) {
   const [isAnimated, setIsAnimated] = useState(false);
   const timerRef = useRef(null);
   const CardRef = useRef(null);
@@ -81,6 +87,7 @@ export default function AICard({ animateOnMouseLeave, card, onClick }) {
       <Card
         card={card}
         bind={bind}
+        detailShown={detailShown}
         innerRef={CardRef}
         isAnimated={isAnimated}
         cardStyle={cardStyle}
