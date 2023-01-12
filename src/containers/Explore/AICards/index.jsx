@@ -49,44 +49,46 @@ export default function AICards() {
 
   return (
     <ErrorBoundary componentPath="Explore/AICards">
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'center'
-        }}
-      >
-        {loading ? (
-          <Loading />
-        ) : (
-          cards.map((card) => (
-            <div key={card.id} style={{ margin: '1rem' }}>
-              <AICard
-                card={cardObj[card.id] ? cardObj[card.id] : card}
-                onClick={() => setAICardModalCardId(card.id)}
-                detailShown
-              />
-            </div>
-          ))
+      <div style={{ width: '100%' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center'
+          }}
+        >
+          {loading ? (
+            <Loading />
+          ) : (
+            cards.map((card) => (
+              <div key={card.id} style={{ margin: '1rem' }}>
+                <AICard
+                  card={cardObj[card.id] ? cardObj[card.id] : card}
+                  onClick={() => setAICardModalCardId(card.id)}
+                  detailShown
+                />
+              </div>
+            ))
+          )}
+        </div>
+        {aiCardModalCardId && (
+          <AICardModal
+            cardId={aiCardModalCardId}
+            onHide={() => {
+              setAICardModalCardId(null);
+            }}
+          />
+        )}
+        {loadMoreShown && !loading && (
+          <LoadMoreButton
+            loading={loadingMore}
+            style={{ marginTop: '5rem' }}
+            filled
+            color={loadMoreButtonColor}
+            onClick={handleLoadMoreAICards}
+          />
         )}
       </div>
-      {aiCardModalCardId && (
-        <AICardModal
-          cardId={aiCardModalCardId}
-          onHide={() => {
-            setAICardModalCardId(null);
-          }}
-        />
-      )}
-      {loadMoreShown && !loading && (
-        <LoadMoreButton
-          loading={loadingMore}
-          style={{ marginTop: '5rem' }}
-          filled
-          color={loadMoreButtonColor}
-          onClick={handleLoadMoreAICards}
-        />
-      )}
     </ErrorBoundary>
   );
 
