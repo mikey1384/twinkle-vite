@@ -6,6 +6,7 @@ import localize from '~/constants/localize';
 import FilterBar from '~/components/FilterBar';
 import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 
@@ -16,6 +17,7 @@ const notRankedForThisMonthLabel = localize('notRankedForThisMonth');
 
 ThisMonth.propTypes = {
   allMonthly: PropTypes.array,
+  loading: PropTypes.bool,
   top30sMonthly: PropTypes.array,
   myId: PropTypes.number,
   myMonthlyRank: PropTypes.number,
@@ -24,6 +26,7 @@ ThisMonth.propTypes = {
 
 export default function ThisMonth({
   allMonthly,
+  loading,
   top30sMonthly,
   myId,
   myMonthlyRank,
@@ -68,8 +71,11 @@ export default function ThisMonth({
       {loggedIn && allSelected && (
         <MyRank myId={myId} rank={myMonthlyRank} twinkleXP={myMonthlyXP} />
       )}
-      {!myId ? null : users.length === 0 ||
-        (allSelected && myMonthlyXP === 0) ? (
+      {!myId ? (
+        loading ? (
+          <Loading />
+        ) : null
+      ) : users.length === 0 || (allSelected && myMonthlyXP === 0) ? (
         <div
           className={css`
             border-radius: ${borderRadius};
