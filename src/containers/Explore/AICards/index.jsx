@@ -71,7 +71,7 @@ export default function AICards() {
           }}
         />
       )}
-      {loadMoreShown && (
+      {loadMoreShown && !loading && (
         <LoadMoreButton
           loading={loadingMore}
           style={{ marginTop: '5rem' }}
