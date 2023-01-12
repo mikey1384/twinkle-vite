@@ -22,6 +22,7 @@ export default function AICards() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState(null);
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
+  const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
   const loadMoreShown = useExploreContext((v) => v.state.aiCards.loadMoreShown);
   const onLoadAICards = useExploreContext((v) => v.actions.onLoadAICards);
@@ -36,7 +37,7 @@ export default function AICards() {
     }
   }, [search]);
   useEffect(() => {
-    init();
+    if (!loaded) init();
     async function init() {
       setLoading(true);
       const { cards, loadMoreShown } = await loadAICards();
@@ -44,7 +45,7 @@ export default function AICards() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loaded]);
 
   return (
     <ErrorBoundary componentPath="Explore/AICards">
