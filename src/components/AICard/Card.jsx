@@ -159,7 +159,13 @@ export default function LiveCard({
             }}
           >
             <div>
-              #{card.id} <b style={{ color: cardColor }}>{card.word}</b>
+              #{card.id}
+              {card.word ? (
+                <div style={{ display: 'inline' }}>
+                  {' '}
+                  <b style={{ color: cardColor }}>{card.word}</b>
+                </div>
+              ) : null}
             </div>
             <div>
               Owned by <UsernameText color="#fff" user={card.owner} />
