@@ -57,6 +57,7 @@ export default function AICards() {
         <CardSearchPanel />
         <div
           style={{
+            marginTop: '3rem',
             display: 'flex',
             flexWrap: 'wrap',
             justifyContent: 'center'
