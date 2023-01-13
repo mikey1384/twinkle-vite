@@ -12,6 +12,7 @@ import queryString from 'query-string';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import CardSearchPanel from './CardSearchPanel';
+import FilterModal from './FilterModal';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function AICards() {
@@ -20,7 +21,7 @@ export default function AICards() {
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
-  const [selectedFilter, setSelectedFilter] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState(null);
@@ -96,7 +97,12 @@ export default function AICards() {
             onClick={handleLoadMoreAICards}
           />
         )}
-        {selectedFilter && <div>{selectedFilter}</div>}
+        {selectedFilter && (
+          <FilterModal
+            selectedFilter={selectedFilter}
+            onHide={() => setSelectedFilter(null)}
+          />
+        )}
       </div>
     </ErrorBoundary>
   );
