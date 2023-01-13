@@ -17,11 +17,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
     },
     async burnAICard(cardId) {
       try {
-        const { data } = await request.delete(
+        const {
+          data: { newXp }
+        } = await request.delete(
           `${URL}/chat/aiCard/burn?cardId=${cardId}`,
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve(newXp);
       } catch (error) {
         return handleError(error);
       }
