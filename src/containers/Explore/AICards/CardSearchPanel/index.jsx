@@ -5,10 +5,10 @@ import Button from '~/components/Button';
 import ButtonContainer from './ButtonContainer';
 
 CardSearchPanel.propTypes = {
-  onSetFilterModalShown: PropTypes.func.isRequired
+  onSetSelectedFilter: PropTypes.func.isRequired
 };
 
-export default function CardSearchPanel({ onSetFilterModalShown }) {
+export default function CardSearchPanel({ onSetSelectedFilter }) {
   return (
     <div
       className={css`
@@ -33,32 +33,32 @@ export default function CardSearchPanel({ onSetFilterModalShown }) {
         }}
       >
         <ButtonContainer label="Owner:">
-          <Button skeuomorphic onClick={() => onSetFilterModalShown(true)}>
+          <Button skeuomorphic onClick={() => onSetSelectedFilter('owner')}>
             Anyone
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Color:">
-          <Button skeuomorphic onClick={() => onSetFilterModalShown(true)}>
+          <Button skeuomorphic onClick={() => onSetSelectedFilter('color')}>
             Any
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Quality:">
-          <Button skeuomorphic onClick={() => onSetFilterModalShown(true)}>
+          <Button skeuomorphic onClick={() => onSetSelectedFilter('quality')}>
             Any
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Price:">
-          <Button skeuomorphic onClick={() => onSetFilterModalShown(true)}>
+          <Button skeuomorphic onClick={() => onSetSelectedFilter('price')}>
             Any
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Card ID:">
-          <Button skeuomorphic onClick={() => onSetFilterModalShown(true)}>
+          <Button skeuomorphic onClick={() => onSetSelectedFilter('cardId')}>
             Any
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Word:">
-          <Button skeuomorphic onClick={() => onSetFilterModalShown(true)}>
+          <Button skeuomorphic onClick={() => onSetSelectedFilter('word')}>
             Any
           </Button>
         </ButtonContainer>
