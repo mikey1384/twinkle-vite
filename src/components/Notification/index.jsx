@@ -34,9 +34,6 @@ function Notification({ className, location, style, trackScrollPosition }) {
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
   const { userId } = useKeyContext((v) => v.myState);
   const notiObj = useNotiContext((v) => v.state.notiObj);
-  const notificationsLoaded = useNotiContext(
-    (v) => v.state.notificationsLoaded
-  );
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const onLoadNotifications = useNotiContext(
     (v) => v.actions.onLoadNotifications
@@ -116,13 +113,6 @@ function Notification({ className, location, style, trackScrollPosition }) {
     handleFetchNotifications(userId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
-
-  useEffect(() => {
-    if (!notificationsLoaded) {
-      handleFetchNews();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (
@@ -245,7 +235,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
     }
   }
 
-  async function handleFetchNews() {
+  async function handleFetchNews(userId) {
     if (!loadingNotificationRef.current) {
       setLoadingNotifications(true);
       loadingNotificationRef.current = true;
