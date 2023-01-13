@@ -37,6 +37,8 @@ export default function UnlistedMenu({
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
+  const { userId } = useKeyContext((v) => v.myState);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const burnAICard = useAppContext((v) => v.requestHelpers.burnAICard);
 
   return (
@@ -63,8 +65,12 @@ export default function UnlistedMenu({
           cardQuality={cardQuality}
           onSetSellModalShown={onSetSellModalShown}
           onBurnConfirm={async () => {
-            const data = await burnAICard(cardId);
-            return Promise.resolve(data);
+            const newXp = await burnAICard(cardId);
+            onSetUserState({
+              userId,
+              newState: { twinkleXP: newXp }
+            });
+            return Promise.resolve();
           }}
         />
       ) : (
