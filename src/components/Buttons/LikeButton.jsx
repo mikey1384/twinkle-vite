@@ -73,8 +73,9 @@ function LikeButton({
             }
           } catch (error) {
             console.error(error);
+          } finally {
+            setLoading(false);
           }
-          setLoading(false);
         }}
       >
         <Icon icon="thumbs-up" />
