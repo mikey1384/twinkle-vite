@@ -10,7 +10,7 @@ FilterModal.propTypes = {
 export default function FilterModal({ selectedFilter, onHide }) {
   return (
     <Modal large onHide={onHide}>
-      <header>header goes here</header>
+      <header>Search Cards</header>
       <main>{selectedFilter}</main>
       <footer>
         <Button transparent onClick={onHide}>
