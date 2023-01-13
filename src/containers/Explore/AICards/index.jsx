@@ -20,6 +20,7 @@ export default function AICards() {
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
+  const [filterModalShown, setFilterModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState(null);
@@ -54,7 +55,7 @@ export default function AICards() {
   return (
     <ErrorBoundary componentPath="Explore/AICards">
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-        <CardSearchPanel />
+        <CardSearchPanel onSetFilterModalShown={setFilterModalShown} />
         <div
           style={{
             marginTop: '3rem',
@@ -95,6 +96,7 @@ export default function AICards() {
             onClick={handleLoadMoreAICards}
           />
         )}
+        {filterModalShown && <div>filter modal shown</div>}
       </div>
     </ErrorBoundary>
   );
