@@ -11,9 +11,21 @@ export default function CardSearchPanel() {
         padding: 1rem;
         background: #fff;
         border: 1px solid ${Color.borderGray()};
+        .label {
+          font-family: 'Roboto', sans-serif;
+          font-weight: bold;
+          font-size: 1.5rem;
+          color: ${Color.darkerGray()};
+        }
       `}
     >
-      <div>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          width: '100%'
+        }}
+      >
         <div
           style={{
             display: 'flex',
@@ -22,10 +34,55 @@ export default function CardSearchPanel() {
             alignItems: 'center'
           }}
         >
-          <div>Owner:</div>
+          <div className="label">Owner:</div>
           <div style={{ marginTop: '0.5rem' }}>
             <Button skeuomorphic onClick={() => console.log('clicked')}>
               Anyone
+            </Button>
+          </div>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <div className="label">Color:</div>
+          <div style={{ marginTop: '0.5rem' }}>
+            <Button skeuomorphic onClick={() => console.log('clicked')}>
+              Any
+            </Button>
+          </div>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <div className="label">Quality:</div>
+          <div style={{ marginTop: '0.5rem' }}>
+            <Button skeuomorphic onClick={() => console.log('clicked')}>
+              Any
+            </Button>
+          </div>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <div className="label">Price:</div>
+          <div style={{ marginTop: '0.5rem' }}>
+            <Button skeuomorphic onClick={() => console.log('clicked')}>
+              Any
             </Button>
           </div>
         </div>
