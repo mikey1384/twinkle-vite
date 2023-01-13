@@ -80,7 +80,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
   );
 
   useEffect(() => {
-    if (!userChangedTab.current) {
+    if (!userChangedTab.current && userId) {
       const tab =
         activeTab === 'reward' ||
         totalRewardedTwinkles + totalRewardedTwinkleCoins > 0
