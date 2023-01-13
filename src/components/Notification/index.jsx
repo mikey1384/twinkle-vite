@@ -96,7 +96,14 @@ function Notification({ className, location, style, trackScrollPosition }) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, notifications, rewards.length, activeTab, location, numNewNotis]);
+  }, [
+    userId,
+    notifications?.length,
+    rewards.length,
+    activeTab,
+    location,
+    numNewNotis
+  ]);
 
   useEffect(() => {
     userChangedTab.current = false;
@@ -156,7 +163,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
         >
           {userId && <TodayStats />}
           <div style={{ position: 'relative' }}>
-            {userId && (numNewNotis > 0 || notifications.length > 0) && (
+            {userId && (numNewNotis > 0 || !!notifications.length > 0) && (
               <FilterBar
                 bordered
                 style={{
