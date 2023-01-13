@@ -169,7 +169,6 @@ function App() {
   const visibilityChangeRef = useRef(null);
   const hiddenRef = useRef(null);
   const authRef = useRef(null);
-  const prevTwinkleXP = useRef(twinkleXP);
   const usingChat = useMemo(
     () => getSectionFromPathname(location?.pathname)?.section === 'chat',
     [location?.pathname]
@@ -191,15 +190,7 @@ function App() {
   }, [location]);
 
   useEffect(() => {
-    if (
-      !userId ||
-      (typeof twinkleXP === 'number' &&
-        twinkleXP > (prevTwinkleXP.current || 0))
-    ) {
-      handleLoadRankings();
-    }
-    prevTwinkleXP.current = twinkleXP;
-
+    handleLoadRankings();
     async function handleLoadRankings() {
       const {
         all,
