@@ -47,6 +47,16 @@ export default function CardSearchPanel() {
             Any
           </Button>
         </ButtonContainer>
+        <ButtonContainer label="Card ID:">
+          <Button skeuomorphic onClick={() => console.log('clicked')}>
+            Any
+          </Button>
+        </ButtonContainer>
+        <ButtonContainer label="Word:">
+          <Button skeuomorphic onClick={() => console.log('clicked')}>
+            Any
+          </Button>
+        </ButtonContainer>
       </div>
     </div>
   );
