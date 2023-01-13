@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Button from '~/components/Button';
+import ButtonContainer from './ButtonContainer';
 
 export default function CardSearchPanel() {
   return (
@@ -26,66 +27,26 @@ export default function CardSearchPanel() {
           width: '100%'
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <div className="label">Owner:</div>
-          <div style={{ marginTop: '0.5rem' }}>
-            <Button skeuomorphic onClick={() => console.log('clicked')}>
-              Anyone
-            </Button>
-          </div>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <div className="label">Color:</div>
-          <div style={{ marginTop: '0.5rem' }}>
-            <Button skeuomorphic onClick={() => console.log('clicked')}>
-              Any
-            </Button>
-          </div>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <div className="label">Quality:</div>
-          <div style={{ marginTop: '0.5rem' }}>
-            <Button skeuomorphic onClick={() => console.log('clicked')}>
-              Any
-            </Button>
-          </div>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <div className="label">Price:</div>
-          <div style={{ marginTop: '0.5rem' }}>
-            <Button skeuomorphic onClick={() => console.log('clicked')}>
-              Any
-            </Button>
-          </div>
-        </div>
+        <ButtonContainer label="Owner:">
+          <Button skeuomorphic onClick={() => console.log('clicked')}>
+            Anyone
+          </Button>
+        </ButtonContainer>
+        <ButtonContainer label="Color:">
+          <Button skeuomorphic onClick={() => console.log('clicked')}>
+            Any
+          </Button>
+        </ButtonContainer>
+        <ButtonContainer label="Quality:">
+          <Button skeuomorphic onClick={() => console.log('clicked')}>
+            Any
+          </Button>
+        </ButtonContainer>
+        <ButtonContainer label="Price:">
+          <Button skeuomorphic onClick={() => console.log('clicked')}>
+            Any
+          </Button>
+        </ButtonContainer>
       </div>
     </div>
   );
