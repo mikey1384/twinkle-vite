@@ -34,32 +34,34 @@ export default function Rankings({ loadingFeeds }) {
 
   return (
     <ErrorBoundary componentPath="Notification/MainFeeds/Ranking/index">
-      <FilterBar
-        bordered
-        style={{
-          height: '4.5rem',
-          fontSize: '1.6rem'
-        }}
-      >
-        <nav
-          className={thisMonthSelected ? 'active' : ''}
-          onClick={() => {
-            userChangedTab.current = true;
-            setThisMonthSelected(true);
+      {userId && (
+        <FilterBar
+          bordered
+          style={{
+            height: '4.5rem',
+            fontSize: '1.6rem'
           }}
         >
-          {monthLabel}
-        </nav>
-        <nav
-          className={thisMonthSelected ? '' : 'active'}
-          onClick={() => {
-            userChangedTab.current = true;
-            setThisMonthSelected(false);
-          }}
-        >
-          {allTimeLabel}
-        </nav>
-      </FilterBar>
+          <nav
+            className={thisMonthSelected ? 'active' : ''}
+            onClick={() => {
+              userChangedTab.current = true;
+              setThisMonthSelected(true);
+            }}
+          >
+            {monthLabel}
+          </nav>
+          <nav
+            className={thisMonthSelected ? '' : 'active'}
+            onClick={() => {
+              userChangedTab.current = true;
+              setThisMonthSelected(false);
+            }}
+          >
+            {allTimeLabel}
+          </nav>
+        </FilterBar>
+      )}
       <div style={{ width: '100%' }}>
         {thisMonthSelected ? (
           <ThisMonth
