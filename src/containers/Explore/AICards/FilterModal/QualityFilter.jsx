@@ -1,25 +1,55 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import DropdownButton from '~/components/Buttons/DropdownButton';
+import { capitalize } from '~/helpers/stringHelpers';
+import { Color } from '~/constants/css';
 
 QualityFilter.propTypes = {
   selectedQuality: PropTypes.string,
   onDropdownShown: PropTypes.func,
-  onSelectQuality: PropTypes.func
+  onSelectQuality: PropTypes.func,
+  style: PropTypes.object
 };
 
 export default function QualityFilter({
   selectedQuality,
   onDropdownShown,
-  onSelectQuality
+  onSelectQuality,
+  style
 }) {
   const menuProps = useMemo(() => {
-    const colors = ['any', 'common', 'superior', 'rare', 'elite', 'legendary'];
-    const rearrangedColor = colors.filter(
+    const qualities = [
+      'any',
+      'common',
+      'superior',
+      'rare',
+      'elite',
+      'legendary'
+    ];
+    const rearrangedQualities = qualities.filter(
       (quality) => quality !== selectedQuality
     );
-    return rearrangedColor.map((quality) => ({
-      label: quality,
+    return rearrangedQualities.map((quality) => ({
+      label: (
+        <b
+          style={{
+            color:
+              Color[
+                quality === 'superior'
+                  ? 'green'
+                  : quality === 'rare'
+                  ? 'purple'
+                  : quality === 'elite'
+                  ? 'orange'
+                  : quality === 'legendary'
+                  ? 'gold'
+                  : 'darkerGray'
+              ]()
+          }}
+        >
+          {capitalize(quality)}
+        </b>
+      ),
       onClick: () => onSelectQuality(quality)
     }));
   }, [onSelectQuality, selectedQuality]);
@@ -30,7 +60,8 @@ export default function QualityFilter({
         padding: '1rem',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        ...style
       }}
     >
       <div>
@@ -39,7 +70,17 @@ export default function QualityFilter({
       <div style={{ marginLeft: '1rem' }}>
         <DropdownButton
           skeuomorphic
-          color="darkerGray"
+          color={
+            selectedQuality === 'superior'
+              ? 'green'
+              : selectedQuality === 'rare'
+              ? 'purple'
+              : selectedQuality === 'elite'
+              ? 'orange'
+              : selectedQuality === 'legendary'
+              ? 'gold'
+              : 'darkerGray'
+          }
           icon="caret-down"
           text={selectedQuality}
           onDropdownShown={onDropdownShown}

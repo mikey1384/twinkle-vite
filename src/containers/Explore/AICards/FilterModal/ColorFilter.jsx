@@ -7,18 +7,20 @@ import { Color } from '~/constants/css';
 ColorFilter.propTypes = {
   selectedColor: PropTypes.string,
   onDropdownShown: PropTypes.func,
-  onSelectColor: PropTypes.func
+  onSelectColor: PropTypes.func,
+  style: PropTypes.object
 };
 
 export default function ColorFilter({
   selectedColor,
   onDropdownShown,
-  onSelectColor
+  onSelectColor,
+  style
 }) {
   const menuProps = useMemo(() => {
     const colors = ['any', 'blue', 'pink', 'orange', 'magenta', 'gold'];
-    const rearrangedColor = colors.filter((color) => color !== selectedColor);
-    return rearrangedColor.map((color) => ({
+    const rearrangedColors = colors.filter((color) => color !== selectedColor);
+    return rearrangedColors.map((color) => ({
       label: (
         <b
           style={{
@@ -45,7 +47,8 @@ export default function ColorFilter({
         padding: '1rem',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        ...style
       }}
     >
       <div>

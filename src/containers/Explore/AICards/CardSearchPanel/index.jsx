@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import ButtonContainer from './ButtonContainer';
 
 CardSearchPanel.propTypes = {
@@ -35,32 +36,23 @@ export default function CardSearchPanel({ filters, onSetSelectedFilter }) {
       >
         <ButtonContainer label="Owner:">
           <Button skeuomorphic onClick={() => onSetSelectedFilter('owner')}>
+            <Icon icon="caret-down" />
+            <span>&nbsp;&nbsp;</span>
             {filters.owner || 'Anyone'}
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Color:">
           <Button skeuomorphic onClick={() => onSetSelectedFilter('color')}>
+            <Icon icon="caret-down" />
+            <span>&nbsp;&nbsp;</span>
             {filters.color || 'Any'}
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Quality:">
           <Button skeuomorphic onClick={() => onSetSelectedFilter('quality')}>
+            <Icon icon="caret-down" />
+            <span>&nbsp;&nbsp;</span>
             {filters.quality || 'Any'}
-          </Button>
-        </ButtonContainer>
-        <ButtonContainer label="Price:">
-          <Button skeuomorphic onClick={() => onSetSelectedFilter('price')}>
-            Any
-          </Button>
-        </ButtonContainer>
-        <ButtonContainer label="Card ID:">
-          <Button skeuomorphic onClick={() => onSetSelectedFilter('cardId')}>
-            {filters.cardId || 'Any'}
-          </Button>
-        </ButtonContainer>
-        <ButtonContainer label="Word:">
-          <Button skeuomorphic onClick={() => onSetSelectedFilter('word')}>
-            {filters.word || 'Any'}
           </Button>
         </ButtonContainer>
       </div>

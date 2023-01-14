@@ -9,10 +9,11 @@ import CloseButton from '~/components/Buttons/CloseButton';
 
 OwnerFilter.propTypes = {
   onSelectOwner: PropTypes.func,
-  selectedOwner: PropTypes.string
+  selectedOwner: PropTypes.string,
+  style: PropTypes.object
 };
 
-export default function OwnerFilter({ onSelectOwner, selectedOwner }) {
+export default function OwnerFilter({ onSelectOwner, selectedOwner, style }) {
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
@@ -27,7 +28,8 @@ export default function OwnerFilter({ onSelectOwner, selectedOwner }) {
       style={{
         padding: '1rem',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        ...style
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center' }}>
