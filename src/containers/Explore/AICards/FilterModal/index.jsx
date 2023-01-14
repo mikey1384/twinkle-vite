@@ -5,9 +5,6 @@ import Button from '~/components/Button';
 import OwnerFilter from './OwnerFilter';
 import ColorFilter from './ColorFilter';
 import QualityFilter from './QualityFilter';
-import PriceFilter from './PriceFilter';
-import CardIdFilter from './CardIdFilter';
-import WordFilter from './WordFilter';
 
 FilterModal.propTypes = {
   onHide: PropTypes.func.isRequired,
@@ -37,13 +34,16 @@ export default function FilterModal({ filters, selectedFilter, onHide }) {
     return result;
   }, [selectedFilter]);
   return (
-    <Modal large onHide={handleHide}>
+    <Modal modalStyle={{ marginTop: 'CALC(50vh - 25rem)' }} onHide={handleHide}>
       <header>Search Cards</header>
       <main>
-        {filterComponents.map((component) => {
+        {filterComponents.map((component, index) => {
+          const style =
+            index < filterComponents.length - 1 ? { marginBottom: '2rem' } : {};
           if (component === 'owner') {
             return (
               <OwnerFilter
+                style={style}
                 selectedOwner={selectedOwner}
                 onSelectOwner={(owner) => setSelectedOwner(owner)}
                 key={component}
@@ -53,6 +53,7 @@ export default function FilterModal({ filters, selectedFilter, onHide }) {
           if (component === 'color') {
             return (
               <ColorFilter
+                style={style}
                 selectedColor={selectedColor}
                 onDropdownShown={setDropdownShown}
                 onSelectColor={setSelectedColor}
@@ -63,21 +64,13 @@ export default function FilterModal({ filters, selectedFilter, onHide }) {
           if (component === 'quality') {
             return (
               <QualityFilter
+                style={style}
                 selectedQuality={selectedQuality}
                 onDropdownShown={setDropdownShown}
                 onSelectQuality={setSelectedQuality}
                 key={component}
               />
             );
-          }
-          if (component === 'price') {
-            return <PriceFilter key={component} />;
-          }
-          if (component === 'cardId') {
-            return <CardIdFilter key={component} />;
-          }
-          if (component === 'word') {
-            return <WordFilter key={component} />;
           }
           return null;
         })}
