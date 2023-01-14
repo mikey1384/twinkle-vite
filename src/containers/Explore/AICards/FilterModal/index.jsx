@@ -11,10 +11,11 @@ import WordFilter from './WordFilter';
 
 FilterModal.propTypes = {
   onHide: PropTypes.func.isRequired,
+  filters: PropTypes.object,
   selectedFilter: PropTypes.string.isRequired
 };
 
-export default function FilterModal({ selectedFilter, onHide }) {
+export default function FilterModal({ filters, selectedFilter, onHide }) {
   const filterComponents = useMemo(() => {
     const defaultFilters = [
       'owner',
@@ -35,7 +36,9 @@ export default function FilterModal({ selectedFilter, onHide }) {
       <main>
         {filterComponents.map((component) => {
           if (component === 'owner') {
-            return <OwnerFilter key={component} />;
+            return (
+              <OwnerFilter selectedOwner={filters.owner} key={component} />
+            );
           }
           if (component === 'color') {
             return <ColorFilter key={component} />;

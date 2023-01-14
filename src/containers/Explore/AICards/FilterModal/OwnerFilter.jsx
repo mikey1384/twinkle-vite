@@ -1,10 +1,16 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 
-export default function OwnerFilter() {
+OwnerFilter.propTypes = {
+  onSelectOwner: PropTypes.func,
+  selectedOwner: PropTypes.string
+};
+
+export default function OwnerFilter({ onSelectOwner, selectedOwner }) {
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
@@ -26,7 +32,7 @@ export default function OwnerFilter() {
         <div>
           <b>Owner:</b>
         </div>
-        <div style={{ marginLeft: '0.5rem' }}>Anyone</div>
+        <div style={{ marginLeft: '0.5rem' }}>{selectedOwner || 'Anyone'}</div>
       </div>
       <div
         style={{
@@ -56,7 +62,7 @@ export default function OwnerFilter() {
   );
 
   function handleSelectUser(user) {
-    console.log(user);
+    onSelectOwner(user.username);
     setSearchedUsers([]);
     setSearchText('');
   }
