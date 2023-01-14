@@ -35,21 +35,49 @@ export default function CardSearchPanel({ filters, onSetSelectedFilter }) {
         }}
       >
         <ButtonContainer label="Owner:">
-          <Button skeuomorphic onClick={() => onSetSelectedFilter('owner')}>
+          <Button
+            color="darkerGray"
+            skeuomorphic
+            onClick={() => onSetSelectedFilter('owner')}
+          >
             <Icon icon="caret-down" />
             <span>&nbsp;&nbsp;</span>
             {filters.owner || 'Anyone'}
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Color:">
-          <Button skeuomorphic onClick={() => onSetSelectedFilter('color')}>
+          <Button
+            color={
+              filters.color
+                ? filters.color === 'blue'
+                  ? 'logoBlue'
+                  : filters.color
+                : 'darkerGray'
+            }
+            skeuomorphic
+            onClick={() => onSetSelectedFilter('color')}
+          >
             <Icon icon="caret-down" />
             <span>&nbsp;&nbsp;</span>
             {filters.color || 'Any'}
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Quality:">
-          <Button skeuomorphic onClick={() => onSetSelectedFilter('quality')}>
+          <Button
+            color={
+              filters.quality === 'superior'
+                ? 'green'
+                : filters.quality === 'rare'
+                ? 'purple'
+                : filters.quality === 'elite'
+                ? 'orange'
+                : filters.quality === 'legendary'
+                ? 'gold'
+                : 'darkerGray'
+            }
+            skeuomorphic
+            onClick={() => onSetSelectedFilter('quality')}
+          >
             <Icon icon="caret-down" />
             <span>&nbsp;&nbsp;</span>
             {filters.quality || 'Any'}
