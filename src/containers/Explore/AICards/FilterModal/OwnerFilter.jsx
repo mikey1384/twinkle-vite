@@ -5,6 +5,7 @@ import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useSearch } from '~/helpers/hooks';
+import CloseButton from '~/components/Buttons/CloseButton';
 
 OwnerFilter.propTypes = {
   onSelectOwner: PropTypes.func,
@@ -35,14 +36,41 @@ export default function OwnerFilter({ onSelectOwner, selectedOwner }) {
         </div>
         <div
           style={{
-            marginLeft: '0.5rem',
+            marginLeft: '0.7rem',
+            position: 'relative',
             fontWeight: 'bold',
             fontSize: '2rem',
             fontFamily: "'Roboto', sans-serif",
-            color: Color.logoBlue()
+            color: Color.logoBlue(),
+            display: 'flex'
           }}
         >
           {selectedOwner || 'Anyone'}
+          {selectedOwner && (
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                marginLeft: '0.7rem'
+              }}
+            >
+              <CloseButton
+                style={{
+                  padding: 0,
+                  margin: 0,
+                  right: 0,
+                  top: 0,
+                  display: 'block',
+                  position: 'static',
+                  width: '1.7rem',
+                  height: '1.7rem',
+                  background: Color.logoBlue()
+                }}
+                onClick={() => onSelectOwner('')}
+              />
+            </div>
+          )}
         </div>
       </div>
       <div
