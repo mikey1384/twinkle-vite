@@ -5,14 +5,24 @@ import Button from '~/components/Button';
 import OwnerFilter from './OwnerFilter';
 import ColorFilter from './ColorFilter';
 import QualityFilter from './QualityFilter';
+import { useKeyContext } from '~/contexts';
 
 FilterModal.propTypes = {
   onHide: PropTypes.func.isRequired,
   filters: PropTypes.object,
-  selectedFilter: PropTypes.string.isRequired
+  selectedFilter: PropTypes.string.isRequired,
+  onApply: PropTypes.func.isRequired
 };
 
-export default function FilterModal({ filters, selectedFilter, onHide }) {
+export default function FilterModal({
+  filters,
+  selectedFilter,
+  onHide,
+  onApply
+}) {
+  const {
+    done: { color: doneColor }
+  } = useKeyContext((v) => v.theme);
   const [dropdownShown, setDropdownShown] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState(filters.owner);
   const [selectedColor, setSelectedColor] = useState(filters.color || 'any');
@@ -76,12 +86,39 @@ export default function FilterModal({ filters, selectedFilter, onHide }) {
         })}
       </main>
       <footer>
-        <Button transparent onClick={handleHide}>
+        <Button
+          style={{ marginRight: '0.7rem' }}
+          transparent
+          onClick={handleHide}
+        >
           Close
+        </Button>
+        <Button color={doneColor} onClick={handleApply}>
+          Apply
         </Button>
       </footer>
     </Modal>
   );
+
+  function handleApply() {
+    const obj = {};
+    if (selectedOwner) {
+      obj.owner = selectedOwner;
+    }
+    if (selectedColor !== 'any') {
+      obj.color = selectedColor;
+    }
+    if (selectedQuality !== 'any') {
+      obj.quality = selectedQuality;
+    }
+    let queryString =
+      Object.keys(obj).length > 0
+        ? `/ai-cards/?${Object.entries(obj)
+            .map(([key, value]) => `search[${key}]=${value}`)
+            .join('&')}`
+        : '/ai-cards';
+    onApply(queryString);
+  }
 
   function handleHide() {
     if (!dropdownShown) onHide();

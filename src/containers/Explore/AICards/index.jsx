@@ -133,6 +133,10 @@ export default function AICards() {
           <FilterModal
             filters={filters}
             selectedFilter={selectedFilter}
+            onApply={(queryString) => {
+              navigate(queryString);
+              setSelectedFilter(null);
+            }}
             onHide={() => setSelectedFilter(null)}
           />
         )}
