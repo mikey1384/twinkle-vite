@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -16,6 +16,7 @@ FilterModal.propTypes = {
 };
 
 export default function FilterModal({ filters, selectedFilter, onHide }) {
+  const [selectedOwner, setSelectedOwner] = useState(filters.owner);
   const filterComponents = useMemo(() => {
     const defaultFilters = [
       'owner',
@@ -37,7 +38,11 @@ export default function FilterModal({ filters, selectedFilter, onHide }) {
         {filterComponents.map((component) => {
           if (component === 'owner') {
             return (
-              <OwnerFilter selectedOwner={filters.owner} key={component} />
+              <OwnerFilter
+                selectedOwner={selectedOwner}
+                onSelectOwner={(owner) => setSelectedOwner(owner)}
+                key={component}
+              />
             );
           }
           if (component === 'color') {
