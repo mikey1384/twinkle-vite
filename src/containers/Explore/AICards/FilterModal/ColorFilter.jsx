@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import DropdownButton from '~/components/Buttons/DropdownButton';
+import { capitalize } from '~/helpers/stringHelpers';
+import { Color } from '~/constants/css';
 
 ColorFilter.propTypes = {
   selectedColor: PropTypes.string,
@@ -17,7 +19,22 @@ export default function ColorFilter({
     const colors = ['any', 'blue', 'pink', 'orange', 'magenta', 'gold'];
     const rearrangedColor = colors.filter((color) => color !== selectedColor);
     return rearrangedColor.map((color) => ({
-      label: color,
+      label: (
+        <b
+          style={{
+            color:
+              Color[
+                color === 'any'
+                  ? 'darkerGray'
+                  : color === 'blue'
+                  ? 'logoBlue'
+                  : color
+              ]()
+          }}
+        >
+          {capitalize(color)}
+        </b>
+      ),
       onClick: () => onSelectColor(color)
     }));
   }, [onSelectColor, selectedColor]);
@@ -37,7 +54,13 @@ export default function ColorFilter({
       <div style={{ marginLeft: '1rem' }}>
         <DropdownButton
           skeuomorphic
-          color="darkerGray"
+          color={
+            selectedColor === 'any'
+              ? 'darkerGray'
+              : selectedColor === 'blue'
+              ? 'logoBlue'
+              : selectedColor
+          }
           icon="caret-down"
           text={selectedColor}
           onDropdownShown={onDropdownShown}
