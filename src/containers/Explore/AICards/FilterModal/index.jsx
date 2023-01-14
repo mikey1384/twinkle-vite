@@ -18,9 +18,9 @@ FilterModal.propTypes = {
 export default function FilterModal({ filters, selectedFilter, onHide }) {
   const [dropdownShown, setDropdownShown] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState(filters.owner);
-  const [selectedColor, setSelectedColor] = useState(filters.color || 'blue');
+  const [selectedColor, setSelectedColor] = useState(filters.color || 'any');
   const [selectedQuality, setSelectedQuality] = useState(
-    filters.quality || 'common'
+    filters.quality || 'any'
   );
   const filterComponents = useMemo(() => {
     const defaultFilters = [

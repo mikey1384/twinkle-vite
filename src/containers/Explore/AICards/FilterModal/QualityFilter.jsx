@@ -14,7 +14,7 @@ export default function QualityFilter({
   onSelectQuality
 }) {
   const menuProps = useMemo(() => {
-    const colors = ['common', 'superior', 'rare', 'elite', 'legendary'];
+    const colors = ['any', 'common', 'superior', 'rare', 'elite', 'legendary'];
     const rearrangedColor = colors.filter(
       (quality) => quality !== selectedQuality
     );
