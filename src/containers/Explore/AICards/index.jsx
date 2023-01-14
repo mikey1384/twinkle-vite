@@ -8,7 +8,6 @@ import {
 } from '~/contexts';
 import AICardModal from '~/components/Modals/AICardModal';
 import AICard from '~/components/AICard';
-import queryString from 'query-string';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import CardSearchPanel from './CardSearchPanel';
@@ -25,6 +24,7 @@ export default function AICards() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState(null);
+  const [filters, setFilters] = useState({});
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
@@ -35,9 +35,28 @@ export default function AICards() {
     (v) => v.actions.onLoadMoreAICards
   );
   useEffect(() => {
-    const { cardId } = queryString.parse(search);
-    if (cardId) {
-      setAICardModalCardId(Number(cardId));
+    const searchParams = new URLSearchParams(search.split('?')[1]);
+    const paramsObject = Object.fromEntries(searchParams);
+    const searchObj = {};
+    Object.entries(paramsObject).forEach(([key, value]) => {
+      const keys = key.split('[').map((k) => k.replace(/[\[\]]/g, ''));
+      let obj = searchObj;
+      for (let i = 0; i < keys.length; i++) {
+        if (i === keys.length - 1) {
+          obj[keys[i]] = value;
+        } else {
+          obj[keys[i]] = obj[keys[i]] || {};
+          obj = obj[keys[i]];
+        }
+      }
+    });
+    if (searchObj.filter) {
+      setFilters(searchObj.filter);
+    } else {
+      setFilters({});
+    }
+    if (searchObj.cardId) {
+      setAICardModalCardId(Number(searchObj.cardId));
     } else {
       setAICardModalCardId(null);
     }
@@ -72,7 +91,14 @@ export default function AICards() {
               <div key={card.id} style={{ margin: '1rem' }}>
                 <AICard
                   card={cardObj[card.id] ? cardObj[card.id] : card}
-                  onClick={() => navigate(`./?cardId=${card.id}`)}
+                  onClick={() => {
+                    const searchParams = new URLSearchParams(search);
+                    searchParams.append('cardId', card.id);
+                    const decodedURL = decodeURIComponent(
+                      searchParams.toString()
+                    );
+                    navigate(`./?${decodedURL}`);
+                  }}
                   detailShown
                 />
               </div>
@@ -83,7 +109,10 @@ export default function AICards() {
           <AICardModal
             cardId={aiCardModalCardId}
             onHide={() => {
-              navigate('../ai-cards');
+              const searchParams = new URLSearchParams(search);
+              searchParams.delete('cardId');
+              const decodedURL = decodeURIComponent(searchParams.toString());
+              navigate(`../ai-cards${decodedURL ? `/?${decodedURL}` : ''}`);
               setAICardModalCardId(null);
             }}
           />
@@ -99,6 +128,7 @@ export default function AICards() {
         )}
         {selectedFilter && (
           <FilterModal
+            filters={filters}
             selectedFilter={selectedFilter}
             onHide={() => setSelectedFilter(null)}
           />
