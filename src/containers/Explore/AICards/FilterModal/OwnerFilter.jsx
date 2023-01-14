@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
+import { Color } from '~/constants/css';
 import { useSearch } from '~/helpers/hooks';
 
 OwnerFilter.propTypes = {
@@ -28,11 +29,21 @@ export default function OwnerFilter({ onSelectOwner, selectedOwner }) {
         flexDirection: 'column'
       }}
     >
-      <div style={{ display: 'flex' }}>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
         <div>
           <b>Owner:</b>
         </div>
-        <div style={{ marginLeft: '0.5rem' }}>{selectedOwner || 'Anyone'}</div>
+        <div
+          style={{
+            marginLeft: '0.5rem',
+            fontWeight: 'bold',
+            fontSize: '2rem',
+            fontFamily: "'Roboto', sans-serif",
+            color: Color.logoBlue()
+          }}
+        >
+          {selectedOwner || 'Anyone'}
+        </div>
       </div>
       <div
         style={{

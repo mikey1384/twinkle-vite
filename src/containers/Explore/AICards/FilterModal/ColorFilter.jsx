@@ -14,7 +14,7 @@ export default function ColorFilter({
   onSelectColor
 }) {
   const menuProps = useMemo(() => {
-    const colors = ['blue', 'pink', 'orange', 'gold'];
+    const colors = ['blue', 'pink', 'orange', 'magenta', 'gold'];
     const rearrangedColor = colors.filter((color) => color !== selectedColor);
     return rearrangedColor.map((color) => ({
       label: color,
