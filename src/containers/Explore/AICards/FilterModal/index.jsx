@@ -16,7 +16,9 @@ FilterModal.propTypes = {
 };
 
 export default function FilterModal({ filters, selectedFilter, onHide }) {
+  const [dropdownShown, setDropdownShown] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState(filters.owner);
+  const [selectedColor, setSelectedColor] = useState(filters.color);
   const filterComponents = useMemo(() => {
     const defaultFilters = [
       'owner',
@@ -32,7 +34,7 @@ export default function FilterModal({ filters, selectedFilter, onHide }) {
     return result;
   }, [selectedFilter]);
   return (
-    <Modal large onHide={onHide}>
+    <Modal large onHide={handleHide}>
       <header>Search Cards</header>
       <main>
         {filterComponents.map((component) => {
@@ -46,7 +48,14 @@ export default function FilterModal({ filters, selectedFilter, onHide }) {
             );
           }
           if (component === 'color') {
-            return <ColorFilter key={component} />;
+            return (
+              <ColorFilter
+                selectedColor={selectedColor}
+                onDropdownShown={setDropdownShown}
+                onSelectColor={setSelectedColor}
+                key={component}
+              />
+            );
           }
           if (component === 'quality') {
             return <QualityFilter key={component} />;
@@ -64,10 +73,14 @@ export default function FilterModal({ filters, selectedFilter, onHide }) {
         })}
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button transparent onClick={handleHide}>
           Close
         </Button>
       </footer>
     </Modal>
   );
+
+  function handleHide() {
+    if (!dropdownShown) onHide();
+  }
 }
