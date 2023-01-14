@@ -50,8 +50,8 @@ export default function AICards() {
         }
       }
     });
-    if (searchObj.filter) {
-      setFilters(searchObj.filter);
+    if (searchObj.search) {
+      setFilters(searchObj.search);
     } else {
       setFilters({});
     }
@@ -75,7 +75,10 @@ export default function AICards() {
   return (
     <ErrorBoundary componentPath="Explore/AICards">
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-        <CardSearchPanel onSetSelectedFilter={setSelectedFilter} />
+        <CardSearchPanel
+          filters={filters}
+          onSetSelectedFilter={setSelectedFilter}
+        />
         <div
           style={{
             marginTop: '3rem',

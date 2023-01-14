@@ -5,10 +5,11 @@ import Button from '~/components/Button';
 import ButtonContainer from './ButtonContainer';
 
 CardSearchPanel.propTypes = {
+  filters: PropTypes.object.isRequired,
   onSetSelectedFilter: PropTypes.func.isRequired
 };
 
-export default function CardSearchPanel({ onSetSelectedFilter }) {
+export default function CardSearchPanel({ filters, onSetSelectedFilter }) {
   return (
     <div
       className={css`
@@ -34,17 +35,17 @@ export default function CardSearchPanel({ onSetSelectedFilter }) {
       >
         <ButtonContainer label="Owner:">
           <Button skeuomorphic onClick={() => onSetSelectedFilter('owner')}>
-            Anyone
+            {filters.owner || 'Anyone'}
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Color:">
           <Button skeuomorphic onClick={() => onSetSelectedFilter('color')}>
-            Any
+            {filters.color || 'Any'}
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Quality:">
           <Button skeuomorphic onClick={() => onSetSelectedFilter('quality')}>
-            Any
+            {filters.quality || 'Any'}
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Price:">
@@ -54,12 +55,12 @@ export default function CardSearchPanel({ onSetSelectedFilter }) {
         </ButtonContainer>
         <ButtonContainer label="Card ID:">
           <Button skeuomorphic onClick={() => onSetSelectedFilter('cardId')}>
-            Any
+            {filters.cardId || 'Any'}
           </Button>
         </ButtonContainer>
         <ButtonContainer label="Word:">
           <Button skeuomorphic onClick={() => onSetSelectedFilter('word')}>
-            Any
+            {filters.word || 'Any'}
           </Button>
         </ButtonContainer>
       </div>
