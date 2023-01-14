@@ -18,7 +18,10 @@ FilterModal.propTypes = {
 export default function FilterModal({ filters, selectedFilter, onHide }) {
   const [dropdownShown, setDropdownShown] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState(filters.owner);
-  const [selectedColor, setSelectedColor] = useState(filters.color);
+  const [selectedColor, setSelectedColor] = useState(filters.color || 'blue');
+  const [selectedQuality, setSelectedQuality] = useState(
+    filters.quality || 'common'
+  );
   const filterComponents = useMemo(() => {
     const defaultFilters = [
       'owner',
@@ -58,7 +61,14 @@ export default function FilterModal({ filters, selectedFilter, onHide }) {
             );
           }
           if (component === 'quality') {
-            return <QualityFilter key={component} />;
+            return (
+              <QualityFilter
+                selectedQuality={selectedQuality}
+                onDropdownShown={setDropdownShown}
+                onSelectQuality={setSelectedQuality}
+                key={component}
+              />
+            );
           }
           if (component === 'price') {
             return <PriceFilter key={component} />;
