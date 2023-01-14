@@ -15,24 +15,43 @@ export default function OwnerFilter() {
   });
 
   return (
-    <div style={{ position: 'relative' }}>
-      <SearchInput
-        placeholder="Search..."
-        onChange={handleSearch}
-        value={searchText}
-        searchResults={searchedUsers}
-        renderItemLabel={(item) => (
-          <span>
-            {item.username} <small>{`(${item.realName})`}</small>
-          </span>
-        )}
-        onClickOutSide={() => {
-          setSearchText('');
-          setSearchedUsers([]);
+    <div
+      style={{
+        padding: '1rem',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      <div style={{ display: 'flex' }}>
+        <div>
+          <b>Owner:</b>
+        </div>
+        <div style={{ marginLeft: '0.5rem' }}>Anyone</div>
+      </div>
+      <div
+        style={{
+          marginTop: '0.5rem',
+          position: 'relative'
         }}
-        onSelect={handleSelectUser}
-      />
-      {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
+      >
+        <SearchInput
+          placeholder="Search user..."
+          onChange={handleSearch}
+          value={searchText}
+          searchResults={searchedUsers}
+          renderItemLabel={(item) => (
+            <span>
+              {item.username} <small>{`(${item.realName})`}</small>
+            </span>
+          )}
+          onClickOutSide={() => {
+            setSearchText('');
+            setSearchedUsers([]);
+          }}
+          onSelect={handleSelectUser}
+        />
+        {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
+      </div>
     </div>
   );
 
