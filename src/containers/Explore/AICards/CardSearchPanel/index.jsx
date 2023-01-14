@@ -70,7 +70,7 @@ export default function CardSearchPanel({ filters, onSetSelectedFilter }) {
                 : filters.quality === 'rare'
                 ? 'purple'
                 : filters.quality === 'elite'
-                ? 'orange'
+                ? 'redOrange'
                 : filters.quality === 'legendary'
                 ? 'gold'
                 : 'darkerGray'
