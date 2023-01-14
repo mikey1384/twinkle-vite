@@ -108,6 +108,10 @@ export default function AddModeratorModal({ accountTypes, onHide }) {
           onChange={handleSearch}
           onSelect={handleSelectUser}
           placeholder={`${searchUsersLabel}...`}
+          onClickOutSide={() => {
+            setSearchText('');
+            setSearchedUsers([]);
+          }}
           renderItemLabel={(item) => (
             <span>
               {item.username} <small>{`(${item.realName})`}</small>
