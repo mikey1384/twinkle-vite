@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import {
   useAppContext,
@@ -7,10 +7,10 @@ import {
   useKeyContext
 } from '~/contexts';
 import AICardModal from '~/components/Modals/AICardModal';
-import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CardSearchPanel from './CardSearchPanel';
 import FilterModal from './FilterModal';
 import DefaultView from './DefaultView';
+import SearchView from './SearchView';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function AICards() {
@@ -21,18 +21,14 @@ export default function AICards() {
   } = useKeyContext((v) => v.theme);
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState(null);
   const [filters, setFilters] = useState({});
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
-  const loadMoreShown = useExploreContext((v) => v.state.aiCards.loadMoreShown);
   const onLoadAICards = useExploreContext((v) => v.actions.onLoadAICards);
   const cardObj = useChatContext((v) => v.state.cardObj);
-  const onLoadMoreAICards = useExploreContext(
-    (v) => v.actions.onLoadMoreAICards
-  );
+
   useEffect(() => {
     const searchParams = new URLSearchParams(search.split('?')[1]);
     const paramsObject = Object.fromEntries(searchParams);
@@ -71,6 +67,8 @@ export default function AICards() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
 
+  const isFilterSet = useMemo(() => Object.keys(filters).length > 0, [filters]);
+
   return (
     <ErrorBoundary componentPath="Explore/AICards">
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -78,13 +76,19 @@ export default function AICards() {
           filters={filters}
           onSetSelectedFilter={setSelectedFilter}
         />
-        <DefaultView
-          cards={cards}
-          loading={loading}
-          navigate={navigate}
-          cardObj={cardObj}
-          search={search}
-        />
+        {isFilterSet ? (
+          <SearchView />
+        ) : (
+          <DefaultView
+            cards={cards}
+            loading={loading}
+            navigate={navigate}
+            cardObj={cardObj}
+            loadAICards={loadAICards}
+            search={search}
+            loadMoreButtonColor={loadMoreButtonColor}
+          />
+        )}
         {aiCardModalCardId && (
           <AICardModal
             cardId={aiCardModalCardId}
@@ -95,15 +99,6 @@ export default function AICards() {
               navigate(`../ai-cards${decodedURL ? `/?${decodedURL}` : ''}`);
               setAICardModalCardId(null);
             }}
-          />
-        )}
-        {loadMoreShown && !loading && (
-          <LoadMoreButton
-            loading={loadingMore}
-            style={{ marginTop: '5rem' }}
-            filled
-            color={loadMoreButtonColor}
-            onClick={handleLoadMoreAICards}
           />
         )}
         {selectedFilter && (
@@ -120,14 +115,4 @@ export default function AICards() {
       </div>
     </ErrorBoundary>
   );
-
-  async function handleLoadMoreAICards() {
-    const lastInteraction = cards[cards.length - 1]?.lastInteraction;
-    setLoadingMore(true);
-    const { cards: newCards, loadMoreShown } = await loadAICards(
-      lastInteraction
-    );
-    onLoadMoreAICards({ cards: newCards, loadMoreShown });
-    setLoadingMore(false);
-  }
 }
