@@ -11,7 +11,9 @@ import CardSearchPanel from './CardSearchPanel';
 import FilterModal from './FilterModal';
 import DefaultView from './DefaultView';
 import SearchView from './SearchView';
+import { Color } from '~/constants/css';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { css } from '@emotion/css';
 
 export default function AICards() {
   const navigate = useNavigate();
@@ -23,6 +25,7 @@ export default function AICards() {
   const [loading, setLoading] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState(null);
   const [filters, setFilters] = useState({});
+  const [numCards, setNumCards] = useState(0);
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
@@ -76,12 +79,28 @@ export default function AICards() {
           filters={filters}
           onSetSelectedFilter={setSelectedFilter}
         />
+        {!!numCards && !!isFilterSet && (
+          <div
+            className={css`
+              width: 100%;
+              padding: 0.7rem 1rem 0 0;
+              display: flex;
+              justify-content: flex-end;
+              font-family: 'Roboto', sans-serif;
+              font-size: 1.3rem;
+              color: ${Color.darkerGray()};
+            `}
+          >
+            {numCards} card{numCards === 1 ? '' : 's'} found
+          </div>
+        )}
         {isFilterSet ? (
           <SearchView
             cardObj={cardObj}
             filters={filters}
             loadMoreButtonColor={loadMoreButtonColor}
             navigate={navigate}
+            onSetNumCards={setNumCards}
             search={search}
           />
         ) : (

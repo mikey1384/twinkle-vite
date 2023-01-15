@@ -242,13 +242,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
           .map((key) => `${key}=${filters[key]}`)
           .join('&');
         const {
-          data: { cards, loadMoreShown }
+          data: { cards, loadMoreShown, numCards }
         } = await request.get(
           `${URL}/ai-card/search?${
             lastInteraction ? `lastInteraction=${lastInteraction}&` : ''
           }${filterString}`
         );
-        return Promise.resolve({ cards, loadMoreShown });
+        return Promise.resolve({ cards, loadMoreShown, numCards });
       } catch (error) {
         return handleError(error);
       }
