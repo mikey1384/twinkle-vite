@@ -51,18 +51,18 @@ export default function SearchView({
         prevFilters.owner !== filters?.owner ||
         prevFilters.quality !== filters?.quality ||
         prevFilters.color !== filters?.color;
-      if (!(filteredLoaded && !(loadedRef.current && filterChanged))) {
+      if (!filteredLoaded || (loadedRef.current && filterChanged)) {
         setLoading(true);
       }
       const { cards, loadMoreShown } = await loadFilteredAICards({ filters });
-      if (!(filteredLoaded && !(loadedRef.current && filterChanged))) {
+      loadedRef.current = true;
+      if (!filteredLoaded || (loadedRef.current && filterChanged)) {
         onLoadFilteredAICards({ cards, loadMoreShown });
       }
       setLoading(false);
       if (filterChanged) {
         onSetPrevAICardFilters(filters);
       }
-      loadedRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters?.owner, filters?.quality, filters?.color]);
