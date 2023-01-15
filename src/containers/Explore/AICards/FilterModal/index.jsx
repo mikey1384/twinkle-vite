@@ -43,6 +43,7 @@ export default function FilterModal({
     );
     return result;
   }, [selectedFilter]);
+
   return (
     <Modal modalStyle={{ marginTop: 'CALC(50vh - 25rem)' }} onHide={handleHide}>
       <header>Search Cards</header>
