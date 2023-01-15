@@ -39,17 +39,23 @@ export default function SearchView({
   const onLoadMoreFilteredAICards = useExploreContext(
     (v) => v.actions.onLoadMoreFilteredAICards
   );
-  const prevFilterRef = useRef(filters);
+  const onSetPrevAICardFilters = useExploreContext(
+    (v) => v.actions.onSetPrevAICardFilters
+  );
+  const prevFilters = useExploreContext((v) => v.state.aiCards.prevFilters);
 
   useEffect(() => {
     init();
     async function init() {
       const filterChanged =
-        prevFilterRef.current?.owner !== filters?.owner ||
-        prevFilterRef.current?.quality !== filters?.quality ||
-        prevFilterRef.current?.color !== filters?.color;
+        prevFilters.owner !== filters?.owner ||
+        prevFilters.quality !== filters?.quality ||
+        prevFilters.color !== filters?.color;
       if (!(filteredLoaded && !(loadedRef.current && filterChanged))) {
         setLoading(true);
+      }
+      if (filterChanged) {
+        onSetPrevAICardFilters(filters);
       }
       const { cards, loadMoreShown } = await loadFilteredAICards({ filters });
       onLoadFilteredAICards({ cards, loadMoreShown });
@@ -57,7 +63,14 @@ export default function SearchView({
       loadedRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters?.owner, filters?.quality, filters?.color]);
+  }, [
+    filters?.owner,
+    filters?.quality,
+    filters?.color,
+    prevFilters?.owner,
+    prevFilters?.quality,
+    prevFilters?.color
+  ]);
 
   return (
     <div
