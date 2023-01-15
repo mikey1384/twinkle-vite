@@ -77,7 +77,7 @@ export default function AICards() {
           onSetSelectedFilter={setSelectedFilter}
         />
         {isFilterSet ? (
-          <SearchView />
+          <SearchView filters={filters} />
         ) : (
           <DefaultView
             cards={cards}
