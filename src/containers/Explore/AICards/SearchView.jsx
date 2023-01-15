@@ -55,7 +55,9 @@ export default function SearchView({
         setLoading(true);
       }
       const { cards, loadMoreShown } = await loadFilteredAICards({ filters });
-      onLoadFilteredAICards({ cards, loadMoreShown });
+      if (!(filteredLoaded && !(loadedRef.current && filterChanged))) {
+        onLoadFilteredAICards({ cards, loadMoreShown });
+      }
       setLoading(false);
       if (filterChanged) {
         onSetPrevAICardFilters(filters);
@@ -63,14 +65,7 @@ export default function SearchView({
       loadedRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    filters?.owner,
-    filters?.quality,
-    filters?.color,
-    prevFilters?.owner,
-    prevFilters?.quality,
-    prevFilters?.color
-  ]);
+  }, [filters?.owner, filters?.quality, filters?.color]);
 
   return (
     <div
