@@ -225,13 +225,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
     async loadAICards(lastInteraction) {
       try {
         const {
-          data: { cards, loadMoreShown }
+          data: { cards, loadMoreShown, numCards }
         } = await request.get(
           `${URL}/ai-card${
             lastInteraction ? `?lastInteraction=${lastInteraction}` : ''
           }`
         );
-        return Promise.resolve({ cards, loadMoreShown });
+        return Promise.resolve({ cards, loadMoreShown, numCards });
       } catch (error) {
         return handleError(error);
       }
