@@ -10,6 +10,7 @@ export const initialExploreState = {
     cards: [],
     loaded: false,
     loadMoreShown: false,
+    prevFilters: {},
     filteredCards: [],
     filteredLoaded: false,
     filteredLoadMoreShown: false

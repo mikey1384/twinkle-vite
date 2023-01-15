@@ -301,6 +301,12 @@ export default function ExploreActions(dispatch) {
         loadMoreButton
       });
     },
+    onSetPrevAICardFilters(filters) {
+      return dispatch({
+        type: 'SET_PREV_AI_CARD_FILTERS',
+        filters
+      });
+    },
     onSetThumbRewardLevel({ videoId, rewardLevel }) {
       return dispatch({
         type: 'SET_REWARD_LEVEL',

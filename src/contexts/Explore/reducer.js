@@ -704,6 +704,14 @@ export default function ExploreReducer(state, action) {
           }
         }
       };
+    case 'SET_PREV_AI_CARD_FILTERS':
+      return {
+        ...state,
+        aiCards: {
+          ...state.aiCards,
+          prevFilters: action.filters
+        }
+      };
     case 'SET_REWARD_LEVEL':
       return {
         ...state,
