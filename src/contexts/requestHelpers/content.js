@@ -236,6 +236,23 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async loadFilteredAICards({ lastInteraction, filter }) {
+      try {
+        const filterString = Object.keys(filter)
+          .map((key) => `${key}=${filter[key]}`)
+          .join('&');
+        const {
+          data: { cards, loadMoreShown }
+        } = await request.get(
+          `${URL}/ai-card/search?${
+            lastInteraction ? `lastInteraction=${lastInteraction}&` : ''
+          }${filterString}`
+        );
+        return Promise.resolve({ cards, loadMoreShown });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadComments({
       contentId,
       contentType,
