@@ -60,7 +60,7 @@ export default function SearchView({
         onLoadFilteredAICards({ cards, loadMoreShown });
       }
       setLoading(false);
-      if (filterChanged) {
+      if (filterChanged && Object.keys(filters).length) {
         onSetPrevAICardFilters(filters);
       }
     }
