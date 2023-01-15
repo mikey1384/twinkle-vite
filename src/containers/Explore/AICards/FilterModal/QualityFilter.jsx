@@ -8,6 +8,7 @@ QualityFilter.propTypes = {
   selectedQuality: PropTypes.string,
   onDropdownShown: PropTypes.func,
   onSelectQuality: PropTypes.func,
+  selectedFilter: PropTypes.string,
   style: PropTypes.object
 };
 
@@ -15,6 +16,7 @@ export default function QualityFilter({
   selectedQuality,
   onDropdownShown,
   onSelectQuality,
+  selectedFilter,
   style
 }) {
   const menuProps = useMemo(() => {
@@ -69,6 +71,7 @@ export default function QualityFilter({
       </div>
       <div style={{ marginLeft: '1rem' }}>
         <DropdownButton
+          isMenuShownWhenMounted={selectedFilter === 'quality'}
           skeuomorphic
           color={
             selectedQuality === 'superior'

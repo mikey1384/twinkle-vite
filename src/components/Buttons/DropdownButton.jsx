@@ -13,6 +13,7 @@ DropdownButton.propTypes = {
   iconSize: PropTypes.string,
   direction: PropTypes.string,
   innerRef: PropTypes.object,
+  isMenuShownWhenMounted: PropTypes.bool,
   onButtonClick: PropTypes.func,
   listStyle: PropTypes.object,
   menuProps: PropTypes.arrayOf(
@@ -34,6 +35,7 @@ DropdownButton.propTypes = {
 export default function DropdownButton({
   buttonStyle = {},
   className,
+  isMenuShownWhenMounted,
   onDropdownShown,
   opacity = 1,
   style,
@@ -53,6 +55,13 @@ export default function DropdownButton({
   const [dropdownContext, setDropdownContext] = useState(null);
   const coolDownRef = useRef(null);
   const ButtonRef = useRef(null);
+
+  useEffect(() => {
+    if (isMenuShownWhenMounted) {
+      handleClick();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     onDropdownShown?.(!!dropdownContext);
