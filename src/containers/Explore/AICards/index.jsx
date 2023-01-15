@@ -7,11 +7,10 @@ import {
   useKeyContext
 } from '~/contexts';
 import AICardModal from '~/components/Modals/AICardModal';
-import AICard from '~/components/AICard';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import Loading from '~/components/Loading';
 import CardSearchPanel from './CardSearchPanel';
 import FilterModal from './FilterModal';
+import DefaultView from './DefaultView';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function AICards() {
@@ -79,35 +78,13 @@ export default function AICards() {
           filters={filters}
           onSetSelectedFilter={setSelectedFilter}
         />
-        <div
-          style={{
-            marginTop: '3rem',
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center'
-          }}
-        >
-          {loading ? (
-            <Loading />
-          ) : (
-            cards.map((card) => (
-              <div key={card.id} style={{ margin: '1rem' }}>
-                <AICard
-                  card={cardObj[card.id] ? cardObj[card.id] : card}
-                  onClick={() => {
-                    const searchParams = new URLSearchParams(search);
-                    searchParams.append('cardId', card.id);
-                    const decodedURL = decodeURIComponent(
-                      searchParams.toString()
-                    );
-                    navigate(`./?${decodedURL}`);
-                  }}
-                  detailShown
-                />
-              </div>
-            ))
-          )}
-        </div>
+        <DefaultView
+          cards={cards}
+          loading={loading}
+          navigate={navigate}
+          cardObj={cardObj}
+          search={search}
+        />
         {aiCardModalCardId && (
           <AICardModal
             cardId={aiCardModalCardId}
