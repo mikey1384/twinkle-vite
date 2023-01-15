@@ -26,6 +26,7 @@ export default function AICards() {
   const [aiCardModalCardId, setAICardModalCardId] = useState(null);
   const [filters, setFilters] = useState({});
   const [numCards, setNumCards] = useState(0);
+  const [numFilteredCards, setNumFilteredCards] = useState(0);
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
@@ -63,14 +64,19 @@ export default function AICards() {
     if (!loaded) init();
     async function init() {
       setLoading(true);
-      const { cards, loadMoreShown } = await loadAICards();
+      const { cards, loadMoreShown, numCards } = await loadAICards();
       onLoadAICards({ cards, loadMoreShown });
+      setNumCards(numCards);
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
 
   const isFilterSet = useMemo(() => Object.keys(filters).length > 0, [filters]);
+  const displayedNumCards = useMemo(
+    () => (isFilterSet ? numFilteredCards : numCards),
+    [isFilterSet, numCards, numFilteredCards]
+  );
 
   return (
     <ErrorBoundary componentPath="Explore/AICards">
@@ -79,7 +85,7 @@ export default function AICards() {
           filters={filters}
           onSetSelectedFilter={setSelectedFilter}
         />
-        {!!numCards && !!isFilterSet && (
+        {displayedNumCards > 0 && (
           <div
             className={css`
               width: 100%;
@@ -91,7 +97,8 @@ export default function AICards() {
               color: ${Color.darkerGray()};
             `}
           >
-            {numCards} card{numCards === 1 ? '' : 's'} found
+            {displayedNumCards} card
+            {displayedNumCards === 1 ? '' : 's'} {isFilterSet ? 'found' : ''}
           </div>
         )}
         {isFilterSet ? (
@@ -100,7 +107,7 @@ export default function AICards() {
             filters={filters}
             loadMoreButtonColor={loadMoreButtonColor}
             navigate={navigate}
-            onSetNumCards={setNumCards}
+            onSetNumCards={setNumFilteredCards}
             search={search}
           />
         ) : (
