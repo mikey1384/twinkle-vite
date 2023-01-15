@@ -112,6 +112,13 @@ export default function ExploreActions(dispatch) {
         loadMoreShown
       });
     },
+    onLoadFilteredAICards({ cards, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_FILTERED_AI_CARDS',
+        cards,
+        loadMoreShown
+      });
+    },
     onLoadContinueWatching({
       videos,
       loadMoreButton,
