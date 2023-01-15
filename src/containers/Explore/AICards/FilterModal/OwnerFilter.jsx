@@ -10,10 +10,16 @@ import CloseButton from '~/components/Buttons/CloseButton';
 OwnerFilter.propTypes = {
   onSelectOwner: PropTypes.func,
   selectedOwner: PropTypes.string,
+  selectedFilter: PropTypes.string,
   style: PropTypes.object
 };
 
-export default function OwnerFilter({ onSelectOwner, selectedOwner, style }) {
+export default function OwnerFilter({
+  onSelectOwner,
+  selectedFilter,
+  selectedOwner,
+  style
+}) {
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
@@ -83,6 +89,7 @@ export default function OwnerFilter({ onSelectOwner, selectedOwner, style }) {
       >
         <SearchInput
           placeholder="Search user..."
+          autoFocus={selectedFilter === 'owner'}
           onChange={handleSearch}
           value={searchText}
           searchResults={searchedUsers}

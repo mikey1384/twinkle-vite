@@ -80,6 +80,7 @@ export default function AICards() {
           <SearchView
             cardObj={cardObj}
             filters={filters}
+            loadMoreButtonColor={loadMoreButtonColor}
             navigate={navigate}
             search={search}
           />

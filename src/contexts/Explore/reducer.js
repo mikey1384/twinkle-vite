@@ -420,6 +420,15 @@ export default function ExploreReducer(state, action) {
           filteredLoadMoreShown: action.loadMoreShown
         }
       };
+    case 'LOAD_MORE_FILTERED_AI_CARDS':
+      return {
+        ...state,
+        aiCards: {
+          ...state.aiCards,
+          filteredCards: state.aiCards.filteredCards.concat(action.cards),
+          filteredLoadMoreShown: action.loadMoreShown
+        }
+      };
     case 'LOAD_LINKS':
       return {
         ...state,
