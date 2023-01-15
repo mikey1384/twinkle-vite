@@ -39,11 +39,16 @@ export default function SearchView({
   const onLoadMoreFilteredAICards = useExploreContext(
     (v) => v.actions.onLoadMoreFilteredAICards
   );
+  const prevFilterRef = useRef(filters);
 
   useEffect(() => {
     init();
     async function init() {
-      if (!filteredLoaded || loadedRef.current) {
+      const filterChanged =
+        prevFilterRef.current?.owner !== filters?.owner ||
+        prevFilterRef.current?.quality !== filters?.quality ||
+        prevFilterRef.current?.color !== filters?.color;
+      if (!(filteredLoaded && !(loadedRef.current && filterChanged))) {
         setLoading(true);
       }
       const { cards, loadMoreShown } = await loadFilteredAICards({ filters });
