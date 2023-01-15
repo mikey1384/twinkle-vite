@@ -8,6 +8,7 @@ ColorFilter.propTypes = {
   selectedColor: PropTypes.string,
   onDropdownShown: PropTypes.func,
   onSelectColor: PropTypes.func,
+  selectedFilter: PropTypes.string,
   style: PropTypes.object
 };
 
@@ -15,6 +16,7 @@ export default function ColorFilter({
   selectedColor,
   onDropdownShown,
   onSelectColor,
+  selectedFilter,
   style
 }) {
   const menuProps = useMemo(() => {
@@ -56,6 +58,7 @@ export default function ColorFilter({
       </div>
       <div style={{ marginLeft: '1rem' }}>
         <DropdownButton
+          isMenuShownWhenMounted={selectedFilter === 'color'}
           skeuomorphic
           color={
             selectedColor === 'any'

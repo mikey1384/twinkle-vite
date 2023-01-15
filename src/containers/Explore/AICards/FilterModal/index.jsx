@@ -67,6 +67,7 @@ export default function FilterModal({
                 selectedColor={selectedColor}
                 onDropdownShown={setDropdownShown}
                 onSelectColor={setSelectedColor}
+                selectedFilter={selectedFilter}
                 key={component}
               />
             );
@@ -78,6 +79,7 @@ export default function FilterModal({
                 selectedQuality={selectedQuality}
                 onDropdownShown={setDropdownShown}
                 onSelectQuality={setSelectedQuality}
+                selectedFilter={selectedFilter}
                 key={component}
               />
             );
