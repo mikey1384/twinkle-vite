@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
@@ -20,7 +20,6 @@ export default function SearchView({
   navigate,
   search
 }) {
-  const loadedRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadFilteredAICards = useAppContext(
@@ -51,13 +50,14 @@ export default function SearchView({
         prevFilters.owner !== filters?.owner ||
         prevFilters.quality !== filters?.quality ||
         prevFilters.color !== filters?.color;
-      if (!filteredLoaded || (loadedRef.current && filterChanged)) {
+      if (!filteredLoaded || filterChanged) {
         setLoading(true);
-      }
-      const { cards, loadMoreShown } = await loadFilteredAICards({ filters });
-      loadedRef.current = true;
-      if (!filteredLoaded || (loadedRef.current && filterChanged)) {
-        onLoadFilteredAICards({ cards, loadMoreShown });
+        const { cards, loadMoreShown } = await loadFilteredAICards({
+          filters
+        });
+        if (!filteredLoaded || filterChanged) {
+          onLoadFilteredAICards({ cards, loadMoreShown });
+        }
       }
       setLoading(false);
       if (filterChanged && Object.keys(filters).length) {
