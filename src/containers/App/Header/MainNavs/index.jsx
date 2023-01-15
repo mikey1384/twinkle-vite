@@ -251,9 +251,8 @@ function MainNavs({
     if (profilePageMatch) {
       onSetProfileNav(pathname);
     }
-
     if (['links', 'videos', 'subjects', 'ai-cards'].includes(section)) {
-      onSetExploreCategory(section);
+      onSetExploreCategory(`${section}${search ? `/${search}` : ''}`);
       loaded.current = true;
     } else if (!loaded.current && defaultSearchFilter) {
       onSetExploreCategory(
