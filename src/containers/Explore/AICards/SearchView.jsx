@@ -54,12 +54,12 @@ export default function SearchView({
       if (!(filteredLoaded && !(loadedRef.current && filterChanged))) {
         setLoading(true);
       }
-      if (filterChanged) {
-        onSetPrevAICardFilters(filters);
-      }
       const { cards, loadMoreShown } = await loadFilteredAICards({ filters });
       onLoadFilteredAICards({ cards, loadMoreShown });
       setLoading(false);
+      if (filterChanged) {
+        onSetPrevAICardFilters(filters);
+      }
       loadedRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
