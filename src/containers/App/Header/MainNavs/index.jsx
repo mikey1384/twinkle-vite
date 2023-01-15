@@ -264,7 +264,7 @@ function MainNavs({
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultSearchFilter, pathname]);
+  }, [defaultSearchFilter, pathname, search]);
 
   const contentIconType = useMemo(
     () =>
