@@ -410,6 +410,16 @@ export default function ExploreReducer(state, action) {
           loadMoreShown: action.loadMoreShown
         }
       };
+    case 'LOAD_FILTERED_AI_CARDS':
+      return {
+        ...state,
+        aiCards: {
+          ...state.aiCards,
+          filteredCards: action.cards,
+          filteredLoaded: true,
+          filteredLoadMoreShown: action.loadMoreShown
+        }
+      };
     case 'LOAD_LINKS':
       return {
         ...state,

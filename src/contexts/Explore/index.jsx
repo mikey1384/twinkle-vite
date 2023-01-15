@@ -9,7 +9,10 @@ export const initialExploreState = {
   aiCards: {
     cards: [],
     loaded: false,
-    loadMoreShown: false
+    loadMoreShown: false,
+    filteredCards: [],
+    filteredLoaded: false,
+    filteredLoadMoreShown: false
   },
   links: {
     byUserLoaded: false,

@@ -236,10 +236,10 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadFilteredAICards({ lastInteraction, filter }) {
+    async loadFilteredAICards({ lastInteraction, filters }) {
       try {
-        const filterString = Object.keys(filter)
-          .map((key) => `${key}=${filter[key]}`)
+        const filterString = Object.keys(filters)
+          .map((key) => `${key}=${filters[key]}`)
           .join('&');
         const {
           data: { cards, loadMoreShown }
