@@ -36,7 +36,7 @@ export default function CardSearchPanel({ filters, onSetSelectedFilter }) {
       >
         <ButtonContainer label="Owner:">
           <Button
-            color="darkerGray"
+            color={filters.owner ? 'logoBlue' : 'darkerGray'}
             skeuomorphic
             onClick={() => onSetSelectedFilter('owner')}
           >

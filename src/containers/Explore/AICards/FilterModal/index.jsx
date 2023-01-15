@@ -55,6 +55,7 @@ export default function FilterModal({
             return (
               <OwnerFilter
                 style={style}
+                selectedFilter={selectedFilter}
                 selectedOwner={selectedOwner}
                 onSelectOwner={(owner) => setSelectedOwner(owner)}
                 key={component}
