@@ -6,7 +6,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useExploreContext } from '~/contexts';
 
 DefaultView.propTypes = {
-  cards: PropTypes.object.isRequired,
+  cards: PropTypes.array.isRequired,
   cardObj: PropTypes.object.isRequired,
   loading: PropTypes.bool.isRequired,
   loadAICards: PropTypes.func.isRequired,
