@@ -10,6 +10,7 @@ SearchView.propTypes = {
   filters: PropTypes.object.isRequired,
   loadMoreButtonColor: PropTypes.string,
   navigate: PropTypes.func.isRequired,
+  onSetNumCards: PropTypes.func.isRequired,
   search: PropTypes.string.isRequired
 };
 
@@ -18,6 +19,7 @@ export default function SearchView({
   filters,
   loadMoreButtonColor,
   navigate,
+  onSetNumCards,
   search
 }) {
   const [loading, setLoading] = useState(false);
@@ -51,10 +53,12 @@ export default function SearchView({
         prevFilters.quality !== filters?.quality ||
         prevFilters.color !== filters?.color;
       if (!filteredLoaded || filterChanged) {
+        onSetNumCards(0);
         setLoading(true);
-        const { cards, loadMoreShown } = await loadFilteredAICards({
+        const { cards, loadMoreShown, numCards } = await loadFilteredAICards({
           filters
         });
+        onSetNumCards(numCards);
         if (!filteredLoaded || filterChanged) {
           onLoadFilteredAICards({ cards, loadMoreShown });
         }
