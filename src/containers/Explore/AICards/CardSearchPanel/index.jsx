@@ -15,7 +15,6 @@ CardSearchPanel.propTypes = {
 };
 
 export default function CardSearchPanel({ filters, onSetSelectedFilter }) {
-  console.log(filters);
   return (
     <div
       className={css`
