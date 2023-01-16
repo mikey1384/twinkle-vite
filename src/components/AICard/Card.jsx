@@ -119,8 +119,8 @@ export default function LiveCard({
                 <UsernameText
                   color={Color[userLinkColor]()}
                   user={{
-                    username: card.owner.username,
-                    id: card.owner.id
+                    username: card.owner?.username,
+                    id: card.owner?.id
                   }}
                 />
               </div>
