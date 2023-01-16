@@ -88,6 +88,7 @@ export default function AICards() {
         <CardSearchPanel
           filters={filters}
           onSetSelectedFilter={setSelectedFilter}
+          onBuyNowSwitchClick={handleBuyNowSwitchClick}
         />
         {displayedNumCards > 0 && (
           <div
@@ -151,4 +152,14 @@ export default function AICards() {
       </div>
     </ErrorBoundary>
   );
+
+  function handleBuyNowSwitchClick() {
+    let newSeach = search;
+    if (filters.isBuyNow) {
+      newSeach = search.replace('&search[isBuyNow]=true', '');
+    } else {
+      newSeach = search + '&search[isBuyNow]=true';
+    }
+    navigate(`../ai-cards${newSeach}`);
+  }
 }
