@@ -11,10 +11,15 @@ const deviceIsMobile = isMobile(navigator);
 
 CardSearchPanel.propTypes = {
   filters: PropTypes.object.isRequired,
-  onSetSelectedFilter: PropTypes.func.isRequired
+  onSetSelectedFilter: PropTypes.func.isRequired,
+  onBuyNowSwitchClick: PropTypes.func.isRequired
 };
 
-export default function CardSearchPanel({ filters, onSetSelectedFilter }) {
+export default function CardSearchPanel({
+  filters,
+  onBuyNowSwitchClick,
+  onSetSelectedFilter
+}) {
   return (
     <div
       className={css`
@@ -90,9 +95,9 @@ export default function CardSearchPanel({ filters, onSetSelectedFilter }) {
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <SwitchButton
             small={deviceIsMobile}
-            checked={filters.isBuyNow}
+            checked={!!filters.isBuyNow}
             label="Buy Now"
-            onChange={() => console.log('pressed')}
+            onChange={onBuyNowSwitchClick}
           />
         </div>
       </div>
