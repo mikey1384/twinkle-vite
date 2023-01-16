@@ -143,7 +143,15 @@ export default function AICards() {
             filters={filters}
             selectedFilter={selectedFilter}
             onApply={(queryString) => {
-              navigate(queryString);
+              const searchParams = new URLSearchParams(queryString);
+              if (filters.isBuyNow) {
+                searchParams.set('search[isBuyNow]', 'true');
+              }
+              const decodedURL =
+                queryString === '/ai-cards'
+                  ? '/ai-cards/?search[isBuyNow]=true'
+                  : decodeURIComponent(searchParams.toString());
+              navigate(filters.isBuyNow ? decodedURL : queryString);
               setSelectedFilter(null);
             }}
             onHide={() => setSelectedFilter(null)}
@@ -154,12 +162,13 @@ export default function AICards() {
   );
 
   function handleBuyNowSwitchClick() {
-    let newSeach = search;
+    const searchParams = new URLSearchParams(search);
     if (filters.isBuyNow) {
-      newSeach = search.replace('&search[isBuyNow]=true', '');
+      searchParams.delete('search[isBuyNow]');
     } else {
-      newSeach = search + '&search[isBuyNow]=true';
+      searchParams.set('search[isBuyNow]', 'true');
     }
-    navigate(`../ai-cards${newSeach}`);
+    const decodedURL = decodeURIComponent(searchParams.toString());
+    navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);
   }
 }

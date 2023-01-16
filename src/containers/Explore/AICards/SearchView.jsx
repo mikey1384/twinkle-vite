@@ -51,7 +51,8 @@ export default function SearchView({
       const filterChanged =
         prevFilters.owner !== filters?.owner ||
         prevFilters.quality !== filters?.quality ||
-        prevFilters.color !== filters?.color;
+        prevFilters.color !== filters?.color ||
+        prevFilters.isBuyNow !== filters?.isBuyNow;
       if (!filteredLoaded || filterChanged) {
         onSetNumCards(0);
         setLoading(true);
@@ -69,7 +70,7 @@ export default function SearchView({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters?.owner, filters?.quality, filters?.color]);
+  }, [filters?.owner, filters?.quality, filters?.color, filters?.isBuyNow]);
 
   return (
     <div
