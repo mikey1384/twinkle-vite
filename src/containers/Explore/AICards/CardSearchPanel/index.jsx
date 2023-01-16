@@ -90,7 +90,7 @@ export default function CardSearchPanel({ filters, onSetSelectedFilter }) {
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <SwitchButton
             small={deviceIsMobile}
-            checked={true}
+            checked={filters.isBuyNow}
             label="Buy Now"
             onChange={() => console.log('pressed')}
           />
