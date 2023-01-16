@@ -4,6 +4,10 @@ import { Color } from '~/constants/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ButtonContainer from './ButtonContainer';
+import SwitchButton from '~/components/Buttons/SwitchButton';
+import { isMobile } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator);
 
 CardSearchPanel.propTypes = {
   filters: PropTypes.object.isRequired,
@@ -11,6 +15,7 @@ CardSearchPanel.propTypes = {
 };
 
 export default function CardSearchPanel({ filters, onSetSelectedFilter }) {
+  console.log(filters);
   return (
     <div
       className={css`
@@ -83,6 +88,14 @@ export default function CardSearchPanel({ filters, onSetSelectedFilter }) {
             {filters.quality || 'Any'}
           </Button>
         </ButtonContainer>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <SwitchButton
+            small={deviceIsMobile}
+            checked={true}
+            label="Buy Now"
+            onChange={() => console.log('pressed')}
+          />
+        </div>
       </div>
     </div>
   );

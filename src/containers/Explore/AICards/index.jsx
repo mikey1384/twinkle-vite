@@ -50,6 +50,10 @@ export default function AICards() {
       }
     });
     if (searchObj.search) {
+      if (searchObj.search.isBuyNow) {
+        searchObj.search.isBuyNow =
+          searchObj.search.isBuyNow === 'true' ? true : false;
+      }
       setFilters(searchObj.search);
     } else {
       setFilters({});
