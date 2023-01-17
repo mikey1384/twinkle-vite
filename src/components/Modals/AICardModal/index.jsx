@@ -112,7 +112,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
       setOfferPrice(loadedOffers.length ? loadedOffers[0].price : 0);
       if (!userSwitchedTab.current) {
         setActiveTab(
-          card?.owner.id === userId && loadedOffers.length ? 'offers' : 'myMenu'
+          card?.ownerId === userId && loadedOffers.length ? 'offers' : 'myMenu'
         );
       }
       setOffers(loadedOffers);
@@ -223,11 +223,11 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
                 color={Color[userLinkColor]()}
                 onMenuShownChange={setUsermenuShown}
                 displayedName={
-                  card.owner.id === userId ? 'you' : card.owner.username
+                  card.ownerId === userId ? 'you' : card.owner?.username
                 }
                 user={{
-                  username: card.owner.username,
-                  id: card.owner.id
+                  username: card.owner?.username,
+                  id: card.ownerId
                 }}
               />
               )
@@ -386,7 +386,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
                   onSetOffers={setOffers}
                   onSetLoadMoreShown={setOffersLoadMoreShown}
                   onSetOfferModalShown={setOfferModalShown}
-                  ownerId={card.owner.id}
+                  ownerId={card.owner?.id}
                   onSetActiveTab={setActiveTab}
                   loaded={offersLoaded}
                   loadMoreShown={offersLoadMoreShown}
