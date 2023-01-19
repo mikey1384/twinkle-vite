@@ -274,7 +274,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
           data: { offers, loadMoreShown }
         } = await request.get(
           `${URL}/chat/aiCard/offer/incoming${
-            lastPrice ? `?lastPrice=${lastPrice}` : ''
+            typeof lastPrice === 'number' ? `?lastPrice=${lastPrice}` : ''
           }`,
           auth()
         );
