@@ -3,9 +3,9 @@ import Link from '~/components/Link';
 import { charLimit } from '~/constants/defaultValues';
 
 const urlRegex =
-  /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)/giu;
+  /\b((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)\b/giu;
 const urlRegex2 =
-  /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)/i;
+  /\b((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)/i;
 
 export function addCommasToNumber(number) {
   const numArray = `${number}`.split('');
