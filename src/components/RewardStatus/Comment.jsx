@@ -255,13 +255,18 @@ function Comment({
   }
 
   async function handleSubmitEdit(editedComment) {
-    await editRewardComment({ editedComment, contentId: reward.id });
-    onEditDone({ id: reward.id, text: editedComment });
-    onSetIsEditing({
-      contentId: reward.id,
-      contentType: 'reward',
-      isEditing: false
-    });
+    try {
+      await editRewardComment({ editedComment, contentId: reward.id });
+      onEditDone({ id: reward.id, text: editedComment });
+      onSetIsEditing({
+        contentId: reward.id,
+        contentType: 'reward',
+        isEditing: false
+      });
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
 }
 

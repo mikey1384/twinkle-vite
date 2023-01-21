@@ -580,6 +580,7 @@ function Message({
           contentType: 'chat',
           isEditing: false
         });
+        Promise.resolve();
       } catch (error) {
         console.error(error);
         return Promise.reject(error);

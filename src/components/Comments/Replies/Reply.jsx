@@ -685,17 +685,22 @@ function Reply({
   ) : null;
 
   async function handleEditDone(editedReply) {
-    const { content } = await editContent({
-      editedComment: editedReply,
-      contentId: reply.id,
-      contentType: 'comment'
-    });
-    onEditDone({ editedComment: content, commentId: reply.id });
-    onSetIsEditing({
-      contentId: reply.id,
-      contentType: 'comment',
-      isEditing: false
-    });
+    try {
+      const { content } = await editContent({
+        editedComment: editedReply,
+        contentId: reply.id,
+        contentType: 'comment'
+      });
+      onEditDone({ editedComment: content, commentId: reply.id });
+      onSetIsEditing({
+        contentId: reply.id,
+        contentType: 'comment',
+        isEditing: false
+      });
+      return Promise.resolve();
+    } catch (err) {
+      return Promise.reject(err);
+    }
   }
 
   function handleLikeClick({ likes, isUnlike }) {
