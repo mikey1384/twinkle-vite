@@ -205,17 +205,22 @@ function Comment({
   }
 
   async function handleEditComment(editedComment) {
-    await editContent({
-      editedComment,
-      contentId: comment.id,
-      contentType: 'comment'
-    });
-    onEditDone({ editedComment, commentId: comment.id });
-    onSetIsEditing({
-      contentId: id,
-      contentType: 'comment',
-      isEditing: false
-    });
+    try {
+      await editContent({
+        editedComment,
+        contentId: comment.id,
+        contentType: 'comment'
+      });
+      onEditDone({ editedComment, commentId: comment.id });
+      onSetIsEditing({
+        contentId: id,
+        contentType: 'comment',
+        isEditing: false
+      });
+      return Promise.resolve();
+    } catch (err) {
+      return Promise.reject(err);
+    }
   }
 }
 

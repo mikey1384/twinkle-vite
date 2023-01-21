@@ -185,6 +185,7 @@ export default function EditTextArea({
       onEditDone(finalizeEmoji(editText));
     } catch (error) {
       console.error(error);
+    } finally {
       setIsEditing(false);
     }
   }
