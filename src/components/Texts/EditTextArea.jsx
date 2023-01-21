@@ -170,7 +170,7 @@ export default function EditTextArea({
     editTextRef.current = text;
   }
 
-  function onSubmit() {
+  async function onSubmit() {
     if (banned?.posting) {
       return;
     }
@@ -182,7 +182,7 @@ export default function EditTextArea({
     submitting.current = true;
     setIsEditing(true);
     try {
-      onEditDone(finalizeEmoji(editText));
+      await onEditDone(finalizeEmoji(editText));
     } catch (error) {
       console.error(error);
     } finally {
