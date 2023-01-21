@@ -99,17 +99,23 @@ export default function RewardLevelModal({
 
   async function submit() {
     setPosting(true);
-    const { cannotChange, success, moderatorName } = await updateRewardLevel({
-      contentId,
-      contentType,
-      rewardLevel
-    });
-    if (cannotChange) {
-      setModeratorName(moderatorName);
-      return setCannotChangeModalShown(true);
-    }
-    if (success) {
-      onSubmit({ contentId, rewardLevel, contentType });
+    try {
+      const { cannotChange, success, moderatorName } = await updateRewardLevel({
+        contentId,
+        contentType,
+        rewardLevel
+      });
+      if (cannotChange) {
+        setModeratorName(moderatorName);
+        return setCannotChangeModalShown(true);
+      }
+      if (success) {
+        onSubmit({ contentId, rewardLevel, contentType });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setPosting(false);
     }
   }
 }
