@@ -349,7 +349,6 @@ export default function XPRewardInterface({
       }
       handleSetComment('');
       handleSetSelectedAmount(0);
-      setRewarding(false);
       rewardingRef.current = false;
       onSetXpRewardInterfaceShown({
         contentId,
@@ -357,8 +356,9 @@ export default function XPRewardInterface({
         shown: false
       });
     } catch (error) {
-      setRewarding(false);
       console.error(error);
+    } finally {
+      setRewarding(false);
     }
   }
 
