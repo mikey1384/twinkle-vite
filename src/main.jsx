@@ -76,6 +76,7 @@ import { faJs } from '@fortawesome/free-brands-svg-icons/faJs';
 import { faLightbulb } from '@fortawesome/pro-solid-svg-icons/faLightbulb';
 import { faList } from '@fortawesome/pro-solid-svg-icons/faList';
 import { faLock } from '@fortawesome/pro-solid-svg-icons/faLock';
+import { faMagnifyingGlass } from '@fortawesome/pro-solid-svg-icons/faMagnifyingGlass';
 import { faMinus } from '@fortawesome/pro-solid-svg-icons/faMinus';
 import { faMobileAlt } from '@fortawesome/pro-solid-svg-icons/faMobileAlt';
 import { faPaperclip } from '@fortawesome/pro-solid-svg-icons/faPaperclip';
@@ -198,6 +199,7 @@ library.add(
   faLink,
   faList,
   faLock,
+  faMagnifyingGlass,
   faMinus,
   faMobileAlt,
   faPaperclip,

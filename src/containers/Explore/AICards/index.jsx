@@ -89,6 +89,7 @@ export default function AICards() {
           filters={filters}
           onSetSelectedFilter={setSelectedFilter}
           onBuyNowSwitchClick={handleBuyNowSwitchClick}
+          onCardNumberSearch={handleCardNumberSearch}
         />
         {displayedNumCards > 0 && (
           <div
@@ -160,6 +161,13 @@ export default function AICards() {
       </div>
     </ErrorBoundary>
   );
+
+  function handleCardNumberSearch(cardNumber) {
+    const searchParams = new URLSearchParams(search);
+    searchParams.set('cardId', cardNumber);
+    const decodedURL = decodeURIComponent(searchParams.toString());
+    navigate(`../ai-cards${decodedURL ? `/?${decodedURL}` : ''}`);
+  }
 
   function handleBuyNowSwitchClick() {
     const searchParams = new URLSearchParams(search);
