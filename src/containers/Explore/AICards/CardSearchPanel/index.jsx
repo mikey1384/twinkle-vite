@@ -139,7 +139,7 @@ export default function CardSearchPanel({
           <span className="label">Card #</span>
           <Input
             onChange={handleSetCardNumber}
-            placeholder="Number"
+            placeholder="Card #"
             value={cardNumber || ''}
             style={{
               margin: 0,
