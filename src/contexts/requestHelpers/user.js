@@ -207,12 +207,12 @@ export default function userRequestHelpers({ auth, handleError, token }) {
     async loadCoinHistory(lastId) {
       try {
         const {
-          data: { changes, loadMoreShown }
+          data: { totalCoins, changes, loadMoreShown }
         } = await request.get(
           `${URL}/user/coin/history${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
         );
-        return Promise.resolve({ changes, loadMoreShown });
+        return Promise.resolve({ totalCoins, changes, loadMoreShown });
       } catch (error) {
         return handleError(error);
       }

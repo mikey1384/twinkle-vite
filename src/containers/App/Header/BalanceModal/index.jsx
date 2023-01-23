@@ -19,7 +19,8 @@ export default function BalanceModal({ onHide }) {
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useKeyContext((v) => v.theme);
-  const { twinkleCoins } = useKeyContext((v) => v.myState);
+  const { twinkleCoins, userId } = useKeyContext((v) => v.myState);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const loadCoinHistory = useAppContext(
     (v) => v.requestHelpers.loadCoinHistory
   );
@@ -34,7 +35,8 @@ export default function BalanceModal({ onHide }) {
     init();
     async function init() {
       setLoading(true);
-      const { changes, loadMoreShown } = await loadCoinHistory();
+      const { totalCoins, changes, loadMoreShown } = await loadCoinHistory();
+      onSetUserState({ userId, newState: { twinkleCoins: totalCoins } });
       setChanges(changes);
       setLoadMoreShown(loadMoreShown);
       setLoading(false);
