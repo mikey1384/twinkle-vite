@@ -17,18 +17,21 @@ const color5 = '#b98cce';
 
 export default function useAICard(card) {
   const cardObj = useMemo(
-    () => (card ? cardLevelHash[card.level] : {}),
-    [card]
+    () => (card?.level ? cardLevelHash[card?.level] : {}),
+    [card?.level]
   );
   const cardColor = useMemo(
-    () => (card ? Color[card.isBurned ? 'black' : cardObj?.color]?.() : ''),
-    [card, cardObj?.color]
+    () =>
+      card?.isBurned !== undefined
+        ? Color[card?.isBurned ? 'black' : cardObj?.color]?.()
+        : '',
+    [card?.isBurned, cardObj?.color]
   );
   const promptText = useMemo(() => {
-    if (!card) return '';
-    if (card.word) {
-      const prompt = card.prompt;
-      const word = card.word;
+    if (!card?.word && !card?.prompt) return '';
+    if (card?.word) {
+      const prompt = card?.prompt;
+      const word = card?.word;
       const wordIndex = prompt.toLowerCase().indexOf(word.toLowerCase());
       const isCapitalized =
         prompt[wordIndex] !== prompt[wordIndex].toLowerCase();
@@ -41,8 +44,8 @@ export default function useAICard(card) {
         prompt.slice(wordIndex + word.length);
       return promptToDisplay;
     }
-    return card.prompt;
-  }, [card, cardObj?.color]);
+    return card?.prompt;
+  }, [card?.prompt, card?.word, cardObj?.color]);
 
   return card
     ? {
