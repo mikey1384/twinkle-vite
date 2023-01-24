@@ -95,7 +95,6 @@ export default function ContentPanel({
   );
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
-
   const contentState = useContentState({ contentType, contentId });
   const {
     commentId,
@@ -348,30 +347,31 @@ export default function ContentPanel({
                       <Embedly small contentId={contentState.rootId} />
                     </div>
                   )}
-                {contentType === 'comment' && contentState.rootType === 'user' && (
-                  <div
-                    className={css`
-                      cursor: pointer;
-                      background: ${Color.whiteGray()};
-                      border: 1px solid ${Color.borderGray()};
-                      border-radius: ${borderRadius};
-                      margin-top: -1rem;
-                      transition: background 0.5s;
-                      padding-bottom: 1rem;
-                      &:hover {
-                        background: #fff;
-                      }
-                      @media (max-width: ${mobileMaxWidth}) {
-                        border-left: 0;
-                        border-right: 0;
-                        margin-top: -0.5rem;
-                      }
-                    `}
-                    onClick={() => navigate(`/users/${rootObj.username}`)}
-                  >
-                    <Profile profile={rootObj} />
-                  </div>
-                )}
+                {contentType === 'comment' &&
+                  contentState.rootType === 'user' && (
+                    <div
+                      className={css`
+                        cursor: pointer;
+                        background: ${Color.whiteGray()};
+                        border: 1px solid ${Color.borderGray()};
+                        border-radius: ${borderRadius};
+                        margin-top: -1rem;
+                        transition: background 0.5s;
+                        padding-bottom: 1rem;
+                        &:hover {
+                          background: #fff;
+                        }
+                        @media (max-width: ${mobileMaxWidth}) {
+                          border-left: 0;
+                          border-right: 0;
+                          margin-top: -0.5rem;
+                        }
+                      `}
+                      onClick={() => navigate(`/users/${rootObj.username}`)}
+                    >
+                      <Profile profile={rootObj} />
+                    </div>
+                  )}
               </div>
             )}
           </div>

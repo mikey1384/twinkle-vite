@@ -76,10 +76,6 @@ function ContentEditor({
   const [inputState, setInputState] = useState(
     prevInputState || defaultInputState
   );
-  useEffect(() => {
-    handleSetInputState(prevInputState || defaultInputState);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevInputState]);
 
   const editForm = useMemo(() => inputState || {}, [inputState]);
   const {
