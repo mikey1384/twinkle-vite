@@ -2,16 +2,13 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Context from './Context';
 import CommentInputArea from './CommentInputArea';
-import Comment from './Comment';
-import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import Loading from '~/components/Loading';
-import PinnedComment from './PinnedComment';
+import Main from './Main';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { v1 as uuidv1 } from 'uuid';
 import { returnImageFileFromUrl, scrollElementToCenter } from '~/helpers';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useContentState, useTheme } from '~/helpers/hooks';
+import { useTheme } from '~/helpers/hooks';
 import {
   useAppContext,
   useContentContext,
@@ -106,14 +103,9 @@ function Comments({
   } = useTheme(theme || profileTheme);
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
-  const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
-  const rootContentState = useContentState({
-    contentType: rootContent?.contentType,
-    contentId: rootContent?.id
-  });
   const onClearCommentFileUploadProgress = useContentContext(
     (v) => v.actions.onClearCommentFileUploadProgress
   );
@@ -121,95 +113,15 @@ function Comments({
     (v) => v.actions.onUpdateCommentFileUploadProgress
   );
   const [deleting, setDeleting] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [commentSubmitted, setCommentSubmitted] = useState(false);
   const [prevComments, setPrevComments] = useState(comments);
   const ContainerRef = useRef(null);
-  const isRepliesOfReply = useMemo(
-    () => parent.contentType === 'comment' && parent.commentId !== parent.id,
-    [parent]
-  );
   const CommentInputAreaRef = useRef(null);
   const CommentRefs = {};
-  const pinnedCommentId = useMemo(() => {
-    if (isSubjectPannelComments) {
-      return subject?.pinnedCommentId;
-    }
-    if (parent.contentType === 'comment') {
-      return rootContentState?.pinnedCommentId;
-    }
-    return parent.pinnedCommentId;
-  }, [
-    isSubjectPannelComments,
-    parent.contentType,
-    parent.pinnedCommentId,
-    rootContentState?.pinnedCommentId,
-    subject?.pinnedCommentId
-  ]);
   const subjectId = useMemo(
     () => (parent.contentType === 'subject' ? parent.contentId : subject?.id),
     [parent.contentId, parent.contentType, subject?.id]
   );
-
-  const renderLoadMoreButton = useCallback(() => {
-    return (autoExpand || commentsShown) && !isLoading ? (
-      <LoadMoreButton
-        filled
-        color={loadMoreButtonColor}
-        loading={isLoadingMore}
-        onClick={handleLoadMoreComments}
-        style={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-          marginTop: inputAtBottom ? 0 : '1rem'
-        }}
-      />
-    ) : null;
-
-    async function handleLoadMoreComments() {
-      if (!isLoadingMore) {
-        setIsLoadingMore(true);
-        const lastCommentLocation =
-          inputAtBottom && !isRepliesOfReply ? 0 : comments.length - 1;
-        const lastCommentId = comments[lastCommentLocation]
-          ? comments[lastCommentLocation].id
-          : 'undefined';
-        try {
-          const data = await loadComments({
-            contentId: parent.contentId,
-            contentType: parent.contentType,
-            lastCommentId,
-            limit: commentsLoadLimit,
-            isRepliesOfReply
-          });
-          onLoadMoreComments({
-            ...data,
-            isRepliesOfReply,
-            contentId: parent.contentId,
-            contentType: parent.contentType
-          });
-          setIsLoadingMore(false);
-        } catch (error) {
-          console.error(error.response || error);
-        }
-      }
-    }
-  }, [
-    autoExpand,
-    comments,
-    commentsLoadLimit,
-    commentsShown,
-    inputAtBottom,
-    isLoading,
-    isLoadingMore,
-    isRepliesOfReply,
-    loadComments,
-    loadMoreButtonColor,
-    onLoadMoreComments,
-    parent.contentId,
-    parent.contentType
-  ]);
 
   const handleFileUpload = useCallback(
     async ({
@@ -543,51 +455,35 @@ function Comments({
             !noInput &&
             (commentsShown || autoExpand) &&
             renderInputArea()}
-          {(commentsShown || autoExpand || numPreviews > 0) && !commentsHidden && (
-            <div
-              style={{
-                width: '100%'
-              }}
-            >
-              {isLoading && <Loading theme={theme} />}
-              {!isLoading &&
-                parent.contentType !== 'comment' &&
-                pinnedCommentId &&
-                !isPreview && (
-                  <PinnedComment
-                    parent={parent}
-                    rootContent={rootContent}
-                    subject={subject}
-                    commentId={pinnedCommentId}
-                    userId={userId}
-                    theme={theme}
-                  />
-                )}
-              {inputAtBottom &&
-                !isRepliesOfReply &&
-                loadMoreButton &&
-                renderLoadMoreButton()}
-              {!isLoading &&
-                (isPreview ? previewComments : comments).map((comment) => (
-                  <Comment
-                    isSubjectPannelComment={isSubjectPannelComments}
-                    isPreview={isPreview}
-                    innerRef={(ref) => (CommentRefs[comment.id] = ref)}
-                    parent={parent}
-                    rootContent={rootContent}
-                    subject={subject}
-                    theme={theme}
-                    comment={comment}
-                    pinnedCommentId={pinnedCommentId}
-                    key={comment.id}
-                    userId={userId}
-                  />
-                ))}
-              {(!inputAtBottom || isRepliesOfReply) &&
-                loadMoreButton &&
-                renderLoadMoreButton()}
-            </div>
-          )}
+          {(commentsShown || autoExpand || numPreviews > 0) &&
+            !commentsHidden && (
+              <div
+                style={{
+                  width: '100%'
+                }}
+              >
+                <Main
+                  autoExpand={autoExpand}
+                  comments={comments}
+                  commentsShown={commentsShown}
+                  commentsLoadLimit={commentsLoadLimit}
+                  CommentRefs={CommentRefs}
+                  inputAtBottom={inputAtBottom}
+                  isLoading={isLoading}
+                  isPreview={isPreview}
+                  isSubjectPannelComments={isSubjectPannelComments}
+                  loadMoreShown={loadMoreButton}
+                  loadMoreButtonColor={loadMoreButtonColor}
+                  onLoadMoreComments={onLoadMoreComments}
+                  parent={parent}
+                  previewComments={previewComments}
+                  subject={subject}
+                  theme={theme}
+                  userId={userId}
+                  rootContent={rootContent}
+                />
+              </div>
+            )}
           {inputAtBottom &&
             !noInput &&
             (commentsShown || autoExpand) &&
