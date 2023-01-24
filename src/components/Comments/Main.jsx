@@ -11,8 +11,8 @@ import { useContentState } from '~/helpers/hooks';
 Main.propTypes = {
   autoFocus: PropTypes.bool,
   autoExpand: PropTypes.bool,
-  banned: PropTypes.bool,
-  CommentRefs: PropTypes.array,
+  banned: PropTypes.object,
+  CommentRefs: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
   comments: PropTypes.arrayOf(PropTypes.object),
   commentsHidden: PropTypes.bool,
   CommentInputAreaRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
