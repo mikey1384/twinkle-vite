@@ -17,45 +17,16 @@ import {
   SELECTED_LANGUAGE
 } from '~/constants/defaultValues';
 import { Color, Theme } from '~/constants/css';
-import { isEqual } from 'lodash';
 
 const BodyRef = document.scrollingElement || document.documentElement;
-const allContentState = {};
 
 export function useContentState({ contentType, contentId }) {
-  const newState = useContentContext((v) => v.state[contentType + contentId]);
-  let stateHasChanged = false;
-  const currentContentState = allContentState?.[contentType + contentId];
-  for (const key in newState) {
-    if (
-      newState?.[key] &&
-      currentContentState?.[key] &&
-      !isEqual(newState?.[key], currentContentState?.[key])
-    ) {
-      stateHasChanged = true;
-      break;
-    }
-  }
-  useEffect(
-    () => {
-      if (
-        (contentType && contentId && stateHasChanged) ||
-        (!currentContentState && newState)
-      ) {
-        if (newState) {
-          allContentState[contentType + contentId] = newState;
-        }
-      }
-    }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      Object.keys(currentContentState || {}).length,
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      Object.keys(newState || {}).length,
-      stateHasChanged
-    ]
+  const result = {};
+  result[contentType + contentId] = useContentContext(
+    (v) => v.state[contentType + contentId]
   );
-  return allContentState[contentType + contentId] || defaultContentState;
+  const state = result[contentType + contentId];
+  return state ? { ...defaultContentState, ...state } : defaultContentState;
 }
 
 export function useInterval(callback, interval) {
