@@ -1,7 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Context from './Context';
-import CommentInputArea from './CommentInputArea';
 import Main from './Main';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { v1 as uuidv1 } from 'uuid';
@@ -233,104 +232,6 @@ function Comments({
     [banned?.posting, onCommentSubmit, onReplySubmit, parent]
   );
 
-  const renderInputArea = useCallback(
-    (style) => {
-      return (
-        <CommentInputArea
-          autoFocus={autoFocus}
-          InputFormRef={CommentInputAreaRef}
-          innerRef={inputAreaInnerRef}
-          inputTypeLabel={inputTypeLabel}
-          numInputRows={numInputRows}
-          onSubmit={handleSubmitComment}
-          onViewSecretAnswer={
-            showSecretButtonAvailable ? handleViewSecretAnswer : null
-          }
-          parent={parent}
-          rootCommentId={
-            parent.contentType === 'comment' ? parent.commentId : null
-          }
-          subjectId={subjectId}
-          subjectRewardLevel={
-            parent?.contentType === 'subject'
-              ? parent?.rewardLevel
-              : parent?.contentType !== 'comment'
-              ? subject?.rewardLevel || 0
-              : 0
-          }
-          style={style}
-          theme={theme}
-          targetCommentId={
-            parent.contentType === 'comment' ? parent.contentId : null
-          }
-        />
-      );
-
-      async function handleSubmitComment({
-        content,
-        rootCommentId,
-        subjectId,
-        targetCommentId
-      }) {
-        if (banned?.posting) {
-          return;
-        }
-        try {
-          setCommentSubmitted(true);
-          const { comment } = await uploadComment({
-            content,
-            parent,
-            rootCommentId,
-            subjectId,
-            targetCommentId
-          });
-          await onCommentSubmit({
-            ...comment,
-            contentId: parent.contentId,
-            contentType: parent.contentType
-          });
-          return Promise.resolve();
-        } catch (error) {
-          console.error(error);
-        }
-      }
-
-      async function handleViewSecretAnswer() {
-        try {
-          setCommentSubmitted(true);
-          const { comment } = await uploadComment({
-            content: 'viewed the secret message',
-            parent,
-            subjectId,
-            isNotification: true
-          });
-          await onCommentSubmit({
-            ...comment,
-            contentId: parent.contentId,
-            contentType: parent.contentType
-          });
-          return Promise.resolve();
-        } catch (error) {
-          console.error(error);
-        }
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      autoFocus,
-      banned?.posting,
-      inputAreaInnerRef,
-      inputTypeLabel,
-      numInputRows,
-      onCommentSubmit,
-      parent,
-      showSecretButtonAvailable,
-      subjectId,
-      subject?.rewardLevel,
-      theme
-    ]
-  );
-
   const handleSubmitReply = useCallback(
     async ({ content, rootCommentId, targetCommentId }) => {
       if (banned?.posting) {
@@ -451,43 +352,40 @@ function Comments({
           ref={ContainerRef}
           onClick={isPreview ? onPreviewClick : () => {}}
         >
-          {!inputAtBottom &&
-            !noInput &&
-            (commentsShown || autoExpand) &&
-            renderInputArea()}
-          {(commentsShown || autoExpand || numPreviews > 0) &&
-            !commentsHidden && (
-              <div
-                style={{
-                  width: '100%'
-                }}
-              >
-                <Main
-                  autoExpand={autoExpand}
-                  comments={comments}
-                  commentsShown={commentsShown}
-                  commentsLoadLimit={commentsLoadLimit}
-                  CommentRefs={CommentRefs}
-                  inputAtBottom={inputAtBottom}
-                  isLoading={isLoading}
-                  isPreview={isPreview}
-                  isSubjectPannelComments={isSubjectPannelComments}
-                  loadMoreShown={loadMoreButton}
-                  loadMoreButtonColor={loadMoreButtonColor}
-                  onLoadMoreComments={onLoadMoreComments}
-                  parent={parent}
-                  previewComments={previewComments}
-                  subject={subject}
-                  theme={theme}
-                  userId={userId}
-                  rootContent={rootContent}
-                />
-              </div>
-            )}
-          {inputAtBottom &&
-            !noInput &&
-            (commentsShown || autoExpand) &&
-            renderInputArea({ marginTop: comments.length > 0 ? '1rem' : 0 })}
+          <Main
+            autoFocus={autoFocus}
+            autoExpand={autoExpand}
+            banned={banned}
+            comments={comments}
+            commentsShown={commentsShown}
+            commentsHidden={commentsHidden}
+            commentsLoadLimit={commentsLoadLimit}
+            CommentRefs={CommentRefs}
+            CommentInputAreaRef={CommentInputAreaRef}
+            inputAreaInnerRef={inputAreaInnerRef}
+            inputAtBottom={inputAtBottom}
+            inputTypeLabel={inputTypeLabel}
+            isLoading={isLoading}
+            isPreview={isPreview}
+            isSubjectPannelComments={isSubjectPannelComments}
+            loadMoreShown={loadMoreButton}
+            loadMoreButtonColor={loadMoreButtonColor}
+            noInput={noInput}
+            numInputRows={numInputRows}
+            numPreviews={numPreviews}
+            onCommentSubmit={onCommentSubmit}
+            onLoadMoreComments={onLoadMoreComments}
+            onSetCommentSubmitted={setCommentSubmitted}
+            parent={parent}
+            previewComments={previewComments}
+            showSecretButtonAvailable={showSecretButtonAvailable}
+            subject={subject}
+            subjectId={subjectId}
+            theme={theme}
+            uploadComment={uploadComment}
+            userId={userId}
+            rootContent={rootContent}
+          />
         </div>
       </Context.Provider>
     </ErrorBoundary>

@@ -4,47 +4,76 @@ import Comment from './Comment';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import PinnedComment from './PinnedComment';
+import CommentInputArea from './CommentInputArea';
 import { useAppContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 
 Main.propTypes = {
+  autoFocus: PropTypes.bool,
   autoExpand: PropTypes.bool,
+  banned: PropTypes.bool,
   CommentRefs: PropTypes.array,
   comments: PropTypes.arrayOf(PropTypes.object),
+  commentsHidden: PropTypes.bool,
+  CommentInputAreaRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
   commentsShown: PropTypes.bool,
   commentsLoadLimit: PropTypes.number,
   inputAtBottom: PropTypes.bool,
+  inputAreaInnerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
+  inputTypeLabel: PropTypes.string,
   isLoading: PropTypes.bool,
   isPreview: PropTypes.bool,
   isSubjectPannelComments: PropTypes.bool,
   loadMoreShown: PropTypes.bool,
   loadMoreButtonColor: PropTypes.string,
+  noInput: PropTypes.bool,
+  numInputRows: PropTypes.number,
+  numPreviews: PropTypes.number,
   onLoadMoreComments: PropTypes.func,
+  onCommentSubmit: PropTypes.func,
+  onSetCommentSubmitted: PropTypes.func,
   parent: PropTypes.object,
   previewComments: PropTypes.arrayOf(PropTypes.object),
+  showSecretButtonAvailable: PropTypes.bool,
   subject: PropTypes.object,
+  subjectId: PropTypes.number,
   theme: PropTypes.string,
+  uploadComment: PropTypes.func,
   userId: PropTypes.number,
   rootContent: PropTypes.object
 };
 
 export default function Main({
   autoExpand,
+  autoFocus,
+  banned,
+  CommentInputAreaRef,
   CommentRefs,
   comments,
+  commentsHidden,
   commentsShown,
   commentsLoadLimit,
   inputAtBottom,
+  inputAreaInnerRef,
+  inputTypeLabel,
   isLoading,
   isPreview,
   isSubjectPannelComments,
   loadMoreShown,
   loadMoreButtonColor,
+  noInput,
+  numInputRows,
+  numPreviews,
+  onCommentSubmit,
   onLoadMoreComments,
+  onSetCommentSubmitted,
   parent,
   previewComments,
+  showSecretButtonAvailable,
   subject,
+  subjectId,
   theme,
+  uploadComment,
   userId,
   rootContent
 }) {
@@ -73,6 +102,104 @@ export default function Main({
     rootContentState?.pinnedCommentId,
     subject?.pinnedCommentId
   ]);
+
+  const renderInputArea = useCallback(
+    (style) => {
+      return (
+        <CommentInputArea
+          autoFocus={autoFocus}
+          InputFormRef={CommentInputAreaRef}
+          innerRef={inputAreaInnerRef}
+          inputTypeLabel={inputTypeLabel}
+          numInputRows={numInputRows}
+          onSubmit={handleSubmitComment}
+          onViewSecretAnswer={
+            showSecretButtonAvailable ? handleViewSecretAnswer : null
+          }
+          parent={parent}
+          rootCommentId={
+            parent.contentType === 'comment' ? parent.commentId : null
+          }
+          subjectId={subjectId}
+          subjectRewardLevel={
+            parent?.contentType === 'subject'
+              ? parent?.rewardLevel
+              : parent?.contentType !== 'comment'
+              ? subject?.rewardLevel || 0
+              : 0
+          }
+          style={style}
+          theme={theme}
+          targetCommentId={
+            parent.contentType === 'comment' ? parent.contentId : null
+          }
+        />
+      );
+
+      async function handleSubmitComment({
+        content,
+        rootCommentId,
+        subjectId,
+        targetCommentId
+      }) {
+        if (banned?.posting) {
+          return;
+        }
+        try {
+          onSetCommentSubmitted(true);
+          const { comment } = await uploadComment({
+            content,
+            parent,
+            rootCommentId,
+            subjectId,
+            targetCommentId
+          });
+          await onCommentSubmit({
+            ...comment,
+            contentId: parent.contentId,
+            contentType: parent.contentType
+          });
+          return Promise.resolve();
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      async function handleViewSecretAnswer() {
+        try {
+          onSetCommentSubmitted(true);
+          const { comment } = await uploadComment({
+            content: 'viewed the secret message',
+            parent,
+            subjectId,
+            isNotification: true
+          });
+          await onCommentSubmit({
+            ...comment,
+            contentId: parent.contentId,
+            contentType: parent.contentType
+          });
+          return Promise.resolve();
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      autoFocus,
+      banned?.posting,
+      inputAreaInnerRef,
+      inputTypeLabel,
+      numInputRows,
+      onCommentSubmit,
+      parent,
+      showSecretButtonAvailable,
+      subjectId,
+      subject?.rewardLevel,
+      theme
+    ]
+  );
 
   const renderLoadMoreButton = useCallback(() => {
     return (autoExpand || commentsShown) && !isLoading ? (
@@ -135,44 +262,60 @@ export default function Main({
   ]);
 
   return (
-    <div style={{ width: '100%' }}>
-      {isLoading && <Loading theme={theme} />}
-      {!isLoading &&
-        parent.contentType !== 'comment' &&
-        pinnedCommentId &&
-        !isPreview && (
-          <PinnedComment
-            parent={parent}
-            rootContent={rootContent}
-            subject={subject}
-            commentId={pinnedCommentId}
-            userId={userId}
-            theme={theme}
-          />
-        )}
+    <div
+      style={{
+        width: '100%'
+      }}
+    >
+      {!inputAtBottom &&
+        !noInput &&
+        (commentsShown || autoExpand) &&
+        renderInputArea()}
+      {(commentsShown || autoExpand || numPreviews > 0) && !commentsHidden ? (
+        <div style={{ width: '100%' }}>
+          {isLoading && <Loading theme={theme} />}
+          {!isLoading &&
+            parent.contentType !== 'comment' &&
+            pinnedCommentId &&
+            !isPreview && (
+              <PinnedComment
+                parent={parent}
+                rootContent={rootContent}
+                subject={subject}
+                commentId={pinnedCommentId}
+                userId={userId}
+                theme={theme}
+              />
+            )}
+          {inputAtBottom &&
+            !isRepliesOfReply &&
+            loadMoreShown &&
+            renderLoadMoreButton()}
+          {!isLoading &&
+            (isPreview ? previewComments : comments).map((comment) => (
+              <Comment
+                isSubjectPannelComment={isSubjectPannelComments}
+                isPreview={isPreview}
+                innerRef={(ref) => (CommentRefs[comment.id] = ref)}
+                parent={parent}
+                rootContent={rootContent}
+                subject={subject}
+                theme={theme}
+                comment={comment}
+                pinnedCommentId={pinnedCommentId}
+                key={comment.id}
+                userId={userId}
+              />
+            ))}
+          {(!inputAtBottom || isRepliesOfReply) &&
+            loadMoreShown &&
+            renderLoadMoreButton()}
+        </div>
+      ) : null}
       {inputAtBottom &&
-        !isRepliesOfReply &&
-        loadMoreShown &&
-        renderLoadMoreButton()}
-      {!isLoading &&
-        (isPreview ? previewComments : comments).map((comment) => (
-          <Comment
-            isSubjectPannelComment={isSubjectPannelComments}
-            isPreview={isPreview}
-            innerRef={(ref) => (CommentRefs[comment.id] = ref)}
-            parent={parent}
-            rootContent={rootContent}
-            subject={subject}
-            theme={theme}
-            comment={comment}
-            pinnedCommentId={pinnedCommentId}
-            key={comment.id}
-            userId={userId}
-          />
-        ))}
-      {(!inputAtBottom || isRepliesOfReply) &&
-        loadMoreShown &&
-        renderLoadMoreButton()}
+        !noInput &&
+        (commentsShown || autoExpand) &&
+        renderInputArea({ marginTop: comments.length > 0 ? '1rem' : 0 })}
     </div>
   );
 }
