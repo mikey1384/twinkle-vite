@@ -28,17 +28,23 @@ export default function Activity({
   const [usermenuShown, setUsermenuShown] = useState(false);
   const navigate = useNavigate();
   const card = useMemo(() => {
-    if (feed.type === 'summon') {
-      return cardObj[feed.contentId];
+    if (feed?.type === 'summon') {
+      return cardObj[feed?.contentId];
     }
-    if (feed.type === 'offer') {
-      return cardObj[feed.offer?.cardId];
+    if (feed?.type === 'offer') {
+      return cardObj[feed?.offer?.cardId];
     }
-    if (feed.type === 'transfer') {
-      return cardObj[feed.transfer?.cardId];
+    if (feed?.type === 'transfer') {
+      return cardObj[feed?.transfer?.cardId];
     }
     return null;
-  }, [cardObj, feed]);
+  }, [
+    cardObj,
+    feed?.contentId,
+    feed?.offer?.cardId,
+    feed?.transfer?.cardId,
+    feed?.type
+  ]);
 
   return (
     <ErrorBoundary componentPath="Chat/Body/Collect/AICards/ActivitiesContainer/Activity">
