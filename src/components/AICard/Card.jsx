@@ -37,12 +37,12 @@ export default function LiveCard({
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
   const burnXP = useMemo(() => {
-    if (!card) return 0;
+    if (!card?.level && !card?.quality) return 0;
     return returnCardBurnXP({
       cardLevel: card?.level,
       cardQuality: card?.quality
     });
-  }, [card]);
+  }, [card?.level, card?.quality]);
   const imageExists = useMemo(() => !!card.imagePath, [card.imagePath]);
   const frontPicUrl = `${cloudFrontURL}${card.imagePath}`;
   const { cardCss, cardColor } = useAICard(card);

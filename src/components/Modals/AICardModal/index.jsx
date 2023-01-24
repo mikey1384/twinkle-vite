@@ -74,12 +74,12 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
   const card = cardObj[cardId];
 
   const burnXP = useMemo(() => {
-    if (!card) return 0;
+    if (!card?.level && !card?.quality) return 0;
     return returnCardBurnXP({
-      cardLevel: card.level,
-      cardQuality: card.quality
+      cardLevel: card?.level,
+      cardQuality: card?.quality
     });
-  }, [card]);
+  }, [card?.level, card?.quality]);
 
   useEffect(() => {
     init();

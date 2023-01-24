@@ -24,12 +24,12 @@ export default function CardThumb({ card }) {
     [card?.level]
   );
   const burnXP = useMemo(() => {
-    if (!card) return 0;
+    if (!card?.level && !card?.quality) return 0;
     return returnCardBurnXP({
-      cardLevel: card.level,
-      cardQuality: card.quality
+      cardLevel: card?.level,
+      cardQuality: card?.quality
     });
-  }, [card]);
+  }, [card?.level, card?.quality]);
   const displayedBurnXP = useMemo(() => {
     if (burnXP < 1000) return burnXP;
     if (burnXP < 1000000) return `${(burnXP / 1000).toFixed(1)}K`;
@@ -39,7 +39,10 @@ export default function CardThumb({ card }) {
     () => Color[card.isBurned ? 'black' : cardDetailObj?.color](),
     [card.isBurned, cardDetailObj?.color]
   );
-  const borderColor = useMemo(() => qualityProps[card.quality]?.color, [card]);
+  const borderColor = useMemo(
+    () => qualityProps[card?.quality]?.color,
+    [card?.quality]
+  );
 
   return (
     <div
