@@ -18,14 +18,14 @@ import {
 } from '~/constants/defaultValues';
 import { Color, Theme } from '~/constants/css';
 
+const allContentState = {};
 const BodyRef = document.scrollingElement || document.documentElement;
 
 export function useContentState({ contentType, contentId }) {
-  const result = {};
-  result[contentType + contentId] = useContentContext(
+  allContentState[contentType + contentId] = useContentContext(
     (v) => v.state[contentType + contentId]
   );
-  const state = result[contentType + contentId];
+  const state = allContentState[contentType + contentId];
   return state ? { ...defaultContentState, ...state } : defaultContentState;
 }
 
