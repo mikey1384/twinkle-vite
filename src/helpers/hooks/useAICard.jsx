@@ -25,7 +25,6 @@ export default function useAICard(card) {
     [card?.isBurned, cardObj?.color]
   );
   const promptText = useMemo(() => {
-    if (!card?.word && !card?.prompt) return '';
     if (card?.word) {
       const prompt = card?.prompt;
       const word = card?.word;
@@ -41,7 +40,7 @@ export default function useAICard(card) {
         prompt.slice(wordIndex + word.length);
       return promptToDisplay;
     }
-    return card?.prompt;
+    return card?.prompt || '';
   }, [card?.prompt, card?.word, cardObj?.color]);
 
   return card
