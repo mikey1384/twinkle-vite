@@ -10,7 +10,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { cloudFrontURL, returnCardBurnXP } from '~/constants/defaultValues';
 import { animated } from 'react-spring';
 
-LiveCard.propTypes = {
+Card.propTypes = {
   animateOnMouseLeave: PropTypes.bool,
   bind: PropTypes.func.isRequired,
   card: PropTypes.object.isRequired,
@@ -22,7 +22,7 @@ LiveCard.propTypes = {
   onMouseMove: PropTypes.func.isRequired
 };
 
-export default function LiveCard({
+export default function Card({
   bind,
   card,
   cardStyle,
@@ -37,7 +37,6 @@ export default function LiveCard({
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
   const burnXP = useMemo(() => {
-    if (!card?.level && !card?.quality) return 0;
     return returnCardBurnXP({
       cardLevel: card?.level,
       cardQuality: card?.quality

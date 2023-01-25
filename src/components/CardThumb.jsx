@@ -24,7 +24,6 @@ export default function CardThumb({ card }) {
     [card?.level]
   );
   const burnXP = useMemo(() => {
-    if (!card?.level && !card?.quality) return 0;
     return returnCardBurnXP({
       cardLevel: card?.level,
       cardQuality: card?.quality
