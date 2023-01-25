@@ -299,9 +299,11 @@ export function addEmoji(string) {
     ':yes:': '👍',
     ':yum:': '😋',
     ':yummy:': '😋',
-    ':zombie:': '🧟',
+    ':zap:': '⚡',
+    ':zebra:': '🦓',
     ':zipped:': '🤐',
     ':zipper:': '🤐',
+    ':zombie:': '🧟',
     ':zzz:': '😴',
     ':^^:': '😊'
   };
