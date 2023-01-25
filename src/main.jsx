@@ -1,5 +1,5 @@
 async function loadPolyfills() {
-  if (typeof window.IntersectionObserver === 'undefined') {
+  if (!window.IntersectionObserver) {
     await import('intersection-observer');
   }
 }
@@ -131,6 +131,8 @@ import { faWindows } from '@fortawesome/free-brands-svg-icons/faWindows';
 import { faXmark } from '@fortawesome/pro-solid-svg-icons/faXmark';
 import { AppContextProvider } from './contexts';
 import App from './containers/App';
+import { install } from 'resize-observer';
+if (!window.ResizeObserver) install();
 
 library.add(
   faAlignJustify,
