@@ -21,10 +21,7 @@ export default function useAICard(card) {
     [card?.level]
   );
   const cardColor = useMemo(
-    () =>
-      card?.isBurned !== undefined
-        ? Color[card?.isBurned ? 'black' : cardObj?.color]?.()
-        : '',
+    () => Color[card?.isBurned ? 'black' : cardObj?.color]?.(),
     [card?.isBurned, cardObj?.color]
   );
   const promptText = useMemo(() => {
