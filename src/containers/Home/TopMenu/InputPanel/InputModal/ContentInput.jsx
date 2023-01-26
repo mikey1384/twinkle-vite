@@ -348,8 +348,9 @@ function ContentInput({ onModalHide }) {
                 type="submit"
                 filled
                 color={successColor}
+                loading={submitting}
                 style={{ marginTop: '1rem' }}
-                disabled={submitting || buttonDisabled}
+                disabled={buttonDisabled}
                 onClick={onSubmit}
               >
                 Share!
