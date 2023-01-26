@@ -2,6 +2,18 @@ import parse from 'html-react-parser';
 import Link from '~/components/Link';
 import { charLimit } from '~/constants/defaultValues';
 
+function checkLookbehindSupported() {
+  const pattern = '(?<=x)y';
+  try {
+    new RegExp(pattern);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+const isLookbehindSupported = checkLookbehindSupported();
+
 const urlRegex =
   /\b((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)\b/giu;
 const urlRegex2 =
@@ -645,8 +657,9 @@ export function applyTextEffects({
     /(((?![0-9\.])\*\*[^\s*]+\*\*(?![0-9]))|(((\*\*[^\s]){1}((?!(\*\*))[^\n])+([^\s]\*\*){1})(?![0-9\.])))/gi;
   const boldRegex =
     /(((?![0-9\.])\*[^\s*]+\*(?![0-9]))|(((\*[^\s]){1}((?!(\*))[^\n])+([^\s]\*){1})(?![0-9\.])))/gi;
-  const underlineRegex =
-    /(?<=^|(?<!_{2}))(((?![0-9\.])__[^\n_]+__(?![0-9]))|(((__[^_]){1}((?!(__))[^\n])+([^_]\__){1})(?![0-9\.])))(?=$|(?!_{2}))/gi;
+  const underlineRegex = isLookbehindSupported
+    ? /(?<=^|(?<!_{2}))(((?![0-9\.])__[^\n_]+__(?![0-9]))|(((__[^_]){1}((?!(__))[^\n])+([^_]\__){1})(?![0-9\.])))(?=$|(?!_{2}))/gi
+    : /(((?![0-9\.])__(?!_)[^\n_]+__(?![0-9]))|(((__[^_]){1}((?!(__))[^\n])+([^_]\__){1})(?![0-9\.])))/gi;
   const lineThroughRegex =
     /(((?![0-9\.])--[^\n-]+--(?![0-9]))|(((--[^-]){1}((?!(--))[^\n])+([^-\-]\--){1})(?![0-9\.])))/gi;
   const blueRegex =

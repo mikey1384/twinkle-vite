@@ -235,6 +235,8 @@ export default function RecommendationInterface({
     } catch (error) {
       console.error(error);
       onHide();
+    } finally {
+      setRecommending(false);
     }
   }
 }
