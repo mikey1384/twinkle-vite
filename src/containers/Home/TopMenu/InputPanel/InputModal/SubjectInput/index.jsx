@@ -347,7 +347,8 @@ function SubjectInput({ onModalHide }) {
                   filled
                   color={successColor}
                   type="submit"
-                  disabled={submittingSubject || buttonDisabled}
+                  loading={submittingSubject}
+                  disabled={buttonDisabled}
                   onClick={handleSubmit}
                 >
                   {postLabel}
