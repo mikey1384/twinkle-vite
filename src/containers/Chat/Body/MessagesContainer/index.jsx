@@ -32,6 +32,7 @@ import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
   rewardReasons,
+  AI_CARD_CHAT_TYPE,
   VOCAB_CHAT_TYPE
 } from '~/constants/defaultValues';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
@@ -329,7 +330,12 @@ function MessagesContainer({
     ) {
       return true;
     }
-    if (currentPathId === VOCAB_CHAT_TYPE) return false;
+    if (
+      currentPathId === VOCAB_CHAT_TYPE ||
+      currentPathId === AI_CARD_CHAT_TYPE
+    ) {
+      return false;
+    }
     if (subchannelPath) {
       return !subchannel?.loaded;
     }
