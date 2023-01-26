@@ -353,14 +353,23 @@ function Comments({
           ref={ContainerRef}
           onClick={isPreview ? onPreviewClick : () => {}}
         >
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '1rem'
+            }}
+          >
             <span
-              style={{
-                fontFamily: "'Roboto', sans-serif"
-              }}
-              className="label"
+              className={css`
+                font-family: 'Roboto', sans-serif;
+                font-size: 1.5rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.25rem;
+                }
+              `}
             >
-              By user
+              Filter comments by poster:
             </span>
             <Input
               onChange={() => console.log('change')}
