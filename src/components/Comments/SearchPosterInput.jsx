@@ -1,8 +1,21 @@
-import Input from '~/components/Texts/Input';
+import { useState } from 'react';
+import SearchInput from '~/components/Texts/SearchInput';
+import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
+import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
+import { useSearch } from '~/helpers/hooks';
 
 export default function SearchPosterInput() {
+  const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
+  const [searchText, setSearchText] = useState('');
+  const [searchedUsers, setSearchedUsers] = useState([]);
+  const { handleSearch, searching } = useSearch({
+    onSearch: handleUserSearch,
+    onClear: () => setSearchedUsers([]),
+    onSetSearchText: setSearchText
+  });
+
   return (
     <div
       style={{
@@ -22,30 +35,34 @@ export default function SearchPosterInput() {
       >
         Filter comments by poster:
       </span>
-      <Input
-        onChange={() => console.log('change')}
-        placeholder="Search by user"
-        value={''}
-        style={{
-          margin: 0,
-          width: '7rem',
-          marginLeft: '1rem',
-          fontSize: '1.5rem',
-          height: 'auto'
+      <SearchInput
+        placeholder="Search user..."
+        onChange={handleSearch}
+        value={searchText}
+        searchResults={searchedUsers}
+        renderItemLabel={(item) => (
+          <span>
+            {item.username} <small>{`(${item.realName})`}</small>
+          </span>
+        )}
+        onClickOutSide={() => {
+          setSearchText('');
+          setSearchedUsers([]);
         }}
-        onKeyPress={(event) => {
-          if (event.key === 'Enter') {
-            console.log('enter');
-          }
-        }}
-        className={css`
-          @media (max-width: ${mobileMaxWidth}) {
-            width: 5rem !important;
-            height: 2.5rem !important;
-            font-size: 1.1rem !important;
-          }
-        `}
+        onSelect={handleSelectUser}
       />
+      {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
     </div>
   );
+
+  function handleSelectUser(user) {
+    console.log(user);
+    setSearchedUsers([]);
+    setSearchText('');
+  }
+
+  async function handleUserSearch(text) {
+    const users = await searchUsers(text);
+    setSearchedUsers(users);
+  }
 }
