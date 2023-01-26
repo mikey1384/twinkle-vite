@@ -33,25 +33,27 @@ export default function SearchPosterInput() {
           }
         `}
       >
-        Filter comments by poster:
+        Filter by Poster:
       </span>
-      <SearchInput
-        placeholder="Search user..."
-        onChange={handleSearch}
-        value={searchText}
-        searchResults={searchedUsers}
-        renderItemLabel={(item) => (
-          <span>
-            {item.username} <small>{`(${item.realName})`}</small>
-          </span>
-        )}
-        onClickOutSide={() => {
-          setSearchText('');
-          setSearchedUsers([]);
-        }}
-        onSelect={handleSelectUser}
-      />
-      {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
+      <div style={{ marginLeft: '1rem', position: 'relative' }}>
+        <SearchInput
+          placeholder="Search user..."
+          onChange={handleSearch}
+          value={searchText}
+          searchResults={searchedUsers}
+          renderItemLabel={(item) => (
+            <span>
+              {item.username} <small>{`(${item.realName})`}</small>
+            </span>
+          )}
+          onClickOutSide={() => {
+            setSearchText('');
+            setSearchedUsers([]);
+          }}
+          onSelect={handleSelectUser}
+        />
+        {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
+      </div>
     </div>
   );
 
