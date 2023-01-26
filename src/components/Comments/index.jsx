@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Context from './Context';
 import Main from './Main';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Input from '~/components/Texts/Input';
 import { v1 as uuidv1 } from 'uuid';
 import { returnImageFileFromUrl, scrollElementToCenter } from '~/helpers';
 import { css } from '@emotion/css';
@@ -352,6 +353,40 @@ function Comments({
           ref={ContainerRef}
           onClick={isPreview ? onPreviewClick : () => {}}
         >
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span
+              style={{
+                fontFamily: "'Roboto', sans-serif"
+              }}
+              className="label"
+            >
+              By user
+            </span>
+            <Input
+              onChange={() => console.log('change')}
+              placeholder="Search by user"
+              value={''}
+              style={{
+                margin: 0,
+                width: '7rem',
+                marginLeft: '1rem',
+                fontSize: '1.5rem',
+                height: 'auto'
+              }}
+              onKeyPress={(event) => {
+                if (event.key === 'Enter') {
+                  console.log('enter');
+                }
+              }}
+              className={css`
+                @media (max-width: ${mobileMaxWidth}) {
+                  width: 5rem !important;
+                  height: 2.5rem !important;
+                  font-size: 1.1rem !important;
+                }
+              `}
+            />
+          </div>
           <Main
             autoFocus={autoFocus}
             autoExpand={autoExpand}
