@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
+import SelectedUser from '~/components/Texts/SelectedUser';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
@@ -10,6 +11,7 @@ export default function SearchPosterInput() {
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState('');
   const { handleSearch, searching } = useSearch({
     onSearch: handleUserSearch,
     onClear: () => setSearchedUsers([]),
@@ -35,30 +37,38 @@ export default function SearchPosterInput() {
       >
         Filter by Poster:
       </span>
-      <div style={{ marginLeft: '1rem', position: 'relative' }}>
-        <SearchInput
-          placeholder="Search user..."
-          onChange={handleSearch}
-          value={searchText}
-          searchResults={searchedUsers}
-          renderItemLabel={(item) => (
-            <span>
-              {item.username} <small>{`(${item.realName})`}</small>
-            </span>
-          )}
-          onClickOutSide={() => {
-            setSearchText('');
-            setSearchedUsers([]);
-          }}
-          onSelect={handleSelectUser}
+      {!selectedUser ? (
+        <div style={{ marginLeft: '1rem', position: 'relative' }}>
+          <SearchInput
+            placeholder="Search user..."
+            onChange={handleSearch}
+            value={searchText}
+            searchResults={searchedUsers}
+            renderItemLabel={(item) => (
+              <span>
+                {item.username} <small>{`(${item.realName})`}</small>
+              </span>
+            )}
+            onClickOutSide={() => {
+              setSearchText('');
+              setSearchedUsers([]);
+            }}
+            onSelect={handleSelectUser}
+          />
+          {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
+        </div>
+      ) : (
+        <SelectedUser
+          selectedUser={selectedUser}
+          onClear={() => setSelectedUser('')}
+          style={{ marginLeft: '0.7rem' }}
         />
-        {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
-      </div>
+      )}
     </div>
   );
 
   function handleSelectUser(user) {
-    console.log(user);
+    setSelectedUser(user.username);
     setSearchedUsers([]);
     setSearchText('');
   }
