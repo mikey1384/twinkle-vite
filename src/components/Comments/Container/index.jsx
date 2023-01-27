@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Main from './Main';
@@ -75,13 +75,10 @@ export default function Container({
   rootContent
 }) {
   const [selectedUser, setSelectedUser] = useState('');
-  const commentsExist = useMemo(() => {
-    return !!comments.filter((comment) => !comment.isDeleteNotification).length;
-  }, [comments]);
 
   return (
     <ErrorBoundary componentPath="Comments/Container">
-      {!isPreview && commentsExist ? (
+      {!isPreview && loadMoreShown ? (
         <SearchPosterInput
           selectedUser={selectedUser}
           onSetSelectedUser={setSelectedUser}
