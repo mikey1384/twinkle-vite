@@ -9,20 +9,17 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useSearch } from '~/helpers/hooks';
 
 SearchPosterInput.propTypes = {
-  searchedUsers: PropTypes.array,
-  onSetSearchedUsers: PropTypes.func
+  selectedUser: PropTypes.string,
+  onSetSelectedUser: PropTypes.func.isRequired
 };
 
-export default function SearchPosterInput({
-  searchedUsers,
-  onSetSearchedUsers
-}) {
+export default function SearchPosterInput({ selectedUser, onSetSelectedUser }) {
+  const [searchedUsers, setSearchedUsers] = useState([]);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const [searchText, setSearchText] = useState('');
-  const [selectedUser, setSelectedUser] = useState('');
   const { handleSearch, searching } = useSearch({
     onSearch: handleUserSearch,
-    onClear: () => onSetSearchedUsers([]),
+    onClear: () => setSearchedUsers([]),
     onSetSearchText: setSearchText
   });
 
@@ -59,7 +56,7 @@ export default function SearchPosterInput({
             )}
             onClickOutSide={() => {
               setSearchText('');
-              onSetSearchedUsers([]);
+              setSearchedUsers([]);
             }}
             onSelect={handleSelectUser}
           />
@@ -68,7 +65,7 @@ export default function SearchPosterInput({
       ) : (
         <SelectedUser
           selectedUser={selectedUser}
-          onClear={() => setSelectedUser('')}
+          onClear={() => onSetSelectedUser('')}
           style={{ marginLeft: '0.7rem' }}
         />
       )}
@@ -76,13 +73,13 @@ export default function SearchPosterInput({
   );
 
   function handleSelectUser(user) {
-    setSelectedUser(user.username);
-    onSetSearchedUsers([]);
+    onSetSelectedUser(user.username);
+    setSearchedUsers([]);
     setSearchText('');
   }
 
   async function handleUserSearch(text) {
     const users = await searchUsers(text);
-    onSetSearchedUsers(users);
+    setSearchedUsers(users);
   }
 }

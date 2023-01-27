@@ -73,49 +73,53 @@ export default function Container({
   userId,
   rootContent
 }) {
-  const [searchedUsers, setSearchedUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState('');
   return (
     <ErrorBoundary componentPath="Comments/Container">
       {!isPreview ? (
         <SearchPosterInput
-          searchedUsers={searchedUsers}
-          onSetSearchedUsers={setSearchedUsers}
+          selectedUser={selectedUser}
+          onSetSelectedUser={setSelectedUser}
         />
       ) : null}
-      <Main
-        autoFocus={autoFocus}
-        autoExpand={autoExpand}
-        banned={banned}
-        comments={comments}
-        commentsShown={commentsShown}
-        commentsHidden={commentsHidden}
-        commentsLoadLimit={commentsLoadLimit}
-        CommentRefs={CommentRefs}
-        CommentInputAreaRef={CommentInputAreaRef}
-        inputAreaInnerRef={inputAreaInnerRef}
-        inputAtBottom={inputAtBottom}
-        inputTypeLabel={inputTypeLabel}
-        isLoading={isLoading}
-        isPreview={isPreview}
-        isSubjectPannelComments={isSubjectPannelComments}
-        loadMoreShown={loadMoreShown}
-        loadMoreButtonColor={loadMoreButtonColor}
-        noInput={noInput}
-        numInputRows={numInputRows}
-        numPreviews={numPreviews}
-        onCommentSubmit={onCommentSubmit}
-        onLoadMoreComments={onLoadMoreComments}
-        onSetCommentSubmitted={onSetCommentSubmitted}
-        parent={parent}
-        previewComments={previewComments}
-        showSecretButtonAvailable={showSecretButtonAvailable}
-        subject={subject}
-        subjectId={subjectId}
-        theme={theme}
-        uploadComment={uploadComment}
-        userId={userId}
-        rootContent={rootContent}
-      />
+      {selectedUser ? (
+        <div>searched results</div>
+      ) : (
+        <Main
+          autoFocus={autoFocus}
+          autoExpand={autoExpand}
+          banned={banned}
+          comments={comments}
+          commentsShown={commentsShown}
+          commentsHidden={commentsHidden}
+          commentsLoadLimit={commentsLoadLimit}
+          CommentRefs={CommentRefs}
+          CommentInputAreaRef={CommentInputAreaRef}
+          inputAreaInnerRef={inputAreaInnerRef}
+          inputAtBottom={inputAtBottom}
+          inputTypeLabel={inputTypeLabel}
+          isLoading={isLoading}
+          isPreview={isPreview}
+          isSubjectPannelComments={isSubjectPannelComments}
+          loadMoreShown={loadMoreShown}
+          loadMoreButtonColor={loadMoreButtonColor}
+          noInput={noInput}
+          numInputRows={numInputRows}
+          numPreviews={numPreviews}
+          onCommentSubmit={onCommentSubmit}
+          onLoadMoreComments={onLoadMoreComments}
+          onSetCommentSubmitted={onSetCommentSubmitted}
+          parent={parent}
+          previewComments={previewComments}
+          showSecretButtonAvailable={showSecretButtonAvailable}
+          subject={subject}
+          subjectId={subjectId}
+          theme={theme}
+          uploadComment={uploadComment}
+          userId={userId}
+          rootContent={rootContent}
+        />
+      )}
     </ErrorBoundary>
   );
 }
