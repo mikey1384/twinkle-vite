@@ -5,7 +5,7 @@ import { useAppContext } from '~/contexts';
 Searched.propTypes = {
   contentId: PropTypes.number.isRequired,
   contentType: PropTypes.string.isRequired,
-  poster: PropTypes.string
+  poster: PropTypes.object
 };
 
 export default function Searched({ contentId, contentType, poster }) {
@@ -15,11 +15,12 @@ export default function Searched({ contentId, contentType, poster }) {
   useEffect(() => {
     init();
     async function init() {
-      await loadCommentsByPoster({
+      const data = await loadCommentsByPoster({
         contentId,
         contentType,
         posterId: poster.id
       });
+      console.log(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
