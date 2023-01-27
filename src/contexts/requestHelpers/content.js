@@ -274,6 +274,25 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async loadCommentsByPoster({
+      contentId,
+      contentType,
+      lastCommentId,
+      posterId
+    }) {
+      try {
+        const {
+          data: { comments, loadMoreButton }
+        } = await request.get(
+          `${URL}/content/comments/byPoster?contentId=${contentId}&contentType=${contentType}&posterId=${posterId}${
+            lastCommentId ? `&lastCommentId=${lastCommentId}` : ''
+          }`
+        );
+        return Promise.resolve({ comments, loadMoreButton });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadContent({ contentId, contentType, isPinnedComment }) {
       try {
         const { data } = await request.get(

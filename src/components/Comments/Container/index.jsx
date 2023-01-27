@@ -74,7 +74,7 @@ export default function Container({
   userId,
   rootContent
 }) {
-  const [selectedUser, setSelectedUser] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
 
   return (
     <ErrorBoundary componentPath="Comments/Container">
