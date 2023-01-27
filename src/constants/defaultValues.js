@@ -1,7 +1,7 @@
 import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 
-export const clientVersion = '1.7.20';
+export const clientVersion = '1.7.21';
 export const defaultChatSubject = 'Welcome!';
 export const defaultContentState = {
   isEditing: false,
@@ -45,6 +45,8 @@ export const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
 export const mb = 1000;
 export const VOCAB_CHAT_TYPE = 'vocabulary';
 export const AI_CARD_CHAT_TYPE = 'ai-cards';
+export const MODERATOR_AUTH_LEVEL = 1;
+export const MIKEY_ID = 5;
 
 export const charLimit = {
   chat: {
