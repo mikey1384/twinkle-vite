@@ -4,20 +4,21 @@ import { Color } from '~/constants/css';
 
 SelectedUser.propTypes = {
   selectedUser: PropTypes.string,
-  onClear: PropTypes.func.isRequired
+  onClear: PropTypes.func.isRequired,
+  style: PropTypes.object
 };
 
-export default function SelectedUser({ selectedUser, onClear }) {
+export default function SelectedUser({ selectedUser, onClear, style }) {
   return (
     <div
       style={{
-        marginLeft: '0.7rem',
         position: 'relative',
         fontWeight: 'bold',
         fontSize: '2rem',
         fontFamily: "'Roboto', sans-serif",
         color: Color.logoBlue(),
-        display: 'flex'
+        display: 'flex',
+        ...style
       }}
     >
       {selectedUser || 'Anyone'}
