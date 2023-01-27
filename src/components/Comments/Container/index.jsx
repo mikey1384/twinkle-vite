@@ -1,9 +1,9 @@
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Main from './Main';
 import SearchPosterInput from './SearchPosterInput';
 import Searched from './Searched';
-import { useState } from 'react';
 
 Container.propTypes = {
   autoFocus: PropTypes.bool,
@@ -75,9 +75,13 @@ export default function Container({
   rootContent
 }) {
   const [selectedUser, setSelectedUser] = useState('');
+  const commentsExist = useMemo(() => {
+    return !!comments.filter((comment) => !comment.isDeleteNotification).length;
+  }, [comments]);
+
   return (
     <ErrorBoundary componentPath="Comments/Container">
-      {!isPreview ? (
+      {!isPreview && commentsExist ? (
         <SearchPosterInput
           selectedUser={selectedUser}
           onSetSelectedUser={setSelectedUser}
