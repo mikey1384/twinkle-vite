@@ -44,6 +44,7 @@ export default function OwnerFilter({
         <SelectedUser
           selectedUser={selectedOwner}
           onClear={() => onSelectOwner('')}
+          style={{ marginLeft: '0.7rem' }}
         />
       </div>
       <div
