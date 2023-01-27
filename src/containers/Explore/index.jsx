@@ -106,23 +106,25 @@ export default function Explore({ category }) {
             }
           `}
         >
-          {stringIsEmpty(searchText) && (
+          {(stringIsEmpty(searchText) || category === 'ai-cards') && (
             <Categories
               style={{ marginTop: '5rem', marginBottom: '3rem' }}
               filter={category}
               onSetDefaultSearchFilter={handleSetDefaultSearchFilter}
             />
           )}
-          <Search
-            innerRef={SearchBoxRef}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              flexDirection: 'column',
-              marginBottom: '3rem'
-            }}
-          />
+          {category !== 'ai-cards' && (
+            <Search
+              innerRef={SearchBoxRef}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                flexDirection: 'column',
+                marginBottom: '3rem'
+              }}
+            />
+          )}
           <DisplayedContent category={category} />
           <Categories
             style={{ marginTop: '3rem', marginBottom: '4rem' }}
