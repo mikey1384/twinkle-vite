@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Main from './Main';
 import SearchPosterInput from './SearchPosterInput';
+import Searched from './Searched';
 import { useState } from 'react';
 
 Container.propTypes = {
@@ -83,7 +84,7 @@ export default function Container({
         />
       ) : null}
       {selectedUser ? (
-        <div>searched results</div>
+        <Searched />
       ) : (
         <Main
           autoFocus={autoFocus}
