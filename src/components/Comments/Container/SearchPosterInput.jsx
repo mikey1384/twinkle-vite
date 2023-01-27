@@ -26,6 +26,7 @@ export default function SearchPosterInput({ selectedUser, onSetSelectedUser }) {
   return (
     <div
       style={{
+        fontSize: '1.5rem',
         display: 'flex',
         alignItems: 'center',
         marginBottom: '1rem'
