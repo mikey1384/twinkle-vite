@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Main from './Main';
 import SearchPosterInput from './SearchPosterInput';
+import { useState } from 'react';
 
 Container.propTypes = {
   autoFocus: PropTypes.bool,
@@ -72,9 +73,15 @@ export default function Container({
   userId,
   rootContent
 }) {
+  const [searchedUsers, setSearchedUsers] = useState([]);
   return (
     <ErrorBoundary componentPath="Comments/Container">
-      {!isPreview ? <SearchPosterInput /> : null}
+      {!isPreview ? (
+        <SearchPosterInput
+          searchedUsers={searchedUsers}
+          onSetSearchedUsers={setSearchedUsers}
+        />
+      ) : null}
       <Main
         autoFocus={autoFocus}
         autoExpand={autoExpand}
