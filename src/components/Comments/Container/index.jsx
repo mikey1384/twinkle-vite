@@ -84,7 +84,7 @@ export default function Container({
         />
       ) : null}
       {selectedUser ? (
-        <Searched />
+        <Searched poster={selectedUser} />
       ) : (
         <Main
           autoFocus={autoFocus}
