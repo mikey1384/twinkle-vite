@@ -2,7 +2,9 @@ import { Buffer } from 'buffer';
 
 import {
   CHAT_ID_BASE_NUMBER,
-  returnMaxRewards
+  returnMaxRewards,
+  MODERATOR_AUTH_LEVEL,
+  MIKEY_ID
 } from '~/constants/defaultValues';
 
 export function checkScrollIsAtTheBottom({ content, container }) {
@@ -18,15 +20,23 @@ export function determineUserCanRewardThis({
 }) {
   if (!userId) return false;
   let studentsCanReward = false;
-  if (authLevel <= 1) {
+  let moderatorCanReward = canReward;
+  if (authLevel === MODERATOR_AUTH_LEVEL && uploader?.id === MIKEY_ID) {
+    moderatorCanReward = false;
+  }
+  if (authLevel <= MODERATOR_AUTH_LEVEL) {
     for (let recommendation of recommendations) {
-      if (recommendation.authLevel > 1 && !recommendation.rewardDisabled) {
+      if (
+        recommendation.authLevel > MODERATOR_AUTH_LEVEL &&
+        !recommendation.rewardDisabled
+      ) {
         studentsCanReward = true;
+        moderatorCanReward = true;
         break;
       }
     }
   }
-  return (studentsCanReward || canReward) && userId !== uploader?.id;
+  return (studentsCanReward || moderatorCanReward) && userId !== uploader?.id;
 }
 
 export function determineXpButtonDisabled({
