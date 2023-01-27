@@ -35,6 +35,7 @@ Vocabulary.propTypes = {
 };
 export default function Vocabulary({ loadingVocabulary }) {
   const navigate = useNavigate();
+  const [searchedWord, setSearchedWord] = useState(null);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const lookUpWord = useAppContext((v) => v.requestHelpers.lookUpWord);
   const registerWord = useAppContext((v) => v.requestHelpers.registerWord);
@@ -42,7 +43,6 @@ export default function Vocabulary({ loadingVocabulary }) {
     (v) => v.user.actions.onUpdateNumWordsCollected
   );
   const vocabErrorMessage = useChatContext((v) => v.state.vocabErrorMessage);
-  const wordsObj = useChatContext((v) => v.state.wordsObj);
   const wordRegisterStatus = useChatContext((v) => v.state.wordRegisterStatus);
   const onRegisterWord = useChatContext((v) => v.actions.onRegisterWord);
   const onSetCollectType = useAppContext(
@@ -60,12 +60,7 @@ export default function Vocabulary({ loadingVocabulary }) {
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const { userId } = useKeyContext((v) => v.myState);
   const inputText = state[VOCAB_CHAT_TYPE]?.text?.trim?.() || '';
-  const wordObj = useMemo(
-    () => wordsObj[inputText] || {},
-    [inputText, wordsObj]
-  );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const text = useRef(null);
   const inputRef = useRef(null);
@@ -75,62 +70,53 @@ export default function Vocabulary({ loadingVocabulary }) {
 
   useEffect(() => {
     text.current = inputText;
+    setSearchedWord(null);
     if (!inputTextIsEmpty) {
       clearTimeout(timerRef.current);
       if (socketConnected) {
-        setLoading(true);
         timerRef.current = setTimeout(() => changeInput(inputText), 1000);
       }
     }
     async function changeInput(input) {
       const word = await lookUpWord(input);
-      if (
-        (!wordObj.content && word.notFound) ||
-        (word.content && word.content === text.current)
-      ) {
+      if (word.notFound || (word.content && word.content === text.current)) {
         onSetWordsObj(word);
+        setSearchedWord(word);
       }
-      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputText, socketConnected]);
 
   const widgetHeight = useMemo(() => {
-    return inputTextIsEmpty || loading || !socketConnected
+    return inputTextIsEmpty || !searchedWord || !socketConnected
       ? wordRegisterStatus
         ? '16rem'
         : '10rem'
-      : wordObj.content
+      : searchedWord?.content
       ? '20rem'
       : `10rem`;
-  }, [
-    inputTextIsEmpty,
-    loading,
-    socketConnected,
-    wordRegisterStatus,
-    wordObj.content
-  ]);
+  }, [inputTextIsEmpty, searchedWord, socketConnected, wordRegisterStatus]);
 
   const containerHeight = useMemo(() => {
     return `CALC(100% - ${widgetHeight} - 6.5rem)`;
   }, [widgetHeight]);
 
   const notRegistered = useMemo(
-    () => wordObj.isNew && !inputTextIsEmpty && !loading && socketConnected,
-    [wordObj.isNew, inputTextIsEmpty, loading, socketConnected]
+    () => searchedWord?.isNew && !inputTextIsEmpty && socketConnected,
+    [inputTextIsEmpty, searchedWord, socketConnected]
   );
 
   const alreadyRegistered = useMemo(
-    () => !!wordObj.content && !wordObj.isNew && !inputTextIsEmpty && !loading,
-    [wordObj.content, wordObj.isNew, inputTextIsEmpty, loading]
+    () => !!searchedWord?.content && !searchedWord?.isNew && !inputTextIsEmpty,
+    [searchedWord?.content, searchedWord?.isNew, inputTextIsEmpty]
   );
 
   const wordLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
-      return /\s/.test(wordObj.content) ? '숙어' : '단어';
+      return /\s/.test(searchedWord?.content) ? '숙어' : '단어';
     }
-    return /\s/.test(wordObj.content) ? 'term' : 'word';
-  }, [wordObj.content]);
+    return /\s/.test(searchedWord?.content) ? 'term' : 'word';
+  }, [searchedWord?.content]);
 
   const notCollectedYetLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
@@ -154,7 +140,7 @@ export default function Vocabulary({ loadingVocabulary }) {
   }, [inputText]);
 
   const handleSubmit = useCallback(async () => {
-    const { isNew, ...definitions } = wordObj;
+    const { isNew, ...definitions } = searchedWord;
     delete definitions.deletedDefIds;
     if (isNew && !isSubmitting) {
       setIsSubmitting(true);
@@ -168,7 +154,8 @@ export default function Vocabulary({ loadingVocabulary }) {
         onUpdateNumWordsCollected(numWordsCollected);
         onRegisterWord(word);
         onUpdateCollectorsRankings({ rankings });
-        onSetWordRegisterStatus(wordObj);
+        onSetWordRegisterStatus(searchedWord);
+        setSearchedWord(null);
         onEnterComment({
           contentType: VOCAB_CHAT_TYPE,
           text: ''
@@ -180,7 +167,7 @@ export default function Vocabulary({ loadingVocabulary }) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSubmitting, registerWord, userId, wordObj]);
+  }, [isSubmitting, userId, searchedWord]);
 
   return (
     <div
@@ -261,7 +248,7 @@ export default function Vocabulary({ loadingVocabulary }) {
           </div>
         )}
         {!inputTextIsEmpty &&
-          (loading || !socketConnected ? (
+          (!searchedWord || !socketConnected ? (
             <Loading
               style={{ height: '100%' }}
               text={socketConnected ? lookingUpLabel : `${loadingLabel}...`}
@@ -278,7 +265,7 @@ export default function Vocabulary({ loadingVocabulary }) {
                 overflow: 'scroll'
               }}
             >
-              {wordObj.content && (
+              {searchedWord?.content && (
                 <>
                   <div
                     className={css`
@@ -295,12 +282,12 @@ export default function Vocabulary({ loadingVocabulary }) {
                       padding: '1rem'
                     }}
                   >
-                    {wordObj.content}
+                    {searchedWord?.content}
                   </div>
-                  <Definition wordObj={wordObj} />
+                  <Definition wordObj={searchedWord} />
                 </>
               )}
-              {!wordObj.content && (
+              {!searchedWord?.content && (
                 <div
                   className={css`
                     font-size: 2.5rem;
