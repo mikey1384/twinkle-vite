@@ -39,7 +39,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
-import LocalContext from './Context';
+import LocalContext from '../Context';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 

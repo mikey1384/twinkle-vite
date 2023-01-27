@@ -1,9 +1,9 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Context from './Context';
-import Main from './Main';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import SearchPosterInput from './SearchPosterInput';
+import Container from './Container';
+
 import { v1 as uuidv1 } from 'uuid';
 import { returnImageFileFromUrl, scrollElementToCenter } from '~/helpers';
 import { css } from '@emotion/css';
@@ -353,8 +353,7 @@ function Comments({
           ref={ContainerRef}
           onClick={isPreview ? onPreviewClick : () => {}}
         >
-          {!isPreview ? <SearchPosterInput /> : null}
-          <Main
+          <Container
             autoFocus={autoFocus}
             autoExpand={autoExpand}
             banned={banned}

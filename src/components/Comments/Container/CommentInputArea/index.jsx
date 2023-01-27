@@ -2,7 +2,7 @@ import { useContext, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import InputForm from '~/components/Forms/InputForm';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
-import LocalContext from './Context';
+import LocalContext from '../../Context';
 import { useContentContext, useInputContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { v1 as uuidv1 } from 'uuid';

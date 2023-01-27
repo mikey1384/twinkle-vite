@@ -35,7 +35,7 @@ import {
   stringIsEmpty
 } from '~/helpers/stringHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import LocalContext from '../Context';
+import LocalContext from '../../Context';
 
 Comment.propTypes = {
   comment: PropTypes.shape({

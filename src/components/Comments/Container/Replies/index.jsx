@@ -1,6 +1,6 @@
 import { memo, useContext, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import LocalContext from '../Context';
+import LocalContext from '../../Context';
 import Reply from './Reply';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useTheme } from '~/helpers/hooks';
