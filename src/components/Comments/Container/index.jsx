@@ -85,7 +85,11 @@ export default function Container({
         />
       ) : null}
       {selectedUser ? (
-        <Searched poster={selectedUser} />
+        <Searched
+          contentId={parent.contentId}
+          contentType={parent.contentType}
+          poster={selectedUser}
+        />
       ) : (
         <Main
           autoFocus={autoFocus}
