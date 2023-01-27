@@ -9,7 +9,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useSearch } from '~/helpers/hooks';
 
 SearchPosterInput.propTypes = {
-  selectedUser: PropTypes.string,
+  selectedUser: PropTypes.object,
   onSetSelectedUser: PropTypes.func.isRequired
 };
 
@@ -65,8 +65,8 @@ export default function SearchPosterInput({ selectedUser, onSetSelectedUser }) {
         </div>
       ) : (
         <SelectedUser
-          selectedUser={selectedUser}
-          onClear={() => onSetSelectedUser('')}
+          selectedUser={selectedUser.username}
+          onClear={() => onSetSelectedUser(null)}
           style={{ marginLeft: '0.7rem' }}
         />
       )}
@@ -74,7 +74,7 @@ export default function SearchPosterInput({ selectedUser, onSetSelectedUser }) {
   );
 
   function handleSelectUser(user) {
-    onSetSelectedUser(user.username);
+    onSetSelectedUser(user);
     setSearchedUsers([]);
     setSearchText('');
   }
