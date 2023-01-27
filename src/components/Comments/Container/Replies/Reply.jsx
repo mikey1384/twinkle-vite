@@ -1,7 +1,7 @@
 import { memo, useContext, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import LocalContext from '../Context';
+import LocalContext from '../../Context';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import Icon from '~/components/Icon';
