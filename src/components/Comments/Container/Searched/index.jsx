@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useAppContext } from '~/contexts';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import Loading from '~/components/Loading';
+import { useAppContext } from '~/contexts';
 
 Searched.propTypes = {
   contentId: PropTypes.number.isRequired,
@@ -21,17 +22,25 @@ export default function Searched({
   );
   const [comments, setComments] = useState([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     init();
     async function init() {
-      const { comments, loadMoreButton } = await loadCommentsByPoster({
-        contentId,
-        contentType,
-        posterId: poster.id
-      });
-      setComments(comments);
-      setLoadMoreShown(loadMoreButton);
+      setLoading(true);
+      try {
+        const { comments, loadMoreButton } = await loadCommentsByPoster({
+          contentId,
+          contentType,
+          posterId: poster.id
+        });
+        setComments(comments);
+        setLoadMoreShown(loadMoreButton);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -42,9 +51,11 @@ export default function Searched({
         width: '100%'
       }}
     >
-      {comments.map((comment) => (
-        <div key={comment.id}>{comment.content}</div>
-      ))}
+      {loading ? (
+        <Loading />
+      ) : (
+        comments.map((comment) => <div key={comment.id}>{comment.content}</div>)
+      )}
       {loadMoreShown && (
         <LoadMoreButton
           filled
