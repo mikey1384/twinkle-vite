@@ -90,9 +90,9 @@ export default function SearchedComment({
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const {
     isEditing,
-    likes = [],
-    recommendations = [],
-    rewards = [],
+    likes = comment?.likes || [],
+    recommendations = comment?.recommendations || [],
+    rewards = comment?.rewards || [],
     loaded,
     thumbUrl: thumbUrlFromContext,
     xpRewardInterfaceShown
