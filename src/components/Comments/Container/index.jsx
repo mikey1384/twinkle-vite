@@ -1,9 +1,10 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Main from './Main';
 import SearchPosterInput from './SearchPosterInput';
 import Searched from './Searched';
+import { useContentState } from '~/helpers/hooks';
+import { useContentContext } from '~/contexts';
 
 Container.propTypes = {
   autoFocus: PropTypes.bool,
@@ -74,21 +75,35 @@ export default function Container({
   userId,
   rootContent
 }) {
-  const [selectedUser, setSelectedUser] = useState(null);
+  const { searchedPoster } = useContentState({
+    contentType: parent.contentType,
+    contentId: parent.contentId
+  });
+  const onSetSearchedPoster = useContentContext(
+    (v) => v.actions.onSetSearchedPoster
+  );
 
   return (
     <ErrorBoundary componentPath="Comments/Container">
-      {!isPreview && loadMoreShown ? (
+      {!isPreview && (loadMoreShown || !!searchedPoster) ? (
         <SearchPosterInput
-          selectedUser={selectedUser}
-          onSetSelectedUser={setSelectedUser}
+          contentId={parent.contentId}
+          contentType={parent.contentType}
+          selectedUser={searchedPoster}
+          onSetSelectedUser={(poster) =>
+            onSetSearchedPoster({
+              contentId: parent.contentId,
+              contentType: parent.contentType,
+              poster
+            })
+          }
         />
       ) : null}
-      {selectedUser ? (
+      {searchedPoster ? (
         <Searched
           parent={parent}
           rootContent={rootContent}
-          poster={selectedUser}
+          poster={searchedPoster}
           loadMoreButtonColor={loadMoreButtonColor}
           subject={subject}
           theme={theme}

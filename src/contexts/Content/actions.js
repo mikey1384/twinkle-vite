@@ -515,6 +515,14 @@ export default function ContentActions(dispatch) {
         visible
       });
     },
+    onSetSearchedPoster({ contentId, contentType, poster }) {
+      return dispatch({
+        type: 'SET_SEARCHED_POSTER',
+        contentId,
+        contentType,
+        poster
+      });
+    },
     onSetVideoCurrentTime({
       contentType,
       contentId,
