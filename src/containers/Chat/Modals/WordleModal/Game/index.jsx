@@ -286,7 +286,7 @@ export default function Game({
       newGuesses.length < MAX_GUESSES &&
       currentGuess !== (actualSolution || solution)
     ) {
-      updateWordleAttempt({
+      await updateWordleAttempt({
         channelName,
         channelId,
         guesses: newGuesses,
