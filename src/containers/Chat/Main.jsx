@@ -393,6 +393,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   const isUsingCollectRef = useRef(isUsingCollect);
 
   useEffect(() => {
+    isUsingCollectRef.current = !!isUsingCollect;
     if (isUsingCollect) {
       prevPathId.current = currentPathId;
       prevSubchannelPath.current = '';
@@ -402,7 +403,6 @@ export default function Main({ currentPathId, onFileUpload }) {
         handleEnterAICardChat();
       }
     } else {
-      isUsingCollectRef.current = false;
       if (!stringIsEmpty(currentPathId)) {
         onUpdateChatType('default');
       }
