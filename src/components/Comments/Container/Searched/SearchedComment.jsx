@@ -61,7 +61,6 @@ SearchedComment.propTypes = {
     thumbUrl: PropTypes.string,
     isNotification: PropTypes.oneOfType([PropTypes.number, PropTypes.bool])
   }).isRequired,
-  innerRef: PropTypes.func,
   parent: PropTypes.object,
   rootContent: PropTypes.shape({
     contentType: PropTypes.string
@@ -72,16 +71,12 @@ SearchedComment.propTypes = {
 
 export default function SearchedComment({
   comment,
-  innerRef,
   parent,
   rootContent = {},
   subject,
   theme,
   comment: {
     id: commentId,
-    likes = [],
-    recommendations = [],
-    rewards = [],
     uploader,
     numReplies,
     filePath,
@@ -91,6 +86,39 @@ export default function SearchedComment({
     thumbUrl: originalThumbUrl
   }
 }) {
+  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  const {
+    isEditing,
+    likes = [],
+    recommendations = [],
+    rewards = [],
+    loaded,
+    thumbUrl: thumbUrlFromContext,
+    xpRewardInterfaceShown
+  } = useContentState({
+    contentType: 'comment',
+    contentId: comment.id
+  });
+  useEffect(() => {
+    if (!loaded) {
+      init();
+    }
+    async function init() {
+      const data = await loadContent({
+        contentId: comment?.id,
+        contentType: 'comment',
+        isPinnedComment: true
+      });
+      onInitContent({
+        contentId: comment?.id,
+        contentType: 'comment',
+        ...data
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comment?.id]);
+
   subject = subject || comment.targetObj?.subject || {};
   const subjectUploaderId = useMemo(
     () => subject.uploader?.id || subject?.userId,
@@ -131,14 +159,6 @@ export default function SearchedComment({
   const onUpdateCommentPinStatus = useContentContext(
     (v) => v.actions.onUpdateCommentPinStatus
   );
-  const {
-    isEditing,
-    thumbUrl: thumbUrlFromContext,
-    xpRewardInterfaceShown
-  } = useContentState({
-    contentType: 'comment',
-    contentId: comment.id
-  });
 
   const thumbUrl = useMemo(
     () => thumbUrlFromContext || originalThumbUrl,
@@ -375,7 +395,7 @@ export default function SearchedComment({
 
   return (
     <>
-      <div className={commentContainer} ref={innerRef}>
+      <div className={commentContainer}>
         <div className="content-wrapper">
           <div
             style={{

@@ -2,20 +2,25 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
+import SearchedComment from './SearchedComment';
 import { useAppContext } from '~/contexts';
 
 Searched.propTypes = {
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
+  parent: PropTypes.object,
+  rootContent: PropTypes.object,
   loadMoreButtonColor: PropTypes.string,
-  poster: PropTypes.object
+  poster: PropTypes.object,
+  subject: PropTypes.object,
+  theme: PropTypes.string
 };
 
 export default function Searched({
-  contentId,
-  contentType,
+  parent,
+  rootContent,
   loadMoreButtonColor,
-  poster
+  poster,
+  subject,
+  theme
 }) {
   const loadCommentsByPoster = useAppContext(
     (v) => v.requestHelpers.loadCommentsByPoster
@@ -30,8 +35,8 @@ export default function Searched({
       setLoading(true);
       try {
         const { comments, loadMoreButton } = await loadCommentsByPoster({
-          contentId,
-          contentType,
+          contentId: parent.contentId,
+          contentType: parent.contentType,
           posterId: poster.id
         });
         setComments(comments);
@@ -54,7 +59,16 @@ export default function Searched({
       {loading ? (
         <Loading />
       ) : (
-        comments.map((comment) => <div key={comment.id}>{comment.content}</div>)
+        comments.map((comment) => (
+          <SearchedComment
+            key={comment.id}
+            parent={parent}
+            rootContent={rootContent}
+            comment={comment}
+            subject={subject}
+            theme={theme}
+          />
+        ))
       )}
       {loadMoreShown && (
         <LoadMoreButton
