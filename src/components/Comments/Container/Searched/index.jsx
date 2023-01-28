@@ -28,6 +28,7 @@ export default function Searched({
   const [comments, setComments] = useState([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     init();
@@ -74,8 +75,8 @@ export default function Searched({
         <LoadMoreButton
           filled
           color={loadMoreButtonColor}
-          loading={false}
-          onClick={() => console.log('clicked')}
+          loading={loadingMore}
+          onClick={handleLoadMore}
           style={{
             width: '100%',
             display: 'flex',
@@ -86,4 +87,23 @@ export default function Searched({
       )}
     </div>
   );
+
+  async function handleLoadMore() {
+    try {
+      setLoadingMore(true);
+      const { comments: newComments, loadMoreButton } =
+        await loadCommentsByPoster({
+          contentId: parent.contentId,
+          contentType: parent.contentType,
+          posterId: poster.id,
+          lastCommentId: comments[comments.length - 1].id
+        });
+      setComments([...comments, ...newComments]);
+      setLoadMoreShown(loadMoreButton);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 }
