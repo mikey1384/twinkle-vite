@@ -13,7 +13,8 @@ export const initialExploreState = {
     prevFilters: {},
     filteredCards: [],
     filteredLoaded: false,
-    filteredLoadMoreShown: false
+    filteredLoadMoreShown: false,
+    numCards: 0
   },
   links: {
     byUserLoaded: false,

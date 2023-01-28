@@ -398,7 +398,8 @@ export default function ExploreReducer(state, action) {
           ...state.aiCards,
           cards: action.cards,
           loaded: true,
-          loadMoreShown: action.loadMoreShown
+          loadMoreShown: action.loadMoreShown,
+          numCards: action.numCards
         }
       };
     case 'LOAD_MORE_AI_CARDS':

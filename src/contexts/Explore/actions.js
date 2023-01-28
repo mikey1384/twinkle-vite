@@ -98,11 +98,12 @@ export default function ExploreActions(dispatch) {
         params
       });
     },
-    onLoadAICards({ cards, loadMoreShown }) {
+    onLoadAICards({ cards, loadMoreShown, numCards }) {
       return dispatch({
         type: 'LOAD_AI_CARDS',
         cards,
-        loadMoreShown
+        loadMoreShown,
+        numCards
       });
     },
     onLoadMoreAICards({ cards, loadMoreShown }) {
