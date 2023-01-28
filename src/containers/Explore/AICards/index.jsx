@@ -25,11 +25,11 @@ export default function AICards() {
   const [loading, setLoading] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState(null);
   const [filters, setFilters] = useState({});
-  const [numCards, setNumCards] = useState(0);
   const [numFilteredCards, setNumFilteredCards] = useState(0);
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
+  const numCards = useExploreContext((v) => v.state.aiCards.numCards);
   const onLoadAICards = useExploreContext((v) => v.actions.onLoadAICards);
   const cardObj = useChatContext((v) => v.state.cardObj);
 
@@ -64,13 +64,13 @@ export default function AICards() {
       setAICardModalCardId(null);
     }
   }, [search]);
+
   useEffect(() => {
     if (!loaded) init();
     async function init() {
       setLoading(true);
       const { cards, loadMoreShown, numCards } = await loadAICards();
-      onLoadAICards({ cards, loadMoreShown });
-      setNumCards(numCards);
+      onLoadAICards({ cards, loadMoreShown, numCards });
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
