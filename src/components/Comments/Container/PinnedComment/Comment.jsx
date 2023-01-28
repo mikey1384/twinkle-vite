@@ -26,8 +26,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import {
   determineUserCanRewardThis,
-  determineXpButtonDisabled,
-  scrollElementToCenter
+  determineXpButtonDisabled
 } from '~/helpers';
 import { borderRadius, Color } from '~/constants/css';
 import {
@@ -82,7 +81,6 @@ function Comment({
   theme,
   comment: {
     id: commentId,
-    replies = [],
     likes = [],
     recommendations = [],
     rewards = [],
@@ -159,9 +157,6 @@ function Comment({
     useState(false);
   const [userListModalShown, setUserListModalShown] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
-  const [replying, setReplying] = useState(false);
-  const prevReplies = useRef(replies);
-  const ReplyRefs = {};
   const RewardInterfaceRef = useRef(null);
 
   const subjectId = useMemo(
@@ -224,17 +219,6 @@ function Comment({
     rootContent.rewardLevel,
     subject
   ]);
-
-  useEffect(() => {
-    if (!isPreview) {
-      if (replying && replies?.length > prevReplies.current?.length) {
-        setReplying(false);
-        scrollElementToCenter(ReplyRefs[replies[replies.length - 1].id]);
-      }
-      prevReplies.current = replies;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [replies]);
 
   const userIsUploader = useMemo(
     () => uploader.id === userId,
