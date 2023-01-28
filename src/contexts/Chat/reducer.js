@@ -1664,19 +1664,19 @@ export default function ChatReducer(state, action) {
         ? {
             ...prevChannelObj?.subchannelObj,
             [subchannelId]: {
-              ...prevChannelObj?.subchannelObj[subchannelId],
+              ...prevChannelObj?.subchannelObj?.[subchannelId],
               numUnreads:
                 subchannelId === action.currentSubchannelId && action.usingChat
                   ? 0
                   : Number(
-                      prevChannelObj?.subchannelObj[subchannelId]?.numUnreads ||
-                        0
+                      prevChannelObj?.subchannelObj?.[subchannelId]
+                        ?.numUnreads || 0
                     ) + 1,
               messageIds: [messageId].concat(
-                prevChannelObj?.subchannelObj[subchannelId]?.messageIds
+                prevChannelObj?.subchannelObj?.[subchannelId]?.messageIds
               ),
               messagesObj: {
-                ...prevChannelObj?.subchannelObj[subchannelId]?.messagesObj,
+                ...prevChannelObj?.subchannelObj?.[subchannelId]?.messagesObj,
                 [messageId]: { ...action.message, id: messageId }
               }
             }
