@@ -1295,6 +1295,14 @@ export default function ContentReducer(state, action) {
             : undefined
         }
       };
+    case 'SET_SEARCHED_POSTER':
+      return {
+        ...state,
+        [contentKey]: {
+          ...prevContentState,
+          searchedPoster: action.poster
+        }
+      };
     case 'SET_COMMENTS_SHOWN':
       return {
         ...state,
