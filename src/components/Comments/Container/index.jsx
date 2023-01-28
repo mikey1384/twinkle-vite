@@ -86,10 +86,12 @@ export default function Container({
       ) : null}
       {selectedUser ? (
         <Searched
-          contentId={parent.contentId}
-          contentType={parent.contentType}
+          parent={parent}
+          rootContent={rootContent}
           poster={selectedUser}
           loadMoreButtonColor={loadMoreButtonColor}
+          subject={subject}
+          theme={theme}
         />
       ) : (
         <Main
