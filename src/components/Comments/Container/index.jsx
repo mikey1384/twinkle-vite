@@ -89,6 +89,7 @@ export default function Container({
           contentId={parent.contentId}
           contentType={parent.contentType}
           poster={selectedUser}
+          loadMoreButtonColor={loadMoreButtonColor}
         />
       ) : (
         <Main
