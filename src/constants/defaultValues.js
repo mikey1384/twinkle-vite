@@ -125,15 +125,62 @@ export const karmaPointTable = {
   },
   rewardBoost: {
     0: 100,
-    1: 250,
+    1: 200,
     2: 500,
-    3: 1000,
-    4: 2500,
-    5: 5_000,
-    6: 10_000,
-    7: 25_000,
-    8: 50_000,
-    9: 100_000
+    3: 800,
+    4: 1500,
+    5: 2_200,
+    6: 3_000,
+    7: 5_000,
+    8: 5_500,
+    9: 8_000
+  }
+};
+
+export const videoRewardHash = {
+  0: {
+    xp: 20,
+    coin: 2
+  },
+  1: {
+    xp: 25,
+    coin: 3
+  },
+  2: {
+    xp: 30,
+    coin: 3
+  },
+  3: {
+    xp: 35,
+    coin: 5
+  },
+  4: {
+    xp: 40,
+    coin: 5
+  },
+  5: {
+    xp: 45,
+    coin: 7
+  },
+  6: {
+    xp: 50,
+    coin: 7
+  },
+  7: {
+    xp: 55,
+    coin: 7
+  },
+  8: {
+    xp: 60,
+    coin: 10
+  },
+  9: {
+    xp: 65,
+    coin: 10
+  },
+  10: {
+    xp: 70,
+    coin: 20
   }
 };
 
@@ -216,53 +263,6 @@ export const qualityProps = {
   legendary: {
     color: Color.darkGold(),
     fontWeight: 'bold'
-  }
-};
-
-export const videoRewardHash = {
-  0: {
-    xp: 20,
-    coin: 2
-  },
-  1: {
-    xp: 25,
-    coin: 2
-  },
-  2: {
-    xp: 30,
-    coin: 2
-  },
-  3: {
-    xp: 35,
-    coin: 3
-  },
-  4: {
-    xp: 40,
-    coin: 3
-  },
-  5: {
-    xp: 45,
-    coin: 3
-  },
-  6: {
-    xp: 50,
-    coin: 4
-  },
-  7: {
-    xp: 55,
-    coin: 4
-  },
-  8: {
-    xp: 60,
-    coin: 4
-  },
-  9: {
-    xp: 65,
-    coin: 4
-  },
-  10: {
-    xp: 70,
-    coin: 5
   }
 };
 
