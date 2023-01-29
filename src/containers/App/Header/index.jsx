@@ -192,6 +192,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
+  const onMakeOutgoingOffer = useChatContext(
+    (v) => v.actions.onMakeOutgoingOffer
+  );
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const onUpdateCollectorsRankings = useChatContext(
     (v) => v.actions.onUpdateCollectorsRankings
@@ -489,6 +492,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         card
       });
       if (feed.offer?.user?.id === userId) {
+        onMakeOutgoingOffer({ ...feed.offer, card });
         onUpdateAICard({
           cardId: card.id,
           newState: { myOffer: feed.offer }

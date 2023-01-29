@@ -1488,6 +1488,12 @@ export default function ChatReducer(state, action) {
         }
       };
     }
+    case 'MAKE_OUTGOING_OFFER': {
+      return {
+        ...state,
+        outgoingOffers: [action.offer].concat(state.outgoingOffers)
+      };
+    }
     case 'NOTIFY_MEMBER_LEFT': {
       const messageId = uuidv1();
       const leaveMessage = 'left the chat group';
