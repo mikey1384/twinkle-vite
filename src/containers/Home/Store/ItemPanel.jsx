@@ -158,8 +158,8 @@ export default function ItemPanel({
                     loading={unlocking}
                     skeuomorphic
                     color="green"
-                    onClick={() => {
-                      onUnlock();
+                    onClick={async () => {
+                      await onUnlock();
                       setHighlighted(true);
                       setTimeout(() => setHighlighted(false), 500);
                     }}

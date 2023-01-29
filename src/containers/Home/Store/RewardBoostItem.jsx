@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ItemPanel from './ItemPanel';
 import Icon from '~/components/Icon';
@@ -173,6 +173,7 @@ RewardBoostItem.propTypes = {
 };
 
 export default function RewardBoostItem({ style }) {
+  const [unlocking, setUnlocking] = useState(false);
   const { rewardBoostLvl, karmaPoints, userId } = useKeyContext(
     (v) => v.myState
   );
@@ -195,6 +196,7 @@ export default function RewardBoostItem({ style }) {
       karmaPoints={karmaPoints}
       requiredKarmaPoints={karmaPointTable.rewardBoost[rewardBoostLvl]}
       locked={!rewardBoostLvl}
+      unlocking={unlocking}
       onUnlock={handleUpgrade}
       itemName={item.name[rewardBoostLvl]}
       itemDescription={item.description[rewardBoostLvl]}
@@ -214,12 +216,25 @@ export default function RewardBoostItem({ style }) {
   );
 
   async function handleUpgrade() {
-    const success = await upgradeRewardBoost();
-    if (success) {
-      onSetUserState({
-        userId,
-        newState: { rewardBoostLvl: rewardBoostLvl + 1 }
-      });
+    setUnlocking(true);
+    try {
+      const success = await upgradeRewardBoost();
+      if (success) {
+        onSetUserState({
+          userId,
+          newState: {
+            rewardBoostLvl: Math.min(
+              Number(rewardBoostLvl) + 1,
+              Number(item.maxLvl)
+            )
+          }
+        });
+      }
+      return Promise.resolve();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setUnlocking(false);
     }
   }
 }
