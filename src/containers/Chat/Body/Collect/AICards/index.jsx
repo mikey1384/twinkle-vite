@@ -135,8 +135,9 @@ export default function AICards({ loadingAICardChat }) {
     try {
       onSetIsGeneratingAICard(true);
       onSetAICardStatusMessage('Processing transaction...');
-      const { quality, level, cardId, word, prompt, coins } =
+      const { quality, level, cardId, word, prompt, coins, numCardSummoned } =
         await processAiCardQuality();
+      onUpdateNumSummoned(numCardSummoned);
       if (!quality) {
         onSetAICardStatusMessage(
           `You don't have enough Twinkle Coins to summon a card.`
@@ -150,7 +151,7 @@ export default function AICards({ loadingAICardChat }) {
       const { imageUrl, style } = await getOpenAiImage(prompt);
       onSetAICardStatusMessage('Almost done...');
       const imagePath = await saveAIImageToS3(imageUrl);
-      const { feed, card, numCardSummoned } = await postAICard({
+      const { feed, card } = await postAICard({
         imagePath,
         cardId,
         style,
@@ -159,7 +160,6 @@ export default function AICards({ loadingAICardChat }) {
         word,
         prompt
       });
-      onUpdateNumSummoned(numCardSummoned);
       onSetAICardStatusMessage('Card Summoned');
       onPostAICardFeed({
         feed,
