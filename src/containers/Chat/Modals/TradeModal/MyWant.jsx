@@ -2,6 +2,7 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
+import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 
 MyWant.propTypes = {
@@ -31,34 +32,50 @@ export default function MyWant({ style }) {
         <div
           style={{ display: 'flex', flexDirection: 'column', width: 'auto' }}
         >
-          <div
-            style={{
-              fontSize: '1.7rem',
-              fontWeight: 'bold',
-              color: Color.darkerGray(),
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            Twinkle Coins (
-            <Icon
-              style={{ color: Color.brownOrange() }}
-              icon={['far', 'badge-dollar']}
+          <div>
+            <div
+              className={css`
+                font-weight: bold;
+                font-size: 1.6rem;
+                color: ${Color.darkerGray()};
+                display: flex;
+                align-items: center;
+              `}
+            >
+              Twinkle Coins (
+              <Icon
+                style={{ color: Color.brownOrange() }}
+                icon={['far', 'badge-dollar']}
+              />
+              )
+            </div>
+            <Input
+              onChange={handleAmountChange}
+              placeholder="Amount"
+              value={amount}
+              style={{
+                fontSize: '1.7rem',
+                padding: '0.5rem',
+                borderRadius,
+                lineHeight: 1.5,
+                marginTop: '0.5rem'
+              }}
             />
-            )
           </div>
-          <Input
-            onChange={handleAmountChange}
-            placeholder="Amount"
-            value={amount}
-            style={{
-              fontSize: '1.7rem',
-              padding: '0.5rem',
-              borderRadius,
-              lineHeight: 1.5,
-              marginTop: '1rem'
-            }}
-          />
+          <div style={{ marginTop: '2rem' }}>
+            <div
+              className={css`
+                font-weight: bold;
+                font-size: 1.6rem;
+                color: ${Color.darkerGray()};
+                display: flex;
+                align-items: center;
+              `}
+            >
+              Cards
+            </div>
+            button
+          </div>
         </div>
       </div>
     </div>
@@ -66,6 +83,6 @@ export default function MyWant({ style }) {
 
   function handleAmountChange(amount) {
     const newAmount = Number(amount.replace(/[^0-9]/g, ''));
-    setAmount(newAmount);
+    setAmount(Math.min(newAmount, 999_999_999));
   }
 }
