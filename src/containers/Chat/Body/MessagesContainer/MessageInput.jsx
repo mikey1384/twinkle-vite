@@ -50,6 +50,7 @@ MessageInput.propTypes = {
   onMessageSubmit: PropTypes.func.isRequired,
   onSelectVideoButtonClick: PropTypes.func.isRequired,
   onSetTextAreaHeight: PropTypes.func.isRequired,
+  onSetTradeModalShown: PropTypes.func.isRequired,
   chessTarget: PropTypes.object,
   replyTarget: PropTypes.object,
   recipientId: PropTypes.number,
@@ -75,6 +76,7 @@ export default function MessageInput({
   onHeightChange,
   onMessageSubmit,
   onSelectVideoButtonClick,
+  onSetTradeModalShown,
   onSetTextAreaHeight,
   chessTarget,
   replyTarget,
@@ -473,6 +475,7 @@ export default function MessageInput({
           }
           onUploadButtonClick={() => FileInputRef.current.click()}
           onSelectVideoButtonClick={onSelectVideoButtonClick}
+          onSetTradeModalShown={onSetTradeModalShown}
         />
         {!socketConnected && (
           <Loading

@@ -6,13 +6,15 @@ import { useKeyContext } from '~/contexts';
 AddButtons.propTypes = {
   disabled: PropTypes.bool,
   onUploadButtonClick: PropTypes.func.isRequired,
-  onSelectVideoButtonClick: PropTypes.func.isRequired
+  onSelectVideoButtonClick: PropTypes.func.isRequired,
+  onSetTradeModalShown: PropTypes.func.isRequired
 };
 
 export default function AddButtons({
   disabled,
   onUploadButtonClick,
-  onSelectVideoButtonClick
+  onSelectVideoButtonClick,
+  onSetTradeModalShown
 }) {
   const {
     button: { color: buttonColor },
@@ -30,7 +32,7 @@ export default function AddButtons({
       <Button
         skeuomorphic
         disabled={disabled}
-        onClick={onUploadButtonClick}
+        onClick={onSetTradeModalShown}
         color={buttonColor}
         mobilePadding="0.5rem"
         hoverColor={buttonHoverColor}
