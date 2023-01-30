@@ -328,9 +328,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async processAiCardQuality() {
       try {
         const {
-          data: { quality, level, cardId, word, prompt, coins }
+          data: { quality, level, cardId, word, prompt, coins, numCardSummoned }
         } = await request.get(`${URL}/chat/aiCard/quality`, auth());
-        return Promise.resolve({ quality, level, cardId, word, prompt, coins });
+        return Promise.resolve({
+          quality,
+          level,
+          cardId,
+          word,
+          prompt,
+          coins,
+          numCardSummoned
+        });
       } catch (error) {
         return handleError(error);
       }
@@ -356,13 +364,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
     }) {
       try {
         const {
-          data: { feed, card, numCardSummoned }
+          data: { feed, card }
         } = await request.post(
           `${URL}/chat/aiCard`,
           { cardId, imagePath, style, quality, level, word, prompt },
           auth()
         );
-        return Promise.resolve({ feed, card, numCardSummoned });
+        return Promise.resolve({ feed, card });
       } catch (error) {
         return handleError(error);
       }
