@@ -10,13 +10,21 @@ export default function MyWant({ style }) {
     <div
       style={{
         width: '100%',
-        padding: '1rem',
-        border: `1px solid ${Color.borderGray()}`,
-        borderRadius,
         ...style
       }}
     >
-      What you want
+      <p>I want...</p>
+      <div
+        style={{
+          padding: '1rem',
+          border: `1px solid ${Color.borderGray()}`,
+          display: 'flex',
+          justifyContent: 'center',
+          borderRadius
+        }}
+      >
+        What you want
+      </div>
     </div>
   );
 }
