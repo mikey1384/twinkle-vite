@@ -13,9 +13,10 @@ export default function MyOffer({ style }) {
         ...style
       }}
     >
-      <p>I offer...</p>
+      <p style={{ fontWeight: 'bold' }}>I offer...</p>
       <div
         style={{
+          marginTop: '0.5rem',
           padding: '1rem',
           border: `1px solid ${Color.borderGray()}`,
           display: 'flex',
