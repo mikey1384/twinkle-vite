@@ -346,7 +346,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
               </div>
             </div>
             <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
-              {!card.isBurned ? (
+              {!card.isBurned && card.imagePath ? (
                 <FilterBar
                   className={css`
                     font-size: 1.5rem !important;
