@@ -23,7 +23,7 @@ export default function MyWant({ style }) {
       <div
         style={{
           marginTop: '0.5rem',
-          padding: '1rem',
+          padding: '2rem',
           border: `1px solid ${Color.borderGray()}`,
           display: 'flex',
           justifyContent: 'center',
