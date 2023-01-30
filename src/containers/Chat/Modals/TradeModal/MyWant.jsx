@@ -72,7 +72,7 @@ export default function MyWant({ style }) {
                 align-items: center;
               `}
             >
-              Cards
+              AI Cards
             </div>
             button
           </div>
