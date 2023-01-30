@@ -23,6 +23,7 @@ import ChessModal from '../../Modals/ChessModal';
 import WordleModal from '../../Modals/WordleModal';
 import SelectVideoModal from '../../Modals/SelectVideoModal';
 import SelectNewOwnerModal from '../../Modals/SelectNewOwnerModal';
+import TradeModal from '../../Modals/TradeModal';
 import SettingsModal from '../../Modals/SettingsModal';
 import CallScreen from './CallScreen';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -188,6 +189,7 @@ function MessagesContainer({
     subjectId: null,
     content: ''
   });
+  const [tradeModalShown, setTradeModalShown] = useState(false);
   const [settingsModalShown, setSettingsModalShown] = useState(false);
   const [leaveConfirmModalShown, setLeaveConfirmModalShown] = useState(false);
   const [selectNewOwnerModalShown, setSelectNewOwnerModalShown] =
@@ -1431,6 +1433,7 @@ function MessagesContainer({
           }}
           onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
           onSetTextAreaHeight={setTextAreaHeight}
+          onSetTradeModalShown={setTradeModalShown}
           recipientId={recipientId}
           chessTarget={chessTarget}
           replyTarget={replyTarget}
@@ -1532,6 +1535,9 @@ function MessagesContainer({
           isClass={currentChannel.isClass}
           andLeave
         />
+      )}
+      {tradeModalShown && (
+        <TradeModal onHide={() => setTradeModalShown(false)} />
       )}
     </ErrorBoundary>
   );
