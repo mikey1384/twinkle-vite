@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
+import { borderRadius, Color } from '~/constants/css';
 
 TradeModal.propTypes = {
   onHide: PropTypes.func.isRequired
@@ -25,8 +26,27 @@ export default function TradeModal({ onHide }) {
             justifyContent: 'center'
           }}
         >
-          <div>What you want</div>
-          <div>What you offer</div>
+          <div
+            style={{
+              width: '100%',
+              padding: '1rem',
+              border: `1px solid ${Color.borderGray()}`,
+              borderRadius
+            }}
+          >
+            What you want
+          </div>
+          <div
+            style={{
+              marginTop: '1rem',
+              width: '100%',
+              padding: '1rem',
+              border: `1px solid ${Color.borderGray()}`,
+              borderRadius
+            }}
+          >
+            What you offer
+          </div>
         </div>
       </main>
       <footer>
