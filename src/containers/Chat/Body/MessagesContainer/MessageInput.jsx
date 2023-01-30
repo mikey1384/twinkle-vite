@@ -371,8 +371,7 @@ export default function MessageInput({
           style={{
             margin: '0.2rem 1rem 0.2rem 0',
             display: 'flex',
-            alignItems: 'center',
-            height: '100%'
+            alignItems: 'center'
           }}
         >
           {isTwoPeopleChannel ? (
@@ -452,7 +451,9 @@ export default function MessageInput({
         {!textIsEmpty && (
           <div
             style={{
-              margin: `0.2rem 1rem 0.2rem 0`
+              margin: `0.2rem 1rem 0.2rem 0`,
+              display: 'flex',
+              alignItems: 'center'
             }}
           >
             <Button

@@ -24,7 +24,7 @@ export default function AddButtons({
       style={{
         display: 'flex',
         margin: '0.2rem 0 0.2rem 0',
-        alignItems: 'flex-start'
+        alignItems: 'center'
       }}
     >
       <Button
@@ -32,7 +32,19 @@ export default function AddButtons({
         disabled={disabled}
         onClick={onUploadButtonClick}
         color={buttonColor}
+        mobilePadding="0.5rem"
         hoverColor={buttonHoverColor}
+      >
+        <Icon size="lg" icon={['far', 'badge-dollar']} />
+      </Button>
+      <Button
+        skeuomorphic
+        disabled={disabled}
+        onClick={onUploadButtonClick}
+        color={buttonColor}
+        hoverColor={buttonHoverColor}
+        mobilePadding="0.5rem"
+        style={{ marginLeft: '0.5rem' }}
       >
         <Icon size="lg" icon="upload" />
       </Button>
@@ -42,6 +54,7 @@ export default function AddButtons({
         color={buttonColor}
         hoverColor={buttonHoverColor}
         onClick={onSelectVideoButtonClick}
+        mobilePadding="0.5rem"
         style={{ marginLeft: '0.5rem' }}
       >
         <Icon size="lg" icon="film" />
