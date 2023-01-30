@@ -28,7 +28,7 @@ export default function TradeModal({ onHide }) {
           }}
         >
           <MyWant />
-          <MyOffer style={{ marginTop: '1rem' }} />
+          <MyOffer style={{ marginTop: '3rem' }} />
         </div>
       </main>
       <footer>
