@@ -35,8 +35,8 @@ export default function TradeModal({ onHide }) {
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
         </Button>
-        <Button color={doneColor} onClick={() => onHide()}>
-          Done
+        <Button disabled={true} color={doneColor} onClick={() => onHide()}>
+          Propose
         </Button>
       </footer>
     </Modal>
