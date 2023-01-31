@@ -13,7 +13,7 @@ export default function SelectAICardModal({ onHide }) {
   } = useKeyContext((v) => v.theme);
 
   return (
-    <Modal onHide={onHide}>
+    <Modal modalOverModal onHide={onHide}>
       <header>Trade</header>
       <main>ai cards</main>
       <footer>
