@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 
 SelectAICardModal.propTypes = {
   aiCardModalType: PropTypes.string.isRequired,
@@ -15,9 +15,24 @@ export default function SelectAICardModal({
   onHide,
   partnerName
 }) {
+  const { username } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const loadFilteredAICards = useAppContext(
+    (v) => v.requestHelpers.loadFilteredAICards
+  );
+
+  useEffect(() => {
+    init();
+    async function init() {
+      const { cards, loadMoreShown, numCards } = await loadFilteredAICards({
+        filters: { owner: aiCardModalType === 'want' ? partnerName : username }
+      });
+      console.log(cards, loadMoreShown, numCards);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const headerLabel = useMemo(() => {
     if (aiCardModalType === 'want') {
