@@ -65,6 +65,7 @@ export default function TradeModal({ onHide, partner }) {
       {!!aiCardModalType && (
         <SelectAICardModal
           aiCardModalType={aiCardModalType}
+          partnerName={partner?.username}
           onHide={() => setAICardModalType(null)}
         />
       )}
