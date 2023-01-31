@@ -3,26 +3,35 @@ import Button from '~/components/Button';
 
 Options.propTypes = {
   partnerName: PropTypes.string.isRequired,
-  onSelectOption: PropTypes.func.isRequired
+  onSelectOption: PropTypes.func.isRequired,
+  selectedOption: PropTypes.string.isRequired
 };
 
-export default function Options({ partnerName, onSelectOption }) {
+export default function Options({
+  partnerName,
+  onSelectOption,
+  selectedOption
+}) {
   return (
     <div>
-      <Button filled color="logoBlue" onClick={() => onSelectOption('want')}>
+      <Button
+        skeuomorphic={selectedOption === 'want'}
+        color="logoBlue"
+        onClick={() => onSelectOption('want')}
+      >
         I want something {partnerName} has
       </Button>
       <Button
+        skeuomorphic={selectedOption === 'offer'}
         style={{ marginTop: '1rem' }}
-        filled
         color="pink"
         onClick={() => onSelectOption('offer')}
       >
         {`I want ${partnerName} to make me an offer`}
       </Button>
       <Button
+        skeuomorphic={selectedOption === 'give'}
         style={{ marginTop: '1rem' }}
-        filled
         color="green"
         onClick={() => onSelectOption('give')}
       >
