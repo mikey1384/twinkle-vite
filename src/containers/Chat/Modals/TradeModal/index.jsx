@@ -32,7 +32,7 @@ export default function TradeModal({ onHide, partner }) {
           }}
         >
           <Options
-            onSelectOptions={setSelectedOption}
+            onSelectOption={setSelectedOption}
             partnerName={partner?.username}
           />
           {selectedOption === 'want' ? <MyWant /> : null}
