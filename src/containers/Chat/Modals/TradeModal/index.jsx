@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import MyWant from './MyWant';
 import MyOffer from './MyOffer';
 import Options from './Options';
+import SelectAICardModal from './SelectAICardModal';
 import { useKeyContext } from '~/contexts';
 
 TradeModal.propTypes = {
@@ -16,6 +17,7 @@ export default function TradeModal({ onHide, partner }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const [aiCardModalType, setAICardModalType] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
 
   return (
@@ -38,12 +40,16 @@ export default function TradeModal({ onHide, partner }) {
             selectedOption={selectedOption}
           />
           {selectedOption === 'want' ? (
-            <MyWant style={{ marginTop: '3rem' }} />
+            <MyWant
+              style={{ marginTop: '3rem' }}
+              onShowAICard={() => setAICardModalType('want')}
+            />
           ) : null}
           {!!selectedOption && (
             <MyOffer
               selectedOption={selectedOption}
               style={{ marginTop: '3rem' }}
+              onShowAICard={() => setAICardModalType('offer')}
             />
           )}
         </div>
@@ -56,6 +62,12 @@ export default function TradeModal({ onHide, partner }) {
           Propose
         </Button>
       </footer>
+      {!!aiCardModalType && (
+        <SelectAICardModal
+          aiCardModalType={aiCardModalType}
+          onHide={() => setAICardModalType(null)}
+        />
+      )}
     </Modal>
   );
 }
