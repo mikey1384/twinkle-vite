@@ -8,10 +8,11 @@ import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
 MyOffer.propTypes = {
+  selectedOption: PropTypes.string.isRequired,
   style: PropTypes.object
 };
 
-export default function MyOffer({ style }) {
+export default function MyOffer({ selectedOption, style }) {
   const { twinkleCoins, profileTheme } = useKeyContext((v) => v.myState);
   const [amount, setAmount] = useState(0);
   return (
@@ -21,7 +22,15 @@ export default function MyOffer({ style }) {
         ...style
       }}
     >
-      <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>I offer...</p>
+      <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>
+        I{' '}
+        {selectedOption === 'want'
+          ? 'offer'
+          : selectedOption === 'give'
+          ? 'want to give'
+          : 'have'}
+        ...
+      </p>
       <div
         style={{
           marginTop: '0.5rem',

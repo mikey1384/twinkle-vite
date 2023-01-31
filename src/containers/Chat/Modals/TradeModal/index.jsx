@@ -39,7 +39,10 @@ export default function TradeModal({ onHide, partner }) {
           {selectedOption === 'want' ? (
             <MyWant style={{ marginTop: '3rem' }} />
           ) : null}
-          <MyOffer style={{ marginTop: '3rem' }} />
+          <MyOffer
+            selectedOption={selectedOption}
+            style={{ marginTop: '3rem' }}
+          />
         </div>
       </main>
       <footer>
