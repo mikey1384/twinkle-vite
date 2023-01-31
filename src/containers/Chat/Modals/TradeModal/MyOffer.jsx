@@ -21,7 +21,7 @@ export default function MyOffer({ style }) {
         ...style
       }}
     >
-      <p style={{ fontWeight: 'bold' }}>I offer...</p>
+      <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>I offer...</p>
       <div
         style={{
           marginTop: '0.5rem',

@@ -19,7 +19,7 @@ export default function MyWant({ style }) {
         ...style
       }}
     >
-      <p style={{ fontWeight: 'bold' }}>I want...</p>
+      <p style={{ fontWeight: 'bold', fontSize: '2rem' }}>I want...</p>
       <div
         style={{
           marginTop: '0.5rem',
