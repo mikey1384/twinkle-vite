@@ -2,10 +2,10 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import { useKeyContext } from '~/contexts';
 import MyWant from './MyWant';
 import MyOffer from './MyOffer';
 import Options from './Options';
+import { useKeyContext } from '~/contexts';
 
 TradeModal.propTypes = {
   onHide: PropTypes.func.isRequired,
