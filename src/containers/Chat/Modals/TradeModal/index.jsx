@@ -28,7 +28,8 @@ export default function TradeModal({ onHide, partner }) {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            paddingBottom: !!selectedOption ? 0 : '2rem'
           }}
         >
           <Options

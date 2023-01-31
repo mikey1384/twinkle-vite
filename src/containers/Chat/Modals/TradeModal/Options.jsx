@@ -19,7 +19,7 @@ export default function Options({
         color="logoBlue"
         onClick={() => onSelectOption('want')}
       >
-        I want something {partnerName} has
+        {partnerName} has something I want
       </Button>
       <Button
         skeuomorphic={selectedOption === 'offer'}
@@ -27,7 +27,7 @@ export default function Options({
         color="pink"
         onClick={() => onSelectOption('offer')}
       >
-        {`I want ${partnerName} to make me an offer`}
+        {`I want to show ${partnerName} what I have`}
       </Button>
       <Button
         skeuomorphic={selectedOption === 'give'}
@@ -35,7 +35,7 @@ export default function Options({
         color="green"
         onClick={() => onSelectOption('give')}
       >
-        {`I want to give ${partnerName} what I have`}
+        {`I want to give ${partnerName} something`}
       </Button>
     </div>
   );
