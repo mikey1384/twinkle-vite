@@ -50,9 +50,11 @@ export default function SelectAICardModal({
     <Modal large modalOverModal onHide={onHide}>
       <header>{headerLabel}</header>
       <main>
-        {cards.map((card) => (
-          <CardItem key={card.id} card={card} />
-        ))}
+        <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
+          {cards.map((card) => (
+            <CardItem key={card.id} card={card} />
+          ))}
+        </div>
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
