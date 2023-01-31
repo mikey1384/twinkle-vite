@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
+import { useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 
 MyWant.propTypes = {
@@ -11,6 +12,7 @@ MyWant.propTypes = {
 };
 
 export default function MyWant({ style }) {
+  const { profileTheme } = useKeyContext((v) => v.myState);
   const [amount, setAmount] = useState(0);
   return (
     <div
@@ -90,7 +92,7 @@ export default function MyWant({ style }) {
               padding: '1.5rem',
               marginTop: '0.5rem'
             }}
-            color="blue"
+            color={profileTheme}
             onClick={() => console.log('clicked')}
           >
             <Icon icon="cards-blank" />
