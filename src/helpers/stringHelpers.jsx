@@ -133,6 +133,7 @@ export function addEmoji(string) {
     ':korea:': '🇰🇷',
     ':kiss:': '💋',
     ':kissing:': '😗',
+    ':laugh:': '🤣',
     ':light:': '💡',
     ':lightbulb:': '💡',
     ':lion:': '🦁',
