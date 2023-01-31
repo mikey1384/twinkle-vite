@@ -12,7 +12,7 @@ MyOffer.propTypes = {
 };
 
 export default function MyOffer({ style }) {
-  const { twinkleCoins } = useKeyContext((v) => v.myState);
+  const { twinkleCoins, profileTheme } = useKeyContext((v) => v.myState);
   const [amount, setAmount] = useState(0);
   return (
     <div
@@ -92,7 +92,7 @@ export default function MyOffer({ style }) {
               padding: '1.5rem',
               marginTop: '0.5rem'
             }}
-            color="blue"
+            color={profileTheme}
             onClick={() => console.log('clicked')}
           >
             <Icon icon="cards-blank" />
