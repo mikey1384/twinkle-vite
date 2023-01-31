@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
+import CardItem from './CardItem';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 SelectAICardModal.propTypes = {
@@ -15,6 +16,7 @@ export default function SelectAICardModal({
   onHide,
   partnerName
 }) {
+  const [cards, setCards] = useState([]);
   const { username } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
@@ -29,6 +31,7 @@ export default function SelectAICardModal({
       const { cards, loadMoreShown, numCards } = await loadFilteredAICards({
         filters: { owner: aiCardModalType === 'want' ? partnerName : username }
       });
+      setCards(cards);
       console.log(cards, loadMoreShown, numCards);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -46,7 +49,11 @@ export default function SelectAICardModal({
   return (
     <Modal large modalOverModal onHide={onHide}>
       <header>{headerLabel}</header>
-      <main>{aiCardModalType}</main>
+      <main>
+        {cards.map((card) => (
+          <CardItem key={card.id} card={card} />
+        ))}
+      </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
