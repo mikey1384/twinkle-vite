@@ -1,18 +1,22 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
 import MyWant from './MyWant';
 import MyOffer from './MyOffer';
+import Options from './Options';
 
 TradeModal.propTypes = {
-  onHide: PropTypes.func.isRequired
+  onHide: PropTypes.func.isRequired,
+  partner: PropTypes.object.isRequired
 };
 
-export default function TradeModal({ onHide }) {
+export default function TradeModal({ onHide, partner }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const [selectedOption, setSelectedOption] = useState('');
 
   return (
     <Modal onHide={onHide}>
@@ -27,7 +31,11 @@ export default function TradeModal({ onHide }) {
             justifyContent: 'center'
           }}
         >
-          <MyWant />
+          <Options
+            onSelectOptions={setSelectedOption}
+            partnerName={partner?.username}
+          />
+          {selectedOption === 'want' ? <MyWant /> : null}
           <MyOffer style={{ marginTop: '3rem' }} />
         </div>
       </main>

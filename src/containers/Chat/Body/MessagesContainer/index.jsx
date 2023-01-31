@@ -1435,6 +1435,7 @@ function MessagesContainer({
           onSetTextAreaHeight={setTextAreaHeight}
           onSetTradeModalShown={setTradeModalShown}
           recipientId={recipientId}
+          partnerName={partner?.username}
           chessTarget={chessTarget}
           replyTarget={replyTarget}
           subchannelId={subchannel?.id}
@@ -1537,7 +1538,10 @@ function MessagesContainer({
         />
       )}
       {tradeModalShown && (
-        <TradeModal onHide={() => setTradeModalShown(false)} />
+        <TradeModal
+          partner={partner}
+          onHide={() => setTradeModalShown(false)}
+        />
       )}
     </ErrorBoundary>
   );
