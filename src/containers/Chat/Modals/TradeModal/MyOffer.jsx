@@ -8,11 +8,12 @@ import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
 MyOffer.propTypes = {
+  onShowAICard: PropTypes.func.isRequired,
   selectedOption: PropTypes.string.isRequired,
   style: PropTypes.object
 };
 
-export default function MyOffer({ selectedOption, style }) {
+export default function MyOffer({ onShowAICard, selectedOption, style }) {
   const { twinkleCoins, profileTheme } = useKeyContext((v) => v.myState);
   const [amount, setAmount] = useState(0);
   return (
@@ -102,7 +103,7 @@ export default function MyOffer({ selectedOption, style }) {
               marginTop: '0.5rem'
             }}
             color={profileTheme}
-            onClick={() => console.log('clicked')}
+            onClick={onShowAICard}
           >
             <Icon icon="cards-blank" />
           </Button>

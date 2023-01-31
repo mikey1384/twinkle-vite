@@ -8,10 +8,11 @@ import { useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 
 MyWant.propTypes = {
-  style: PropTypes.object
+  style: PropTypes.object,
+  onShowAICard: PropTypes.func.isRequired
 };
 
-export default function MyWant({ style }) {
+export default function MyWant({ style, onShowAICard }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const [amount, setAmount] = useState(0);
   return (
@@ -93,7 +94,7 @@ export default function MyWant({ style }) {
               marginTop: '0.5rem'
             }}
             color={profileTheme}
-            onClick={() => console.log('clicked')}
+            onClick={onShowAICard}
           >
             <Icon icon="cards-blank" />
           </Button>

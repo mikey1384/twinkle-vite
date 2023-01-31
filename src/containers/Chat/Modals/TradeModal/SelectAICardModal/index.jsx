@@ -4,10 +4,11 @@ import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
 
 SelectAICardModal.propTypes = {
+  aiCardModalType: PropTypes.string.isRequired,
   onHide: PropTypes.func.isRequired
 };
 
-export default function SelectAICardModal({ onHide }) {
+export default function SelectAICardModal({ aiCardModalType, onHide }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -15,7 +16,7 @@ export default function SelectAICardModal({ onHide }) {
   return (
     <Modal modalOverModal onHide={onHide}>
       <header>Trade</header>
-      <main>ai cards</main>
+      <main>{aiCardModalType}</main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
