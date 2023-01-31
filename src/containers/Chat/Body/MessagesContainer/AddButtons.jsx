@@ -5,6 +5,7 @@ import { useKeyContext } from '~/contexts';
 
 AddButtons.propTypes = {
   disabled: PropTypes.bool,
+  isTwoPeopleChannel: PropTypes.bool,
   onUploadButtonClick: PropTypes.func.isRequired,
   onSelectVideoButtonClick: PropTypes.func.isRequired,
   onSetTradeModalShown: PropTypes.func.isRequired
@@ -12,6 +13,7 @@ AddButtons.propTypes = {
 
 export default function AddButtons({
   disabled,
+  isTwoPeopleChannel,
   onUploadButtonClick,
   onSelectVideoButtonClick,
   onSetTradeModalShown
@@ -29,24 +31,26 @@ export default function AddButtons({
         alignItems: 'center'
       }}
     >
-      <Button
-        skeuomorphic
-        disabled={disabled}
-        onClick={onSetTradeModalShown}
-        color={buttonColor}
-        mobilePadding="0.5rem"
-        hoverColor={buttonHoverColor}
-      >
-        <Icon size="lg" icon={['far', 'badge-dollar']} />
-      </Button>
+      {isTwoPeopleChannel && (
+        <Button
+          skeuomorphic
+          disabled={disabled}
+          onClick={onSetTradeModalShown}
+          color={buttonColor}
+          mobilePadding="0.5rem"
+          hoverColor={buttonHoverColor}
+        >
+          <Icon size="lg" icon={['far', 'badge-dollar']} />
+        </Button>
+      )}
       <Button
         skeuomorphic
         disabled={disabled}
         onClick={onUploadButtonClick}
         color={buttonColor}
         hoverColor={buttonHoverColor}
-        mobilePadding="0.5rem"
-        style={{ marginLeft: '0.5rem' }}
+        mobilePadding={isTwoPeopleChannel ? '0.5rem' : null}
+        style={{ marginLeft: isTwoPeopleChannel ? '0.5rem' : 0 }}
       >
         <Icon size="lg" icon="upload" />
       </Button>
@@ -56,7 +60,7 @@ export default function AddButtons({
         color={buttonColor}
         hoverColor={buttonHoverColor}
         onClick={onSelectVideoButtonClick}
-        mobilePadding="0.5rem"
+        mobilePadding={isTwoPeopleChannel ? '0.5rem' : null}
         style={{ marginLeft: '0.5rem' }}
       >
         <Icon size="lg" icon="film" />

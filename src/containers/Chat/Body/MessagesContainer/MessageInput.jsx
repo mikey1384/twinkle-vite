@@ -476,6 +476,7 @@ export default function MessageInput({
           onUploadButtonClick={() => FileInputRef.current.click()}
           onSelectVideoButtonClick={onSelectVideoButtonClick}
           onSetTradeModalShown={onSetTradeModalShown}
+          isTwoPeopleChannel={isTwoPeopleChannel}
         />
         {!socketConnected && (
           <Loading
