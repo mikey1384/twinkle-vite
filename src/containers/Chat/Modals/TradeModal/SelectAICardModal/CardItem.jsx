@@ -29,23 +29,30 @@ export default function CardItem({ card }) {
 
   return (
     <div
-      className="item"
       style={{
-        width: '16%',
+        display: 'flex',
+        justifyContent: 'center',
         padding: '1rem',
-        margin: '0.3%',
         border: `1px solid ${Color.borderGray()}`,
         borderRadius
       }}
+      className={css`
+        margin: 0.3%;
+        width: 16%;
+        @media (max-width: ${mobileMaxWidth}) {
+          margin: 1%;
+          width: 30%;
+        }
+      `}
     >
       <div
         className={css`
-          width: 5rem;
-          height: 7rem;
+          width: 8rem;
+          height: 12rem;
           border-radius: 3px;
           @media (max-width: ${mobileMaxWidth}) {
-            width: 3.5rem;
-            height: 5.5rem;
+            width: 7rem;
+            height: 11rem;
             border-radius: 2px;
           }
         `}
