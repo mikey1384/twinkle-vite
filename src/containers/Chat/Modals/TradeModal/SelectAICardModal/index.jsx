@@ -19,9 +19,11 @@ export default function SelectAICardModal({
   partnerName
 }) {
   const [cards, setCards] = useState([]);
+  const [selectedCardIds, setSelectedCardIds] = useState([]);
   const { username } = useKeyContext((v) => v.myState);
   const {
-    done: { color: doneColor }
+    done: { color: doneColor },
+    success: { color: successColor }
   } = useKeyContext((v) => v.theme);
   const loadFilteredAICards = useAppContext(
     (v) => v.requestHelpers.loadFilteredAICards
@@ -57,6 +59,16 @@ export default function SelectAICardModal({
             <CardItem
               key={card.id}
               card={card}
+              selected={selectedCardIds.includes(card.id)}
+              onSelect={() =>
+                setSelectedCardIds((prevIds) => [...prevIds, card.id])
+              }
+              onDeselect={() =>
+                setSelectedCardIds((prevIds) =>
+                  prevIds.filter((id) => id !== card.id)
+                )
+              }
+              successColor={successColor}
               onSetAICardModalCardId={onSetAICardModalCardId}
             />
           ))}
