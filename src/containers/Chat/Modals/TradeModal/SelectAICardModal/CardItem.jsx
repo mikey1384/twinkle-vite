@@ -14,6 +14,7 @@ import {
   cardProps,
   qualityProps
 } from '~/constants/defaultValues';
+import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 
 CardItem.propTypes = {
@@ -25,6 +26,8 @@ CardItem.propTypes = {
   successColor: PropTypes.string.isRequired
 };
 
+const deviceIsMobile = isMobile(navigator);
+
 export default function CardItem({
   card,
   onSetAICardModalCardId,
@@ -33,7 +36,7 @@ export default function CardItem({
   selected,
   successColor
 }) {
-  const [mouseOver, setMouseOver] = useState(false);
+  const [mouseOver, setMouseOver] = useState(!!deviceIsMobile);
   const cardDetailObj = useMemo(
     () => cardLevelHash[card?.level],
     [card?.level]
@@ -49,8 +52,8 @@ export default function CardItem({
 
   return (
     <div
-      onMouseEnter={() => setMouseOver(true)}
-      onMouseLeave={() => setMouseOver(false)}
+      onMouseEnter={deviceIsMobile ? null : () => setMouseOver(true)}
+      onMouseLeave={deviceIsMobile ? null : () => setMouseOver(false)}
       style={{
         position: 'relative',
         display: 'flex',
@@ -106,18 +109,25 @@ export default function CardItem({
             top: 0,
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
             alignItems: 'center',
             position: 'absolute',
             height: '100%',
-            width: '100%',
-            background: 'rgba(0, 0, 0, 0.1)'
+            width: '100%'
           }}
+          className={css`
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.1);
+            @media (max-width: ${mobileMaxWidth}) {
+              justify-content: flex-end;
+              background: transparent;
+            }
+          `}
         >
           <div>
             <Button
-              opacity={0.5}
+              opacity={0.8}
               skeuomorphic
+              mobilePadding="0.5rem"
               onClick={() => onSetAICardModalCardId(card.id)}
             >
               Details
@@ -128,6 +138,7 @@ export default function CardItem({
               color={selected ? successColor : 'black'}
               opacity={0.8}
               skeuomorphic
+              mobilePadding="0.5rem"
               onClick={selected ? onDeselect : onSelect}
             >
               <Icon icon="check" />
