@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import {
   borderRadius,
   innerBorderRadius,
@@ -16,10 +17,11 @@ import {
 import { css } from '@emotion/css';
 
 CardItem.propTypes = {
-  card: PropTypes.object.isRequired
+  card: PropTypes.object.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired
 };
 
-export default function CardItem({ card }) {
+export default function CardItem({ card, onSetAICardModalCardId }) {
   const [mouseOver, setMouseOver] = useState(false);
   const cardDetailObj = useMemo(
     () => cardLevelHash[card?.level],
@@ -101,13 +103,18 @@ export default function CardItem({ card }) {
           }}
         >
           <div>
-            <Button opacity={0.5} skeuomorphic>
-              details
+            <Button
+              opacity={0.5}
+              skeuomorphic
+              onClick={() => onSetAICardModalCardId(card.id)}
+            >
+              Details
             </Button>
           </div>
           <div style={{ marginTop: '0.5rem' }}>
             <Button opacity={0.8} skeuomorphic>
-              select
+              <Icon icon="check" />
+              <span style={{ marginLeft: '0.7rem' }}>Select</span>
             </Button>
           </div>
         </div>

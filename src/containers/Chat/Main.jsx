@@ -867,6 +867,7 @@ export default function Main({ currentPathId, onFileUpload }) {
                 currentPathId={currentPathId}
                 subchannelId={selectedSubchannelId}
                 subchannelPath={subchannelPath}
+                isAICardModalShown={!!aiCardModalCardId}
                 onSetAICardModalCardId={setAICardModalCardId}
               />
               <RightMenu

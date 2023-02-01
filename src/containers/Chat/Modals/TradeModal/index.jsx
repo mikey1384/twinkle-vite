@@ -9,11 +9,18 @@ import SelectAICardModal from './SelectAICardModal';
 import { useKeyContext } from '~/contexts';
 
 TradeModal.propTypes = {
+  isAICardModalShown: PropTypes.bool.isRequired,
   onHide: PropTypes.func.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired
 };
 
-export default function TradeModal({ onHide, partner }) {
+export default function TradeModal({
+  isAICardModalShown,
+  onHide,
+  onSetAICardModalCardId,
+  partner
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -21,7 +28,7 @@ export default function TradeModal({ onHide, partner }) {
   const [selectedOption, setSelectedOption] = useState('');
 
   return (
-    <Modal onHide={onHide}>
+    <Modal onHide={isAICardModalShown ? null : onHide}>
       <header>Trade</header>
       <main>
         <div
@@ -55,10 +62,14 @@ export default function TradeModal({ onHide, partner }) {
         </div>
       </main>
       <footer>
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button
+          transparent
+          style={{ marginRight: '0.7rem' }}
+          onClick={isAICardModalShown ? null : onHide}
+        >
           Cancel
         </Button>
-        <Button disabled={true} color={doneColor} onClick={() => onHide()}>
+        <Button disabled={true} color={doneColor} onClick={onHide}>
           Propose
         </Button>
       </footer>
@@ -66,7 +77,8 @@ export default function TradeModal({ onHide, partner }) {
         <SelectAICardModal
           aiCardModalType={aiCardModalType}
           partnerName={partner?.username}
-          onHide={() => setAICardModalType(null)}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+          onHide={isAICardModalShown ? null : () => setAICardModalType(null)}
         />
       )}
     </Modal>

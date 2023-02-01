@@ -66,6 +66,7 @@ MessagesContainer.propTypes = {
   currentChannel: PropTypes.object.isRequired,
   currentPathId: PropTypes.string,
   displayedThemeColor: PropTypes.string,
+  isAICardModalShown: PropTypes.bool,
   onSetAICardModalCardId: PropTypes.func,
   subchannelId: PropTypes.number,
   subchannelPath: PropTypes.string
@@ -77,6 +78,7 @@ function MessagesContainer({
   currentChannel,
   currentPathId,
   displayedThemeColor,
+  isAICardModalShown,
   onSetAICardModalCardId,
   subchannelId,
   subchannelPath
@@ -1540,6 +1542,8 @@ function MessagesContainer({
       {tradeModalShown && (
         <TradeModal
           partner={partner}
+          isAICardModalShown={isAICardModalShown}
+          onSetAICardModalCardId={onSetAICardModalCardId}
           onHide={() => setTradeModalShown(false)}
         />
       )}
