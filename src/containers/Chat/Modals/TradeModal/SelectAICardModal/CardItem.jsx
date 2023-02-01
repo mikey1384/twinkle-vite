@@ -19,6 +19,7 @@ import { css } from '@emotion/css';
 CardItem.propTypes = {
   card: PropTypes.object.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
+  onDeselect: PropTypes.func.isRequired,
   onSelect: PropTypes.func.isRequired,
   selected: PropTypes.bool.isRequired,
   successColor: PropTypes.string.isRequired
@@ -27,6 +28,7 @@ CardItem.propTypes = {
 export default function CardItem({
   card,
   onSetAICardModalCardId,
+  onDeselect,
   onSelect,
   selected,
   successColor
@@ -54,6 +56,7 @@ export default function CardItem({
         display: 'flex',
         justifyContent: 'center',
         padding: '1rem',
+        boxShadow: selected ? `0 0 5px ${successColor}` : null,
         border: `1px solid ${Color[selected ? successColor : 'borderGray']()}`,
         borderRadius
       }}
@@ -121,9 +124,16 @@ export default function CardItem({
             </Button>
           </div>
           <div style={{ marginTop: '0.5rem' }}>
-            <Button opacity={0.8} skeuomorphic onClick={onSelect}>
+            <Button
+              color={selected ? successColor : 'black'}
+              opacity={0.8}
+              skeuomorphic
+              onClick={selected ? onDeselect : onSelect}
+            >
               <Icon icon="check" />
-              <span style={{ marginLeft: '0.7rem' }}>Select</span>
+              <span style={{ marginLeft: '0.7rem' }}>
+                Select{selected ? 'ed' : ''}
+              </span>
             </Button>
           </div>
         </div>
