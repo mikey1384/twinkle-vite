@@ -93,14 +93,23 @@ export default function CardItem({ card }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
+            alignItems: 'center',
             position: 'absolute',
             height: '100%',
             width: '100%',
             background: 'rgba(0, 0, 0, 0.1)'
           }}
         >
-          <Button skeuomorphic>details</Button>
-          <Button skeuomorphic>select</Button>
+          <div>
+            <Button opacity={0.5} skeuomorphic>
+              details
+            </Button>
+          </div>
+          <div style={{ marginTop: '0.5rem' }}>
+            <Button opacity={0.8} skeuomorphic>
+              select
+            </Button>
+          </div>
         </div>
       ) : null}
     </div>
