@@ -7,13 +7,15 @@ import { useAppContext, useKeyContext } from '~/contexts';
 
 SelectAICardModal.propTypes = {
   aiCardModalType: PropTypes.string.isRequired,
-  onHide: PropTypes.func.isRequired,
+  onHide: PropTypes.func,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
   partnerName: PropTypes.string.isRequired
 };
 
 export default function SelectAICardModal({
   aiCardModalType,
   onHide,
+  onSetAICardModalCardId,
   partnerName
 }) {
   const [cards, setCards] = useState([]);
@@ -52,7 +54,11 @@ export default function SelectAICardModal({
       <main>
         <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
           {cards.map((card) => (
-            <CardItem key={card.id} card={card} />
+            <CardItem
+              key={card.id}
+              card={card}
+              onSetAICardModalCardId={onSetAICardModalCardId}
+            />
           ))}
         </div>
       </main>
