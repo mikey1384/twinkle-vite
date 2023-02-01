@@ -18,10 +18,19 @@ import { css } from '@emotion/css';
 
 CardItem.propTypes = {
   card: PropTypes.object.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired
+  onSetAICardModalCardId: PropTypes.func.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  selected: PropTypes.bool.isRequired,
+  successColor: PropTypes.string.isRequired
 };
 
-export default function CardItem({ card, onSetAICardModalCardId }) {
+export default function CardItem({
+  card,
+  onSetAICardModalCardId,
+  onSelect,
+  selected,
+  successColor
+}) {
   const [mouseOver, setMouseOver] = useState(false);
   const cardDetailObj = useMemo(
     () => cardLevelHash[card?.level],
@@ -45,7 +54,7 @@ export default function CardItem({ card, onSetAICardModalCardId }) {
         display: 'flex',
         justifyContent: 'center',
         padding: '1rem',
-        border: `1px solid ${Color.borderGray()}`,
+        border: `1px solid ${Color[selected ? successColor : 'borderGray']()}`,
         borderRadius
       }}
       className={css`
@@ -112,7 +121,7 @@ export default function CardItem({ card, onSetAICardModalCardId }) {
             </Button>
           </div>
           <div style={{ marginTop: '0.5rem' }}>
-            <Button opacity={0.8} skeuomorphic>
+            <Button opacity={0.8} skeuomorphic onClick={onSelect}>
               <Icon icon="check" />
               <span style={{ marginLeft: '0.7rem' }}>Select</span>
             </Button>
