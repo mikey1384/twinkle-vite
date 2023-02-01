@@ -1,6 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import Button from '~/components/Button';
+import {
+  borderRadius,
+  innerBorderRadius,
+  Color,
+  mobileMaxWidth
+} from '~/constants/css';
 import {
   cardLevelHash,
   cloudFrontURL,
@@ -14,13 +20,14 @@ CardItem.propTypes = {
 };
 
 export default function CardItem({ card }) {
+  const [mouseOver, setMouseOver] = useState(false);
   const cardDetailObj = useMemo(
     () => cardLevelHash[card?.level],
     [card?.level]
   );
   const cardColor = useMemo(
-    () => Color[card.isBurned ? 'black' : cardDetailObj?.color](),
-    [card.isBurned, cardDetailObj?.color]
+    () => Color[cardDetailObj?.color](),
+    [cardDetailObj?.color]
   );
   const borderColor = useMemo(
     () => qualityProps[card?.quality]?.color,
@@ -29,7 +36,10 @@ export default function CardItem({ card }) {
 
   return (
     <div
+      onMouseEnter={() => setMouseOver(true)}
+      onMouseLeave={() => setMouseOver(false)}
       style={{
+        position: 'relative',
         display: 'flex',
         justifyContent: 'center',
         padding: '1rem',
@@ -46,7 +56,7 @@ export default function CardItem({ card }) {
       `}
     >
       <div
-        className={css`
+        className={`inner ${css`
           width: 8rem;
           height: 12rem;
           border-radius: 3px;
@@ -55,7 +65,7 @@ export default function CardItem({ card }) {
             height: 11rem;
             border-radius: 2px;
           }
-        `}
+        `}`}
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -64,7 +74,8 @@ export default function CardItem({ card }) {
           border:
             cardProps[card.quality]?.includes('glowy') && !card.isBurned
               ? `3px solid ${borderColor}`
-              : 'none'
+              : 'none',
+          position: 'relative'
         }}
       >
         {card.imagePath && !card.isBurned && (
@@ -74,6 +85,24 @@ export default function CardItem({ card }) {
           />
         )}
       </div>
+      {mouseOver ? (
+        <div
+          style={{
+            borderRadius: innerBorderRadius,
+            top: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            position: 'absolute',
+            height: '100%',
+            width: '100%',
+            background: 'rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          <Button skeuomorphic>details</Button>
+          <Button skeuomorphic>select</Button>
+        </div>
+      ) : null}
     </div>
   );
 }
