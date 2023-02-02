@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
+import SelectedCards from './SelectedCards';
 import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
@@ -102,7 +103,7 @@ export default function MyOffer({
             AI Cards
           </div>
           {selectedCards.length ? (
-            <div>{selectedCards.length}</div>
+            <SelectedCards selectedCards={selectedCards} />
           ) : (
             <Button
               skeuomorphic
