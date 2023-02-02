@@ -1,20 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import {
-  borderRadius,
-  innerBorderRadius,
-  Color,
-  mobileMaxWidth
-} from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import {
   cardLevelHash,
   cloudFrontURL,
   cardProps,
   qualityProps
 } from '~/constants/defaultValues';
-import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 
 CardItem.propTypes = {
@@ -26,8 +20,6 @@ CardItem.propTypes = {
   successColor: PropTypes.string.isRequired
 };
 
-const deviceIsMobile = isMobile(navigator);
-
 export default function CardItem({
   card,
   onSetAICardModalCardId,
@@ -36,7 +28,6 @@ export default function CardItem({
   selected,
   successColor
 }) {
-  const [mouseOver, setMouseOver] = useState(!!deviceIsMobile);
   const cardDetailObj = useMemo(
     () => cardLevelHash[card?.level],
     [card?.level]
@@ -52,12 +43,12 @@ export default function CardItem({
 
   return (
     <div
-      onMouseEnter={deviceIsMobile ? null : () => setMouseOver(true)}
-      onMouseLeave={deviceIsMobile ? null : () => setMouseOver(false)}
       style={{
         position: 'relative',
         display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
+        flexDirection: 'column',
         padding: '1rem',
         boxShadow: selected ? `0 0 5px ${successColor}` : null,
         border: `1px solid ${Color[selected ? successColor : 'borderGray']()}`,
@@ -73,82 +64,68 @@ export default function CardItem({
       `}
     >
       <div
-        className={`inner ${css`
-          width: 8rem;
-          height: 12rem;
-          border-radius: 3px;
-          @media (max-width: ${mobileMaxWidth}) {
-            width: 7rem;
-            height: 11rem;
-            border-radius: 2px;
-          }
-        `}`}
         style={{
+          cursor: 'pointer',
+          width: '100%',
           display: 'flex',
-          flexDirection: 'column',
           justifyContent: 'center',
-          backgroundColor: cardColor,
-          border:
-            cardProps[card.quality]?.includes('glowy') && !card.isBurned
-              ? `3px solid ${borderColor}`
-              : 'none',
-          position: 'relative'
+          alignItems: 'center',
+          flexDirection: 'column'
         }}
+        onClick={() => onSetAICardModalCardId(card.id)}
       >
-        {card.imagePath && !card.isBurned && (
-          <img
-            style={{ width: '100%' }}
-            src={`${cloudFrontURL}${card.imagePath}`}
-          />
-        )}
-      </div>
-      {mouseOver ? (
+        <div style={{ fontFamily: "'Roboto', sans-serif" }}>#{card.id}</div>
         <div
+          className={`inner ${css`
+            width: 8rem;
+            height: 12rem;
+            border-radius: 3px;
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 7rem;
+              height: 11rem;
+              border-radius: 2px;
+            }
+          `}`}
           style={{
-            borderRadius: innerBorderRadius,
-            top: 0,
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            position: 'absolute',
-            height: '100%',
-            width: '100%'
+            justifyContent: 'center',
+            backgroundColor: cardColor,
+            border:
+              cardProps[card.quality]?.includes('glowy') && !card.isBurned
+                ? `3px solid ${borderColor}`
+                : 'none',
+            position: 'relative'
           }}
-          className={css`
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.1);
-            @media (max-width: ${mobileMaxWidth}) {
-              justify-content: flex-end;
-              background: transparent;
-            }
-          `}
         >
-          <div>
-            <Button
-              opacity={0.8}
-              skeuomorphic
-              mobilePadding="0.5rem"
-              onClick={() => onSetAICardModalCardId(card.id)}
-            >
-              Details
-            </Button>
-          </div>
-          <div style={{ marginTop: '0.5rem' }}>
-            <Button
-              color={selected ? successColor : 'black'}
-              opacity={0.8}
-              skeuomorphic
-              mobilePadding="0.5rem"
-              onClick={selected ? onDeselect : onSelect}
-            >
-              <Icon icon="check" />
-              <span style={{ marginLeft: '0.7rem' }}>
-                Select{selected ? 'ed' : ''}
-              </span>
-            </Button>
-          </div>
+          {card.imagePath && !card.isBurned && (
+            <img
+              style={{ width: '100%' }}
+              src={`${cloudFrontURL}${card.imagePath}`}
+            />
+          )}
         </div>
-      ) : null}
+        {card.word ? (
+          <div style={{ display: 'inline', marginTop: '0.5rem' }}>
+            {' '}
+            <b style={{ color: cardColor }}>{card.word}</b>
+          </div>
+        ) : null}
+      </div>
+      <div style={{ marginTop: '1rem' }}>
+        <Button
+          color={selected ? successColor : 'black'}
+          opacity={0.8}
+          skeuomorphic
+          mobilePadding="0.5rem"
+          onClick={selected ? onDeselect : onSelect}
+        >
+          <Icon icon="check" />
+          <span style={{ marginLeft: '0.7rem' }}>
+            Select{selected ? 'ed' : ''}
+          </span>
+        </Button>
+      </div>
     </div>
   );
 }
