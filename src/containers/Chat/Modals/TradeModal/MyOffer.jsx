@@ -9,7 +9,7 @@ import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
 MyOffer.propTypes = {
-  onShowAICard: PropTypes.func.isRequired,
+  onShowAICardSelector: PropTypes.func.isRequired,
   selectedCards: PropTypes.array.isRequired,
   selectedOption: PropTypes.string.isRequired,
   onDeselect: PropTypes.func.isRequired,
@@ -17,7 +17,7 @@ MyOffer.propTypes = {
 };
 
 export default function MyOffer({
-  onShowAICard,
+  onShowAICardSelector,
   selectedCards,
   selectedOption,
   onDeselect,
@@ -109,6 +109,7 @@ export default function MyOffer({
               style={{ marginTop: '1rem' }}
               selectedCards={selectedCards}
               onDeselect={onDeselect}
+              onShowAICardSelector={onShowAICardSelector}
             />
           ) : (
             <Button
@@ -119,7 +120,7 @@ export default function MyOffer({
                 marginTop: '0.5rem'
               }}
               color={profileTheme}
-              onClick={onShowAICard}
+              onClick={onShowAICardSelector}
             >
               <Icon icon="cards-blank" />
             </Button>

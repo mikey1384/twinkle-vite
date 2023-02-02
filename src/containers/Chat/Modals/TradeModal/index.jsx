@@ -56,7 +56,7 @@ export default function TradeModal({
               <MyWant
                 style={{ marginTop: '3rem' }}
                 selectedCards={selectedCardsObj.want}
-                onShowAICard={() => setAICardModalType('want')}
+                onShowAICardSelector={() => setAICardModalType('want')}
                 onDeselect={(cardId) =>
                   setSelectedCardsObj((prevState) => ({
                     ...prevState,
@@ -70,7 +70,7 @@ export default function TradeModal({
                 selectedCards={selectedCardsObj.offer}
                 selectedOption={selectedOption}
                 style={{ marginTop: '3rem' }}
-                onShowAICard={() => setAICardModalType('offer')}
+                onShowAICardSelector={() => setAICardModalType('offer')}
                 onDeselect={(cardId) =>
                   setSelectedCardsObj((prevState) => ({
                     ...prevState,
