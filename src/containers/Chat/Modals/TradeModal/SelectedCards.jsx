@@ -7,10 +7,23 @@ SelectedCards.propTypes = {
 };
 export default function SelectedCards({ selectedCards, style }) {
   return (
-    <div style={{ width: '100%', ...style }}>
-      <div style={{ width: '100%', display: 'flex' }}>
-        {selectedCards.map((card) => (
-          <CardThumb key={card.id} card={card} />
+    <div
+      style={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        ...style
+      }}
+    >
+      <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+        {selectedCards.map((card, index) => (
+          <CardThumb
+            key={card.id}
+            card={card}
+            style={{
+              marginLeft: index > 0 ? '1rem' : 0
+            }}
+          />
         ))}
       </div>
     </div>
