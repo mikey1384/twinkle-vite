@@ -26,6 +26,10 @@ export default function TradeModal({
   } = useKeyContext((v) => v.theme);
   const [aiCardModalType, setAICardModalType] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
+  const [selectedCardIdsObj, setSelectedCardIdsObj] = useState({
+    offer: [],
+    want: []
+  });
 
   return (
     <Modal onHide={isAICardModalShown ? null : onHide}>
@@ -49,11 +53,13 @@ export default function TradeModal({
           {selectedOption === 'want' ? (
             <MyWant
               style={{ marginTop: '3rem' }}
+              selectedCardIds={selectedCardIdsObj.want}
               onShowAICard={() => setAICardModalType('want')}
             />
           ) : null}
           {!!selectedOption && (
             <MyOffer
+              selectedCardIds={selectedCardIdsObj.offer}
               selectedOption={selectedOption}
               style={{ marginTop: '3rem' }}
               onShowAICard={() => setAICardModalType('offer')}
@@ -78,13 +84,17 @@ export default function TradeModal({
           aiCardModalType={aiCardModalType}
           partnerName={partner?.username}
           onSetAICardModalCardId={onSetAICardModalCardId}
-          onSelectDone={handleSelectAICards}
+          onSelectDone={(cardIds) =>
+            setSelectedCardIdsObj((prevCardIdsObj) => {
+              return {
+                ...prevCardIdsObj,
+                [aiCardModalType]: cardIds
+              };
+            })
+          }
           onHide={isAICardModalShown ? null : () => setAICardModalType(null)}
         />
       )}
     </Modal>
   );
-  function handleSelectAICards(selectedCardIds) {
-    console.log(selectedCardIds);
-  }
 }
