@@ -96,7 +96,7 @@ export default function SelectAICardModal({
               style={{ marginTop: '1.5em' }}
               loading={loadingMore}
               filled
-              onClick={() => setLoadingMore(true)}
+              onClick={handleLoadMore}
             />
           )}
         </div>
@@ -111,4 +111,18 @@ export default function SelectAICardModal({
       </footer>
     </Modal>
   );
+
+  async function handleLoadMore() {
+    const lastInteraction = cards[cards.length - 1]?.lastInteraction;
+    setLoadingMore(true);
+    const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
+      lastInteraction,
+      filters: {
+        owner: aiCardModalType === 'want' ? partnerName : username
+      }
+    });
+    setCards((prevCards) => [...prevCards, ...newCards]);
+    setLoadMoreShown(loadMoreShown);
+    setLoadingMore(false);
+  }
 }
