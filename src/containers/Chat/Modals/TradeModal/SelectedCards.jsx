@@ -19,7 +19,10 @@ export default function SelectedCards({ selectedCards, style }) {
       <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
         {selectedCards.map((card, index) => (
           <div key={card.id} style={{ position: 'relative' }}>
-            <CloseButton onClick={() => console.log('close')} />
+            <CloseButton
+              style={{ top: '0.5rem' }}
+              onClick={() => console.log('close')}
+            />
             <CardThumb
               card={card}
               style={{
