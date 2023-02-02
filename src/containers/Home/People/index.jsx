@@ -39,7 +39,6 @@ function People() {
   const userSearchText = useInputContext((v) => v.state.userSearchText);
   const onSetSearchText = useInputContext((v) => v.actions.onSetSearchText);
   const {
-    loadMoreButton: { color: loadMoreButtonColor },
     search: { color: searchColor }
   } = useKeyContext((v) => v.theme);
   const [loading, setLoading] = useState(false);
@@ -157,7 +156,6 @@ function People() {
           <LoadMoreButton
             filled
             style={{ marginTop: '1rem', marginBottom: '1rem' }}
-            color={loadMoreButtonColor}
             onClick={() => setLoading(true)}
             loading={loading}
           />

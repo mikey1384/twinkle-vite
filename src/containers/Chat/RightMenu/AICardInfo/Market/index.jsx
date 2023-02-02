@@ -8,9 +8,6 @@ import { useKeyContext } from '~/contexts';
 
 export default function Market() {
   const { userId } = useKeyContext((v) => v.myState);
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
 
   useEffect(() => {
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
@@ -52,12 +49,11 @@ export default function Market() {
       </FilterBar>
       <div style={{ height: '100%' }}>
         {activeTab === 'buy' ? (
-          <Listings loadMoreButtonColor={loadMoreButtonColor} />
+          <Listings />
         ) : (
           <Offers
             onSetSelectedSubTab={setSelectedSubTab}
             selectedSubTab={selectedSubTab}
-            loadMoreButtonColor={loadMoreButtonColor}
           />
         )}
       </div>

@@ -5,7 +5,7 @@ import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import QuestionListItem from './QuestionListItem';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
@@ -24,9 +24,6 @@ export default function GrammarReview({
   onSetMissionState,
   style
 }) {
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const loadMoreGrammarAttempts = useAppContext(
     (v) => v.requestHelpers.loadMoreGrammarAttempts
   );
@@ -105,7 +102,6 @@ export default function GrammarReview({
             <LoadMoreButton
               style={{ marginTop: '2rem', fontSize: '1.7rem' }}
               filled
-              color={loadMoreButtonColor}
               loading={loadingMore}
               onClick={handleLoadMore}
             />

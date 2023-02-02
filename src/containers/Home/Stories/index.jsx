@@ -47,8 +47,7 @@ export default function Stories() {
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
   const { hideWatched, userId, username } = useKeyContext((v) => v.myState);
   const {
-    alert: { color: alertColor },
-    loadMoreButton: { color: loadMoreButtonColor }
+    alert: { color: alertColor }
   } = useKeyContext((v) => v.theme);
   const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
   const onResetNumNewPosts = useNotiContext(
@@ -234,7 +233,6 @@ export default function Stories() {
                   style={{ marginBottom: '1rem' }}
                   onClick={handleLoadMoreFeeds}
                   loading={loadingMore}
-                  color={loadMoreButtonColor}
                   filled
                 />
               )}

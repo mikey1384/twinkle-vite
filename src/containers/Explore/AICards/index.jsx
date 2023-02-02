@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import {
-  useAppContext,
-  useChatContext,
-  useExploreContext,
-  useKeyContext
-} from '~/contexts';
+import { useAppContext, useChatContext, useExploreContext } from '~/contexts';
 import AICardModal from '~/components/Modals/AICardModal';
 import CardSearchPanel from './CardSearchPanel';
 import FilterModal from './FilterModal';
@@ -18,9 +13,6 @@ import { css } from '@emotion/css';
 export default function AICards() {
   const navigate = useNavigate();
   const { search } = useLocation();
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [loading, setLoading] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState(null);
@@ -111,7 +103,6 @@ export default function AICards() {
           <SearchView
             cardObj={cardObj}
             filters={filters}
-            loadMoreButtonColor={loadMoreButtonColor}
             navigate={navigate}
             onSetNumCards={setNumFilteredCards}
             search={search}
@@ -124,7 +115,6 @@ export default function AICards() {
             cardObj={cardObj}
             loadAICards={loadAICards}
             search={search}
-            loadMoreButtonColor={loadMoreButtonColor}
           />
         )}
         {aiCardModalCardId && (

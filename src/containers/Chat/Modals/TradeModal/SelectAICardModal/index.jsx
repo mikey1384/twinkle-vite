@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import CardItem from './CardItem';
+import Loading from '~/components/Loading';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 SelectAICardModal.propTypes = {
@@ -19,7 +21,10 @@ export default function SelectAICardModal({
   partnerName
 }) {
   const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState([]);
+  const [loadMoreShown, setLoadMoreShown] = useState(false);
   const { username } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor },
@@ -32,11 +37,21 @@ export default function SelectAICardModal({
   useEffect(() => {
     init();
     async function init() {
-      const { cards, loadMoreShown, numCards } = await loadFilteredAICards({
-        filters: { owner: aiCardModalType === 'want' ? partnerName : username }
-      });
-      setCards(cards);
-      console.log(cards, loadMoreShown, numCards);
+      setLoading(true);
+      try {
+        const { cards, loadMoreShown } = await loadFilteredAICards({
+          filters: {
+            owner: aiCardModalType === 'want' ? partnerName : username
+          }
+        });
+        setCards(cards);
+        setLoadMoreShown(loadMoreShown);
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -55,23 +70,35 @@ export default function SelectAICardModal({
       <header>{headerLabel}</header>
       <main>
         <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
-          {cards.map((card) => (
-            <CardItem
-              key={card.id}
-              card={card}
-              selected={selectedCardIds.includes(card.id)}
-              onSelect={() =>
-                setSelectedCardIds((prevIds) => [...prevIds, card.id])
-              }
-              onDeselect={() =>
-                setSelectedCardIds((prevIds) =>
-                  prevIds.filter((id) => id !== card.id)
-                )
-              }
-              successColor={successColor}
-              onSetAICardModalCardId={onSetAICardModalCardId}
+          {loading ? (
+            <Loading />
+          ) : (
+            cards.map((card) => (
+              <CardItem
+                key={card.id}
+                card={card}
+                selected={selectedCardIds.includes(card.id)}
+                onSelect={() =>
+                  setSelectedCardIds((prevIds) => [...prevIds, card.id])
+                }
+                onDeselect={() =>
+                  setSelectedCardIds((prevIds) =>
+                    prevIds.filter((id) => id !== card.id)
+                  )
+                }
+                successColor={successColor}
+                onSetAICardModalCardId={onSetAICardModalCardId}
+              />
+            ))
+          )}
+          {loadMoreShown && (
+            <LoadMoreButton
+              style={{ marginTop: '1.5em' }}
+              loading={loadingMore}
+              filled
+              onClick={() => setLoadingMore(true)}
             />
-          ))}
+          )}
         </div>
       </main>
       <footer>

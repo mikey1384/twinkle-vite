@@ -3,16 +3,13 @@ import PropTypes from 'prop-types';
 import Channel from './Channel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 Channels.propTypes = {
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 function Channels({ currentPathId }) {
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const loadMoreChannels = useAppContext(
     (v) => v.requestHelpers.loadMoreChannels
   );
@@ -170,7 +167,6 @@ function Channels({ currentPathId }) {
           ))}
         {loadMoreButtonShown && (
           <LoadMoreButton
-            color={loadMoreButtonColor}
             filled
             loading={channelsLoading}
             onClick={handleLoadMoreChannels}

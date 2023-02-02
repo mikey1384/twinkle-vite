@@ -11,9 +11,6 @@ ActivitiesContainer.propTypes = {
 };
 
 function ActivitiesContainer({ style }) {
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const [loadingMore, setLoadingMore] = useState(false);
   const [scrollAtBottom, setScrollAtBottom] = useState(false);
   const [scrollHeight, setScrollHeight] = useState(0);
@@ -95,7 +92,6 @@ function ActivitiesContainer({ style }) {
         >
           <LoadMoreButton
             filled
-            color={loadMoreButtonColor}
             loading={loadingMore}
             onClick={handleLoadMore}
           />

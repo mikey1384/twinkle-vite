@@ -18,7 +18,6 @@ Offers.propTypes = {
   onSetLoadMoreShown: PropTypes.func.isRequired,
   loaded: PropTypes.bool.isRequired,
   loadMoreShown: PropTypes.bool.isRequired,
-  loadMoreButtonColor: PropTypes.string,
   onSetActiveTab: PropTypes.func.isRequired,
   onSetOfferModalShown: PropTypes.func.isRequired,
   ownerId: PropTypes.number.isRequired,
@@ -34,7 +33,6 @@ export default function Offers({
   onUserMenuShownChange,
   loaded,
   loadMoreShown,
-  loadMoreButtonColor,
   onSetActiveTab,
   onSetOfferModalShown,
   ownerId,
@@ -135,7 +133,6 @@ export default function Offers({
         {loadMoreShown && (
           <LoadMoreButton
             filled
-            color={loadMoreButtonColor}
             loading={loadingMore}
             onClick={handleLoadMore}
             style={{

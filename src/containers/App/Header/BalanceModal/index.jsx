@@ -16,9 +16,6 @@ BalanceModal.propTypes = {
 };
 
 export default function BalanceModal({ onHide }) {
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const { twinkleCoins, userId } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const loadCoinHistory = useAppContext(
@@ -137,7 +134,6 @@ export default function BalanceModal({ onHide }) {
                   border: 0
                 }}
                 loading={loadingMore}
-                color={loadMoreButtonColor}
                 onClick={handleLoadMore}
               />
             )}

@@ -67,8 +67,7 @@ function MainFeeds({
   );
   const {
     alert: { color: alertColor },
-    success: { color: successColor },
-    loadMoreButton: { color: loadMoreButtonColor }
+    success: { color: successColor }
   } = useKeyContext((v) => v.theme);
   const notiObj = useNotiContext((v) => v.state.notiObj);
   const totalRewardedTwinkles = useMemo(
@@ -255,7 +254,6 @@ function MainFeeds({
           <LoadMoreButton
             style={{ marginTop: '1rem' }}
             loading={loading}
-            color={loadMoreButtonColor}
             filled
             stretch
             onClick={onLoadMore}
