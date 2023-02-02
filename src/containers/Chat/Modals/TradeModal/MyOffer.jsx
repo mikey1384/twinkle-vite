@@ -12,6 +12,7 @@ MyOffer.propTypes = {
   onShowAICard: PropTypes.func.isRequired,
   selectedCards: PropTypes.array.isRequired,
   selectedOption: PropTypes.string.isRequired,
+  onDeselect: PropTypes.func.isRequired,
   style: PropTypes.object
 };
 
@@ -19,6 +20,7 @@ export default function MyOffer({
   onShowAICard,
   selectedCards,
   selectedOption,
+  onDeselect,
   style
 }) {
   const { twinkleCoins, profileTheme } = useKeyContext((v) => v.myState);
@@ -106,6 +108,7 @@ export default function MyOffer({
             <SelectedCards
               style={{ marginTop: '1rem' }}
               selectedCards={selectedCards}
+              onDeselect={onDeselect}
             />
           ) : (
             <Button

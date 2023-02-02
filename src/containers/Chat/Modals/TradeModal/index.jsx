@@ -57,6 +57,12 @@ export default function TradeModal({
                 style={{ marginTop: '3rem' }}
                 selectedCards={selectedCardsObj.want}
                 onShowAICard={() => setAICardModalType('want')}
+                onDeselect={(cardId) =>
+                  setSelectedCardsObj((prevState) => ({
+                    ...prevState,
+                    want: prevState.want.filter((card) => card.id !== cardId)
+                  }))
+                }
               />
             ) : null}
             {!!selectedOption && (
@@ -65,6 +71,12 @@ export default function TradeModal({
                 selectedOption={selectedOption}
                 style={{ marginTop: '3rem' }}
                 onShowAICard={() => setAICardModalType('offer')}
+                onDeselect={(cardId) =>
+                  setSelectedCardsObj((prevState) => ({
+                    ...prevState,
+                    offer: prevState.offer.filter((card) => card.id !== cardId)
+                  }))
+                }
               />
             )}
           </div>
