@@ -32,7 +32,6 @@ export default function Playlist({
     (v) => v.requestHelpers.loadPlaylistVideos
   );
   const {
-    loadMoreButton: { color: loadMoreButtonColor },
     link: { color: linkColor },
     userLink: { color: userLinkColor }
   } = useKeyContext((v) => v.theme);
@@ -122,7 +121,6 @@ export default function Playlist({
           style={{ marginTop: '1.5em' }}
           loading={loading}
           filled
-          color={loadMoreButtonColor}
           onClick={handleLoadMoreVideos}
         />
       )}

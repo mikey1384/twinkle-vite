@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import CardItem from '../CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
@@ -7,11 +6,7 @@ import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { useAppContext, useNotiContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
-MyCollection.propTypes = {
-  loadMoreButtonColor: PropTypes.string
-};
-
-export default function MyCollection({ loadMoreButtonColor }) {
+export default function MyCollection() {
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
@@ -113,7 +108,6 @@ export default function MyCollection({ loadMoreButtonColor }) {
       {loaded && myCardsLoadMoreButton && (
         <LoadMoreButton
           filled
-          color={loadMoreButtonColor}
           loading={loadingMore}
           onClick={handleLoadMore}
           style={{

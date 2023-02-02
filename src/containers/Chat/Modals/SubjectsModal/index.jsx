@@ -7,7 +7,7 @@ import SubjectItem from './SubjectItem';
 import Loading from '~/components/Loading';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 
 SubjectsModal.propTypes = {
   channelId: PropTypes.number.isRequired,
@@ -26,9 +26,6 @@ export default function SubjectsModal({
   onSelectSubject,
   userIsOwner
 }) {
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const deleteChatSubject = useAppContext(
     (v) => v.requestHelpers.deleteChatSubject
   );
@@ -96,7 +93,6 @@ export default function SubjectsModal({
             {mySubjects.loadMoreButton && (
               <LoadMoreButton
                 filled
-                color={loadMoreButtonColor}
                 loading={mySubjects.loading}
                 onClick={() => handleLoadMoreSubjects(true)}
               />
@@ -137,7 +133,6 @@ export default function SubjectsModal({
         {allSubjects.loadMoreButton && (
           <LoadMoreButton
             filled
-            color={loadMoreButtonColor}
             loading={allSubjects.loading}
             onClick={() => handleLoadMoreSubjects(false)}
           />

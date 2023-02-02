@@ -1,14 +1,10 @@
 import { useState } from 'react';
-import { useKeyContext } from '~/contexts';
 import MyCollection from './MyCollection';
 import Listed from './Listed';
 import FilterBar from '~/components/FilterBar';
 
 export default function CollectedCards() {
   const [activeTab, setActiveTab] = useState('myCollection');
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
 
   return (
     <div style={{ width: '100%', height: '50%' }}>
@@ -29,11 +25,7 @@ export default function CollectedCards() {
         </nav>
       </FilterBar>
       <div style={{ height: '100%' }}>
-        {activeTab === 'myCollection' ? (
-          <MyCollection loadMoreButtonColor={loadMoreButtonColor} />
-        ) : (
-          <Listed loadMoreButtonColor={loadMoreButtonColor} />
-        )}
+        {activeTab === 'myCollection' ? <MyCollection /> : <Listed />}
       </div>
     </div>
   );

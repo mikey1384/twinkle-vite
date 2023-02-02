@@ -6,9 +6,6 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 export default function ActivitiesContainer() {
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const { userId: myId } = useKeyContext((v) => v.myState);
   const loadAICardFeeds = useAppContext(
     (v) => v.requestHelpers.loadAICardFeeds
@@ -94,7 +91,6 @@ export default function ActivitiesContainer() {
         >
           <LoadMoreButton
             filled
-            color={loadMoreButtonColor}
             loading={loadingMore}
             onClick={handleLoadMore}
           />

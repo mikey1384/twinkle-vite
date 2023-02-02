@@ -9,7 +9,7 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 OfferDetailModal.propTypes = {
@@ -35,9 +35,6 @@ export default function OfferDetailModal({
   usermenuShown,
   userId
 }) {
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [offerAcceptModalObj, setOfferAcceptModalObj] = useState(null);
   const [offers, setOffers] = useState([]);
@@ -101,7 +98,6 @@ export default function OfferDetailModal({
             style={{ marginTop: '1rem' }}
             loading={loadingMore}
             filled
-            color={loadMoreButtonColor}
             onClick={handleLoadMoreoffers}
           />
         )}

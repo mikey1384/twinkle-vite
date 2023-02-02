@@ -32,8 +32,7 @@ AICardModal.propTypes = {
 export default function AICardModal({ cardId, modalOverModal, onHide }) {
   const {
     link: { color: linkColor },
-    userLink: { color: userLinkColor },
-    loadMoreButton: { color: loadMoreButtonColor }
+    userLink: { color: userLinkColor }
   } = useKeyContext((v) => v.theme);
   const { userId, username, twinkleCoins, signinModalShown } = useKeyContext(
     (v) => v.myState
@@ -389,7 +388,6 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
                   onSetActiveTab={setActiveTab}
                   loaded={offersLoaded}
                   loadMoreShown={offersLoadMoreShown}
-                  loadMoreButtonColor={loadMoreButtonColor}
                   onUserMenuShownChange={setUsermenuShown}
                   usermenuShown={usermenuShown}
                 />

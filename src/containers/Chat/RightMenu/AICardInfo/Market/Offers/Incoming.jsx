@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CardItem from '../../CardItem';
@@ -15,11 +14,7 @@ import {
   useNotiContext
 } from '~/contexts';
 
-Incoming.propTypes = {
-  loadMoreButtonColor: PropTypes.string
-};
-
-export default function Incoming({ loadMoreButtonColor }) {
+export default function Incoming() {
   const { userId } = useKeyContext((v) => v.myState);
   const CardItemsRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -166,7 +161,6 @@ export default function Incoming({ loadMoreButtonColor }) {
         {loaded && incomingOffersLoadMoreButton && (
           <LoadMoreButton
             filled
-            color={loadMoreButtonColor}
             loading={loadingMore}
             onClick={handleLoadMore}
             style={{

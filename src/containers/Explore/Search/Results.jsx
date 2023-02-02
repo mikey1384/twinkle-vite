@@ -6,7 +6,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Link from '~/components/Link';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
-import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
+import { useAppContext, useExploreContext } from '~/contexts';
 
 Results.propTypes = {
   filter: PropTypes.string.isRequired,
@@ -14,9 +14,6 @@ Results.propTypes = {
 };
 
 export default function Results({ filter, searchText }) {
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
   const results = useExploreContext((v) => v.state.search.results);
   const loadMoreButton = useExploreContext(
@@ -134,7 +131,6 @@ export default function Results({ filter, searchText }) {
         <div style={{ paddingBottom: '8rem' }}>
           <LoadMoreButton
             filled
-            color={loadMoreButtonColor}
             loading={loadingMore}
             onClick={loadMoreSearchResults}
           />

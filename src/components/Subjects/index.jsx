@@ -5,7 +5,7 @@ import StartNewSubjectPanel from './StartNewSubjectPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import LocalContext from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 
 Subjects.propTypes = {
   className: PropTypes.string,
@@ -60,9 +60,6 @@ export default function Subjects({
     onUploadReply
   }
 }) {
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const loadSubjects = useAppContext((v) => v.requestHelpers.loadSubjects);
   const [loadingMore, setLoadingMore] = useState(false);
   return (
@@ -106,7 +103,6 @@ export default function Subjects({
               <LoadMoreButton
                 style={{ width: '100%', borderRadius: 0 }}
                 filled
-                color={loadMoreButtonColor}
                 loading={loadingMore}
                 onClick={handleLoadMoreSubjects}
               />

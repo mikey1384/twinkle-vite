@@ -7,16 +7,11 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
 Offers.propTypes = {
-  loadMoreButtonColor: PropTypes.string,
   onSetSelectedSubTab: PropTypes.func,
   selectedSubTab: PropTypes.string
 };
 
-export default function Offers({
-  loadMoreButtonColor,
-  onSetSelectedSubTab,
-  selectedSubTab
-}) {
+export default function Offers({ onSetSelectedSubTab, selectedSubTab }) {
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Bids">
       <FilterBar
@@ -42,11 +37,7 @@ export default function Offers({
           My offers
         </nav>
       </FilterBar>
-      {selectedSubTab === 'incoming' ? (
-        <Incoming loadMoreButtonColor={loadMoreButtonColor} />
-      ) : (
-        <Outgoing loadMoreButtonColor={loadMoreButtonColor} />
-      )}
+      {selectedSubTab === 'incoming' ? <Incoming /> : <Outgoing />}
     </ErrorBoundary>
   );
 }

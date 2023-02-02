@@ -4,7 +4,7 @@ import Attempt from './Attempt';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import localize from '~/constants/localize';
 
 const displayedStatus = {
@@ -34,9 +34,6 @@ export default function Attempts({
   onSetAttemptObj,
   onSetManagementObj
 }) {
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMissionAttempts = useAppContext(
@@ -127,7 +124,6 @@ export default function Attempts({
         <LoadMoreButton
           style={{ marginTop: '2rem', fontSize: '1.7rem' }}
           filled
-          color={loadMoreButtonColor}
           loading={loadingMore}
           onClick={handleLoadMoreAttempts}
         />

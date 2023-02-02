@@ -10,7 +10,6 @@ DefaultView.propTypes = {
   cardObj: PropTypes.object.isRequired,
   loading: PropTypes.bool.isRequired,
   loadAICards: PropTypes.func.isRequired,
-  loadMoreButtonColor: PropTypes.string,
   navigate: PropTypes.func.isRequired,
   search: PropTypes.string.isRequired
 };
@@ -20,7 +19,6 @@ export default function DefaultView({
   cardObj,
   loading,
   loadAICards,
-  loadMoreButtonColor,
   navigate,
   search
 }) {
@@ -62,7 +60,6 @@ export default function DefaultView({
           loading={loadingMore}
           style={{ marginTop: '5rem' }}
           filled
-          color={loadMoreButtonColor}
           onClick={handleLoadMoreAICards}
         />
       )}

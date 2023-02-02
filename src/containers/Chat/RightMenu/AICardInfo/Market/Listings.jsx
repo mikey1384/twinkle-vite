@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CardItem from '../CardItem';
@@ -9,11 +8,7 @@ import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-Listings.propTypes = {
-  loadMoreButtonColor: PropTypes.string
-};
-
-export default function Listings({ loadMoreButtonColor }) {
+export default function Listings() {
   const CardItemsRef = useRef(null);
   const timeoutRef = useRef(null);
   const [loaded, setLoaded] = useState(false);
@@ -125,7 +120,6 @@ export default function Listings({ loadMoreButtonColor }) {
         {loaded && listedCardsLoadMoreButton && (
           <LoadMoreButton
             filled
-            color={loadMoreButtonColor}
             loading={loadingMore}
             onClick={handleLoadMore}
             style={{

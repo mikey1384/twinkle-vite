@@ -8,7 +8,6 @@ import { useAppContext, useExploreContext } from '~/contexts';
 SearchView.propTypes = {
   cardObj: PropTypes.object.isRequired,
   filters: PropTypes.object.isRequired,
-  loadMoreButtonColor: PropTypes.string,
   navigate: PropTypes.func.isRequired,
   onSetNumCards: PropTypes.func.isRequired,
   search: PropTypes.string.isRequired
@@ -17,7 +16,6 @@ SearchView.propTypes = {
 export default function SearchView({
   cardObj,
   filters,
-  loadMoreButtonColor,
   navigate,
   onSetNumCards,
   search
@@ -108,7 +106,6 @@ export default function SearchView({
           loading={loadingMore}
           style={{ marginTop: '5rem' }}
           filled
-          color={loadMoreButtonColor}
           onClick={handleLoadMoreAICards}
         />
       )}
