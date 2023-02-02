@@ -36,7 +36,9 @@ export default function CardThumb({ card }) {
         flexDirection: 'column'
       }}
     >
-      <div style={{ fontFamily: "'Roboto', sans-serif" }}>#{card.id}</div>
+      <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1.3rem' }}>
+        #{card.id}
+      </div>
       <div
         className={`inner ${css`
           width: 8rem;
@@ -70,7 +72,7 @@ export default function CardThumb({ card }) {
       {card.word ? (
         <div style={{ display: 'inline', marginTop: '0.5rem' }}>
           {' '}
-          <b style={{ color: cardColor }}>{card.word}</b>
+          <b style={{ color: cardColor, fontSize: '1.3rem' }}>{card.word}</b>
         </div>
       ) : null}
     </div>
