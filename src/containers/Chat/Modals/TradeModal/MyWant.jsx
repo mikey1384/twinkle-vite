@@ -10,14 +10,14 @@ import { borderRadius, Color } from '~/constants/css';
 
 MyWant.propTypes = {
   style: PropTypes.object,
-  onShowAICard: PropTypes.func.isRequired,
+  onShowAICardSelector: PropTypes.func.isRequired,
   selectedCards: PropTypes.array.isRequired,
   onDeselect: PropTypes.func.isRequired
 };
 
 export default function MyWant({
   style,
-  onShowAICard,
+  onShowAICardSelector,
   selectedCards,
   onDeselect
 }) {
@@ -99,6 +99,7 @@ export default function MyWant({
               style={{ marginTop: '1rem' }}
               selectedCards={selectedCards}
               onDeselect={onDeselect}
+              onShowAICardSelector={onShowAICardSelector}
             />
           ) : (
             <Button
@@ -109,7 +110,7 @@ export default function MyWant({
                 marginTop: '0.5rem'
               }}
               color={profileTheme}
-              onClick={onShowAICard}
+              onClick={onShowAICardSelector}
             >
               <Icon icon="cards-blank" />
             </Button>
