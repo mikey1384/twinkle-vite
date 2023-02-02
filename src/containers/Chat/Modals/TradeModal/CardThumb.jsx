@@ -10,10 +10,11 @@ import {
 } from '~/constants/defaultValues';
 
 CardThumb.propTypes = {
-  card: PropTypes.object.isRequired
+  card: PropTypes.object.isRequired,
+  style: PropTypes.object
 };
 
-export default function CardThumb({ card }) {
+export default function CardThumb({ card, style }) {
   const cardDetailObj = useMemo(
     () => cardLevelHash[card?.level],
     [card?.level]
@@ -33,7 +34,8 @@ export default function CardThumb({ card }) {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        ...style
       }}
     >
       <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1.3rem' }}>
