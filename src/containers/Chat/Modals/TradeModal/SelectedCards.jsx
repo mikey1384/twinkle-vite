@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import CardThumb from './CardThumb';
+import CloseButton from '~/components/Buttons/CloseButton';
 
 SelectedCards.propTypes = {
   selectedCards: PropTypes.array.isRequired,
@@ -17,13 +18,15 @@ export default function SelectedCards({ selectedCards, style }) {
     >
       <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
         {selectedCards.map((card, index) => (
-          <CardThumb
-            key={card.id}
-            card={card}
-            style={{
-              marginLeft: index > 0 ? '1rem' : 0
-            }}
-          />
+          <div key={card.id} style={{ position: 'relative' }}>
+            <CloseButton onClick={() => console.log('close')} />
+            <CardThumb
+              card={card}
+              style={{
+                marginLeft: index > 0 ? '1rem' : 0
+              }}
+            />
+          </div>
         ))}
       </div>
     </div>
