@@ -56,8 +56,8 @@ export default function useInfiniteScroll({
   useEffect(() => {
     if (feedsLength < prevFeedsLength.current) {
       scrollHeightRef.current = Math.max(
-        document.getElementById('App').scrollHeight,
-        BodyRef.scrollTop
+        document.getElementById('App')?.scrollHeight,
+        BodyRef?.scrollTop
       );
     }
     prevFeedsLength.current = feedsLength;
