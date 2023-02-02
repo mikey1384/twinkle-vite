@@ -10,10 +10,10 @@ import { borderRadius, Color } from '~/constants/css';
 MyWant.propTypes = {
   style: PropTypes.object,
   onShowAICard: PropTypes.func.isRequired,
-  selectedCardIds: PropTypes.array.isRequired
+  selectedCards: PropTypes.array.isRequired
 };
 
-export default function MyWant({ style, onShowAICard, selectedCardIds }) {
+export default function MyWant({ style, onShowAICard, selectedCards }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const [amount, setAmount] = useState(0);
   return (
@@ -87,8 +87,8 @@ export default function MyWant({ style, onShowAICard, selectedCardIds }) {
           >
             AI Cards
           </div>
-          {selectedCardIds.length ? (
-            <div>{selectedCardIds.length}</div>
+          {selectedCards.length ? (
+            <div>{selectedCards.length}</div>
           ) : (
             <Button
               skeuomorphic
