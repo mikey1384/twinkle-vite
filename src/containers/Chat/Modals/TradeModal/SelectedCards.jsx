@@ -6,7 +6,7 @@ SelectedCards.propTypes = {
 export default function SelectedCards({ selectedCards }) {
   return (
     <div>
-      <div>{selectedCards.length}</div>;
+      <div>{selectedCards.length}</div>
     </div>
   );
 }
