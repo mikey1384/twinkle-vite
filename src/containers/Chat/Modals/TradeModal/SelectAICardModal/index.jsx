@@ -11,6 +11,7 @@ SelectAICardModal.propTypes = {
   aiCardModalType: PropTypes.string.isRequired,
   onHide: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func.isRequired,
+  onSelectDone: PropTypes.func.isRequired,
   partnerName: PropTypes.string.isRequired
 };
 
@@ -18,6 +19,7 @@ export default function SelectAICardModal({
   aiCardModalType,
   onHide,
   onSetAICardModalCardId,
+  onSelectDone,
   partnerName
 }) {
   const [cards, setCards] = useState([]);
@@ -108,7 +110,10 @@ export default function SelectAICardModal({
         <Button
           disabled={!selectedCardIds?.length}
           color={doneColor}
-          onClick={() => onHide()}
+          onClick={() => {
+            onSelectDone(selectedCardIds);
+            onHide();
+          }}
         >
           Done
         </Button>

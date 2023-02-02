@@ -78,9 +78,13 @@ export default function TradeModal({
           aiCardModalType={aiCardModalType}
           partnerName={partner?.username}
           onSetAICardModalCardId={onSetAICardModalCardId}
+          onSelectDone={handleSelectAICards}
           onHide={isAICardModalShown ? null : () => setAICardModalType(null)}
         />
       )}
     </Modal>
   );
+  function handleSelectAICards(selectedCardIds) {
+    console.log(selectedCardIds);
+  }
 }
