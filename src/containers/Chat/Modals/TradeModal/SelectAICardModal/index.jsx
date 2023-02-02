@@ -105,8 +105,12 @@ export default function SelectAICardModal({
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
         </Button>
-        <Button disabled={true} color={doneColor} onClick={() => onHide()}>
-          Propose
+        <Button
+          disabled={!selectedCardIds?.length}
+          color={doneColor}
+          onClick={() => onHide()}
+        >
+          Done
         </Button>
       </footer>
     </Modal>
