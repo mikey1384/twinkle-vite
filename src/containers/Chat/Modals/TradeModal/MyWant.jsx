@@ -89,7 +89,10 @@ export default function MyWant({ style, onShowAICard, selectedCards }) {
             AI Cards
           </div>
           {selectedCards.length ? (
-            <SelectedCards selectedCards={selectedCards} />
+            <SelectedCards
+              style={{ marginTop: '1rem' }}
+              selectedCards={selectedCards}
+            />
           ) : (
             <Button
               skeuomorphic
