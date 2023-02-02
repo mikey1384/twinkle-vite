@@ -4,9 +4,10 @@ import CloseButton from '~/components/Buttons/CloseButton';
 
 SelectedCards.propTypes = {
   selectedCards: PropTypes.array.isRequired,
-  style: PropTypes.object
+  style: PropTypes.object,
+  onDeselect: PropTypes.func.isRequired
 };
-export default function SelectedCards({ selectedCards, style }) {
+export default function SelectedCards({ selectedCards, style, onDeselect }) {
   return (
     <div
       style={{
@@ -21,7 +22,7 @@ export default function SelectedCards({ selectedCards, style }) {
           <div key={card.id} style={{ position: 'relative' }}>
             <CloseButton
               style={{ top: '0.5rem' }}
-              onClick={() => console.log('close')}
+              onClick={() => onDeselect(card.id)}
             />
             <CardThumb
               card={card}

@@ -11,10 +11,16 @@ import { borderRadius, Color } from '~/constants/css';
 MyWant.propTypes = {
   style: PropTypes.object,
   onShowAICard: PropTypes.func.isRequired,
-  selectedCards: PropTypes.array.isRequired
+  selectedCards: PropTypes.array.isRequired,
+  onDeselect: PropTypes.func.isRequired
 };
 
-export default function MyWant({ style, onShowAICard, selectedCards }) {
+export default function MyWant({
+  style,
+  onShowAICard,
+  selectedCards,
+  onDeselect
+}) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const [amount, setAmount] = useState(0);
   return (
@@ -92,6 +98,7 @@ export default function MyWant({ style, onShowAICard, selectedCards }) {
             <SelectedCards
               style={{ marginTop: '1rem' }}
               selectedCards={selectedCards}
+              onDeselect={onDeselect}
             />
           ) : (
             <Button
