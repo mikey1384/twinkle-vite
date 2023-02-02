@@ -111,7 +111,11 @@ export default function SelectAICardModal({
           disabled={!selectedCardIds?.length}
           color={doneColor}
           onClick={() => {
-            onSelectDone(selectedCardIds);
+            onSelectDone(
+              selectedCardIds.map((cardId) =>
+                cards.find((card) => card.id === cardId)
+              )
+            );
             onHide();
           }}
         >

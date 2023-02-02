@@ -9,14 +9,14 @@ import { useKeyContext } from '~/contexts';
 
 MyOffer.propTypes = {
   onShowAICard: PropTypes.func.isRequired,
-  selectedCardIds: PropTypes.array.isRequired,
+  selectedCards: PropTypes.array.isRequired,
   selectedOption: PropTypes.string.isRequired,
   style: PropTypes.object
 };
 
 export default function MyOffer({
   onShowAICard,
-  selectedCardIds,
+  selectedCards,
   selectedOption,
   style
 }) {
@@ -101,8 +101,8 @@ export default function MyOffer({
           >
             AI Cards
           </div>
-          {selectedCardIds.length ? (
-            <div>{selectedCardIds.length}</div>
+          {selectedCards.length ? (
+            <div>{selectedCards.length}</div>
           ) : (
             <Button
               skeuomorphic
