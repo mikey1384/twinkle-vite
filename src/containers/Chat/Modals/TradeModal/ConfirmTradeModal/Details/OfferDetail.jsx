@@ -72,7 +72,7 @@ export default function OfferDetail({
               />{' '}
               <span style={{ color: Color.darkerGray() }}>{coins}</span>
             </div>
-            {cards.length && <div style={{ marginTop: '0.5rem' }}>and</div>}
+            {cards.length && <div>and</div>}
           </div>
         )}
         <div>{cards.length}</div>
