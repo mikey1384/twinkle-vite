@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
@@ -9,20 +8,23 @@ import { useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 
 MyWant.propTypes = {
+  coinAmount: PropTypes.number.isRequired,
   style: PropTypes.object,
+  onSetCoinAmount: PropTypes.func.isRequired,
   onShowAICardSelector: PropTypes.func.isRequired,
   selectedCards: PropTypes.array.isRequired,
   onDeselect: PropTypes.func.isRequired
 };
 
 export default function MyWant({
+  coinAmount,
   style,
+  onSetCoinAmount,
   onShowAICardSelector,
   selectedCards,
   onDeselect
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
-  const [amount, setAmount] = useState(0);
   return (
     <div
       style={{
@@ -63,7 +65,7 @@ export default function MyWant({
           <Input
             onChange={handleAmountChange}
             placeholder="Amount"
-            value={amount}
+            value={coinAmount}
             style={{
               fontSize: '1.7rem',
               padding: '0.5rem',
@@ -122,6 +124,6 @@ export default function MyWant({
 
   function handleAmountChange(amount) {
     const newAmount = Number(amount.replace(/[^0-9]/g, ''));
-    setAmount(Math.min(newAmount, 999_999_999));
+    onSetCoinAmount(Math.min(newAmount, 999_999_999));
   }
 }
