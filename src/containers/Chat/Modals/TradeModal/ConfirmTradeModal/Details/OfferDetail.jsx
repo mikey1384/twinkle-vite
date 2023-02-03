@@ -29,6 +29,7 @@ export default function OfferDetail({
       style={{
         width: '100%',
         display: 'flex',
+        flexDirection: 'column',
         borderRadius,
         border: `1px solid ${Color.borderGray()}`
       }}
@@ -45,8 +46,12 @@ export default function OfferDetail({
       </div>
       <div
         style={{
-          borderLeft: `1px solid ${Color.borderGray()}`,
-          padding: '1rem'
+          borderTop: `1px solid ${Color.borderGray()}`,
+          padding: '1rem',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column'
         }}
       >
         <div>{coins}</div>
