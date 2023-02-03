@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
+import Details from './Details';
 import { useKeyContext } from '~/contexts';
 
 const cancelLabel = localize('cancel');
@@ -51,7 +52,7 @@ export default function ConfirmTradeModal({
     <Modal modalOverModal onHide={onHide}>
       <header>{title}</header>
       <main>
-        {selectedCardsObj.want.length} {coinAmountObj.want}
+        <Details />
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
