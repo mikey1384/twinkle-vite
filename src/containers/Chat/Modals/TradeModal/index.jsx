@@ -6,7 +6,7 @@ import MyWant from './MyWant';
 import MyOffer from './MyOffer';
 import Options from './Options';
 import SelectAICardModal from './SelectAICardModal';
-import ConfirmModal from '~/components/Modals/ConfirmModal';
+import ConfirmTradeModal from './ConfirmTradeModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useKeyContext } from '~/contexts';
 
@@ -160,7 +160,7 @@ export default function TradeModal({
           />
         )}
         {confirmModalShown && (
-          <ConfirmModal
+          <ConfirmTradeModal
             modalOverModal
             onHide={() => setConfirmModalShown(false)}
             title="Confirm Trade"
