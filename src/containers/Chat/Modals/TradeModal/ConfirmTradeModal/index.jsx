@@ -52,7 +52,7 @@ export default function ConfirmTradeModal({
     <Modal modalOverModal onHide={onHide}>
       <header>{title}</header>
       <main>
-        <Details />
+        <Details selectedOption={selectedOption} />
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
