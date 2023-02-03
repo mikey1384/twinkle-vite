@@ -6,6 +6,7 @@ import MyWant from './MyWant';
 import MyOffer from './MyOffer';
 import Options from './Options';
 import SelectAICardModal from './SelectAICardModal';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useKeyContext } from '~/contexts';
 
@@ -27,6 +28,7 @@ export default function TradeModal({
   } = useKeyContext((v) => v.theme);
   const [aiCardModalType, setAICardModalType] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [coinAmountObj, setCoinAmountObj] = useState({
     offer: 0,
     want: 0
@@ -134,7 +136,7 @@ export default function TradeModal({
           <Button
             disabled={doneButtonDisabled}
             color={doneColor}
-            onClick={onHide}
+            onClick={() => setConfirmModalShown(true)}
           >
             {doneLabel}
           </Button>
@@ -157,7 +159,19 @@ export default function TradeModal({
             onHide={isAICardModalShown ? null : () => setAICardModalType(null)}
           />
         )}
+        {confirmModalShown && (
+          <ConfirmModal
+            modalOverModal
+            onHide={() => setConfirmModalShown(false)}
+            title="Confirm Trade"
+            onConfirm={handleConfirm}
+          />
+        )}
       </Modal>
     </ErrorBoundary>
   );
+
+  async function handleConfirm() {
+    console.log('confirm');
+  }
 }
