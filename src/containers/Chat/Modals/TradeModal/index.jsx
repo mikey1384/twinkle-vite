@@ -97,15 +97,17 @@ export default function TradeModal({
           <SelectAICardModal
             aiCardModalType={aiCardModalType}
             partnerName={partner?.username}
+            currentlySelectedCards={selectedCardsObj[aiCardModalType]}
             onSetAICardModalCardId={onSetAICardModalCardId}
-            onSelectDone={(cardIds) =>
+            onSelectDone={(cards) => {
               setSelectedCardsObj((prevCardsObj) => {
                 return {
                   ...prevCardsObj,
-                  [aiCardModalType]: cardIds
+                  [aiCardModalType]: cards
                 };
-              })
-            }
+              });
+              setAICardModalType(null);
+            }}
             onHide={isAICardModalShown ? null : () => setAICardModalType(null)}
           />
         )}
