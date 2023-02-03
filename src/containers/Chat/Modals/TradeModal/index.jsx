@@ -62,10 +62,20 @@ export default function TradeModal({
     selectedOption
   ]);
 
+  const title = useMemo(() => {
+    if (selectedOption === 'offer') {
+      return 'Show';
+    }
+    if (selectedOption === 'give') {
+      return 'Give';
+    }
+    return 'Trade';
+  }, [selectedOption]);
+
   return (
     <ErrorBoundary componentPath="Chat/Modals/TradeModal">
       <Modal onHide={isAICardModalShown ? null : onHide}>
-        <header>Trade</header>
+        <header>{title}</header>
         <main>
           <div
             style={{
