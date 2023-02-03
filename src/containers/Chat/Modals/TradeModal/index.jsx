@@ -176,6 +176,7 @@ export default function TradeModal({
             coinAmountObj={coinAmountObj}
             selectedCardsObj={selectedCardsObj}
             selectedOption={selectedOption}
+            partnerName={partner?.username}
           />
         )}
       </Modal>
