@@ -4,6 +4,7 @@ import CardThumb from './CardThumb';
 import CloseButton from '~/components/Buttons/CloseButton';
 import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
+import { isMobile } from '~/helpers';
 
 SelectedCards.propTypes = {
   selectedCards: PropTypes.array.isRequired,
@@ -11,6 +12,9 @@ SelectedCards.propTypes = {
   onDeselect: PropTypes.func.isRequired,
   onShowAICardSelector: PropTypes.func.isRequired
 };
+
+const deviceIsMobile = isMobile(navigator);
+
 export default function SelectedCards({
   selectedCards,
   style,
@@ -18,7 +22,7 @@ export default function SelectedCards({
   onShowAICardSelector
 }) {
   const displayedCards = useMemo(() => {
-    const numShown = 5;
+    const numShown = deviceIsMobile ? 3 : 5;
     if (selectedCards.length <= numShown) {
       return selectedCards;
     }
