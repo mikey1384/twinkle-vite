@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
+import Icon from '~/components/Icon';
 import { borderRadius, Color } from '~/constants/css';
 
 OfferDetail.propTypes = {
@@ -54,7 +55,26 @@ export default function OfferDetail({
           flexDirection: 'column'
         }}
       >
-        <div>{coins}</div>
+        {coins && (
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <div style={{ fontWeight: 'bold' }}>
+              <Icon
+                style={{ color: Color.brownOrange() }}
+                icon={['far', 'badge-dollar']}
+              />{' '}
+              <span style={{ color: Color.darkerGray() }}>{coins}</span>
+            </div>
+            {cards.length && <div style={{ marginTop: '0.5rem' }}>and</div>}
+          </div>
+        )}
         <div>{cards.length}</div>
       </div>
     </div>
