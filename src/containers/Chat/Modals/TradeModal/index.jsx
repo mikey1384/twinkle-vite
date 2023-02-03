@@ -161,10 +161,11 @@ export default function TradeModal({
         )}
         {confirmModalShown && (
           <ConfirmTradeModal
-            modalOverModal
             onHide={() => setConfirmModalShown(false)}
-            title="Confirm Trade"
             onConfirm={handleConfirm}
+            coinAmountObj={coinAmountObj}
+            selectedCardsObj={selectedCardsObj}
+            selectedOption={selectedOption}
           />
         )}
       </Modal>

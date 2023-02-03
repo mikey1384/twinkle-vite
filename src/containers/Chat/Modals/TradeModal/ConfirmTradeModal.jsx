@@ -10,10 +10,19 @@ const confirmLabel = localize('confirm');
 
 ConfirmTradeModal.propTypes = {
   onHide: PropTypes.func.isRequired,
-  onConfirm: PropTypes.func.isRequired
+  onConfirm: PropTypes.func.isRequired,
+  selectedOption: PropTypes.string.isRequired,
+  selectedCardsObj: PropTypes.object.isRequired,
+  coinAmountObj: PropTypes.object.isRequired
 };
 
-export default function ConfirmTradeModal({ onHide, onConfirm }) {
+export default function ConfirmTradeModal({
+  onHide,
+  onConfirm,
+  selectedOption,
+  selectedCardsObj,
+  coinAmountObj
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -21,8 +30,11 @@ export default function ConfirmTradeModal({ onHide, onConfirm }) {
   const [submitting, setSubmitting] = useState(false);
   return (
     <Modal modalOverModal onHide={onHide}>
-      <header>this is the title</header>
-      <main>this is to confirm the trade</main>
+      <header>{selectedOption}</header>
+      <main>
+        {selectedCardsObj[selectedOption].length}{' '}
+        {coinAmountObj[selectedOption]}
+      </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           {cancelLabel}
