@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
@@ -9,22 +8,25 @@ import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
 MyOffer.propTypes = {
+  coinAmount: PropTypes.number.isRequired,
   onShowAICardSelector: PropTypes.func.isRequired,
   selectedCards: PropTypes.array.isRequired,
   selectedOption: PropTypes.string.isRequired,
   onDeselect: PropTypes.func.isRequired,
+  onSetCoinAmount: PropTypes.func.isRequired,
   style: PropTypes.object
 };
 
 export default function MyOffer({
+  coinAmount,
   onShowAICardSelector,
   selectedCards,
   selectedOption,
   onDeselect,
+  onSetCoinAmount,
   style
 }) {
   const { twinkleCoins, profileTheme } = useKeyContext((v) => v.myState);
-  const [amount, setAmount] = useState(0);
   return (
     <div
       style={{
@@ -73,7 +75,7 @@ export default function MyOffer({
           <Input
             onChange={handleAmountChange}
             placeholder="Amount"
-            value={amount}
+            value={coinAmount}
             style={{
               fontSize: '1.7rem',
               padding: '0.5rem',
@@ -133,6 +135,6 @@ export default function MyOffer({
   function handleAmountChange(amount) {
     const newAmount = Number(amount.replace(/[^0-9]/g, ''));
     const amounts = [newAmount, twinkleCoins];
-    setAmount(Math.min(...amounts));
+    onSetCoinAmount(Math.min(...amounts));
   }
 }

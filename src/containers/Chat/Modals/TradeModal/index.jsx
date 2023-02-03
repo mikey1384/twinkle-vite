@@ -27,6 +27,10 @@ export default function TradeModal({
   } = useKeyContext((v) => v.theme);
   const [aiCardModalType, setAICardModalType] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
+  const [coinAmountObj, setCoinAmountObj] = useState({
+    offer: 0,
+    want: 0
+  });
   const [selectedCardsObj, setSelectedCardsObj] = useState({
     offer: [],
     want: []
@@ -55,6 +59,13 @@ export default function TradeModal({
             {selectedOption === 'want' ? (
               <MyWant
                 style={{ marginTop: '3rem' }}
+                coinAmount={coinAmountObj.want}
+                onSetCoinAmount={(amount) =>
+                  setCoinAmountObj((prevState) => ({
+                    ...prevState,
+                    want: amount
+                  }))
+                }
                 selectedCards={selectedCardsObj.want}
                 onShowAICardSelector={() => setAICardModalType('want')}
                 onDeselect={(cardId) =>
@@ -67,9 +78,16 @@ export default function TradeModal({
             ) : null}
             {!!selectedOption && (
               <MyOffer
+                coinAmount={coinAmountObj.offer}
                 selectedCards={selectedCardsObj.offer}
                 selectedOption={selectedOption}
                 style={{ marginTop: '3rem' }}
+                onSetCoinAmount={(amount) =>
+                  setCoinAmountObj((prevState) => ({
+                    ...prevState,
+                    offer: amount
+                  }))
+                }
                 onShowAICardSelector={() => setAICardModalType('offer')}
                 onDeselect={(cardId) =>
                   setSelectedCardsObj((prevState) => ({
