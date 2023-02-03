@@ -75,11 +75,15 @@ export default function SelectedCards({
             marginLeft: '2rem',
             borderRadius,
             cursor: 'pointer',
-            border: `1px solid ${Color.borderGray()}`
+            border: `1px solid ${Color.borderGray()}`,
+            fontWeight: 'bold',
+            color: Color.black()
           }}
           className={css`
+            font-size: 1.4rem;
             &:hover {
               background-color: ${Color.highlightGray()};
+              font-size: 1.3rem;
             }
           `}
           onClick={onShowAICardSelector}
