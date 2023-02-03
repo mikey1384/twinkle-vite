@@ -5,10 +5,12 @@ import Button from '~/components/Button';
 import CardItem from './CardItem';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import { objectify } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 SelectAICardModal.propTypes = {
   aiCardModalType: PropTypes.string.isRequired,
+  currentlySelectedCards: PropTypes.array.isRequired,
   onHide: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   onSelectDone: PropTypes.func.isRequired,
@@ -17,15 +19,19 @@ SelectAICardModal.propTypes = {
 
 export default function SelectAICardModal({
   aiCardModalType,
+  currentlySelectedCards,
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
   partnerName
 }) {
-  const [cards, setCards] = useState([]);
+  const [cardObj, setCardObj] = useState(objectify(currentlySelectedCards));
+  const [cards, setCards] = useState(currentlySelectedCards);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [selectedCardIds, setSelectedCardIds] = useState([]);
+  const [selectedCardIds, setSelectedCardIds] = useState(
+    currentlySelectedCards.map((card) => card.id)
+  );
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const { username } = useKeyContext((v) => v.myState);
   const {
@@ -47,6 +53,10 @@ export default function SelectAICardModal({
           }
         });
         setCards(cards);
+        setCardObj((prevCardObj) => ({
+          ...prevCardObj,
+          ...objectify(cards)
+        }));
         setLoadMoreShown(loadMoreShown);
         setLoading(false);
       } catch (error) {
@@ -111,12 +121,7 @@ export default function SelectAICardModal({
           disabled={!selectedCardIds?.length}
           color={doneColor}
           onClick={() => {
-            onSelectDone(
-              selectedCardIds.map((cardId) =>
-                cards.find((card) => card.id === cardId)
-              )
-            );
-            onHide();
+            onSelectDone(selectedCardIds.map((cardId) => cardObj[cardId]));
           }}
         >
           Done
@@ -135,6 +140,10 @@ export default function SelectAICardModal({
       }
     });
     setCards((prevCards) => [...prevCards, ...newCards]);
+    setCardObj((prevCardObj) => ({
+      ...prevCardObj,
+      ...objectify(newCards)
+    }));
     setLoadMoreShown(loadMoreShown);
     setLoadingMore(false);
   }
