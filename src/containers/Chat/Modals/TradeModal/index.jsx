@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -35,6 +35,15 @@ export default function TradeModal({
     offer: [],
     want: []
   });
+  const doneLabel = useMemo(() => {
+    if (selectedOption === 'want') {
+      return 'Propose';
+    }
+    if (selectedOption === 'give') {
+      return 'Give';
+    }
+    return 'Show';
+  }, [selectedOption]);
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/TradeModal">
@@ -108,7 +117,7 @@ export default function TradeModal({
             Cancel
           </Button>
           <Button disabled={true} color={doneColor} onClick={onHide}>
-            Propose
+            {doneLabel}
           </Button>
         </footer>
         {!!aiCardModalType && (
