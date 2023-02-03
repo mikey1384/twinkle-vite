@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import CardThumb from './CardThumb';
 import CloseButton from '~/components/Buttons/CloseButton';
 import { Color, borderRadius } from '~/constants/css';
+import { css } from '@emotion/css';
 
 SelectedCards.propTypes = {
   selectedCards: PropTypes.array.isRequired,
@@ -72,6 +73,11 @@ export default function SelectedCards({
             cursor: 'pointer',
             border: `1px solid ${Color.borderGray()}`
           }}
+          className={css`
+            &:hover {
+              background-color: ${Color.highlightGray()};
+            }
+          `}
           onClick={onShowAICardSelector}
         >
           {!!numMore ? `...${numMore} more` : '+ Add'}
