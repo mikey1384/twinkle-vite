@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import CardThumb from './CardThumb';
 import CloseButton from '~/components/Buttons/CloseButton';
-import { Color, borderRadius } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 
@@ -67,7 +67,7 @@ export default function SelectedCards({
           style={{
             marginTop: '2.5rem',
             height: 'CALC(100% - 5rem)',
-            minWidth: '8rem',
+            minWidth: '9rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -84,6 +84,9 @@ export default function SelectedCards({
             &:hover {
               background-color: ${Color.highlightGray()};
               font-size: 1.3rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.4rem;
+              }
             }
           `}
           onClick={onShowAICardSelector}
