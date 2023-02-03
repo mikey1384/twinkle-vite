@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -28,12 +28,30 @@ export default function ConfirmTradeModal({
   } = useKeyContext((v) => v.theme);
 
   const [submitting, setSubmitting] = useState(false);
+  const title = useMemo(() => {
+    const coinToGive = coinAmountObj.offer;
+    const cardsToGive = selectedCardsObj.offer;
+    if (selectedOption === 'want') {
+      return 'Propose Trade';
+    }
+    return `${selectedOption === 'offer' ? 'Show' : 'Give'}${
+      coinToGive === 0
+        ? ''
+        : ` ${coinToGive} coin${coinToGive === 1 ? '' : 's'} ${
+            cardsToGive.length === 0 ? '' : 'and'
+          }`
+    }${
+      cardsToGive.length === 0
+        ? ''
+        : ` ${cardsToGive.length} card${cardsToGive.length === 1 ? '' : 's'}`
+    }`;
+  }, [coinAmountObj.offer, selectedCardsObj.offer, selectedOption]);
+
   return (
     <Modal modalOverModal onHide={onHide}>
-      <header>{selectedOption}</header>
+      <header>{title}</header>
       <main>
-        {selectedCardsObj[selectedOption].length}{' '}
-        {coinAmountObj[selectedOption]}
+        {selectedCardsObj.want.length} {coinAmountObj.want}
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
