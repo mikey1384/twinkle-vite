@@ -52,7 +52,13 @@ export default function ConfirmTradeModal({
     <Modal modalOverModal onHide={onHide}>
       <header>{title}</header>
       <main>
-        <Details selectedOption={selectedOption} />
+        <Details
+          selectedOption={selectedOption}
+          cardsOffered={selectedCardsObj.offer}
+          cardsWanted={selectedCardsObj.want}
+          coinOffered={coinAmountObj.offer}
+          coinWanted={coinAmountObj.want}
+        />
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
