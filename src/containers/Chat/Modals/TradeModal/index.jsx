@@ -44,6 +44,21 @@ export default function TradeModal({
     }
     return 'Show';
   }, [selectedOption]);
+  const doneButtonDisabled = useMemo(() => {
+    if (selectedOption === 'want') {
+      return (
+        (!coinAmountObj.want && !selectedCardsObj.want.length) ||
+        (!coinAmountObj.offer && !selectedCardsObj.offer.length)
+      );
+    }
+    return !coinAmountObj.offer && !selectedCardsObj.offer.length;
+  }, [
+    coinAmountObj.offer,
+    coinAmountObj.want,
+    selectedCardsObj.offer.length,
+    selectedCardsObj.want.length,
+    selectedOption
+  ]);
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/TradeModal">
@@ -116,7 +131,11 @@ export default function TradeModal({
           >
             Cancel
           </Button>
-          <Button disabled={true} color={doneColor} onClick={onHide}>
+          <Button
+            disabled={doneButtonDisabled}
+            color={doneColor}
+            onClick={onHide}
+          >
             {doneLabel}
           </Button>
         </footer>
