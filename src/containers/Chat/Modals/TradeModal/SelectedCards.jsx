@@ -27,23 +27,34 @@ export default function SelectedCards({
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const validCardIds = useMemo(() => {
+    return selectedCardIds.filter(
+      (cardId) =>
+        cardObj[cardId] &&
+        !cardObj[cardId].isBurned &&
+        (type === 'want'
+          ? cardObj[cardId].ownerId === partnerId
+          : cardObj[cardId].ownerId === userId)
+    );
+  }, [cardObj, partnerId, selectedCardIds, type, userId]);
   const displayedCardIds = useMemo(() => {
     const numShown = deviceIsMobile ? 3 : 5;
-    if (selectedCardIds.length <= numShown) {
-      return selectedCardIds;
+    if (validCardIds.length <= numShown) {
+      return validCardIds;
     }
-    return selectedCardIds.slice(0, numShown);
-  }, [selectedCardIds]);
+    return validCardIds.slice(0, numShown);
+  }, [validCardIds]);
 
   const numMore = useMemo(() => {
-    return selectedCardIds.length - displayedCardIds.length;
-  }, [selectedCardIds, displayedCardIds]);
+    return validCardIds.length - displayedCardIds.length;
+  }, [validCardIds, displayedCardIds]);
 
   const displayedCards = displayedCardIds
     .map((cardId) => cardObj[cardId])
     .filter(
       (card) =>
         !!card &&
+        !card.isBurned &&
         (type === 'want' ? card.ownerId === partnerId : card.ownerId === userId)
     );
 

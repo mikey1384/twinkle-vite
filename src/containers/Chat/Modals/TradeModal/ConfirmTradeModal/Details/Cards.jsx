@@ -29,6 +29,7 @@ export default function Cards({
     return cardIds.filter(
       (cardId) =>
         cardObj[cardId] &&
+        !cardObj[cardId].isBurned &&
         (type === 'want'
           ? cardObj[cardId].ownerId === partnerId
           : cardObj[cardId].ownerId === userId)
