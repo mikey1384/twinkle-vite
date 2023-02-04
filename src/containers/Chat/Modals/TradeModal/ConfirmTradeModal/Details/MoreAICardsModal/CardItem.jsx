@@ -4,10 +4,11 @@ import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 CardItem.propTypes = {
-  card: PropTypes.object.isRequired
+  card: PropTypes.object.isRequired,
+  onClick: PropTypes.func.isRequired
 };
 
-export default function CardItem({ card }) {
+export default function CardItem({ card, onClick }) {
   return (
     <div
       style={{
@@ -28,7 +29,7 @@ export default function CardItem({ card }) {
         }
       `}
     >
-      <CardThumb card={card} />
+      <CardThumb onClick={onClick} card={card} />
     </div>
   );
 }

@@ -10,6 +10,7 @@ const cancelLabel = localize('cancel');
 const confirmLabel = localize('confirm');
 
 ConfirmTradeModal.propTypes = {
+  isAICardModalShown: PropTypes.bool,
   onHide: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
   selectedOption: PropTypes.string.isRequired,
@@ -20,6 +21,7 @@ ConfirmTradeModal.propTypes = {
 };
 
 export default function ConfirmTradeModal({
+  isAICardModalShown,
   onHide,
   onConfirm,
   selectedOption,
@@ -57,6 +59,7 @@ export default function ConfirmTradeModal({
       <header>{title}</header>
       <main>
         <Details
+          isAICardModalShown={isAICardModalShown}
           selectedOption={selectedOption}
           cardsOffered={selectedCardsObj.offer}
           cardsWanted={selectedCardsObj.want}

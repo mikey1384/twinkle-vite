@@ -5,6 +5,7 @@ import Cards from './Cards';
 import { borderRadius, Color } from '~/constants/css';
 
 OfferDetail.propTypes = {
+  isAICardModalShown: PropTypes.bool,
   selectedOption: PropTypes.string.isRequired,
   cards: PropTypes.array.isRequired,
   coins: PropTypes.number.isRequired,
@@ -13,6 +14,7 @@ OfferDetail.propTypes = {
 };
 
 export default function OfferDetail({
+  isAICardModalShown,
   selectedOption,
   cards,
   coins,
@@ -80,7 +82,11 @@ export default function OfferDetail({
             {cards.length && <div>and</div>}
           </div>
         )}
-        <Cards cards={cards} onSetAICardModalCardId={onSetAICardModalCardId} />
+        <Cards
+          isAICardModalShown={isAICardModalShown}
+          cards={cards}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+        />
       </div>
     </div>
   );

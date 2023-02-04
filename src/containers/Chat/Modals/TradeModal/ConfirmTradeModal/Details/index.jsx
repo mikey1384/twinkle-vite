@@ -3,6 +3,7 @@ import OfferDetail from './OfferDetail';
 import WantDetail from './WantDetail';
 
 Details.propTypes = {
+  isAICardModalShown: PropTypes.bool,
   selectedOption: PropTypes.string.isRequired,
   cardsOffered: PropTypes.array.isRequired,
   coinOffered: PropTypes.number.isRequired,
@@ -11,6 +12,7 @@ Details.propTypes = {
 };
 
 export default function Details({
+  isAICardModalShown,
   selectedOption,
   cardsOffered,
   coinOffered,
@@ -20,6 +22,7 @@ export default function Details({
   return (
     <div>
       <OfferDetail
+        isAICardModalShown={isAICardModalShown}
         selectedOption={selectedOption}
         cards={cardsOffered}
         coins={coinOffered}
