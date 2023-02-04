@@ -154,7 +154,7 @@ export default function TradeModal({
         {!!aiCardModalType && (
           <SelectAICardModal
             aiCardModalType={aiCardModalType}
-            partnerName={partner?.username}
+            partner={partner}
             currentlySelectedCardIds={selectedCardIdsObj[aiCardModalType]}
             onSetAICardModalCardId={onSetAICardModalCardId}
             onSelectDone={(cardIds) => {
