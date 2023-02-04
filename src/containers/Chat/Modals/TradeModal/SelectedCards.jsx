@@ -6,14 +6,14 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 
+const deviceIsMobile = isMobile(navigator);
+
 SelectedCards.propTypes = {
   selectedCards: PropTypes.array.isRequired,
   style: PropTypes.object,
   onDeselect: PropTypes.func.isRequired,
   onShowAICardSelector: PropTypes.func.isRequired
 };
-
-const deviceIsMobile = isMobile(navigator);
 
 export default function SelectedCards({
   selectedCards,
