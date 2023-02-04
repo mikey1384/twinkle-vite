@@ -13,7 +13,7 @@ SelectAICardModal.propTypes = {
   onHide: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   onSelectDone: PropTypes.func.isRequired,
-  partnerName: PropTypes.string.isRequired
+  partner: PropTypes.object.isRequired
 };
 
 export default function SelectAICardModal({
@@ -22,7 +22,7 @@ export default function SelectAICardModal({
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
-  partnerName
+  partner
 }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
@@ -33,7 +33,7 @@ export default function SelectAICardModal({
     currentlySelectedCardIds.map((card) => card.id)
   );
   const [loadMoreShown, setLoadMoreShown] = useState(false);
-  const { username } = useKeyContext((v) => v.myState);
+  const { userId, username } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor },
     success: { color: successColor }
@@ -49,7 +49,7 @@ export default function SelectAICardModal({
       try {
         const { cards, loadMoreShown } = await loadFilteredAICards({
           filters: {
-            owner: aiCardModalType === 'want' ? partnerName : username
+            owner: aiCardModalType === 'want' ? partner.username : username
           }
         });
         setCardIds(cards.map((card) => card.id));
@@ -69,16 +69,22 @@ export default function SelectAICardModal({
 
   const headerLabel = useMemo(() => {
     if (aiCardModalType === 'want') {
-      return `${partnerName}'s AI Cards`;
+      return `${partner.username}'s AI Cards`;
     }
     if (aiCardModalType === 'offer') {
       return `My AI Cards`;
     }
-  }, [aiCardModalType, partnerName]);
+  }, [aiCardModalType, partner.username]);
 
   const cards = cardIds
     .map((cardId) => cardObj[cardId])
-    .filter((card) => !!card);
+    .filter(
+      (card) =>
+        !!card &&
+        (aiCardModalType === 'want'
+          ? card.ownerId === partner.id
+          : card.ownerId === userId)
+    );
 
   return (
     <Modal large modalOverModal onHide={onHide}>
@@ -139,7 +145,7 @@ export default function SelectAICardModal({
     const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
       lastInteraction,
       filters: {
-        owner: aiCardModalType === 'want' ? partnerName : username
+        owner: aiCardModalType === 'want' ? partner.username : username
       }
     });
     for (let card of newCards) {
