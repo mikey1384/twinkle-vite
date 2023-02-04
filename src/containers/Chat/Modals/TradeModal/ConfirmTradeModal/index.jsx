@@ -14,7 +14,7 @@ ConfirmTradeModal.propTypes = {
   onHide: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
   selectedOption: PropTypes.string.isRequired,
-  selectedCardsObj: PropTypes.object.isRequired,
+  selectedCardIdsObj: PropTypes.object.isRequired,
   coinAmountObj: PropTypes.object.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   partnerName: PropTypes.string.isRequired
@@ -25,7 +25,7 @@ export default function ConfirmTradeModal({
   onHide,
   onConfirm,
   selectedOption,
-  selectedCardsObj,
+  selectedCardIdsObj,
   coinAmountObj,
   onSetAICardModalCardId,
   partnerName
@@ -37,7 +37,7 @@ export default function ConfirmTradeModal({
   const [submitting, setSubmitting] = useState(false);
   const title = useMemo(() => {
     const coinToGive = coinAmountObj.offer;
-    const cardsToGive = selectedCardsObj.offer;
+    const cardIdsToGive = selectedCardIdsObj.offer;
     if (selectedOption === 'want') {
       return 'Propose Trade';
     }
@@ -45,14 +45,16 @@ export default function ConfirmTradeModal({
       coinToGive === 0
         ? ''
         : ` ${coinToGive} coin${coinToGive === 1 ? '' : 's'} ${
-            cardsToGive.length === 0 ? '' : 'and'
+            cardIdsToGive.length === 0 ? '' : 'and'
           }`
     }${
-      cardsToGive.length === 0
+      cardIdsToGive.length === 0
         ? ''
-        : ` ${cardsToGive.length} card${cardsToGive.length === 1 ? '' : 's'}`
+        : ` ${cardIdsToGive.length} card${
+            cardIdsToGive.length === 1 ? '' : 's'
+          }`
     }`;
-  }, [coinAmountObj.offer, selectedCardsObj.offer, selectedOption]);
+  }, [coinAmountObj.offer, selectedCardIdsObj.offer, selectedOption]);
 
   return (
     <Modal modalOverModal onHide={onHide}>
@@ -61,8 +63,8 @@ export default function ConfirmTradeModal({
         <Details
           isAICardModalShown={isAICardModalShown}
           selectedOption={selectedOption}
-          cardsOffered={selectedCardsObj.offer}
-          cardsWanted={selectedCardsObj.want}
+          offeredCardIds={selectedCardIdsObj.offer}
+          cardsWanted={selectedCardIdsObj.want}
           coinOffered={coinAmountObj.offer}
           coinWanted={coinAmountObj.want}
           partnerName={partnerName}
