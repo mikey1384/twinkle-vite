@@ -50,6 +50,7 @@ export default function OfferDetail({
       </div>
       <div
         style={{
+          width: '100%',
           borderTop: `1px solid ${Color.borderGray()}`,
           padding: '1rem',
           display: 'flex',

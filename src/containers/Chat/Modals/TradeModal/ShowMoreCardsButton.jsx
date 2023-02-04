@@ -9,35 +9,37 @@ ShowMoreCardsButton.propTypes = {
 
 export default function ShowMoreCardsButton({ onClick, numMore }) {
   return (
-    <div
-      style={{
-        marginTop: '2.5rem',
-        height: 'CALC(100% - 5rem)',
-        minWidth: '9rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-        marginLeft: '2rem',
-        borderRadius,
-        cursor: 'pointer',
-        border: `1px solid ${Color.borderGray()}`,
-        fontWeight: 'bold',
-        color: Color.black()
-      }}
-      className={css`
-        font-size: 1.4rem;
-        &:hover {
-          background-color: ${Color.highlightGray()};
-          font-size: 1.3rem;
-          @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1.4rem;
+    <div style={{ marginTop: '2.5rem', display: 'flex' }}>
+      <div
+        style={{
+          minWidth: '9rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+          marginLeft: '2rem',
+          borderRadius,
+          cursor: 'pointer',
+          border: `1px solid ${Color.borderGray()}`,
+          fontWeight: 'bold',
+          color: Color.black(),
+          marginBottom: '3rem',
+          flexGrow: 1
+        }}
+        className={css`
+          font-size: 1.4rem;
+          &:hover {
+            background-color: ${Color.highlightGray()};
+            font-size: 1.3rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.4rem;
+            }
           }
-        }
-      `}
-      onClick={onClick}
-    >
-      {!!numMore ? `...${numMore} more` : '+ Add'}
+        `}
+        onClick={onClick}
+      >
+        {!!numMore ? `...${numMore} more` : '+ Add'}
+      </div>
     </div>
   );
 }
