@@ -5,12 +5,11 @@ import Button from '~/components/Button';
 import CardItem from './CardItem';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import { objectify } from '~/helpers';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 SelectAICardModal.propTypes = {
   aiCardModalType: PropTypes.string.isRequired,
-  currentlySelectedCards: PropTypes.array.isRequired,
+  currentlySelectedCardIds: PropTypes.array.isRequired,
   onHide: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   onSelectDone: PropTypes.func.isRequired,
@@ -19,18 +18,19 @@ SelectAICardModal.propTypes = {
 
 export default function SelectAICardModal({
   aiCardModalType,
-  currentlySelectedCards,
+  currentlySelectedCardIds,
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
   partnerName
 }) {
-  const [cardObj, setCardObj] = useState(objectify(currentlySelectedCards));
-  const [cards, setCards] = useState(currentlySelectedCards);
+  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const cardObj = useChatContext((v) => v.state.cardObj);
+  const [cardIds, setCardIds] = useState(currentlySelectedCardIds);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState(
-    currentlySelectedCards.map((card) => card.id)
+    currentlySelectedCardIds.map((card) => card.id)
   );
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const { username } = useKeyContext((v) => v.myState);
@@ -52,11 +52,10 @@ export default function SelectAICardModal({
             owner: aiCardModalType === 'want' ? partnerName : username
           }
         });
-        setCards(cards);
-        setCardObj((prevCardObj) => ({
-          ...prevCardObj,
-          ...objectify(cards)
-        }));
+        setCardIds(cards.map((card) => card.id));
+        for (let card of cards) {
+          onUpdateAICard({ cardId: card.id, newState: card });
+        }
         setLoadMoreShown(loadMoreShown);
         setLoading(false);
       } catch (error) {
@@ -76,6 +75,10 @@ export default function SelectAICardModal({
       return `My AI Cards`;
     }
   }, [aiCardModalType, partnerName]);
+
+  const cards = cardIds
+    .map((cardId) => cardObj[cardId])
+    .filter((card) => !!card);
 
   return (
     <Modal large modalOverModal onHide={onHide}>
@@ -139,11 +142,13 @@ export default function SelectAICardModal({
         owner: aiCardModalType === 'want' ? partnerName : username
       }
     });
-    setCards((prevCards) => [...prevCards, ...newCards]);
-    setCardObj((prevCardObj) => ({
-      ...prevCardObj,
-      ...objectify(newCards)
-    }));
+    for (let card of newCards) {
+      onUpdateAICard({ cardId: card.id, newState: card });
+    }
+    setCardIds((prevCardIds) => [
+      ...prevCardIds,
+      ...newCards.map((card) => card.id)
+    ]);
     setLoadMoreShown(loadMoreShown);
     setLoadingMore(false);
   }
