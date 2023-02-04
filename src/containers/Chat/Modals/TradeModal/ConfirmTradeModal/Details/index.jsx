@@ -30,6 +30,18 @@ export default function Details({
         onSetAICardModalCardId={onSetAICardModalCardId}
       />
       {selectedOption === 'want' && <WantDetail />}
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          marginTop: '1rem',
+          padding: '1rem',
+          fontWeight: 'bold'
+        }}
+      >
+        Are you sure?
+      </div>
     </div>
   );
 }
