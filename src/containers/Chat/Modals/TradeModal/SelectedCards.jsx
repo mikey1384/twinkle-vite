@@ -2,9 +2,8 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import CardThumb from './CardThumb';
 import CloseButton from '~/components/Buttons/CloseButton';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
+import ShowMoreCardsButton from './ShowMoreCardsButton';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -63,36 +62,7 @@ export default function SelectedCards({
             />
           </div>
         ))}
-        <div
-          style={{
-            marginTop: '2.5rem',
-            height: 'CALC(100% - 5rem)',
-            minWidth: '9rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-            marginLeft: '2rem',
-            borderRadius,
-            cursor: 'pointer',
-            border: `1px solid ${Color.borderGray()}`,
-            fontWeight: 'bold',
-            color: Color.black()
-          }}
-          className={css`
-            font-size: 1.4rem;
-            &:hover {
-              background-color: ${Color.highlightGray()};
-              font-size: 1.3rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.4rem;
-              }
-            }
-          `}
-          onClick={onShowAICardSelector}
-        >
-          {!!numMore ? `...${numMore} more` : '+ Add'}
-        </div>
+        <ShowMoreCardsButton onClick={onShowAICardSelector} numMore={numMore} />
       </div>
     </div>
   );
