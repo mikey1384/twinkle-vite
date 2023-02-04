@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
+import Cards from './Cards';
 import { borderRadius, Color } from '~/constants/css';
 
 OfferDetail.propTypes = {
@@ -75,7 +76,7 @@ export default function OfferDetail({
             {cards.length && <div>and</div>}
           </div>
         )}
-        <div>{cards.length}</div>
+        <Cards cards={cards} />
       </div>
     </div>
   );
