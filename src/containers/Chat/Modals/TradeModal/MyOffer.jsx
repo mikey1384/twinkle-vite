@@ -10,7 +10,7 @@ import { useKeyContext } from '~/contexts';
 MyOffer.propTypes = {
   coinAmount: PropTypes.number.isRequired,
   onShowAICardSelector: PropTypes.func.isRequired,
-  selectedCards: PropTypes.array.isRequired,
+  selectedCardIds: PropTypes.array.isRequired,
   selectedOption: PropTypes.string.isRequired,
   onDeselect: PropTypes.func.isRequired,
   onSetCoinAmount: PropTypes.func.isRequired,
@@ -20,7 +20,7 @@ MyOffer.propTypes = {
 export default function MyOffer({
   coinAmount,
   onShowAICardSelector,
-  selectedCards,
+  selectedCardIds,
   selectedOption,
   onDeselect,
   onSetCoinAmount,
@@ -106,10 +106,11 @@ export default function MyOffer({
           >
             AI Cards
           </div>
-          {selectedCards.length ? (
+          {selectedCardIds.length ? (
             <SelectedCards
               style={{ marginTop: '1rem' }}
-              selectedCards={selectedCards}
+              type="offer"
+              selectedCardIds={selectedCardIds}
               onDeselect={onDeselect}
               onShowAICardSelector={onShowAICardSelector}
             />

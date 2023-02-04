@@ -12,8 +12,9 @@ MyWant.propTypes = {
   style: PropTypes.object,
   onSetCoinAmount: PropTypes.func.isRequired,
   onShowAICardSelector: PropTypes.func.isRequired,
-  selectedCards: PropTypes.array.isRequired,
-  onDeselect: PropTypes.func.isRequired
+  selectedCardIds: PropTypes.array.isRequired,
+  onDeselect: PropTypes.func.isRequired,
+  partnerId: PropTypes.number.isRequired
 };
 
 export default function MyWant({
@@ -21,8 +22,9 @@ export default function MyWant({
   style,
   onSetCoinAmount,
   onShowAICardSelector,
-  selectedCards,
-  onDeselect
+  selectedCardIds,
+  onDeselect,
+  partnerId
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   return (
@@ -96,12 +98,14 @@ export default function MyWant({
           >
             AI Cards
           </div>
-          {selectedCards.length ? (
+          {selectedCardIds.length ? (
             <SelectedCards
               style={{ marginTop: '1rem' }}
-              selectedCards={selectedCards}
+              type="want"
+              selectedCardIds={selectedCardIds}
               onDeselect={onDeselect}
               onShowAICardSelector={onShowAICardSelector}
+              partnerId={partnerId}
             />
           ) : (
             <Button
