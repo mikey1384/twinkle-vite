@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import CardThumb from '../../CardThumb';
 import { isMobile } from '~/helpers';
 import ShowMoreCardsButton from '../../ShowMoreCardsButton';
+import MoreAICardsModal from './MoreAICardsModal';
 const deviceIsMobile = isMobile(navigator);
 
 Cards.propTypes = {
@@ -11,6 +12,7 @@ Cards.propTypes = {
 };
 
 export default function Cards({ cards, onSetAICardModalCardId }) {
+  const [moreAICardsModalShown, setMoreAICardsModalShown] = useState(false);
   const displayedCards = useMemo(() => {
     const numShown = deviceIsMobile ? 3 : 5;
     if (cards.length <= numShown) {
@@ -37,8 +39,14 @@ export default function Cards({ cards, onSetAICardModalCardId }) {
       ))}
       {!!numMore && (
         <ShowMoreCardsButton
-          onClick={() => console.log('clicked')}
+          onClick={() => setMoreAICardsModalShown(true)}
           numMore={numMore}
+        />
+      )}
+      {moreAICardsModalShown && (
+        <MoreAICardsModal
+          cards={cards}
+          onHide={() => setMoreAICardsModalShown(false)}
         />
       )}
     </div>
