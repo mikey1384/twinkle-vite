@@ -171,11 +171,14 @@ export default function TradeModal({
         )}
         {confirmModalShown && (
           <ConfirmTradeModal
-            onHide={() => setConfirmModalShown(false)}
+            onHide={() =>
+              isAICardModalShown ? null : setConfirmModalShown(false)
+            }
             onConfirm={handleConfirm}
             coinAmountObj={coinAmountObj}
             selectedCardsObj={selectedCardsObj}
             selectedOption={selectedOption}
+            onSetAICardModalCardId={onSetAICardModalCardId}
             partnerName={partner?.username}
           />
         )}
