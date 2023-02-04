@@ -4,30 +4,35 @@ import CardThumb from '../../CardThumb';
 import { isMobile } from '~/helpers';
 import ShowMoreCardsButton from '../../ShowMoreCardsButton';
 import MoreAICardsModal from './MoreAICardsModal';
+import { useChatContext } from '~/contexts';
+
 const deviceIsMobile = isMobile(navigator);
 
 Cards.propTypes = {
   isAICardModalShown: PropTypes.bool,
-  cards: PropTypes.array.isRequired,
+  cardIds: PropTypes.array.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired
 };
 
 export default function Cards({
   isAICardModalShown,
-  cards,
+  cardIds,
   onSetAICardModalCardId
 }) {
+  const cardObj = useChatContext((v) => v.state.cardObj);
   const [moreAICardsModalShown, setMoreAICardsModalShown] = useState(false);
-  const displayedCards = useMemo(() => {
+  const displayedCardIds = useMemo(() => {
     const numShown = deviceIsMobile ? 3 : 5;
-    if (cards.length <= numShown) {
-      return cards;
+    if (cardIds.length <= numShown) {
+      return cardIds;
     }
-    return cards.slice(0, numShown);
-  }, [cards]);
+    return cardIds.slice(0, numShown);
+  }, [cardIds]);
   const numMore = useMemo(() => {
-    return cards.length - displayedCards.length;
-  }, [cards, displayedCards]);
+    return cardIds.length - displayedCardIds.length;
+  }, [cardIds, displayedCardIds]);
+  const cards = cardIds.map((cardId) => cardObj[cardId]);
+  const displayedCards = displayedCardIds.map((cardId) => cardObj[cardId]);
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>

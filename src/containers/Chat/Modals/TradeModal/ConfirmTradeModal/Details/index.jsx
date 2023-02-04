@@ -5,7 +5,7 @@ import WantDetail from './WantDetail';
 Details.propTypes = {
   isAICardModalShown: PropTypes.bool,
   selectedOption: PropTypes.string.isRequired,
-  cardsOffered: PropTypes.array.isRequired,
+  offeredCardIds: PropTypes.array.isRequired,
   coinOffered: PropTypes.number.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   partnerName: PropTypes.string.isRequired
@@ -14,7 +14,7 @@ Details.propTypes = {
 export default function Details({
   isAICardModalShown,
   selectedOption,
-  cardsOffered,
+  offeredCardIds,
   coinOffered,
   onSetAICardModalCardId,
   partnerName
@@ -24,7 +24,7 @@ export default function Details({
       <OfferDetail
         isAICardModalShown={isAICardModalShown}
         selectedOption={selectedOption}
-        cards={cardsOffered}
+        cardIds={offeredCardIds}
         coins={coinOffered}
         partnerName={partnerName}
         onSetAICardModalCardId={onSetAICardModalCardId}
