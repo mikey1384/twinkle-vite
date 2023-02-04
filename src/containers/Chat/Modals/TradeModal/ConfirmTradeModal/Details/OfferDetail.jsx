@@ -43,7 +43,8 @@ export default function OfferDetail({
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '1rem'
+          padding: '1rem',
+          fontWeight: 'bold'
         }}
       >
         {actionLabel} {partnerName}...
