@@ -5,17 +5,26 @@ import CardItem from './CardItem';
 
 MoreAICardsModal.propTypes = {
   cards: PropTypes.array.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
   onHide: PropTypes.func
 };
 
-export default function MoreAICardsModal({ cards, onHide }) {
+export default function MoreAICardsModal({
+  cards,
+  onSetAICardModalCardId,
+  onHide
+}) {
   return (
-    <Modal large modalOverModal onHide={onHide}>
+    <Modal modalOverModal onHide={onHide}>
       <header>Selected Cards</header>
       <main>
         <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
           {cards.map((card) => (
-            <CardItem key={card.id} card={card} />
+            <CardItem
+              key={card.id}
+              card={card}
+              onClick={() => onSetAICardModalCardId(card.id)}
+            />
           ))}
         </div>
       </main>

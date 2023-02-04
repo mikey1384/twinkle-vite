@@ -174,6 +174,7 @@ export default function TradeModal({
             onHide={() =>
               isAICardModalShown ? null : setConfirmModalShown(false)
             }
+            isAICardModalShown={isAICardModalShown}
             onConfirm={handleConfirm}
             coinAmountObj={coinAmountObj}
             selectedCardsObj={selectedCardsObj}

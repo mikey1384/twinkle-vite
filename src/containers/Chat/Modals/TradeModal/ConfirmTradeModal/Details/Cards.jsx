@@ -7,11 +7,16 @@ import MoreAICardsModal from './MoreAICardsModal';
 const deviceIsMobile = isMobile(navigator);
 
 Cards.propTypes = {
+  isAICardModalShown: PropTypes.bool,
   cards: PropTypes.array.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired
 };
 
-export default function Cards({ cards, onSetAICardModalCardId }) {
+export default function Cards({
+  isAICardModalShown,
+  cards,
+  onSetAICardModalCardId
+}) {
   const [moreAICardsModalShown, setMoreAICardsModalShown] = useState(false);
   const displayedCards = useMemo(() => {
     const numShown = deviceIsMobile ? 3 : 5;
@@ -46,7 +51,10 @@ export default function Cards({ cards, onSetAICardModalCardId }) {
       {moreAICardsModalShown && (
         <MoreAICardsModal
           cards={cards}
-          onHide={() => setMoreAICardsModalShown(false)}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+          onHide={() =>
+            isAICardModalShown ? null : setMoreAICardsModalShown(false)
+          }
         />
       )}
     </div>
