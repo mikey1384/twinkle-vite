@@ -55,7 +55,7 @@ export default function OfferDetail({
           flexDirection: 'column'
         }}
       >
-        {coins && (
+        {!!coins && (
           <div
             style={{
               width: '100%',
