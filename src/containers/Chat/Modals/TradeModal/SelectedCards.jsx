@@ -3,34 +3,49 @@ import PropTypes from 'prop-types';
 import CardThumb from './CardThumb';
 import CloseButton from '~/components/Buttons/CloseButton';
 import { isMobile } from '~/helpers';
+import { useChatContext, useKeyContext } from '~/contexts';
 import ShowMoreCardsButton from './ShowMoreCardsButton';
 
 const deviceIsMobile = isMobile(navigator);
 
 SelectedCards.propTypes = {
-  selectedCards: PropTypes.array.isRequired,
+  selectedCardIds: PropTypes.array.isRequired,
   style: PropTypes.object,
   onDeselect: PropTypes.func.isRequired,
-  onShowAICardSelector: PropTypes.func.isRequired
+  onShowAICardSelector: PropTypes.func.isRequired,
+  partnerId: PropTypes.number,
+  type: PropTypes.string.isRequired
 };
 
 export default function SelectedCards({
-  selectedCards,
+  selectedCardIds,
   style,
+  type,
   onDeselect,
-  onShowAICardSelector
+  onShowAICardSelector,
+  partnerId
 }) {
-  const displayedCards = useMemo(() => {
+  const { userId } = useKeyContext((v) => v.myState);
+  const cardObj = useChatContext((v) => v.state.cardObj);
+  const displayedCardIds = useMemo(() => {
     const numShown = deviceIsMobile ? 3 : 5;
-    if (selectedCards.length <= numShown) {
-      return selectedCards;
+    if (selectedCardIds.length <= numShown) {
+      return selectedCardIds;
     }
-    return selectedCards.slice(0, numShown);
-  }, [selectedCards]);
+    return selectedCardIds.slice(0, numShown);
+  }, [selectedCardIds]);
 
   const numMore = useMemo(() => {
-    return selectedCards.length - displayedCards.length;
-  }, [selectedCards, displayedCards]);
+    return selectedCardIds.length - displayedCardIds.length;
+  }, [selectedCardIds, displayedCardIds]);
+
+  const displayedCards = displayedCardIds
+    .map((cardId) => cardObj[cardId])
+    .filter(
+      (card) =>
+        !!card &&
+        (type === 'want' ? card.ownerId === partnerId : card.ownerId === userId)
+    );
 
   return (
     <div

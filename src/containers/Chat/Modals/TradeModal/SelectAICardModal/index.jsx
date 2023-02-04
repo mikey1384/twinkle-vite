@@ -30,7 +30,7 @@ export default function SelectAICardModal({
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState(
-    currentlySelectedCardIds.map((card) => card.id)
+    currentlySelectedCardIds
   );
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const { userId, username } = useKeyContext((v) => v.myState);
@@ -130,7 +130,7 @@ export default function SelectAICardModal({
           disabled={!selectedCardIds?.length}
           color={doneColor}
           onClick={() => {
-            onSelectDone(selectedCardIds.map((cardId) => cardObj[cardId]));
+            onSelectDone(selectedCardIds);
           }}
         >
           Done

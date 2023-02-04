@@ -102,20 +102,21 @@ export default function TradeModal({
                     want: amount
                   }))
                 }
-                selectedCards={selectedCardIdsObj.want}
+                selectedCardIds={selectedCardIdsObj.want}
                 onShowAICardSelector={() => setAICardModalType('want')}
                 onDeselect={(cardId) =>
                   setSelectedCardIdsObj((prevState) => ({
                     ...prevState,
-                    want: prevState.want.filter((card) => card.id !== cardId)
+                    want: prevState.want.filter((id) => id !== cardId)
                   }))
                 }
+                partnerId={partner.id}
               />
             ) : null}
             {!!selectedOption && (
               <MyOffer
                 coinAmount={coinAmountObj.offer}
-                selectedCards={selectedCardIdsObj.offer}
+                selectedCardIds={selectedCardIdsObj.offer}
                 selectedOption={selectedOption}
                 style={{ marginTop: '3rem' }}
                 onSetCoinAmount={(amount) =>
@@ -128,7 +129,7 @@ export default function TradeModal({
                 onDeselect={(cardId) =>
                   setSelectedCardIdsObj((prevState) => ({
                     ...prevState,
-                    offer: prevState.offer.filter((card) => card.id !== cardId)
+                    offer: prevState.offer.filter((id) => id !== cardId)
                   }))
                 }
               />

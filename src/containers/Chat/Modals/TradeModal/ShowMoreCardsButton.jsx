@@ -12,7 +12,6 @@ export default function ShowMoreCardsButton({ onClick, numMore }) {
     <div style={{ marginTop: '2.5rem', display: 'flex' }}>
       <div
         style={{
-          minWidth: '9rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -27,6 +26,7 @@ export default function ShowMoreCardsButton({ onClick, numMore }) {
           flexGrow: 1
         }}
         className={css`
+          min-width: 9rem;
           font-size: 1.4rem;
           &:hover {
             background-color: ${Color.highlightGray()};
@@ -34,6 +34,9 @@ export default function ShowMoreCardsButton({ onClick, numMore }) {
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.4rem;
             }
+          }
+          @media (max-width: ${mobileMaxWidth}) {
+            min-width: 7rem;
           }
         `}
         onClick={onClick}
