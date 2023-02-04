@@ -11,10 +11,11 @@ import {
 
 CardThumb.propTypes = {
   card: PropTypes.object.isRequired,
-  style: PropTypes.object
+  style: PropTypes.object,
+  onClick: PropTypes.func
 };
 
-export default function CardThumb({ card, style }) {
+export default function CardThumb({ card, style, onClick }) {
   const cardDetailObj = useMemo(
     () => cardLevelHash[card?.level],
     [card?.level]
@@ -35,8 +36,10 @@ export default function CardThumb({ card, style }) {
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
+        cursor: onClick ? 'pointer' : 'default',
         ...style
       }}
+      onClick={onClick}
     >
       <div style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1.3rem' }}>
         #{card.id}

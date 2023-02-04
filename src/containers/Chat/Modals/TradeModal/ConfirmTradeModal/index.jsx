@@ -15,6 +15,7 @@ ConfirmTradeModal.propTypes = {
   selectedOption: PropTypes.string.isRequired,
   selectedCardsObj: PropTypes.object.isRequired,
   coinAmountObj: PropTypes.object.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
   partnerName: PropTypes.string.isRequired
 };
 
@@ -24,6 +25,7 @@ export default function ConfirmTradeModal({
   selectedOption,
   selectedCardsObj,
   coinAmountObj,
+  onSetAICardModalCardId,
   partnerName
 }) {
   const {
@@ -61,6 +63,7 @@ export default function ConfirmTradeModal({
           coinOffered={coinAmountObj.offer}
           coinWanted={coinAmountObj.want}
           partnerName={partnerName}
+          onSetAICardModalCardId={onSetAICardModalCardId}
         />
       </main>
       <footer>
