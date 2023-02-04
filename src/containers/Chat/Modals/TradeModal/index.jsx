@@ -33,7 +33,7 @@ export default function TradeModal({
     offer: 0,
     want: 0
   });
-  const [selectedCardsObj, setSelectedCardsObj] = useState({
+  const [selectedCardIdsObj, setSelectedCardIdsObj] = useState({
     offer: [],
     want: []
   });
@@ -49,16 +49,16 @@ export default function TradeModal({
   const doneButtonDisabled = useMemo(() => {
     if (selectedOption === 'want') {
       return (
-        (!coinAmountObj.want && !selectedCardsObj.want.length) ||
-        (!coinAmountObj.offer && !selectedCardsObj.offer.length)
+        (!coinAmountObj.want && !selectedCardIdsObj.want.length) ||
+        (!coinAmountObj.offer && !selectedCardIdsObj.offer.length)
       );
     }
-    return !coinAmountObj.offer && !selectedCardsObj.offer.length;
+    return !coinAmountObj.offer && !selectedCardIdsObj.offer.length;
   }, [
     coinAmountObj.offer,
     coinAmountObj.want,
-    selectedCardsObj.offer.length,
-    selectedCardsObj.want.length,
+    selectedCardIdsObj.offer.length,
+    selectedCardIdsObj.want.length,
     selectedOption
   ]);
 
@@ -102,10 +102,10 @@ export default function TradeModal({
                     want: amount
                   }))
                 }
-                selectedCards={selectedCardsObj.want}
+                selectedCards={selectedCardIdsObj.want}
                 onShowAICardSelector={() => setAICardModalType('want')}
                 onDeselect={(cardId) =>
-                  setSelectedCardsObj((prevState) => ({
+                  setSelectedCardIdsObj((prevState) => ({
                     ...prevState,
                     want: prevState.want.filter((card) => card.id !== cardId)
                   }))
@@ -115,7 +115,7 @@ export default function TradeModal({
             {!!selectedOption && (
               <MyOffer
                 coinAmount={coinAmountObj.offer}
-                selectedCards={selectedCardsObj.offer}
+                selectedCards={selectedCardIdsObj.offer}
                 selectedOption={selectedOption}
                 style={{ marginTop: '3rem' }}
                 onSetCoinAmount={(amount) =>
@@ -126,7 +126,7 @@ export default function TradeModal({
                 }
                 onShowAICardSelector={() => setAICardModalType('offer')}
                 onDeselect={(cardId) =>
-                  setSelectedCardsObj((prevState) => ({
+                  setSelectedCardIdsObj((prevState) => ({
                     ...prevState,
                     offer: prevState.offer.filter((card) => card.id !== cardId)
                   }))
@@ -155,13 +155,13 @@ export default function TradeModal({
           <SelectAICardModal
             aiCardModalType={aiCardModalType}
             partnerName={partner?.username}
-            currentlySelectedCards={selectedCardsObj[aiCardModalType]}
+            currentlySelectedCardIds={selectedCardIdsObj[aiCardModalType]}
             onSetAICardModalCardId={onSetAICardModalCardId}
-            onSelectDone={(cards) => {
-              setSelectedCardsObj((prevCardsObj) => {
+            onSelectDone={(cardIds) => {
+              setSelectedCardIdsObj((prevCardsObj) => {
                 return {
                   ...prevCardsObj,
-                  [aiCardModalType]: cards
+                  [aiCardModalType]: cardIds
                 };
               });
               setAICardModalType(null);
@@ -177,7 +177,7 @@ export default function TradeModal({
             isAICardModalShown={isAICardModalShown}
             onConfirm={handleConfirm}
             coinAmountObj={coinAmountObj}
-            selectedCardsObj={selectedCardsObj}
+            selectedCardIdsObj={selectedCardIdsObj}
             selectedOption={selectedOption}
             onSetAICardModalCardId={onSetAICardModalCardId}
             partnerName={partner?.username}
