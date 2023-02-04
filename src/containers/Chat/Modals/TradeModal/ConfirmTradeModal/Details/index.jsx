@@ -8,7 +8,7 @@ Details.propTypes = {
   offeredCardIds: PropTypes.array.isRequired,
   coinOffered: PropTypes.number.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
-  partnerName: PropTypes.string.isRequired
+  partner: PropTypes.object.isRequired
 };
 
 export default function Details({
@@ -17,7 +17,7 @@ export default function Details({
   offeredCardIds,
   coinOffered,
   onSetAICardModalCardId,
-  partnerName
+  partner
 }) {
   return (
     <div>
@@ -26,7 +26,7 @@ export default function Details({
         selectedOption={selectedOption}
         cardIds={offeredCardIds}
         coins={coinOffered}
-        partnerName={partnerName}
+        partner={partner}
         onSetAICardModalCardId={onSetAICardModalCardId}
       />
       {selectedOption === 'want' && <WantDetail />}

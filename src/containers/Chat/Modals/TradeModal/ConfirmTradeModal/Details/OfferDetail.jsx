@@ -10,7 +10,7 @@ OfferDetail.propTypes = {
   cardIds: PropTypes.array.isRequired,
   coins: PropTypes.number.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
-  partnerName: PropTypes.string.isRequired
+  partner: PropTypes.object.isRequired
 };
 
 export default function OfferDetail({
@@ -19,7 +19,7 @@ export default function OfferDetail({
   cardIds,
   coins,
   onSetAICardModalCardId,
-  partnerName
+  partner
 }) {
   const actionLabel = useMemo(() => {
     if (selectedOption === 'want') {
@@ -49,7 +49,7 @@ export default function OfferDetail({
           fontWeight: 'bold'
         }}
       >
-        {actionLabel} {partnerName}...
+        {actionLabel} {partner.username}...
       </div>
       <div
         style={{
@@ -86,6 +86,8 @@ export default function OfferDetail({
           isAICardModalShown={isAICardModalShown}
           cardIds={cardIds}
           onSetAICardModalCardId={onSetAICardModalCardId}
+          partnerId={partner.id}
+          type="offer"
         />
       </div>
     </div>
