@@ -4,34 +4,48 @@ import CardThumb from '../../CardThumb';
 import { isMobile } from '~/helpers';
 import ShowMoreCardsButton from '../../ShowMoreCardsButton';
 import MoreAICardsModal from './MoreAICardsModal';
-import { useChatContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 
 const deviceIsMobile = isMobile(navigator);
 
 Cards.propTypes = {
   isAICardModalShown: PropTypes.bool,
   cardIds: PropTypes.array.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired
+  onSetAICardModalCardId: PropTypes.func.isRequired,
+  partnerId: PropTypes.number,
+  type: PropTypes.string.isRequired
 };
 
 export default function Cards({
   isAICardModalShown,
   cardIds,
-  onSetAICardModalCardId
+  onSetAICardModalCardId,
+  partnerId,
+  type
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const validCardIds = useMemo(() => {
+    return cardIds.filter(
+      (cardId) =>
+        cardObj[cardId] &&
+        (type === 'want'
+          ? cardObj[cardId].ownerId === partnerId
+          : cardObj[cardId].ownerId === userId)
+    );
+  }, [cardIds, cardObj, partnerId, type, userId]);
   const [moreAICardsModalShown, setMoreAICardsModalShown] = useState(false);
   const displayedCardIds = useMemo(() => {
     const numShown = deviceIsMobile ? 3 : 5;
-    if (cardIds.length <= numShown) {
-      return cardIds;
+    if (validCardIds.length <= numShown) {
+      return validCardIds;
     }
-    return cardIds.slice(0, numShown);
-  }, [cardIds]);
+    return validCardIds.slice(0, numShown);
+  }, [validCardIds]);
   const numMore = useMemo(() => {
-    return cardIds.length - displayedCardIds.length;
-  }, [cardIds, displayedCardIds]);
-  const cards = cardIds.map((cardId) => cardObj[cardId]);
+    return validCardIds.length - displayedCardIds.length;
+  }, [validCardIds, displayedCardIds]);
+  const cards = validCardIds.map((cardId) => cardObj[cardId]);
   const displayedCards = displayedCardIds.map((cardId) => cardObj[cardId]);
 
   return (
