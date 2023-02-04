@@ -81,6 +81,7 @@ export default function SelectAICardModal({
     .filter(
       (card) =>
         !!card &&
+        !card.isBurned &&
         (aiCardModalType === 'want'
           ? card.ownerId === partner.id
           : card.ownerId === userId)
