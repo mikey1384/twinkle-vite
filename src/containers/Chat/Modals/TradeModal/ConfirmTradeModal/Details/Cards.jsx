@@ -4,49 +4,34 @@ import CardThumb from '../../CardThumb';
 import { isMobile } from '~/helpers';
 import ShowMoreCardsButton from '../../ShowMoreCardsButton';
 import MoreAICardsModal from './MoreAICardsModal';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useChatContext } from '~/contexts';
 
 const deviceIsMobile = isMobile(navigator);
 
 Cards.propTypes = {
   isAICardModalShown: PropTypes.bool,
   cardIds: PropTypes.array.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  partnerId: PropTypes.number,
-  type: PropTypes.string.isRequired
+  onSetAICardModalCardId: PropTypes.func.isRequired
 };
 
 export default function Cards({
   isAICardModalShown,
   cardIds,
-  onSetAICardModalCardId,
-  partnerId,
-  type
+  onSetAICardModalCardId
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
   const cardObj = useChatContext((v) => v.state.cardObj);
-  const validCardIds = useMemo(() => {
-    return cardIds.filter(
-      (cardId) =>
-        cardObj[cardId] &&
-        !cardObj[cardId].isBurned &&
-        (type === 'want'
-          ? cardObj[cardId].ownerId === partnerId
-          : cardObj[cardId].ownerId === userId)
-    );
-  }, [cardIds, cardObj, partnerId, type, userId]);
   const [moreAICardsModalShown, setMoreAICardsModalShown] = useState(false);
   const displayedCardIds = useMemo(() => {
     const numShown = deviceIsMobile ? 3 : 5;
-    if (validCardIds.length <= numShown) {
-      return validCardIds;
+    if (cardIds.length <= numShown) {
+      return cardIds;
     }
-    return validCardIds.slice(0, numShown);
-  }, [validCardIds]);
+    return cardIds.slice(0, numShown);
+  }, [cardIds]);
   const numMore = useMemo(() => {
-    return validCardIds.length - displayedCardIds.length;
-  }, [validCardIds, displayedCardIds]);
-  const cards = validCardIds.map((cardId) => cardObj[cardId]);
+    return cardIds.length - displayedCardIds.length;
+  }, [cardIds, displayedCardIds]);
+  const cards = cardIds.map((cardId) => cardObj[cardId]);
   const displayedCards = displayedCardIds.map((cardId) => cardObj[cardId]);
 
   return (
