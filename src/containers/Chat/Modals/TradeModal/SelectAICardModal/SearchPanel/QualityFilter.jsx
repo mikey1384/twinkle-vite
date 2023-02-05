@@ -1,15 +1,57 @@
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import Button from '~/components/Button';
-import Icon from '~/components/Icon';
-import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import DropdownButton from '~/components/Buttons/DropdownButton';
+import { Color } from '~/constants/css';
+import { capitalize } from '~/helpers/stringHelpers';
 
 QualityFilter.propTypes = {
-  filters: PropTypes.object,
-  onSetFilters: PropTypes.func
+  selectedQuality: PropTypes.string,
+  onSelectQuality: PropTypes.func,
+  onDropdownShown: PropTypes.func
 };
 
-export default function QualityFilter({ filters, onSetFilters }) {
+export default function QualityFilter({
+  selectedQuality = 'any',
+  onSelectQuality,
+  onDropdownShown
+}) {
+  const menuProps = useMemo(() => {
+    const qualities = [
+      'any',
+      'common',
+      'superior',
+      'rare',
+      'elite',
+      'legendary'
+    ];
+    const rearrangedQualities = qualities.filter(
+      (quality) => quality !== selectedQuality
+    );
+    return rearrangedQualities.map((quality) => ({
+      label: (
+        <b
+          style={{
+            color:
+              Color[
+                quality === 'superior'
+                  ? 'green'
+                  : quality === 'rare'
+                  ? 'purple'
+                  : quality === 'elite'
+                  ? 'redOrange'
+                  : quality === 'legendary'
+                  ? 'gold'
+                  : 'darkerGray'
+              ]()
+          }}
+        >
+          {capitalize(quality)}
+        </b>
+      ),
+      onClick: () => onSelectQuality(quality)
+    }));
+  }, [onSelectQuality, selectedQuality]);
+
   return (
     <div
       style={{
@@ -21,35 +63,24 @@ export default function QualityFilter({ filters, onSetFilters }) {
     >
       <div className="label">Quality</div>
       <div style={{ marginTop: '0.5rem' }}>
-        <Button
-          mobilePadding="0.5rem 1rem"
+        <DropdownButton
+          skeuomorphic
           color={
-            filters.quality === 'superior'
+            selectedQuality === 'superior'
               ? 'green'
-              : filters.quality === 'rare'
+              : selectedQuality === 'rare'
               ? 'purple'
-              : filters.quality === 'elite'
+              : selectedQuality === 'elite'
               ? 'redOrange'
-              : filters.quality === 'legendary'
+              : selectedQuality === 'legendary'
               ? 'gold'
               : 'darkerGray'
           }
-          skeuomorphic
-          onClick={() => onSetFilters('quality')}
-        >
-          <Icon icon="caret-down" />
-          <span>&nbsp;&nbsp;</span>
-          <span
-            className={css`
-              font-size: 1.4rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.1rem;
-              }
-            `}
-          >
-            {filters.quality || 'Any'}
-          </span>
-        </Button>
+          icon="caret-down"
+          text={selectedQuality}
+          onDropdownShown={onDropdownShown}
+          menuProps={menuProps}
+        />
       </div>
     </div>
   );
