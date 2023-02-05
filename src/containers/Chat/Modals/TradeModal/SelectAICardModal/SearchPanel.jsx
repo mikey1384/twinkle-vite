@@ -14,10 +14,11 @@ export default function SearchPanel({ filters, onSetFilters }) {
     <div
       className={css`
         font-size: 1.7rem;
-        width: 100%;
+        width: 50%;
         padding: 1rem;
         background: #fff;
         border: 1px solid ${Color.borderGray()};
+        margin-bottom: 2rem;
         .label {
           font-family: 'Roboto', sans-serif;
           font-weight: bold;
@@ -26,6 +27,9 @@ export default function SearchPanel({ filters, onSetFilters }) {
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 1.1rem;
           }
+        }
+        @media (max-width: ${mobileMaxWidth}) {
+          width: 100%;
         }
       `}
     >
