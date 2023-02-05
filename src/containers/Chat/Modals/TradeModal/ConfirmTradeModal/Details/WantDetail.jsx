@@ -22,7 +22,7 @@ export default function WantDetail({
   return (
     <div
       style={{
-        marginTop: '2rem',
+        marginBottom: '2rem',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -39,7 +39,7 @@ export default function WantDetail({
           fontWeight: 'bold'
         }}
       >
-        in exchange for...
+        In exchange for...
       </div>
       <div
         style={{
@@ -71,7 +71,7 @@ export default function WantDetail({
                 {addCommasToNumber(coins)}
               </span>
             </div>
-            {cardIds.length && <div style={{ padding: '1rem' }}>and</div>}
+            {!!cardIds.length && <div style={{ padding: '1rem' }}>and</div>}
           </div>
         )}
         <Cards

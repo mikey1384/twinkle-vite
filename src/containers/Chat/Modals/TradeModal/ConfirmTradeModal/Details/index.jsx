@@ -40,14 +40,6 @@ export default function Details({
 
   return (
     <div>
-      <OfferDetail
-        isAICardModalShown={isAICardModalShown}
-        selectedOption={selectedOption}
-        cardIds={offeredCardIds}
-        coins={effectiveCoinOffered}
-        partner={partner}
-        onSetAICardModalCardId={onSetAICardModalCardId}
-      />
       {selectedOption === 'want' && (
         <WantDetail
           isAICardModalShown={isAICardModalShown}
@@ -57,6 +49,14 @@ export default function Details({
           onSetAICardModalCardId={onSetAICardModalCardId}
         />
       )}
+      <OfferDetail
+        isAICardModalShown={isAICardModalShown}
+        selectedOption={selectedOption}
+        cardIds={offeredCardIds}
+        coins={effectiveCoinOffered}
+        partner={partner}
+        onSetAICardModalCardId={onSetAICardModalCardId}
+      />
       <div
         style={{
           width: '100%',
