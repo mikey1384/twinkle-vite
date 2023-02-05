@@ -38,8 +38,8 @@ export default function MyOffer({
         I{' '}
         {selectedOption === 'want'
           ? 'offer'
-          : selectedOption === 'give'
-          ? 'want to give'
+          : selectedOption === 'send'
+          ? 'want to send'
           : 'have'}
         ...
       </p>

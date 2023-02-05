@@ -30,12 +30,12 @@ export default function Options({
         {`I want to show ${partnerName} what I have`}
       </Button>
       <Button
-        skeuomorphic={selectedOption === 'give'}
+        skeuomorphic={selectedOption === 'send'}
         style={{ marginTop: '1rem' }}
         color="green"
-        onClick={() => onSelectOption('give')}
+        onClick={() => onSelectOption('send')}
       >
-        {`I want to give ${partnerName} something`}
+        {`I want to send ${partnerName} something`}
       </Button>
     </div>
   );

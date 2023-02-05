@@ -41,8 +41,8 @@ export default function TradeModal({
     if (selectedOption === 'want') {
       return 'Propose';
     }
-    if (selectedOption === 'give') {
-      return 'Give';
+    if (selectedOption === 'send') {
+      return 'Send';
     }
     return 'Show';
   }, [selectedOption]);
@@ -66,8 +66,8 @@ export default function TradeModal({
     if (selectedOption === 'offer') {
       return 'Show';
     }
-    if (selectedOption === 'give') {
-      return 'Give';
+    if (selectedOption === 'send') {
+      return 'Send';
     }
     return 'Trade';
   }, [selectedOption]);
