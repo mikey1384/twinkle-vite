@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import OfferDetail from './OfferDetail';
 import WantDetail from './WantDetail';
+import { useChatContext, useKeyContext } from '~/contexts';
 
 Details.propTypes = {
   isAICardModalShown: PropTypes.bool,
@@ -24,6 +25,8 @@ export default function Details({
   onSetAICardModalCardId,
   partner
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
+  const cardObj = useChatContext((v) => v.state.cardObj);
   const effectiveCoinOffered = useMemo(() => {
     if (selectedOption === 'want') {
       return Math.max(coinOffered - coinWanted, 0);
@@ -38,12 +41,30 @@ export default function Details({
     return coinWanted;
   }, [coinOffered, coinWanted, selectedOption]);
 
+  const validOfferedCardIds = useMemo(() => {
+    return offeredCardIds.filter(
+      (cardId) =>
+        cardObj[cardId] &&
+        !cardObj[cardId].isBurned &&
+        cardObj[cardId].ownerId === userId
+    );
+  }, [offeredCardIds, cardObj, userId]);
+
+  const validWantedCardIds = useMemo(() => {
+    return wantedCardIds.filter(
+      (cardId) =>
+        cardObj[cardId] &&
+        !cardObj[cardId].isBurned &&
+        cardObj[cardId].ownerId === partner.id
+    );
+  }, [wantedCardIds, cardObj, partner.id]);
+
   return (
     <div>
       {selectedOption === 'want' && (
         <WantDetail
           isAICardModalShown={isAICardModalShown}
-          cardIds={wantedCardIds}
+          cardIds={validWantedCardIds}
           coins={effectiveCoinWanted}
           partner={partner}
           onSetAICardModalCardId={onSetAICardModalCardId}
@@ -52,7 +73,7 @@ export default function Details({
       <OfferDetail
         isAICardModalShown={isAICardModalShown}
         selectedOption={selectedOption}
-        cardIds={offeredCardIds}
+        cardIds={validOfferedCardIds}
         coins={effectiveCoinOffered}
         partner={partner}
         onSetAICardModalCardId={onSetAICardModalCardId}
