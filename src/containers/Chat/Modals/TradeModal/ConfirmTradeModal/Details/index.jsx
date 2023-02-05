@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import OfferDetail from './OfferDetail';
 import WantDetail from './WantDetail';
@@ -23,13 +24,27 @@ export default function Details({
   onSetAICardModalCardId,
   partner
 }) {
+  const effectiveCoinOffered = useMemo(() => {
+    if (selectedOption === 'want') {
+      return Math.max(coinOffered - coinWanted, 0);
+    }
+    return coinOffered;
+  }, [coinOffered, coinWanted, selectedOption]);
+
+  const effectiveCoinWanted = useMemo(() => {
+    if (selectedOption === 'want') {
+      return Math.max(coinWanted - coinOffered, 0);
+    }
+    return coinWanted;
+  }, [coinOffered, coinWanted, selectedOption]);
+
   return (
     <div>
       <OfferDetail
         isAICardModalShown={isAICardModalShown}
         selectedOption={selectedOption}
         cardIds={offeredCardIds}
-        coins={coinOffered}
+        coins={effectiveCoinOffered}
         partner={partner}
         onSetAICardModalCardId={onSetAICardModalCardId}
       />
@@ -37,7 +52,7 @@ export default function Details({
         <WantDetail
           isAICardModalShown={isAICardModalShown}
           cardIds={wantedCardIds}
-          coins={coinWanted}
+          coins={effectiveCoinWanted}
           partner={partner}
           onSetAICardModalCardId={onSetAICardModalCardId}
         />
