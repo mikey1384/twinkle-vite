@@ -6,7 +6,9 @@ Details.propTypes = {
   isAICardModalShown: PropTypes.bool,
   selectedOption: PropTypes.string.isRequired,
   offeredCardIds: PropTypes.array.isRequired,
+  wantedCardIds: PropTypes.array.isRequired,
   coinOffered: PropTypes.number.isRequired,
+  coinWanted: PropTypes.number.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired
 };
@@ -15,7 +17,9 @@ export default function Details({
   isAICardModalShown,
   selectedOption,
   offeredCardIds,
+  wantedCardIds,
   coinOffered,
+  coinWanted,
   onSetAICardModalCardId,
   partner
 }) {
@@ -29,7 +33,15 @@ export default function Details({
         partner={partner}
         onSetAICardModalCardId={onSetAICardModalCardId}
       />
-      {selectedOption === 'want' && <WantDetail />}
+      {selectedOption === 'want' && (
+        <WantDetail
+          isAICardModalShown={isAICardModalShown}
+          cardIds={wantedCardIds}
+          coins={coinWanted}
+          partner={partner}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+        />
+      )}
       <div
         style={{
           width: '100%',
