@@ -96,7 +96,7 @@ export default function OfferDetail({
                 {addCommasToNumber(coins)}
               </span>
             </div>
-            {cardIds.length && <div style={{ padding: '1rem' }}>and</div>}
+            {!!cardIds.length && <div style={{ padding: '1rem' }}>and</div>}
           </div>
         )}
         <Cards
