@@ -4,7 +4,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import Details from './Details';
-import { useKeyContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 
 const cancelLabel = localize('cancel');
 const confirmLabel = localize('confirm');
@@ -35,6 +35,10 @@ export default function ConfirmTradeModal({
   } = useKeyContext((v) => v.theme);
 
   const [submitting, setSubmitting] = useState(false);
+  const coinOffered = coinAmountObj.offer;
+  const coinWanted = coinAmountObj.want;
+  const offeredCardIds = selectedCardIdsObj.offer;
+  const wantedCardIds = selectedCardIdsObj.want;
   const title = useMemo(() => {
     const coinToGive = coinAmountObj.offer;
     const cardIdsToGive = selectedCardIdsObj.offer;
@@ -55,18 +59,49 @@ export default function ConfirmTradeModal({
           }`
     }`;
   }, [coinAmountObj.offer, selectedCardIdsObj.offer, selectedOption]);
+  const { userId } = useKeyContext((v) => v.myState);
+  const cardObj = useChatContext((v) => v.state.cardObj);
+  const effectiveCoinOffered = useMemo(() => {
+    if (selectedOption === 'want') {
+      return Math.max(coinOffered - coinWanted, 0);
+    }
+    return coinOffered;
+  }, [coinOffered, coinWanted, selectedOption]);
+
+  const effectiveCoinWanted = useMemo(() => {
+    if (selectedOption === 'want') {
+      return Math.max(coinWanted - coinOffered, 0);
+    }
+    return coinWanted;
+  }, [coinOffered, coinWanted, selectedOption]);
+  const validOfferedCardIds = useMemo(() => {
+    return offeredCardIds.filter(
+      (cardId) =>
+        cardObj[cardId] &&
+        !cardObj[cardId].isBurned &&
+        cardObj[cardId].ownerId === userId
+    );
+  }, [offeredCardIds, cardObj, userId]);
+  const validWantedCardIds = useMemo(() => {
+    return wantedCardIds.filter(
+      (cardId) =>
+        cardObj[cardId] &&
+        !cardObj[cardId].isBurned &&
+        cardObj[cardId].ownerId === partner.id
+    );
+  }, [wantedCardIds, cardObj, partner.id]);
 
   return (
     <Modal modalOverModal onHide={onHide}>
       <header>{title}</header>
       <main>
         <Details
+          coinsOffered={effectiveCoinOffered}
+          coinsWanted={effectiveCoinWanted}
+          cardIdsOffered={validOfferedCardIds}
+          cardIdsWanted={validWantedCardIds}
           isAICardModalShown={isAICardModalShown}
           selectedOption={selectedOption}
-          offeredCardIds={selectedCardIdsObj.offer}
-          wantedCardIds={selectedCardIdsObj.want}
-          coinOffered={coinAmountObj.offer}
-          coinWanted={coinAmountObj.want}
           partner={partner}
           onSetAICardModalCardId={onSetAICardModalCardId}
         />
