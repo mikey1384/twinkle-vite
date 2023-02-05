@@ -14,6 +14,7 @@ SelectAICardModal.propTypes = {
   onHide: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   onSelectDone: PropTypes.func.isRequired,
+  onDropdownShown: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired
 };
 
@@ -23,6 +24,7 @@ export default function SelectAICardModal({
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
+  onDropdownShown,
   partner
 }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
@@ -96,7 +98,11 @@ export default function SelectAICardModal({
       <header>{headerLabel}</header>
       <main>
         {searchPanelShown && (
-          <SearchPanel filters={filters} onSetFilters={setFilters} />
+          <SearchPanel
+            filters={filters}
+            onSetFilters={setFilters}
+            onDropdownShown={onDropdownShown}
+          />
         )}
         <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
           {loading ? (

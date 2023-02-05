@@ -6,10 +6,15 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 
 SearchPanel.propTypes = {
   filters: PropTypes.object.isRequired,
+  onDropdownShown: PropTypes.func.isRequired,
   onSetFilters: PropTypes.func.isRequired
 };
 
-export default function SearchPanel({ filters, onSetFilters }) {
+export default function SearchPanel({
+  filters,
+  onDropdownShown,
+  onSetFilters
+}) {
   return (
     <div
       className={css`
@@ -40,9 +45,20 @@ export default function SearchPanel({ filters, onSetFilters }) {
           width: '100%'
         }}
       >
-        <ColorFilter filters={filters} onSetFilters={onSetFilters} />
+        <ColorFilter
+          selectedColor={filters.color}
+          onSelectColor={handleSelectColor}
+          onDropdownShown={onDropdownShown}
+        />
         <QualityFilter filters={filters} onSetFilters={onSetFilters} />
       </div>
     </div>
   );
+
+  function handleSelectColor(color) {
+    onSetFilters((prevFilters) => ({
+      ...prevFilters,
+      color
+    }));
+  }
 }
