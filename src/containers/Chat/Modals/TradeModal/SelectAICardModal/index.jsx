@@ -4,6 +4,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import CardItem from './CardItem';
 import Loading from '~/components/Loading';
+import SearchPanel from './SearchPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
@@ -91,6 +92,7 @@ export default function SelectAICardModal({
     <Modal large modalOverModal onHide={onHide}>
       <header>{headerLabel}</header>
       <main>
+        <SearchPanel />
         <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
           {loading ? (
             <Loading />
