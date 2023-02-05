@@ -4,12 +4,12 @@ import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
-ColorFilter.propTypes = {
+QualityFilter.propTypes = {
   filters: PropTypes.object,
   onSetFilters: PropTypes.func
 };
 
-export default function ColorFilter({ filters, onSetFilters }) {
+export default function QualityFilter({ filters, onSetFilters }) {
   return (
     <div
       style={{
@@ -19,19 +19,23 @@ export default function ColorFilter({ filters, onSetFilters }) {
         alignItems: 'center'
       }}
     >
-      <div className="label">Color</div>
+      <div className="label">Quality</div>
       <div style={{ marginTop: '0.5rem' }}>
         <Button
           mobilePadding="0.5rem 1rem"
           color={
-            filters.color
-              ? filters.color === 'blue'
-                ? 'logoBlue'
-                : filters.color
+            filters.quality === 'superior'
+              ? 'green'
+              : filters.quality === 'rare'
+              ? 'purple'
+              : filters.quality === 'elite'
+              ? 'redOrange'
+              : filters.quality === 'legendary'
+              ? 'gold'
               : 'darkerGray'
           }
           skeuomorphic
-          onClick={() => onSetFilters('color')}
+          onClick={() => onSetFilters('quality')}
         >
           <Icon icon="caret-down" />
           <span>&nbsp;&nbsp;</span>
@@ -43,7 +47,7 @@ export default function ColorFilter({ filters, onSetFilters }) {
               }
             `}
           >
-            {filters.color || 'Any'}
+            {filters.quality || 'Any'}
           </span>
         </Button>
       </div>
