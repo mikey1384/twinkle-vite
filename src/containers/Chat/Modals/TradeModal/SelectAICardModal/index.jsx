@@ -27,6 +27,7 @@ export default function SelectAICardModal({
 }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const [filters, setFilters] = useState({});
   const [cardIds, setCardIds] = useState(currentlySelectedCardIds);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -92,7 +93,7 @@ export default function SelectAICardModal({
     <Modal large modalOverModal onHide={onHide}>
       <header>{headerLabel}</header>
       <main>
-        <SearchPanel />
+        <SearchPanel filters={filters} onSetFilters={setFilters} />
         <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
           {loading ? (
             <Loading />
