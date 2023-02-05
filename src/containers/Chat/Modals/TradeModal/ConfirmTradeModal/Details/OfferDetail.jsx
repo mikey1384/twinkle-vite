@@ -22,14 +22,12 @@ export default function OfferDetail({
   partner
 }) {
   const actionLabel = useMemo(() => {
-    if (selectedOption === 'want') {
-      return 'Offer';
-    }
     if (selectedOption === 'offer') {
       return 'Show';
     }
     return 'Give';
   }, [selectedOption]);
+
   return (
     <div
       style={{

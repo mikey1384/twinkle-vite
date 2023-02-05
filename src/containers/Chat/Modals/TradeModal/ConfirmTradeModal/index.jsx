@@ -64,7 +64,7 @@ export default function ConfirmTradeModal({
           isAICardModalShown={isAICardModalShown}
           selectedOption={selectedOption}
           offeredCardIds={selectedCardIdsObj.offer}
-          cardsWanted={selectedCardIdsObj.want}
+          wantedCardIds={selectedCardIdsObj.want}
           coinOffered={coinAmountObj.offer}
           coinWanted={coinAmountObj.want}
           partner={partner}
