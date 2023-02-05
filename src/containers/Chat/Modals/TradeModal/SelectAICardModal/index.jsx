@@ -31,6 +31,7 @@ export default function SelectAICardModal({
   const [cardIds, setCardIds] = useState(currentlySelectedCardIds);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [searchPanelShown, setSearchPanelShown] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState(
     currentlySelectedCardIds
   );
@@ -58,6 +59,7 @@ export default function SelectAICardModal({
         for (let card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
+        setSearchPanelShown(loadMoreShown);
         setLoadMoreShown(loadMoreShown);
         setLoading(false);
       } catch (error) {
@@ -93,7 +95,9 @@ export default function SelectAICardModal({
     <Modal large modalOverModal onHide={onHide}>
       <header>{headerLabel}</header>
       <main>
-        <SearchPanel filters={filters} onSetFilters={setFilters} />
+        {searchPanelShown && (
+          <SearchPanel filters={filters} onSetFilters={setFilters} />
+        )}
         <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
           {loading ? (
             <Loading />
