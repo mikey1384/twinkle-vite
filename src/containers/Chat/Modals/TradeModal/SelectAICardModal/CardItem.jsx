@@ -46,16 +46,17 @@ export default function CardItem({
     >
       <div
         style={{
-          cursor: 'pointer',
           width: '100%',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           flexDirection: 'column'
         }}
-        onClick={() => onSetAICardModalCardId(card.id)}
       >
-        <CardThumb card={card} />
+        <CardThumb
+          card={card}
+          onClick={() => onSetAICardModalCardId(card.id)}
+        />
       </div>
       <div style={{ marginTop: '1rem' }}>
         <Button
