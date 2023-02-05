@@ -26,6 +26,7 @@ export default function TradeModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const [dropdownShown, setDropdownShown] = useState(false);
   const [aiCardModalType, setAICardModalType] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
   const [confirmModalShown, setConfirmModalShown] = useState(false);
@@ -74,7 +75,7 @@ export default function TradeModal({
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/TradeModal">
-      <Modal onHide={isAICardModalShown ? null : onHide}>
+      <Modal onHide={isAICardModalShown || dropdownShown ? null : onHide}>
         <header>{title}</header>
         <main>
           <div
@@ -157,6 +158,7 @@ export default function TradeModal({
             aiCardModalType={aiCardModalType}
             partner={partner}
             currentlySelectedCardIds={selectedCardIdsObj[aiCardModalType]}
+            onDropdownShown={setDropdownShown}
             onSetAICardModalCardId={onSetAICardModalCardId}
             onSelectDone={(cardIds) => {
               setSelectedCardIdsObj((prevCardsObj) => {
@@ -167,7 +169,11 @@ export default function TradeModal({
               });
               setAICardModalType(null);
             }}
-            onHide={isAICardModalShown ? null : () => setAICardModalType(null)}
+            onHide={
+              isAICardModalShown || dropdownShown
+                ? null
+                : () => setAICardModalType(null)
+            }
           />
         )}
         {confirmModalShown && (
