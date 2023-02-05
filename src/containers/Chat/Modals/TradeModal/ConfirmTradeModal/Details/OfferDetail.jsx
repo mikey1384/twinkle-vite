@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Cards from './Cards';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, Color } from '~/constants/css';
 
 OfferDetail.propTypes = {
@@ -78,9 +79,11 @@ export default function OfferDetail({
                 style={{ color: Color.brownOrange() }}
                 icon={['far', 'badge-dollar']}
               />{' '}
-              <span style={{ color: Color.darkerGray() }}>{coins}</span>
+              <span style={{ color: Color.darkerGray() }}>
+                {addCommasToNumber(coins)}
+              </span>
             </div>
-            {cardIds.length && <div>and</div>}
+            {cardIds.length && <div style={{ padding: '1rem' }}>and</div>}
           </div>
         )}
         <Cards
