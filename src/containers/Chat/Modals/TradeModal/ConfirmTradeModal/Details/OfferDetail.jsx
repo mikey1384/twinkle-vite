@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Cards from './Cards';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { borderRadius, Color } from '~/constants/css';
+import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 
 OfferDetail.propTypes = {
   isAICardModalShown: PropTypes.bool,
@@ -31,6 +31,15 @@ export default function OfferDetail({
     }
     return 'Give';
   }, [selectedOption]);
+  const backgroundColor = useMemo(() => {
+    if (selectedOption === 'want') {
+      return 'transparent';
+    }
+    if (selectedOption === 'offer') {
+      return Color.pink();
+    }
+    return Color.green();
+  }, [selectedOption]);
 
   return (
     <div
@@ -44,10 +53,14 @@ export default function OfferDetail({
     >
       <div
         style={{
+          color: selectedOption === 'want' ? '#000' : '#fff',
+          borderTopLeftRadius: innerBorderRadius,
+          borderTopRightRadius: innerBorderRadius,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           padding: '1rem',
+          background: backgroundColor,
           fontWeight: 'bold'
         }}
       >
