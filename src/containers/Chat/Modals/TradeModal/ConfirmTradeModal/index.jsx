@@ -40,22 +40,22 @@ export default function ConfirmTradeModal({
   const offeredCardIds = selectedCardIdsObj.offer;
   const wantedCardIds = selectedCardIdsObj.want;
   const title = useMemo(() => {
-    const coinToGive = coinAmountObj.offer;
-    const cardIdsToGive = selectedCardIdsObj.offer;
+    const coinToSend = coinAmountObj.offer;
+    const cardIdsToSend = selectedCardIdsObj.offer;
     if (selectedOption === 'want') {
       return 'Propose Trade';
     }
-    return `${selectedOption === 'offer' ? 'Show' : 'Give'}${
-      coinToGive === 0
+    return `${selectedOption === 'offer' ? 'Show' : 'Send'}${
+      coinToSend === 0
         ? ''
-        : ` ${coinToGive} coin${coinToGive === 1 ? '' : 's'} ${
-            cardIdsToGive.length === 0 ? '' : 'and'
+        : ` ${coinToSend} coin${coinToSend === 1 ? '' : 's'} ${
+            cardIdsToSend.length === 0 ? '' : 'and'
           }`
     }${
-      cardIdsToGive.length === 0
+      cardIdsToSend.length === 0
         ? ''
-        : ` ${cardIdsToGive.length} card${
-            cardIdsToGive.length === 1 ? '' : 's'
+        : ` ${cardIdsToSend.length} card${
+            cardIdsToSend.length === 1 ? '' : 's'
           }`
     }`;
   }, [coinAmountObj.offer, selectedCardIdsObj.offer, selectedOption]);

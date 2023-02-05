@@ -29,7 +29,7 @@ export default function OfferDetail({
     if (selectedOption === 'offer') {
       return 'Show';
     }
-    return 'Give';
+    return 'Send';
   }, [selectedOption]);
   const backgroundColor = useMemo(() => {
     if (selectedOption === 'want') {
