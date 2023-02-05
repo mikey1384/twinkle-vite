@@ -50,7 +50,11 @@ export default function SearchPanel({
           onSelectColor={handleSelectColor}
           onDropdownShown={onDropdownShown}
         />
-        <QualityFilter filters={filters} onSetFilters={onSetFilters} />
+        <QualityFilter
+          selectedQuality={filters.quality}
+          onSelectQuality={handleSelectQuality}
+          onDropdownShown={onDropdownShown}
+        />
       </div>
     </div>
   );
@@ -59,6 +63,13 @@ export default function SearchPanel({
     onSetFilters((prevFilters) => ({
       ...prevFilters,
       color
+    }));
+  }
+
+  function handleSelectQuality(quality) {
+    onSetFilters((prevFilters) => ({
+      ...prevFilters,
+      quality
     }));
   }
 }
