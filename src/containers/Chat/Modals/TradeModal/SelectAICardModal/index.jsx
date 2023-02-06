@@ -73,6 +73,10 @@ export default function SelectAICardModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    console.log(filters?.color, filters?.quality);
+  }, [filters?.color, filters?.quality]);
+
   const headerLabel = useMemo(() => {
     if (aiCardModalType === 'want') {
       return `${partner.username}'s AI Cards`;
