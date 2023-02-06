@@ -110,7 +110,22 @@ export default function SelectAICardModal({
           />
         )}
         {isFiltered ? (
-          <Filtered color={filters.color} quality={filters.quality} />
+          <Filtered
+            aiCardModalType={aiCardModalType}
+            cardObj={cardObj}
+            color={filters.color}
+            loadFilteredAICards={loadFilteredAICards}
+            myId={userId}
+            myUsername={username}
+            onUpdateAICard={onUpdateAICard}
+            onSetSelectedCardIds={setSelectedCardIds}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            partnerId={partner.id}
+            partnerName={partner.username}
+            quality={filters.quality}
+            selectedCardIds={selectedCardIds}
+            successColor={successColor}
+          />
         ) : (
           <Main
             aiCardModalType={aiCardModalType}
