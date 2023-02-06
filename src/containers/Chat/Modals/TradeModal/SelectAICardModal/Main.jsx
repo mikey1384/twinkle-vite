@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import CardItem from './CardItem';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import { mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 
 Main.propTypes = {
   aiCardModalType: PropTypes.string,
@@ -42,7 +44,7 @@ export default function Main({
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
       {loading ? (
         <Loading />
-      ) : (
+      ) : cards.length ? (
         cards.map((card) => (
           <CardItem
             key={card.id}
@@ -60,6 +62,31 @@ export default function Main({
             onSetAICardModalCardId={onSetAICardModalCardId}
           />
         ))
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            height: '20rem',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <div
+            className={css`
+              font-weight: bold;
+              font-size: 1.7rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.5rem;
+              }
+            `}
+          >
+            {aiCardModalType === 'want'
+              ? `${partnerName} does not own any`
+              : `You don't own any`}{' '}
+            cards
+          </div>
+        </div>
       )}
       {loadMoreShown && (
         <LoadMoreButton
