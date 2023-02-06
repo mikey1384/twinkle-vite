@@ -222,6 +222,7 @@ export function addEmoji(string) {
     ':spiderweb:': '🕸',
     ':squared:': '²',
     ':squid:': '🦑',
+    ':squint:': '😆',
     ':squinting:': '😆',
     ':star:': '⭐',
     ':starstruck:': '🤩',
