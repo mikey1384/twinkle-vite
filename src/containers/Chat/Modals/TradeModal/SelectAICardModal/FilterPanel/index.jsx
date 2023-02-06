@@ -23,7 +23,7 @@ export default function FilterPanel({
         padding: 1rem;
         background: #fff;
         border: 1px solid ${Color.borderGray()};
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
         .label {
           font-family: 'Roboto', sans-serif;
           font-weight: bold;
