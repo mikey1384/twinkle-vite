@@ -122,7 +122,10 @@ export default function Filtered({
               }
             `}
           >
-            There are no cards that match the filter criteria
+            {aiCardModalType === 'want'
+              ? `${partnerName} does not own any`
+              : `You don't own`}{' '}
+            any cards that match the filter criteria
           </div>
         </div>
       )}
