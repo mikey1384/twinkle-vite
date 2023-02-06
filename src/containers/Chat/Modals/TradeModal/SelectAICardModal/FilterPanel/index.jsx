@@ -4,13 +4,13 @@ import QualityFilter from './QualityFilter';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
-SearchPanel.propTypes = {
+FilterPanel.propTypes = {
   filters: PropTypes.object.isRequired,
   onDropdownShown: PropTypes.func.isRequired,
   onSetFilters: PropTypes.func.isRequired
 };
 
-export default function SearchPanel({
+export default function FilterPanel({
   filters,
   onDropdownShown,
   onSetFilters
