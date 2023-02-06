@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import CardItem from '../CardItem';
+import { mobileMaxWidth } from '~/constants/css';
 import { cardLevelHash } from '~/constants/defaultValues';
+import { css } from '@emotion/css';
 
 Selected.propTypes = {
   aiCardModalType: PropTypes.string,
@@ -45,25 +48,59 @@ export default function Selected({
         : card.ownerId === myId;
     });
 
+  const noCardsLabel = useMemo(() => {
+    const filterApplied =
+      (color && color !== 'any') || (quality && quality !== 'any');
+    return (
+      <div
+        className={css`
+          font-weight: bold;
+          font-size: 1.7rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 1.5rem;
+          }
+        `}
+      >
+        {filterApplied
+          ? 'There are no selected cards that match the filter criteria'
+          : `You haven't selected any cards`}
+      </div>
+    );
+  }, [quality, color]);
+
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
-      {cards.map((card) => (
-        <CardItem
-          key={card.id}
-          card={card}
-          selected
-          onSelect={() =>
-            onSetSelectedCardIds((prevIds) => [...prevIds, card.id])
-          }
-          onDeselect={() =>
-            onSetSelectedCardIds((prevIds) =>
-              prevIds.filter((id) => id !== card.id)
-            )
-          }
-          successColor={successColor}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-        />
-      ))}
+      {cards.length ? (
+        cards.map((card) => (
+          <CardItem
+            key={card.id}
+            card={card}
+            selected
+            onSelect={() =>
+              onSetSelectedCardIds((prevIds) => [...prevIds, card.id])
+            }
+            onDeselect={() =>
+              onSetSelectedCardIds((prevIds) =>
+                prevIds.filter((id) => id !== card.id)
+              )
+            }
+            successColor={successColor}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+          />
+        ))
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            height: '20rem',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          {noCardsLabel}
+        </div>
+      )}
     </div>
   );
 }
