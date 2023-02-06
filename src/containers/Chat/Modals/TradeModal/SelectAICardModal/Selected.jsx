@@ -62,7 +62,7 @@ export default function Selected({
         `}
       >
         {filterApplied
-          ? 'There are no selected cards that match the filter criteria'
+          ? 'None of the selected cards match the filter criteria'
           : `You haven't selected any cards`}
       </div>
     );
