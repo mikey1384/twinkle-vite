@@ -131,13 +131,21 @@ export default function SelectAICardModal({
           </nav>
         </FilterBar>
         {isSelectedTab ? (
-          <Selected />
+          <Selected
+            aiCardModalType={aiCardModalType}
+            cardObj={cardObj}
+            cardIds={selectedCardIds}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            onSetSelectedCardIds={setSelectedCardIds}
+            partnerId={partner.id}
+            myId={userId}
+            successColor={successColor}
+          />
         ) : isFiltered ? (
           <Filtered
             aiCardModalType={aiCardModalType}
             cardObj={cardObj}
             color={filters.color}
-            isSelectedTab={isSelectedTab}
             loadFilteredAICards={loadFilteredAICards}
             myId={userId}
             myUsername={username}
@@ -154,7 +162,6 @@ export default function SelectAICardModal({
           <Main
             aiCardModalType={aiCardModalType}
             cards={cards}
-            isSelectedTab={isSelectedTab}
             loading={loading}
             loadFilteredAICards={loadFilteredAICards}
             loadMoreShown={loadMoreShown}
