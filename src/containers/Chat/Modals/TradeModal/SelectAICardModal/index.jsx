@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import SearchPanel from './SearchPanel';
+import FilterPanel from './FilterPanel';
 import Main from './Main';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
@@ -30,7 +30,7 @@ export default function SelectAICardModal({
   const [filters, setFilters] = useState({});
   const [cardIds, setCardIds] = useState(currentlySelectedCardIds);
   const [loading, setLoading] = useState(false);
-  const [searchPanelShown, setSearchPanelShown] = useState(false);
+  const [filterPanelShown, setFilterPanelShown] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState(
     currentlySelectedCardIds
   );
@@ -58,7 +58,7 @@ export default function SelectAICardModal({
         for (let card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
-        setSearchPanelShown(loadMoreShown);
+        setFilterPanelShown(loadMoreShown);
         setLoadMoreShown(loadMoreShown);
         setLoading(false);
       } catch (error) {
@@ -105,8 +105,8 @@ export default function SelectAICardModal({
     <Modal large modalOverModal onHide={onHide}>
       <header>{headerLabel}</header>
       <main>
-        {searchPanelShown && (
-          <SearchPanel
+        {filterPanelShown && (
+          <FilterPanel
             filters={filters}
             onSetFilters={setFilters}
             onDropdownShown={onDropdownShown}
