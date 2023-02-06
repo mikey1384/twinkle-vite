@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import FilterPanel from './FilterPanel';
 import Main from './Main';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import Filtered from './Filtered';
 
 SelectAICardModal.propTypes = {
   aiCardModalType: PropTypes.string.isRequired,
@@ -113,7 +114,7 @@ export default function SelectAICardModal({
           />
         )}
         {isFiltered ? (
-          <div>filtered</div>
+          <Filtered />
         ) : (
           <Main
             aiCardModalType={aiCardModalType}
