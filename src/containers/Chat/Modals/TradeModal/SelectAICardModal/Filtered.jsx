@@ -60,8 +60,8 @@ export default function Filtered({
         const { cards, loadMoreShown } = await loadFilteredAICards({
           filters: {
             owner: aiCardModalType === 'want' ? partnerName : myUsername,
-            ...(color === 'any' ? {} : { color }),
-            ...(quality === 'any' ? {} : { quality })
+            ...(!color || color === 'any' ? {} : { color }),
+            ...(!quality || quality === 'any' ? {} : { quality })
           }
         });
         setCardIds(cards.map((card) => card.id));
@@ -120,8 +120,8 @@ export default function Filtered({
       lastInteraction,
       filters: {
         owner: aiCardModalType === 'want' ? partnerName : myUsername,
-        ...(color === 'any' ? {} : { color }),
-        ...(quality === 'any' ? {} : { quality })
+        ...(!color || color === 'any' ? {} : { color }),
+        ...(!quality || quality === 'any' ? {} : { quality })
       }
     });
     for (let card of newCards) {
