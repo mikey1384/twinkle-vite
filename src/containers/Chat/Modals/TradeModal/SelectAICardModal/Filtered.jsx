@@ -64,7 +64,6 @@ export default function Filtered({
             ...(quality === 'any' ? {} : { quality })
           }
         });
-        console.log(color, quality);
         setCardIds(cards.map((card) => card.id));
         for (let card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
@@ -81,7 +80,7 @@ export default function Filtered({
   }, [color, quality]);
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
       {loading ? (
         <Loading />
       ) : (
@@ -120,10 +119,10 @@ export default function Filtered({
     const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
       lastInteraction,
       filters: {
-        owner: aiCardModalType === 'want' ? partnerName : myUsername
-      },
-      color,
-      quality
+        owner: aiCardModalType === 'want' ? partnerName : myUsername,
+        ...(color === 'any' ? {} : { color }),
+        ...(quality === 'any' ? {} : { quality })
+      }
     });
     for (let card of newCards) {
       onUpdateAICard({ cardId: card.id, newState: card });
