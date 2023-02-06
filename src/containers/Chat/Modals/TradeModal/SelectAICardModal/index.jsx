@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import FilterPanel from './FilterPanel';
+import FilterBar from '~/components/FilterBar';
 import Main from './Main';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import Filtered from './Filtered';
@@ -28,6 +29,7 @@ export default function SelectAICardModal({
 }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const [isSelectedTab, setIsSelectedTab] = useState(false);
   const [filters, setFilters] = useState({});
   const [cardIds, setCardIds] = useState(currentlySelectedCardIds);
   const [loading, setLoading] = useState(false);
@@ -109,6 +111,24 @@ export default function SelectAICardModal({
             onDropdownShown={onDropdownShown}
           />
         )}
+        <FilterBar style={{ marginBottom: '2rem' }}>
+          <nav
+            className={isSelectedTab ? '' : 'active'}
+            onClick={() => {
+              setIsSelectedTab(false);
+            }}
+          >
+            All
+          </nav>
+          <nav
+            className={isSelectedTab ? 'active' : ''}
+            onClick={() => {
+              setIsSelectedTab(true);
+            }}
+          >
+            Selected
+          </nav>
+        </FilterBar>
         {isFiltered ? (
           <Filtered
             aiCardModalType={aiCardModalType}
