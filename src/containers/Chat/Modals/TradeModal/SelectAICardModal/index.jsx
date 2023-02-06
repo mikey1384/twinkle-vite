@@ -5,8 +5,9 @@ import Button from '~/components/Button';
 import FilterPanel from './FilterPanel';
 import FilterBar from '~/components/FilterBar';
 import Main from './Main';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import Filtered from './Filtered';
+import Selected from './Selected';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 SelectAICardModal.propTypes = {
   aiCardModalType: PropTypes.string.isRequired,
@@ -129,11 +130,14 @@ export default function SelectAICardModal({
             Selected
           </nav>
         </FilterBar>
-        {isFiltered ? (
+        {isSelectedTab ? (
+          <Selected />
+        ) : isFiltered ? (
           <Filtered
             aiCardModalType={aiCardModalType}
             cardObj={cardObj}
             color={filters.color}
+            isSelectedTab={isSelectedTab}
             loadFilteredAICards={loadFilteredAICards}
             myId={userId}
             myUsername={username}
@@ -150,6 +154,7 @@ export default function SelectAICardModal({
           <Main
             aiCardModalType={aiCardModalType}
             cards={cards}
+            isSelectedTab={isSelectedTab}
             loading={loading}
             loadFilteredAICards={loadFilteredAICards}
             loadMoreShown={loadMoreShown}
