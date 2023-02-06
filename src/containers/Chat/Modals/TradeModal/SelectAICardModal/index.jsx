@@ -83,6 +83,13 @@ export default function SelectAICardModal({
     }
   }, [aiCardModalType, partner.username]);
 
+  const isFiltered = useMemo(() => {
+    return (
+      (filters?.color || filters?.quality) &&
+      !(filters?.color === 'any' && filters?.quality === 'any')
+    );
+  }, [filters?.color, filters?.quality]);
+
   const cards = cardIds
     .map((cardId) => cardObj[cardId])
     .filter(
@@ -105,22 +112,26 @@ export default function SelectAICardModal({
             onDropdownShown={onDropdownShown}
           />
         )}
-        <Main
-          aiCardModalType={aiCardModalType}
-          cards={cards}
-          loading={loading}
-          loadFilteredAICards={loadFilteredAICards}
-          loadMoreShown={loadMoreShown}
-          myUsername={username}
-          onSetCardIds={setCardIds}
-          onSetLoadMoreShown={setLoadMoreShown}
-          onSetSelectedCardIds={setSelectedCardIds}
-          onUpdateAICard={onUpdateAICard}
-          partnerName={partner.username}
-          selectedCardIds={selectedCardIds}
-          successColor={successColor}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-        />
+        {isFiltered ? (
+          <div>filtered</div>
+        ) : (
+          <Main
+            aiCardModalType={aiCardModalType}
+            cards={cards}
+            loading={loading}
+            loadFilteredAICards={loadFilteredAICards}
+            loadMoreShown={loadMoreShown}
+            myUsername={username}
+            onSetCardIds={setCardIds}
+            onSetLoadMoreShown={setLoadMoreShown}
+            onSetSelectedCardIds={setSelectedCardIds}
+            onUpdateAICard={onUpdateAICard}
+            partnerName={partner.username}
+            selectedCardIds={selectedCardIds}
+            successColor={successColor}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+          />
+        )}
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
