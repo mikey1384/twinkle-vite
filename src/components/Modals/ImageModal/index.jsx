@@ -33,6 +33,7 @@ export default function ImageModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const [submitting, setSubmitting] = useState(false);
   const [editedCaption, setEditedCaption] = useState(caption || '');
   const [isEditing, setIsEditing] = useState(false);
   return (
@@ -65,12 +66,15 @@ export default function ImageModal({
             Download
           </Button>
         )}
-        {hasCaption && !stringIsEmpty(caption) && userIsUploader && !isEditing && (
-          <Button transparent onClick={() => setIsEditing(true)}>
-            <Icon icon="pencil-alt" />
-            <span style={{ marginLeft: '0.7rem' }}>Edit Caption</span>
-          </Button>
-        )}
+        {hasCaption &&
+          !stringIsEmpty(caption) &&
+          userIsUploader &&
+          !isEditing && (
+            <Button transparent onClick={() => setIsEditing(true)}>
+              <Icon icon="pencil-alt" />
+              <span style={{ marginLeft: '0.7rem' }}>Edit Caption</span>
+            </Button>
+          )}
         {hasCaption && isEditing && (
           <Button
             transparent
@@ -88,8 +92,11 @@ export default function ImageModal({
             <Button
               style={{ marginLeft: '1rem' }}
               color="green"
+              loading={submitting}
               onClick={async () => {
+                setSubmitting(true);
                 await onEditCaption(finalizeEmoji(editedCaption));
+                setSubmitting(false);
                 setIsEditing(false);
               }}
             >
