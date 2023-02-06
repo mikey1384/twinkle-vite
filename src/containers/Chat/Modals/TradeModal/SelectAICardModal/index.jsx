@@ -2,10 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import CardItem from './CardItem';
-import Loading from '~/components/Loading';
 import SearchPanel from './SearchPanel';
-import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import Main from './Main';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 SelectAICardModal.propTypes = {
@@ -32,7 +30,6 @@ export default function SelectAICardModal({
   const [filters, setFilters] = useState({});
   const [cardIds, setCardIds] = useState(currentlySelectedCardIds);
   const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [searchPanelShown, setSearchPanelShown] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState(
     currentlySelectedCardIds
@@ -108,37 +105,22 @@ export default function SelectAICardModal({
             onDropdownShown={onDropdownShown}
           />
         )}
-        <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
-          {loading ? (
-            <Loading />
-          ) : (
-            cards.map((card) => (
-              <CardItem
-                key={card.id}
-                card={card}
-                selected={selectedCardIds.includes(card.id)}
-                onSelect={() =>
-                  setSelectedCardIds((prevIds) => [...prevIds, card.id])
-                }
-                onDeselect={() =>
-                  setSelectedCardIds((prevIds) =>
-                    prevIds.filter((id) => id !== card.id)
-                  )
-                }
-                successColor={successColor}
-                onSetAICardModalCardId={onSetAICardModalCardId}
-              />
-            ))
-          )}
-          {loadMoreShown && (
-            <LoadMoreButton
-              style={{ marginTop: '1.5em' }}
-              loading={loadingMore}
-              filled
-              onClick={handleLoadMore}
-            />
-          )}
-        </div>
+        <Main
+          aiCardModalType={aiCardModalType}
+          cards={cards}
+          loading={loading}
+          loadFilteredAICards={loadFilteredAICards}
+          loadMoreShown={loadMoreShown}
+          myUsername={username}
+          onSetCardIds={setCardIds}
+          onSetLoadMoreShown={setLoadMoreShown}
+          onSetSelectedCardIds={setSelectedCardIds}
+          onUpdateAICard={onUpdateAICard}
+          partnerName={partner.username}
+          selectedCardIds={selectedCardIds}
+          successColor={successColor}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+        />
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
@@ -156,24 +138,4 @@ export default function SelectAICardModal({
       </footer>
     </Modal>
   );
-
-  async function handleLoadMore() {
-    const lastInteraction = cards[cards.length - 1]?.lastInteraction;
-    setLoadingMore(true);
-    const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
-      lastInteraction,
-      filters: {
-        owner: aiCardModalType === 'want' ? partner.username : username
-      }
-    });
-    for (let card of newCards) {
-      onUpdateAICard({ cardId: card.id, newState: card });
-    }
-    setCardIds((prevCardIds) => [
-      ...prevCardIds,
-      ...newCards.map((card) => card.id)
-    ]);
-    setLoadMoreShown(loadMoreShown);
-    setLoadingMore(false);
-  }
 }
