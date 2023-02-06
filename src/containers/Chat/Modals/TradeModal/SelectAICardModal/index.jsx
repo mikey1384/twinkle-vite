@@ -138,6 +138,8 @@ export default function SelectAICardModal({
             onSetAICardModalCardId={onSetAICardModalCardId}
             onSetSelectedCardIds={setSelectedCardIds}
             partnerId={partner.id}
+            color={filters.color}
+            quality={filters.quality}
             myId={userId}
             successColor={successColor}
           />
