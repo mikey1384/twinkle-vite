@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import CardItem from '../CardItem';
+import CardItem from './CardItem';
 import { mobileMaxWidth } from '~/constants/css';
 import { cardLevelHash } from '~/constants/defaultValues';
 import { css } from '@emotion/css';

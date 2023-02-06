@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import CardItem from './CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import { mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 
 Filtered.propTypes = {
   aiCardModalType: PropTypes.string,
@@ -83,7 +85,7 @@ export default function Filtered({
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
       {loading ? (
         <Loading />
-      ) : (
+      ) : cards.length ? (
         cards.map((card) => (
           <CardItem
             key={card.id}
@@ -101,6 +103,28 @@ export default function Filtered({
             onSetAICardModalCardId={onSetAICardModalCardId}
           />
         ))
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            height: '20rem',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <div
+            className={css`
+              font-weight: bold;
+              font-size: 1.7rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.5rem;
+              }
+            `}
+          >
+            There are no cards that match the filter criteria
+          </div>
+        </div>
       )}
       {loadMoreShown && (
         <LoadMoreButton
