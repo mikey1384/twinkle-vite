@@ -39,26 +39,6 @@ export default function ConfirmTradeModal({
   const [submitting, setSubmitting] = useState(false);
   const coinOffered = coinAmountObj.offer;
   const coinWanted = coinAmountObj.want;
-  const title = useMemo(() => {
-    const coinToSend = coinAmountObj.offer;
-    if (selectedOption === 'want') {
-      if (!coinOffered && !offeredCardIds.length) return 'Express Interest';
-      return 'Propose Trade';
-    }
-    return `${selectedOption === 'offer' ? 'Show' : 'Send'}${
-      coinToSend === 0
-        ? ''
-        : ` ${coinToSend} coin${coinToSend === 1 ? '' : 's'} ${
-            offeredCardIds.length === 0 ? '' : 'and'
-          }`
-    }${
-      offeredCardIds.length === 0
-        ? ''
-        : ` ${offeredCardIds.length} card${
-            offeredCardIds.length === 1 ? '' : 's'
-          }`
-    }`;
-  }, [coinAmountObj.offer, coinOffered, offeredCardIds.length, selectedOption]);
   const effectiveCoinOffered = useMemo(() => {
     if (selectedOption === 'want') {
       return Math.max(coinOffered - coinWanted, 0);
@@ -72,6 +52,47 @@ export default function ConfirmTradeModal({
     }
     return coinWanted;
   }, [coinOffered, coinWanted, selectedOption]);
+
+  const title = useMemo(() => {
+    if (selectedOption === 'want') {
+      if (!effectiveCoinOffered && !offeredCardIds.length)
+        return 'Express Interest';
+      if (!effectiveCoinWanted && !wantedCardIds.length)
+        return `Show${
+          effectiveCoinOffered === 0
+            ? ''
+            : ` ${effectiveCoinOffered} coin${
+                effectiveCoinOffered === 1 ? '' : 's'
+              } ${offeredCardIds.length === 0 ? '' : 'and'}`
+        }${
+          offeredCardIds.length === 0
+            ? ''
+            : ` ${offeredCardIds.length} card${
+                offeredCardIds.length === 1 ? '' : 's'
+              }`
+        }`;
+      return 'Propose Trade';
+    }
+    return `${selectedOption === 'offer' ? 'Show' : 'Send'}${
+      effectiveCoinOffered === 0
+        ? ''
+        : ` ${effectiveCoinOffered} coin${
+            effectiveCoinOffered === 1 ? '' : 's'
+          } ${offeredCardIds.length === 0 ? '' : 'and'}`
+    }${
+      offeredCardIds.length === 0
+        ? ''
+        : ` ${offeredCardIds.length} card${
+            offeredCardIds.length === 1 ? '' : 's'
+          }`
+    }`;
+  }, [
+    effectiveCoinOffered,
+    effectiveCoinWanted,
+    offeredCardIds.length,
+    selectedOption,
+    wantedCardIds.length
+  ]);
 
   return (
     <Modal modalOverModal onHide={onHide}>
