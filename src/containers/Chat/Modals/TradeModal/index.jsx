@@ -70,10 +70,7 @@ export default function TradeModal({
   }, [cardObj, myId, selectedCardIdsObj.offer]);
   const doneButtonDisabled = useMemo(() => {
     if (selectedOption === 'want') {
-      return (
-        (!coinAmountObj.want && !validSelectedWantCardIds.length) ||
-        (!coinAmountObj.offer && !validSelectedOfferCardIds.length)
-      );
+      return !coinAmountObj.want && !validSelectedWantCardIds.length;
     }
     return !coinAmountObj.offer && !validSelectedOfferCardIds.length;
   }, [
@@ -93,6 +90,13 @@ export default function TradeModal({
     }
     return 'Trade';
   }, [selectedOption]);
+
+  const offerMenuShown = useMemo(() => {
+    if (selectedOption === 'offer') {
+      return true;
+    }
+    return coinAmountObj.want || validSelectedWantCardIds.length;
+  }, [coinAmountObj.want, selectedOption, validSelectedWantCardIds.length]);
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/TradeModal">
@@ -135,7 +139,7 @@ export default function TradeModal({
                 partnerId={partner.id}
               />
             ) : null}
-            {!!selectedOption && (
+            {!!offerMenuShown && (
               <MyOffer
                 coinAmount={coinAmountObj.offer}
                 selectedCardIds={selectedCardIdsObj.offer}
