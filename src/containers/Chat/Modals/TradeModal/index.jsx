@@ -92,7 +92,7 @@ export default function TradeModal({
   }, [selectedOption]);
 
   const offerMenuShown = useMemo(() => {
-    if (selectedOption === 'offer') {
+    if (selectedOption === 'offer' || selectedOption === 'send') {
       return true;
     }
     return coinAmountObj.want || validSelectedWantCardIds.length;
