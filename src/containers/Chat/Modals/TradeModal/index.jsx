@@ -202,8 +202,8 @@ export default function TradeModal({
             isAICardModalShown={isAICardModalShown}
             onConfirm={handleConfirm}
             coinAmountObj={coinAmountObj}
-            offeredCardIds={validSelectedWantCardIds}
-            wantedCardIds={validSelectedOfferCardIds}
+            offeredCardIds={validSelectedOfferCardIds}
+            wantedCardIds={validSelectedWantCardIds}
             selectedOption={selectedOption}
             onSetAICardModalCardId={onSetAICardModalCardId}
             partner={partner}
@@ -213,7 +213,12 @@ export default function TradeModal({
     </ErrorBoundary>
   );
 
-  async function handleConfirm() {
-    console.log('confirm');
+  async function handleConfirm({
+    coinsWanted,
+    coinsOffered,
+    offeredCardIds,
+    wantedCardIds
+  }) {
+    console.log(coinsWanted, coinsOffered, offeredCardIds, wantedCardIds);
   }
 }

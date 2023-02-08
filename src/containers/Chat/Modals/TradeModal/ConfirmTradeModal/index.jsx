@@ -14,7 +14,6 @@ ConfirmTradeModal.propTypes = {
   onHide: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
   selectedOption: PropTypes.string.isRequired,
-  selectedCardIdsObj: PropTypes.object.isRequired,
   coinAmountObj: PropTypes.object.isRequired,
   offeredCardIds: PropTypes.array.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
@@ -27,7 +26,6 @@ export default function ConfirmTradeModal({
   onHide,
   onConfirm,
   selectedOption,
-  selectedCardIdsObj,
   coinAmountObj,
   onSetAICardModalCardId,
   offeredCardIds,
@@ -43,7 +41,6 @@ export default function ConfirmTradeModal({
   const coinWanted = coinAmountObj.want;
   const title = useMemo(() => {
     const coinToSend = coinAmountObj.offer;
-    const cardIdsToSend = selectedCardIdsObj.offer;
     if (selectedOption === 'want') {
       return 'Propose Trade';
     }
@@ -51,16 +48,16 @@ export default function ConfirmTradeModal({
       coinToSend === 0
         ? ''
         : ` ${coinToSend} coin${coinToSend === 1 ? '' : 's'} ${
-            cardIdsToSend.length === 0 ? '' : 'and'
+            offeredCardIds.length === 0 ? '' : 'and'
           }`
     }${
-      cardIdsToSend.length === 0
+      offeredCardIds.length === 0
         ? ''
-        : ` ${cardIdsToSend.length} card${
-            cardIdsToSend.length === 1 ? '' : 's'
+        : ` ${offeredCardIds.length} card${
+            offeredCardIds.length === 1 ? '' : 's'
           }`
     }`;
-  }, [coinAmountObj.offer, selectedCardIdsObj.offer, selectedOption]);
+  }, [coinAmountObj.offer, offeredCardIds.length, selectedOption]);
   const effectiveCoinOffered = useMemo(() => {
     if (selectedOption === 'want') {
       return Math.max(coinOffered - coinWanted, 0);
@@ -103,6 +100,11 @@ export default function ConfirmTradeModal({
 
   function handleConfirm() {
     setSubmitting(true);
-    onConfirm();
+    onConfirm({
+      coinsWanted: effectiveCoinWanted,
+      coinsOffered: effectiveCoinOffered,
+      offeredCardIds,
+      wantedCardIds
+    });
   }
 }
