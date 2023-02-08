@@ -4,7 +4,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import Details from './Details';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
 
 const cancelLabel = localize('cancel');
 const confirmLabel = localize('confirm');
@@ -16,8 +16,10 @@ ConfirmTradeModal.propTypes = {
   selectedOption: PropTypes.string.isRequired,
   selectedCardIdsObj: PropTypes.object.isRequired,
   coinAmountObj: PropTypes.object.isRequired,
+  offeredCardIds: PropTypes.array.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
-  partner: PropTypes.object.isRequired
+  partner: PropTypes.object.isRequired,
+  wantedCardIds: PropTypes.array.isRequired
 };
 
 export default function ConfirmTradeModal({
@@ -28,6 +30,8 @@ export default function ConfirmTradeModal({
   selectedCardIdsObj,
   coinAmountObj,
   onSetAICardModalCardId,
+  offeredCardIds,
+  wantedCardIds,
   partner
 }) {
   const {
@@ -37,8 +41,6 @@ export default function ConfirmTradeModal({
   const [submitting, setSubmitting] = useState(false);
   const coinOffered = coinAmountObj.offer;
   const coinWanted = coinAmountObj.want;
-  const offeredCardIds = selectedCardIdsObj.offer;
-  const wantedCardIds = selectedCardIdsObj.want;
   const title = useMemo(() => {
     const coinToSend = coinAmountObj.offer;
     const cardIdsToSend = selectedCardIdsObj.offer;
@@ -59,8 +61,6 @@ export default function ConfirmTradeModal({
           }`
     }`;
   }, [coinAmountObj.offer, selectedCardIdsObj.offer, selectedOption]);
-  const { userId } = useKeyContext((v) => v.myState);
-  const cardObj = useChatContext((v) => v.state.cardObj);
   const effectiveCoinOffered = useMemo(() => {
     if (selectedOption === 'want') {
       return Math.max(coinOffered - coinWanted, 0);
@@ -74,22 +74,6 @@ export default function ConfirmTradeModal({
     }
     return coinWanted;
   }, [coinOffered, coinWanted, selectedOption]);
-  const validOfferedCardIds = useMemo(() => {
-    return offeredCardIds.filter(
-      (cardId) =>
-        cardObj[cardId] &&
-        !cardObj[cardId].isBurned &&
-        cardObj[cardId].ownerId === userId
-    );
-  }, [offeredCardIds, cardObj, userId]);
-  const validWantedCardIds = useMemo(() => {
-    return wantedCardIds.filter(
-      (cardId) =>
-        cardObj[cardId] &&
-        !cardObj[cardId].isBurned &&
-        cardObj[cardId].ownerId === partner.id
-    );
-  }, [wantedCardIds, cardObj, partner.id]);
 
   return (
     <Modal modalOverModal onHide={onHide}>
@@ -98,8 +82,8 @@ export default function ConfirmTradeModal({
         <Details
           coinsOffered={effectiveCoinOffered}
           coinsWanted={effectiveCoinWanted}
-          cardIdsOffered={validOfferedCardIds}
-          cardIdsWanted={validWantedCardIds}
+          cardIdsOffered={offeredCardIds}
+          cardIdsWanted={wantedCardIds}
           isAICardModalShown={isAICardModalShown}
           selectedOption={selectedOption}
           partner={partner}
