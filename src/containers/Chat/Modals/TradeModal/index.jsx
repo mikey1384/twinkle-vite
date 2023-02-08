@@ -202,7 +202,8 @@ export default function TradeModal({
             isAICardModalShown={isAICardModalShown}
             onConfirm={handleConfirm}
             coinAmountObj={coinAmountObj}
-            selectedCardIdsObj={selectedCardIdsObj}
+            offeredCardIds={validSelectedWantCardIds}
+            wantedCardIds={validSelectedOfferCardIds}
             selectedOption={selectedOption}
             onSetAICardModalCardId={onSetAICardModalCardId}
             partner={partner}
