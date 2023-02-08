@@ -8,7 +8,7 @@ import Options from './Options';
 import SelectAICardModal from './SelectAICardModal';
 import ConfirmTradeModal from './ConfirmTradeModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useKeyContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 
 TradeModal.propTypes = {
   isAICardModalShown: PropTypes.bool.isRequired,
@@ -23,9 +23,11 @@ export default function TradeModal({
   onSetAICardModalCardId,
   partner
 }) {
+  const { userId: myId } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const cardObj = useChatContext((v) => v.state.cardObj);
   const [dropdownShown, setDropdownShown] = useState(false);
   const [aiCardModalType, setAICardModalType] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
@@ -47,20 +49,36 @@ export default function TradeModal({
     }
     return 'Show';
   }, [selectedOption]);
+  const validSelectedWantCardIds = useMemo(() => {
+    return selectedCardIdsObj.want.filter(
+      (cardId) =>
+        cardObj[cardId] &&
+        !cardObj[cardId].isBurned &&
+        cardObj[cardId].ownerId === partner.id
+    );
+  }, [cardObj, partner.id, selectedCardIdsObj.want]);
+  const validSelectedOfferCardIds = useMemo(() => {
+    return selectedCardIdsObj.offer.filter(
+      (cardId) =>
+        cardObj[cardId] &&
+        !cardObj[cardId].isBurned &&
+        cardObj[cardId].ownerId === myId
+    );
+  }, [cardObj, myId, selectedCardIdsObj.offer]);
   const doneButtonDisabled = useMemo(() => {
     if (selectedOption === 'want') {
       return (
-        (!coinAmountObj.want && !selectedCardIdsObj.want.length) ||
-        (!coinAmountObj.offer && !selectedCardIdsObj.offer.length)
+        (!coinAmountObj.want && !validSelectedWantCardIds.length) ||
+        (!coinAmountObj.offer && !validSelectedOfferCardIds.length)
       );
     }
-    return !coinAmountObj.offer && !selectedCardIdsObj.offer.length;
+    return !coinAmountObj.offer && !validSelectedOfferCardIds.length;
   }, [
     coinAmountObj.offer,
     coinAmountObj.want,
-    selectedCardIdsObj.offer.length,
-    selectedCardIdsObj.want.length,
-    selectedOption
+    selectedOption,
+    validSelectedOfferCardIds.length,
+    validSelectedWantCardIds.length
   ]);
 
   const title = useMemo(() => {
