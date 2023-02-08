@@ -227,6 +227,7 @@ export default function TradeModal({
     wantedCardIds
   }) {
     const data = await postTradeRequest({
+      type: selectedOption,
       wanted: {
         coins: coinsWanted,
         cardIds: wantedCardIds
