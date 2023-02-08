@@ -7,6 +7,7 @@ import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 
 OfferDetail.propTypes = {
   isAICardModalShown: PropTypes.bool,
+  isShowing: PropTypes.bool,
   selectedOption: PropTypes.string.isRequired,
   cardIds: PropTypes.array.isRequired,
   coins: PropTypes.number.isRequired,
@@ -16,6 +17,7 @@ OfferDetail.propTypes = {
 
 export default function OfferDetail({
   isAICardModalShown,
+  isShowing,
   selectedOption,
   cardIds,
   coins,
@@ -24,22 +26,29 @@ export default function OfferDetail({
 }) {
   const actionLabel = useMemo(() => {
     if (selectedOption === 'want') {
-      return 'Offer';
+      if (isShowing) {
+        return 'Show';
+      } else {
+        return 'Offer';
+      }
     }
     if (selectedOption === 'offer') {
       return 'Show';
     }
     return 'Send';
-  }, [selectedOption]);
+  }, [isShowing, selectedOption]);
   const backgroundColor = useMemo(() => {
     if (selectedOption === 'want') {
+      if (isShowing) {
+        return Color.pink();
+      }
       return 'transparent';
     }
     if (selectedOption === 'offer') {
       return Color.pink();
     }
     return Color.green();
-  }, [selectedOption]);
+  }, [isShowing, selectedOption]);
 
   return (
     <div
@@ -53,7 +62,7 @@ export default function OfferDetail({
     >
       <div
         style={{
-          color: selectedOption === 'want' ? '#000' : '#fff',
+          color: selectedOption === 'want' && !isShowing ? '#000' : '#fff',
           borderTopLeftRadius: innerBorderRadius,
           borderTopRightRadius: innerBorderRadius,
           display: 'flex',

@@ -25,27 +25,30 @@ export default function Details({
 }) {
   return (
     <div>
-      {selectedOption === 'want' && (
-        <WantDetail
+      {selectedOption === 'want' &&
+        (!!cardIdsWanted.length || !!coinsWanted) && (
+          <WantDetail
+            isAICardModalShown={isAICardModalShown}
+            isExpressingInterest={!cardIdsOffered.length && !coinsOffered}
+            cardIds={cardIdsWanted}
+            coins={coinsWanted}
+            partner={partner}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+          />
+        )}
+      {(selectedOption !== 'want' ||
+        !!cardIdsOffered.length ||
+        !!coinsOffered) && (
+        <OfferDetail
           isAICardModalShown={isAICardModalShown}
-          isExpressingInterest={!cardIdsOffered.length && !coinsOffered}
-          cardIds={cardIdsWanted}
-          coins={coinsWanted}
+          isShowing={!cardIdsWanted.length && !coinsWanted}
+          selectedOption={selectedOption}
+          cardIds={cardIdsOffered}
+          coins={coinsOffered}
           partner={partner}
           onSetAICardModalCardId={onSetAICardModalCardId}
         />
       )}
-      {selectedOption !== 'want' ||
-        ((!!cardIdsOffered.length || !!coinsOffered) && (
-          <OfferDetail
-            isAICardModalShown={isAICardModalShown}
-            selectedOption={selectedOption}
-            cardIds={cardIdsOffered}
-            coins={coinsOffered}
-            partner={partner}
-            onSetAICardModalCardId={onSetAICardModalCardId}
-          />
-        ))}
       <div
         style={{
           width: '100%',
