@@ -58,7 +58,7 @@ export default function ConfirmTradeModal({
             offeredCardIds.length === 1 ? '' : 's'
           }`
     }`;
-  }, [coinAmountObj.offer, offeredCardIds.length, selectedOption]);
+  }, [coinAmountObj.offer, coinOffered, offeredCardIds.length, selectedOption]);
   const effectiveCoinOffered = useMemo(() => {
     if (selectedOption === 'want') {
       return Math.max(coinOffered - coinWanted, 0);
