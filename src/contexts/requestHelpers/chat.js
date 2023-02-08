@@ -771,11 +771,11 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async postTradeRequest({ cardId, cardName, cardImageUrl }) {
+    async postTradeRequest({ wanted, offered }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/trade`,
-          { cardId, cardName, cardImageUrl },
+          { wanted, offered },
           auth()
         );
         return Promise.resolve(data);

@@ -8,7 +8,7 @@ import Options from './Options';
 import SelectAICardModal from './SelectAICardModal';
 import ConfirmTradeModal from './ConfirmTradeModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 TradeModal.propTypes = {
   isAICardModalShown: PropTypes.bool.isRequired,
@@ -27,6 +27,9 @@ export default function TradeModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const postTradeRequest = useAppContext(
+    (v) => v.requestHelpers.postTradeRequest
+  );
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [dropdownShown, setDropdownShown] = useState(false);
   const [aiCardModalType, setAICardModalType] = useState(null);
@@ -219,6 +222,16 @@ export default function TradeModal({
     offeredCardIds,
     wantedCardIds
   }) {
-    console.log(coinsWanted, coinsOffered, offeredCardIds, wantedCardIds);
+    const data = await postTradeRequest({
+      wanted: {
+        coins: coinsWanted,
+        cardIds: wantedCardIds
+      },
+      offered: {
+        coins: coinsOffered,
+        cardIds: offeredCardIds
+      }
+    });
+    console.log(data);
   }
 }
