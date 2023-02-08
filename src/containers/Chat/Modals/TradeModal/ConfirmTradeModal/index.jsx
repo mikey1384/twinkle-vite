@@ -42,6 +42,7 @@ export default function ConfirmTradeModal({
   const title = useMemo(() => {
     const coinToSend = coinAmountObj.offer;
     if (selectedOption === 'want') {
+      if (!coinOffered && !offeredCardIds.length) return 'Express Interest';
       return 'Propose Trade';
     }
     return `${selectedOption === 'offer' ? 'Show' : 'Send'}${

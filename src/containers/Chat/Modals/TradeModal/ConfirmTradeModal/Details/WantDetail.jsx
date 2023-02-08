@@ -6,6 +6,7 @@ import { borderRadius, Color } from '~/constants/css';
 
 WantDetail.propTypes = {
   isAICardModalShown: PropTypes.bool,
+  isExpressingInterest: PropTypes.bool,
   cardIds: PropTypes.array.isRequired,
   coins: PropTypes.number.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
@@ -14,6 +15,7 @@ WantDetail.propTypes = {
 
 export default function WantDetail({
   isAICardModalShown,
+  isExpressingInterest,
   cardIds,
   coins,
   onSetAICardModalCardId,
@@ -39,7 +41,7 @@ export default function WantDetail({
           fontWeight: 'bold'
         }}
       >
-        In exchange for...
+        {isExpressingInterest ? 'Express interest in...' : 'In exchange for...'}
       </div>
       <div
         style={{
