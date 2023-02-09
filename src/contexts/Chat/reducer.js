@@ -146,7 +146,7 @@ export default function ChatReducer(state, action) {
       const prevChannelObj = state.channelsObj[action.channelId];
       const message =
         (action.subchannelId
-          ? prevChannelObj?.subchannelObj[action.subchannelId]?.messagesObj?.[
+          ? prevChannelObj?.subchannelObj?.[action.subchannelId]?.messagesObj?.[
               action.messageId
             ]
           : prevChannelObj?.messagesObj?.[action.messageId]) || {};
