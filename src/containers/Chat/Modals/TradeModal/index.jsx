@@ -235,7 +235,8 @@ export default function TradeModal({
       offered: {
         coins: coinsOffered,
         cardIds: offeredCardIds
-      }
+      },
+      targetId: partner.id
     });
     console.log(data);
   }
