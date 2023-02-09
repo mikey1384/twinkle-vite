@@ -127,6 +127,7 @@ function Message({
     uploaderAuthLevel,
     userId,
     transferDetails,
+    transactionDetails,
     wordleResult,
     isResign
   },
@@ -636,6 +637,15 @@ function Message({
         transferDetails={transferDetails}
         onSetAICardModalCardId={onSetAICardModalCardId}
       />
+    );
+  }
+
+  if (transactionDetails) {
+    return (
+      <div>
+        this is for transaction
+        {(transactionDetails?.id, transactionDetails.offer.coins)}
+      </div>
     );
   }
 
