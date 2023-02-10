@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import CardThumb from '~/components/CardThumb';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -58,42 +59,44 @@ export default function TransferMessage({
         : partner;
     if (isPurchase) {
       return (
-        <div>
-          <UsernameText
-            displayedName={buyer.id === myId ? 'You' : buyer.username}
-            color={Color.black()}
-            user={{
-              id: buyer.id,
-              username: buyer.username
-            }}
-          />{' '}
-          bought{' '}
-          <b
-            style={{
-              color: Color.black()
-            }}
-          >
-            Card #{card.id}
-          </b>{' '}
-          from{' '}
-          <UsernameText
-            displayedName={seller.id === myId ? 'you' : seller.username}
-            color={Color.black()}
-            user={{
-              id: seller.id,
-              username: seller.username
-            }}
-          />{' '}
-          for{' '}
-          <b
-            style={{
-              color: Color.black()
-            }}
-          >
-            {addCommasToNumber(price)}
-          </b>{' '}
-          Twinkle {price === 1 ? 'Coin' : 'Coins'}
-        </div>
+        <ErrorBoundary componentPath="Chat/Message/TransferMessage">
+          <div>
+            <UsernameText
+              displayedName={buyer.id === myId ? 'You' : buyer.username}
+              color={Color.black()}
+              user={{
+                id: buyer.id,
+                username: buyer.username
+              }}
+            />{' '}
+            bought{' '}
+            <b
+              style={{
+                color: Color.black()
+              }}
+            >
+              Card #{card.id}
+            </b>{' '}
+            from{' '}
+            <UsernameText
+              displayedName={seller.id === myId ? 'you' : seller.username}
+              color={Color.black()}
+              user={{
+                id: seller.id,
+                username: seller.username
+              }}
+            />{' '}
+            for{' '}
+            <b
+              style={{
+                color: Color.black()
+              }}
+            >
+              {addCommasToNumber(price)}
+            </b>{' '}
+            Twinkle {price === 1 ? 'Coin' : 'Coins'}
+          </div>
+        </ErrorBoundary>
       );
     }
     if (isSale) {
