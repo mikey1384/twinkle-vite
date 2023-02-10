@@ -1,20 +1,20 @@
 import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import CardThumb from '../../CardThumb';
+import CardThumb from '../containers/Chat/Modals/TradeModal/CardThumb';
 import { isMobile } from '~/helpers';
-import ShowMoreCardsButton from '../../ShowMoreCardsButton';
-import MoreAICardsModal from './MoreAICardsModal';
+import ShowMoreCardsButton from '../containers/Chat/Modals/TradeModal/ShowMoreCardsButton';
+import MoreAICardsModal from '../containers/Chat/Modals/TradeModal/ConfirmTradeModal/Details/MoreAICardsModal';
 import { useChatContext } from '~/contexts';
 
 const deviceIsMobile = isMobile(navigator);
 
-Cards.propTypes = {
+AICardsPreview.propTypes = {
   isAICardModalShown: PropTypes.bool,
   cardIds: PropTypes.array.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired
 };
 
-export default function Cards({
+export default function AICardsPreview({
   isAICardModalShown,
   cardIds,
   onSetAICardModalCardId

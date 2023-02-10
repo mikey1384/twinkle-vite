@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
-import Cards from './Cards';
+import AICardsPreview from '~/components/AICardsPreview';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 
@@ -108,7 +108,7 @@ export default function OfferDetail({
             {!!cardIds.length && <div style={{ padding: '1rem' }}>and</div>}
           </div>
         )}
-        <Cards
+        <AICardsPreview
           isAICardModalShown={isAICardModalShown}
           cardIds={cardIds}
           onSetAICardModalCardId={onSetAICardModalCardId}
