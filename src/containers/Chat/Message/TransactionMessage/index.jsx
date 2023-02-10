@@ -56,7 +56,6 @@ export default function TransactionMessage({
           partner={partner}
           onSetAICardModalCardId={onSetAICardModalCardId}
           fromId={transaction.from}
-          toId={transaction.to}
         />
       )}
       {type === 'show' && (
