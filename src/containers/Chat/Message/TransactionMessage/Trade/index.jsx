@@ -37,22 +37,30 @@ export default function Trade({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        width: '100%'
       }}
     >
-      <OfferPanel
-        from={from}
-        myId={myId}
-        offerCardIds={offerCardIds}
-        offerCoins={offerCoins}
-        onSetAICardModalCardId={onSetAICardModalCardId}
-      />
-      <div>in exchange for</div>
-      <WantPanel
-        wantCardIds={wantCardIds}
-        wantCoins={wantCoins}
-        onSetAICardModalCardId={onSetAICardModalCardId}
-      />
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'space-around'
+        }}
+      >
+        <OfferPanel
+          from={from}
+          myId={myId}
+          offerCardIds={offerCardIds}
+          offerCoins={offerCoins}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+        />
+        <WantPanel
+          wantCardIds={wantCardIds}
+          wantCoins={wantCoins}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+        />
+      </div>
     </div>
   );
 }

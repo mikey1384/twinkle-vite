@@ -14,6 +14,7 @@ export default function WantPanel({
 }) {
   return (
     <div>
+      <div>in exchange for</div>
       {wantCardIds.length ? (
         <div>
           <AICardsPreview
