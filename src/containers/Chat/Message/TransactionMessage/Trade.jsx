@@ -1,13 +1,13 @@
 import PropTypes from 'prop-types';
 
 Trade.propTypes = {
-  wantCards: PropTypes.array.isRequired
+  wantCardIds: PropTypes.array.isRequired
 };
 
-export default function Trade({ wantCards }) {
+export default function Trade({ wantCardIds }) {
   return (
     <div>
-      <div>{wantCards.length}</div>
+      <div>{wantCardIds.length}</div>
     </div>
   );
 }
