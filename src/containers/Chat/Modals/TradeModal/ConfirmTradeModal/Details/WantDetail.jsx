@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
-import Cards from './Cards';
+import AICardsPreview from '~/components/AICardsPreview';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, Color } from '~/constants/css';
 
@@ -76,7 +76,7 @@ export default function WantDetail({
             {!!cardIds.length && <div style={{ padding: '1rem' }}>and</div>}
           </div>
         )}
-        <Cards
+        <AICardsPreview
           isAICardModalShown={isAICardModalShown}
           cardIds={cardIds}
           onSetAICardModalCardId={onSetAICardModalCardId}
