@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import OfferPanel from './OfferPanel';
 import WantPanel from './WantPanel';
+import Heading from './Heading';
 
 Trade.propTypes = {
   myId: PropTypes.number.isRequired,
@@ -29,6 +30,9 @@ export default function Trade({
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
   }, [fromId, myId, myUsername, partner]);
+  const isTrade = useMemo(() => {
+    return !!offerCardIds.length || !!offerCoins;
+  }, [offerCardIds, offerCoins]);
 
   return (
     <div
@@ -41,6 +45,7 @@ export default function Trade({
         width: '100%'
       }}
     >
+      <Heading isTrade={isTrade} from={from} myId={myId} />
       <div
         style={{
           width: '100%',
@@ -48,14 +53,17 @@ export default function Trade({
           justifyContent: 'space-around'
         }}
       >
-        <OfferPanel
-          from={from}
-          myId={myId}
-          offerCardIds={offerCardIds}
-          offerCoins={offerCoins}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-        />
+        {isTrade && (
+          <OfferPanel
+            from={from}
+            myId={myId}
+            offerCardIds={offerCardIds}
+            offerCoins={offerCoins}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+          />
+        )}
         <WantPanel
+          isTrade={isTrade}
           wantCardIds={wantCardIds}
           wantCoins={wantCoins}
           onSetAICardModalCardId={onSetAICardModalCardId}
