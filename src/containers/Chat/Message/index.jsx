@@ -32,6 +32,7 @@ import moment from 'moment';
 import FileAttachment from './FileAttachment';
 import TargetChessPosition from './TargetChessPosition';
 import TransferMessage from './TransferMessage';
+import TransactionMessage from './TransactionMessage';
 import { useInView } from 'react-intersection-observer';
 import { socket } from '~/constants/io';
 import { MessageStyle } from '../Styles';
@@ -641,12 +642,7 @@ function Message({
   }
 
   if (transactionDetails) {
-    return (
-      <div>
-        this is for transaction
-        {(transactionDetails?.id, transactionDetails.offer.coins)}
-      </div>
-    );
+    return <TransactionMessage transaction={transactionDetails} />;
   }
 
   if (!chessState && (gameWinnerId || isDraw || isAbort)) {
