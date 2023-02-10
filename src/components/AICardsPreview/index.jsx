@@ -41,8 +41,8 @@ export default function AICardsPreview({
       {displayedCards.map((card, index) => (
         <div key={card.id} style={{ position: 'relative' }}>
           <CardThumb
-            card={card}
             detailed
+            card={card}
             style={{
               marginLeft: index > 0 ? '1rem' : 0
             }}
