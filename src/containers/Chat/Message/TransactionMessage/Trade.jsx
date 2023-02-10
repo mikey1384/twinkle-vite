@@ -13,7 +13,7 @@ export default function Trade({
   onSetAICardModalCardId
 }) {
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
       <AICardsPreview
         cardIds={wantCardIds}
         onSetAICardModalCardId={onSetAICardModalCardId}

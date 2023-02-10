@@ -3,19 +3,20 @@ import PropTypes from 'prop-types';
 import Trade from './Trade';
 import Show from './Show';
 import Send from './Send';
-import { useChatContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 
 TransactionMessage.propTypes = {
   onSetAICardModalCardId: PropTypes.func.isRequired,
-  partnerId: PropTypes.number.isRequired,
+  partner: PropTypes.object.isRequired,
   transaction: PropTypes.object.isRequired
 };
 
 export default function TransactionMessage({
   onSetAICardModalCardId,
   transaction,
-  partnerId
+  partner
 }) {
+  const { userId, username } = useKeyContext((v) => v.myState);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const { type, want = {}, offer = {} } = transaction;
@@ -46,19 +47,33 @@ export default function TransactionMessage({
     <div>
       {type === 'trade' && (
         <Trade
+          myId={userId}
+          myUsername={username}
           wantCardIds={wantCardIds}
           wantCoins={wantCoins}
           offerCardIds={offerCardIds}
           offerCoins={offerCoins}
-          partnerId={partnerId}
+          partner={partner}
           onSetAICardModalCardId={onSetAICardModalCardId}
         />
       )}
       {type === 'show' && (
-        <Show cardIds={offerCardIds} offerCoins={offerCoins} />
+        <Show
+          myId={userId}
+          myUsername={username}
+          partner={partner}
+          cardIds={offerCardIds}
+          offerCoins={offerCoins}
+        />
       )}
       {type === 'send' && (
-        <Send cardIds={offerCardIds} offerCoins={offerCoins} />
+        <Send
+          myId={userId}
+          myUsername={username}
+          partner={partner}
+          cardIds={offerCardIds}
+          offerCoins={offerCoins}
+        />
       )}
     </div>
   );

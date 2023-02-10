@@ -644,7 +644,7 @@ function Message({
   if (transactionDetails) {
     return (
       <TransactionMessage
-        partnerId={partner.id}
+        partner={partner}
         onSetAICardModalCardId={onSetAICardModalCardId}
         transaction={transactionDetails}
       />
