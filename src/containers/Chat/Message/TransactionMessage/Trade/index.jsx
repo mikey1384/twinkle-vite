@@ -45,7 +45,12 @@ export default function Trade({
         width: '100%'
       }}
     >
-      <Heading isTrade={isTrade} from={from} myId={myId} />
+      <Heading
+        isTrade={isTrade}
+        from={from}
+        myId={myId}
+        isWantingCoin={!!wantCoins}
+      />
       <div
         style={{
           width: '100%',

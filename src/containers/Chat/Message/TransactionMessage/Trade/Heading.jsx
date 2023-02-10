@@ -5,10 +5,11 @@ import { Color } from '~/constants/css';
 Heading.propTypes = {
   isTrade: PropTypes.bool.isRequired,
   from: PropTypes.object.isRequired,
-  myId: PropTypes.number.isRequired
+  myId: PropTypes.number.isRequired,
+  isWantingCoin: PropTypes.bool
 };
 
-export default function Heading({ isTrade, from, myId }) {
+export default function Heading({ isTrade, from, myId, isWantingCoin }) {
   return (
     <div>
       <UsernameText
@@ -19,8 +20,11 @@ export default function Heading({ isTrade, from, myId }) {
           username: from.username
         }}
       />{' '}
-      {isTrade ? 'wants to trade' : `want${from.id === myId ? '' : 's'}`}
-      <div></div>
+      {isTrade
+        ? 'wants to trade'
+        : isWantingCoin
+        ? `want${from.id === myId ? '' : 's'}`
+        : 'is interested in'}
     </div>
   );
 }
