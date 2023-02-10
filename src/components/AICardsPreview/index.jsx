@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import CardThumb from '../containers/Chat/Modals/TradeModal/CardThumb';
+import CardThumb from '../../containers/Chat/Modals/TradeModal/CardThumb';
 import { isMobile } from '~/helpers';
-import ShowMoreCardsButton from '../containers/Chat/Modals/TradeModal/ShowMoreCardsButton';
-import MoreAICardsModal from '../containers/Chat/Modals/TradeModal/ConfirmTradeModal/Details/MoreAICardsModal';
+import ShowMoreCardsButton from '~/components/ShowMoreCardsButton';
+import MoreAICardsModal from './MoreAICardsModal';
 import { useChatContext } from '~/contexts';
 
 const deviceIsMobile = isMobile(navigator);

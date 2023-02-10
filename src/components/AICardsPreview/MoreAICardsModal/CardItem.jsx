@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import CardThumb from '../../../CardThumb';
+import CardThumb from '../../../containers/Chat/Modals/TradeModal/CardThumb';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 

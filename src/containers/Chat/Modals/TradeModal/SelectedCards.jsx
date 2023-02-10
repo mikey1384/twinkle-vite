@@ -4,7 +4,7 @@ import CardThumb from './CardThumb';
 import CloseButton from '~/components/Buttons/CloseButton';
 import { isMobile } from '~/helpers';
 import { useChatContext, useKeyContext } from '~/contexts';
-import ShowMoreCardsButton from './ShowMoreCardsButton';
+import ShowMoreCardsButton from '~/components/ShowMoreCardsButton';
 
 const deviceIsMobile = isMobile(navigator);
 
