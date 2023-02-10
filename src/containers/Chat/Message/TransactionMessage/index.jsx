@@ -15,6 +15,8 @@ export default function TransactionMessage({ transaction }) {
   const { type, want = {}, offer = {} } = transaction;
   const { cards: wantCards = [], coins: wantCoins = 0 } = want || {};
   const { cards: offerCards = [], coins: offerCoins = 0 } = offer || {};
+  const wantCardIds = wantCards.map((card) => card.id);
+  const offerCardIds = offerCards.map((card) => card.id);
 
   useEffect(() => {
     if (wantCards.length) {
@@ -38,14 +40,18 @@ export default function TransactionMessage({ transaction }) {
     <div>
       {type === 'trade' && (
         <Trade
-          wantCards={wantCards}
+          wantCardIds={wantCardIds}
           wantCoins={wantCoins}
-          offerCards={offerCards}
+          offerCardIds={offerCardIds}
           offerCoins={offerCoins}
         />
       )}
-      {type === 'show' && <Show cards={offerCards} offerCoins={offerCoins} />}
-      {type === 'send' && <Send cards={offerCards} offerCoins={offerCoins} />}
+      {type === 'show' && (
+        <Show cardIds={offerCardIds} offerCoins={offerCoins} />
+      )}
+      {type === 'send' && (
+        <Send cardIds={offerCardIds} offerCoins={offerCoins} />
+      )}
     </div>
   );
 }
