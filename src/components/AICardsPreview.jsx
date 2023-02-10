@@ -32,7 +32,9 @@ export default function AICardsPreview({
     return cardIds.length - displayedCardIds.length;
   }, [cardIds, displayedCardIds]);
   const cards = cardIds.map((cardId) => cardObj[cardId]);
-  const displayedCards = displayedCardIds.map((cardId) => cardObj[cardId]);
+  const displayedCards = displayedCardIds
+    .filter((cardId) => !!cardObj[cardId])
+    .map((cardId) => cardObj[cardId]);
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>

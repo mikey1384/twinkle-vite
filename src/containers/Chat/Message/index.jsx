@@ -642,7 +642,13 @@ function Message({
   }
 
   if (transactionDetails) {
-    return <TransactionMessage transaction={transactionDetails} />;
+    return (
+      <TransactionMessage
+        partnerId={partner.id}
+        onSetAICardModalCardId={onSetAICardModalCardId}
+        transaction={transactionDetails}
+      />
+    );
   }
 
   if (!chessState && (gameWinnerId || isDraw || isAbort)) {
