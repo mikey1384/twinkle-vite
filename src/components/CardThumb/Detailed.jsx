@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 
@@ -8,15 +8,19 @@ CardThumb.propTypes = {
   card: PropTypes.object.isRequired,
   cardColor: PropTypes.string,
   style: PropTypes.object,
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
+  displayedBurnXP: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  xpNumberColor: PropTypes.string.isRequired
 };
 
 export default function CardThumb({
   card,
+  displayedBurnXP,
   borderColor,
   cardColor,
   style,
-  onClick
+  onClick,
+  xpNumberColor
 }) {
   return (
     <div
@@ -61,6 +65,20 @@ export default function CardThumb({
             style={{ width: '100%' }}
             src={`${cloudFrontURL}${card.imagePath}`}
           />
+        )}
+        {!!card.isBurned && (
+          <div
+            className={css`
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              padding: 0.5rem 0;
+              font-size: 1.3rem;
+            `}
+          >
+            <b style={{ color: Color[xpNumberColor]() }}>{displayedBurnXP}</b>
+            <b style={{ color: Color.gold(), marginLeft: '2px' }}>XP</b>
+          </div>
         )}
       </div>
       {card.word ? (
