@@ -19,7 +19,7 @@ export default function Heading({ isTrade, from, myId }) {
           username: from.username
         }}
       />{' '}
-      {isTrade ? 'wants to trade' : 'is interested in'}
+      {isTrade ? 'wants to trade' : `want${from.id === myId ? '' : 's'}`}
       <div></div>
     </div>
   );
