@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import CardThumb from '../../../containers/Chat/Modals/TradeModal/CardThumb';
+import CardThumb from '~/components/CardThumb';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -29,7 +29,7 @@ export default function CardItem({ card, onClick }) {
         }
       `}
     >
-      <CardThumb onClick={onClick} card={card} />
+      <CardThumb detailed onClick={onClick} card={card} />
     </div>
   );
 }

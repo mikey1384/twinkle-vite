@@ -58,6 +58,7 @@ export default function CardItem({ card, isOverflown, isLast, offerObj }) {
           }
         `}`}
         style={{
+          padding: '0 0.5rem',
           cursor: 'pointer',
           height: '10rem',
           display: 'flex',

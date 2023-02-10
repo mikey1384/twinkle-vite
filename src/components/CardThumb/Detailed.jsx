@@ -1,34 +1,23 @@
-import { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import {
-  cardLevelHash,
-  cloudFrontURL,
-  cardProps,
-  qualityProps
-} from '~/constants/defaultValues';
+import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 
 CardThumb.propTypes = {
+  borderColor: PropTypes.string,
   card: PropTypes.object.isRequired,
+  cardColor: PropTypes.string,
   style: PropTypes.object,
   onClick: PropTypes.func
 };
 
-export default function CardThumb({ card, style, onClick }) {
-  const cardDetailObj = useMemo(
-    () => cardLevelHash[card?.level],
-    [card?.level]
-  );
-  const cardColor = useMemo(
-    () => Color[cardDetailObj?.color](),
-    [cardDetailObj?.color]
-  );
-  const borderColor = useMemo(
-    () => qualityProps[card?.quality]?.color,
-    [card?.quality]
-  );
-
+export default function CardThumb({
+  card,
+  borderColor,
+  cardColor,
+  style,
+  onClick
+}) {
   return (
     <div
       style={{
@@ -45,7 +34,7 @@ export default function CardThumb({ card, style, onClick }) {
         #{card.id}
       </div>
       <div
-        className={`inner ${css`
+        className={css`
           width: 8rem;
           height: 12rem;
           border-radius: 3px;
@@ -54,7 +43,7 @@ export default function CardThumb({ card, style, onClick }) {
             height: 11rem;
             border-radius: 2px;
           }
-        `}`}
+        `}
         style={{
           display: 'flex',
           flexDirection: 'column',
