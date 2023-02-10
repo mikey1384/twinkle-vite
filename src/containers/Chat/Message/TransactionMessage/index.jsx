@@ -55,6 +55,8 @@ export default function TransactionMessage({
           offerCoins={offerCoins}
           partner={partner}
           onSetAICardModalCardId={onSetAICardModalCardId}
+          fromId={transaction.from}
+          toId={transaction.to}
         />
       )}
       {type === 'show' && (
