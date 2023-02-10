@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import CardThumb from '../../containers/Chat/Modals/TradeModal/CardThumb';
-import { isMobile } from '~/helpers';
+import CardThumb from '~/components/CardThumb';
 import ShowMoreCardsButton from '~/components/ShowMoreCardsButton';
 import MoreAICardsModal from './MoreAICardsModal';
+import { isMobile } from '~/helpers';
 import { useChatContext } from '~/contexts';
 
 const deviceIsMobile = isMobile(navigator);
@@ -42,6 +42,7 @@ export default function AICardsPreview({
         <div key={card.id} style={{ position: 'relative' }}>
           <CardThumb
             card={card}
+            detailed
             style={{
               marginLeft: index > 0 ? '1rem' : 0
             }}

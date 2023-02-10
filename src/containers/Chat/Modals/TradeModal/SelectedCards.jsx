@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import CardThumb from './CardThumb';
+import CardThumb from '~/components/CardThumb';
 import CloseButton from '~/components/Buttons/CloseButton';
 import { isMobile } from '~/helpers';
 import { useChatContext, useKeyContext } from '~/contexts';
@@ -81,6 +81,7 @@ export default function SelectedCards({
               onClick={() => onDeselect(card.id)}
             />
             <CardThumb
+              detailed
               card={card}
               style={{
                 marginLeft: index > 0 ? '1rem' : 0

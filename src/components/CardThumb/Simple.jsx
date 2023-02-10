@@ -1,48 +1,23 @@
-import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import {
-  cardLevelHash,
-  cloudFrontURL,
-  cardProps,
-  returnCardBurnXP,
-  qualityProps
-} from '~/constants/defaultValues';
+import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
 
-CardThumb.propTypes = {
-  card: PropTypes.object.isRequired
+Simple.propTypes = {
+  card: PropTypes.object.isRequired,
+  borderColor: PropTypes.string.isRequired,
+  cardColor: PropTypes.string.isRequired,
+  displayedBurnXP: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  xpNumberColor: PropTypes.string.isRequired
 };
 
-export default function CardThumb({ card }) {
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
-  const cardDetailObj = useMemo(
-    () => cardLevelHash[card?.level],
-    [card?.level]
-  );
-  const burnXP = useMemo(() => {
-    return returnCardBurnXP({
-      cardLevel: card?.level,
-      cardQuality: card?.quality
-    });
-  }, [card?.level, card?.quality]);
-  const displayedBurnXP = useMemo(() => {
-    if (burnXP < 1000) return burnXP;
-    if (burnXP < 1000000) return `${(burnXP / 1000).toFixed(1)}K`;
-    return `${(burnXP / 1000000).toFixed(1)}M`;
-  }, [burnXP]);
-  const cardColor = useMemo(
-    () => Color[card.isBurned ? 'black' : cardDetailObj?.color](),
-    [card.isBurned, cardDetailObj?.color]
-  );
-  const borderColor = useMemo(
-    () => qualityProps[card?.quality]?.color,
-    [card?.quality]
-  );
-
+export default function Simple({
+  card,
+  borderColor,
+  cardColor,
+  displayedBurnXP,
+  xpNumberColor
+}) {
   return (
     <div
       className={css`
@@ -56,7 +31,6 @@ export default function CardThumb({ card }) {
         }
       `}
       style={{
-        marginLeft: '0.5rem',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',

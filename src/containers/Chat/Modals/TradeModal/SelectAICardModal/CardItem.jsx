@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import CardThumb from '../CardThumb';
+import CardThumb from '~/components/CardThumb';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -55,6 +55,7 @@ export default function CardItem({
       >
         <CardThumb
           card={card}
+          detailed
           onClick={() => onSetAICardModalCardId(card.id)}
         />
       </div>
