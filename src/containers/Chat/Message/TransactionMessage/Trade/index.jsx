@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import AICardsPreview from '~/components/AICardsPreview';
-import UsernameText from '~/components/Texts/UsernameText';
-import { Color } from '~/constants/css';
+import OfferPanel from './OfferPanel';
+import WantPanel from './WantPanel';
 
 Trade.propTypes = {
   myId: PropTypes.number.isRequired,
@@ -41,36 +40,19 @@ export default function Trade({
         alignItems: 'center'
       }}
     >
-      <UsernameText
-        displayedName={from.id === myId ? 'You' : from.username}
-        color={Color.black()}
-        user={{
-          id: from.id,
-          username: from.username
-        }}
+      <OfferPanel
+        from={from}
+        myId={myId}
+        offerCardIds={offerCardIds}
+        offerCoins={offerCoins}
+        onSetAICardModalCardId={onSetAICardModalCardId}
       />
-      <div>{`offer${from.id === myId ? '' : 's'}`}</div>
-      {offerCardIds.length ? (
-        <div>
-          <AICardsPreview
-            cardIds={offerCardIds}
-            onSetAICardModalCardId={onSetAICardModalCardId}
-          />
-          {offerCoins > 0 && <div>and</div>}
-        </div>
-      ) : null}
-      {offerCoins > 0 && <div>{`${offerCoins} coins`}</div>}
       <div>in exchange for</div>
-      {wantCardIds.length ? (
-        <div>
-          <AICardsPreview
-            cardIds={wantCardIds}
-            onSetAICardModalCardId={onSetAICardModalCardId}
-          />
-          {wantCoins > 0 && <div>and</div>}
-        </div>
-      ) : null}
-      {wantCoins > 0 && <div>{`${wantCoins} coins`}</div>}
+      <WantPanel
+        wantCardIds={wantCardIds}
+        wantCoins={wantCoins}
+        onSetAICardModalCardId={onSetAICardModalCardId}
+      />
     </div>
   );
 }
