@@ -113,7 +113,6 @@ export default function OfferDetail({
           cardIds={cardIds}
           onSetAICardModalCardId={onSetAICardModalCardId}
           partnerId={partner.id}
-          type="offer"
         />
       </div>
     </div>

@@ -81,7 +81,6 @@ export default function WantDetail({
           cardIds={cardIds}
           onSetAICardModalCardId={onSetAICardModalCardId}
           partnerId={partner.id}
-          type="want"
         />
       </div>
     </div>
