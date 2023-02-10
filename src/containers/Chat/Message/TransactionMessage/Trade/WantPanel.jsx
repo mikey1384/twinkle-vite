@@ -16,7 +16,7 @@ export default function WantPanel({
 }) {
   return (
     <div>
-      {isTrade ? <div>isTrade exchange for</div> : null}
+      {isTrade ? <div>in exchange for</div> : null}
       {wantCardIds.length ? (
         <div>
           <AICardsPreview
