@@ -9,25 +9,21 @@ TransactionMessage.propTypes = {
 
 export default function TransactionMessage({ transaction }) {
   const { type, want = {}, offer = {} } = transaction;
-  const { cardIds: wantCardIds = [], coins: wantCoins = 0 } = want || {};
-  const { cardIds: offerCardIds = [], coins: offerCoins = 0 } = offer || {};
+  const { cards: wantCards = [], coins: wantCoins = 0 } = want || {};
+  const { cards: offerCards = [], coins: offerCoins = 0 } = offer || {};
 
   return (
     <div>
       {type === 'trade' && (
         <Trade
-          wantCardIds={wantCardIds}
+          wantCards={wantCards}
           wantCoins={wantCoins}
-          offerCardIds={offerCardIds}
+          offerCards={offerCards}
           offerCoins={offerCoins}
         />
       )}
-      {type === 'show' && (
-        <Show offerCardIds={offerCardIds} offerCoins={offerCoins} />
-      )}
-      {type === 'send' && (
-        <Send offerCardIds={offerCardIds} offerCoins={offerCoins} />
-      )}
+      {type === 'show' && <Show cards={offerCards} offerCoins={offerCoins} />}
+      {type === 'send' && <Send cards={offerCards} offerCoins={offerCoins} />}
     </div>
   );
 }
