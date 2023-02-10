@@ -21,10 +21,10 @@ export default function Heading({ isTrade, from, myId, isWantingCoin }) {
         }}
       />{' '}
       {isTrade
-        ? 'wants to trade'
+        ? `want${from.id === myId ? '' : 's'} to trade`
         : isWantingCoin
         ? `want${from.id === myId ? '' : 's'}`
-        : 'is interested in'}
+        : `${from.id === myId ? 'are' : 'is'} interested in`}
     </div>
   );
 }
