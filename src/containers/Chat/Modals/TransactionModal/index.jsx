@@ -2,13 +2,11 @@ import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import MyWant from './MyWant';
-import MyOffer from './MyOffer';
-import Options from './Options';
 import SelectAICardModal from './SelectAICardModal';
 import ConfirmTransactionModal from './ConfirmTransactionModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import InitiateTransaction from './InitiateTransaction';
 
 TransactionModal.propTypes = {
   isAICardModalShown: PropTypes.bool.isRequired,
@@ -91,76 +89,22 @@ export default function TransactionModal({
     return 'Trade';
   }, [selectedOption]);
 
-  const offerMenuShown = useMemo(() => {
-    if (selectedOption === 'offer' || selectedOption === 'send') {
-      return true;
-    }
-    return coinAmountObj.want || validSelectedWantCardIds.length;
-  }, [coinAmountObj.want, selectedOption, validSelectedWantCardIds.length]);
-
   return (
     <ErrorBoundary componentPath="Chat/Modals/TransactionModal">
       <Modal onHide={isAICardModalShown || dropdownShown ? null : onHide}>
         <header>{title}</header>
         <main>
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingBottom: !!selectedOption ? 0 : '2rem'
-            }}
-          >
-            <Options
-              onSelectOption={setSelectedOption}
-              partnerName={partner?.username}
-              selectedOption={selectedOption}
-            />
-            {selectedOption === 'want' ? (
-              <MyWant
-                style={{ marginTop: '3rem' }}
-                coinAmount={coinAmountObj.want}
-                onSetCoinAmount={(amount) =>
-                  setCoinAmountObj((prevState) => ({
-                    ...prevState,
-                    want: amount
-                  }))
-                }
-                selectedCardIds={selectedCardIdsObj.want}
-                onShowAICardSelector={() => setAICardModalType('want')}
-                onDeselect={(cardId) =>
-                  setSelectedCardIdsObj((prevState) => ({
-                    ...prevState,
-                    want: prevState.want.filter((id) => id !== cardId)
-                  }))
-                }
-                partnerId={partner.id}
-              />
-            ) : null}
-            {!!offerMenuShown && (
-              <MyOffer
-                coinAmount={coinAmountObj.offer}
-                selectedCardIds={selectedCardIdsObj.offer}
-                selectedOption={selectedOption}
-                style={{ marginTop: '3rem' }}
-                onSetCoinAmount={(amount) =>
-                  setCoinAmountObj((prevState) => ({
-                    ...prevState,
-                    offer: amount
-                  }))
-                }
-                onShowAICardSelector={() => setAICardModalType('offer')}
-                onDeselect={(cardId) =>
-                  setSelectedCardIdsObj((prevState) => ({
-                    ...prevState,
-                    offer: prevState.offer.filter((id) => id !== cardId)
-                  }))
-                }
-              />
-            )}
-          </div>
+          <InitiateTransaction
+            coinAmountObj={coinAmountObj}
+            onSetAICardModalType={setAICardModalType}
+            onSetCoinAmountObj={setCoinAmountObj}
+            onSetSelectedOption={setSelectedOption}
+            onSetSelectedCardIdsObj={setSelectedCardIdsObj}
+            partner={partner}
+            selectedCardIdsObj={selectedCardIdsObj}
+            selectedOption={selectedOption}
+            validSelectedWantCardIds={validSelectedWantCardIds}
+          />
         </main>
         <footer>
           <Button
