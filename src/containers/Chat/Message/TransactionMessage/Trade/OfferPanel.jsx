@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import AICardsPreview from '~/components/AICardsPreview';
-import { Color, borderRadius } from '~/constants/css';
+import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
 
 OfferPanel.propTypes = {
   offerCardIds: PropTypes.array,
@@ -16,23 +16,34 @@ export default function OfferPanel({
   return (
     <div
       style={{
-        padding: '1rem',
         width: 'CALC(50% - 1rem)',
         borderRadius,
         border: `1px solid ${Color.borderGray()}`
       }}
     >
-      <div>Offering...</div>
-      {offerCardIds.length ? (
-        <div>
-          <AICardsPreview
-            cardIds={offerCardIds}
-            onSetAICardModalCardId={onSetAICardModalCardId}
-          />
-          {offerCoins > 0 && <div>and</div>}
-        </div>
-      ) : null}
-      {offerCoins > 0 && <div>{`${offerCoins} coins`}</div>}
+      <div
+        style={{
+          padding: '1rem',
+          borderTopLeftRadius: innerBorderRadius,
+          borderTopRightRadius: innerBorderRadius,
+          color: '#fff',
+          background: Color.logoBlue()
+        }}
+      >
+        Offering...
+      </div>
+      <div style={{ padding: '1rem' }}>
+        {offerCardIds.length ? (
+          <div>
+            <AICardsPreview
+              cardIds={offerCardIds}
+              onSetAICardModalCardId={onSetAICardModalCardId}
+            />
+            {offerCoins > 0 && <div>and</div>}
+          </div>
+        ) : null}
+        {offerCoins > 0 && <div>{`${offerCoins} coins`}</div>}
+      </div>
     </div>
   );
 }
