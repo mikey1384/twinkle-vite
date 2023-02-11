@@ -67,6 +67,7 @@ export default function Trade({
       <Body>
         {isTrade && (
           <OfferPanel
+            isTrade
             offerCardIds={offerCardIds}
             offerCoins={offerCoins}
             onSetAICardModalCardId={onSetAICardModalCardId}

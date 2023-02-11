@@ -5,11 +5,12 @@ import { Color, borderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 OfferPanel.propTypes = {
+  isTrade: PropTypes.bool,
   offerCardIds: PropTypes.array,
   offerCoins: PropTypes.number
 };
 
-export default function OfferPanel({ offerCardIds, offerCoins }) {
+export default function OfferPanel({ isTrade, offerCardIds, offerCoins }) {
   return (
     <div
       className="panel"
@@ -19,17 +20,19 @@ export default function OfferPanel({ offerCardIds, offerCoins }) {
         border: `1px solid ${Color.borderGray()}`
       }}
     >
-      <div
-        style={{
-          padding: '1rem',
-          fontWeight: 'bold',
-          fontFamily: 'Roboto, monospace',
-          textAlign: 'center',
-          borderBottom: `1px solid ${Color.borderGray()}`
-        }}
-      >
-        Offering...
-      </div>
+      {isTrade ? (
+        <div
+          style={{
+            padding: '1rem',
+            fontWeight: 'bold',
+            fontFamily: 'Roboto, monospace',
+            textAlign: 'center',
+            borderBottom: `1px solid ${Color.borderGray()}`
+          }}
+        >
+          Offering...
+        </div>
+      ) : null}
       <div
         style={{
           padding: '1rem',
