@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import AICardsPreview from '~/components/AICardsPreview';
-import { Color, borderRadius } from '~/constants/css';
+import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
 
 WantPanel.propTypes = {
   isTrade: PropTypes.bool.isRequired,
@@ -18,13 +18,24 @@ export default function WantPanel({
   return (
     <div
       style={{
-        padding: '1rem',
         width: 'CALC(50% - 1rem)',
         borderRadius,
         border: `1px solid ${Color.borderGray()}`
       }}
     >
-      {isTrade ? <div>in exchange for</div> : null}
+      {isTrade ? (
+        <div
+          style={{
+            padding: '1rem',
+            borderTopLeftRadius: innerBorderRadius,
+            borderTopRightRadius: innerBorderRadius,
+            color: '#fff',
+            background: Color.logoBlue()
+          }}
+        >
+          in exchange for
+        </div>
+      ) : null}
       {wantCardIds.length ? (
         <div>
           <AICardsPreview
