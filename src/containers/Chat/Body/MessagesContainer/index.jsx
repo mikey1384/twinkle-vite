@@ -23,7 +23,7 @@ import ChessModal from '../../Modals/ChessModal';
 import WordleModal from '../../Modals/WordleModal';
 import SelectVideoModal from '../../Modals/SelectVideoModal';
 import SelectNewOwnerModal from '../../Modals/SelectNewOwnerModal';
-import TradeModal from '../../Modals/TradeModal';
+import TransactionModal from '../../Modals/TransactionModal';
 import SettingsModal from '../../Modals/SettingsModal';
 import CallScreen from './CallScreen';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -191,7 +191,7 @@ function MessagesContainer({
     subjectId: null,
     content: ''
   });
-  const [tradeModalShown, setTradeModalShown] = useState(false);
+  const [TransactionModalShown, setTransactionModalShown] = useState(false);
   const [settingsModalShown, setSettingsModalShown] = useState(false);
   const [leaveConfirmModalShown, setLeaveConfirmModalShown] = useState(false);
   const [selectNewOwnerModalShown, setSelectNewOwnerModalShown] =
@@ -1435,7 +1435,7 @@ function MessagesContainer({
           }}
           onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
           onSetTextAreaHeight={setTextAreaHeight}
-          onSetTradeModalShown={setTradeModalShown}
+          onSetTransactionModalShown={setTransactionModalShown}
           recipientId={recipientId}
           partnerName={partner?.username}
           chessTarget={chessTarget}
@@ -1539,12 +1539,12 @@ function MessagesContainer({
           andLeave
         />
       )}
-      {tradeModalShown && (
-        <TradeModal
+      {TransactionModalShown && (
+        <TransactionModal
           partner={partner}
           isAICardModalShown={isAICardModalShown}
           onSetAICardModalCardId={onSetAICardModalCardId}
-          onHide={() => setTradeModalShown(false)}
+          onHide={() => setTransactionModalShown(false)}
         />
       )}
     </ErrorBoundary>

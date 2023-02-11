@@ -9,7 +9,7 @@ import { useKeyContext } from '~/contexts';
 const cancelLabel = localize('cancel');
 const confirmLabel = localize('confirm');
 
-ConfirmTradeModal.propTypes = {
+ConfirmTransactionModal.propTypes = {
   isAICardModalShown: PropTypes.bool,
   onHide: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
@@ -21,7 +21,7 @@ ConfirmTradeModal.propTypes = {
   wantedCardIds: PropTypes.array.isRequired
 };
 
-export default function ConfirmTradeModal({
+export default function ConfirmTransactionModal({
   isAICardModalShown,
   onHide,
   onConfirm,
