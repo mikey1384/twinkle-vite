@@ -774,7 +774,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async postTradeRequest({ type, wanted, offered, targetId }) {
       try {
         const { data } = await request.post(
-          `${URL}/chat/trade`,
+          `${URL}/chat/transaction`,
           { type, wanted, offered, targetId },
           auth()
         );
