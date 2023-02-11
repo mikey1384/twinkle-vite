@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -7,6 +7,7 @@ import ConfirmTransactionModal from './ConfirmTransactionModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import InitiateTransaction from './InitiateTransaction';
+import Loading from '~/components/Loading';
 
 TransactionModal.propTypes = {
   isAICardModalShown: PropTypes.bool.isRequired,
@@ -21,6 +22,7 @@ export default function TransactionModal({
   onSetAICardModalCardId,
   partner
 }) {
+  const [loading, setLoading] = useState(false);
   const { userId: myId } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
@@ -29,6 +31,10 @@ export default function TransactionModal({
     (v) => v.requestHelpers.postTradeRequest
   );
   const cardObj = useChatContext((v) => v.state.cardObj);
+  useEffect(() => {
+    setLoading(true);
+  }, []);
+
   const [dropdownShown, setDropdownShown] = useState(false);
   const [aiCardModalType, setAICardModalType] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
@@ -94,17 +100,21 @@ export default function TransactionModal({
       <Modal onHide={isAICardModalShown || dropdownShown ? null : onHide}>
         <header>{title}</header>
         <main>
-          <InitiateTransaction
-            coinAmountObj={coinAmountObj}
-            onSetAICardModalType={setAICardModalType}
-            onSetCoinAmountObj={setCoinAmountObj}
-            onSetSelectedOption={setSelectedOption}
-            onSetSelectedCardIdsObj={setSelectedCardIdsObj}
-            partner={partner}
-            selectedCardIdsObj={selectedCardIdsObj}
-            selectedOption={selectedOption}
-            validSelectedWantCardIds={validSelectedWantCardIds}
-          />
+          {loading ? (
+            <Loading />
+          ) : (
+            <InitiateTransaction
+              coinAmountObj={coinAmountObj}
+              onSetAICardModalType={setAICardModalType}
+              onSetCoinAmountObj={setCoinAmountObj}
+              onSetSelectedOption={setSelectedOption}
+              onSetSelectedCardIdsObj={setSelectedCardIdsObj}
+              partner={partner}
+              selectedCardIdsObj={selectedCardIdsObj}
+              selectedOption={selectedOption}
+              validSelectedWantCardIds={validSelectedWantCardIds}
+            />
+          )}
         </main>
         <footer>
           <Button
