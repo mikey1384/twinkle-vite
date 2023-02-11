@@ -76,7 +76,7 @@ export default function TransactionMessage({
           myUsername={username}
           partner={partner}
           cardIds={offerCardIds}
-          offerCoins={offerCoins}
+          coins={offerCoins}
           toId={transaction.to}
         />
       )}
