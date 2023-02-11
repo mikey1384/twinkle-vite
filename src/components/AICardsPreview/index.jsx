@@ -11,7 +11,7 @@ const deviceIsMobile = isMobile(navigator);
 AICardsPreview.propTypes = {
   isAICardModalShown: PropTypes.bool,
   cardIds: PropTypes.array.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired
+  onSetAICardModalCardId: PropTypes.func
 };
 
 export default function AICardsPreview({
