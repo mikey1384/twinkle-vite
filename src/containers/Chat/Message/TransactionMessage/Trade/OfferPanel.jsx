@@ -32,7 +32,16 @@ export default function OfferPanel({
       >
         Offering...
       </div>
-      <div style={{ padding: '1rem' }}>
+      <div
+        style={{
+          padding: '1rem',
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column'
+        }}
+      >
         {offerCardIds.length ? (
           <div>
             <AICardsPreview
