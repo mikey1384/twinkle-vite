@@ -72,10 +72,12 @@ export default function TransactionMessage({
       {type === 'send' && (
         <Send
           myId={userId}
+          fromId={transaction.from}
           myUsername={username}
           partner={partner}
           cardIds={offerCardIds}
           offerCoins={offerCoins}
+          toId={transaction.to}
         />
       )}
     </div>
