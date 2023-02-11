@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import AICardsPreview from '~/components/AICardsPreview';
-import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 
 OfferPanel.propTypes = {
   offerCardIds: PropTypes.array,
@@ -24,10 +24,10 @@ export default function OfferPanel({
       <div
         style={{
           padding: '1rem',
-          borderTopLeftRadius: innerBorderRadius,
-          borderTopRightRadius: innerBorderRadius,
-          color: '#fff',
-          background: Color.logoBlue()
+          fontWeight: 'bold',
+          fontFamily: 'Roboto, monospace',
+          textAlign: 'center',
+          borderBottom: `1px solid ${Color.borderGray()}`
         }}
       >
         Offering...

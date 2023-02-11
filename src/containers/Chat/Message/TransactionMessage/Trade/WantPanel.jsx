@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import AICardsPreview from '~/components/AICardsPreview';
-import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 
 WantPanel.propTypes = {
   isTrade: PropTypes.bool.isRequired,
@@ -20,6 +20,7 @@ export default function WantPanel({
       style={{
         width: 'CALC(50% - 1rem)',
         borderRadius,
+        fontFamily: 'Roboto, monospace',
         border: `1px solid ${Color.borderGray()}`
       }}
     >
@@ -27,13 +28,13 @@ export default function WantPanel({
         <div
           style={{
             padding: '1rem',
-            borderTopLeftRadius: innerBorderRadius,
-            borderTopRightRadius: innerBorderRadius,
-            color: '#fff',
-            background: Color.logoBlue()
+            fontWeight: 'bold',
+            fontFamily: 'Roboto, monospace',
+            textAlign: 'center',
+            borderBottom: `1px solid ${Color.borderGray()}`
           }}
         >
-          in exchange for
+          in exchange for...
         </div>
       ) : null}
       {wantCardIds.length ? (
