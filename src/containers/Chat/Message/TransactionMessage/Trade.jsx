@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import OfferPanel from './OfferPanel';
 import WantPanel from './WantPanel';
 import Heading from './Heading';
+import UsernameText from '~/components/Texts/UsernameText';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
@@ -47,12 +48,23 @@ export default function Trade({
         paddingBottom: '1rem'
       }}
     >
-      <Heading
-        isTrade={isTrade}
-        from={from}
-        myId={myId}
-        isWantingCoin={!!wantCoins}
-      />
+      <Heading color="logoBlue">
+        <div>
+          <UsernameText
+            displayedName={from.id === myId ? 'You' : from.username}
+            color="#fff"
+            user={{
+              id: from.id,
+              username: from.username
+            }}
+          />{' '}
+          {isTrade
+            ? `want${from.id === myId ? '' : 's'} to trade`
+            : !!wantCoins
+            ? `want${from.id === myId ? '' : 's'}`
+            : `${from.id === myId ? 'are' : 'is'} interested in`}
+        </div>
+      </Heading>
       <div
         style={{
           padding: '1rem',
