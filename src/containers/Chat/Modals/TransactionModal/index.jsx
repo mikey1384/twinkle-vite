@@ -25,6 +25,7 @@ export default function TransactionModal({
   partner
 }) {
   const [loading, setLoading] = useState(false);
+  const [pendingTransaction, setPendingTransaction] = useState(null);
   const { userId: myId } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
@@ -41,9 +42,8 @@ export default function TransactionModal({
     init();
     async function init() {
       setLoading(true);
-      const { transaction, noPendingTransaction } =
-        await loadPendingTransaction(channelId);
-      console.log(transaction, noPendingTransaction);
+      const { transaction } = await loadPendingTransaction(channelId);
+      setPendingTransaction(transaction);
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -116,6 +116,8 @@ export default function TransactionModal({
         <main>
           {loading ? (
             <Loading />
+          ) : pendingTransaction ? (
+            <div>{pendingTransaction.id}</div>
           ) : (
             <InitiateTransaction
               coinAmountObj={coinAmountObj}
