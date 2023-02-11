@@ -22,7 +22,7 @@ export default function Heading({ isTrade, from, myId, isWantingCoin }) {
         fontWeight: 'bold',
         backgroundColor: Color.lightGray(),
         color: '#fff',
-        marginBottom: '1.5rem'
+        marginBottom: '1rem'
       }}
     >
       <div>
