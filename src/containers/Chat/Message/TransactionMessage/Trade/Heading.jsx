@@ -15,6 +15,8 @@ export default function Heading({ isTrade, from, myId, isWantingCoin }) {
   return (
     <div
       style={{
+        marginTop: '1rem',
+        marginBottom: '0.5rem',
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
@@ -23,8 +25,7 @@ export default function Heading({ isTrade, from, myId, isWantingCoin }) {
         fontFamily: 'Roboto, monospace',
         fontWeight: 'bold',
         backgroundColor: Color[profileTheme](),
-        color: '#fff',
-        marginBottom: '1rem'
+        color: '#fff'
       }}
     >
       <div>

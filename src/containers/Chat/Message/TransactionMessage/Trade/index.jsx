@@ -41,7 +41,8 @@ export default function Trade({
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        width: '100%'
+        width: '100%',
+        paddingBottom: '1rem'
       }}
     >
       <Heading
