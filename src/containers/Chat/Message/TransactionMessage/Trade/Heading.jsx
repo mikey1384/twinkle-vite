@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
 
 Heading.propTypes = {
   isTrade: PropTypes.bool.isRequired,
@@ -11,7 +10,6 @@ Heading.propTypes = {
 };
 
 export default function Heading({ isTrade, from, myId, isWantingCoin }) {
-  const { profileTheme } = useKeyContext((v) => v.myState);
   return (
     <div
       style={{
@@ -24,7 +22,7 @@ export default function Heading({ isTrade, from, myId, isWantingCoin }) {
         fontSize: '2rem',
         fontFamily: 'Roboto, monospace',
         fontWeight: 'bold',
-        backgroundColor: Color[profileTheme](),
+        backgroundColor: Color.logoBlue(),
         color: '#fff'
       }}
     >
