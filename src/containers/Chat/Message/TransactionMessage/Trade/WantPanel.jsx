@@ -37,16 +37,18 @@ export default function WantPanel({
           in exchange for...
         </div>
       ) : null}
-      {wantCardIds.length ? (
-        <div>
-          <AICardsPreview
-            cardIds={wantCardIds}
-            onSetAICardModalCardId={onSetAICardModalCardId}
-          />
-          {wantCoins > 0 && <div>and</div>}
-        </div>
-      ) : null}
-      {wantCoins > 0 && <div>{`${wantCoins} coins`}</div>}
+      <div style={{ padding: '1rem' }}>
+        {wantCardIds.length ? (
+          <div>
+            <AICardsPreview
+              cardIds={wantCardIds}
+              onSetAICardModalCardId={onSetAICardModalCardId}
+            />
+            {wantCoins > 0 && <div>and</div>}
+          </div>
+        ) : null}
+        {wantCoins > 0 && <div>{`${wantCoins} coins`}</div>}
+      </div>
     </div>
   );
 }
