@@ -65,6 +65,8 @@ export default function TransactionMessage({
           partner={partner}
           cardIds={offerCardIds}
           offerCoins={offerCoins}
+          fromId={transaction.from}
+          toId={transaction.to}
         />
       )}
       {type === 'send' && (
