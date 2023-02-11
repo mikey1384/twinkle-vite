@@ -1,8 +1,7 @@
 import PropTypes from 'prop-types';
 import AICardsPreview from '~/components/AICardsPreview';
 import Icon from '~/components/Icon';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
+import { Color, borderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 OfferPanel.propTypes = {
@@ -13,13 +12,9 @@ OfferPanel.propTypes = {
 export default function OfferPanel({ offerCardIds, offerCoins }) {
   return (
     <div
-      className={css`
-        width: 60%;
-        @media (max-width: ${mobileMaxWidth}) {
-          width: 100%;
-        }
-      `}
+      className="panel"
       style={{
+        width: '100%',
         borderRadius,
         border: `1px solid ${Color.borderGray()}`
       }}
