@@ -661,6 +661,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async loadPendingTransaction(channelId) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/transaction?channelId=${channelId}`,
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadVocabulary(lastWordId) {
       try {
         const { data } = await request.get(
