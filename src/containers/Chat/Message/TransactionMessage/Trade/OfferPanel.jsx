@@ -1,6 +1,9 @@
 import PropTypes from 'prop-types';
 import AICardsPreview from '~/components/AICardsPreview';
-import { Color, borderRadius } from '~/constants/css';
+import Icon from '~/components/Icon';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 OfferPanel.propTypes = {
   offerCardIds: PropTypes.array,
@@ -15,8 +18,13 @@ export default function OfferPanel({
 }) {
   return (
     <div
+      className={css`
+        width: 60%;
+        @media (max-width: ${mobileMaxWidth}) {
+          width: 100%;
+        }
+      `}
       style={{
-        width: 'CALC(50% - 1rem)',
         borderRadius,
         border: `1px solid ${Color.borderGray()}`
       }}
@@ -61,7 +69,23 @@ export default function OfferPanel({
             )}
           </div>
         ) : null}
-        {offerCoins > 0 && <div>{`${offerCoins} coins`}</div>}
+        {offerCoins > 0 && (
+          <div>
+            <Icon
+              style={{ color: Color.brownOrange() }}
+              icon={['far', 'badge-dollar']}
+            />
+            <span
+              style={{
+                fontWeight: 'bold',
+                color: Color.darkerGray(),
+                marginLeft: '0.3rem'
+              }}
+            >
+              {addCommasToNumber(offerCoins)}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

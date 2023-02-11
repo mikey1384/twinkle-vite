@@ -1,27 +1,38 @@
 import PropTypes from 'prop-types';
 import AICardsPreview from '~/components/AICardsPreview';
-import { Color, borderRadius } from '~/constants/css';
+import Icon from '~/components/Icon';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 WantPanel.propTypes = {
   isTrade: PropTypes.bool.isRequired,
   wantCardIds: PropTypes.array.isRequired,
   wantCoins: PropTypes.number.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired
+  onSetAICardModalCardId: PropTypes.func.isRequired,
+  style: PropTypes.object
 };
 
 export default function WantPanel({
   isTrade,
   wantCardIds,
   wantCoins,
-  onSetAICardModalCardId
+  onSetAICardModalCardId,
+  style
 }) {
   return (
     <div
+      className={css`
+        width: 60%;
+        @media (max-width: ${mobileMaxWidth}) {
+          width: 100%;
+        }
+      `}
       style={{
-        width: 'CALC(50% - 1rem)',
         borderRadius,
         fontFamily: 'Roboto, monospace',
-        border: `1px solid ${Color.borderGray()}`
+        border: `1px solid ${Color.borderGray()}`,
+        ...style
       }}
     >
       {isTrade ? (
@@ -37,17 +48,52 @@ export default function WantPanel({
           in exchange for...
         </div>
       ) : null}
-      <div style={{ padding: '1rem' }}>
+      <div
+        style={{
+          padding: '1rem',
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column'
+        }}
+      >
         {wantCardIds.length ? (
-          <div>
+          <div style={{ textAlign: 'center' }}>
             <AICardsPreview
               cardIds={wantCardIds}
               onSetAICardModalCardId={onSetAICardModalCardId}
             />
-            {wantCoins > 0 && <div>and</div>}
+            {wantCoins > 0 && (
+              <div
+                style={{
+                  padding: '0.5rem',
+                  fontFamily: 'Roboto, Helvetica, monospace',
+                  fontSize: '1.5rem'
+                }}
+              >
+                and
+              </div>
+            )}
           </div>
         ) : null}
-        {wantCoins > 0 && <div>{`${wantCoins} coins`}</div>}
+        {wantCoins > 0 && (
+          <div>
+            <Icon
+              style={{ color: Color.brownOrange() }}
+              icon={['far', 'badge-dollar']}
+            />
+            <span
+              style={{
+                fontWeight: 'bold',
+                color: Color.darkerGray(),
+                marginLeft: '0.3rem'
+              }}
+            >
+              {addCommasToNumber(wantCoins)}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
