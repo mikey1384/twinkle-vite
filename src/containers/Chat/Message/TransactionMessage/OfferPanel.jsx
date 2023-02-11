@@ -1,8 +1,9 @@
 import PropTypes from 'prop-types';
 import AICardsPreview from '~/components/AICardsPreview';
 import Icon from '~/components/Icon';
-import { Color, borderRadius } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { css } from '@emotion/css';
 
 OfferPanel.propTypes = {
   isTrade: PropTypes.bool,
@@ -22,6 +23,12 @@ export default function OfferPanel({ isTrade, offerCardIds, offerCoins }) {
     >
       {isTrade ? (
         <div
+          className={css`
+            font-size: 1.6rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.5rem;
+            }
+          `}
           style={{
             padding: '1rem',
             fontWeight: 'bold',
@@ -67,6 +74,7 @@ export default function OfferPanel({ isTrade, offerCardIds, offerCoins }) {
             />
             <span
               style={{
+                fontSize: '1.5rem',
                 fontWeight: 'bold',
                 color: Color.darkerGray(),
                 marginLeft: '0.3rem'

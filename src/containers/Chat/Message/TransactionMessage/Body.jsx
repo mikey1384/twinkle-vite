@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 Body.propTypes = {
@@ -21,11 +21,14 @@ export default function Body({ children }) {
         cursor: pointer;
         &:hover {
           > .panel {
-            background-color: #f5f5f5;
+            background-color: ${Color.highlightGray()};
+            @media (max-width: ${mobileMaxWidth}) {
+              background-color: transparent;
+            }
           }
         }
-        @media (max-width: 768px) {
-          width: ${mobileMaxWidth};
+        @media (max-width: ${mobileMaxWidth}) {
+          width: 100%;
         }
       `}`}
     >
