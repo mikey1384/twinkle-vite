@@ -43,12 +43,22 @@ export default function OfferPanel({
         }}
       >
         {offerCardIds.length ? (
-          <div>
+          <div style={{ textAlign: 'center' }}>
             <AICardsPreview
               cardIds={offerCardIds}
               onSetAICardModalCardId={onSetAICardModalCardId}
             />
-            {offerCoins > 0 && <div>and</div>}
+            {offerCoins > 0 && (
+              <div
+                style={{
+                  padding: '0.5rem',
+                  fontFamily: 'Roboto, Helvetica, monospace',
+                  fontSize: '1.5rem'
+                }}
+              >
+                and
+              </div>
+            )}
           </div>
         ) : null}
         {offerCoins > 0 && <div>{`${offerCoins} coins`}</div>}
