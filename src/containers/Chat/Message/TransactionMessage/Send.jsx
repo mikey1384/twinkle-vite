@@ -1,9 +1,13 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Heading from './Heading';
+import Body from './Body';
+import OfferPanel from './OfferPanel';
 import UsernameText from '~/components/Texts/UsernameText';
 
 Send.propTypes = {
+  cardIds: PropTypes.array,
+  coins: PropTypes.number,
   fromId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
@@ -11,7 +15,15 @@ Send.propTypes = {
   toId: PropTypes.number.isRequired
 };
 
-export default function Send({ fromId, myId, myUsername, partner, toId }) {
+export default function Send({
+  cardIds,
+  coins,
+  fromId,
+  myId,
+  myUsername,
+  partner,
+  toId
+}) {
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
   }, [fromId, myId, myUsername, partner]);
@@ -51,7 +63,9 @@ export default function Send({ fromId, myId, myUsername, partner, toId }) {
           />
         </div>
       </Heading>
-      <div>Send</div>
+      <Body>
+        <OfferPanel offerCardIds={cardIds} offerCoins={coins} />
+      </Body>
     </div>
   );
 }
