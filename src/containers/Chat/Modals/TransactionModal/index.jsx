@@ -41,8 +41,9 @@ export default function TransactionModal({
     init();
     async function init() {
       setLoading(true);
-      const data = await loadPendingTransaction(channelId);
-      console.log(data);
+      const { transaction, noPendingTransaction } =
+        await loadPendingTransaction(channelId);
+      console.log(transaction, noPendingTransaction);
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

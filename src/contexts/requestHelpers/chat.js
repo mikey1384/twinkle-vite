@@ -663,11 +663,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
     },
     async loadPendingTransaction(channelId) {
       try {
-        const { data } = await request.get(
+        const {
+          data: { noPendingTransaction, transaction }
+        } = await request.get(
           `${URL}/chat/transaction?channelId=${channelId}`,
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve({ noPendingTransaction, transaction });
       } catch (error) {
         return handleError(error);
       }
