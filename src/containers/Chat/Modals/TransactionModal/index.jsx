@@ -10,6 +10,7 @@ import InitiateTransaction from './InitiateTransaction';
 import Loading from '~/components/Loading';
 
 TransactionModal.propTypes = {
+  channelId: PropTypes.number.isRequired,
   isAICardModalShown: PropTypes.bool.isRequired,
   onHide: PropTypes.func.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
@@ -17,6 +18,7 @@ TransactionModal.propTypes = {
 };
 
 export default function TransactionModal({
+  channelId,
   isAICardModalShown,
   onHide,
   onSetAICardModalCardId,
@@ -27,12 +29,23 @@ export default function TransactionModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const loadPendingTransaction = useAppContext(
+    (v) => v.requestHelpers.loadPendingTransaction
+  );
   const postTradeRequest = useAppContext(
     (v) => v.requestHelpers.postTradeRequest
   );
   const cardObj = useChatContext((v) => v.state.cardObj);
+
   useEffect(() => {
-    setLoading(true);
+    init();
+    async function init() {
+      setLoading(true);
+      const data = await loadPendingTransaction(channelId);
+      console.log(data);
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [dropdownShown, setDropdownShown] = useState(false);

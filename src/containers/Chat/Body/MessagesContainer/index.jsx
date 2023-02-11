@@ -1541,6 +1541,7 @@ function MessagesContainer({
       )}
       {TransactionModalShown && (
         <TransactionModal
+          channelId={selectedChannelId}
           partner={partner}
           isAICardModalShown={isAICardModalShown}
           onSetAICardModalCardId={onSetAICardModalCardId}
