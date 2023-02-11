@@ -41,7 +41,6 @@ export default function Trade({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
         alignItems: 'center',
         width: '100%',
         paddingBottom: '1rem'
@@ -74,7 +73,7 @@ export default function Trade({
           />
         )}
         <WantPanel
-          style={{ marginTop: '1rem' }}
+          style={{ marginTop: isTrade ? '1rem' : 0 }}
           isTrade={isTrade}
           wantCardIds={wantCardIds}
           wantCoins={wantCoins}
