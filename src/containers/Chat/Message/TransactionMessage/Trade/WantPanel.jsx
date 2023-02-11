@@ -9,17 +9,10 @@ WantPanel.propTypes = {
   isTrade: PropTypes.bool.isRequired,
   wantCardIds: PropTypes.array.isRequired,
   wantCoins: PropTypes.number.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
   style: PropTypes.object
 };
 
-export default function WantPanel({
-  isTrade,
-  wantCardIds,
-  wantCoins,
-  onSetAICardModalCardId,
-  style
-}) {
+export default function WantPanel({ isTrade, wantCardIds, wantCoins, style }) {
   return (
     <div
       className={css`
@@ -60,10 +53,7 @@ export default function WantPanel({
       >
         {wantCardIds.length ? (
           <div style={{ textAlign: 'center' }}>
-            <AICardsPreview
-              cardIds={wantCardIds}
-              onSetAICardModalCardId={onSetAICardModalCardId}
-            />
+            <AICardsPreview cardIds={wantCardIds} />
             {wantCoins > 0 && (
               <div
                 style={{

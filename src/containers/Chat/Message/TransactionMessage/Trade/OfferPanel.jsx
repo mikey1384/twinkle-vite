@@ -7,15 +7,10 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 OfferPanel.propTypes = {
   offerCardIds: PropTypes.array,
-  offerCoins: PropTypes.number,
-  onSetAICardModalCardId: PropTypes.func.isRequired
+  offerCoins: PropTypes.number
 };
 
-export default function OfferPanel({
-  offerCardIds,
-  offerCoins,
-  onSetAICardModalCardId
-}) {
+export default function OfferPanel({ offerCardIds, offerCoins }) {
   return (
     <div
       className={css`
@@ -52,10 +47,7 @@ export default function OfferPanel({
       >
         {offerCardIds.length ? (
           <div style={{ textAlign: 'center' }}>
-            <AICardsPreview
-              cardIds={offerCardIds}
-              onSetAICardModalCardId={onSetAICardModalCardId}
-            />
+            <AICardsPreview cardIds={offerCardIds} />
             {offerCoins > 0 && (
               <div
                 style={{
