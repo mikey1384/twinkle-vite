@@ -37,7 +37,6 @@ export default function Trade({
   return (
     <div
       style={{
-        padding: '1rem',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -53,6 +52,7 @@ export default function Trade({
       />
       <div
         style={{
+          padding: '1rem',
           width: '100%',
           display: 'flex',
           justifyContent: 'space-around'
