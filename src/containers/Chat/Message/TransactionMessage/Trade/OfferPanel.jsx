@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import AICardsPreview from '~/components/AICardsPreview';
-import { Color } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 
 OfferPanel.propTypes = {
   from: PropTypes.object.isRequired,
@@ -19,7 +19,14 @@ export default function OfferPanel({
   onSetAICardModalCardId
 }) {
   return (
-    <div>
+    <div
+      style={{
+        padding: '1rem',
+        width: 'CALC(50% - 1rem)',
+        borderRadius,
+        border: `1px solid ${Color.borderGray()}`
+      }}
+    >
       <UsernameText
         displayedName={from.id === myId ? 'You' : from.username}
         color={Color.black()}
