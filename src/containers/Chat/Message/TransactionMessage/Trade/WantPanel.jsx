@@ -1,8 +1,7 @@
 import PropTypes from 'prop-types';
 import AICardsPreview from '~/components/AICardsPreview';
 import Icon from '~/components/Icon';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
+import { Color, borderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 WantPanel.propTypes = {
@@ -15,13 +14,9 @@ WantPanel.propTypes = {
 export default function WantPanel({ isTrade, wantCardIds, wantCoins, style }) {
   return (
     <div
-      className={css`
-        width: 60%;
-        @media (max-width: ${mobileMaxWidth}) {
-          width: 100%;
-        }
-      `}
+      className="panel"
       style={{
+        width: '100%',
         borderRadius,
         fontFamily: 'Roboto, monospace',
         border: `1px solid ${Color.borderGray()}`,
