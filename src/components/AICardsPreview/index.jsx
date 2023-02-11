@@ -46,7 +46,11 @@ export default function AICardsPreview({
             style={{
               marginLeft: index > 0 ? '1rem' : 0
             }}
-            onClick={() => onSetAICardModalCardId(card.id)}
+            onClick={
+              onSetAICardModalCardId
+                ? () => onSetAICardModalCardId(card.id)
+                : null
+            }
           />
         </div>
       ))}
