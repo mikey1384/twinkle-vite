@@ -1,9 +1,13 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Heading from './Heading';
+import Body from './Body';
+import OfferPanel from './OfferPanel';
 import UsernameText from '~/components/Texts/UsernameText';
 
 Show.propTypes = {
+  cardIds: PropTypes.array,
+  coins: PropTypes.number,
   fromId: PropTypes.number.isRequired,
   toId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
@@ -11,7 +15,15 @@ Show.propTypes = {
   partner: PropTypes.object.isRequired
 };
 
-export default function Show({ myId, myUsername, fromId, toId, partner }) {
+export default function Show({
+  cardIds,
+  coins,
+  myId,
+  myUsername,
+  fromId,
+  toId,
+  partner
+}) {
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
   }, [fromId, myId, myUsername, partner]);
@@ -52,6 +64,9 @@ export default function Show({ myId, myUsername, fromId, toId, partner }) {
           might be interested in
         </div>
       </Heading>
+      <Body>
+        <OfferPanel offerCardIds={cardIds} offerCoins={coins} />
+      </Body>
     </div>
   );
 }
