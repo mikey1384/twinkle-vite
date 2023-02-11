@@ -8,7 +8,7 @@ AddButtons.propTypes = {
   isTwoPeopleChannel: PropTypes.bool,
   onUploadButtonClick: PropTypes.func.isRequired,
   onSelectVideoButtonClick: PropTypes.func.isRequired,
-  onSetTradeModalShown: PropTypes.func.isRequired
+  onSetTransactionModalShown: PropTypes.func.isRequired
 };
 
 export default function AddButtons({
@@ -16,7 +16,7 @@ export default function AddButtons({
   isTwoPeopleChannel,
   onUploadButtonClick,
   onSelectVideoButtonClick,
-  onSetTradeModalShown
+  onSetTransactionModalShown
 }) {
   const {
     button: { color: buttonColor },
@@ -35,7 +35,7 @@ export default function AddButtons({
         <Button
           skeuomorphic
           disabled={disabled}
-          onClick={onSetTradeModalShown}
+          onClick={onSetTransactionModalShown}
           color={buttonColor}
           mobilePadding="0.5rem"
           hoverColor={buttonHoverColor}

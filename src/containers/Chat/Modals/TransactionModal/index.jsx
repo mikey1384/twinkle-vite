@@ -6,18 +6,18 @@ import MyWant from './MyWant';
 import MyOffer from './MyOffer';
 import Options from './Options';
 import SelectAICardModal from './SelectAICardModal';
-import ConfirmTradeModal from './ConfirmTradeModal';
+import ConfirmTransactionModal from './ConfirmTransactionModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
-TradeModal.propTypes = {
+TransactionModal.propTypes = {
   isAICardModalShown: PropTypes.bool.isRequired,
   onHide: PropTypes.func.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired
 };
 
-export default function TradeModal({
+export default function TransactionModal({
   isAICardModalShown,
   onHide,
   onSetAICardModalCardId,
@@ -99,7 +99,7 @@ export default function TradeModal({
   }, [coinAmountObj.want, selectedOption, validSelectedWantCardIds.length]);
 
   return (
-    <ErrorBoundary componentPath="Chat/Modals/TradeModal">
+    <ErrorBoundary componentPath="Chat/Modals/TransactionModal">
       <Modal onHide={isAICardModalShown || dropdownShown ? null : onHide}>
         <header>{title}</header>
         <main>
@@ -202,7 +202,7 @@ export default function TradeModal({
           />
         )}
         {confirmModalShown && (
-          <ConfirmTradeModal
+          <ConfirmTransactionModal
             onHide={() =>
               isAICardModalShown ? null : setConfirmModalShown(false)
             }
