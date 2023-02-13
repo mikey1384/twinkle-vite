@@ -43,6 +43,7 @@ export function addEmoji(string) {
     ':brofist:': '👊',
     ':bunny:': '🐰',
     ':burger:': '🍔',
+    ':burn:': '🔥',
     ':butterfly:': '🦋',
     ':bye:': '👋',
     ':cake:': '🍰',
