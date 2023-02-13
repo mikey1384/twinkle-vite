@@ -118,7 +118,13 @@ export default function TransactionModal({
           {loading ? (
             <Loading />
           ) : pendingTransaction ? (
-            <HandleTransaction transaction={pendingTransaction} />
+            <HandleTransaction
+              offer={pendingTransaction.offer}
+              want={pendingTransaction.want}
+              fromId={pendingTransaction.from}
+              toId={pendingTransaction.to}
+              type={pendingTransaction.type}
+            />
           ) : (
             <InitiateTransaction
               coinAmountObj={coinAmountObj}
