@@ -12,7 +12,7 @@ Show.propTypes = {
   toId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
-  onClick: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
   partner: PropTypes.object.isRequired
 };
 
