@@ -13,11 +13,12 @@ export default function HandleTransaction({
   transactionDetails
 }) {
   return (
-    <div>
+    <div style={{ width: '100%' }}>
       <TransactionDetails
         partner={partner}
         onSetAICardModalCardId={onSetAICardModalCardId}
         transaction={transactionDetails}
+        style={{ marginTop: '-1rem' }}
       />
     </div>
   );
