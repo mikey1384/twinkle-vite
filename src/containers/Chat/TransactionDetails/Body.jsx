@@ -19,7 +19,8 @@ export default function Body({ children, onClick }) {
       }}
       onClick={onClick}
       className={`unselectable ${css`
-        width: 60%;
+        width: 100%;
+        max-width: 65rem;
         cursor: ${onClick ? 'pointer' : 'default'};
         ${onClick
           ? `&:hover {
@@ -31,9 +32,6 @@ export default function Body({ children, onClick }) {
           }
         }`
           : ''}
-        @media (max-width: ${mobileMaxWidth}) {
-          width: 100%;
-        }
       `}`}
     >
       {children}
