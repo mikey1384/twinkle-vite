@@ -6,14 +6,14 @@ import Send from './Send';
 import { useChatContext, useKeyContext } from '~/contexts';
 
 TransactionMessage.propTypes = {
-  onSetTransactionModalShown: PropTypes.func.isRequired,
+  onClick: PropTypes.func.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired,
   transaction: PropTypes.object.isRequired
 };
 
 export default function TransactionMessage({
-  onSetTransactionModalShown,
+  onClick,
   onSetAICardModalCardId,
   transaction,
   partner
@@ -56,7 +56,7 @@ export default function TransactionMessage({
           offerCardIds={offerCardIds}
           offerCoins={offerCoins}
           partner={partner}
-          onSetTransactionModalShown={onSetTransactionModalShown}
+          onClick={onClick}
           onSetAICardModalCardId={onSetAICardModalCardId}
           fromId={transaction.from}
         />
@@ -69,7 +69,7 @@ export default function TransactionMessage({
           cardIds={offerCardIds}
           coins={offerCoins}
           fromId={transaction.from}
-          onSetTransactionModalShown={onSetTransactionModalShown}
+          onClick={onClick}
           toId={transaction.to}
         />
       )}
@@ -81,7 +81,7 @@ export default function TransactionMessage({
           partner={partner}
           cardIds={offerCardIds}
           coins={offerCoins}
-          onSetTransactionModalShown={onSetTransactionModalShown}
+          onClick={onClick}
           toId={transaction.to}
         />
       )}
