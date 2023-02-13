@@ -3,10 +3,11 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 Body.propTypes = {
-  children: PropTypes.node
+  children: PropTypes.node,
+  onSetTransactionModalShown: PropTypes.func.isRequired
 };
 
-export default function Body({ children }) {
+export default function Body({ children, onSetTransactionModalShown }) {
   return (
     <div
       style={{
@@ -16,6 +17,7 @@ export default function Body({ children }) {
         justifyContent: 'center',
         alignItems: 'center'
       }}
+      onClick={() => onSetTransactionModalShown(true)}
       className={`unselectable ${css`
         width: 60%;
         cursor: pointer;

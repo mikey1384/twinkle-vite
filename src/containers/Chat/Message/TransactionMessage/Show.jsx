@@ -12,6 +12,7 @@ Show.propTypes = {
   toId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
+  onSetTransactionModalShown: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired
 };
 
@@ -22,6 +23,7 @@ export default function Show({
   myUsername,
   fromId,
   toId,
+  onSetTransactionModalShown,
   partner
 }) {
   const from = useMemo(() => {
@@ -63,7 +65,7 @@ export default function Show({
           might be interested in
         </div>
       </Heading>
-      <Body>
+      <Body onSetTransactionModalShown={onSetTransactionModalShown}>
         <OfferPanel offerCardIds={cardIds} offerCoins={coins} />
       </Body>
     </div>

@@ -15,6 +15,7 @@ Trade.propTypes = {
   wantCoins: PropTypes.number,
   offerCardIds: PropTypes.array,
   offerCoins: PropTypes.number,
+  onSetTransactionModalShown: PropTypes.func.isRequired,
   fromId: PropTypes.number.isRequired
 };
 
@@ -23,6 +24,7 @@ export default function Trade({
   myUsername,
   partner,
   onSetAICardModalCardId,
+  onSetTransactionModalShown,
   offerCardIds,
   offerCoins,
   wantCardIds,
@@ -63,7 +65,7 @@ export default function Trade({
             : `${from.id === myId ? 'are' : 'is'} interested in`}
         </div>
       </Heading>
-      <Body>
+      <Body onSetTransactionModalShown={onSetTransactionModalShown}>
         {isTrade && (
           <OfferPanel
             isTrade
