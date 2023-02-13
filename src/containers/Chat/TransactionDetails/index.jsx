@@ -9,6 +9,7 @@ TransactionMessage.propTypes = {
   onClick: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired,
+  style: PropTypes.object,
   transaction: PropTypes.object.isRequired
 };
 
@@ -16,7 +17,8 @@ export default function TransactionMessage({
   onClick,
   onSetAICardModalCardId,
   transaction,
-  partner
+  partner,
+  style
 }) {
   const { userId, username } = useKeyContext((v) => v.myState);
   const cardObj = useChatContext((v) => v.state.cardObj);
@@ -46,7 +48,7 @@ export default function TransactionMessage({
   }, [offerCards?.length, wantCards?.length]);
 
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ width: '100%', ...style }}>
       {type === 'trade' && (
         <Trade
           myId={userId}
