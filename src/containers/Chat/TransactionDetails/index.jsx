@@ -48,7 +48,7 @@ export default function TransactionMessage({
   }, [offerCards?.length, wantCards?.length]);
 
   return (
-    <div style={{ width: '100%', ...style }}>
+    <div style={style}>
       {type === 'trade' && (
         <Trade
           myId={userId}
