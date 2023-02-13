@@ -647,8 +647,8 @@ function Message({
     return (
       <TransactionMessage
         partner={partner}
+        onClick={() => onSetTransactionModalShown(true)}
         onSetAICardModalCardId={onSetAICardModalCardId}
-        onSetTransactionModalShown={onSetTransactionModalShown}
         transaction={transactionDetails}
       />
     );

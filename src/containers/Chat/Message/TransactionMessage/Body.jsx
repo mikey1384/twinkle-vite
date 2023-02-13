@@ -4,10 +4,10 @@ import { css } from '@emotion/css';
 
 Body.propTypes = {
   children: PropTypes.node,
-  onSetTransactionModalShown: PropTypes.func.isRequired
+  onClick: PropTypes.func
 };
 
-export default function Body({ children, onSetTransactionModalShown }) {
+export default function Body({ children, onClick }) {
   return (
     <div
       style={{
@@ -17,18 +17,20 @@ export default function Body({ children, onSetTransactionModalShown }) {
         justifyContent: 'center',
         alignItems: 'center'
       }}
-      onClick={() => onSetTransactionModalShown(true)}
+      onClick={onClick}
       className={`unselectable ${css`
         width: 60%;
-        cursor: pointer;
-        &:hover {
+        cursor: ${onClick ? 'pointer' : 'default'};
+        ${onClick
+          ? `&:hover {
           > .panel {
             background-color: ${Color.highlightGray()};
             @media (max-width: ${mobileMaxWidth}) {
               background-color: transparent;
             }
           }
-        }
+        }`
+          : ''}
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;
         }
