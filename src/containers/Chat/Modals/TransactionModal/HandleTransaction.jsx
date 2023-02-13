@@ -1,27 +1,24 @@
 import PropTypes from 'prop-types';
-import AICardsPreview from '~/components/AICardsPreview';
+import TransactionDetails from '../../TransactionDetails';
 
 HandleTransaction.propTypes = {
-  offer: PropTypes.object,
-  want: PropTypes.object,
-  fromId: PropTypes.number,
-  toId: PropTypes.number,
-  type: PropTypes.string
+  onSetAICardModalCardId: PropTypes.func.isRequired,
+  partner: PropTypes.object.isRequired,
+  transactionDetails: PropTypes.object.isRequired
 };
 
-export default function HandleTransaction({ offer, want, fromId, toId, type }) {
-  const { coins: wantCoins, cardIds: wantCardIds } = want;
-  const { coins: offerCoins, cardIds: offerCardIds } = offer;
-
+export default function HandleTransaction({
+  onSetAICardModalCardId,
+  partner,
+  transactionDetails
+}) {
   return (
     <div>
-      <div>From: {fromId}</div>
-      <div>To: {toId}</div>
-      <div>Type: {type}</div>
-      <div>Want Coins: {wantCoins}</div>
-      <div>Offer Coins: {offerCoins}</div>
-      {wantCardIds && <AICardsPreview cardIds={wantCardIds} />}
-      {offerCardIds && <AICardsPreview cardIds={offerCardIds} />}
+      <TransactionDetails
+        partner={partner}
+        onSetAICardModalCardId={onSetAICardModalCardId}
+        transaction={transactionDetails}
+      />
     </div>
   );
 }

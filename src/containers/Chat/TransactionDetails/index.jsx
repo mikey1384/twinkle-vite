@@ -6,7 +6,7 @@ import Send from './Send';
 import { useChatContext, useKeyContext } from '~/contexts';
 
 TransactionMessage.propTypes = {
-  onClick: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired,
   transaction: PropTypes.object.isRequired

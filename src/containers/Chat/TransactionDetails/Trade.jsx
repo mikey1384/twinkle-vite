@@ -15,7 +15,7 @@ Trade.propTypes = {
   wantCoins: PropTypes.number,
   offerCardIds: PropTypes.array,
   offerCoins: PropTypes.number,
-  onClick: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
   fromId: PropTypes.number.isRequired
 };
 
