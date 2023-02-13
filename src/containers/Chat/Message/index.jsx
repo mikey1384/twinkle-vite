@@ -75,6 +75,7 @@ Message.propTypes = {
   onRequestRewind: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func,
   onSetChessTarget: PropTypes.func,
+  onSetTransactionModalShown: PropTypes.func,
   onRewardMessageSubmit: PropTypes.func.isRequired,
   onScrollToBottom: PropTypes.func.isRequired,
   onShowSubjectMsgsModal: PropTypes.func,
@@ -145,6 +146,7 @@ function Message({
   onRewardMessageSubmit,
   onSetAICardModalCardId,
   onSetChessTarget,
+  onSetTransactionModalShown,
   onScrollToBottom,
   onShowSubjectMsgsModal,
   zIndex
@@ -646,6 +648,7 @@ function Message({
       <TransactionMessage
         partner={partner}
         onSetAICardModalCardId={onSetAICardModalCardId}
+        onSetTransactionModalShown={onSetTransactionModalShown}
         transaction={transactionDetails}
       />
     );

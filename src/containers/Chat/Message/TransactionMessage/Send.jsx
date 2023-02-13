@@ -11,6 +11,7 @@ Send.propTypes = {
   fromId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
+  onSetTransactionModalShown: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired,
   toId: PropTypes.number.isRequired
 };
@@ -21,6 +22,7 @@ export default function Send({
   fromId,
   myId,
   myUsername,
+  onSetTransactionModalShown,
   partner,
   toId
 }) {
@@ -62,7 +64,7 @@ export default function Send({
           />
         </div>
       </Heading>
-      <Body>
+      <Body onSetTransactionModalShown={onSetTransactionModalShown}>
         <OfferPanel offerCardIds={cardIds} offerCoins={coins} />
       </Body>
     </div>

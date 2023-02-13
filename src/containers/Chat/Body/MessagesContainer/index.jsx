@@ -1334,6 +1334,7 @@ function MessagesContainer({
                   onRewardMessageSubmit={handleRewardMessageSubmit}
                   onSetAICardModalCardId={onSetAICardModalCardId}
                   onSetChessTarget={handleSetChessTarget}
+                  onSetTransactionModalShown={setTransactionModalShown}
                   onScrollToBottom={handleScrollToBottom}
                   recipientId={recipientId}
                   onShowSubjectMsgsModal={({ subjectId, content }) =>
