@@ -8,6 +8,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import InitiateTransaction from './InitiateTransaction';
 import Loading from '~/components/Loading';
+import HandleTransaction from './HandleTransaction';
 
 TransactionModal.propTypes = {
   channelId: PropTypes.number.isRequired,
@@ -117,7 +118,7 @@ export default function TransactionModal({
           {loading ? (
             <Loading />
           ) : pendingTransaction ? (
-            <div>{pendingTransaction.id}</div>
+            <HandleTransaction transaction={pendingTransaction} />
           ) : (
             <InitiateTransaction
               coinAmountObj={coinAmountObj}
