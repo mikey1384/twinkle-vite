@@ -32,7 +32,7 @@ import moment from 'moment';
 import FileAttachment from './FileAttachment';
 import TargetChessPosition from './TargetChessPosition';
 import TransferMessage from './TransferMessage';
-import TransactionMessage from './TransactionMessage';
+import TransactionDetails from '../TransactionDetails';
 import { useInView } from 'react-intersection-observer';
 import { socket } from '~/constants/io';
 import { MessageStyle } from '../Styles';
@@ -645,7 +645,7 @@ function Message({
 
   if (transactionDetails) {
     return (
-      <TransactionMessage
+      <TransactionDetails
         partner={partner}
         onClick={() => onSetTransactionModalShown(true)}
         onSetAICardModalCardId={onSetAICardModalCardId}
