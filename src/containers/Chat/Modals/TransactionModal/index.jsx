@@ -6,9 +6,9 @@ import SelectAICardModal from './SelectAICardModal';
 import ConfirmTransactionModal from './ConfirmTransactionModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import InitiateTransaction from './InitiateTransaction';
+import TransactionInitiator from './TransactionInitiator';
 import Loading from '~/components/Loading';
-import HandleTransaction from './HandleTransaction';
+import TransactionHandler from './TransactionHandler';
 
 TransactionModal.propTypes = {
   channelId: PropTypes.number.isRequired,
@@ -118,13 +118,13 @@ export default function TransactionModal({
           {loading ? (
             <Loading />
           ) : pendingTransaction ? (
-            <HandleTransaction
+            <TransactionHandler
               onSetAICardModalCardId={onSetAICardModalCardId}
               partner={partner}
               transactionDetails={pendingTransaction}
             />
           ) : (
-            <InitiateTransaction
+            <TransactionInitiator
               coinAmountObj={coinAmountObj}
               onSetAICardModalType={setAICardModalType}
               onSetCoinAmountObj={setCoinAmountObj}

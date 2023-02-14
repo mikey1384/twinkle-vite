@@ -1,13 +1,13 @@
 import PropTypes from 'prop-types';
 import TransactionDetails from '../../TransactionDetails';
 
-HandleTransaction.propTypes = {
+TransactionHandler.propTypes = {
   onSetAICardModalCardId: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired,
   transactionDetails: PropTypes.object.isRequired
 };
 
-export default function HandleTransaction({
+export default function TransactionHandler({
   onSetAICardModalCardId,
   partner,
   transactionDetails
