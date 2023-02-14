@@ -4,7 +4,7 @@ import MyWant from './MyWant';
 import MyOffer from './MyOffer';
 import Options from './Options';
 
-InitiateTransaction.propTypes = {
+TransactionInitiator.propTypes = {
   coinAmountObj: PropTypes.object.isRequired,
   onSetCoinAmountObj: PropTypes.func.isRequired,
   onSetSelectedOption: PropTypes.func.isRequired,
@@ -16,7 +16,7 @@ InitiateTransaction.propTypes = {
   validSelectedWantCardIds: PropTypes.array.isRequired
 };
 
-export default function InitiateTransaction({
+export default function TransactionInitiator({
   coinAmountObj,
   onSetCoinAmountObj,
   onSetSelectedOption,
