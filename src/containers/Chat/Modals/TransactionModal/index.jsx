@@ -119,6 +119,7 @@ export default function TransactionModal({
             <Loading />
           ) : pendingTransaction ? (
             <TransactionHandler
+              myId={myId}
               onSetAICardModalCardId={onSetAICardModalCardId}
               partner={partner}
               transactionDetails={pendingTransaction}
