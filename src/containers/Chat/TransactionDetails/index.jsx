@@ -85,6 +85,7 @@ export default function TransactionDetails({
           cardIds={offerCardIds}
           coins={offerCoins}
           onClick={onClick}
+          onSetAICardModalCardId={onSetAICardModalCardId}
           toId={transaction.to}
         />
       )}
