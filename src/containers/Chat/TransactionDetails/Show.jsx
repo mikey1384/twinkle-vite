@@ -13,6 +13,7 @@ Show.propTypes = {
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
   onClick: PropTypes.func,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired
 };
 
@@ -24,6 +25,7 @@ export default function Show({
   fromId,
   toId,
   onClick,
+  onSetAICardModalCardId,
   partner
 }) {
   const from = useMemo(() => {
@@ -66,7 +68,11 @@ export default function Show({
         </div>
       </Heading>
       <Body onClick={onClick}>
-        <OfferPanel offerCardIds={cardIds} offerCoins={coins} />
+        <OfferPanel
+          offerCardIds={cardIds}
+          offerCoins={coins}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+        />
       </Body>
     </div>
   );
