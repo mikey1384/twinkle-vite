@@ -63,7 +63,7 @@ export default function OfferPanel({
             <AICardsPreview
               cardIds={offerCardIds}
               onSetAICardModalCardId={
-                showCardDetailsOnThumbClick ? onSetAICardModalCardId : null
+                showCardDetailsOnThumbClick ? onSetAICardModalCardId : () => {}
               }
             />
             {offerCoins > 0 && (
