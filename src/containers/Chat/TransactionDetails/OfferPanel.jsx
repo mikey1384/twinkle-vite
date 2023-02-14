@@ -9,14 +9,16 @@ OfferPanel.propTypes = {
   isTrade: PropTypes.bool,
   offerCardIds: PropTypes.array,
   offerCoins: PropTypes.number,
-  onSetAICardModalCardId: PropTypes.func
+  onSetAICardModalCardId: PropTypes.func,
+  showCardDetailsOnThumbClick: PropTypes.bool
 };
 
 export default function OfferPanel({
   isTrade,
   offerCardIds,
   offerCoins,
-  onSetAICardModalCardId
+  onSetAICardModalCardId,
+  showCardDetailsOnThumbClick
 }) {
   return (
     <div
@@ -60,7 +62,9 @@ export default function OfferPanel({
           <div style={{ textAlign: 'center' }}>
             <AICardsPreview
               cardIds={offerCardIds}
-              onSetAICardModalCardId={onSetAICardModalCardId}
+              onSetAICardModalCardId={
+                showCardDetailsOnThumbClick ? onSetAICardModalCardId : null
+              }
             />
             {offerCoins > 0 && (
               <div

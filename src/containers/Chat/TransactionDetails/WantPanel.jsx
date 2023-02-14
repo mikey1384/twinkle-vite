@@ -10,6 +10,7 @@ WantPanel.propTypes = {
   onSetAICardModalCardId: PropTypes.func.isRequired,
   wantCardIds: PropTypes.array.isRequired,
   wantCoins: PropTypes.number.isRequired,
+  showCardDetailsOnThumbClick: PropTypes.bool,
   style: PropTypes.object
 };
 
@@ -18,6 +19,7 @@ export default function WantPanel({
   onSetAICardModalCardId,
   wantCardIds,
   wantCoins,
+  showCardDetailsOnThumbClick,
   style
 }) {
   return (
@@ -64,7 +66,9 @@ export default function WantPanel({
           <div style={{ textAlign: 'center' }}>
             <AICardsPreview
               cardIds={wantCardIds}
-              onSetAICardModalCardId={onSetAICardModalCardId}
+              onSetAICardModalCardId={
+                showCardDetailsOnThumbClick ? onSetAICardModalCardId : null
+              }
             />
             {wantCoins > 0 && (
               <div

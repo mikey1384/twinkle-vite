@@ -72,6 +72,7 @@ export default function Show({
           offerCardIds={cardIds}
           offerCoins={coins}
           onSetAICardModalCardId={onSetAICardModalCardId}
+          showCardDetailsOnThumbClick={!onClick}
         />
       </Body>
     </div>
