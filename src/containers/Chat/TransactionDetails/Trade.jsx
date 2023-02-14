@@ -72,6 +72,7 @@ export default function Trade({
             offerCardIds={offerCardIds}
             offerCoins={offerCoins}
             onSetAICardModalCardId={onSetAICardModalCardId}
+            showCardDetailsOnThumbClick={!onClick}
           />
         )}
         <WantPanel
@@ -80,6 +81,7 @@ export default function Trade({
           wantCardIds={wantCardIds}
           wantCoins={wantCoins}
           onSetAICardModalCardId={onSetAICardModalCardId}
+          showCardDetailsOnThumbClick={!onClick}
         />
       </Body>
     </div>

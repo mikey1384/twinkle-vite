@@ -71,6 +71,7 @@ export default function Send({
           offerCardIds={cardIds}
           offerCoins={coins}
           onSetAICardModalCardId={onSetAICardModalCardId}
+          showCardDetailsOnThumbClick={!onClick}
         />
       </Body>
     </div>
