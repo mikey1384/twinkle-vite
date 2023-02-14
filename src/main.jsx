@@ -3,6 +3,12 @@ async function loadPolyfills() {
     await import('intersection-observer');
   }
 }
+function fromEntries(entries) {
+  var res = {};
+  for (let i = 0; i < entries.length; i++) res[entries[i][0]] = entries[i][1];
+  return res;
+}
+if (!Object.fromEntries) Object.fromEntries = fromEntries;
 loadPolyfills();
 
 import './styles.css';
