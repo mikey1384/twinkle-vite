@@ -5,7 +5,7 @@ import Show from './Show';
 import Send from './Send';
 import { useChatContext, useKeyContext } from '~/contexts';
 
-TransactionMessage.propTypes = {
+TransactionDetails.propTypes = {
   onClick: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired,
@@ -13,7 +13,7 @@ TransactionMessage.propTypes = {
   transaction: PropTypes.object.isRequired
 };
 
-export default function TransactionMessage({
+export default function TransactionDetails({
   onClick,
   onSetAICardModalCardId,
   transaction,
@@ -72,6 +72,7 @@ export default function TransactionMessage({
           coins={offerCoins}
           fromId={transaction.from}
           onClick={onClick}
+          onSetAICardModalCardId={onSetAICardModalCardId}
           toId={transaction.to}
         />
       )}

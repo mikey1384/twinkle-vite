@@ -7,12 +7,19 @@ import { css } from '@emotion/css';
 
 WantPanel.propTypes = {
   isTrade: PropTypes.bool.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
   wantCardIds: PropTypes.array.isRequired,
   wantCoins: PropTypes.number.isRequired,
   style: PropTypes.object
 };
 
-export default function WantPanel({ isTrade, wantCardIds, wantCoins, style }) {
+export default function WantPanel({
+  isTrade,
+  onSetAICardModalCardId,
+  wantCardIds,
+  wantCoins,
+  style
+}) {
   return (
     <div
       className="panel"
@@ -55,7 +62,10 @@ export default function WantPanel({ isTrade, wantCardIds, wantCoins, style }) {
       >
         {wantCardIds.length ? (
           <div style={{ textAlign: 'center' }}>
-            <AICardsPreview cardIds={wantCardIds} />
+            <AICardsPreview
+              cardIds={wantCardIds}
+              onSetAICardModalCardId={onSetAICardModalCardId}
+            />
             {wantCoins > 0 && (
               <div
                 style={{

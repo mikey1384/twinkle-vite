@@ -8,10 +8,16 @@ import { css } from '@emotion/css';
 OfferPanel.propTypes = {
   isTrade: PropTypes.bool,
   offerCardIds: PropTypes.array,
-  offerCoins: PropTypes.number
+  offerCoins: PropTypes.number,
+  onSetAICardModalCardId: PropTypes.func
 };
 
-export default function OfferPanel({ isTrade, offerCardIds, offerCoins }) {
+export default function OfferPanel({
+  isTrade,
+  offerCardIds,
+  offerCoins,
+  onSetAICardModalCardId
+}) {
   return (
     <div
       className="panel"
@@ -52,7 +58,10 @@ export default function OfferPanel({ isTrade, offerCardIds, offerCoins }) {
       >
         {offerCardIds.length ? (
           <div style={{ textAlign: 'center' }}>
-            <AICardsPreview cardIds={offerCardIds} />
+            <AICardsPreview
+              cardIds={offerCardIds}
+              onSetAICardModalCardId={onSetAICardModalCardId}
+            />
             {offerCoins > 0 && (
               <div
                 style={{

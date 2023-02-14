@@ -12,6 +12,7 @@ Send.propTypes = {
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
   onClick: PropTypes.func,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired,
   toId: PropTypes.number.isRequired
 };
@@ -23,6 +24,7 @@ export default function Send({
   myId,
   myUsername,
   onClick,
+  onSetAICardModalCardId,
   partner,
   toId
 }) {
@@ -65,7 +67,11 @@ export default function Send({
         </div>
       </Heading>
       <Body onClick={onClick}>
-        <OfferPanel offerCardIds={cardIds} offerCoins={coins} />
+        <OfferPanel
+          offerCardIds={cardIds}
+          offerCoins={coins}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+        />
       </Body>
     </div>
   );
