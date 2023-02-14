@@ -59,7 +59,7 @@ export default function Trade({
             }}
           />{' '}
           {isTrade
-            ? `want${from.id === myId ? '' : 's'} to trade`
+            ? `propose${from.id === myId ? '' : 's'} to trade`
             : !!wantCoins
             ? `want${from.id === myId ? '' : 's'}`
             : `${from.id === myId ? 'are' : 'is'} interested in`}
