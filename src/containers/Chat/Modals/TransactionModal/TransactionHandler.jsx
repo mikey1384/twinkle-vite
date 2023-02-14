@@ -33,7 +33,7 @@ export default function TransactionHandler({
       <div>
         <Button onClick={() => console.log('clicked')} color="orange" filled>
           <Icon icon="redo" />
-          <span style={{ marginLeft: '0.7rem' }}>Withdraw Offer</span>
+          <span style={{ marginLeft: '0.7rem' }}>Withdraw Proposal</span>
         </Button>
       </div>
     </div>
