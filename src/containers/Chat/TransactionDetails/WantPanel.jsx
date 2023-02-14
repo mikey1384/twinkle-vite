@@ -67,7 +67,7 @@ export default function WantPanel({
             <AICardsPreview
               cardIds={wantCardIds}
               onSetAICardModalCardId={
-                showCardDetailsOnThumbClick ? onSetAICardModalCardId : null
+                showCardDetailsOnThumbClick ? onSetAICardModalCardId : () => {}
               }
             />
             {wantCoins > 0 && (
