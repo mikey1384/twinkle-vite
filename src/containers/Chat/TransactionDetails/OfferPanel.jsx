@@ -37,7 +37,7 @@ export default function OfferPanel({ isTrade, offerCardIds, offerCoins }) {
             borderBottom: `1px solid ${Color.borderGray()}`
           }}
         >
-          Offering...
+          Offered...
         </div>
       ) : null}
       <div
