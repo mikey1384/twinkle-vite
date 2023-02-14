@@ -143,15 +143,17 @@ export default function TransactionModal({
             style={{ marginRight: '0.7rem' }}
             onClick={isAICardModalShown ? null : onHide}
           >
-            Cancel
+            {pendingTransaction ? 'Close' : 'Cancel'}
           </Button>
-          <Button
-            disabled={doneButtonDisabled}
-            color={doneColor}
-            onClick={() => setConfirmModalShown(true)}
-          >
-            {doneLabel}
-          </Button>
+          {!pendingTransaction && (
+            <Button
+              disabled={doneButtonDisabled}
+              color={doneColor}
+              onClick={() => setConfirmModalShown(true)}
+            >
+              {doneLabel}
+            </Button>
+          )}
         </footer>
         {!!aiCardModalType && (
           <SelectAICardModal
