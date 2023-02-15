@@ -110,7 +110,8 @@ function Channel({
       username: senderName,
       isAbort,
       isDraw,
-      transferDetails
+      transferDetails,
+      transactionDetails
     }) {
       const messageSender = senderId
         ? senderId === userId
@@ -155,6 +156,23 @@ function Channel({
             <span>{`${seller}: sold Card #${transferDetails?.card?.id}`}</span>
           );
         }
+      }
+      if (transactionDetails) {
+        const from = transactionDetails.from === userId ? 'You' : otherMember;
+        const to = transactionDetails.to === userId ? 'you' : otherMember;
+        let actionText = '';
+        if (transactionDetails.type === 'trade') {
+          actionText = 'proposed a trade';
+        }
+        if (transactionDetails.type === 'show') {
+          actionText = `${
+            transactionDetails.from === userId ? 'have' : 'has'
+          } something to show`;
+        }
+        if (transactionDetails.type === 'send') {
+          actionText = `sent ${to} something`;
+        }
+        return <span>{`${from}: ${actionText}`}</span>;
       }
       if (messageSender && content) {
         const truncatedContent =
