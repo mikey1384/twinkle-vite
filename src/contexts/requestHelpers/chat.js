@@ -67,6 +67,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async cancelTransaction({ transactionId, channelId, reason }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/chat/transaction?transactionId=${transactionId}&channelId=${channelId}&reason=${reason}`,
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async changeChannelOwner({ channelId, newOwner }) {
       try {
         const {
