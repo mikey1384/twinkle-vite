@@ -108,7 +108,7 @@ export default function TransactionHandler({
             color="logoBlue"
             onClick={() => onSetPendingTransaction(null)}
           >
-            Propose something else
+            Make another proposal
           </Button>
         </div>
       ) : null}
