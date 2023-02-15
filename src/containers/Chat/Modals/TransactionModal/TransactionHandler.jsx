@@ -83,9 +83,16 @@ export default function TransactionHandler({
         </div>
       )}
       {isCancelled ? (
-        <div>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
           <div>Transaction has been cancelled</div>
           <Button
+            style={{ marginTop: '1rem' }}
             filled
             color="logoBlue"
             onClick={() => onSetPendingTransaction(null)}
