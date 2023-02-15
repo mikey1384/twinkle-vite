@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import TransactionDetails from '../../TransactionDetails';
 import Button from '~/components/Button';
@@ -26,7 +26,18 @@ export default function TransactionHandler({
     (v) => v.requestHelpers.cancelTransaction
   );
   const [withdrawing, setWithdrawing] = useState(false);
-  const [isCancelled, setIsCancelled] = useState(false);
+  const [cancelReason, setCancelReason] = useState(null);
+
+  const cancelExplainText = useMemo(() => {
+    switch (cancelReason) {
+      case 'withdraw':
+        return 'You withdrew the trade proposal.';
+      case 'decline':
+        return 'You have declined the transaction.';
+      default:
+        return null;
+    }
+  }, [cancelReason]);
 
   const isFromMe = transactionDetails.from === myId;
   return (
@@ -45,7 +56,7 @@ export default function TransactionHandler({
         transaction={transactionDetails}
         style={{ marginTop: '-1rem', width: '100%' }}
       />
-      {!isCancelled && (
+      {!cancelReason && (
         <div>
           {isFromMe ? (
             <div>
@@ -82,7 +93,7 @@ export default function TransactionHandler({
           )}
         </div>
       )}
-      {isCancelled ? (
+      {cancelReason ? (
         <div
           style={{
             display: 'flex',
@@ -90,14 +101,14 @@ export default function TransactionHandler({
             alignItems: 'center'
           }}
         >
-          <div>Transaction has been cancelled</div>
+          <div style={{ padding: '2rem 0 1.5rem 0' }}>{cancelExplainText}</div>
           <Button
             style={{ marginTop: '1rem' }}
             filled
             color="logoBlue"
             onClick={() => onSetPendingTransaction(null)}
           >
-            Start another transaction
+            Propose something else
           </Button>
         </div>
       ) : null}
@@ -115,7 +126,7 @@ export default function TransactionHandler({
     } catch (error) {
       console.log(error);
     } finally {
-      setIsCancelled(true);
+      setCancelReason('withdraw');
       setWithdrawing(false);
     }
   }
