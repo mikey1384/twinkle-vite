@@ -24,7 +24,7 @@ export default function Details({
   partner
 }) {
   return (
-    <div>
+    <div style={{ width: '100%' }}>
       {selectedOption === 'want' &&
         (!!cardIdsWanted.length || !!coinsWanted) && (
           <WantDetail
