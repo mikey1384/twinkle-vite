@@ -8,6 +8,7 @@ import { useAppContext } from '~/contexts';
 TransactionHandler.propTypes = {
   onSetAICardModalCardId: PropTypes.func.isRequired,
   myId: PropTypes.number.isRequired,
+  onSetPendingTransaction: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired,
   transactionDetails: PropTypes.object.isRequired,
   channelId: PropTypes.number.isRequired
@@ -16,6 +17,7 @@ TransactionHandler.propTypes = {
 export default function TransactionHandler({
   onSetAICardModalCardId,
   myId,
+  onSetPendingTransaction,
   partner,
   transactionDetails,
   channelId
@@ -24,6 +26,7 @@ export default function TransactionHandler({
     (v) => v.requestHelpers.cancelTransaction
   );
   const [withdrawing, setWithdrawing] = useState(false);
+  const [isCancelled, setIsCancelled] = useState(false);
 
   const isFromMe = transactionDetails.from === myId;
   return (
@@ -42,50 +45,70 @@ export default function TransactionHandler({
         transaction={transactionDetails}
         style={{ marginTop: '-1rem', width: '100%' }}
       />
-      {isFromMe ? (
+      {!isCancelled && (
         <div>
-          <Button
-            loading={withdrawing}
-            onClick={handleWithdrawTransaction}
-            color="orange"
-            filled
-          >
-            <Icon icon="redo" />
-            <span style={{ marginLeft: '0.7rem' }}>Withdraw Proposal</span>
-          </Button>
-        </div>
-      ) : (
-        <div style={{ display: 'flex' }}>
-          <Button onClick={() => console.log('clicked')} color="rose" filled>
-            <Icon icon="xmark" />
-            <span style={{ marginLeft: '0.7rem' }}>Decline</span>
-          </Button>
-          <Button
-            style={{ marginLeft: '2rem' }}
-            onClick={() => console.log('clicked')}
-            color="green"
-            filled
-          >
-            <Icon icon="check" />
-            <span style={{ marginLeft: '0.7rem' }}>Accept</span>
-          </Button>
+          {isFromMe ? (
+            <div>
+              <Button
+                loading={withdrawing}
+                onClick={handleWithdrawTransaction}
+                color="orange"
+                filled
+              >
+                <Icon icon="redo" />
+                <span style={{ marginLeft: '0.7rem' }}>Withdraw Proposal</span>
+              </Button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex' }}>
+              <Button
+                onClick={() => console.log('clicked')}
+                color="rose"
+                filled
+              >
+                <Icon icon="xmark" />
+                <span style={{ marginLeft: '0.7rem' }}>Decline</span>
+              </Button>
+              <Button
+                style={{ marginLeft: '2rem' }}
+                onClick={() => console.log('clicked')}
+                color="green"
+                filled
+              >
+                <Icon icon="check" />
+                <span style={{ marginLeft: '0.7rem' }}>Accept</span>
+              </Button>
+            </div>
+          )}
         </div>
       )}
+      {isCancelled ? (
+        <div>
+          <div>Transaction has been cancelled</div>
+          <Button
+            filled
+            color="logoBlue"
+            onClick={() => onSetPendingTransaction(null)}
+          >
+            Start another transaction
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 
   async function handleWithdrawTransaction() {
     try {
       setWithdrawing(true);
-      const data = await cancelTransaction({
+      await cancelTransaction({
         channelId,
         transactionId: transactionDetails.id,
         reason: 'withdraw'
       });
-      console.log(data);
     } catch (error) {
       console.log(error);
     } finally {
+      setIsCancelled(true);
       setWithdrawing(false);
     }
   }
