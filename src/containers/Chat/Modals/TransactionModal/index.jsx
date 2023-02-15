@@ -204,7 +204,7 @@ export default function TransactionModal({
     offeredCardIds,
     wantedCardIds
   }) {
-    const data = await postTradeRequest({
+    await postTradeRequest({
       type: selectedOption,
       wanted: {
         coins: coinsWanted,
@@ -216,6 +216,6 @@ export default function TransactionModal({
       },
       targetId: partner.id
     });
-    console.log(data);
+    onHide();
   }
 }
