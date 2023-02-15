@@ -41,8 +41,7 @@ export default function Show({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        width: '100%',
-        paddingBottom: '1rem'
+        width: '100%'
       }}
     >
       <Heading color="pink">
