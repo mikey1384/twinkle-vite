@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import TransactionDetails from '../../TransactionDetails';
 import Button from '~/components/Button';
@@ -22,6 +23,8 @@ export default function TransactionHandler({
   const cancelTransaction = useAppContext(
     (v) => v.requestHelpers.cancelTransaction
   );
+  const [withdrawing, setWithdrawing] = useState(false);
+
   const isFromMe = transactionDetails.from === myId;
   return (
     <div
@@ -41,7 +44,12 @@ export default function TransactionHandler({
       />
       {isFromMe ? (
         <div>
-          <Button onClick={handleWithdrawTransaction} color="orange" filled>
+          <Button
+            loading={withdrawing}
+            onClick={handleWithdrawTransaction}
+            color="orange"
+            filled
+          >
             <Icon icon="redo" />
             <span style={{ marginLeft: '0.7rem' }}>Withdraw Proposal</span>
           </Button>
@@ -67,11 +75,18 @@ export default function TransactionHandler({
   );
 
   async function handleWithdrawTransaction() {
-    const data = await cancelTransaction({
-      channelId,
-      transactionId: transactionDetails.id,
-      reason: 'withdraw'
-    });
-    console.log(data);
+    try {
+      setWithdrawing(true);
+      const data = await cancelTransaction({
+        channelId,
+        transactionId: transactionDetails.id,
+        reason: 'withdraw'
+      });
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setWithdrawing(false);
+    }
   }
 }
