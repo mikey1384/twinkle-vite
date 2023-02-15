@@ -35,7 +35,7 @@ export default function TransactionHandler({
       />
       {isFromMe ? (
         <div>
-          <Button onClick={() => console.log('clicked')} color="orange" filled>
+          <Button onClick={handleWithdrawTransaction} color="orange" filled>
             <Icon icon="redo" />
             <span style={{ marginLeft: '0.7rem' }}>Withdraw Proposal</span>
           </Button>
@@ -59,4 +59,8 @@ export default function TransactionHandler({
       )}
     </div>
   );
+
+  async function handleWithdrawTransaction() {
+    console.log('withdraw transaction!!');
+  }
 }
