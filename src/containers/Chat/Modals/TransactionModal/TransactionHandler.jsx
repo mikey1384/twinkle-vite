@@ -2,20 +2,26 @@ import PropTypes from 'prop-types';
 import TransactionDetails from '../../TransactionDetails';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import { useAppContext } from '~/contexts';
 
 TransactionHandler.propTypes = {
   onSetAICardModalCardId: PropTypes.func.isRequired,
   myId: PropTypes.number.isRequired,
   partner: PropTypes.object.isRequired,
-  transactionDetails: PropTypes.object.isRequired
+  transactionDetails: PropTypes.object.isRequired,
+  channelId: PropTypes.number.isRequired
 };
 
 export default function TransactionHandler({
   onSetAICardModalCardId,
   myId,
   partner,
-  transactionDetails
+  transactionDetails,
+  channelId
 }) {
+  const cancelTransaction = useAppContext(
+    (v) => v.requestHelpers.cancelTransaction
+  );
   const isFromMe = transactionDetails.from === myId;
   return (
     <div
@@ -61,6 +67,11 @@ export default function TransactionHandler({
   );
 
   async function handleWithdrawTransaction() {
-    console.log('withdraw transaction!!');
+    const data = await cancelTransaction({
+      channelId,
+      transactionId: transactionDetails.id,
+      reason: 'withdraw'
+    });
+    console.log(data);
   }
 }

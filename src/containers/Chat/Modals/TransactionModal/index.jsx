@@ -123,6 +123,7 @@ export default function TransactionModal({
               onSetAICardModalCardId={onSetAICardModalCardId}
               partner={partner}
               transactionDetails={pendingTransaction}
+              channelId={channelId}
             />
           ) : (
             <TransactionInitiator
