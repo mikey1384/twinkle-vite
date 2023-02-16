@@ -51,7 +51,10 @@ export default function PinnedComment({
 
   return (
     <ErrorBoundary componentPath="Comments/PinnedComment/index">
-      {comment.loaded && !comment.isDeleted && !comment.notFound ? (
+      {comment.loaded &&
+      !comment.isDeleted &&
+      !comment.notFound &&
+      !comment.isDeleteNotification ? (
         <div
           style={{
             marginTop: '0.5rem',
