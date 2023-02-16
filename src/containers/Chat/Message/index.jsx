@@ -256,7 +256,6 @@ function Message({
     [channelId, filePath, filesBeingUploaded, subchannelId]
   );
   let {
-    currentTransactionId,
     username,
     profilePicUrl,
     targetMessage,
@@ -647,9 +646,12 @@ function Message({
   if (transactionDetails) {
     return (
       <TransactionDetails
+        currentTransactionId={currentChannel.currentTransactionId}
         partner={partner}
         onClick={
-          currentTransactionId ? () => onSetTransactionModalShown(true) : null
+          currentChannel.currentTransactionId
+            ? () => onSetTransactionModalShown(true)
+            : null
         }
         onSetAICardModalCardId={onSetAICardModalCardId}
         transaction={transactionDetails}

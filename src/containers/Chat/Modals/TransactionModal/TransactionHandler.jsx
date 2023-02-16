@@ -7,6 +7,7 @@ import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
 TransactionHandler.propTypes = {
+  currentTransactionId: PropTypes.number,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   myId: PropTypes.number.isRequired,
   onSetPendingTransaction: PropTypes.func.isRequired,
@@ -16,6 +17,7 @@ TransactionHandler.propTypes = {
 };
 
 export default function TransactionHandler({
+  currentTransactionId,
   onSetAICardModalCardId,
   myId,
   onSetPendingTransaction,
@@ -74,6 +76,7 @@ export default function TransactionHandler({
     >
       {!cancelReason && (
         <TransactionDetails
+          currentTransactionId={currentTransactionId}
           partner={partner}
           onSetAICardModalCardId={onSetAICardModalCardId}
           transaction={transactionDetails}

@@ -11,6 +11,7 @@ import Loading from '~/components/Loading';
 import TransactionHandler from './TransactionHandler';
 
 TransactionModal.propTypes = {
+  currentTransactionId: PropTypes.number,
   channelId: PropTypes.number.isRequired,
   isAICardModalShown: PropTypes.bool.isRequired,
   onHide: PropTypes.func.isRequired,
@@ -19,6 +20,7 @@ TransactionModal.propTypes = {
 };
 
 export default function TransactionModal({
+  currentTransactionId,
   channelId,
   isAICardModalShown,
   onHide,
@@ -126,6 +128,7 @@ export default function TransactionModal({
             <Loading />
           ) : pendingTransaction ? (
             <TransactionHandler
+              currentTransactionId={currentTransactionId}
               myId={myId}
               onSetAICardModalCardId={onSetAICardModalCardId}
               partner={partner}

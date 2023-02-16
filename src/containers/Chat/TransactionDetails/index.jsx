@@ -6,6 +6,7 @@ import Send from './Send';
 import { useChatContext, useKeyContext } from '~/contexts';
 
 TransactionDetails.propTypes = {
+  currentTransactionId: PropTypes.number,
   onClick: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired,
@@ -14,6 +15,7 @@ TransactionDetails.propTypes = {
 };
 
 export default function TransactionDetails({
+  currentTransactionId,
   onClick,
   onSetAICardModalCardId,
   transaction,
@@ -65,6 +67,7 @@ export default function TransactionDetails({
       )}
       {type === 'show' && (
         <Show
+          isCurrentlyShowing={transaction.id === currentTransactionId}
           myId={userId}
           myUsername={username}
           partner={partner}

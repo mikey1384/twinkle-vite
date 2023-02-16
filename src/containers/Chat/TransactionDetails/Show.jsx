@@ -8,6 +8,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 Show.propTypes = {
   cardIds: PropTypes.array,
   coins: PropTypes.number,
+  isCurrentlyShowing: PropTypes.bool,
   fromId: PropTypes.number.isRequired,
   toId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
@@ -20,6 +21,7 @@ Show.propTypes = {
 export default function Show({
   cardIds,
   coins,
+  isCurrentlyShowing,
   myId,
   myUsername,
   fromId,
@@ -54,7 +56,11 @@ export default function Show({
               username: from.username
             }}
           />{' '}
-          {from.id === myId ? 'think' : 'thinks'}{' '}
+          {isCurrentlyShowing
+            ? from.id === myId
+              ? 'think'
+              : 'thinks'
+            : 'thought'}{' '}
           <UsernameText
             displayedName={to.id === myId ? 'you' : to.username}
             color="#fff"
