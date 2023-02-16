@@ -6,10 +6,12 @@ import Options from './Options';
 
 TransactionInitiator.propTypes = {
   coinAmountObj: PropTypes.object.isRequired,
+  isSelectAICardModalShown: PropTypes.bool,
   onSetCoinAmountObj: PropTypes.func.isRequired,
   onSetSelectedOption: PropTypes.func.isRequired,
   onSetAICardModalType: PropTypes.func.isRequired,
   onSetSelectedCardIdsObj: PropTypes.func.isRequired,
+  ModalRef: PropTypes.object,
   partner: PropTypes.object.isRequired,
   selectedCardIdsObj: PropTypes.object.isRequired,
   selectedOption: PropTypes.string,
@@ -18,10 +20,12 @@ TransactionInitiator.propTypes = {
 
 export default function TransactionInitiator({
   coinAmountObj,
+  isSelectAICardModalShown,
   onSetCoinAmountObj,
   onSetSelectedOption,
   onSetAICardModalType,
   onSetSelectedCardIdsObj,
+  ModalRef,
   partner,
   selectedCardIdsObj,
   selectedOption,
@@ -73,6 +77,9 @@ export default function TransactionInitiator({
       ) : null}
       {!!offerMenuShown && (
         <MyOffer
+          focusOnMount={selectedOption === 'want'}
+          isSelectAICardModalShown={isSelectAICardModalShown}
+          ModalRef={ModalRef}
           coinAmount={coinAmountObj.offer}
           selectedCardIds={selectedCardIdsObj.offer}
           selectedOption={selectedOption}

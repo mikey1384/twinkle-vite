@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -25,6 +25,7 @@ export default function TransactionModal({
   onSetAICardModalCardId,
   partner
 }) {
+  const ModalRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState(null);
   const { userId: myId } = useKeyContext((v) => v.myState);
@@ -112,7 +113,10 @@ export default function TransactionModal({
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/TransactionModal">
-      <Modal onHide={isAICardModalShown || dropdownShown ? null : onHide}>
+      <Modal
+        innerRef={ModalRef}
+        onHide={isAICardModalShown || dropdownShown ? null : onHide}
+      >
         <header>{title}</header>
         <main>
           {loading ? (
@@ -133,6 +137,8 @@ export default function TransactionModal({
               onSetCoinAmountObj={setCoinAmountObj}
               onSetSelectedOption={setSelectedOption}
               onSetSelectedCardIdsObj={setSelectedCardIdsObj}
+              isSelectAICardModalShown={!!aiCardModalType}
+              ModalRef={ModalRef}
               partner={partner}
               selectedCardIdsObj={selectedCardIdsObj}
               selectedOption={selectedOption}

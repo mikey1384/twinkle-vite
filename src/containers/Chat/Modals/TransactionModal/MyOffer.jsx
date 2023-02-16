@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
@@ -8,27 +9,44 @@ import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
 MyOffer.propTypes = {
+  focusOnMount: PropTypes.bool,
   coinAmount: PropTypes.number.isRequired,
+  isSelectAICardModalShown: PropTypes.bool,
   onShowAICardSelector: PropTypes.func.isRequired,
   selectedCardIds: PropTypes.array.isRequired,
   selectedOption: PropTypes.string.isRequired,
   onDeselect: PropTypes.func.isRequired,
   onSetCoinAmount: PropTypes.func.isRequired,
-  style: PropTypes.object
+  style: PropTypes.object,
+  ModalRef: PropTypes.object
 };
 
 export default function MyOffer({
+  focusOnMount,
+  isSelectAICardModalShown,
   coinAmount,
   onShowAICardSelector,
   selectedCardIds,
   selectedOption,
   onDeselect,
   onSetCoinAmount,
-  style
+  style,
+  ModalRef
 }) {
+  const ContainerRef = useRef(null);
+  useEffect(() => {
+    if (focusOnMount) {
+      if (!isSelectAICardModalShown) {
+        ModalRef.current.scrollTop = ContainerRef.current.offsetTop;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSelectAICardModalShown]);
+
   const { twinkleCoins, profileTheme } = useKeyContext((v) => v.myState);
   return (
     <div
+      ref={ContainerRef}
       style={{
         width: '100%',
         ...style
