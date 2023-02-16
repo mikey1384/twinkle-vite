@@ -108,7 +108,10 @@ export default function TransactionModal({
     if (selectedOption === 'send') {
       return 'Send';
     }
-    return 'Trade';
+    if (selectedOption === 'want') {
+      return 'Trade';
+    }
+    return 'Transaction';
   }, [selectedOption]);
 
   return (
