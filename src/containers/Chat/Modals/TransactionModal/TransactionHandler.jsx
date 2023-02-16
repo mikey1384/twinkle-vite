@@ -72,12 +72,14 @@ export default function TransactionHandler({
         alignItems: 'center'
       }}
     >
-      <TransactionDetails
-        partner={partner}
-        onSetAICardModalCardId={onSetAICardModalCardId}
-        transaction={transactionDetails}
-        style={{ marginTop: '-1rem', width: '100%' }}
-      />
+      {!cancelReason && (
+        <TransactionDetails
+          partner={partner}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+          transaction={transactionDetails}
+          style={{ marginTop: '-1rem', width: '100%' }}
+        />
+      )}
       {!cancelReason && (
         <div>
           {isFromMe ? (
@@ -126,7 +128,10 @@ export default function TransactionHandler({
           <div
             style={{
               fontSize: '1.7rem',
-              padding: '2rem 0 1.5rem 0',
+              height: '10rem',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               color: Color.darkerGray(),
               fontFamily: 'Roboto, sans-serif'
             }}
@@ -134,7 +139,7 @@ export default function TransactionHandler({
             {cancelExplainText}
           </div>
           <Button
-            style={{ marginTop: '1rem' }}
+            style={{ marginTop: '1rem', marginBottom: '1rem' }}
             filled
             color="blue"
             onClick={() => onSetPendingTransaction(null)}
