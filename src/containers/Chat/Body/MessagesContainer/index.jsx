@@ -149,6 +149,7 @@ function MessagesContainer({
   const { banned, profilePicUrl, userId, profileTheme, isCreator, username } =
     useKeyContext((v) => v.myState);
   const {
+    currentTransactionId,
     isRespondingToSubject = false,
     messageIds = [],
     messagesObj = {},
@@ -1542,6 +1543,7 @@ function MessagesContainer({
       )}
       {TransactionModalShown && (
         <TransactionModal
+          currentTransactionId={currentTransactionId}
           channelId={selectedChannelId}
           partner={partner}
           isAICardModalShown={isAICardModalShown}
