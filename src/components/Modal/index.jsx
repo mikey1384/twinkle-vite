@@ -10,6 +10,7 @@ Modal.propTypes = {
   closeColor: PropTypes.string,
   children: PropTypes.node,
   closeWhenClickedOutside: PropTypes.bool,
+  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
   modalOverModal: PropTypes.bool,
   medium: PropTypes.bool,
   onHide: PropTypes.func,
@@ -24,6 +25,7 @@ export default function Modal({
   closeColor,
   closeWhenClickedOutside = true,
   children,
+  innerRef,
   modalOverModal,
   onHide,
   small,
@@ -64,6 +66,7 @@ export default function Modal({
         `} ${className}`}
       >
         <div
+          ref={innerRef}
           className={css`
             position: absolute;
             z-index: 500;
