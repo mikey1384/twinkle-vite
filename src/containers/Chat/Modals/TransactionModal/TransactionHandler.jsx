@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import TransactionDetails from '../../TransactionDetails';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
 TransactionHandler.propTypes = {
@@ -39,6 +40,27 @@ export default function TransactionHandler({
     }
   }, [cancelReason]);
 
+  const withdrawIcon = useMemo(() => {
+    if (transactionDetails.type === 'trade') {
+      return 'redo';
+    }
+    return 'sparkles';
+  }, [transactionDetails]);
+
+  const withdrawColor = useMemo(() => {
+    if (transactionDetails.type === 'trade') {
+      return 'orange';
+    }
+    return 'blue';
+  }, [transactionDetails]);
+
+  const withdrawLabel = useMemo(() => {
+    if (transactionDetails.type === 'trade') {
+      return 'Withdraw Proposal';
+    }
+    return 'New Proposal';
+  }, [transactionDetails]);
+
   const isFromMe = transactionDetails.from === myId;
   return (
     <div
@@ -59,15 +81,15 @@ export default function TransactionHandler({
       {!cancelReason && (
         <div>
           {isFromMe ? (
-            <div>
+            <div style={{ marginTop: '0.5rem' }}>
               <Button
                 loading={withdrawing}
                 onClick={handleWithdrawTransaction}
-                color="orange"
+                color={withdrawColor}
                 filled
               >
-                <Icon icon="redo" />
-                <span style={{ marginLeft: '0.7rem' }}>Withdraw Proposal</span>
+                <Icon icon={withdrawIcon} />
+                <span style={{ marginLeft: '0.7rem' }}>{withdrawLabel}</span>
               </Button>
             </div>
           ) : (
@@ -101,14 +123,24 @@ export default function TransactionHandler({
             alignItems: 'center'
           }}
         >
-          <div style={{ padding: '2rem 0 1.5rem 0' }}>{cancelExplainText}</div>
+          <div
+            style={{
+              fontSize: '1.7rem',
+              padding: '2rem 0 1.5rem 0',
+              color: Color.darkerGray(),
+              fontFamily: 'Roboto, sans-serif'
+            }}
+          >
+            {cancelExplainText}
+          </div>
           <Button
             style={{ marginTop: '1rem' }}
             filled
-            color="logoBlue"
+            color="blue"
             onClick={() => onSetPendingTransaction(null)}
           >
-            New Proposal
+            <Icon icon="sparkles" />
+            <span style={{ marginLeft: '0.7rem' }}>New Proposal</span>
           </Button>
         </div>
       ) : null}
@@ -126,8 +158,12 @@ export default function TransactionHandler({
     } catch (error) {
       console.log(error);
     } finally {
-      setCancelReason('withdraw');
-      setWithdrawing(false);
+      if (transactionDetails.type === 'trade') {
+        setCancelReason('withdraw');
+        setWithdrawing(false);
+      } else {
+        onSetPendingTransaction(null);
+      }
     }
   }
 }
