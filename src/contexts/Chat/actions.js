@@ -904,6 +904,13 @@ export default function ChatActions(dispatch) {
         pathId
       });
     },
+    onUpdateCurrentTransactionId({ channelId, transactionId }) {
+      return dispatch({
+        type: 'UPDATE_CURRENT_TRANSACTION_ID',
+        channelId,
+        transactionId
+      });
+    },
     onUpdateLastChessMessageId({ channelId, messageId }) {
       return dispatch({
         type: 'UPDATE_LAST_CHESS_MESSAGE_ID',
