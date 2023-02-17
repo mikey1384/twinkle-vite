@@ -116,6 +116,19 @@ export default function TransactionModal({
     return 'Transaction';
   }, [selectedOption]);
 
+  const isTransactionHandlerShown = useMemo(() => {
+    if (!!pendingTransaction) {
+      if (
+        pendingTransaction.type === 'send' &&
+        pendingTransaction.from === myId
+      ) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }, [myId, pendingTransaction]);
+
   return (
     <ErrorBoundary componentPath="Chat/Modals/TransactionModal">
       <Modal
@@ -126,7 +139,7 @@ export default function TransactionModal({
         <main>
           {loading ? (
             <Loading />
-          ) : pendingTransaction ? (
+          ) : isTransactionHandlerShown ? (
             <TransactionHandler
               currentTransactionId={currentTransactionId}
               myId={myId}
