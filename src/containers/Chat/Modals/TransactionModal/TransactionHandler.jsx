@@ -4,7 +4,7 @@ import TransactionDetails from '../../TransactionDetails';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 
 TransactionHandler.propTypes = {
   currentTransactionId: PropTypes.number,
@@ -27,6 +27,9 @@ export default function TransactionHandler({
 }) {
   const cancelTransaction = useAppContext(
     (v) => v.requestHelpers.cancelTransaction
+  );
+  const onUpdateCurrentTransactionId = useChatContext(
+    (v) => v.actions.onUpdateCurrentTransactionId
   );
   const [withdrawing, setWithdrawing] = useState(false);
   const [cancelReason, setCancelReason] = useState(null);
@@ -172,6 +175,7 @@ export default function TransactionHandler({
       } else {
         onSetPendingTransaction(null);
       }
+      onUpdateCurrentTransactionId({ channelId, transactionId: null });
     }
   }
 }

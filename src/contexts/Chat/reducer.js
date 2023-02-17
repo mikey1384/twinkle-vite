@@ -2429,6 +2429,17 @@ export default function ChatReducer(state, action) {
           }
         }
       };
+    case 'UPDATE_CURRENT_TRANSACTION_ID':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            currentTransactionId: action.transactionId
+          }
+        }
+      };
     case 'UPDATE_CHANNEL_PATH_ID_HASH':
       return {
         ...state,
