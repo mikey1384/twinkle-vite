@@ -5,10 +5,11 @@ ActionBlock.propTypes = {
   action: PropTypes.string.isRequired,
   target: PropTypes.string.isRequired,
   style: PropTypes.object,
-  type: PropTypes.string.isRequired
+  type: PropTypes.string.isRequired,
+  username: PropTypes.string
 };
 
-export default function ActionBlock({ action, target, style, type }) {
+export default function ActionBlock({ action, target, style, type, username }) {
   const displayedAction = useMemo(() => {
     if (action === 'attempt') {
       if (target === 'mission') {
@@ -73,10 +74,16 @@ export default function ActionBlock({ action, target, style, type }) {
         return 'sold an AI card';
       }
     }
+    if (action === 'receive') {
+      return `received from ${username}`;
+    }
+    if (action === 'send') {
+      return `sent ${username}`;
+    }
     if (action === 'watch') {
       return 'watched a video';
     }
     return `${action} ${target}`;
-  }, [action, target, type]);
+  }, [action, target, type, username]);
   return <div style={style}>{displayedAction}</div>;
 }
