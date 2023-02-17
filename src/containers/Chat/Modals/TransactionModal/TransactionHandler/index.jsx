@@ -4,7 +4,7 @@ import TransactionDetails from '../../../TransactionDetails';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { useAppContext, useChatContext } from '~/contexts';
+import ButtonsContainer from './ButtonsContainer';
 
 TransactionHandler.propTypes = {
   currentTransactionId: PropTypes.number,
@@ -25,13 +25,6 @@ export default function TransactionHandler({
   transactionDetails,
   channelId
 }) {
-  const cancelTransaction = useAppContext(
-    (v) => v.requestHelpers.cancelTransaction
-  );
-  const onUpdateCurrentTransactionId = useChatContext(
-    (v) => v.actions.onUpdateCurrentTransactionId
-  );
-  const [withdrawing, setWithdrawing] = useState(false);
   const [cancelReason, setCancelReason] = useState(null);
 
   const cancelExplainText = useMemo(() => {
@@ -44,27 +37,6 @@ export default function TransactionHandler({
         return null;
     }
   }, [cancelReason]);
-
-  const withdrawIcon = useMemo(() => {
-    if (transactionDetails.type === 'trade') {
-      return 'redo';
-    }
-    return 'sparkles';
-  }, [transactionDetails]);
-
-  const withdrawColor = useMemo(() => {
-    if (transactionDetails.type === 'trade') {
-      return 'orange';
-    }
-    return 'blue';
-  }, [transactionDetails]);
-
-  const withdrawLabel = useMemo(() => {
-    if (transactionDetails.type === 'trade') {
-      return 'Withdraw Proposal';
-    }
-    return 'New Proposal';
-  }, [transactionDetails]);
 
   const isFromMe = transactionDetails.from === myId;
   return (
@@ -87,41 +59,14 @@ export default function TransactionHandler({
         />
       )}
       {!cancelReason && (
-        <div>
-          {isFromMe ? (
-            <div style={{ marginTop: '0.5rem' }}>
-              <Button
-                loading={withdrawing}
-                onClick={handleWithdrawTransaction}
-                color={withdrawColor}
-                filled
-              >
-                <Icon icon={withdrawIcon} />
-                <span style={{ marginLeft: '0.7rem' }}>{withdrawLabel}</span>
-              </Button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex' }}>
-              <Button
-                onClick={() => console.log('clicked')}
-                color="rose"
-                filled
-              >
-                <Icon icon="xmark" />
-                <span style={{ marginLeft: '0.7rem' }}>Decline</span>
-              </Button>
-              <Button
-                style={{ marginLeft: '2rem' }}
-                onClick={() => console.log('clicked')}
-                color="green"
-                filled
-              >
-                <Icon icon="check" />
-                <span style={{ marginLeft: '0.7rem' }}>Accept</span>
-              </Button>
-            </div>
-          )}
-        </div>
+        <ButtonsContainer
+          isFromMe={isFromMe}
+          channelId={channelId}
+          onSetCancelReason={setCancelReason}
+          onSetPendingTransaction={onSetPendingTransaction}
+          transactionId={transactionDetails.id}
+          type={transactionDetails.type}
+        />
       )}
       {cancelReason ? (
         <div
@@ -157,25 +102,4 @@ export default function TransactionHandler({
       ) : null}
     </div>
   );
-
-  async function handleWithdrawTransaction() {
-    try {
-      setWithdrawing(true);
-      await cancelTransaction({
-        channelId,
-        transactionId: transactionDetails.id,
-        reason: 'withdraw'
-      });
-    } catch (error) {
-      console.log(error);
-    } finally {
-      if (transactionDetails.type === 'trade') {
-        setCancelReason('withdraw');
-        setWithdrawing(false);
-      } else {
-        onSetPendingTransaction(null);
-      }
-      onUpdateCurrentTransactionId({ channelId, transactionId: null });
-    }
-  }
 }
