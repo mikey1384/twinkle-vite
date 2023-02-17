@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import TransactionDetails from '../../TransactionDetails';
+import TransactionDetails from '../../../TransactionDetails';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
