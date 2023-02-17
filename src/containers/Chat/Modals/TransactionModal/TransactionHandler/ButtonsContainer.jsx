@@ -41,7 +41,6 @@ export default function ButtonsContainer({
     }
     return 'blue';
   }, [type]);
-
   const withdrawLabel = useMemo(() => {
     if (type === 'trade') {
       return 'Withdraw Proposal';
