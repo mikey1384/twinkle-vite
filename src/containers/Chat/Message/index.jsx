@@ -649,7 +649,8 @@ function Message({
         currentTransactionId={currentChannel.currentTransactionId}
         partner={partner}
         onClick={
-          currentChannel.currentTransactionId
+          currentChannel.currentTransactionId &&
+          currentChannel.currentTransactionId === transactionDetails.id
             ? () => onSetTransactionModalShown(true)
             : null
         }
