@@ -34,7 +34,6 @@ export default function ButtonsContainer({
     }
     return 'sparkles';
   }, [type]);
-
   const withdrawColor = useMemo(() => {
     if (type === 'trade') {
       return 'orange';
