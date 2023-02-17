@@ -42,6 +42,7 @@ export default function ChangeListItem({ change, balance }) {
         action={change.action}
         target={change.target}
         type={change.type}
+        username={change.username}
       />
       <div
         style={{
