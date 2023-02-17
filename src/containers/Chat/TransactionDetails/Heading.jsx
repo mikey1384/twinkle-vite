@@ -3,11 +3,12 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 Heading.propTypes = {
+  isCurrent: PropTypes.bool,
   color: PropTypes.string,
   children: PropTypes.node
 };
 
-export default function Heading({ color, children }) {
+export default function Heading({ isCurrent, color, children }) {
   return (
     <div
       className={css`
@@ -26,7 +27,7 @@ export default function Heading({ color, children }) {
         justifyContent: 'center',
         fontFamily: 'Roboto, monospace',
         fontWeight: 'bold',
-        backgroundColor: Color[color](),
+        backgroundColor: Color[color](isCurrent ? 1 : 0.7),
         color: '#fff'
       }}
     >
