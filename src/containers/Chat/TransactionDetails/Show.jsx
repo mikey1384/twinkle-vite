@@ -47,26 +47,48 @@ export default function Show({
       }}
     >
       <Heading isCurrent={isCurrent} color="pink">
-        <div>
-          <UsernameText
-            displayedName={from.id === myId ? 'You' : from.username}
-            color="#fff"
-            user={{
-              id: from.id,
-              username: from.username
-            }}
-          />{' '}
-          {isCurrent ? (from.id === myId ? 'think' : 'thinks') : 'thought'}{' '}
-          <UsernameText
-            displayedName={to.id === myId ? 'you' : to.username}
-            color="#fff"
-            user={{
-              id: to.id,
-              username: to.username
-            }}
-          />{' '}
-          might be interested in
-        </div>
+        {isCurrent ? (
+          <div>
+            <UsernameText
+              displayedName={from.id === myId ? 'You' : from.username}
+              color="#fff"
+              user={{
+                id: from.id,
+                username: from.username
+              }}
+            />{' '}
+            {from.id === myId ? 'think' : 'thinks'}{' '}
+            <UsernameText
+              displayedName={to.id === myId ? 'you' : to.username}
+              color="#fff"
+              user={{
+                id: to.id,
+                username: to.username
+              }}
+            />{' '}
+            might be interested in
+          </div>
+        ) : (
+          <div>
+            <UsernameText
+              displayedName={from.id === myId ? 'You' : from.username}
+              color="#fff"
+              user={{
+                id: from.id,
+                username: from.username
+              }}
+            />{' '}
+            showed{' '}
+            <UsernameText
+              displayedName={to.id === myId ? 'you' : to.username}
+              color="#fff"
+              user={{
+                id: to.id,
+                username: to.username
+              }}
+            />
+          </div>
+        )}
       </Heading>
       <Body onClick={onClick}>
         <OfferPanel
