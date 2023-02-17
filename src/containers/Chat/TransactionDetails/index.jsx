@@ -53,6 +53,7 @@ export default function TransactionDetails({
     <div style={style}>
       {type === 'trade' && (
         <Trade
+          isCurrent={transaction.id === currentTransactionId}
           myId={userId}
           myUsername={username}
           wantCardIds={wantCardIds}
@@ -67,7 +68,7 @@ export default function TransactionDetails({
       )}
       {type === 'show' && (
         <Show
-          isCurrentlyShowing={transaction.id === currentTransactionId}
+          isCurrent={transaction.id === currentTransactionId}
           myId={userId}
           myUsername={username}
           partner={partner}
@@ -81,6 +82,7 @@ export default function TransactionDetails({
       )}
       {type === 'send' && (
         <Send
+          isCurrent={transaction.id === currentTransactionId}
           myId={userId}
           fromId={transaction.from}
           myUsername={username}

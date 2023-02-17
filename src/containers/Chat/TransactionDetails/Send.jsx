@@ -9,6 +9,7 @@ Send.propTypes = {
   cardIds: PropTypes.array,
   coins: PropTypes.number,
   fromId: PropTypes.number.isRequired,
+  isCurrent: PropTypes.bool,
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
   onClick: PropTypes.func,
@@ -21,6 +22,7 @@ export default function Send({
   cardIds,
   coins,
   fromId,
+  isCurrent,
   myId,
   myUsername,
   onClick,
@@ -44,7 +46,7 @@ export default function Send({
         width: '100%'
       }}
     >
-      <Heading color="green">
+      <Heading isCurrent={isCurrent} color="green">
         <div>
           <UsernameText
             displayedName={from.id === myId ? 'You' : from.username}

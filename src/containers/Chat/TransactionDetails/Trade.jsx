@@ -7,6 +7,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import Body from './Body';
 
 Trade.propTypes = {
+  isCurrent: PropTypes.bool,
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
   partner: PropTypes.object.isRequired,
@@ -20,6 +21,7 @@ Trade.propTypes = {
 };
 
 export default function Trade({
+  isCurrent,
   myId,
   myUsername,
   partner,
@@ -47,7 +49,7 @@ export default function Trade({
         width: '100%'
       }}
     >
-      <Heading color="logoBlue">
+      <Heading isCurrent={isCurrent} color="logoBlue">
         <div>
           <UsernameText
             displayedName={from.id === myId ? 'You' : from.username}
