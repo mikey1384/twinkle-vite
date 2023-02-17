@@ -61,8 +61,8 @@ export default function ButtonsContainer({
             <span style={{ marginLeft: '0.7rem' }}>{withdrawLabel}</span>
           </Button>
         </div>
-      ) : (
-        <div style={{ display: 'flex' }}>
+      ) : type === 'trade' ? (
+        <div style={{ marginTop: '0.5rem', display: 'flex' }}>
           <Button onClick={() => console.log('clicked')} color="rose" filled>
             <Icon icon="xmark" />
             <span style={{ marginLeft: '0.7rem' }}>Decline</span>
@@ -75,6 +75,13 @@ export default function ButtonsContainer({
           >
             <Icon icon="check" />
             <span style={{ marginLeft: '0.7rem' }}>Accept</span>
+          </Button>
+        </div>
+      ) : (
+        <div style={{ marginTop: '0.5rem' }}>
+          <Button onClick={handleWithdrawTransaction} color="blue" filled>
+            <Icon icon="check" />
+            <span style={{ marginLeft: '0.7rem' }}>Got it</span>
           </Button>
         </div>
       )}
