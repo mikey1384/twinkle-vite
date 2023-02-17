@@ -189,6 +189,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onSetPeerStreams = useChatContext((v) => v.actions.onSetPeerStreams);
   const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
   const onShowOutgoing = useChatContext((v) => v.actions.onShowOutgoing);
+  const onUpdateCurrentTransactionId = useChatContext(
+    (v) => v.actions.onUpdateCurrentTransactionId
+  );
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
@@ -952,6 +955,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       const senderIsUser = message.userId === userId && !isNotification;
       if (senderIsUser && pageVisible) return;
       if (messageIsForCurrentChannel) {
+        if (message.transactionDetails?.id) {
+          onUpdateCurrentTransactionId({
+            channelId: selectedChannelId,
+            transactionId: message.transactionDetails.id
+          });
+        }
         if (usingChat) {
           updateChatLastRead(message.channelId);
           if (message.subchannelId === subchannelId) {
