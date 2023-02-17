@@ -77,8 +77,14 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const updateSubchannelLastRead = useAppContext(
     (v) => v.requestHelpers.updateSubchannelLastRead
   );
-  const { searchFilter, userId, username, loggedIn, profilePicUrl } =
-    useKeyContext((v) => v.myState);
+  const {
+    searchFilter,
+    userId,
+    username,
+    loggedIn,
+    profilePicUrl,
+    twinkleCoins
+  } = useKeyContext((v) => v.myState);
   const {
     header: { color: headerColor }
   } = useKeyContext((v) => v.theme);
@@ -295,6 +301,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('ai_card_delisted', handleAICardDelisted);
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
+    socket.on('assets_sent', handleAssetsSent);
     socket.on('ban_status_updated', handleBanStatusUpdate);
     socket.on('signal_received', handleCallSignal);
     socket.on('online_status_changed', handleOnlineStatusChange);
@@ -344,6 +351,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       socket.removeListener('ai_card_delisted', handleAICardDelisted);
       socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
       socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
+      socket.removeListener('assets_sent', handleAssetsSent);
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('signal_received', handleCallSignal);
       socket.removeListener('online_status_changed', handleOnlineStatusChange);
@@ -499,6 +507,21 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         onUpdateAICard({
           cardId: card.id,
           newState: { myOffer: feed.offer }
+        });
+      }
+    }
+
+    function handleAssetsSent({ coins, from, to }) {
+      if (from === userId) {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: twinkleCoins - coins }
+        });
+      }
+      if (to === userId) {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: twinkleCoins + coins }
         });
       }
     }
