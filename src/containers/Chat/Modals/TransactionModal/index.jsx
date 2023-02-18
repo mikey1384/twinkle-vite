@@ -173,7 +173,7 @@ export default function TransactionModal({
           >
             {pendingTransaction ? 'Close' : 'Cancel'}
           </Button>
-          {!pendingTransaction && (
+          {!isTransactionHandlerShown && (
             <Button
               disabled={doneButtonDisabled}
               color={doneColor}
