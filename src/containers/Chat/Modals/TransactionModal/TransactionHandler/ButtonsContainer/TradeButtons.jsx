@@ -1,16 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 
 TradeButtons.propTypes = {
+  myId: PropTypes.number.isRequired,
   onWithdrawTransaction: PropTypes.func.isRequired,
   transactionId: PropTypes.number.isRequired
 };
 
-export default function TradeButtons({ onWithdrawTransaction, transactionId }) {
+export default function TradeButtons({
+  myId,
+  onWithdrawTransaction,
+  transactionId
+}) {
   const [checking, setChecking] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
+  const [disableReasonObj, setDisableReasonObj] = useState({});
   const checkTransactionPossible = useAppContext(
     (v) => v.requestHelpers.checkTransactionPossible
   );
@@ -20,16 +27,53 @@ export default function TradeButtons({ onWithdrawTransaction, transactionId }) {
       setChecking(true);
       const { disableReason, responsibleParty, isDisabled } =
         await checkTransactionPossible(transactionId);
-      console.log(disableReason, responsibleParty, isDisabled);
+      setIsDisabled(isDisabled);
+      if (isDisabled) {
+        setDisableReasonObj({
+          reason: disableReason,
+          responsibleParty
+        });
+      }
       setChecking(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const disabledReasonText = useMemo(() => {
+    const imResponsible = disableReasonObj.responsibleParty?.id === myId;
+    const responsiblePartyLabel = imResponsible
+      ? 'You'
+      : disableReasonObj.responsibleParty?.username;
+    if (disableReasonObj.reason === 'not enough coins') {
+      return `${responsiblePartyLabel} ${
+        imResponsible ? `don't` : `doesn't`
+      } have enough money to proceed with this transaction`;
+    }
+    if (disableReasonObj.reason === 'changed card ownership') {
+      return `${responsiblePartyLabel} no longer ${
+        imResponsible ? `own` : `owns`
+      } one or more of the cards in this transaction`;
+    }
+    if (disableReasonObj.reason === 'card burned') {
+      return `${responsiblePartyLabel} ${
+        imResponsible ? `burned` : `burned`
+      } one or more of the cards included this transaction`;
+    }
+    return '';
+  }, [
+    disableReasonObj.reason,
+    disableReasonObj.responsibleParty?.id,
+    disableReasonObj.responsibleParty?.username,
+    myId
+  ]);
+
   return (
     <div
       style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column' }}
     >
+      {disabledReasonText && (
+        <div style={{ marginBottom: '0.5rem' }}>{disabledReasonText}</div>
+      )}
       <div style={{ display: 'flex' }}>
         <Button
           onClick={() => onWithdrawTransaction('decline')}
@@ -42,6 +86,7 @@ export default function TradeButtons({ onWithdrawTransaction, transactionId }) {
         <Button
           style={{ marginLeft: '1.5rem' }}
           loading={checking}
+          disabled={isDisabled}
           onClick={() => console.log('clicked')}
           color="green"
           filled
