@@ -94,11 +94,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
     },
     async checkTransactionPossible(transactionId) {
       try {
-        const { data } = await request.get(
+        const {
+          data: { disableReason, responsibleParty, isDisabled }
+        } = await request.get(
           `${URL}/chat/transaction/check?transactionId=${transactionId}`,
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve({ disableReason, responsibleParty, isDisabled });
       } catch (error) {
         return handleError(error);
       }

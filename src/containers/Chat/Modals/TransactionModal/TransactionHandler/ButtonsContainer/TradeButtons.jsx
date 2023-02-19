@@ -18,8 +18,9 @@ export default function TradeButtons({ onWithdrawTransaction, transactionId }) {
     init();
     async function init() {
       setChecking(true);
-      const { data } = await checkTransactionPossible(transactionId);
-      console.log(data);
+      const { disableReason, responsibleParty, isDisabled } =
+        await checkTransactionPossible(transactionId);
+      console.log(disableReason, responsibleParty, isDisabled);
       setChecking(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
