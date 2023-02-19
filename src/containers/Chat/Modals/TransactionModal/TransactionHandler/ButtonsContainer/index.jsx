@@ -61,7 +61,10 @@ export default function ButtonsContainer({
           </Button>
         </div>
       ) : type === 'trade' ? (
-        <TradeButtons onWithdrawTransaction={handleWithdrawTransaction} />
+        <TradeButtons
+          onWithdrawTransaction={handleWithdrawTransaction}
+          transactionId={transactionId}
+        />
       ) : (
         <div style={{ marginTop: '0.5rem' }}>
           <Button onClick={handleWithdrawTransaction} color="blue" filled>
