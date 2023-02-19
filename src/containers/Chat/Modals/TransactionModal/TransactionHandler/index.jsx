@@ -38,6 +38,14 @@ export default function TransactionHandler({
     }
   }, [cancelReason]);
 
+  const isExpressionOfInterest = useMemo(() => {
+    const noCoinsOffered = !transactionDetails?.offer.coins;
+    const noCardsOffered = !transactionDetails?.offer.cards?.length;
+    return (
+      transactionDetails?.type === 'trade' && noCoinsOffered && noCardsOffered
+    );
+  }, [transactionDetails?.offer, transactionDetails?.type]);
+
   const isFromMe = transactionDetails.from === myId;
   return (
     <div
@@ -65,6 +73,7 @@ export default function TransactionHandler({
           onSetCancelReason={setCancelReason}
           onSetPendingTransaction={onSetPendingTransaction}
           transactionId={transactionDetails.id}
+          isExpressionOfInterest={isExpressionOfInterest}
           type={transactionDetails.type}
         />
       )}
