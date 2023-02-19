@@ -92,6 +92,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async checkTransactionPossible(transactionId) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/transaction/check?transactionId=${transactionId}`,
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async checkChatAccessible(pathId) {
       try {
         const {
