@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import TradeButtons from './TradeButtons';
 import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/io';
 
@@ -60,25 +61,7 @@ export default function ButtonsContainer({
           </Button>
         </div>
       ) : type === 'trade' ? (
-        <div style={{ marginTop: '0.5rem', display: 'flex' }}>
-          <Button
-            onClick={() => handleWithdrawTransaction('decline')}
-            color="rose"
-            filled
-          >
-            <Icon icon="xmark" />
-            <span style={{ marginLeft: '0.7rem' }}>Decline</span>
-          </Button>
-          <Button
-            style={{ marginLeft: '2rem' }}
-            onClick={() => console.log('clicked')}
-            color="green"
-            filled
-          >
-            <Icon icon="check" />
-            <span style={{ marginLeft: '0.7rem' }}>Accept</span>
-          </Button>
-        </div>
+        <TradeButtons onWithdrawTransaction={handleWithdrawTransaction} />
       ) : (
         <div style={{ marginTop: '0.5rem' }}>
           <Button onClick={handleWithdrawTransaction} color="blue" filled>
