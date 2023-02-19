@@ -320,6 +320,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('connect', handleConnect);
     socket.on('canceled_chess_rewind', handleChessRewindCanceled);
+    socket.on('current_transaction_id_updated', handleTransactionIdUpdate);
     socket.on('declined_chess_rewind', handleChessRewindDeclined);
     socket.on('disconnect', handleDisconnect);
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
@@ -379,6 +380,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       socket.removeListener('chess_rewind_requested', handleChessRewindRequest);
       socket.removeListener('connect', handleConnect);
       socket.removeListener('canceled_chess_rewind', handleChessRewindCanceled);
+      socket.removeListener(
+        'current_transaction_id_updated',
+        handleTransactionIdUpdate
+      );
       socket.removeListener('declined_chess_rewind', handleChessRewindDeclined);
       socket.removeListener('disconnect', handleDisconnect);
       socket.removeListener(
@@ -681,6 +686,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         const numUnreads = await getNumberOfUnreadMessages();
         onGetNumberOfUnreadMessages(numUnreads);
       }
+    }
+
+    function handleTransactionIdUpdate({ channelId, transactionId }) {
+      onUpdateCurrentTransactionId({ channelId, transactionId });
     }
 
     function handleOnlineStatusChange({ userId, member, isOnline }) {

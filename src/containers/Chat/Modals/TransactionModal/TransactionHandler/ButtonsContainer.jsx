@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
+import { socket } from '~/constants/io';
 
 ButtonsContainer.propTypes = {
   channelId: PropTypes.number.isRequired,
@@ -24,9 +25,6 @@ export default function ButtonsContainer({
   const [withdrawing, setWithdrawing] = useState(false);
   const cancelTransaction = useAppContext(
     (v) => v.requestHelpers.cancelTransaction
-  );
-  const onUpdateCurrentTransactionId = useChatContext(
-    (v) => v.actions.onUpdateCurrentTransactionId
   );
   const withdrawIcon = useMemo(() => {
     if (type === 'trade') {
@@ -109,7 +107,10 @@ export default function ButtonsContainer({
       } else {
         onSetPendingTransaction(null);
       }
-      onUpdateCurrentTransactionId({ channelId, transactionId: null });
+      socket.emit('update_current_transaction_id', {
+        channelId,
+        transactionId: null
+      });
     }
   }
 }
