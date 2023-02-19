@@ -53,7 +53,7 @@ export default function ButtonsContainer({
         <div style={{ marginTop: '0.5rem' }}>
           <Button
             loading={withdrawing}
-            onClick={handleWithdrawTransaction}
+            onClick={() => handleWithdrawTransaction('withdraw')}
             color={withdrawColor}
             filled
           >
@@ -63,7 +63,11 @@ export default function ButtonsContainer({
         </div>
       ) : type === 'trade' ? (
         <div style={{ marginTop: '0.5rem', display: 'flex' }}>
-          <Button onClick={() => console.log('clicked')} color="rose" filled>
+          <Button
+            onClick={() => handleWithdrawTransaction('decline')}
+            color="rose"
+            filled
+          >
             <Icon icon="xmark" />
             <span style={{ marginLeft: '0.7rem' }}>Decline</span>
           </Button>
@@ -88,7 +92,7 @@ export default function ButtonsContainer({
     </div>
   );
 
-  async function handleWithdrawTransaction() {
+  async function handleWithdrawTransaction(reason) {
     try {
       setWithdrawing(true);
       await cancelTransaction({
@@ -100,7 +104,7 @@ export default function ButtonsContainer({
       console.log(error);
     } finally {
       if (type === 'trade') {
-        onSetCancelReason('withdraw');
+        onSetCancelReason(reason);
         setWithdrawing(false);
       } else {
         onSetPendingTransaction(null);
