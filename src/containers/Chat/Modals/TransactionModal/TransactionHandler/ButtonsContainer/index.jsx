@@ -28,8 +28,8 @@ export default function ButtonsContainer({
   type
 }) {
   const [withdrawing, setWithdrawing] = useState(false);
-  const cancelTransaction = useAppContext(
-    (v) => v.requestHelpers.cancelTransaction
+  const closeTransaction = useAppContext(
+    (v) => v.requestHelpers.closeTransaction
   );
   const withdrawIcon = useMemo(() => {
     if (type === 'trade') {
@@ -56,7 +56,7 @@ export default function ButtonsContainer({
         <div style={{ marginTop: '0.5rem' }}>
           <Button
             loading={withdrawing}
-            onClick={() => handleWithdrawTransaction('withdraw')}
+            onClick={() => handleCloseTransaction('withdraw')}
             color={withdrawColor}
             filled
           >
@@ -67,12 +67,12 @@ export default function ButtonsContainer({
       ) : type === 'trade' && !isExpressionOfInterest ? (
         <TradeButtons
           myId={myId}
-          onWithdrawTransaction={handleWithdrawTransaction}
+          onWithdrawTransaction={handleCloseTransaction}
           transactionId={transactionId}
         />
       ) : (
         <div style={{ marginTop: '0.5rem' }}>
-          <Button onClick={handleWithdrawTransaction} color="blue" filled>
+          <Button onClick={handleCloseTransaction} color="blue" filled>
             <Icon icon="check" />
             <span style={{ marginLeft: '0.7rem' }}>Got it</span>
           </Button>
@@ -81,19 +81,19 @@ export default function ButtonsContainer({
     </div>
   );
 
-  async function handleWithdrawTransaction(reason) {
+  async function handleCloseTransaction(cancelReason) {
     try {
       setWithdrawing(true);
-      await cancelTransaction({
+      await closeTransaction({
         channelId,
         transactionId,
-        reason
+        cancelReason
       });
     } catch (error) {
       console.log(error);
     } finally {
       if (type === 'trade') {
-        onSetCancelReason(reason);
+        onSetCancelReason(cancelReason);
         setWithdrawing(false);
       } else {
         onSetPendingTransaction(null);

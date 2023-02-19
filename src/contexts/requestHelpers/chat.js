@@ -67,10 +67,12 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async cancelTransaction({ transactionId, channelId, reason }) {
+    async closeTransaction({ transactionId, channelId, cancelReason }) {
       try {
         const { data } = await request.delete(
-          `${URL}/chat/transaction?transactionId=${transactionId}&channelId=${channelId}&reason=${reason}`,
+          `${URL}/chat/transaction?transactionId=${transactionId}&channelId=${channelId}${
+            cancelReason ? `&cancelReason=${cancelReason}` : ''
+          }`,
           auth()
         );
         return Promise.resolve(data);
