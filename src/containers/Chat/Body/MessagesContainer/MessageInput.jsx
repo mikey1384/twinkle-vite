@@ -472,10 +472,12 @@ export default function MessageInput({
           </div>
         )}
         <AddButtons
+          channelId={selectedChannelId}
           disabled={
             isRestricted || loading || !!banned?.chat || !socketConnected
           }
           currentTransactionId={currentTransactionId}
+          myId={myId}
           onUploadButtonClick={() => FileInputRef.current.click()}
           onSelectVideoButtonClick={onSelectVideoButtonClick}
           onSetTransactionModalShown={onSetTransactionModalShown}
