@@ -1410,6 +1410,7 @@ function MessagesContainer({
         }}
       >
         <MessageInput
+          currentTransactionId={currentTransactionId}
           selectedChannelId={selectedChannelId}
           isRestricted={!!isChatRestricted}
           isBanned={!!banned?.chat}
