@@ -36,6 +36,7 @@ import localize from '~/constants/localize';
 const enterMessageLabel = localize('enterMessage');
 
 MessageInput.propTypes = {
+  currentTransactionId: PropTypes.number,
   selectedChannelId: PropTypes.number,
   innerRef: PropTypes.object,
   inputState: PropTypes.object,
@@ -63,6 +64,7 @@ MessageInput.propTypes = {
 const deviceIsMobile = isMobile(navigator);
 
 export default function MessageInput({
+  currentTransactionId,
   selectedChannelId = 0,
   innerRef,
   inputState,
@@ -473,6 +475,7 @@ export default function MessageInput({
           disabled={
             isRestricted || loading || !!banned?.chat || !socketConnected
           }
+          currentTransactionId={currentTransactionId}
           onUploadButtonClick={() => FileInputRef.current.click()}
           onSelectVideoButtonClick={onSelectVideoButtonClick}
           onSetTransactionModalShown={onSetTransactionModalShown}

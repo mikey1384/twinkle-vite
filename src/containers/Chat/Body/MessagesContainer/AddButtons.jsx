@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
 
 AddButtons.propTypes = {
+  currentTransactionId: PropTypes.number,
   disabled: PropTypes.bool,
   isTwoPeopleChannel: PropTypes.bool,
   onUploadButtonClick: PropTypes.func.isRequired,
@@ -12,6 +13,7 @@ AddButtons.propTypes = {
 };
 
 export default function AddButtons({
+  currentTransactionId,
   disabled,
   isTwoPeopleChannel,
   onUploadButtonClick,
@@ -19,6 +21,7 @@ export default function AddButtons({
   onSetTransactionModalShown
 }) {
   const {
+    alert: { color: alertColor },
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor }
   } = useKeyContext((v) => v.theme);
@@ -34,11 +37,12 @@ export default function AddButtons({
       {isTwoPeopleChannel && (
         <Button
           skeuomorphic
+          filled={!!currentTransactionId}
           disabled={disabled}
           onClick={onSetTransactionModalShown}
-          color={buttonColor}
+          color={!!currentTransactionId ? alertColor : buttonColor}
           mobilePadding="0.5rem"
-          hoverColor={buttonHoverColor}
+          hoverColor={!!currentTransactionId ? alertColor : buttonColor}
         >
           <Icon size="lg" icon={['far', 'badge-dollar']} />
         </Button>
