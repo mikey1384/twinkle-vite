@@ -9,6 +9,7 @@ import { socket } from '~/constants/io';
 ButtonsContainer.propTypes = {
   channelId: PropTypes.number.isRequired,
   isFromMe: PropTypes.bool,
+  isExpressionOfInterest: PropTypes.bool,
   onSetCancelReason: PropTypes.func.isRequired,
   onSetPendingTransaction: PropTypes.func.isRequired,
   transactionId: PropTypes.number.isRequired,
@@ -18,6 +19,7 @@ ButtonsContainer.propTypes = {
 export default function ButtonsContainer({
   channelId,
   isFromMe,
+  isExpressionOfInterest,
   onSetCancelReason,
   onSetPendingTransaction,
   transactionId,
@@ -60,7 +62,7 @@ export default function ButtonsContainer({
             <span style={{ marginLeft: '0.7rem' }}>{withdrawLabel}</span>
           </Button>
         </div>
-      ) : type === 'trade' ? (
+      ) : type === 'trade' && !isExpressionOfInterest ? (
         <TradeButtons
           onWithdrawTransaction={handleWithdrawTransaction}
           transactionId={transactionId}
