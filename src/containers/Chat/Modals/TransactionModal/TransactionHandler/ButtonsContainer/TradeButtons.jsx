@@ -1,12 +1,30 @@
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import { useAppContext } from '~/contexts';
 
 TradeButtons.propTypes = {
-  onWithdrawTransaction: PropTypes.func.isRequired
+  onWithdrawTransaction: PropTypes.func.isRequired,
+  transactionId: PropTypes.number.isRequired
 };
 
-export default function TradeButtons({ onWithdrawTransaction }) {
+export default function TradeButtons({ onWithdrawTransaction, transactionId }) {
+  const [checking, setChecking] = useState(false);
+  const checkTransactionPossible = useAppContext(
+    (v) => v.requestHelpers.checkTransactionPossible
+  );
+  useEffect(() => {
+    init();
+    async function init() {
+      setChecking(true);
+      const { data } = await checkTransactionPossible(transactionId);
+      console.log(data);
+      setChecking(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div
       style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column' }}
@@ -22,6 +40,7 @@ export default function TradeButtons({ onWithdrawTransaction }) {
         </Button>
         <Button
           style={{ marginLeft: '1.5rem' }}
+          loading={checking}
           onClick={() => console.log('clicked')}
           color="green"
           filled
