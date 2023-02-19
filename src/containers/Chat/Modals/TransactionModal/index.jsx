@@ -51,7 +51,7 @@ export default function TransactionModal({
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentTransactionId]);
 
   const [dropdownShown, setDropdownShown] = useState(false);
   const [aiCardModalType, setAICardModalType] = useState(null);
