@@ -52,12 +52,12 @@ export default function TradeButtons({
     if (disableReasonObj.reason === 'changed card ownership') {
       return `${responsiblePartyLabel} no longer ${
         imResponsible ? `own` : `owns`
-      } one or more of the cards in this transaction`;
+      } one or more of the cards included in this proposal`;
     }
     if (disableReasonObj.reason === 'card burned') {
       return `${responsiblePartyLabel} ${
         imResponsible ? `burned` : `burned`
-      } one or more of the cards that were included in this transaction`;
+      } one or more of the cards included in this proposal`;
     }
     return '';
   }, [
