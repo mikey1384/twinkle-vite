@@ -99,6 +99,7 @@ export default function ButtonsContainer({
         onSetPendingTransaction(null);
       }
       socket.emit('update_current_transaction_id', {
+        senderId: myId,
         channelId,
         transactionId: null
       });

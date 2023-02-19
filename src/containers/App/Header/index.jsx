@@ -688,8 +688,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleTransactionIdUpdate({ channelId, transactionId }) {
-      onUpdateCurrentTransactionId({ channelId, transactionId });
+    function handleTransactionIdUpdate({ channelId, senderId, transactionId }) {
+      if (senderId !== userId) {
+        onUpdateCurrentTransactionId({ channelId, transactionId });
+      }
     }
 
     function handleOnlineStatusChange({ userId, member, isOnline }) {
