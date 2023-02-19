@@ -87,7 +87,7 @@ export default function ButtonsContainer({
       await cancelTransaction({
         channelId,
         transactionId,
-        reason: 'withdraw'
+        reason
       });
     } catch (error) {
       console.log(error);
