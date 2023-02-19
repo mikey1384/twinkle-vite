@@ -78,7 +78,7 @@ export default function TradeButtons({
       )}
       <div style={{ display: 'flex', width: '100%', justifyContent: 'center' }}>
         <Button
-          onClick={() => onWithdrawTransaction('decline')}
+          onClick={() => onWithdrawTransaction({ cancelReason: 'decline' })}
           color="rose"
           filled
         >

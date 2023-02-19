@@ -4,13 +4,13 @@ import TransactionDetails from '../../../TransactionDetails';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
+import { useChatContext } from '~/contexts';
 import ButtonsContainer from './ButtonsContainer';
 
 TransactionHandler.propTypes = {
   currentTransactionId: PropTypes.number,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   myId: PropTypes.number.isRequired,
-  onSetPendingTransaction: PropTypes.func.isRequired,
   partner: PropTypes.object.isRequired,
   transactionDetails: PropTypes.object.isRequired,
   channelId: PropTypes.number.isRequired
@@ -20,13 +20,14 @@ export default function TransactionHandler({
   currentTransactionId,
   onSetAICardModalCardId,
   myId,
-  onSetPendingTransaction,
   partner,
   transactionDetails,
   channelId
 }) {
+  const onUpdateCurrentTransactionId = useChatContext(
+    (v) => v.actions.onUpdateCurrentTransactionId
+  );
   const [cancelReason, setCancelReason] = useState(null);
-
   const cancelExplainText = useMemo(() => {
     switch (cancelReason) {
       case 'withdraw':
@@ -72,9 +73,9 @@ export default function TransactionHandler({
           myId={myId}
           channelId={channelId}
           onSetCancelReason={setCancelReason}
-          onSetPendingTransaction={onSetPendingTransaction}
           transactionId={transactionDetails.id}
           isExpressionOfInterest={isExpressionOfInterest}
+          onUpdateCurrentTransactionId={onUpdateCurrentTransactionId}
           type={transactionDetails.type}
         />
       )}
@@ -103,7 +104,12 @@ export default function TransactionHandler({
             style={{ marginTop: '1rem', marginBottom: '1rem' }}
             filled
             color="blue"
-            onClick={() => onSetPendingTransaction(null)}
+            onClick={() =>
+              onUpdateCurrentTransactionId({
+                channelId,
+                transactionId: null
+              })
+            }
           >
             <Icon icon="sparkles" />
             <span style={{ marginLeft: '0.7rem' }}>New Proposal</span>

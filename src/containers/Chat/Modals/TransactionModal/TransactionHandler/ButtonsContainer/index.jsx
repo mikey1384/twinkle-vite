@@ -12,7 +12,7 @@ ButtonsContainer.propTypes = {
   isExpressionOfInterest: PropTypes.bool,
   myId: PropTypes.number.isRequired,
   onSetCancelReason: PropTypes.func.isRequired,
-  onSetPendingTransaction: PropTypes.func.isRequired,
+  onUpdateCurrentTransactionId: PropTypes.func.isRequired,
   transactionId: PropTypes.number.isRequired,
   type: PropTypes.string.isRequired
 };
@@ -23,7 +23,7 @@ export default function ButtonsContainer({
   isExpressionOfInterest,
   myId,
   onSetCancelReason,
-  onSetPendingTransaction,
+  onUpdateCurrentTransactionId,
   transactionId,
   type
 }) {
@@ -56,7 +56,7 @@ export default function ButtonsContainer({
         <div style={{ marginTop: '0.5rem' }}>
           <Button
             loading={withdrawing}
-            onClick={() => handleCloseTransaction('withdraw')}
+            onClick={() => handleCloseTransaction({ cancelReason: 'withdraw' })}
             color={withdrawColor}
             filled
           >
@@ -81,7 +81,7 @@ export default function ButtonsContainer({
     </div>
   );
 
-  async function handleCloseTransaction(cancelReason) {
+  async function handleCloseTransaction({ cancelReason }) {
     try {
       setWithdrawing(true);
       await closeTransaction({
@@ -96,7 +96,10 @@ export default function ButtonsContainer({
         onSetCancelReason(cancelReason);
         setWithdrawing(false);
       } else {
-        onSetPendingTransaction(null);
+        onUpdateCurrentTransactionId({
+          channelId,
+          transactionId: null
+        });
       }
       socket.emit('update_current_transaction_id', {
         senderId: myId,
