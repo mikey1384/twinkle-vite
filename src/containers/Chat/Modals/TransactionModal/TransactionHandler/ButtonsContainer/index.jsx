@@ -10,6 +10,7 @@ ButtonsContainer.propTypes = {
   channelId: PropTypes.number.isRequired,
   isFromMe: PropTypes.bool,
   isExpressionOfInterest: PropTypes.bool,
+  myId: PropTypes.number.isRequired,
   onSetCancelReason: PropTypes.func.isRequired,
   onSetPendingTransaction: PropTypes.func.isRequired,
   transactionId: PropTypes.number.isRequired,
@@ -20,6 +21,7 @@ export default function ButtonsContainer({
   channelId,
   isFromMe,
   isExpressionOfInterest,
+  myId,
   onSetCancelReason,
   onSetPendingTransaction,
   transactionId,
@@ -64,6 +66,7 @@ export default function ButtonsContainer({
         </div>
       ) : type === 'trade' && !isExpressionOfInterest ? (
         <TradeButtons
+          myId={myId}
           onWithdrawTransaction={handleWithdrawTransaction}
           transactionId={transactionId}
         />

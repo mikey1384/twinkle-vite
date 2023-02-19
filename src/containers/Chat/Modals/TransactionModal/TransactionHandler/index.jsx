@@ -69,6 +69,7 @@ export default function TransactionHandler({
       {!cancelReason && (
         <ButtonsContainer
           isFromMe={isFromMe}
+          myId={myId}
           channelId={channelId}
           onSetCancelReason={setCancelReason}
           onSetPendingTransaction={onSetPendingTransaction}
