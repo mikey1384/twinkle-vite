@@ -57,7 +57,7 @@ export default function TradeButtons({
     if (disableReasonObj.reason === 'card burned') {
       return `${responsiblePartyLabel} ${
         imResponsible ? `burned` : `burned`
-      } one or more of the cards included this transaction`;
+      } one or more of the cards that were included in this transaction`;
     }
     return '';
   }, [
@@ -72,9 +72,11 @@ export default function TradeButtons({
       style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column' }}
     >
       {disabledReasonText && (
-        <div style={{ marginBottom: '0.5rem' }}>{disabledReasonText}</div>
+        <div style={{ marginTop: '1rem', marginBottom: '2rem' }}>
+          {disabledReasonText}
+        </div>
       )}
-      <div style={{ display: 'flex' }}>
+      <div style={{ display: 'flex', width: '100%', justifyContent: 'center' }}>
         <Button
           onClick={() => onWithdrawTransaction('decline')}
           color="rose"
