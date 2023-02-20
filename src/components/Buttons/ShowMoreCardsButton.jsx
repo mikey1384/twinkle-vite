@@ -3,7 +3,7 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 ShowMoreCardsButton.propTypes = {
-  onClick: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
   numMore: PropTypes.number
 };
 
@@ -18,7 +18,7 @@ export default function ShowMoreCardsButton({ onClick, numMore }) {
           padding: '1rem',
           marginLeft: '2rem',
           borderRadius,
-          cursor: 'pointer',
+          cursor: onClick ? 'pointer' : 'inherit',
           border: `1px solid ${Color.borderGray()}`,
           fontWeight: 'bold',
           color: Color.black(),
@@ -28,13 +28,15 @@ export default function ShowMoreCardsButton({ onClick, numMore }) {
         className={css`
           min-width: 9rem;
           font-size: 1.4rem;
-          &:hover {
+          ${onClick
+            ? `&:hover {
             background-color: ${Color.highlightGray()};
             font-size: 1.3rem;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.4rem;
             }
-          }
+          }`
+            : ''}
           @media (max-width: ${mobileMaxWidth}) {
             min-width: 7rem;
           }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import CardThumb from '~/components/CardThumb';
-import ShowMoreCardsButton from '~/components/ShowMoreCardsButton';
+import ShowMoreCardsButton from '~/components/Buttons/ShowMoreCardsButton';
 import MoreAICardsModal from './MoreAICardsModal';
 import { isMobile } from '~/helpers';
 import { useChatContext } from '~/contexts';
@@ -56,7 +56,9 @@ export default function AICardsPreview({
       ))}
       {!!numMore && (
         <ShowMoreCardsButton
-          onClick={() => setMoreAICardsModalShown(true)}
+          onClick={
+            onSetAICardModalCardId ? () => setMoreAICardsModalShown(true) : null
+          }
           numMore={numMore}
         />
       )}

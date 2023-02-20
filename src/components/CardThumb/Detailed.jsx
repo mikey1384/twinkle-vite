@@ -29,7 +29,7 @@ export default function CardThumb({
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        cursor: onClick ? 'pointer' : 'default',
+        cursor: onClick ? 'pointer' : 'inherit',
         ...style
       }}
       onClick={onClick}
