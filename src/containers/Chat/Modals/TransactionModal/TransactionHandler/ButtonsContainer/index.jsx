@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import TradeButtons from './TradeButtons';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { socket } from '~/constants/io';
 
 ButtonsContainer.propTypes = {
@@ -28,6 +28,9 @@ export default function ButtonsContainer({
   type
 }) {
   const [withdrawing, setWithdrawing] = useState(false);
+  const onCancelTransaction = useChatContext(
+    (v) => v.actions.onCancelTransaction
+  );
   const closeTransaction = useAppContext(
     (v) => v.requestHelpers.closeTransaction
   );
@@ -92,6 +95,9 @@ export default function ButtonsContainer({
     } catch (error) {
       console.log(error);
     } finally {
+      if (cancelReason) {
+        onCancelTransaction({ transactionId, reason: cancelReason });
+      }
       if (type === 'trade') {
         onSetCancelReason(cancelReason);
         setWithdrawing(false);
