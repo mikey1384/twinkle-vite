@@ -7,6 +7,7 @@ import { useAppContext } from '~/contexts';
 TradeButtons.propTypes = {
   isDeclining: PropTypes.bool.isRequired,
   myId: PropTypes.number.isRequired,
+  onAcceptTrade: PropTypes.func.isRequired,
   onWithdrawTransaction: PropTypes.func.isRequired,
   transactionId: PropTypes.number.isRequired
 };
@@ -14,9 +15,11 @@ TradeButtons.propTypes = {
 export default function TradeButtons({
   isDeclining,
   myId,
+  onAcceptTrade,
   onWithdrawTransaction,
   transactionId
 }) {
+  const [accepting, setAccepting] = useState(false);
   const [checking, setChecking] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
   const [disableReasonObj, setDisableReasonObj] = useState({});
@@ -90,9 +93,9 @@ export default function TradeButtons({
         </Button>
         <Button
           style={{ marginLeft: '1.5rem' }}
-          loading={checking}
+          loading={checking || accepting}
           disabled={isDisabled}
-          onClick={() => console.log('clicked')}
+          onClick={handleAcceptClick}
           color="green"
           filled
         >
@@ -102,4 +105,9 @@ export default function TradeButtons({
       </div>
     </div>
   );
+
+  function handleAcceptClick() {
+    setAccepting(true);
+    onAcceptTrade();
+  }
 }
