@@ -64,6 +64,9 @@ export default function TradeButtons({
         imResponsible ? `burned` : `burned`
       } one or more of the cards included in this proposal`;
     }
+    if (disableReasonObj.reason === 'unauthorized') {
+      return 'You are not authorized to accept this transaction';
+    }
     return '';
   }, [
     disableReasonObj.reason,
