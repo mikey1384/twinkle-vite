@@ -117,12 +117,13 @@ export default function TransactionHandler({
             style={{ marginTop: '1rem', marginBottom: '1rem' }}
             filled
             color="blue"
-            onClick={() =>
+            onClick={() => {
+              setCancelReason(null);
               onUpdateCurrentTransactionId({
                 channelId,
                 transactionId: null
-              })
-            }
+              });
+            }}
           >
             <Icon icon="sparkles" />
             <span style={{ marginLeft: '0.7rem' }}>New Proposal</span>
