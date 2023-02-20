@@ -890,11 +890,12 @@ export default function ChatActions(dispatch) {
         channelId
       });
     },
-    onUpdateAICard({ cardId, newState }) {
+    onUpdateAICard({ cardId, newState, isInit }) {
       return dispatch({
         type: 'UPDATE_AI_CARD',
         cardId,
-        newState
+        newState,
+        isInit
       });
     },
     onUpdateChannelPathIdHash({ channelId, pathId }) {
