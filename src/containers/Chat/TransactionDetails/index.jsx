@@ -61,6 +61,7 @@ export default function TransactionDetails({
           onClick={onClick}
           onSetAICardModalCardId={onSetAICardModalCardId}
           fromId={transaction.from}
+          toId={transaction.to}
         />
       )}
       {type === 'show' && (
