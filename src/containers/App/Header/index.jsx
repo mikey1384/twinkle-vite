@@ -204,6 +204,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   const onMakeOutgoingOffer = useChatContext(
     (v) => v.actions.onMakeOutgoingOffer
   );
+  const onCancelTransaction = useChatContext(
+    (v) => v.actions.onCancelTransaction
+  );
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const onUpdateCollectorsRankings = useChatContext(
     (v) => v.actions.onUpdateCollectorsRankings
@@ -341,6 +344,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.on('profile_pic_changed', handleProfilePicChange);
     socket.on('rewound_chess_game', handleChessRewind);
     socket.on('subject_changed', handleTopicChange);
+    socket.on('transaction_cancelled', handleTransactionCancel);
     socket.on('user_type_updated', handleUserTypeUpdate);
     socket.on('username_changed', handleUsernameChange);
 
@@ -416,6 +420,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       socket.removeListener('profile_pic_changed', handleProfilePicChange);
       socket.removeListener('rewound_chess_game', handleChessRewind);
       socket.removeListener('subject_changed', handleTopicChange);
+      socket.removeListener('transaction_cancelled', handleTransactionCancel);
       socket.removeListener('user_type_updated', handleUserTypeUpdate);
       socket.removeListener('username_changed', handleUsernameChange);
     };
@@ -1060,6 +1065,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         onNotifyChatSubjectChange(subject);
       }
       onChangeChatSubject({ subject, channelId, subchannelId });
+    }
+
+    function handleTransactionCancel({ transactionId, cancelReason }) {
+      onCancelTransaction({ transactionId, reason: cancelReason });
     }
   });
 
