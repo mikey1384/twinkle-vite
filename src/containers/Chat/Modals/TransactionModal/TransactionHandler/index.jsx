@@ -10,6 +10,7 @@ import ButtonsContainer from './ButtonsContainer';
 TransactionHandler.propTypes = {
   currentTransactionId: PropTypes.number,
   onSetAICardModalCardId: PropTypes.func.isRequired,
+  onSetPendingTransaction: PropTypes.func.isRequired,
   myId: PropTypes.number.isRequired,
   partner: PropTypes.object.isRequired,
   transactionDetails: PropTypes.object.isRequired,
@@ -19,6 +20,7 @@ TransactionHandler.propTypes = {
 export default function TransactionHandler({
   currentTransactionId,
   onSetAICardModalCardId,
+  onSetPendingTransaction,
   myId,
   partner,
   transactionDetails,
@@ -119,6 +121,7 @@ export default function TransactionHandler({
             color="blue"
             onClick={() => {
               setCancelReason(null);
+              onSetPendingTransaction(null);
               onUpdateCurrentTransactionId({
                 channelId,
                 transactionId: null
