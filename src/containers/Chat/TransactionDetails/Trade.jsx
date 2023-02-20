@@ -5,6 +5,7 @@ import WantPanel from './WantPanel';
 import Heading from './Heading';
 import UsernameText from '~/components/Texts/UsernameText';
 import Body from './Body';
+import { Color } from '~/constants/css';
 
 Trade.propTypes = {
   isCurrent: PropTypes.bool,
@@ -19,7 +20,8 @@ Trade.propTypes = {
   offerCardIds: PropTypes.array,
   offerCoins: PropTypes.number,
   onClick: PropTypes.func,
-  fromId: PropTypes.number.isRequired
+  fromId: PropTypes.number.isRequired,
+  toId: PropTypes.number.isRequired
 };
 
 export default function Trade({
@@ -27,6 +29,7 @@ export default function Trade({
   isCancelled,
   cancelReason,
   myId,
+  toId,
   myUsername,
   partner,
   onSetAICardModalCardId,
@@ -40,9 +43,26 @@ export default function Trade({
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
   }, [fromId, myId, myUsername, partner]);
+  const to = useMemo(() => {
+    return toId === myId ? { id: myId, username: myUsername } : partner;
+  }, [toId, myId, myUsername, partner]);
+
   const isTrade = useMemo(() => {
     return !!offerCardIds.length || !!offerCoins;
   }, [offerCardIds, offerCoins]);
+
+  const cancelReasonText = useMemo(() => {
+    if (cancelReason === 'withdraw') {
+      return `${
+        from.username === myUsername ? 'You' : from.username
+      } withdrew the trade.`;
+    }
+    if (cancelReason === 'decline') {
+      return `${
+        to.username === myUsername ? 'You' : to.username
+      } declined the trade.`;
+    }
+  }, [cancelReason, from.username, myUsername, to.username]);
 
   return (
     <div
@@ -88,7 +108,17 @@ export default function Trade({
           onSetAICardModalCardId={onSetAICardModalCardId}
           showCardDetailsOnThumbClick={!onClick}
         />
-        {isCancelled && <div>{cancelReason}</div>}
+        {isCancelled && (
+          <div
+            style={{
+              marginTop: '1.5rem',
+              fontFamily: 'Roboto, sans-serif',
+              color: Color.darkerGray()
+            }}
+          >
+            {cancelReasonText}
+          </div>
+        )}
       </Body>
     </div>
   );
