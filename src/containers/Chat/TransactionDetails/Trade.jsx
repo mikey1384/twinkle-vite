@@ -112,6 +112,7 @@ export default function Trade({
           <div
             style={{
               marginTop: '1.5rem',
+              marginBottom: '0.5rem',
               fontFamily: 'Roboto, sans-serif',
               color: Color.darkerGray()
             }}
