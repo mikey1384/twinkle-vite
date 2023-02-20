@@ -912,6 +912,13 @@ export default function ChatActions(dispatch) {
         transactionId
       });
     },
+    onCancelTransaction({ transactionId, reason }) {
+      return dispatch({
+        type: 'CANCEL_TRANSACTION',
+        transactionId,
+        reason
+      });
+    },
     onUpdateLastChessMessageId({ channelId, messageId }) {
       return dispatch({
         type: 'UPDATE_LAST_CHESS_MESSAGE_ID',

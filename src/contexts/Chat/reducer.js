@@ -2469,6 +2469,14 @@ export default function ChatReducer(state, action) {
           }
         }
       };
+    case 'CANCEL_TRANSACTION':
+      return {
+        ...state,
+        cancelledTransactions: {
+          ...state.cancelledTransactions,
+          [action.transactionId]: action.reason
+        }
+      };
     case 'UPDATE_UPLOAD_PROGRESS': {
       const targetId =
         action.channelId +
