@@ -55,12 +55,12 @@ export default function Trade({
     if (cancelReason === 'withdraw') {
       return `${
         from.username === myUsername ? 'You' : from.username
-      } withdrew the trade.`;
+      } withdrew the trade proposal.`;
     }
     if (cancelReason === 'decline') {
       return `${
         to.username === myUsername ? 'You' : to.username
-      } declined the trade.`;
+      } declined the trade proposal.`;
     }
   }, [cancelReason, from.username, myUsername, to.username]);
 
