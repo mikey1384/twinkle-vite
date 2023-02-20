@@ -47,7 +47,7 @@ export default function TradeButtons({
     if (disableReasonObj.reason === 'not enough coins') {
       return `${responsiblePartyLabel} ${
         imResponsible ? `don't` : `doesn't`
-      } have enough money to proceed with this transaction`;
+      } have enough coins to proceed with this transaction`;
     }
     if (disableReasonObj.reason === 'changed card ownership') {
       return `${responsiblePartyLabel} no longer ${
