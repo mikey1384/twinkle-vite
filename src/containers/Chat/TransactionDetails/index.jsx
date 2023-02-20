@@ -50,7 +50,7 @@ export default function TransactionDetails({
         <Trade
           isCurrent={transaction.id === currentTransactionId}
           isCancelled={!!transaction.isCancelled}
-          cancelReason={!!transaction.cancelReason}
+          cancelReason={transaction.cancelReason}
           myId={userId}
           myUsername={username}
           wantCardIds={wantCardIds}
