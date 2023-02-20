@@ -5,12 +5,14 @@ import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 
 TradeButtons.propTypes = {
+  isDeclining: PropTypes.bool.isRequired,
   myId: PropTypes.number.isRequired,
   onWithdrawTransaction: PropTypes.func.isRequired,
   transactionId: PropTypes.number.isRequired
 };
 
 export default function TradeButtons({
+  isDeclining,
   myId,
   onWithdrawTransaction,
   transactionId
@@ -79,6 +81,7 @@ export default function TradeButtons({
       <div style={{ display: 'flex', width: '100%', justifyContent: 'center' }}>
         <Button
           onClick={() => onWithdrawTransaction({ cancelReason: 'decline' })}
+          loading={isDeclining}
           color="rose"
           filled
         >

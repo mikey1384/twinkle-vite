@@ -67,6 +67,7 @@ export default function ButtonsContainer({
       ) : type === 'trade' && !isExpressionOfInterest ? (
         <TradeButtons
           myId={myId}
+          isDeclining={withdrawing}
           onWithdrawTransaction={handleCloseTransaction}
           transactionId={transactionId}
         />
@@ -97,13 +98,13 @@ export default function ButtonsContainer({
       }
       if (type === 'trade') {
         onSetCancelReason(cancelReason);
-        setWithdrawing(false);
       } else {
         onUpdateCurrentTransactionId({
           channelId,
           transactionId: null
         });
       }
+      setWithdrawing(false);
       socket.emit('update_current_transaction_id', {
         senderId: myId,
         channelId,
