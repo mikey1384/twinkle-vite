@@ -23,7 +23,6 @@ export default function TransactionDetails({
   style
 }) {
   const { userId, username } = useKeyContext((v) => v.myState);
-  const cardObj = useChatContext((v) => v.state.cardObj);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const { type, want = {}, offer = {} } = transaction;
   const { cards: wantCards = [], coins: wantCoins = 0 } = want || {};
@@ -34,16 +33,12 @@ export default function TransactionDetails({
   useEffect(() => {
     if (wantCards.length) {
       for (const card of wantCards) {
-        if (!cardObj[card.id]) {
-          onUpdateAICard({ cardId: card.id, newState: card });
-        }
+        onUpdateAICard({ cardId: card.id, newState: card, isInit: true });
       }
     }
     if (offerCards.length) {
       for (const card of offerCards) {
-        if (!cardObj[card.id]) {
-          onUpdateAICard({ cardId: card.id, newState: card });
-        }
+        onUpdateAICard({ cardId: card.id, newState: card, isInit: true });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1370,10 +1370,14 @@ export default function ChatReducer(state, action) {
         ...state,
         cardObj: {
           ...state.cardObj,
-          [action.cardId]: {
-            ...state.cardObj[action.cardId],
-            ...action.newState
-          }
+          ...(action.isInit && state.cardObj[action.cardId]
+            ? {}
+            : {
+                [action.cardId]: {
+                  ...state.cardObj[action.cardId],
+                  ...action.newState
+                }
+              })
         }
       };
     }
