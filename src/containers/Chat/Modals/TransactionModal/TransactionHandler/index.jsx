@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import TransactionDetails from '../../../TransactionDetails';
 import Button from '~/components/Button';
@@ -48,6 +48,19 @@ export default function TransactionHandler({
   }, [transactionDetails?.offer, transactionDetails?.type]);
 
   const isFromMe = transactionDetails.from === myId;
+
+  useEffect(() => {
+    return () => {
+      if (cancelReason) {
+        onUpdateCurrentTransactionId({
+          channelId,
+          transactionId: null
+        });
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cancelReason, channelId]);
+
   return (
     <div
       style={{
