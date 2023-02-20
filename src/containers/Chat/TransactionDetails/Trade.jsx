@@ -8,6 +8,8 @@ import Body from './Body';
 
 Trade.propTypes = {
   isCurrent: PropTypes.bool,
+  isCancelled: PropTypes.bool,
+  cancelReason: PropTypes.string,
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
   partner: PropTypes.object.isRequired,
@@ -22,6 +24,8 @@ Trade.propTypes = {
 
 export default function Trade({
   isCurrent,
+  isCancelled,
+  cancelReason,
   myId,
   myUsername,
   partner,
@@ -84,6 +88,7 @@ export default function Trade({
           onSetAICardModalCardId={onSetAICardModalCardId}
           showCardDetailsOnThumbClick={!onClick}
         />
+        {isCancelled && <div>{cancelReason}</div>}
       </Body>
     </div>
   );
