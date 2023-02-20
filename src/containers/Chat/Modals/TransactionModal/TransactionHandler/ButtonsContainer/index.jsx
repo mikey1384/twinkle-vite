@@ -94,7 +94,11 @@ export default function ButtonsContainer({
       console.log(error);
     } finally {
       if (cancelReason) {
-        socket.emit('cancel_transaction', { transactionId, cancelReason });
+        socket.emit('cancel_transaction', {
+          channelId,
+          transactionId,
+          cancelReason
+        });
       }
       if (type === 'trade') {
         onSetCancelReason(cancelReason);
