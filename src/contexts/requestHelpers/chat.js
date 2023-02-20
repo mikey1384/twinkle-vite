@@ -15,6 +15,18 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async acceptTrade({ transactionId, channelId }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/chat/transaction/accept`,
+          { transactionId, channelId },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async burnAICard(cardId) {
       try {
         const {
