@@ -29,6 +29,7 @@ export default function TransactionDetails({
   );
   const isCancelled =
     !!cancelledTransactions[transaction.id] || !!transaction.isCancelled;
+  const isAccepted = !!transaction.isAccepted;
   const cancelReason =
     cancelledTransactions[transaction.id] || transaction.cancelReason;
   const { type, want = {}, offer = {} } = transaction;
@@ -56,6 +57,7 @@ export default function TransactionDetails({
       {type === 'trade' && (
         <Trade
           isCurrent={transaction.id === currentTransactionId}
+          isAccepted={isAccepted}
           isCancelled={isCancelled}
           cancelReason={cancelReason}
           myId={userId}

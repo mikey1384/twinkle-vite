@@ -8,6 +8,7 @@ import Body from './Body';
 import { Color } from '~/constants/css';
 
 Trade.propTypes = {
+  isAccepted: PropTypes.bool,
   isCurrent: PropTypes.bool,
   isCancelled: PropTypes.bool,
   cancelReason: PropTypes.string,
@@ -25,6 +26,7 @@ Trade.propTypes = {
 };
 
 export default function Trade({
+  isAccepted,
   isCurrent,
   isCancelled,
   cancelReason,
@@ -63,6 +65,15 @@ export default function Trade({
       } declined the trade proposal.`;
     }
   }, [cancelReason, from.username, myUsername, to.username]);
+
+  const acceptedText = useMemo(() => {
+    if (isAccepted) {
+      return `${
+        to.username === myUsername ? 'You' : to.username
+      } accepted the trade proposal.`;
+    }
+    return '';
+  }, [isAccepted, myUsername, to.username]);
 
   return (
     <div
@@ -108,16 +119,16 @@ export default function Trade({
           onSetAICardModalCardId={onSetAICardModalCardId}
           showCardDetailsOnThumbClick={!onClick}
         />
-        {isCancelled && (
+        {(isAccepted || isCancelled) && (
           <div
             style={{
               marginTop: '1.5rem',
               marginBottom: '0.5rem',
               fontFamily: 'Roboto, sans-serif',
-              color: Color.darkerGray()
+              color: Color[isAccepted ? 'green' : 'darkerGray']()
             }}
           >
-            {cancelReasonText}
+            {isAccepted ? acceptedText : cancelReasonText}
           </div>
         )}
       </Body>
