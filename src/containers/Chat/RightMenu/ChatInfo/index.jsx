@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Members from './Members';
 import ChannelDetails from './ChannelDetails';
@@ -37,6 +37,7 @@ function ChatInfo({
     profilePicUrl,
     banned
   } = useKeyContext((v) => v.myState);
+  const [callDisabled, setCallDisabled] = useState(false);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
@@ -147,6 +148,10 @@ function ChatInfo({
       } else {
         onHangUp({ memberId: myId, iHungUp: true });
       }
+      setCallDisabled(true);
+      setTimeout(() => {
+        setCallDisabled(false);
+      }, 3000);
       socket.emit('hang_up_call', channelOnCall.id, () => {
         if (selectedChannelId !== channelOnCall.id) {
           const messageId = uuidv1();
@@ -201,7 +206,11 @@ function ChatInfo({
           className="unselectable"
         >
           {voiceChatButtonShown && !banned?.chat && (
-            <CallButton callOngoing={callOngoing} onCall={handleCall} />
+            <CallButton
+              callOngoing={callOngoing}
+              disabled={callDisabled}
+              onCall={handleCall}
+            />
           )}
           <ChannelDetails
             style={{ marginTop: '1rem' }}
