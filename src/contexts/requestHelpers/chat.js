@@ -17,12 +17,14 @@ export default function chatRequestHelpers({ auth, handleError }) {
     },
     async acceptTrade({ channelId, transactionId }) {
       try {
-        const { data } = await request.put(
+        const {
+          data: { isDisabled, disableReason, responsibleParty }
+        } = await request.put(
           `${URL}/chat/transaction/accept`,
           { channelId, transactionId },
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve({ isDisabled, disableReason, responsibleParty });
       } catch (error) {
         return handleError(error);
       }
