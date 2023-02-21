@@ -912,6 +912,12 @@ export default function ChatActions(dispatch) {
         transactionId
       });
     },
+    onAcceptTransaction({ transactionId }) {
+      return dispatch({
+        type: 'ACCEPT_TRANSACTION',
+        transactionId
+      });
+    },
     onCancelTransaction({ transactionId, reason }) {
       return dispatch({
         type: 'CANCEL_TRANSACTION',

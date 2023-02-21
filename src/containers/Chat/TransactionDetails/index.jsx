@@ -24,12 +24,16 @@ export default function TransactionDetails({
 }) {
   const { userId, username } = useKeyContext((v) => v.myState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const acceptedTransactions = useChatContext(
+    (v) => v.state.acceptedTransactions
+  );
   const cancelledTransactions = useChatContext(
     (v) => v.state.cancelledTransactions
   );
+  const isAccepted =
+    acceptedTransactions[transaction.id] || !!transaction.isAccepted;
   const isCancelled =
     !!cancelledTransactions[transaction.id] || !!transaction.isCancelled;
-  const isAccepted = !!transaction.isAccepted;
   const cancelReason =
     cancelledTransactions[transaction.id] || transaction.cancelReason;
   const { type, want = {}, offer = {} } = transaction;

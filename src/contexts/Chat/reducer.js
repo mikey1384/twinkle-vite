@@ -2469,6 +2469,14 @@ export default function ChatReducer(state, action) {
           }
         }
       };
+    case 'ACCEPT_TRANSACTION':
+      return {
+        ...state,
+        acceptedTransactions: {
+          ...state.acceptedTransactions,
+          [action.transactionId]: true
+        }
+      };
     case 'CANCEL_TRANSACTION':
       return {
         ...state,
