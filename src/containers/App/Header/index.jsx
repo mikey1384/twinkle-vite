@@ -540,7 +540,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           onRemoveMyAICard(card.id);
         }
         if (to === userId) {
-          console.log(to, userId, card);
           onAddMyAICard(card);
         }
         onUpdateAICard({ cardId: card.id, newState: { ownerId: to } });

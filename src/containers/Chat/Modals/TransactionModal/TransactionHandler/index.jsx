@@ -9,6 +9,7 @@ import ButtonsContainer from './ButtonsContainer';
 
 TransactionHandler.propTypes = {
   currentTransactionId: PropTypes.number,
+  onAcceptTrade: PropTypes.func.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   onSetPendingTransaction: PropTypes.func.isRequired,
   myId: PropTypes.number.isRequired,
@@ -19,6 +20,7 @@ TransactionHandler.propTypes = {
 
 export default function TransactionHandler({
   currentTransactionId,
+  onAcceptTrade,
   onSetAICardModalCardId,
   onSetPendingTransaction,
   myId,
@@ -87,6 +89,7 @@ export default function TransactionHandler({
           isFromMe={isFromMe}
           myId={myId}
           channelId={channelId}
+          onAcceptTrade={onAcceptTrade}
           onSetCancelReason={setCancelReason}
           transactionId={transactionDetails.id}
           isExpressionOfInterest={isExpressionOfInterest}

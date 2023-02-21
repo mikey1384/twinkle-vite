@@ -145,6 +145,7 @@ export default function TransactionModal({
               myId={myId}
               onSetAICardModalCardId={onSetAICardModalCardId}
               onSetPendingTransaction={setPendingTransaction}
+              onAcceptTrade={onHide}
               partner={partner}
               transactionDetails={pendingTransaction}
               channelId={channelId}
