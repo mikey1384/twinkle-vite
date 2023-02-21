@@ -448,6 +448,8 @@ export default function MessageInput({
           }}
           onPaste={handlePaste}
           style={{
+            width: 'auto',
+            flexGrow: 1,
             marginRight: '1rem',
             ...(messageExceedsCharLimit?.style || {})
           }}

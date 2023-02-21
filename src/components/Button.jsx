@@ -170,10 +170,12 @@ function Button({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {children}
-      {loading && (
-        <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
-      )}
+      <div style={{ width: '100%' }}>
+        {children}
+        {loading && (
+          <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
+        )}
+      </div>
     </button>
   );
 }
