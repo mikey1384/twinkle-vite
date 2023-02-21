@@ -20,7 +20,7 @@ export default function GenerateCardInterface({
   onGenerateAICard,
   posting
 }) {
-  const maxSummoned = useMemo(() => numSummoned >= 10, [numSummoned]);
+  const maxSummoned = useMemo(() => numSummoned >= 5, [numSummoned]);
   const { twinkleCoins } = useKeyContext((v) => v.myState);
   const hasEnoughTwinkleCoins = twinkleCoins >= priceTable.card;
   return (
