@@ -19,7 +19,7 @@ export default function Options({
         color="logoBlue"
         onClick={() => onSelectOption('want')}
       >
-        {partnerName} has something I want
+        I want to see what {partnerName} has
       </Button>
       <Button
         skeuomorphic={selectedOption === 'offer'}
