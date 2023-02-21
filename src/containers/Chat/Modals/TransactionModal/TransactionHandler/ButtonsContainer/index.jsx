@@ -104,7 +104,7 @@ export default function ButtonsContainer({
           cancelReason
         });
       }
-      if (type === 'trade') {
+      if (type === 'trade' && !isExpressionOfInterest) {
         onSetCancelReason(cancelReason);
       } else {
         onUpdateCurrentTransactionId({
