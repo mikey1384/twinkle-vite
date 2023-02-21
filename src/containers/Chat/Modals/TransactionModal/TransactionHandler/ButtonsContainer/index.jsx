@@ -33,7 +33,6 @@ export default function ButtonsContainer({
   const closeTransaction = useAppContext(
     (v) => v.requestHelpers.closeTransaction
   );
-  const acceptTrade = useAppContext((v) => v.requestHelpers.acceptTrade);
   const withdrawIcon = useMemo(() => {
     if (type === 'trade') {
       return 'redo';
@@ -71,7 +70,8 @@ export default function ButtonsContainer({
         <TradeButtons
           myId={myId}
           isDeclining={withdrawing}
-          onAcceptTrade={handleAcceptTrade}
+          channelId={channelId}
+          onAcceptTrade={onAcceptTrade}
           onWithdrawTransaction={handleCloseTransaction}
           transactionId={transactionId}
         />
@@ -85,16 +85,6 @@ export default function ButtonsContainer({
       )}
     </div>
   );
-
-  async function handleAcceptTrade() {
-    try {
-      await acceptTrade({ channelId, transactionId });
-    } catch (error) {
-      console.log(error);
-    } finally {
-      onAcceptTrade();
-    }
-  }
 
   async function handleCloseTransaction({ cancelReason }) {
     try {

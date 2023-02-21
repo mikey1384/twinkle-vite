@@ -6,6 +6,7 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext } from '~/contexts';
 
 TradeButtons.propTypes = {
+  channelId: PropTypes.number.isRequired,
   isDeclining: PropTypes.bool.isRequired,
   myId: PropTypes.number.isRequired,
   onAcceptTrade: PropTypes.func.isRequired,
@@ -14,12 +15,14 @@ TradeButtons.propTypes = {
 };
 
 export default function TradeButtons({
+  channelId,
   isDeclining,
   myId,
   onAcceptTrade,
   onWithdrawTransaction,
   transactionId
 }) {
+  const acceptTrade = useAppContext((v) => v.requestHelpers.acceptTrade);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -119,8 +122,23 @@ export default function TradeButtons({
     </div>
   );
 
-  function handleAcceptClick() {
+  async function handleAcceptClick() {
     setAccepting(true);
-    onAcceptTrade();
+    try {
+      const { isDisabled, disableReason, responsibleParty } = await acceptTrade(
+        { channelId, transactionId }
+      );
+      if (isDisabled) {
+        setDisableReasonObj({
+          reason: disableReason,
+          responsibleParty
+        });
+        setIsDisabled(true);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      onAcceptTrade();
+    }
   }
 }
