@@ -34,23 +34,23 @@ export default function ButtonsContainer({
     (v) => v.requestHelpers.closeTransaction
   );
   const withdrawIcon = useMemo(() => {
-    if (type === 'trade') {
+    if (type === 'trade' && !isExpressionOfInterest) {
       return 'redo';
     }
     return 'sparkles';
-  }, [type]);
+  }, [isExpressionOfInterest, type]);
   const withdrawColor = useMemo(() => {
-    if (type === 'trade') {
+    if (type === 'trade' && !isExpressionOfInterest) {
       return 'orange';
     }
     return 'blue';
-  }, [type]);
+  }, [isExpressionOfInterest, type]);
   const withdrawLabel = useMemo(() => {
-    if (type === 'trade') {
+    if (type === 'trade' && !isExpressionOfInterest) {
       return 'Withdraw Proposal';
     }
     return 'New Proposal';
-  }, [type]);
+  }, [isExpressionOfInterest, type]);
 
   return (
     <div>
