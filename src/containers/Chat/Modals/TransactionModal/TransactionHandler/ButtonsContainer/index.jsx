@@ -7,6 +7,7 @@ import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/io';
 
 ButtonsContainer.propTypes = {
+  onAcceptTrade: PropTypes.func.isRequired,
   channelId: PropTypes.number.isRequired,
   isFromMe: PropTypes.bool,
   isExpressionOfInterest: PropTypes.bool,
@@ -22,6 +23,7 @@ export default function ButtonsContainer({
   isFromMe,
   isExpressionOfInterest,
   myId,
+  onAcceptTrade,
   onSetCancelReason,
   onUpdateCurrentTransactionId,
   transactionId,
@@ -86,12 +88,11 @@ export default function ButtonsContainer({
 
   async function handleAcceptTrade() {
     try {
-      const data = await acceptTrade({ channelId, transactionId });
-      console.log(data);
+      await acceptTrade({ channelId, transactionId });
     } catch (error) {
       console.log(error);
     } finally {
-      console.log('got here');
+      onAcceptTrade();
     }
   }
 
