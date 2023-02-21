@@ -70,7 +70,7 @@ export default function Trade({
     if (isAccepted) {
       return `${
         to.username === myUsername ? 'You' : to.username
-      } accepted the trade proposal.`;
+      } accepted the proposal. Trade has been completed.`;
     }
     return '';
   }, [isAccepted, myUsername, to.username]);
