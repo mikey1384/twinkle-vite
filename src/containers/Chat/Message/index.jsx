@@ -649,6 +649,10 @@ function Message({
         currentTransactionId={currentChannel.currentTransactionId}
         partner={partner}
         onClick={
+          !(
+            transactionDetails.type === 'send' &&
+            transactionDetails.from === myId
+          ) &&
           currentChannel.currentTransactionId &&
           currentChannel.currentTransactionId === transactionDetails.id
             ? () => onSetTransactionModalShown(true)
