@@ -77,7 +77,12 @@ export default function ButtonsContainer({
         />
       ) : (
         <div style={{ marginTop: '0.5rem' }}>
-          <Button onClick={handleCloseTransaction} color="blue" filled>
+          <Button
+            loading={withdrawing}
+            onClick={handleCloseTransaction}
+            color="blue"
+            filled
+          >
             <Icon icon="check" />
             <span style={{ marginLeft: '0.7rem' }}>Got it</span>
           </Button>
