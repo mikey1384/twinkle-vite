@@ -9,20 +9,24 @@ const hangUpLabel = localize('hangUp');
 
 CallButton.propTypes = {
   callOngoing: PropTypes.bool,
+  disabled: PropTypes.bool,
   onCall: PropTypes.func
 };
 
-export default function CallButton({ callOngoing, onCall }) {
+export default function CallButton({ callOngoing, disabled, onCall }) {
   return (
-    <div
+    <button
       className={css`
-        padding: 1rem;
-        background: ${callOngoing ? Color.rose(0.8) : Color.darkBlue(0.8)};
+        font-size: 1.6rem;
+        padding: 1.5rem;
+        background: ${callOngoing ? Color.rose(0.9) : Color.darkBlue(0.9)};
         color: #fff;
         display: flex;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
+        cursor: ${disabled ? 'not-allowed' : 'pointer'};
+        border: none;
+        opacity: ${disabled ? 0.5 : 1};
         transition: background 0.2s;
         @media (max-width: ${mobileMaxWidth}) {
           background: ${callOngoing ? Color.rose(1) : Color.darkBlue(1)};
@@ -33,12 +37,13 @@ export default function CallButton({ callOngoing, onCall }) {
           }
         }
       `}
+      disabled={disabled}
       onClick={onCall}
     >
       {!callOngoing && <Icon icon="phone-volume" />}
       <span style={{ marginLeft: '1rem' }}>
         {!callOngoing ? callLabel : hangUpLabel}
       </span>
-    </div>
+    </button>
   );
 }
