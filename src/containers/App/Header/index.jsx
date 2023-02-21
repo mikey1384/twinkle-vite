@@ -521,7 +521,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleAssetsSent({ coins, from, to }) {
+    function handleAssetsSent({ cards, coins, from, to }) {
       if (from === userId) {
         onSetUserState({
           userId,
@@ -533,6 +533,17 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           userId,
           newState: { twinkleCoins: twinkleCoins + coins }
         });
+      }
+      for (const card of cards) {
+        if (from === userId) {
+          onDelistAICard(card.id);
+          onRemoveMyAICard(card.id);
+        }
+        if (to === userId) {
+          console.log(to, userId, card);
+          onAddMyAICard(card);
+        }
+        onUpdateAICard({ cardId: card.id, newState: { ownerId: to } });
       }
     }
 
