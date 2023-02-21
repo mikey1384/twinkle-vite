@@ -86,7 +86,7 @@ export default function ButtonsContainer({
 
   async function handleAcceptTrade() {
     try {
-      const data = await acceptTrade({ transactionId });
+      const data = await acceptTrade({ channelId, transactionId });
       console.log(data);
     } catch (error) {
       console.log(error);

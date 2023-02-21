@@ -15,11 +15,11 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async acceptTrade({ transactionId }) {
+    async acceptTrade({ channelId, transactionId }) {
       try {
         const { data } = await request.put(
           `${URL}/chat/transaction/accept`,
-          { transactionId },
+          { channelId, transactionId },
           auth()
         );
         return Promise.resolve(data);
