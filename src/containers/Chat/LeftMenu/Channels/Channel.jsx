@@ -162,7 +162,15 @@ function Channel({
         const to = transactionDetails.to === userId ? 'you' : otherMember;
         let actionText = '';
         if (transactionDetails.type === 'trade') {
-          actionText = 'proposed a trade';
+          const noCoinsOffered = !transactionDetails?.offer.coins;
+          const noCardsOffered = !transactionDetails?.offer.cards?.length;
+          if (noCoinsOffered && noCardsOffered) {
+            const tos =
+              transactionDetails.to === userId ? 'your' : `${otherMember}'s}`;
+            actionText = `showed interest in ${tos} items`;
+          } else {
+            actionText = 'proposed a trade';
+          }
         }
         if (transactionDetails.type === 'show') {
           actionText = `${
