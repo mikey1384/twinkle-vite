@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext } from '~/contexts';
 
 TradeButtons.propTypes = {
@@ -19,6 +20,7 @@ export default function TradeButtons({
   onWithdrawTransaction,
   transactionId
 }) {
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [checking, setChecking] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
@@ -98,7 +100,7 @@ export default function TradeButtons({
           style={{ marginLeft: '1.5rem' }}
           loading={checking || accepting}
           disabled={isDisabled}
-          onClick={handleAcceptClick}
+          onClick={() => setConfirmModalShown(true)}
           color="green"
           filled
         >
@@ -106,6 +108,14 @@ export default function TradeButtons({
           <span style={{ marginLeft: '0.7rem' }}>Accept</span>
         </Button>
       </div>
+      {confirmModalShown && (
+        <ConfirmModal
+          modalOverModal
+          onHide={() => setConfirmModalShown(false)}
+          title="Accept Trade"
+          onConfirm={handleAcceptClick}
+        />
+      )}
     </div>
   );
 
