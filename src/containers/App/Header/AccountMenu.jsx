@@ -90,6 +90,7 @@ function AccountMenu({ className, onSetBalanceModalShown }) {
           text={
             <div
               style={{
+                display: 'inline',
                 maxWidth: '12rem',
                 overflow: 'hidden',
                 whiteSpace: 'nowrap',
@@ -112,15 +113,7 @@ function AccountMenu({ className, onSetBalanceModalShown }) {
           color={loginColor}
           filled
         >
-          <div
-            style={{
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis'
-            }}
-          >
-            {logInLabel}
-          </div>
+          {logInLabel}
         </Button>
       )}
     </div>
