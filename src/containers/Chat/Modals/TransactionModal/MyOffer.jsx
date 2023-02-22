@@ -17,6 +17,7 @@ MyOffer.propTypes = {
   selectedOption: PropTypes.string.isRequired,
   onDeselect: PropTypes.func.isRequired,
   onSetCoinAmount: PropTypes.func.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
   style: PropTypes.object,
   ModalRef: PropTypes.object
 };
@@ -30,6 +31,7 @@ export default function MyOffer({
   selectedOption,
   onDeselect,
   onSetCoinAmount,
+  onSetAICardModalCardId,
   style,
   ModalRef
 }) {
@@ -130,6 +132,7 @@ export default function MyOffer({
               type="offer"
               selectedCardIds={selectedCardIds}
               onDeselect={onDeselect}
+              onSetAICardModalCardId={onSetAICardModalCardId}
               onShowAICardSelector={onShowAICardSelector}
             />
           ) : (

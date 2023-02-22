@@ -12,6 +12,7 @@ SelectedCards.propTypes = {
   selectedCardIds: PropTypes.array.isRequired,
   style: PropTypes.object,
   onDeselect: PropTypes.func.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
   onShowAICardSelector: PropTypes.func.isRequired,
   partnerId: PropTypes.number,
   type: PropTypes.string.isRequired
@@ -22,6 +23,7 @@ export default function SelectedCards({
   style,
   type,
   onDeselect,
+  onSetAICardModalCardId,
   onShowAICardSelector,
   partnerId
 }) {
@@ -83,6 +85,7 @@ export default function SelectedCards({
             <CardThumb
               detailed
               card={card}
+              onClick={() => onSetAICardModalCardId(card.id)}
               style={{
                 marginLeft: index > 0 ? '1rem' : 0
               }}

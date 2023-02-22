@@ -158,6 +158,7 @@ export default function TransactionModal({
               onSetCoinAmountObj={setCoinAmountObj}
               onSetSelectedOption={setSelectedOption}
               onSetSelectedCardIdsObj={setSelectedCardIdsObj}
+              onSetAICardModalCardId={onSetAICardModalCardId}
               isSelectAICardModalShown={!!aiCardModalType}
               ModalRef={ModalRef}
               partner={partner}
@@ -228,7 +229,16 @@ export default function TransactionModal({
   );
 
   function handleCounterPropose() {
-    console.log(pendingTransaction);
+    setCoinAmountObj({
+      offer: pendingTransaction.want.coins,
+      want: pendingTransaction.offer.coins
+    });
+    setSelectedCardIdsObj({
+      offer: pendingTransaction.want.cardIds,
+      want: pendingTransaction.offer.cardIds
+    });
+    setPendingTransaction(null);
+    setSelectedOption('want');
   }
 
   async function handleConfirm({

@@ -10,6 +10,7 @@ TransactionInitiator.propTypes = {
   onSetCoinAmountObj: PropTypes.func.isRequired,
   onSetSelectedOption: PropTypes.func.isRequired,
   onSetAICardModalType: PropTypes.func.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
   onSetSelectedCardIdsObj: PropTypes.func.isRequired,
   ModalRef: PropTypes.object,
   partner: PropTypes.object.isRequired,
@@ -25,6 +26,7 @@ export default function TransactionInitiator({
   onSetSelectedOption,
   onSetAICardModalType,
   onSetSelectedCardIdsObj,
+  onSetAICardModalCardId,
   ModalRef,
   partner,
   selectedCardIdsObj,
@@ -65,6 +67,7 @@ export default function TransactionInitiator({
             }))
           }
           selectedCardIds={selectedCardIdsObj.want}
+          onSetAICardModalCardId={onSetAICardModalCardId}
           onShowAICardSelector={() => onSetAICardModalType('want')}
           onDeselect={(cardId) =>
             onSetSelectedCardIdsObj((prevState) => ({
@@ -84,6 +87,7 @@ export default function TransactionInitiator({
           selectedCardIds={selectedCardIdsObj.offer}
           selectedOption={selectedOption}
           style={{ marginTop: '3rem' }}
+          onSetAICardModalCardId={onSetAICardModalCardId}
           onSetCoinAmount={(amount) =>
             onSetCoinAmountObj((prevState) => ({
               ...prevState,
