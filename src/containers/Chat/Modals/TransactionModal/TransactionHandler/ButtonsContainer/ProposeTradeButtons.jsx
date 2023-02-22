@@ -53,7 +53,7 @@ export default function ProposeTradeButtons({
           filled
         >
           <Icon icon="check" />
-          <span style={{ marginLeft: '0.7rem' }}>Yes, Show Me</span>
+          <span style={{ marginLeft: '0.7rem' }}>Yes, I want to see them</span>
         </Button>
       </div>
     </div>
