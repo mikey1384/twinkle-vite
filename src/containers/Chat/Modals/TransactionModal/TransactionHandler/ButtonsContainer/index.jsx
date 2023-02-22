@@ -83,6 +83,22 @@ export default function ButtonsContainer({
           onWithdrawTransaction={handleCloseTransaction}
           transactionId={transactionId}
         />
+      ) : type === 'send' ? (
+        <div>
+          <div
+            style={{ marginTop: '1rem', width: '100%', textAlign: 'center' }}
+          >
+            <Button
+              loading={withdrawing}
+              onClick={handleCloseTransaction}
+              color="blue"
+              filled
+            >
+              <Icon icon="check" />
+              <span style={{ marginLeft: '0.7rem' }}>Got it</span>
+            </Button>
+          </div>
+        </div>
       ) : (
         <ProposeTradeButtons
           style={{ marginTop: '0.5rem' }}
