@@ -705,6 +705,14 @@ export default function ExploreReducer(state, action) {
           }
         }
       };
+    case 'SET_NUM_FILTERED_CARDS':
+      return {
+        ...state,
+        aiCards: {
+          ...state.aiCards,
+          numFilteredCards: action.numCards
+        }
+      };
     case 'SET_PREV_AI_CARD_FILTERS':
       return {
         ...state,

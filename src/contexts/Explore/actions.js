@@ -295,6 +295,12 @@ export default function ExploreActions(dispatch) {
         data
       });
     },
+    onSetNumFilteredCards(numCards) {
+      return dispatch({
+        type: 'SET_NUM_FILTERED_CARDS',
+        numCards
+      });
+    },
     onSetSearchedPlaylists({ playlists, loadMoreButton }) {
       return dispatch({
         type: 'SET_SEARCHED_PLAYLISTS',

@@ -17,12 +17,17 @@ export default function AICards() {
   const [loading, setLoading] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState(null);
   const [filters, setFilters] = useState({});
-  const [numFilteredCards, setNumFilteredCards] = useState(0);
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
   const numCards = useExploreContext((v) => v.state.aiCards.numCards);
+  const numFilteredCards = useExploreContext(
+    (v) => v.state.aiCards.numFilteredCards
+  );
   const onLoadAICards = useExploreContext((v) => v.actions.onLoadAICards);
+  const onSetNumFilteredCards = useExploreContext(
+    (v) => v.actions.onSetNumFilteredCards
+  );
   const cardObj = useChatContext((v) => v.state.cardObj);
 
   useEffect(() => {
@@ -104,7 +109,7 @@ export default function AICards() {
             cardObj={cardObj}
             filters={filters}
             navigate={navigate}
-            onSetNumCards={setNumFilteredCards}
+            onSetNumCards={onSetNumFilteredCards}
             search={search}
           />
         ) : (
