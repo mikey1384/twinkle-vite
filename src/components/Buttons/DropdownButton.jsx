@@ -93,9 +93,11 @@ export default function DropdownButton({
           }}
           onClick={handleClick}
         >
-          <Icon icon={icon} size={iconSize} />
-          {text && <span>&nbsp;&nbsp;</span>}
-          {text}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Icon icon={icon} size={iconSize} />
+            {text && <span>&nbsp;&nbsp;</span>}
+            {text}
+          </div>
         </Button>
         {dropdownContext && (
           <DropdownList

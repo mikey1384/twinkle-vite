@@ -90,7 +90,7 @@ function AccountMenu({ className, onSetBalanceModalShown }) {
           text={
             <div
               style={{
-                display: 'inline',
+                padding: 0,
                 maxWidth: '12rem',
                 overflow: 'hidden',
                 whiteSpace: 'nowrap',
