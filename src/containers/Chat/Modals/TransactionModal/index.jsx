@@ -146,6 +146,7 @@ export default function TransactionModal({
               onSetAICardModalCardId={onSetAICardModalCardId}
               onSetPendingTransaction={setPendingTransaction}
               onAcceptTrade={onHide}
+              onCounterPropose={handleCounterPropose}
               partner={partner}
               transactionDetails={pendingTransaction}
               channelId={channelId}
@@ -225,6 +226,10 @@ export default function TransactionModal({
       </Modal>
     </ErrorBoundary>
   );
+
+  function handleCounterPropose() {
+    console.log(pendingTransaction);
+  }
 
   async function handleConfirm({
     coinsWanted,
