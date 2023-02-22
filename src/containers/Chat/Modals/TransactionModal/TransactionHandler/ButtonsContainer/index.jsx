@@ -86,6 +86,7 @@ export default function ButtonsContainer({
       ) : (
         <ProposeTradeButtons
           style={{ marginTop: '0.5rem' }}
+          type={type}
           withdrawing={withdrawing}
           onCounterPropose={onCounterPropose}
           onCloseTransaction={handleCloseTransaction}
