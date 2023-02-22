@@ -10,6 +10,7 @@ TradeButtons.propTypes = {
   isDeclining: PropTypes.bool.isRequired,
   myId: PropTypes.number.isRequired,
   onAcceptTrade: PropTypes.func.isRequired,
+  onCounterPropose: PropTypes.func.isRequired,
   onWithdrawTransaction: PropTypes.func.isRequired,
   transactionId: PropTypes.number.isRequired
 };
@@ -19,6 +20,7 @@ export default function TradeButtons({
   isDeclining,
   myId,
   onAcceptTrade,
+  onCounterPropose,
   onWithdrawTransaction,
   transactionId
 }) {
@@ -100,7 +102,16 @@ export default function TradeButtons({
           <span style={{ marginLeft: '0.7rem' }}>Decline</span>
         </Button>
         <Button
-          style={{ marginLeft: '1.5rem' }}
+          onClick={onCounterPropose}
+          style={{ marginLeft: '1rem' }}
+          color="pink"
+          filled
+        >
+          <Icon icon="sparkles" />
+          <span style={{ marginLeft: '0.7rem' }}>Counter</span>
+        </Button>
+        <Button
+          style={{ marginLeft: '1rem' }}
           loading={checking || accepting}
           disabled={isDisabled}
           onClick={() => setConfirmModalShown(true)}
