@@ -93,7 +93,7 @@ export default function TradeButtons({
         <Button
           onClick={() => onWithdrawTransaction({ cancelReason: 'decline' })}
           loading={isDeclining}
-          color="rose"
+          color="darkGray"
           filled
         >
           <Icon icon="xmark" />

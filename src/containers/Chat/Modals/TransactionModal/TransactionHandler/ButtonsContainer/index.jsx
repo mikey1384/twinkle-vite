@@ -13,9 +13,11 @@ ButtonsContainer.propTypes = {
   isFromMe: PropTypes.bool,
   isExpressionOfInterest: PropTypes.bool,
   myId: PropTypes.number.isRequired,
+  onCounterPropose: PropTypes.func.isRequired,
   onSetPendingTransaction: PropTypes.func.isRequired,
   onSetCancelReason: PropTypes.func.isRequired,
   onUpdateCurrentTransactionId: PropTypes.func.isRequired,
+  partner: PropTypes.object.isRequired,
   transactionId: PropTypes.number.isRequired,
   type: PropTypes.string.isRequired
 };
@@ -26,9 +28,11 @@ export default function ButtonsContainer({
   isExpressionOfInterest,
   myId,
   onAcceptTrade,
+  onCounterPropose,
   onSetCancelReason,
   onSetPendingTransaction,
   onUpdateCurrentTransactionId,
+  partner,
   transactionId,
   type
 }) {
@@ -82,7 +86,9 @@ export default function ButtonsContainer({
         <ProposeTradeButtons
           style={{ marginTop: '0.5rem' }}
           withdrawing={withdrawing}
+          onCounterPropose={onCounterPropose}
           onCloseTransaction={handleCloseTransaction}
+          partner={partner}
         />
       )}
     </div>
