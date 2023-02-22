@@ -14,7 +14,8 @@ export const initialExploreState = {
     filteredCards: [],
     filteredLoaded: false,
     filteredLoadMoreShown: false,
-    numCards: 0
+    numCards: 0,
+    numFilteredCards: 0
   },
   links: {
     byUserLoaded: false,
