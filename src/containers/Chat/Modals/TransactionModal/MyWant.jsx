@@ -11,6 +11,7 @@ MyWant.propTypes = {
   coinAmount: PropTypes.number.isRequired,
   style: PropTypes.object,
   onSetCoinAmount: PropTypes.func.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
   onShowAICardSelector: PropTypes.func.isRequired,
   selectedCardIds: PropTypes.array.isRequired,
   onDeselect: PropTypes.func.isRequired,
@@ -20,6 +21,7 @@ MyWant.propTypes = {
 export default function MyWant({
   coinAmount,
   style,
+  onSetAICardModalCardId,
   onSetCoinAmount,
   onShowAICardSelector,
   selectedCardIds,
@@ -104,6 +106,7 @@ export default function MyWant({
               type="want"
               selectedCardIds={selectedCardIds}
               onDeselect={onDeselect}
+              onSetAICardModalCardId={onSetAICardModalCardId}
               onShowAICardSelector={onShowAICardSelector}
               partnerId={partnerId}
             />
