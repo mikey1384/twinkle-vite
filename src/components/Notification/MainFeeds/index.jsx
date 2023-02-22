@@ -294,19 +294,26 @@ function MainFeeds({
 
   async function onLoadMore() {
     setLoading(true);
-    if (activeTab === 'notification') {
-      const { loadMoreNotifications: loadMore, notifications: notis } =
-        await loadMoreNotifications(notifications[notifications.length - 1].id);
-      onLoadMoreNotifications({
-        loadMoreNotifications: loadMore,
-        notifications: notis,
-        userId
-      });
-    } else {
-      const data = await loadMoreRewards(rewards[rewards.length - 1].id);
-      onLoadMoreRewards({ data, userId });
+    try {
+      if (activeTab === 'notification') {
+        const { loadMoreNotifications: loadMore, notifications: notis } =
+          await loadMoreNotifications(
+            notifications[notifications.length - 1].id
+          );
+        onLoadMoreNotifications({
+          loadMoreNotifications: loadMore,
+          notifications: notis,
+          userId
+        });
+      } else {
+        const data = await loadMoreRewards(rewards[rewards.length - 1].id);
+        onLoadMoreRewards({ data, userId });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 }
 
