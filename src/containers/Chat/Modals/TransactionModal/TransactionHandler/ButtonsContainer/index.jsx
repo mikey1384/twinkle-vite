@@ -5,6 +5,7 @@ import Icon from '~/components/Icon';
 import TradeButtons from './TradeButtons';
 import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/io';
+import ProposeTradeButtons from './ProposeTradeButtons';
 
 ButtonsContainer.propTypes = {
   onAcceptTrade: PropTypes.func.isRequired,
@@ -78,17 +79,11 @@ export default function ButtonsContainer({
           transactionId={transactionId}
         />
       ) : (
-        <div style={{ marginTop: '0.5rem' }}>
-          <Button
-            loading={withdrawing}
-            onClick={handleCloseTransaction}
-            color="blue"
-            filled
-          >
-            <Icon icon="check" />
-            <span style={{ marginLeft: '0.7rem' }}>Got it</span>
-          </Button>
-        </div>
+        <ProposeTradeButtons
+          style={{ marginTop: '0.5rem' }}
+          withdrawing={withdrawing}
+          onCloseTransaction={handleCloseTransaction}
+        />
       )}
     </div>
   );
