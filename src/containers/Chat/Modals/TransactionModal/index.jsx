@@ -230,12 +230,12 @@ export default function TransactionModal({
 
   function handleCounterPropose() {
     setCoinAmountObj({
-      offer: pendingTransaction.want.coins,
-      want: pendingTransaction.offer.coins
+      offer: pendingTransaction.want?.coins || 0,
+      want: pendingTransaction.offer?.coins || 0
     });
     setSelectedCardIdsObj({
-      offer: pendingTransaction.want.cardIds,
-      want: pendingTransaction.offer.cardIds
+      offer: pendingTransaction.want?.cardIds || [],
+      want: pendingTransaction.offer?.cardIds || []
     });
     setPendingTransaction(null);
     setSelectedOption('want');

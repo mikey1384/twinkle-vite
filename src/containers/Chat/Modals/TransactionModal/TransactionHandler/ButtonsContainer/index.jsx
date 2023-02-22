@@ -79,6 +79,7 @@ export default function ButtonsContainer({
           isDeclining={withdrawing}
           channelId={channelId}
           onAcceptTrade={onAcceptTrade}
+          onCounterPropose={onCounterPropose}
           onWithdrawTransaction={handleCloseTransaction}
           transactionId={transactionId}
         />
