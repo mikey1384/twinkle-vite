@@ -40,6 +40,9 @@ export default function AddButtons({
     if (isTwoPeopleChannel) {
       init();
     }
+    if (!currentTransactionId) {
+      setTransactionButtonIsGlowing(false);
+    }
     async function init() {
       const { transaction } = await loadPendingTransaction(channelId);
       setTransactionButtonIsGlowing(transaction && transaction.from !== myId);

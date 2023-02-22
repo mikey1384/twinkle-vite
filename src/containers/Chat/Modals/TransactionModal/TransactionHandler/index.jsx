@@ -93,6 +93,7 @@ export default function TransactionHandler({
           onSetCancelReason={setCancelReason}
           transactionId={transactionDetails.id}
           isExpressionOfInterest={isExpressionOfInterest}
+          onSetPendingTransaction={onSetPendingTransaction}
           onUpdateCurrentTransactionId={onUpdateCurrentTransactionId}
           type={transactionDetails.type}
         />
