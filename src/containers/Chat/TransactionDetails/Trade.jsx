@@ -119,7 +119,7 @@ export default function Trade({
           onSetAICardModalCardId={onSetAICardModalCardId}
           showCardDetailsOnThumbClick={!onClick}
         />
-        {(isAccepted || isCancelled) && (
+        {isTrade && (isAccepted || isCancelled) && (
           <div
             style={{
               marginTop: '1.5rem',
