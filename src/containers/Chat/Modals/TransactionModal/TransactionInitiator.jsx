@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MyWant from './MyWant';
 import MyOffer from './MyOffer';
@@ -39,6 +39,15 @@ export default function TransactionInitiator({
     }
     return coinAmountObj.want || validSelectedWantCardIds.length;
   }, [coinAmountObj.want, selectedOption, validSelectedWantCardIds.length]);
+
+  useEffect(() => {
+    if (coinAmountObj.want === coinAmountObj.offer && coinAmountObj.want > 0) {
+      onSetCoinAmountObj({
+        want: 0,
+        offer: 0
+      });
+    }
+  }, [coinAmountObj.offer, coinAmountObj.want, onSetCoinAmountObj]);
 
   return (
     <div

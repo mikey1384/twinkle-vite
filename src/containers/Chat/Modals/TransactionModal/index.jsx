@@ -92,7 +92,10 @@ export default function TransactionModal({
   }, [cardObj, myId, selectedCardIdsObj.offer]);
   const doneButtonDisabled = useMemo(() => {
     if (selectedOption === 'want') {
-      return !coinAmountObj.want && !validSelectedWantCardIds.length;
+      return (
+        (!coinAmountObj.want || coinAmountObj.want === coinAmountObj.offer) &&
+        !validSelectedWantCardIds.length
+      );
     }
     return !coinAmountObj.offer && !validSelectedOfferCardIds.length;
   }, [
