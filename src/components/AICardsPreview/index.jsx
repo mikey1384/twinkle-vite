@@ -20,21 +20,16 @@ export default function AICardsPreview({
   onSetAICardModalCardId
 }) {
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const { numMore, cards, displayedCards } = useMemo(() => {
+    const displayedCardIds = cardIds.slice(0, deviceIsMobile ? 3 : 5);
+    const numMore = cardIds.length - displayedCardIds.length;
+    const cards = cardIds.map((cardId) => cardObj[cardId]);
+    const displayedCards = displayedCardIds
+      .filter((cardId) => !!cardObj[cardId])
+      .map((cardId) => cardObj[cardId]);
+    return { numMore, cards, displayedCards };
+  }, [cardIds, cardObj]);
   const [moreAICardsModalShown, setMoreAICardsModalShown] = useState(false);
-  const displayedCardIds = useMemo(() => {
-    const numShown = deviceIsMobile ? 3 : 5;
-    if (cardIds.length <= numShown) {
-      return cardIds;
-    }
-    return cardIds.slice(0, numShown);
-  }, [cardIds]);
-  const numMore = useMemo(() => {
-    return cardIds.length - displayedCardIds.length;
-  }, [cardIds, displayedCardIds]);
-  const cards = cardIds.map((cardId) => cardObj[cardId]);
-  const displayedCards = displayedCardIds
-    .filter((cardId) => !!cardObj[cardId])
-    .map((cardId) => cardObj[cardId]);
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
