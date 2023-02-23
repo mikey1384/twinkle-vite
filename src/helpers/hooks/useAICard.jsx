@@ -16,32 +16,34 @@ const color4 = '#8ec5d6';
 const color5 = '#b98cce';
 
 export default function useAICard(card) {
-  const cardObj = useMemo(
-    () => (card?.level ? cardLevelHash[card?.level] : {}),
-    [card?.level]
-  );
-  const cardColor = useMemo(
-    () => Color[card?.isBurned ? 'black' : cardObj?.color]?.(),
-    [card?.isBurned, cardObj?.color]
-  );
-  const promptText = useMemo(() => {
-    if (card?.word) {
-      const prompt = card?.prompt;
-      const word = card?.word;
+  const { cardColor, promptText } = useMemo(() => {
+    const cardObj = card?.level ? cardLevelHash[card.level] : {};
+    const cardColor = Color[card?.isBurned ? 'black' : cardObj.color]?.();
+    const promptText = card?.word
+      ? getPromptText(card?.prompt, card?.word, cardObj.color)
+      : card?.prompt || '';
+
+    return { cardColor, promptText };
+  }, [card?.level, card?.prompt, card?.word, card?.isBurned]);
+
+  function getPromptText(prompt, word, color) {
+    if (word) {
       const wordIndex = prompt.toLowerCase().indexOf(word.toLowerCase());
       const isCapitalized =
         prompt[wordIndex] !== prompt[wordIndex].toLowerCase();
       const wordToDisplay = isCapitalized
-        ? word[0].toUpperCase() + word.slice(1)
+        ? `${word[0].toUpperCase()}${word.slice(1)}`
         : word;
-      const promptToDisplay =
-        prompt.slice(0, wordIndex) +
-        `<b style="color:${Color[cardObj?.color]()}">${wordToDisplay}</b>` +
-        prompt.slice(wordIndex + word.length);
+      const promptToDisplay = `${prompt.slice(
+        0,
+        wordIndex
+      )}<b style="color:${Color[color]()}">${wordToDisplay}</b>${prompt.slice(
+        wordIndex + word.length
+      )}`;
       return promptToDisplay;
     }
-    return card?.prompt || '';
-  }, [card?.prompt, card?.word, cardObj?.color]);
+    return prompt || '';
+  }
 
   return card
     ? {
@@ -71,7 +73,6 @@ export default function useAICard(card) {
             will-change: transform, filter;
             background-color: ${cardColor};
             transform-origin: center;
-
             &:hover {
               ${cardProps[card.quality]?.includes('glowy') && !card.isBurned
                 ? `box-shadow: -20px -20px
