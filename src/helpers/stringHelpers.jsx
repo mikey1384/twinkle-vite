@@ -3,7 +3,7 @@ import Link from '~/components/Link';
 import { charLimit } from '~/constants/defaultValues';
 
 const urlRegex =
-  /\b((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)\b/giu;
+  /(\b((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)\b(?:\/)?)/giu;
 const urlRegex2 =
   /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)/i;
 
@@ -109,7 +109,6 @@ export function addEmoji(string) {
     ':grin:': '😁',
     ':gross:': '🤮',
     ':guitar:': '🎸',
-    ':haha:': '😄',
     ':hamburger:': '🍔',
     ':hamster:': '🐹',
     ':hammer:': '🔨',
@@ -218,7 +217,7 @@ export function addEmoji(string) {
     ':skull:': '💀',
     ':sleep:': '😴',
     ':smh:': '🤦',
-    ':smile:': '😊',
+    ':smile:': '😄',
     ':smiley:': '😃',
     ':smirk:': '😏',
     ':snail:': '🐌',
