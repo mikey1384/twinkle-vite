@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -35,6 +35,7 @@ export default function OfferDetailModal({
   usermenuShown,
   userId
 }) {
+  const isAcceptingRef = useRef(false);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [offerAcceptModalObj, setOfferAcceptModalObj] = useState(null);
   const [offers, setOffers] = useState([]);
@@ -134,16 +135,20 @@ export default function OfferDetailModal({
   );
 
   async function handleConfirmAcceptOffer() {
-    const coins = await sellAICard({
-      offerId: offerAcceptModalObj.id,
-      cardId,
-      price: offerAcceptModalObj.price,
-      offererId: offerAcceptModalObj.userId
-    });
-    onSetUserState({ userId, newState: { twinkleCoins: coins } });
-    setOfferAcceptModalObj(null);
-    onSetActiveTab('myMenu');
-    onHide();
+    if (!isAcceptingRef.current) {
+      isAcceptingRef.current = true;
+      const coins = await sellAICard({
+        offerId: offerAcceptModalObj.id,
+        cardId,
+        price: offerAcceptModalObj.price,
+        offererId: offerAcceptModalObj.userId
+      });
+      onSetUserState({ userId, newState: { twinkleCoins: coins } });
+      setOfferAcceptModalObj(null);
+      onSetActiveTab('myMenu');
+      onHide();
+      isAcceptingRef.current = false;
+    }
   }
 
   async function handleLoadMoreoffers() {
