@@ -6,6 +6,8 @@ import { useContentState } from '~/helpers/hooks';
 import YouTubeIcon from '~/assets/YoutubeIcon.svg';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
+const fallbackImage = '/img/link.png';
+
 WebsiteContent.propTypes = {
   attachment: PropTypes.object.isRequired
 };
@@ -17,8 +19,6 @@ export default function WebsiteContent({ attachment }) {
     contentType: attachment.contentType,
     contentId: attachment.id
   });
-  const fallbackImage = '/img/link.png';
-
   useEffect(() => {
     setImageUrl(
       attachment.contentType === 'video'
@@ -37,13 +37,7 @@ export default function WebsiteContent({ attachment }) {
           display: 'flex',
           flexDirection: 'column'
         }}
-        onClick={() =>
-          navigate(
-            `/${attachment.contentType === 'url' ? 'links' : 'videos'}/${
-              attachment.id
-            }`
-          )
-        }
+        onClick={handleClick}
       >
         <div style={{ fontSize: '2.5rem' }}>
           {attachment.contentType === 'video' && (
@@ -80,6 +74,11 @@ export default function WebsiteContent({ attachment }) {
       </div>
     </ErrorBoundary>
   );
+
+  function handleClick() {
+    const path = attachment.contentType === 'url' ? 'links' : 'videos';
+    navigate(`/${path}/${attachment.id}`);
+  }
 
   function handleImageLoadError() {
     setImageUrl(!thumbUrl || imageUrl === thumbUrl ? fallbackImage : thumbUrl);
