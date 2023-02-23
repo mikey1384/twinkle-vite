@@ -134,7 +134,7 @@ export default function Card({
             </div>
           )}
         </div>
-        {detailShown && (
+        {detailShown && !card.isBurned && (
           <div
             className={css`
               font-size: 1.5rem;
