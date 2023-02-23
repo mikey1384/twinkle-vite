@@ -59,6 +59,7 @@ export function addEmoji(string) {
     ':christmas:': '🎄',
     ':clap:': '👏',
     ':clown:': '🤡',
+    ':coin:': '🪙',
     ':cold:': '🥶',
     ':colored pencil:': '🖍',
     ':computer:': '💻',
