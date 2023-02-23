@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Trade from './Trade';
 import Show from './Show';
 import Send from './Send';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { useChatContext, useKeyContext } from '~/contexts';
 
 TransactionDetails.propTypes = {
@@ -57,54 +58,56 @@ export default function TransactionDetails({
   }, [offerCards?.length, wantCards?.length]);
 
   return (
-    <div style={style}>
-      {type === 'trade' && (
-        <Trade
-          isCurrent={transaction.id === currentTransactionId}
-          isAccepted={isAccepted}
-          isCancelled={isCancelled}
-          cancelReason={cancelReason}
-          myId={userId}
-          myUsername={username}
-          wantCardIds={wantCardIds}
-          wantCoins={wantCoins}
-          offerCardIds={offerCardIds}
-          offerCoins={offerCoins}
-          partner={partner}
-          onClick={onClick}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          fromId={transaction.from}
-          toId={transaction.to}
-        />
-      )}
-      {type === 'show' && (
-        <Show
-          isCurrent={transaction.id === currentTransactionId}
-          myId={userId}
-          myUsername={username}
-          partner={partner}
-          cardIds={offerCardIds}
-          coins={offerCoins}
-          fromId={transaction.from}
-          onClick={onClick}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          toId={transaction.to}
-        />
-      )}
-      {type === 'send' && (
-        <Send
-          isCurrent={transaction.id === currentTransactionId}
-          myId={userId}
-          fromId={transaction.from}
-          myUsername={username}
-          partner={partner}
-          cardIds={offerCardIds}
-          coins={offerCoins}
-          onClick={onClick}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          toId={transaction.to}
-        />
-      )}
-    </div>
+    <ErrorBoundary componentPath="Chat/TransactionDetails">
+      <div style={style}>
+        {type === 'trade' && (
+          <Trade
+            isCurrent={transaction.id === currentTransactionId}
+            isAccepted={isAccepted}
+            isCancelled={isCancelled}
+            cancelReason={cancelReason}
+            myId={userId}
+            myUsername={username}
+            wantCardIds={wantCardIds}
+            wantCoins={wantCoins}
+            offerCardIds={offerCardIds}
+            offerCoins={offerCoins}
+            partner={partner}
+            onClick={onClick}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            fromId={transaction.from}
+            toId={transaction.to}
+          />
+        )}
+        {type === 'show' && (
+          <Show
+            isCurrent={transaction.id === currentTransactionId}
+            myId={userId}
+            myUsername={username}
+            partner={partner}
+            cardIds={offerCardIds}
+            coins={offerCoins}
+            fromId={transaction.from}
+            onClick={onClick}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            toId={transaction.to}
+          />
+        )}
+        {type === 'send' && (
+          <Send
+            isCurrent={transaction.id === currentTransactionId}
+            myId={userId}
+            fromId={transaction.from}
+            myUsername={username}
+            partner={partner}
+            cardIds={offerCardIds}
+            coins={offerCoins}
+            onClick={onClick}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            toId={transaction.to}
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import CardThumb from '~/components/CardThumb';
 import ShowMoreCardsButton from '~/components/Buttons/ShowMoreCardsButton';
 import MoreAICardsModal from './MoreAICardsModal';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { isMobile } from '~/helpers';
 import { useChatContext } from '~/contexts';
 
@@ -32,40 +33,44 @@ export default function AICardsPreview({
   const [moreAICardsModalShown, setMoreAICardsModalShown] = useState(false);
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      {displayedCards.map((card, index) => (
-        <div key={card.id} style={{ position: 'relative' }}>
-          <CardThumb
-            detailed
-            card={card}
-            style={{
-              marginLeft: index > 0 ? '1rem' : 0
-            }}
+    <ErrorBoundary componentPath="components/AICardsPreview">
+      <div style={{ display: 'flex', height: '100%' }}>
+        {displayedCards.map((card, index) => (
+          <div key={card.id} style={{ position: 'relative' }}>
+            <CardThumb
+              detailed
+              card={card}
+              style={{
+                marginLeft: index > 0 ? '1rem' : 0
+              }}
+              onClick={
+                onSetAICardModalCardId
+                  ? () => onSetAICardModalCardId(card.id)
+                  : null
+              }
+            />
+          </div>
+        ))}
+        {!!numMore && (
+          <ShowMoreCardsButton
             onClick={
               onSetAICardModalCardId
-                ? () => onSetAICardModalCardId(card.id)
+                ? () => setMoreAICardsModalShown(true)
                 : null
             }
+            numMore={numMore}
           />
-        </div>
-      ))}
-      {!!numMore && (
-        <ShowMoreCardsButton
-          onClick={
-            onSetAICardModalCardId ? () => setMoreAICardsModalShown(true) : null
-          }
-          numMore={numMore}
-        />
-      )}
-      {moreAICardsModalShown && (
-        <MoreAICardsModal
-          cards={cards}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          onHide={() =>
-            isAICardModalShown ? null : setMoreAICardsModalShown(false)
-          }
-        />
-      )}
-    </div>
+        )}
+        {moreAICardsModalShown && (
+          <MoreAICardsModal
+            cards={cards}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            onHide={() =>
+              isAICardModalShown ? null : setMoreAICardsModalShown(false)
+            }
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
