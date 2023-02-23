@@ -50,6 +50,7 @@ export default function Main({
         gotWrong={gotWrong}
       />
     ));
+
     async function handleSelectCorrectAnswer() {
       if (!loadingRef.current && !gotWrongRef.current) {
         clearTimeout(timer);
@@ -59,7 +60,7 @@ export default function Main({
           ...prev,
           [currentIndex]: {
             ...prev[currentIndex],
-            score: score,
+            score,
             selectedChoiceIndex: prev[currentIndex].answerIndex
           }
         }));
@@ -76,6 +77,7 @@ export default function Main({
         }
       }
     }
+
     function handleSetGotWrong(index) {
       numWrong.current = numWrong.current + 1;
       clearTimeout(gotWrongTimer);
