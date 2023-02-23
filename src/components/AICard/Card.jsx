@@ -36,12 +36,11 @@ export default function Card({
     userLink: { color: userLinkColor },
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
-  const burnXP = useMemo(() => {
-    return returnCardBurnXP({
-      cardLevel: card?.level,
-      cardQuality: card?.quality
-    });
-  }, [card?.level, card?.quality]);
+  const burnXP = useMemo(
+    () =>
+      returnCardBurnXP({ cardLevel: card?.level, cardQuality: card?.quality }),
+    [card?.level, card?.quality]
+  );
   const imageExists = useMemo(() => !!card.imagePath, [card.imagePath]);
   const frontPicUrl = `${cloudFrontURL}${card.imagePath}`;
   const { cardCss, cardColor } = useAICard(card);
