@@ -25,13 +25,13 @@ export default function MissionLink({
         marginTop: '1.3rem',
         width: '100%',
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center'
       }}
     >
       <Link
         className={css`
-          width: 50%;
           display: block;
           &:hover {
             text-decoration: none;

@@ -180,22 +180,21 @@ export default function XPRewardInterface({
 
   const confirmText = useMemo(() => {
     return (
-      <>
+      <div style={{ display: 'inline' }}>
         {rewardLabel}
         {requiresPayment ? (
-          <>
-            <div style={{ marginLeft: '0.7rem' }}>
-              (<Icon icon={['far', 'badge-dollar']} />
-              <span style={{ marginLeft: '0.3rem' }}>
-                {selectedAmount * priceTable.reward}
-              </span>
-              )
-            </div>
-          </>
+          <div style={{ display: 'inline' }}>
+            &nbsp;(
+            <Icon icon={['far', 'badge-dollar']} />
+            <span style={{ marginLeft: '0.3rem' }}>
+              {selectedAmount * priceTable.reward}
+            </span>
+            )
+          </div>
         ) : (
           ''
         )}
-      </>
+      </div>
     );
   }, [requiresPayment, selectedAmount]);
 
