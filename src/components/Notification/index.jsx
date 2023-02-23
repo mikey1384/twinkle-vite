@@ -145,6 +145,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
       >
         <section
           style={{
+            width: '100%',
             marginBottom: '1rem',
             position: 'relative',
             display: 'flex',

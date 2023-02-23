@@ -20,7 +20,7 @@ export default function TodayStats() {
   return (
     <ErrorBoundary componentPath="Notification/TodayStats">
       <div
-        style={{ marginBottom: '1rem' }}
+        style={{ marginBottom: '1rem', width: '100%' }}
         className={css`
           padding: 1.5rem 0;
           text-align: center;
@@ -35,7 +35,7 @@ export default function TodayStats() {
         `}
       >
         {todayStats?.loaded ? (
-          <div>
+          <div style={{ width: '100%' }}>
             <b
               className={css`
                 color: ${Color[todayProgressTextColor]()};
@@ -47,7 +47,7 @@ export default function TodayStats() {
               `}
               style={{ fontSize: '1.7rem' }}
             >{`Today's Progress`}</b>
-            <div style={{ marginTop: '0.3rem' }}>
+            <div style={{ marginTop: '0.3rem', width: '100%' }}>
               <p
                 style={{
                   fontWeight: 'bold',
