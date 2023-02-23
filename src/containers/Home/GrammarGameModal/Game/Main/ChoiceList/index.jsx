@@ -22,6 +22,7 @@ ChoiceList.propTypes = {
   selectedChoiceIndex: PropTypes.number,
   style: PropTypes.object
 };
+
 export default function ChoiceList({
   answerIndex,
   gotWrong,
@@ -38,6 +39,7 @@ export default function ChoiceList({
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
   const [shown, setShown] = useState(false);
+
   useEffect(() => {
     setTimeout(() => {
       setShown(true);
