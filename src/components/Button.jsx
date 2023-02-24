@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 Button.propTypes = {
   className: PropTypes.string,
@@ -162,21 +163,23 @@ function Button({
     className
   ]);
   return (
-    <button
-      style={{ ...style, ...(stretch ? { width: '100%' } : {}) }}
-      className={ButtonStyle}
-      onClick={onClick}
-      disabled={isDisabled}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
-      <div style={{ width: '100%' }}>
-        {children}
-        {loading && (
-          <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
-        )}
-      </div>
-    </button>
+    <ErrorBoundary componentPath="Button">
+      <button
+        style={{ ...style, ...(stretch ? { width: '100%' } : {}) }}
+        className={ButtonStyle}
+        onClick={onClick}
+        disabled={isDisabled}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <div style={{ width: '100%' }}>
+          {children}
+          {loading && (
+            <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
+          )}
+        </div>
+      </button>
+    </ErrorBoundary>
   );
 }
 
