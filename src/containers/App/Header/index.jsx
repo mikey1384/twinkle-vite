@@ -108,13 +108,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   );
   const subchannelId = useMemo(() => {
     if (!subchannelPath || !currentChannel?.subchannelObj) return null;
-    for (let subchannel of Object.values(currentChannel.subchannelObj)) {
+    for (let subchannel of Object.values(currentChannel?.subchannelObj)) {
       if (subchannel.path === subchannelPath) {
         return subchannel.id;
       }
     }
     return null;
-  }, [currentChannel.subchannelObj, subchannelPath]);
+  }, [currentChannel?.subchannelObj, subchannelPath]);
 
   useEffect(() => {
     onSetSelectedSubchannelId(subchannelId);
