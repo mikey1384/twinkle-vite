@@ -51,7 +51,7 @@ export default function SectionToScreenshot({
       }}
     >
       <Icon icon="arrow-right" size="2x" />
-      <div>
+      <div style={{ fontFamily: 'Verdana, Ariel, Tahoma' }}>
         <p
           className={css`
             font-weight: bold;
