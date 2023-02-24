@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useKeyContext } from '~/contexts';
-import { priceTable } from '~/constants/defaultValues';
+import { MAX_NUM_SUMMONS, priceTable } from '~/constants/defaultValues';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
 
@@ -20,7 +20,10 @@ export default function GenerateCardInterface({
   onGenerateAICard,
   posting
 }) {
-  const maxSummoned = useMemo(() => numSummoned >= 5, [numSummoned]);
+  const maxSummoned = useMemo(
+    () => numSummoned >= MAX_NUM_SUMMONS,
+    [numSummoned]
+  );
   const { twinkleCoins } = useKeyContext((v) => v.myState);
   const hasEnoughTwinkleCoins = twinkleCoins >= priceTable.card;
   return (

@@ -135,9 +135,23 @@ export default function AICards({ loadingAICardChat }) {
     try {
       onSetIsGeneratingAICard(true);
       onSetAICardStatusMessage('Processing transaction...');
-      const { quality, level, cardId, word, prompt, coins, numCardSummoned } =
-        await processAiCardQuality();
+      const {
+        isMaxReached,
+        quality,
+        level,
+        cardId,
+        word,
+        prompt,
+        coins,
+        numCardSummoned
+      } = await processAiCardQuality();
       onUpdateNumSummoned(numCardSummoned);
+      if (isMaxReached) {
+        onSetIsGeneratingAICard(false);
+        return onSetAICardStatusMessage(
+          `You cannot summon any more cards today.`
+        );
+      }
       if (!quality) {
         onSetAICardStatusMessage(
           `You don't have enough Twinkle Coins to summon a card.`

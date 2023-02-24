@@ -368,10 +368,20 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async processAiCardQuality() {
       try {
         const {
-          data: { quality, level, cardId, word, prompt, coins, numCardSummoned }
+          data: {
+            quality,
+            isMaxReached,
+            level,
+            cardId,
+            word,
+            prompt,
+            coins,
+            numCardSummoned
+          }
         } = await request.get(`${URL}/chat/aiCard/quality`, auth());
         return Promise.resolve({
           quality,
+          isMaxReached,
           level,
           cardId,
           word,
