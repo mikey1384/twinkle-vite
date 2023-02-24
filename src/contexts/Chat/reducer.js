@@ -2229,7 +2229,7 @@ export default function ChatReducer(state, action) {
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             subchannelObj: {
-              ...state.channelsObj[action.channelId].subchannelObj,
+              ...state.channelsObj[action.channelId]?.subchannelObj,
               [action.subchannel.id]: action.subchannel
             }
           }
