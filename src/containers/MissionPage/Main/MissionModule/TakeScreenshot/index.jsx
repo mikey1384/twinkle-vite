@@ -17,6 +17,8 @@ TakeScreenshot.propTypes = {
   style: PropTypes.object
 };
 
+const expectedText = 'captured this screenshot';
+
 export default function TakeScreenshot({ attachment, missionId, style }) {
   const [isReady, setIsReady] = useState(false);
   const [buttonShown, setButtonShown] = useState(false);
@@ -40,10 +42,6 @@ export default function TakeScreenshot({ attachment, missionId, style }) {
     const now = new Date(Date.now());
     return now.toString();
   }, []);
-  const expectedText = useMemo(
-    () => `${username} captured this screenshot`,
-    [username]
-  );
 
   return (
     <div
@@ -227,7 +225,7 @@ export default function TakeScreenshot({ attachment, missionId, style }) {
           payload,
           function (img) {
             Tesseract.recognize(img, 'eng').then(async ({ data: { text } }) => {
-              if (text.includes(expectedText)) {
+              if (text.includes(expectedText) && text.includes(username)) {
                 const { success, newXpAndRank, newCoins } =
                   await uploadMissionAttempt({
                     missionId,
