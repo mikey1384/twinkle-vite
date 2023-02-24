@@ -5,7 +5,8 @@ import WantPanel from './WantPanel';
 import Heading from './Heading';
 import UsernameText from '~/components/Texts/UsernameText';
 import Body from './Body';
-import { Color } from '~/constants/css';
+import { css } from '@emotion/css';
+import { mobileMaxWidth, Color } from '~/constants/css';
 
 Trade.propTypes = {
   isAccepted: PropTypes.bool,
@@ -127,6 +128,12 @@ export default function Trade({
               fontFamily: 'Roboto, sans-serif',
               color: Color[isAccepted ? 'green' : 'darkerGray']()
             }}
+            className={css`
+              font-size: 1.6rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.3rem;
+              }
+            `}
           >
             {isAccepted ? acceptedText : cancelReasonText}
           </div>
