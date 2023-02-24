@@ -21,29 +21,27 @@ export default function CardThumb({ card, detailed, style, onClick }) {
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
-  const cardDetailObj = useMemo(
-    () => cardLevelHash[card?.level],
-    [card?.level]
-  );
-  const burnXP = useMemo(() => {
-    return returnCardBurnXP({
+  const { displayedBurnXP, cardColor, borderColor } = useMemo(() => {
+    const cardDetailObj = cardLevelHash[card?.level];
+    const burnXP = returnCardBurnXP({
       cardLevel: card?.level,
       cardQuality: card?.quality
     });
-  }, [card?.level, card?.quality]);
-  const displayedBurnXP = useMemo(() => {
-    if (burnXP < 1000) return burnXP;
-    if (burnXP < 1000000) return `${(burnXP / 1000).toFixed(1)}K`;
-    return `${(burnXP / 1000000).toFixed(1)}M`;
-  }, [burnXP]);
-  const cardColor = useMemo(
-    () => Color[card.isBurned ? 'black' : cardDetailObj?.color](),
-    [card.isBurned, cardDetailObj?.color]
-  );
-  const borderColor = useMemo(
-    () => qualityProps[card?.quality]?.color,
-    [card?.quality]
-  );
+    const displayedBurnXP =
+      burnXP < 1000
+        ? burnXP
+        : burnXP < 1000000
+        ? `${(burnXP / 1000).toFixed(1)}K`
+        : `${(burnXP / 1000000).toFixed(1)}M`;
+    const cardColor =
+      Color[card?.isBurned ? 'black' : cardDetailObj?.color]?.();
+    const borderColor = qualityProps[card?.quality]?.color;
+    return {
+      displayedBurnXP,
+      cardColor,
+      borderColor
+    };
+  }, [card?.level, card?.quality, card?.isBurned]);
 
   return detailed ? (
     <Detailed
