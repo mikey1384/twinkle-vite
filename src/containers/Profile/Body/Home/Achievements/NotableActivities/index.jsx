@@ -86,6 +86,7 @@ export default function NotableActivities({
           loading={loadingMore}
           label={showMoreLabel}
           transparent
+          theme={selectedTheme}
           onClick={handleLoadMoreNotables}
         />
       )}

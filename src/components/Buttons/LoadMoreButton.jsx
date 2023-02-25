@@ -3,6 +3,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
+import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
@@ -13,14 +14,22 @@ LoadMoreButton.propTypes = {
   color: PropTypes.string,
   label: PropTypes.string,
   style: PropTypes.object,
+  theme: PropTypes.string,
   onClick: PropTypes.func.isRequired,
   loading: PropTypes.bool
 };
 
-export default function LoadMoreButton({ label, loading, color, ...props }) {
+export default function LoadMoreButton({
+  label,
+  loading,
+  color,
+  theme,
+  ...props
+}) {
+  const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     loadMoreButton: { color: loadMoreButtonColor }
-  } = useKeyContext((v) => v.theme);
+  } = useTheme(theme || profileTheme);
 
   return (
     <ErrorBoundary componentPath="LoadMoreButton">
