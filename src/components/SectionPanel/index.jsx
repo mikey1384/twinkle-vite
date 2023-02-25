@@ -74,6 +74,7 @@ export default function SectionPanel({
       shadow: sectionPanelTextShadowColor
     }
   } = useTheme(customColorTheme || profileTheme);
+
   const TitleInputRef = useRef(null);
   useOutsideClick(TitleInputRef, () => {
     setOnEdit(false);
@@ -275,6 +276,7 @@ export default function SectionPanel({
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <LoadMoreButton
               transparent
+              theme={customColorTheme}
               loading={loading}
               onClick={handleLoadMore}
               style={{ fontSize: '2rem' }}
