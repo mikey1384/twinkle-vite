@@ -148,7 +148,7 @@ export default function TradeButtons({
         setIsDisabled(true);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       onAcceptTrade();
     }

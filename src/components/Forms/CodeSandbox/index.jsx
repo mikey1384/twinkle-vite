@@ -124,7 +124,7 @@ export default function CodeSandbox({
       onSetCode(formattedCode);
       setCode(formattedCode);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 

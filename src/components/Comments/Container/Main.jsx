@@ -162,6 +162,7 @@ export default function Main({
           return Promise.resolve();
         } catch (error) {
           console.error(error);
+          return Promise.reject(error);
         }
       }
 

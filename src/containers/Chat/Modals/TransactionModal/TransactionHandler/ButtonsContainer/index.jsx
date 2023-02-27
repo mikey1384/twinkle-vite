@@ -121,7 +121,7 @@ export default function ButtonsContainer({
         cancelReason
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       if (cancelReason) {
         socket.emit('cancel_transaction', {
