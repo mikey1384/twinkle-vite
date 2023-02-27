@@ -11,24 +11,24 @@ Spoiler.propTypes = {
   content: PropTypes.string
 };
 
-export default function Spoiler({ content }) {
+export default function Spoiler({ content = '' }) {
   const [spoilerShown, setSpoilerShown] = useState(false);
   const [grayness, setGrayness] = useState(105);
   const contentLength = useMemo(() => {
-    if (content.startsWith('/spoiler ')) {
-      return content.substr(9).length;
+    if ((content || '').startsWith('/spoiler ')) {
+      return content.substring(9).length;
     }
-    if (content.startsWith('/secret ')) {
-      return content.substr(8).length;
+    if ((content || '').startsWith('/secret ')) {
+      return content.substring(8).length;
     }
   }, [content]);
 
   const processedText = useMemo(() => {
-    if (content.startsWith('/spoiler ')) {
-      return processedStringWithURL(content.substr(9));
+    if ((content || '').startsWith('/spoiler ')) {
+      return processedStringWithURL(content.substring(9));
     }
-    if (content.startsWith('/secret ')) {
-      return processedStringWithURL(content.substr(8));
+    if ((content || '').startsWith('/secret ')) {
+      return processedStringWithURL(content.substring(8));
     }
   }, [content]);
 

@@ -462,10 +462,10 @@ export function isValidEmail(email = '') {
 
 export function isValidSpoiler(content = '') {
   let displayedContent = '';
-  if (content.startsWith('/secret ')) {
+  if ((content || '').startsWith('/secret ')) {
     displayedContent = content.substring(8);
   }
-  if (content.startsWith('/spoiler ')) {
+  if ((content || '').startsWith('/spoiler ')) {
     displayedContent = content.substring(9);
   }
   return !stringIsEmpty(displayedContent);
