@@ -6,6 +6,7 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useChatContext } from '~/contexts';
 import ButtonsContainer from './ButtonsContainer';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 TransactionHandler.propTypes = {
   currentTransactionId: PropTypes.number,
@@ -68,79 +69,81 @@ export default function TransactionHandler({
   }, [cancelReason, channelId]);
 
   return (
-    <div
-      style={{
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}
-    >
-      {!cancelReason && (
-        <TransactionDetails
-          currentTransactionId={currentTransactionId}
-          partner={partner}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          transaction={transactionDetails}
-          style={{ marginTop: '-1rem', width: '100%' }}
-        />
-      )}
-      {!cancelReason && (
-        <ButtonsContainer
-          isFromMe={isFromMe}
-          myId={myId}
-          channelId={channelId}
-          onAcceptTrade={onAcceptTrade}
-          onSetCancelReason={setCancelReason}
-          transactionId={transactionDetails.id}
-          isExpressionOfInterest={isExpressionOfInterest}
-          onCounterPropose={onCounterPropose}
-          onSetPendingTransaction={onSetPendingTransaction}
-          onUpdateCurrentTransactionId={onUpdateCurrentTransactionId}
-          partner={partner}
-          type={transactionDetails.type}
-        />
-      )}
-      {cancelReason ? (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}
-        >
+    <ErrorBoundary componentPath="Chat/Modals/TransactionModal/TransactionHandler">
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
+        {!cancelReason && transactionDetails && (
+          <TransactionDetails
+            currentTransactionId={currentTransactionId}
+            partner={partner}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            transaction={transactionDetails}
+            style={{ marginTop: '-1rem', width: '100%' }}
+          />
+        )}
+        {!cancelReason && (
+          <ButtonsContainer
+            isFromMe={isFromMe}
+            myId={myId}
+            channelId={channelId}
+            onAcceptTrade={onAcceptTrade}
+            onSetCancelReason={setCancelReason}
+            transactionId={transactionDetails.id}
+            isExpressionOfInterest={isExpressionOfInterest}
+            onCounterPropose={onCounterPropose}
+            onSetPendingTransaction={onSetPendingTransaction}
+            onUpdateCurrentTransactionId={onUpdateCurrentTransactionId}
+            partner={partner}
+            type={transactionDetails.type}
+          />
+        )}
+        {cancelReason ? (
           <div
             style={{
-              fontSize: '1.7rem',
-              height: '10rem',
               display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              color: Color.darkerGray(),
-              fontFamily: 'Roboto, sans-serif'
+              flexDirection: 'column',
+              alignItems: 'center'
             }}
           >
-            {cancelExplainText}
+            <div
+              style={{
+                fontSize: '1.7rem',
+                height: '10rem',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                color: Color.darkerGray(),
+                fontFamily: 'Roboto, sans-serif'
+              }}
+            >
+              {cancelExplainText}
+            </div>
+            <Button
+              style={{ marginTop: '1rem', marginBottom: '1rem' }}
+              filled
+              color="blue"
+              onClick={() => {
+                setCancelReason(null);
+                onSetPendingTransaction(null);
+                onUpdateCurrentTransactionId({
+                  channelId,
+                  transactionId: null
+                });
+              }}
+            >
+              <Icon icon="sparkles" />
+              <span style={{ marginLeft: '0.7rem' }}>New Proposal</span>
+            </Button>
           </div>
-          <Button
-            style={{ marginTop: '1rem', marginBottom: '1rem' }}
-            filled
-            color="blue"
-            onClick={() => {
-              setCancelReason(null);
-              onSetPendingTransaction(null);
-              onUpdateCurrentTransactionId({
-                channelId,
-                transactionId: null
-              });
-            }}
-          >
-            <Icon icon="sparkles" />
-            <span style={{ marginLeft: '0.7rem' }}>New Proposal</span>
-          </Button>
-        </div>
-      ) : null}
-    </div>
+        ) : null}
+      </div>
+    </ErrorBoundary>
   );
 }
