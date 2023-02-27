@@ -144,15 +144,16 @@ function InputForm({
 
   const handleSubmit = useCallback(async () => {
     setSubmitting(true);
-    setText('');
     try {
       await onSubmit(finalizeEmoji(text));
-      handleSetText('');
       setSubmitting(false);
     } catch (error) {
-      setSubmitting(false);
       console.error(error);
+      setSubmitting(false);
+      return;
     }
+    handleSetText('');
+    setSubmitting(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentId, contentType, onSubmit, text]);
 

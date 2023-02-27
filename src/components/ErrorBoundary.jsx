@@ -124,6 +124,6 @@ async function reportError({ componentPath, info, message }) {
     );
     return Promise.resolve(success);
   } catch (error) {
-    return console.log(error);
+    return console.error(error);
   }
 }

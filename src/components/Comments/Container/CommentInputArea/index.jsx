@@ -117,43 +117,48 @@ export default function CommentInputArea({
   );
 
   async function handleSubmit(text) {
-    if (attachment) {
+    try {
+      if (attachment) {
+        onSetUploadingFile({
+          contentId,
+          contentType,
+          isUploading: true
+        });
+        await onSubmitWithAttachment({
+          attachment,
+          commentContent: text,
+          contentId,
+          contentType,
+          filePath: uuidv1(),
+          file: attachment.file,
+          rootCommentId,
+          subjectId,
+          targetCommentId
+        });
+        onSetCommentAttachment({
+          attachment: null,
+          contentType,
+          contentId
+        });
+      } else {
+        setUploading(true);
+        await onSubmit({
+          content: text,
+          rootCommentId,
+          subjectId,
+          targetCommentId
+        });
+        setUploading(false);
+      }
       onSetUploadingFile({
         contentId,
         contentType,
-        isUploading: true
+        isUploading: false
       });
-      await onSubmitWithAttachment({
-        attachment,
-        commentContent: text,
-        contentId,
-        contentType,
-        filePath: uuidv1(),
-        file: attachment.file,
-        rootCommentId,
-        subjectId,
-        targetCommentId
-      });
-      onSetCommentAttachment({
-        attachment: null,
-        contentType,
-        contentId
-      });
-    } else {
-      setUploading(true);
-      await onSubmit({
-        content: text,
-        rootCommentId,
-        subjectId,
-        targetCommentId
-      });
+      return Promise.resolve();
+    } catch (error) {
       setUploading(false);
+      return Promise.reject(error);
     }
-    onSetUploadingFile({
-      contentId,
-      contentType,
-      isUploading: false
-    });
-    return Promise.resolve();
   }
 }
