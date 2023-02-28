@@ -6,6 +6,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
 WantPanel.propTypes = {
+  isAICardModalShown: PropTypes.bool,
   isTrade: PropTypes.bool.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   wantCardIds: PropTypes.array.isRequired,
@@ -15,6 +16,7 @@ WantPanel.propTypes = {
 };
 
 export default function WantPanel({
+  isAICardModalShown,
   isTrade,
   onSetAICardModalCardId,
   wantCardIds,
@@ -65,6 +67,7 @@ export default function WantPanel({
         {wantCardIds.length ? (
           <div style={{ textAlign: 'center' }}>
             <AICardsPreview
+              isAICardModalShown={isAICardModalShown}
               cardIds={wantCardIds}
               onSetAICardModalCardId={
                 showCardDetailsOnThumbClick ? onSetAICardModalCardId : null

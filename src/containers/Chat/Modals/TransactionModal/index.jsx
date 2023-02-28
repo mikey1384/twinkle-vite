@@ -145,6 +145,7 @@ export default function TransactionModal({
           ) : isTransactionHandlerShown ? (
             <TransactionHandler
               currentTransactionId={currentTransactionId}
+              isAICardModalShown={isAICardModalShown}
               myId={myId}
               onSetAICardModalCardId={onSetAICardModalCardId}
               onSetPendingTransaction={setPendingTransaction}

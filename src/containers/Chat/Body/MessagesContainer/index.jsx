@@ -1315,6 +1315,7 @@ function MessagesContainer({
                   currentChannel={currentChannel}
                   displayedThemeColor={displayedThemeColor}
                   forceRefreshForMobile={handleForceRefreshForMobile}
+                  isAICardModalShown={isAICardModalShown}
                   index={index}
                   isLastMsg={index === 0}
                   isNotification={!!message.isNotification}

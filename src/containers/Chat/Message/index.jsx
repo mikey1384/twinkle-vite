@@ -56,6 +56,7 @@ Message.propTypes = {
   currentChannel: PropTypes.object,
   displayedThemeColor: PropTypes.string,
   forceRefreshForMobile: PropTypes.func,
+  isAICardModalShown: PropTypes.bool,
   message: PropTypes.object,
   onDelete: PropTypes.func,
   index: PropTypes.number,
@@ -90,6 +91,7 @@ function Message({
   displayedThemeColor,
   forceRefreshForMobile,
   index,
+  isAICardModalShown,
   isLastMsg,
   isNotification,
   isRestricted,
@@ -647,6 +649,7 @@ function Message({
     return (
       <TransactionDetails
         currentTransactionId={currentChannel.currentTransactionId}
+        isAICardModalShown={isAICardModalShown}
         partner={partner}
         onClick={
           !(

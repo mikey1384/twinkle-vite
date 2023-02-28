@@ -12,6 +12,7 @@ Trade.propTypes = {
   isAccepted: PropTypes.bool,
   isCurrent: PropTypes.bool,
   isCancelled: PropTypes.bool,
+  isAICardModalShown: PropTypes.bool,
   cancelReason: PropTypes.string,
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
@@ -28,6 +29,7 @@ Trade.propTypes = {
 
 export default function Trade({
   isAccepted,
+  isAICardModalShown,
   isCurrent,
   isCancelled,
   cancelReason,
@@ -106,6 +108,7 @@ export default function Trade({
         {isTrade && (
           <OfferPanel
             isTrade
+            isAICardModalShown={isAICardModalShown}
             offerCardIds={offerCardIds}
             offerCoins={offerCoins}
             onSetAICardModalCardId={onSetAICardModalCardId}
@@ -114,6 +117,7 @@ export default function Trade({
         )}
         <WantPanel
           style={{ marginTop: isTrade ? '1rem' : 0 }}
+          isAICardModalShown={isAICardModalShown}
           isTrade={isTrade}
           wantCardIds={wantCardIds}
           wantCoins={wantCoins}

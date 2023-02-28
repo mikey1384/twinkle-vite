@@ -9,6 +9,7 @@ Send.propTypes = {
   cardIds: PropTypes.array,
   coins: PropTypes.number,
   fromId: PropTypes.number.isRequired,
+  isAICardModalShown: PropTypes.bool,
   isCurrent: PropTypes.bool,
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
@@ -22,6 +23,7 @@ export default function Send({
   cardIds,
   coins,
   fromId,
+  isAICardModalShown,
   isCurrent,
   myId,
   myUsername,
@@ -69,6 +71,7 @@ export default function Send({
       </Heading>
       <Body onClick={onClick}>
         <OfferPanel
+          isAICardModalShown={isAICardModalShown}
           offerCardIds={cardIds}
           offerCoins={coins}
           onSetAICardModalCardId={onSetAICardModalCardId}

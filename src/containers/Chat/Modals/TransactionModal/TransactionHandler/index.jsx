@@ -10,6 +10,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 
 TransactionHandler.propTypes = {
   currentTransactionId: PropTypes.number,
+  isAICardModalShown: PropTypes.bool,
   onAcceptTrade: PropTypes.func.isRequired,
   onCounterPropose: PropTypes.func.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
@@ -22,6 +23,7 @@ TransactionHandler.propTypes = {
 
 export default function TransactionHandler({
   currentTransactionId,
+  isAICardModalShown,
   onAcceptTrade,
   onCounterPropose,
   onSetAICardModalCardId,
@@ -83,6 +85,7 @@ export default function TransactionHandler({
           <TransactionDetails
             currentTransactionId={currentTransactionId}
             partner={partner}
+            isAICardModalShown={isAICardModalShown}
             onSetAICardModalCardId={onSetAICardModalCardId}
             transaction={transactionDetails}
             style={{ marginTop: '-1rem', width: '100%' }}
