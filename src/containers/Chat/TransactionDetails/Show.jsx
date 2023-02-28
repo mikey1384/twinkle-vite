@@ -10,6 +10,7 @@ Show.propTypes = {
   coins: PropTypes.number,
   isAICardModalShown: PropTypes.bool,
   isCurrent: PropTypes.bool,
+  isOnModal: PropTypes.bool,
   fromId: PropTypes.number.isRequired,
   toId: PropTypes.number.isRequired,
   myId: PropTypes.number.isRequired,
@@ -24,6 +25,7 @@ export default function Show({
   coins,
   isAICardModalShown,
   isCurrent,
+  isOnModal,
   myId,
   myUsername,
   fromId,
@@ -95,6 +97,7 @@ export default function Show({
       <Body onClick={onClick}>
         <OfferPanel
           isAICardModalShown={isAICardModalShown}
+          isOnModal={isOnModal}
           offerCardIds={cardIds}
           offerCoins={coins}
           onSetAICardModalCardId={onSetAICardModalCardId}

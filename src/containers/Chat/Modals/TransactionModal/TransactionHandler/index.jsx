@@ -83,6 +83,7 @@ export default function TransactionHandler({
       >
         {!cancelReason && transactionDetails && (
           <TransactionDetails
+            isOnModal
             currentTransactionId={currentTransactionId}
             partner={partner}
             isAICardModalShown={isAICardModalShown}

@@ -10,6 +10,7 @@ import { mobileMaxWidth, Color } from '~/constants/css';
 
 Trade.propTypes = {
   isAccepted: PropTypes.bool,
+  isOnModal: PropTypes.bool,
   isCurrent: PropTypes.bool,
   isCancelled: PropTypes.bool,
   isAICardModalShown: PropTypes.bool,
@@ -29,6 +30,7 @@ Trade.propTypes = {
 
 export default function Trade({
   isAccepted,
+  isOnModal,
   isAICardModalShown,
   isCurrent,
   isCancelled,
@@ -108,6 +110,7 @@ export default function Trade({
         {isTrade && (
           <OfferPanel
             isTrade
+            isOnModal={isOnModal}
             isAICardModalShown={isAICardModalShown}
             offerCardIds={offerCardIds}
             offerCoins={offerCoins}
@@ -118,6 +121,7 @@ export default function Trade({
         <WantPanel
           style={{ marginTop: isTrade ? '1rem' : 0 }}
           isAICardModalShown={isAICardModalShown}
+          isOnModal={isOnModal}
           isTrade={isTrade}
           wantCardIds={wantCardIds}
           wantCoins={wantCoins}

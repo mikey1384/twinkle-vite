@@ -10,6 +10,7 @@ Send.propTypes = {
   coins: PropTypes.number,
   fromId: PropTypes.number.isRequired,
   isAICardModalShown: PropTypes.bool,
+  isOnModal: PropTypes.bool,
   isCurrent: PropTypes.bool,
   myId: PropTypes.number.isRequired,
   myUsername: PropTypes.string.isRequired,
@@ -24,6 +25,7 @@ export default function Send({
   coins,
   fromId,
   isAICardModalShown,
+  isOnModal,
   isCurrent,
   myId,
   myUsername,
@@ -72,6 +74,7 @@ export default function Send({
       <Body onClick={onClick}>
         <OfferPanel
           isAICardModalShown={isAICardModalShown}
+          isOnModal={isOnModal}
           offerCardIds={cardIds}
           offerCoins={coins}
           onSetAICardModalCardId={onSetAICardModalCardId}
