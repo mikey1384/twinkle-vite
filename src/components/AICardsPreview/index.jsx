@@ -11,12 +11,14 @@ const deviceIsMobile = isMobile(navigator);
 
 AICardsPreview.propTypes = {
   isAICardModalShown: PropTypes.bool,
+  isOnModal: PropTypes.bool,
   cardIds: PropTypes.array.isRequired,
   onSetAICardModalCardId: PropTypes.func
 };
 
 export default function AICardsPreview({
   isAICardModalShown,
+  isOnModal,
   cardIds,
   onSetAICardModalCardId
 }) {
@@ -63,7 +65,7 @@ export default function AICardsPreview({
         )}
         {moreAICardsModalShown && (
           <MoreAICardsModal
-            modalOverModal
+            modalOverModal={isOnModal}
             cards={cards}
             onSetAICardModalCardId={onSetAICardModalCardId}
             onHide={() =>

@@ -77,6 +77,7 @@ export default function WantDetail({
           </div>
         )}
         <AICardsPreview
+          modalOverModal
           isAICardModalShown={isAICardModalShown}
           cardIds={cardIds}
           onSetAICardModalCardId={onSetAICardModalCardId}

@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 
 WantPanel.propTypes = {
   isAICardModalShown: PropTypes.bool,
+  isOnModal: PropTypes.bool,
   isTrade: PropTypes.bool.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
   wantCardIds: PropTypes.array.isRequired,
@@ -17,6 +18,7 @@ WantPanel.propTypes = {
 
 export default function WantPanel({
   isAICardModalShown,
+  isOnModal,
   isTrade,
   onSetAICardModalCardId,
   wantCardIds,
@@ -68,6 +70,7 @@ export default function WantPanel({
           <div style={{ textAlign: 'center' }}>
             <AICardsPreview
               isAICardModalShown={isAICardModalShown}
+              isOnModal={isOnModal}
               cardIds={wantCardIds}
               onSetAICardModalCardId={
                 showCardDetailsOnThumbClick ? onSetAICardModalCardId : null

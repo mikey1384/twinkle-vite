@@ -8,6 +8,7 @@ import { useChatContext, useKeyContext } from '~/contexts';
 
 TransactionDetails.propTypes = {
   isAICardModalShown: PropTypes.bool,
+  isOnModal: PropTypes.bool,
   currentTransactionId: PropTypes.number,
   onClick: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func.isRequired,
@@ -20,6 +21,7 @@ export default function TransactionDetails({
   currentTransactionId,
   onClick,
   isAICardModalShown,
+  isOnModal,
   onSetAICardModalCardId,
   transaction,
   partner,
@@ -67,6 +69,7 @@ export default function TransactionDetails({
             isCurrent={transaction.id === currentTransactionId}
             isAccepted={isAccepted}
             isCancelled={isCancelled}
+            isOnModal={isOnModal}
             isAICardModalShown={isAICardModalShown}
             cancelReason={cancelReason}
             myId={userId}
@@ -85,6 +88,7 @@ export default function TransactionDetails({
         {type === 'show' && (
           <Show
             isCurrent={transaction.id === currentTransactionId}
+            isOnModal={isOnModal}
             isAICardModalShown={isAICardModalShown}
             myId={userId}
             myUsername={username}
@@ -101,6 +105,7 @@ export default function TransactionDetails({
           <Send
             isAICardModalShown={isAICardModalShown}
             isCurrent={transaction.id === currentTransactionId}
+            isOnModal={isOnModal}
             myId={userId}
             fromId={transaction.from}
             myUsername={username}

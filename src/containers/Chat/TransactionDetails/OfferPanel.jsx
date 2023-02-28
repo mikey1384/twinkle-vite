@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 
 OfferPanel.propTypes = {
   isAICardModalShown: PropTypes.bool,
+  isOnModal: PropTypes.bool,
   isTrade: PropTypes.bool,
   offerCardIds: PropTypes.array,
   offerCoins: PropTypes.number,
@@ -16,6 +17,7 @@ OfferPanel.propTypes = {
 
 export default function OfferPanel({
   isAICardModalShown,
+  isOnModal,
   isTrade,
   offerCardIds,
   offerCoins,
@@ -64,6 +66,7 @@ export default function OfferPanel({
           <div style={{ textAlign: 'center' }}>
             <AICardsPreview
               isAICardModalShown={isAICardModalShown}
+              isOnModal={isOnModal}
               cardIds={offerCardIds}
               onSetAICardModalCardId={
                 showCardDetailsOnThumbClick ? onSetAICardModalCardId : null
