@@ -63,6 +63,7 @@ export default function AICardsPreview({
         )}
         {moreAICardsModalShown && (
           <MoreAICardsModal
+            modalOverModal
             cards={cards}
             onSetAICardModalCardId={onSetAICardModalCardId}
             onHide={() =>
