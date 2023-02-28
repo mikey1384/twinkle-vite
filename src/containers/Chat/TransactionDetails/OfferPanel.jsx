@@ -6,6 +6,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
 OfferPanel.propTypes = {
+  isAICardModalShown: PropTypes.bool,
   isTrade: PropTypes.bool,
   offerCardIds: PropTypes.array,
   offerCoins: PropTypes.number,
@@ -14,6 +15,7 @@ OfferPanel.propTypes = {
 };
 
 export default function OfferPanel({
+  isAICardModalShown,
   isTrade,
   offerCardIds,
   offerCoins,
@@ -61,6 +63,7 @@ export default function OfferPanel({
         {offerCardIds.length ? (
           <div style={{ textAlign: 'center' }}>
             <AICardsPreview
+              isAICardModalShown={isAICardModalShown}
               cardIds={offerCardIds}
               onSetAICardModalCardId={
                 showCardDetailsOnThumbClick ? onSetAICardModalCardId : null

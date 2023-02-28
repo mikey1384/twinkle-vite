@@ -8,6 +8,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 Show.propTypes = {
   cardIds: PropTypes.array,
   coins: PropTypes.number,
+  isAICardModalShown: PropTypes.bool,
   isCurrent: PropTypes.bool,
   fromId: PropTypes.number.isRequired,
   toId: PropTypes.number.isRequired,
@@ -21,6 +22,7 @@ Show.propTypes = {
 export default function Show({
   cardIds,
   coins,
+  isAICardModalShown,
   isCurrent,
   myId,
   myUsername,
@@ -92,6 +94,7 @@ export default function Show({
       </Heading>
       <Body onClick={onClick}>
         <OfferPanel
+          isAICardModalShown={isAICardModalShown}
           offerCardIds={cardIds}
           offerCoins={coins}
           onSetAICardModalCardId={onSetAICardModalCardId}

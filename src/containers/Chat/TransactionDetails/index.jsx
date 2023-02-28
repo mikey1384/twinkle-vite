@@ -7,6 +7,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { useChatContext, useKeyContext } from '~/contexts';
 
 TransactionDetails.propTypes = {
+  isAICardModalShown: PropTypes.bool,
   currentTransactionId: PropTypes.number,
   onClick: PropTypes.func,
   onSetAICardModalCardId: PropTypes.func.isRequired,
@@ -18,6 +19,7 @@ TransactionDetails.propTypes = {
 export default function TransactionDetails({
   currentTransactionId,
   onClick,
+  isAICardModalShown,
   onSetAICardModalCardId,
   transaction,
   partner,
@@ -65,6 +67,7 @@ export default function TransactionDetails({
             isCurrent={transaction.id === currentTransactionId}
             isAccepted={isAccepted}
             isCancelled={isCancelled}
+            isAICardModalShown={isAICardModalShown}
             cancelReason={cancelReason}
             myId={userId}
             myUsername={username}
@@ -82,6 +85,7 @@ export default function TransactionDetails({
         {type === 'show' && (
           <Show
             isCurrent={transaction.id === currentTransactionId}
+            isAICardModalShown={isAICardModalShown}
             myId={userId}
             myUsername={username}
             partner={partner}
@@ -95,6 +99,7 @@ export default function TransactionDetails({
         )}
         {type === 'send' && (
           <Send
+            isAICardModalShown={isAICardModalShown}
             isCurrent={transaction.id === currentTransactionId}
             myId={userId}
             fromId={transaction.from}
