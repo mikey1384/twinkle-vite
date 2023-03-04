@@ -35,7 +35,7 @@ export const GITHUB_APP_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 export const LAST_ONLINE_FILTER_LABEL = localize('lastOnline2');
 export const RANKING_FILTER_LABEL = localize('ranking');
 export const MAX_PROFILE_PIC_SIZE = 10000;
-export const MAX_NUM_SUMMONS = 5;
+export const MAX_NUM_SUMMONS = 3;
 export const S3URL = `https://${
   import.meta.env.VITE_AWS_S3_BUCKET_NAME
 }.s3.amazonaws.com`;
