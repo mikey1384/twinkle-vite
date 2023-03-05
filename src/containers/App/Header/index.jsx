@@ -1009,12 +1009,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       const senderIsUser = message.userId === userId && !isNotification;
       if (senderIsUser && pageVisible) return;
       if (messageIsForCurrentChannel) {
-        if (message.transactionDetails?.id) {
-          onUpdateCurrentTransactionId({
-            channelId: selectedChannelId,
-            transactionId: message.transactionDetails.id
-          });
-        }
         if (usingChat) {
           updateChatLastRead(message.channelId);
           if (message.subchannelId === subchannelId) {
@@ -1036,6 +1030,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           pageVisible,
           usingChat,
           newMembers
+        });
+      }
+      if (message.transactionDetails?.id) {
+        onUpdateCurrentTransactionId({
+          channelId: message.channelId,
+          transactionId: message.transactionDetails.id
         });
       }
       if (message.targetMessage?.userId === userId && message.rewardAmount) {
