@@ -6,6 +6,7 @@ import { useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
 
 RewardButton.propTypes = {
+  className: PropTypes.string,
   contentId: PropTypes.number.isRequired,
   contentType: PropTypes.string.isRequired,
   disableReason: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
@@ -16,6 +17,7 @@ RewardButton.propTypes = {
 const rewardLabel = localize('reward');
 
 export default function RewardButton({
+  className,
   contentId,
   contentType,
   disableReason,
@@ -32,6 +34,7 @@ export default function RewardButton({
 
   return (
     <Button
+      className={className}
       color={rewardColor}
       style={style}
       onClick={() =>

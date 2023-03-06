@@ -13,6 +13,7 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import XPRewardInterface from '~/components/XPRewardInterface';
 import RecommendationInterface from '~/components/RecommendationInterface';
 import RewardStatus from '~/components/RewardStatus';
+import RewardButton from '~/components/Buttons/RewardButton';
 import RecommendationStatus from '~/components/RecommendationStatus';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
@@ -36,7 +37,6 @@ const editLabel = localize('edit');
 const removeLabel = localize('remove');
 const replyLabel = localize('reply');
 const respondLabel = localize('respond');
-const rewardLabel = localize('reward');
 const deviceIsMobile = isMobile(navigator);
 
 Body.propTypes = {
@@ -480,22 +480,18 @@ export default function Body({
                     </Button>
                   )}
                   {userCanRewardThis && !secretHidden && (
-                    <Button
-                      color={rewardColor}
-                      disabled={!!xpButtonDisabled}
+                    <RewardButton
                       className={css`
                         margin-left: 1rem;
                         @media (max-width: ${mobileMaxWidth}) {
                           margin-left: 0.5rem;
                         }
                       `}
-                      onClick={handleSetXpRewardInterfaceShown}
-                    >
-                      <Icon icon="certificate" />
-                      <span style={{ marginLeft: '0.7rem' }}>
-                        {xpButtonDisabled || rewardLabel}
-                      </span>
-                    </Button>
+                      contentId={contentId}
+                      contentType={contentType}
+                      disableReason={xpButtonDisabled}
+                      theme={theme}
+                    />
                   )}
                   {!secretHidden && (
                     <div
@@ -740,14 +736,6 @@ export default function Body({
     } else {
       onCommentSubmit(params);
     }
-  }
-
-  function handleSetXpRewardInterfaceShown() {
-    onSetXpRewardInterfaceShown({
-      contentType,
-      contentId,
-      shown: true
-    });
   }
 
   async function handleCommentButtonClick() {
