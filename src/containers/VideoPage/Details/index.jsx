@@ -4,6 +4,7 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import XPRewardInterface from '~/components/XPRewardInterface';
+import RewardButton from '~/components/Buttons/RewardButton';
 import AlreadyPosted from '~/components/AlreadyPosted';
 import BasicInfos from './BasicInfos';
 import SideButtons from './SideButtons';
@@ -41,7 +42,6 @@ import localize from '~/constants/localize';
 const deleteLabel = localize('delete');
 const editLabel = localize('edit');
 const editOrDeleteLabel = localize('editOrDelete');
-const rewardLabel = localize('reward');
 const deviceIsMobile = isMobile(navigator);
 
 Details.propTypes = {
@@ -459,17 +459,12 @@ export default function Details({
           >
             <div style={{ display: 'flex' }}>
               {rewardButtonShown && (
-                <Button
+                <RewardButton
                   skeuomorphic
-                  color={rewardColor}
-                  disabled={xpButtonDisabled}
-                  onClick={handleSetXpRewardInterfaceShown}
-                >
-                  <Icon icon="certificate" />
-                  <span style={{ marginLeft: '0.7rem' }}>
-                    {xpButtonDisabled || rewardLabel}
-                  </span>
-                </Button>
+                  contentId={videoId}
+                  contentType="video"
+                  disableReason={xpButtonDisabled}
+                />
               )}
               <Button
                 color={rewardColor}
@@ -600,14 +595,6 @@ export default function Details({
         setRecommendationInterfaceShown(!isUnlike);
       }
     }
-  }
-
-  function handleSetXpRewardInterfaceShown() {
-    onSetXpRewardInterfaceShown({
-      contentId: videoId,
-      contentType: 'video',
-      shown: true
-    });
   }
 
   function handleTitleChange(text) {
