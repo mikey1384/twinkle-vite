@@ -9,6 +9,7 @@ RewardButton.propTypes = {
   contentId: PropTypes.number.isRequired,
   contentType: PropTypes.string.isRequired,
   disableReason: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+  style: PropTypes.object,
   theme: PropTypes.string
 };
 
@@ -18,6 +19,7 @@ export default function RewardButton({
   contentId,
   contentType,
   disableReason,
+  style,
   theme
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
@@ -31,7 +33,7 @@ export default function RewardButton({
   return (
     <Button
       color={rewardColor}
-      style={{ marginLeft: '0.7rem' }}
+      style={style}
       onClick={() =>
         onSetXpRewardInterfaceShown({
           contentId,

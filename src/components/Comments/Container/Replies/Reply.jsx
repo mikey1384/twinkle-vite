@@ -21,6 +21,7 @@ import RewardStatus from '~/components/RewardStatus';
 import XPRewardInterface from '~/components/XPRewardInterface';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
+import RewardButton from '~/components/Buttons/RewardButton';
 import { commentContainer } from '../Styles';
 import { Link } from 'react-router-dom';
 import { borderRadius, Color } from '~/constants/css';
@@ -46,7 +47,6 @@ const unpinLabel = localize('unpin');
 const removeReplyLabel = localize('removeReply');
 const repliesLabel = localize('replies');
 const replyLabel = localize('reply');
-const rewardLabel = localize('reward');
 
 Reply.propTypes = {
   comment: PropTypes.shape({
@@ -539,23 +539,13 @@ function Reply({
                           </Button>
                         )}
                         {userCanRewardThis && !isDeleteNotification && (
-                          <Button
-                            color={rewardColor}
+                          <RewardButton
                             style={{ marginLeft: '1rem' }}
-                            onClick={() =>
-                              onSetXpRewardInterfaceShown({
-                                contentId: reply.id,
-                                contentType: 'comment',
-                                shown: true
-                              })
-                            }
-                            disabled={!!xpButtonDisabled}
-                          >
-                            <Icon icon="certificate" />
-                            <span style={{ marginLeft: '0.7rem' }}>
-                              {xpButtonDisabled || rewardLabel}
-                            </span>
-                          </Button>
+                            contentId={reply.id}
+                            contentType="comment"
+                            disableReason={xpButtonDisabled}
+                            theme={theme}
+                          />
                         )}
                       </div>
                       {isDeleteNotification ? null : (
