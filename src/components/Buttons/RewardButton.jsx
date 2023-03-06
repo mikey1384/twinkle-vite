@@ -1,0 +1,50 @@
+import PropTypes from 'prop-types';
+import Button from '~/components/Button';
+import localize from '~/constants/localize';
+import Icon from '~/components/Icon';
+import { useTheme } from '~/helpers/hooks';
+import { useContentContext, useKeyContext } from '~/contexts';
+
+RewardButton.propTypes = {
+  contentId: PropTypes.number.isRequired,
+  contentType: PropTypes.string.isRequired,
+  disableReason: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+  theme: PropTypes.string
+};
+
+const rewardLabel = localize('reward');
+
+export default function RewardButton({
+  contentId,
+  contentType,
+  disableReason,
+  theme
+}) {
+  const { profileTheme } = useKeyContext((v) => v.myState);
+  const onSetXpRewardInterfaceShown = useContentContext(
+    (v) => v.actions.onSetXpRewardInterfaceShown
+  );
+  const {
+    reward: { color: rewardColor }
+  } = useTheme(theme || profileTheme);
+
+  return (
+    <Button
+      color={rewardColor}
+      style={{ marginLeft: '0.7rem' }}
+      onClick={() =>
+        onSetXpRewardInterfaceShown({
+          contentId,
+          contentType,
+          shown: true
+        })
+      }
+      disabled={!!disableReason}
+    >
+      <Icon icon="certificate" />
+      <span style={{ marginLeft: '0.7rem' }}>
+        {disableReason || rewardLabel}
+      </span>
+    </Button>
+  );
+}
