@@ -5,6 +5,7 @@ import Comments from '~/components/Comments';
 import Subjects from '~/components/Subjects';
 import StarButton from '~/components/Buttons/StarButton';
 import LikeButton from '~/components/Buttons/LikeButton';
+import RewardButton from '~/components/Buttons/RewardButton';
 import Likers from '~/components/Likers';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import UserListModal from '~/components/Modals/UserListModal';
@@ -33,9 +34,6 @@ import {
 } from '~/contexts';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
-
-const rewardLabel = localize('reward');
 
 export default function LinkPage() {
   const location = useLocation();
@@ -378,21 +376,15 @@ export default function LinkPage() {
                 likes={likes}
               />
               {userCanRewardThis && (
-                <Button
-                  color={rewardColor}
-                  filled
-                  disabled={xpButtonDisabled}
+                <RewardButton
+                  contentId={linkId}
+                  contentType="url"
+                  disableReason={xpButtonDisabled}
                   style={{
                     fontSize: '2rem',
                     marginLeft: '1rem'
                   }}
-                  onClick={handleSetXpRewardInterfaceShown}
-                >
-                  <Icon icon="certificate" />
-                  <span style={{ marginLeft: '0.7rem' }}>
-                    {xpButtonDisabled || rewardLabel}
-                  </span>
-                </Button>
+                />
               )}
               <div style={{ position: 'relative' }}>
                 <StarButton
@@ -625,14 +617,6 @@ export default function LinkPage() {
         setRecommendationInterfaceShown(!isUnlike);
       }
     }
-  }
-
-  function handleSetXpRewardInterfaceShown() {
-    onSetXpRewardInterfaceShown({
-      contentType: 'url',
-      contentId: linkId,
-      shown: true
-    });
   }
 
   function handleSetByUserStatus(byUser) {

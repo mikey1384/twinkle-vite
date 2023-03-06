@@ -11,6 +11,7 @@ import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import Link from '~/components/Link';
+import RewardButton from '~/components/Buttons/RewardButton';
 import SecretAnswer from '~/components/SecretAnswer';
 import StarButton from '~/components/Buttons/StarButton';
 import LocalContext from './Context';
@@ -86,9 +87,6 @@ export default function SubjectPanel({
   );
   const onEditRewardComment = useContentContext(
     (v) => v.actions.onEditRewardComment
-  );
-  const onSetXpRewardInterfaceShown = useContentContext(
-    (v) => v.actions.onSetXpRewardInterfaceShown
   );
   const onSetByUserStatus = useContentContext(
     (v) => v.actions.onSetByUserStatus
@@ -408,34 +406,18 @@ export default function SubjectPanel({
                   </span>
                 </Button>
                 {rewardButtonShown && (
-                  <Button
+                  <RewardButton
                     skeuomorphic
-                    color={rewardColor}
-                    style={{ fontSize: '2rem', marginLeft: '1rem' }}
-                    disabled={determineXpButtonDisabled({
+                    contentId={subjectId}
+                    contentType="subject"
+                    disableReason={determineXpButtonDisabled({
                       rewardLevel: finalRewardLevel,
                       myId,
                       xpRewardInterfaceShown,
                       rewards
                     })}
-                    onClick={() =>
-                      onSetXpRewardInterfaceShown({
-                        contentType: 'subject',
-                        contentId: subjectId,
-                        shown: true
-                      })
-                    }
-                  >
-                    <Icon icon="certificate" />
-                    <span style={{ marginLeft: '0.7rem' }}>
-                      {determineXpButtonDisabled({
-                        rewardLevel: finalRewardLevel,
-                        myId,
-                        xpRewardInterfaceShown,
-                        rewards
-                      }) || 'Reward'}
-                    </span>
-                  </Button>
+                    style={{ fontSize: '2rem', marginLeft: '1rem' }}
+                  />
                 )}
                 <Button
                   color={rewardColor}

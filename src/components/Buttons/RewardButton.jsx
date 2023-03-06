@@ -10,6 +10,7 @@ RewardButton.propTypes = {
   contentId: PropTypes.number.isRequired,
   contentType: PropTypes.string.isRequired,
   disableReason: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+  skeuomorphic: PropTypes.bool,
   style: PropTypes.object,
   theme: PropTypes.string
 };
@@ -21,6 +22,7 @@ export default function RewardButton({
   contentId,
   contentType,
   disableReason,
+  skeuomorphic,
   style,
   theme
 }) {
@@ -34,6 +36,7 @@ export default function RewardButton({
 
   return (
     <Button
+      skeuomorphic={skeuomorphic}
       className={className}
       color={rewardColor}
       style={style}
