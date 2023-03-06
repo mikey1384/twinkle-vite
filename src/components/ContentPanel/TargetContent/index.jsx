@@ -20,6 +20,7 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import SecretComment from '~/components/SecretComment';
 import Icon from '~/components/Icon';
 import LoginToViewContent from '~/components/LoginToViewContent';
+import RewardButton from '~/components/Buttons/RewardButton';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
@@ -43,7 +44,6 @@ import localize from '~/constants/localize';
 
 const commentRemovedLabel = localize('commentRemoved');
 const replyLabel = localize('reply');
-const rewardLabel = localize('reward');
 const deviceIsMobile = isMobile(navigator);
 
 TargetContent.propTypes = {
@@ -442,17 +442,13 @@ export default function TargetContent({
                           </span>
                         </Button>
                         {userCanRewardThis && (
-                          <Button
+                          <RewardButton
                             style={{ marginLeft: '1rem' }}
-                            color={rewardColor}
-                            disabled={!!xpButtonDisabled}
-                            onClick={handleSetXpRewardInterfaceShown}
-                          >
-                            <Icon icon="certificate" />
-                            <span style={{ marginLeft: '0.7rem' }}>
-                              {xpButtonDisabled || rewardLabel}
-                            </span>
-                          </Button>
+                            contentId={comment.id}
+                            contentType="comment"
+                            disableReason={xpButtonDisabled}
+                            theme={theme}
+                          />
                         )}
                       </div>
                       <Likers
@@ -618,14 +614,6 @@ export default function TargetContent({
     if (comments.length === 0) {
       onShowTCReplyInput({ contentId, contentType });
     }
-  }
-
-  function handleSetXpRewardInterfaceShown() {
-    onSetXpRewardInterfaceShown({
-      contentType: 'comment',
-      contentId: comment.id,
-      shown: true
-    });
   }
 
   function handleReplyClick() {
