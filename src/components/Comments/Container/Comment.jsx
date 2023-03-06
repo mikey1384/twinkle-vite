@@ -816,6 +816,7 @@ function Comment({
                                   contentId={commentId}
                                   contentType="comment"
                                   disableReason={xpButtonDisabled}
+                                  style={{ marginLeft: '0.7rem' }}
                                   theme={theme}
                                 />
                               )}
