@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import RoundList from '~/components/RoundList';
 import Banner from '~/components/Banner';
@@ -29,7 +29,7 @@ MainFeeds.propTypes = {
   style: PropTypes.object
 };
 
-function MainFeeds({
+export default function MainFeeds({
   activeTab,
   loadingNotifications,
   loadMoreNotificationsButton,
@@ -181,7 +181,7 @@ function MainFeeds({
               style={{ marginBottom: '1rem', width: '100%' }}
               fontSize="2.2rem"
               mobileFontSize="1.7rem"
-              onClick={totalRewardAmount > 0 ? onCollectReward : null}
+              onClick={totalRewardAmount > 0 ? handleCollectReward : null}
             >
               <div>
                 <p>{tapToCollectRewardsLabel}</p>
@@ -262,20 +262,22 @@ function MainFeeds({
     </ErrorBoundary>
   );
 
-  async function onCollectReward() {
-    setOriginalTwinkleXP(twinkleXP);
-    setOriginalTwinkleCoins(twinkleCoins);
-    setCollectingReward(true);
-    const coins = await collectRewardedCoins();
-    const { xp, rank } = await updateUserXP({
-      action: 'collect'
-    });
-    onSetUserState({
-      userId,
-      newState: { twinkleXP: xp, twinkleCoins: coins, rank }
-    });
-    onCollectRewards(userId);
-    setCollectingReward(false);
+  async function handleCollectReward() {
+    if (typeof twinkleXP === 'number') {
+      setOriginalTwinkleXP(twinkleXP);
+      setOriginalTwinkleCoins(twinkleCoins);
+      setCollectingReward(true);
+      const coins = await collectRewardedCoins();
+      const { xp, rank } = await updateUserXP({
+        action: 'collect'
+      });
+      onSetUserState({
+        userId,
+        newState: { twinkleXP: xp, twinkleCoins: coins, rank }
+      });
+      onCollectRewards(userId);
+      setCollectingReward(false);
+    }
   }
 
   async function handleNewNotiAlertClick() {
@@ -316,5 +318,3 @@ function MainFeeds({
     }
   }
 }
-
-export default memo(MainFeeds);
