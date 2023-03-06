@@ -22,6 +22,7 @@ import Icon from '~/components/Icon';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
+import RewardButton from '~/components/Buttons/RewardButton';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { commentContainer } from './Styles';
@@ -52,7 +53,6 @@ const unpinLabel = localize('unpin');
 const removeCommentLabel = localize('removeComment');
 const repliesLabel = localize('replies');
 const replyLabel = localize('reply');
-const rewardLabel = localize('reward');
 
 Comment.propTypes = {
   isSubjectPannelComment: PropTypes.bool,
@@ -812,23 +812,12 @@ function Comment({
                                 </Button>
                               )}
                               {userCanRewardThis && !isDeleteNotification && (
-                                <Button
-                                  color={rewardColor}
-                                  style={{ marginLeft: '0.7rem' }}
-                                  onClick={() =>
-                                    onSetXpRewardInterfaceShown({
-                                      contentId: commentId,
-                                      contentType: 'comment',
-                                      shown: true
-                                    })
-                                  }
-                                  disabled={!!xpButtonDisabled}
-                                >
-                                  <Icon icon="certificate" />
-                                  <span style={{ marginLeft: '0.7rem' }}>
-                                    {xpButtonDisabled || rewardLabel}
-                                  </span>
-                                </Button>
+                                <RewardButton
+                                  contentId={commentId}
+                                  contentType="comment"
+                                  disableReason={xpButtonDisabled}
+                                  theme={theme}
+                                />
                               )}
                             </div>
                             {isDeleteNotification ? null : (
