@@ -42,7 +42,8 @@ MessageInput.propTypes = {
   inputState: PropTypes.object,
   isBanned: PropTypes.bool,
   isRespondingToSubject: PropTypes.bool,
-  isRestricted: PropTypes.bool,
+  isZeroChannel: PropTypes.bool,
+  isRestrictedChannel: PropTypes.bool,
   isTwoPeopleChannel: PropTypes.oneOfType([PropTypes.number, PropTypes.bool]),
   loading: PropTypes.bool,
   onChessButtonClick: PropTypes.func.isRequired,
@@ -69,7 +70,8 @@ export default function MessageInput({
   innerRef,
   inputState,
   isBanned,
-  isRestricted,
+  isZeroChannel,
+  isRestrictedChannel,
   isRespondingToSubject,
   isTwoPeopleChannel,
   loading,
@@ -380,7 +382,9 @@ export default function MessageInput({
         >
           {isTwoPeopleChannel ? (
             <Button
-              disabled={loading || banned?.chess}
+              disabled={
+                loading || banned?.chess || isZeroChannel || isRestrictedChannel
+              }
               skeuomorphic
               onClick={onChessButtonClick}
               color={buttonColor}
@@ -428,14 +432,16 @@ export default function MessageInput({
           )}
         </div>
         <Textarea
-          disabled={isRestricted || isBanned}
+          disabled={isZeroChannel || isRestrictedChannel || isBanned}
           innerRef={innerRef}
           minRows={1}
           placeholder={
             isBanned
               ? 'You are banned from using the Chat feature'
-              : isRestricted
+              : isRestrictedChannel
               ? `Only the administrator can post messages here...`
+              : isZeroChannel
+              ? `Zero cannot chat yet. Leave a message on his profile page`
               : `${enterMessageLabel}...`
           }
           onKeyDown={handleKeyDown}
@@ -476,7 +482,11 @@ export default function MessageInput({
         <AddButtons
           channelId={selectedChannelId}
           disabled={
-            isRestricted || loading || !!banned?.chat || !socketConnected
+            isRestrictedChannel ||
+            isZeroChannel ||
+            loading ||
+            !!banned?.chat ||
+            !socketConnected
           }
           currentTransactionId={currentTransactionId}
           myId={myId}
