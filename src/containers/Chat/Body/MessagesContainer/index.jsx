@@ -34,7 +34,8 @@ import {
   GENERAL_CHAT_PATH_ID,
   rewardReasons,
   AI_CARD_CHAT_TYPE,
-  VOCAB_CHAT_TYPE
+  VOCAB_CHAT_TYPE,
+  ZERO_TWINKLE_ID
 } from '~/constants/defaultValues';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { css } from '@emotion/css';
@@ -243,10 +244,18 @@ function MessagesContainer({
     return currentChannel?.replyTarget;
   }, [currentChannel?.replyTarget, subchannel?.replyTarget, subchannelId]);
 
-  const isChatRestricted = useMemo(() => {
-    return subchannel?.isRestricted && !isCreator;
-  }, [subchannel?.isRestricted, isCreator]);
-
+  const isZeroChannel = useMemo(
+    () => partner?.id === ZERO_TWINKLE_ID,
+    [partner?.id]
+  );
+  const isRestrictedChannel = useMemo(
+    () => subchannel?.isRestricted && !isCreator,
+    [isCreator, subchannel?.isRestricted]
+  );
+  const isChatRestricted = useMemo(
+    () => !!isRestrictedChannel || !!isZeroChannel,
+    [isRestrictedChannel, isZeroChannel]
+  );
   const loadMoreButtonShown = useMemo(() => {
     if (subchannel) {
       return subchannel?.loadMoreButtonShown;
@@ -1320,7 +1329,7 @@ function MessagesContainer({
                   isLastMsg={index === 0}
                   isNotification={!!message.isNotification}
                   isBanned={!!banned?.chat}
-                  isRestricted={!!isChatRestricted}
+                  isRestricted={isChatRestricted}
                   loading={loadingAnimationShown}
                   message={message}
                   onAcceptGroupInvitation={handleAcceptGroupInvitation}
@@ -1413,7 +1422,8 @@ function MessagesContainer({
         <MessageInput
           currentTransactionId={currentTransactionId}
           selectedChannelId={selectedChannelId}
-          isRestricted={!!isChatRestricted}
+          isZeroChannel={!!isZeroChannel}
+          isRestrictedChannel={!!isRestrictedChannel}
           isBanned={!!banned?.chat}
           innerRef={ChatInputRef}
           loading={loadingAnimationShown}
