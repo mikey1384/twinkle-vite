@@ -50,11 +50,7 @@ export default function FilterModal({
   }, [selectedFilter]);
 
   return (
-    <Modal
-      closeWhenClickedOutside={!deviceIsMobile}
-      modalStyle={{ marginTop: 'CALC(50vh - 25rem)' }}
-      onHide={handleHide}
-    >
+    <Modal closeWhenClickedOutside={!deviceIsMobile} onHide={handleHide}>
       <header>Search Cards</header>
       <main>
         {filterComponents.map((component, index) => {
