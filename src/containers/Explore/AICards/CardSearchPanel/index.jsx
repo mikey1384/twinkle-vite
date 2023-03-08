@@ -146,15 +146,12 @@ export default function CardSearchPanel({
           <div>
             <span className="label">Word</span>
             <Input
-              onChange={() => onSetSelectedFilter('')}
               onFocus={(event) => {
                 event.currentTarget.blur();
+                console.log('here');
                 onSetSelectedFilter('word');
               }}
-              onClick={(event) => {
-                event.currentTarget.blur();
-                onSetSelectedFilter('word');
-              }}
+              onChange={() => null}
               placeholder="Word"
               value={filters.word || ''}
               style={{
