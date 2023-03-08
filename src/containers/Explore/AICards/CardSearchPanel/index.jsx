@@ -135,50 +135,102 @@ export default function CardSearchPanel({
             </span>
           </Button>
         </ButtonContainer>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span className="label">Card #</span>
-          <Input
-            onChange={handleSetCardNumber}
-            placeholder="Card #"
-            value={cardNumber || ''}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div>
+            <span className="label">Word</span>
+            <Input
+              onChange={(e) => onSetSelectedFilter('word', e.target.value)}
+              placeholder="Word"
+              value={filters.word || ''}
+              style={{
+                margin: 0,
+                padding: '0.5rem',
+                width: '7rem',
+                lineHeight: 1,
+                marginLeft: '1rem',
+                fontSize: '1.5rem',
+                height: 'auto'
+              }}
+              className={css`
+                @media (max-width: ${mobileMaxWidth}) {
+                  width: 5rem !important;
+                  height: 2.5rem !important;
+                  font-size: 1.1rem !important;
+                }
+              `}
+            />
+          </div>
+          <div
             style={{
-              margin: 0,
-              width: '7rem',
-              marginLeft: '1rem',
-              fontSize: '1.5rem',
-              height: 'auto'
+              marginTop: '0.5rem',
+              display: 'flex',
+              alignItems: 'center'
             }}
-            onKeyPress={(event) => {
-              if (!!cardNumber && event.key === 'Enter') {
-                onCardNumberSearch(cardNumber);
-              }
-            }}
-            className={css`
-              @media (max-width: ${mobileMaxWidth}) {
-                width: 5rem !important;
-                height: 2.5rem !important;
-                font-size: 1.1rem !important;
-              }
-            `}
-          />
-          {!!cardNumber && (
-            <Button
-              style={{ marginLeft: '1rem', padding: '0.7rem' }}
-              filled
-              color={successColor}
-              onClick={() => onCardNumberSearch(cardNumber)}
-            >
-              <Icon
-                className={css`
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.1rem;
-                  }
-                `}
-                icon="magnifying-glass"
-                size="lg"
-              />
-            </Button>
-          )}
+          >
+            <span className="label">Card #</span>
+            <Input
+              onChange={handleSetCardNumber}
+              placeholder="Card #"
+              value={cardNumber || ''}
+              style={{
+                margin: 0,
+                padding: '0.5rem',
+                width: '7rem',
+                lineHeight: 1,
+                marginLeft: '1rem',
+                fontSize: '1.5rem',
+                height: 'auto'
+              }}
+              onKeyPress={(event) => {
+                if (!!cardNumber && event.key === 'Enter') {
+                  onCardNumberSearch(cardNumber);
+                }
+              }}
+              className={css`
+                @media (max-width: ${mobileMaxWidth}) {
+                  width: 5rem !important;
+                  height: 2.5rem !important;
+                  font-size: 1.1rem !important;
+                }
+              `}
+            />
+            {!!cardNumber && (
+              <div>
+                <Button
+                  style={{
+                    padding: '0.5rem',
+                    lineHeight: 0
+                  }}
+                  className={css`
+                    margin-left: 1rem;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      margin-left: 0.5rem;
+                    }
+                  `}
+                  filled
+                  color={successColor}
+                  onClick={() => onCardNumberSearch(cardNumber)}
+                >
+                  <Icon
+                    className={css`
+                      @media (max-width: ${mobileMaxWidth}) {
+                        font-size: 1.1rem;
+                      }
+                    `}
+                    icon="magnifying-glass"
+                    size="lg"
+                  />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <SwitchButton
