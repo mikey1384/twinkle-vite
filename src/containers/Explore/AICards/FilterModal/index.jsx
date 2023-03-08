@@ -122,6 +122,9 @@ export default function FilterModal({
     if (selectedOwner) {
       obj.owner = selectedOwner;
     }
+    if (selectedWord) {
+      obj.word = selectedWord;
+    }
     if (selectedColor !== 'any') {
       obj.color = selectedColor;
     }

@@ -50,6 +50,7 @@ export default function SearchView({
         prevFilters.owner !== filters?.owner ||
         prevFilters.quality !== filters?.quality ||
         prevFilters.color !== filters?.color ||
+        prevFilters.word !== filters?.word ||
         prevFilters.isBuyNow !== filters?.isBuyNow;
       if (!filteredLoaded || filterChanged) {
         onSetNumCards(0);
@@ -68,7 +69,13 @@ export default function SearchView({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters?.owner, filters?.quality, filters?.color, filters?.isBuyNow]);
+  }, [
+    filters?.owner,
+    filters?.word,
+    filters?.quality,
+    filters?.color,
+    filters?.isBuyNow
+  ]);
 
   return (
     <div
