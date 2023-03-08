@@ -52,7 +52,7 @@ export default function WordFilter({
         }}
       >
         <SearchInput
-          placeholder="Search user..."
+          placeholder="Search word..."
           autoFocus={selectedFilter === 'owner'}
           onChange={handleSearch}
           value={searchText}
