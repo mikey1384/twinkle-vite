@@ -148,7 +148,6 @@ export default function CardSearchPanel({
             <Input
               onFocus={(event) => {
                 event.currentTarget.blur();
-                console.log('here');
                 onSetSelectedFilter('word');
               }}
               onChange={() => null}
