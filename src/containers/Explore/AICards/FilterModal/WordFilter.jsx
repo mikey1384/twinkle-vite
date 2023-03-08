@@ -6,14 +6,14 @@ import SelectedWord from '~/components/Texts/SelectedWord';
 import { useSearch } from '~/helpers/hooks';
 
 WordFilter.propTypes = {
-  onSelectOwner: PropTypes.func,
+  onSelectWord: PropTypes.func,
   selectedWord: PropTypes.string,
   selectedFilter: PropTypes.string,
   style: PropTypes.object
 };
 
 export default function WordFilter({
-  onSelectOwner,
+  onSelectWord,
   selectedFilter,
   selectedWord,
   style
@@ -41,7 +41,7 @@ export default function WordFilter({
         </div>
         <SelectedWord
           selectedWord={selectedWord}
-          onClear={() => onSelectOwner('')}
+          onClear={() => onSelectWord('')}
           style={{ marginLeft: '0.7rem' }}
         />
       </div>
@@ -66,15 +66,15 @@ export default function WordFilter({
             setSearchText('');
             setSearchedWords([]);
           }}
-          onSelect={handleSelectUser}
+          onSelect={handleSelectWord}
         />
         {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
       </div>
     </div>
   );
 
-  function handleSelectUser(user) {
-    onSelectOwner(user.username);
+  function handleSelectWord(word) {
+    onSelectWord(word);
     setSearchedWords([]);
     setSearchText('');
   }
