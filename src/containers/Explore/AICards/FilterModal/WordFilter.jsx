@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
 import SelectedUser from '~/components/Texts/SelectedUser';
-import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 
 WordFilter.propTypes = {
@@ -19,12 +18,11 @@ export default function WordFilter({
   selectedOwner,
   style
 }) {
-  const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const [searchText, setSearchText] = useState('');
-  const [searchedUsers, setSearchedUsers] = useState([]);
+  const [searchedWords, setSearchedWords] = useState([]);
   const { handleSearch, searching } = useSearch({
     onSearch: handleUserSearch,
-    onClear: () => setSearchedUsers([]),
+    onClear: () => setSearchedWords([]),
     onSetSearchText: setSearchText
   });
 
@@ -58,7 +56,7 @@ export default function WordFilter({
           autoFocus={selectedFilter === 'owner'}
           onChange={handleSearch}
           value={searchText}
-          searchResults={searchedUsers}
+          searchResults={searchedWords}
           renderItemLabel={(item) => (
             <span>
               {item.username} <small>{`(${item.realName})`}</small>
@@ -66,7 +64,7 @@ export default function WordFilter({
           )}
           onClickOutSide={() => {
             setSearchText('');
-            setSearchedUsers([]);
+            setSearchedWords([]);
           }}
           onSelect={handleSelectUser}
         />
@@ -77,12 +75,12 @@ export default function WordFilter({
 
   function handleSelectUser(user) {
     onSelectOwner(user.username);
-    setSearchedUsers([]);
+    setSearchedWords([]);
     setSearchText('');
   }
 
   async function handleUserSearch(text) {
-    const users = await searchUsers(text);
-    setSearchedUsers(users);
+    const words = [text];
+    setSearchedWords(words);
   }
 }
