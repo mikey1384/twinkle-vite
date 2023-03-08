@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
 import SelectedWord from '~/components/Texts/SelectedWord';
+import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 
 WordFilter.propTypes = {
@@ -18,10 +19,13 @@ export default function WordFilter({
   selectedWord,
   style
 }) {
+  const searchAICardWords = useAppContext(
+    (v) => v.requestHelpers.searchAICardWords
+  );
   const [searchText, setSearchText] = useState('');
   const [searchedWords, setSearchedWords] = useState([]);
   const { handleSearch, searching } = useSearch({
-    onSearch: handleUserSearch,
+    onSearch: handleWordSearch,
     onClear: () => setSearchedWords([]),
     onSetSearchText: setSearchText
   });
@@ -79,8 +83,8 @@ export default function WordFilter({
     setSearchText('');
   }
 
-  async function handleUserSearch(text) {
-    const words = [text];
+  async function handleWordSearch(text) {
+    const words = await searchAICardWords(text);
     setSearchedWords(words);
   }
 }

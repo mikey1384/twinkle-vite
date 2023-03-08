@@ -801,6 +801,16 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async searchAICardWords(word) {
+      try {
+        const { data: words } = await request.get(
+          `${URL}/ai-card/search/word?word=${word}`
+        );
+        return Promise.resolve(words);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async setByUser({ contentType, contentId }) {
       try {
         const {
