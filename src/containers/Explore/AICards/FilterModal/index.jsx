@@ -59,7 +59,12 @@ export default function FilterModal({
       <main>
         {filterComponents.map((component, index) => {
           const style =
-            index < filterComponents.length - 1 ? { marginBottom: '2rem' } : {};
+            index < filterComponents.length - 1
+              ? {
+                  marginBottom: '2rem',
+                  zIndex: filterComponents.length - 1 - index
+                }
+              : { zIndex: filterComponents.length - 1 - index };
           if (component === 'owner') {
             return (
               <OwnerFilter
