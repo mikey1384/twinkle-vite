@@ -2,12 +2,12 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
-import SelectedUser from '~/components/Texts/SelectedUser';
+import SelectedWord from '~/components/Texts/SelectedWord';
 import { useSearch } from '~/helpers/hooks';
 
 WordFilter.propTypes = {
   onSelectOwner: PropTypes.func,
-  selectedOwner: PropTypes.string,
+  selectedWord: PropTypes.string,
   selectedFilter: PropTypes.string,
   style: PropTypes.object
 };
@@ -15,7 +15,7 @@ WordFilter.propTypes = {
 export default function WordFilter({
   onSelectOwner,
   selectedFilter,
-  selectedOwner,
+  selectedWord,
   style
 }) {
   const [searchText, setSearchText] = useState('');
@@ -39,8 +39,8 @@ export default function WordFilter({
         <div>
           <b>Word:</b>
         </div>
-        <SelectedUser
-          selectedUser={selectedOwner}
+        <SelectedWord
+          selectedWord={selectedWord}
           onClear={() => onSelectOwner('')}
           style={{ marginLeft: '0.7rem' }}
         />
