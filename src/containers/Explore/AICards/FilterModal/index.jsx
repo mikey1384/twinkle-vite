@@ -7,6 +7,9 @@ import ColorFilter from './ColorFilter';
 import QualityFilter from './QualityFilter';
 import WordFilter from './WordFilter';
 import { useKeyContext } from '~/contexts';
+import { isMobile } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator);
 
 FilterModal.propTypes = {
   onHide: PropTypes.func.isRequired,
@@ -47,7 +50,11 @@ export default function FilterModal({
   }, [selectedFilter]);
 
   return (
-    <Modal modalStyle={{ marginTop: 'CALC(50vh - 25rem)' }} onHide={handleHide}>
+    <Modal
+      closeWhenClickedOutside={!deviceIsMobile}
+      modalStyle={{ marginTop: 'CALC(50vh - 25rem)' }}
+      onHide={handleHide}
+    >
       <header>Search Cards</header>
       <main>
         {filterComponents.map((component, index) => {
