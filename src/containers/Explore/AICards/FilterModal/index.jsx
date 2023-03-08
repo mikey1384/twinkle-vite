@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import OwnerFilter from './OwnerFilter';
 import ColorFilter from './ColorFilter';
 import QualityFilter from './QualityFilter';
+import WordFilter from './WordFilter';
 import { useKeyContext } from '~/contexts';
 
 FilterModal.propTypes = {
@@ -24,6 +25,7 @@ export default function FilterModal({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const [dropdownShown, setDropdownShown] = useState(false);
+  const [selectedWord, setSelectedWord] = useState(filters.word || '');
   const [selectedOwner, setSelectedOwner] = useState(filters.owner);
   const [selectedColor, setSelectedColor] = useState(filters.color || 'any');
   const [selectedQuality, setSelectedQuality] = useState(
@@ -57,7 +59,7 @@ export default function FilterModal({
                 style={style}
                 selectedFilter={selectedFilter}
                 selectedOwner={selectedOwner}
-                onSelectOwner={(owner) => setSelectedOwner(owner)}
+                onSelectOwner={setSelectedOwner}
                 key={component}
               />
             );
@@ -82,6 +84,17 @@ export default function FilterModal({
                 onDropdownShown={setDropdownShown}
                 onSelectQuality={setSelectedQuality}
                 selectedFilter={selectedFilter}
+                key={component}
+              />
+            );
+          }
+          if (component === 'word') {
+            return (
+              <WordFilter
+                style={style}
+                selectedFilter={selectedFilter}
+                selectedWord={selectedWord}
+                onSelectWord={setSelectedWord}
                 key={component}
               />
             );
