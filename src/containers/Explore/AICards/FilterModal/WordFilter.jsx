@@ -61,11 +61,7 @@ export default function WordFilter({
           onChange={handleSearch}
           value={searchText}
           searchResults={searchedWords}
-          renderItemLabel={(item) => (
-            <span>
-              {item.username} <small>{`(${item.realName})`}</small>
-            </span>
-          )}
+          renderItemLabel={(word) => word}
           onClickOutSide={() => {
             setSearchText('');
             setSearchedWords([]);
