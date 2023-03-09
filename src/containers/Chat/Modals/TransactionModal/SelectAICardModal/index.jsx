@@ -85,10 +85,10 @@ export default function SelectAICardModal({
 
   const isFiltered = useMemo(() => {
     return (
-      (filters?.color || filters?.quality) &&
+      (filters?.color || filters?.quality || filters?.word) &&
       !(filters?.color === 'any' && filters?.quality === 'any')
     );
-  }, [filters?.color, filters?.quality]);
+  }, [filters?.color, filters?.quality, filters?.word]);
 
   const cards = cardIds
     .map((cardId) => cardObj[cardId])
