@@ -157,6 +157,7 @@ export default function SelectAICardModal({
             partnerId={partner.id}
             partnerName={partner.username}
             quality={filters.quality}
+            word={filters.word}
             selectedCardIds={selectedCardIds}
             successColor={successColor}
           />

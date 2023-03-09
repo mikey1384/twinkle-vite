@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import ColorFilter from './ColorFilter';
 import QualityFilter from './QualityFilter';
+import WordFilter from './WordFilter';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
@@ -50,6 +51,10 @@ export default function FilterPanel({
           onSelectColor={handleSelectColor}
           onDropdownShown={onDropdownShown}
         />
+        <WordFilter
+          selectedWord={filters.word}
+          onSelectWord={handleSelectWord}
+        />
         <QualityFilter
           selectedQuality={filters.quality}
           onSelectQuality={handleSelectQuality}
@@ -70,6 +75,13 @@ export default function FilterPanel({
     onSetFilters((prevFilters) => ({
       ...prevFilters,
       quality
+    }));
+  }
+
+  function handleSelectWord(word) {
+    onSetFilters((prevFilters) => ({
+      ...prevFilters,
+      word
     }));
   }
 }
