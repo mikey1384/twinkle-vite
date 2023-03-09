@@ -20,7 +20,8 @@ Filtered.propTypes = {
   partnerId: PropTypes.number,
   partnerName: PropTypes.string,
   selectedCardIds: PropTypes.array,
-  successColor: PropTypes.string
+  successColor: PropTypes.string,
+  word: PropTypes.string
 };
 
 export default function Filtered({
@@ -37,7 +38,8 @@ export default function Filtered({
   partnerId,
   partnerName,
   selectedCardIds,
-  successColor
+  successColor,
+  word
 }) {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -63,7 +65,8 @@ export default function Filtered({
           filters: {
             owner: aiCardModalType === 'want' ? partnerName : myUsername,
             ...(!color || color === 'any' ? {} : { color }),
-            ...(!quality || quality === 'any' ? {} : { quality })
+            ...(!quality || quality === 'any' ? {} : { quality }),
+            ...(!word ? {} : { word })
           }
         });
         setCardIds(cards.map((card) => card.id));
@@ -79,7 +82,7 @@ export default function Filtered({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [color, quality]);
+  }, [color, quality, word]);
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
