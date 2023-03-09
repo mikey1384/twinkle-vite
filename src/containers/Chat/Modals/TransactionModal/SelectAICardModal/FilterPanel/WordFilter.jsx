@@ -32,14 +32,24 @@ export default function WordFilter({ selectedWord = '', onSelectWord }) {
         alignItems: 'center'
       }}
     >
-      <div className="label">Word</div>
-      <SelectedWord
-        selectedWord={selectedWord}
-        onClear={() => onSelectWord('')}
-        style={{ marginLeft: '0.7rem' }}
-      />
       <div
         style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
+        <div className="label">Word:</div>
+        <SelectedWord
+          selectedWord={selectedWord}
+          onClear={() => onSelectWord('')}
+          style={{ marginLeft: '0.7rem' }}
+        />
+      </div>
+      <div
+        style={{
+          paddingLeft: '10%',
+          paddingRight: '10%',
           marginTop: '0.5rem',
           position: 'relative'
         }}
