@@ -655,15 +655,15 @@ export default function Main({ currentPathId, onFileUpload }) {
       }
       return result;
     }
-    const onlineMembersArray = (currentChannel?.members || []).filter(
-      (member) => !!chatStatus[member.id]?.isOnline
+    const onlineMembersArray = (currentChannel?.onlineMemberIds || []).map(
+      (memberId) => chatStatus[memberId]
     );
     const result = {};
     for (let member of onlineMembersArray) {
       result[member.id] = member;
     }
     return result;
-  }, [chatStatus, currentChannel?.id, currentChannel?.members]);
+  }, [chatStatus, currentChannel?.id, currentChannel?.onlineMemberIds]);
 
   const handleCreateNewChannel = useCallback(
     async ({ userId, channelName, isClosed }) => {

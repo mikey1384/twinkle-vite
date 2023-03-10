@@ -61,46 +61,12 @@ function ChatInfo({
   }, [currentChannel]);
 
   const displayedChannelMembers = useMemo(() => {
-    const totalChannelMembers = currentChannel?.members || [];
     const me = { id: myId, username, profilePicUrl };
     let currentChannelOnlineMembersOtherThanMe = Object.values(
       currentChannelOnlineMembers
     ).filter((member) => !!member.id && member.id !== myId);
-    if (selectedChannelId !== GENERAL_CHAT_ID) {
-      const totalChannelMemberIds = totalChannelMembers.map(
-        (member) => member.id
-      );
-      currentChannelOnlineMembersOtherThanMe =
-        currentChannelOnlineMembersOtherThanMe.filter((member) =>
-          totalChannelMemberIds.includes(member.id)
-        );
-    }
-    const totalValidChannelMembers = totalChannelMembers.filter(
-      (member) => !!member.id
-    );
-    const currentlyOnlineIds = Object.keys(currentChannelOnlineMembers).map(
-      (memberId) => Number(memberId)
-    );
-    if (totalValidChannelMembers.length > 0) {
-      const offlineChannelMembers = totalValidChannelMembers.filter(
-        (member) =>
-          !currentlyOnlineIds.includes(member.id) && member.id !== myId
-      );
-      return [
-        me,
-        ...currentChannelOnlineMembersOtherThanMe,
-        ...offlineChannelMembers
-      ];
-    }
     return [me, ...currentChannelOnlineMembersOtherThanMe];
-  }, [
-    currentChannel?.members,
-    myId,
-    username,
-    profilePicUrl,
-    currentChannelOnlineMembers,
-    selectedChannelId
-  ]);
+  }, [myId, username, profilePicUrl, currentChannelOnlineMembers]);
 
   const numOnline = useMemo(() => {
     return Object.keys(currentChannelOnlineMembers).length;

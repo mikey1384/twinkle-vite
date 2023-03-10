@@ -666,7 +666,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
             ({ membersOnline }) => {
               const members = Object.values(membersOnline);
               const onlineMemberIds = members.map((member) => member.id);
-              onSetOnlineMembers(onlineMemberIds);
+              onSetOnlineMembers({
+                channelId: selectedChannelId,
+                memberIds: onlineMemberIds
+              });
               for (let member of members) {
                 onSetOnlineUserData(member);
               }
