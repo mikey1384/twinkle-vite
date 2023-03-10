@@ -790,12 +790,6 @@ export default function ChatActions(dispatch) {
         onlineMemberIds: memberIds
       });
     },
-    onSetOnlineUserData(profile) {
-      return dispatch({
-        type: 'SET_ONLINE_USER_DATA',
-        profile
-      });
-    },
     onSetSubchannel({ channelId, subchannel }) {
       return dispatch({
         type: 'SET_SUBCHANNEL',

@@ -2160,14 +2160,6 @@ export default function ChatReducer(state, action) {
         }
       };
     }
-    case 'SET_ONLINE_USER_DATA':
-      return {
-        ...state,
-        chatStatus: {
-          ...state.chatStatus,
-          [action.profile.id]: action.profile
-        }
-      };
     case 'SET_MY_STREAM':
       return {
         ...state,

@@ -646,24 +646,14 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [selectedChannelId]);
 
   const currentChannelOnlineMembers = useMemo(() => {
-    if (currentChannel?.id === GENERAL_CHAT_ID) {
-      const result = {};
-      for (let member of Object.values(chatStatus)) {
-        if (member?.isOnline) {
-          result[member.id] = member;
-        }
-      }
-      return result;
-    }
-    const onlineMembersArray = (currentChannel?.onlineMemberIds || []).map(
-      (memberId) => chatStatus[memberId]
-    );
     const result = {};
-    for (let member of onlineMembersArray) {
-      result[member.id] = member;
+    for (let member of Object.values(chatStatus)) {
+      if (member?.isOnline) {
+        result[member.id] = member;
+      }
     }
     return result;
-  }, [chatStatus, currentChannel?.id, currentChannel?.onlineMemberIds]);
+  }, [chatStatus]);
 
   const handleCreateNewChannel = useCallback(
     async ({ userId, channelName, isClosed }) => {
