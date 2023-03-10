@@ -185,9 +185,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     (v) => v.actions.onSetMembersOnCall
   );
   const onSetMyStream = useChatContext((v) => v.actions.onSetMyStream);
-  const onSetOnlineUserData = useChatContext(
-    (v) => v.actions.onSetOnlineUserData
-  );
   const onSetOnlineMembers = useChatContext(
     (v) => v.actions.onSetOnlineMembers
   );
@@ -670,9 +667,6 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
                 channelId: selectedChannelId,
                 memberIds: onlineMemberIds
               });
-              for (let member of members) {
-                onSetOnlineUserData(member);
-              }
             }
           );
           if (!currentChannelIsAccessible) {
