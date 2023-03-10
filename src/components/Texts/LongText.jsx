@@ -9,6 +9,7 @@ import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 
 const readMoreLabel = localize('readMore');
@@ -113,56 +114,61 @@ export default function LongText({
   }, [cleanString, fullText, text, isOverflown]);
 
   return (
-    <div style={{ minWidth: '100%', width: 0, ...style }} className={className}>
-      <span
-        ref={ContainerRef}
-        style={{
-          lineHeight,
-          width: '100%',
-          ...(fullText
-            ? {}
-            : {
-                overflow: 'hidden',
-                display: '-webkit-box',
-                WebkitLineClamp: maxLines,
-                WebkitBoxOrient: 'vertical'
-              })
-        }}
-        className={css`
-          a {
-            color: ${Color[
-              isStatusMsg ? statusMsgLinkColor : linkColor
-            ]()}!important;
-          }
-        `}
-      >
-        {innerHTML}
-      </span>
+    <ErrorBoundary componentPath="components/Texts/LongText">
       <div
-        style={{
-          height: readMoreHeightFixed ? '2rem' : 'auto',
-          display: 'flex',
-          alignItems: 'center'
-        }}
+        style={{ minWidth: '100%', width: 0, ...style }}
+        className={className}
       >
-        {!fullText && isOverflown && (
-          <a
-            style={{
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              color: readMoreColor || Color[linkColor](),
-              display: 'inline',
-              paddingTop: '1rem'
-            }}
-            onClick={() => {
-              setFullText(true);
-              fullTextRef.current = true;
-            }}
-          >
-            {readMoreLabel}
-          </a>
-        )}
+        <span
+          ref={ContainerRef}
+          style={{
+            lineHeight,
+            width: '100%',
+            ...(fullText
+              ? {}
+              : {
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: maxLines,
+                  WebkitBoxOrient: 'vertical'
+                })
+          }}
+          className={css`
+            a {
+              color: ${Color[
+                isStatusMsg ? statusMsgLinkColor : linkColor
+              ]()}!important;
+            }
+          `}
+        >
+          {innerHTML}
+        </span>
+        <div
+          style={{
+            height: readMoreHeightFixed ? '2rem' : 'auto',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          {!fullText && isOverflown && (
+            <a
+              style={{
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                color: readMoreColor || Color[linkColor](),
+                display: 'inline',
+                paddingTop: '1rem'
+              }}
+              onClick={() => {
+                setFullText(true);
+                fullTextRef.current = true;
+              }}
+            >
+              {readMoreLabel}
+            </a>
+          )}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
