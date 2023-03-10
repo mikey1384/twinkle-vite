@@ -2147,9 +2147,17 @@ export default function ChatReducer(state, action) {
       for (const memberId in action.onlineMemberIds) {
         newChatStatus[memberId] = state.chatStatus[memberId];
       }
+      const prevChannelObj = state.channelsObj[action.channelId];
       return {
         ...state,
-        chatStatus: newChatStatus
+        chatStatus: newChatStatus,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            onlineMemberIds: action.onlineMemberIds
+          }
+        }
       };
     }
     case 'SET_ONLINE_USER_DATA':

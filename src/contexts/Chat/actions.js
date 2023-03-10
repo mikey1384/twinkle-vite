@@ -783,10 +783,11 @@ export default function ChatActions(dispatch) {
         target
       });
     },
-    onSetOnlineMembers(onlineMemberIds) {
+    onSetOnlineMembers({ channelId, memberIds }) {
       return dispatch({
         type: 'SET_ONLINE_MEMBERS',
-        onlineMemberIds
+        channelId,
+        onlineMemberIds: memberIds
       });
     },
     onSetOnlineUserData(profile) {
