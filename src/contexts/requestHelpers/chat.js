@@ -972,10 +972,10 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async searchUserToInvite(text) {
+    async searchUserToInvite({ channelId, searchText }) {
       try {
         const { data } = await request.get(
-          `${URL}/chat/search/users?text=${text}`
+          `${URL}/chat/search/users?text=${searchText}&channelId=${channelId}`
         );
         return Promise.resolve(data);
       } catch (error) {

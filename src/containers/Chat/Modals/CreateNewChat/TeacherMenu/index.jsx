@@ -6,12 +6,14 @@ import ClassroomChatForm from './ClassroomChatForm';
 import RegularMenu from '../RegularMenu';
 
 TeacherMenu.propTypes = {
+  channelId: PropTypes.number,
   creatingChat: PropTypes.bool,
   onCreateRegularChat: PropTypes.func.isRequired,
   onHide: PropTypes.func.isRequired
 };
 
 export default function TeacherMenu({
+  channelId,
   creatingChat,
   onCreateRegularChat,
   onHide
@@ -32,6 +34,7 @@ export default function TeacherMenu({
       )}
       {section === 'classroom' && (
         <ClassroomChatForm
+          channelId={channelId}
           onBackClick={() => setSection('select')}
           onHide={onHide}
         />
