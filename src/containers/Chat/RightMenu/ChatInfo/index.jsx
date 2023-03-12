@@ -223,6 +223,7 @@ function ChatInfo({
         channelId={selectedChannelId}
         creatorId={currentChannel.creatorId}
         members={displayedChannelMembers}
+        theme={displayedThemeColor}
         onlineMemberObj={objectify(onlineChannelMembers)}
         loadMoreShown={currentChannel.membersLoadMoreButtonShown}
       />

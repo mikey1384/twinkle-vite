@@ -11,7 +11,8 @@ Members.propTypes = {
   creatorId: PropTypes.number,
   loadMoreShown: PropTypes.bool,
   members: PropTypes.array.isRequired,
-  onlineMemberObj: PropTypes.object.isRequired
+  onlineMemberObj: PropTypes.object.isRequired,
+  theme: PropTypes.string
 };
 
 function Members({
@@ -19,7 +20,8 @@ function Members({
   creatorId,
   loadMoreShown,
   members,
-  onlineMemberObj
+  onlineMemberObj,
+  theme
 }) {
   const channelOnCallId = useChatContext((v) => v.state.channelOnCall.id);
   const membersOnCallObj = useChatContext((v) => v.state.channelOnCall.members);
@@ -95,6 +97,7 @@ function Members({
         ))}
         {loadMoreShown && (
           <LoadMoreButton
+            theme={theme}
             onClick={() => console.log('loading more')}
             filled
             style={{
