@@ -2142,7 +2142,7 @@ export default function ChatReducer(state, action) {
               : {}
         }
       };
-    case 'SET_ONLINE_MEMBERS': {
+    case 'SET_ONLINE_USERS': {
       const newChatStatus = {};
       for (const memberId in action.onlineMemberIds) {
         newChatStatus[memberId] = state.chatStatus[memberId];
