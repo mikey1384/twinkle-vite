@@ -1032,6 +1032,9 @@ export default function ChatReducer(state, action) {
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
+            allMemberIds: state.channelsObj[
+              action.channelId
+            ].allMemberIds.filter((memberId) => memberId !== action.userId),
             loaded: false,
             members: (
               state.channelsObj[action.channelId]?.members || []
