@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import MemberListItem from './MemberListItem';
 import { useAppContext, useChatContext } from '~/contexts';
@@ -23,6 +23,7 @@ function Members({
   onlineMemberObj,
   theme
 }) {
+  const [loadingMore, setLoadingMore] = useState(false);
   const loadMoreChannelMembers = useAppContext(
     (v) => v.requestHelpers.loadMoreChannelMembers
   );
@@ -104,6 +105,7 @@ function Members({
         {loadMoreShown && (
           <LoadMoreButton
             theme={theme}
+            loading={loadingMore}
             onClick={handleLoadMore}
             filled
             style={{
@@ -119,6 +121,7 @@ function Members({
   );
 
   async function handleLoadMore() {
+    setLoadingMore(true);
     const { members, membersLoadMoreButtonShown } =
       await loadMoreChannelMembers({
         channelId,
@@ -129,6 +132,7 @@ function Members({
       members,
       loadMoreShown: membersLoadMoreButtonShown
     });
+    setLoadingMore(false);
   }
 }
 
