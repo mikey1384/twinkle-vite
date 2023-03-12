@@ -543,6 +543,18 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async loadMoreChannelMembers({ channelId, lastId }) {
+      try {
+        const {
+          data: { members, membersLoadMoreButtonShown }
+        } = await request.get(
+          `${URL}/chat/channel/members/more?channelId=${channelId}&lastId=${lastId}`
+        );
+        return Promise.resolve({ members, membersLoadMoreButtonShown });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadSubchannel({ channelId, subchannelId }) {
       try {
         const { data: subchannel } = await request.get(

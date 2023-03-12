@@ -1098,6 +1098,21 @@ export default function ChatReducer(state, action) {
         )
       };
     }
+    case 'LOAD_MORE_CHANNEL_MEMBERS': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            members: state.channelsObj[action.channelId].members.concat(
+              action.members
+            ),
+            membersLoadMoreButtonShown: action.loadMoreShown
+          }
+        }
+      };
+    }
     case 'LOAD_MORE_CHANNELS': {
       let loadMoreButton = false;
       if (action.channelType === 'home') {

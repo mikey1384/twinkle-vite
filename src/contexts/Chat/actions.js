@@ -284,6 +284,14 @@ export default function ChatActions(dispatch) {
         price
       });
     },
+    onLoadMoreChannelMembers({ channelId, members, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_MORE_CHANNEL_MEMBERS',
+        channelId,
+        members,
+        loadMoreShown
+      });
+    },
     onAddListedAICard(card) {
       return dispatch({
         type: 'ADD_LISTED_AI_CARD',
