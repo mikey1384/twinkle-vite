@@ -242,14 +242,6 @@ function Channel({
     userId
   ]);
 
-  const badgeWidth = useMemo(() => {
-    const numDigits = totalNumUnreads?.toString?.()?.length || 1;
-    if (numDigits === 1) {
-      return '2rem';
-    }
-    return `${Math.min(numDigits, 4)}.5rem`;
-  }, [totalNumUnreads]);
-
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Channels/Channel">
       <div
@@ -329,21 +321,19 @@ function Channel({
           {badgeShown && (
             <div
               style={{
-                background: Color.rose(),
+                background: Color.gold(),
                 display: 'flex',
                 color: '#fff',
                 fontWeight: 'bold',
                 fontSize: '1.5rem',
-                minWidth: badgeWidth,
+                minWidth: '2rem',
                 height: '2rem',
                 borderRadius: '1rem',
                 lineHeight: 1,
                 justifyContent: 'center',
                 alignItems: 'center'
               }}
-            >
-              {totalNumUnreads}
-            </div>
+            />
           )}
         </div>
       </div>
