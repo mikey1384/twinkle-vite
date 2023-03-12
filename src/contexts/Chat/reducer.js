@@ -2143,21 +2143,9 @@ export default function ChatReducer(state, action) {
         }
       };
     case 'SET_ONLINE_USERS': {
-      const newChatStatus = {};
-      for (const memberId in action.onlineMemberIds) {
-        newChatStatus[memberId] = state.chatStatus[memberId];
-      }
-      const prevChannelObj = state.channelsObj[action.channelId];
       return {
         ...state,
-        chatStatus: newChatStatus,
-        channelsObj: {
-          ...state.channelsObj,
-          [action.channelId]: {
-            ...prevChannelObj,
-            onlineMemberIds: action.onlineMemberIds
-          }
-        }
+        chatStatus: action.onlineUsers
       };
     }
     case 'SET_MY_STREAM':
