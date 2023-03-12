@@ -8,13 +8,13 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
 MemberListItem.propTypes = {
-  onlineMembers: PropTypes.object,
+  onlineMemberObj: PropTypes.object,
   creatorId: PropTypes.number,
   member: PropTypes.object,
   style: PropTypes.object
 };
 
-function MemberListItem({ onlineMembers, creatorId, member, style }) {
+function MemberListItem({ onlineMemberObj, creatorId, member, style }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const { username: memberName, profilePicUrl: memberProfilePicUrl } =
     useAppContext((v) => v.user.state.userObj[member.id] || {});
@@ -53,7 +53,7 @@ function MemberListItem({ onlineMembers, creatorId, member, style }) {
             profilePicUrl={
               memberProfilePicUrl || member.profilePicUrl || profilePicUrl
             }
-            online={!!onlineMembers[member.id]}
+            online={!!onlineMemberObj[member.id]}
             isAway={member.id === myId ? false : isAway}
             isBusy={member.id === myId ? false : isBusy}
             statusShown

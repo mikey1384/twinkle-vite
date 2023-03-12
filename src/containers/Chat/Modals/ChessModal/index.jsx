@@ -64,8 +64,8 @@ export default function ChessModal({
     (v) => v.myState
   );
   const rewindRequestId = useMemo(
-    () => currentChannel.gameState?.chess?.rewindRequestId,
-    [currentChannel]
+    () => currentChannel?.gameState?.chess?.rewindRequestId,
+    [currentChannel?.gameState]
   );
   const {
     warning: { color: warningColor },
