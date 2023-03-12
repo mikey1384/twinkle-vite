@@ -450,10 +450,18 @@ export default function ChatActions(dispatch) {
         wordsObj
       });
     },
-    onNotifyThatMemberLeftChannel(data) {
+    onNotifyThatMemberLeftChannel({
+      channelId,
+      userId,
+      username,
+      profilePicUrl
+    }) {
       return dispatch({
         type: 'NOTIFY_MEMBER_LEFT',
-        data
+        channelId,
+        userId,
+        username,
+        profilePicUrl
       });
     },
     onOpenNewChatTab({ user, recipient }) {

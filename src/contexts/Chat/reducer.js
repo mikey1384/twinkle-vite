@@ -1502,33 +1502,36 @@ export default function ChatReducer(state, action) {
       const messageId = uuidv1();
       const leaveMessage = 'left the chat group';
       const timeStamp = Math.floor(Date.now() / 1000);
-      return state.channelsObj[action.data.channelId]
+      return state.channelsObj[action.channelId]
         ? {
             ...state,
             channelsObj: {
               ...state.channelsObj,
-              [action.data.channelId]: {
-                ...state.channelsObj[action.data.channelId],
+              [action.channelId]: {
+                ...state.channelsObj[action.channelId],
+                allMemberIds: state.channelsObj[
+                  action.channelId
+                ].allMemberIds.filter((memberId) => memberId !== action.userId),
                 messageIds: [messageId].concat(
-                  state.channelsObj[action.data.channelId].messageIds
+                  state.channelsObj[action.channelId].messageIds
                 ),
                 messagesObj: {
-                  ...state.channelsObj[action.data.channelId].messagesObj,
+                  ...state.channelsObj[action.channelId].messagesObj,
                   [messageId]: {
                     id: messageId,
-                    channelId: action.data.channelId,
+                    channelId: action.channelId,
                     content: leaveMessage,
                     timeStamp: timeStamp,
                     isNotification: true,
-                    username: action.data.username,
-                    userId: action.data.userId,
-                    profilePicUrl: action.data.profilePicUrl
+                    username: action.username,
+                    userId: action.userId,
+                    profilePicUrl: action.profilePicUrl
                   }
                 },
                 numUnreads: 0,
                 members: (
-                  state.channelsObj[action.data.channelId]?.members || []
-                ).filter((member) => member.id !== action.data.userId)
+                  state.channelsObj[action.channelId]?.members || []
+                ).filter((member) => member.id !== action.userId)
               }
             }
           }
