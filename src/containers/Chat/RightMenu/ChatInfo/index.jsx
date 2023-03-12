@@ -45,8 +45,15 @@ function ChatInfo({
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
 
   const allMemberIds = useMemo(() => {
+    if (currentChannel?.twoPeople) {
+      return currentChannel?.members?.map((member) => member.id);
+    }
     return currentChannel?.allMemberIds;
-  }, [currentChannel?.allMemberIds]);
+  }, [
+    currentChannel?.allMemberIds,
+    currentChannel?.members,
+    currentChannel?.twoPeople
+  ]);
 
   const callOngoing = useMemo(
     () =>
@@ -76,7 +83,7 @@ function ChatInfo({
   }, [myId, username, profilePicUrl, currentOnlineUsers, allMemberIds]);
 
   const displayedChannelMembers = useMemo(() => {
-    const offlineChannelMembers = currentChannel?.members?.filter(
+    const offlineChannelMembers = (currentChannel?.members || []).filter(
       (member) => !onlineChannelMembers?.map((m) => m.id)?.includes(member.id)
     );
     return [...onlineChannelMembers, ...offlineChannelMembers];
