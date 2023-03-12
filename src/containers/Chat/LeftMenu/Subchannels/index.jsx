@@ -29,7 +29,7 @@ export default function SubChannels({
 }) {
   const currentChannelNumUnreads = useMemo(() => {
     return currentChannel?.numUnreads || 0;
-  }, [currentChannel]);
+  }, [currentChannel?.numUnreads]);
   const onUpdateLastSubchannelPath = useChatContext(
     (v) => v.actions.onUpdateLastSubchannelPath
   );

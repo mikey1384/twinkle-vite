@@ -8,6 +8,7 @@ import { useChatContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/io';
 import { v1 as uuidv1 } from 'uuid';
 import { GENERAL_CHAT_ID } from '~/constants/defaultValues';
+import { objectify } from '~/helpers';
 import CallButton from './CallButton';
 import localize from '~/constants/localize';
 
@@ -42,6 +43,10 @@ function ChatInfo({
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
 
+  const allMemberIds = useMemo(() => {
+    return currentChannel?.allMemberIds;
+  }, [currentChannel?.allMemberIds]);
+
   const callOngoing = useMemo(
     () =>
       selectedChannelId === channelOnCall.id && !!channelOnCall.members[myId],
@@ -53,28 +58,25 @@ function ChatInfo({
   }, [channelOnCall.callReceived, channelOnCall.imCalling]);
 
   const voiceChatButtonShown = useMemo(() => {
-    if (currentChannel.twoPeople) {
-      if (currentChannel.members?.length !== 2) return false;
-      return !!currentChannel.id;
+    if (currentChannel?.twoPeople) {
+      if (currentChannel?.members?.length !== 2) return false;
+      return !!currentChannel?.id;
     }
     return false;
-  }, [currentChannel]);
+  }, [currentChannel?.twoPeople, currentChannel?.members, currentChannel?.id]);
 
-  const displayedChannelMembers = useMemo(() => {
+  const onlineChannelMembers = useMemo(() => {
     const me = { id: myId, username, profilePicUrl };
-    let currentChannelOnlineMembersOtherThanMe = Object.values(
-      currentOnlineUsers
-    ).filter((member) => !!member.id && member.id !== myId);
-    return [me, ...currentChannelOnlineMembersOtherThanMe];
-  }, [myId, username, profilePicUrl, currentOnlineUsers]);
-
-  const numOnline = useMemo(() => {
-    return Object.keys(currentOnlineUsers).length;
-  }, [currentOnlineUsers]);
+    let onlineMembersOtherThanMe = Object.values(currentOnlineUsers).filter(
+      (member) =>
+        !!member.id && member.id !== myId && allMemberIds?.includes(member.id)
+    );
+    return [me, ...onlineMembersOtherThanMe];
+  }, [myId, username, profilePicUrl, currentOnlineUsers, allMemberIds]);
 
   const handleCall = useCallback(async () => {
     if (!channelOnCall.id) {
-      if (numOnline === 1) {
+      if (onlineChannelMembers.length === 1) {
         const messageId = uuidv1();
         const partnerName = currentChannel?.members
           ?.map((member) => member.username)
@@ -145,7 +147,7 @@ function ChatInfo({
     calling,
     channelOnCall?.id,
     myId,
-    numOnline,
+    onlineChannelMembers?.length,
     profilePicUrl,
     selectedChannelId,
     username
@@ -183,7 +185,7 @@ function ChatInfo({
             channelId={currentChannel.id}
             channelName={channelName}
           />
-          {displayedChannelMembers.length > 2 && (
+          {onlineChannelMembers.length > 2 && (
             <div
               className={css`
                 color: ${Color[displayedThemeColor]()};
@@ -194,9 +196,9 @@ function ChatInfo({
                 }
               `}
             >
-              {numOnline}
+              {onlineChannelMembers.length}
               {currentChannel.id !== GENERAL_CHAT_ID &&
-                '/' + displayedChannelMembers.length}{' '}
+                '/' + allMemberIds.length}{' '}
               {onlineLabel}
             </div>
           )}
@@ -205,8 +207,8 @@ function ChatInfo({
       <Members
         channelId={selectedChannelId}
         creatorId={currentChannel.creatorId}
-        members={displayedChannelMembers}
-        onlineMembers={currentOnlineUsers}
+        members={currentChannel.members}
+        onlineMemberObj={objectify(onlineChannelMembers)}
       />
     </>
   );

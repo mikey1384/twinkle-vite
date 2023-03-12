@@ -9,10 +9,10 @@ Members.propTypes = {
   channelId: PropTypes.number,
   creatorId: PropTypes.number,
   members: PropTypes.array.isRequired,
-  onlineMembers: PropTypes.object.isRequired
+  onlineMemberObj: PropTypes.object.isRequired
 };
 
-function Members({ channelId, creatorId, members, onlineMembers }) {
+function Members({ channelId, creatorId, members, onlineMemberObj }) {
   const channelOnCallId = useChatContext((v) => v.state.channelOnCall.id);
   const membersOnCallObj = useChatContext((v) => v.state.channelOnCall.members);
   const membersOnCall = useMemo(
@@ -57,7 +57,7 @@ function Members({ channelId, creatorId, members, onlineMembers }) {
               <MemberListItem
                 key={`oncall-member-${member.id}`}
                 creatorId={creatorId}
-                onlineMembers={onlineMembers}
+                onlineMemberObj={onlineMemberObj}
                 member={member}
               />
             ))}
@@ -79,7 +79,7 @@ function Members({ channelId, creatorId, members, onlineMembers }) {
           <MemberListItem
             key={`member-${member.id}`}
             creatorId={creatorId}
-            onlineMembers={onlineMembers}
+            onlineMemberObj={onlineMemberObj}
             member={member}
             style={{
               paddingBottom: index === members.length - 1 ? '15rem' : '1rem'
