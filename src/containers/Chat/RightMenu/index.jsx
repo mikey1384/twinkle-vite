@@ -13,7 +13,7 @@ RightMenu.propTypes = {
   channelName: PropTypes.string,
   channelOnCall: PropTypes.object,
   currentChannel: PropTypes.object,
-  currentChannelOnlineMembers: PropTypes.object,
+  currentOnlineUsers: PropTypes.object,
   displayedThemeColor: PropTypes.string,
   selectedChannelId: PropTypes.number
 };
@@ -22,7 +22,7 @@ function RightMenu({
   channelName,
   channelOnCall,
   currentChannel,
-  currentChannelOnlineMembers,
+  currentOnlineUsers,
   displayedThemeColor,
   selectedChannelId
 }) {
@@ -66,7 +66,7 @@ function RightMenu({
             channelName={channelName}
             channelOnCall={channelOnCall}
             currentChannel={currentChannel}
-            currentChannelOnlineMembers={currentChannelOnlineMembers}
+            currentOnlineUsers={currentOnlineUsers}
             displayedThemeColor={displayedThemeColor}
             selectedChannelId={selectedChannelId}
           />

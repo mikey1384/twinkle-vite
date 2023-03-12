@@ -645,11 +645,11 @@ export default function Main({ currentPathId, onFileUpload }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId]);
 
-  const currentChannelOnlineMembers = useMemo(() => {
+  const currentOnlineUsers = useMemo(() => {
     const result = {};
-    for (let member of Object.values(chatStatus)) {
-      if (member?.isOnline) {
-        result[member.id] = member;
+    for (let user of Object.values(chatStatus)) {
+      if (user?.isOnline) {
+        result[user.id] = user;
       }
     }
     return result;
@@ -864,7 +864,7 @@ export default function Main({ currentPathId, onFileUpload }) {
                 channelOnCall={channelOnCall}
                 channelName={currentChannelName}
                 currentChannel={currentChannel}
-                currentChannelOnlineMembers={currentChannelOnlineMembers}
+                currentOnlineUsers={currentOnlineUsers}
                 displayedThemeColor={displayedThemeColor}
                 selectedChannelId={selectedChannelId}
               />
