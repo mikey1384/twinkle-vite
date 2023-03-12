@@ -77,10 +77,20 @@ function ChatInfo({
     const me = { id: myId, username, profilePicUrl };
     let onlineMembersOtherThanMe = Object.values(currentOnlineUsers).filter(
       (member) =>
-        !!member.id && member.id !== myId && allMemberIds?.includes(member.id)
+        !!member.id &&
+        member.id !== myId &&
+        (currentChannel?.id === GENERAL_CHAT_ID ||
+          allMemberIds?.includes(member.id))
     );
     return [me, ...onlineMembersOtherThanMe];
-  }, [myId, username, profilePicUrl, currentOnlineUsers, allMemberIds]);
+  }, [
+    myId,
+    username,
+    profilePicUrl,
+    currentOnlineUsers,
+    allMemberIds,
+    currentChannel?.id
+  ]);
 
   const displayedChannelMembers = useMemo(() => {
     const offlineChannelMembers = (currentChannel?.members || []).filter(
