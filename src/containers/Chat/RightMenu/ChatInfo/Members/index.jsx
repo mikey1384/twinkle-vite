@@ -4,15 +4,23 @@ import MemberListItem from './MemberListItem';
 import { useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 
 Members.propTypes = {
   channelId: PropTypes.number,
   creatorId: PropTypes.number,
+  loadMoreShown: PropTypes.bool,
   members: PropTypes.array.isRequired,
   onlineMemberObj: PropTypes.object.isRequired
 };
 
-function Members({ channelId, creatorId, members, onlineMemberObj }) {
+function Members({
+  channelId,
+  creatorId,
+  loadMoreShown,
+  members,
+  onlineMemberObj
+}) {
   const channelOnCallId = useChatContext((v) => v.state.channelOnCall.id);
   const membersOnCallObj = useChatContext((v) => v.state.channelOnCall.members);
   const membersOnCall = useMemo(
@@ -38,7 +46,9 @@ function Members({ channelId, creatorId, members, onlineMemberObj }) {
 
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/Members/index">
-      <div style={{ width: '100%' }}>
+      <div
+        style={{ width: '100%', paddingBottom: loadMoreShown ? 0 : '10rem' }}
+      >
         {callIsOnGoing && (
           <div
             style={{
@@ -75,17 +85,26 @@ function Members({ channelId, creatorId, members, onlineMemberObj }) {
             others
           </div>
         )}
-        {membersNotOnCall.map((member, index) => (
+        {membersNotOnCall.map((member) => (
           <MemberListItem
             key={`member-${member.id}`}
             creatorId={creatorId}
             onlineMemberObj={onlineMemberObj}
             member={member}
-            style={{
-              paddingBottom: index === members.length - 1 ? '15rem' : '1rem'
-            }}
           />
         ))}
+        {loadMoreShown && (
+          <LoadMoreButton
+            onClick={() => console.log('loading more')}
+            filled
+            style={{
+              marginTop: '2rem',
+              width: '100%',
+              borderRadius: 0,
+              border: 0
+            }}
+          />
+        )}
       </div>
     </ErrorBoundary>
   );
