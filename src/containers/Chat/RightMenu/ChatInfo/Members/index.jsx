@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MemberListItem from './MemberListItem';
-import { useChatContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -23,8 +23,14 @@ function Members({
   onlineMemberObj,
   theme
 }) {
+  const loadMoreChannelMembers = useAppContext(
+    (v) => v.requestHelpers.loadMoreChannelMembers
+  );
   const channelOnCallId = useChatContext((v) => v.state.channelOnCall.id);
   const membersOnCallObj = useChatContext((v) => v.state.channelOnCall.members);
+  const onLoadMoreChannelMembers = useChatContext(
+    (v) => v.actions.onLoadMoreChannelMembers
+  );
   const membersOnCall = useMemo(
     () =>
       channelOnCallId === channelId
@@ -98,7 +104,7 @@ function Members({
         {loadMoreShown && (
           <LoadMoreButton
             theme={theme}
-            onClick={() => console.log('loading more')}
+            onClick={handleLoadMore}
             filled
             style={{
               marginTop: '2rem',
@@ -111,6 +117,19 @@ function Members({
       </div>
     </ErrorBoundary>
   );
+
+  async function handleLoadMore() {
+    const { members, membersLoadMoreButtonShown } =
+      await loadMoreChannelMembers({
+        channelId,
+        lastId: membersNotOnCall[membersNotOnCall.length - 1].id
+      });
+    onLoadMoreChannelMembers({
+      channelId,
+      members,
+      loadMoreShown: membersLoadMoreButtonShown
+    });
+  }
 }
 
 export default memo(Members);
