@@ -1008,6 +1008,11 @@ export default function ChatReducer(state, action) {
           ...state.channelsObj,
           [state.selectedChannelId]: {
             ...state.channelsObj[state.selectedChannelId],
+            allMemberIds: state.channelsObj[
+              state.selectedChannelId
+            ].allMemberIds.concat(
+              action.data.selectedUsers.map((user) => user.id)
+            ),
             messageIds: [action.data.message.id].concat(
               state.channelsObj[state.selectedChannelId].messageIds
             ),
