@@ -185,9 +185,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     (v) => v.actions.onSetMembersOnCall
   );
   const onSetMyStream = useChatContext((v) => v.actions.onSetMyStream);
-  const onSetOnlineMembers = useChatContext(
-    (v) => v.actions.onSetOnlineMembers
-  );
+  const onSetOnlineUsers = useChatContext((v) => v.actions.onSetOnlineUsers);
   const onPostAICardFeed = useChatContext((v) => v.actions.onPostAICardFeed);
   const onSetPeerStreams = useChatContext((v) => v.actions.onSetPeerStreams);
   const onShowIncoming = useChatContext((v) => v.actions.onShowIncoming);
@@ -661,11 +659,11 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
             'check_online_users',
             selectedChannelId,
             ({ onlineUsers }) => {
-              const members = Object.values(onlineUsers);
-              const onlineMemberIds = members.map((member) => member.id);
-              onSetOnlineMembers({
+              const users = Object.values(onlineUsers);
+              const onlineUserIds = users.map((user) => user.id);
+              onSetOnlineUsers({
                 channelId: selectedChannelId,
-                memberIds: onlineMemberIds
+                memberIds: onlineUserIds
               });
             }
           );
