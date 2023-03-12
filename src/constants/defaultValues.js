@@ -1,7 +1,7 @@
 import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 
-export const clientVersion = '1.7.35';
+export const clientVersion = '1.7.36';
 export const defaultChatSubject = 'Welcome!';
 export const defaultContentState = {
   isEditing: false,
