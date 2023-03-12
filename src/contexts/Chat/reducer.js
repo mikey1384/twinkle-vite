@@ -1711,6 +1711,12 @@ export default function ChatReducer(state, action) {
           ...state.channelsObj,
           [action.message.channelId]: {
             ...prevChannelObj,
+            allMemberIds: action.newMembers
+              ? [
+                  ...prevChannelObj.allMemberIds,
+                  ...action.newMembers.map((m) => m.id)
+                ]
+              : prevChannelObj.allMemberIds,
             messageIds,
             messagesObj,
             lastChessMoveViewerId,
@@ -1801,6 +1807,16 @@ export default function ChatReducer(state, action) {
                 ...action.channel,
                 ...(prevChannelObj?.members && action.newMembers.length > 0
                   ? {
+                      allMemberIds: prevChannelObj.allMemberIds.concat(
+                        action.newMembers
+                          .map((member) => member.id)
+                          .filter(
+                            (memberId) =>
+                              !(prevChannelObj.allMemberIds || []).includes(
+                                memberId
+                              )
+                          )
+                      ),
                       members: [
                         ...prevChannelObj?.members,
                         ...action.newMembers.filter(
