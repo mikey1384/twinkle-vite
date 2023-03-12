@@ -74,6 +74,13 @@ function ChatInfo({
     return [me, ...onlineMembersOtherThanMe];
   }, [myId, username, profilePicUrl, currentOnlineUsers, allMemberIds]);
 
+  const displayedChannelMembers = useMemo(() => {
+    const offlineChannelMembers = currentChannel?.members?.filter(
+      (member) => !onlineChannelMembers?.map((m) => m.id)?.includes(member.id)
+    );
+    return [...onlineChannelMembers, ...offlineChannelMembers];
+  }, [currentChannel?.members, onlineChannelMembers]);
+
   const handleCall = useCallback(async () => {
     if (!channelOnCall.id) {
       if (onlineChannelMembers.length === 1) {
@@ -207,7 +214,7 @@ function ChatInfo({
       <Members
         channelId={selectedChannelId}
         creatorId={currentChannel.creatorId}
-        members={currentChannel.members}
+        members={displayedChannelMembers}
         onlineMemberObj={objectify(onlineChannelMembers)}
       />
     </>
