@@ -457,6 +457,7 @@ export default function ChatReducer(state, action) {
           ...state.channelsObj,
           [channelId]: {
             id: channelId,
+            allMemberIds: action.data.members.map((member) => member.id),
             channelName: action.data.message.channelName,
             messageIds: [startMessageId],
             messagesObj: {
