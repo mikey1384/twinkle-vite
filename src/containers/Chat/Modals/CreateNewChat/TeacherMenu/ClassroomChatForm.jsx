@@ -19,11 +19,12 @@ const nameLabel = localize('name');
 const newClassroomLabel = localize('newClassroomChat');
 
 ClassroomChatForm.propTypes = {
+  channelId: PropTypes.number.isRequired,
   onBackClick: PropTypes.func,
   onHide: PropTypes.func.isRequired
 };
 
-export default function ClassroomChatForm({ onBackClick, onHide }) {
+export default function ClassroomChatForm({ channelId, onBackClick, onHide }) {
   const navigate = useNavigate();
   const createNewChat = useAppContext((v) => v.requestHelpers.createNewChat);
   const searchUserToInvite = useAppContext(
@@ -79,7 +80,9 @@ export default function ClassroomChatForm({ onBackClick, onHide }) {
           itemLabel="username"
           searchResults={userSearchResults}
           filter={(result) => result.id !== userId}
-          onSearch={handleSearchUserToInvite}
+          onSearch={(text) =>
+            handleSearchUserToInvite({ channelId, searchText: text })
+          }
           onClear={onClearUserSearchResults}
           channelName={channelName}
           onAddItem={onAddUser}
@@ -116,8 +119,8 @@ export default function ClassroomChatForm({ onBackClick, onHide }) {
     </ErrorBoundary>
   );
 
-  async function handleSearchUserToInvite(text) {
-    const data = await searchUserToInvite(text);
+  async function handleSearchUserToInvite({ channelId, searchText }) {
+    const data = await searchUserToInvite({ channelId, searchText });
     onSearchUserToInvite(data);
   }
 

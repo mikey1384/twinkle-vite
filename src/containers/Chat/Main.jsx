@@ -832,6 +832,7 @@ export default function Main({ currentPathId, onFileUpload }) {
             >
               {createNewChatModalShown && (
                 <CreateNewChat
+                  channelId={selectedChannelId}
                   creatingChat={creatingChat}
                   onHide={() => setCreateNewChatModalShown(false)}
                   onDone={handleCreateNewChannel}

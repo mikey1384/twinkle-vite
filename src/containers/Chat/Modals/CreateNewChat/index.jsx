@@ -6,18 +6,25 @@ import { useKeyContext } from '~/contexts';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 CreateNewChatModal.propTypes = {
+  channelId: PropTypes.number,
   creatingChat: PropTypes.bool,
   onDone: PropTypes.func.isRequired,
   onHide: PropTypes.func.isRequired
 };
 
-export default function CreateNewChatModal({ creatingChat, onHide, onDone }) {
+export default function CreateNewChatModal({
+  channelId,
+  creatingChat,
+  onHide,
+  onDone
+}) {
   const { authLevel } = useKeyContext((v) => v.myState);
   return (
     <ErrorBoundary componentPath="Chat/Modals/CreateNewChat">
       <Modal onHide={onHide}>
         {authLevel > 2 ? (
           <TeacherMenu
+            channelId={channelId}
             creatingChat={creatingChat}
             onCreateRegularChat={onDone}
             onHide={onHide}

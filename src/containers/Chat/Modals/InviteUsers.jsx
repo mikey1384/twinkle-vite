@@ -51,7 +51,12 @@ export default function InviteUsersModal({
           itemLabel="username"
           searchResults={userSearchResults}
           filter={(result) => !currentMembersUID.includes(result.id)}
-          onSearch={handleSearchUserToInvite}
+          onSearch={(text) =>
+            handleSearchUserToInvite({
+              channelId: selectedChannelId,
+              searchText: text
+            })
+          }
           onClear={onClearUserSearchResults}
           onAddItem={onAddUser}
           onRemoveItem={onRemoveUser}
@@ -112,8 +117,8 @@ export default function InviteUsersModal({
     }
   }
 
-  async function handleSearchUserToInvite(text) {
-    const data = await searchUserToInvite(text);
+  async function handleSearchUserToInvite({ channelId, searchText }) {
+    const data = await searchUserToInvite({ channelId, searchText });
     onSearchUserToInvite(data);
   }
 }
