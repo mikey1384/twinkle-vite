@@ -658,10 +658,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           });
           onInitChat(data);
           socket.emit(
-            'check_online_members',
+            'check_online_users',
             selectedChannelId,
-            ({ membersOnline }) => {
-              const members = Object.values(membersOnline);
+            ({ onlineUsers }) => {
+              const members = Object.values(onlineUsers);
               const onlineMemberIds = members.map((member) => member.id);
               onSetOnlineMembers({
                 channelId: selectedChannelId,
@@ -1090,12 +1090,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
 
   useEffect(() => {
     socket.emit(
-      'check_online_members',
+      'check_online_users',
       selectedChannelId,
-      ({ callData, membersOnline }) => {
+      ({ callData, onlineUsers }) => {
         if (callData && Object.keys(membersOnCall.current).length === 0) {
           const membersHash = {};
-          for (let member of Object.values(membersOnline).filter(
+          for (let member of Object.values(onlineUsers).filter(
             (member) => !!callData.peers[member.socketId]
           )) {
             membersHash[member.id] = member.socketId;
