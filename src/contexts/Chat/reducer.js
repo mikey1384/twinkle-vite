@@ -892,9 +892,11 @@ export default function ChatReducer(state, action) {
         ...action.data.channelsObj
       };
       const newSubchannelObj = {};
+      const newCurrentChannel =
+        action.data.channelsObj?.[action.data.currentChannelId];
       if (action.data.currentSubchannelId && action.data.channelsObj) {
         for (let subchannel of Object.values(
-          action.data.channelsObj?.[action.data.currentChannelId]?.subchannelObj
+          newCurrentChannel?.subchannelObj
         )) {
           newSubchannelObj[subchannel.id] = {
             ...(state.channelsObj[action.data.currentChannelId]
@@ -905,6 +907,10 @@ export default function ChatReducer(state, action) {
       }
       newChannelsObj[action.data.currentChannelId] = {
         ...action.data.channelsObj[action.data.currentChannelId],
+        allMemberIds:
+          newCurrentChannel?.allMemberIds ||
+          action.data.channelsObj[action.data.currentChannelId].allMemberIds ||
+          [],
         messagesLoadMoreButton,
         messageIds: newMessageIds,
         messagesObj: newMessagesObj,
