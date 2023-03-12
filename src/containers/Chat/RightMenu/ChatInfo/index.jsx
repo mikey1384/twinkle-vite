@@ -84,7 +84,7 @@ function ChatInfo({
 
   const handleCall = useCallback(async () => {
     if (!channelOnCall.id) {
-      if (onlineChannelMembers.length === 1) {
+      if (onlineChannelMembers?.length === 1) {
         const messageId = uuidv1();
         const partnerName = currentChannel?.members
           ?.map((member) => member.username)
