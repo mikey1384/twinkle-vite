@@ -659,11 +659,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
             'check_online_users',
             selectedChannelId,
             ({ onlineUsers }) => {
-              const users = Object.values(onlineUsers);
-              const onlineUserIds = users.map((user) => user.id);
               onSetOnlineUsers({
                 channelId: selectedChannelId,
-                memberIds: onlineUserIds
+                onlineUsers
               });
             }
           );
