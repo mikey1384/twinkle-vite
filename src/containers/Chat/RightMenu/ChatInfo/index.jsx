@@ -18,7 +18,7 @@ ChatInfo.propTypes = {
   channelName: PropTypes.string,
   channelOnCall: PropTypes.object,
   currentChannel: PropTypes.object.isRequired,
-  currentChannelOnlineMembers: PropTypes.object.isRequired,
+  currentOnlineUsers: PropTypes.object.isRequired,
   displayedThemeColor: PropTypes.string,
   selectedChannelId: PropTypes.number
 };
@@ -27,7 +27,7 @@ function ChatInfo({
   selectedChannelId,
   channelOnCall,
   currentChannel,
-  currentChannelOnlineMembers,
+  currentOnlineUsers,
   displayedThemeColor,
   channelName
 }) {
@@ -63,14 +63,14 @@ function ChatInfo({
   const displayedChannelMembers = useMemo(() => {
     const me = { id: myId, username, profilePicUrl };
     let currentChannelOnlineMembersOtherThanMe = Object.values(
-      currentChannelOnlineMembers
+      currentOnlineUsers
     ).filter((member) => !!member.id && member.id !== myId);
     return [me, ...currentChannelOnlineMembersOtherThanMe];
-  }, [myId, username, profilePicUrl, currentChannelOnlineMembers]);
+  }, [myId, username, profilePicUrl, currentOnlineUsers]);
 
   const numOnline = useMemo(() => {
-    return Object.keys(currentChannelOnlineMembers).length;
-  }, [currentChannelOnlineMembers]);
+    return Object.keys(currentOnlineUsers).length;
+  }, [currentOnlineUsers]);
 
   const handleCall = useCallback(async () => {
     if (!channelOnCall.id) {
@@ -206,7 +206,7 @@ function ChatInfo({
         channelId={selectedChannelId}
         creatorId={currentChannel.creatorId}
         members={displayedChannelMembers}
-        onlineMembers={currentChannelOnlineMembers}
+        onlineMembers={currentOnlineUsers}
       />
     </>
   );
