@@ -9,6 +9,7 @@ import { socket } from '~/constants/io';
 import { v1 as uuidv1 } from 'uuid';
 import { GENERAL_CHAT_ID } from '~/constants/defaultValues';
 import { objectify } from '~/helpers';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import CallButton from './CallButton';
 import localize from '~/constants/localize';
 
@@ -161,7 +162,7 @@ function ChatInfo({
   ]);
 
   return (
-    <>
+    <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo">
       <div
         className={css`
           width: 100%;
@@ -217,7 +218,7 @@ function ChatInfo({
         members={displayedChannelMembers}
         onlineMemberObj={objectify(onlineChannelMembers)}
       />
-    </>
+    </ErrorBoundary>
   );
 }
 
