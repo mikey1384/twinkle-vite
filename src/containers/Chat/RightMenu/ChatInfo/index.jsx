@@ -224,6 +224,7 @@ function ChatInfo({
         creatorId={currentChannel.creatorId}
         members={displayedChannelMembers}
         onlineMemberObj={objectify(onlineChannelMembers)}
+        loadMoreShown={currentChannel.membersLoadMoreButtonShown}
       />
     </ErrorBoundary>
   );
