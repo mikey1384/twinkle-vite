@@ -129,7 +129,7 @@ function Members({
       });
     onLoadMoreChannelMembers({
       channelId,
-      members,
+      members: members.filter((member) => member.id !== creatorId),
       loadMoreShown: membersLoadMoreButtonShown
     });
     setLoadingMore(false);
