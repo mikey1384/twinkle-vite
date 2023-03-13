@@ -69,6 +69,7 @@ export default function Subchannel({
               marginLeft: '1rem',
               display: 'flex',
               justifyContent: 'space-between',
+              alignItems: 'center',
               flexGrow: 1
             }}
           >
@@ -81,9 +82,9 @@ export default function Subchannel({
                   color: '#fff',
                   fontWeight: 'bold',
                   fontSize: '1.5rem',
-                  minWidth: '2rem',
-                  height: '2rem',
-                  borderRadius: '1rem',
+                  minWidth: '1.5rem',
+                  height: '1.5rem',
+                  borderRadius: '50%',
                   lineHeight: 1,
                   justifyContent: 'center',
                   alignItems: 'center'
