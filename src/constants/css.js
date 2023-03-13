@@ -183,6 +183,16 @@ export function Theme(color = 'logoBlue') {
           gold: 'brownOrange'
         }[color] || color
     },
+    chatUnread: {
+      color:
+        {
+          green: 'lightYellowGreen',
+          rose: 'cranberry',
+          red: 'redOrange',
+          black: 'darkerGray',
+          vantaBlack: 'black'
+        }[color] || color
+    },
     content: {
       color:
         {

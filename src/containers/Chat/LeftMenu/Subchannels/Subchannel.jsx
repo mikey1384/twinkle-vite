@@ -22,6 +22,9 @@ export default function Subchannel({
   onUpdateLastSubchannelPath
 }) {
   const { userId } = useKeyContext((v) => v.myState);
+  const {
+    warning: { chatUnread: chatUnreadColor }
+  } = useKeyContext((v) => v.theme);
   const subchannelSelected = useMemo(
     () => subchannelPath === subchannel.path,
     [subchannel.path, subchannelPath]
@@ -73,7 +76,7 @@ export default function Subchannel({
             {badgeShown && (
               <div
                 style={{
-                  background: Color.gold(),
+                  background: Color[chatUnreadColor](),
                   display: 'flex',
                   color: '#fff',
                   fontWeight: 'bold',
