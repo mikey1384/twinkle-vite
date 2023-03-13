@@ -42,6 +42,9 @@ function Channel({
   } = useContext(LocalContext);
   const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
+  const {
+    chatUnread: { color: chatUnreadColor }
+  } = useKeyContext((v) => v.theme);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
@@ -321,7 +324,7 @@ function Channel({
           {badgeShown && (
             <div
               style={{
-                background: Color.gold(),
+                background: Color[chatUnreadColor](),
                 display: 'flex',
                 color: '#fff',
                 fontWeight: 'bold',
