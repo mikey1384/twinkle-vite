@@ -324,7 +324,7 @@ function Channel({
           {badgeShown && (
             <div
               style={{
-                background: Color[chatUnreadColor](),
+                background: Color[chatUnreadColor]?.(),
                 display: 'flex',
                 color: '#fff',
                 fontWeight: 'bold',
