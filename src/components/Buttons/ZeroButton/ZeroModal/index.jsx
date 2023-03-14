@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import Greeting from './Greeting';
+import ZeroMessage from './ZeroMessage';
 import Menu from './Menu';
 import { useContentState } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
@@ -32,7 +32,7 @@ export default function ZeroModal({
     >
       <header>Zero</header>
       <main>
-        <Greeting />
+        <ZeroMessage />
         <Menu />
         <div>{content}</div>
       </main>
