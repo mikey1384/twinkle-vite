@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Greeting from './Greeting';
+import Menu from './Menu';
 import { useKeyContext } from '~/contexts';
 
 ZeroModal.propTypes = {
@@ -18,6 +19,7 @@ export default function ZeroModal({ onHide, modalOverModal }) {
       <header>Zero</header>
       <main>
         <Greeting />
+        <Menu />
       </main>
       <footer>
         <Button color={doneColor} onClick={onHide}>
