@@ -404,7 +404,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return Promise.resolve(data);
       } catch (error) {
         if (error.response.status === 401) {
-          return Promise.reject('Incorrect username/password combination');
+          return Promise.reject('Wrong username/password combination');
         }
         return handleError(error);
       }
