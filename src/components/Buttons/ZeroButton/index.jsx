@@ -20,7 +20,7 @@ export default function ZeroButton({ style }) {
           ...style
         }}
         className={css`
-          opacity: 0.5;
+          opacity: ${modalShown ? 1 : 0.5};
           &:hover {
             opacity: 1;
           }
