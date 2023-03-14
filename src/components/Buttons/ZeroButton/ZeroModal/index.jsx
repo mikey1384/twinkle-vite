@@ -5,6 +5,8 @@ import ZeroMessage from './ZeroMessage';
 import Menu from './Menu';
 import { useContentState } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
+import { mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 
 ZeroModal.propTypes = {
   contentId: PropTypes.number,
@@ -32,9 +34,37 @@ export default function ZeroModal({
     >
       <header>Zero</header>
       <main>
-        <ZeroMessage />
-        <Menu />
-        <div>{content}</div>
+        <div
+          className={css`
+            display: flex;
+            > .menu {
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              width: 60%;
+            }
+            > .content {
+              width: 40%;
+            }
+            @media (max-width: ${mobileMaxWidth}) {
+              flex-direction: column;
+              > .menu {
+                width: 100%;
+              }
+              > .content {
+                margin-top: 3rem;
+                width: 100%;
+              }
+            }
+          `}
+        >
+          <div className="menu">
+            <ZeroMessage />
+            <Menu />
+          </div>
+          <div className="content">{content}</div>
+        </div>
       </main>
       <footer>
         <Button color={doneColor} onClick={onHide}>
