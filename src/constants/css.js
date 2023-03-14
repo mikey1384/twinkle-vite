@@ -190,7 +190,8 @@ export function Theme(color = 'logoBlue') {
           rose: 'cranberry',
           red: 'redOrange',
           black: 'darkerGray',
-          vantaBlack: 'black'
+          vantaBlack: 'black',
+          gold: 'logoBlue'
         }[color] || color
     },
     content: {
