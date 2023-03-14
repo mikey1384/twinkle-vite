@@ -572,7 +572,13 @@ export default function Body({
                       uploader={uploader}
                     />
                   )}
-                  {!!userId && <ZeroButton style={{ marginLeft: '1rem' }} />}
+                  {!!userId && contentType === 'comment' && (
+                    <ZeroButton
+                      contentId={contentId}
+                      contentType={contentType}
+                      style={{ marginLeft: '1rem' }}
+                    />
+                  )}
                 </div>
               )}
             </div>

@@ -6,10 +6,17 @@ import Menu from './Menu';
 import { useKeyContext } from '~/contexts';
 
 ZeroModal.propTypes = {
+  contentId: PropTypes.number,
+  contentType: PropTypes.string,
   onHide: PropTypes.func.isRequired,
   modalOverModal: PropTypes.bool
 };
-export default function ZeroModal({ onHide, modalOverModal }) {
+export default function ZeroModal({
+  contentId,
+  contentType,
+  onHide,
+  modalOverModal
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -20,6 +27,10 @@ export default function ZeroModal({ onHide, modalOverModal }) {
       <main>
         <Greeting />
         <Menu />
+        <div>
+          {contentId}
+          {contentType}
+        </div>
       </main>
       <footer>
         <Button color={doneColor} onClick={onHide}>
