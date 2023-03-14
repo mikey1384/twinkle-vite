@@ -24,7 +24,12 @@ export default function ZeroModal({
   const { content } = useContentState({ contentId, contentType });
 
   return (
-    <Modal large modalOverModal={modalOverModal} onHide={onHide}>
+    <Modal
+      closeWhenClickedOutside={false}
+      large
+      modalOverModal={modalOverModal}
+      onHide={onHide}
+    >
       <header>Zero</header>
       <main>
         <Greeting />
