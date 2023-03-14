@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Greeting from './Greeting';
 import Menu from './Menu';
+import { useContentState } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 
 ZeroModal.propTypes = {
@@ -20,6 +21,7 @@ export default function ZeroModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const { content } = useContentState({ contentId, contentType });
 
   return (
     <Modal modalOverModal={modalOverModal} onHide={onHide}>
@@ -27,10 +29,7 @@ export default function ZeroModal({
       <main>
         <Greeting />
         <Menu />
-        <div>
-          {contentId}
-          {contentType}
-        </div>
+        <div>{content}</div>
       </main>
       <footer>
         <Button color={doneColor} onClick={onHide}>
