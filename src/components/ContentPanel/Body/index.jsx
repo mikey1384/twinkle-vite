@@ -14,6 +14,7 @@ import XPRewardInterface from '~/components/XPRewardInterface';
 import RecommendationInterface from '~/components/RecommendationInterface';
 import RewardStatus from '~/components/RewardStatus';
 import RewardButton from '~/components/Buttons/RewardButton';
+import ZeroButton from '~/components/Buttons/ZeroButton';
 import RecommendationStatus from '~/components/RecommendationStatus';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
@@ -571,6 +572,7 @@ export default function Body({
                       uploader={uploader}
                     />
                   )}
+                  {!!userId && <ZeroButton style={{ marginLeft: '1rem' }} />}
                 </div>
               )}
             </div>
