@@ -7,10 +7,12 @@ import { css } from '@emotion/css';
 import ZeroModal from './ZeroModal';
 
 ZeroButton.propTypes = {
+  contentId: PropTypes.number,
+  contentType: PropTypes.string,
   style: PropTypes.object
 };
 
-export default function ZeroButton({ style }) {
+export default function ZeroButton({ contentId, contentType, style }) {
   const [modalShown, setModalShown] = useState(false);
   return (
     <ErrorBoundary componentPath="Buttons/ZeroButton">
@@ -30,7 +32,13 @@ export default function ZeroButton({ style }) {
       >
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       </Button>
-      {modalShown && <ZeroModal onHide={() => setModalShown(false)} />}
+      {modalShown && (
+        <ZeroModal
+          contentId={contentId}
+          contentType={contentType}
+          onHide={() => setModalShown(false)}
+        />
+      )}
     </ErrorBoundary>
   );
 }
