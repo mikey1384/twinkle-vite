@@ -1,14 +1,17 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import zero from './zero.png';
 import { css } from '@emotion/css';
+import ZeroModal from './ZeroModal';
 
 ZeroButton.propTypes = {
   style: PropTypes.object
 };
 
 export default function ZeroButton({ style }) {
+  const [modalShown, setModalShown] = useState(false);
   return (
     <ErrorBoundary componentPath="Buttons/ZeroButton">
       <Button
@@ -23,10 +26,11 @@ export default function ZeroButton({ style }) {
           }
         `}
         skeuomorphic
-        onClick={() => console.log('clicked')}
+        onClick={() => setModalShown(true)}
       >
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       </Button>
+      {modalShown && <ZeroModal onHide={() => setModalShown(false)} />}
     </ErrorBoundary>
   );
 }
