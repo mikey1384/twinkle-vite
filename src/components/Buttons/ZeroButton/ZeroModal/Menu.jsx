@@ -10,7 +10,7 @@ export default function Menu({ content }) {
   const getZerosReview = useAppContext((v) => v.requestHelpers.getZerosReview);
   return (
     <div>
-      <Button skeuomorphic onClick={() => handleButtonClick('easier')}>
+      <Button skeuomorphic onClick={() => handleButtonClick('easy')}>
         Make it easier to understand
       </Button>
       <Button
