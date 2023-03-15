@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ZeroMessage from './ZeroMessage';
 import Menu from './Menu';
 import Loading from '~/components/Loading';
+import ProgressBar from '~/components/ProgressBar';
 import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -24,7 +25,16 @@ export default function ZeroModal({
   content
 }) {
   const [loadingType, setLoadingType] = useState(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [response, setResponse] = useState(null);
+  useEffect(() => {
+    if (loadingType && loadingProgress < 95) {
+      setTimeout(() => {
+        setLoadingProgress((loadingProgress) => loadingProgress + 1);
+      }, 200);
+    }
+  }, [loadingProgress, loadingType]);
+
   const { content: contentFetchedFromContext } = useContentState({
     contentId,
     contentType
@@ -82,12 +92,10 @@ export default function ZeroModal({
               loadingType={loadingType}
               onSetLoadingType={setLoadingType}
               onSetResponse={setResponse}
+              onSetLoadingProgress={setLoadingProgress}
             />
           </div>
           <div className="content">
-            {loadingType ? (
-              <Loading style={{ position: 'absolute', top: '5rem' }} />
-            ) : null}
             {response ? (
               <p
                 style={{
@@ -109,6 +117,12 @@ export default function ZeroModal({
                 WebkitBoxOrient: 'vertical'
               }}
             >{`"${content || contentFetchedFromContext}"`}</p>
+            {loadingType ? (
+              <div style={{ position: 'absolute', top: '5rem', width: '70%' }}>
+                <Loading style={{ height: '5rem' }} />
+                <ProgressBar progress={loadingProgress} />
+              </div>
+            ) : null}
           </div>
         </div>
       </main>
