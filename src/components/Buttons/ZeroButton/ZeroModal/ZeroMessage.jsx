@@ -3,7 +3,7 @@ import ZeroPic from './ZeroPic';
 import UsernameText from '~/components/Texts/UsernameText';
 import { useKeyContext } from '~/contexts';
 
-export default function Greeting() {
+export default function ZeroMessage() {
   const { username } = useKeyContext((v) => v.myState);
   return (
     <div>
