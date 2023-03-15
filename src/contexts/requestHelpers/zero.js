@@ -5,12 +5,10 @@ export default function zeroRequestHelpers({ auth, handleError }) {
   return {
     async getZerosReview({ type, content }) {
       try {
-        const { data } = await request.post(
-          `${URL}/zero/review`,
-          { type, content },
-          auth()
-        );
-        return Promise.resolve(data);
+        const {
+          data: { response }
+        } = await request.post(`${URL}/zero/review`, { type, content }, auth());
+        return Promise.resolve(response);
       } catch (error) {
         return handleError(error);
       }
