@@ -20,7 +20,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled,
@@ -572,13 +572,15 @@ export default function Body({
                       uploader={uploader}
                     />
                   )}
-                  {!!userId && contentType === 'comment' && (
-                    <ZeroButton
-                      contentId={contentId}
-                      contentType={contentType}
-                      style={{ marginLeft: '1rem' }}
-                    />
-                  )}
+                  {!!userId &&
+                    contentType === 'comment' &&
+                    !stringIsEmpty(contentObj.content) && (
+                      <ZeroButton
+                        contentId={contentId}
+                        contentType={contentType}
+                        style={{ marginLeft: '1rem' }}
+                      />
+                    )}
                 </div>
               )}
             </div>
