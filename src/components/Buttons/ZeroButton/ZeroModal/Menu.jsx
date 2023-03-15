@@ -1,7 +1,12 @@
+import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
 
-export default function Menu() {
+Menu.propTypes = {
+  content: PropTypes.string.isRequired
+};
+
+export default function Menu({ content }) {
   const getZerosReview = useAppContext((v) => v.requestHelpers.getZerosReview);
   return (
     <div>
@@ -26,8 +31,7 @@ export default function Menu() {
   );
 
   async function handleButtonClick(type) {
-    console.log(type);
-    const data = await getZerosReview(type);
+    const data = await getZerosReview({ type, content });
     console.log(data);
   }
 }
