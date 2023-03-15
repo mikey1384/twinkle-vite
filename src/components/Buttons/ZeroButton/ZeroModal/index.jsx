@@ -31,7 +31,7 @@ export default function ZeroModal({
     if (loadingType && loadingProgress < 95) {
       setTimeout(() => {
         setLoadingProgress((loadingProgress) => loadingProgress + 1);
-      }, 200);
+      }, 250);
     }
   }, [loadingProgress, loadingType]);
 
