@@ -28,10 +28,10 @@ export default function ZeroModal({
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [response, setResponse] = useState(null);
   useEffect(() => {
-    if (loadingType && loadingProgress < 95) {
+    if (loadingType && loadingProgress < 99) {
       setTimeout(() => {
         setLoadingProgress((loadingProgress) => loadingProgress + 1);
-      }, 250);
+      }, 300);
     }
   }, [loadingProgress, loadingType]);
 
