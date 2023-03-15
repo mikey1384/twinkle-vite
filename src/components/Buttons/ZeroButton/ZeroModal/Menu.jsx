@@ -7,6 +7,7 @@ Menu.propTypes = {
   loadingType: PropTypes.string,
   onSetLoadingType: PropTypes.func.isRequired,
   onSetResponse: PropTypes.func.isRequired,
+  onSetLoadingProgress: PropTypes.func.isRequired,
   style: PropTypes.object
 };
 
@@ -15,6 +16,7 @@ export default function Menu({
   style,
   loadingType,
   onSetLoadingType,
+  onSetLoadingProgress,
   onSetResponse
 }) {
   const getZerosReview = useAppContext((v) => v.requestHelpers.getZerosReview);
@@ -51,5 +53,6 @@ export default function Menu({
     const response = await getZerosReview({ type, content });
     onSetLoadingType(null);
     onSetResponse(response);
+    onSetLoadingProgress(0);
   }
 }
