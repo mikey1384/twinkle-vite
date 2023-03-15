@@ -9,10 +9,11 @@ import ZeroModal from './ZeroModal';
 ZeroButton.propTypes = {
   contentId: PropTypes.number,
   contentType: PropTypes.string,
-  style: PropTypes.object
+  style: PropTypes.object,
+  content: PropTypes.string
 };
 
-export default function ZeroButton({ contentId, contentType, style }) {
+export default function ZeroButton({ contentId, contentType, content, style }) {
   const [modalShown, setModalShown] = useState(false);
   return (
     <ErrorBoundary componentPath="Buttons/ZeroButton">
@@ -37,6 +38,7 @@ export default function ZeroButton({ contentId, contentType, style }) {
           contentId={contentId}
           contentType={contentType}
           onHide={() => setModalShown(false)}
+          content={content}
         />
       )}
     </ErrorBoundary>

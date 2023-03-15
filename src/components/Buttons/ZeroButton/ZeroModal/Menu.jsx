@@ -1,27 +1,36 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import { useAppContext } from '~/contexts';
 
 Menu.propTypes = {
-  content: PropTypes.string.isRequired
+  content: PropTypes.string.isRequired,
+  style: PropTypes.object
 };
 
-export default function Menu({ content }) {
+export default function Menu({ content, style }) {
   const getZerosReview = useAppContext((v) => v.requestHelpers.getZerosReview);
+  const [loadingType, setLoadingType] = useState(null);
   return (
-    <div>
-      <Button skeuomorphic onClick={() => handleButtonClick('easy')}>
+    <div style={style}>
+      <Button
+        skeuomorphic
+        loading={loadingType === 'easy'}
+        onClick={() => handleButtonClick('easy')}
+      >
         Make it easier to understand
       </Button>
       <Button
         skeuomorphic
+        loading={loadingType === 'natural'}
         style={{ marginTop: '1rem' }}
         onClick={() => handleButtonClick('natural')}
       >
-        Make it sound more natural
+        Rewrite this in your own way
       </Button>
       <Button
         skeuomorphic
+        loading={loadingType === 'grammar'}
         style={{ marginTop: '1rem' }}
         onClick={() => handleButtonClick('grammar')}
       >
@@ -31,7 +40,9 @@ export default function Menu({ content }) {
   );
 
   async function handleButtonClick(type) {
+    setLoadingType(type);
     const data = await getZerosReview({ type, content });
     console.log(data);
+    setLoadingType(null);
   }
 }
