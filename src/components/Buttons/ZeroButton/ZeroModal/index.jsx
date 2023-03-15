@@ -100,7 +100,16 @@ export default function ZeroModal({
                 {response}
               </p>
             ) : null}
-            <p>{`"${content || contentFetchedFromContext}"`}</p>
+            <p
+              style={{
+                width: '100%',
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'break-word',
+                wordBreak: 'break-word',
+                display: '-webkit-box',
+                WebkitBoxOrient: 'vertical'
+              }}
+            >{`"${content || contentFetchedFromContext}"`}</p>
           </div>
         </div>
       </main>
