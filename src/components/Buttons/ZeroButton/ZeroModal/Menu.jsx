@@ -33,7 +33,7 @@ export default function Menu({
         style={{ marginTop: '1rem' }}
         onClick={() => handleButtonClick('natural')}
       >
-        Rewrite this in your own way
+        Rewrite it in your own way
       </Button>
       <Button
         skeuomorphic
