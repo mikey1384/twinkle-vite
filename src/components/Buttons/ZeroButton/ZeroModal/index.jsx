@@ -102,7 +102,6 @@ export default function ZeroModal({
             ) : null}
             <p
               style={{
-                width: '100%',
                 whiteSpace: 'pre-wrap',
                 overflowWrap: 'break-word',
                 wordBreak: 'break-word',
