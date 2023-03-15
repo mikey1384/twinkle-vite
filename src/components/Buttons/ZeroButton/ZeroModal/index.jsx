@@ -4,7 +4,6 @@ import Button from '~/components/Button';
 import ZeroMessage from './ZeroMessage';
 import Menu from './Menu';
 import { useContentState } from '~/helpers/hooks';
-import { useKeyContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -20,9 +19,6 @@ export default function ZeroModal({
   onHide,
   modalOverModal
 }) {
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
   const { content } = useContentState({ contentId, contentType });
 
   return (
@@ -61,14 +57,14 @@ export default function ZeroModal({
         >
           <div className="menu">
             <ZeroMessage />
-            <Menu />
+            <Menu content={content} />
           </div>
           <div className="content">{content}</div>
         </div>
       </main>
       <footer>
-        <Button color={doneColor} onClick={onHide}>
-          OK
+        <Button transparent onClick={onHide}>
+          Close
         </Button>
       </footer>
     </Modal>
