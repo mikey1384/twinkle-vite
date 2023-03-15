@@ -11,15 +11,20 @@ ZeroModal.propTypes = {
   contentId: PropTypes.number,
   contentType: PropTypes.string,
   onHide: PropTypes.func.isRequired,
-  modalOverModal: PropTypes.bool
+  modalOverModal: PropTypes.bool,
+  content: PropTypes.string
 };
 export default function ZeroModal({
   contentId,
   contentType,
   onHide,
-  modalOverModal
+  modalOverModal,
+  content
 }) {
-  const { content } = useContentState({ contentId, contentType });
+  const { content: contentFetchedFromContext } = useContentState({
+    contentId,
+    contentType
+  });
 
   return (
     <Modal
@@ -32,16 +37,20 @@ export default function ZeroModal({
       <main>
         <div
           className={css`
+            width: 100%;
             display: flex;
             > .menu {
               display: flex;
               flex-direction: column;
-              justify-content: center;
+              justify-content: flex-start;
               align-items: center;
-              width: 60%;
+              flex-grow: 1;
             }
             > .content {
-              width: 40%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              width: 50%;
             }
             @media (max-width: ${mobileMaxWidth}) {
               flex-direction: column;
@@ -57,9 +66,14 @@ export default function ZeroModal({
         >
           <div className="menu">
             <ZeroMessage />
-            <Menu content={content} />
+            <Menu
+              style={{ marginTop: '2rem' }}
+              content={content || contentFetchedFromContext}
+            />
           </div>
-          <div className="content">{content}</div>
+          <div className="content">
+            {`"${content || contentFetchedFromContext}"`}
+          </div>
         </div>
       </main>
       <footer>
