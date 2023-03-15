@@ -88,11 +88,10 @@ export default function ZeroModal({
             {loadingType ? (
               <Loading style={{ position: 'absolute', top: '5rem' }} />
             ) : null}
-            <p>{`"${content || contentFetchedFromContext}"`}</p>
             {response ? (
               <p
                 style={{
-                  marginTop: '3rem',
+                  marginBottom: '3rem',
                   fontWeight: 'bold',
                   fontFamily: 'Roboto mono, monospace',
                   color: Color.logoBlue()
@@ -101,6 +100,7 @@ export default function ZeroModal({
                 {response}
               </p>
             ) : null}
+            <p>{`"${content || contentFetchedFromContext}"`}</p>
           </div>
         </div>
       </main>
