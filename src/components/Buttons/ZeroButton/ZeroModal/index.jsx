@@ -6,6 +6,7 @@ import ZeroMessage from './ZeroMessage';
 import Menu from './Menu';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
+import LongText from '~/components/Texts/LongText';
 import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -97,16 +98,16 @@ export default function ZeroModal({
           </div>
           <div className="content">
             {response ? (
-              <p
+              <LongText
                 style={{
                   marginBottom: '3rem',
                   fontWeight: 'bold',
                   fontFamily: 'Roboto mono, monospace',
-                  color: Color.logoBlue()
+                  color: Color.darkerGray()
                 }}
               >
                 {response}
-              </p>
+              </LongText>
             ) : null}
             <p
               style={{
