@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 
 Menu.propTypes = {
@@ -24,21 +25,32 @@ export default function Menu({
     <div style={style}>
       <Button
         skeuomorphic
+        color="logoBlue"
         loading={loadingType === 'easy'}
         onClick={() => handleButtonClick('easy')}
       >
         Make it easier to understand
       </Button>
+      <div style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
+        Rewrite it in
+        <Button skeuomorphic>your own style</Button>
+        using
+        <Button skeuomorphic>Simple</Button>
+        words.
+        <Button
+          skeuomorphic
+          color="green"
+          loading={loadingType === 'natural'}
+          style={{ marginLeft: '1rem' }}
+          onClick={() => handleButtonClick('natural')}
+        >
+          <Icon icon="play" />
+          <span style={{ marginLeft: '0.5rem' }}>Run</span>
+        </Button>
+      </div>
       <Button
         skeuomorphic
-        loading={loadingType === 'natural'}
-        style={{ marginTop: '1rem' }}
-        onClick={() => handleButtonClick('natural')}
-      >
-        Rewrite it in your own way
-      </Button>
-      <Button
-        skeuomorphic
+        color="pink"
         loading={loadingType === 'grammar'}
         style={{ marginTop: '1rem' }}
         onClick={() => handleButtonClick('grammar')}
