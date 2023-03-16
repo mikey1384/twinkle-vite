@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
+import Icon from '~/components/Icon';
+import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
 Menu.propTypes = {
@@ -54,23 +56,26 @@ export default function Menu({
     <div style={style}>
       <Button
         skeuomorphic
-        color="darkBlue"
+        color="strongPink"
         loading={loadingType === 'easy'}
         onClick={() => handleButtonClick('easy')}
       >
-        Make it easy to understand
+        <Icon icon="play" />
+        <span style={{ marginLeft: '0.7rem' }}>Make it easy to understand</span>
       </Button>
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginTop: '1rem'
+          marginTop: '2rem'
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            Rewrite it
+            <div>
+              <b style={{ color: Color.green() }}>Rewrite</b> it
+            </div>
             <DropdownButton
               icon="chevron-down"
               skeuomorphic
@@ -139,23 +144,27 @@ export default function Menu({
         <div>
           <Button
             skeuomorphic
-            color="darkBlue"
+            color="green"
             loading={loadingType === 'rewrite'}
             style={{ marginLeft: '1rem' }}
             onClick={() => handleButtonClick('rewrite')}
           >
-            Go
+            <Icon icon="play" />
+            <span style={{ marginLeft: '0.7rem' }}>Rewrite</span>
           </Button>
         </div>
       </div>
       <Button
         skeuomorphic
-        color="darkBlue"
+        color="logoBlue"
         loading={loadingType === 'grammar'}
-        style={{ marginTop: '1rem' }}
+        style={{ marginTop: '2rem' }}
         onClick={() => handleButtonClick('grammar')}
       >
-        Grammar (Remember, Zero is not always right)
+        <Icon icon="play" />
+        <span style={{ marginLeft: '0.7rem' }}>
+          Grammar (Remember, Zero is not always right)
+        </span>
       </Button>
     </div>
   );
