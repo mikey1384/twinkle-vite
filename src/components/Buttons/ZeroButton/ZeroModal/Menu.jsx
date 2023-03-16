@@ -29,7 +29,7 @@ export default function Menu({
       return { label: `In your own style`, key: 'zero' };
     }
     if (selectedStyle === 'kpop') {
-      return { label: 'In KPOP style', key: 'kpop' };
+      return { label: 'In KPOP lyrics style', key: 'kpop' };
     }
     if (selectedStyle === 'shakespear') {
       return { label: 'In Shakespearean style', key: 'shakespear' };
