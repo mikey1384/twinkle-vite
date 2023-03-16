@@ -4,6 +4,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import zero from './zero.png';
 import { css } from '@emotion/css';
+import { desktopMinWidth } from '~/constants/css';
 import ZeroModal from './ZeroModal';
 
 ZeroButton.propTypes = {
@@ -24,8 +25,10 @@ export default function ZeroButton({ contentId, contentType, content, style }) {
         }}
         className={css`
           opacity: ${modalShown ? 1 : 0.5};
-          &:hover {
-            opacity: 1;
+          @media (min-width: ${desktopMinWidth}) {
+            &:hover {
+              opacity: 1;
+            }
           }
         `}
         skeuomorphic
