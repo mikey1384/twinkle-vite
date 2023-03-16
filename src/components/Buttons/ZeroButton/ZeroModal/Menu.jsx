@@ -31,8 +31,25 @@ export default function Menu({
     if (selectedStyle === 'kpop') {
       return { label: 'In KPOP style', key: 'kpop' };
     }
+    if (selectedStyle === 'shakespear') {
+      return { label: 'In Shakespearean style', key: 'shakespear' };
+    }
+    if (selectedStyle === 'poem') {
+      return { label: 'In the form of a poem', key: 'poem' };
+    }
+    if (selectedStyle === 'rap') {
+      return { label: 'In rap style', key: 'rap' };
+    }
     return {};
   }, [selectedStyle]);
+  const command = useMemo(() => {
+    if (selectedStyle === 'zero') {
+      return `Please make the text above sound more natural using ${wordLevel} words.`;
+    } else {
+      return `Please rewrite the text above ${styleLabelObj.label.toLowerCase()} using ${wordLevel} words.`;
+    }
+  }, [selectedStyle, wordLevel, styleLabelObj]);
+
   return (
     <div style={style}>
       <Button
@@ -43,61 +60,93 @@ export default function Menu({
       >
         Make it easy to understand
       </Button>
-      <div style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
-        Rewrite it
-        <DropdownButton
-          icon="chevron-down"
-          skeuomorphic
-          text={styleLabelObj.label}
-          color="darkerGray"
-          listStyle={{ minWidth: '30ch' }}
-          menuProps={[
-            {
-              label: `Zero's own style`,
-              key: 'zero',
-              onClick: () => setSelectedStyle('zero')
-            },
-            {
-              label: `KPOP style`,
-              key: 'kpop',
-              onClick: () => setSelectedStyle('kpop')
-            }
-          ].filter((v) => v.key !== styleLabelObj.key)}
-        />
-        using
-        <DropdownButton
-          icon="chevron-down"
-          skeuomorphic
-          text={wordLevel}
-          color="darkerGray"
-          listStyle={{ minWidth: '25ch' }}
-          menuProps={[
-            {
-              label: 'Easy',
-              onClick: () => setWordLevel('easy')
-            },
-            {
-              label: 'Intermediate',
-              onClick: () => setWordLevel('intermediate')
-            },
-            {
-              label: 'Hard',
-              onClick: () => setWordLevel('hard')
-            }
-          ].filter(
-            (v) => v.label.toLowerCase() !== wordLevel.toLocaleLowerCase()
-          )}
-        />
-        words
-        <Button
-          skeuomorphic
-          color="darkBlue"
-          loading={loadingType === 'natural'}
-          style={{ marginLeft: '1rem' }}
-          onClick={() => handleButtonClick('natural')}
-        >
-          Go
-        </Button>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: '1rem'
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            Rewrite it
+            <DropdownButton
+              icon="chevron-down"
+              skeuomorphic
+              text={styleLabelObj.label}
+              color="darkerGray"
+              listStyle={{ minWidth: '30ch' }}
+              menuProps={[
+                {
+                  label: `Zero's own style`,
+                  key: 'zero',
+                  onClick: () => setSelectedStyle('zero')
+                },
+                {
+                  label: `Shakespearean style`,
+                  key: 'shakespear',
+                  onClick: () => setSelectedStyle('shakespear')
+                },
+                {
+                  label: 'Poem',
+                  key: 'poem',
+                  onClick: () => setSelectedStyle('poem')
+                },
+                {
+                  label: `KPOP style`,
+                  key: 'kpop',
+                  onClick: () => setSelectedStyle('kpop')
+                },
+                {
+                  label: `Rap style`,
+                  key: 'rap',
+                  onClick: () => setSelectedStyle('rap')
+                }
+              ].filter((v) => v.key !== styleLabelObj.key)}
+            />
+          </div>
+          <div
+            style={{ display: 'flex', marginTop: '1rem', alignItems: 'center' }}
+          >
+            using
+            <DropdownButton
+              icon="chevron-down"
+              skeuomorphic
+              text={wordLevel}
+              color="darkerGray"
+              listStyle={{ minWidth: '25ch' }}
+              menuProps={[
+                {
+                  label: 'Easy',
+                  onClick: () => setWordLevel('easy')
+                },
+                {
+                  label: 'Intermediate',
+                  onClick: () => setWordLevel('intermediate')
+                },
+                {
+                  label: 'Hard',
+                  onClick: () => setWordLevel('hard')
+                }
+              ].filter(
+                (v) => v.label.toLowerCase() !== wordLevel.toLocaleLowerCase()
+              )}
+            />
+            words
+          </div>
+        </div>
+        <div>
+          <Button
+            skeuomorphic
+            color="darkBlue"
+            loading={loadingType === 'rewrite'}
+            style={{ marginLeft: '1rem' }}
+            onClick={() => handleButtonClick('rewrite')}
+          >
+            Go
+          </Button>
+        </div>
       </div>
       <Button
         skeuomorphic
@@ -113,7 +162,7 @@ export default function Menu({
 
   async function handleButtonClick(type) {
     onSetLoadingType(type);
-    const response = await getZerosReview({ type, content });
+    const response = await getZerosReview({ type, content, command });
     onSetLoadingType(null);
     onSetResponse(response);
     onSetLoadingProgress(0);
