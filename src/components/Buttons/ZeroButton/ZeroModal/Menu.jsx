@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
+import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 
@@ -35,7 +36,18 @@ export default function Menu({
         Rewrite it in
         <Button skeuomorphic>your own style</Button>
         using
-        <Button skeuomorphic>Simple</Button>
+        <DropdownButton
+          icon="chevron-down"
+          skeuomorphic
+          text="Easy"
+          color="darkerGray"
+          menuProps={[
+            {
+              label: 'Easy',
+              onClick: () => console.log('easy')
+            }
+          ]}
+        />
         words.
         <Button
           skeuomorphic
