@@ -99,6 +99,7 @@ export default function ZeroModal({
           <div className="content">
             {response ? (
               <LongText
+                key={response}
                 style={{
                   marginBottom: '3rem',
                   fontWeight: 'bold',
