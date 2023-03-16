@@ -1,7 +1,7 @@
+import { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 
 Menu.propTypes = {
@@ -22,6 +22,17 @@ export default function Menu({
   onSetResponse
 }) {
   const getZerosReview = useAppContext((v) => v.requestHelpers.getZerosReview);
+  const [selectedStyle, setSelectedStyle] = useState('zero');
+  const [wordLevel, setWordLevel] = useState('intermediate');
+  const styleLabelObj = useMemo(() => {
+    if (selectedStyle === 'zero') {
+      return { label: `In your own style`, key: 'zero' };
+    }
+    if (selectedStyle === 'kpop') {
+      return { label: 'In KPOP style', key: 'kpop' };
+    }
+    return {};
+  }, [selectedStyle]);
   return (
     <div style={style}>
       <Button
@@ -30,44 +41,52 @@ export default function Menu({
         loading={loadingType === 'easy'}
         onClick={() => handleButtonClick('easy')}
       >
-        <Icon icon="play" />
-        <span style={{ marginLeft: '0.5rem' }}>Make it easy to understand</span>
+        Make it easy to understand
       </Button>
       <div style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
-        Rewrite it in
+        Rewrite it
         <DropdownButton
           icon="chevron-down"
           skeuomorphic
-          text="your own style"
+          text={styleLabelObj.label}
           color="darkerGray"
           listStyle={{ minWidth: '30ch' }}
           menuProps={[
             {
               label: `Zero's own style`,
-              onClick: () => console.log('own')
+              key: 'zero',
+              onClick: () => setSelectedStyle('zero')
+            },
+            {
+              label: `KPOP style`,
+              key: 'kpop',
+              onClick: () => setSelectedStyle('kpop')
             }
-          ]}
+          ].filter((v) => v.key !== styleLabelObj.key)}
         />
         using
         <DropdownButton
           icon="chevron-down"
           skeuomorphic
-          text="Easy"
+          text={wordLevel}
           color="darkerGray"
+          listStyle={{ minWidth: '25ch' }}
           menuProps={[
             {
               label: 'Easy',
-              onClick: () => console.log('easy')
+              onClick: () => setWordLevel('easy')
             },
             {
               label: 'Intermediate',
-              onClick: () => console.log('easy')
+              onClick: () => setWordLevel('intermediate')
             },
             {
               label: 'Hard',
-              onClick: () => console.log('easy')
+              onClick: () => setWordLevel('hard')
             }
-          ]}
+          ].filter(
+            (v) => v.label.toLowerCase() !== wordLevel.toLocaleLowerCase()
+          )}
         />
         words
         <Button
@@ -77,8 +96,7 @@ export default function Menu({
           style={{ marginLeft: '1rem' }}
           onClick={() => handleButtonClick('natural')}
         >
-          <Icon icon="play" />
-          <span style={{ marginLeft: '0.5rem' }}>Go</span>
+          Go
         </Button>
       </div>
       <Button
@@ -88,10 +106,7 @@ export default function Menu({
         style={{ marginTop: '1rem' }}
         onClick={() => handleButtonClick('grammar')}
       >
-        <Icon icon="play" />
-        <span style={{ marginLeft: '0.5rem' }}>
-          Grammar (Remember, Zero is not always right)
-        </span>
+        Grammar (Remember, Zero is not always right)
       </Button>
     </div>
   );
