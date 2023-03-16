@@ -26,7 +26,7 @@ export default function Menu({
     <div style={style}>
       <Button
         skeuomorphic
-        color="logoBlue"
+        color="darkBlue"
         loading={loadingType === 'easy'}
         onClick={() => handleButtonClick('easy')}
       >
@@ -34,7 +34,19 @@ export default function Menu({
       </Button>
       <div style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
         Rewrite it in
-        <Button skeuomorphic>your own style</Button>
+        <DropdownButton
+          icon="chevron-down"
+          skeuomorphic
+          text="your own style"
+          color="darkerGray"
+          listStyle={{ minWidth: '30ch' }}
+          menuProps={[
+            {
+              label: `Zero's own style`,
+              onClick: () => console.log('own')
+            }
+          ]}
+        />
         using
         <DropdownButton
           icon="chevron-down"
@@ -45,10 +57,18 @@ export default function Menu({
             {
               label: 'Easy',
               onClick: () => console.log('easy')
+            },
+            {
+              label: 'Intermediate',
+              onClick: () => console.log('easy')
+            },
+            {
+              label: 'Hard',
+              onClick: () => console.log('easy')
             }
           ]}
         />
-        words.
+        words
         <Button
           skeuomorphic
           color="green"
@@ -57,12 +77,12 @@ export default function Menu({
           onClick={() => handleButtonClick('natural')}
         >
           <Icon icon="play" />
-          <span style={{ marginLeft: '0.5rem' }}>Run</span>
+          <span style={{ marginLeft: '0.5rem' }}>Go</span>
         </Button>
       </div>
       <Button
         skeuomorphic
-        color="pink"
+        color="purple"
         loading={loadingType === 'grammar'}
         style={{ marginTop: '1rem' }}
         onClick={() => handleButtonClick('grammar')}
