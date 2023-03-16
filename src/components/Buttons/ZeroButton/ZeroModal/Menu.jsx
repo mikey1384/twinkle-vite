@@ -30,7 +30,8 @@ export default function Menu({
         loading={loadingType === 'easy'}
         onClick={() => handleButtonClick('easy')}
       >
-        Make it easier to understand
+        <Icon icon="play" />
+        <span style={{ marginLeft: '0.5rem' }}>Make it easy to understand</span>
       </Button>
       <div style={{ display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
         Rewrite it in
@@ -71,7 +72,7 @@ export default function Menu({
         words
         <Button
           skeuomorphic
-          color="green"
+          color="darkBlue"
           loading={loadingType === 'natural'}
           style={{ marginLeft: '1rem' }}
           onClick={() => handleButtonClick('natural')}
@@ -82,12 +83,15 @@ export default function Menu({
       </div>
       <Button
         skeuomorphic
-        color="purple"
+        color="darkBlue"
         loading={loadingType === 'grammar'}
         style={{ marginTop: '1rem' }}
         onClick={() => handleButtonClick('grammar')}
       >
-        Grammar (Remember, Zero is not always right)
+        <Icon icon="play" />
+        <span style={{ marginLeft: '0.5rem' }}>
+          Grammar (Remember, Zero is not always right)
+        </span>
       </Button>
     </div>
   );
