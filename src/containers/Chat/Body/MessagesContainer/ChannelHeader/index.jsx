@@ -451,6 +451,7 @@ export default function ChannelHeader({
           style={{
             color: Color[displayedThemeColor]()
           }}
+          theme={displayedThemeColor}
           text={`${loadingTopicLabel}...`}
         />
       )}
