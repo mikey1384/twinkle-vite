@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Members from './Members';
 import ChannelDetails from './ChannelDetails';
@@ -25,7 +25,7 @@ ChatInfo.propTypes = {
   selectedChannelId: PropTypes.number
 };
 
-function ChatInfo({
+export default function ChatInfo({
   selectedChannelId,
   channelOnCall,
   currentChannel,
@@ -97,8 +97,7 @@ function ChatInfo({
       (member) => !onlineChannelMembers?.map((m) => m.id)?.includes(member.id)
     );
     return [...onlineChannelMembers, ...offlineChannelMembers];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId, currentChannel?.members, onlineChannelMembers]);
+  }, [currentChannel?.members, onlineChannelMembers]);
 
   const handleCall = useCallback(async () => {
     if (!channelOnCall.id) {
@@ -241,5 +240,3 @@ function ChatInfo({
     </ErrorBoundary>
   );
 }
-
-export default memo(ChatInfo);
