@@ -97,7 +97,8 @@ function ChatInfo({
       (member) => !onlineChannelMembers?.map((m) => m.id)?.includes(member.id)
     );
     return [...onlineChannelMembers, ...offlineChannelMembers];
-  }, [currentChannel?.members, onlineChannelMembers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChannelId, currentChannel?.members, onlineChannelMembers]);
 
   const handleCall = useCallback(async () => {
     if (!channelOnCall.id) {
