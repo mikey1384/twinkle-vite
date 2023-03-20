@@ -42,6 +42,9 @@ export default function Menu({
     if (selectedStyle === 'rap') {
       return { label: 'In rap style', key: 'rap' };
     }
+    if (selectedStyle === 'youtuber') {
+      return { label: 'In YouTuber style', key: 'youtuber' };
+    }
     return {};
   }, [selectedStyle]);
   const command = useMemo(() => {
@@ -92,6 +95,11 @@ export default function Menu({
                   label: `Shakespearean style`,
                   key: 'shakespear',
                   onClick: () => setSelectedStyle('shakespear')
+                },
+                {
+                  label: 'YouTuber style',
+                  key: 'youtuber',
+                  onClick: () => setSelectedStyle('youtuber')
                 },
                 {
                   label: 'Poem',
