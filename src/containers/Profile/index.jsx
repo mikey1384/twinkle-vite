@@ -37,11 +37,16 @@ export default function Profile() {
   const {
     background: { color: backgroundColor }
   } = useTheme(selectedTheme);
+
   useEffect(() => {
+    let retries = 0;
+    const maxRetries = 3;
+
     if (!notExist && !profile.loaded) {
-      init();
+      loadProfile();
     }
-    async function init() {
+
+    async function loadProfile() {
       setLoading(true);
       try {
         const { pageNotExists, user } = await loadProfileViaUsername(
@@ -67,11 +72,18 @@ export default function Profile() {
           contentType: 'user',
           ...user
         });
+        setLoading(false);
       } catch (error) {
-        onUserNotExist(params.username);
+        if (retries < maxRetries) {
+          retries++;
+          setTimeout(loadProfile, 500);
+        } else {
+          onUserNotExist(params.username);
+          setLoading(false);
+        }
       }
-      setLoading(false);
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.username, notExist, profile.loaded]);
 
