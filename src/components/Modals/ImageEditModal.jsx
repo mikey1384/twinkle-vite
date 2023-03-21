@@ -33,6 +33,7 @@ export default function ImageEditModal({
   imageUri
 }) {
   const [captionText, setCaptionText] = useState('');
+  const isUploadingRef = useRef(false);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const uploadUserPic = useAppContext((v) => v.requestHelpers.uploadUserPic);
   const { userId } = useKeyContext((v) => v.myState);
@@ -205,7 +206,9 @@ export default function ImageEditModal({
   }
 
   async function handleFileUpload() {
+    if (isUploadingRef.current) return;
     setUploading(true);
+    isUploadingRef.current = true;
     const path = uuidv1();
     const fileName = `${path}.jpg`;
     const file = returnImageFileFromUrl({
