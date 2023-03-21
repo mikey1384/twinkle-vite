@@ -25,6 +25,7 @@ Comments.propTypes = {
   commentsShown: PropTypes.bool,
   comments: PropTypes.array.isRequired,
   commentsLoadLimit: PropTypes.number,
+  disableReason: PropTypes.string,
   inputAreaInnerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
   inputAtBottom: PropTypes.bool,
   inputTypeLabel: PropTypes.string,
@@ -69,6 +70,7 @@ function Comments({
   commentsLoadLimit,
   commentsShown,
   className,
+  disableReason,
   inputAreaInnerRef,
   inputAtBottom,
   inputTypeLabel,
@@ -363,6 +365,7 @@ function Comments({
             commentsLoadLimit={commentsLoadLimit}
             CommentRefs={CommentRefs}
             CommentInputAreaRef={CommentInputAreaRef}
+            disableReason={disableReason}
             inputAreaInnerRef={inputAreaInnerRef}
             inputAtBottom={inputAtBottom}
             inputTypeLabel={inputTypeLabel}
