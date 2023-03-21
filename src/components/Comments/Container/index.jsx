@@ -16,6 +16,7 @@ Container.propTypes = {
   CommentInputAreaRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
   commentsShown: PropTypes.bool,
   commentsLoadLimit: PropTypes.number,
+  disableReason: PropTypes.string,
   inputAtBottom: PropTypes.bool,
   inputAreaInnerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
   inputTypeLabel: PropTypes.string,
@@ -51,6 +52,7 @@ export default function Container({
   commentsHidden,
   commentsShown,
   commentsLoadLimit,
+  disableReason,
   inputAtBottom,
   inputAreaInnerRef,
   inputTypeLabel,
@@ -119,6 +121,7 @@ export default function Container({
           commentsLoadLimit={commentsLoadLimit}
           CommentRefs={CommentRefs}
           CommentInputAreaRef={CommentInputAreaRef}
+          disableReason={disableReason}
           inputAreaInnerRef={inputAreaInnerRef}
           inputAtBottom={inputAtBottom}
           inputTypeLabel={inputTypeLabel}

@@ -38,6 +38,7 @@ const viewSecretMessageWithoutRespondingLabel = localize(
 InputForm.propTypes = {
   autoFocus: PropTypes.bool,
   className: PropTypes.string,
+  disableReason: PropTypes.string,
   formGroupStyle: PropTypes.object,
   innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
   onSubmit: PropTypes.func.isRequired,
@@ -53,6 +54,7 @@ InputForm.propTypes = {
 function InputForm({
   autoFocus,
   className = '',
+  disableReason,
   formGroupStyle = {},
   innerRef,
   onSubmit,
@@ -263,6 +265,7 @@ function InputForm({
           }}
         >
           <Textarea
+            disabled={!!disableReason}
             autoFocus={autoFocus}
             innerRef={innerRef}
             style={{
@@ -271,7 +274,7 @@ function InputForm({
             }}
             minRows={rows}
             value={text}
-            placeholder={placeholder}
+            placeholder={disableReason || placeholder}
             onChange={handleOnChange}
             onKeyUp={handleKeyUp}
           />

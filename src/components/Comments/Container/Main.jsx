@@ -15,6 +15,7 @@ Main.propTypes = {
   CommentRefs: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
   comments: PropTypes.arrayOf(PropTypes.object),
   commentsHidden: PropTypes.bool,
+  disableReason: PropTypes.string,
   CommentInputAreaRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
   commentsShown: PropTypes.bool,
   commentsLoadLimit: PropTypes.number,
@@ -53,6 +54,7 @@ export default function Main({
   commentsHidden,
   commentsShown,
   commentsLoadLimit,
+  disableReason,
   inputAtBottom,
   inputAreaInnerRef,
   inputTypeLabel,
@@ -108,6 +110,7 @@ export default function Main({
       return (
         <CommentInputArea
           autoFocus={autoFocus}
+          disableReason={disableReason}
           InputFormRef={CommentInputAreaRef}
           innerRef={inputAreaInnerRef}
           inputTypeLabel={inputTypeLabel}
@@ -135,56 +138,6 @@ export default function Main({
           }
         />
       );
-
-      async function handleSubmitComment({
-        content,
-        rootCommentId,
-        subjectId,
-        targetCommentId
-      }) {
-        if (banned?.posting) {
-          return;
-        }
-        try {
-          onSetCommentSubmitted(true);
-          const { comment } = await uploadComment({
-            content,
-            parent,
-            rootCommentId,
-            subjectId,
-            targetCommentId
-          });
-          await onCommentSubmit({
-            ...comment,
-            contentId: parent.contentId,
-            contentType: parent.contentType
-          });
-          return Promise.resolve();
-        } catch (error) {
-          console.error(error);
-          return Promise.reject(error);
-        }
-      }
-
-      async function handleViewSecretAnswer() {
-        try {
-          onSetCommentSubmitted(true);
-          const { comment } = await uploadComment({
-            content: 'viewed the secret message',
-            parent,
-            subjectId,
-            isNotification: true
-          });
-          await onCommentSubmit({
-            ...comment,
-            contentId: parent.contentId,
-            contentType: parent.contentType
-          });
-          return Promise.resolve();
-        } catch (error) {
-          console.error(error);
-        }
-      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -319,4 +272,54 @@ export default function Main({
         renderInputArea({ marginTop: comments.length > 0 ? '1rem' : 0 })}
     </div>
   );
+
+  async function handleSubmitComment({
+    content,
+    rootCommentId,
+    subjectId,
+    targetCommentId
+  }) {
+    if (banned?.posting) {
+      return;
+    }
+    try {
+      onSetCommentSubmitted(true);
+      const { comment } = await uploadComment({
+        content,
+        parent,
+        rootCommentId,
+        subjectId,
+        targetCommentId
+      });
+      await onCommentSubmit({
+        ...comment,
+        contentId: parent.contentId,
+        contentType: parent.contentType
+      });
+      return Promise.resolve();
+    } catch (error) {
+      console.error(error);
+      return Promise.reject(error);
+    }
+  }
+
+  async function handleViewSecretAnswer() {
+    try {
+      onSetCommentSubmitted(true);
+      const { comment } = await uploadComment({
+        content: 'viewed the secret message',
+        parent,
+        subjectId,
+        isNotification: true
+      });
+      await onCommentSubmit({
+        ...comment,
+        contentId: parent.contentId,
+        contentType: parent.contentType
+      });
+      return Promise.resolve();
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }

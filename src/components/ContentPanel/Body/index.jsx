@@ -64,6 +64,7 @@ export default function Body({
     numReplies,
     comments = [],
     commentsLoadMoreButton = false,
+    isClosed,
     isNotification,
     likes = [],
     previewLoaded,
@@ -308,6 +309,13 @@ export default function Body({
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canDelete, canEdit, contentId, contentType, uploader.id, userId]);
+
+  const disableReason = useMemo(() => {
+    if (isClosed) {
+      return `${isClosed.by.username}} disabled comments for this ${contentType}`;
+    }
+    return null;
+  }, [contentType, isClosed]);
 
   const editButtonShown = useMemo(() => {
     return !!editMenuItems?.length;
@@ -676,6 +684,7 @@ export default function Body({
             commentsLoadLimit={commentsLoadLimit}
             commentsShown={commentsShown && !secretHidden}
             contentId={contentId}
+            disableReason={disableReason}
             inputAreaInnerRef={CommentInputAreaRef}
             inputAtBottom={inputAtBottom}
             loadMoreButton={commentsLoadMoreButton}
