@@ -33,6 +33,7 @@ export default function ImageEditModal({
   imageUri
 }) {
   const [captionText, setCaptionText] = useState('');
+  const isUploadingRef = useRef(false);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const uploadUserPic = useAppContext((v) => v.requestHelpers.uploadUserPic);
   const { userId } = useKeyContext((v) => v.myState);
@@ -41,7 +42,6 @@ export default function ImageEditModal({
   } = useKeyContext((v) => v.theme);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(null);
-  const [processing, setProcessing] = useState(false);
   const [crop, setCrop] = useState({
     unit: '%',
     width: 50,
@@ -142,7 +142,7 @@ export default function ImageEditModal({
           <Button
             color={doneColor}
             onClick={handleFileUpload}
-            disabled={processing}
+            loading={uploading}
           >
             Submit
           </Button>
@@ -206,8 +206,9 @@ export default function ImageEditModal({
   }
 
   async function handleFileUpload() {
+    if (isUploadingRef.current) return;
     setUploading(true);
-    setProcessing(true);
+    isUploadingRef.current = true;
     const path = uuidv1();
     const fileName = `${path}.jpg`;
     const file = returnImageFileFromUrl({
@@ -227,7 +228,6 @@ export default function ImageEditModal({
       isProfilePic,
       caption
     });
-    setProcessing(false);
     onEditDone({
       pictures,
       filePath
