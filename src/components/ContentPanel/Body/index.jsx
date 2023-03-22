@@ -180,6 +180,7 @@ export default function Body({
   const [copiedShown, setCopiedShown] = useState(false);
   const [userListModalShown, setUserListModalShown] = useState(false);
   const [deleteConfirmModalShown, setDeleteConfirmModalShown] = useState(false);
+  const [closeConfirmModalShown, setCloseConfirmModalShown] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
@@ -334,7 +335,8 @@ export default function Body({
               {contentObj?.isClosedBy ? 'Open' : 'Close'}
             </span>
           </>
-        )
+        ),
+        onClick: () => setCloseConfirmModalShown(true)
       });
     }
     return items;
@@ -783,11 +785,22 @@ export default function Body({
       </div>
       {deleteConfirmModalShown && (
         <ConfirmModal
-          onConfirm={deleteThisContent}
+          onConfirm={handleDeleteThisContent}
           onHide={() => setDeleteConfirmModalShown(false)}
           title={`Remove ${
             contentType.charAt(0).toUpperCase() + contentType.slice(1)
           }`}
+        />
+      )}
+      {closeConfirmModalShown && (
+        <ConfirmModal
+          onConfirm={handleCloseThisContent}
+          onHide={() => setCloseConfirmModalShown(false)}
+          title={`Close ${
+            contentType.charAt(0).toUpperCase() + contentType.slice(1)
+          }`}
+          description={`Are you sure you want to close the comment section of this ${contentType}?`}
+          descriptionFontSize="1.7rem"
         />
       )}
     </ErrorBoundary>
@@ -824,7 +837,11 @@ export default function Body({
     CommentInputAreaRef.current?.focus?.();
   }
 
-  async function deleteThisContent() {
+  async function handleCloseThisContent() {
+    console.log('close');
+  }
+
+  async function handleDeleteThisContent() {
     await deleteContent({ contentType, id });
     if (contentType === 'comment') {
       onDeleteComment(id);
