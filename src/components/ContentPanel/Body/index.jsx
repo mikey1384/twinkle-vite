@@ -275,7 +275,6 @@ export default function Body({
       contentObj?.isClosedBy &&
       contentObj?.isClosedBy?.authLevel > authLevel
     ) {
-      console.log(contentObj?.isClosedBy);
       return false;
     }
     if (userId === uploader.id) return true;
