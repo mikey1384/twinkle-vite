@@ -179,7 +179,7 @@ export default function Body({
   } = useContext(LocalContext);
   const [copiedShown, setCopiedShown] = useState(false);
   const [userListModalShown, setUserListModalShown] = useState(false);
-  const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [deleteConfirmModalShown, setDeleteConfirmModalShown] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
@@ -266,8 +266,21 @@ export default function Body({
 
   const userCanDeleteThis = useMemo(() => {
     if (userId === uploader.id) return true;
-    return canDelete && authLevel > uploader?.authLevel;
+    return canDelete && authLevel > uploader.authLevel;
   }, [authLevel, canDelete, uploader.authLevel, uploader.id, userId]);
+
+  const userCanCloseThis = useMemo(() => {
+    if (!authLevel || contentType !== 'subject') return false;
+    if (userId === uploader.id) return true;
+    return canDelete && authLevel > uploader?.authLevel;
+  }, [
+    authLevel,
+    canDelete,
+    contentType,
+    uploader.authLevel,
+    uploader.id,
+    userId
+  ]);
 
   const userCanEditThis = useMemo(() => {
     if (userId === uploader.id) return true;
@@ -302,12 +315,35 @@ export default function Body({
             <span style={{ marginLeft: '1rem' }}>{removeLabel}</span>
           </>
         ),
-        onClick: () => setConfirmModalShown(true)
+        onClick: () => setDeleteConfirmModalShown(true)
+      });
+    }
+    if (userCanCloseThis) {
+      items.push({
+        label: (
+          <>
+            <Icon icon={contentObj?.isClosedBy ? 'check' : 'ban'} />
+            <span style={{ marginLeft: '1rem' }}>
+              {contentObj?.isClosedBy ? 'Open' : 'Close'}
+            </span>
+          </>
+        )
       });
     }
     return items;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canDelete, canEdit, contentId, contentType, uploader.id, userId]);
+  }, [
+    contentId,
+    contentObj?.isClosedBy,
+    contentType,
+    isCommentForSecretSubject,
+    subjectUploaderId,
+    uploader.id,
+    userCanCloseThis,
+    userCanDeleteThis,
+    userCanEditThis,
+    userId
+  ]);
 
   const disableReason = useMemo(() => {
     const isClosedBy = contentObj?.isClosedBy || rootObj?.isClosedBy;
@@ -738,10 +774,10 @@ export default function Body({
           />
         )}
       </div>
-      {confirmModalShown && (
+      {deleteConfirmModalShown && (
         <ConfirmModal
           onConfirm={deleteThisContent}
-          onHide={() => setConfirmModalShown(false)}
+          onHide={() => setDeleteConfirmModalShown(false)}
           title={`Remove ${
             contentType.charAt(0).toUpperCase() + contentType.slice(1)
           }`}
