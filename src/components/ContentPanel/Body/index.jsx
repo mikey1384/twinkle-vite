@@ -81,6 +81,7 @@ export default function Body({
   onChangeSpoilerStatus,
   theme
 }) {
+  const closeContent = useAppContext((v) => v.requestHelpers.closeContent);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
@@ -271,7 +272,7 @@ export default function Body({
   }, [authLevel, canDelete, uploader.authLevel, uploader.id, userId]);
 
   const userCanCloseThis = useMemo(() => {
-    if (!authLevel || contentType !== 'subject') return false;
+    if (!canDelete || contentType !== 'subject') return false;
     if (
       contentObj?.isClosedBy &&
       contentObj?.isClosedBy?.authLevel > authLevel
@@ -279,7 +280,7 @@ export default function Body({
       return false;
     }
     if (userId === uploader.id) return true;
-    return canDelete && authLevel > uploader.authLevel;
+    return authLevel > uploader.authLevel;
   }, [
     authLevel,
     canDelete,
@@ -840,7 +841,7 @@ export default function Body({
   }
 
   async function handleCloseThisContent() {
-    console.log('close');
+    await closeContent({ contentType, contentId: id });
   }
 
   async function handleDeleteThisContent() {
