@@ -64,7 +64,6 @@ export default function Body({
     numReplies,
     comments = [],
     commentsLoadMoreButton = false,
-    isClosed,
     isNotification,
     likes = [],
     previewLoaded,
@@ -311,11 +310,22 @@ export default function Body({
   }, [canDelete, canEdit, contentId, contentType, uploader.id, userId]);
 
   const disableReason = useMemo(() => {
-    if (isClosed) {
-      return `${isClosed.by.username}} disabled comments for this ${contentType}`;
+    const isClosedBy = contentObj?.isClosedBy || rootObj?.isClosedBy;
+    if (isClosedBy) {
+      return `${
+        isClosedBy.id === userId ? 'You' : isClosedBy.username
+      } disabled comments for this ${
+        contentObj?.isClosedBy ? contentType : rootType
+      }`;
     }
     return null;
-  }, [contentType, isClosed]);
+  }, [
+    contentObj?.isClosedBy,
+    contentType,
+    rootObj?.isClosedBy,
+    rootType,
+    userId
+  ]);
 
   const editButtonShown = useMemo(() => {
     return !!editMenuItems?.length;
