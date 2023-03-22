@@ -332,7 +332,7 @@ export default function Body({
           <>
             <Icon icon={contentObj?.isClosedBy ? 'check' : 'ban'} />
             <span style={{ marginLeft: '1rem' }}>
-              {contentObj?.isClosedBy ? 'Open' : 'Close'}
+              {contentObj?.isClosedBy ? 'Reopen' : 'Close'}
             </span>
           </>
         ),
@@ -796,10 +796,12 @@ export default function Body({
         <ConfirmModal
           onConfirm={handleCloseThisContent}
           onHide={() => setCloseConfirmModalShown(false)}
-          title={`Close ${
+          title={`${!!disableReason ? 'Reopen' : 'Close'} ${
             contentType.charAt(0).toUpperCase() + contentType.slice(1)
           }`}
-          description={`Are you sure you want to close the comment section of this ${contentType}?`}
+          description={`Are you sure you want to ${
+            !!disableReason ? 'reopen' : 'close'
+          } the comment section of this ${contentType}?`}
           descriptionFontSize="1.7rem"
         />
       )}
