@@ -210,6 +210,14 @@ export default function ContentReducer(state, action) {
           twinkleCoins: action.coins
         }
       };
+    case 'CLOSE_CONTENT':
+      return {
+        ...state,
+        [contentKey]: {
+          ...prevContentState,
+          isClosedBy: action.userId
+        }
+      };
     case 'DELETE_COMMENT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
