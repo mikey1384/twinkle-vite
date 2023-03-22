@@ -879,15 +879,15 @@ export default function Body({
     }
   }
 
-  function handleCopyToClipboard() {
-    const textField = document.createElement('textarea');
-    textField.innerText = `https://www.twin-kle.com/${
+  async function handleCopyToClipboard() {
+    const contentUrl = `https://www.twin-kle.com/${
       contentType === 'url' ? 'link' : contentType
     }s/${contentId}`;
-    document.body.appendChild(textField);
-    textField.select();
-    document.execCommand('copy');
-    textField.remove();
+    try {
+      await navigator.clipboard.writeText(contentUrl);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   function handleToggleByUser(byUser) {
