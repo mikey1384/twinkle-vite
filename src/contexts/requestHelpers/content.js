@@ -84,6 +84,18 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async closeContent({ contentId, contentType }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/content/close`,
+          { contentId, contentType },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async deleteContent({ id, contentType, undo }) {
       try {
         const {
