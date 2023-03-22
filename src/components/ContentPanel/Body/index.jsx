@@ -300,8 +300,7 @@ export default function Body({
     ) {
       return false;
     }
-    if (userId === uploader.id) return true;
-    return authLevel > uploader.authLevel;
+    return userId === uploader.id || authLevel > uploader.authLevel;
   }, [
     authLevel,
     canDelete,
