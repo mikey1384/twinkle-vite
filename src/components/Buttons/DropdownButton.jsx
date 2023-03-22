@@ -169,7 +169,7 @@ export default function DropdownButton({
   }
 
   function handleMenuClick(action) {
-    action();
+    action?.();
     setDropdownContext(null);
   }
 }
