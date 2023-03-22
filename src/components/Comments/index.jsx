@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import Context from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Container from './Container';
-
 import { v1 as uuidv1 } from 'uuid';
 import { returnImageFileFromUrl, scrollElementToCenter } from '~/helpers';
 import { css } from '@emotion/css';
