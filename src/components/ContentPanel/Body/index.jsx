@@ -271,11 +271,19 @@ export default function Body({
 
   const userCanCloseThis = useMemo(() => {
     if (!authLevel || contentType !== 'subject') return false;
+    if (
+      contentObj?.isClosedBy &&
+      contentObj?.isClosedBy?.authLevel > authLevel
+    ) {
+      console.log(contentObj?.isClosedBy);
+      return false;
+    }
     if (userId === uploader.id) return true;
-    return canDelete && authLevel > uploader?.authLevel;
+    return canDelete && authLevel > uploader.authLevel;
   }, [
     authLevel,
     canDelete,
+    contentObj?.isClosedBy,
     contentType,
     uploader.authLevel,
     uploader.id,
