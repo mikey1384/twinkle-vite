@@ -248,6 +248,7 @@ export default function Main({
           {!isLoading &&
             (isPreview ? previewComments : comments).map((comment) => (
               <Comment
+                disableReason={disableReason}
                 isSubjectPannelComment={isSubjectPannelComments}
                 isPreview={isPreview}
                 innerRef={(ref) => (CommentRefs[comment.id] = ref)}

@@ -86,6 +86,7 @@ Comment.propTypes = {
     ]),
     isNotification: PropTypes.oneOfType([PropTypes.number, PropTypes.bool])
   }).isRequired,
+  disableReason: PropTypes.string,
   innerRef: PropTypes.func,
   isPreview: PropTypes.bool,
   parent: PropTypes.object,
@@ -99,6 +100,7 @@ Comment.propTypes = {
 
 function Comment({
   comment,
+  disableReason,
   innerRef,
   isSubjectPannelComment,
   isPreview,
@@ -922,6 +924,7 @@ function Comment({
                   <div style={{ position: 'relative' }}>
                     {isDeleteNotification ? null : (
                       <ReplyInputArea
+                        disableReason={disableReason}
                         innerRef={ReplyInputAreaRef}
                         numReplies={numReplies}
                         onSubmit={submitReply}
@@ -941,6 +944,7 @@ function Comment({
                       />
                     )}
                     <Replies
+                      disableReason={disableReason}
                       isSubjectPannelComment={isSubjectPannelComment}
                       pinnedCommentId={pinnedCommentId}
                       subject={subject || {}}
