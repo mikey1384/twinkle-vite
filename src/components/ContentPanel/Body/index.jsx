@@ -17,6 +17,7 @@ import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
 import RecommendationStatus from '~/components/RecommendationStatus';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import AlertModal from '~/components/Modals/AlertModal';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -37,6 +38,7 @@ const copiedLabel = localize('copied');
 const editLabel = localize('edit');
 const removeLabel = localize('remove');
 const replyLabel = localize('reply');
+const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
 const respondLabel = localize('respond');
 const deviceIsMobile = isMobile(navigator);
 
@@ -101,6 +103,7 @@ export default function Body({
 
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
+  const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
@@ -180,6 +183,8 @@ export default function Body({
   } = useContext(LocalContext);
   const [copiedShown, setCopiedShown] = useState(false);
   const [userListModalShown, setUserListModalShown] = useState(false);
+  const [moderatorName, setModeratorName] = useState('');
+  const [cannotChangeModalShown, setCannotChangeModalShown] = useState(false);
   const [deleteConfirmModalShown, setDeleteConfirmModalShown] = useState(false);
   const [closeConfirmModalShown, setCloseConfirmModalShown] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -195,6 +200,22 @@ export default function Body({
       ).length > 0
     );
   }, [recommendations, userId]);
+
+  const moderatorHasDisabledChangeLabel = useMemo(() => {
+    if (SELECTED_LANGUAGE === 'kr') {
+      return (
+        <span>
+          <b>{moderatorName}</b>님이 이 설정을 변경하지 못하도록 설정하였습니다
+        </span>
+      );
+    }
+    return (
+      <span>
+        <b>{moderatorName}</b> has disabled users from changing this setting for
+        this post
+      </span>
+    );
+  }, [moderatorName]);
 
   const isRewardedByUser = useMemo(() => {
     return rewards.filter((reward) => reward.rewarderId === userId).length > 0;
@@ -806,6 +827,13 @@ export default function Body({
           descriptionFontSize="1.7rem"
         />
       )}
+      {cannotChangeModalShown && (
+        <AlertModal
+          title={settingCannotBeChangedLabel}
+          content={moderatorHasDisabledChangeLabel}
+          onHide={() => setCannotChangeModalShown(false)}
+        />
+      )}
     </ErrorBoundary>
   );
 
@@ -841,7 +869,24 @@ export default function Body({
   }
 
   async function handleCloseThisContent() {
-    await closeContent({ contentType, contentId: id });
+    const {
+      isClosedBy,
+      cannotChange,
+      moderatorName: modName
+    } = await closeContent({
+      contentType,
+      contentId: id
+    });
+    if (cannotChange) {
+      setModeratorName(modName);
+      return setCannotChangeModalShown(true);
+    }
+    onCloseContent({
+      contentType,
+      contentId: id,
+      userId: isClosedBy
+    });
+    setCloseConfirmModalShown(false);
   }
 
   async function handleDeleteThisContent() {

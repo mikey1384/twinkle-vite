@@ -42,6 +42,14 @@ export default function ContentActions(dispatch) {
         contentType: 'subject'
       });
     },
+    onCloseContent({ contentId, contentType, userId }) {
+      return dispatch({
+        type: 'CLOSE_CONTENT',
+        contentId,
+        contentType,
+        userId
+      });
+    },
     onDeleteComment(commentId) {
       return dispatch({
         type: 'DELETE_COMMENT',

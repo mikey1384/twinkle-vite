@@ -86,12 +86,14 @@ export default function contentRequestHelpers({ auth, handleError }) {
     },
     async closeContent({ contentId, contentType }) {
       try {
-        const { data } = await request.put(
+        const {
+          data: { isClosedBy, cannotChange, moderatorName }
+        } = await request.put(
           `${URL}/content/close`,
           { contentId, contentType },
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve({ isClosedBy, cannotChange, moderatorName });
       } catch (error) {
         return handleError(error);
       }
