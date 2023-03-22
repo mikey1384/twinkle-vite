@@ -11,6 +11,7 @@ import localize from '~/constants/localize';
 const enterReplyLabel = localize('enterReply');
 
 ReplyInputArea.propTypes = {
+  disableReason: PropTypes.string,
   rootCommentId: PropTypes.number,
   innerRef: PropTypes.object,
   onSubmit: PropTypes.func.isRequired,
@@ -23,6 +24,7 @@ ReplyInputArea.propTypes = {
 };
 
 export default function ReplyInputArea({
+  disableReason,
   innerRef,
   onSubmit,
   onSubmitWithAttachment,
@@ -67,6 +69,7 @@ export default function ReplyInputArea({
         ) : (
           <InputForm
             innerRef={innerRef}
+            disableReason={disableReason}
             onSubmit={handleSubmit}
             parent={parent}
             placeholder={`${enterReplyLabel}...`}

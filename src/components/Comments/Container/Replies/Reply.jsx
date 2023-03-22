@@ -53,6 +53,7 @@ Reply.propTypes = {
   comment: PropTypes.shape({
     id: PropTypes.number.isRequired
   }),
+  disableReason: PropTypes.string,
   innerRef: PropTypes.func,
   deleteReply: PropTypes.func.isRequired,
   isSubjectPannelComment: PropTypes.bool,
@@ -99,6 +100,7 @@ function Reply({
   comment,
   innerRef = () => {},
   deleteReply,
+  disableReason,
   isSubjectPannelComment,
   onLoadRepliesOfReply,
   onPinReply,
@@ -646,6 +648,7 @@ function Reply({
             <div style={{ position: 'relative' }}>
               {isDeleteNotification ? null : (
                 <ReplyInputArea
+                  disableReason={disableReason}
                   innerRef={ReplyInputAreaRef}
                   onSubmit={handleSubmitReply}
                   onSubmitWithAttachment={onSubmitWithAttachment}
