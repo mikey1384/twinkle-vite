@@ -17,7 +17,7 @@ export default function ContentGenerator({ loading, loadComplete, storyObj }) {
     if (!loadComplete && loadingProgress < 99) {
       setTimeout(() => {
         setLoadingProgress(loadingProgress + 1);
-      }, 350);
+      }, 300);
     }
     if (loadComplete) {
       setLoadingProgress(100);
