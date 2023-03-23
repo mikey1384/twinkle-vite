@@ -14,10 +14,10 @@ export default function ContentGenerator({ loading, loadComplete, storyObj }) {
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   useEffect(() => {
-    if (!loadComplete && loadingProgress < 95) {
+    if (!loadComplete && loadingProgress < 99) {
       setTimeout(() => {
         setLoadingProgress(loadingProgress + 1);
-      }, 200);
+      }, 350);
     }
     if (loadComplete) {
       setLoadingProgress(100);
