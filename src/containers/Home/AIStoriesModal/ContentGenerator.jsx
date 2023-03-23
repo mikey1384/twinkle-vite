@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
+import LongText from '~/components/Texts/LongText';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -17,7 +18,7 @@ export default function ContentGenerator({ loading, loadComplete, storyObj }) {
     if (!loadComplete && loadingProgress < 99) {
       setTimeout(() => {
         setLoadingProgress(loadingProgress + 1);
-      }, 300);
+      }, 500);
     }
     if (loadComplete) {
       setLoadingProgress(100);
@@ -44,10 +45,15 @@ export default function ContentGenerator({ loading, loadComplete, storyObj }) {
         fontSize: '1.7rem'
       }}
     >
-      <div
-        dangerouslySetInnerHTML={{ __html: storyObj?.story }}
-        style={{ lineHeight: 3 }}
-      />
+      <LongText maxLines={100}>{storyObj.story}</LongText>
+      {storyObj.explanation ? (
+        <div style={{ marginTop: '7rem', marginBottom: '1rem' }}>
+          ===============================
+        </div>
+      ) : (
+        ''
+      )}
+      <LongText maxLines={100}>{storyObj.explanation}</LongText>
     </div>
   );
 }
