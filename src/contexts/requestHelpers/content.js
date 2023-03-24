@@ -383,12 +383,12 @@ export default function contentRequestHelpers({ auth, handleError }) {
     async loadAIStory(difficulty) {
       try {
         const {
-          data: { imageUrl, storyObj }
+          data: { imageUrl, storyObj, questionObj }
         } = await request.get(
           `${URL}/content/game/story?difficulty=${difficulty}`,
           auth()
         );
-        return Promise.resolve({ imageUrl, storyObj });
+        return Promise.resolve({ imageUrl, storyObj, questionObj });
       } catch (error) {
         return handleError(error);
       }

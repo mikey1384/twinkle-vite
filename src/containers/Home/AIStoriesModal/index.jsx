@@ -29,6 +29,7 @@ export default function AIStoriesModal({ onHide }) {
   const [generateButtonPressed, setGenerateButtonPressed] = useState(false);
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
   const [storyObj, setStoryObj] = useState({});
+  const [questionObj, setQuestionObj] = useState({});
 
   useEffect(() => {
     localStorage.setItem('story-difficulty', difficulty);
@@ -36,7 +37,7 @@ export default function AIStoriesModal({ onHide }) {
 
   return (
     <Modal
-      closeWhenClickedOutside={!dropdownShown}
+      closeWhenClickedOutside={!dropdownShown && !loadComplete}
       modalStyle={{
         height: '80vh'
       }}
@@ -78,6 +79,7 @@ export default function AIStoriesModal({ onHide }) {
             loading={loading}
             loadComplete={loadComplete}
             storyObj={storyObj}
+            questionObj={questionObj}
           />
         ) : (
           <div
@@ -149,8 +151,9 @@ export default function AIStoriesModal({ onHide }) {
     setGenerateButtonPressed(true);
     setLoading(true);
     try {
-      const { storyObj } = await loadAIStory(difficulty);
+      const { storyObj, questionObj } = await loadAIStory(difficulty);
       setStoryObj(storyObj);
+      setQuestionObj(questionObj);
       setLoadComplete(true);
       await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {

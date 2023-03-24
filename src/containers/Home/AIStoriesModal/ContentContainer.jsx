@@ -10,10 +10,17 @@ import { css } from '@emotion/css';
 ContentContainer.propTypes = {
   loading: PropTypes.bool.isRequired,
   loadComplete: PropTypes.bool.isRequired,
+  questionObj: PropTypes.object,
   storyObj: PropTypes.object.isRequired
 };
 
-export default function ContentContainer({ loading, loadComplete, storyObj }) {
+export default function ContentContainer({
+  loading,
+  loadComplete,
+  questionObj,
+  storyObj
+}) {
+  console.log(questionObj);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   useEffect(() => {
