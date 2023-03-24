@@ -6,12 +6,13 @@ import LongText from '~/components/Texts/LongText';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-ContentGenerator.propTypes = {
+ContentContainer.propTypes = {
   loading: PropTypes.bool.isRequired,
   loadComplete: PropTypes.bool.isRequired,
   storyObj: PropTypes.object.isRequired
 };
-export default function ContentGenerator({ loading, loadComplete, storyObj }) {
+
+export default function ContentContainer({ loading, loadComplete, storyObj }) {
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   useEffect(() => {

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import { useAppContext } from '~/contexts';
 import Button from '~/components/Button';
-import ContentGenerator from './ContentGenerator';
+import ContentContainer from './ContentContainer';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import GradientButton from '~/components/Buttons/GradientButton';
 
@@ -74,7 +74,7 @@ export default function AIStoriesModal({ onHide }) {
             </GradientButton>
           </div>
         ) : generateButtonPressed ? (
-          <ContentGenerator
+          <ContentContainer
             loading={loading}
             loadComplete={loadComplete}
             storyObj={storyObj}
