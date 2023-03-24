@@ -20,6 +20,7 @@ const levelHash = {
 };
 
 export default function AIStoriesModal({ onHide }) {
+  const [hasError, setHasError] = useState(false);
   const [loading, setLoading] = useState(true);
   const loadedDifficulty = localStorage.getItem('story-difficulty');
   const [difficulty, setDifficulty] = useState(loadedDifficulty || 2);
@@ -51,7 +52,28 @@ export default function AIStoriesModal({ onHide }) {
           alignItems: 'center'
         }}
       >
-        {generateButtonPressed ? (
+        {hasError ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              height: '100%',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
+              Oops, something went wrong. Try again
+            </p>
+            <GradientButton
+              style={{ marginTop: '5rem' }}
+              onClick={handleGenerate}
+            >
+              Retry
+            </GradientButton>
+          </div>
+        ) : generateButtonPressed ? (
           <ContentGenerator
             loading={loading}
             loadComplete={loadComplete}
@@ -108,7 +130,7 @@ export default function AIStoriesModal({ onHide }) {
         {generateButtonPressed && (
           <div
             style={{
-              marginTop: '20rem',
+              marginTop: hasError ? '1rem' : '20rem',
               display: 'flex',
               justifyContent: 'center'
             }}
@@ -123,12 +145,19 @@ export default function AIStoriesModal({ onHide }) {
   );
 
   async function handleGenerate() {
+    setHasError(false);
     setGenerateButtonPressed(true);
     setLoading(true);
-    const { storyObj } = await loadAIStory(difficulty);
-    setStoryObj(storyObj);
-    setLoadComplete(true);
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    setLoading(false);
+    try {
+      const { storyObj } = await loadAIStory(difficulty);
+      setStoryObj(storyObj);
+      setLoadComplete(true);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    } catch (error) {
+      console.error(error);
+      setHasError(true);
+    } finally {
+      setLoading(false);
+    }
   }
 }
