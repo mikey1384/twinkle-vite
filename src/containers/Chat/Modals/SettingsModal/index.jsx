@@ -91,11 +91,11 @@ export default function SettingsModal({
       channelNameDidNotChange = false;
     }
     return (
-      ((userIsChannelOwner && stringIsEmpty(editedChannelName)) ||
-        channelNameDidNotChange) &&
-      isClosed === editedIsClosed &&
-      editedCanChangeSubject === canChangeSubject &&
-      currentTheme === selectedTheme
+      (channelNameDidNotChange &&
+        isClosed === editedIsClosed &&
+        editedCanChangeSubject === canChangeSubject &&
+        currentTheme === selectedTheme) ||
+      (userIsChannelOwner && stringIsEmpty(editedChannelName))
     );
   }, [
     canChangeSubject,
