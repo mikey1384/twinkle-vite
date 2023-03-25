@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
-import LongText from '~/components/Texts/LongText';
-import GradientButton from '~/components/Buttons/GradientButton';
+import Story from './Story';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -53,27 +52,11 @@ export default function ContentContainer({
         fontSize: '1.7rem'
       }}
     >
-      <LongText maxLines={100}>{storyObj.story}</LongText>
-      {!!storyObj.story && (
-        <div
-          style={{
-            marginTop: '10rem',
-            width: '100%',
-            justifyContent: 'center',
-            display: 'flex'
-          }}
-        >
-          <GradientButton onClick={handleFinishRead}>Finished</GradientButton>
-        </div>
-      )}
-      {storyObj.explanation ? (
-        <div style={{ marginTop: '7rem', marginBottom: '1rem' }}>
-          ===============================
-        </div>
-      ) : (
-        ''
-      )}
-      <LongText maxLines={100}>{storyObj.explanation}</LongText>
+      <Story
+        story={storyObj.story}
+        explanation={storyObj.explanation}
+        onFinishRead={handleFinishRead}
+      />
     </div>
   );
 
