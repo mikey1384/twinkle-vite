@@ -78,8 +78,7 @@ export default function Invitation({
   );
 
   const alreadyJoined = useMemo(() => {
-    const memberIds = invitationChannel?.members.map((member) => member.id);
-    return memberIds?.includes(userId);
+    return invitationChannel.allMemberIds?.includes(userId);
   }, [invitationChannel, userId]);
 
   const desktopHeight = useMemo(() => {
