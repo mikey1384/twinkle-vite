@@ -6,7 +6,7 @@ import Subchannel from './Subchannel';
 import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useChatContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 
 SubChannels.propTypes = {
   currentChannel: PropTypes.object,
@@ -27,6 +27,9 @@ export default function SubChannels({
   subchannelObj,
   subchannelPath
 }) {
+  const {
+    chatUnread: { color: chatUnreadColor }
+  } = useKeyContext((v) => v.theme);
   const currentChannelNumUnreads = useMemo(() => {
     return currentChannel?.numUnreads || 0;
   }, [currentChannel?.numUnreads]);
@@ -46,13 +49,6 @@ export default function SubChannels({
   const badgeShown = useMemo(() => {
     return currentChannelNumUnreads > 0 && !!subchannelPath;
   }, [currentChannelNumUnreads, subchannelPath]);
-  const badgeWidth = useMemo(() => {
-    const numDigits = 1;
-    if (numDigits === 1) {
-      return '2rem';
-    }
-    return `${Math.min(numDigits, 4)}.5rem`;
-  }, []);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
@@ -115,6 +111,7 @@ export default function SubChannels({
                 marginLeft: '1rem',
                 display: 'flex',
                 justifyContent: 'space-between',
+                alignItems: 'center',
                 flexGrow: 1
               }}
             >
@@ -122,21 +119,19 @@ export default function SubChannels({
               {badgeShown && (
                 <div
                   style={{
-                    background: Color.rose(),
+                    background: Color[chatUnreadColor]?.(),
                     display: 'flex',
                     color: '#fff',
                     fontWeight: 'bold',
                     fontSize: '1.5rem',
-                    minWidth: badgeWidth,
-                    height: '2rem',
-                    borderRadius: '1rem',
+                    minWidth: '1.5rem',
+                    height: '1.5rem',
+                    borderRadius: '50%',
                     lineHeight: 1,
                     justifyContent: 'center',
                     alignItems: 'center'
                   }}
-                >
-                  {currentChannelNumUnreads}
-                </div>
+                />
               )}
             </div>
           </nav>
@@ -145,6 +140,7 @@ export default function SubChannels({
           return (
             <Subchannel
               key={subchannel.id}
+              chatUnreadColor={chatUnreadColor}
               currentPathId={currentPathId}
               selectedChannelId={selectedChannelId}
               subchannel={subchannel}
