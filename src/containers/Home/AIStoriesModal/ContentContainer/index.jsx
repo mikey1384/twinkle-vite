@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
 import Story from './Story';
+import Questions from './Questions';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -20,6 +21,7 @@ export default function ContentContainer({
   storyObj
 }) {
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [displayedSection, setDisplayedSection] = useState('story');
 
   useEffect(() => {
     if (!loadComplete && loadingProgress < 99) {
@@ -52,15 +54,21 @@ export default function ContentContainer({
         fontSize: '1.7rem'
       }}
     >
-      <Story
-        story={storyObj.story}
-        explanation={storyObj.explanation}
-        onFinishRead={handleFinishRead}
-      />
+      {displayedSection === 'story' && (
+        <Story
+          story={storyObj.story}
+          explanation={storyObj.explanation}
+          onFinishRead={handleFinishRead}
+        />
+      )}
+      {displayedSection === 'questions' && (
+        <Questions questions={questionObj.questions} />
+      )}
     </div>
   );
 
   function handleFinishRead() {
     console.log('got here', questionObj);
+    setDisplayedSection('questions');
   }
 }
