@@ -39,7 +39,6 @@ export default function InviteUsersModal({
   );
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [inviting, setInviting] = useState(false);
-  const currentMembersUID = currentChannel.members.map((member) => member.id);
 
   return (
     <Modal onHide={onHide}>
@@ -50,7 +49,7 @@ export default function InviteUsersModal({
           title="Invite People"
           itemLabel="username"
           searchResults={userSearchResults}
-          filter={(result) => !currentMembersUID.includes(result.id)}
+          filter={(result) => !currentChannel.allMemberIds.includes(result.id)}
           onSearch={(text) =>
             handleSearchUserToInvite({
               channelId: selectedChannelId,

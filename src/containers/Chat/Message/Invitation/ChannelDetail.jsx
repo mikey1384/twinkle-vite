@@ -4,22 +4,28 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
+import { useChatContext, useKeyContext, useAppContext } from '~/contexts';
 import UserListModal from '~/components/Modals/UserListModal';
 import localize from '~/constants/localize';
 
 const membersLabel = localize('members');
 
 ChannelDetail.propTypes = {
+  allMemberIds: PropTypes.array.isRequired,
   invitePath: PropTypes.number.isRequired,
   alreadyJoined: PropTypes.bool.isRequired,
+  channelId: PropTypes.number.isRequired,
   channelName: PropTypes.string.isRequired,
+  creatorId: PropTypes.number.isRequired,
   members: PropTypes.array.isRequired
 };
 
 export default function ChannelDetail({
+  allMemberIds,
   alreadyJoined,
   channelName,
+  channelId,
+  creatorId,
   invitePath,
   members
 }) {
@@ -28,17 +34,28 @@ export default function ChannelDetail({
     chatInvitation: { color: chatInvitationColor },
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
+  const loadMoreChannelMembers = useAppContext(
+    (v) => v.requestHelpers.loadMoreChannelMembers
+  );
+  const onLoadMoreChannelMembers = useChatContext(
+    (v) => v.actions.onLoadMoreChannelMembers
+  );
   const [shownMembers, setShownMembers] = useState([]);
   const [userListModalShown, setUserListModalShown] = useState(false);
+  const [loadMoreButtonShown, setLoadMoreButtonShown] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [more, setMore] = useState(null);
   useEffect(() => {
-    if (members.length > 3) {
+    if (allMemberIds.length > 3) {
       setShownMembers(members.filter((member, index) => index < 3));
-      setMore(members.length - 3);
+      setMore(allMemberIds.length - 3);
     } else {
       setShownMembers(members);
     }
-  }, [members]);
+  }, [allMemberIds.length, members]);
+  useEffect(() => {
+    setLoadMoreButtonShown(members.length < allMemberIds.length);
+  }, [allMemberIds.length, members.length]);
   const handleChannelEnter = useCallback(() => {
     if (alreadyJoined) {
       navigate(`/chat/${invitePath}`);
@@ -124,8 +141,26 @@ export default function ChannelDetail({
           onHide={() => setUserListModalShown(false)}
           title="Members"
           users={members}
+          loadMoreButtonShown={loadMoreButtonShown}
+          onLoadMore={handleLoadMore}
+          loadingMore={loadingMore}
         />
       )}
     </div>
   );
+
+  async function handleLoadMore() {
+    setLoadingMore(true);
+    const { members: loadedMembers, membersLoadMoreButtonShown } =
+      await loadMoreChannelMembers({
+        channelId,
+        lastId: members[members.length - 1].id
+      });
+    onLoadMoreChannelMembers({
+      channelId,
+      members: loadedMembers.filter((member) => member.id !== creatorId),
+      loadMoreShown: membersLoadMoreButtonShown
+    });
+    setLoadingMore(false);
+  }
 }
