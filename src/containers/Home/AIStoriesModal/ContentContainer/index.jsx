@@ -50,8 +50,8 @@ export default function ContentContainer({
         }
       `}
       style={{
-        marginTop: '60vh',
-        marginBottom: '60vh',
+        marginTop: displayedSection === 'story' ? '60vh' : '10rem',
+        marginBottom: displayedSection === 'story' ? '60vh' : '10rem',
         padding: '2rem',
         fontSize: '1.7rem'
       }}
