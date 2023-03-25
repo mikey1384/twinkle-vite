@@ -11,14 +11,16 @@ ContentContainer.propTypes = {
   loading: PropTypes.bool.isRequired,
   loadComplete: PropTypes.bool.isRequired,
   questionObj: PropTypes.object,
-  storyObj: PropTypes.object.isRequired
+  storyObj: PropTypes.object.isRequired,
+  onScrollToTop: PropTypes.func.isRequired
 };
 
 export default function ContentContainer({
   loading,
   loadComplete,
   questionObj,
-  storyObj
+  storyObj,
+  onScrollToTop
 }) {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [displayedSection, setDisplayedSection] = useState('story');
@@ -69,6 +71,7 @@ export default function ContentContainer({
 
   function handleFinishRead() {
     console.log('got here', questionObj);
+    onScrollToTop();
     setDisplayedSection('questions');
   }
 }

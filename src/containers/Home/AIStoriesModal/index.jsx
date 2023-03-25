@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import { useAppContext } from '~/contexts';
@@ -20,6 +20,7 @@ const levelHash = {
 };
 
 export default function AIStoriesModal({ onHide }) {
+  const MainRef = useRef();
   const [hasError, setHasError] = useState(false);
   const [loading, setLoading] = useState(true);
   const loadedDifficulty = localStorage.getItem('story-difficulty');
@@ -48,10 +49,10 @@ export default function AIStoriesModal({ onHide }) {
         style={{
           height: '100%',
           overflow: 'scroll',
-          scrollBehavior: 'smooth',
           justifyContent: 'flex-start',
           alignItems: 'center'
         }}
+        ref={MainRef}
       >
         {hasError ? (
           <div
@@ -80,6 +81,7 @@ export default function AIStoriesModal({ onHide }) {
             loadComplete={loadComplete}
             storyObj={storyObj}
             questionObj={questionObj}
+            onScrollToTop={() => (MainRef.current.scrollTop = 0)}
           />
         ) : (
           <div
