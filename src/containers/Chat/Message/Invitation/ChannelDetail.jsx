@@ -11,6 +11,7 @@ import localize from '~/constants/localize';
 const membersLabel = localize('members');
 
 ChannelDetail.propTypes = {
+  allMemberIds: PropTypes.array.isRequired,
   invitePath: PropTypes.number.isRequired,
   alreadyJoined: PropTypes.bool.isRequired,
   channelName: PropTypes.string.isRequired,
@@ -18,6 +19,7 @@ ChannelDetail.propTypes = {
 };
 
 export default function ChannelDetail({
+  allMemberIds,
   alreadyJoined,
   channelName,
   invitePath,
@@ -32,13 +34,13 @@ export default function ChannelDetail({
   const [userListModalShown, setUserListModalShown] = useState(false);
   const [more, setMore] = useState(null);
   useEffect(() => {
-    if (members.length > 3) {
+    if (allMemberIds.length > 3) {
       setShownMembers(members.filter((member, index) => index < 3));
-      setMore(members.length - 3);
+      setMore(allMemberIds.length - 3);
     } else {
       setShownMembers(members);
     }
-  }, [members]);
+  }, [allMemberIds.length, members]);
   const handleChannelEnter = useCallback(() => {
     if (alreadyJoined) {
       navigate(`/chat/${invitePath}`);

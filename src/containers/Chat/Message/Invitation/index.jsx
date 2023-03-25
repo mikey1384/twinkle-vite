@@ -141,6 +141,7 @@ export default function Invitation({
           alreadyJoined={alreadyJoined}
           channelName={invitationChannel.channelName}
           members={invitationChannel.members}
+          allMemberIds={invitationChannel.allMemberIds}
         />
       )}
       {userId !== sender.id && (
