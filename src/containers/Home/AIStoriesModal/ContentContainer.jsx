@@ -20,7 +20,6 @@ export default function ContentContainer({
   questionObj,
   storyObj
 }) {
-  console.log(questionObj);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   useEffect(() => {
@@ -64,9 +63,7 @@ export default function ContentContainer({
             display: 'flex'
           }}
         >
-          <GradientButton onClick={() => console.log('click')}>
-            Finished
-          </GradientButton>
+          <GradientButton onClick={handleFinishRead}>Finished</GradientButton>
         </div>
       )}
       {storyObj.explanation ? (
@@ -79,4 +76,8 @@ export default function ContentContainer({
       <LongText maxLines={100}>{storyObj.explanation}</LongText>
     </div>
   );
+
+  function handleFinishRead() {
+    console.log('got here', questionObj);
+  }
 }
