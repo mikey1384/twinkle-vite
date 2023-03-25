@@ -30,8 +30,8 @@ export default function Subchannel({
   );
 
   const lastMessage = useMemo(() => {
-    const lastMessageId = subchannel?.messageIds[0];
-    return subchannel?.messagesObj[lastMessageId];
+    const lastMessageId = subchannel?.messageIds?.[0];
+    return subchannel?.messagesObj?.[lastMessageId];
   }, [subchannel?.messageIds, subchannel?.messagesObj]);
   const numUnreads = useMemo(() => subchannel?.numUnreads || 0, [subchannel]);
   const badgeShown = useMemo(() => {
