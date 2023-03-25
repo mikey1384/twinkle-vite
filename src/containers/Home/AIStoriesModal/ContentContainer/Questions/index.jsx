@@ -17,6 +17,7 @@ export default function Questions({ questions }) {
           question={question.question}
           choices={question.choices}
           selectedChoiceIndex={userChoiceObj[question.id]}
+          answerIndex={question.answerIndex}
           onSelectChoice={(index) =>
             setUserChoiceObj((obj) => ({
               ...obj,

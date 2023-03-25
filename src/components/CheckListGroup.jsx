@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
+import Icon from '~/components/Icon';
 
 CheckListGroup.propTypes = {
   inputType: PropTypes.string,
@@ -81,13 +82,21 @@ export default function CheckListGroup({
             </section>
             <div
               style={{
-                padding: '0.5rem 2rem',
                 width: 'CALC(100% - 4.3rem)',
                 display: 'flex',
+                padding: '0.5rem 2rem',
+                justifyContent: 'space-between',
                 alignItems: 'center'
               }}
-              dangerouslySetInnerHTML={{ __html: listItem.label }}
-            />
+            >
+              <div dangerouslySetInnerHTML={{ __html: listItem.label }} />
+              {listItem.isCorrect && (
+                <Icon style={{ color: Color.green() }} icon="check" />
+              )}
+              {listItem.isWrong && (
+                <Icon style={{ color: Color.rose() }} icon="times" />
+              )}
+            </div>
           </nav>
         );
       })}
