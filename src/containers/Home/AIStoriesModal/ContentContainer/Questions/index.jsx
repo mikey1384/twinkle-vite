@@ -1,12 +1,14 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import Question from './Question';
+import GradientButton from '~/components/Buttons/GradientButton';
 
 Questions.propTypes = {
-  questions: PropTypes.array.isRequired
+  questions: PropTypes.array.isRequired,
+  onReadAgain: PropTypes.func.isRequired
 };
 
-export default function Questions({ questions }) {
+export default function Questions({ questions, onReadAgain }) {
   const [userChoiceObj, setUserChoiceObj] = useState({});
   return (
     <div>
@@ -26,6 +28,16 @@ export default function Questions({ questions }) {
           }
         />
       ))}
+      <div
+        style={{
+          marginTop: '10rem',
+          width: '100%',
+          justifyContent: 'center',
+          display: 'flex'
+        }}
+      >
+        <GradientButton onClick={onReadAgain}>Read Again</GradientButton>
+      </div>
     </div>
   );
 }
