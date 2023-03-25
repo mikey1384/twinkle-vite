@@ -7,6 +7,7 @@ import { useKeyContext } from '~/contexts';
 import { Link } from 'react-router-dom';
 
 Subchannel.propTypes = {
+  chatUnreadColor: PropTypes.string,
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   selectedChannelId: PropTypes.number,
   subchannel: PropTypes.object.isRequired,
@@ -15,6 +16,7 @@ Subchannel.propTypes = {
 };
 
 export default function Subchannel({
+  chatUnreadColor,
   currentPathId,
   selectedChannelId,
   subchannel,
@@ -22,9 +24,6 @@ export default function Subchannel({
   onUpdateLastSubchannelPath
 }) {
   const { userId } = useKeyContext((v) => v.myState);
-  const {
-    chatUnread: { color: chatUnreadColor }
-  } = useKeyContext((v) => v.theme);
   const subchannelSelected = useMemo(
     () => subchannelPath === subchannel.path,
     [subchannel.path, subchannelPath]
