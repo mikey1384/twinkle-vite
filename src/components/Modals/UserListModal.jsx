@@ -6,6 +6,7 @@ import RoundList from '~/components/RoundList';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import Loading from '~/components/Loading';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -14,8 +15,11 @@ UserListModal.propTypes = {
   description: PropTypes.string,
   descriptionShown: PropTypes.func,
   descriptionColor: PropTypes.string,
+  loadMoreButtonShown: PropTypes.bool,
   loading: PropTypes.bool,
+  loadingMore: PropTypes.bool,
   onHide: PropTypes.func.isRequired,
+  onLoadMore: PropTypes.func,
   title: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
   users: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.number.isRequired }))
     .isRequired
@@ -25,8 +29,11 @@ export default function UserListModal({
   description = '',
   descriptionColor = Color.green(),
   descriptionShown,
+  loadMoreButtonShown,
   loading,
+  loadingMore,
   onHide,
+  onLoadMore,
   title,
   users
 }) {
@@ -118,6 +125,14 @@ export default function UserListModal({
                 </nav>
               );
             })
+          )}
+          {loadMoreButtonShown && (
+            <LoadMoreButton
+              style={{ marginTop: '1.5rem' }}
+              filled
+              loading={loadingMore}
+              onClick={onLoadMore}
+            />
           )}
         </RoundList>
       </main>
