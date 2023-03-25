@@ -52,8 +52,9 @@ export default function CheckListGroup({
         return (
           <nav
             className={css`
+              min-height: 4.3rem;
               display: flex;
-              align-items: center;
+              align-items: stretch;
               width: 100%;
               cursor: pointer;
               &:hover {
@@ -65,7 +66,6 @@ export default function CheckListGroup({
           >
             <section
               className={css`
-                height: 4.3rem;
                 width: 4.3rem;
                 background: ${Color.checkboxAreaGray()};
                 display: flex;
@@ -80,7 +80,12 @@ export default function CheckListGroup({
               />
             </section>
             <div
-              style={{ padding: '0 2rem' }}
+              style={{
+                padding: '0.5rem 2rem',
+                width: 'CALC(100% - 4.3rem)',
+                display: 'flex',
+                alignItems: 'center'
+              }}
               dangerouslySetInnerHTML={{ __html: listItem.label }}
             />
           </nav>
