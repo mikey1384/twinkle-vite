@@ -21,7 +21,9 @@ export default function Story({ story, explanation, onFinishRead }) {
             display: 'flex'
           }}
         >
-          <GradientButton onClick={onFinishRead}>Finished</GradientButton>
+          <GradientButton onClick={onFinishRead}>
+            Finished Reading
+          </GradientButton>
         </div>
       )}
       {explanation ? (

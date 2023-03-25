@@ -4,6 +4,7 @@ import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
 import Story from './Story';
 import Questions from './Questions';
+
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -64,14 +65,21 @@ export default function ContentContainer({
         />
       )}
       {displayedSection === 'questions' && (
-        <Questions questions={questionObj.questions} />
+        <Questions
+          questions={questionObj.questions}
+          onReadAgain={handleReadAgain}
+        />
       )}
     </div>
   );
 
   function handleFinishRead() {
-    console.log('got here', questionObj);
     onScrollToTop();
     setDisplayedSection('questions');
+  }
+
+  function handleReadAgain() {
+    onScrollToTop();
+    setDisplayedSection('story');
   }
 }
