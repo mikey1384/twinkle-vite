@@ -69,6 +69,7 @@ export default function ContentContainer({
         >
           {displayedSection === 'story' && (
             <Story
+              isGraded={isGraded}
               story={storyObj.story}
               explanation={storyObj.explanation}
               questionsLoaded={questionsLoaded}

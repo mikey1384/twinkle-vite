@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import Question from './Question';
+import Button from '~/components/Button';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
@@ -70,7 +71,9 @@ export default function Questions({
         }}
       >
         {isGraded ? (
-          <GradientButton onClick={onReadAgain}>Read Again</GradientButton>
+          <Button filled color="logoBlue" onClick={onReadAgain}>
+            Read Again
+          </Button>
         ) : (
           <GradientButton onClick={() => onSetIsGraded(true)}>
             Finish
