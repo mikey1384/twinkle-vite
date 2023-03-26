@@ -193,6 +193,7 @@ export default function AIStoriesModal({ onHide }) {
   }
 
   async function handleLoadQuestions() {
+    if (questionsLoaded) return;
     const questions = await loadAIStoryQuestions({
       difficulty,
       story: storyObj.story

@@ -7,6 +7,7 @@ Story.propTypes = {
   explanation: PropTypes.string,
   onFinishRead: PropTypes.func.isRequired,
   onLoadQuestions: PropTypes.func.isRequired,
+  questionsLoaded: PropTypes.bool,
   story: PropTypes.string.isRequired
 };
 
@@ -14,12 +15,15 @@ export default function Story({
   story,
   explanation,
   onLoadQuestions,
-  onFinishRead
+  onFinishRead,
+  questionsLoaded
 }) {
   useEffect(() => {
-    onLoadQuestions();
+    if (!questionsLoaded) {
+      onLoadQuestions();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [questionsLoaded]);
 
   return (
     <div style={{ width: '100%' }}>
