@@ -73,7 +73,7 @@ export default function Questions({
           <GradientButton onClick={onReadAgain}>Read Again</GradientButton>
         ) : (
           <GradientButton onClick={() => onSetIsGraded(true)}>
-            Grade
+            Finish
           </GradientButton>
         )}
       </div>
