@@ -28,12 +28,31 @@ export default function AIStoriesModal({ onHide }) {
   const [loadComplete, setLoadComplete] = useState(false);
   const [dropdownShown, setDropdownShown] = useState(false);
   const [generateButtonPressed, setGenerateButtonPressed] = useState(false);
+  const loadAIStoryTopic = useAppContext(
+    (v) => v.requestHelpers.loadAIStoryTopic
+  );
+  const loadAIStoryQuestions = useAppContext(
+    (v) => v.requestHelpers.loadAIStoryQuestions
+  );
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
   const [storyObj, setStoryObj] = useState({});
-  const [questionObj, setQuestionObj] = useState({});
+  const [topic, setTopic] = useState('');
+  const [storyType, setStoryType] = useState('');
+  const [loadingTopic, setLoadingTopic] = useState(false);
+  const [questions, setQuestions] = useState([]);
+  const [questionsLoaded, setQuestionsLoaded] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('story-difficulty', difficulty);
+    loadTopic(difficulty);
+    async function loadTopic(difficulty) {
+      setLoadingTopic(true);
+      const { topic, type } = await loadAIStoryTopic(difficulty);
+      setTopic(topic);
+      setStoryType(type);
+      setLoadingTopic(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty]);
 
   return (
@@ -70,7 +89,7 @@ export default function AIStoriesModal({ onHide }) {
             </p>
             <GradientButton
               style={{ marginTop: '5rem' }}
-              onClick={handleGenerate}
+              onClick={handleGenerateStory}
             >
               Retry
             </GradientButton>
@@ -78,10 +97,13 @@ export default function AIStoriesModal({ onHide }) {
         ) : generateButtonPressed ? (
           <ContentContainer
             loading={loading}
+            loadingTopic={loadingTopic}
             loadComplete={loadComplete}
             storyObj={storyObj}
-            questionObj={questionObj}
+            questions={questions}
+            onLoadQuestions={handleLoadQuestions}
             onScrollToTop={() => (MainRef.current.scrollTop = 0)}
+            questionsLoaded={questionsLoaded}
           />
         ) : (
           <div
@@ -125,7 +147,8 @@ export default function AIStoriesModal({ onHide }) {
             />
             <GradientButton
               style={{ marginTop: '2rem' }}
-              onClick={handleGenerate}
+              onClick={handleGenerateStory}
+              loading={loadingTopic}
             >
               Generate a Story
             </GradientButton>
@@ -148,14 +171,17 @@ export default function AIStoriesModal({ onHide }) {
     </Modal>
   );
 
-  async function handleGenerate() {
+  async function handleGenerateStory() {
     setHasError(false);
     setGenerateButtonPressed(true);
     setLoading(true);
     try {
-      const { storyObj, questionObj } = await loadAIStory(difficulty);
+      const { storyObj } = await loadAIStory({
+        difficulty,
+        topic,
+        type: storyType
+      });
       setStoryObj(storyObj);
-      setQuestionObj(questionObj);
       setLoadComplete(true);
       await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
@@ -164,5 +190,14 @@ export default function AIStoriesModal({ onHide }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleLoadQuestions() {
+    const questions = await loadAIStoryQuestions({
+      difficulty,
+      story: storyObj.story
+    });
+    setQuestions(questions);
+    setQuestionsLoaded(true);
   }
 }
