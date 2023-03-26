@@ -8,12 +8,19 @@ import ProgressBar from '~/components/ProgressBar';
 Questions.propTypes = {
   questions: PropTypes.array.isRequired,
   questionsLoaded: PropTypes.bool,
-  onReadAgain: PropTypes.func.isRequired
+  onReadAgain: PropTypes.func.isRequired,
+  onSetUserChoiceObj: PropTypes.func.isRequired,
+  userChoiceObj: PropTypes.object.isRequired
 };
 
-export default function Questions({ questions, onReadAgain, questionsLoaded }) {
+export default function Questions({
+  questions,
+  onReadAgain,
+  questionsLoaded,
+  userChoiceObj,
+  onSetUserChoiceObj
+}) {
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [userChoiceObj, setUserChoiceObj] = useState({});
 
   useEffect(() => {
     if (!questionsLoaded && loadingProgress < 99) {
@@ -42,7 +49,7 @@ export default function Questions({ questions, onReadAgain, questionsLoaded }) {
           selectedChoiceIndex={userChoiceObj[question.id]}
           answerIndex={question.answerIndex}
           onSelectChoice={(index) =>
-            setUserChoiceObj((obj) => ({
+            onSetUserChoiceObj((obj) => ({
               ...obj,
               [question.id]: index
             }))
