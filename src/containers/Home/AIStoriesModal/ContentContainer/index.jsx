@@ -27,6 +27,7 @@ export default function ContentContainer({
   onScrollToTop,
   questionsLoaded
 }) {
+  const [userChoiceObj, setUserChoiceObj] = useState({});
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [displayedSection, setDisplayedSection] = useState('story');
 
@@ -76,6 +77,8 @@ export default function ContentContainer({
           )}
           {displayedSection === 'questions' && (
             <Questions
+              userChoiceObj={userChoiceObj}
+              onSetUserChoiceObj={setUserChoiceObj}
               questions={questions}
               onReadAgain={handleReadAgain}
               questionsLoaded={questionsLoaded}
