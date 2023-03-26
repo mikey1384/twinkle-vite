@@ -28,7 +28,7 @@ export default function Story({
   return (
     <div style={{ width: '100%' }}>
       <LongText maxLines={100}>{story}</LongText>
-      {!!story && (
+      {story && (
         <div
           style={{
             marginTop: '10rem',
@@ -42,12 +42,10 @@ export default function Story({
           </GradientButton>
         </div>
       )}
-      {explanation ? (
+      {explanation && (
         <div style={{ marginTop: '7rem', marginBottom: '1rem' }}>
           ===============================
         </div>
-      ) : (
-        ''
       )}
       <LongText maxLines={100}>{explanation}</LongText>
     </div>
