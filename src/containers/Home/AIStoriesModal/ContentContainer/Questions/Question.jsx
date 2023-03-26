@@ -5,6 +5,7 @@ import CheckListGroup from '~/components/CheckListGroup';
 Question.propTypes = {
   question: PropTypes.string.isRequired,
   choices: PropTypes.array.isRequired,
+  isGraded: PropTypes.bool,
   selectedChoiceIndex: PropTypes.number,
   onSelectChoice: PropTypes.func.isRequired,
   style: PropTypes.object,
@@ -14,6 +15,7 @@ Question.propTypes = {
 export default function Question({
   question,
   choices,
+  isGraded,
   selectedChoiceIndex,
   onSelectChoice,
   answerIndex,
@@ -25,15 +27,17 @@ export default function Question({
         label: choice,
         checked: index === selectedChoiceIndex,
         isCorrect:
+          isGraded &&
           typeof selectedChoiceIndex === 'number' &&
           index === selectedChoiceIndex &&
           selectedChoiceIndex === answerIndex,
         isWrong:
+          isGraded &&
           typeof selectedChoiceIndex === 'number' &&
           index === selectedChoiceIndex &&
           selectedChoiceIndex !== answerIndex
       })),
-    [choices, selectedChoiceIndex, answerIndex]
+    [choices, selectedChoiceIndex, isGraded, answerIndex]
   );
 
   return (

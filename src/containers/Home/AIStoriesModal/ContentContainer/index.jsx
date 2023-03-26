@@ -27,6 +27,7 @@ export default function ContentContainer({
   onScrollToTop,
   questionsLoaded
 }) {
+  const [isGraded, setIsGraded] = useState(false);
   const [userChoiceObj, setUserChoiceObj] = useState({});
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [displayedSection, setDisplayedSection] = useState('story');
@@ -77,11 +78,13 @@ export default function ContentContainer({
           )}
           {displayedSection === 'questions' && (
             <Questions
+              isGraded={isGraded}
               userChoiceObj={userChoiceObj}
               onSetUserChoiceObj={setUserChoiceObj}
               questions={questions}
               onReadAgain={handleReadAgain}
               questionsLoaded={questionsLoaded}
+              onSetIsGraded={setIsGraded}
             />
           )}
         </div>

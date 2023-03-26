@@ -6,6 +6,8 @@ import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
 
 Questions.propTypes = {
+  isGraded: PropTypes.bool,
+  onSetIsGraded: PropTypes.func.isRequired,
   questions: PropTypes.array.isRequired,
   questionsLoaded: PropTypes.bool,
   onReadAgain: PropTypes.func.isRequired,
@@ -14,6 +16,8 @@ Questions.propTypes = {
 };
 
 export default function Questions({
+  isGraded,
+  onSetIsGraded,
   questions,
   onReadAgain,
   questionsLoaded,
@@ -43,6 +47,7 @@ export default function Questions({
       {questions.map((question, index) => (
         <Question
           key={question.id}
+          isGraded={isGraded}
           style={{ marginTop: index === 0 ? 0 : '3rem' }}
           question={question.question}
           choices={question.choices}
@@ -64,7 +69,13 @@ export default function Questions({
           display: 'flex'
         }}
       >
-        <GradientButton onClick={onReadAgain}>Read Again</GradientButton>
+        {isGraded ? (
+          <GradientButton onClick={onReadAgain}>Read Again</GradientButton>
+        ) : (
+          <GradientButton onClick={() => onSetIsGraded(true)}>
+            Grade
+          </GradientButton>
+        )}
       </div>
     </div>
   );
