@@ -380,15 +380,41 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadAIStory(difficulty) {
+    async loadAIStoryTopic(difficulty) {
       try {
         const {
-          data: { imageUrl, storyObj, questionObj }
+          data: { topic, type }
         } = await request.get(
-          `${URL}/content/game/story?difficulty=${difficulty}`,
+          `${URL}/content/game/story/topic?difficulty=${difficulty}`,
           auth()
         );
-        return Promise.resolve({ imageUrl, storyObj, questionObj });
+        return Promise.resolve({ topic, type });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadAIStory({ difficulty, topic, type }) {
+      try {
+        const {
+          data: { imageUrl, storyObj }
+        } = await request.get(
+          `${URL}/content/game/story?difficulty=${difficulty}&topic=${topic}&type=${type}`,
+          auth()
+        );
+        return Promise.resolve({ imageUrl, storyObj });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadAIStoryQuestions({ difficulty, story }) {
+      try {
+        const {
+          data: { questions }
+        } = await request.get(
+          `${URL}/content/game/story/questions?difficulty=${difficulty}&story=${story}`,
+          auth()
+        );
+        return Promise.resolve(questions);
       } catch (error) {
         return handleError(error);
       }

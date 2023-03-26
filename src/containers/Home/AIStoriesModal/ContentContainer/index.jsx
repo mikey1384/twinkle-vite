@@ -11,17 +11,21 @@ import { css } from '@emotion/css';
 ContentContainer.propTypes = {
   loading: PropTypes.bool.isRequired,
   loadComplete: PropTypes.bool.isRequired,
-  questionObj: PropTypes.object,
+  questions: PropTypes.array,
   storyObj: PropTypes.object.isRequired,
-  onScrollToTop: PropTypes.func.isRequired
+  onLoadQuestions: PropTypes.func.isRequired,
+  onScrollToTop: PropTypes.func.isRequired,
+  questionsLoaded: PropTypes.bool
 };
 
 export default function ContentContainer({
   loading,
   loadComplete,
-  questionObj,
+  questions,
   storyObj,
-  onScrollToTop
+  onLoadQuestions,
+  onScrollToTop,
+  questionsLoaded
 }) {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [displayedSection, setDisplayedSection] = useState('story');
@@ -37,12 +41,7 @@ export default function ContentContainer({
     }
   }, [loadComplete, loading, loadingProgress]);
 
-  return loading ? (
-    <div style={{ marginTop: '20vh' }}>
-      <Loading text="Generating a Story..." />
-      <ProgressBar progress={loadingProgress} />
-    </div>
-  ) : (
+  return (
     <div
       className={css`
         width: 50%;
@@ -50,25 +49,39 @@ export default function ContentContainer({
           width: 100%;
         }
       `}
-      style={{
-        marginTop: displayedSection === 'story' ? '60vh' : '10rem',
-        marginBottom: displayedSection === 'story' ? '60vh' : '10rem',
-        padding: '2rem',
-        fontSize: '1.7rem'
-      }}
     >
-      {displayedSection === 'story' && (
-        <Story
-          story={storyObj.story}
-          explanation={storyObj.explanation}
-          onFinishRead={handleFinishRead}
-        />
-      )}
-      {displayedSection === 'questions' && (
-        <Questions
-          questions={questionObj.questions}
-          onReadAgain={handleReadAgain}
-        />
+      {loading ? (
+        <div style={{ marginTop: '20vh' }}>
+          <Loading text="Generating a Story..." />
+          <ProgressBar progress={loadingProgress} />
+        </div>
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            marginTop: displayedSection === 'story' ? '60vh' : '10rem',
+            marginBottom: displayedSection === 'story' ? '60vh' : '10rem',
+            padding: '2rem',
+            fontSize: '1.7rem'
+          }}
+        >
+          {displayedSection === 'story' && (
+            <Story
+              story={storyObj.story}
+              explanation={storyObj.explanation}
+              questionsLoaded={questionsLoaded}
+              onLoadQuestions={onLoadQuestions}
+              onFinishRead={handleFinishRead}
+            />
+          )}
+          {displayedSection === 'questions' && (
+            <Questions
+              questions={questions}
+              onReadAgain={handleReadAgain}
+              questionsLoaded={questionsLoaded}
+            />
+          )}
+        </div>
       )}
     </div>
   );
