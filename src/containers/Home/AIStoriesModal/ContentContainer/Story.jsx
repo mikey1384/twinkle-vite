@@ -38,7 +38,7 @@ export default function Story({
           }}
         >
           <GradientButton onClick={onFinishRead}>
-            Finished Reading
+            Solve Questions
           </GradientButton>
         </div>
       )}
