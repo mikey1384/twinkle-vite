@@ -2,8 +2,10 @@ import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import LongText from '~/components/Texts/LongText';
 import GradientButton from '~/components/Buttons/GradientButton';
+import Button from '~/components/Button';
 
 Story.propTypes = {
+  isGraded: PropTypes.bool,
   explanation: PropTypes.string,
   onFinishRead: PropTypes.func.isRequired,
   onLoadQuestions: PropTypes.func.isRequired,
@@ -13,6 +15,7 @@ Story.propTypes = {
 
 export default function Story({
   story,
+  isGraded,
   explanation,
   onLoadQuestions,
   onFinishRead,
@@ -37,9 +40,15 @@ export default function Story({
             display: 'flex'
           }}
         >
-          <GradientButton onClick={onFinishRead}>
-            Solve Questions
-          </GradientButton>
+          {isGraded ? (
+            <Button filled color="orange" onClick={onFinishRead}>
+              Review Questions
+            </Button>
+          ) : (
+            <GradientButton onClick={onFinishRead}>
+              Solve Questions
+            </GradientButton>
+          )}
         </div>
       )}
       {explanation && (
