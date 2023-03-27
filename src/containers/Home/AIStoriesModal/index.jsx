@@ -105,6 +105,7 @@ export default function AIStoriesModal({ onHide }) {
             onLoadQuestions={handleLoadQuestions}
             onScrollToTop={() => (MainRef.current.scrollTop = 0)}
             questionsLoaded={questionsLoaded}
+            onReset={handleReset}
           />
         ) : (
           <div
@@ -202,5 +203,12 @@ export default function AIStoriesModal({ onHide }) {
     });
     setQuestions(questions);
     setQuestionsLoaded(true);
+  }
+
+  function handleReset() {
+    setLoadComplete(false);
+    setQuestionsLoaded(false);
+    setQuestions([]);
+    setGenerateButtonPressed(false);
   }
 }
