@@ -9,6 +9,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 ContentContainer.propTypes = {
+  difficulty: PropTypes.number.isRequired,
   loading: PropTypes.bool.isRequired,
   loadComplete: PropTypes.bool.isRequired,
   questions: PropTypes.array,
@@ -19,6 +20,7 @@ ContentContainer.propTypes = {
 };
 
 export default function ContentContainer({
+  difficulty,
   loading,
   loadComplete,
   questions,
@@ -97,6 +99,7 @@ export default function ContentContainer({
         <SuccessModal
           onHide={() => setSuccessModalShown(false)}
           numQuestions={questions.length}
+          difficulty={difficulty}
         />
       )}
     </div>
