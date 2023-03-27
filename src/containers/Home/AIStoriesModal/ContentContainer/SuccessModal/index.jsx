@@ -35,7 +35,7 @@ export default function SuccessModal({
         <div
           style={{
             marginTop: '1rem',
-            marginBottom: '3rem',
+            marginBottom: '2rem',
             fontSize: difficulty > 3 ? '1.7rem' : '1.5rem'
           }}
         >
