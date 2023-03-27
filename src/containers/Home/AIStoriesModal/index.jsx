@@ -96,6 +96,7 @@ export default function AIStoriesModal({ onHide }) {
           </div>
         ) : generateButtonPressed ? (
           <ContentContainer
+            difficulty={difficulty}
             loading={loading}
             loadingTopic={loadingTopic}
             loadComplete={loadComplete}
