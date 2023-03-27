@@ -26,7 +26,7 @@ export default function SuccessModal({
           You answered {numQuestions} out of {numQuestions} question
           {numQuestions === 1 ? '' : 's'} correctly!
         </div>
-        <div style={{ marginTop: '1rem' }}>
+        <div style={{ marginTop: '1rem', marginBottom: '3rem' }}>
           You earned {addCommasToNumber(rewardTable[difficulty].xp)} XP and{' '}
           {addCommasToNumber(rewardTable[difficulty].coins)} coins
         </div>

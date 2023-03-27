@@ -5,6 +5,7 @@ import ProgressBar from '~/components/ProgressBar';
 import Story from './Story';
 import Questions from './Questions';
 import SuccessModal from './SuccessModal';
+import GradientButton from '~/components/Buttons/GradientButton';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -38,6 +39,7 @@ ContentContainer.propTypes = {
   questions: PropTypes.array,
   storyObj: PropTypes.object.isRequired,
   onLoadQuestions: PropTypes.func.isRequired,
+  onReset: PropTypes.func.isRequired,
   onScrollToTop: PropTypes.func.isRequired,
   questionsLoaded: PropTypes.bool
 };
@@ -49,6 +51,7 @@ export default function ContentContainer({
   questions,
   storyObj,
   onLoadQuestions,
+  onReset,
   onScrollToTop,
   questionsLoaded
 }) {
@@ -116,6 +119,18 @@ export default function ContentContainer({
               onGrade={handleGrade}
             />
           )}
+          {solveObj.isGraded ? (
+            <div
+              style={{
+                width: '100%',
+                marginTop: '5rem',
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <GradientButton onClick={onReset}>New Story</GradientButton>
+            </div>
+          ) : null}
         </div>
       )}
       {successModalShown && (
