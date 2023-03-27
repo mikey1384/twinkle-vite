@@ -8,6 +8,29 @@ import SuccessModal from './SuccessModal';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
+const rewardTable = {
+  1: {
+    xp: 300,
+    coins: 25
+  },
+  2: {
+    xp: 500,
+    coins: 50
+  },
+  3: {
+    xp: 1000,
+    coins: 75
+  },
+  4: {
+    xp: 3000,
+    coins: 100
+  },
+  5: {
+    xp: 5000,
+    coins: 150
+  }
+};
+
 ContentContainer.propTypes = {
   difficulty: PropTypes.number.isRequired,
   loading: PropTypes.bool.isRequired,
@@ -100,6 +123,7 @@ export default function ContentContainer({
           onHide={() => setSuccessModalShown(false)}
           numQuestions={questions.length}
           difficulty={difficulty}
+          rewardTable={rewardTable}
         />
       )}
     </div>
