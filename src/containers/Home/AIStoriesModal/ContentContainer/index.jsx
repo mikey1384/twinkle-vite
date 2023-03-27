@@ -4,7 +4,7 @@ import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
 import Story from './Story';
 import Questions from './Questions';
-
+import SuccessModal from './SuccessModal';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -31,6 +31,7 @@ export default function ContentContainer({
     numCorrect: 0,
     isGraded: false
   });
+  const [successModalShown, setSuccessModalShown] = useState(false);
   const [userChoiceObj, setUserChoiceObj] = useState({});
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [displayedSection, setDisplayedSection] = useState('story');
@@ -65,7 +66,6 @@ export default function ContentContainer({
           style={{
             width: '100%',
             marginTop: displayedSection === 'story' ? '60vh' : '10rem',
-            marginBottom: '10rem',
             padding: '2rem',
             fontSize: '1.7rem'
           }}
@@ -93,6 +93,12 @@ export default function ContentContainer({
           )}
         </div>
       )}
+      {successModalShown && (
+        <SuccessModal
+          onHide={() => setSuccessModalShown(false)}
+          numQuestions={questions.length}
+        />
+      )}
     </div>
   );
 
@@ -109,7 +115,7 @@ export default function ContentContainer({
       isGraded: true
     });
     if (numCorrect === questions.length) {
-      alert(`You got ${numCorrect} out of ${questions.length} correct!`);
+      setSuccessModalShown(true);
     }
   }
 
