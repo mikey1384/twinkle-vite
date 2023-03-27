@@ -23,6 +23,7 @@ export default function AIStoriesModal({ onHide }) {
   const MainRef = useRef();
   const [hasError, setHasError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [attemptId, setAttemptId] = useState(null);
   const loadedDifficulty = localStorage.getItem('story-difficulty');
   const [difficulty, setDifficulty] = useState(loadedDifficulty || 2);
   const [loadComplete, setLoadComplete] = useState(false);
@@ -96,6 +97,7 @@ export default function AIStoriesModal({ onHide }) {
           </div>
         ) : generateButtonPressed ? (
           <ContentContainer
+            attemptId={attemptId}
             difficulty={Number(difficulty)}
             loading={loading}
             loadingTopic={loadingTopic}
@@ -178,11 +180,12 @@ export default function AIStoriesModal({ onHide }) {
     setGenerateButtonPressed(true);
     setLoading(true);
     try {
-      const { storyObj } = await loadAIStory({
+      const { attemptId: newAttemptId, storyObj } = await loadAIStory({
         difficulty,
         topic,
         type: storyType
       });
+      setAttemptId(newAttemptId);
       setStoryObj(storyObj);
       setLoadComplete(true);
       await new Promise((resolve) => setTimeout(resolve, 100));

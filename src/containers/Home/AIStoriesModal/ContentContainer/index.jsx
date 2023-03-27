@@ -6,6 +6,7 @@ import Story from './Story';
 import Questions from './Questions';
 import SuccessModal from './SuccessModal';
 import GradientButton from '~/components/Buttons/GradientButton';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -33,6 +34,7 @@ const rewardTable = {
 };
 
 ContentContainer.propTypes = {
+  attemptId: PropTypes.number,
   difficulty: PropTypes.number.isRequired,
   loading: PropTypes.bool.isRequired,
   loadComplete: PropTypes.bool.isRequired,
@@ -45,6 +47,7 @@ ContentContainer.propTypes = {
 };
 
 export default function ContentContainer({
+  attemptId,
   difficulty,
   loading,
   loadComplete,
@@ -55,6 +58,12 @@ export default function ContentContainer({
   onScrollToTop,
   questionsLoaded
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const uploadAIStoryAttempt = useAppContext(
+    (v) => v.requestHelpers.uploadAIStoryAttempt
+  );
+  const [isGrading, setIsGrading] = useState(false);
   const [solveObj, setSolveObj] = useState({
     numCorrect: 0,
     isGraded: false
@@ -117,6 +126,7 @@ export default function ContentContainer({
               onReadAgain={handleReadAgain}
               questionsLoaded={questionsLoaded}
               onGrade={handleGrade}
+              isGrading={isGrading}
             />
           )}
           {solveObj.isGraded ? (
@@ -144,20 +154,44 @@ export default function ContentContainer({
     </div>
   );
 
-  function handleGrade() {
+  async function handleGrade() {
     let numCorrect = 0;
+    const result = [];
     for (let question of questions) {
       const userChoice = userChoiceObj[question.id];
       if (userChoice === question.answerIndex) {
         numCorrect++;
       }
+      result.push({
+        questionId: question.id,
+        isCorrect: userChoice === question.answerIndex
+      });
     }
-    setSolveObj({
-      numCorrect,
-      isGraded: true
-    });
-    if (numCorrect === questions.length) {
-      setSuccessModalShown(true);
+    const isPassed = numCorrect === questions.length;
+    try {
+      setIsGrading(true);
+      const { newXp, newCoins } = await uploadAIStoryAttempt({
+        attemptId,
+        difficulty,
+        result,
+        isPassed
+      });
+      if (newXp && newCoins) {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: newCoins, twinkeXP: newXp }
+        });
+      }
+      setSolveObj({
+        numCorrect,
+        isGraded: true
+      });
+      if (isPassed) {
+        setSuccessModalShown(true);
+      }
+      setIsGrading(false);
+    } catch (error) {
+      console.error(error);
     }
   }
 
