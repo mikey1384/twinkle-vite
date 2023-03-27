@@ -5,9 +5,10 @@ import Button from '~/components/Button';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
+import { Color } from '~/constants/css';
 
 Questions.propTypes = {
-  isGraded: PropTypes.bool,
+  solveObj: PropTypes.object.isRequired,
   onGrade: PropTypes.func.isRequired,
   questions: PropTypes.array.isRequired,
   questionsLoaded: PropTypes.bool,
@@ -17,7 +18,7 @@ Questions.propTypes = {
 };
 
 export default function Questions({
-  isGraded,
+  solveObj,
   onGrade,
   questions,
   onReadAgain,
@@ -48,7 +49,7 @@ export default function Questions({
       {questions.map((question, index) => (
         <Question
           key={question.id}
-          isGraded={isGraded}
+          isGraded={solveObj.isGraded}
           style={{ marginTop: index === 0 ? 0 : '3rem' }}
           question={question.question}
           choices={question.choices}
@@ -70,10 +71,35 @@ export default function Questions({
           display: 'flex'
         }}
       >
-        {isGraded ? (
-          <Button filled color="logoBlue" onClick={onReadAgain}>
-            Read Again
-          </Button>
+        {solveObj.isGraded ? (
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <div
+              style={{
+                color:
+                  solveObj.numCorrect === questions.length
+                    ? Color.green()
+                    : null,
+                fontWeight:
+                  solveObj.numCorrect === questions.length ? 'bold' : null
+              }}
+            >
+              {solveObj.numCorrect} / {questions.length} correct
+              {solveObj.numCorrect === questions.length ? '!' : ''}
+            </div>
+            <div style={{ marginTop: '2rem' }}>
+              <Button filled color="logoBlue" onClick={onReadAgain}>
+                Read Again
+              </Button>
+            </div>
+          </div>
         ) : (
           <GradientButton onClick={onGrade}>Finish</GradientButton>
         )}

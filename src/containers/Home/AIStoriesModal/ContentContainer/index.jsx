@@ -27,7 +27,10 @@ export default function ContentContainer({
   onScrollToTop,
   questionsLoaded
 }) {
-  const [isGraded, setIsGraded] = useState(false);
+  const [solveObj, setSolveObj] = useState({
+    numCorrect: 0,
+    isGraded: false
+  });
   const [userChoiceObj, setUserChoiceObj] = useState({});
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [displayedSection, setDisplayedSection] = useState('story');
@@ -69,7 +72,7 @@ export default function ContentContainer({
         >
           {displayedSection === 'story' && (
             <Story
-              isGraded={isGraded}
+              isGraded={solveObj.isGraded}
               story={storyObj.story}
               explanation={storyObj.explanation}
               questionsLoaded={questionsLoaded}
@@ -79,7 +82,7 @@ export default function ContentContainer({
           )}
           {displayedSection === 'questions' && (
             <Questions
-              isGraded={isGraded}
+              solveObj={solveObj}
               userChoiceObj={userChoiceObj}
               onSetUserChoiceObj={setUserChoiceObj}
               questions={questions}
@@ -101,8 +104,13 @@ export default function ContentContainer({
         numCorrect++;
       }
     }
-    alert(`You got ${numCorrect} out of ${questions.length} correct!`);
-    setIsGraded(true);
+    setSolveObj({
+      numCorrect,
+      isGraded: true
+    });
+    if (numCorrect === questions.length) {
+      alert(`You got ${numCorrect} out of ${questions.length} correct!`);
+    }
   }
 
   function handleFinishRead() {
