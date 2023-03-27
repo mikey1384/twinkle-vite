@@ -95,7 +95,7 @@ export default function ReactionText({ difficulty }) {
                   color: transparent;
                   background-size: 500% auto;
                   background-position: right center;
-                  animation: bling 1.5s ease infinite;
+                  animation: bling 1.5s ease 1;
                   @keyframes bling {
                     0% {
                       background-position: 100% 0%;
@@ -106,7 +106,7 @@ export default function ReactionText({ difficulty }) {
                     }
 
                     100% {
-                      background-position: 0% 0%;
+                      background-position: 100% 0%;
                     }
                   }
                 `
