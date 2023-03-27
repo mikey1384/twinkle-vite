@@ -396,12 +396,12 @@ export default function contentRequestHelpers({ auth, handleError }) {
     async loadAIStory({ difficulty, topic, type }) {
       try {
         const {
-          data: { imageUrl, storyObj }
+          data: { imageUrl, attemptId, storyObj }
         } = await request.get(
           `${URL}/content/game/story?difficulty=${difficulty}&topic=${topic}&type=${type}`,
           auth()
         );
-        return Promise.resolve({ imageUrl, storyObj });
+        return Promise.resolve({ imageUrl, attemptId, storyObj });
       } catch (error) {
         return handleError(error);
       }
@@ -415,6 +415,23 @@ export default function contentRequestHelpers({ auth, handleError }) {
           auth()
         );
         return Promise.resolve(questions);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async uploadAIStoryAttempt({ attemptId, difficulty, result, isPassed }) {
+      try {
+        const {
+          data: { newXp, newCoins }
+        } = await request.post(
+          `${URL}/content/game/story/attempt`,
+          { attemptId, difficulty, result, isPassed },
+          auth()
+        );
+        return Promise.resolve({
+          newXp,
+          newCoins
+        });
       } catch (error) {
         return handleError(error);
       }

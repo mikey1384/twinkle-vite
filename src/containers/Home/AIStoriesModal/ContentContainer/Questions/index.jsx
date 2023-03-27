@@ -8,6 +8,7 @@ import ProgressBar from '~/components/ProgressBar';
 import { Color } from '~/constants/css';
 
 Questions.propTypes = {
+  isGrading: PropTypes.bool,
   solveObj: PropTypes.object.isRequired,
   onGrade: PropTypes.func.isRequired,
   questions: PropTypes.array.isRequired,
@@ -18,6 +19,7 @@ Questions.propTypes = {
 };
 
 export default function Questions({
+  isGrading,
   solveObj,
   onGrade,
   questions,
@@ -101,7 +103,9 @@ export default function Questions({
             </div>
           </div>
         ) : (
-          <GradientButton onClick={onGrade}>Finish</GradientButton>
+          <GradientButton loading={isGrading} onClick={onGrade}>
+            Finish
+          </GradientButton>
         )}
       </div>
     </div>
