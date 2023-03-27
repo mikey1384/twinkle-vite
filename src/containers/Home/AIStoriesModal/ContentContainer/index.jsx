@@ -65,7 +65,7 @@ export default function ContentContainer({
           style={{
             width: '100%',
             marginTop: displayedSection === 'story' ? '60vh' : '10rem',
-            marginBottom: displayedSection === 'story' ? '60vh' : '10rem',
+            marginBottom: '10rem',
             padding: '2rem',
             fontSize: '1.7rem'
           }}

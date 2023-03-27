@@ -157,7 +157,7 @@ export default function AIStoriesModal({ onHide }) {
         {generateButtonPressed && (
           <div
             style={{
-              marginTop: hasError ? '1rem' : '20rem',
+              marginTop: hasError ? '1rem' : '5rem',
               display: 'flex',
               justifyContent: 'center'
             }}
