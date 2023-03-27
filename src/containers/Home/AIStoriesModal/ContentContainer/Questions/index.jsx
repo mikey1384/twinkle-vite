@@ -8,7 +8,7 @@ import ProgressBar from '~/components/ProgressBar';
 
 Questions.propTypes = {
   isGraded: PropTypes.bool,
-  onSetIsGraded: PropTypes.func.isRequired,
+  onGrade: PropTypes.func.isRequired,
   questions: PropTypes.array.isRequired,
   questionsLoaded: PropTypes.bool,
   onReadAgain: PropTypes.func.isRequired,
@@ -18,7 +18,7 @@ Questions.propTypes = {
 
 export default function Questions({
   isGraded,
-  onSetIsGraded,
+  onGrade,
   questions,
   onReadAgain,
   questionsLoaded,
@@ -75,9 +75,7 @@ export default function Questions({
             Read Again
           </Button>
         ) : (
-          <GradientButton onClick={() => onSetIsGraded(true)}>
-            Finish
-          </GradientButton>
+          <GradientButton onClick={onGrade}>Finish</GradientButton>
         )}
       </div>
     </div>

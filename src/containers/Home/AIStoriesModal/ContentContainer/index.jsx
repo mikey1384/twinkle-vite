@@ -85,13 +85,25 @@ export default function ContentContainer({
               questions={questions}
               onReadAgain={handleReadAgain}
               questionsLoaded={questionsLoaded}
-              onSetIsGraded={setIsGraded}
+              onGrade={handleGrade}
             />
           )}
         </div>
       )}
     </div>
   );
+
+  function handleGrade() {
+    let numCorrect = 0;
+    for (let question of questions) {
+      const userChoice = userChoiceObj[question.id];
+      if (userChoice === question.answerIndex) {
+        numCorrect++;
+      }
+    }
+    alert(`You got ${numCorrect} out of ${questions.length} correct!`);
+    setIsGraded(true);
+  }
 
   function handleFinishRead() {
     onScrollToTop();
