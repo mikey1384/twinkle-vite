@@ -4,6 +4,7 @@ import Modal from '~/components/Modal';
 import { useAppContext } from '~/contexts';
 import Button from '~/components/Button';
 import ContentContainer from './ContentContainer';
+import FilterBar from '~/components/FilterBar';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import GradientButton from '~/components/Buttons/GradientButton';
 
@@ -21,6 +22,7 @@ const levelHash = {
 
 export default function AIStoriesModal({ onHide }) {
   const MainRef = useRef();
+  const [activeTab, setActiveTab] = useState('game');
   const [hasError, setHasError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [attemptId, setAttemptId] = useState(null);
@@ -59,9 +61,34 @@ export default function AIStoriesModal({ onHide }) {
       large
       onHide={onHide}
     >
+      {false && !generateButtonPressed && (
+        <header style={{ height: '3rem', padding: 0 }}>
+          <FilterBar
+            style={{
+              marginTop: '3rem',
+              height: '6rem'
+            }}
+          >
+            <nav
+              className={activeTab === 'game' ? 'active' : null}
+              onClick={() => setActiveTab('game')}
+            >
+              Game
+            </nav>
+            <nav
+              className={activeTab === 'rankings' ? 'active' : null}
+              onClick={() => setActiveTab('rankings')}
+            >
+              Rankings
+            </nav>
+          </FilterBar>
+        </header>
+      )}
       <main
         style={{
           height: '100%',
+          marginTop: '1.5rem',
+          margin: '1rem',
           overflow: 'scroll',
           justifyContent: 'flex-start',
           alignItems: 'center'
