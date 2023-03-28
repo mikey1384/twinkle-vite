@@ -22,8 +22,10 @@ const levelHash = {
 
 export default function AIStoriesModal({ onHide }) {
   const MainRef = useRef();
+  const [resetNumber, setResetNumber] = useState(0);
   const [activeTab, setActiveTab] = useState('game');
   const [hasError, setHasError] = useState(false);
+  const [questionsLoadError, setQuestionsLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [attemptId, setAttemptId] = useState(null);
   const loadedDifficulty = localStorage.getItem('story-difficulty');
@@ -50,7 +52,7 @@ export default function AIStoriesModal({ onHide }) {
     localStorage.setItem('story-difficulty', difficulty);
     handleLoadTopic(difficulty);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [difficulty]);
+  }, [difficulty, resetNumber]);
 
   return (
     <Modal
@@ -125,6 +127,7 @@ export default function AIStoriesModal({ onHide }) {
             loadComplete={loadComplete}
             storyObj={storyObj}
             questions={questions}
+            questionsLoadError={questionsLoadError}
             onLoadQuestions={handleLoadQuestions}
             onScrollToTop={() => (MainRef.current.scrollTop = 0)}
             questionsLoaded={questionsLoaded}
@@ -273,17 +276,24 @@ export default function AIStoriesModal({ onHide }) {
   }
 
   async function handleLoadQuestions() {
+    setQuestionsLoadError(false);
     if (questionsLoaded) return;
-    const questions = await loadAIStoryQuestions({
-      difficulty,
-      story: storyObj.story,
-      storyId: storyObj.id
-    });
-    setQuestions(questions);
-    setQuestionsLoaded(true);
+    try {
+      const questions = await loadAIStoryQuestions({
+        difficulty,
+        story: storyObj.story,
+        storyId: storyObj.id
+      });
+      setQuestions(questions);
+      setQuestionsLoaded(true);
+    } catch (error) {
+      console.error(error);
+      setQuestionsLoadError(true);
+    }
   }
 
   function handleReset() {
+    setResetNumber((prevNumber) => prevNumber + 1);
     setLoadComplete(false);
     setQuestionsLoaded(false);
     setQuestions([]);

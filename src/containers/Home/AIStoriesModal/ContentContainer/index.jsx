@@ -43,6 +43,7 @@ ContentContainer.propTypes = {
   onLoadQuestions: PropTypes.func.isRequired,
   onReset: PropTypes.func.isRequired,
   onScrollToTop: PropTypes.func.isRequired,
+  questionsLoadError: PropTypes.bool,
   questionsLoaded: PropTypes.bool
 };
 
@@ -56,6 +57,7 @@ export default function ContentContainer({
   onLoadQuestions,
   onReset,
   onScrollToTop,
+  questionsLoadError,
   questionsLoaded
 }) {
   const { userId } = useKeyContext((v) => v.myState);
@@ -126,6 +128,8 @@ export default function ContentContainer({
               onReadAgain={handleReadAgain}
               questionsLoaded={questionsLoaded}
               onGrade={handleGrade}
+              onRetryLoadingQuestions={onLoadQuestions}
+              questionsLoadError={questionsLoadError}
               isGrading={isGrading}
             />
           )}
