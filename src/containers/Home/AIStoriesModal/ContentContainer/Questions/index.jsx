@@ -14,7 +14,9 @@ Questions.propTypes = {
   questions: PropTypes.array.isRequired,
   questionsLoaded: PropTypes.bool,
   onReadAgain: PropTypes.func.isRequired,
+  onRetryLoadingQuestions: PropTypes.func.isRequired,
   onSetUserChoiceObj: PropTypes.func.isRequired,
+  questionsLoadError: PropTypes.bool,
   userChoiceObj: PropTypes.object.isRequired
 };
 
@@ -25,6 +27,8 @@ export default function Questions({
   questions,
   onReadAgain,
   questionsLoaded,
+  onRetryLoadingQuestions,
+  questionsLoadError,
   userChoiceObj,
   onSetUserChoiceObj
 }) {
@@ -41,7 +45,28 @@ export default function Questions({
     }
   }, [loadingProgress, questionsLoaded]);
 
-  return !questionsLoaded ? (
+  return questionsLoadError ? (
+    <div
+      style={{
+        marginTop: '5rem',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
+      <div>There was an error while loading the questions.</div>
+      <GradientButton
+        style={{ marginTop: '3rem' }}
+        onClick={() => {
+          setLoadingProgress(0);
+          onRetryLoadingQuestions();
+        }}
+      >
+        Retry
+      </GradientButton>
+    </div>
+  ) : !questionsLoaded ? (
     <div>
       <Loading text="Generating Questions..." />
       <ProgressBar progress={loadingProgress} />
