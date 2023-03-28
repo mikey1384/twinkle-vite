@@ -25,7 +25,7 @@ export default function AIStoriesModal({ onHide }) {
   const [loading, setLoading] = useState(true);
   const [attemptId, setAttemptId] = useState(null);
   const loadedDifficulty = localStorage.getItem('story-difficulty');
-  const [difficulty, setDifficulty] = useState(loadedDifficulty || 2);
+  const [difficulty, setDifficulty] = useState(loadedDifficulty || 3);
   const [loadComplete, setLoadComplete] = useState(false);
   const [dropdownShown, setDropdownShown] = useState(false);
   const [generateButtonPressed, setGenerateButtonPressed] = useState(false);
