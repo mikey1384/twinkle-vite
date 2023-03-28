@@ -18,6 +18,9 @@ export default function ActionBlock({ action, target, style, type, username }) {
       if (target === 'grammarbles') {
         return 'completed daily grammarbles';
       }
+      if (target === 'aiStory') {
+        return 'completed an AI story';
+      }
     }
     if (action === 'generate') {
       return 'summoned a card';
