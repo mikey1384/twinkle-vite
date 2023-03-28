@@ -42,17 +42,11 @@ export default function AIStoriesModal({ onHide }) {
   const [loadingTopic, setLoadingTopic] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [questionsLoaded, setQuestionsLoaded] = useState(false);
+  const [topicLoadError, setTopicLoadError] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('story-difficulty', difficulty);
-    loadTopic(difficulty);
-    async function loadTopic(difficulty) {
-      setLoadingTopic(true);
-      const { topic, type } = await loadAIStoryTopic(difficulty);
-      setTopic(topic);
-      setStoryType(type);
-      setLoadingTopic(false);
-    }
+    handleLoadTopic(difficulty);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty]);
 
@@ -149,13 +143,35 @@ export default function AIStoriesModal({ onHide }) {
                 }
               ]}
             />
-            <GradientButton
-              style={{ marginTop: '2rem' }}
-              onClick={handleGenerateStory}
-              loading={loadingTopic}
-            >
-              Generate a Story
-            </GradientButton>
+            {topicLoadError ? (
+              <div
+                style={{
+                  marginTop: '5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center'
+                }}
+              >
+                <p>There was an error initializing AI Story</p>
+                <GradientButton
+                  style={{ marginTop: '3rem' }}
+                  onClick={() => {
+                    setTopicLoadError(false);
+                    handleLoadTopic(difficulty);
+                  }}
+                >
+                  Retry
+                </GradientButton>
+              </div>
+            ) : (
+              <GradientButton
+                style={{ marginTop: '2rem' }}
+                onClick={handleGenerateStory}
+                loading={loadingTopic}
+              >
+                Generate a Story
+              </GradientButton>
+            )}
           </div>
         )}
         {generateButtonPressed && (
@@ -194,6 +210,38 @@ export default function AIStoriesModal({ onHide }) {
       setHasError(true);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleLoadTopic(difficulty) {
+    setLoadingTopic(true);
+    try {
+      const { topic, type } = await tryLoadTopic(difficulty, 3, 1000);
+      setTopic(topic);
+      setStoryType(type);
+    } catch (error) {
+      console.error('Failed to load topic:', error);
+      setTopicLoadError(true);
+    } finally {
+      setLoadingTopic(false);
+    }
+
+    async function tryLoadTopic(difficulty, retries, timeout) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const { topic, type } = await loadAIStoryTopic(difficulty);
+          return { topic, type };
+        } catch (error) {
+          console.error(`Error on attempt ${i + 1}:`, error);
+          if (i < retries - 1) {
+            await sleep(timeout);
+          }
+        }
+      }
+      throw new Error('Failed to load topic after maximum retries');
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
     }
   }
 
