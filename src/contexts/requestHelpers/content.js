@@ -436,6 +436,20 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
+    async loadAIStoryRankings() {
+      try {
+        const {
+          data: { all, top30s, myRank }
+        } = await request.get(`${URL}/content/game/story/leaderBoard`, auth());
+        return Promise.resolve({
+          all,
+          top30s,
+          myRank
+        });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadGrammarGame() {
       try {
         const {

@@ -16,8 +16,8 @@ Rankings.propTypes = {
 };
 
 export default function Rankings({ rankingsTab, onSetRankingsTab }) {
-  const loadGrammarRankings = useAppContext(
-    (v) => v.requestHelpers.loadGrammarRankings
+  const loadAIStoryRankings = useAppContext(
+    (v) => v.requestHelpers.loadAIStoryRankings
   );
   const [loading, setLoading] = useState(true);
   const [allRanks, setAllRanks] = useState([]);
@@ -31,7 +31,7 @@ export default function Rankings({ rankingsTab, onSetRankingsTab }) {
   useEffect(() => {
     init();
     async function init() {
-      const { all, top30s, myRank: loadedMyRank } = await loadGrammarRankings();
+      const { all, top30s, myRank: loadedMyRank } = await loadAIStoryRankings();
       setMyRank(loadedMyRank);
       setAllRanks(all);
       setTop30s(top30s);
