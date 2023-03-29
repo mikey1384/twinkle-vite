@@ -88,7 +88,6 @@ export default function AIStoriesModal({ onHide }) {
       <main
         style={{
           height: '100%',
-          marginTop: '1.5rem',
           margin: '1rem',
           overflow: 'scroll',
           justifyContent: 'flex-start',
