@@ -4,6 +4,7 @@ import Modal from '~/components/Modal';
 import { useAppContext } from '~/contexts';
 import FilterBar from '~/components/FilterBar';
 import Game from './Game';
+import Rankings from './Rankings';
 
 AIStoriesModal.propTypes = {
   onHide: PropTypes.func.isRequired
@@ -13,6 +14,7 @@ export default function AIStoriesModal({ onHide }) {
   const MainRef = useRef();
   const [resetNumber, setResetNumber] = useState(0);
   const [activeTab, setActiveTab] = useState('game');
+  const [rankingsTab, setRankingsTab] = useState('all');
   const [attemptId, setAttemptId] = useState(null);
   const loadedDifficulty = localStorage.getItem('story-difficulty');
   const [difficulty, setDifficulty] = useState(Number(loadedDifficulty) || 3);
@@ -98,6 +100,20 @@ export default function AIStoriesModal({ onHide }) {
             topic={topic}
             topicLoadError={topicLoadError}
           />
+        )}
+        {activeTab === 'rankings' && (
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <Rankings
+              onSetRankingsTab={setRankingsTab}
+              rankingsTab={rankingsTab}
+            />
+          </div>
         )}
       </main>
     </Modal>
