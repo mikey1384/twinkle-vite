@@ -44,9 +44,11 @@ ContentContainer.propTypes = {
   onReset: PropTypes.func.isRequired,
   onSetSolveObj: PropTypes.func.isRequired,
   onScrollToTop: PropTypes.func.isRequired,
+  onSetUserChoiceObj: PropTypes.func.isRequired,
   questionsLoadError: PropTypes.bool,
   questionsLoaded: PropTypes.bool,
-  solveObj: PropTypes.object.isRequired
+  solveObj: PropTypes.object.isRequired,
+  userChoiceObj: PropTypes.object.isRequired
 };
 
 export default function ContentContainer({
@@ -59,10 +61,12 @@ export default function ContentContainer({
   onLoadQuestions,
   onReset,
   onSetSolveObj,
+  onSetUserChoiceObj,
   onScrollToTop,
   questionsLoadError,
   questionsLoaded,
-  solveObj
+  solveObj,
+  userChoiceObj
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -71,7 +75,6 @@ export default function ContentContainer({
   );
   const [isGrading, setIsGrading] = useState(false);
   const [successModalShown, setSuccessModalShown] = useState(false);
-  const [userChoiceObj, setUserChoiceObj] = useState({});
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [displayedSection, setDisplayedSection] = useState('story');
 
@@ -123,7 +126,7 @@ export default function ContentContainer({
             <Questions
               solveObj={solveObj}
               userChoiceObj={userChoiceObj}
-              onSetUserChoiceObj={setUserChoiceObj}
+              onSetUserChoiceObj={onSetUserChoiceObj}
               questions={questions}
               onReadAgain={handleReadAgain}
               questionsLoaded={questionsLoaded}

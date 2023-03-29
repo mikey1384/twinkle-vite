@@ -31,6 +31,7 @@ export default function AIStoriesModal({ onHide }) {
   const [questions, setQuestions] = useState([]);
   const [questionsLoaded, setQuestionsLoaded] = useState(false);
   const [questionsLoadError, setQuestionsLoadError] = useState(false);
+  const [userChoiceObj, setUserChoiceObj] = useState({});
   const loadAIStoryTopic = useAppContext(
     (v) => v.requestHelpers.loadAIStoryTopic
   );
@@ -112,12 +113,14 @@ export default function AIStoriesModal({ onHide }) {
             onSetSolveObj={setSolveObj}
             onSetStoryLoadError={setStoryLoadError}
             onSetStoryObj={setStoryObj}
+            onSetUserChoiceObj={setUserChoiceObj}
             onSetTopicLoadError={setTopicLoadError}
             questions={questions}
             questionsLoadError={questionsLoadError}
             questionsLoaded={questionsLoaded}
             solveObj={solveObj}
             storyObj={storyObj}
+            userChoiceObj={userChoiceObj}
             MainRef={MainRef}
             storyLoadError={storyLoadError}
             storyType={storyType}

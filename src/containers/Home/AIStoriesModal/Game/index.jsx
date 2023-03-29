@@ -37,6 +37,7 @@ Game.propTypes = {
   onSetSolveObj: PropTypes.func.isRequired,
   onSetStoryLoadError: PropTypes.func.isRequired,
   onSetStoryObj: PropTypes.func.isRequired,
+  onSetUserChoiceObj: PropTypes.func.isRequired,
   questions: PropTypes.array,
   questionsLoaded: PropTypes.bool,
   questionsLoadError: PropTypes.bool,
@@ -45,7 +46,8 @@ Game.propTypes = {
   storyObj: PropTypes.object.isRequired,
   storyType: PropTypes.string.isRequired,
   topic: PropTypes.string.isRequired,
-  topicLoadError: PropTypes.bool.isRequired
+  topicLoadError: PropTypes.bool.isRequired,
+  userChoiceObj: PropTypes.object.isRequired
 };
 
 export default function Game({
@@ -68,6 +70,7 @@ export default function Game({
   onSetSolveObj,
   onSetStoryLoadError,
   onSetStoryObj,
+  onSetUserChoiceObj,
   onSetQuestions,
   onSetQuestionsLoaded,
   onSetQuestionsLoadError,
@@ -80,7 +83,8 @@ export default function Game({
   storyObj,
   storyType,
   topic,
-  topicLoadError
+  topicLoadError,
+  userChoiceObj
 }) {
   const loadAIStoryQuestions = useAppContext(
     (v) => v.requestHelpers.loadAIStoryQuestions
@@ -129,11 +133,13 @@ export default function Game({
           questions={questions}
           questionsLoadError={questionsLoadError}
           onLoadQuestions={handleLoadQuestions}
+          onSetUserChoiceObj={onSetUserChoiceObj}
           onScrollToTop={() => (MainRef.current.scrollTop = 0)}
           onReset={handleReset}
           onSetSolveObj={onSetSolveObj}
           questionsLoaded={questionsLoaded}
           solveObj={solveObj}
+          userChoiceObj={userChoiceObj}
         />
       ) : (
         <div
@@ -267,6 +273,7 @@ export default function Game({
     onSetLoadStoryComplete(false);
     onSetQuestionsLoaded(false);
     onSetQuestions([]);
+    onSetUserChoiceObj({});
     onSetSolveObj({
       numCorrect: 0,
       isGraded: false
