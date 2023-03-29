@@ -238,7 +238,7 @@ export default function TakeScreenshot({ attachment, missionId, style }) {
                   onSetUserState({
                     userId,
                     newState: {
-                      twinkeXP: newXpAndRank.xp,
+                      twinkleXP: newXpAndRank.xp,
                       rank: newXpAndRank.rank
                     }
                   });

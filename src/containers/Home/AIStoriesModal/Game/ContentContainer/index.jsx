@@ -183,7 +183,7 @@ export default function ContentContainer({
       if (newXp && newCoins) {
         onSetUserState({
           userId,
-          newState: { twinkleCoins: newCoins, twinkeXP: newXp }
+          newState: { twinkleCoins: newCoins, twinkleXP: newXp }
         });
       }
       setSolveObj({
