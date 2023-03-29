@@ -14,7 +14,8 @@ const colors = {
   vocabulary: Color.orange(),
   missions: Color.green(),
   grammar: Color.purple(),
-  cards: Color.magenta()
+  cards: Color.magenta(),
+  reading: Color.gold()
 };
 
 AcquisitionPieChart.propTypes = {
