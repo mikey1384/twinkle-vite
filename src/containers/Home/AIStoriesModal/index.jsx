@@ -25,6 +25,12 @@ export default function AIStoriesModal({ onHide }) {
   const [loadStoryComplete, onSetLoadStoryComplete] = useState(false);
   const [dropdownShown, setDropdownShown] = useState(false);
   const [generateButtonPressed, setGenerateButtonPressed] = useState(false);
+  const [storyLoadError, setStoryLoadError] = useState(false);
+  const [loadingStory, setLoadingStory] = useState(false);
+  const [storyObj, setStoryObj] = useState({});
+  const [questions, setQuestions] = useState([]);
+  const [questionsLoaded, setQuestionsLoaded] = useState(false);
+  const [questionsLoadError, setQuestionsLoadError] = useState(false);
   const loadAIStoryTopic = useAppContext(
     (v) => v.requestHelpers.loadAIStoryTopic
   );
@@ -87,6 +93,7 @@ export default function AIStoriesModal({ onHide }) {
           <Game
             attemptId={attemptId}
             difficulty={difficulty}
+            loadingStory={loadingStory}
             loadingTopic={loadingTopic}
             generateButtonPressed={generateButtonPressed}
             loadStoryComplete={loadStoryComplete}
@@ -97,11 +104,22 @@ export default function AIStoriesModal({ onHide }) {
             onSetResetNumber={setResetNumber}
             onSetDifficulty={setDifficulty}
             onSetGenerateButtonPressed={setGenerateButtonPressed}
+            onSetLoadingStory={setLoadingStory}
             onSetLoadStoryComplete={onSetLoadStoryComplete}
+            onSetQuestions={setQuestions}
+            onSetQuestionsLoaded={setQuestionsLoaded}
+            onSetQuestionsLoadError={setQuestionsLoadError}
             onSetSolveObj={setSolveObj}
+            onSetStoryLoadError={setStoryLoadError}
+            onSetStoryObj={setStoryObj}
             onSetTopicLoadError={setTopicLoadError}
+            questions={questions}
+            questionsLoadError={questionsLoadError}
+            questionsLoaded={questionsLoaded}
             solveObj={solveObj}
+            storyObj={storyObj}
             MainRef={MainRef}
+            storyLoadError={storyLoadError}
             storyType={storyType}
             topic={topic}
             topicLoadError={topicLoadError}

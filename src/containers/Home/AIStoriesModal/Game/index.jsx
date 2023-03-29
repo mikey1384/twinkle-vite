@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import ContentContainer from './ContentContainer';
@@ -19,6 +18,7 @@ Game.propTypes = {
   difficulty: PropTypes.number.isRequired,
   generateButtonPressed: PropTypes.bool.isRequired,
   loadStoryComplete: PropTypes.bool.isRequired,
+  loadingStory: PropTypes.bool.isRequired,
   loadingTopic: PropTypes.bool.isRequired,
   MainRef: PropTypes.object.isRequired,
   onHide: PropTypes.func.isRequired,
@@ -28,10 +28,21 @@ Game.propTypes = {
   onSetDifficulty: PropTypes.func.isRequired,
   onSetDropdownShown: PropTypes.func.isRequired,
   onSetGenerateButtonPressed: PropTypes.func.isRequired,
+  onSetLoadingStory: PropTypes.func.isRequired,
   onSetLoadStoryComplete: PropTypes.func.isRequired,
+  onSetQuestions: PropTypes.func.isRequired,
+  onSetQuestionsLoaded: PropTypes.func.isRequired,
+  onSetQuestionsLoadError: PropTypes.func.isRequired,
   onSetTopicLoadError: PropTypes.func.isRequired,
   onSetSolveObj: PropTypes.func.isRequired,
+  onSetStoryLoadError: PropTypes.func.isRequired,
+  onSetStoryObj: PropTypes.func.isRequired,
+  questions: PropTypes.array,
+  questionsLoaded: PropTypes.bool,
+  questionsLoadError: PropTypes.bool,
   solveObj: PropTypes.object.isRequired,
+  storyLoadError: PropTypes.bool.isRequired,
+  storyObj: PropTypes.object.isRequired,
   storyType: PropTypes.string.isRequired,
   topic: PropTypes.string.isRequired,
   topicLoadError: PropTypes.bool.isRequired
@@ -42,6 +53,7 @@ export default function Game({
   difficulty,
   generateButtonPressed,
   loadStoryComplete,
+  loadingStory,
   loadingTopic,
   MainRef,
   onLoadTopic,
@@ -51,10 +63,21 @@ export default function Game({
   onSetDifficulty,
   onSetDropdownShown,
   onSetGenerateButtonPressed,
+  onSetLoadingStory,
   onSetLoadStoryComplete,
   onSetSolveObj,
+  onSetStoryLoadError,
+  onSetStoryObj,
+  onSetQuestions,
+  onSetQuestionsLoaded,
+  onSetQuestionsLoadError,
   onSetTopicLoadError,
+  questions,
+  questionsLoaded,
+  questionsLoadError,
   solveObj,
+  storyLoadError,
+  storyObj,
   storyType,
   topic,
   topicLoadError
@@ -63,12 +86,6 @@ export default function Game({
     (v) => v.requestHelpers.loadAIStoryQuestions
   );
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
-  const [hasError, setHasError] = useState(false);
-  const [loadingStory, setLoadingStory] = useState(false);
-  const [storyObj, setStoryObj] = useState({});
-  const [questions, setQuestions] = useState([]);
-  const [questionsLoaded, setQuestionsLoaded] = useState(false);
-  const [questionsLoadError, setQuestionsLoadError] = useState(false);
 
   return (
     <div
@@ -80,7 +97,7 @@ export default function Game({
         alignItems: 'center'
       }}
     >
-      {hasError ? (
+      {storyLoadError ? (
         <div
           style={{
             display: 'flex',
@@ -192,7 +209,7 @@ export default function Game({
       {generateButtonPressed && (
         <div
           style={{
-            marginTop: hasError ? '1rem' : '13rem',
+            marginTop: storyLoadError ? '1rem' : '13rem',
             padding: '2rem',
             display: 'flex',
             justifyContent: 'center'
@@ -207,7 +224,7 @@ export default function Game({
   );
 
   async function handleLoadQuestions() {
-    setQuestionsLoadError(false);
+    onSetQuestionsLoadError(false);
     if (questionsLoaded) return;
     try {
       const questions = await loadAIStoryQuestions({
@@ -215,18 +232,18 @@ export default function Game({
         story: storyObj.story,
         storyId: storyObj.id
       });
-      setQuestions(questions);
-      setQuestionsLoaded(true);
+      onSetQuestions(questions);
+      onSetQuestionsLoaded(true);
     } catch (error) {
       console.error(error);
-      setQuestionsLoadError(true);
+      onSetQuestionsLoadError(true);
     }
   }
 
   async function handleGenerateStory() {
-    setHasError(false);
+    onSetStoryLoadError(false);
     onSetGenerateButtonPressed(true);
-    setLoadingStory(true);
+    onSetLoadingStory(true);
     try {
       const { attemptId: newAttemptId, storyObj } = await loadAIStory({
         difficulty,
@@ -234,22 +251,22 @@ export default function Game({
         type: storyType
       });
       onSetAttemptId(newAttemptId);
-      setStoryObj(storyObj);
+      onSetStoryObj(storyObj);
       onSetLoadStoryComplete(true);
       await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
       console.error(error);
-      setHasError(true);
+      onSetStoryLoadError(true);
     } finally {
-      setLoadingStory(false);
+      onSetLoadingStory(false);
     }
   }
 
   function handleReset() {
     onSetResetNumber((prevNumber) => prevNumber + 1);
     onSetLoadStoryComplete(false);
-    setQuestionsLoaded(false);
-    setQuestions([]);
+    onSetQuestionsLoaded(false);
+    onSetQuestions([]);
     onSetSolveObj({
       numCorrect: 0,
       isGraded: false
