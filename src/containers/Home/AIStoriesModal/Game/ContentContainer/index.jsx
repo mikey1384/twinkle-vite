@@ -96,7 +96,7 @@ export default function ContentContainer({
       `}
     >
       {loading ? (
-        <div style={{ marginTop: '20vh' }}>
+        <div style={{ marginTop: '20vh', padding: '0 2rem' }}>
           <Loading text="Generating a Story..." />
           <ProgressBar progress={loadingProgress} />
         </div>

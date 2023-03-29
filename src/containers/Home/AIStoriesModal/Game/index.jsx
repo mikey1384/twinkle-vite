@@ -186,7 +186,8 @@ export default function Game({
       {generateButtonPressed && (
         <div
           style={{
-            marginTop: hasError ? '3rem' : '15rem',
+            marginTop: hasError ? '1rem' : '13rem',
+            padding: '2rem',
             display: 'flex',
             justifyContent: 'center'
           }}

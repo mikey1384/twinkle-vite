@@ -72,7 +72,7 @@ export default function AIStoriesModal({ onHide }) {
       <main
         style={{
           height: '100%',
-          margin: '1rem',
+          padding: 0,
           overflow: 'scroll',
           justifyContent: 'flex-start',
           alignItems: 'center'
@@ -105,6 +105,7 @@ export default function AIStoriesModal({ onHide }) {
           <div
             style={{
               width: '100%',
+              height: '100%',
               display: 'flex',
               justifyContent: 'center'
             }}
