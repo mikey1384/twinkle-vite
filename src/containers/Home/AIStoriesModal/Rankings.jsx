@@ -41,11 +41,11 @@ export default function Rankings({ rankingsTab, onSetRankingsTab }) {
   }, []);
 
   return loading ? (
-    <Loading style={{ height: 'CALC(100vh - 30rem)' }} />
+    <Loading style={{ height: '100%' }} />
   ) : (
     <div
       style={{
-        height: 'CALC(100vh - 30rem)',
+        height: '100%',
         width: '100%',
         display: 'flex',
         alignItems: 'center',
