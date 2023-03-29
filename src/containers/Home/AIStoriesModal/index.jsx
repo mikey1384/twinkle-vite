@@ -15,7 +15,7 @@ export default function AIStoriesModal({ onHide }) {
   const [activeTab, setActiveTab] = useState('game');
   const [attemptId, setAttemptId] = useState(null);
   const loadedDifficulty = localStorage.getItem('story-difficulty');
-  const [difficulty, setDifficulty] = useState(loadedDifficulty || 3);
+  const [difficulty, setDifficulty] = useState(Number(loadedDifficulty) || 3);
   const [loadStoryComplete, onSetLoadStoryComplete] = useState(false);
   const [dropdownShown, setDropdownShown] = useState(false);
   const [generateButtonPressed, setGenerateButtonPressed] = useState(false);
@@ -48,7 +48,8 @@ export default function AIStoriesModal({ onHide }) {
         <header style={{ padding: 0 }}>
           <FilterBar
             style={{
-              height: '6rem'
+              height: '6rem',
+              marginBottom: 0
             }}
           >
             <nav
