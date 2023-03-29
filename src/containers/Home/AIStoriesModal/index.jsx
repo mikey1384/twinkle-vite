@@ -12,6 +12,10 @@ AIStoriesModal.propTypes = {
 
 export default function AIStoriesModal({ onHide }) {
   const MainRef = useRef();
+  const [solveObj, setSolveObj] = useState({
+    numCorrect: 0,
+    isGraded: false
+  });
   const [resetNumber, setResetNumber] = useState(0);
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
@@ -46,7 +50,7 @@ export default function AIStoriesModal({ onHide }) {
       large
       onHide={onHide}
     >
-      {!generateButtonPressed && (
+      {(!generateButtonPressed || solveObj.isGraded) && (
         <header style={{ padding: 0 }}>
           <FilterBar
             style={{
@@ -94,7 +98,9 @@ export default function AIStoriesModal({ onHide }) {
             onSetDifficulty={setDifficulty}
             onSetGenerateButtonPressed={setGenerateButtonPressed}
             onSetLoadStoryComplete={onSetLoadStoryComplete}
+            onSetSolveObj={setSolveObj}
             onSetTopicLoadError={setTopicLoadError}
+            solveObj={solveObj}
             MainRef={MainRef}
             storyType={storyType}
             topic={topic}

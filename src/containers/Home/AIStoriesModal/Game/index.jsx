@@ -30,6 +30,8 @@ Game.propTypes = {
   onSetGenerateButtonPressed: PropTypes.func.isRequired,
   onSetLoadStoryComplete: PropTypes.func.isRequired,
   onSetTopicLoadError: PropTypes.func.isRequired,
+  onSetSolveObj: PropTypes.func.isRequired,
+  solveObj: PropTypes.object.isRequired,
   storyType: PropTypes.string.isRequired,
   topic: PropTypes.string.isRequired,
   topicLoadError: PropTypes.bool.isRequired
@@ -50,7 +52,9 @@ export default function Game({
   onSetDropdownShown,
   onSetGenerateButtonPressed,
   onSetLoadStoryComplete,
+  onSetSolveObj,
   onSetTopicLoadError,
+  solveObj,
   storyType,
   topic,
   topicLoadError
@@ -109,8 +113,10 @@ export default function Game({
           questionsLoadError={questionsLoadError}
           onLoadQuestions={handleLoadQuestions}
           onScrollToTop={() => (MainRef.current.scrollTop = 0)}
-          questionsLoaded={questionsLoaded}
           onReset={handleReset}
+          onSetSolveObj={onSetSolveObj}
+          questionsLoaded={questionsLoaded}
+          solveObj={solveObj}
         />
       ) : (
         <div
@@ -244,6 +250,10 @@ export default function Game({
     onSetLoadStoryComplete(false);
     setQuestionsLoaded(false);
     setQuestions([]);
+    onSetSolveObj({
+      numCorrect: 0,
+      isGraded: false
+    });
     onSetGenerateButtonPressed(false);
   }
 }
