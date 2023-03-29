@@ -18,6 +18,7 @@ export default function AIStoriesModal({ onHide }) {
   });
   const [resetNumber, setResetNumber] = useState(0);
   const [activeTab, setActiveTab] = useState('game');
+  const [displayedSection, setDisplayedSection] = useState('story');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [attemptId, setAttemptId] = useState(null);
   const loadedDifficulty = localStorage.getItem('story-difficulty');
@@ -94,6 +95,7 @@ export default function AIStoriesModal({ onHide }) {
           <Game
             attemptId={attemptId}
             difficulty={difficulty}
+            displayedSection={displayedSection}
             loadingStory={loadingStory}
             loadingTopic={loadingTopic}
             generateButtonPressed={generateButtonPressed}
@@ -104,6 +106,7 @@ export default function AIStoriesModal({ onHide }) {
             onSetDropdownShown={setDropdownShown}
             onSetResetNumber={setResetNumber}
             onSetDifficulty={setDifficulty}
+            onSetDisplayedSection={setDisplayedSection}
             onSetGenerateButtonPressed={setGenerateButtonPressed}
             onSetLoadingStory={setLoadingStory}
             onSetLoadStoryComplete={onSetLoadStoryComplete}

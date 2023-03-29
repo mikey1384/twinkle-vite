@@ -16,6 +16,7 @@ const levelHash = {
 Game.propTypes = {
   attemptId: PropTypes.number,
   difficulty: PropTypes.number.isRequired,
+  displayedSection: PropTypes.string.isRequired,
   generateButtonPressed: PropTypes.bool.isRequired,
   loadStoryComplete: PropTypes.bool.isRequired,
   loadingStory: PropTypes.bool.isRequired,
@@ -26,6 +27,7 @@ Game.propTypes = {
   onSetAttemptId: PropTypes.func.isRequired,
   onSetResetNumber: PropTypes.func.isRequired,
   onSetDifficulty: PropTypes.func.isRequired,
+  onSetDisplayedSection: PropTypes.func.isRequired,
   onSetDropdownShown: PropTypes.func.isRequired,
   onSetGenerateButtonPressed: PropTypes.func.isRequired,
   onSetLoadingStory: PropTypes.func.isRequired,
@@ -53,6 +55,7 @@ Game.propTypes = {
 export default function Game({
   attemptId,
   difficulty,
+  displayedSection,
   generateButtonPressed,
   loadStoryComplete,
   loadingStory,
@@ -64,6 +67,7 @@ export default function Game({
   onSetResetNumber,
   onSetDifficulty,
   onSetDropdownShown,
+  onSetDisplayedSection,
   onSetGenerateButtonPressed,
   onSetLoadingStory,
   onSetLoadStoryComplete,
@@ -126,6 +130,7 @@ export default function Game({
         <ContentContainer
           attemptId={attemptId}
           difficulty={Number(difficulty)}
+          displayedSection={displayedSection}
           loading={loadingStory}
           loadingTopic={loadingTopic}
           loadComplete={loadStoryComplete}
@@ -133,6 +138,7 @@ export default function Game({
           questions={questions}
           questionsLoadError={questionsLoadError}
           onLoadQuestions={handleLoadQuestions}
+          onSetDisplayedSection={onSetDisplayedSection}
           onSetUserChoiceObj={onSetUserChoiceObj}
           onScrollToTop={() => (MainRef.current.scrollTop = 0)}
           onReset={handleReset}
@@ -273,6 +279,7 @@ export default function Game({
     onSetLoadStoryComplete(false);
     onSetQuestionsLoaded(false);
     onSetQuestions([]);
+    onSetDisplayedSection('story');
     onSetUserChoiceObj({});
     onSetSolveObj({
       numCorrect: 0,
