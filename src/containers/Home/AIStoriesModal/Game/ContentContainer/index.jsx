@@ -42,9 +42,11 @@ ContentContainer.propTypes = {
   storyObj: PropTypes.object.isRequired,
   onLoadQuestions: PropTypes.func.isRequired,
   onReset: PropTypes.func.isRequired,
+  onSetSolveObj: PropTypes.func.isRequired,
   onScrollToTop: PropTypes.func.isRequired,
   questionsLoadError: PropTypes.bool,
-  questionsLoaded: PropTypes.bool
+  questionsLoaded: PropTypes.bool,
+  solveObj: PropTypes.object.isRequired
 };
 
 export default function ContentContainer({
@@ -56,9 +58,11 @@ export default function ContentContainer({
   storyObj,
   onLoadQuestions,
   onReset,
+  onSetSolveObj,
   onScrollToTop,
   questionsLoadError,
-  questionsLoaded
+  questionsLoaded,
+  solveObj
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -66,10 +70,6 @@ export default function ContentContainer({
     (v) => v.requestHelpers.uploadAIStoryAttempt
   );
   const [isGrading, setIsGrading] = useState(false);
-  const [solveObj, setSolveObj] = useState({
-    numCorrect: 0,
-    isGraded: false
-  });
   const [successModalShown, setSuccessModalShown] = useState(false);
   const [userChoiceObj, setUserChoiceObj] = useState({});
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -186,7 +186,7 @@ export default function ContentContainer({
           newState: { twinkleCoins: newCoins, twinkleXP: newXp }
         });
       }
-      setSolveObj({
+      onSetSolveObj({
         numCorrect,
         isGraded: true
       });
