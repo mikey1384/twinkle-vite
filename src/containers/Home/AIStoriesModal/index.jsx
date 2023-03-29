@@ -63,11 +63,10 @@ export default function AIStoriesModal({ onHide }) {
       large
       onHide={onHide}
     >
-      {false && !generateButtonPressed && (
-        <header style={{ height: '3rem', padding: 0 }}>
+      {!generateButtonPressed && (
+        <header style={{ padding: 0 }}>
           <FilterBar
             style={{
-              marginTop: '3rem',
               height: '6rem'
             }}
           >
