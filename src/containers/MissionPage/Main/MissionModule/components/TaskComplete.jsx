@@ -84,7 +84,7 @@ export default function TaskComplete({
       if (newXpAndRank.xp) {
         onSetUserState({
           userId,
-          newState: { twinkeXP: newXpAndRank.xp, rank: newXpAndRank.rank }
+          newState: { twinkleXP: newXpAndRank.xp, rank: newXpAndRank.rank }
         });
       }
       if (newCoins) {
