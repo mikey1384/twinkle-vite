@@ -36,6 +36,7 @@ const rewardTable = {
 ContentContainer.propTypes = {
   attemptId: PropTypes.number,
   difficulty: PropTypes.number.isRequired,
+  displayedSection: PropTypes.string.isRequired,
   loading: PropTypes.bool.isRequired,
   loadComplete: PropTypes.bool.isRequired,
   questions: PropTypes.array,
@@ -44,6 +45,7 @@ ContentContainer.propTypes = {
   onReset: PropTypes.func.isRequired,
   onSetSolveObj: PropTypes.func.isRequired,
   onScrollToTop: PropTypes.func.isRequired,
+  onSetDisplayedSection: PropTypes.func.isRequired,
   onSetUserChoiceObj: PropTypes.func.isRequired,
   questionsLoadError: PropTypes.bool,
   questionsLoaded: PropTypes.bool,
@@ -54,12 +56,14 @@ ContentContainer.propTypes = {
 export default function ContentContainer({
   attemptId,
   difficulty,
+  displayedSection,
   loading,
   loadComplete,
   questions,
   storyObj,
   onLoadQuestions,
   onReset,
+  onSetDisplayedSection,
   onSetSolveObj,
   onSetUserChoiceObj,
   onScrollToTop,
@@ -76,7 +80,6 @@ export default function ContentContainer({
   const [isGrading, setIsGrading] = useState(false);
   const [successModalShown, setSuccessModalShown] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [displayedSection, setDisplayedSection] = useState('story');
 
   useEffect(() => {
     if (!loadComplete && loadingProgress < 99) {
@@ -204,11 +207,11 @@ export default function ContentContainer({
 
   function handleFinishRead() {
     onScrollToTop();
-    setDisplayedSection('questions');
+    onSetDisplayedSection('questions');
   }
 
   function handleReadAgain() {
     onScrollToTop();
-    setDisplayedSection('story');
+    onSetDisplayedSection('story');
   }
 }
