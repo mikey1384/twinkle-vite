@@ -29,7 +29,7 @@ export default function Story({
   }, [questionsLoaded]);
 
   return (
-    <div style={{ width: '100%' }}>
+    <div className="unselectable" style={{ width: '100%' }}>
       <LongText maxLines={100}>{story}</LongText>
       {story && (
         <div
