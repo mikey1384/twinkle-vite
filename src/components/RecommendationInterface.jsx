@@ -50,7 +50,7 @@ export default function RecommendationInterface({
     return expectedResponseLength(rewardLevel);
   }, [contentType, rewardLevel]);
   const meetsRequirement = useMemo(
-    () => content?.length > expectedContentLength || contentType === 'pass',
+    () => content?.length > expectedContentLength && contentType !== 'pass',
     [content?.length, contentType, expectedContentLength]
   );
   const [rewardDisabled, setRewardDisabled] = useState(!meetsRequirement);
@@ -100,6 +100,10 @@ export default function RecommendationInterface({
       </>
     ) : null;
   }, [authLevel, isRecommendedByUser]);
+
+  const switchButtonShown = useMemo(() => {
+    return !isRecommendedByUser && authLevel > 1 && contentType !== 'pass';
+  }, [isRecommendedByUser, authLevel, contentType]);
 
   return hidden ? null : (
     <ErrorBoundary
@@ -177,7 +181,7 @@ export default function RecommendationInterface({
               }
             `}
           >
-            {!isRecommendedByUser && authLevel > 1 && (
+            {switchButtonShown && (
               <SwitchButton
                 small={deviceIsMobile}
                 checked={!rewardDisabled}
