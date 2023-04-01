@@ -70,10 +70,12 @@ export default function RecommendationStatus({
 
   const isRewardable = useMemo(
     () =>
-      (myRecommendation?.authLevel > 1 && !myRecommendation?.rewardDisabled) ||
-      (mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel > 1 &&
-        !mostRecentRewardEnabledRecommenderOtherThanMe?.rewardDisabled),
+      contentType !== 'pass' &&
+      ((myRecommendation?.authLevel > 1 && !myRecommendation?.rewardDisabled) ||
+        (mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel > 1 &&
+          !mostRecentRewardEnabledRecommenderOtherThanMe?.rewardDisabled)),
     [
+      contentType,
       mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel,
       mostRecentRewardEnabledRecommenderOtherThanMe?.rewardDisabled,
       myRecommendation?.authLevel,
