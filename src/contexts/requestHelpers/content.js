@@ -383,22 +383,22 @@ export default function contentRequestHelpers({ auth, handleError }) {
     async loadAIStoryTopic(difficulty) {
       try {
         const {
-          data: { topic, type }
+          data: { topic, topicKey, type }
         } = await request.get(
           `${URL}/content/game/story/topic?difficulty=${difficulty}`,
           auth()
         );
-        return Promise.resolve({ topic, type });
+        return Promise.resolve({ topic, topicKey, type });
       } catch (error) {
         return handleError(error);
       }
     },
-    async loadAIStory({ difficulty, topic, type }) {
+    async loadAIStory({ difficulty, topic, topicKey, type }) {
       try {
         const {
           data: { imageUrl, attemptId, storyObj }
         } = await request.get(
-          `${URL}/content/game/story?difficulty=${difficulty}&topic=${topic}&type=${type}`,
+          `${URL}/content/game/story?difficulty=${difficulty}&topic=${topic}&topicKey=${topicKey}&type=${type}`,
           auth()
         );
         return Promise.resolve({ imageUrl, attemptId, storyObj });
