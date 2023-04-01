@@ -1107,8 +1107,7 @@ export default function ChatReducer(state, action) {
             ...state.channelsObj[action.channelId],
             members: state.channelsObj[action.channelId].members.concat(
               action.members
-            ),
-            membersLoadMoreButtonShown: action.loadMoreShown
+            )
           }
         }
       };

@@ -233,9 +233,9 @@ export default function ChatInfo({
         channelId={selectedChannelId}
         creatorId={currentChannel.creatorId}
         members={displayedChannelMembers}
+        numMembers={allMemberIds.length}
         theme={displayedThemeColor}
         onlineMemberObj={objectify(onlineChannelMembers)}
-        loadMoreShown={currentChannel.membersLoadMoreButtonShown}
       />
     </ErrorBoundary>
   );
