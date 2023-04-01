@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import InputForm from '~/components/Forms/InputForm';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import LocalContext from '../../Context';
-import { useContentContext, useInputContext } from '~/contexts';
+import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { v1 as uuidv1 } from 'uuid';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
@@ -46,12 +46,22 @@ export default function CommentInputArea({
   theme
 }) {
   const [uploading, setUploading] = useState(false);
+  const { userId } = useKeyContext((v) => v.myState);
   const placeholderLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return '댓글을 입력하세요...';
     }
+    if (inputTypeLabel === 'reply') {
+      if (!parent.uploader?.id) {
+        return 'Reply...';
+      }
+      if (parent.uploader?.id === userId) {
+        return 'Add more...';
+      }
+      return `Reply to ${parent.uploader?.username}...`;
+    }
     return `Enter your ${inputTypeLabel} here...`;
-  }, [inputTypeLabel]);
+  }, [inputTypeLabel, parent.uploader?.id, parent.uploader?.username, userId]);
   const contentType = useMemo(
     () =>
       targetCommentId ? 'comment' : subjectId ? 'subject' : parent.contentType,
