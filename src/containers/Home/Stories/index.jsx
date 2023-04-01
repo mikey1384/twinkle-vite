@@ -28,7 +28,7 @@ const categoryObj = {
   },
   recommended: {
     filter: 'all',
-    mustInclude: 'totalRecommendations',
+    isRecommended: true,
     orderBy: 'lastInteraction'
   },
   responses: {
@@ -134,7 +134,7 @@ export default function Stories() {
       onResetNumNewPosts();
       try {
         const { data } = await loadFeeds({
-          mustInclude: 'totalRecommendations'
+          isRecommended: true
         });
         onLoadFeeds(data);
         setLoadingFeeds(false);
@@ -279,7 +279,7 @@ export default function Stories() {
           category === 'uploads' ? subFilter : categoryObj[category].filter,
         order: displayOrder,
         orderBy: categoryObj[category].orderBy,
-        mustInclude: categoryObj[category].mustInclude,
+        isRecommended: categoryObj[category].isRecommended,
         lastFeedId,
         lastRewardLevel:
           feeds.length > 0 ? feeds[feeds.length - 1].rewardLevel : null,
@@ -306,7 +306,7 @@ export default function Stories() {
       order: 'desc',
       filter: categoryObj[newCategory].filter,
       orderBy: categoryObj[newCategory].orderBy,
-      mustInclude: categoryObj[newCategory].mustInclude
+      isRecommended: categoryObj[newCategory].isRecommended
     });
     if (
       loadedFilter === categoryObj[categoryRef.current].filter &&
