@@ -9,8 +9,8 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 Members.propTypes = {
   channelId: PropTypes.number,
   creatorId: PropTypes.number,
-  loadMoreShown: PropTypes.bool,
   members: PropTypes.array.isRequired,
+  numMembers: PropTypes.number.isRequired,
   onlineMemberObj: PropTypes.object.isRequired,
   theme: PropTypes.string
 };
@@ -18,8 +18,8 @@ Members.propTypes = {
 function Members({
   channelId,
   creatorId,
-  loadMoreShown,
   members,
+  numMembers,
   onlineMemberObj,
   theme
 }) {
@@ -52,6 +52,10 @@ function Members({
     () => membersOnCall.length > 0,
     [membersOnCall.length]
   );
+
+  const loadMoreShown = useMemo(() => {
+    return members?.length < numMembers;
+  }, [members?.length, numMembers]);
 
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/ChatInfo/Members/index">
@@ -122,15 +126,13 @@ function Members({
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const { members, membersLoadMoreButtonShown } =
-      await loadMoreChannelMembers({
-        channelId,
-        lastId: membersNotOnCall[membersNotOnCall.length - 1].id
-      });
+    const { members } = await loadMoreChannelMembers({
+      channelId,
+      lastId: membersNotOnCall[membersNotOnCall.length - 1].id
+    });
     onLoadMoreChannelMembers({
       channelId,
-      members: members.filter((member) => member.id !== creatorId),
-      loadMoreShown: membersLoadMoreButtonShown
+      members: members.filter((member) => member.id !== creatorId)
     });
     setLoadingMore(false);
   }
