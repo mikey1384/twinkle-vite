@@ -223,7 +223,7 @@ export default function ChatInfo({
             >
               {onlineChannelMembers.length}
               {currentChannel.id !== GENERAL_CHAT_ID &&
-                '/' + allMemberIds.length}{' '}
+                '/' + allMemberIds?.length}{' '}
               {onlineLabel}
             </div>
           )}
@@ -233,7 +233,7 @@ export default function ChatInfo({
         channelId={selectedChannelId}
         creatorId={currentChannel.creatorId}
         members={displayedChannelMembers}
-        numMembers={allMemberIds.length}
+        numMembers={allMemberIds?.length}
         theme={displayedThemeColor}
         onlineMemberObj={objectify(onlineChannelMembers)}
       />
