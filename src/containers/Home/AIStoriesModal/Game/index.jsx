@@ -48,6 +48,7 @@ Game.propTypes = {
   storyObj: PropTypes.object.isRequired,
   storyType: PropTypes.string.isRequired,
   topic: PropTypes.string.isRequired,
+  topicKey: PropTypes.string.isRequired,
   topicLoadError: PropTypes.bool.isRequired,
   userChoiceObj: PropTypes.object.isRequired
 };
@@ -87,6 +88,7 @@ export default function Game({
   storyObj,
   storyType,
   topic,
+  topicKey,
   topicLoadError,
   userChoiceObj
 }) {
@@ -260,6 +262,7 @@ export default function Game({
       const { attemptId: newAttemptId, storyObj } = await loadAIStory({
         difficulty,
         topic,
+        topicKey,
         type: storyType
       });
       onSetAttemptId(newAttemptId);

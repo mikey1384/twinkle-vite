@@ -37,6 +37,7 @@ export default function AIStoriesModal({ onHide }) {
     (v) => v.requestHelpers.loadAIStoryTopic
   );
   const [topic, setTopic] = useState('');
+  const [topicKey, setTopicKey] = useState('');
   const [storyType, setStoryType] = useState('');
   const [loadingTopic, setLoadingTopic] = useState(false);
   const [topicLoadError, setTopicLoadError] = useState(false);
@@ -128,6 +129,7 @@ export default function AIStoriesModal({ onHide }) {
             storyLoadError={storyLoadError}
             storyType={storyType}
             topic={topic}
+            topicKey={topicKey}
             topicLoadError={topicLoadError}
           />
         )}
@@ -153,9 +155,10 @@ export default function AIStoriesModal({ onHide }) {
   async function handleLoadTopic(difficulty) {
     setLoadingTopic(true);
     try {
-      const { topic, type } = await tryLoadTopic(difficulty, 3, 1000);
+      const { topic, topicKey, type } = await tryLoadTopic(difficulty, 3, 1000);
       setTopic(topic);
       setStoryType(type);
+      setTopicKey(topicKey);
     } catch (error) {
       console.error('Failed to load topic:', error);
       setTopicLoadError(true);
@@ -166,8 +169,8 @@ export default function AIStoriesModal({ onHide }) {
     async function tryLoadTopic(difficulty, retries, timeout) {
       for (let i = 0; i < retries; i++) {
         try {
-          const { topic, type } = await loadAIStoryTopic(difficulty);
-          return { topic, type };
+          const { topic, topicKey, type } = await loadAIStoryTopic(difficulty);
+          return { topic, topicKey, type };
         } catch (error) {
           console.error(`Error on attempt ${i + 1}:`, error);
           if (i < retries - 1) {
