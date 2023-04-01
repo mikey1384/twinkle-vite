@@ -85,12 +85,16 @@ export default function RecommendationInterface({
     return !isRecommendedByUser && twinkleCoins < priceTable.recommendation;
   }, [isRecommendedByUser, twinkleCoins]);
 
+  const switchButtonShown = useMemo(() => {
+    return !isRecommendedByUser && authLevel > 1 && contentType !== 'pass';
+  }, [isRecommendedByUser, authLevel, contentType]);
+
   const priceText = useMemo(() => {
     return !isRecommendedByUser ? (
       <>
         <span
           style={{
-            marginLeft: authLevel > 1 ? 0 : '0.7rem',
+            marginLeft: switchButtonShown ? 0 : '0.7rem',
             color: Color.darkBlue(),
             fontSize: '1.3rem'
           }}
@@ -99,11 +103,7 @@ export default function RecommendationInterface({
         </span>
       </>
     ) : null;
-  }, [authLevel, isRecommendedByUser]);
-
-  const switchButtonShown = useMemo(() => {
-    return !isRecommendedByUser && authLevel > 1 && contentType !== 'pass';
-  }, [isRecommendedByUser, authLevel, contentType]);
+  }, [isRecommendedByUser, switchButtonShown]);
 
   return hidden ? null : (
     <ErrorBoundary
@@ -151,7 +151,7 @@ export default function RecommendationInterface({
           <div
             style={{
               display: 'flex',
-              flexDirection: authLevel ? 'column' : 'row',
+              flexDirection: switchButtonShown ? 'column' : 'row',
               alignItems: 'center',
               lineHeight: 1.3
             }}
