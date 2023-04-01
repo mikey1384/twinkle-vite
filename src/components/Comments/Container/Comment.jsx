@@ -935,6 +935,7 @@ function Comment({
                           marginTop: '0.5rem'
                         }}
                         theme={theme}
+                        targetCommentPoster={uploader}
                         targetCommentId={comment.id}
                       />
                     )}

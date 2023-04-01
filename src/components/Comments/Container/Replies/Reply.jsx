@@ -657,6 +657,7 @@ function Reply({
                   style={{
                     marginTop: '0.5rem'
                   }}
+                  targetCommentPoster={reply.uploader}
                   theme={theme}
                   targetCommentId={reply.id}
                 />

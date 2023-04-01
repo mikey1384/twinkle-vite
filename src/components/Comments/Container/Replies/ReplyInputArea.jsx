@@ -3,12 +3,9 @@ import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InputForm from '~/components/Forms/InputForm';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
-import { useContentContext, useInputContext } from '~/contexts';
+import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { v1 as uuidv1 } from 'uuid';
-import localize from '~/constants/localize';
-
-const enterReplyLabel = localize('enterReply');
 
 ReplyInputArea.propTypes = {
   disableReason: PropTypes.string,
@@ -20,7 +17,8 @@ ReplyInputArea.propTypes = {
   rows: PropTypes.number,
   style: PropTypes.object,
   theme: PropTypes.string,
-  targetCommentId: PropTypes.number
+  targetCommentId: PropTypes.number,
+  targetCommentPoster: PropTypes.object
 };
 
 export default function ReplyInputArea({
@@ -32,10 +30,12 @@ export default function ReplyInputArea({
   rootCommentId,
   style,
   targetCommentId,
+  targetCommentPoster,
   theme,
   rows = 1
 }) {
   const state = useInputContext((v) => v.state);
+  const { userId } = useKeyContext((v) => v.myState);
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
   );
@@ -50,6 +50,15 @@ export default function ReplyInputArea({
     () => state['comment' + targetCommentId]?.attachment,
     [state, targetCommentId]
   );
+  const replyPlaceholder = useMemo(() => {
+    if (!targetCommentPoster?.id) {
+      return 'Reply...';
+    }
+    if (targetCommentPoster?.id === userId) {
+      return 'Add more...';
+    }
+    return `Reply to ${targetCommentPoster?.username}...`;
+  }, [targetCommentPoster?.id, targetCommentPoster?.username, userId]);
 
   return (
     <ErrorBoundary componentPath="Comments/Replies/ReplyInputArea">
@@ -72,7 +81,7 @@ export default function ReplyInputArea({
             disableReason={disableReason}
             onSubmit={handleSubmit}
             parent={parent}
-            placeholder={`${enterReplyLabel}...`}
+            placeholder={replyPlaceholder}
             rows={rows}
             theme={theme}
             targetCommentId={targetCommentId}
