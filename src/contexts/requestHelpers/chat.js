@@ -546,11 +546,11 @@ export default function chatRequestHelpers({ auth, handleError }) {
     async loadMoreChannelMembers({ channelId, lastId }) {
       try {
         const {
-          data: { members, membersLoadMoreButtonShown }
+          data: { members }
         } = await request.get(
           `${URL}/chat/channel/members/more?channelId=${channelId}&lastId=${lastId}`
         );
-        return Promise.resolve({ members, membersLoadMoreButtonShown });
+        return Promise.resolve({ members });
       } catch (error) {
         return handleError(error);
       }

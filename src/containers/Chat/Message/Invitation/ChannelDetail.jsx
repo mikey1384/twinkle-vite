@@ -151,15 +151,13 @@ export default function ChannelDetail({
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const { members: loadedMembers, membersLoadMoreButtonShown } =
-      await loadMoreChannelMembers({
-        channelId,
-        lastId: members[members.length - 1].id
-      });
+    const { members: loadedMembers } = await loadMoreChannelMembers({
+      channelId,
+      lastId: members[members.length - 1].id
+    });
     onLoadMoreChannelMembers({
       channelId,
-      members: loadedMembers.filter((member) => member.id !== creatorId),
-      loadMoreShown: membersLoadMoreButtonShown
+      members: loadedMembers.filter((member) => member.id !== creatorId)
     });
     setLoadingMore(false);
   }
