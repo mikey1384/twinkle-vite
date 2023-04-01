@@ -46,9 +46,9 @@ export default function ChatInfo({
 
   const allMemberIds = useMemo(() => {
     if (currentChannel?.twoPeople) {
-      return currentChannel?.members?.map((member) => member.id);
+      return (currentChannel?.members || []).map((member) => member.id);
     }
-    return currentChannel?.allMemberIds;
+    return currentChannel?.allMemberIds || [];
   }, [
     currentChannel?.allMemberIds,
     currentChannel?.members,
