@@ -456,7 +456,7 @@ function Message({
           </>
         ),
         onClick: () => {
-          onDelete({ messageId });
+          onDelete({ messageId, filePath, fileName });
         }
       });
     }
