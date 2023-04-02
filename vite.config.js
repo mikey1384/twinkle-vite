@@ -33,6 +33,9 @@ export default defineConfig({
     }
   },
   build: {
+    commonjsOptions: {
+      defaultIsModuleExports: true
+    },
     rollupOptions: {
       plugins: [
         inject({ Buffer: ['buffer', 'Buffer'], process: 'process' }),

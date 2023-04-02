@@ -243,8 +243,7 @@ export default function Editor({
 
   function handleTransformBeforeCompilation(ast) {
     try {
-      const renderer = customTraverse;
-      renderer(ast, {
+      traverse(ast, {
         VariableDeclaration(path) {
           if (path.parent.type === 'Program') {
             path.replaceWith(path.node.declarations[0].init);
@@ -270,7 +269,7 @@ export default function Editor({
     return ast;
   }
 
-  function customTraverse(ast, visitor) {
+  function traverse(ast, visitor) {
     function visit(node, parentNode) {
       if (!node) return;
       const visitorFunc = visitor[node.type];
