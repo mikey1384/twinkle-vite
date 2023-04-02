@@ -79,7 +79,7 @@ export default function SubjectPanel({
   secretAttachment,
   subjectId
 }) {
-  const deleteSubject = useAppContext((v) => v.requestHelpers.deleteSubject);
+  const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const onChangeSpoilerStatus = useContentContext(
@@ -126,8 +126,6 @@ export default function SubjectPanel({
     comments,
     isDeleted,
     secretShown,
-    fileName,
-    filePath,
     pinnedCommentId,
     recommendations,
     rewards,
@@ -578,7 +576,7 @@ export default function SubjectPanel({
 
   async function deleteThis() {
     try {
-      await deleteSubject({ fileName, filePath, subjectId });
+      await deleteContent({ contentType: 'subject', id: subjectId });
       setConfirmModalShown(false);
       onSubjectDelete(subjectId);
     } catch (error) {

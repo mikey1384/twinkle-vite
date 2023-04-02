@@ -129,19 +129,6 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async deleteSubject({ filePath, fileName, subjectId }) {
-      try {
-        await request.delete(
-          `${URL}/content/subjects?subjectId=${subjectId}${
-            filePath ? `&filePath=${filePath}` : ''
-          }${fileName ? `&fileName=${fileName}` : ''}`,
-          auth()
-        );
-        return Promise.resolve();
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async editContent({
       contentId,
       editedComment,
