@@ -34,7 +34,7 @@ export default defineConfig({
   },
   build: {
     commonjsOptions: {
-      defaultIsModuleExports: true
+      defaultIsModuleExports: false
     },
     rollupOptions: {
       plugins: [
