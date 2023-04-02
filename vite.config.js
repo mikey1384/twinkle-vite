@@ -2,11 +2,10 @@ import react from '@vitejs/plugin-react-swc';
 import { defineConfig, splitVendorChunkPlugin } from 'vite';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import { resolve } from 'path';
-import inject from '@rollup/plugin-inject';
-import commonjs from '@rollup/plugin-commonjs';
+import commonjsPlugin from 'vite-plugin-commonjs';
 
 export default defineConfig({
-  plugins: [react(), splitVendorChunkPlugin()],
+  plugins: [react(), splitVendorChunkPlugin(), commonjsPlugin()],
   server: {
     port: '3000'
   },
@@ -33,15 +32,6 @@ export default defineConfig({
     }
   },
   build: {
-    commonjsOptions: {
-      defaultIsModuleExports: true
-    },
-    rollupOptions: {
-      plugins: [
-        inject({ Buffer: ['buffer', 'Buffer'], process: 'process' }),
-        commonjs()
-      ]
-    },
     sourcemap: true
   }
 });
