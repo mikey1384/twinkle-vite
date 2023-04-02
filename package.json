@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@babel/traverse": "^7.21.4",
     "@emotion/css": "^11.10.6",
     "@emotion/react": "^11.10.6",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
