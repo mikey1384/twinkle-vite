@@ -3,6 +3,7 @@ import { defineConfig, splitVendorChunkPlugin } from 'vite';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import { resolve } from 'path';
 import inject from '@rollup/plugin-inject';
+import commonjs from '@rollup/plugin-commonjs';
 
 export default defineConfig({
   plugins: [react(), splitVendorChunkPlugin()],
@@ -33,7 +34,10 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      plugins: [inject({ Buffer: ['buffer', 'Buffer'], process: 'process' })]
+      plugins: [
+        inject({ Buffer: ['buffer', 'Buffer'], process: 'process' }),
+        commonjs()
+      ]
     },
     sourcemap: true
   }
