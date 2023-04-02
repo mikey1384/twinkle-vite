@@ -54,7 +54,7 @@
     "react-textarea-autosize": "^8.4.1",
     "recharts": "^2.5.0",
     "resize-observer": "^1.0.4",
-    "sanitize-html": "^2.10.0",
+    "sanitize-html": "^2.7.3",
     "simple-peer": "^9.11.1",
     "socket.io-client": "^4.6.1",
     "source-map-support": "^0.5.21",
