@@ -41,10 +41,16 @@ export default function AIStoriesModal({ onHide }) {
   const [storyType, setStoryType] = useState('');
   const [loadingTopic, setLoadingTopic] = useState(false);
   const [topicLoadError, setTopicLoadError] = useState(false);
+  const requestRef = useRef();
 
   useEffect(() => {
     localStorage.setItem('story-difficulty', difficulty);
-    handleLoadTopic(difficulty);
+    const currentRequestId = Math.random();
+    requestRef.current = currentRequestId;
+    if (difficulty && currentRequestId) {
+      handleLoadTopic({ difficulty, currentRequestId });
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty, resetNumber]);
 
@@ -152,36 +158,53 @@ export default function AIStoriesModal({ onHide }) {
     </Modal>
   );
 
-  async function handleLoadTopic(difficulty) {
+  async function handleLoadTopic({ difficulty, currentRequestId }) {
     setLoadingTopic(true);
     try {
-      const { topic, topicKey, type } = await tryLoadTopic(difficulty, 3, 1000);
-      setTopic(topic);
-      setStoryType(type);
-      setTopicKey(topicKey);
-    } catch (error) {
-      console.error('Failed to load topic:', error);
-      setTopicLoadError(true);
-    } finally {
-      setLoadingTopic(false);
-    }
+      const { topic, topicKey, type } = await tryLoadTopic({
+        difficulty,
+        retries: 3,
+        timeout: 1000,
+        currentRequestId
+      });
+      if (currentRequestId === requestRef.current) {
+        setTopic(topic);
+        setStoryType(type);
+        setTopicKey(topicKey);
+        setLoadingTopic(false);
+      }
 
-    async function tryLoadTopic(difficulty, retries, timeout) {
-      for (let i = 0; i < retries; i++) {
-        try {
-          const { topic, topicKey, type } = await loadAIStoryTopic(difficulty);
-          return { topic, topicKey, type };
-        } catch (error) {
-          console.error(`Error on attempt ${i + 1}:`, error);
-          if (i < retries - 1) {
-            await sleep(timeout);
+      async function tryLoadTopic({
+        difficulty,
+        retries,
+        timeout,
+        currentRequestId
+      }) {
+        for (let i = 0; i < retries; i++) {
+          try {
+            const { topic, topicKey, type } = await loadAIStoryTopic(
+              difficulty
+            );
+            if (currentRequestId === requestRef.current) {
+              return { topic, topicKey, type };
+            } else {
+              return {};
+            }
+          } catch (error) {
+            console.error(`Error on attempt ${i + 1}:`, error);
+            if (i < retries - 1) {
+              await sleep(timeout);
+            }
           }
         }
+        throw new Error('Failed to load topic after maximum retries');
       }
-      throw new Error('Failed to load topic after maximum retries');
       function sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
+    } catch (error) {
+      console.error('Failed to load topic:', error);
+      setTopicLoadError(true);
     }
   }
 }
