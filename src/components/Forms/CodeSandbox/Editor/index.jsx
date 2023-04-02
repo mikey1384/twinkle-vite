@@ -4,7 +4,7 @@ import SimpleEditor from 'react-simple-code-editor';
 import okaidia from 'prism-react-renderer/themes/okaidia';
 import Preview from './Preview';
 import Highlight, { Prism } from 'prism-react-renderer';
-import traverse from '@babel/traverse';
+import { traverse } from '@babel/traverse';
 import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
