@@ -4,7 +4,6 @@ import SimpleEditor from 'react-simple-code-editor';
 import okaidia from 'prism-react-renderer/themes/okaidia';
 import Preview from './Preview';
 import Highlight, { Prism } from 'prism-react-renderer';
-import { traverse } from '@babel/traverse';
 import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
@@ -244,8 +243,7 @@ export default function Editor({
 
   function handleTransformBeforeCompilation(ast) {
     try {
-      const renderer =
-        typeof traverse === 'function' ? traverse : traverse.default;
+      const renderer = customTraverse;
       renderer(ast, {
         VariableDeclaration(path) {
           if (path.parent.type === 'Program') {
@@ -270,5 +268,21 @@ export default function Editor({
       setError(error);
     }
     return ast;
+  }
+
+  function customTraverse(ast, visitor) {
+    function visit(node, parentNode) {
+      if (!node) return;
+      const visitorFunc = visitor[node.type];
+      if (visitorFunc) {
+        visitorFunc({ node, parent: parentNode });
+      }
+
+      if (node.type === 'Program' || node.type === 'BlockStatement') {
+        node.body.forEach((childNode) => visit(childNode, node));
+      }
+    }
+
+    visit(ast, null);
   }
 }
