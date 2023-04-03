@@ -13,7 +13,7 @@ import TagStatus from '~/components/TagStatus';
 import SecretAnswer from '~/components/SecretAnswer';
 import Link from '~/components/Link';
 import SecretComment from '~/components/SecretComment';
-import MissionContent from './MissionContent';
+import PassContent from './PassContent';
 import { isMobile, scrollElementToCenter } from '~/helpers';
 import {
   stringIsEmpty,
@@ -128,7 +128,7 @@ export default function MainContent({
     <ErrorBoundary componentPath="ContentPanel/Body/MainContent">
       <div ref={ContainerRef}>
         {contentType === 'pass' && (
-          <MissionContent theme={theme} uploader={uploader} rootObj={rootObj} />
+          <PassContent theme={theme} uploader={uploader} rootObj={rootObj} />
         )}
         {(contentType === 'video' || subjectIsAttachedToVideo) && (
           <XPVideoPlayer
@@ -229,22 +229,25 @@ export default function MainContent({
           ) : (
             <LoginToViewContent />
           ))}
-        {contentType === 'subject' && !rootObj.id && !byUser && !!rewardLevel && (
-          <RewardLevelBar
-            className={css`
-              margin-left: -1px;
-              margin-right: -1px;
-              @media (max-width: ${mobileMaxWidth}) {
-                margin-left: 0px;
-                margin-right: 0px;
-              }
-            `}
-            style={{
-              marginBottom: rootType === 'url' ? '-0.5rem' : 0
-            }}
-            rewardLevel={rewardLevel}
-          />
-        )}
+        {contentType === 'subject' &&
+          !rootObj.id &&
+          !byUser &&
+          !!rewardLevel && (
+            <RewardLevelBar
+              className={css`
+                margin-left: -1px;
+                margin-right: -1px;
+                @media (max-width: ${mobileMaxWidth}) {
+                  margin-left: 0px;
+                  margin-right: 0px;
+                }
+              `}
+              style={{
+                marginBottom: rootType === 'url' ? '-0.5rem' : 0
+              }}
+              rewardLevel={rewardLevel}
+            />
+          )}
         <div
           style={{
             marginTop:

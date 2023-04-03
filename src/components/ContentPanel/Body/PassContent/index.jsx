@@ -13,13 +13,13 @@ import localize from '~/constants/localize';
 const taskCompleteLabel = localize('taskComplete');
 const missionAccomplishedLabel = localize('missionAccomplished');
 
-MissionContent.propTypes = {
+PassContent.propTypes = {
   uploader: PropTypes.object.isRequired,
   rootObj: PropTypes.object.isRequired,
   theme: PropTypes.string
 };
 
-export default function MissionContent({ uploader, rootObj: mission, theme }) {
+export default function PassContent({ uploader, rootObj: mission, theme }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     link: { color: linkColor },
