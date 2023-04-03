@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ChatSearchBox from './ChatSearchBox';
 import Channels from './Channels';
@@ -29,7 +29,7 @@ LeftMenu.propTypes = {
   subchannelPath: PropTypes.string
 };
 
-function LeftMenu({
+export default function LeftMenu({
   currentChannel,
   currentPathId,
   displayedThemeColor,
@@ -177,5 +177,3 @@ function LeftMenu({
     </ErrorBoundary>
   );
 }
-
-export default memo(LeftMenu);
