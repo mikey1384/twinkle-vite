@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
@@ -8,7 +8,6 @@ import localize from '~/constants/localize';
 import moment from 'moment';
 import { useKeyContext, useNotiContext } from '~/contexts';
 
-const monthLabel = moment().utc().format('MMMM');
 const allTimeLabel = localize('allTime');
 
 Rankings.propTypes = {
@@ -19,6 +18,7 @@ export default function Rankings({ loadingFeeds }) {
   const { userId } = useKeyContext((v) => v.myState);
   const [thisMonthSelected, setThisMonthSelected] = useState(!!userId);
   const allRanks = useNotiContext((v) => v.state.allRanks);
+  const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const top30s = useNotiContext((v) => v.state.top30s);
   const allMonthly = useNotiContext((v) => v.state.allMonthly);
   const top30sMonthly = useNotiContext((v) => v.state.top30sMonthly);
@@ -27,6 +27,10 @@ export default function Rankings({ loadingFeeds }) {
   const myMonthlyXP = useNotiContext((v) => v.state.myMonthlyXP);
   const myAllTimeXP = useNotiContext((v) => v.state.myAllTimeXP);
   const userChangedTab = useRef(false);
+  const currentMonth = useMemo(
+    () => moment.utc(standardTimeStamp || Date.now()).format('MMMM'),
+    [standardTimeStamp]
+  );
 
   useEffect(() => {
     setThisMonthSelected(!!userId);
@@ -49,7 +53,7 @@ export default function Rankings({ loadingFeeds }) {
               setThisMonthSelected(true);
             }}
           >
-            {monthLabel}
+            {currentMonth}
           </nav>
           <nav
             className={thisMonthSelected ? '' : 'active'}

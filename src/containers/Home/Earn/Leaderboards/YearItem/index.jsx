@@ -7,7 +7,7 @@ import localize from '~/constants/localize';
 import moment from 'moment';
 import Loading from '~/components/Loading';
 import { panel } from '../../Styles';
-import { useAppContext, useHomeContext } from '~/contexts';
+import { useAppContext, useHomeContext, useNotiContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 const months = [
@@ -25,7 +25,6 @@ const months = [
   'December'
 ];
 const leaderboardLabel = localize('leaderboard');
-const currentMonth = Number(moment().utc().format('M'));
 
 YearItem.propTypes = {
   currentYear: PropTypes.number,
@@ -34,6 +33,7 @@ YearItem.propTypes = {
 };
 
 export default function YearItem({ style, year, currentYear }) {
+  const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const loadMonthlyLeaderboards = useAppContext(
     (v) => v.requestHelpers.loadMonthlyLeaderboards
   );
@@ -44,6 +44,12 @@ export default function YearItem({ style, year, currentYear }) {
   const onSetLeaderboardsExpanded = useHomeContext(
     (v) => v.actions.onSetLeaderboardsExpanded
   );
+
+  const currentMonth = useMemo(
+    () => Number(moment.utc(standardTimeStamp || Date.now()).format('M')),
+    [standardTimeStamp]
+  );
+
   useEffect(() => {
     if (!leaderboardsObj?.[year]?.loaded) {
       handleLoadMonthlyLeaderboards();
@@ -69,7 +75,7 @@ export default function YearItem({ style, year, currentYear }) {
         : [];
     }
     return expanded ? leaderboards : [leaderboards[0]];
-  }, [currentYear, expanded, leaderboards, year]);
+  }, [currentMonth, currentYear, expanded, leaderboards, year]);
 
   const showAllButtonShown = useMemo(() => {
     return (
