@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -19,12 +19,9 @@ const peopleLabel = localize('people');
 const postsLabel = localize('posts');
 const storeLabel = localize('store');
 const deviceIsMobile = isMobile(navigator);
-const year = (() => {
-  const dt = new Date();
-  return dt.getFullYear();
-})();
 
 export default function HomeMenuItems({ style = {} }) {
+  const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const location = useLocation();
   const navigate = useNavigate();
   const onSetProfilesLoaded = useAppContext(
@@ -38,6 +35,9 @@ export default function HomeMenuItems({ style = {} }) {
     () => Color[homeMenuItemActive](),
     [homeMenuItemActive]
   );
+  const year = useMemo(() => {
+    return new Date(standardTimeStamp || Date.now()).getFullYear();
+  }, [standardTimeStamp]);
 
   return (
     <ErrorBoundary componentPath="HomeMenuItems">

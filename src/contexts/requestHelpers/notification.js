@@ -35,13 +35,15 @@ export default function notificationRequestHelpers({ auth, handleError }) {
             xpEarned,
             coinsEarned,
             nextMission,
-            unansweredChessMsgChannelId
+            unansweredChessMsgChannelId,
+            standardTimeStamp
           }
         } = await request.get(`${URL}/notification/today`, auth());
         return Promise.resolve({
           xpEarned,
           coinsEarned,
           nextMission,
+          standardTimeStamp,
           unansweredChessMsgChannelId
         });
       } catch (error) {

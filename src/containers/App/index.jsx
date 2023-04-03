@@ -225,6 +225,7 @@ function App() {
         xpEarned,
         coinsEarned,
         nextMission,
+        standardTimeStamp,
         unansweredChessMsgChannelId
       } = await fetchTodayStats();
       onUpdateTodayStats({
@@ -232,6 +233,7 @@ function App() {
           xpEarned,
           coinsEarned,
           nextMission,
+          standardTimeStamp,
           unansweredChessMsgChannelId
         }
       });
