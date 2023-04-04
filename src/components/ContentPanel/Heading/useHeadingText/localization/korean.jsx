@@ -131,7 +131,7 @@ export default function renderKoreanMessage({
             content={contentObj}
             contentType={contentType}
           />
-          를 게시했습니다{' '}
+          에 대한 AI 스토리를 게시했습니다{' '}
         </>
       );
     default:
