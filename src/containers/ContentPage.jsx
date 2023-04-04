@@ -17,7 +17,9 @@ export default function ContentPage() {
   const contentId = Number(initialContentId);
   const { userId } = useKeyContext((v) => v.myState);
   const onSetContentNav = useViewContext((v) => v.actions.onSetContentNav);
-  const contentType = location.pathname.split('/')[1].slice(0, -1);
+  const rawContentType = location.pathname.split('/')[1].slice(0, -1);
+  const contentType =
+    rawContentType === 'ai-storie' ? 'aiStory' : rawContentType;
   const { loaded, isDeleted, isDeleteNotification } = useContentState({
     contentType,
     contentId
