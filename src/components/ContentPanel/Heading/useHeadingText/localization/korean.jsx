@@ -121,6 +121,19 @@ export default function renderKoreanMessage({
           를 완료했습니다{' '}
         </>
       );
+    case 'aiStory':
+      return (
+        <>
+          <UsernameText user={uploader} color={Color[linkColor]()} />
+          님이{' '}
+          <ContentLink
+            theme={theme}
+            content={contentObj}
+            contentType={contentType}
+          />
+          를 게시했습니다{' '}
+        </>
+      );
     default:
       return <span>Error</span>;
   }
