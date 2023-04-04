@@ -115,6 +115,18 @@ export default function renderEnglishMessage({
           />{' '}
         </>
       );
+    case 'aiStory':
+      return (
+        <>
+          <UsernameText user={uploader} color={Color[linkColor]()} /> generated
+          an AI story:{' '}
+          <ContentLink
+            content={contentObj}
+            contentType={contentType}
+            theme={theme}
+          />{' '}
+        </>
+      );
     default:
       return <span>Error</span>;
   }
