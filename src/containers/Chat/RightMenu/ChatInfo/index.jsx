@@ -210,10 +210,19 @@ export default function ChatInfo({
             channelId={currentChannel.id}
             channelName={channelName}
           />
-          {onlineChannelMembers.length > 2 && (
+          {((onlineChannelMembers.length > 1 && !currentChannel.twoPeople) ||
+            (onlineChannelMembers.length === 1 &&
+              !!allMemberIds?.length &&
+              allMemberIds?.length > 1 &&
+              !currentChannel.twoPeople &&
+              currentChannel.id !== GENERAL_CHAT_ID)) && (
             <div
               className={css`
-                color: ${Color[displayedThemeColor]()};
+                color: ${Color[
+                  onlineChannelMembers.length === 1
+                    ? 'darkGray'
+                    : displayedThemeColor
+                ]()};
                 font-size: 1.5rem;
                 font-weight: bold;
                 @media (max-width: ${mobileMaxWidth}) {
@@ -221,10 +230,16 @@ export default function ChatInfo({
                 }
               `}
             >
-              {onlineChannelMembers.length}
-              {currentChannel.id !== GENERAL_CHAT_ID &&
-                '/' + allMemberIds?.length}{' '}
-              {onlineLabel}
+              {onlineChannelMembers.length > 1 ? (
+                <>
+                  {onlineChannelMembers.length}
+                  {currentChannel.id !== GENERAL_CHAT_ID &&
+                    '/' + allMemberIds?.length}{' '}
+                  {onlineLabel}
+                </>
+              ) : (
+                <>{allMemberIds?.length} members</>
+              )}
             </div>
           )}
         </div>
