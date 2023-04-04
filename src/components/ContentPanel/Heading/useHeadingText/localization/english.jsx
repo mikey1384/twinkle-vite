@@ -20,7 +20,13 @@ export default function renderEnglishMessage({
   userLinkColor
 }) {
   let contentLabel =
-    rootType === 'url' ? 'link' : rootType === 'subject' ? 'subject' : rootType;
+    rootType === 'aiStory'
+      ? 'AI story'
+      : rootType === 'url'
+      ? 'link'
+      : rootType === 'subject'
+      ? 'subject'
+      : rootType;
   const isSubjectComment =
     contentType === 'comment' &&
     targetObj?.subject &&
