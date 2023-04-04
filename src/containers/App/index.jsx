@@ -681,6 +681,7 @@ function App() {
         >
           <Routes>
             <Route path="/users/:username/*" element={<Profile />} />
+            <Route path="/ai-stories/:contentId" element={<ContentPage />} />
             <Route path="/comments/:contentId" element={<ContentPage />} />
             <Route path="/videos/:videoId" element={<VideoPage />} />
             <Route path="/videos/:videoId/*" element={<VideoPage />} />
