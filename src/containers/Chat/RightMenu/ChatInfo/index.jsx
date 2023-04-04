@@ -210,7 +210,7 @@ export default function ChatInfo({
             channelId={currentChannel.id}
             channelName={channelName}
           />
-          {(onlineChannelMembers.length > 2 ||
+          {(onlineChannelMembers.length > 1 ||
             (onlineChannelMembers.length === 1 &&
               !!allMemberIds?.length &&
               allMemberIds?.length > 1 &&
@@ -230,7 +230,7 @@ export default function ChatInfo({
                 }
               `}
             >
-              {onlineChannelMembers.length > 2 ? (
+              {onlineChannelMembers.length > 1 ? (
                 <>
                   {onlineChannelMembers.length}
                   {currentChannel.id !== GENERAL_CHAT_ID &&
