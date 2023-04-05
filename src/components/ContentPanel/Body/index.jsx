@@ -293,14 +293,15 @@ export default function Body({
   }, [authLevel, canDelete, uploader.authLevel, uploader.id, userId]);
 
   const userCanCloseThis = useMemo(() => {
-    if (!canDelete || contentType !== 'subject') return false;
     if (
       contentObj?.isClosedBy &&
       contentObj?.isClosedBy?.authLevel > authLevel
     ) {
       return false;
     }
-    return userId === uploader.id || authLevel > uploader.authLevel;
+    if (userId === uploader.id) return true;
+    if (!canDelete || contentType !== 'subject') return false;
+    return authLevel > uploader.authLevel;
   }, [
     authLevel,
     canDelete,
