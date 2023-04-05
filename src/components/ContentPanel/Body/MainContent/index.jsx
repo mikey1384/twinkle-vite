@@ -4,8 +4,6 @@ import Embedly from '~/components/Embedly';
 import LongText from '~/components/Texts/LongText';
 import ContentEditor from '../ContentEditor';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import ContentFileViewer from '~/components/ContentFileViewer';
-import LoginToViewContent from '~/components/LoginToViewContent';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import XPVideoAdditionalInfo from './XPVideoAdditionalInfo';
 import SecretAnswer from '~/components/SecretAnswer';
@@ -13,6 +11,7 @@ import Link from '~/components/Link';
 import SecretComment from '~/components/SecretComment';
 import ByUserIndicator from './ByUserIndicator';
 import PassNotification from './PassNotification';
+import FileViewer from './FileViewer';
 import XPVideo from './XPVideo';
 import { scrollElementToCenter } from '~/helpers';
 import {
@@ -169,40 +168,21 @@ export default function MainContent({
           uploader={uploader}
           filePath={filePath}
         />
-        {(contentType === 'subject' || contentType === 'comment') &&
-          filePath &&
-          !(contentType === 'comment' && secretHidden) &&
-          (userId ? (
-            <ContentFileViewer
-              theme={theme}
-              contentId={contentId}
-              contentType={contentType}
-              fileName={fileName}
-              filePath={filePath}
-              fileSize={fileSize}
-              thumbUrl={thumbUrl}
-              onMediaPause={() =>
-                onSetMediaStarted({ contentType, contentId, started: false })
-              }
-              onMediaPlay={() =>
-                onSetMediaStarted({ contentType, contentId, started: true })
-              }
-              videoHeight="100%"
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginTop: byUser ? '1.7rem' : '1rem',
-                ...(fileType === 'audio'
-                  ? {
-                      padding: '1rem'
-                    }
-                  : {}),
-                marginBottom: rewardLevel ? '1.5rem' : 0
-              }}
-            />
-          ) : (
-            <LoginToViewContent />
-          ))}
+        <FileViewer
+          contentType={contentType}
+          filePath={filePath}
+          secretHidden={secretHidden}
+          userId={userId}
+          theme={theme}
+          contentId={contentId}
+          fileName={fileName}
+          fileSize={fileSize}
+          thumbUrl={thumbUrl}
+          byUser={!!byUser}
+          fileType={fileType}
+          rewardLevel={rewardLevel}
+          onSetMediaStarted={onSetMediaStarted}
+        />
         {contentType === 'subject' &&
           !rootObj.id &&
           !byUser &&
