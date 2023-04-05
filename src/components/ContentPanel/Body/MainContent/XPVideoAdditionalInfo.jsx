@@ -6,7 +6,8 @@ XPVideoAdditionalInfo.propTypes = {
   contentType: PropTypes.string.isRequired,
   uploader: PropTypes.object,
   contentId: PropTypes.number.isRequired,
-  content: PropTypes.string.isRequired,
+  content: PropTypes.string,
+  loggedIn: PropTypes.bool.isRequired,
   onAddTags: PropTypes.func.isRequired,
   onAddTagToContents: PropTypes.func.isRequired,
   onLoadTags: PropTypes.func.isRequired,
@@ -20,6 +21,7 @@ export default function XPVideoAdditionalInfo({
   uploader,
   contentId,
   content,
+  loggedIn,
   onAddTags,
   onAddTagToContents,
   onLoadTags,
@@ -32,7 +34,7 @@ export default function XPVideoAdditionalInfo({
     <>
       <AlreadyPosted
         style={{
-          marginTop: rewardLevel ? '0.5rem' : '-0.5rem',
+          marginTop: loggedIn && rewardLevel ? '0.5rem' : '-0.5rem',
           marginBottom: '0.5rem'
         }}
         uploaderId={(uploader || {}).id}
