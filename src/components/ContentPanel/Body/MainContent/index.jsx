@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Embedly from '~/components/Embedly';
 import LongText from '~/components/Texts/LongText';
-import XPVideoPlayer from '~/components/XPVideoPlayer';
-import ContentEditor from './ContentEditor';
+import ContentEditor from '../ContentEditor';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import LoginToViewContent from '~/components/LoginToViewContent';
@@ -13,8 +12,9 @@ import TagStatus from '~/components/TagStatus';
 import SecretAnswer from '~/components/SecretAnswer';
 import Link from '~/components/Link';
 import SecretComment from '~/components/SecretComment';
-import PassContent from './PassContent';
-import { isMobile, scrollElementToCenter } from '~/helpers';
+import PassNotification from './PassNotification';
+import XPVideo from './XPVideo';
+import { scrollElementToCenter } from '~/helpers';
 import {
   stringIsEmpty,
   getFileInfoFromFileName
@@ -33,8 +33,6 @@ MainContent.propTypes = {
   theme: PropTypes.string,
   userId: PropTypes.number
 };
-
-const displayIsMobile = isMobile(navigator);
 
 export default function MainContent({
   contentId,
@@ -128,24 +126,25 @@ export default function MainContent({
   return (
     <ErrorBoundary componentPath="ContentPanel/Body/MainContent">
       <div ref={ContainerRef}>
-        {contentType === 'pass' && (
-          <PassContent theme={theme} uploader={uploader} rootObj={rootObj} />
-        )}
-        {(contentType === 'video' || subjectIsAttachedToVideo) && (
-          <XPVideoPlayer
-            isLink={displayIsMobile}
-            rewardLevel={
-              contentType === 'subject' ? rootObj.rewardLevel : rewardLevel
-            }
-            byUser={!!(rootObj.byUser || (contentType === 'video' && byUser))}
-            onEdit={isEditing}
-            title={rootObj.title || title}
-            uploader={rootObj.uploader || uploader}
-            videoId={contentType === 'video' ? contentId : rootId}
-            videoCode={contentType === 'video' ? content : rootObj.content}
-            style={{ paddingBottom: '0.5rem' }}
-          />
-        )}
+        <PassNotification
+          contentType={contentType}
+          rootObj={rootObj}
+          theme={theme}
+          uploader={uploader}
+        />
+        <XPVideo
+          contentType={contentType}
+          subjectIsAttachedToVideo={subjectIsAttachedToVideo}
+          isEditing={isEditing}
+          rewardLevel={rewardLevel}
+          byUser={byUser}
+          title={title}
+          uploader={uploader}
+          contentId={contentId}
+          content={displayedContent}
+          rootId={rootId}
+          rootObj={rootObj}
+        />
         {contentType === 'video' && (
           <AlreadyPosted
             style={{ marginTop: '-0.5rem' }}
