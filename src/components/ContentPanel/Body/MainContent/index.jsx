@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Embedly from '~/components/Embedly';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import RewardLevelBar from '~/components/RewardLevelBar';
 import XPVideoAdditionalInfo from './XPVideoAdditionalInfo';
 import ByUserIndicator from './ByUserIndicator';
 import PassNotification from './PassNotification';
@@ -10,10 +9,9 @@ import FileViewer from './FileViewer';
 import XPVideo from './XPVideo';
 import RewardLevelDisplay from './RewardLevelDisplay';
 import ContentDisplay from './ContentDisplay';
+import BottomRewardLevelDisplay from './BottomRewardLevelDisplay';
 import { scrollElementToCenter } from '~/helpers';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useKeyContext, useContentContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
@@ -205,28 +203,15 @@ export default function MainContent({
             mobileLoadingHeight="25rem"
           />
         )}
-        {contentType === 'subject' &&
-          !!rewardLevel &&
-          (!!rootObj.id || !!byUser) && (
-            <RewardLevelBar
-              className={css`
-                margin-left: -1px;
-                margin-right: -1px;
-                @media (max-width: ${mobileMaxWidth}) {
-                  margin-left: 0px;
-                  margin-right: 0px;
-                }
-              `}
-              style={{
-                marginBottom: isEditing
-                  ? '1rem'
-                  : rootType === 'url' && !secretHidden
-                  ? '-0.5rem'
-                  : 0
-              }}
-              rewardLevel={rewardLevel}
-            />
-          )}
+        <BottomRewardLevelDisplay
+          contentType={contentType}
+          rewardLevel={rewardLevel}
+          rootObj={rootObj}
+          byUser={!!byUser}
+          isEditing={isEditing}
+          rootType={rootType}
+          secretHidden={secretHidden}
+        />
       </div>
     </ErrorBoundary>
   );
