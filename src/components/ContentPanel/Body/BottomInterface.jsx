@@ -152,7 +152,9 @@ export default function BottomInterface({
   const userCanCloseThis = useMemo(() => {
     if (
       contentObj?.isClosedBy &&
-      contentObj?.isClosedBy?.authLevel > authLevel
+      ((contentObj?.isClosedBy.id === uploader.id &&
+        contentObj?.isClosedBy.id !== userId) ||
+        contentObj?.isClosedBy?.authLevel > authLevel)
     ) {
       return false;
     }
