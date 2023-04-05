@@ -66,6 +66,7 @@ export default function MainContent({
     rootType,
     secretAnswer,
     secretAttachment,
+    story,
     targetObj,
     tags,
     title
@@ -368,7 +369,7 @@ export default function MainContent({
                     section="description"
                     theme={theme}
                   >
-                    {Description}
+                    {Description || story}
                   </LongText>
                 </div>
               )}
