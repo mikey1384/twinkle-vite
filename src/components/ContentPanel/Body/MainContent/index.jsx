@@ -136,7 +136,7 @@ export default function MainContent({
           subjectIsAttachedToVideo={subjectIsAttachedToVideo}
           isEditing={isEditing}
           rewardLevel={rewardLevel}
-          byUser={byUser}
+          byUser={!!byUser}
           title={title}
           uploader={uploader}
           contentId={contentId}
@@ -149,6 +149,7 @@ export default function MainContent({
           uploader={uploader}
           contentId={contentId}
           content={displayedContent}
+          loggedIn={!!userId}
           onAddTags={onAddTags}
           onAddTagToContents={onAddTagToContents}
           onLoadTags={onLoadTags}
