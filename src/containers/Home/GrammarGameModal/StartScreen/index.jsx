@@ -7,7 +7,7 @@ import Marble from './Marble';
 import localize from '~/constants/localize';
 import Countdown from 'react-countdown';
 import TodayResult from './TodayResult';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -40,6 +40,7 @@ export default function StartScreen({
     fail: { color: failColor },
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
+  const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const { userId } = useKeyContext((v) => v.myState);
   const checkNumGrammarGamesPlayedToday = useAppContext(
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
@@ -76,13 +77,21 @@ export default function StartScreen({
             `}
             date={nextDayTimeStamp}
             daysInHours={true}
+            now={
+              standardTimeStamp ? () => Date.now(standardTimeStamp) : Date.now
+            }
             onComplete={() => onSetTimesPlayedToday(0)}
           />
         </div>
       );
     }
     return 'Start';
-  }, [maxTimesPlayedToday, nextDayTimeStamp, onSetTimesPlayedToday]);
+  }, [
+    maxTimesPlayedToday,
+    nextDayTimeStamp,
+    onSetTimesPlayedToday,
+    standardTimeStamp
+  ]);
 
   return (
     <ErrorBoundary componentPath="Earn/GrammarGameModal/StartScreen">

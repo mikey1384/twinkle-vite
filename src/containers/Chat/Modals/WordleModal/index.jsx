@@ -11,7 +11,12 @@ import Rankings from './Rankings';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { MAX_GUESSES } from './constants/settings';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 
 WordleModal.propTypes = {
   attemptState: PropTypes.object,
@@ -44,6 +49,7 @@ export default function WordleModal({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const { wordleStrictMode: isStrictMode } = useKeyContext((v) => v.myState);
+  const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [streaksTab, setStreaksTab] = useState(
@@ -211,6 +217,11 @@ export default function WordleModal({
                   font-size: 1.3rem;
                 `}
                 date={nextDayTimeStamp}
+                now={
+                  standardTimeStamp
+                    ? () => Date.now(standardTimeStamp)
+                    : Date.now
+                }
                 daysInHours={true}
                 onComplete={handleCountdownComplete}
               />
