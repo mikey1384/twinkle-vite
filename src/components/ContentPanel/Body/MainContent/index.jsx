@@ -7,8 +7,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import RewardLevelBar from '~/components/RewardLevelBar';
-import AlreadyPosted from '~/components/AlreadyPosted';
-import TagStatus from '~/components/TagStatus';
+import XPVideoAdditionalInfo from './XPVideoAdditionalInfo';
 import SecretAnswer from '~/components/SecretAnswer';
 import Link from '~/components/Link';
 import SecretComment from '~/components/SecretComment';
@@ -145,26 +144,18 @@ export default function MainContent({
           rootId={rootId}
           rootObj={rootObj}
         />
-        {contentType === 'video' && (
-          <AlreadyPosted
-            style={{ marginTop: '-0.5rem' }}
-            uploaderId={(uploader || {}).id}
-            contentId={contentId}
-            contentType={contentType}
-            url={content}
-            videoCode={contentType === 'video' ? content : undefined}
-          />
-        )}
-        {contentType === 'video' && (
-          <TagStatus
-            onAddTags={onAddTags}
-            onAddTagToContents={onAddTagToContents}
-            onLoadTags={onLoadTags}
-            tags={tags || []}
-            contentId={contentId}
-            theme={theme}
-          />
-        )}
+        <XPVideoAdditionalInfo
+          contentType={contentType}
+          uploader={uploader}
+          contentId={contentId}
+          content={displayedContent}
+          onAddTags={onAddTags}
+          onAddTagToContents={onAddTagToContents}
+          onLoadTags={onLoadTags}
+          rewardLevel={rewardLevel}
+          tags={tags}
+          theme={theme}
+        />
         {(contentType === 'url' || contentType === 'subject') && !!byUser && (
           <div
             style={{
