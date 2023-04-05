@@ -6,11 +6,11 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import { useAppContext } from '~/contexts';
 
 const levelHash = {
-  1: 'Level 1',
-  2: 'Level 2',
-  3: 'Level 3',
-  4: 'Level 4',
-  5: 'Level 5'
+  1: 'Level 1 (AR 1)',
+  2: 'Level 2 (AR 5)',
+  3: 'Level 3 (TOEFL JR)',
+  4: 'Level 4 (TOEFL)',
+  5: 'Level 5 (SAT)'
 };
 
 Game.propTypes = {
