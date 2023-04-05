@@ -8,7 +8,7 @@ import { useKeyContext } from '~/contexts';
 
 ContentLink.propTypes = {
   content: PropTypes.shape({
-    byUser: PropTypes.number,
+    byUser: PropTypes.oneOfType([PropTypes.number, PropTypes.bool]),
     content: PropTypes.string,
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     missionType: PropTypes.string,
