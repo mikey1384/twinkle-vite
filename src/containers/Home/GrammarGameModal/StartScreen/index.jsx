@@ -41,6 +41,13 @@ export default function StartScreen({
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
   const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
+  const timeDifference = useMemo(
+    () =>
+      standardTimeStamp
+        ? new Date(standardTimeStamp).getTime() - Date.now()
+        : 0,
+    [standardTimeStamp]
+  );
   const { userId } = useKeyContext((v) => v.myState);
   const checkNumGrammarGamesPlayedToday = useAppContext(
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
@@ -77,9 +84,9 @@ export default function StartScreen({
             `}
             date={nextDayTimeStamp}
             daysInHours={true}
-            now={
-              standardTimeStamp ? () => Date.now(standardTimeStamp) : Date.now
-            }
+            now={() => {
+              return Date.now() + timeDifference;
+            }}
             onComplete={() => onSetTimesPlayedToday(0)}
           />
         </div>
@@ -90,7 +97,7 @@ export default function StartScreen({
     maxTimesPlayedToday,
     nextDayTimeStamp,
     onSetTimesPlayedToday,
-    standardTimeStamp
+    timeDifference
   ]);
 
   return (
