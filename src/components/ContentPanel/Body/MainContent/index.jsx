@@ -1,27 +1,21 @@
 import { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Embedly from '~/components/Embedly';
-import LongText from '~/components/Texts/LongText';
-import ContentEditor from '../ContentEditor';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import XPVideoAdditionalInfo from './XPVideoAdditionalInfo';
-import SecretAnswer from '~/components/SecretAnswer';
-import Link from '~/components/Link';
-import SecretComment from '~/components/SecretComment';
 import ByUserIndicator from './ByUserIndicator';
 import PassNotification from './PassNotification';
 import FileViewer from './FileViewer';
 import XPVideo from './XPVideo';
+import RewardLevelDisplay from './RewardLevelDisplay';
+import ContentDisplay from './ContentDisplay';
 import { scrollElementToCenter } from '~/helpers';
-import {
-  stringIsEmpty,
-  getFileInfoFromFileName
-} from '~/helpers/stringHelpers';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
-import { useAppContext, useKeyContext, useContentContext } from '~/contexts';
+import { useKeyContext, useContentContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 
 MainContent.propTypes = {
@@ -43,7 +37,6 @@ export default function MainContent({
 }) {
   const ContainerRef = useRef(null);
   const navigate = useNavigate();
-  const editContent = useAppContext((v) => v.requestHelpers.editContent);
 
   const {
     byUser,
@@ -76,7 +69,6 @@ export default function MainContent({
   const onSetMediaStarted = useContentContext(
     (v) => v.actions.onSetMediaStarted
   );
-  const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const onLoadTags = useContentContext((v) => v.actions.onLoadTags);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const { profileTheme } = useKeyContext((v) => v.myState);
@@ -103,13 +95,6 @@ export default function MainContent({
       !rootObj?.notFound,
     [contentType, rootObj, rootType]
   );
-  const Description = useMemo(() => {
-    return !stringIsEmpty(description)
-      ? description
-      : contentType === 'video' || contentType === 'url'
-      ? title
-      : '';
-  }, [contentType, description, title]);
   const displayedContent = useMemo(
     () => content || rootContent,
     [content, rootContent]
@@ -183,162 +168,36 @@ export default function MainContent({
           rewardLevel={rewardLevel}
           onSetMediaStarted={onSetMediaStarted}
         />
-        {contentType === 'subject' &&
-          !rootObj.id &&
-          !byUser &&
-          !!rewardLevel && (
-            <RewardLevelBar
-              className={css`
-                margin-left: -1px;
-                margin-right: -1px;
-                @media (max-width: ${mobileMaxWidth}) {
-                  margin-left: 0px;
-                  margin-right: 0px;
-                }
-              `}
-              style={{
-                marginBottom: rootType === 'url' ? '-0.5rem' : 0
-              }}
-              rewardLevel={rewardLevel}
-            />
-          )}
-        <div
-          style={{
-            marginTop:
-              contentType === 'subject' && filePath ? '0.5rem' : '1rem',
-            marginBottom: isEditing
-              ? 0
-              : contentType !== 'video' && !secretHidden && '1rem',
-            padding: '1rem',
-            whiteSpace: 'pre-wrap',
-            overflowWrap: 'break-word',
-            wordBrea: 'break-word'
-          }}
-        >
-          {isEditing ? (
-            <ContentEditor
-              comment={content}
-              content={displayedContent}
-              contentId={contentId}
-              description={description}
-              filePath={filePath}
-              onDismiss={() =>
-                onSetIsEditing({ contentId, contentType, isEditing: false })
-              }
-              onEditContent={handleEditContent}
-              secretAnswer={secretAnswer}
-              style={{
-                marginTop:
-                  (contentType === 'video' || contentType === 'subject') &&
-                  '1rem'
-              }}
-              title={title}
-              contentType={contentType}
-            />
-          ) : (
-            <div>
-              {contentType === 'comment' &&
-                (secretHidden ? (
-                  <SecretComment
-                    onClick={() =>
-                      navigate(`/subjects/${targetObj?.subject?.id || rootId}`)
-                    }
-                  />
-                ) : isNotification ? (
-                  <div
-                    style={{
-                      color: Color.gray(),
-                      fontWeight: 'bold',
-                      borderRadius
-                    }}
-                  >
-                    {uploader.username} viewed the secret message
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      whiteSpace: 'pre-wrap',
-                      overflowWrap: 'break-word',
-                      wordBreak: 'break-word'
-                    }}
-                  >
-                    <LongText
-                      contentId={contentId}
-                      contentType={contentType}
-                      section="content"
-                      theme={theme}
-                    >
-                      {content}
-                    </LongText>
-                  </div>
-                ))}
-              {contentType === 'subject' && (
-                <div
-                  style={{
-                    whiteSpace: 'pre-wrap',
-                    overflowWrap: 'break-word',
-                    wordBreak: 'break-word'
-                  }}
-                >
-                  <Link
-                    style={{
-                      fontWeight: 'bold',
-                      fontSize: '2.2rem',
-                      color: Color[contentColor](),
-                      textDecoration: 'none'
-                    }}
-                    to={`/subjects/${contentId}`}
-                  >
-                    Subject:
-                  </Link>
-                  <p
-                    style={{
-                      marginTop: '1rem',
-                      marginBottom: '1rem',
-                      fontWeight: 'bold',
-                      fontSize: '2.2rem'
-                    }}
-                  >
-                    {title}
-                  </p>
-                </div>
-              )}
-              {contentType !== 'comment' && (
-                <div
-                  style={{
-                    marginTop: contentType === 'url' ? '-1rem' : 0,
-                    whiteSpace: 'pre-wrap',
-                    overflowWrap: 'break-word',
-                    wordBreak: 'break-word',
-                    marginBottom:
-                      contentType === 'url' || contentType === 'subject'
-                        ? '1rem'
-                        : '0.5rem'
-                  }}
-                >
-                  <LongText
-                    contentId={contentId}
-                    contentType={contentType}
-                    section="description"
-                    theme={theme}
-                  >
-                    {Description || story}
-                  </LongText>
-                </div>
-              )}
-              {(secretAnswer || secretAttachment) && (
-                <SecretAnswer
-                  answer={secretAnswer}
-                  theme={theme}
-                  attachment={secretAttachment}
-                  onClick={onClickSecretAnswer}
-                  subjectId={contentId}
-                  uploaderId={uploader.id}
-                />
-              )}
-            </div>
-          )}
-        </div>
+        <RewardLevelDisplay
+          contentType={contentType}
+          rootObj={rootObj}
+          byUser={!!byUser}
+          rewardLevel={rewardLevel}
+          rootType={rootType}
+        />
+        <ContentDisplay
+          contentId={contentId}
+          contentType={contentType}
+          isEditing={isEditing}
+          content={content}
+          displayedContent={displayedContent}
+          description={description}
+          filePath={filePath}
+          navigate={navigate}
+          secretAnswer={secretAnswer}
+          secretAttachment={secretAttachment}
+          title={title}
+          theme={theme}
+          onSetIsEditing={onSetIsEditing}
+          uploader={uploader}
+          targetObj={targetObj}
+          rootId={rootId}
+          contentColor={contentColor}
+          story={story}
+          secretHidden={secretHidden}
+          isNotification={!!isNotification}
+          onClickSecretAnswer={onClickSecretAnswer}
+        />
         {contentType === 'url' && (
           <Embedly
             contentId={contentId}
@@ -371,9 +230,4 @@ export default function MainContent({
       </div>
     </ErrorBoundary>
   );
-
-  async function handleEditContent(params) {
-    const data = await editContent(params);
-    onEditContent({ data, contentType, contentId });
-  }
 }
