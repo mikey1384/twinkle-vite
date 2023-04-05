@@ -11,6 +11,7 @@ import XPVideoAdditionalInfo from './XPVideoAdditionalInfo';
 import SecretAnswer from '~/components/SecretAnswer';
 import Link from '~/components/Link';
 import SecretComment from '~/components/SecretComment';
+import ByUserIndicator from './ByUserIndicator';
 import PassNotification from './PassNotification';
 import XPVideo from './XPVideo';
 import { scrollElementToCenter } from '~/helpers';
@@ -157,36 +158,17 @@ export default function MainContent({
           tags={tags}
           theme={theme}
         />
-        {(contentType === 'url' || contentType === 'subject') && !!byUser && (
-          <div
-            style={{
-              ...(subjectIsAttachedToVideo ? { marginTop: '0.5rem' } : {}),
-              padding: '0.7rem',
-              background: Color[byUserIndicatorColor](byUserIndicatorOpacity),
-              color: Color[byUserIndicatorTextColor](),
-              textShadow: byUserIndicatorTextShadowColor
-                ? `0 0 1px ${Color[byUserIndicatorTextShadowColor]()}`
-                : 'none',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              fontWeight: 'bold',
-              fontSize: '1.7rem'
-            }}
-            className={css`
-              margin-left: -1px;
-              margin-right: -1px;
-              @media (max-width: ${mobileMaxWidth}) {
-                margin-left: 0;
-                margin-right: 0;
-              }
-            `}
-          >
-            This was{' '}
-            {contentType === 'subject' && !filePath ? 'written' : 'made'} by{' '}
-            {uploader.username}
-          </div>
-        )}
+        <ByUserIndicator
+          contentType={contentType}
+          byUser={!!byUser}
+          subjectIsAttachedToVideo={subjectIsAttachedToVideo}
+          byUserIndicatorColor={byUserIndicatorColor}
+          byUserIndicatorOpacity={byUserIndicatorOpacity}
+          byUserIndicatorTextColor={byUserIndicatorTextColor}
+          byUserIndicatorTextShadowColor={byUserIndicatorTextShadowColor}
+          uploader={uploader}
+          filePath={filePath}
+        />
         {(contentType === 'subject' || contentType === 'comment') &&
           filePath &&
           !(contentType === 'comment' && secretHidden) &&
