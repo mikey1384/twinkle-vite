@@ -160,7 +160,7 @@ export default function BottomInterface({
     }
     if (userId === uploader.id) return true;
     if (!canDelete || contentType !== 'subject') return false;
-    return userId === uploader.id || authLevel > uploader.authLevel;
+    return authLevel > uploader.authLevel;
   }, [
     authLevel,
     canDelete,
