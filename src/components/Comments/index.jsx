@@ -237,21 +237,27 @@ function Comments({
   const handleSubmitReply = useCallback(
     async ({ content, rootCommentId, targetCommentId }) => {
       if (banned?.posting) {
-        return Promise.resolve();
+        return;
       }
       setCommentSubmitted(true);
-      const { comment } = await uploadComment({
-        content,
-        parent,
-        rootCommentId,
-        targetCommentId
-      });
-      onReplySubmit({
-        ...comment,
-        contentId: parent.contentId,
-        contentType: parent.contentType
-      });
-      return Promise.resolve();
+      try {
+        const { comment } = await uploadComment({
+          content,
+          parent,
+          rootCommentId,
+          targetCommentId
+        });
+        onReplySubmit({
+          ...comment,
+          contentId: parent.contentId,
+          contentType: parent.contentType
+        });
+        setCommentSubmitted(false);
+      } catch (error) {
+        console.error('Error submitting reply:', error);
+        setCommentSubmitted(false);
+        return Promise.reject(error);
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [banned?.posting, onReplySubmit, parent]

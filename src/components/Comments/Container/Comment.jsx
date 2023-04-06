@@ -1071,10 +1071,11 @@ function Comment({
       setReplying(true);
       setIsPostingReply(true);
       await onReplySubmit(reply);
-    } catch (error) {
-      console.error('Error submitting reply:', error);
-    } finally {
       setIsPostingReply(false);
+    } catch (error) {
+      setIsPostingReply(false);
+      console.error('Error submitting reply from comment:', error);
+      throw error;
     }
   }
 }

@@ -148,16 +148,13 @@ function InputForm({
     setSubmitting(true);
     try {
       await onSubmit(finalizeEmoji(text));
-      setSubmitting(false);
+      handleSetText('');
     } catch (error) {
-      console.error(error);
+      console.error('Error submitting form:', error.message);
+    } finally {
       setSubmitting(false);
-      return;
     }
-    handleSetText('');
-    setSubmitting(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentId, contentType, onSubmit, text]);
+  }, [onSubmit, text]);
 
   const handleUpload = useCallback(
     (event) => {

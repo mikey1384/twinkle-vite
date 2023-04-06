@@ -92,42 +92,48 @@ export default function ReplyInputArea({
   );
 
   async function handleSubmit(text) {
-    if (attachment) {
+    try {
+      if (attachment) {
+        onSetUploadingFile({
+          contentId: targetCommentId,
+          contentType: 'comment',
+          isUploading: true
+        });
+        await onSubmitWithAttachment({
+          attachment,
+          commentContent: text,
+          contentId: parent.contentId,
+          contentType: parent.contentType,
+          filePath: uuidv1(),
+          file: attachment.file,
+          rootCommentId,
+          subjectId: parent.subjectId,
+          targetCommentId,
+          isReply: true
+        });
+        onSetCommentAttachment({
+          attachment: undefined,
+          contentType: 'comment',
+          contentId: targetCommentId
+        });
+      } else {
+        await onSubmit({
+          content: text,
+          rootCommentId,
+          subjectId: parent.subjectId,
+          targetCommentId
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      throw error;
+    } finally {
       onSetUploadingFile({
         contentId: targetCommentId,
         contentType: 'comment',
-        isUploading: true
-      });
-      await onSubmitWithAttachment({
-        attachment,
-        commentContent: text,
-        contentId: parent.contentId,
-        contentType: parent.contentType,
-        filePath: uuidv1(),
-        file: attachment.file,
-        rootCommentId,
-        subjectId: parent.subjectId,
-        targetCommentId,
-        isReply: true
-      });
-      onSetCommentAttachment({
-        attachment: undefined,
-        contentType: 'comment',
-        contentId: targetCommentId
-      });
-    } else {
-      onSubmit({
-        content: text,
-        rootCommentId,
-        subjectId: parent.subjectId,
-        targetCommentId
+        isUploading: false
       });
     }
-    onSetUploadingFile({
-      contentId: targetCommentId,
-      contentType: 'comment',
-      isUploading: false
-    });
     return Promise.resolve();
   }
 }
