@@ -53,27 +53,32 @@ export default function Content({
       ? title
       : '';
   }, [contentType, description, title]);
-
-  return (
-    <div>
-      {contentType === 'comment' &&
-        (secretHidden ? (
-          <SecretComment
-            onClick={() =>
-              navigate(`/subjects/${targetObj?.subject?.id || rootId}`)
-            }
-          />
-        ) : isNotification ? (
-          <div
-            style={{
-              color: Color.gray(),
-              fontWeight: 'bold',
-              borderRadius
-            }}
-          >
-            {uploader.username} viewed the secret message
-          </div>
-        ) : (
+  const RenderedContent = useMemo(() => {
+    switch (contentType) {
+      case 'comment':
+        if (secretHidden) {
+          return (
+            <SecretComment
+              onClick={() =>
+                navigate(`/subjects/${targetObj?.subject?.id || rootId}`)
+              }
+            />
+          );
+        }
+        if (isNotification) {
+          return (
+            <div
+              style={{
+                color: Color.gray(),
+                fontWeight: 'bold',
+                borderRadius
+              }}
+            >
+              {uploader.username} viewed the secret message
+            </div>
+          );
+        }
+        return (
           <div
             style={{
               whiteSpace: 'pre-wrap',
@@ -90,81 +95,105 @@ export default function Content({
               {content}
             </LongText>
           </div>
-        ))}
-      {contentType === 'subject' && (
-        <div
-          style={{
-            whiteSpace: 'pre-wrap',
-            overflowWrap: 'break-word',
-            wordBreak: 'break-word'
-          }}
-        >
-          <Link
+        );
+      case 'subject':
+        return (
+          <div
             style={{
-              fontWeight: 'bold',
-              fontSize: '2.2rem',
-              color: Color[contentColor](),
-              textDecoration: 'none'
-            }}
-            to={`/subjects/${contentId}`}
-          >
-            Subject:
-          </Link>
-          <p
-            style={{
-              marginTop: '1rem',
-              marginBottom: '1rem',
-              fontWeight: 'bold',
-              fontSize: '2.2rem'
+              whiteSpace: 'pre-wrap',
+              overflowWrap: 'break-word',
+              wordBreak: 'break-word'
             }}
           >
-            {title}
-          </p>
-        </div>
-      )}
-      {contentType === 'aiStory' && (
-        <div
-          style={{
-            marginTop: 0,
-            whiteSpace: 'pre-wrap',
-            overflowWrap: 'break-word',
-            wordBreak: 'break-word',
-            marginBottom: '0.5rem'
-          }}
-        >
-          <LongText
-            contentId={contentId}
-            contentType={contentType}
-            section="description"
-            theme={theme}
+            <Link
+              style={{
+                fontWeight: 'bold',
+                fontSize: '2.2rem',
+                color: Color[contentColor](),
+                textDecoration: 'none'
+              }}
+              to={`/subjects/${contentId}`}
+            >
+              Subject:
+            </Link>
+            <p
+              style={{
+                marginTop: '1rem',
+                marginBottom: '1rem',
+                fontWeight: 'bold',
+                fontSize: '2.2rem'
+              }}
+            >
+              {title}
+            </p>
+          </div>
+        );
+      case 'aiStory':
+        return (
+          <div
+            style={{
+              marginTop: 0,
+              whiteSpace: 'pre-wrap',
+              overflowWrap: 'break-word',
+              wordBreak: 'break-word',
+              marginBottom: '0.5rem'
+            }}
           >
-            {story}
-          </LongText>
-        </div>
-      )}
-      {contentType !== 'comment' && contentType !== 'aiStory' && (
-        <div
-          style={{
-            marginTop: contentType === 'url' ? '-1rem' : 0,
-            whiteSpace: 'pre-wrap',
-            overflowWrap: 'break-word',
-            wordBreak: 'break-word',
-            marginBottom:
-              contentType === 'url' || contentType === 'subject'
-                ? '1rem'
-                : '0.5rem'
-          }}
-        >
-          <LongText
-            contentId={contentId}
-            contentType={contentType}
-            section="description"
-            theme={theme}
+            <LongText
+              contentId={contentId}
+              contentType={contentType}
+              section="description"
+              theme={theme}
+            >
+              {story}
+            </LongText>
+          </div>
+        );
+      default:
+        return (
+          <div
+            style={{
+              marginTop: contentType === 'url' ? '-1rem' : 0,
+              whiteSpace: 'pre-wrap',
+              overflowWrap: 'break-word',
+              wordBreak: 'break-word',
+              marginBottom:
+                contentType === 'url' || contentType === 'subject'
+                  ? '1rem'
+                  : '0.5rem'
+            }}
           >
-            {Description}
-          </LongText>
-        </div>
-      )}
+            <LongText
+              contentId={contentId}
+              contentType={contentType}
+              section="description"
+              theme={theme}
+            >
+              {Description}
+            </LongText>
+          </div>
+        );
+    }
+  }, [
+    contentType,
+    secretHidden,
+    isNotification,
+    contentColor,
+    contentId,
+    title,
+    theme,
+    story,
+    Description,
+    navigate,
+    targetObj?.subject?.id,
+    rootId,
+    uploader?.username,
+    content
+  ]);
+
+  return (
+    <div>
+      {RenderedContent}
       {(secretAnswer || secretAttachment) && (
         <SecretAnswer
           answer={secretAnswer}
