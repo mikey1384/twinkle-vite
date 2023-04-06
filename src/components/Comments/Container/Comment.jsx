@@ -927,7 +927,7 @@ function Comment({
                         disableReason={disableReason}
                         innerRef={ReplyInputAreaRef}
                         numReplies={numReplies}
-                        onSubmit={submitReply}
+                        onSubmit={handleSubmitReply}
                         onSubmitWithAttachment={handleSubmitWithAttachment}
                         parent={parent}
                         rootCommentId={comment.commentId}
@@ -1066,11 +1066,16 @@ function Comment({
     await onSubmitWithAttachment(params);
   }
 
-  async function submitReply(reply) {
-    setReplying(true);
-    setIsPostingReply(true);
-    await onReplySubmit(reply);
-    setIsPostingReply(false);
+  async function handleSubmitReply(reply) {
+    try {
+      setReplying(true);
+      setIsPostingReply(true);
+      await onReplySubmit(reply);
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+    } finally {
+      setIsPostingReply(false);
+    }
   }
 }
 
