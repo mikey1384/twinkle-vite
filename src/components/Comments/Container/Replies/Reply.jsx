@@ -754,9 +754,15 @@ function Reply({
   }
 
   async function handleSubmitReply(params) {
-    setIsPostingReply(true);
-    await onSubmitReply(params);
-    setIsPostingReply(false);
+    try {
+      setIsPostingReply(true);
+      await onSubmitReply(params);
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      throw error;
+    } finally {
+      setIsPostingReply(false);
+    }
   }
 }
 
