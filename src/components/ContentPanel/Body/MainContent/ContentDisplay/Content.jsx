@@ -122,7 +122,27 @@ export default function Content({
           </p>
         </div>
       )}
-      {contentType !== 'comment' && (
+      {contentType === 'aiStory' && (
+        <div
+          style={{
+            marginTop: 0,
+            whiteSpace: 'pre-wrap',
+            overflowWrap: 'break-word',
+            wordBreak: 'break-word',
+            marginBottom: '0.5rem'
+          }}
+        >
+          <LongText
+            contentId={contentId}
+            contentType={contentType}
+            section="description"
+            theme={theme}
+          >
+            {story}
+          </LongText>
+        </div>
+      )}
+      {contentType !== 'comment' && contentType !== 'aiStory' && (
         <div
           style={{
             marginTop: contentType === 'url' ? '-1rem' : 0,
@@ -141,7 +161,7 @@ export default function Content({
             section="description"
             theme={theme}
           >
-            {Description || story}
+            {Description}
           </LongText>
         </div>
       )}
