@@ -39,11 +39,8 @@ export default function Body({
   contentObj: {
     commentsLoaded,
     contentId,
-    filePath,
     rewardLevel,
     id,
-    numComments,
-    numReplies,
     comments = [],
     commentsLoadMoreButton = false,
     isNotification,
@@ -55,8 +52,7 @@ export default function Body({
     rewards = [],
     targetObj = {},
     contentType,
-    uploader = {},
-    views
+    uploader = {}
   },
   inputAtBottom,
   numPreviewComments,
@@ -326,17 +322,10 @@ export default function Body({
           canReward={canReward}
           commentsShown={commentsShown}
           CommentInputAreaRef={CommentInputAreaRef}
-          contentId={contentId}
-          contentType={contentType}
           contentObj={contentObj}
-          filePath={filePath}
           finalRewardLevel={finalRewardLevel}
           isEditing={isEditing}
-          isNotification={isNotification}
           isRecommendedByUser={isRecommendedByUser}
-          likes={likes}
-          numComments={numComments}
-          numReplies={numReplies}
           onByUserStatusChange={onByUserStatusChange}
           onExpandComments={handleExpandComments}
           onSetCloseConfirmModalShown={setCloseConfirmModalShown}
@@ -348,16 +337,11 @@ export default function Body({
           onSetXpRewardInterfaceShown={onSetXpRewardInterfaceShown}
           recommendationInterfaceShown={recommendationInterfaceShown}
           rewardColor={rewardColor}
-          rewardLevel={rewardLevel}
-          rewards={rewards}
           secretHidden={secretHidden}
           subjectUploaderId={subjectUploaderId}
-          targetObj={targetObj}
           theme={theme}
-          uploader={uploader}
           userCanRewardThis={userCanRewardThis}
           userId={userId}
-          views={views}
           xpRewardInterfaceShown={xpRewardInterfaceShown}
         />
         <RecommendationStatus
