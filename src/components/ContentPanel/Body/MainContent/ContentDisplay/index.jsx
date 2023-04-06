@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
 import Link from '~/components/Link';
 import LongText from '~/components/Texts/LongText';
-import ContentEditor from '../ContentEditor';
+import ContentEditor from '../../ContentEditor';
 import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
