@@ -34,6 +34,7 @@ export const Color = {
   lightGray: (opacity = 1) => `rgba(165,165,165,${opacity})`,
   darkerBorderGray: (opacity = 1) => `rgba(185,188,190,${opacity})`,
   lighterGray: (opacity = 1) => `rgba(207,207,207,${opacity})`,
+  extraLightGray: (opacity = 1) => `rgba(242,242,242,${opacity})`,
   blueGray: (opacity = 1) => `rgba(61,75,95,${opacity})`,
   lightBlueGray: (opacity = 1) => `rgba(91,105,125,${opacity})`,
   darkBlueGray: (opacity = 1) => `rgba(41,55,75,${opacity})`,
