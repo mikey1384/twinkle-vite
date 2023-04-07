@@ -135,11 +135,20 @@ export default function BottomInterface({
   ]);
 
   const userCanDeleteThis = useMemo(() => {
+    if (contentType === 'aiStory') return false;
     if (userId === uploader.id) return true;
     return canDelete && authLevel > uploader.authLevel;
-  }, [authLevel, canDelete, uploader.authLevel, uploader.id, userId]);
+  }, [
+    authLevel,
+    canDelete,
+    contentType,
+    uploader.authLevel,
+    uploader.id,
+    userId
+  ]);
 
   const userCanCloseThis = useMemo(() => {
+    if (contentType !== 'subject') return false;
     if (
       contentObj?.isClosedBy &&
       ((contentObj?.isClosedBy.id === uploader.id &&
@@ -149,7 +158,7 @@ export default function BottomInterface({
       return false;
     }
     if (userId === uploader.id) return true;
-    if (!canDelete || contentType !== 'subject') return false;
+    if (!canDelete) return false;
     return authLevel > uploader.authLevel;
   }, [
     authLevel,
@@ -162,9 +171,17 @@ export default function BottomInterface({
   ]);
 
   const userCanEditThis = useMemo(() => {
+    if (contentType === 'aiStory') return false;
     if (userId === uploader.id) return true;
     return canEdit && authLevel > uploader?.authLevel;
-  }, [authLevel, canEdit, uploader.authLevel, uploader.id, userId]);
+  }, [
+    authLevel,
+    canEdit,
+    contentType,
+    uploader?.authLevel,
+    uploader.id,
+    userId
+  ]);
 
   const editMenuItems = useMemo(() => {
     const items = [];
@@ -335,20 +352,22 @@ export default function BottomInterface({
                 ) : null}
               </Button>
             )}
-            {userCanRewardThis && !secretHidden && (
-              <RewardButton
-                className={css`
-                  margin-left: 1rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    margin-left: 0.5rem;
-                  }
-                `}
-                contentId={contentId}
-                contentType={contentType}
-                disableReason={xpButtonDisabled}
-                theme={theme}
-              />
-            )}
+            {userCanRewardThis &&
+              !secretHidden &&
+              contentType !== 'aiStory' && (
+                <RewardButton
+                  className={css`
+                    margin-left: 1rem;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      margin-left: 0.5rem;
+                    }
+                  `}
+                  contentId={contentId}
+                  contentType={contentType}
+                  disableReason={xpButtonDisabled}
+                  theme={theme}
+                />
+              )}
             {!secretHidden && (
               <div
                 className={css`
@@ -498,7 +517,11 @@ export default function BottomInterface({
 
   async function handleCopyToClipboard() {
     const contentUrl = `https://www.twin-kle.com/${
-      contentType === 'url' ? 'link' : contentType
+      contentType === 'aiStory'
+        ? 'ai-storie'
+        : contentType === 'url'
+        ? 'link'
+        : contentType
     }s/${contentId}`;
     try {
       await navigator.clipboard.writeText(contentUrl);
