@@ -2,14 +2,12 @@ import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import Link from '~/components/Link';
 import LongText from '~/components/Texts/LongText';
 import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
 
 Content.propTypes = {
   content: PropTypes.string,
-  contentColor: PropTypes.string,
   contentId: PropTypes.number.isRequired,
   contentType: PropTypes.string.isRequired,
   description: PropTypes.string,
@@ -29,7 +27,6 @@ Content.propTypes = {
 
 export default function Content({
   content,
-  contentColor,
   contentId,
   contentType,
   description,
@@ -96,38 +93,6 @@ export default function Content({
             </LongText>
           </div>
         );
-      case 'subject':
-        return (
-          <div
-            style={{
-              whiteSpace: 'pre-wrap',
-              overflowWrap: 'break-word',
-              wordBreak: 'break-word'
-            }}
-          >
-            <Link
-              style={{
-                fontWeight: 'bold',
-                fontSize: '2.2rem',
-                color: Color[contentColor](),
-                textDecoration: 'none'
-              }}
-              to={`/subjects/${contentId}`}
-            >
-              Subject:
-            </Link>
-            <p
-              style={{
-                marginTop: '1rem',
-                marginBottom: '1rem',
-                fontWeight: 'bold',
-                fontSize: '2.2rem'
-              }}
-            >
-              {title}
-            </p>
-          </div>
-        );
       case 'aiStory':
         return (
           <div
@@ -185,21 +150,39 @@ export default function Content({
     contentType,
     secretHidden,
     isNotification,
-    contentColor,
     contentId,
-    title,
     theme,
     story,
     Description,
     navigate,
     targetObj?.subject?.id,
     rootId,
-    uploader?.username,
+    uploader.username,
     content
   ]);
 
   return (
     <div>
+      {contentType === 'subject' && (
+        <div
+          style={{
+            whiteSpace: 'pre-wrap',
+            overflowWrap: 'break-word',
+            wordBreak: 'break-word'
+          }}
+        >
+          <p
+            style={{
+              marginTop: '1rem',
+              marginBottom: '1rem',
+              fontWeight: 'bold',
+              fontSize: '2.2rem'
+            }}
+          >
+            {title}
+          </p>
+        </div>
+      )}
       {RenderedContent}
       {(secretAnswer || secretAttachment) && (
         <SecretAnswer
