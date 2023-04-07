@@ -136,7 +136,14 @@ export default function Content({
               whiteSpace: 'pre-wrap',
               overflowWrap: 'break-word',
               wordBreak: 'break-word',
-              marginBottom: '0.5rem'
+              marginBottom: '0.5rem',
+              backgroundColor: Color.extraLightGray(),
+              padding: '1rem',
+              border: '1px solid #ccc',
+              borderRadius,
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              fontFamily: '"Arial", sans-serif',
+              fontSize: '1.8rem'
             }}
           >
             <LongText
