@@ -19,7 +19,7 @@ export default function ActionBlock({ action, target, style, type, username }) {
         return 'completed daily grammarbles';
       }
       if (target === 'aiStory') {
-        return 'completed an AI story';
+        return 'completed an AI Story';
       }
     }
     if (action === 'generate') {
@@ -59,6 +59,9 @@ export default function ActionBlock({ action, target, style, type, username }) {
     if (action === 'recommend') {
       if (target === 'pass') {
         return 'recommended an achievement';
+      }
+      if (target === 'aiStory') {
+        return 'recommended an AI Story';
       }
       return `recommended a ${target}`;
     }
