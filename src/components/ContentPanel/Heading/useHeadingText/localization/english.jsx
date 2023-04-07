@@ -1,6 +1,7 @@
 import { Color } from '~/constants/css';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
+import { cardLevelHash } from '~/constants/defaultValues';
 
 export default function renderEnglishMessage({
   id,
@@ -124,8 +125,15 @@ export default function renderEnglishMessage({
     case 'aiStory':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> cleared an
-          AI story:{' '}
+          <UsernameText user={uploader} color={Color[linkColor]()} /> cleared a{' '}
+          <b
+            style={{
+              color: Color?.[cardLevelHash?.[contentObj?.difficulty]?.color]?.()
+            }}
+          >
+            Level {contentObj.difficulty} AI story
+          </b>
+          :{' '}
           <ContentLink
             content={contentObj}
             contentType={contentType}
