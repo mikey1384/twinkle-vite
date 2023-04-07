@@ -87,7 +87,13 @@ export default function renderEnglishText({
         content={{
           id: rootId,
           title: `this ${
-            rootType === 'pass' ? (isTask ? 'task' : 'mission') : rootType
+            rootType === 'pass'
+              ? isTask
+                ? 'task'
+                : 'mission'
+              : rootType === 'aiStory'
+              ? 'AI Story'
+              : rootType
           }`,
           missionType: rootMissionType
         }}

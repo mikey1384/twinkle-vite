@@ -22,7 +22,7 @@ export default function renderEnglishMessage({
 }) {
   let contentLabel =
     rootType === 'aiStory'
-      ? 'AI story'
+      ? 'AI Story'
       : rootType === 'url'
       ? 'link'
       : rootType === 'subject'
