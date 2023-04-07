@@ -362,7 +362,7 @@ export default function Body({
             uploaderId={uploader.id}
           />
         )}
-        {xpRewardInterfaceShown && (
+        {xpRewardInterfaceShown && contentType !== 'aiStory' && (
           <XPRewardInterface
             innerRef={RewardInterfaceRef}
             isRecommendedByUser={isRecommendedByUser}
