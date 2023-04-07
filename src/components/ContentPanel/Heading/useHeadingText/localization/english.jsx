@@ -131,7 +131,7 @@ export default function renderEnglishMessage({
               color: Color?.[cardLevelHash?.[contentObj?.difficulty]?.color]?.()
             }}
           >
-            Level {contentObj.difficulty} AI story
+            Level {contentObj.difficulty} AI Story
           </b>
           :{' '}
           <ContentLink
