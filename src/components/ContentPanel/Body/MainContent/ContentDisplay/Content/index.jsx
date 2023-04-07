@@ -174,7 +174,7 @@ export default function Content({
           <p
             style={{
               marginTop: '0.7rem',
-              marginBottom: '1.5rem',
+              marginBottom: '1.7rem',
               fontWeight: 'bold',
               fontSize: '2.2rem'
             }}
