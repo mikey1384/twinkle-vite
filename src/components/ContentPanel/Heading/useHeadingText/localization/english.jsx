@@ -124,8 +124,8 @@ export default function renderEnglishMessage({
     case 'aiStory':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> generated
-          an AI story:{' '}
+          <UsernameText user={uploader} color={Color[linkColor]()} /> cleared an
+          AI story:{' '}
           <ContentLink
             content={contentObj}
             contentType={contentType}
