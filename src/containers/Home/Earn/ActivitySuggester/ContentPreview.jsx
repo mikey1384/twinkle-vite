@@ -15,6 +15,7 @@ ContentPreview.propTypes = {
 export default function ContentPreview({
   contentObj: {
     id: contentId,
+    contentType,
     uploader,
     content,
     fileName,
@@ -50,7 +51,15 @@ export default function ContentPreview({
         }
       `}
     >
-      <div onClick={() => navigate(`/comments/${contentId}`)}>
+      <div
+        onClick={() =>
+          navigate(
+            `/${
+              contentType === 'aiStory' ? 'ai-storie' : contentType
+            }s/${contentId}`
+          )
+        }
+      >
         <div style={{ padding: '1rem' }}>
           <div
             style={{
