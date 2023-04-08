@@ -728,29 +728,34 @@ function Reply({
   }
 
   async function handleReplyClick() {
-    if (!isDeleteNotification) {
-      ReplyInputAreaRef.current.focus();
-    }
-    if (isExpanded || !reply.numReplies) {
-      return;
-    }
-    setLoadingReplies(true);
-    const { replies, loadMoreButton } = await loadReplies({
-      commentId: reply.id,
-      isLoadingRepliesOfReply: true,
-      isReverse: true
-    });
-    if (typeof replies.length === 'number') {
-      onLoadRepliesOfReply({
-        replies,
-        commentId: reply.commentId,
-        replyId: reply.id,
-        contentId: parent.contentId,
-        contentType: parent.contentType,
-        loadMoreButton
+    try {
+      if (!isDeleteNotification) {
+        ReplyInputAreaRef.current.focus();
+      }
+      if (isExpanded || !reply.numReplies) {
+        return;
+      }
+      setLoadingReplies(true);
+      const { replies, loadMoreButton } = await loadReplies({
+        commentId: reply.id,
+        isLoadingRepliesOfReply: true,
+        isReverse: true
       });
+      if (typeof replies.length === 'number') {
+        onLoadRepliesOfReply({
+          replies,
+          commentId: reply.commentId,
+          replyId: reply.id,
+          contentId: parent.contentId,
+          contentType: parent.contentType,
+          loadMoreButton
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingReplies(false);
     }
-    setLoadingReplies(false);
   }
 
   async function handleSubmitReply(params) {
