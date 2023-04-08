@@ -4,6 +4,7 @@ import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
+import { truncateTopic } from '~/helpers/stringHelpers';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -18,9 +19,11 @@ export default function ContentPreview({
     contentType,
     uploader,
     content,
+    story,
     fileName,
     filePath,
     fileSize,
+    topic,
     thumbUrl
   },
   style
@@ -146,7 +149,32 @@ export default function ContentPreview({
                         )}
                       </div>
                     )}
-                    <div>{content}</div>
+                    {topic ? (
+                      <div
+                        style={{ marginBottom: '1.5rem', fontSize: '1.6rem' }}
+                      >
+                        <b>{truncateTopic(topic)}</b>
+                      </div>
+                    ) : null}
+                    <div
+                      className={css`
+                        width: 100%;
+                        text-align: left;
+                        color: ${Color.black()};
+                        white-space: pre-wrap;
+                        overflow-wrap: break-word;
+                        word-break: break-word;
+                        overflow: hidden;
+                        display: -webkit-box;
+                        -webkit-line-clamp: 10;
+                        -webkit-box-orient: vertical;
+                        @media (max-width: ${mobileMaxWidth}) {
+                          line-height: 1.4;
+                        }
+                      `}
+                    >
+                      {content || story}
+                    </div>
                   </div>
                 </div>
               </div>
