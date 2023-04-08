@@ -224,6 +224,8 @@ export default function renderEnglishMessage({
                   ? 'comment'
                   : isSubjectResponse
                   ? 'subject'
+                  : targetObj.contentType === 'aiStory'
+                  ? 'AI Story'
                   : targetObj.contentType === 'user'
                   ? 'profile'
                   : targetObj.contentType === 'url'
