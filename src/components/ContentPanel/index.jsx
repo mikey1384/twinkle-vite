@@ -323,6 +323,17 @@ export default function ContentPanel({
                       contentObj={rootObj}
                     />
                   )}
+                {contentType === 'comment' &&
+                  contentState.rootType === 'aiStory' && (
+                    <ContentListItem
+                      style={{
+                        position: 'relative'
+                      }}
+                      expandable
+                      onClick={() => navigate(`/ai-stories/${rootObj.id}`)}
+                      contentObj={rootObj}
+                    />
+                  )}
                 {(contentType === 'comment' || contentType === 'subject') &&
                   rootType === 'url' &&
                   !rootObj.notFound && (
