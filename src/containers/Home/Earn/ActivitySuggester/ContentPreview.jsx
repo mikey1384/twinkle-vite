@@ -7,12 +7,12 @@ import { useKeyContext } from '~/contexts';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-CommentPreview.propTypes = {
+ContentPreview.propTypes = {
   contentObj: PropTypes.object.isRequired,
   style: PropTypes.object
 };
 
-export default function CommentPreview({
+export default function ContentPreview({
   contentObj: {
     id: contentId,
     uploader,

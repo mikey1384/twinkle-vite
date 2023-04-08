@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import CommentPreview from './CommentPreview';
+import ContentPreview from './ContentPreview';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
@@ -60,7 +60,7 @@ export default function RecommendPosts() {
           ) : (
             <>
               {posts.map((post) => (
-                <CommentPreview key={post.id} contentObj={post} />
+                <ContentPreview key={post.id} contentObj={post} />
               ))}
             </>
           )}
