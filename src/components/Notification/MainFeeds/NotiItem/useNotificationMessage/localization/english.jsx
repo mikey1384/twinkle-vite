@@ -30,7 +30,9 @@ export default function renderEnglishMessage({
       : targetObj.content;
 
   const contentPreview = `${
-    targetObj.contentType === 'url'
+    targetObj.contentType === 'aiStory'
+      ? 'AI Story'
+      : targetObj.contentType === 'url'
       ? 'link'
       : targetObj.contentType === 'pass'
       ? 'achievement'
