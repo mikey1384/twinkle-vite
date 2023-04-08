@@ -51,7 +51,6 @@ export default function PlaylistCarousel({
   const {
     carousel: { color: carouselColor }
   } = useKeyContext((v) => v.theme);
-  const clickSafe = useExploreContext((v) => v.state.videos.clickSafe);
   const onDeletePlaylist = useExploreContext((v) => v.actions.onDeletePlaylist);
   const onEditPlaylistTitle = useExploreContext(
     (v) => v.actions.onEditPlaylistTitle
@@ -235,7 +234,6 @@ export default function PlaylistCarousel({
             }
           `}
           to={`videos/${thumb.videoId}?playlist=${playlistId}`}
-          clickSafe={clickSafe}
           key={index}
           video={{
             id: thumb.videoId,

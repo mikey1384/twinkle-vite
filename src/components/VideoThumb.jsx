@@ -1,7 +1,7 @@
 import { memo, useEffect, useCallback, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
-import Link from '~/components/Link';
+import { Link } from 'react-router-dom';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import VideoThumbImage from '~/components/VideoThumbImage';
@@ -19,7 +19,6 @@ const addedByLabel = localize('addedBy');
 
 VideoThumb.propTypes = {
   className: PropTypes.string,
-  clickSafe: PropTypes.bool,
   style: PropTypes.object,
   to: PropTypes.string.isRequired,
   user: PropTypes.object.isRequired,
@@ -33,7 +32,7 @@ VideoThumb.propTypes = {
   }).isRequired
 };
 
-function VideoThumb({ className, clickSafe, style, to, user, video }) {
+function VideoThumb({ className, style, to, user, video }) {
   const timerRef = useRef(null);
   const {
     link: { color: linkColor },
@@ -46,10 +45,6 @@ function VideoThumb({ className, clickSafe, style, to, user, video }) {
   const [titleContext, setTitleContext] = useState(null);
   const ThumbLabelRef = useRef(null);
   const ThumbLabelContainerRef = useRef(null);
-  const onLinkClick = useCallback(
-    () => Promise.resolve(clickSafe),
-    [clickSafe]
-  );
   const onMouseOver = useCallback(() => {
     if (textIsOverflown(ThumbLabelRef.current)) {
       const parentElementDimensions =
@@ -91,7 +86,7 @@ function VideoThumb({ className, clickSafe, style, to, user, video }) {
         `}`}
       >
         <div style={{ width: '100%' }}>
-          <Link to={`/${to}`} onClickAsync={onLinkClick}>
+          <Link to={`/${to}`}>
             <VideoThumbImage
               height="65%"
               videoId={video.id}
@@ -125,17 +120,17 @@ function VideoThumb({ className, clickSafe, style, to, user, video }) {
                 lineHeight: 'normal'
               }}
             >
-              <a
+              <Link
                 style={{
+                  display: 'inline',
                   color: video.byUser
                     ? Color[userLinkColor]()
                     : Color[linkColor]()
                 }}
-                href={`/${to}`}
-                onClick={onLinkClick}
+                to={`/${to}`}
               >
                 {video.title}
-              </a>
+              </Link>
             </p>
             {titleContext && (
               <FullTextReveal

@@ -915,6 +915,24 @@ export function truncateText({ text = '', limit }) {
   return text;
 }
 
+export function truncateTopic(topic) {
+  // Remove quotes if enclosed in them
+  if (topic.startsWith('"') && topic.endsWith('"')) {
+    topic = topic.slice(1, -1);
+  } else if (topic.startsWith("'") && topic.endsWith("'")) {
+    topic = topic.slice(1, -1);
+  }
+  if (topic.endsWith('.')) {
+    topic = topic.slice(0, -1);
+  }
+  // Truncate if over 100 characters
+  if (topic.length > 100) {
+    topic = topic.slice(0, 100) + '...';
+  }
+
+  return topic;
+}
+
 export function stringsAreCaseInsensitivelyEqual(string1, string2) {
   if (typeof string1 !== 'string' || typeof string2 !== 'string') {
     return false;

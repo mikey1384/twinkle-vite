@@ -69,8 +69,7 @@ export const initialExploreState = {
     playlistsToPin: [],
     selectFeaturedPlaylistsModalShown: false,
     showingRecommendedVideos: false,
-    reorderFeaturedPlaylistsShown: false,
-    clickSafe: true
+    reorderFeaturedPlaylistsShown: false
   },
   prevUserId: null
 };

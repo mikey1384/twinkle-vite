@@ -21,7 +21,8 @@ ContentListItem.propTypes = {
   onContentIsDeleted: PropTypes.func,
   selectable: PropTypes.bool,
   selected: PropTypes.bool,
-  style: PropTypes.object
+  style: PropTypes.object,
+  innerStyle: PropTypes.object
 };
 
 function ContentListItem({
@@ -33,7 +34,8 @@ function ContentListItem({
   onContentIsDeleted,
   selectable,
   selected,
-  style
+  style,
+  innerStyle
 }) {
   const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
@@ -53,6 +55,7 @@ function ContentListItem({
     secretAnswer,
     secretAttachment,
     story,
+    topic,
     title,
     thumbUrl,
     uploader = {}
@@ -133,7 +136,8 @@ function ContentListItem({
               display: 'flex',
               width: '100%',
               fontSize: '1.3rem',
-              minHeight: contentType === 'subject' ? '10rem' : ''
+              minHeight: contentType === 'subject' ? '10rem' : '',
+              ...innerStyle
             }}
           >
             {contentType === 'video' && (
@@ -147,6 +151,7 @@ function ContentListItem({
               contentType={contentType}
               description={description}
               story={story}
+              topic={topic}
               title={title}
               uploader={uploader}
               contentId={contentId}

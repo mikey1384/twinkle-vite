@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
-import { removeLineBreaks } from '~/helpers/stringHelpers';
+import { removeLineBreaks, truncateTopic } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 
 ContentLink.propTypes = {
@@ -83,22 +83,4 @@ export default function ContentLink({
       (Deleted)
     </span>
   );
-
-  function truncateTopic(topic) {
-    // Remove quotes if enclosed in them
-    if (topic.startsWith('"') && topic.endsWith('"')) {
-      topic = topic.slice(1, -1);
-    } else if (topic.startsWith("'") && topic.endsWith("'")) {
-      topic = topic.slice(1, -1);
-    }
-    if (topic.endsWith('.')) {
-      topic = topic.slice(0, -1);
-    }
-    // Truncate if over 100 characters
-    if (topic.length > 100) {
-      topic = topic.slice(0, 100) + '...';
-    }
-
-    return topic;
-  }
 }
