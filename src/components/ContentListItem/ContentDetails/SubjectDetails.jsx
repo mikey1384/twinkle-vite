@@ -18,14 +18,16 @@ export default function SubjectDetails({ description, title, uploader }) {
       }}
     >
       <div
-        className="label"
-        style={{
-          fontSize: '2.5rem',
-          fontWeight: 'bold',
-          marginBottom: '0.5rem',
-          overflowWrap: 'break-word',
-          wordBreak: 'break-word'
-        }}
+        className={`label ${css`
+          font-size: 2.5rem;
+          font-weight: bold;
+          margin-bottom: 0.5rem;
+          overflow-wrap: break-word;
+          word-break: break-word;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 2rem;
+          }
+        `}`}
       >
         {title}
       </div>
