@@ -52,6 +52,7 @@ function ContentListItem({
     rootObj,
     secretAnswer,
     secretAttachment,
+    story,
     title,
     thumbUrl,
     uploader = {}
@@ -145,6 +146,7 @@ function ContentListItem({
             <ContentDetails
               contentType={contentType}
               description={description}
+              story={story}
               title={title}
               uploader={uploader}
               contentId={contentId}

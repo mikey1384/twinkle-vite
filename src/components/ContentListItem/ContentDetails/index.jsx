@@ -7,6 +7,7 @@ import UrlDetails from './UrlDetails';
 ContentDetails.propTypes = {
   contentType: PropTypes.string.isRequired,
   description: PropTypes.string,
+  story: PropTypes.string,
   title: PropTypes.string,
   uploader: PropTypes.object,
   contentId: PropTypes.number
@@ -15,6 +16,7 @@ ContentDetails.propTypes = {
 export default function ContentDetails({
   contentType,
   description,
+  story,
   title,
   uploader,
   contentId
@@ -23,7 +25,11 @@ export default function ContentDetails({
     <div
       style={{
         width:
-          contentType !== 'subject' && contentType !== 'url' ? '75%' : '100%',
+          contentType !== 'subject' &&
+          contentType !== 'url' &&
+          contentType !== 'aiStory'
+            ? '75%'
+            : '100%',
         paddingTop: '1rem',
         paddingBottom: '1rem',
         paddingLeft: 0,
@@ -48,6 +54,7 @@ export default function ContentDetails({
       {contentType === 'url' && (
         <UrlDetails contentId={contentId} title={title} />
       )}
+      {contentType === 'aiStory' && <div>{story}</div>}
     </div>
   );
 }
