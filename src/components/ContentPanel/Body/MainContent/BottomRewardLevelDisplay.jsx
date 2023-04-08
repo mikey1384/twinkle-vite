@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import { mobileMaxWidth } from '~/constants/css';
