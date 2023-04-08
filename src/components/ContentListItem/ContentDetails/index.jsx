@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Embedly from '~/components/Embedly';
 import VideoDetails from './VideoDetails';
 import SubjectDetails from './SubjectDetails';
+import UrlDetails from './UrlDetails';
 
 ContentDetails.propTypes = {
   contentType: PropTypes.string.isRequired,
@@ -46,23 +46,7 @@ export default function ContentDetails({
         />
       )}
       {contentType === 'url' && (
-        <div>
-          <span
-            style={{
-              fontWeight: 'bold',
-              fontSize: '2rem'
-            }}
-            className="label"
-          >
-            {title}
-          </span>
-          <Embedly
-            small
-            noLink
-            style={{ marginTop: '0.5rem' }}
-            contentId={contentId}
-          />
-        </div>
+        <UrlDetails contentId={contentId} title={title} />
       )}
     </div>
   );
