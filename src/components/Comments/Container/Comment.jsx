@@ -1055,8 +1055,9 @@ function Comment({
         });
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoadingReplies(false);
       }
-      setLoadingReplies(false);
     }
     if (!isDeleteNotification) ReplyInputAreaRef.current.focus();
   }
