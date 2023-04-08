@@ -17,7 +17,6 @@ export default function Link({
   className,
   to,
   onClick = () => {},
-  onClickAsync,
   children,
   style,
   target,
@@ -57,11 +56,6 @@ export default function Link({
   function handleLinkClick(event) {
     event.preventDefault();
     if (target) return window.open(to, target);
-    if (typeof onClickAsync === 'function') {
-      return onClickAsync().then((clickSafe) => {
-        if (!clickSafe) navigate(to);
-      });
-    }
     navigate(to);
     onClick();
   }

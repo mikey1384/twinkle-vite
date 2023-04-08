@@ -40,16 +40,6 @@ export default function ExploreActions(dispatch) {
         type: 'CLEAR_VIDEOS_LOADED'
       });
     },
-    onClickSafeOff() {
-      return dispatch({
-        type: 'TURN_OFF_CLICK_SAFE'
-      });
-    },
-    onClickSafeOn() {
-      return dispatch({
-        type: 'TURN_ON_CLICK_SAFE'
-      });
-    },
     onCloseAddPlaylistModal() {
       return dispatch({
         type: 'CLOSE_PLAYLIST_MODAL'

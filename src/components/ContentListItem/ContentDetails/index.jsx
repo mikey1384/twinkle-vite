@@ -1,8 +1,8 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import VideoDetails from './VideoDetails';
 import SubjectDetails from './SubjectDetails';
 import UrlDetails from './UrlDetails';
+import AIStoryDetails from './AIStoryDetails';
 
 ContentDetails.propTypes = {
   contentType: PropTypes.string.isRequired,
@@ -10,7 +10,8 @@ ContentDetails.propTypes = {
   story: PropTypes.string,
   title: PropTypes.string,
   uploader: PropTypes.object,
-  contentId: PropTypes.number
+  contentId: PropTypes.number,
+  topic: PropTypes.string
 };
 
 export default function ContentDetails({
@@ -19,7 +20,8 @@ export default function ContentDetails({
   story,
   title,
   uploader,
-  contentId
+  contentId,
+  topic
 }) {
   return (
     <div
@@ -30,7 +32,6 @@ export default function ContentDetails({
           contentType !== 'aiStory'
             ? '75%'
             : '100%',
-        paddingTop: '1rem',
         paddingBottom: '1rem',
         paddingLeft: 0,
         paddingRight: 0,
@@ -54,7 +55,9 @@ export default function ContentDetails({
       {contentType === 'url' && (
         <UrlDetails contentId={contentId} title={title} />
       )}
-      {contentType === 'aiStory' && <div>{story}</div>}
+      {contentType === 'aiStory' && (
+        <AIStoryDetails topic={topic} story={story} />
+      )}
     </div>
   );
 }

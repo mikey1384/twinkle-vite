@@ -778,22 +778,6 @@ export default function ExploreReducer(state, action) {
           loaded: action.loaded
         }
       };
-    case 'TURN_OFF_CLICK_SAFE':
-      return {
-        ...state,
-        videos: {
-          ...state.videos,
-          clickSafe: false
-        }
-      };
-    case 'TURN_ON_CLICK_SAFE':
-      return {
-        ...state,
-        videos: {
-          ...state.videos,
-          clickSafe: true
-        }
-      };
     case 'UPDATE_NUM_LINK_COMMENTS':
       return {
         ...state,
