@@ -86,7 +86,12 @@ export default function RecommendationInterface({
   }, [isRecommendedByUser, twinkleCoins]);
 
   const switchButtonShown = useMemo(() => {
-    return !isRecommendedByUser && authLevel > 1 && contentType !== 'pass';
+    return (
+      !isRecommendedByUser &&
+      authLevel > 1 &&
+      contentType !== 'pass' &&
+      contentType !== 'aiStory'
+    );
   }, [isRecommendedByUser, authLevel, contentType]);
 
   const priceText = useMemo(() => {
