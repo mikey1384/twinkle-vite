@@ -71,6 +71,7 @@ export default function RecommendationStatus({
   const isRewardable = useMemo(
     () =>
       contentType !== 'pass' &&
+      contentType !== 'aiStory' &&
       ((myRecommendation?.authLevel > 1 && !myRecommendation?.rewardDisabled) ||
         (mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel > 1 &&
           !mostRecentRewardEnabledRecommenderOtherThanMe?.rewardDisabled)),
