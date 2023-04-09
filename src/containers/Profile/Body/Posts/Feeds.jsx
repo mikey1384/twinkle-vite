@@ -125,6 +125,8 @@ export default function Feeds({
     switch (section) {
       case 'all':
         return `${username} has not posted anything, yet`;
+      case 'ai-stories':
+        return `${username} has not cleared any AI Story, yet`;
       case 'subjects':
         return `${username} has not posted a subject, yet`;
       case 'comments':

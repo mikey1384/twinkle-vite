@@ -82,6 +82,8 @@ export default function Feeds({
     switch (section) {
       case 'all':
         return `${username} has not any content so far`;
+      case 'ai-stories':
+        return `${username} has not liked any AI Story so far`;
       case 'subjects':
         return `${username} has not liked any subject so far`;
       case 'comments':
