@@ -892,7 +892,7 @@ export function trimUrl(url) {
   return trimWWW;
 }
 
-export function stripWhiteSpaces(text = '') {
+export function removeAllWhiteSpaces(text = '') {
   return text.replace(/\s+/g, '').trim();
 }
 
