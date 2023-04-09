@@ -6,7 +6,7 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
-import { stripWhiteSpaces } from '~/helpers/stringHelpers';
+import { removeAllWhiteSpaces } from '~/helpers/stringHelpers';
 import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -52,7 +52,7 @@ export default function RecommendationInterface({
   }, [contentType, rewardLevel]);
   const meetsRequirement = useMemo(
     () =>
-      stripWhiteSpaces(content).length > expectedContentLength &&
+      removeAllWhiteSpaces(content).length > expectedContentLength &&
       contentType !== 'pass',
     [content, contentType, expectedContentLength]
   );
