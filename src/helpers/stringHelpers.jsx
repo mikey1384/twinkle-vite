@@ -892,20 +892,12 @@ export function trimUrl(url) {
   return trimWWW;
 }
 
-export function trimWhiteSpaces(text) {
-  let newText = text;
-  while (
-    newText !== '' &&
-    (newText[0] === ' ' || newText[newText.length - 1] === ' ')
-  ) {
-    if (newText[0] === ' ') {
-      newText = newText.substring(1);
-    }
-    if (newText[newText.length - 1] === ' ') {
-      newText = newText.slice(0, -1);
-    }
-  }
-  return newText;
+export function stripWhiteSpaces(text = '') {
+  return text.replace(/\s+/g, '').trim();
+}
+
+export function trimWhiteSpaces(text = '') {
+  return text.trim();
 }
 
 export function truncateText({ text = '', limit }) {

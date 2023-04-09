@@ -6,6 +6,7 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
+import { stripWhiteSpaces } from '~/helpers/stringHelpers';
 import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -50,8 +51,10 @@ export default function RecommendationInterface({
     return expectedResponseLength(rewardLevel);
   }, [contentType, rewardLevel]);
   const meetsRequirement = useMemo(
-    () => content?.length > expectedContentLength && contentType !== 'pass',
-    [content?.length, contentType, expectedContentLength]
+    () =>
+      stripWhiteSpaces(content).length > expectedContentLength &&
+      contentType !== 'pass',
+    [content, contentType, expectedContentLength]
   );
   const [rewardDisabled, setRewardDisabled] = useState(!meetsRequirement);
   const [hidden, setHidden] = useState(false);
