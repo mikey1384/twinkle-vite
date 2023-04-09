@@ -5,6 +5,7 @@ export default function ProfileReducer(state, action) {
       loadMoreButton: false
     },
     likes: {
+      ['ai-stories']: [],
       all: [],
       allLoaded: false,
       allLoadMoreButton: false,

@@ -10,6 +10,7 @@ LikedPosts.propTypes = {
 
 const filterTable = {
   all: 'all',
+  ['ai-stories']: 'aiStory',
   comments: 'comment',
   subjects: 'subject',
   videos: 'video',

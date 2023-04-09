@@ -98,17 +98,14 @@ export default function Feeds({
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
         <FilterBar
           color={selectedTheme}
-          style={{ height: '5rem', marginTop: '-1rem' }}
-          className={`mobile ${css`
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.3rem !important;
-            }
-          `}`}
+          style={{ height: '5rem', marginTop: '-1rem', fontSize: '1.3rem' }}
+          className="mobile"
         >
           {[
             { key: 'all', label: 'All' },
             { key: 'video', label: 'Videos' },
             { key: 'subject', label: 'Subjects' },
+            { key: 'aiStory', label: 'AI Stories' },
             { key: 'comment', label: 'Comments' },
             { key: 'url', label: 'Links' }
           ].map((type) => {
@@ -214,6 +211,7 @@ export default function Feeds({
               { key: 'all', label: 'All' },
               { key: 'video', label: 'Videos' },
               { key: 'subject', label: 'Subjects' },
+              { key: 'aiStory', label: 'AI Stories' },
               { key: 'comment', label: 'Comments' },
               { key: 'url', label: 'Links' }
             ]}
@@ -227,9 +225,9 @@ export default function Feeds({
 
   function handleClickPostsMenu({ item }) {
     navigate(
-      `/users/${username}/likes/${item === 'url' ? 'link' : item}${
-        item === 'all' ? '' : 's'
-      }`
+      `/users/${username}/likes/${
+        item === 'url' ? 'link' : item === 'aiStory' ? 'ai-storie' : item
+      }${item === 'all' ? '' : 's'}`
     );
   }
 
