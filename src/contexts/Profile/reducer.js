@@ -34,6 +34,7 @@ export default function ProfileReducer(state, action) {
       linksByUserLoadMoreButton: false
     },
     posts: {
+      ['ai-stories']: [],
       all: [],
       allLoaded: false,
       allLoadMoreButton: false,

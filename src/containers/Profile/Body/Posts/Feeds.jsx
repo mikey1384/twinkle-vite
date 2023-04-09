@@ -156,17 +156,14 @@ export default function Feeds({
         {section !== 'watched' && (
           <FilterBar
             color={selectedTheme}
-            style={{ height: '5rem', marginTop: '-1rem' }}
-            className={`mobile ${css`
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.3rem;
-              }
-            `}`}
+            style={{ height: '5rem', marginTop: '-1rem', fontSize: '1.3rem' }}
+            className="mobile"
           >
             {[
               { key: 'all', label: 'All' },
               { key: 'comment', label: 'Comments' },
               { key: 'subject', label: 'Subjects' },
+              { key: 'aiStory', label: 'AI Stories' },
               { key: 'video', label: 'Videos' },
               { key: 'url', label: 'Links' }
             ].map((type) => {
@@ -303,6 +300,7 @@ export default function Feeds({
                 { key: 'all', label: 'All' },
                 { key: 'comment', label: 'Comments' },
                 { key: 'subject', label: 'Subjects' },
+                { key: 'aiStory', label: 'AI Stories' },
                 { key: 'video', label: 'Videos' },
                 { key: 'url', label: 'Links' }
               ]}
@@ -317,9 +315,9 @@ export default function Feeds({
 
   function handleClickPostsMenu({ item }) {
     navigate(
-      `/users/${username}/${item === 'url' ? 'link' : item}${
-        item === 'all' ? '' : 's'
-      }`
+      `/users/${username}/${
+        item === 'url' ? 'link' : item === 'aiStory' ? 'ai-storie' : item
+      }${item === 'all' ? '' : 's'}`
     );
   }
 
