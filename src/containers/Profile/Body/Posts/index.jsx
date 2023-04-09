@@ -10,6 +10,7 @@ Posts.propTypes = {
 
 const filterTable = {
   all: 'all',
+  ['ai-stories']: 'aiStory',
   comments: 'comment',
   likes: 'like',
   watched: 'watched',
