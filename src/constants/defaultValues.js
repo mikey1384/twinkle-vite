@@ -91,11 +91,11 @@ export const charLimit = {
 export const expectedResponseLength = (rewardLevel) => {
   switch (rewardLevel) {
     case 5:
-      return 800;
+      return 700;
     case 4:
-      return 500;
+      return 450;
     case 3:
-      return 300;
+      return 250;
     case 2:
       return 100;
     default:
