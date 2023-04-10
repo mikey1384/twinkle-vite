@@ -917,7 +917,13 @@ export default function ChatReducer(state, action) {
         recentChessMessage: null,
         loaded: true,
         ...(action.data.currentSubchannelId
-          ? { subchannelObj: newSubchannelObj }
+          ? {
+              subchannelObj: {
+                ...(state.channelsObj[action.data.currentChannelId]
+                  ?.subchannelObj || {}),
+                ...newSubchannelObj
+              }
+            }
           : {})
       };
       if (alreadyUsingChat) {
@@ -2259,20 +2265,22 @@ export default function ChatReducer(state, action) {
         selectedSubchannelId: action.subchannelId
       };
     }
-    case 'SET_SUBCHANNEL':
+    case 'SET_SUBCHANNEL': {
+      const newSubchannelObj = {
+        ...state.channelsObj[action.channelId]?.subchannelObj,
+        [action.subchannel.id]: action.subchannel
+      };
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            subchannelObj: {
-              ...state.channelsObj[action.channelId]?.subchannelObj,
-              [action.subchannel.id]: action.subchannel
-            }
+            subchannelObj: newSubchannelObj
           }
         }
       };
+    }
     case 'SET_AI_IMAGE_ERROR_MESSAGE': {
       return {
         ...state,
