@@ -262,16 +262,22 @@ export default function SelectFeaturedSubjectsModal({
   }
 
   async function handleSubmit() {
-    setSubmitting(true);
-    for (let selectedId of selected) {
-      if (!selectedId) {
-        return reportError({
-          componentPath: 'Explore/Modals/SelectFeaturedSubjects',
-          message: `handleSubmit: one of the elements inside selected array is null`
-        });
+    try {
+      setSubmitting(true);
+      for (let selectedId of selected) {
+        if (!selectedId) {
+          return reportError({
+            componentPath: 'Explore/Modals/SelectFeaturedSubjects',
+            message: `handleSubmit: one of the elements inside selected array is null`
+          });
+        }
       }
+      await uploadFeaturedSubjects({ selected });
+      onSubmit(selected.map((selectedId) => subjectObj[selectedId]));
+    } catch (error) {
+      console.error('Error during handleSubmit:', error);
+    } finally {
+      setSubmitting(false);
     }
-    await uploadFeaturedSubjects({ selected });
-    onSubmit(selected.map((selectedId) => subjectObj[selectedId]));
   }
 }
