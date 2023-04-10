@@ -29,6 +29,7 @@ export default function BioEditModal({ onHide, onSubmit, ...props }) {
   return (
     <Modal
       onHide={onHide}
+      closeWhenClickedOutside={false}
       className={css`
         b {
           color: ${Color.green()};
