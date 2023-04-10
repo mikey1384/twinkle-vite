@@ -893,11 +893,11 @@ export function trimUrl(url) {
 }
 
 export function removeAllWhiteSpaces(text = '') {
-  return text.replace(/\s+/g, '').trim();
+  return (text || '').replace(/\s+/g, '').trim();
 }
 
 export function trimWhiteSpaces(text = '') {
-  return text.trim();
+  return (text || '').trim();
 }
 
 export function truncateText({ text = '', limit }) {
