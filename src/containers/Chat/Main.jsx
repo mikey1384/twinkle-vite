@@ -457,6 +457,7 @@ export default function Main({ currentPathId, onFileUpload }) {
             channelId,
             subchannelId: selectedSubchannelId
           });
+          if (subchannel.notFound) return;
           return onSetSubchannel({ channelId, subchannel });
         }
       }
