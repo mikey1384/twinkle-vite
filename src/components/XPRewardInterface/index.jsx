@@ -67,12 +67,11 @@ export default function XPRewardInterface({
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
 
-  const rewardForm = state['reward' + contentType + contentId] || {};
-  const {
-    comment: prevComment = '',
-    selectedAmount: prevSelectedAmount = 0,
-    rewardLevel: prevRewardLevel
-  } = rewardForm;
+  const { comment: prevComment = '', selectedAmount: prevSelectedAmount = 0 } =
+    useMemo(
+      () => state['reward' + contentType + contentId] || {},
+      [contentId, contentType, state]
+    );
 
   const maxRewardAmountForOnePerson = useMemo(
     () => Math.min(Math.ceil(returnMaxRewards({ rewardLevel }) / 2), 10),
@@ -109,6 +108,10 @@ export default function XPRewardInterface({
   const [rewarding, setRewarding] = useState(false);
   const [comment, setComment] = useState(prevComment);
   const selectedAmountRef = useRef(prevSelectedAmount);
+  useEffect(() => {
+    setSelectedAmount(prevSelectedAmount);
+    selectedAmountRef.current = prevSelectedAmount;
+  }, [prevSelectedAmount]);
   const [selectedAmount, setSelectedAmount] = useState(prevSelectedAmount);
   const requiresPayment =
     !authLevel || authLevel < 2 || uploaderAuthLevel >= authLevel;
@@ -130,18 +133,6 @@ export default function XPRewardInterface({
   useEffect(() => {
     handleSetComment(prevComment);
   }, [prevComment]);
-
-  useEffect(() => {
-    onSetRewardForm({
-      contentType,
-      contentId,
-      form: {
-        selectedAmount: rewardLevel !== prevRewardLevel ? 0 : selectedAmount,
-        rewardLevel
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rewardLevel]);
 
   const rewardCommentExceedsCharLimit = useMemo(
     () =>
@@ -205,7 +196,8 @@ export default function XPRewardInterface({
         contentId,
         form: {
           comment: commentRef.current,
-          selectedAmount: selectedAmountRef.current
+          selectedAmount: selectedAmountRef.current,
+          rewardLevel
         }
       });
     };
