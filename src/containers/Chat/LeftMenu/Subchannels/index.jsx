@@ -6,7 +6,7 @@ import Subchannel from './Subchannel';
 import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 SubChannels.propTypes = {
   currentChannel: PropTypes.object,
@@ -33,6 +33,7 @@ export default function SubChannels({
   const currentChannelNumUnreads = useMemo(() => {
     return currentChannel?.numUnreads || 0;
   }, [currentChannel?.numUnreads]);
+  const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const onUpdateLastSubchannelPath = useChatContext(
     (v) => v.actions.onUpdateLastSubchannelPath
   );
@@ -44,8 +45,17 @@ export default function SubChannels({
         result.push(subchannel);
       }
     }
+    if (result.length === 1) {
+      reportError({
+        componentPath: 'LeftMenu/Subchannels',
+        message: `Only one subchannel in channel ${selectedChannelId}.\n\nSubchannelIds: ${JSON.stringify(
+          subchannelIds
+        )}\n\nSubchannelObj Keys: ${JSON.stringify(Object.keys(subchannelObj))}`
+      });
+    }
     return result;
-  }, [subchannelIds, subchannelObj]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChannelId, subchannelIds, subchannelObj]);
   const badgeShown = useMemo(() => {
     return currentChannelNumUnreads > 0 && !!subchannelPath;
   }, [currentChannelNumUnreads, subchannelPath]);
