@@ -1,16 +1,28 @@
-import PropTypes from 'prop-types';
+import React, {
+  ReactNode,
+  CSSProperties,
+  Ref,
+  MouseEvent,
+  AnchorHTMLAttributes,
+  DetailedHTMLProps
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 
-Link.propTypes = {
-  innerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
-  className: PropTypes.string,
-  children: PropTypes.node,
-  onClick: PropTypes.func,
-  onClickAsync: PropTypes.func,
-  style: PropTypes.object,
-  target: PropTypes.string,
-  to: PropTypes.string
-};
+interface LinkProps
+  extends DetailedHTMLProps<
+    AnchorHTMLAttributes<HTMLAnchorElement>,
+    HTMLAnchorElement
+  > {
+  innerRef?:
+    | Ref<HTMLAnchorElement>
+    | ((instance: HTMLAnchorElement | null) => void);
+  className?: string;
+  children?: ReactNode;
+  onClick?: () => void;
+  style?: CSSProperties;
+  target?: string;
+  to?: string;
+}
 
 export default function Link({
   innerRef,
@@ -21,7 +33,7 @@ export default function Link({
   style,
   target,
   ...props
-}) {
+}: LinkProps) {
   const navigate = useNavigate();
   return to ? (
     <a
@@ -53,10 +65,10 @@ export default function Link({
     </div>
   );
 
-  function handleLinkClick(event) {
+  function handleLinkClick(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
     if (target) return window.open(to, target);
-    navigate(to);
+    navigate(to!);
     onClick();
   }
 }

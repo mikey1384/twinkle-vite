@@ -1,9 +1,15 @@
 import request from 'axios';
 import URL from '~/constants/URL';
 
-export default function chatRequestHelpers({ auth, handleError }) {
+export default function chatRequestHelpers({
+  auth,
+  handleError
+}: {
+  auth: () => any;
+  handleError: (error: unknown) => void;
+}) {
   return {
-    async acceptInvitation(channelId) {
+    async acceptInvitation(channelId: number) {
       try {
         const { data } = await request.post(
           `${URL}/chat/invitation/accept`,
@@ -15,7 +21,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async acceptTrade({ channelId, transactionId }) {
+    async acceptTrade({
+      channelId,
+      transactionId
+    }: {
+      channelId: number;
+      transactionId: number;
+    }) {
       try {
         const {
           data: { isDisabled, disableReason, responsibleParty }
@@ -29,7 +41,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async burnAICard(cardId) {
+    async burnAICard(cardId: number) {
       try {
         const {
           data: { newXp }
@@ -42,7 +54,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async buyAICard(cardId) {
+    async buyAICard(cardId: number) {
       try {
         const {
           data: { coins }
@@ -52,7 +64,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async buyChatSubject(channelId) {
+    async buyChatSubject(channelId: number) {
       try {
         const { data } = await request.put(
           `${URL}/chat/chatSubject/buy`,
@@ -66,7 +78,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async buyChatTheme({ channelId, theme }) {
+    async buyChatTheme({
+      channelId,
+      theme
+    }: {
+      channelId: number;
+      theme: string;
+    }) {
       try {
         const { data } = await request.put(
           `${URL}/chat/theme/buy`,
@@ -81,7 +99,15 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async closeTransaction({ transactionId, channelId, cancelReason }) {
+    async closeTransaction({
+      transactionId,
+      channelId,
+      cancelReason
+    }: {
+      transactionId: number;
+      channelId: number;
+      cancelReason: string;
+    }) {
       try {
         const { data } = await request.delete(
           `${URL}/chat/transaction?transactionId=${transactionId}&channelId=${channelId}${
@@ -94,7 +120,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async changeChannelOwner({ channelId, newOwner }) {
+    async changeChannelOwner({
+      channelId,
+      newOwner
+    }: {
+      channelId: number;
+      newOwner: object;
+    }) {
       try {
         const {
           data: { notificationMsg }
@@ -108,7 +140,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async checkTransactionPossible(transactionId) {
+    async checkTransactionPossible(transactionId: number) {
       try {
         const {
           data: { disableReason, responsibleParty, isDisabled }
@@ -121,7 +153,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async checkChatAccessible(pathId) {
+    async checkChatAccessible(pathId: number) {
       try {
         const {
           data: { isAccessible, generalChatPathId }
@@ -139,6 +171,11 @@ export default function chatRequestHelpers({ auth, handleError }) {
       isClass,
       isClosed,
       selectedUsers = []
+    }: {
+      channelName: string;
+      isClass: boolean;
+      isClosed: boolean;
+      selectedUsers?: Array<number>;
     }) {
       try {
         const { data } = await request.post(
@@ -151,7 +188,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async cancelChessRewind(channelId) {
+    async cancelChessRewind(channelId: number) {
       try {
         const {
           data: { messageId, cancelMessage, timeStamp }
@@ -165,7 +202,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async declineChessRewind(channelId) {
+    async declineChessRewind(channelId: number) {
       try {
         const {
           data: { messageId, declineMessage, timeStamp }
@@ -179,7 +216,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async deleteChatSubject(subjectId) {
+    async deleteChatSubject(subjectId: number) {
       try {
         await request.delete(
           `${URL}/chat/chatSubject?subjectId=${subjectId}`,
@@ -190,7 +227,15 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async deleteChatMessage({ fileName = '', filePath = '', messageId }) {
+    async deleteChatMessage({
+      fileName = '',
+      filePath = '',
+      messageId
+    }: {
+      fileName?: string;
+      filePath?: string;
+      messageId: number;
+    }) {
       try {
         await request.delete(
           `${URL}/chat/message?messageId=${messageId}&filePath=${filePath}&fileName=${fileName}`,
@@ -201,7 +246,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async editChannelSettings(params) {
+    async editChannelSettings(params: object) {
       try {
         await request.put(`${URL}/chat/settings`, params, auth());
         return Promise.resolve();
@@ -209,7 +254,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async editChatMessage({ editedMessage, messageId, isSubject, subjectId }) {
+    async editChatMessage({
+      editedMessage,
+      messageId,
+      isSubject,
+      subjectId
+    }: {
+      editedMessage: string;
+      messageId: number;
+      isSubject: boolean;
+      subjectId: number;
+    }) {
       try {
         const {
           data: { subjectChanged }
@@ -228,6 +283,11 @@ export default function chatRequestHelpers({ auth, handleError }) {
       editedDefinitionOrder,
       partOfSpeeches,
       word
+    }: {
+      deletedDefIds: Array<number>;
+      editedDefinitionOrder: Array<any>;
+      partOfSpeeches: Array<any>;
+      word: string;
     }) {
       try {
         const data = await request.put(
@@ -240,7 +300,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async fetchCurrentChessState({ channelId, recentChessMessage }) {
+    async fetchCurrentChessState({
+      channelId,
+      recentChessMessage
+    }: {
+      channelId: number;
+      recentChessMessage: string;
+    }) {
       try {
         const { data } = await request.put(
           `${URL}/chat/chess`,
@@ -255,7 +321,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async fetchCurrentRewindRequest({ channelId, rewindRequestId }) {
+    async fetchCurrentRewindRequest({
+      channelId,
+      rewindRequestId
+    }: {
+      channelId: number;
+      rewindRequestId: number;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/chat/chess/rewind?channelId=${channelId}&rewindRequestId=${rewindRequestId}`,
@@ -266,7 +338,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async getOpenAiImage(prompt) {
+    async getOpenAiImage(prompt: string) {
       try {
         const {
           data: { imageUrl, style }
@@ -279,7 +351,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async getOffersForCard({ cardId, lastPrice }) {
+    async getOffersForCard({
+      cardId,
+      lastPrice
+    }: {
+      cardId: number;
+      lastPrice?: number;
+    }) {
       try {
         const {
           data: { offers, loadMoreShown }
@@ -293,7 +371,15 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async getOffersForCardByPrice({ cardId, price, lastTimeStamp }) {
+    async getOffersForCardByPrice({
+      cardId,
+      price,
+      lastTimeStamp
+    }: {
+      cardId: number;
+      price: number;
+      lastTimeStamp?: number;
+    }) {
       try {
         const {
           data: { offers, loadMoreShown }
@@ -308,7 +394,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async getIncomingCardOffers(lastPrice) {
+    async getIncomingCardOffers(lastPrice: number) {
       try {
         const {
           data: { offers, loadMoreShown }
@@ -323,7 +409,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async getMyAICardOffers(lastId) {
+    async getMyAICardOffers(lastId: number) {
       try {
         const {
           data: { offers, loadMoreShown }
@@ -338,7 +424,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async postAICardOffer({ cardId, price }) {
+    async postAICardOffer({
+      cardId,
+      price
+    }: {
+      cardId: number;
+      price: number;
+    }) {
       try {
         const {
           data: { coins }
@@ -352,7 +444,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async deleteAICardOffer({ cardId, offerId }) {
+    async deleteAICardOffer({
+      cardId,
+      offerId
+    }: {
+      cardId: number;
+      offerId: number;
+    }) {
       try {
         const {
           data: { coins }
@@ -393,7 +491,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async saveAIImageToS3(imageUrl) {
+    async saveAIImageToS3(imageUrl: string) {
       try {
         const {
           data: { imagePath }
@@ -411,6 +509,14 @@ export default function chatRequestHelpers({ auth, handleError }) {
       level,
       word,
       prompt
+    }: {
+      cardId: number;
+      imagePath: string;
+      style: string;
+      quality: string;
+      level: number;
+      word: string;
+      prompt: string;
     }) {
       try {
         const {
@@ -446,7 +552,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async hideChatAttachment(messageId) {
+    async hideChatAttachment(messageId: number) {
       try {
         await request.put(`${URL}/chat/hide/attachment`, { messageId }, auth());
         return Promise.resolve();
@@ -454,7 +560,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async hideChat(channelId) {
+    async hideChat(channelId: number) {
       try {
         await request.put(`${URL}/chat/hide/chat`, { channelId }, auth());
         return Promise.resolve();
@@ -462,7 +568,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async inviteUsersToChannel(params) {
+    async inviteUsersToChannel(params: object) {
       try {
         const {
           data: { message }
@@ -472,7 +578,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async leaveChannel(channelId) {
+    async leaveChannel(channelId: number) {
       try {
         await request.delete(
           `${URL}/chat/channel?channelId=${channelId}`,
@@ -483,7 +589,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async listAICard({ cardId, price }) {
+    async listAICard({ cardId, price }: { cardId: number; price: number }) {
       try {
         const {
           data: { success }
@@ -497,7 +603,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async delistAICard(cardId) {
+    async delistAICard(cardId: number) {
       try {
         const {
           data: { success }
@@ -510,7 +616,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadChat({ channelId, subchannelPath }) {
+    async loadChat({
+      channelId,
+      subchannelPath
+    }: {
+      channelId: number;
+      subchannelPath: string;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/chat?channelId=${channelId}${
@@ -528,6 +640,11 @@ export default function chatRequestHelpers({ auth, handleError }) {
       isForInvitation,
       subchannelPath,
       skipUpdateChannelId
+    }: {
+      channelId: number;
+      isForInvitation?: boolean;
+      subchannelPath?: string;
+      skipUpdateChannelId?: boolean;
     }) {
       try {
         const { data } = await request.get(
@@ -543,7 +660,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMoreChannelMembers({ channelId, lastId }) {
+    async loadMoreChannelMembers({
+      channelId,
+      lastId
+    }: {
+      channelId: number;
+      lastId: number;
+    }) {
       try {
         const {
           data: { members }
@@ -555,7 +678,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadSubchannel({ channelId, subchannelId }) {
+    async loadSubchannel({
+      channelId,
+      subchannelId
+    }: {
+      channelId: number;
+      subchannelId: number;
+    }) {
       try {
         const { data: subchannel } = await request.get(
           `${URL}/chat/channel/subchannel?channelId=${channelId}&subchannelId=${subchannelId}`,
@@ -566,7 +695,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadChatSubject({ channelId, subchannelId }) {
+    async loadChatSubject({
+      channelId,
+      subchannelId
+    }: {
+      channelId: number;
+      subchannelId: number;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/chat/chatSubject?channelId=${channelId}${
@@ -578,7 +713,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadDMChannel({ recipient }) {
+    async loadDMChannel({ recipient }: { recipient: { id: number } }) {
       try {
         const { data } = await request.get(
           `${URL}/chat/channel/check?partnerId=${recipient.id}`,
@@ -589,7 +724,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMoreChannels({ currentChannelId, lastId, lastUpdated, type }) {
+    async loadMoreChannels({
+      currentChannelId,
+      lastId,
+      lastUpdated,
+      type
+    }: {
+      currentChannelId: number;
+      lastId: number;
+      lastUpdated: number;
+      type: string;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/chat/more/channels?type=${type}&currentChannelId=${currentChannelId}&lastUpdated=${lastUpdated}&lastId=${lastId}`,
@@ -600,7 +745,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMoreChatMessages({ userId, messageId, channelId, subchannelId }) {
+    async loadMoreChatMessages({
+      userId,
+      messageId,
+      channelId,
+      subchannelId
+    }: {
+      userId: number;
+      messageId: number;
+      channelId: number;
+      subchannelId?: number;
+    }) {
       try {
         const {
           data: { messageIds, messagesObj, loadedChannelId, loadedSubchannelId }
@@ -620,7 +775,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadChatSubjects({ channelId }) {
+    async loadChatSubjects({ channelId }: { channelId: number }) {
       try {
         const {
           data: { mySubjects, allSubjects }
@@ -630,10 +785,18 @@ export default function chatRequestHelpers({ auth, handleError }) {
         );
         return Promise.resolve({ mySubjects, allSubjects });
       } catch (error) {
-        console.error(error.response || error);
+        return handleError(error);
       }
     },
-    async loadMoreChatSubjects({ channelId, mineOnly, lastSubject }) {
+    async loadMoreChatSubjects({
+      channelId,
+      mineOnly,
+      lastSubject
+    }: {
+      channelId: number;
+      mineOnly: boolean;
+      lastSubject: { id: number; timeStamp: number; reloadTimeStamp: number };
+    }) {
       try {
         const {
           data: { subjects, loadMoreButton }
@@ -645,10 +808,10 @@ export default function chatRequestHelpers({ auth, handleError }) {
         );
         return Promise.resolve({ subjects, loadMoreButton });
       } catch (error) {
-        console.error(error.response || error);
+        return handleError(error);
       }
     },
-    async loadListedAICards(lastId) {
+    async loadListedAICards(lastId: number) {
       try {
         const {
           data: { cards, loadMoreShown }
@@ -661,7 +824,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMyListedAICards(lastId) {
+    async loadMyListedAICards(lastId: number) {
       try {
         const {
           data: { cards, loadMoreShown }
@@ -674,7 +837,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMyAICardCollections(lastTimeStamp) {
+    async loadMyAICardCollections(lastTimeStamp: number) {
       try {
         const {
           data: { cards, loadMoreShown }
@@ -692,7 +855,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadAICard(cardId) {
+    async loadAICard(cardId: number) {
       try {
         const {
           data: { card, prevCardId, nextCardId }
@@ -705,7 +868,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadAICardFeeds(lastId) {
+    async loadAICardFeeds(lastId: number) {
       try {
         const {
           data: { cardFeeds, cardObj, loadMoreShown, numCardSummonedToday }
@@ -723,7 +886,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadPendingTransaction(channelId) {
+    async loadPendingTransaction(channelId: number) {
       try {
         const {
           data: { transaction }
@@ -736,7 +899,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadVocabulary(lastWordId) {
+    async loadVocabulary(lastWordId: number) {
       try {
         const { data } = await request.get(
           `${URL}/chat/vocabulary${
@@ -749,7 +912,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadWordle(channelId) {
+    async loadWordle(channelId: number) {
       try {
         const {
           data: { wordleSolution, wordleWordLevel, nextDayTimeStamp }
@@ -766,7 +929,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadWordleRankings(channelId) {
+    async loadWordleRankings(channelId: number) {
       try {
         const {
           data: { all, top30s, myRank }
@@ -783,7 +946,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadWordleStreaks(channelId) {
+    async loadWordleStreaks(channelId: number) {
       try {
         const {
           data: { bestStreaks, bestStreakObj }
@@ -796,7 +959,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadWordleDoubleStreaks(channelId) {
+    async loadWordleDoubleStreaks(channelId: number) {
       try {
         const {
           data: { bestStreaks, bestStreakObj }
@@ -809,7 +972,15 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async reloadChatSubject({ subjectId, subchannelId, channelId }) {
+    async reloadChatSubject({
+      subjectId,
+      subchannelId,
+      channelId
+    }: {
+      subjectId: number;
+      subchannelId: number;
+      channelId: number;
+    }) {
       try {
         const {
           data: { subject, message }
@@ -823,7 +994,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async lookUpWord(word) {
+    async lookUpWord(word: string) {
       try {
         const { data } = await request.get(
           `${URL}/chat/word?word=${word}`,
@@ -834,7 +1005,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async postChatReaction({ messageId, reaction }) {
+    async postChatReaction({
+      messageId,
+      reaction
+    }: {
+      messageId: number;
+      reaction: string;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/reaction`,
@@ -846,7 +1023,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async postTradeRequest({ type, wanted, offered, targetId }) {
+    async postTradeRequest({
+      type,
+      wanted,
+      offered,
+      targetId
+    }: {
+      type: string;
+      wanted: number;
+      offered: number;
+      targetId: number;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/transaction`,
@@ -858,7 +1045,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async putFavoriteChannel(channelId) {
+    async putFavoriteChannel(channelId: number) {
       try {
         const {
           data: { favorited }
@@ -872,7 +1059,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async removeChatReaction({ messageId, reaction }) {
+    async removeChatReaction({
+      messageId,
+      reaction
+    }: {
+      messageId: number;
+      reaction: string;
+    }) {
       try {
         const { data } = await request.delete(
           `${URL}/chat/reaction?messageId=${messageId}&reaction=${reaction}`,
@@ -883,7 +1076,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async rewindChessMove({ channelId, chessState }) {
+    async rewindChessMove({
+      channelId,
+      chessState
+    }: {
+      channelId: number;
+      chessState: string;
+    }) {
       try {
         await request.post(
           `${URL}/chat/chess/rewind`,
@@ -895,7 +1094,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async registerWord(definitions) {
+    async registerWord(definitions: string[]) {
       try {
         const { data } = await request.post(
           `${URL}/chat/word`,
@@ -907,7 +1106,15 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async saveChatMessage({ message, targetMessageId, targetSubject }) {
+    async saveChatMessage({
+      message,
+      targetMessageId,
+      targetSubject
+    }: {
+      message: string;
+      targetMessageId: number;
+      targetSubject: string;
+    }) {
       try {
         const {
           data: { messageId, timeStamp }
@@ -921,7 +1128,15 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async checkIfDuplicateWordleAttempt({ channelId, numGuesses, solution }) {
+    async checkIfDuplicateWordleAttempt({
+      channelId,
+      numGuesses,
+      solution
+    }: {
+      channelId: number;
+      numGuesses: number;
+      solution: string;
+    }) {
       try {
         const {
           data: { isDuplicate, actualSolution, actualWordLevel, needsReload }
@@ -946,6 +1161,12 @@ export default function chatRequestHelpers({ auth, handleError }) {
       guesses,
       solution,
       isSolved
+    }: {
+      channelName: string;
+      channelId: number;
+      guesses: string[];
+      solution: string;
+      isSolved: boolean;
     }) {
       try {
         const {
@@ -963,7 +1184,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async searchChat(text) {
+    async searchChat(text: string) {
       try {
         const { data } = await request.get(
           `${URL}/chat/search/chat?text=${text}`,
@@ -974,7 +1195,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async searchChatSubject({ text, channelId }) {
+    async searchChatSubject({
+      text,
+      channelId
+    }: {
+      text: string;
+      channelId: number;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/chat/search/subject?text=${text}&channelId=${channelId}`
@@ -984,7 +1211,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async searchUserToInvite({ channelId, searchText }) {
+    async searchUserToInvite({
+      channelId,
+      searchText
+    }: {
+      channelId: number;
+      searchText: string;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/chat/search/users?text=${searchText}&channelId=${channelId}`
@@ -994,7 +1227,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async sellAICard({ offerId, cardId, price, offererId }) {
+    async sellAICard({
+      offerId,
+      cardId,
+      price,
+      offererId
+    }: {
+      offerId: number;
+      cardId: number;
+      price: number;
+      offererId: number;
+    }) {
       try {
         const {
           data: { coins }
@@ -1008,7 +1251,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async sendInvitationMessage({ origin, recipients }) {
+    async sendInvitationMessage({
+      origin,
+      recipients
+    }: {
+      origin: string | number;
+      recipients: number[];
+    }) {
       try {
         const {
           data: { invitationMessage, channels, messages }
@@ -1022,7 +1271,13 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async setChessMoveViewTimeStamp({ channelId, message }) {
+    async setChessMoveViewTimeStamp({
+      channelId,
+      message
+    }: {
+      channelId: number;
+      message: string;
+    }) {
       try {
         await request.put(
           `${URL}/chat/chess/timeStamp`,
@@ -1034,7 +1289,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async startNewDMChannel(params) {
+    async startNewDMChannel(params: object) {
       try {
         const {
           data: { alreadyExists, channel, message, pathId }
@@ -1044,7 +1299,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateLastChannelId(channelId) {
+    async updateLastChannelId(channelId: number) {
       try {
         await request.put(`${URL}/chat/lastChannelId`, { channelId }, auth());
         return Promise.resolve();
@@ -1052,7 +1307,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateChatLastRead(channelId) {
+    async updateChatLastRead(channelId: number) {
       try {
         await request.post(`${URL}/chat/lastRead`, { channelId }, auth());
         return Promise.resolve();
@@ -1060,7 +1315,7 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateSubchannelLastRead(subchannelId) {
+    async updateSubchannelLastRead(subchannelId: number) {
       try {
         await request.post(
           `${URL}/chat/lastRead/subchannel`,
@@ -1072,7 +1327,15 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadChatSubject({ channelId, content, subchannelId }) {
+    async uploadChatSubject({
+      channelId,
+      content,
+      subchannelId
+    }: {
+      channelId: number;
+      content: string;
+      subchannelId: number;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/chatSubject`,
@@ -1084,7 +1347,17 @@ export default function chatRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadFileOnChat({ fileName, selectedFile, onUploadProgress, path }) {
+    async uploadFileOnChat({
+      fileName,
+      selectedFile,
+      onUploadProgress,
+      path
+    }: {
+      fileName: string;
+      selectedFile: File;
+      onUploadProgress: (progressEvent: any) => void;
+      path: string;
+    }) {
       try {
         const { data: url } = await request.get(
           `${URL}/content/sign-s3?fileSize=${
@@ -1115,6 +1388,18 @@ export default function chatRequestHelpers({ auth, handleError }) {
       subchannelId,
       subjectId,
       thumbUrl
+    }: {
+      channelId: number;
+      chessState: object;
+      content: string;
+      fileName: string;
+      fileSize: number;
+      path: string;
+      recipientId: number;
+      targetMessageId: number;
+      subchannelId: number;
+      subjectId: number;
+      thumbUrl: string;
     }) {
       const {
         data: { channel, message, messageId, alreadyExists }

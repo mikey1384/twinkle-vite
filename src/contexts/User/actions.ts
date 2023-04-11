@@ -1,6 +1,8 @@
-export default function UserActions(dispatch) {
+export default function UserActions(
+  dispatch: (action: { type: string; [key: string]: any }) => void
+) {
   return {
-    onChangeDefaultSearchFilter(filter) {
+    onChangeDefaultSearchFilter(filter: string) {
       return dispatch({
         type: 'CHANGE_DEFAULT_FILTER',
         filter
@@ -16,25 +18,25 @@ export default function UserActions(dispatch) {
         type: 'CLOSE_SIGNIN_MODAL'
       });
     },
-    onInitMyState(data) {
+    onInitMyState(data: object) {
       return dispatch({
         type: 'INIT_MY_STATE',
         data: data
       });
     },
-    onLoadUsers(data) {
+    onLoadUsers(data: object) {
       return dispatch({
         type: 'LOAD_USERS',
         data
       });
     },
-    onLoadMoreUsers(data) {
+    onLoadMoreUsers(data: object) {
       return dispatch({
         type: 'LOAD_MORE_USERS',
         data
       });
     },
-    onLogin(data) {
+    onLogin(data: object) {
       return dispatch({
         type: 'LOGIN',
         data
@@ -51,37 +53,37 @@ export default function UserActions(dispatch) {
         type: 'OPEN_SIGNIN_MODAL'
       });
     },
-    onSearchUsers(users) {
+    onSearchUsers(users: Array<any>) {
       return dispatch({
         type: 'SEARCH_USERS',
         users
       });
     },
-    onSignup(data) {
+    onSignup(data: object) {
       return dispatch({
         type: 'SIGNUP',
         data
       });
     },
-    onSetCollectType(type) {
+    onSetCollectType(type: string) {
       return dispatch({
         type: 'SET_COLLECT_TYPE',
         collectType: type
       });
     },
-    onSetLastChatPath(lastChatPath) {
+    onSetLastChatPath(lastChatPath: string) {
       return dispatch({
         type: 'SET_LAST_CHAT_PATH',
         lastChatPath
       });
     },
-    onSetOrderUsersBy(label) {
+    onSetOrderUsersBy(label: string) {
       return dispatch({
         type: 'SET_ORDER_USERS_BY',
         label
       });
     },
-    onSetProfilesLoaded(loaded) {
+    onSetProfilesLoaded(loaded: boolean) {
       return dispatch({
         type: 'SET_PROFILES_LOADED',
         loaded
@@ -92,32 +94,38 @@ export default function UserActions(dispatch) {
         type: 'SET_SESSION_LOADED'
       });
     },
-    onSetUserState({ userId, newState }) {
+    onSetUserState({ userId, newState }: { userId: number; newState: object }) {
       return dispatch({
         type: 'SET_USER_STATE',
         userId,
         newState
       });
     },
-    onToggleHideWatched(hideWatched) {
+    onToggleHideWatched(hideWatched: boolean) {
       return dispatch({
         type: 'TOGGLE_HIDE_WATCHED',
         hideWatched
       });
     },
-    onToggleWordleStrictMode(strictMode) {
+    onToggleWordleStrictMode(strictMode: boolean) {
       return dispatch({
         type: 'TOGGLE_WORDLE_STRICT_MODE',
         strictMode
       });
     },
-    onUpdateNumWordsCollected(numWordsCollected) {
+    onUpdateNumWordsCollected(numWordsCollected: number) {
       return dispatch({
         type: 'UPDATE_NUM_WORDS_COLLECTED',
         numWordsCollected
       });
     },
-    onUpdateUserMissionState({ missionType, newState }) {
+    onUpdateUserMissionState({
+      missionType,
+      newState
+    }: {
+      missionType: string;
+      newState: object;
+    }) {
       return dispatch({
         type: 'UPDATE_MISSION_STATE',
         missionType,

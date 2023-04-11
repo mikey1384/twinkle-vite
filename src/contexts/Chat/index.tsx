@@ -1,10 +1,10 @@
-import { useReducer } from 'react';
+import React, { useReducer } from 'react';
 import { createContext } from 'use-context-selector';
 import PropTypes from 'prop-types';
 import ChatActions from './actions';
 import ChatReducer from './reducer';
 
-export const ChatContext = createContext();
+export const ChatContext = createContext({});
 
 export const initialChatState = {
   aiCardErrorMessage: '',
