@@ -50,7 +50,13 @@ export const MODERATOR_AUTH_LEVEL = 1;
 export const MIKEY_ID = 5;
 export const ZERO_TWINKLE_ID = Number(import.meta.env.VITE_ZERO_TWINKLE_ID);
 
-export const charLimit = {
+export interface CharLimit {
+  comment: number;
+  rewardComment: number;
+  statusMsg: number;
+  [key: string]: number | { [key: string]: number };
+}
+export const charLimit: CharLimit = {
   chat: {
     aiCard: 250,
     subject: 200,
@@ -88,7 +94,7 @@ export const charLimit = {
   }
 };
 
-export const expectedResponseLength = (rewardLevel) => {
+export const expectedResponseLength = (rewardLevel: number): number => {
   switch (rewardLevel) {
     case 5:
       return 700;
@@ -358,12 +364,18 @@ export const rewardReasons = {
   }
 };
 
-export const returnCardBurnXP = ({ cardLevel, cardQuality }) => {
+export const returnCardBurnXP = ({
+  cardLevel,
+  cardQuality
+}: {
+  cardLevel: number;
+  cardQuality: 'common' | 'superior' | 'rare' | 'elite' | 'legendary';
+}): number => {
   // base XP value
   let xp = 50;
 
   // color probabilities
-  const colorProbs = {
+  const colorProbs: { [level: number]: number } = {
     1: 0.5,
     2: 0.2,
     3: 0.15,
@@ -375,7 +387,7 @@ export const returnCardBurnXP = ({ cardLevel, cardQuality }) => {
   xp *= 1 / colorProbs[cardLevel] ** 1.281774;
 
   // quality probabilities
-  const qualityProbs = {
+  const qualityProbs: { [quality: string]: number } = {
     common: 0.5,
     superior: 0.3,
     rare: 0.13,
@@ -389,10 +401,14 @@ export const returnCardBurnXP = ({ cardLevel, cardQuality }) => {
   return Math.round(xp);
 };
 
-export const returnMissionThumb = (missionType) =>
+export const returnMissionThumb = (missionType: string): string =>
   `${cloudFrontURL}/missions/${missionType}/thumb.gif`;
 
-export const returnMaxRewards = ({ rewardLevel }) => {
+export const returnMaxRewards = ({
+  rewardLevel
+}: {
+  rewardLevel: number;
+}): number => {
   let maxRewards = 5;
   if (rewardLevel > 0) {
     maxRewards = 10 * rewardLevel;
@@ -402,11 +418,17 @@ export const returnMaxRewards = ({ rewardLevel }) => {
 
 export const maxSizes = [300, 400, 500, 650, 800, 1000, 1500, 2000];
 
-export const returnMaxUploadSize = (fileUploadLvl) => {
+export const returnMaxUploadSize = (fileUploadLvl: number): number => {
   return maxSizes[fileUploadLvl] * mb;
 };
 
-export function returnWordLevel({ frequency, word }) {
+export function returnWordLevel({
+  frequency,
+  word
+}: {
+  frequency?: number;
+  word: string;
+}): number {
   const intermediateWordFrequency = 4;
   const advancedWordFrequency = 2.5;
   const epicWordFrequency = 1.6;

@@ -1,5 +1,11 @@
-const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
-const languageObj = {
+const SELECTED_LANGUAGE =
+  (import.meta.env.VITE_SELECTED_LANGUAGE as string) || 'en';
+
+const languageObj: {
+  [section: string]: {
+    [language: string]: string;
+  };
+} = {
   abort: {
     en: 'Abort',
     kr: '게임취소'
@@ -1662,6 +1668,6 @@ const languageObj = {
   }
 };
 
-export default function localize(section) {
+export default function localize(section: string): string {
   return languageObj?.[section]?.[SELECTED_LANGUAGE] || '';
 }

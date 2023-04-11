@@ -1,13 +1,14 @@
+import React from 'react';
 import parse from 'html-react-parser';
 import Link from '~/components/Link';
-import { charLimit } from '~/constants/defaultValues';
+import { charLimit, CharLimit } from '~/constants/defaultValues';
 
 const urlRegex =
   /(\b((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n"' ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)\b(?:\/)?)/giu;
 const urlRegex2 =
   /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n"' ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)/i;
 
-export function addCommasToNumber(number) {
+export function addCommasToNumber(number: number): string {
   const numArray = `${number}`.split('');
   let result = '';
   numArray.reverse();
@@ -21,8 +22,8 @@ export function addCommasToNumber(number) {
   return result;
 }
 
-export function addEmoji(string) {
-  const emoticons = {
+export function addEmoji(string: string): string {
+  const emoticons: { [key: string]: string } = {
     ':alien:': '👽',
     ':america:': '🇺🇸',
     ':agony:': '😩',
@@ -335,22 +336,24 @@ export function capitalize(string = '') {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-export function containsTwinkleVideoUrl(string) {
+export function containsTwinkleVideoUrl(string: string): boolean {
   const regex =
     /(^((http[s]?:\/\/(www\.)?|www\.)(twin-kle.com)\/videos\/[0-9]+))/g;
   return regex.test(string);
 }
 
-export function extractVideoIdFromTwinkleVideoUrl(string) {
+export function extractVideoIdFromTwinkleVideoUrl(
+  string: string
+): string | null {
   const regex =
     /(^((http[s]?:\/\/(www\.)?|www\.)(twin-kle.com)\/videos\/[0-9]+))/g;
   if (!regex.test(string)) return null;
   const urlArray = string.match(regex);
-  const videoId = urlArray?.[0]?.split?.('videos/')?.[1];
+  const videoId = urlArray?.[0]?.split?.('videos/')?.[1] || null;
   return videoId;
 }
 
-export function expandShortcut(string) {
+export function expandShortcut(string: string): string {
   return string
     .replace(/(\(brb\))/gi, 'be right back')
     .replace(/(\(gtg\))/gi, 'got to go')
@@ -362,14 +365,25 @@ export function expandShortcut(string) {
     );
 }
 
-export function exceedsCharLimit({ inputType, contentType, text }) {
+export function exceedsCharLimit({
+  inputType,
+  contentType,
+  text
+}: {
+  inputType: string;
+  contentType: keyof CharLimit;
+  text: string;
+}): {
+  style: { color: string; borderColor: string };
+  message: string;
+} | null {
   const targetText = text || '';
   const limit =
     contentType === 'comment' ||
     contentType === 'rewardComment' ||
     contentType === 'statusMsg'
-      ? charLimit[contentType]
-      : charLimit[contentType][inputType];
+      ? (charLimit[contentType] as number)
+      : (charLimit[contentType] as { [key: string]: number })[inputType];
   return targetText.length > limit
     ? {
         style: {
@@ -381,9 +395,9 @@ export function exceedsCharLimit({ inputType, contentType, text }) {
     : null;
 }
 
-export function fetchURLFromText(text) {
+export function fetchURLFromText(text: string): string {
   if (!text) return '';
-  let url = text.match(urlRegex)?.[0] || '';
+  const url = text.match(urlRegex)?.[0] || '';
   const processedURL =
     (url.split('.')[0] || '').toLowerCase() + (url.split('.')[1] || '');
   if (
@@ -391,12 +405,12 @@ export function fetchURLFromText(text) {
     !processedURL.includes('http://') &&
     !processedURL.includes('https://')
   ) {
-    url = 'http://' + url;
+    return 'http://' + url;
   }
   return url;
 }
 
-export function fetchedVideoCodeFromURL(url) {
+export function fetchedVideoCodeFromURL(url: string): string {
   let videoCode = '';
   if (typeof url.split('v=')[1] !== 'undefined') {
     let trimmedUrl = url?.split('v=')[1]?.split('#')[0];
@@ -408,7 +422,7 @@ export function fetchedVideoCodeFromURL(url) {
   return videoCode || '';
 }
 
-export function finalizeEmoji(string) {
+export function finalizeEmoji(string: string): string {
   if (stringIsEmpty(string)) return '';
   let finalizedString = addEmoji(expandShortcut(string + ' '));
   if (finalizedString[finalizedString.length - 1] === ' ') {
@@ -417,14 +431,16 @@ export function finalizeEmoji(string) {
   return finalizedString || '';
 }
 
-export function getFileInfoFromFileName(fileName) {
-  if (typeof fileName !== 'string') return '';
+export function getFileInfoFromFileName(
+  fileName: string
+): null | { extension: string; fileType: string } {
+  if (typeof fileName !== 'string') return null;
   const fileNameArray = fileName.split('.');
   const extension =
     fileNameArray[fileNameArray.length - 1]?.toLowerCase?.() || '';
   return { extension, fileType: getFileType(extension) };
 
-  function getFileType(extension) {
+  function getFileType(extension: string): string {
     const audioExt = ['wav', 'aif', 'mp3', 'mid', 'm4a'];
     const imageExt = ['jpg', 'png', 'jpeg', 'bmp', 'gif', 'webp'];
     const movieExt = ['wmv', 'mov', 'mp4', '3gp', 'ogg', 'm4v'];
@@ -452,7 +468,7 @@ export function getFileInfoFromFileName(fileName) {
   }
 }
 
-export function hashify(string) {
+export function hashify(string: string): string {
   const stringArray = string.split(' ');
   const hashedString =
     '#' + stringArray.map((string) => capitalize(string)).join('');
@@ -494,11 +510,11 @@ export function isValidYoutubeUrl(url = '') {
   );
 }
 
-export function isValidPassword(password) {
+export function isValidPassword(password: string): boolean {
   return password.length > 4 && !stringIsEmpty(password);
 }
 
-export function isValidUsername(username) {
+export function isValidUsername(username: string): boolean {
   const pattern = new RegExp(/^(?!.*___.*)[a-zA-Z0-9_]+$/);
   return (
     !!username &&
@@ -516,18 +532,22 @@ export function isValidYoutubeChannelUrl(url = '') {
   return urlRegex2.test(url) && typeof trim !== 'undefined';
 }
 
-export function limitBrs(string) {
+export function limitBrs(string: string): string {
   return (string || '').replace(
     /(<br ?\/?>){11,}/gi,
     '<br><br><br><br><br><br><br><br><br><br>'
   );
 }
 
-export function processMentionLink(text) {
+export function processMentionLink(text: string): React.ReactNode {
   const result = parse(limitBrs(text), {
     replace: (domNode) => {
-      if (domNode.name === 'a' && domNode.attribs.class === 'mention') {
-        const node = domNode.children[0];
+      if (
+        domNode.type === 'tag' &&
+        domNode.name === 'a' &&
+        domNode.attribs?.class === 'mention'
+      ) {
+        const node = domNode.children?.[0];
         return <Link to={domNode.attribs.href}>{node?.data}</Link>;
       }
     }
@@ -535,20 +555,20 @@ export function processMentionLink(text) {
   return result;
 }
 
-export function processedQueryString(string) {
+export function processedQueryString(string: string): string {
   return string
     ? string
         .replace(/\r?\n/g, '<br>')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/\r?\n/g, '<br>')
-    : null;
+    : '';
 }
 
-export function processedStringWithURL(string) {
+export function processedStringWithURL(string: string): string {
   if (typeof string !== 'string') return string || null;
   const maxChar = 100;
-  const trimmedString = (string) =>
+  const trimmedString = (string: string) =>
     string.length > maxChar ? `${string.substring(0, maxChar)}...` : string;
   let tempString = applyTextSize(
     string.replace(/&/g, '&amp').replace(/</g, '&lt').replace(/>/g, '&gt')
@@ -601,14 +621,15 @@ export function processedStringWithURL(string) {
     hasMention: false
   });
 
-  function applyTextSize(string) {
-    const wordRegex = {
+  function applyTextSize(string: string): string {
+    type FontSize = 'huge' | 'big' | 'small' | 'tiny';
+    const wordRegex: { [K in FontSize]: RegExp } = {
       huge: /(h\[[^\s]+\]h)/gi,
       big: /(b\[[^\s]+\]b)/gi,
       small: /(s\[[^\s]+\]s)/gi,
       tiny: /(t\[[^\s]+\]t)/gi
     };
-    const sentenceRegex = {
+    const sentenceRegex: { [K in FontSize]: RegExp } = {
       huge: /((h\[[^\s]){1}((?!(h\[|\]h))[^\n])+([^\s]\]h){1})/gi,
       big: /((b\[[^\s]){1}((?!(b\[|\]b))[^\n])+([^\s]\]b){1})/gi,
       small: /((s\[[^\s]){1}((?!(s\[|\]s))[^\n])+([^\s]\]s){1})/gi,
@@ -625,23 +646,21 @@ export function processedStringWithURL(string) {
 
     Object.keys(wordRegex).forEach((key) => {
       outputString = outputString.replace(
-        wordRegex[key],
+        wordRegex[key as FontSize],
         (string) =>
-          `<span style="font-size: ${fontSizes[key]};">${string.substring(
-            2,
-            string.length - 2
-          )}</span>`
+          `<span style="font-size: ${
+            fontSizes[key as FontSize]
+          };">${string.substring(2, string.length - 2)}</span>`
       );
     });
 
     Object.keys(sentenceRegex).forEach((key) => {
       outputString = outputString.replace(
-        sentenceRegex[key],
+        sentenceRegex[key as FontSize],
         (string) =>
-          `<span style="font-size: ${fontSizes[key]};">${string.substring(
-            2,
-            string.length - 2
-          )}</span>`
+          `<span style="font-size: ${
+            fontSizes[key as FontSize]
+          };">${string.substring(2, string.length - 2)}</span>`
       );
     });
 
@@ -653,6 +672,10 @@ export function applyTextEffects({
   string,
   isFinalProcessing,
   hasMention = true
+}: {
+  string: string;
+  isFinalProcessing?: boolean;
+  hasMention?: boolean;
 }) {
   const italicRegex =
     /(((?![0-9\.])\*\*[^\s*]+\*\*(?![0-9]))|(((\*\*[^\s]){1}((?!(\*\*))[^\n])+([^\s]\*\*){1})(?![0-9\.])))/gi;
@@ -805,24 +828,32 @@ export function applyTextEffects({
   return isFinalProcessing ? result.replace(fakeAtSymbolRegex, '@') : result;
 }
 
-export function processedURL(url) {
+export function processedURL(url: string): string {
   if (!url.includes('://')) {
     url = 'http://' + url;
   }
   return url;
 }
 
-export function queryStringForArray({ array, originVar, destinationVar }) {
+export function queryStringForArray({
+  array,
+  originVar,
+  destinationVar
+}: {
+  array: Array<any>;
+  originVar?: string;
+  destinationVar: string;
+}): string {
   return `${array
     .map((elem) => `${destinationVar}[]=${originVar ? elem[originVar] : elem}`)
     .join('&')}`;
 }
 
-export function removeLineBreaks(string) {
+export function removeLineBreaks(string: string): string {
   return string.replace(/\n/gi, ' ').replace(/ {2,}/gi, ' ');
 }
 
-export function renderFileSize(fileSize) {
+export function renderFileSize(fileSize: number): string | null {
   if (fileSize > 1_000_000) {
     return `(${(fileSize / 1_000_000).toFixed(2)} MB)`;
   }
@@ -832,7 +863,7 @@ export function renderFileSize(fileSize) {
   return null;
 }
 
-export function renderText(text) {
+export function renderText(text: string): string {
   let newText = text;
   while (
     newText !== '' &&
@@ -853,12 +884,12 @@ export function renderText(text) {
   return newText;
 }
 
-export function replaceFakeAtSymbol(string) {
+export function replaceFakeAtSymbol(string: string): string {
   if (stringIsEmpty(string)) return '';
   return string.replace(/＠/g, '@');
 }
 
-export function generateFileName(fileName) {
+export function generateFileName(fileName: string): string {
   const splitFileName = fileName.split('.');
   const result = `${Math.floor(Date.now() / 1000)}.${
     splitFileName[splitFileName.length - 1]
@@ -866,27 +897,27 @@ export function generateFileName(fileName) {
   return result;
 }
 
-export function stringIsEmpty(string) {
+export function stringIsEmpty(string: string | null | undefined): boolean {
   const evalString = string || '';
   if (evalString && typeof evalString !== 'string') return true;
   return evalString.length === 0 || !evalString.trim();
 }
 
-export function translateMBToGB(size) {
+export function translateMBToGB(size: number): string {
   if (size >= 1000) {
     return `${size / 1000} GB`;
   }
   return `${size} MB`;
 }
 
-export function translateMBToGBWithoutSpace(size) {
+export function translateMBToGBWithoutSpace(size: number): string {
   if (size >= 1000) {
     return `${size / 1000}GB`;
   }
   return `${size}MB`;
 }
 
-export function trimUrl(url) {
+export function trimUrl(url: string | null | undefined) {
   const trimHttp = url?.split('//')[1] || url?.split('//')[0];
   const trimWWW = trimHttp?.split('www.')[1] || trimHttp?.split('www.')[0];
   return trimWWW;
@@ -900,14 +931,20 @@ export function trimWhiteSpaces(text = '') {
   return (text || '').trim();
 }
 
-export function truncateText({ text = '', limit }) {
+export function truncateText({
+  text = '',
+  limit
+}: {
+  text: string;
+  limit: number;
+}): string {
   if (text?.length > limit) {
     return text.substring(0, limit) + '...';
   }
   return text;
 }
 
-export function truncateTopic(topic) {
+export function truncateTopic(topic: string): string {
   // Remove quotes if enclosed in them
   if (topic.startsWith('"') && topic.endsWith('"')) {
     topic = topic.slice(1, -1);
@@ -925,7 +962,10 @@ export function truncateTopic(topic) {
   return topic;
 }
 
-export function stringsAreCaseInsensitivelyEqual(string1, string2) {
+export function stringsAreCaseInsensitivelyEqual(
+  string1: string,
+  string2: string
+): boolean {
   if (typeof string1 !== 'string' || typeof string2 !== 'string') {
     return false;
   }

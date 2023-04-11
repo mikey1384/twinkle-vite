@@ -1,4 +1,6 @@
-export default function ChatActions(dispatch) {
+export default function ChatActions(
+  dispatch: (action: { type: string; [key: string]: any }) => void
+) {
   return {
     onAddReactionToMessage({
       channelId,
@@ -6,6 +8,12 @@ export default function ChatActions(dispatch) {
       reaction,
       subchannelId,
       userId
+    }: {
+      channelId: number;
+      messageId: number;
+      reaction: string;
+      subchannelId: number;
+      userId: number;
     }) {
       dispatch({
         type: 'ADD_REACTION_TO_MESSAGE',
@@ -16,19 +24,27 @@ export default function ChatActions(dispatch) {
         userId
       });
     },
-    onAICardOfferWithdrawal(feedId) {
+    onAICardOfferWithdrawal(feedId: number) {
       return dispatch({
         type: 'AI_CARD_OFFER_WITHDRAWAL',
         feedId
       });
     },
-    onCallReceptionConfirm(channelId) {
+    onCallReceptionConfirm(channelId: number) {
       return dispatch({
         type: 'CONFIRM_CALL_RECEPTION',
         channelId
       });
     },
-    onChangeOnlineStatus({ userId, member = {}, isOnline }) {
+    onChangeOnlineStatus({
+      userId,
+      member = {},
+      isOnline
+    }: {
+      userId: number;
+      member?: object;
+      isOnline: boolean;
+    }) {
       return dispatch({
         type: 'CHANGE_ONLINE_STATUS',
         userId,

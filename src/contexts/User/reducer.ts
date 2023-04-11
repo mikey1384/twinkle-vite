@@ -1,6 +1,9 @@
 import { initialMyState } from '../AppContext';
 
-export default function UserReducer(state, action) {
+export default function UserReducer(
+  state: { [key: string]: any },
+  action: { type: string; [key: string]: any }
+) {
   switch (action.type) {
     case 'CHANGE_DEFAULT_FILTER':
       return {
@@ -90,11 +93,13 @@ export default function UserReducer(state, action) {
     case 'SHOW_PROFILE_COMMENTS':
       return {
         ...state,
-        profiles: state.profiles.map((profile) => ({
-          ...profile,
-          commentsShown:
-            profile.id === action.profileId ? true : profile.commentsShown
-        }))
+        profiles: state.profiles.map(
+          (profile: { id: string; commentsShown: boolean }) => ({
+            ...profile,
+            commentsShown:
+              profile.id === action.profileId ? true : profile.commentsShown
+          })
+        )
       };
     case 'SIGNUP':
       return {
