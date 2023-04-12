@@ -1,11 +1,16 @@
 import request from 'axios';
 import URL from '~/constants/URL';
 import { clientVersion } from '~/constants/defaultValues';
+import { RequestHelpers } from './types';
 import { queryStringForArray } from '~/helpers/stringHelpers';
 
-export default function userRequestHelpers({ auth, handleError, token }) {
+export default function userRequestHelpers({
+  auth,
+  handleError,
+  token
+}: RequestHelpers) {
   return {
-    async addAccountType(accountType) {
+    async addAccountType(accountType: string) {
       try {
         const { data } = await request.post(
           `${URL}/user/accountType`,
@@ -17,7 +22,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async addModerators(newModerators) {
+    async addModerators(newModerators: number[]) {
       try {
         const { data } = await request.post(
           `${URL}/user/moderator`,
@@ -29,7 +34,13 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async changeAccountType({ userId, selectedAccountType }) {
+    async changeAccountType({
+      userId,
+      selectedAccountType
+    }: {
+      userId: number;
+      selectedAccountType: string;
+    }) {
       try {
         const { data } = await request.put(
           `${URL}/user/moderator`,
@@ -41,7 +52,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async checkIfUsernameExists(username) {
+    async checkIfUsernameExists(username: string) {
       try {
         const {
           data: { exists }
@@ -54,7 +65,13 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async changePassword({ userId, password }) {
+    async changePassword({
+      userId,
+      password
+    }: {
+      userId: number;
+      password: string;
+    }) {
       try {
         const { data } = await request.put(`${URL}/user/password`, {
           userId,
@@ -68,7 +85,13 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async changePasswordFromStore({ currentPassword, newPassword }) {
+    async changePasswordFromStore({
+      currentPassword,
+      newPassword
+    }: {
+      currentPassword: string;
+      newPassword: string;
+    }) {
       try {
         const {
           data: { isSuccess }
@@ -82,7 +105,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async changeUsername(newUsername) {
+    async changeUsername(newUsername: string) {
       try {
         const {
           data: { alreadyExists, coins }
@@ -92,7 +115,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async confirmPassword(password) {
+    async confirmPassword(password: string) {
       try {
         const {
           data: { success }
@@ -106,7 +129,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async deleteAccountType(accountTypeLabel) {
+    async deleteAccountType(accountTypeLabel: string) {
       try {
         const {
           data: { success }
@@ -119,7 +142,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async deleteProfilePictures(remainingPictures) {
+    async deleteProfilePictures(remainingPictures: object[]) {
       const queryString = queryStringForArray({
         array: remainingPictures,
         originVar: 'id',
@@ -134,7 +157,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async deleteArchivedPicture(pictureId) {
+    async deleteArchivedPicture(pictureId: number) {
       try {
         const {
           data: { success }
@@ -147,7 +170,13 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async editAccountType({ label, editedAccountType }) {
+    async editAccountType({
+      label,
+      editedAccountType
+    }: {
+      label: string;
+      editedAccountType: string;
+    }) {
       try {
         const {
           data: { success }
@@ -164,7 +193,13 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async editRewardComment({ editedComment, contentId }) {
+    async editRewardComment({
+      editedComment,
+      contentId
+    }: {
+      editedComment: string;
+      contentId: number;
+    }) {
       try {
         await request.put(
           `${URL}/user/reward`,
@@ -176,7 +211,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async revokeReward(rewardId) {
+    async revokeReward(rewardId: number) {
       try {
         const {
           data: { success }
@@ -189,8 +224,8 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async recordUserTraffic(pathname) {
-      if (token() === null) {
+    async recordUserTraffic(pathname: string) {
+      if (!token?.()) {
         request.post(`${URL}/user/recordAnonTraffic`, { pathname });
         return {};
       }
@@ -204,7 +239,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async loadCoinHistory(lastId) {
+    async loadCoinHistory(lastId: number) {
       try {
         const {
           data: { totalCoins, changes, loadMoreShown }
@@ -225,7 +260,13 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async loadUserPictures({ lastPictureId, exclude }) {
+    async loadUserPictures({
+      lastPictureId,
+      exclude
+    }: {
+      lastPictureId: number;
+      exclude: number[];
+    }) {
       const queryString = exclude
         ? queryStringForArray({
             array: exclude,
@@ -273,7 +314,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async loadMonthlyLeaderboards(year) {
+    async loadMonthlyLeaderboards(year: number) {
       try {
         const { data: leaderboards } = await request.get(
           `${URL}/user/leaderBoard/monthly?year=${year}`
@@ -283,7 +324,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async loadMonthlyXp(userId) {
+    async loadMonthlyXp(userId: number) {
       try {
         const { data } = await request.get(
           `${URL}/user/monthlyXp?userId=${userId}`
@@ -293,7 +334,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async loadProfile(userId) {
+    async loadProfile(userId: number) {
       try {
         const { data } = await request.get(`${URL}/user?userId=${userId}`);
         return Promise.resolve(data);
@@ -301,7 +342,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async loadProfileViaUsername(username) {
+    async loadProfileViaUsername(username: string) {
       try {
         const {
           data: { pageNotExists, user }
@@ -341,7 +382,17 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async loadUsers({ orderBy, lastUserId, lastActive, lastTwinkleXP } = {}) {
+    async loadUsers({
+      orderBy,
+      lastUserId,
+      lastActive,
+      lastTwinkleXP
+    }: {
+      orderBy?: string;
+      lastUserId?: number;
+      lastActive?: number;
+      lastTwinkleXP?: number;
+    } = {}) {
       try {
         const { data } = await request.get(
           `${URL}/user/users${orderBy ? `?orderBy=${orderBy}` : ''}${
@@ -377,7 +428,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async loadMissionProgress(userId) {
+    async loadMissionProgress(userId: number) {
       try {
         const { data } = await request.get(
           `${URL}/user/state/mission?userId=${userId}`
@@ -387,7 +438,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async loadXpAcquisition(userId) {
+    async loadXpAcquisition(userId: number) {
       try {
         const { data } = await request.get(
           `${URL}/user/xp/acquisition?userId=${userId}`
@@ -397,19 +448,19 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async login(params) {
+    async login(params: { username: string; password: string }) {
       try {
         const { data } = await request.post(`${URL}/user/login`, params);
         localStorage.setItem('token', data.token);
         return Promise.resolve(data);
-      } catch (error) {
+      } catch (error: any) {
         if (error.response.status === 401) {
           return Promise.reject('Wrong username/password combination');
         }
         return handleError(error);
       }
     },
-    async reorderProfilePictures(reorderedPictureIds) {
+    async reorderProfilePictures(reorderedPictureIds: number[]) {
       try {
         const {
           data: { success }
@@ -423,7 +474,15 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async reportError({ componentPath, info, message }) {
+    async reportError({
+      componentPath,
+      info,
+      message
+    }: {
+      componentPath: string;
+      info: string;
+      message: string;
+    }) {
       try {
         const {
           data: { success }
@@ -447,6 +506,16 @@ export default function userRequestHelpers({ auth, handleError, token }) {
       rootId,
       uploaderId,
       rewardType
+    }: {
+      maxRewardAmountForOnePerson: number;
+      explanation?: string;
+      amount: number;
+      contentType: string;
+      contentId: number;
+      rootType: string;
+      rootId: number;
+      uploaderId: number;
+      rewardType: string;
     }) {
       try {
         const {
@@ -471,7 +540,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async searchUsers(query) {
+    async searchUsers(query: string) {
       try {
         const { data: users } = await request.get(
           `${URL}/user/users/search?queryString=${query}`
@@ -481,7 +550,15 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async sendVerificationEmail({ email, userId, isPasswordReset }) {
+    async sendVerificationEmail({
+      email,
+      userId,
+      isPasswordReset
+    }: {
+      email: string;
+      userId: number;
+      isPasswordReset: boolean;
+    }) {
       try {
         const { data } = await request.put(`${URL}/user/email/verify`, {
           email,
@@ -493,7 +570,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async sendVerificationOTPEmail(email) {
+    async sendVerificationOTPEmail(email: string) {
       try {
         const {
           data: { success }
@@ -509,7 +586,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async setDefaultSearchFilter(filter) {
+    async setDefaultSearchFilter(filter: string) {
       try {
         const { data } = await request.post(
           `${URL}/user/searchFilter`,
@@ -521,7 +598,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async setTheme({ color }) {
+    async setTheme({ color }: { color: string }) {
       try {
         await request.put(`${URL}/user/theme`, { color }, auth());
         return Promise.resolve();
@@ -529,7 +606,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async signup(params) {
+    async signup(params: object) {
       try {
         const { data } = await request.post(`${URL}/user/signup`, params);
         if (data.token) {
@@ -550,7 +627,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async toggleWordleStrictMode(strictMode) {
+    async toggleWordleStrictMode(strictMode: boolean) {
       try {
         const data = await request.put(
           `${URL}/user/wordleStrictMode`,
@@ -562,7 +639,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async updateCollectType(collectType) {
+    async updateCollectType(collectType: string) {
       try {
         const {
           data: { success }
@@ -576,7 +653,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async updateCurrentlyWatching({ watchCode }) {
+    async updateCurrentlyWatching({ watchCode }: { watchCode: string }) {
       const authorization = auth();
       const authExists = !!authorization.headers.authorization;
       if (authExists) {
@@ -608,6 +685,13 @@ export default function userRequestHelpers({ auth, handleError, token }) {
       target,
       targetId,
       totalDuration
+    }: {
+      action: string;
+      type: string;
+      amount: number;
+      target: string;
+      targetId: number;
+      totalDuration: number;
     }) {
       try {
         const {
@@ -630,6 +714,14 @@ export default function userRequestHelpers({ auth, handleError, token }) {
       totalDuration,
       type,
       userId
+    }: {
+      amount: number;
+      action: string;
+      target: string;
+      targetId: number;
+      totalDuration: number;
+      type: string;
+      userId: number;
     }) {
       try {
         const {
@@ -644,7 +736,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async uploadBio(params) {
+    async uploadBio(params: object) {
       try {
         const { data } = await request.post(`${URL}/user/bio`, params, auth());
         return Promise.resolve(data);
@@ -652,7 +744,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async uploadGreeting({ greeting }) {
+    async uploadGreeting({ greeting }: { greeting: string }) {
       try {
         await request.put(`${URL}/user/greeting`, { greeting }, auth());
         return Promise.resolve();
@@ -660,7 +752,17 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async uploadProfileInfo({ email, website, youtubeName, youtubeUrl }) {
+    async uploadProfileInfo({
+      email,
+      website,
+      youtubeName,
+      youtubeUrl
+    }: {
+      email: string;
+      website: string;
+      youtubeName: string;
+      youtubeUrl: string;
+    }) {
       try {
         const { data } = await request.put(
           `${URL}/user/info`,
@@ -697,7 +799,15 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async uploadUserPic({ caption, src, isProfilePic }) {
+    async uploadUserPic({
+      caption,
+      src,
+      isProfilePic
+    }: {
+      caption: string;
+      src: string;
+      isProfilePic: boolean;
+    }) {
       try {
         const {
           data: { pictures }
@@ -711,7 +821,13 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async updateUserPictureCaption({ caption, pictureId }) {
+    async updateUserPictureCaption({
+      caption,
+      pictureId
+    }: {
+      caption: string;
+      pictureId: number;
+    }) {
       try {
         const {
           data: { pictures }
@@ -725,7 +841,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async updateUserPictures(pictureIds) {
+    async updateUserPictures(pictureIds: number[]) {
       try {
         const {
           data: { pictures }
@@ -769,7 +885,7 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async verifyEmailViaOTP({ otp, email }) {
+    async verifyEmailViaOTP({ otp, email }: { otp: string; email: string }) {
       try {
         const {
           data: { success }
@@ -782,7 +898,13 @@ export default function userRequestHelpers({ auth, handleError, token }) {
         return handleError(error);
       }
     },
-    async verifyEmail({ token, forPasswordReset }) {
+    async verifyEmail({
+      token,
+      forPasswordReset
+    }: {
+      token: string;
+      forPasswordReset: boolean;
+    }) {
       try {
         const {
           data: { profilePicUrl, userId, username, errorMsg }

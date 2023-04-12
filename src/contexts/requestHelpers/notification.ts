@@ -1,8 +1,12 @@
 import request from 'axios';
 import URL from '~/constants/URL';
+import { RequestHelpers } from './types';
 import { clientVersion } from '~/constants/defaultValues';
 
-export default function notificationRequestHelpers({ auth, handleError }) {
+export default function notificationRequestHelpers({
+  auth,
+  handleError
+}: RequestHelpers) {
   return {
     async checkVersion() {
       try {
@@ -50,7 +54,7 @@ export default function notificationRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMoreNotifications(lastId) {
+    async loadMoreNotifications(lastId: number) {
       try {
         const {
           data: { loadMoreNotifications, notifications }
@@ -60,7 +64,7 @@ export default function notificationRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMoreRewards(lastId) {
+    async loadMoreRewards(lastId: number) {
       try {
         const { data } = await request.get(
           `${URL}/notification/more/rewards?lastId=${lastId}`,

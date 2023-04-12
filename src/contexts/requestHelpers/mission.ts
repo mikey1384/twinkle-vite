@@ -1,9 +1,19 @@
 import request from 'axios';
 import URL from '~/constants/URL';
+import { RequestHelpers } from './types';
 
-export default function missionRequestHelpers({ auth, handleError }) {
+export default function missionRequestHelpers({
+  auth,
+  handleError
+}: RequestHelpers) {
   return {
-    async approveGrammarQuestion({ questionId, isApproved }) {
+    async approveGrammarQuestion({
+      questionId,
+      isApproved
+    }: {
+      questionId: number;
+      isApproved: boolean;
+    }) {
       try {
         const {
           data: { success }
@@ -17,7 +27,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async deleteGrammarQuestion(questionId) {
+    async deleteGrammarQuestion(questionId: number) {
       try {
         const {
           data: { success }
@@ -30,7 +40,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async attachMissionTutorial({ missionId, missionTitle }) {
+    async attachMissionTutorial({
+      missionId,
+      missionTitle
+    }: {
+      missionId: number;
+      missionTitle: string;
+    }) {
       try {
         const {
           data: { tutorialId }
@@ -47,7 +63,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async checkMissionStatus(missionId) {
+    async checkMissionStatus(missionId: number) {
       try {
         const {
           data: { filePath, feedback, status, reviewer, reviewTimeStamp }
@@ -74,6 +90,14 @@ export default function missionRequestHelpers({ auth, handleError }) {
       wrongChoice2,
       wrongChoice3,
       questionId
+    }: {
+      leftSideText: string;
+      rightSideText: string;
+      correctChoice: string;
+      wrongChoice1: string;
+      wrongChoice2: string;
+      wrongChoice3: string;
+      questionId: number;
     }) {
       try {
         const {
@@ -96,7 +120,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async formatCode(code) {
+    async formatCode(code: string) {
       try {
         const {
           data: { formattedCode }
@@ -106,7 +130,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async lintCode(code) {
+    async lintCode(code: string) {
       try {
         const {
           data: { results }
@@ -116,7 +140,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async processAst(ast) {
+    async processAst(ast: string) {
       try {
         const {
           data: { result }
@@ -128,7 +152,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadGitHubData(code) {
+    async loadGitHubData(code: string) {
       try {
         const {
           data: { githubUsername }
@@ -149,7 +173,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMoreGrammarAttempts({ activeTab, lastTimeStamp }) {
+    async loadMoreGrammarAttempts({
+      activeTab,
+      lastTimeStamp
+    }: {
+      activeTab: string;
+      lastTimeStamp: number;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/mission/grammar/attempt/more?activeTab=${activeTab}&lastTimeStamp=${lastTimeStamp}`,
@@ -170,7 +200,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async deleteGrammarCategory(category) {
+    async deleteGrammarCategory(category: string) {
       try {
         const {
           data: { success }
@@ -183,7 +213,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadGrammarCategoryQuestions(category) {
+    async loadGrammarCategoryQuestions(category: string) {
       try {
         const {
           data: { questions }
@@ -196,7 +226,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async editGrammarCategory({ category, newCategory }) {
+    async editGrammarCategory({
+      category,
+      newCategory
+    }: {
+      category: string;
+      newCategory: string;
+    }) {
       try {
         const {
           data: { success }
@@ -210,7 +246,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadGrammarCategory(category) {
+    async uploadGrammarCategory(category: string) {
       try {
         await request.post(
           `${URL}/mission/grammar/category`,
@@ -222,7 +258,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadGrammarQuestions({ activeTab, lastQuestionId }) {
+    async loadGrammarQuestions({
+      activeTab,
+      lastQuestionId
+    }: {
+      activeTab: string;
+      lastQuestionId: number;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/mission/grammar/question?activeTab=${activeTab}${
@@ -235,7 +277,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateGrammarQuestionCategory({ questionId, category }) {
+    async updateGrammarQuestionCategory({
+      questionId,
+      category
+    }: {
+      questionId: number;
+      category: string;
+    }) {
       try {
         const {
           data: { success }
@@ -249,7 +297,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMission({ missionId, isTask }) {
+    async loadMission({
+      missionId,
+      isTask
+    }: {
+      missionId: number;
+      isTask: boolean;
+    }) {
       try {
         const {
           data: { page, myAttempts }
@@ -264,7 +318,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateMissionData(missionId) {
+    async updateMissionData(missionId: number) {
       try {
         const {
           data: { success }
@@ -278,7 +332,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMissionRankings(missionId) {
+    async loadMissionRankings(missionId: number) {
       try {
         const { data } = await request.get(
           `${URL}/mission/ranking?missionId=${missionId}`,
@@ -293,6 +347,10 @@ export default function missionRequestHelpers({ auth, handleError }) {
       activeTab,
       lastAttemptId,
       lastAttemptReviewTimeStamp
+    }: {
+      activeTab: string;
+      lastAttemptId: number;
+      lastAttemptReviewTimeStamp: number;
     }) {
       try {
         const { data } = await request.get(
@@ -315,6 +373,11 @@ export default function missionRequestHelpers({ auth, handleError }) {
       missionId,
       lastAttemptId,
       lastAttemptReviewTimeStamp
+    }: {
+      activeTab: string;
+      missionId: number;
+      lastAttemptId: number;
+      lastAttemptReviewTimeStamp: number;
     }) {
       try {
         const { data } = await request.get(
@@ -348,7 +411,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadGoogleMissionQuestions({ missionId }) {
+    async loadGoogleMissionQuestions({ missionId }: { missionId: number }) {
       try {
         const { data } = await request.get(
           `${URL}/mission/question?missionId=${missionId}`,
@@ -359,7 +422,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateCurrentMission(missionId) {
+    async updateCurrentMission(missionId: number) {
       try {
         await request.put(
           `${URL}/mission/current`,
@@ -371,7 +434,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateMissionStatus({ missionType, newStatus }) {
+    async updateMissionStatus({
+      missionType,
+      newStatus
+    }: {
+      missionType: string;
+      newStatus: string;
+    }) {
       try {
         await request.put(
           `${URL}/user/state/mission`,
@@ -383,7 +452,15 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateTutorialPrompt({ missionId, tutorialPrompt, buttonLabel }) {
+    async updateTutorialPrompt({
+      missionId,
+      tutorialPrompt,
+      buttonLabel
+    }: {
+      missionId: number;
+      tutorialPrompt: string;
+      buttonLabel: string;
+    }) {
       try {
         const {
           data: { success }
@@ -397,7 +474,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadGoogleQuestion({ missionId, questionText }) {
+    async uploadGoogleQuestion({
+      missionId,
+      questionText
+    }: {
+      missionId: number;
+      questionText: string;
+    }) {
       try {
         const {
           data: { alreadyExists, questionId, question }
@@ -411,7 +494,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async approveGoogleQuestion(questionId) {
+    async approveGoogleQuestion(questionId: number) {
       try {
         const {
           data: { success }
@@ -425,7 +508,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async disapproveGoogleQuestion(questionId) {
+    async disapproveGoogleQuestion(questionId: number) {
       try {
         const {
           data: { success }
@@ -439,7 +522,7 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async deleteGoogleQuestion(questionId) {
+    async deleteGoogleQuestion(questionId: number) {
       try {
         const {
           data: { success }
@@ -459,6 +542,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
       wrongChoice1,
       wrongChoice2,
       wrongChoice3
+    }: {
+      leftSideText: string;
+      rightSideText: string;
+      correctChoice: string;
+      wrongChoice1: string;
+      wrongChoice2: string;
+      wrongChoice3: string;
     }) {
       try {
         const {
@@ -480,7 +570,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadGrammarAttempt({ result, questionId }) {
+    async uploadGrammarAttempt({
+      result,
+      questionId
+    }: {
+      result: boolean;
+      questionId: number;
+    }) {
       try {
         await request.post(
           `${URL}/mission/grammar/attempt`,
@@ -492,7 +588,13 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadMissionAttempt({ missionId, attempt }) {
+    async uploadMissionAttempt({
+      missionId,
+      attempt
+    }: {
+      missionId: number;
+      attempt: object;
+    }) {
       try {
         const {
           data: { success, newXpAndRank, newCoins }
@@ -509,7 +611,15 @@ export default function missionRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadMissionFeedback({ attemptId, feedback, status }) {
+    async uploadMissionFeedback({
+      attemptId,
+      feedback,
+      status
+    }: {
+      attemptId: number;
+      feedback: string;
+      status: string;
+    }) {
       try {
         const {
           data: { success }
