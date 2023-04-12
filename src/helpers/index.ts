@@ -7,7 +7,13 @@ import {
   MIKEY_ID
 } from '~/constants/defaultValues';
 
-export function checkScrollIsAtTheBottom({ content, container }) {
+export function checkScrollIsAtTheBottom({
+  content,
+  container
+}: {
+  content: HTMLElement;
+  container: HTMLElement;
+}) {
   return content.offsetHeight <= container.offsetHeight + container.scrollTop;
 }
 
@@ -17,6 +23,12 @@ export function determineUserCanRewardThis({
   recommendations = [],
   uploader,
   userId
+}: {
+  canReward: boolean;
+  authLevel: number;
+  recommendations?: any[];
+  uploader?: { id: number };
+  userId: number;
 }) {
   if (!userId) return false;
   let studentsCanReward = false;
@@ -44,6 +56,11 @@ export function determineXpButtonDisabled({
   rewards,
   myId,
   xpRewardInterfaceShown
+}: {
+  rewardLevel: number;
+  rewards: any[];
+  myId: number;
+  xpRewardInterfaceShown: boolean;
 }) {
   const maxRewards = returnMaxRewards({ rewardLevel });
   if (xpRewardInterfaceShown) return 'Reward';
@@ -67,14 +84,20 @@ export function determineXpButtonDisabled({
   return false;
 }
 
-export function returnImageFileFromUrl({ imageUrl, fileName = 'thumb.png' }) {
+export function returnImageFileFromUrl({
+  imageUrl,
+  fileName = 'thumb.png'
+}: {
+  imageUrl: string;
+  fileName?: string;
+}) {
   const dataUri = imageUrl.replace(/^data:image\/\w+;base64,/, '');
   const buffer = Buffer.from(dataUri, 'base64');
   const file = new File([buffer], fileName);
   return file;
 }
 
-export function getSectionFromPathname(pathname) {
+export function getSectionFromPathname(pathname: string) {
   const result = pathname?.split('/')[1];
   return {
     section: result === '' ? 'home' : result,
@@ -82,67 +105,90 @@ export function getSectionFromPathname(pathname) {
   };
 }
 
-export function isMobile(navigator) {
+export function isMobile(navigator: Navigator) {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
   );
 }
 
-export function last(array) {
+export function last(array: any[]) {
   return array[array.length - 1];
 }
 
-export function objectify(array, id = 'id') {
-  const result = {};
+export function objectify(array: any[], id: string = 'id') {
+  const result: { [key: string]: any } = {};
   for (let elem of array) {
     result[elem[id]] = elem;
   }
   return result;
 }
 
-export function parseChannelPath(pathId) {
+export function parseChannelPath(pathId: string | number) {
   return Number(pathId) - Number(CHAT_ID_BASE_NUMBER);
 }
 
-export function scrollElementToCenter(element, adjustment = -50) {
+export function scrollElementToCenter(
+  element: HTMLElement | null,
+  adjustment: number = -50
+): void {
   if (!element) return;
   let offsetTop = 0;
-  const body = document
-    ? document.scrollingElement || document.documentElement
-    : {};
+  const body: { scrollTop: number; clientHeight: number } = document
+    ? ((document.scrollingElement || document.documentElement) as {
+        scrollTop: number;
+        clientHeight: number;
+      })
+    : { scrollTop: 0, clientHeight: 0 };
   addAllOffsetTop(element);
   body.scrollTop =
     offsetTop + adjustment - (body.clientHeight - element.clientHeight) / 2;
-  document.getElementById('App').scrollTop =
-    offsetTop +
-    adjustment -
-    (document.getElementById('App').clientHeight - element.clientHeight) / 2;
-  function addAllOffsetTop(element) {
+
+  const appElement = document.getElementById('App') as HTMLElement;
+  if (appElement) {
+    appElement.scrollTop =
+      offsetTop +
+      adjustment -
+      (appElement.clientHeight - element.clientHeight) / 2;
+  }
+
+  function addAllOffsetTop(element: HTMLElement): void {
     offsetTop += element.offsetTop;
     if (element.offsetParent) {
-      addAllOffsetTop(element.offsetParent);
+      addAllOffsetTop(element.offsetParent as HTMLElement);
     }
   }
 }
 
-export function scrollElementTo({ element, amount }) {
+export function scrollElementTo({
+  element,
+  amount
+}: {
+  element: HTMLElement | null;
+  amount: number;
+}): void {
   if (!element) return;
   let offsetTop = 0;
-  const body = document
-    ? document.scrollingElement || document.documentElement
-    : {};
+  const body: { scrollTop: number; clientHeight: number } = document
+    ? ((document.scrollingElement || document.documentElement) as {
+        scrollTop: number;
+        clientHeight: number;
+      })
+    : { scrollTop: 0, clientHeight: 0 };
   addAllOffsetTop(element);
   body.scrollTop = offsetTop + amount - 350;
-  document.getElementById('App').scrollTop = offsetTop + amount - 350;
-  function addAllOffsetTop(element) {
+  const appElement = document.getElementById('App') as HTMLElement;
+  if (appElement) {
+    appElement.scrollTop = offsetTop + amount - 350;
+  }
+  function addAllOffsetTop(element: HTMLElement): void {
     offsetTop += element.offsetTop;
     if (element.offsetParent) {
-      addAllOffsetTop(element.offsetParent);
+      addAllOffsetTop(element.offsetParent as HTMLElement);
     }
   }
 }
 
-export function textIsOverflown(element) {
+export function textIsOverflown(element: HTMLElement) {
   return (
     element.scrollHeight > element.clientHeight ||
     element.scrollWidth > element.clientWidth
