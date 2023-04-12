@@ -8,34 +8,44 @@ import { determineSelectedChatTab } from './helpers';
 import { objectify } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 
-const chatTabHash = {
+const chatTabHash: {
+  [key: string]: string;
+} = {
   home: 'homeChannelIds',
   favorite: 'favoriteChannelIds',
   class: 'classChannelIds'
 };
 
-export default function ChatReducer(state, action) {
+export default function ChatReducer(
+  state: any,
+  action: {
+    type: string;
+    [key: string]: any;
+  }
+) {
   switch (action.type) {
     case 'AI_CARD_OFFER_WITHDRAWAL': {
       return {
         ...state,
-        aiCardFeeds: state.aiCardFeeds.map((feed) => {
-          if (feed.id === action.feedId) {
-            return {
-              ...feed,
-              offer: {
-                ...feed.offer,
-                isCancelled: true
-              }
-            };
+        aiCardFeeds: state.aiCardFeeds.map(
+          (feed: { id: number; offer: object }) => {
+            if (feed.id === action.feedId) {
+              return {
+                ...feed,
+                offer: {
+                  ...feed.offer,
+                  isCancelled: true
+                }
+              };
+            }
+            return feed;
           }
-          return feed;
-        })
+        )
       };
     }
     case 'ADD_ID_TO_NEW_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
-      const messageIds = prevChannelObj?.messageIds?.map((messageId) =>
+      const messageIds = prevChannelObj?.messageIds?.map((messageId: number) =>
         messageId === action.tempMessageId ? action.messageId : messageId
       );
       const messagesObj = {
@@ -53,7 +63,7 @@ export default function ChatReducer(state, action) {
               ...prevChannelObj?.subchannelObj[action.subchannelId],
               messageIds: prevChannelObj?.subchannelObj[
                 action.subchannelId
-              ]?.messageIds.map((messageId) =>
+              ]?.messageIds.map((messageId: number) =>
                 messageId === action.tempMessageId
                   ? action.messageId
                   : messageId
@@ -123,7 +133,9 @@ export default function ChatReducer(state, action) {
             askPrice: null
           }
         },
-        myCardIds: state.myCardIds.filter((cardId) => cardId !== action.cardId)
+        myCardIds: state.myCardIds.filter(
+          (cardId: number) => cardId !== action.cardId
+        )
       };
     }
     case 'REMOVE_LISTED_AI_CARD': {
@@ -138,7 +150,7 @@ export default function ChatReducer(state, action) {
           }
         },
         listedCardIds: state.listedCardIds.filter(
-          (cardId) => cardId !== action.cardId
+          (cardId: number) => cardId !== action.cardId
         )
       };
     }
@@ -151,7 +163,7 @@ export default function ChatReducer(state, action) {
             ]
           : prevChannelObj?.messagesObj?.[action.messageId]) || {};
       const reactions = (message.reactions || [])
-        .filter((reaction) => {
+        .filter((reaction: { userId: number; type: string }) => {
           return (
             reaction.userId !== action.userId ||
             reaction.type !== action.reaction
@@ -223,11 +235,14 @@ export default function ChatReducer(state, action) {
               action.messageId
             ]
           : prevChannelObj?.messagesObj?.[action.messageId]) || {};
-      const reactions = (message.reactions || []).filter((reaction) => {
-        return (
-          reaction.userId !== action.userId || reaction.type !== action.reaction
-        );
-      });
+      const reactions = (message.reactions || []).filter(
+        (reaction: { userId: number; type: string }) => {
+          return (
+            reaction.userId !== action.userId ||
+            reaction.type !== action.reaction
+          );
+        }
+      );
       const subchannelObj = action.subchannelId
         ? {
             ...prevChannelObj?.subchannelObj,
@@ -457,7 +472,9 @@ export default function ChatReducer(state, action) {
           ...state.channelsObj,
           [channelId]: {
             id: channelId,
-            allMemberIds: action.data.members.map((member) => member.id),
+            allMemberIds: action.data.members.map(
+              (member: { id: number }) => member.id
+            ),
             channelName: action.data.message.channelName,
             messageIds: [startMessageId],
             messagesObj: {
@@ -485,7 +502,7 @@ export default function ChatReducer(state, action) {
         subject: {},
         homeChannelIds: [
           action.channel.id,
-          ...state.homeChannelIds.filter((channelId) => channelId !== 0)
+          ...state.homeChannelIds.filter((channelId: number) => channelId !== 0)
         ],
         channelsObj: {
           ...state.channelsObj,
@@ -513,7 +530,7 @@ export default function ChatReducer(state, action) {
               messageIds: prevChannelObj?.subchannelObj?.[
                 action.subchannelId
               ]?.messageIds?.filter(
-                (messageId) => messageId !== action.messageId
+                (messageId: number) => messageId !== action.messageId
               )
             }
           }
@@ -525,7 +542,7 @@ export default function ChatReducer(state, action) {
           [action.channelId]: {
             ...prevChannelObj,
             messageIds: prevChannelObj?.messageIds?.filter(
-              (messageId) => messageId !== action.messageId
+              (messageId: number) => messageId !== action.messageId
             ),
             ...(subchannelObj ? { subchannelObj } : {})
           }
@@ -892,11 +909,16 @@ export default function ChatReducer(state, action) {
         ...state.channelsObj,
         ...action.data.channelsObj
       };
-      const newSubchannelObj = {};
+      const newSubchannelObj: {
+        messageIds: number[];
+        messagesObj: Record<number, object>;
+        subchannelObj: Record<number, { id: number }>;
+        [key: number]: any;
+      } = { messageIds: [], messagesObj: {}, subchannelObj: {} };
       const newCurrentChannel =
         action.data.channelsObj?.[action.data.currentChannelId];
       if (action.data.currentSubchannelId && action.data.channelsObj) {
-        for (let subchannel of Object.values(
+        for (let subchannel of Object.values<{ id: number }>(
           newCurrentChannel?.subchannelObj
         )) {
           newSubchannelObj[subchannel.id] = {
@@ -1024,7 +1046,7 @@ export default function ChatReducer(state, action) {
             allMemberIds: state.channelsObj[
               state.selectedChannelId
             ]?.allMemberIds.concat(
-              action.data.selectedUsers.map((user) => user.id)
+              action.data.selectedUsers.map((user: { id: number }) => user.id)
             ),
             messageIds: [action.data.message.id].concat(
               state.channelsObj[state.selectedChannelId].messageIds
@@ -1034,12 +1056,19 @@ export default function ChatReducer(state, action) {
               [action.data.message.id]: action.data.message
             },
             members: state.channelsObj[state.selectedChannelId].members.concat(
-              action.data.selectedUsers.map((user) => ({
-                id: user.id,
-                username: user.username,
-                profilePicUrl: user.profilePicUrl,
-                authLevel: user.authLevel
-              }))
+              action.data.selectedUsers.map(
+                (user: {
+                  id: number;
+                  username: string;
+                  profilePicUrl: string;
+                  authLevel: number;
+                }) => ({
+                  id: user.id,
+                  username: user.username,
+                  profilePicUrl: user.profilePicUrl,
+                  authLevel: user.authLevel
+                })
+              )
             )
           }
         }
@@ -1053,11 +1082,13 @@ export default function ChatReducer(state, action) {
             ...state.channelsObj[action.channelId],
             allMemberIds: state.channelsObj[
               action.channelId
-            ]?.allMemberIds.filter((memberId) => memberId !== action.userId),
+            ]?.allMemberIds.filter(
+              (memberId: number) => memberId !== action.userId
+            ),
             loaded: false,
             members: (
               state.channelsObj[action.channelId]?.members || []
-            )?.filter((member) => member.id !== action.userId)
+            )?.filter((member: { id: number }) => member.id !== action.userId)
           }
         },
         allFavoriteChannelIds: {
@@ -1065,13 +1096,13 @@ export default function ChatReducer(state, action) {
           [action.channelId]: false
         },
         favoriteChannelIds: state.favoriteChannelIds.filter(
-          (channelId) => channelId !== action.channelId
+          (channelId: number) => channelId !== action.channelId
         ),
         homeChannelIds: state.homeChannelIds.filter(
-          (channelId) => channelId !== action.channelId
+          (channelId: number) => channelId !== action.channelId
         ),
         classChannelIds: state.classChannelIds.filter(
-          (channelId) => channelId !== action.channelId
+          (channelId: number) => channelId !== action.channelId
         )
       };
     case 'LIST_AI_CARD': {
@@ -1101,7 +1132,7 @@ export default function ChatReducer(state, action) {
           }
         },
         myListedCardIds: state.myListedCardIds.filter(
-          (cardId) => cardId !== action.cardId
+          (cardId: number) => cardId !== action.cardId
         )
       };
     }
@@ -1151,7 +1182,7 @@ export default function ChatReducer(state, action) {
         ...{ [`${action.channelType}LoadMoreButton`]: loadMoreButton },
         [chatTabHash[action.channelType]]: state[
           chatTabHash[action.channelType]
-        ].concat(action.channels.map((channel) => channel.id)),
+        ].concat(action.channels.map((channel: { id: number }) => channel.id)),
         channelsObj: {
           ...state.channelsObj,
           ...newChannels
@@ -1216,7 +1247,7 @@ export default function ChatReducer(state, action) {
           ...state.cardObj,
           ...objectify(action.cards)
         },
-        listedCardIds: action.cards.map((card) => card.id),
+        listedCardIds: action.cards.map((card: { id: number }) => card.id),
         listedCardsLoadMoreButton: action.loadMoreShown
       };
     case 'LOAD_MORE_LISTED_AI_CARDS':
@@ -1227,7 +1258,7 @@ export default function ChatReducer(state, action) {
           ...objectify(action.cards)
         },
         listedCardIds: state.listedCardIds.concat(
-          action.cards.map((card) => card.id)
+          action.cards.map((card: { id: number }) => card.id)
         ),
         listedCardsLoadMoreButton: action.loadMoreShown
       };
@@ -1238,7 +1269,7 @@ export default function ChatReducer(state, action) {
           ...state.cardObj,
           ...objectify(action.cards)
         },
-        myCardIds: action.cards.map((card) => card.id),
+        myCardIds: action.cards.map((card: { id: number }) => card.id),
         myCardsLoadMoreButton: action.loadMoreShown
       };
     case 'LOAD_MORE_MY_AI_CARDS':
@@ -1248,7 +1279,9 @@ export default function ChatReducer(state, action) {
           ...state.cardObj,
           ...objectify(action.cards)
         },
-        myCardIds: state.myCardIds.concat(action.cards.map((card) => card.id)),
+        myCardIds: state.myCardIds.concat(
+          action.cards.map((card: { id: number }) => card.id)
+        ),
         myCardsLoadMoreButton: action.loadMoreShown
       };
     case 'LOAD_MY_LISTED_AI_CARDS':
@@ -1258,7 +1291,7 @@ export default function ChatReducer(state, action) {
           ...state.cardObj,
           ...objectify(action.cards)
         },
-        myListedCardIds: action.cards.map((card) => card.id),
+        myListedCardIds: action.cards.map((card: { id: number }) => card.id),
         myListedCardsLoadMoreButton: action.loadMoreShown
       };
     case 'LOAD_MORE_MY_LISTED_AI_CARDS':
@@ -1269,7 +1302,7 @@ export default function ChatReducer(state, action) {
           ...objectify(action.cards)
         },
         myListedCardIds: state.myListedCardIds.concat(
-          action.cards.map((card) => card.id)
+          action.cards.map((card: { id: number }) => card.id)
         ),
         myListedCardsLoadMoreButton: action.loadMoreShown
       };
@@ -1278,7 +1311,9 @@ export default function ChatReducer(state, action) {
         ...state,
         cardObj: {
           ...state.cardObj,
-          ...objectify(action.offers.map((offer) => offer.card))
+          ...objectify(
+            action.offers.map((offer: { card: object }) => offer.card)
+          )
         },
         incomingOffers: action.offers,
         incomingOffersLoadMoreButton: action.loadMoreShown
@@ -1289,7 +1324,9 @@ export default function ChatReducer(state, action) {
         ...state,
         cardObj: {
           ...state.cardObj,
-          ...objectify(action.offers.map((offer) => offer.card))
+          ...objectify(
+            action.offers.map((offer: { card: object }) => offer.card)
+          )
         },
         outgoingOffers: action.offers,
         outgoingOffersLoadMoreButton: action.loadMoreShown
@@ -1300,7 +1337,9 @@ export default function ChatReducer(state, action) {
         ...state,
         cardObj: {
           ...state.cardObj,
-          ...objectify(action.offers.map((offer) => offer.card))
+          ...objectify(
+            action.offers.map((offer: { card: object }) => offer.card)
+          )
         },
         incomingOffers: state.incomingOffers.concat(action.offers),
         incomingOffersLoadMoreButton: action.loadMoreShown
@@ -1311,7 +1350,9 @@ export default function ChatReducer(state, action) {
         ...state,
         cardObj: {
           ...state.cardObj,
-          ...objectify(action.offers.map((offer) => offer.card))
+          ...objectify(
+            action.offers.map((offer: { card: object }) => offer.card)
+          )
         },
         outgoingOffers: state.outgoingOffers.concat(action.offers),
         outgoingOffersLoadMoreButton: action.loadMoreShown
@@ -1500,7 +1541,7 @@ export default function ChatReducer(state, action) {
         homeChannelIds: [
           action.channelId,
           ...state.homeChannelIds.filter(
-            (channelId) => channelId !== action.channelId
+            (channelId: number) => channelId !== action.channelId
           )
         ],
         channelsObj: {
@@ -1548,7 +1589,7 @@ export default function ChatReducer(state, action) {
                 allMemberIds: state.channelsObj[
                   action.channelId
                 ]?.allMemberIds.filter(
-                  (memberId) => memberId !== action.userId
+                  (memberId: number) => memberId !== action.userId
                 ),
                 messageIds: [messageId].concat(
                   state.channelsObj[action.channelId].messageIds
@@ -1569,7 +1610,9 @@ export default function ChatReducer(state, action) {
                 numUnreads: 0,
                 members: (
                   state.channelsObj[action.channelId]?.members || []
-                ).filter((member) => member.id !== action.userId)
+                ).filter(
+                  (member: { id: number }) => member.id !== action.userId
+                )
               }
             }
           }
@@ -1583,7 +1626,7 @@ export default function ChatReducer(state, action) {
         subject: {},
         homeChannelIds: [
           0,
-          ...state.homeChannelIds.filter((channelId) => channelId !== 0)
+          ...state.homeChannelIds.filter((channelId: number) => channelId !== 0)
         ],
         selectedChannelId: 0,
         channelsObj: {
@@ -1625,7 +1668,7 @@ export default function ChatReducer(state, action) {
               ...prevChannelObj?.subchannelObj[action.subchannelId],
               messageIds: prevChannelObj?.subchannelObj[
                 action.subchannelId
-              ]?.messageIds.map((messageId) =>
+              ]?.messageIds.map((messageId: number) =>
                 messageId === action.tempMessageId
                   ? action.messageId
                   : messageId
@@ -1646,7 +1689,7 @@ export default function ChatReducer(state, action) {
           ...state.channelsObj,
           [action.channelId]: {
             ...prevChannelObj,
-            messageIds: prevChannelObj?.messageIds?.map((messageId) =>
+            messageIds: prevChannelObj?.messageIds?.map((messageId: number) =>
               messageId === action.tempMessageId ? action.messageId : messageId
             ),
             messagesObj: {
@@ -1686,9 +1729,9 @@ export default function ChatReducer(state, action) {
         ? [
             ...(prevChannelObj?.members || []),
             ...action.newMembers.filter(
-              (newMember) =>
+              (newMember: { id: number }) =>
                 !(prevChannelObj?.members || [])
-                  .map((member) => member.id)
+                  .map((member: { id: number }) => member.id)
                   .includes(newMember.id)
             )
           ]
@@ -1743,7 +1786,7 @@ export default function ChatReducer(state, action) {
             allMemberIds: action.newMembers
               ? [
                   ...(prevChannelObj?.allMemberIds || []),
-                  ...action.newMembers.map((m) => m.id)
+                  ...action.newMembers.map((m: { id: number }) => m.id)
                 ]
               : prevChannelObj?.allMemberIds,
             messageIds,
@@ -1792,7 +1835,7 @@ export default function ChatReducer(state, action) {
           }
         },
         homeChannelIds: [action.message.channelId].concat(
-          state.homeChannelIds.filter((channelId, index) =>
+          state.homeChannelIds.filter((_: number, index: number) =>
             action.isDuplicate ? index !== 0 : true
           )
         )
@@ -1838,9 +1881,9 @@ export default function ChatReducer(state, action) {
                   ? {
                       allMemberIds: (prevChannelObj?.allMemberIds || []).concat(
                         action.newMembers
-                          .map((member) => member.id)
+                          .map((member: { id: number }) => member.id)
                           .filter(
-                            (memberId) =>
+                            (memberId: number) =>
                               !(prevChannelObj?.allMemberIds || []).includes(
                                 memberId
                               )
@@ -1849,9 +1892,9 @@ export default function ChatReducer(state, action) {
                       members: [
                         ...prevChannelObj?.members,
                         ...action.newMembers.filter(
-                          (newMember) =>
+                          (newMember: { id: number }) =>
                             !(prevChannelObj?.members || [])
-                              .map((member) => member.id)
+                              .map((member: { id: number }) => member.id)
                               .includes(newMember.id)
                         )
                       ]
@@ -1882,13 +1925,13 @@ export default function ChatReducer(state, action) {
         favoriteChannelIds: state.allFavoriteChannelIds[action.channel.id]
           ? [action.channel.id].concat(
               state.favoriteChannelIds.filter(
-                (channelId) => channelId !== action.channel.id
+                (channelId: number) => channelId !== action.channel.id
               )
             )
           : state.favoriteChannelIds,
         homeChannelIds: [action.channel.id].concat(
           state.homeChannelIds.filter(
-            (channelId) => channelId !== action.channel.id
+            (channelId: number) => channelId !== action.channel.id
           )
         )
       };
@@ -1948,7 +1991,7 @@ export default function ChatReducer(state, action) {
         homeChannelIds: [
           action.channelId,
           ...state.homeChannelIds.filter(
-            (channelId) => channelId !== action.channelId
+            (channelId: number) => channelId !== action.channelId
           )
         ],
         channelsObj: {
@@ -2114,7 +2157,7 @@ export default function ChatReducer(state, action) {
       };
     case 'SET_FAVORITE_CHANNEL': {
       const filteredFavChannelIds = state.favoriteChannelIds.filter(
-        (channelId) => channelId !== action.channelId
+        (channelId: number) => channelId !== action.channelId
       );
       return {
         ...state,
@@ -2443,7 +2486,7 @@ export default function ChatReducer(state, action) {
           ? state.homeChannelIds
           : [action.message.channelId].concat(
               state.homeChannelIds.filter(
-                (channelId) => channelId !== action.message.channelId
+                (channelId: number) => channelId !== action.message.channelId
               )
             ),
         channelsObj: {
@@ -2474,7 +2517,7 @@ export default function ChatReducer(state, action) {
             messageIds:
               state.channelsObj[action.channelId]?.messageIds?.length > 20
                 ? state.channelsObj[action.channelId]?.messageIds.filter(
-                    (messageId, index) => index <= 20
+                    (_: number, index: number) => index <= 20
                   )
                 : state.channelsObj[action.channelId]?.messageIds
           }
@@ -2540,13 +2583,14 @@ export default function ChatReducer(state, action) {
         ...state,
         filesBeingUploaded: {
           ...state.filesBeingUploaded,
-          [targetId]: state.filesBeingUploaded[targetId]?.map((file) =>
-            file.filePath === action.path
-              ? {
-                  ...file,
-                  uploadProgress: action.progress
-                }
-              : file
+          [targetId]: state.filesBeingUploaded[targetId]?.map(
+            (file: { filePath: string }) =>
+              file.filePath === action.path
+                ? {
+                    ...file,
+                    uploadProgress: action.progress
+                  }
+                : file
           )
         }
       };
@@ -2635,7 +2679,7 @@ export default function ChatReducer(state, action) {
       return {
         ...state,
         outgoingOffers: state.outgoingOffers.filter(
-          (offer) => offer.id !== action.offerId
+          (offer: { id: number }) => offer.id !== action.offerId
         )
       };
     }
@@ -2647,9 +2691,14 @@ export default function ChatReducer(state, action) {
 function updateWordCollectorsRankings({
   collector,
   currentRankings: { all = [], top30s = [] }
+}: {
+  collector: { rank: number; username: string };
+  currentRankings: { all: any[]; top30s: any[] };
 }) {
   const newAllRankings = all
-    .filter((ranker) => ranker.username !== collector.username)
+    .filter(
+      (ranker: { username: string }) => ranker.username !== collector.username
+    )
     .concat([collector]);
   newAllRankings.sort((a, b) => b.numWordsCollected - a.numWordsCollected);
   let newTop30s = top30s;

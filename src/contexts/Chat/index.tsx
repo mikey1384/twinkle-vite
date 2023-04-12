@@ -1,6 +1,5 @@
 import React, { ReactNode, useReducer } from 'react';
 import { createContext } from 'use-context-selector';
-import PropTypes from 'prop-types';
 import ChatActions from './actions';
 import ChatReducer from './reducer';
 
@@ -66,10 +65,6 @@ export const initialChatState = {
   wordRegisterStatus: null,
   wordleModalShown: false,
   wordsObj: {}
-};
-
-ChatContextProvider.propTypes = {
-  children: PropTypes.node
 };
 
 export function ChatContextProvider({ children }: { children: ReactNode }) {
