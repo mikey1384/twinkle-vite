@@ -1,9 +1,19 @@
+import { RequestHelpers } from './types';
 import request from 'axios';
 import URL from '~/constants/URL';
 
-export default function interactiveRequestHelpers({ auth, handleError }) {
+export default function interactiveRequestHelpers({
+  auth,
+  handleError
+}: RequestHelpers) {
   return {
-    async appendInteractiveSlide({ interactiveId, lastFork }) {
+    async appendInteractiveSlide({
+      interactiveId,
+      lastFork
+    }: {
+      interactiveId: number;
+      lastFork: object;
+    }) {
       try {
         const {
           data: { slide, numUpdates }
@@ -17,7 +27,7 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async checkInteractiveNumUpdates(interactiveId) {
+    async checkInteractiveNumUpdates(interactiveId: number) {
       try {
         const {
           data: { numUpdates }
@@ -30,7 +40,7 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async deleteInteractiveSlide(slideId) {
+    async deleteInteractiveSlide(slideId: number) {
       try {
         const {
           data: { numUpdates }
@@ -48,6 +58,11 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
       slideId,
       selectedSlideId,
       forkedFrom
+    }: {
+      interactiveId: number;
+      slideId: number;
+      selectedSlideId: number;
+      forkedFrom: number;
     }) {
       try {
         const {
@@ -62,7 +77,15 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async insertInteractiveSlide({ interactiveId, forkedFrom, slideId }) {
+    async insertInteractiveSlide({
+      interactiveId,
+      forkedFrom,
+      slideId
+    }: {
+      interactiveId: number;
+      forkedFrom: number;
+      slideId: number;
+    }) {
       try {
         const {
           data: { slide, numUpdates }
@@ -76,7 +99,7 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async undeleteInteractiveSlide(slideId) {
+    async undeleteInteractiveSlide(slideId: number) {
       try {
         const {
           data: { numUpdates }
@@ -89,7 +112,7 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadInteractive(contentId) {
+    async loadInteractive(contentId: number) {
       try {
         const { data } = await request.get(
           `${URL}/interactive?contentId=${contentId}`,
@@ -100,7 +123,13 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async editInteractiveSlide({ slideId, post }) {
+    async editInteractiveSlide({
+      slideId,
+      post
+    }: {
+      slideId: number;
+      post: object;
+    }) {
       try {
         const {
           data: { slide, numUpdates }
@@ -119,6 +148,11 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
       forkedFrom,
       interactiveId,
       slideId
+    }: {
+      direction: string;
+      forkedFrom: number;
+      interactiveId: number;
+      slideId: number;
     }) {
       try {
         const {
@@ -133,7 +167,7 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async publishInteractive(interactiveId) {
+    async publishInteractive(interactiveId: number) {
       try {
         const {
           data: { numUpdates }
@@ -147,7 +181,7 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async publishInteractiveSlide(slideId) {
+    async publishInteractiveSlide(slideId: number) {
       try {
         const {
           data: { numUpdates }
@@ -161,7 +195,15 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async recoverArchivedSlide({ interactiveId, selectedSlideId, lastFork }) {
+    async recoverArchivedSlide({
+      interactiveId,
+      selectedSlideId,
+      lastFork
+    }: {
+      interactiveId: number;
+      selectedSlideId: number;
+      lastFork: object;
+    }) {
       try {
         const {
           data: { numUpdates }
@@ -175,7 +217,7 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async unPublishInteractiveSlide(slideId) {
+    async unPublishInteractiveSlide(slideId: number) {
       try {
         const {
           data: { numUpdates }
@@ -195,6 +237,12 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
       actualTitle,
       actualDescription,
       siteUrl
+    }: {
+      slideId: number;
+      thumbUrl: string;
+      actualTitle: string;
+      actualDescription: string;
+      siteUrl: string;
     }) {
       try {
         const {
@@ -209,7 +257,15 @@ export default function interactiveRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadThumbForInteractiveSlide({ slideId, file, path }) {
+    async uploadThumbForInteractiveSlide({
+      slideId,
+      file,
+      path
+    }: {
+      slideId: number;
+      file: File;
+      path: string;
+    }) {
       const { data: url } = await request.post(
         `${URL}/interactive/slide/thumb`,
         {
