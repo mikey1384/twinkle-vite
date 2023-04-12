@@ -28,7 +28,7 @@ export default function InputPanel({ onInputModalButtonClick }) {
             event.currentTarget.blur();
             onInputModalButtonClick();
           }}
-          onClick={() => {
+          onClick={(event) => {
             event.currentTarget.blur();
             onInputModalButtonClick();
           }}
@@ -49,7 +49,7 @@ export default function InputPanel({ onInputModalButtonClick }) {
           `}
         />
         {inputModalShown && (
-          <InputModal onHide={() => onSetInputModalShown(false)} />
+          <InputModal onHide={() => onSetInputModalShown({ shown: false })} />
         )}
       </div>
     </ErrorBoundary>

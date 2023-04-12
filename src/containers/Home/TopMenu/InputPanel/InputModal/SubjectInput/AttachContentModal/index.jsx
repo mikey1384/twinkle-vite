@@ -41,7 +41,11 @@ export default function AttachContentModal({ onConfirm, onHide }) {
     <Modal
       modalOverModal
       large={section === 'selectVideo' || section === 'selectLink'}
-      onHide={onHide}
+      onHide={
+        section === 'selectVideo' || section === 'selectLink'
+          ? () => setSection('start')
+          : onHide
+      }
     >
       <header>{sectionObj[section].title}</header>
       <main>

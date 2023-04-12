@@ -570,7 +570,7 @@ function App() {
         onResetSubjectInput();
         onSetSubmittingSubject(false);
         onClearFileUploadProgress();
-        onSetInputModalShown(false);
+        onSetInputModalShown({ shown: false });
         onSetUploadingFile(false);
       } catch (error) {
         console.error(error);

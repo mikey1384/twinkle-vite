@@ -156,7 +156,9 @@ export default function Stories() {
     <ErrorBoundary componentPath="Home/Stories/index">
       <div style={{ width: '100%' }} ref={ContainerRef}>
         <TopMenu
-          onInputModalButtonClick={() => onSetInputModalShown(true)}
+          onInputModalButtonClick={(modalType) =>
+            onSetInputModalShown({ shown: true, modalType })
+          }
           onPlayAIStories={() => onSetAIStoriesModalShown(true)}
           onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
         />
