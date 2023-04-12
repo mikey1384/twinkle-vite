@@ -16,7 +16,7 @@ const auth = () => ({
   }
 });
 
-export default function requestHelpers(handleError: (error: Error) => void) {
+export default function requestHelpers(handleError: (error: unknown) => void) {
   return {
     auth,
     ...contentRequestHelpers({ auth, handleError }),

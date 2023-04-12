@@ -1,10 +1,21 @@
 import request from 'axios';
 import URL from '~/constants/URL';
+import { RequestHelpers } from './types';
 import { queryStringForArray, stringIsEmpty } from '~/helpers/stringHelpers';
+import { AxiosProgressEvent } from 'axios';
 
-export default function contentRequestHelpers({ auth, handleError }) {
+export default function contentRequestHelpers({
+  auth,
+  handleError
+}: RequestHelpers) {
   return {
-    async addVideoToPlaylists({ videoId, playlistIds }) {
+    async addVideoToPlaylists({
+      videoId,
+      playlistIds
+    }: {
+      videoId: number | string;
+      playlistIds: number[];
+    }) {
       try {
         await request.post(
           `${URL}/playlist/videoToPlaylists`,
@@ -16,14 +27,22 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async addVideoView(params) {
+    async addVideoView(params: object) {
       try {
         request.post(`${URL}/video/view`, params);
       } catch (error) {
         return handleError(error);
       }
     },
-    async checkContentUrl({ url, videoCode, contentType }) {
+    async checkContentUrl({
+      url,
+      videoCode,
+      contentType
+    }: {
+      url: string;
+      videoCode?: string;
+      contentType: string;
+    }) {
       try {
         const {
           data: { exists, content, ytDetails }
@@ -43,7 +62,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async checkIfHomeOutdated({ lastInteraction, category, subFilter }) {
+    async checkIfHomeOutdated({
+      lastInteraction,
+      category,
+      subFilter
+    }: {
+      lastInteraction: number;
+      category: string;
+      subFilter: string;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/content/outdated?lastInteraction=${lastInteraction}&category=${category}&subFilter=${subFilter}`
@@ -53,7 +80,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async checkIfUserResponded(subjectId) {
+    async checkIfUserResponded(subjectId: number) {
       try {
         const {
           data: { responded }
@@ -84,7 +111,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async closeContent({ contentId, contentType }) {
+    async closeContent({
+      contentId,
+      contentType
+    }: {
+      contentId: number;
+      contentType: string;
+    }) {
       try {
         const {
           data: { isClosedBy, cannotChange, moderatorName }
@@ -98,7 +131,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async deleteContent({ id, contentType, undo }) {
+    async deleteContent({
+      id,
+      contentType,
+      undo
+    }: {
+      id: number;
+      contentType: string;
+      undo?: boolean;
+    }) {
       try {
         const {
           data: { success, isRecovered }
@@ -118,7 +159,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async deletePlaylist(playlistId) {
+    async deletePlaylist(playlistId: number) {
       try {
         await request.delete(
           `${URL}/playlist?playlistId=${playlistId}`,
@@ -137,6 +178,14 @@ export default function contentRequestHelpers({ auth, handleError }) {
       editedTitle,
       editedUrl,
       contentType
+    }: {
+      contentId: number;
+      editedComment?: string;
+      editedDescription?: string;
+      editedSecretAnswer?: string;
+      editedTitle?: string;
+      editedUrl?: string;
+      contentType: string;
     }) {
       try {
         const { data } = await request.put(
@@ -157,7 +206,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async editPlaylistTitle(params) {
+    async editPlaylistTitle(params: object) {
       try {
         const {
           data: { title }
@@ -167,7 +216,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async editPlaylistVideos({ addedVideoIds, removedVideoIds, playlistId }) {
+    async editPlaylistVideos({
+      addedVideoIds,
+      removedVideoIds,
+      playlistId
+    }: {
+      addedVideoIds: number[];
+      removedVideoIds: number[];
+      playlistId: number;
+    }) {
       try {
         const { data: playlist } = await request.put(
           `${URL}/playlist/videos`,
@@ -179,7 +236,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async fetchPlaylistsContaining({ videoId }) {
+    async fetchPlaylistsContaining({ videoId }: { videoId: number }) {
       try {
         const { data: playlists } = await request.get(
           `${URL}/playlist/containing?videoId=${videoId}`
@@ -189,7 +246,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async fetchUrlEmbedData(url) {
+    async fetchUrlEmbedData(url: string) {
       try {
         const { data } = await request.get(`${URL}/content/embed?url=${url}`);
         return Promise.resolve(data);
@@ -197,7 +254,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async finishWatchingVideo(videoId) {
+    async finishWatchingVideo(videoId: number) {
       try {
         const { data } = await request.put(
           `${URL}/video/finish`,
@@ -209,7 +266,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async likeContent({ id, contentType }) {
+    async likeContent({
+      id,
+      contentType
+    }: {
+      id: number;
+      contentType: string;
+    }) {
       try {
         const {
           data: { likes }
@@ -223,7 +286,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadAICards(lastInteraction) {
+    async loadAICards(lastInteraction: number) {
       try {
         const {
           data: { cards, loadMoreShown, numCards }
@@ -237,7 +300,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadFilteredAICards({ lastInteraction, filters }) {
+    async loadFilteredAICards({
+      lastInteraction,
+      filters
+    }: {
+      lastInteraction: number;
+      filters: { [key: string]: string };
+    }) {
       try {
         const filterString = Object.keys(filters)
           .map((key) => `${key}=${filters[key]}`)
@@ -261,6 +330,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
       limit,
       isRepliesOfReply,
       isPreview
+    }: {
+      contentId: number;
+      contentType: string;
+      lastCommentId?: number;
+      limit?: number;
+      isRepliesOfReply?: boolean;
+      isPreview?: boolean;
     }) {
       try {
         const {
@@ -280,6 +356,11 @@ export default function contentRequestHelpers({ auth, handleError }) {
       contentType,
       lastCommentId,
       posterId
+    }: {
+      contentId: number;
+      contentType: string;
+      lastCommentId?: number;
+      posterId: number;
     }) {
       try {
         const {
@@ -294,7 +375,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadContent({ contentId, contentType, isPinnedComment }) {
+    async loadContent({
+      contentId,
+      contentType,
+      isPinnedComment
+    }: {
+      contentId: number;
+      contentType: string;
+      isPinnedComment?: boolean;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/content?contentId=${contentId}&contentType=${contentType}${
@@ -306,7 +395,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadContinueWatching(lastTimeStamp) {
+    async loadContinueWatching(lastTimeStamp: number) {
       try {
         const {
           data: { videos, loadMoreButton, noVideosToContinue }
@@ -350,6 +439,16 @@ export default function contentRequestHelpers({ auth, handleError }) {
       order = 'desc',
       orderBy = 'lastInteraction',
       username
+    }: {
+      lastFeedId?: number;
+      lastTimeStamp?: string;
+      lastRewardLevel?: number;
+      lastViewDuration?: number;
+      isRecommended?: boolean;
+      filter?: string;
+      order?: string;
+      orderBy?: string;
+      username?: string;
     } = {}) {
       try {
         const { data } = await request.get(
@@ -367,7 +466,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadAIStoryTopic(difficulty) {
+    async loadAIStoryTopic(difficulty: number) {
       try {
         const {
           data: { topic, topicKey, type }
@@ -380,7 +479,17 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadAIStory({ difficulty, topic, topicKey, type }) {
+    async loadAIStory({
+      difficulty,
+      topic,
+      topicKey,
+      type
+    }: {
+      difficulty: number;
+      topic: string;
+      topicKey: string;
+      type: string;
+    }) {
       try {
         const {
           data: { imageUrl, attemptId, storyObj }
@@ -393,7 +502,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadAIStoryQuestions({ difficulty, story, storyId }) {
+    async loadAIStoryQuestions({
+      difficulty,
+      story,
+      storyId
+    }: {
+      difficulty: number;
+      story: string;
+      storyId: string;
+    }) {
       try {
         const {
           data: { questions }
@@ -406,7 +523,17 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadAIStoryAttempt({ attemptId, difficulty, result, isPassed }) {
+    async uploadAIStoryAttempt({
+      attemptId,
+      difficulty,
+      result,
+      isPassed
+    }: {
+      attemptId: number;
+      difficulty: number;
+      result: number;
+      isPassed: boolean;
+    }) {
       try {
         const {
           data: { newXp, newCoins }
@@ -473,6 +600,11 @@ export default function contentRequestHelpers({ auth, handleError }) {
       lastFeedId,
       lastTimeStamp,
       username
+    }: {
+      filter?: string;
+      lastFeedId?: number;
+      lastTimeStamp?: number;
+      username?: string;
     } = {}) {
       try {
         const { data } = await request.get(
@@ -493,6 +625,11 @@ export default function contentRequestHelpers({ auth, handleError }) {
       lastTimeStamp,
       section = 'all',
       username
+    }: {
+      lastFeedId?: number;
+      lastTimeStamp?: number;
+      section?: string;
+      username?: string;
     } = {}) {
       try {
         const { data } = await request.get(
@@ -538,7 +675,17 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async markPostAsSkipped({ earnType, action, contentType, contentId }) {
+    async markPostAsSkipped({
+      earnType,
+      action,
+      contentType,
+      contentId
+    }: {
+      earnType: string;
+      action: string;
+      contentType: string;
+      contentId: number;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/content/earn/skip`,
@@ -550,7 +697,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMorePlaylistList(playlistId) {
+    async loadMorePlaylistList(playlistId: number) {
       try {
         const { data } = await request.get(
           `${URL}/playlist/list?playlistId=${playlistId}`
@@ -560,7 +707,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadMoreNotableContents({ userId, lastFeedId }) {
+    async loadMoreNotableContents({
+      userId,
+      lastFeedId
+    }: {
+      userId: number;
+      lastFeedId: number;
+    }) {
       try {
         const {
           data: { results, loadMoreButton }
@@ -572,7 +725,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadNotableContent({ userId }) {
+    async loadNotableContent({ userId }: { userId: number }) {
       try {
         const {
           data: { results, loadMoreButton }
@@ -584,7 +737,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadNewFeeds({ lastInteraction }) {
+    async loadNewFeeds({ lastInteraction }: { lastInteraction: number }) {
       try {
         const { data } = await request.get(
           `${URL}/content/newFeeds?lastInteraction=${lastInteraction}`
@@ -594,7 +747,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadPlaylistList(playlistId) {
+    async loadPlaylistList(playlistId: number) {
       try {
         const { data } = await request.get(
           `${URL}/playlist/list${playlistId ? `?playlistId=${playlistId}` : ''}`
@@ -604,7 +757,11 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadPlaylists({ shownPlaylists } = {}) {
+    async loadPlaylists({
+      shownPlaylists
+    }: {
+      shownPlaylists?: number[];
+    } = {}) {
       try {
         const {
           data: { results, loadMoreButton }
@@ -625,7 +782,17 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadPlaylistVideos({ limit, shownVideos, targetVideos, playlistId }) {
+    async loadPlaylistVideos({
+      limit,
+      shownVideos,
+      targetVideos,
+      playlistId
+    }: {
+      limit: number;
+      shownVideos?: number[];
+      targetVideos?: number[];
+      playlistId: number;
+    }) {
       try {
         const {
           data: { title, videos, loadMoreButton }
@@ -660,6 +827,11 @@ export default function contentRequestHelpers({ auth, handleError }) {
       commentId,
       isReverse,
       isLoadingRepliesOfReply
+    }: {
+      lastReplyId?: number;
+      commentId: number;
+      isReverse?: boolean;
+      isLoadingRepliesOfReply?: boolean;
     }) {
       try {
         const { data } = await request.get(
@@ -674,7 +846,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadRightMenuVideos({ playlistId, videoId, isContinuing }) {
+    async loadRightMenuVideos({
+      playlistId,
+      videoId,
+      isContinuing
+    }: {
+      playlistId?: number;
+      videoId: number;
+      isContinuing?: boolean;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/${
@@ -689,7 +869,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadSubjects({ contentType, contentId, lastSubjectId }) {
+    async loadSubjects({
+      contentType,
+      contentId,
+      lastSubjectId
+    }: {
+      contentType: string;
+      contentId: number;
+      lastSubjectId?: number;
+    }) {
       try {
         const {
           data: { results, loadMoreButton }
@@ -701,7 +889,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadByUserUploads({ contentType, lastId, limit }) {
+    async loadByUserUploads({
+      contentType,
+      lastId,
+      limit
+    }: {
+      contentType: string;
+      lastId?: number;
+      limit: number;
+    }) {
       try {
         const {
           data: { results, loadMoreButton }
@@ -720,6 +916,11 @@ export default function contentRequestHelpers({ auth, handleError }) {
       lastRecommendationId,
       lastInteraction,
       contentType
+    }: {
+      limit: number;
+      lastRecommendationId?: number;
+      lastInteraction?: number;
+      contentType: string;
     }) {
       try {
         const {
@@ -742,6 +943,12 @@ export default function contentRequestHelpers({ auth, handleError }) {
       includeRoot,
       excludeContentIds = [],
       contentType
+    }: {
+      limit: number;
+      contentId: number;
+      includeRoot?: boolean;
+      excludeContentIds?: number[];
+      contentType: string;
     }) {
       try {
         const {
@@ -761,7 +968,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async makeThumbnailSecure({ contentId, contentType, thumbUrl }) {
+    async makeThumbnailSecure({
+      contentId,
+      contentType,
+      thumbUrl
+    }: {
+      contentId: number;
+      contentType: string;
+      thumbUrl: string;
+    }) {
       try {
         const { data } = await request.put(
           `${URL}/content/thumb/secure`,
@@ -773,7 +988,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadVideoCurrentTime(videoId) {
+    async loadVideoCurrentTime(videoId: number) {
       try {
         const {
           data: { currentTime, userViewDuration }
@@ -786,7 +1001,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadVideoWatchPercentage(videoId) {
+    async loadVideoWatchPercentage(videoId: number) {
       try {
         const {
           data: { percentage }
@@ -805,6 +1020,12 @@ export default function contentRequestHelpers({ auth, handleError }) {
       currentRecommendations,
       rewardDisabled,
       uploaderId
+    }: {
+      contentId: number;
+      contentType: string;
+      currentRecommendations: number[];
+      rewardDisabled: boolean;
+      uploaderId: number;
     }) {
       try {
         const {
@@ -829,6 +1050,10 @@ export default function contentRequestHelpers({ auth, handleError }) {
       originalVideoIds,
       reorderedVideoIds,
       playlistId
+    }: {
+      originalVideoIds: number[];
+      reorderedVideoIds: number[];
+      playlistId: number;
     }) {
       try {
         const { data: playlist } = await request.put(
@@ -841,7 +1066,17 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async searchContent({ filter, limit, searchText, shownResults }) {
+    async searchContent({
+      filter,
+      limit,
+      searchText,
+      shownResults
+    }: {
+      filter: string;
+      limit: number;
+      searchText: string;
+      shownResults?: number[];
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/content/search?filter=${filter}&limit=${limit}&searchText=${searchText}${
@@ -859,7 +1094,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async searchAICardWords(word) {
+    async searchAICardWords(word: string) {
       try {
         const { data: words } = await request.get(
           `${URL}/ai-card/search/word?word=${word}`
@@ -869,7 +1104,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async setByUser({ contentType, contentId }) {
+    async setByUser({
+      contentType,
+      contentId
+    }: {
+      contentType: string;
+      contentId: number;
+    }) {
       try {
         const {
           data: { byUser, cannotChange, moderatorName }
@@ -883,7 +1124,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateCommentPinStatus({ commentId, contentType, contentId }) {
+    async updateCommentPinStatus({
+      commentId,
+      contentType,
+      contentId
+    }: {
+      commentId: number;
+      contentType: string;
+      contentId: number;
+    }) {
       try {
         const { data } = await request.put(
           `${URL}/content/pin`,
@@ -895,7 +1144,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateRewardLevel({ rewardLevel, contentId, contentType }) {
+    async updateRewardLevel({
+      rewardLevel,
+      contentId,
+      contentType
+    }: {
+      rewardLevel: number;
+      contentId: number;
+      contentType: string;
+    }) {
       try {
         const {
           data: { cannotChange, success, moderatorName }
@@ -909,7 +1166,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async checkCurrentlyWatchingAnotherVideo({ rewardLevel, watchCode }) {
+    async checkCurrentlyWatchingAnotherVideo({
+      rewardLevel,
+      watchCode
+    }: {
+      rewardLevel: number;
+      watchCode: string;
+    }) {
       try {
         const {
           data: { currentlyWatchingAnotherVideo }
@@ -922,7 +1185,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateTotalViewDuration({ videoId, currentTime, totalTime }) {
+    async updateTotalViewDuration({
+      videoId,
+      currentTime,
+      totalTime
+    }: {
+      videoId: number;
+      currentTime: number;
+      totalTime: number;
+    }) {
       try {
         await request.put(
           `${URL}/video/duration`,
@@ -950,6 +1221,18 @@ export default function contentRequestHelpers({ auth, handleError }) {
       fileSize,
       isNotification,
       thumbUrl
+    }: {
+      content: string;
+      parent: object;
+      rootCommentId: number;
+      subjectId: number;
+      targetCommentId: number;
+      attachment: object;
+      filePath: string;
+      fileName: string;
+      fileSize: number;
+      isNotification: boolean;
+      thumbUrl: string;
     }) {
       try {
         const { data } = await request.post(
@@ -993,6 +1276,25 @@ export default function contentRequestHelpers({ auth, handleError }) {
       secretAttachmentThumbUrl,
       thumbUrl,
       ytDetails
+    }: {
+      byUser: boolean;
+      url: string;
+      isVideo: boolean;
+      title: string;
+      description: string;
+      fileName: string;
+      filePath: string;
+      fileSize: number;
+      rewardLevel: number;
+      rootId: number;
+      rootType: string;
+      secretAnswer: string;
+      secretAttachmentFilePath: string;
+      secretAttachmentFileName: string;
+      secretAttachmentFileSize: number;
+      secretAttachmentThumbUrl: string;
+      thumbUrl: string;
+      ytDetails: object;
     }) {
       try {
         const { data } = await request.post(
@@ -1024,7 +1326,11 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadFeaturedPlaylists({ selectedPlaylists }) {
+    async uploadFeaturedPlaylists({
+      selectedPlaylists
+    }: {
+      selectedPlaylists: number[];
+    }) {
       try {
         const {
           data: { playlists }
@@ -1038,7 +1344,7 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadFeaturedSubjects({ selected }) {
+    async uploadFeaturedSubjects({ selected }: { selected: number[] }) {
       try {
         const { data: subjects } = await request.post(
           `${URL}/content/featured/subjects`,
@@ -1050,7 +1356,13 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadGrammarGameResult({ attemptNumber, scoreArray }) {
+    async uploadGrammarGameResult({
+      attemptNumber,
+      scoreArray
+    }: {
+      attemptNumber: number;
+      scoreArray: number[];
+    }) {
       try {
         const {
           data: { newXp, newCoins, isDuplicate }
@@ -1064,7 +1376,20 @@ export default function contentRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async uploadQuestions({ questions, videoId }) {
+    async uploadQuestions({
+      questions,
+      videoId
+    }: {
+      questions: {
+        title: string;
+        choiceIds: number[];
+        choicesObj: {
+          [key: number]: string;
+        };
+        correctChoice: number;
+      }[];
+      videoId: number;
+    }) {
       const data = {
         videoId,
         questions: questions.map((question) => {
@@ -1112,6 +1437,12 @@ export default function contentRequestHelpers({ auth, handleError }) {
       file,
       fileName,
       onUploadProgress
+    }: {
+      context?: string;
+      filePath: string;
+      file: File;
+      fileName?: string;
+      onUploadProgress?: (progressEvent: AxiosProgressEvent) => void;
     }) {
       const { data: url } = await request.get(
         `${URL}/content/sign-s3?fileSize=${
@@ -1133,7 +1464,15 @@ export default function contentRequestHelpers({ auth, handleError }) {
       });
       return Promise.resolve(url?.url?.split('.com')?.[1]);
     },
-    async uploadPlaylist({ title, description, selectedVideos }) {
+    async uploadPlaylist({
+      title,
+      description,
+      selectedVideos
+    }: {
+      title: string;
+      description: string;
+      selectedVideos: number[];
+    }) {
       try {
         const {
           data: { result }
@@ -1158,6 +1497,17 @@ export default function contentRequestHelpers({ auth, handleError }) {
       secretAttachmentFileName,
       secretAttachmentFileSize,
       secretAttachmentThumbUrl
+    }: {
+      contentType: string;
+      contentId: number;
+      title: string;
+      description: string;
+      rewardLevel: number;
+      secretAnswer: string;
+      secretAttachmentFilePath: string;
+      secretAttachmentFileName: string;
+      secretAttachmentFileSize: number;
+      secretAttachmentThumbUrl: string;
     }) {
       try {
         const { data } = await request.post(
@@ -1187,6 +1537,12 @@ export default function contentRequestHelpers({ auth, handleError }) {
       file,
       isSecretAttachment,
       path
+    }: {
+      contentId: number;
+      contentType: string;
+      file: File;
+      isSecretAttachment: boolean;
+      path: string;
     }) {
       const { data: url } = await request.post(`${URL}/content/thumb`, {
         fileSize: file.size,
