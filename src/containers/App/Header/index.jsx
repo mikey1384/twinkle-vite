@@ -757,7 +757,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       isClass,
       pathId
     }) {
-      let duplicate = false;
+      let isDuplicate = false;
       if (selectedChannelId === 0) {
         if (
           members.filter((member) => member.userId !== userId)[0].userId ===
@@ -765,13 +765,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
             (member) => member.userId !== userId
           )[0].userId
         ) {
-          duplicate = true;
+          isDuplicate = true;
         }
       }
       socket.emit('join_chat_group', message.channelId);
       onReceiveFirstMsg({
         message,
-        duplicate,
+        isDuplicate,
         isTwoPeople,
         isClass,
         pageVisible,

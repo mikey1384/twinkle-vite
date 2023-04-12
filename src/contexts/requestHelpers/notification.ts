@@ -1,6 +1,6 @@
 import request from 'axios';
 import URL from '~/constants/URL';
-import { RequestHelpers } from './types';
+import { RequestHelpers } from '../types';
 import { clientVersion } from '~/constants/defaultValues';
 
 export default function notificationRequestHelpers({

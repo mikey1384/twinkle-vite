@@ -1,6 +1,6 @@
-export default function ChatActions(
-  dispatch: (action: { type: string; [key: string]: any }) => void
-) {
+import { Dispatch } from '../types';
+
+export default function ChatActions(dispatch: Dispatch) {
   return {
     onAddReactionToMessage({
       channelId,
@@ -52,21 +52,41 @@ export default function ChatActions(
         isOnline
       });
     },
-    onChangeAwayStatus({ userId, isAway }) {
+    onChangeAwayStatus({
+      userId,
+      isAway
+    }: {
+      userId: number;
+      isAway: boolean;
+    }) {
       return dispatch({
         type: 'CHANGE_AWAY_STATUS',
         userId,
         isAway
       });
     },
-    onChangeBusyStatus({ userId, isBusy }) {
+    onChangeBusyStatus({
+      userId,
+      isBusy
+    }: {
+      userId: number;
+      isBusy: boolean;
+    }) {
       return dispatch({
         type: 'CHANGE_BUSY_STATUS',
         userId,
         isBusy
       });
     },
-    onChangeChannelOwner({ channelId, message, newOwner }) {
+    onChangeChannelOwner({
+      channelId,
+      message,
+      newOwner
+    }: {
+      channelId: number;
+      message: string;
+      newOwner: number;
+    }) {
       return dispatch({
         type: 'CHANGE_CHANNEL_OWNER',
         channelId,
@@ -79,6 +99,11 @@ export default function ChatActions(
       channelId,
       channelName,
       isClosed
+    }: {
+      canChangeSubject: boolean;
+      channelId: number;
+      channelName: string;
+      isClosed: boolean;
     }) {
       return dispatch({
         type: 'CHANGE_CHANNEL_SETTINGS',
@@ -88,7 +113,15 @@ export default function ChatActions(
         isClosed
       });
     },
-    onChangeChatSubject({ subject, channelId, subchannelId }) {
+    onChangeChatSubject({
+      subject,
+      channelId,
+      subchannelId
+    }: {
+      subject: string;
+      channelId: number;
+      subchannelId: number;
+    }) {
       return dispatch({
         type: 'CHANGE_SUBJECT',
         subject,
@@ -101,13 +134,19 @@ export default function ChatActions(
         type: 'CLEAR_NUM_UNREADS'
       });
     },
-    onClearRecentChessMessage(channelId) {
+    onClearRecentChessMessage(channelId: number) {
       return dispatch({
         type: 'CLEAR_RECENT_CHESS_MESSAGE',
         channelId
       });
     },
-    onClearSubchannelUnreads({ channelId, subchannelId }) {
+    onClearSubchannelUnreads({
+      channelId,
+      subchannelId
+    }: {
+      channelId: number;
+      subchannelId: number;
+    }) {
       return dispatch({
         type: 'CLEAR_SUBCHANNEL_UNREADS',
         channelId,
@@ -129,13 +168,21 @@ export default function ChatActions(
         type: 'CLEAR_USER_SEARCH_RESULTS'
       });
     },
-    onCreateNewChannel(data) {
+    onCreateNewChannel(data: object) {
       return dispatch({
         type: 'CREATE_NEW_CHANNEL',
         data
       });
     },
-    onDeleteMessage({ messageId, channelId, subchannelId }) {
+    onDeleteMessage({
+      messageId,
+      channelId,
+      subchannelId
+    }: {
+      messageId: number;
+      channelId: number;
+      subchannelId: number;
+    }) {
       return dispatch({
         type: 'DELETE_MESSAGE',
         channelId,
@@ -155,6 +202,18 @@ export default function ChatActions(
       subchannelId,
       uploaderAuthLevel,
       thumbUrl
+    }: {
+      id: number;
+      channelId: number;
+      chessState: object;
+      filePath: string;
+      fileSize: number;
+      userId: number;
+      username: string;
+      profilePicUrl: string;
+      subchannelId: number;
+      uploaderAuthLevel: number;
+      thumbUrl: string;
     }) {
       return dispatch({
         type: 'DISPLAY_ATTACHED_FILE',
@@ -179,6 +238,12 @@ export default function ChatActions(
       channelId,
       canChangeSubject,
       theme
+    }: {
+      channelName: string;
+      isClosed: boolean;
+      channelId: number;
+      canChangeSubject: boolean;
+      theme: string;
     }) {
       return dispatch({
         type: 'EDIT_CHANNEL_SETTINGS',
@@ -196,6 +261,13 @@ export default function ChatActions(
       isSubject,
       subchannelId,
       subjectChanged
+    }: {
+      editedMessage: string;
+      channelId: number;
+      messageId: number;
+      isSubject: boolean;
+      subchannelId: number;
+      subjectChanged: boolean;
     }) {
       return dispatch({
         type: 'EDIT_MESSAGE',
@@ -207,7 +279,17 @@ export default function ChatActions(
         subjectChanged
       });
     },
-    onEditWord({ deletedDefIds, partOfSpeeches, editedDefinitionOrder, word }) {
+    onEditWord({
+      deletedDefIds,
+      partOfSpeeches,
+      editedDefinitionOrder,
+      word
+    }: {
+      deletedDefIds: number[];
+      partOfSpeeches: string[];
+      editedDefinitionOrder: number[];
+      word: string;
+    }) {
       return dispatch({
         type: 'EDIT_WORD',
         deletedDefIds,
@@ -216,20 +298,20 @@ export default function ChatActions(
         word
       });
     },
-    onEnableChatSubject(channelId) {
+    onEnableChatSubject(channelId: number) {
       return dispatch({
         type: 'ENABLE_CHAT_SUBJECT',
         channelId
       });
     },
-    onEnableTheme({ channelId, theme }) {
+    onEnableTheme({ channelId, theme }: { channelId: number; theme: string }) {
       return dispatch({
         type: 'ENABLE_THEME',
         channelId,
         theme
       });
     },
-    onEnterChannelWithId(data) {
+    onEnterChannelWithId(data: object) {
       return dispatch({
         type: 'ENTER_CHANNEL',
         data
@@ -240,13 +322,21 @@ export default function ChatActions(
         type: 'ENTER_EMPTY_CHAT'
       });
     },
-    onGetNumberOfUnreadMessages(numUnreads) {
+    onGetNumberOfUnreadMessages(numUnreads: number) {
       return dispatch({
         type: 'GET_NUM_UNREAD_MSGS',
         numUnreads
       });
     },
-    onHangUp({ iHungUp, memberId, peerId }) {
+    onHangUp({
+      iHungUp,
+      memberId,
+      peerId
+    }: {
+      iHungUp: boolean;
+      memberId: number;
+      peerId: string;
+    }) {
       return dispatch({
         type: 'HANG_UP',
         memberId,
@@ -254,7 +344,15 @@ export default function ChatActions(
         peerId
       });
     },
-    onHideAttachment({ messageId, channelId, subchannelId }) {
+    onHideAttachment({
+      messageId,
+      channelId,
+      subchannelId
+    }: {
+      messageId: number;
+      channelId: number;
+      subchannelId: number;
+    }) {
       return dispatch({
         type: 'HIDE_ATTACHMENT',
         channelId,
@@ -262,45 +360,59 @@ export default function ChatActions(
         subchannelId
       });
     },
-    onHideChat(channelId) {
+    onHideChat(channelId: number) {
       return dispatch({
         type: 'HIDE_CHAT',
         channelId
       });
     },
-    onInitChat(data) {
+    onInitChat(data: object) {
       return dispatch({
         type: 'INIT_CHAT',
         data
       });
     },
-    onInviteUsersToChannel(data) {
+    onInviteUsersToChannel(data: object) {
       return dispatch({
         type: 'INVITE_USERS_TO_CHANNEL',
         data
       });
     },
-    onLeaveChannel({ channelId, userId }) {
+    onLeaveChannel({
+      channelId,
+      userId
+    }: {
+      channelId: number;
+      userId: number;
+    }) {
       return dispatch({
         type: 'LEAVE_CHANNEL',
         channelId,
         userId
       });
     },
-    onDelistAICard(cardId) {
+    onDelistAICard(cardId: number) {
       return dispatch({
         type: 'DELIST_AI_CARD',
         cardId
       });
     },
-    onListAICard({ card, price }) {
+    onListAICard({ card, price }: { card: object; price: number }) {
       return dispatch({
         type: 'LIST_AI_CARD',
         card,
         price
       });
     },
-    onLoadMoreChannelMembers({ channelId, members, loadMoreShown }) {
+    onLoadMoreChannelMembers({
+      channelId,
+      members,
+      loadMoreShown
+    }: {
+      channelId: number;
+      members: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_CHANNEL_MEMBERS',
         channelId,
@@ -308,37 +420,43 @@ export default function ChatActions(
         loadMoreShown
       });
     },
-    onAddListedAICard(card) {
+    onAddListedAICard(card: object) {
       return dispatch({
         type: 'ADD_LISTED_AI_CARD',
         card
       });
     },
-    onAddMyAICard(card) {
+    onAddMyAICard(card: object) {
       return dispatch({
         type: 'ADD_MY_AI_CARD',
         card
       });
     },
-    onRemoveListedAICard(cardId) {
+    onRemoveListedAICard(cardId: number) {
       return dispatch({
         type: 'REMOVE_LISTED_AI_CARD',
         cardId
       });
     },
-    onRemoveMyAICard(cardId) {
+    onRemoveMyAICard(cardId: number) {
       return dispatch({
         type: 'REMOVE_MY_AI_CARD',
         cardId
       });
     },
-    onLoadChatSubject(data) {
+    onLoadChatSubject(data: object) {
       return dispatch({
         type: 'LOAD_SUBJECT',
         data
       });
     },
-    onLoadMoreChannels({ type, channels }) {
+    onLoadMoreChannels({
+      type,
+      channels
+    }: {
+      type: string;
+      channels: object[];
+    }) {
       return dispatch({
         type: 'LOAD_MORE_CHANNELS',
         channelType: type,
@@ -350,6 +468,11 @@ export default function ChatActions(
       messagesObj,
       loadedChannelId,
       loadedSubchannelId
+    }: {
+      messageIds: number[];
+      messagesObj: object;
+      loadedChannelId: number;
+      loadedSubchannelId: number;
     }) {
       return dispatch({
         type: 'LOAD_MORE_MESSAGES',
@@ -364,6 +487,11 @@ export default function ChatActions(
       cardObj,
       loadMoreShown,
       numCardSummonedToday
+    }: {
+      cardFeeds: object[];
+      cardObj: object;
+      loadMoreShown: boolean;
+      numCardSummonedToday: number;
     }) {
       return dispatch({
         type: 'LOAD_AI_CARD_CHAT',
@@ -373,7 +501,15 @@ export default function ChatActions(
         numCardSummonedToday
       });
     },
-    onLoadMoreAICards({ cardFeeds, cardObj, loadMoreShown }) {
+    onLoadMoreAICards({
+      cardFeeds,
+      cardObj,
+      loadMoreShown
+    }: {
+      cardFeeds: object[];
+      cardObj: object;
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_AI_CARDS',
         cardFeeds,
@@ -381,77 +517,145 @@ export default function ChatActions(
         loadMoreShown
       });
     },
-    onLoadIncomingOffers({ offers, loadMoreShown }) {
+    onLoadIncomingOffers({
+      offers,
+      loadMoreShown
+    }: {
+      offers: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_INCOMING_OFFERS',
         offers,
         loadMoreShown
       });
     },
-    onLoadOutgoingOffers({ offers, loadMoreShown }) {
+    onLoadOutgoingOffers({
+      offers,
+      loadMoreShown
+    }: {
+      offers: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_OUTGOING_OFFERS',
         offers,
         loadMoreShown
       });
     },
-    onLoadMoreIncomingOffers({ offers, loadMoreShown }) {
+    onLoadMoreIncomingOffers({
+      offers,
+      loadMoreShown
+    }: {
+      offers: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_INCOMING_OFFERS',
         offers,
         loadMoreShown
       });
     },
-    onLoadMoreOutgoingOffers({ offers, loadMoreShown }) {
+    onLoadMoreOutgoingOffers({
+      offers,
+      loadMoreShown
+    }: {
+      offers: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_OUTGOING_OFFERS',
         offers,
         loadMoreShown
       });
     },
-    onLoadListedAICards({ cards, loadMoreShown }) {
+    onLoadListedAICards({
+      cards,
+      loadMoreShown
+    }: {
+      cards: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_LISTED_AI_CARDS',
         cards,
         loadMoreShown
       });
     },
-    onLoadMoreListedAICards({ cards, loadMoreShown }) {
+    onLoadMoreListedAICards({
+      cards,
+      loadMoreShown
+    }: {
+      cards: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_LISTED_AI_CARDS',
         cards,
         loadMoreShown
       });
     },
-    onLoadMyAICards({ cards, loadMoreShown }) {
+    onLoadMyAICards({
+      cards,
+      loadMoreShown
+    }: {
+      cards: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MY_AI_CARDS',
         cards,
         loadMoreShown
       });
     },
-    onLoadMoreMyAICards({ cards, loadMoreShown }) {
+    onLoadMoreMyAICards({
+      cards,
+      loadMoreShown
+    }: {
+      cards: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_MY_AI_CARDS',
         cards,
         loadMoreShown
       });
     },
-    onLoadMyListedAICards({ cards, loadMoreShown }) {
+    onLoadMyListedAICards({
+      cards,
+      loadMoreShown
+    }: {
+      cards: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MY_LISTED_AI_CARDS',
         cards,
         loadMoreShown
       });
     },
-    onLoadMoreMyListedAICards({ cards, loadMoreShown }) {
+    onLoadMoreMyListedAICards({
+      cards,
+      loadMoreShown
+    }: {
+      cards: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_MY_LISTED_AI_CARDS',
         cards,
         loadMoreShown
       });
     },
-    onPostAICardFeed({ feed, isSummon, card }) {
+    onPostAICardFeed({
+      feed,
+      isSummon,
+      card
+    }: {
+      feed: object;
+      isSummon: boolean;
+      card: object;
+    }) {
       return dispatch({
         type: 'POST_AI_CARD_FEED',
         isSummon,
@@ -459,7 +663,15 @@ export default function ChatActions(
         card
       });
     },
-    onLoadVocabulary({ vocabActivities, wordsObj, wordCollectors }) {
+    onLoadVocabulary({
+      vocabActivities,
+      wordsObj,
+      wordCollectors
+    }: {
+      vocabActivities: object[];
+      wordsObj: object;
+      wordCollectors: object;
+    }) {
       return dispatch({
         type: 'LOAD_VOCABULARY',
         vocabActivities,
@@ -467,7 +679,13 @@ export default function ChatActions(
         wordCollectors
       });
     },
-    onLoadMoreVocabulary({ vocabActivities, wordsObj }) {
+    onLoadMoreVocabulary({
+      vocabActivities,
+      wordsObj
+    }: {
+      vocabActivities: object[];
+      wordsObj: object;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_VOCABULARY',
         vocabActivities,
@@ -479,6 +697,11 @@ export default function ChatActions(
       userId,
       username,
       profilePicUrl
+    }: {
+      channelId: number;
+      userId: number;
+      username: string;
+      profilePicUrl: string;
     }) {
       return dispatch({
         type: 'NOTIFY_MEMBER_LEFT',
@@ -488,7 +711,7 @@ export default function ChatActions(
         profilePicUrl
       });
     },
-    onOpenNewChatTab({ user, recipient }) {
+    onOpenNewChatTab({ user, recipient }: { user: object; recipient: object }) {
       return dispatch({
         type: 'OPEN_NEW_TAB',
         user,
@@ -502,6 +725,13 @@ export default function ChatActions(
       filePath,
       fileToUpload,
       subchannelId
+    }: {
+      channelId: number;
+      content: string;
+      fileName: string;
+      filePath: string;
+      fileToUpload: object;
+      subchannelId: number;
     }) {
       return dispatch({
         type: 'POST_FILE_UPLOAD_STATUS',
@@ -522,6 +752,13 @@ export default function ChatActions(
       messageId,
       path,
       result
+    }: {
+      channelId: number;
+      subchannelId: number;
+      tempMessageId: number;
+      messageId: number;
+      path: string;
+      result: object;
     }) {
       return dispatch({
         type: 'POST_UPLOAD_COMPLETE',
@@ -539,6 +776,12 @@ export default function ChatActions(
       newMembers = [],
       usingChat,
       currentSubchannelId
+    }: {
+      pageVisible: boolean;
+      message: object;
+      newMembers: object[];
+      usingChat: boolean;
+      currentSubchannelId: number;
     }) {
       return dispatch({
         type: 'RECEIVE_MESSAGE',
@@ -556,14 +799,21 @@ export default function ChatActions(
       message,
       isClass,
       isTwoPeople,
-      duplicate,
+      isDuplicate,
       pageVisible,
       pathId
+    }: {
+      message: object;
+      isClass: boolean;
+      isTwoPeople: boolean;
+      isDuplicate: boolean;
+      pageVisible: boolean;
+      pathId: number;
     }) {
       return dispatch({
         type: 'RECEIVE_FIRST_MSG',
         message,
-        duplicate,
+        isDuplicate,
         isClass,
         isTwoPeople,
         pageVisible,
@@ -577,6 +827,13 @@ export default function ChatActions(
       usingChat,
       isMyMessage,
       newMembers = []
+    }: {
+      message: object;
+      channel: object;
+      pageVisible: boolean;
+      usingChat: boolean;
+      isMyMessage: boolean;
+      newMembers: object[];
     }) {
       return dispatch({
         type: 'RECEIVE_MSG_ON_DIFF_CHANNEL',
@@ -588,27 +845,43 @@ export default function ChatActions(
         newMembers
       });
     },
-    onNewAICardSummon({ card, feed }) {
+    onNewAICardSummon({ card, feed }: { card: object; feed: object }) {
       return dispatch({
         type: 'RECEIVE_AI_CARD_SUMMON',
         card,
         feed
       });
     },
-    onReceiveVocabActivity({ activity, usingVocabSection }) {
+    onReceiveVocabActivity({
+      activity,
+      usingVocabSection
+    }: {
+      activity: object;
+      usingVocabSection: boolean;
+    }) {
       return dispatch({
         type: 'RECEIVE_VOCAB_ACTIVITY',
         activity,
         usingVocabSection
       });
     },
-    onRegisterWord(word) {
+    onRegisterWord(word: string) {
       return dispatch({
         type: 'REGISTER_WORD',
         word
       });
     },
-    onReloadChatSubject({ channelId, subchannelId, subject, message }) {
+    onReloadChatSubject({
+      channelId,
+      subchannelId,
+      subject,
+      message
+    }: {
+      channelId: number;
+      subchannelId: number;
+      subject: string;
+      message: object;
+    }) {
       return dispatch({
         type: 'RELOAD_SUBJECT',
         channelId,
@@ -623,6 +896,12 @@ export default function ChatActions(
       reaction,
       subchannelId,
       userId
+    }: {
+      channelId: number;
+      messageId: number;
+      reaction: string;
+      subchannelId: number;
+      userId: number;
     }) {
       return dispatch({
         type: 'REMOVE_REACTION_FROM_MESSAGE',
@@ -633,7 +912,7 @@ export default function ChatActions(
         userId
       });
     },
-    onRemoveNewActivityStatus(word) {
+    onRemoveNewActivityStatus(word: string) {
       return dispatch({
         type: 'REMOVE_NEW_ACTIVITY_STATUS',
         word
@@ -651,6 +930,13 @@ export default function ChatActions(
       subchannelId,
       timeStamp,
       tempMessageId
+    }: {
+      index: number;
+      messageId: number;
+      channelId: number;
+      subchannelId: number;
+      timeStamp: number;
+      tempMessageId: string;
     }) {
       return dispatch({
         type: 'ADD_ID_TO_NEW_MESSAGE',
@@ -662,59 +948,91 @@ export default function ChatActions(
         tempMessageId
       });
     },
-    onSearchChat(data) {
+    onSearchChat(data: object) {
       return dispatch({
         type: 'SEARCH',
         data
       });
     },
-    onSearchChatSubject(data) {
+    onSearchChatSubject(data: object) {
       return dispatch({
         type: 'SEARCH_SUBJECT',
         data
       });
     },
-    onSearchUserToInvite(data) {
+    onSearchUserToInvite(data: object) {
       return dispatch({
         type: 'SEARCH_USERS_FOR_CHANNEL',
         data
       });
     },
-    onSelectChatTab(selectedChatTab) {
+    onSelectChatTab(selectedChatTab: string) {
       return dispatch({
         type: 'SELECT_CHAT_TAB',
         selectedChatTab
       });
     },
-    onSendFirstDirectMessage({ channel, message }) {
+    onSendFirstDirectMessage({
+      channel,
+      message
+    }: {
+      channel: object;
+      message: object;
+    }) {
       return dispatch({
         type: 'CREATE_NEW_DM_CHANNEL',
         channel,
         message
       });
     },
-    onSetCall({ channelId, imCalling }) {
+    onSetCall({
+      channelId,
+      imCalling
+    }: {
+      channelId: number;
+      imCalling: boolean;
+    }) {
       return dispatch({
         type: 'SET_CALL',
         channelId,
         imCalling
       });
     },
-    onSetChannelState({ channelId, newState }) {
+    onSetChannelState({
+      channelId,
+      newState
+    }: {
+      channelId: number;
+      newState: object;
+    }) {
       return dispatch({
         type: 'SET_CHANNEL_STATE',
         channelId,
         newState
       });
     },
-    onSetChessGameState({ channelId, newState }) {
+    onSetChessGameState({
+      channelId,
+      newState
+    }: {
+      channelId: number;
+      newState: object;
+    }) {
       return dispatch({
         type: 'SET_CHESS_GAME_STATE',
         channelId,
         newState
       });
     },
-    onSetChatInvitationDetail({ messageId, channelId, channel }) {
+    onSetChatInvitationDetail({
+      messageId,
+      channelId,
+      channel
+    }: {
+      messageId: number;
+      channelId: number;
+      channel: object;
+    }) {
       return dispatch({
         type: 'SET_CHAT_INVITATION_DETAIL',
         messageId,
@@ -722,32 +1040,46 @@ export default function ChatActions(
         channel
       });
     },
-    onSetChessModalShown(shown) {
+    onSetChessModalShown(shown: boolean) {
       return dispatch({
         type: 'SET_CHESS_MODAL_SHOWN',
         shown
       });
     },
-    onSetCreatingNewDMChannel(creating) {
+    onSetCreatingNewDMChannel(creating: boolean) {
       return dispatch({
         type: 'SET_CREATING_NEW_DM_CHANNEL',
         creating
       });
     },
-    onSetCurrentChannelName(channelName) {
+    onSetCurrentChannelName(channelName: string) {
       return dispatch({
         type: 'SET_CURRENT_CHANNEL_NAME',
         channelName
       });
     },
-    onSetFavoriteChannel({ channelId, favorited }) {
+    onSetFavoriteChannel({
+      channelId,
+      favorited
+    }: {
+      channelId: number;
+      favorited: boolean;
+    }) {
       return dispatch({
         type: 'SET_FAVORITE_CHANNEL',
         channelId,
         favorited
       });
     },
-    onSetIsRespondingToSubject({ channelId, subchannelId, isResponding }) {
+    onSetIsRespondingToSubject({
+      channelId,
+      subchannelId,
+      isResponding
+    }: {
+      channelId: number;
+      subchannelId: number;
+      isResponding: boolean;
+    }) {
       return dispatch({
         type: 'SET_IS_RESPONDING_TO_SUBJECT',
         channelId,
@@ -755,25 +1087,33 @@ export default function ChatActions(
         isResponding
       });
     },
-    onSetLoadingVocabulary(loading) {
+    onSetLoadingVocabulary(loading: boolean) {
       return dispatch({
         type: 'SET_LOADING_VOCABULARY',
         loading
       });
     },
-    onSetLoadingAIImageChat(loading) {
+    onSetLoadingAIImageChat(loading: boolean) {
       return dispatch({
         type: 'SET_LOADING_AI_IMAGE_CHAT',
         loading
       });
     },
-    onSetMembersOnCall(members) {
+    onSetMembersOnCall(members: object[]) {
       return dispatch({
         type: 'SET_MEMBERS_ON_CALL',
         members
       });
     },
-    onSetMessageState({ channelId, messageId, newState }) {
+    onSetMessageState({
+      channelId,
+      messageId,
+      newState
+    }: {
+      channelId: number;
+      messageId: number;
+      newState: object;
+    }) {
       return dispatch({
         type: 'SET_MESSAGE_STATE',
         channelId,
@@ -781,13 +1121,13 @@ export default function ChatActions(
         newState
       });
     },
-    onSetMyStream(stream) {
+    onSetMyStream(stream: object) {
       return dispatch({
         type: 'SET_MY_STREAM',
         stream
       });
     },
-    onSetPeerStreams({ peerId, stream }) {
+    onSetPeerStreams({ peerId, stream }: { peerId: string; stream: object }) {
       return dispatch({
         type: 'SET_PEER_STREAMS',
         peerId,
@@ -799,7 +1139,15 @@ export default function ChatActions(
         type: 'SET_RECONNECTING'
       });
     },
-    onSetChessTarget({ channelId, messageId, target }) {
+    onSetChessTarget({
+      channelId,
+      messageId,
+      target
+    }: {
+      channelId: number;
+      messageId: number;
+      target: object;
+    }) {
       return dispatch({
         type: 'SET_CHESS_TARGET',
         channelId,
@@ -807,7 +1155,15 @@ export default function ChatActions(
         target
       });
     },
-    onSetReplyTarget({ channelId, subchannelId, target }) {
+    onSetReplyTarget({
+      channelId,
+      subchannelId,
+      target
+    }: {
+      channelId: number;
+      subchannelId: number;
+      target: object;
+    }) {
       return dispatch({
         type: 'SET_REPLY_TARGET',
         channelId,
@@ -815,64 +1171,82 @@ export default function ChatActions(
         target
       });
     },
-    onSetOnlineUsers({ channelId, onlineUsers }) {
+    onSetOnlineUsers({
+      channelId,
+      onlineUsers
+    }: {
+      channelId: number;
+      onlineUsers: object[];
+    }) {
       return dispatch({
         type: 'SET_ONLINE_USERS',
         channelId,
         onlineUsers
       });
     },
-    onSetSubchannel({ channelId, subchannel }) {
+    onSetSubchannel({
+      channelId,
+      subchannel
+    }: {
+      channelId: number;
+      subchannel: object;
+    }) {
       return dispatch({
         type: 'SET_SUBCHANNEL',
         channelId,
         subchannel
       });
     },
-    onSetSelectedSubchannelId(subchannelId) {
+    onSetSelectedSubchannelId(subchannelId: number) {
       return dispatch({
         type: 'SET_SELECTED_SUBCHANNEL_ID',
         subchannelId
       });
     },
-    onSetAICardStatusMessage(message) {
+    onSetAICardStatusMessage(message: string) {
       return dispatch({
         type: 'SET_AI_IMAGE_STATUS_MESSAGE',
         message
       });
     },
-    onSetIsGeneratingAICard(isGenerating) {
+    onSetIsGeneratingAICard(isGenerating: boolean) {
       return dispatch({
         type: 'SET_IS_GENERATING_AI_CARD',
         isGenerating
       });
     },
-    onSetVocabErrorMessage(message) {
+    onSetVocabErrorMessage(message: string) {
       return dispatch({
         type: 'SET_VOCAB_ERROR_MESSAGE',
         message
       });
     },
-    onSetWordleGuesses({ channelId, guesses }) {
+    onSetWordleGuesses({
+      channelId,
+      guesses
+    }: {
+      channelId: number;
+      guesses: string[];
+    }) {
       return dispatch({
         type: 'SET_WORDLE_GUESSES',
         channelId,
         guesses
       });
     },
-    onSetWordleModalShown(shown) {
+    onSetWordleModalShown(shown: boolean) {
       return dispatch({
         type: 'SET_WORDLE_MODAL_SHOWN',
         shown
       });
     },
-    onSetWordsObj(wordObj) {
+    onSetWordsObj(wordObj: object) {
       return dispatch({
         type: 'SET_WORDS_OBJECT',
         wordObj
       });
     },
-    onSetWordRegisterStatus(status) {
+    onSetWordRegisterStatus(status: string) {
       return dispatch({
         type: 'SET_WORD_REGISTER_STATUS',
         status
@@ -896,6 +1270,14 @@ export default function ChatActions(
       rewardReason,
       rewardAmount,
       subchannelId
+    }: {
+      isRespondingToSubject: boolean;
+      message: object;
+      messageId: number;
+      replyTarget: object;
+      rewardReason: string;
+      rewardAmount: number;
+      subchannelId: number;
     }) {
       return dispatch({
         type: 'SUBMIT_MESSAGE',
@@ -911,13 +1293,21 @@ export default function ChatActions(
         replyTarget
       });
     },
-    onTrimMessages(channelId) {
+    onTrimMessages(channelId: number) {
       return dispatch({
         type: 'TRIM_MESSAGES',
         channelId
       });
     },
-    onUpdateAICard({ cardId, newState, isInit }) {
+    onUpdateAICard({
+      cardId,
+      newState,
+      isInit
+    }: {
+      cardId: number;
+      newState: object;
+      isInit: boolean;
+    }) {
       return dispatch({
         type: 'UPDATE_AI_CARD',
         cardId,
@@ -925,48 +1315,86 @@ export default function ChatActions(
         isInit
       });
     },
-    onUpdateChannelPathIdHash({ channelId, pathId }) {
+    onUpdateChannelPathIdHash({
+      channelId,
+      pathId
+    }: {
+      channelId: number;
+      pathId: number;
+    }) {
       return dispatch({
         type: 'UPDATE_CHANNEL_PATH_ID_HASH',
         channelId,
         pathId
       });
     },
-    onUpdateCurrentTransactionId({ channelId, transactionId }) {
+    onUpdateCurrentTransactionId({
+      channelId,
+      transactionId
+    }: {
+      channelId: number;
+      transactionId: number;
+    }) {
       return dispatch({
         type: 'UPDATE_CURRENT_TRANSACTION_ID',
         channelId,
         transactionId
       });
     },
-    onAcceptTransaction({ transactionId }) {
+    onAcceptTransaction({ transactionId }: { transactionId: number }) {
       return dispatch({
         type: 'ACCEPT_TRANSACTION',
         transactionId
       });
     },
-    onCancelTransaction({ transactionId, reason }) {
+    onCancelTransaction({
+      transactionId,
+      reason
+    }: {
+      transactionId: number;
+      reason: string;
+    }) {
       return dispatch({
         type: 'CANCEL_TRANSACTION',
         transactionId,
         reason
       });
     },
-    onUpdateLastChessMessageId({ channelId, messageId }) {
+    onUpdateLastChessMessageId({
+      channelId,
+      messageId
+    }: {
+      channelId: number;
+      messageId: number;
+    }) {
       return dispatch({
         type: 'UPDATE_LAST_CHESS_MESSAGE_ID',
         channelId,
         messageId
       });
     },
-    onUpdateLastChessMoveViewerId({ channelId, viewerId }) {
+    onUpdateLastChessMoveViewerId({
+      channelId,
+      viewerId
+    }: {
+      channelId: number;
+      viewerId: number;
+    }) {
       return dispatch({
         type: 'UPDATE_LAST_CHESS_MOVE_VIEWER_ID',
         channelId,
         viewerId
       });
     },
-    onUpdateLastSubchannelPath({ channelId, path, currentSubchannelPath }) {
+    onUpdateLastSubchannelPath({
+      channelId,
+      path,
+      currentSubchannelPath
+    }: {
+      channelId: number;
+      path: string;
+      currentSubchannelPath: string;
+    }) {
       return dispatch({
         type: 'UPDATE_LAST_SUBCHANNEL_PATH',
         channelId,
@@ -974,19 +1402,29 @@ export default function ChatActions(
         currentSubchannelPath
       });
     },
-    onUpdateCollectorsRankings(data) {
+    onUpdateCollectorsRankings(data: object) {
       return dispatch({
         type: 'UPDATE_COLLECTORS_RANKINGS',
         data
       });
     },
-    onUpdateChatType(chatType) {
+    onUpdateChatType(chatType: string) {
       return dispatch({
         type: 'UPDATE_CHAT_TYPE',
         chatType
       });
     },
-    onUpdateChatUploadProgress({ progress, channelId, subchannelId, path }) {
+    onUpdateChatUploadProgress({
+      progress,
+      channelId,
+      subchannelId,
+      path
+    }: {
+      progress: number;
+      channelId: number;
+      subchannelId: number;
+      path: string;
+    }) {
       return dispatch({
         type: 'UPDATE_UPLOAD_PROGRESS',
         progress,
@@ -995,26 +1433,42 @@ export default function ChatActions(
         path
       });
     },
-    onUpdateNumSummoned(numSummoned) {
+    onUpdateNumSummoned(numSummoned: number) {
       return dispatch({
         type: 'UPDATE_NUM_SUMMONED',
         numSummoned
       });
     },
-    onUpdateRecentChessMessage({ channelId, message }) {
+    onUpdateRecentChessMessage({
+      channelId,
+      message
+    }: {
+      channelId: number;
+      message: object;
+    }) {
       return dispatch({
         type: 'UPDATE_RECENT_CHESS_MESSAGE',
         channelId,
         message
       });
     },
-    onUpdateSelectedChannelId(channelId) {
+    onUpdateSelectedChannelId(channelId: number) {
       return dispatch({
         type: 'UPDATE_SELECTED_CHANNEL_ID',
         channelId
       });
     },
-    onUploadChatSubject({ subjectId, subject, channelId, subchannelId }) {
+    onUploadChatSubject({
+      subjectId,
+      subject,
+      channelId,
+      subchannelId
+    }: {
+      subjectId: number;
+      subject: object;
+      channelId: number;
+      subchannelId: number;
+    }) {
       return dispatch({
         type: 'NEW_SUBJECT',
         subjectId,
@@ -1023,13 +1477,13 @@ export default function ChatActions(
         subchannelId
       });
     },
-    onMakeOutgoingOffer(offer) {
+    onMakeOutgoingOffer(offer: object) {
       return dispatch({
         type: 'MAKE_OUTGOING_OFFER',
         offer
       });
     },
-    onWithdrawOutgoingOffer(offerId) {
+    onWithdrawOutgoingOffer(offerId: number) {
       return dispatch({
         type: 'WITHDRAW_OUTGOING_OFFER',
         offerId

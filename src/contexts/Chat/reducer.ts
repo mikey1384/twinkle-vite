@@ -1766,10 +1766,10 @@ export default function ChatReducer(state, action) {
       return {
         ...state,
         numUnreads:
-          action.duplicate && action.pageVisible
+          action.isDuplicate && action.pageVisible
             ? state.numUnreads
             : Number(state.numUnreads) + 1,
-        selectedChannelId: action.duplicate
+        selectedChannelId: action.isDuplicate
           ? action.message.channelId
           : state.selectedChannelId,
         channelsObj: {
@@ -1788,12 +1788,12 @@ export default function ChatReducer(state, action) {
             isClass: action.isClass,
             members: action.message.members,
             channelName: action.message.channelName || action.message.username,
-            numUnreads: action.duplicate ? 0 : 1
+            numUnreads: action.isDuplicate ? 0 : 1
           }
         },
         homeChannelIds: [action.message.channelId].concat(
           state.homeChannelIds.filter((channelId, index) =>
-            action.duplicate ? index !== 0 : true
+            action.isDuplicate ? index !== 0 : true
           )
         )
       };

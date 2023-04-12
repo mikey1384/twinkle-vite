@@ -1,6 +1,6 @@
-export default function UserActions(
-  dispatch: (action: { type: string; [key: string]: any }) => void
-) {
+import { Dispatch } from '../types';
+
+export default function UserActions(dispatch: Dispatch) {
   return {
     onChangeDefaultSearchFilter(filter: string) {
       return dispatch({

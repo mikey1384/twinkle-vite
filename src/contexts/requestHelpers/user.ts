@@ -1,7 +1,7 @@
 import request from 'axios';
 import URL from '~/constants/URL';
 import { clientVersion } from '~/constants/defaultValues';
-import { RequestHelpers } from './types';
+import { RequestHelpers } from '../types';
 import { queryStringForArray } from '~/helpers/stringHelpers';
 
 export default function userRequestHelpers({
