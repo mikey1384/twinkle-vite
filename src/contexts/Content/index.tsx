@@ -1,17 +1,17 @@
-import { useReducer } from 'react';
+import React, { useReducer, ReactNode } from 'react';
 import { createContext } from 'use-context-selector';
 import PropTypes from 'prop-types';
 import ContentActions from './actions';
 import ContentReducer from './reducer';
 
-export const ContentContext = createContext();
+export const ContentContext = createContext({});
 export const initialContentState = {};
 
 ContentContextProvider.propTypes = {
   children: PropTypes.node
 };
 
-export function ContentContextProvider({ children }) {
+export function ContentContextProvider({ children }: { children: ReactNode }) {
   const [contentState, contentDispatch] = useReducer(
     ContentReducer,
     initialContentState

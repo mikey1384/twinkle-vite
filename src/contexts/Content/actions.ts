@@ -1,6 +1,16 @@
-export default function ContentActions(dispatch) {
+import { Dispatch } from '../types';
+
+export default function ContentActions(dispatch: Dispatch) {
   return {
-    onAddTags({ tags, contentType, contentId }) {
+    onAddTags({
+      tags,
+      contentType,
+      contentId
+    }: {
+      tags: string[];
+      contentType: string;
+      contentId: number;
+    }) {
       return dispatch({
         type: 'ADD_TAGS',
         tags,
@@ -8,7 +18,17 @@ export default function ContentActions(dispatch) {
         contentId: Number(contentId)
       });
     },
-    onAddTagToContents({ contentIds, contentType, tagId, tagTitle }) {
+    onAddTagToContents({
+      contentIds,
+      contentType,
+      tagId,
+      tagTitle
+    }: {
+      contentIds: number[];
+      contentType: string;
+      tagId: number;
+      tagTitle: string;
+    }) {
       return dispatch({
         type: 'ADD_TAG_TO_CONTENTS',
         contentIds,
@@ -17,7 +37,15 @@ export default function ContentActions(dispatch) {
         tagTitle
       });
     },
-    onAttachReward({ reward, contentId, contentType }) {
+    onAttachReward({
+      reward,
+      contentId,
+      contentType
+    }: {
+      reward: object;
+      contentId: number;
+      contentType: string;
+    }) {
       return dispatch({
         type: 'ATTACH_REWARD',
         reward,
@@ -25,7 +53,15 @@ export default function ContentActions(dispatch) {
         contentType
       });
     },
-    onClearCommentFileUploadProgress({ contentId, contentType, filePath }) {
+    onClearCommentFileUploadProgress({
+      contentId,
+      contentType,
+      filePath
+    }: {
+      contentId: number;
+      contentType: string;
+      filePath: string;
+    }) {
       return dispatch({
         type: 'CLEAR_COMMENT_FILE_UPLOAD_PROGRESS',
         filePath,
@@ -33,7 +69,15 @@ export default function ContentActions(dispatch) {
         contentType
       });
     },
-    onChangeSpoilerStatus({ prevSecretViewerId, shown, subjectId }) {
+    onChangeSpoilerStatus({
+      prevSecretViewerId,
+      shown,
+      subjectId
+    }: {
+      prevSecretViewerId: number;
+      shown: boolean;
+      subjectId: number;
+    }) {
       return dispatch({
         type: 'CHANGE_SPOILER_STATUS',
         shown,
@@ -42,7 +86,15 @@ export default function ContentActions(dispatch) {
         contentType: 'subject'
       });
     },
-    onCloseContent({ contentId, contentType, userId }) {
+    onCloseContent({
+      contentId,
+      contentType,
+      userId
+    }: {
+      contentId: number;
+      contentType: string;
+      userId: number;
+    }) {
       return dispatch({
         type: 'CLOSE_CONTENT',
         contentId,
@@ -50,27 +102,47 @@ export default function ContentActions(dispatch) {
         userId
       });
     },
-    onDeleteComment(commentId) {
+    onDeleteComment(commentId: number) {
       return dispatch({
         type: 'DELETE_COMMENT',
         commentId
       });
     },
-    onDeleteContent({ contentType, contentId }) {
+    onDeleteContent({
+      contentType,
+      contentId
+    }: {
+      contentType: string;
+      contentId: number;
+    }) {
       return dispatch({
         type: 'DELETE_CONTENT',
         contentType,
         contentId
       });
     },
-    onEditComment({ commentId, editedComment }) {
+    onEditComment({
+      commentId,
+      editedComment
+    }: {
+      commentId: number;
+      editedComment: string;
+    }) {
       return dispatch({
         type: 'EDIT_COMMENT',
         commentId,
         editedComment
       });
     },
-    onEditContent({ data, contentType, contentId }) {
+    onEditContent({
+      data,
+      contentType,
+      contentId
+    }: {
+      data: object;
+      contentType: string;
+      contentId: number;
+    }) {
       return dispatch({
         type: 'EDIT_CONTENT',
         contentType,
@@ -78,21 +150,33 @@ export default function ContentActions(dispatch) {
         data
       });
     },
-    onEditRewardComment({ id, text }) {
+    onEditRewardComment({ id, text }: { id: number; text: string }) {
       return dispatch({
         type: 'EDIT_REWARD_COMMENT',
         id,
         text
       });
     },
-    onEditSubject({ editedSubject, subjectId }) {
+    onEditSubject({
+      editedSubject,
+      subjectId
+    }: {
+      editedSubject: string;
+      subjectId: number;
+    }) {
       return dispatch({
         type: 'EDIT_SUBJECT',
         editedSubject,
         subjectId
       });
     },
-    onIncreaseNumCoinsEarned({ videoId, amount }) {
+    onIncreaseNumCoinsEarned({
+      videoId,
+      amount
+    }: {
+      videoId: number;
+      amount: number;
+    }) {
       return dispatch({
         type: 'INCREASE_NUM_COINS_EARNED',
         amount,
@@ -100,7 +184,13 @@ export default function ContentActions(dispatch) {
         contentId: videoId
       });
     },
-    onIncreaseNumXpEarned({ videoId, amount }) {
+    onIncreaseNumXpEarned({
+      videoId,
+      amount
+    }: {
+      videoId: number;
+      amount: number;
+    }) {
       return dispatch({
         type: 'INCREASE_NUM_XP_EARNED',
         amount,
@@ -108,7 +198,14 @@ export default function ContentActions(dispatch) {
         contentId: videoId
       });
     },
-    onInitContent({ contentId, contentType, ...data }) {
+    onInitContent({
+      contentId,
+      contentType,
+      ...data
+    }: {
+      contentId: number;
+      contentType: string;
+    }) {
       return dispatch({
         type: 'INIT_CONTENT',
         contentId: Number(contentId),
@@ -116,14 +213,28 @@ export default function ContentActions(dispatch) {
         data
       });
     },
-    onLikeComment({ commentId, likes }) {
+    onLikeComment({
+      commentId,
+      likes
+    }: {
+      commentId: number;
+      likes: object[];
+    }) {
       return dispatch({
         type: 'LIKE_COMMENT',
         commentId,
         likes
       });
     },
-    onLikeContent({ likes, contentType, contentId }) {
+    onLikeContent({
+      likes,
+      contentType,
+      contentId
+    }: {
+      likes: object[];
+      contentType: string;
+      contentId: number;
+    }) {
       return dispatch({
         type: 'LIKE_CONTENT',
         likes,
@@ -137,6 +248,12 @@ export default function ContentActions(dispatch) {
       contentType,
       isPreview,
       loadMoreButton
+    }: {
+      comments: object[];
+      contentId: number;
+      contentType: string;
+      isPreview: boolean;
+      loadMoreButton: boolean;
     }) {
       return dispatch({
         type: 'LOAD_COMMENTS',
@@ -153,6 +270,12 @@ export default function ContentActions(dispatch) {
       isRepliesOfReply,
       contentId,
       contentType
+    }: {
+      comments: object[];
+      loadMoreButton: boolean;
+      isRepliesOfReply: boolean;
+      contentId: number;
+      contentType: string;
     }) {
       return dispatch({
         type: 'LOAD_MORE_COMMENTS',
@@ -169,6 +292,12 @@ export default function ContentActions(dispatch) {
       loadMoreButton,
       contentType,
       contentId
+    }: {
+      commentId: number;
+      replies: object[];
+      loadMoreButton: boolean;
+      contentType: string;
+      contentId: number;
     }) {
       return dispatch({
         type: 'LOAD_MORE_REPLIES',
@@ -185,6 +314,12 @@ export default function ContentActions(dispatch) {
       contentId,
       contentType,
       subjectId
+    }: {
+      comments: object[];
+      loadMoreButton: boolean;
+      contentId: number;
+      contentType: string;
+      subjectId: number;
     }) {
       return dispatch({
         type: 'LOAD_MORE_SUBJECT_COMMENTS',
@@ -202,6 +337,13 @@ export default function ContentActions(dispatch) {
       contentId,
       contentType,
       subjectId
+    }: {
+      commentId: number;
+      loadMoreButton: boolean;
+      replies: object[];
+      contentId: number;
+      contentType: string;
+      subjectId: number;
     }) {
       return dispatch({
         type: 'LOAD_MORE_SUBJECT_REPLIES',
@@ -213,7 +355,17 @@ export default function ContentActions(dispatch) {
         subjectId
       });
     },
-    onLoadMoreSubjects({ results, loadMoreButton, contentId, contentType }) {
+    onLoadMoreSubjects({
+      results,
+      loadMoreButton,
+      contentId,
+      contentType
+    }: {
+      results: object[];
+      loadMoreButton: boolean;
+      contentId: number;
+      contentType: string;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_SUBJECTS',
         results,
@@ -228,6 +380,12 @@ export default function ContentActions(dispatch) {
       replies,
       contentType,
       contentId
+    }: {
+      commentId: number;
+      loadMoreButton: boolean;
+      replies: object[];
+      contentType: string;
+      contentId: number;
     }) {
       return dispatch({
         type: 'LOAD_REPLIES',
@@ -247,6 +405,15 @@ export default function ContentActions(dispatch) {
       contentId,
       loadMoreButton,
       loadMoreButtonId
+    }: {
+      replies: object[];
+      commentId: number;
+      replyId: number;
+      rootReplyId: number;
+      contentType: string;
+      contentId: number;
+      loadMoreButton: boolean;
+      loadMoreButtonId: number;
     }) {
       return dispatch({
         type: 'LOAD_REPLIES_OF_REPLY',
@@ -266,6 +433,12 @@ export default function ContentActions(dispatch) {
       loadMoreButton,
       replyId,
       subjectId
+    }: {
+      replies: object[];
+      commentId: number;
+      loadMoreButton: boolean;
+      replyId: number;
+      subjectId: number;
     }) {
       return dispatch({
         type: 'LOAD_SUBJECT_REPLIES_OF_REPLY',
@@ -277,7 +450,17 @@ export default function ContentActions(dispatch) {
         loadMoreButton
       });
     },
-    onLoadSubjects({ contentId, contentType, subjects, loadMoreButton }) {
+    onLoadSubjects({
+      contentId,
+      contentType,
+      subjects,
+      loadMoreButton
+    }: {
+      contentId: number;
+      contentType: string;
+      subjects: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_SUBJECTS',
         contentId,
@@ -292,6 +475,12 @@ export default function ContentActions(dispatch) {
       subjectId,
       contentType,
       contentId
+    }: {
+      comments: object[];
+      loadMoreButton: boolean;
+      subjectId: number;
+      contentType: string;
+      contentId: number;
     }) {
       return dispatch({
         type: 'LOAD_SUBJECT_COMMENTS',
@@ -302,7 +491,15 @@ export default function ContentActions(dispatch) {
         contentId
       });
     },
-    onLoadTags({ contentType, contentId, tags }) {
+    onLoadTags({
+      contentType,
+      contentId,
+      tags
+    }: {
+      contentType: string;
+      contentId: number;
+      tags: object[];
+    }) {
       return dispatch({
         type: 'LOAD_TAGS',
         contentId,
@@ -310,7 +507,15 @@ export default function ContentActions(dispatch) {
         tags
       });
     },
-    onRecommendContent({ recommendations, contentType, contentId }) {
+    onRecommendContent({
+      recommendations,
+      contentType,
+      contentId
+    }: {
+      recommendations: object[];
+      contentType: string;
+      contentId: number;
+    }) {
       return dispatch({
         type: 'RECOMMEND_CONTENT',
         recommendations,
@@ -318,21 +523,41 @@ export default function ContentActions(dispatch) {
         contentId: Number(contentId)
       });
     },
-    onReloadContent({ contentId, contentType }) {
+    onReloadContent({
+      contentId,
+      contentType
+    }: {
+      contentId: number;
+      contentType: string;
+    }) {
       return dispatch({
         type: 'RELOAD_CONTENT',
         contentId,
         contentType
       });
     },
-    onReloadComments({ contentId, contentType }) {
+    onReloadComments({
+      contentId,
+      contentType
+    }: {
+      contentId: number;
+      contentType: string;
+    }) {
       return dispatch({
         type: 'RELOAD_COMMENTS',
         contentId,
         contentType
       });
     },
-    onRevokeReward({ contentType, contentId, rewardId }) {
+    onRevokeReward({
+      contentType,
+      contentId,
+      rewardId
+    }: {
+      contentType: string;
+      contentId: number;
+      rewardId: number;
+    }) {
       return dispatch({
         type: 'REVOKE_REWARD',
         contentId,
@@ -340,7 +565,15 @@ export default function ContentActions(dispatch) {
         rewardId
       });
     },
-    onSetActualDescription({ contentId, contentType, description }) {
+    onSetActualDescription({
+      contentId,
+      contentType,
+      description
+    }: {
+      contentId: number;
+      contentType: string;
+      description: string;
+    }) {
       return dispatch({
         type: 'SET_ACTUAL_URL_DESCRIPTION',
         contentId,
@@ -348,7 +581,15 @@ export default function ContentActions(dispatch) {
         description
       });
     },
-    onSetActualTitle({ contentId, contentType, title }) {
+    onSetActualTitle({
+      contentId,
+      contentType,
+      title
+    }: {
+      contentId: number;
+      contentType: string;
+      title: string;
+    }) {
       return dispatch({
         type: 'SET_ACTUAL_URL_TITLE',
         contentId,
@@ -356,7 +597,15 @@ export default function ContentActions(dispatch) {
         title
       });
     },
-    onSetByUserStatus({ byUser, contentId, contentType }) {
+    onSetByUserStatus({
+      byUser,
+      contentId,
+      contentType
+    }: {
+      byUser: boolean;
+      contentId: number;
+      contentType: string;
+    }) {
       return dispatch({
         type: 'SET_BY_USER_STATUS',
         byUser,
@@ -364,14 +613,28 @@ export default function ContentActions(dispatch) {
         contentType
       });
     },
-    onSetCommentsShown({ contentId, contentType }) {
+    onSetCommentsShown({
+      contentId,
+      contentType
+    }: {
+      contentId: number;
+      contentType: string;
+    }) {
       return dispatch({
         type: 'SET_COMMENTS_SHOWN',
         contentId,
         contentType
       });
     },
-    onSetCommentUploadingFile({ contentId, contentType, uploading }) {
+    onSetCommentUploadingFile({
+      contentId,
+      contentType,
+      uploading
+    }: {
+      contentId: number;
+      contentType: string;
+      uploading: boolean;
+    }) {
       return dispatch({
         type: 'SET_COMMENT_UPLOADING_FILE',
         contentId,
@@ -379,7 +642,15 @@ export default function ContentActions(dispatch) {
         uploading
       });
     },
-    onSetEmbeddedUrl({ contentId, contentType, url }) {
+    onSetEmbeddedUrl({
+      contentId,
+      contentType,
+      url
+    }: {
+      contentId: number;
+      contentType: string;
+      url: string;
+    }) {
       return dispatch({
         type: 'SET_EMBEDDED_URL',
         contentId,
@@ -387,7 +658,15 @@ export default function ContentActions(dispatch) {
         url
       });
     },
-    onSetExistingContent({ contentId, contentType, content }) {
+    onSetExistingContent({
+      contentId,
+      contentType,
+      content
+    }: {
+      contentId: number;
+      contentType: string;
+      content: object;
+    }) {
       return dispatch({
         type: 'SET_EXISTING_CONTENT',
         contentId,
@@ -395,7 +674,17 @@ export default function ContentActions(dispatch) {
         content
       });
     },
-    onSetFullTextState({ contentId, contentType, section, fullTextShown }) {
+    onSetFullTextState({
+      contentId,
+      contentType,
+      section,
+      fullTextShown
+    }: {
+      contentId: number;
+      contentType: string;
+      section: string;
+      fullTextShown: boolean;
+    }) {
       return dispatch({
         type: 'SET_FULL_TEXT_STATE',
         contentId,
@@ -404,7 +693,15 @@ export default function ContentActions(dispatch) {
         fullTextShown
       });
     },
-    onSetIsEditing({ contentId, contentType, isEditing }) {
+    onSetIsEditing({
+      contentId,
+      contentType,
+      isEditing
+    }: {
+      contentId: number;
+      contentType: string;
+      isEditing: boolean;
+    }) {
       return dispatch({
         type: 'SET_IS_EDITING',
         contentId,
@@ -412,14 +709,28 @@ export default function ContentActions(dispatch) {
         isEditing
       });
     },
-    onSetCommentPlaceholderHeight({ commentId, height }) {
+    onSetCommentPlaceholderHeight({
+      commentId,
+      height
+    }: {
+      commentId: number;
+      height: number;
+    }) {
       return dispatch({
         type: 'SET_COMMENT_PLACEHOLDER_HEIGHT',
         commentId,
         height
       });
     },
-    onSetPlaceholderHeight({ contentId, contentType, height }) {
+    onSetPlaceholderHeight({
+      contentId,
+      contentType,
+      height
+    }: {
+      contentId: number;
+      contentType: string;
+      height: number;
+    }) {
       return dispatch({
         type: 'SET_PLACEHOLDER_HEIGHT',
         contentId,
@@ -427,7 +738,15 @@ export default function ContentActions(dispatch) {
         height
       });
     },
-    onSetPrevUrl({ contentId, contentType, prevUrl }) {
+    onSetPrevUrl({
+      contentId,
+      contentType,
+      prevUrl
+    }: {
+      contentId: number;
+      contentType: string;
+      prevUrl: string;
+    }) {
       return dispatch({
         type: 'SET_PREV_URL',
         contentId,
@@ -435,7 +754,15 @@ export default function ContentActions(dispatch) {
         prevUrl
       });
     },
-    onSetRewardLevel({ rewardLevel, contentType, contentId }) {
+    onSetRewardLevel({
+      rewardLevel,
+      contentType,
+      contentId
+    }: {
+      rewardLevel: number;
+      contentType: string;
+      contentId: number;
+    }) {
       return dispatch({
         type: 'SET_REWARD_LEVEL',
         rewardLevel,
@@ -443,7 +770,15 @@ export default function ContentActions(dispatch) {
         contentId
       });
     },
-    onSetSiteUrl({ contentId, contentType, siteUrl }) {
+    onSetSiteUrl({
+      contentId,
+      contentType,
+      siteUrl
+    }: {
+      contentId: number;
+      contentType: string;
+      siteUrl: string;
+    }) {
       return dispatch({
         type: 'SET_SITE_URL',
         contentId,
@@ -451,7 +786,15 @@ export default function ContentActions(dispatch) {
         siteUrl
       });
     },
-    onSetSubjectFormShown({ contentId, contentType, shown }) {
+    onSetSubjectFormShown({
+      contentId,
+      contentType,
+      shown
+    }: {
+      contentId: number;
+      contentType: string;
+      shown: boolean;
+    }) {
       return dispatch({
         type: 'SET_SUBJECT_FORM_SHOWN',
         contentId,
@@ -459,7 +802,15 @@ export default function ContentActions(dispatch) {
         shown
       });
     },
-    onSetSubjectRewardLevel({ contentId, contentType, rewardLevel }) {
+    onSetSubjectRewardLevel({
+      contentId,
+      contentType,
+      rewardLevel
+    }: {
+      contentId: number;
+      contentType: string;
+      rewardLevel: number;
+    }) {
       return dispatch({
         type: 'SET_SUBJECT_REWARD_LEVEL',
         rewardLevel,
@@ -467,7 +818,17 @@ export default function ContentActions(dispatch) {
         contentType
       });
     },
-    onSetThumbUrl({ contentId, contentType, thumbUrl, isSecretAttachment }) {
+    onSetThumbUrl({
+      contentId,
+      contentType,
+      thumbUrl,
+      isSecretAttachment
+    }: {
+      contentId: number;
+      contentType: string;
+      thumbUrl: string;
+      isSecretAttachment: boolean;
+    }) {
       return dispatch({
         type: 'SET_THUMB_URL',
         contentId,
@@ -476,7 +837,15 @@ export default function ContentActions(dispatch) {
         isSecretAttachment
       });
     },
-    onSetUploadingFile({ contentId, contentType, isUploading }) {
+    onSetUploadingFile({
+      contentId,
+      contentType,
+      isUploading
+    }: {
+      contentId: number;
+      contentType: string;
+      isUploading: boolean;
+    }) {
       return dispatch({
         type: 'SET_UPLOADING_FILE',
         contentId,
@@ -484,7 +853,13 @@ export default function ContentActions(dispatch) {
         isUploading
       });
     },
-    onSetVideoProgress({ videoId, progress }) {
+    onSetVideoProgress({
+      videoId,
+      progress
+    }: {
+      videoId: number;
+      progress: number;
+    }) {
       return dispatch({
         type: 'SET_VIDEO_PROGRESS',
         contentType: 'video',
@@ -492,7 +867,15 @@ export default function ContentActions(dispatch) {
         progress
       });
     },
-    onSetVideoQuestions({ questions, contentType, contentId }) {
+    onSetVideoQuestions({
+      questions,
+      contentType,
+      contentId
+    }: {
+      questions: object[];
+      contentType: string;
+      contentId: number;
+    }) {
       return dispatch({
         type: 'SET_VIDEO_QUESTIONS',
         questions,
@@ -500,7 +883,15 @@ export default function ContentActions(dispatch) {
         contentId
       });
     },
-    onSetMediaStarted({ contentType, contentId, started }) {
+    onSetMediaStarted({
+      contentType,
+      contentId,
+      started
+    }: {
+      contentType: string;
+      contentId: number;
+      started: boolean;
+    }) {
       return dispatch({
         type: 'SET_MEDIA_STARTED',
         contentType,
@@ -508,7 +899,13 @@ export default function ContentActions(dispatch) {
         started
       });
     },
-    onSetTimeWatched({ videoId, timeWatched }) {
+    onSetTimeWatched({
+      videoId,
+      timeWatched
+    }: {
+      videoId: number;
+      timeWatched: number;
+    }) {
       return dispatch({
         type: 'SET_VIDEO_TIME_WATCHED',
         contentType: 'video',
@@ -516,14 +913,28 @@ export default function ContentActions(dispatch) {
         timeWatched
       });
     },
-    onSetCommentVisible({ visible, commentId }) {
+    onSetCommentVisible({
+      visible,
+      commentId
+    }: {
+      visible: boolean;
+      commentId: number;
+    }) {
       return dispatch({
         type: 'SET_COMMENT_VISIBLE',
         commentId,
         visible
       });
     },
-    onSetSearchedPoster({ contentId, contentType, poster }) {
+    onSetSearchedPoster({
+      contentId,
+      contentType,
+      poster
+    }: {
+      contentId: number;
+      contentType: string;
+      poster: object;
+    }) {
       return dispatch({
         type: 'SET_SEARCHED_POSTER',
         contentId,
@@ -536,6 +947,11 @@ export default function ContentActions(dispatch) {
       contentId,
       currentTime,
       secretAttachmentCurrentTime
+    }: {
+      contentType: string;
+      contentId: number;
+      currentTime: number;
+      secretAttachmentCurrentTime: number;
     }) {
       return dispatch({
         type: 'SET_VIDEO_CURRENT_TIME',
@@ -545,7 +961,15 @@ export default function ContentActions(dispatch) {
         secretAttachmentCurrentTime
       });
     },
-    onSetVisible({ visible, contentId, contentType }) {
+    onSetVisible({
+      visible,
+      contentId,
+      contentType
+    }: {
+      visible: boolean;
+      contentId: number;
+      contentType: string;
+    }) {
       return dispatch({
         type: 'SET_VISIBLE',
         contentType,
@@ -553,7 +977,15 @@ export default function ContentActions(dispatch) {
         visible
       });
     },
-    onSetXpRewardInterfaceShown({ contentId, contentType, shown }) {
+    onSetXpRewardInterfaceShown({
+      contentId,
+      contentType,
+      shown
+    }: {
+      contentId: number;
+      contentType: string;
+      shown: boolean;
+    }) {
       return dispatch({
         type: 'SET_XP_REWARD_INTERFACE_SHOWN',
         contentId,
@@ -561,14 +993,28 @@ export default function ContentActions(dispatch) {
         shown
       });
     },
-    onShowTCReplyInput({ contentId, contentType }) {
+    onShowTCReplyInput({
+      contentId,
+      contentType
+    }: {
+      contentId: number;
+      contentType: string;
+    }) {
       return dispatch({
         type: 'SHOW_TC_REPLY_INPUT',
         contentId,
         contentType
       });
     },
-    onUpdateSecretFileUploadProgress({ contentId, contentType, progress }) {
+    onUpdateSecretFileUploadProgress({
+      contentId,
+      contentType,
+      progress
+    }: {
+      contentId: number;
+      contentType: string;
+      progress: number;
+    }) {
       return dispatch({
         type: 'UPDATE_SECRET_FILE_UPLOAD_PROGRESS',
         contentId,
@@ -576,7 +1022,15 @@ export default function ContentActions(dispatch) {
         progress
       });
     },
-    onUpdateCommentFileUploadProgress({ contentId, contentType, progress }) {
+    onUpdateCommentFileUploadProgress({
+      contentId,
+      contentType,
+      progress
+    }: {
+      contentId: number;
+      contentType: string;
+      progress: number;
+    }) {
       return dispatch({
         type: 'UPDATE_COMMENT_FILE_UPLOAD_PROGRESS',
         progress,
@@ -584,7 +1038,15 @@ export default function ContentActions(dispatch) {
         contentId
       });
     },
-    onUpdateCommentPinStatus({ contentType, contentId, commentId }) {
+    onUpdateCommentPinStatus({
+      contentType,
+      contentId,
+      commentId
+    }: {
+      contentType: string;
+      contentId: number;
+      commentId: number;
+    }) {
       return dispatch({
         type: 'UPDATE_COMMENT_PIN_STATUS',
         contentType,
@@ -592,7 +1054,15 @@ export default function ContentActions(dispatch) {
         commentId
       });
     },
-    onUploadComment({ contentId, contentType, ...data }) {
+    onUploadComment({
+      contentId,
+      contentType,
+      ...data
+    }: {
+      contentId: number;
+      contentType: string;
+      data: object;
+    }) {
       return dispatch({
         type: 'UPLOAD_COMMENT',
         data,
@@ -600,7 +1070,15 @@ export default function ContentActions(dispatch) {
         contentType
       });
     },
-    onUploadReply({ contentId, contentType, ...data }) {
+    onUploadReply({
+      contentId,
+      contentType,
+      ...data
+    }: {
+      contentId: number;
+      contentType: string;
+      data: object;
+    }) {
       return dispatch({
         type: 'UPLOAD_REPLY',
         data,
@@ -608,7 +1086,15 @@ export default function ContentActions(dispatch) {
         contentType
       });
     },
-    onUploadSubject({ contentType, contentId, ...subject }) {
+    onUploadSubject({
+      contentType,
+      contentId,
+      ...subject
+    }: {
+      contentType: string;
+      contentId: number;
+      subject: object;
+    }) {
       return dispatch({
         type: 'UPLOAD_SUBJECT',
         subject,
@@ -616,7 +1102,15 @@ export default function ContentActions(dispatch) {
         contentType
       });
     },
-    onUploadTargetComment({ contentType, contentId, ...data }) {
+    onUploadTargetComment({
+      contentType,
+      contentId,
+      ...data
+    }: {
+      contentType: string;
+      contentId: number;
+      data: object;
+    }) {
       return dispatch({
         type: 'UPLOAD_TARGET_COMMENT',
         data,
