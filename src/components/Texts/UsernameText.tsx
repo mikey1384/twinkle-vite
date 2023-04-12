@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import DropdownList from '~/components/DropdownList';
 import { Color } from '~/constants/css';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -14,16 +13,15 @@ const chatLabel = localize('chat2');
 const deletedLabel = localize('deleted');
 const profileLabel = localize('Profile');
 
-UsernameText.propTypes = {
-  className: PropTypes.string,
-  color: PropTypes.string,
-  onMenuShownChange: PropTypes.func,
-  style: PropTypes.object,
-  user: PropTypes.object,
-  displayedName: PropTypes.string,
-  wordBreakEnabled: PropTypes.bool
-};
-
+interface Props {
+  className?: string;
+  color?: string;
+  onMenuShownChange?: (v: boolean) => void;
+  style?: object;
+  user?: object;
+  wordBreakEnabled?: boolean;
+  displayedName?: string;
+}
 export default function UsernameText({
   className,
   color,
@@ -32,7 +30,7 @@ export default function UsernameText({
   user = {},
   wordBreakEnabled,
   displayedName
-}) {
+}: Props) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const location = useLocation();
