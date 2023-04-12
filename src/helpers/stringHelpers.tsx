@@ -840,7 +840,7 @@ export function queryStringForArray({
   originVar,
   destinationVar
 }: {
-  array: Array<any>;
+  array: any[];
   originVar?: string;
   destinationVar: string;
 }): string {

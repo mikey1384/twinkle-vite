@@ -1,13 +1,11 @@
 import request from 'axios';
 import URL from '~/constants/URL';
+import { RequestHelpers } from './types';
 
 export default function chatRequestHelpers({
   auth,
   handleError
-}: {
-  auth: () => any;
-  handleError: (error: unknown) => void;
-}) {
+}: RequestHelpers) {
   return {
     async acceptInvitation(channelId: number) {
       try {
@@ -175,7 +173,7 @@ export default function chatRequestHelpers({
       channelName: string;
       isClass: boolean;
       isClosed: boolean;
-      selectedUsers?: Array<number>;
+      selectedUsers?: number[];
     }) {
       try {
         const { data } = await request.post(
@@ -284,9 +282,9 @@ export default function chatRequestHelpers({
       partOfSpeeches,
       word
     }: {
-      deletedDefIds: Array<number>;
-      editedDefinitionOrder: Array<any>;
-      partOfSpeeches: Array<any>;
+      deletedDefIds: number[];
+      editedDefinitionOrder: any[];
+      partOfSpeeches: any[];
       word: string;
     }) {
       try {

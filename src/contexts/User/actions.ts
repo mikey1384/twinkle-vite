@@ -53,7 +53,7 @@ export default function UserActions(
         type: 'OPEN_SIGNIN_MODAL'
       });
     },
-    onSearchUsers(users: Array<any>) {
+    onSearchUsers(users: any[]) {
       return dispatch({
         type: 'SEARCH_USERS',
         users
