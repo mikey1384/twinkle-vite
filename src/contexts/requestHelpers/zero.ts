@@ -1,9 +1,21 @@
 import request from 'axios';
 import URL from '~/constants/URL';
+import { RequestHelpers } from './types';
 
-export default function zeroRequestHelpers({ auth, handleError }) {
+export default function zeroRequestHelpers({
+  auth,
+  handleError
+}: RequestHelpers) {
   return {
-    async getZerosReview({ type, content, command }) {
+    async getZerosReview({
+      type,
+      content,
+      command
+    }: {
+      type: string;
+      content: string;
+      command: string;
+    }) {
       try {
         const {
           data: { response }

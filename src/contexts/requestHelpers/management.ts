@@ -1,9 +1,23 @@
 import request from 'axios';
 import URL from '~/constants/URL';
+import { RequestHelpers } from './types';
 
-export default function managementRequestHelpers({ auth, handleError }) {
+export default function managementRequestHelpers({
+  auth,
+  handleError
+}: RequestHelpers) {
   return {
-    async deletePermanently({ contentId, contentType, filePath, fileName }) {
+    async deletePermanently({
+      contentId,
+      contentType,
+      filePath,
+      fileName
+    }: {
+      contentId: number;
+      contentType: string;
+      filePath?: string;
+      fileName?: string;
+    }) {
       try {
         const {
           data: { success }
@@ -34,7 +48,13 @@ export default function managementRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async loadDeletedContent({ contentId, contentType }) {
+    async loadDeletedContent({
+      contentId,
+      contentType
+    }: {
+      contentId: number;
+      contentType: string;
+    }) {
       try {
         const { data } = await request.get(
           `${URL}/management/deleted/content?contentId=${contentId}&contentType=${contentType}`
@@ -62,7 +82,13 @@ export default function managementRequestHelpers({ auth, handleError }) {
         return handleError(error);
       }
     },
-    async updateBanStatus({ userId, banStatus }) {
+    async updateBanStatus({
+      userId,
+      banStatus
+    }: {
+      userId: number;
+      banStatus: object;
+    }) {
       try {
         await request.put(`${URL}/user/banned`, { userId, banStatus }, auth());
         return Promise.resolve();
