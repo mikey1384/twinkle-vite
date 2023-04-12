@@ -1,7 +1,38 @@
 import { defaultContentState } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
 
-export default function ContentReducer(state, action) {
+interface Reward {
+  id: number;
+  rewardComment: string;
+}
+
+interface Comment {
+  commentId: number;
+  content: string;
+  id: number;
+  isExpanded: boolean;
+  likes: object[];
+  loadMoreButton: boolean;
+  recommendations: object[];
+  rewards: Reward[];
+  replyId: number;
+  replies: Comment[];
+}
+
+interface Subject {
+  id: number;
+  rewards: Reward[];
+  comments: Comment[];
+  rewardLevel: number;
+}
+
+export default function ContentReducer(
+  state: any,
+  action: {
+    type: string;
+    [key: string]: any;
+  }
+) {
   const contentKey =
     action.contentType && action.contentId
       ? action.contentType + action.contentId
@@ -66,7 +97,7 @@ export default function ContentReducer(state, action) {
             : prevContentState.rewards,
           comments:
             action.contentType === 'comment'
-              ? prevContentState.comments?.map((comment) => {
+              ? prevContentState.comments?.map((comment: Comment) => {
                   const commentMatches = comment.id === action.contentId;
                   return {
                     ...comment,
@@ -85,7 +116,7 @@ export default function ContentReducer(state, action) {
                   };
                 })
               : prevContentState.comments,
-          subjects: prevContentState.subjects?.map((subject) => {
+          subjects: prevContentState.subjects?.map((subject: Subject) => {
             const subjectMatches =
               subject.id === action.contentId &&
               action.contentType === 'subject';
@@ -223,7 +254,13 @@ export default function ContentReducer(state, action) {
       const contentKeys = Object.keys(newState);
       for (let contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
-        const contentDeleteStatus = { isDeleted: prevContentState.isDeleted };
+        const contentDeleteStatus: {
+          isDeleted: boolean;
+          isDeleteNotification: boolean;
+        } = {
+          isDeleted: prevContentState.isDeleted,
+          isDeleteNotification: false
+        };
         if (
           prevContentState.contentId === action.commentId &&
           prevContentState.contentType === 'comment'
@@ -241,8 +278,11 @@ export default function ContentReducer(state, action) {
         newState[contentKey] = {
           ...prevContentState,
           ...contentDeleteStatus,
-          comments: prevContentState.comments?.map((comment) => {
-            const deleteStatus = { isDeleted: true };
+          comments: prevContentState.comments?.map((comment: Comment) => {
+            const deleteStatus: {
+              isDeleted: boolean;
+              isDeleteNotification: boolean;
+            } = { isDeleted: true, isDeleteNotification: false };
             if (comment.id === action.commentId) {
               if (
                 !comment.commentId &&
@@ -265,7 +305,7 @@ export default function ContentReducer(state, action) {
                   )
                 };
           }),
-          subjects: prevContentState.subjects?.map((subject) => ({
+          subjects: prevContentState.subjects?.map((subject: Subject) => ({
             ...subject,
             comments: subject.comments?.map((comment) =>
               comment.id === action.commentId
@@ -291,7 +331,7 @@ export default function ContentReducer(state, action) {
                         action.commentId,
                       comments:
                         prevContentState.targetObj.comment.comments?.map(
-                          (comment) =>
+                          (comment: Comment) =>
                             comment.id === action.commentId
                               ? { ...comment, isDeleted: true }
                               : comment
@@ -320,7 +360,7 @@ export default function ContentReducer(state, action) {
         newState[contentKey] = {
           ...prevContentState,
           subjects: prevContentState.subjects?.filter(
-            (subject) => subject.id !== action.subjectId
+            (subject: Subject) => subject.id !== action.subjectId
           )
         };
       }
@@ -337,7 +377,7 @@ export default function ContentReducer(state, action) {
             prevContentState.contentId === action.commentId
               ? action.editedComment
               : prevContentState.content,
-          comments: prevContentState.comments.map((comment) => ({
+          comments: prevContentState.comments.map((comment: Comment) => ({
             ...comment,
             content:
               comment.id === action.commentId
@@ -360,7 +400,7 @@ export default function ContentReducer(state, action) {
                       ...prevContentState.targetObj.comment,
                       comments:
                         prevContentState.targetObj.comment.comments?.map(
-                          (comment) =>
+                          (comment: Comment) =>
                             comment.id === action.commentId
                               ? {
                                   ...comment,
@@ -372,7 +412,7 @@ export default function ContentReducer(state, action) {
                   : undefined
               }
             : undefined,
-          subjects: prevContentState.subjects?.map((subject) => ({
+          subjects: prevContentState.subjects?.map((subject: Subject) => ({
             ...subject,
             comments: subject.comments?.map((comment) => ({
               ...comment,
@@ -407,7 +447,7 @@ export default function ContentReducer(state, action) {
           ...(contentMatches ? action.data : {}),
           comments:
             action.contentType === 'comment'
-              ? prevContentState.comments?.map((comment) => {
+              ? prevContentState.comments?.map((comment: Comment) => {
                   const commentMatches = comment.id === action.contentId;
                   return {
                     ...comment,
@@ -422,7 +462,7 @@ export default function ContentReducer(state, action) {
                   };
                 })
               : prevContentState.comments,
-          subjects: prevContentState.subjects?.map((subject) => {
+          subjects: prevContentState.subjects?.map((subject: Subject) => {
             const subjectMatches =
               subject.id === action.contentId &&
               action.contentType === 'subject';
@@ -482,12 +522,12 @@ export default function ContentReducer(state, action) {
         const prevContentState = newState[contentKey];
         newState[contentKey] = {
           ...prevContentState,
-          rewards: prevContentState.rewards?.map((reward) => ({
+          rewards: prevContentState.rewards?.map((reward: Reward) => ({
             ...reward,
             rewardComment:
               reward.id === action.id ? action.text : reward.rewardComment
           })),
-          comments: prevContentState.comments?.map((comment) => ({
+          comments: prevContentState.comments?.map((comment: Comment) => ({
             ...comment,
             rewards: comment.rewards?.map((reward) => ({
               ...reward,
@@ -503,7 +543,7 @@ export default function ContentReducer(state, action) {
               }))
             }))
           })),
-          subjects: prevContentState.subjects?.map((subject) => ({
+          subjects: prevContentState.subjects?.map((subject: Subject) => ({
             ...subject,
             comments: subject.comments.map((comment) => ({
               ...comment,
@@ -537,7 +577,7 @@ export default function ContentReducer(state, action) {
                   ? {
                       ...prevContentState.targetObj.comment,
                       rewards: prevContentState.targetObj.comment.rewards?.map(
-                        (reward) => ({
+                        (reward: Reward) => ({
                           ...reward,
                           rewardComment:
                             reward.id === action.id
@@ -564,7 +604,7 @@ export default function ContentReducer(state, action) {
         newState[contentKey] = {
           ...prevContentState,
           ...(contentMatches ? action.editedSubject : {}),
-          subjects: prevContentState.subjects?.map((subject) =>
+          subjects: prevContentState.subjects?.map((subject: Subject) =>
             subject.id === action.subjectId
               ? {
                   ...subject,
@@ -599,7 +639,7 @@ export default function ContentReducer(state, action) {
         const prevContentState = newState[contentKey];
         newState[contentKey] = {
           ...prevContentState,
-          comments: prevContentState.comments.map((comment) => {
+          comments: prevContentState.comments.map((comment: Comment) => {
             return {
               ...comment,
               likes:
@@ -613,29 +653,31 @@ export default function ContentReducer(state, action) {
               })
             };
           }),
-          subjects: prevContentState.subjects?.map((subject) => {
-            return {
-              ...subject,
-              comments: subject.comments.map((comment) => {
-                return {
-                  ...comment,
-                  likes:
-                    comment.id === action.commentId
-                      ? action.likes
-                      : comment.likes,
-                  replies: (comment.replies || []).map((reply) => {
-                    return {
-                      ...reply,
-                      likes:
-                        reply.id === action.commentId
-                          ? action.likes
-                          : reply.likes
-                    };
-                  })
-                };
-              })
-            };
-          })
+          subjects: prevContentState.subjects?.map(
+            (subject: { id: number; comments: Comment[] }) => {
+              return {
+                ...subject,
+                comments: subject.comments.map((comment) => {
+                  return {
+                    ...comment,
+                    likes:
+                      comment.id === action.commentId
+                        ? action.likes
+                        : comment.likes,
+                    replies: (comment.replies || []).map((reply) => {
+                      return {
+                        ...reply,
+                        likes:
+                          reply.id === action.commentId
+                            ? action.likes
+                            : reply.likes
+                      };
+                    })
+                  };
+                })
+              };
+            }
+          )
         };
       }
       return newState;
@@ -654,7 +696,7 @@ export default function ContentReducer(state, action) {
               : prevContentState.likes,
           comments:
             action.contentType === 'comment'
-              ? prevContentState.comments?.map((comment) => ({
+              ? prevContentState.comments?.map((comment: Comment) => ({
                   ...comment,
                   likes:
                     comment.id === action.contentId
@@ -737,7 +779,7 @@ export default function ContentReducer(state, action) {
         ...state,
         [contentKey]: {
           ...prevContentState,
-          comments: prevContentState.comments.map((comment) => ({
+          comments: prevContentState.comments.map((comment: Comment) => ({
             ...comment,
             replies:
               comment.id === action.commentId
@@ -761,7 +803,7 @@ export default function ContentReducer(state, action) {
         },
         [contentKey]: {
           ...prevContentState,
-          subjects: prevContentState.subjects?.map((subject) => {
+          subjects: prevContentState.subjects?.map((subject: Subject) => {
             if (subject.id === action.subjectId) {
               return {
                 ...subject,
@@ -779,7 +821,7 @@ export default function ContentReducer(state, action) {
         ['subject' + action.subjectId]: {
           ...state['subject' + action.subjectId],
           comments: state['subject' + action.subjectId].comments.map(
-            (comment) => {
+            (comment: Comment) => {
               return {
                 ...comment,
                 replies:
@@ -796,7 +838,7 @@ export default function ContentReducer(state, action) {
         },
         [contentKey]: {
           ...prevContentState,
-          subjects: prevContentState.subjects?.map((subject) => {
+          subjects: prevContentState.subjects?.map((subject: Subject) => {
             return {
               ...subject,
               comments: subject.comments.map((comment) => {
@@ -817,7 +859,7 @@ export default function ContentReducer(state, action) {
         }
       };
     case 'LOAD_MORE_SUBJECTS': {
-      const subjectStates = {};
+      const subjectStates: { [key: string]: any } = {};
       for (let subject of action.results) {
         subjectStates['subject' + subject.id] = subject;
       }
@@ -836,7 +878,7 @@ export default function ContentReducer(state, action) {
         ...state,
         [contentKey]: {
           ...prevContentState,
-          comments: prevContentState.comments.map((comment) => {
+          comments: prevContentState.comments.map((comment: Comment) => {
             if (comment.id === action.commentId) {
               return {
                 ...comment,
@@ -854,12 +896,12 @@ export default function ContentReducer(state, action) {
         ...state,
         [contentKey]: {
           ...prevContentState,
-          comments: prevContentState.comments.map((comment) => {
+          comments: prevContentState.comments.map((comment: Comment) => {
             if (comment.id === action.commentId) {
               const replies = comment.replies || [];
               const replyIds = replies.map((reply) => reply.id);
               const loadedReplies = action.replies.filter(
-                (reply) => !replyIds.includes(reply.id)
+                (reply: Comment) => !replyIds.includes(reply.id)
               );
               const targetReplyIndex = replies
                 .map((reply) => reply.id)
@@ -920,7 +962,7 @@ export default function ContentReducer(state, action) {
               );
               const replyIds = (comment.replies || []).map((reply) => reply.id);
               const loadedReplies = action.replies.filter(
-                (reply) => !replyIds.includes(reply.id)
+                (reply: Comment) => !replyIds.includes(reply.id)
               );
               replies[replies.length - 1] = {
                 ...replies[replies.length - 1],
@@ -953,10 +995,10 @@ export default function ContentReducer(state, action) {
         ...state,
         [contentKey]: {
           ...prevContentState,
-          comments: prevContentState.comments.map((comment) => {
+          comments: prevContentState.comments.map((comment: Comment) => {
             const replyIds = (comment.replies || []).map((reply) => reply.id);
             const loadedReplies = action.replies.filter(
-              (reply) => !replyIds.includes(reply.id)
+              (reply: Comment) => !replyIds.includes(reply.id)
             );
             if (comment.id === action.commentId) {
               return {
@@ -996,7 +1038,7 @@ export default function ContentReducer(state, action) {
               };
               const replyIds = (comment.replies || []).map((reply) => reply.id);
               const loadedReplies = action.replies.filter(
-                (reply) => !replyIds.includes(reply.id)
+                (reply: Comment) => !replyIds.includes(reply.id)
               );
               return {
                 ...comment,
@@ -1021,7 +1063,7 @@ export default function ContentReducer(state, action) {
         }
       };
     case 'LOAD_SUBJECTS': {
-      const subjectStates = {};
+      const subjectStates: { [key: string]: any } = {};
       for (let subject of action.subjects) {
         subjectStates['subject' + subject.id] = subject;
       }
@@ -1046,7 +1088,7 @@ export default function ContentReducer(state, action) {
         },
         [contentKey]: {
           ...prevContentState,
-          subjects: prevContentState.subjects?.map((subject) => {
+          subjects: prevContentState.subjects?.map((subject: Subject) => {
             if (subject.id === action.subjectId) {
               return {
                 ...subject,
@@ -1080,7 +1122,7 @@ export default function ContentReducer(state, action) {
               : prevContentState.recommendations,
           comments:
             action.contentType === 'comment'
-              ? prevContentState.comments.map((comment) => ({
+              ? prevContentState.comments.map((comment: Comment) => ({
                   ...comment,
                   recommendations:
                     comment.id === action.contentId
@@ -1141,7 +1183,7 @@ export default function ContentReducer(state, action) {
         const prevContentState = newState[contentKey];
         newState[contentKey] = {
           ...prevContentState,
-          subjects: prevContentState.subjects?.map((subject) =>
+          subjects: prevContentState.subjects?.map((subject: Subject) =>
             subject.id === action.subjectId
               ? {
                   ...subject,
@@ -1174,12 +1216,12 @@ export default function ContentReducer(state, action) {
           ...prevContentState,
           rewards: contentMatches
             ? (prevContentState.rewards || []).filter(
-                (reward) => reward.id !== action.rewardId
+                (reward: Reward) => reward.id !== action.rewardId
               )
             : prevContentState.rewards,
           comments:
             action.contentType === 'comment'
-              ? prevContentState.comments?.map((comment) => {
+              ? prevContentState.comments?.map((comment: Comment) => {
                   const commentMatches = comment.id === action.contentId;
                   return {
                     ...comment,
@@ -1202,7 +1244,7 @@ export default function ContentReducer(state, action) {
                   };
                 })
               : prevContentState.comments,
-          subjects: prevContentState.subjects?.map((subject) => {
+          subjects: prevContentState.subjects?.map((subject: Subject) => {
             const subjectMatches =
               subject.id === action.contentId &&
               action.contentType === 'subject';
@@ -1251,7 +1293,9 @@ export default function ContentReducer(state, action) {
                           action.contentId && action.contentType === 'comment'
                           ? (
                               prevContentState.targetObj.comment.rewards || []
-                            ).filter((reward) => reward.id !== action.rewardId)
+                            ).filter(
+                              (reward: Reward) => reward.id !== action.rewardId
+                            )
                           : prevContentState.targetObj.comment.rewards
                     }
                   : undefined,
@@ -1263,7 +1307,9 @@ export default function ContentReducer(state, action) {
                           action.contentId && action.contentType === 'subject'
                           ? (
                               prevContentState.targetObj.subject.rewards || []
-                            ).filter((reward) => reward.id !== action.rewardId)
+                            ).filter(
+                              (reward: Reward) => reward.id !== action.rewardId
+                            )
                           : prevContentState.targetObj.subject.rewards
                     }
                   : undefined
@@ -1402,7 +1448,7 @@ export default function ContentReducer(state, action) {
           rewardLevel: contentMatches
             ? action.rewardLevel
             : prevContentState.rewardLevel,
-          subjects: prevContentState.subjects?.map((subject) => {
+          subjects: prevContentState.subjects?.map((subject: Subject) => {
             const subjectMatches =
               subject.id === action.contentId &&
               action.contentType === 'subject';
@@ -1461,7 +1507,7 @@ export default function ContentReducer(state, action) {
         ...state,
         [contentKey]: {
           ...prevContentState,
-          subjects: prevContentState.subjects?.map((subject) => {
+          subjects: prevContentState.subjects?.map((subject: Subject) => {
             return subject.id === action.contentId
               ? {
                   ...subject,
@@ -1602,7 +1648,7 @@ export default function ContentReducer(state, action) {
           const prevContentState = newState[contentKey];
           newState[contentKey] = {
             ...prevContentState,
-            comments: prevContentState.comments.map((comment) => {
+            comments: prevContentState.comments.map((comment: Comment) => {
               if (
                 comment.id === action.data.commentId ||
                 comment.id === action.data.replyId
@@ -1639,7 +1685,7 @@ export default function ContentReducer(state, action) {
             prevContentState.contentType === 'comment'
               ? (prevContentState.comments || []).concat([action.data])
               : [action.data].concat(prevContentState.comments),
-          subjects: prevContentState.subjects?.map((subject) =>
+          subjects: prevContentState.subjects?.map((subject: Subject) =>
             subject.id === action.data.subjectId
               ? {
                   ...subject,
@@ -1659,7 +1705,7 @@ export default function ContentReducer(state, action) {
           const prevContentState = newState[contentKey];
           newState[contentKey] = {
             ...prevContentState,
-            comments: prevContentState.comments.map((comment) => {
+            comments: prevContentState.comments.map((comment: Comment) => {
               if (
                 comment.id === action.data.commentId ||
                 comment.id === action.data.replyId
@@ -1680,7 +1726,7 @@ export default function ContentReducer(state, action) {
           ['subject' + action.data.subjectId]: {
             ...state['subject' + action.data.subjectId],
             comments: state['subject' + action.data.subjectId].comments.map(
-              (comment) =>
+              (comment: Comment) =>
                 comment.id === action.data.commentId ||
                 comment.id === action.data.replyId
                   ? {
@@ -1736,7 +1782,7 @@ export default function ContentReducer(state, action) {
                 : comment.replies
             };
           }),
-          subjects: prevContentState.subjects?.map((subject) => {
+          subjects: prevContentState.subjects?.map((subject: Subject) => {
             return {
               ...subject,
               comments: subject.comments.map((comment) =>
