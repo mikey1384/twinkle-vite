@@ -69,7 +69,8 @@ export default function HomeReducer(state, action) {
     case 'SET_INPUT_MODAL_SHOWN':
       return {
         ...state,
-        inputModalShown: action.shown
+        inputModalShown: action.shown,
+        inputModalType: action.shown ? action.modalType : null
       };
     case 'SET_TOP_MENU_SECTION':
       return {

@@ -82,10 +82,11 @@ export default function HomeActions(dispatch) {
         shown
       });
     },
-    onSetInputModalShown(shown) {
+    onSetInputModalShown({ shown, modalType }) {
       return dispatch({
         type: 'SET_INPUT_MODAL_SHOWN',
-        shown
+        shown,
+        modalType
       });
     },
     onSetSubmittingSubject(submitting) {

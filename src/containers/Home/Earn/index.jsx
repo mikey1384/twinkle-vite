@@ -61,8 +61,8 @@ export default function Earn() {
     </ErrorBoundary>
   );
 
-  function handleInputModalButtonClick() {
+  function handleInputModalButtonClick(modalType) {
     navigate('/');
-    onSetInputModalShown(true);
+    onSetInputModalShown({ shown: true, modalType });
   }
 }

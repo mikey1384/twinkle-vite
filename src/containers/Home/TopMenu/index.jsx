@@ -130,6 +130,16 @@ export default function TopMenu({
               Chess
             </TopButton>
           )}
+          <TopButton
+            loading={loadingWordle}
+            colorLeft={Color.purple()}
+            colorMiddle={Color.pink()}
+            colorRight={Color.purple()}
+            style={{ marginLeft: '1rem' }}
+            onClick={() => onInputModalButtonClick('file')}
+          >
+            Post Pics/Videos
+          </TopButton>
         </div>
       </div>
     </ErrorBoundary>
