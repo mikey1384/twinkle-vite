@@ -47,6 +47,7 @@ SubjectInput.propTypes = {
 };
 
 function SubjectInput({ onModalHide }) {
+  const inputModalType = useHomeContext((v) => v.state.inputModalType);
   const { onFileUpload } = useContext(LocalContext);
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const { canEditRewardLevel, banned } = useKeyContext((v) => v.myState);
@@ -115,6 +116,12 @@ function SubjectInput({ onModalHide }) {
   );
   const isMadeByUserRef = useRef(subject.isMadeByUser);
   const [isMadeByUser, setIsMadeByUser] = useState(subject.isMadeByUser);
+
+  useEffect(() => {
+    if (inputModalType === 'file') {
+      setAttachContentModalShown(true);
+    }
+  }, [inputModalType]);
 
   const titleExceedsCharLimit = useMemo(
     () =>

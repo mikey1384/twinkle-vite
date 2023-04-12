@@ -118,12 +118,22 @@ export default function TopMenu({
           >
             Wordle
           </TopButton>
+          <TopButton
+            loading={loadingWordle}
+            colorLeft={Color.armyGreen()}
+            colorMiddle={Color.logoGreen()}
+            colorRight={Color.armyGreen()}
+            style={{ marginLeft: '1rem' }}
+            onClick={() => onInputModalButtonClick('file')}
+          >
+            Post Pics/Videos
+          </TopButton>
           {todayStats.unansweredChessMsgChannelId && (
             <TopButton
               loading={loadingChess}
-              colorLeft={Color.armyGreen()}
-              colorMiddle={Color.logoGreen()}
-              colorRight={Color.armyGreen()}
+              colorLeft={Color.purple()}
+              colorMiddle={Color.pink()}
+              colorRight={Color.purple()}
               style={{ marginLeft: '1rem' }}
               onClick={handleChessButtonClick}
             >
