@@ -54,6 +54,7 @@ export const Color = {
   darkBrownOrange: (opacity = 1) => `rgba(235,160,70,${opacity})`,
   brownOrange: (opacity = 1) => `rgba(245,190,70,${opacity})`,
   orange: (opacity = 1) => `rgba(255,140,0,${opacity})`,
+  lavender: (opacity = 1) => `rgba(200,200,230,${opacity})`,
   lightOrange: (opacity = 1) => `rgba(255,175,75,${opacity})`,
   lighterOrange: (opacity = 1) => `rgba(255,205,90,${opacity})`,
   pinkOrange: (opacity = 1) => `rgba(250,120,110,${opacity})`,
