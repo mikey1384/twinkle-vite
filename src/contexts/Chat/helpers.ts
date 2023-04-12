@@ -2,6 +2,10 @@ export function determineSelectedChatTab({
   currentSelectedChatTab,
   selectedChatTab,
   selectedChannel
+}: {
+  currentSelectedChatTab: string;
+  selectedChatTab?: string;
+  selectedChannel?: { isClass: boolean };
 }) {
   let newSelectedChatTab = currentSelectedChatTab;
   if (selectedChatTab) {

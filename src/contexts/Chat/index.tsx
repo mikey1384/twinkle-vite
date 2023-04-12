@@ -1,4 +1,4 @@
-import React, { useReducer } from 'react';
+import React, { ReactNode, useReducer } from 'react';
 import { createContext } from 'use-context-selector';
 import PropTypes from 'prop-types';
 import ChatActions from './actions';
@@ -72,7 +72,7 @@ ChatContextProvider.propTypes = {
   children: PropTypes.node
 };
 
-export function ChatContextProvider({ children }) {
+export function ChatContextProvider({ children }: { children: ReactNode }) {
   const [chatState, chatDispatch] = useReducer(ChatReducer, initialChatState);
   return (
     <ChatContext.Provider
