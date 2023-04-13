@@ -7,7 +7,7 @@ import { renderText } from '~/helpers/stringHelpers';
 interface Props {
   hasError?: boolean;
   autoComplete?: string;
-  inputRef?: RefObject<HTMLInputElement>;
+  inputRef?: RefObject<any>;
   onChange: (value: string) => void;
   type?: string;
   className?: string;

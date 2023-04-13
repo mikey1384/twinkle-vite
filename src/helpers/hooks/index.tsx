@@ -231,6 +231,11 @@ export function useSearch({
   onEmptyQuery,
   onClear,
   onSetSearchText
+}: {
+  onSearch: (text: string) => Promise<void>;
+  onEmptyQuery?: () => void;
+  onClear?: () => void;
+  onSetSearchText: (text: string) => void;
 }) {
   const [searching, setSearching] = useState(false);
   const timerRef = useRef(null);
