@@ -4,8 +4,8 @@ import { useOutsideClick } from '~/helpers/hooks';
 
 interface Props {
   indexToHighlight: number;
-  renderItemLabel: (item: any) => string;
-  renderItemUrl: (item: any) => string;
+  renderItemLabel: (item: any) => any;
+  renderItemUrl?: (item: any) => string;
   searchResults: any[];
   onClickOutSide: () => void;
   onSelect: (item: any) => void;

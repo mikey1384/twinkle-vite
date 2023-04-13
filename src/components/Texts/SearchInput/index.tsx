@@ -19,8 +19,8 @@ interface Props {
   onClear?: () => void;
   onFocus?: () => void;
   onSelect: (item: any) => void;
-  renderItemLabel: (item: any) => string;
-  renderItemUrl: (item: any) => string;
+  renderItemLabel: (item: any) => any;
+  renderItemUrl?: (item: any) => string;
   style?: any;
   value?: string;
 }
