@@ -1,10 +1,29 @@
-import React, { useRef, useState } from 'react';
+import React, { RefObject, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Input from '../Input';
 import Icon from '~/components/Icon';
 import DropdownList from './DropdownList';
 
+interface Props {
+  onClickOutSide: () => void;
+  searchResults?: any[];
+  addonColor?: string;
+  autoFocus?: boolean;
+  borderColor?: string;
+  className?: string;
+  innerRef?: RefObject<any>;
+  inputHeight?: string;
+  onChange: (text: string) => void;
+  placeholder?: string;
+  onClear?: () => void;
+  onFocus?: () => void;
+  onSelect: (item: any) => void;
+  renderItemLabel: (item: any) => string;
+  renderItemUrl: (item: any) => string;
+  style?: any;
+  value?: string;
+}
 export default function SearchInput({
   onClickOutSide,
   searchResults = [],
@@ -12,7 +31,7 @@ export default function SearchInput({
   autoFocus,
   borderColor,
   className,
-  innerRef = () => {},
+  innerRef,
   inputHeight,
   onChange,
   placeholder,
@@ -23,7 +42,7 @@ export default function SearchInput({
   renderItemUrl,
   style,
   value = ''
-}) {
+}: Props) {
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const SearchInputRef = useRef(null);
 
@@ -77,7 +96,7 @@ export default function SearchInput({
         onFocus={onFocus && onFocus}
         placeholder={placeholder}
         value={value}
-        onChange={(text) => onChange(text)}
+        onChange={onChange}
         onKeyDown={onKeyDown}
       />
       <DropdownList
@@ -92,7 +111,7 @@ export default function SearchInput({
     </div>
   );
 
-  function onKeyDown(event) {
+  function onKeyDown(event: any) {
     let index = indexToHighlight;
     if (searchResults.length > 0) {
       if (event.keyCode === 40) {

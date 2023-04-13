@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from 'react';
+import React, { CSSProperties, memo, useCallback, useState } from 'react';
 import Loading from '~/components/Loading';
 import SearchInput from '~/components/Texts/SearchInput';
 import { useSearch } from '~/helpers/hooks';
@@ -7,7 +7,7 @@ import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-function ChatSearchBox({ style }) {
+function ChatSearchBox({ style }: { style?: CSSProperties }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const searchChat = useAppContext((v) => v.requestHelpers.searchChat);
@@ -26,7 +26,7 @@ function ChatSearchBox({ style }) {
   const onSearchChat = useChatContext((v) => v.actions.onSearchChat);
 
   const [searchText, setSearchText] = useState('');
-  const handleSearchChat = useCallback(async (text) => {
+  const handleSearchChat = useCallback(async (text: string) => {
     const data = await searchChat(text);
     onSearchChat(data);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -37,7 +37,14 @@ function ChatSearchBox({ style }) {
     onSetSearchText: setSearchText
   });
   const handleSelect = useCallback(
-    async (item) => {
+    async (item: {
+      id?: number;
+      primary?: boolean;
+      pathId?: number;
+      label?: string;
+      profilePicUrl?: string;
+      authLevel?: number;
+    }) => {
       if (item.primary || !!item.pathId) {
         navigate(`/chat/${item.pathId}`);
       } else {
