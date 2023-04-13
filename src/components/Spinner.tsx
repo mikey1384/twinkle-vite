@@ -1,14 +1,10 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 
-Spinner.propTypes = {
-  theme: PropTypes.string
-};
-
-export default function Spinner({ theme }) {
+export default function Spinner({ theme }: { theme?: string }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     spinner: { color: spinnerColor }
