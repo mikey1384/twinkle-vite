@@ -20,6 +20,8 @@ interface Props {
   style?: object;
   user?: {
     id: number;
+    authLevel?: number;
+    profilePicUrl?: string;
     username?: string;
     twinkleXP?: number;
     rank?: number;
@@ -62,7 +64,12 @@ export default function UsernameText({
     (v) => v.actions.onUpdateSelectedChannelId
   );
   const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
-  const [dropdownContext, setDropdownContext] = useState(null);
+  const [dropdownContext, setDropdownContext] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const menuShownRef = useRef(false);
   const userXP = useMemo(() => {
     if (!twinkleXP && !user.twinkleXP) {
@@ -270,10 +277,10 @@ export default function UsernameText({
 
   async function onUsernameClick() {
     const elementContext = {
-      x: UsernameTextRef.current.getBoundingClientRect().left,
-      y: UsernameTextRef.current.getBoundingClientRect().top,
-      width: UsernameTextRef.current.getBoundingClientRect().width,
-      height: UsernameTextRef.current.getBoundingClientRect().height
+      x: UsernameTextRef.current?.getBoundingClientRect?.()?.left,
+      y: UsernameTextRef.current?.getBoundingClientRect?.()?.top,
+      width: UsernameTextRef.current?.getBoundingClientRect?.()?.width,
+      height: UsernameTextRef.current?.getBoundingClientRect?.()?.height
     };
     if (user.username) {
       if (!twinkleXP && !user.twinkleXP && !menuShownRef.current) {
