@@ -1,10 +1,9 @@
-import { useReducer } from 'react';
+import React, { useReducer, ReactNode } from 'react';
 import { createContext } from 'use-context-selector';
-import PropTypes from 'prop-types';
 import ExploreActions from './actions';
 import ExploreReducer from './reducer';
 
-export const ExploreContext = createContext();
+export const ExploreContext = createContext({});
 export const initialExploreState = {
   aiCards: {
     cards: [],
@@ -74,10 +73,7 @@ export const initialExploreState = {
   prevUserId: null
 };
 
-ExploreContextProvider.propTypes = {
-  children: PropTypes.node
-};
-export function ExploreContextProvider({ children }) {
+export function ExploreContextProvider({ children }: { children: ReactNode }) {
   const [exploreState, exploreDispatch] = useReducer(
     ExploreReducer,
     initialExploreState
