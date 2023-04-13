@@ -1,12 +1,15 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { borderRadius } from '~/constants/css';
 
-Tag.propTypes = {
-  label: PropTypes.string.isRequired,
-  onClick: PropTypes.func.isRequired,
-  renderTagLabel: PropTypes.func
-};
-export default function Tag({ label, onClick, renderTagLabel }) {
+export default function Tag({
+  label,
+  onClick,
+  renderTagLabel
+}: {
+  label: string;
+  onClick: () => void;
+  renderTagLabel?: (label?: string) => string;
+}) {
   return (
     <div
       style={{

@@ -115,8 +115,8 @@ export function last(array: any[]) {
   return array[array.length - 1];
 }
 
-export function objectify(array: any[], id: string = 'id') {
-  const result: { [key: string]: any } = {};
+export function objectify(array: any[], id: any = 'id') {
+  const result: any = {};
   for (let elem of array) {
     result[elem[id]] = elem;
   }

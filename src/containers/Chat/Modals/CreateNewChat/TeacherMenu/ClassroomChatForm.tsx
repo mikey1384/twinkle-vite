@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import TagForm from '~/components/Forms/TagForm';
@@ -17,12 +16,6 @@ const enterClassNameLabel = localize('enterClassName');
 const membersLabel = localize('members');
 const nameLabel = localize('name');
 const newClassroomLabel = localize('newClassroomChat');
-
-ClassroomChatForm.propTypes = {
-  channelId: PropTypes.number.isRequired,
-  onBackClick: PropTypes.func,
-  onHide: PropTypes.func.isRequired
-};
 
 export default function ClassroomChatForm({ channelId, onBackClick, onHide }) {
   const navigate = useNavigate();

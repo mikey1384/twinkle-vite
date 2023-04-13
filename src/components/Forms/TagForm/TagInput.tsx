@@ -1,5 +1,4 @@
-import PropTypes from 'prop-types';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import SearchDropdown from '~/components/SearchDropdown';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
@@ -10,24 +9,23 @@ import { useOutsideClick } from '~/helpers/hooks';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-TagInput.propTypes = {
-  autoFocus: PropTypes.bool,
-  className: PropTypes.string,
-  dropdownFooter: PropTypes.node,
-  inputRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  loading: PropTypes.bool,
-  value: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  onClickOutSide: PropTypes.func.isRequired,
-  onNotFound: PropTypes.func,
-  placeholder: PropTypes.string.isRequired,
-  searchResults: PropTypes.array.isRequired,
-  selectedItems: PropTypes.object.isRequired,
-  style: PropTypes.object,
-  onAddItem: PropTypes.func.isRequired,
-  renderDropdownLabel: PropTypes.func
-};
-
+interface Props {
+  autoFocus?: boolean;
+  className?: string;
+  dropdownFooter?: any;
+  inputRef?: any;
+  onClickOutSide?: () => void;
+  loading?: boolean;
+  onAddItem: (item: object) => void;
+  onChange: (value: string) => void;
+  onNotFound?: ({ messageShown }: { messageShown: boolean }) => void;
+  placeholder?: string;
+  renderDropdownLabel?: string;
+  searchResults?: { id: number; title: string }[];
+  selectedItems: { id: number }[];
+  style?: any;
+  value: string;
+}
 export default function TagInput({
   autoFocus,
   className,
@@ -44,7 +42,7 @@ export default function TagInput({
   selectedItems,
   style,
   value
-}) {
+}: Props) {
   const [results, setResults] = useState(searchResults);
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const TagInputRef = useRef(null);
@@ -126,7 +124,7 @@ export default function TagInput({
     ) : null;
   }
 
-  function onKeyDown(event) {
+  function onKeyDown(event: any) {
     searchResults = searchResults.filter((user) => !selectedItems[user.id]);
     let index = indexToHighlight;
     if (searchResults.length > 0) {

@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -10,12 +10,13 @@ const classroomChatLabel = localize('classroomChat');
 const regularChatLabel = localize('regularChat');
 const startNewChatLabel = localize('startNewChat');
 
-SelectScreen.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  onSetSection: PropTypes.func.isRequired
-};
-
-export default function SelectScreen({ onHide, onSetSection }) {
+export default function SelectScreen({
+  onHide,
+  onSetSection
+}: {
+  onHide: () => void;
+  onSetSection: (section: string) => void;
+}) {
   return (
     <ErrorBoundary componentPath="CreateNewChat/TeacherMenu/SelectScreen">
       <header>{startNewChatLabel}</header>
