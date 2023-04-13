@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -18,13 +17,6 @@ const groupNameLabel = localize('groupName');
 const youCanChangeThisSettingLaterLabel = localize(
   'youCanChangeThisSettingLater'
 );
-
-RegularMenu.propTypes = {
-  creatingChat: PropTypes.bool,
-  onBackClick: PropTypes.func,
-  onDone: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired
-};
 
 export default function RegularMenu({
   creatingChat,

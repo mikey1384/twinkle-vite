@@ -1,4 +1,6 @@
-export const Color = {
+export const Color: {
+  [key: string]: (opacity?: number) => string;
+} = {
   blue: (opacity = 1) => `rgba(5,110,178,${opacity})`,
   lightBlue: (opacity = 1) => `rgba(117,192,255,${opacity})`,
   darkBlue: (opacity = 1) => `rgba(0,70,195,${opacity})`,

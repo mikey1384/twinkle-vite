@@ -1,31 +1,29 @@
-import { memo, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { CSSProperties, memo, ReactNode, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-Button.propTypes = {
-  className: PropTypes.string,
-  color: PropTypes.string,
-  disabled: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
-  filled: PropTypes.bool,
-  loading: PropTypes.bool,
-  stretch: PropTypes.bool,
-  hoverColor: PropTypes.string,
-  onClick: PropTypes.func,
-  children: PropTypes.node,
-  onHover: PropTypes.bool,
-  onMouseEnter: PropTypes.func,
-  onMouseLeave: PropTypes.func,
-  opacity: PropTypes.number,
-  skeuomorphic: PropTypes.bool,
-  style: PropTypes.object,
-  transparent: PropTypes.bool,
-  mobilePadding: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  mobileBorderRadius: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-};
-
+interface Props {
+  className?: string;
+  color?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  onClick?: () => void;
+  onHover?: boolean;
+  children?: ReactNode;
+  hoverColor?: string;
+  filled?: boolean;
+  opacity?: number;
+  stretch?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  skeuomorphic?: boolean;
+  style?: CSSProperties;
+  transparent?: boolean;
+  mobilePadding?: string;
+  mobileBorderRadius?: string;
+}
 function Button({
   className,
   color = 'black',
@@ -45,10 +43,10 @@ function Button({
   transparent,
   mobilePadding,
   mobileBorderRadius
-}) {
+}: Props) {
   const isDisabled = useMemo(() => disabled || loading, [disabled, loading]);
   const ButtonStyle = useMemo(() => {
-    const colorKey = onHover ? hoverColor : color;
+    const colorKey = (onHover ? hoverColor : color) || 'black';
     const backgroundOpacity = opacity || (filled ? 1 : skeuomorphic ? 0.5 : 0);
     const backgroundHoverOpacity = transparent ? 0 : 0.9;
     const backgroundDisabledOpacity = filled || skeuomorphic ? 0.2 : 0;
