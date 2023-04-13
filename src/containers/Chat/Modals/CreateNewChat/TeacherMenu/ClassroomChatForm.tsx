@@ -17,7 +17,15 @@ const membersLabel = localize('members');
 const nameLabel = localize('name');
 const newClassroomLabel = localize('newClassroomChat');
 
-export default function ClassroomChatForm({ channelId, onBackClick, onHide }) {
+export default function ClassroomChatForm({
+  channelId,
+  onBackClick,
+  onHide
+}: {
+  channelId?: number;
+  onBackClick?: () => void;
+  onHide: () => void;
+}) {
   const navigate = useNavigate();
   const createNewChat = useAppContext((v) => v.requestHelpers.createNewChat);
   const searchUserToInvite = useAppContext(
@@ -39,7 +47,7 @@ export default function ClassroomChatForm({ channelId, onBackClick, onHide }) {
   } = useKeyContext((v) => v.theme);
   const [creatingChat, setCreatingChat] = useState(false);
   const [channelName, setChannelName] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState<{ id: number }[]>([]);
   const disabled = useMemo(
     () =>
       creatingChat || stringIsEmpty(channelName) || selectedUsers.length === 0,
@@ -77,7 +85,6 @@ export default function ClassroomChatForm({ channelId, onBackClick, onHide }) {
             handleSearchUserToInvite({ channelId, searchText: text })
           }
           onClear={onClearUserSearchResults}
-          channelName={channelName}
           onAddItem={onAddUser}
           onRemoveItem={onRemoveUser}
           renderDropdownLabel={(item) => (
@@ -112,17 +119,25 @@ export default function ClassroomChatForm({ channelId, onBackClick, onHide }) {
     </ErrorBoundary>
   );
 
-  async function handleSearchUserToInvite({ channelId, searchText }) {
+  async function handleSearchUserToInvite({
+    channelId,
+    searchText
+  }: {
+    channelId?: number;
+    searchText: string;
+  }) {
     const data = await searchUserToInvite({ channelId, searchText });
     onSearchUserToInvite(data);
   }
 
-  function onAddUser(user) {
-    setSelectedUsers(selectedUsers.concat([user]));
+  function onAddUser(user: { id: number }) {
+    setSelectedUsers((prevSelectedUsers) => prevSelectedUsers.concat([user]));
   }
 
-  function onRemoveUser(userId) {
-    setSelectedUsers(selectedUsers.filter((user) => user.id !== userId));
+  function onRemoveUser(userId: number) {
+    setSelectedUsers((prevSelectedUsers) =>
+      prevSelectedUsers.filter((user) => user.id !== userId)
+    );
   }
 
   async function handleDone() {

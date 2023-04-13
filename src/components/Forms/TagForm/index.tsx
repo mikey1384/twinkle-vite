@@ -14,15 +14,15 @@ interface Props {
   filter: (value: any, index: number) => boolean;
   itemLabel: string;
   maxItems?: number;
-  onAddItem: (item: object) => void;
+  onAddItem: (value: any) => void;
   onClear: () => void;
   searchResults: { id: number; title: string }[];
-  selectedItems: ({ id: number } & { [key: string]: string })[];
+  selectedItems: any[];
   onNotFound?: ({ messageShown }: { messageShown: boolean }) => void;
   onRemoveItem: (id: number) => void;
   onSearch?: (text: string) => void;
   onSubmit?: () => void;
-  renderDropdownLabel: (item: any) => string;
+  renderDropdownLabel: (item: any) => any;
   renderTagLabel?: (label?: string) => string;
   searchPlaceholder?: string;
   subTitle?: string;
