@@ -277,10 +277,10 @@ export default function UsernameText({
 
   async function onUsernameClick() {
     const elementContext = {
-      x: UsernameTextRef.current?.getBoundingClientRect?.()?.left,
-      y: UsernameTextRef.current?.getBoundingClientRect?.()?.top,
-      width: UsernameTextRef.current?.getBoundingClientRect?.()?.width,
-      height: UsernameTextRef.current?.getBoundingClientRect?.()?.height
+      x: UsernameTextRef.current?.getBoundingClientRect?.()?.left || 0,
+      y: UsernameTextRef.current?.getBoundingClientRect?.()?.top || 0,
+      width: UsernameTextRef.current?.getBoundingClientRect?.()?.width || 0,
+      height: UsernameTextRef.current?.getBoundingClientRect?.()?.height || 0
     };
     if (user.username) {
       if (!twinkleXP && !user.twinkleXP && !menuShownRef.current) {
