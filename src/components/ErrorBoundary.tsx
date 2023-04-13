@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import { clientVersion } from '~/constants/defaultValues';
@@ -13,22 +13,31 @@ install();
 const token = () =>
   typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
 
-export default class ErrorBoundary extends Component {
-  static propTypes = {
-    children: PropTypes.node,
-    innerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
-    userId: PropTypes.number,
-    username: PropTypes.string,
-    componentPath: PropTypes.string.isRequired
-  };
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  innerRef?: React.RefObject<any> | ((instance: any) => void);
+  userId?: number;
+  username?: string;
+  componentPath: string;
+  style?: object;
+}
 
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+export default class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   state = { hasError: false };
 
-  async componentDidCatch(error) {
+  async componentDidCatch(error: Error) {
     this.setState({ hasError: true });
     reportError({
       componentPath: this.props.componentPath,
-      message: error.stack
+      message: error.stack || '',
+      info: ''
     });
   }
 
@@ -109,7 +118,15 @@ export default class ErrorBoundary extends Component {
   }
 }
 
-async function reportError({ componentPath, info, message }) {
+async function reportError({
+  componentPath,
+  info,
+  message
+}: {
+  componentPath: string;
+  info: string;
+  message: string;
+}) {
   try {
     const {
       data: { success }
