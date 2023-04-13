@@ -1,4 +1,10 @@
-export default function InteractiveReducer(state, action) {
+export default function InteractiveReducer(
+  state: any,
+  action: {
+    type: string;
+    [key: string]: any;
+  }
+) {
   switch (action.type) {
     case 'ADD_NEW_INTERACTIVE_SLIDE': {
       let newLastFork;
@@ -20,7 +26,7 @@ export default function InteractiveReducer(state, action) {
           ...state[action.interactiveId],
           displayedSlideIds: state[action.interactiveId].displayedSlideIds
             .concat([action.slide.id])
-            .filter((slideId) => {
+            .filter((slideId: number) => {
               const slide = state[action.interactiveId].slideObj[slideId];
               return !(slide?.isFork && slide?.isDeleted);
             }),
@@ -48,7 +54,7 @@ export default function InteractiveReducer(state, action) {
           ),
           displayedSlideIds: state[
             action.interactiveId
-          ].displayedSlideIds.filter((slideId) => {
+          ].displayedSlideIds.filter((slideId: number) => {
             return slideId !== action.slideId;
           })
         }
@@ -137,7 +143,7 @@ export default function InteractiveReducer(state, action) {
           ...state[action.interactiveId],
           displayedSlideIds: state[action.interactiveId].displayedSlideIds
             .concat(action.newSlides)
-            .filter((slideId) => {
+            .filter((slideId: number) => {
               const slide = state[action.interactiveId].slideObj[slideId];
               return !(slide?.isFork && slide?.isDeleted);
             })
@@ -197,7 +203,7 @@ export default function InteractiveReducer(state, action) {
         [action.interactiveId]: {
           ...state[action.interactiveId],
           archivedSlideIds: state[action.interactiveId].archivedSlideIds.filter(
-            (slideId) => slideId !== action.slideId
+            (slideId: number) => slideId !== action.slideId
           ),
           slideObj: {
             ...state[action.interactiveId].slideObj,
@@ -216,7 +222,7 @@ export default function InteractiveReducer(state, action) {
           ...state[action.interactiveId],
           displayedSlideIds: state[
             action.interactiveId
-          ].displayedSlideIds.filter((slideId) => {
+          ].displayedSlideIds.filter((slideId: number) => {
             return slideId !== action.slideId;
           })
         }
