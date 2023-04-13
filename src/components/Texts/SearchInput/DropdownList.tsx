@@ -1,18 +1,16 @@
-import { useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
 import SearchDropdown from '~/components/SearchDropdown';
 import { useOutsideClick } from '~/helpers/hooks';
 
-DropdownList.propTypes = {
-  indexToHighlight: PropTypes.number,
-  renderItemUrl: PropTypes.func,
-  renderItemLabel: PropTypes.func,
-  searchResults: PropTypes.array,
-  onClickOutSide: PropTypes.func,
-  onSelect: PropTypes.func,
-  onSetIndexToHighlight: PropTypes.func
-};
-
+interface Props {
+  indexToHighlight: number;
+  renderItemLabel: (item: any) => string;
+  renderItemUrl: (item: any) => string;
+  searchResults: any[];
+  onClickOutSide: () => void;
+  onSelect: (item: any) => void;
+  onSetIndexToHighlight: (index: number) => void;
+}
 export default function DropdownList({
   indexToHighlight,
   renderItemLabel,
@@ -21,7 +19,7 @@ export default function DropdownList({
   onClickOutSide,
   onSelect,
   onSetIndexToHighlight
-}) {
+}: Props) {
   const DropdownRef = useRef(null);
   useOutsideClick(DropdownRef, onClickOutSide);
   return searchResults.length > 0 ? (
@@ -29,7 +27,6 @@ export default function DropdownList({
       innerRef={DropdownRef}
       searchResults={searchResults}
       onUpdate={() => onSetIndexToHighlight(0)}
-      onUnmount={() => onSetIndexToHighlight(0)}
       indexToHighlight={indexToHighlight}
       onItemClick={(item) => onSelect(item)}
       renderItemLabel={renderItemLabel}

@@ -1,5 +1,4 @@
 import { memo, useCallback, useState } from 'react';
-import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import SearchInput from '~/components/Texts/SearchInput';
 import { useSearch } from '~/helpers/hooks';
@@ -7,10 +6,6 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import ErrorBoundary from '~/components/ErrorBoundary';
-
-ChatSearchBox.propTypes = {
-  style: PropTypes.object
-};
 
 function ChatSearchBox({ style }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
