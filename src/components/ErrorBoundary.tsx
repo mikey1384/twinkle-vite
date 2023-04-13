@@ -19,6 +19,7 @@ interface ErrorBoundaryProps {
   username?: string;
   componentPath: string;
   style?: object;
+  className?: string;
 }
 
 interface ErrorBoundaryState {

@@ -1,21 +1,19 @@
-import PropTypes from 'prop-types';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
-SearchDropdown.propTypes = {
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  dropdownFooter: PropTypes.node,
-  indexToHighlight: PropTypes.number.isRequired,
-  onItemClick: PropTypes.func.isRequired,
-  onUpdate: PropTypes.func.isRequired,
-  renderItemLabel: PropTypes.func.isRequired,
-  renderItemUrl: PropTypes.func,
-  searchResults: PropTypes.array.isRequired,
-  style: PropTypes.object
-};
-
+interface Props {
+  innerRef?: any;
+  dropdownFooter?: any;
+  indexToHighlight: number;
+  searchResults: any[];
+  onUpdate: () => void;
+  style?: any;
+  onItemClick: (item: any) => void;
+  renderItemLabel: (item: any) => string;
+  renderItemUrl?: (item: any) => string;
+}
 export default function SearchDropdown({
   innerRef,
   dropdownFooter,
@@ -26,7 +24,7 @@ export default function SearchDropdown({
   onItemClick,
   renderItemLabel,
   renderItemUrl
-}) {
+}: Props) {
   useEffect(() => {
     onUpdate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
