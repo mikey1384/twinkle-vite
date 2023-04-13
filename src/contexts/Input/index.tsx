@@ -1,10 +1,9 @@
-import { useReducer } from 'react';
+import React, { useReducer, ReactNode } from 'react';
 import { createContext } from 'use-context-selector';
-import PropTypes from 'prop-types';
 import InputActions from './actions';
 import InputReducer from './reducer';
 
-export const InputContext = createContext();
+export const InputContext = createContext({});
 export const initialInputState = {
   subject: {
     descriptionFieldShown: false,
@@ -35,10 +34,7 @@ export const initialInputState = {
   userInfo: {}
 };
 
-InputContextProvider.propTypes = {
-  children: PropTypes.node
-};
-export function InputContextProvider({ children }) {
+export function InputContextProvider({ children }: { children: ReactNode }) {
   const [inputState, inputDispatch] = useReducer(
     InputReducer,
     initialInputState
