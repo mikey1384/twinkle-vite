@@ -1,4 +1,10 @@
-export default function MissionReducer(state, action) {
+export default function MissionReducer(
+  state: any,
+  action: {
+    type: string;
+    [key: string]: any;
+  }
+) {
   switch (action.type) {
     case 'LOAD_MISSION': {
       return {
@@ -44,7 +50,7 @@ export default function MissionReducer(state, action) {
         ...state,
         listLoaded: true,
         prevUserId: action.prevUserId,
-        missions: action.missions.map(({ id }) => id),
+        missions: action.missions.map(({ id }: { id: number }) => id),
         missionObj: newMissionObj,
         myAttempts: newMyAttempts,
         loadMoreButton: action.loadMoreButton

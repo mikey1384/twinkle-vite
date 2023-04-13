@@ -1,4 +1,10 @@
-export default function ProfileReducer(state, action) {
+export default function ProfileReducer(
+  state: any,
+  action: {
+    type: string;
+    [key: string]: any;
+  }
+) {
   const defaultState = {
     notables: {
       feeds: [],

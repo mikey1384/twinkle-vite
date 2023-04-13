@@ -1,10 +1,9 @@
-import { useReducer } from 'react';
+import React, { useReducer, ReactNode } from 'react';
 import { createContext } from 'use-context-selector';
-import PropTypes from 'prop-types';
 import MissionActions from './actions';
 import MissionReducer from './reducer';
 
-export const MissionContext = createContext();
+export const MissionContext = createContext({});
 export const initialMissionState = {
   missions: [],
   pendingLoadMoreButton: false,
@@ -20,11 +19,7 @@ export const initialMissionState = {
   selectedMissionListTab: ''
 };
 
-MissionContextProvider.propTypes = {
-  children: PropTypes.node
-};
-
-export function MissionContextProvider({ children }) {
+export function MissionContextProvider({ children }: { children: ReactNode }) {
   const [missionState, missionDispatch] = useReducer(
     MissionReducer,
     initialMissionState
