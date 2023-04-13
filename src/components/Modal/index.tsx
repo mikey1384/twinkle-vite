@@ -1,26 +1,24 @@
-import React from 'react';
+import React, { RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Content from './Content';
 
-Modal.propTypes = {
-  className: PropTypes.string,
-  closeColor: PropTypes.string,
-  children: PropTypes.node,
-  closeWhenClickedOutside: PropTypes.bool,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  modalOverModal: PropTypes.bool,
-  medium: PropTypes.bool,
-  onHide: PropTypes.func,
-  small: PropTypes.bool,
-  large: PropTypes.bool,
-  modalStyle: PropTypes.object,
-  style: PropTypes.object
-};
-
+interface Props {
+  className?: string;
+  closeColor?: string;
+  closeWhenClickedOutside?: boolean;
+  children?: any;
+  innerRef?: RefObject<any> | ((instance: any) => void);
+  modalOverModal?: boolean;
+  onHide?: () => void;
+  small?: boolean;
+  medium?: boolean;
+  large?: boolean;
+  modalStyle?: object;
+  style?: object;
+}
 export default function Modal({
   className,
   closeColor,
@@ -34,7 +32,7 @@ export default function Modal({
   large,
   modalStyle,
   style
-}) {
+}: Props) {
   const modalWidth = {
     small: '26%',
     medium: '35%',
@@ -86,7 +84,6 @@ export default function Modal({
             closeColor={closeColor}
             closeWhenClickedOutside={closeWhenClickedOutside}
             style={modalStyle}
-            eventTypes={['mouseup']}
             className={css`
               position: relative;
               border-radius: ${borderRadius};
@@ -144,5 +141,7 @@ export default function Modal({
   );
   return modalOverModal
     ? Modal
-    : createPortal(Modal, document.getElementById('modal'));
+    : document.getElementById('modal')
+    ? createPortal(Modal, document.getElementById('modal') as HTMLElement)
+    : null;
 }
