@@ -13,6 +13,7 @@ if (!Object.fromEntries) Object.fromEntries = fromEntries;
 loadPolyfills();
 
 import './styles.css';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import ErrorBoundary from './components/ErrorBoundary';
 import { BrowserRouter } from 'react-router-dom';
@@ -263,14 +264,19 @@ library.add(
   faXmark
 );
 
-const root = ReactDOM.createRoot(document.getElementById('react-view'));
+const rootElement = document.getElementById('react-view');
 
-root.render(
-  <BrowserRouter>
-    <ErrorBoundary componentPath="AppContext">
-      <AppContextProvider>
-        <App />
-      </AppContextProvider>
-    </ErrorBoundary>
-  </BrowserRouter>
-);
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <BrowserRouter>
+      <ErrorBoundary componentPath="AppContext">
+        <AppContextProvider>
+          <App />
+        </AppContextProvider>
+      </ErrorBoundary>
+    </BrowserRouter>
+  );
+} else {
+  console.error('Could not find the root element with the ID "react-view".');
+}
