@@ -1,19 +1,17 @@
-import { useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
 import Icon from '~/components/Icon';
 import { useOutsideClick } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
-Content.propTypes = {
-  closeColor: PropTypes.string,
-  closeWhenClickedOutside: PropTypes.bool,
-  onHide: PropTypes.func,
-  className: PropTypes.string,
-  children: PropTypes.node,
-  style: PropTypes.object
-};
-
+interface Props {
+  closeColor?: string;
+  closeWhenClickedOutside?: boolean;
+  children?: any;
+  className?: string;
+  onHide?: () => void;
+  style?: object;
+}
 export default function Content({
   closeColor,
   closeWhenClickedOutside,
@@ -21,7 +19,7 @@ export default function Content({
   className,
   onHide,
   style
-}) {
+}: Props) {
   const ContentRef = useRef(null);
   useOutsideClick(ContentRef, () =>
     closeWhenClickedOutside ? onHide?.() : null
