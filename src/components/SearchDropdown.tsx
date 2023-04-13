@@ -11,7 +11,7 @@ interface Props {
   onUpdate: () => void;
   style?: any;
   onItemClick: (item: any) => void;
-  renderItemLabel: (item: any) => string;
+  renderItemLabel: (item: any) => any;
   renderItemUrl?: (item: any) => string;
 }
 export default function SearchDropdown({
