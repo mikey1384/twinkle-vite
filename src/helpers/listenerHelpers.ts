@@ -2,11 +2,11 @@ type EventType = keyof GlobalEventHandlersEventMap;
 type EventListener = (event: Event) => void;
 
 export function addEvent(
-  elem: HTMLElement | null | undefined,
+  elem: Window | HTMLElement | null,
   type: EventType,
   eventHandle: EventListener
 ): void {
-  if (elem === null || typeof elem === 'undefined') {
+  if (!elem) {
     return;
   }
   if (elem.addEventListener) {
@@ -19,11 +19,11 @@ export function addEvent(
 }
 
 export function removeEvent(
-  elem: HTMLElement | null | undefined,
+  elem: Window | HTMLElement | null,
   type: EventType,
   eventHandle: EventListener
 ): void {
-  if (elem === null || typeof elem === 'undefined') {
+  if (!elem) {
     return;
   }
   if (elem.removeEventListener) {

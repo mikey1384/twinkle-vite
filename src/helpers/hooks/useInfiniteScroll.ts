@@ -7,6 +7,10 @@ export default function useInfiniteScroll({
   feedsLength,
   scrollable,
   onScrollToBottom
+}: {
+  feedsLength: number;
+  scrollable: boolean;
+  onScrollToBottom: () => void;
 }) {
   const prevFeedsLength = useRef(0);
   const scrollHeightRef = useRef(0);
