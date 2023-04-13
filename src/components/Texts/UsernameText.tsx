@@ -18,7 +18,12 @@ interface Props {
   color?: string;
   onMenuShownChange?: (v: boolean) => void;
   style?: object;
-  user?: object;
+  user?: {
+    id: number;
+    username?: string;
+    twinkleXP?: number;
+    rank?: number;
+  };
   wordBreakEnabled?: boolean;
   displayedName?: string;
 }
@@ -27,7 +32,7 @@ export default function UsernameText({
   color,
   onMenuShownChange,
   style = {},
-  user = {},
+  user = { id: 0 },
   wordBreakEnabled,
   displayedName
 }: Props) {
@@ -38,11 +43,11 @@ export default function UsernameText({
     () => getSectionFromPathname(location?.pathname)?.section === 'chat',
     [location?.pathname]
   );
-  const coolDownRef = useRef(null);
-  const showTimerRef = useRef(null);
-  const hideTimerRef = useRef(null);
-  const hideTimerRef2 = useRef(null);
-  const UsernameTextRef = useRef(null);
+  const coolDownRef = useRef(false);
+  const showTimerRef = useRef(0);
+  const hideTimerRef = useRef(0);
+  const hideTimerRef2 = useRef(0);
+  const UsernameTextRef = useRef<HTMLDivElement | null>(null);
   const mouseEntered = useRef(false);
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
