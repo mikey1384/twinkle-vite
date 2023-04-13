@@ -139,6 +139,7 @@ export default function Modal({
       </div>
     </ErrorBoundary>
   );
+
   return modalOverModal
     ? Modal
     : document.getElementById('modal')
