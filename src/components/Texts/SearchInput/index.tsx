@@ -1,30 +1,9 @@
-import PropTypes from 'prop-types';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Input from '../Input';
 import Icon from '~/components/Icon';
 import DropdownList from './DropdownList';
-
-SearchInput.propTypes = {
-  addonColor: PropTypes.string,
-  autoFocus: PropTypes.bool,
-  borderColor: PropTypes.string,
-  className: PropTypes.string,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  inputHeight: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  onChange: PropTypes.func.isRequired,
-  onClear: PropTypes.func,
-  onClickOutSide: PropTypes.func,
-  onFocus: PropTypes.func,
-  onSelect: PropTypes.func,
-  placeholder: PropTypes.string,
-  renderItemLabel: PropTypes.func,
-  renderItemUrl: PropTypes.func,
-  searchResults: PropTypes.array,
-  style: PropTypes.object,
-  value: PropTypes.string
-};
 
 export default function SearchInput({
   onClickOutSide,

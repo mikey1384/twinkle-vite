@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ChatSearchBox from './ChatSearchBox';
 import Channels from './Channels';
 import Collect from './Collect';
@@ -15,19 +14,6 @@ import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 const newChatLabel = localize('newChat');
-
-LeftMenu.propTypes = {
-  currentChannel: PropTypes.object,
-  currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  displayedThemeColor: PropTypes.string,
-  loadingVocabulary: PropTypes.bool,
-  loadingAICardChat: PropTypes.bool,
-  onNewButtonClick: PropTypes.func.isRequired,
-  selectedChannelId: PropTypes.number,
-  subchannelIds: PropTypes.arrayOf(PropTypes.number),
-  subchannelObj: PropTypes.object,
-  subchannelPath: PropTypes.string
-};
 
 export default function LeftMenu({
   currentChannel,

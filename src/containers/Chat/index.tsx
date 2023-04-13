@@ -1,12 +1,12 @@
+import React from 'react';
 import { Route, Routes } from 'react-router-dom';
-import PropTypes from 'prop-types';
 import Router from './Router';
 
-Chat.propTypes = {
-  onFileUpload: PropTypes.func.isRequired
-};
-
-export default function Chat({ onFileUpload }) {
+export default function Chat({
+  onFileUpload
+}: {
+  onFileUpload: (file: File) => void;
+}) {
   return (
     <Routes>
       <Route
