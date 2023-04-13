@@ -1,10 +1,9 @@
-import { useReducer } from 'react';
+import React, { useReducer, ReactNode } from 'react';
 import { createContext } from 'use-context-selector';
-import PropTypes from 'prop-types';
 import ViewActions from './actions';
 import ViewReducer from './reducer';
 
-export const ViewContext = createContext();
+export const ViewContext = createContext({});
 const initialViewState = {
   pageVisible: true,
   exploreCategory: ['subjects', 'videos', 'links', 'ai-cards'][
@@ -18,10 +17,7 @@ const initialViewState = {
   scrollPositions: {}
 };
 
-ViewContextProvider.propTypes = {
-  children: PropTypes.node
-};
-export function ViewContextProvider({ children }) {
+export function ViewContextProvider({ children }: { children: ReactNode }) {
   const [viewState, viewDispatch] = useReducer(ViewReducer, initialViewState);
   return (
     <ViewContext.Provider

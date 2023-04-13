@@ -1,17 +1,12 @@
-import { useReducer } from 'react';
+import React, { useReducer, ReactNode } from 'react';
 import { createContext } from 'use-context-selector';
-import PropTypes from 'prop-types';
 import ProfileActions from './actions';
 import ProfileReducer from './reducer';
 
-export const ProfileContext = createContext();
+export const ProfileContext = createContext({});
 export const initialProfileState = {};
 
-ProfileContextProvider.propTypes = {
-  children: PropTypes.node
-};
-
-export function ProfileContextProvider({ children }) {
+export function ProfileContextProvider({ children }: { children: ReactNode }) {
   const [profileState, profileDispatch] = useReducer(
     ProfileReducer,
     initialProfileState
