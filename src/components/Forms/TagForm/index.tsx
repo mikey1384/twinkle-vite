@@ -1,40 +1,34 @@
-import { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState, CSSProperties } from 'react';
 import { useSearch } from '~/helpers/hooks';
-import PropTypes from 'prop-types';
 import TagInput from './TagInput';
 import Tag from './Tag';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { objectify } from '~/helpers';
 
-TagForm.propTypes = {
-  autoFocus: PropTypes.bool,
-  className: PropTypes.string,
-  dropdownFooter: PropTypes.node,
-  inputRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  itemLabel: PropTypes.string.isRequired,
-  maxItems: PropTypes.number,
-  searchPlaceholder: PropTypes.string.isRequired,
-  searchResults: PropTypes.array.isRequired,
-  selectedItems: PropTypes.array.isRequired,
-  filter: PropTypes.func.isRequired,
-  onSearch: PropTypes.func.isRequired,
-  onClear: PropTypes.func.isRequired,
-  onAddItem: PropTypes.func.isRequired,
-  onRemoveItem: PropTypes.func.isRequired,
-  children: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array,
-    PropTypes.node
-  ]),
-  onNotFound: PropTypes.func,
-  onSubmit: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
-  renderDropdownLabel: PropTypes.func.isRequired,
-  renderTagLabel: PropTypes.func,
-  subTitle: PropTypes.node,
-  style: PropTypes.object,
-  title: PropTypes.string
-};
-
+interface Props {
+  autoFocus?: boolean;
+  children?: any;
+  className?: string;
+  dropdownFooter?: any;
+  inputRef?: any;
+  filter: (value: any, index: number) => boolean;
+  itemLabel: string;
+  maxItems?: number;
+  onAddItem: (item: object) => void;
+  onClear: () => void;
+  searchResults: { id: number; title: string }[];
+  selectedItems: ({ id: number } & { [key: string]: string })[];
+  onNotFound?: ({ messageShown }: { messageShown: boolean }) => void;
+  onRemoveItem: (id: number) => void;
+  onSearch?: (text: string) => void;
+  onSubmit?: () => void;
+  renderDropdownLabel?: string;
+  renderTagLabel?: (label?: string) => string;
+  searchPlaceholder?: string;
+  subTitle?: string;
+  style?: CSSProperties;
+  title?: string;
+}
 function TagForm({
   autoFocus,
   children,
@@ -58,7 +52,7 @@ function TagForm({
   subTitle,
   style,
   title
-}) {
+}: Props) {
   const [searchText, setSearchText] = useState('');
   const { handleSearch, searching } = useSearch({
     onSearch,
@@ -77,11 +71,10 @@ function TagForm({
           marginTop: '1rem'
         }}
       >
-        {selectedItems.map((item, index) => {
+        {selectedItems.map((item) => {
           return (
             <Tag
               key={item.id}
-              index={index}
               label={item[itemLabel]}
               onClick={() => onRemoveItem(item.id)}
               renderTagLabel={renderTagLabel}
@@ -133,7 +126,7 @@ function TagForm({
     </ErrorBoundary>
   );
 
-  function handleAddItem(item) {
+  function handleAddItem(item: object) {
     setSearchText('');
     onAddItem(item);
     onClear();

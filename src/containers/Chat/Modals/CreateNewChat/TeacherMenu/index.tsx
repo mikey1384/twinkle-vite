@@ -1,22 +1,19 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import SelectScreen from './SelectScreen';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ClassroomChatForm from './ClassroomChatForm';
 import RegularMenu from '../RegularMenu';
-
-TeacherMenu.propTypes = {
-  channelId: PropTypes.number,
-  creatingChat: PropTypes.bool,
-  onCreateRegularChat: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired
-};
 
 export default function TeacherMenu({
   channelId,
   creatingChat,
   onCreateRegularChat,
   onHide
+}: {
+  channelId: number;
+  creatingChat: boolean;
+  onCreateRegularChat: () => void;
+  onHide: () => void;
 }) {
   const [section, setSection] = useState('select');
   return (

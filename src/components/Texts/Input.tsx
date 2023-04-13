@@ -1,19 +1,19 @@
-import PropTypes from 'prop-types';
+import React, { RefObject } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { renderText } from '~/helpers/stringHelpers';
 
-Input.propTypes = {
-  autoComplete: PropTypes.string,
-  hasError: PropTypes.bool,
-  inputRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  onChange: PropTypes.func.isRequired,
-  className: PropTypes.string,
-  style: PropTypes.object,
-  type: PropTypes.string
-};
-
+interface Props {
+  hasError?: boolean;
+  autoComplete?: string;
+  inputRef?: RefObject<HTMLInputElement>;
+  onChange: (value: string) => void;
+  type?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  [key: string]: any;
+}
 export default function Input({
   hasError,
   autoComplete = 'off',
@@ -23,7 +23,7 @@ export default function Input({
   className,
   style,
   ...props
-}) {
+}: Props) {
   return (
     <ErrorBoundary componentPath="Input">
       {autoComplete === 'off' && (
