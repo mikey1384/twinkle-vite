@@ -22,7 +22,7 @@ interface Props {
   onRemoveItem: (id: number) => void;
   onSearch?: (text: string) => void;
   onSubmit?: () => void;
-  renderDropdownLabel?: string;
+  renderDropdownLabel: (item: any) => string;
   renderTagLabel?: (label?: string) => string;
   searchPlaceholder?: string;
   subTitle?: string;

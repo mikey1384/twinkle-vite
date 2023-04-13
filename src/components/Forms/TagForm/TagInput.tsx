@@ -20,7 +20,7 @@ interface Props {
   onChange: (value: string) => void;
   onNotFound?: ({ messageShown }: { messageShown: boolean }) => void;
   placeholder?: string;
-  renderDropdownLabel?: string;
+  renderDropdownLabel: (item: any) => string;
   searchResults?: { id: number; title: string }[];
   selectedItems: { id: number }[];
   style?: any;
@@ -116,7 +116,6 @@ export default function TagInput({
         dropdownFooter={dropdownFooter}
         searchResults={results}
         onUpdate={() => setIndexToHighlight(0)}
-        onUnmount={() => setIndexToHighlight(0)}
         indexToHighlight={indexToHighlight}
         onItemClick={onAddItem}
         renderItemLabel={renderDropdownLabel}
