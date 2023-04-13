@@ -1,6 +1,8 @@
-export default function ExploreActions(dispatch) {
+import { Dispatch } from '../types';
+
+export default function ExploreActions(dispatch: Dispatch) {
   return {
-    onChangeSearchInput(text) {
+    onChangeSearchInput(text: string) {
       return dispatch({
         type: 'CHANGE_SEARCH_INPUT',
         text
@@ -16,19 +18,25 @@ export default function ExploreActions(dispatch) {
         type: 'CLEAR_LINKS_LOADED'
       });
     },
-    onChangeFeaturedPlaylists(playlists) {
+    onChangeFeaturedPlaylists(playlists: object[]) {
       return dispatch({
         type: 'CHANGE_FEATURED_PLAYLISTS',
         data: playlists
       });
     },
-    onChangePlaylistVideos(playlist) {
+    onChangePlaylistVideos(playlist: object) {
       return dispatch({
         type: 'CHANGE_PLAYLIST_VIDEOS',
         playlist
       });
     },
-    onChangeVideoByUserStatus({ videoId, byUser }) {
+    onChangeVideoByUserStatus({
+      videoId,
+      byUser
+    }: {
+      videoId: string;
+      byUser: boolean;
+    }) {
       return dispatch({
         type: 'CHANGE_VIDEO_BY_USER_STATUS',
         videoId,
@@ -55,13 +63,21 @@ export default function ExploreActions(dispatch) {
         type: 'CLOSE_SELECT_FEATURED_PL_MODAL'
       });
     },
-    onDeletePlaylist(playlistId) {
+    onDeletePlaylist(playlistId: number) {
       return dispatch({
         type: 'DELETE_PLAYLIST',
         playlistId
       });
     },
-    onEditLinkPage({ id, title, content }) {
+    onEditLinkPage({
+      id,
+      title,
+      content
+    }: {
+      id: number;
+      title: string;
+      content: string;
+    }) {
       return dispatch({
         type: 'EDIT_LINK_PAGE',
         id,
@@ -69,26 +85,40 @@ export default function ExploreActions(dispatch) {
         content
       });
     },
-    onEditLinkTitle(params) {
+    onEditLinkTitle(params: object) {
       return dispatch({
         type: 'EDIT_LINK_TITLE',
         data: params
       });
     },
-    onEditPlaylistTitle({ playlistId, title }) {
+    onEditPlaylistTitle({
+      playlistId,
+      title
+    }: {
+      playlistId: number;
+      title: string;
+    }) {
       return dispatch({
         type: 'EDIT_PLAYLIST_TITLE',
         playlistId,
         title
       });
     },
-    onEditVideoThumbs(params) {
+    onEditVideoThumbs(params: object) {
       return dispatch({
         type: 'EDIT_VIDEO_THUMBS',
         params
       });
     },
-    onLoadAICards({ cards, loadMoreShown, numCards }) {
+    onLoadAICards({
+      cards,
+      loadMoreShown,
+      numCards
+    }: {
+      cards: object[];
+      loadMoreShown: boolean;
+      numCards: number;
+    }) {
       return dispatch({
         type: 'LOAD_AI_CARDS',
         cards,
@@ -96,21 +126,39 @@ export default function ExploreActions(dispatch) {
         numCards
       });
     },
-    onLoadMoreAICards({ cards, loadMoreShown }) {
+    onLoadMoreAICards({
+      cards,
+      loadMoreShown
+    }: {
+      cards: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_AI_CARDS',
         cards,
         loadMoreShown
       });
     },
-    onLoadFilteredAICards({ cards, loadMoreShown }) {
+    onLoadFilteredAICards({
+      cards,
+      loadMoreShown
+    }: {
+      cards: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_FILTERED_AI_CARDS',
         cards,
         loadMoreShown
       });
     },
-    onLoadMoreFilteredAICards({ cards, loadMoreShown }) {
+    onLoadMoreFilteredAICards({
+      cards,
+      loadMoreShown
+    }: {
+      cards: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_FILTERED_AI_CARDS',
         cards,
@@ -121,6 +169,10 @@ export default function ExploreActions(dispatch) {
       videos,
       loadMoreButton,
       showingRecommendedVideos
+    }: {
+      videos: object[];
+      loadMoreButton: boolean;
+      showingRecommendedVideos: boolean;
     }) {
       return dispatch({
         type: 'LOAD_CONTINUE_WATCHING',
@@ -129,110 +181,184 @@ export default function ExploreActions(dispatch) {
         showingRecommendedVideos
       });
     },
-    onLoadMoreContinueWatching({ videos, loadMoreButton }) {
+    onLoadMoreContinueWatching({
+      videos,
+      loadMoreButton
+    }: {
+      videos: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_CONTINUE_WATCHING',
         videos,
         loadMoreButton
       });
     },
-    onLoadLinks({ links, loadMoreButton }) {
+    onLoadLinks({
+      links,
+      loadMoreButton
+    }: {
+      links: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_LINKS',
         links,
         loadMoreButton
       });
     },
-    onLoadMoreLinks({ links, loadMoreButton }) {
+    onLoadMoreLinks({
+      links,
+      loadMoreButton
+    }: {
+      links: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_LINKS',
         links,
         loadMoreButton
       });
     },
-    onLoadByUserLinks({ links, loadMoreButton }) {
+    onLoadByUserLinks({
+      links,
+      loadMoreButton
+    }: {
+      links: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_BY_USER_LINKS',
         links,
         loadMoreButton
       });
     },
-    onLoadMoreByUserLinks({ links, loadMoreButton }) {
+    onLoadMoreByUserLinks({
+      links,
+      loadMoreButton
+    }: {
+      links: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_BY_USER_LINKS',
         links,
         loadMoreButton
       });
     },
-    onLoadRecommendedLinks({ links, loadMoreButton }) {
+    onLoadRecommendedLinks({
+      links,
+      loadMoreButton
+    }: {
+      links: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_RECOMMENDED_LINKS',
         recommendeds: links,
         loadMoreButton
       });
     },
-    onLoadMoreRecommendedLinks({ links, loadMoreButton }) {
+    onLoadMoreRecommendedLinks({
+      links,
+      loadMoreButton
+    }: {
+      links: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_RECOMMENDED_LINKS',
         recommendeds: links,
         loadMoreButton
       });
     },
-    onLoadRecommendedSubjects({ subjects, loadMoreButton }) {
+    onLoadRecommendedSubjects({
+      subjects,
+      loadMoreButton
+    }: {
+      subjects: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_RECOMMENDED_SUBJECTS',
         subjects,
         loadMoreButton
       });
     },
-    onLoadByUserSubjects({ subjects, loadMoreButton }) {
+    onLoadByUserSubjects({
+      subjects,
+      loadMoreButton
+    }: {
+      subjects: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_BY_USER_SUBJECTS',
         subjects,
         loadMoreButton
       });
     },
-    onLoadMoreByUserSubjects({ subjects, loadMoreButton }) {
+    onLoadMoreByUserSubjects({
+      subjects,
+      loadMoreButton
+    }: {
+      subjects: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_BY_USER_SUBJECTS',
         subjects,
         loadMoreButton
       });
     },
-    onLoadMoreRecommendedSubjects({ subjects, loadMoreButton }) {
+    onLoadMoreRecommendedSubjects({
+      subjects,
+      loadMoreButton
+    }: {
+      subjects: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_RECOMMENDED_SUBJECTS',
         subjects,
         loadMoreButton
       });
     },
-    onLoadFeaturedPlaylists(playlists) {
+    onLoadFeaturedPlaylists(playlists: object[]) {
       return dispatch({
         type: 'LOAD_FEATURED_PLAYLISTS',
         playlists
       });
     },
-    onLikeLink({ id, likes }) {
+    onLikeLink({ id, likes }: { id: number; likes: object[] }) {
       return dispatch({
         type: 'LIKE_LINK',
         id,
         likes
       });
     },
-    onLikeVideo({ likes, videoId }) {
+    onLikeVideo({ likes, videoId }: { likes: object[]; videoId: number }) {
       return dispatch({
         type: 'LIKE_VIDEO',
         likes,
         videoId
       });
     },
-    onLoadFeaturedSubjects(subjects) {
+    onLoadFeaturedSubjects(subjects: object[]) {
       return dispatch({
         type: 'LOAD_FEATURED_SUBJECTS',
         subjects
       });
     },
-    onLoadMoreSearchResults({ filter, results, loadMoreButton }) {
+    onLoadMoreSearchResults({
+      filter,
+      results,
+      loadMoreButton
+    }: {
+      filter: string;
+      results: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_SEARCH_RESULTS',
         filter,
@@ -240,14 +366,28 @@ export default function ExploreActions(dispatch) {
         loadMoreButton
       });
     },
-    onLoadPlaylists({ playlists, loadMoreButton }) {
+    onLoadPlaylists({
+      playlists,
+      loadMoreButton
+    }: {
+      playlists: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_PLAYLISTS',
         playlists,
         loadMoreButton
       });
     },
-    onLoadMorePlaylists({ playlists, isSearch, loadMoreButton }) {
+    onLoadMorePlaylists({
+      playlists,
+      isSearch,
+      loadMoreButton
+    }: {
+      playlists: object[];
+      isSearch: boolean;
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_PLAYLISTS',
         playlists,
@@ -255,13 +395,21 @@ export default function ExploreActions(dispatch) {
         loadMoreButton
       });
     },
-    onLoadMorePlaylistsToPin(data) {
+    onLoadMorePlaylistsToPin(data: object) {
       return dispatch({
         type: 'LOAD_MORE_PLAYLISTS_TO_PIN',
         data
       });
     },
-    onLoadSearchResults({ filter, results, loadMoreButton }) {
+    onLoadSearchResults({
+      filter,
+      results,
+      loadMoreButton
+    }: {
+      filter: string;
+      results: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_SEARCH_RESULTS',
         filter,
@@ -279,88 +427,106 @@ export default function ExploreActions(dispatch) {
         type: 'OPEN_REORDER_FEATURED_PL_MODAL'
       });
     },
-    onOpenSelectFeaturedPlaylists(data) {
+    onOpenSelectFeaturedPlaylists(data: object) {
       return dispatch({
         type: 'OPEN_SELECT_FEATURED_PL_MODAL',
         data
       });
     },
-    onSetNumFilteredCards(numCards) {
+    onSetNumFilteredCards(numCards: number) {
       return dispatch({
         type: 'SET_NUM_FILTERED_CARDS',
         numCards
       });
     },
-    onSetSearchedPlaylists({ playlists, loadMoreButton }) {
+    onSetSearchedPlaylists({
+      playlists,
+      loadMoreButton
+    }: {
+      playlists: object[];
+      loadMoreButton: boolean;
+    }) {
       return dispatch({
         type: 'SET_SEARCHED_PLAYLISTS',
         playlists,
         loadMoreButton
       });
     },
-    onSetPrevAICardFilters(filters) {
+    onSetPrevAICardFilters(filters: object) {
       return dispatch({
         type: 'SET_PREV_AI_CARD_FILTERS',
         filters
       });
     },
-    onSetThumbRewardLevel({ videoId, rewardLevel }) {
+    onSetThumbRewardLevel({
+      videoId,
+      rewardLevel
+    }: {
+      videoId: number;
+      rewardLevel: number;
+    }) {
       return dispatch({
         type: 'SET_REWARD_LEVEL',
         videoId,
         rewardLevel
       });
     },
-    onSetFeaturedSubjectsExpanded(expanded) {
+    onSetFeaturedSubjectsExpanded(expanded: boolean) {
       return dispatch({
         type: 'SET_FEATURED_SUBJECTS_EXPANDED',
         expanded
       });
     },
-    onSetPrevUserId(userId) {
+    onSetPrevUserId(userId: number) {
       return dispatch({
         type: 'SET_PREV_USER_ID_FOR_EXPLORE',
         userId
       });
     },
-    onSetRecommendedSubjectsExpanded(expanded) {
+    onSetRecommendedSubjectsExpanded(expanded: boolean) {
       return dispatch({
         type: 'SET_RECOMMENDED_SUBJECTS_EXPANDED',
         expanded
       });
     },
-    onSetByUserSubjectsExpanded(expanded) {
+    onSetByUserSubjectsExpanded(expanded: boolean) {
       return dispatch({
         type: 'SET_BY_USERS_EXPANDED',
         expanded
       });
     },
-    onSetNavVideoState(newState) {
+    onSetNavVideoState(newState: object) {
       return dispatch({
         type: 'SET_NAV_VIDEOS',
         newState
       });
     },
-    onSetSubjectsLoaded(loaded) {
+    onSetSubjectsLoaded(loaded: boolean) {
       return dispatch({
         type: 'SET_SUBJECTS_LOADED',
         loaded
       });
     },
-    onUpdateNumLinkComments({ id, updateType }) {
+    onUpdateNumLinkComments({
+      id,
+      updateType
+    }: {
+      id: number;
+      updateType: string;
+    }) {
       return dispatch({
         type: 'UPDATE_NUM_LINK_COMMENTS',
         id,
         updateType
       });
     },
-    onUploadLink(linkItem) {
+    onUploadLink(linkItem: object) {
       return dispatch({
         type: 'UPLOAD_LINK',
         linkItem
       });
     },
-    onUploadPlaylist(data) {
+    onUploadPlaylist(data: object) {
       return dispatch({
         type: 'UPLOAD_PLAYLIST',
         data
