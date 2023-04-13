@@ -1,10 +1,9 @@
-import { useReducer } from 'react';
+import React, { useReducer, ReactNode } from 'react';
 import { createContext } from 'use-context-selector';
-import PropTypes from 'prop-types';
 import NotiActions from './actions';
 import NotiReducer from './reducer';
 
-export const NotiContext = createContext();
+export const NotiContext = createContext({});
 export const initialNotiState = {
   versionMatch: true,
   notiObj: {},
@@ -33,11 +32,7 @@ export const initialNotiState = {
   updateNoticeShown: false
 };
 
-NotiContextProvider.propTypes = {
-  children: PropTypes.node
-};
-
-export function NotiContextProvider({ children }) {
+export function NotiContextProvider({ children }: { children: ReactNode }) {
   const [notiState, notiDispatch] = useReducer(NotiReducer, initialNotiState);
   return (
     <NotiContext.Provider

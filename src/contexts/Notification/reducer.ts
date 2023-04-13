@@ -1,4 +1,10 @@
-export default function NotiReducer(state, action) {
+export default function NotiReducer(
+  state: any,
+  action: {
+    type: string;
+    [key: string]: any;
+  }
+) {
   switch (action.type) {
     case 'CHANGE_SOCKET_STATUS':
       return {
