@@ -1,7 +1,6 @@
-import React, { useReducer } from 'react';
+import React, { useReducer, ReactNode } from 'react';
 import { AxiosError } from 'axios';
 import { createContext } from 'use-context-selector';
-import PropTypes from 'prop-types';
 import UserActions from './User/actions';
 import UserReducer from './User/reducer';
 import requestHelpers from './requestHelpers';
@@ -18,7 +17,7 @@ import { MissionContextProvider } from './Mission';
 import { ViewContextProvider } from './View';
 import { LAST_ONLINE_FILTER_LABEL } from '~/constants/defaultValues';
 
-export const AppContext = createContext();
+export const AppContext = createContext({});
 export const initialMyState = {
   authLevel: 0,
   canDelete: false,
@@ -39,11 +38,7 @@ export const initialMyState = {
   xpThisMonth: null
 };
 
-AppContextProvider.propTypes = {
-  children: PropTypes.node
-};
-
-export function AppContextProvider({ children }) {
+export function AppContextProvider({ children }: { children: ReactNode }) {
   const [userState, userDispatch] = useReducer(UserReducer, {
     myState: initialMyState,
     loadMoreButton: false,

@@ -1,44 +1,58 @@
-export default function ManagementActions(dispatch) {
+import { Dispatch } from '../types';
+
+export default function ManagementActions(dispatch: Dispatch) {
   return {
-    onAddAccountType(accountType) {
+    onAddAccountType(accountType: string) {
       return dispatch({
         type: 'ADD_ACCOUNT_TYPE',
         accountType
       });
     },
-    onDeleteAccountType(accountTypeLabel) {
+    onDeleteAccountType(accountTypeLabel: string) {
       return dispatch({
         type: 'DELETE_ACCOUNT_TYPE',
         accountTypeLabel
       });
     },
-    onEditModerators(newModerators) {
+    onEditModerators(newModerators: object[]) {
       return dispatch({
         type: 'EDIT_MODERATORS',
         newModerators
       });
     },
-    onChangeModeratorAccountType({ userId, selectedAccountType }) {
+    onChangeModeratorAccountType({
+      userId,
+      selectedAccountType
+    }: {
+      userId: number;
+      selectedAccountType: string;
+    }) {
       return dispatch({
         type: 'CHANGE_MODERATOR_ACCOUNT_TYPE',
         userId,
         selectedAccountType
       });
     },
-    onEditAccountType({ label, editedAccountType }) {
+    onEditAccountType({
+      label,
+      editedAccountType
+    }: {
+      label: string;
+      editedAccountType: string;
+    }) {
       return dispatch({
         type: 'EDIT_ACCOUNT_TYPE',
         label,
         editedAccountType
       });
     },
-    onLoadAccountTypes(accountTypes) {
+    onLoadAccountTypes(accountTypes: string[]) {
       return dispatch({
         type: 'LOAD_ACCOUNT_TYPES',
         accountTypes
       });
     },
-    onLoadBannedUsers(bannedUsers) {
+    onLoadBannedUsers(bannedUsers: object[]) {
       return dispatch({
         type: 'LOAD_BANNED_USERS',
         bannedUsers
@@ -49,7 +63,7 @@ export default function ManagementActions(dispatch) {
         type: 'LOAD_MANAGEMENT'
       });
     },
-    onLoadModerators(moderators) {
+    onLoadModerators(moderators: object[]) {
       return dispatch({
         type: 'LOAD_MODERATORS',
         moderators
@@ -60,7 +74,7 @@ export default function ManagementActions(dispatch) {
         type: 'LOAD_MORE_MODERATORS'
       });
     },
-    onUpdateBanStatus(user) {
+    onUpdateBanStatus(user: object) {
       return dispatch({
         type: 'UPDATE_BAN_STATUS',
         user

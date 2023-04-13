@@ -1,6 +1,5 @@
 import React, { useReducer, ReactNode } from 'react';
 import { createContext } from 'use-context-selector';
-import PropTypes from 'prop-types';
 import ManagementActions from './actions';
 import ManagementReducer from './reducer';
 
@@ -14,10 +13,6 @@ export const initialManagementState = {
   bannedUsers: [],
   bannedUsersLoaded: false,
   numModeratorsShown: 5
-};
-
-ManagementContextProvider.propTypes = {
-  children: PropTypes.node
 };
 
 export function ManagementContextProvider({

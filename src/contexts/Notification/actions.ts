@@ -1,24 +1,26 @@
-export default function NotiActions(dispatch) {
+import { Dispatch } from '../types';
+
+export default function NotiActions(dispatch: Dispatch) {
   return {
-    onChangeSocketStatus(connected) {
+    onChangeSocketStatus(connected: boolean) {
       return dispatch({
         type: 'CHANGE_SOCKET_STATUS',
         connected
       });
     },
-    onCheckVersion(data) {
+    onCheckVersion(data: object) {
       return dispatch({
         type: 'CHECK_VERSION',
         data
       });
     },
-    onClearRewards(userId) {
+    onClearRewards(userId: number) {
       return dispatch({
         type: 'CLEAR_REWARDS',
         userId
       });
     },
-    onCollectRewards(userId) {
+    onCollectRewards(userId: number) {
       return dispatch({
         type: 'COLLECT_REWARDS',
         userId
@@ -29,6 +31,11 @@ export default function NotiActions(dispatch) {
       loadMoreNotifications,
       notifications,
       userId
+    }: {
+      currentChatSubject: string;
+      loadMoreNotifications: boolean;
+      notifications: object[];
+      userId: number;
     }) {
       return dispatch({
         type: 'LOAD_NOTIFICATIONS',
@@ -44,6 +51,12 @@ export default function NotiActions(dispatch) {
       totalRewardedTwinkles,
       totalRewardedTwinkleCoins,
       userId
+    }: {
+      rewards: object[];
+      loadMoreRewards: boolean;
+      totalRewardedTwinkles: number;
+      totalRewardedTwinkleCoins: number;
+      userId: number;
     }) {
       return dispatch({
         type: 'LOAD_REWARDS',
@@ -63,6 +76,15 @@ export default function NotiActions(dispatch) {
       myAllTimeRank,
       myAllTimeXP,
       myMonthlyXP
+    }: {
+      all: object[];
+      top30s: object[];
+      allMonthly: object[];
+      top30sMonthly: object[];
+      myMonthlyRank: number;
+      myAllTimeRank: number;
+      myAllTimeXP: number;
+      myMonthlyXP: number;
     }) {
       return dispatch({
         type: 'LOAD_RANKS',
@@ -86,7 +108,15 @@ export default function NotiActions(dispatch) {
         type: 'INCREASE_NUM_NEW_POSTS'
       });
     },
-    onLoadMoreNotifications({ loadMoreNotifications, notifications, userId }) {
+    onLoadMoreNotifications({
+      loadMoreNotifications,
+      notifications,
+      userId
+    }: {
+      loadMoreNotifications: boolean;
+      notifications: object[];
+      userId: number;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_NOTIFICATIONS',
         loadMoreNotifications,
@@ -94,14 +124,14 @@ export default function NotiActions(dispatch) {
         userId
       });
     },
-    onLoadMoreRewards({ userId, data }) {
+    onLoadMoreRewards({ userId, data }: { userId: number; data: object }) {
       return dispatch({
         type: 'LOAD_MORE_REWARDS',
         data,
         userId
       });
     },
-    onNotifyChatSubjectChange(subject) {
+    onNotifyChatSubjectChange(subject: object) {
       return dispatch({
         type: 'CHAT_SUBJECT_CHANGE',
         subject
@@ -112,13 +142,13 @@ export default function NotiActions(dispatch) {
         type: 'RESET_NUM_NEW_POSTS'
       });
     },
-    onShowUpdateNotice(shown) {
+    onShowUpdateNotice(shown: boolean) {
       return dispatch({
         type: 'SHOW_UPDATE_NOTICE',
         shown
       });
     },
-    onUpdateTodayStats({ newStats }) {
+    onUpdateTodayStats({ newStats }: { newStats: object }) {
       return dispatch({
         type: 'UPDATE_TODAY_STATS',
         newStats

@@ -1,4 +1,15 @@
-export default function ManagementReducer(state, action) {
+interface Moderator {
+  id: number;
+  userType: string;
+}
+
+export default function ManagementReducer(
+  state: any,
+  action: {
+    type: string;
+    [key: string]: any;
+  }
+) {
   switch (action.type) {
     case 'ADD_ACCOUNT_TYPE':
       return {
@@ -10,9 +21,9 @@ export default function ManagementReducer(state, action) {
         ...state,
         moderators: action.newModerators.concat(
           state.moderators.filter(
-            (moderator) =>
+            (moderator: Moderator) =>
               !action.newModerators
-                .map((newModerator) => newModerator.id)
+                .map((newModerator: Moderator) => newModerator.id)
                 .includes(moderator.id)
           )
         )
@@ -21,7 +32,7 @@ export default function ManagementReducer(state, action) {
       return {
         ...state,
         moderators: action.selectedAccountType
-          ? state.moderators.map((moderator) =>
+          ? state.moderators.map((moderator: Moderator) =>
               moderator.id === action.userId
                 ? {
                     ...moderator,
@@ -30,23 +41,25 @@ export default function ManagementReducer(state, action) {
                 : moderator
             )
           : state.moderators.filter(
-              (moderator) => moderator.id !== action.userId
+              (moderator: Moderator) => moderator.id !== action.userId
             )
       };
     case 'DELETE_ACCOUNT_TYPE':
       return {
         ...state,
         accountTypes: state.accountTypes.filter(
-          (accountType) => accountType.label !== action.accountTypeLabel
+          (accountType: { label: string }) =>
+            accountType.label !== action.accountTypeLabel
         ),
         moderators: state.moderators.filter(
-          (moderator) => moderator.userType !== action.accountTypeLabel
+          (moderator: Moderator) =>
+            moderator.userType !== action.accountTypeLabel
         )
       };
     case 'EDIT_ACCOUNT_TYPE':
       return {
         ...state,
-        accountTypes: state.accountTypes.map((accountType) =>
+        accountTypes: state.accountTypes.map((accountType: { label: string }) =>
           accountType.label === action.label
             ? {
                 ...accountType,
@@ -54,7 +67,7 @@ export default function ManagementReducer(state, action) {
               }
             : accountType
         ),
-        moderators: state.moderators.map((moderator) => {
+        moderators: state.moderators.map((moderator: Moderator) => {
           return {
             ...moderator,
             userType:
@@ -96,7 +109,9 @@ export default function ManagementReducer(state, action) {
       return {
         ...state,
         bannedUsers: [action.user].concat(
-          state.bannedUsers.filter((user) => user.id !== action.user.id)
+          state.bannedUsers.filter(
+            (user: { id: number }) => user.id !== action.user.id
+          )
         )
       };
     default:
