@@ -1,10 +1,10 @@
-import { useReducer } from 'react';
+import React, { useReducer, ReactNode } from 'react';
 import { createContext } from 'use-context-selector';
 import PropTypes from 'prop-types';
 import ManagementActions from './actions';
 import ManagementReducer from './reducer';
 
-export const ManagementContext = createContext();
+export const ManagementContext = createContext({});
 export const initialManagementState = {
   accountTypes: [],
   accountTypesLoaded: false,
@@ -20,7 +20,11 @@ ManagementContextProvider.propTypes = {
   children: PropTypes.node
 };
 
-export function ManagementContextProvider({ children }) {
+export function ManagementContextProvider({
+  children
+}: {
+  children: ReactNode;
+}) {
   const [managementState, managementDispatch] = useReducer(
     ManagementReducer,
     initialManagementState

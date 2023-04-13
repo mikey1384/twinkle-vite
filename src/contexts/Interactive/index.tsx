@@ -1,17 +1,21 @@
-import { useReducer } from 'react';
+import React, { useReducer, ReactNode } from 'react';
 import { createContext } from 'use-context-selector';
 import PropTypes from 'prop-types';
 import InteractiveActions from './actions';
 import InteractiveReducer from './reducer';
 
-export const InteractiveContext = createContext();
+export const InteractiveContext = createContext({});
 export const initialInteractiveState = {};
 
 InteractiveContextProvider.propTypes = {
   children: PropTypes.node
 };
 
-export function InteractiveContextProvider({ children }) {
+export function InteractiveContextProvider({
+  children
+}: {
+  children: ReactNode;
+}) {
   const [interactiveState, interactiveDispatch] = useReducer(
     InteractiveReducer,
     initialInteractiveState
