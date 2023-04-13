@@ -1,4 +1,7 @@
-export default function ViewReducer(state, action) {
+export default function ViewReducer(
+  state: { [key: string]: any },
+  action: { type: string; [key: string]: any }
+) {
   switch (action.type) {
     case 'CHANGE_PAGE_VISIBILITY':
       return {
