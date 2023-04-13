@@ -1,4 +1,10 @@
-export default function HomeReducer(state, action) {
+export default function HomeReducer(
+  state: any,
+  action: {
+    type: string;
+    [key: string]: any;
+  }
+) {
   const contentKey =
     action.contentType && action.contentId
       ? action.contentType + action.contentId
@@ -24,7 +30,8 @@ export default function HomeReducer(state, action) {
       return {
         ...state,
         feeds: state.feeds.filter(
-          (feed) => feed.contentType + feed.contentId !== contentKey
+          (feed: { contentType: string; contentId: number }) =>
+            feed.contentType + feed.contentId !== contentKey
         )
       };
     case 'LOAD_FEEDS':

@@ -1,10 +1,9 @@
-import { useReducer } from 'react';
+import React, { useReducer, ReactNode } from 'react';
 import { createContext } from 'use-context-selector';
-import PropTypes from 'prop-types';
 import HomeActions from './actions';
 import HomeReducer from './reducer';
 
-export const HomeContext = createContext();
+export const HomeContext = createContext({});
 export const initialHomeState = {
   category: 'recommended',
   displayOrder: 'desc',
@@ -23,11 +22,7 @@ export const initialHomeState = {
   leaderboardsObj: {}
 };
 
-HomeContextProvider.propTypes = {
-  children: PropTypes.node
-};
-
-export function HomeContextProvider({ children }) {
+export function HomeContextProvider({ children }: { children: ReactNode }) {
   const [homeState, homeDispatch] = useReducer(HomeReducer, initialHomeState);
   return (
     <HomeContext.Provider
