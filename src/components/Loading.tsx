@@ -1,14 +1,6 @@
-import PropTypes from 'prop-types';
+import React, { CSSProperties } from 'react';
 import Spinner from '~/components/Spinner';
 import { css } from '@emotion/css';
-
-Loading.propTypes = {
-  className: PropTypes.string,
-  innerStyle: PropTypes.object,
-  style: PropTypes.object,
-  text: PropTypes.string,
-  theme: PropTypes.string
-};
 
 export default function Loading({
   className,
@@ -16,6 +8,12 @@ export default function Loading({
   innerStyle = {},
   style = {},
   theme
+}: {
+  className?: string;
+  text?: string;
+  innerStyle?: CSSProperties;
+  style?: CSSProperties;
+  theme?: 'light' | 'dark';
 }) {
   return (
     <div
