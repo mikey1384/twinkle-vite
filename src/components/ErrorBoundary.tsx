@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import { clientVersion } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
