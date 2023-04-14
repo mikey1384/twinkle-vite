@@ -6,6 +6,17 @@ import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
 import { stringIsEmpty, finalizeEmoji } from '~/helpers/stringHelpers';
 
+interface Props {
+  caption?: string;
+  hasCaption?: boolean;
+  modalOverModal?: boolean;
+  onEditCaption?: (caption: string) => void;
+  onHide: () => void;
+  fileName?: string;
+  src: string;
+  downloadable?: boolean;
+  userIsUploader?: boolean;
+}
 export default function ImageModal({
   caption,
   hasCaption,
@@ -16,7 +27,7 @@ export default function ImageModal({
   src,
   downloadable = true,
   userIsUploader
-}) {
+}: Props) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

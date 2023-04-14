@@ -433,10 +433,11 @@ export function finalizeEmoji(string: string): string {
   return finalizedString || '';
 }
 
-export function getFileInfoFromFileName(
-  fileName: string
-): null | { extension: string; fileType: string } {
-  if (typeof fileName !== 'string') return null;
+export function getFileInfoFromFileName(fileName: string): {
+  extension: string;
+  fileType: string;
+} {
+  if (typeof fileName !== 'string') return { extension: '', fileType: '' };
   const fileNameArray = fileName.split('.');
   const extension =
     fileNameArray[fileNameArray.length - 1]?.toLowerCase?.() || '';
