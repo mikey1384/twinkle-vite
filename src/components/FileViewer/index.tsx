@@ -6,6 +6,16 @@ import ImageModal from '~/components/Modals/ImageModal';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 
+interface Props {
+  fileSize: number;
+  isOnModal?: boolean;
+  onThumbnailLoad?: (thumbUrl: string) => void;
+  small?: boolean;
+  src: string;
+  style?: React.CSSProperties;
+  thumbUrl?: string;
+  showImageModalOnClick?: boolean;
+}
 export default function FileViewer({
   fileSize,
   isOnModal,
@@ -15,11 +25,11 @@ export default function FileViewer({
   style,
   thumbUrl,
   showImageModalOnClick
-}) {
+}: Props) {
   const [imageModalShown, setImageModalShown] = useState(false);
-  const PlayerRef = useRef(null);
+  const PlayerRef: React.RefObject<any> = useRef(null);
   const { fileType } = useMemo(() => getFileInfoFromFileName(src), [src]);
-  const fileName = useMemo(() => src.split('/').pop(), [src]);
+  const fileName = useMemo(() => src.split('/').pop() ?? '', [src]);
   const filePath = useMemo(() => {
     const srcArray = src.split('/');
     const fileName = srcArray[srcArray.length - 1];
@@ -48,7 +58,7 @@ export default function FileViewer({
             cursor: showImageModalOnClick ? 'pointer' : 'default'
           }}
           onClick={
-            showImageModalOnClick ? () => setImageModalShown(true) : null
+            showImageModalOnClick ? () => setImageModalShown(true) : undefined
           }
           src={`${cloudFrontURL}${filePath}`}
         />
