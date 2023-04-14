@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, ReactNode, RefObject } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import { clientVersion } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
@@ -13,8 +13,8 @@ const token = () =>
   typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
 
 interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  innerRef?: React.RefObject<any> | ((instance: any) => void);
+  children: ReactNode;
+  innerRef?: RefObject<any> | ((instance: any) => void);
   userId?: number;
   username?: string;
   componentPath: string;

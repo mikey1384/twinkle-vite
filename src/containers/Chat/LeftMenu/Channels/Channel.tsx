@@ -1,5 +1,4 @@
-import { useContext, memo, useCallback, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, memo, useCallback, useMemo } from 'react';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
@@ -12,14 +11,30 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 
 const deletedLabel = localize('deleted');
 
-Channel.propTypes = {
-  channel: PropTypes.object.isRequired,
-  chatType: PropTypes.string,
-  currentPathId: PropTypes.string,
-  customChannelNames: PropTypes.object.isRequired,
-  selectedChannelId: PropTypes.number
-};
-
+interface Props {
+  customChannelNames: {
+    [key: number]: string;
+  };
+  currentPathId?: string | number;
+  channel: {
+    id: number;
+    channelName?: string;
+    messageIds?: number[];
+    messagesObj?: {
+      [key: number]: {
+        id: number;
+        [key: string]: any;
+      };
+    };
+    twoPeople?: boolean;
+    members?: { id: number; username: string }[];
+    numUnreads?: number;
+    pathId?: number;
+    subchannelObj?: object;
+  };
+  chatType?: string;
+  selectedChannelId?: number;
+}
 function Channel({
   customChannelNames,
   currentPathId,
@@ -36,7 +51,7 @@ function Channel({
   },
   chatType,
   selectedChannelId
-}) {
+}: Props) {
   const {
     state: { lastSubchannelPaths }
   } = useContext(LocalContext);

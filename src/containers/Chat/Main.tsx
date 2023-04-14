@@ -38,11 +38,6 @@ import {
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-Main.propTypes = {
-  currentPathId: PropTypes.string,
-  onFileUpload: PropTypes.func
-};
-
 export default function Main({ currentPathId, onFileUpload }) {
   const { subchannelPath } = useParams();
   const { search } = useLocation();
