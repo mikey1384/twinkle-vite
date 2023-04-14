@@ -1,15 +1,19 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  RefObject
+} from 'react';
 import Channel from './Channel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext } from '~/contexts';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-Channels.propTypes = {
-  currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-};
-function Channels({ currentPathId }) {
+function Channels({ currentPathId }: { currentPathId?: string | number }) {
   const loadMoreChannels = useAppContext(
     (v) => v.requestHelpers.loadMoreChannels
   );
@@ -34,8 +38,8 @@ function Channels({ currentPathId }) {
 
   const [channelsLoading, setChannelsLoading] = useState(false);
   const [prevChannelIds, setPrevChannelIds] = useState(homeChannelIds);
-  const ChannelListRef = useRef(null);
-  const timeoutRef = useRef(null);
+  const ChannelListRef: RefObject<any> = useRef(null);
+  const timeoutRef = useRef(0);
   const selectedChatTabRef = useRef('home');
   const loading = useRef(false);
   const channelIds = useMemo(() => {
@@ -52,7 +56,9 @@ function Channels({ currentPathId }) {
   }, [classChannelIds, favoriteChannelIds, homeChannelIds, selectedChatTab]);
 
   const loadMoreButtonShown = useMemo(() => {
-    const hash = {
+    const hash: {
+      [key: string]: boolean;
+    } = {
       home: homeLoadMoreButton,
       class: classLoadMoreButton,
       favorite: favoriteLoadMoreButton
@@ -66,7 +72,9 @@ function Channels({ currentPathId }) {
   ]);
 
   const handleLoadMoreChannels = useCallback(async () => {
-    const chatTabHash = {
+    const chatTabHash: {
+      [key: string]: number[];
+    } = {
       home: homeChannelIds,
       favorite: favoriteChannelIds,
       class: classChannelIds
@@ -108,7 +116,7 @@ function Channels({ currentPathId }) {
       timeoutRef.current = setTimeout(() => {
         if (
           loadMoreButtonShown &&
-          ChannelListRef.current.scrollTop >=
+          (ChannelListRef.current?.scrollTop || 0) >=
             (ChannelListRef.current.scrollHeight -
               ChannelListRef.current.offsetHeight) *
               0.7
@@ -153,9 +161,11 @@ function Channels({ currentPathId }) {
         }}
       >
         {channelIds
-          ?.map((channelId) => channelsObj[channelId])
-          .filter((channel) => !!channel && !channel?.isHidden)
-          .map((channel) => (
+          ?.map((channelId: number) => channelsObj[channelId])
+          .filter(
+            (channel: { isHidden: boolean }) => !!channel && !channel?.isHidden
+          )
+          .map((channel: { id: number }) => (
             <Channel
               key={selectedChatTab + channel.id}
               channel={channel}

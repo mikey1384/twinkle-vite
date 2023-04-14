@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -10,21 +10,18 @@ import localize from '~/constants/localize';
 const loadMoreLabel = localize('loadMore');
 const loadingLabel = localize('loading');
 
-LoadMoreButton.propTypes = {
-  color: PropTypes.string,
-  label: PropTypes.string,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  onClick: PropTypes.func.isRequired,
-  loading: PropTypes.bool
-};
-
 export default function LoadMoreButton({
   label,
   loading,
   color,
   theme,
   ...props
+}: {
+  label?: string;
+  loading?: boolean;
+  color?: string;
+  theme?: string;
+  [key: string]: any;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
