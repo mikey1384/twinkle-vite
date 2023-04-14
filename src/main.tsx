@@ -142,6 +142,16 @@ import App from './containers/App';
 import { install } from 'resize-observer';
 if (!window.ResizeObserver) install();
 
+declare global {
+  interface Window {
+    loadImage: (
+      imageUri: string,
+      callback: (img: any) => void,
+      options?: any
+    ) => void;
+  }
+}
+
 library.add(
   faAlignJustify,
   faAndroid,
