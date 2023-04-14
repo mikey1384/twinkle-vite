@@ -250,7 +250,12 @@ export const cardProps = {
   legendary: ['glowy', 'glossy', 'sparky', 'grad']
 };
 
-export const qualityProps = {
+export const qualityProps: {
+  [key: string]: {
+    color: string;
+    fontWeight: string;
+  };
+} = {
   common: {
     color: Color.vantaBlack(),
     fontWeight: 'normal'

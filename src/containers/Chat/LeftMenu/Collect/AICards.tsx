@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
 import { useChatContext, useKeyContext } from '~/contexts';
