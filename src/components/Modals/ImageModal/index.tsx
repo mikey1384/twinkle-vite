@@ -10,7 +10,7 @@ interface Props {
   caption?: string;
   hasCaption?: boolean;
   modalOverModal?: boolean;
-  onEditCaption?: (caption: string) => void;
+  onEditCaption: (caption: string) => void;
   onHide: () => void;
   fileName?: string;
   src: string;
@@ -46,7 +46,6 @@ export default function ImageModal({
         <img
           style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }}
           src={src}
-          rel={fileName}
         />
         {hasCaption && (
           <Caption
@@ -78,7 +77,7 @@ export default function ImageModal({
             transparent
             onClick={() => {
               setIsEditing(false);
-              setEditedCaption(caption);
+              setEditedCaption(caption || '');
             }}
           >
             Cancel
