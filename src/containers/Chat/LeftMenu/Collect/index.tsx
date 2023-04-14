@@ -7,7 +7,15 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import AICards from './AICards';
 import Vocabulary from './Vocabulary';
 
-function Collect({ aiCardSelected, vocabSelected, onClick }) {
+function Collect({
+  aiCardSelected,
+  vocabSelected,
+  onClick
+}: {
+  aiCardSelected: boolean;
+  vocabSelected: boolean;
+  onClick: () => void;
+}) {
   const { collectType } = useKeyContext((v) => v.myState);
 
   return (
@@ -17,7 +25,8 @@ function Collect({ aiCardSelected, vocabSelected, onClick }) {
           cursor: 'pointer',
           padding: '1rem',
           borderBottom: `1px solid ${Color.borderGray()}`,
-          background: (aiCardSelected || vocabSelected) && Color.highlightGray()
+          background:
+            aiCardSelected || vocabSelected ? Color.highlightGray() : undefined
         }}
         className={`unselectable ${css`
           &:hover {

@@ -308,7 +308,14 @@ export const cardLevelHash = {
   }
 };
 
-export const wordLevelHash = {
+export const wordLevelHash: {
+  [key: number]: {
+    label: string;
+    rewardAmount: number;
+    coinAmount: number;
+    color: string;
+  };
+} = {
   1: {
     label: 'basic',
     rewardAmount: 10,
