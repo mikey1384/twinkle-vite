@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   limitBrs,
   processMentionLink,
@@ -15,22 +14,21 @@ import { css } from '@emotion/css';
 const readMoreLabel = localize('readMore');
 const lineHeight = 1.7;
 
-LongText.propTypes = {
-  children: PropTypes.string,
-  className: PropTypes.string,
-  cleanString: PropTypes.bool,
-  contentId: PropTypes.number,
-  contentType: PropTypes.string,
-  isPreview: PropTypes.bool,
-  isStatusMsg: PropTypes.bool,
-  maxLines: PropTypes.number,
-  section: PropTypes.string,
-  style: PropTypes.object,
-  readMoreHeightFixed: PropTypes.bool,
-  readMoreColor: PropTypes.string,
-  theme: PropTypes.string
-};
-
+interface Props {
+  style?: any;
+  className?: string;
+  cleanString?: boolean;
+  children?: any;
+  contentId?: number;
+  contentType?: string;
+  isPreview?: boolean;
+  isStatusMsg?: boolean;
+  section?: string;
+  maxLines?: number;
+  readMoreHeightFixed?: boolean;
+  readMoreColor?: string;
+  theme?: string;
+}
 export default function LongText({
   style,
   className,
@@ -40,12 +38,12 @@ export default function LongText({
   contentType,
   isPreview,
   isStatusMsg,
-  section,
+  section = '',
   maxLines = 10,
   readMoreHeightFixed,
   readMoreColor,
   theme
-}) {
+}: Props) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     statusMsgLink: { color: statusMsgLinkColor },
@@ -55,7 +53,7 @@ export default function LongText({
   const onSetFullTextState = useContentContext(
     (v) => v.actions.onSetFullTextState
   );
-  const ContainerRef = useRef(null);
+  const ContainerRef: React.RefObject<any> = useRef(null);
   const contentState =
     contentType && section ? useContentState({ contentType, contentId }) : {};
   const { fullTextState = {} } = contentState;
@@ -63,7 +61,7 @@ export default function LongText({
   const [fullText, setFullText] = useState(
     isPreview ? false : fullTextState[section]
   );
-  const [isOverflown, setIsOverflown] = useState(null);
+  const [isOverflown, setIsOverflown] = useState<boolean | null>(null);
   useEffect(() => {
     setFullText(false);
     setIsOverflown(
