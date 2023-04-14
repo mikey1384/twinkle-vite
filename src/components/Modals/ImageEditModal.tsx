@@ -20,6 +20,14 @@ export default function ImageEditModal({
   onEditDone,
   onHide,
   imageUri
+}: {
+  aspectFixed?: boolean;
+  hasDescription?: boolean;
+  isProfilePic?: boolean;
+  modalOverModal?: boolean;
+  onEditDone: (params: { pictures: any[]; filePath: string }) => void;
+  onHide: () => void;
+  imageUri: string;
 }) {
   const [captionText, setCaptionText] = useState('');
   const isUploadingRef = useRef(false);
@@ -30,11 +38,19 @@ export default function ImageEditModal({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(null);
-  const [crop, setCrop] = useState({
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [crop, setCrop] = useState<{
+    unit: '%' | 'px';
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+  }>({
     unit: '%',
     width: 50,
-    x: 5
+    height: 50,
+    x: 5,
+    y: 5
   });
   const [loading, setLoading] = useState(false);
   const [originalImageUrl, setOriginalImageUrl] = useState('');
@@ -68,7 +84,7 @@ export default function ImageEditModal({
             {!loading && imageUri && (
               <ReactCrop
                 crop={crop}
-                aspect={aspectFixed ? 1 : null}
+                aspect={aspectFixed ? 1 : undefined}
                 minWidth={50}
                 minHeight={50}
                 keepSelection
@@ -94,11 +110,13 @@ export default function ImageEditModal({
                       height
                     );
                     setCrop(crop);
-                    const cropped = initImage({
-                      image: ImageRef.current,
-                      crop
-                    });
-                    setCroppedImageUrl(cropped);
+                    if (ImageRef.current) {
+                      const cropped = initImage({
+                        image: ImageRef.current,
+                        crop
+                      });
+                      setCroppedImageUrl(cropped);
+                    }
                   }}
                   style={{
                     objectFit: 'contain',
@@ -140,8 +158,13 @@ export default function ImageEditModal({
     </Modal>
   );
 
-  async function handleCropComplete(crop) {
-    if (crop.width && crop.height) {
+  async function handleCropComplete(crop: {
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+  }) {
+    if (crop.width && crop.height && ImageRef.current) {
       const cropped = getCroppedImg({
         image: ImageRef.current,
         crop
@@ -150,7 +173,13 @@ export default function ImageEditModal({
     }
   }
 
-  function initImage({ image, crop }) {
+  function initImage({
+    image,
+    crop
+  }: {
+    image: HTMLImageElement;
+    crop: { width: number; height: number; x: number; y: number };
+  }) {
     const canvas = document.createElement('canvas');
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
@@ -158,7 +187,7 @@ export default function ImageEditModal({
     canvas.height = (image.height * crop.height) / 100;
     const ctx = canvas.getContext('2d');
 
-    ctx.drawImage(
+    ctx?.drawImage(
       image,
       ((image.width * crop.x) / 100) * scaleX,
       ((image.height * crop.y) / 100) * scaleY,
@@ -172,7 +201,13 @@ export default function ImageEditModal({
     return canvas.toDataURL('image/jpeg');
   }
 
-  function getCroppedImg({ image, crop }) {
+  function getCroppedImg({
+    image,
+    crop
+  }: {
+    image: HTMLImageElement;
+    crop: { width: number; height: number; x: number; y: number };
+  }) {
     const canvas = document.createElement('canvas');
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
@@ -180,7 +215,7 @@ export default function ImageEditModal({
     canvas.height = crop.height;
     const ctx = canvas.getContext('2d');
 
-    ctx.drawImage(
+    ctx?.drawImage(
       image,
       crop.x * scaleX,
       crop.y * scaleY,
@@ -223,7 +258,13 @@ export default function ImageEditModal({
     });
   }
 
-  function handleUploadProgress({ loaded, total }) {
+  function handleUploadProgress({
+    loaded,
+    total
+  }: {
+    loaded: number;
+    total: number;
+  }) {
     setUploadProgress(loaded / total);
   }
 }
