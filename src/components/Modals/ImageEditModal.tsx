@@ -1,9 +1,8 @@
-import { useRef, useState, useEffect } from 'react';
+import 'react-image-crop/dist/ReactCrop.css';
+import React, { useRef, useState, useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import PropTypes from 'prop-types';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
@@ -12,16 +11,6 @@ import { v1 as uuidv1 } from 'uuid';
 import { returnImageFileFromUrl } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { finalizeEmoji } from '~/helpers/stringHelpers';
-
-ImageEditModal.propTypes = {
-  aspectFixed: PropTypes.bool,
-  hasDescription: PropTypes.bool,
-  imageUri: PropTypes.string,
-  isProfilePic: PropTypes.bool,
-  modalOverModal: PropTypes.bool,
-  onEditDone: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired
-};
 
 export default function ImageEditModal({
   aspectFixed = true,
