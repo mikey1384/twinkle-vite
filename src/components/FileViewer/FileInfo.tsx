@@ -5,7 +5,17 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { renderFileSize } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 
-export default function FileInfo({ src, fileType, fileName, fileSize }) {
+export default function FileInfo({
+  src,
+  fileType,
+  fileName,
+  fileSize
+}: {
+  src: string;
+  fileType: string;
+  fileName: string;
+  fileSize: number;
+}) {
   const {
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
