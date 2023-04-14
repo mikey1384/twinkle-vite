@@ -1,17 +1,9 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { renderFileSize } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
-
-FileInfo.propTypes = {
-  fileType: PropTypes.string.isRequired,
-  fileName: PropTypes.string,
-  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  src: PropTypes.string.isRequired
-};
 
 export default function FileInfo({ src, fileType, fileName, fileSize }) {
   const {

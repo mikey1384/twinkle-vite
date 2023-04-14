@@ -1,3 +1,4 @@
+import React from 'react';
 import Icon from '~/components/Icon';
 import FilterBar from '~/components/FilterBar';
 import { useChatContext } from '~/contexts';
@@ -18,14 +19,14 @@ export default function Tabs() {
       }}
     >
       <nav
-        className={selectedChatTab === 'home' ? 'active' : null}
+        className={selectedChatTab === 'home' ? 'active' : ''}
         onClick={() => onSelectChatTab('home')}
       >
         <Icon icon="home" />
       </nav>
       {favoriteChannelIds.length > 0 && (
         <nav
-          className={selectedChatTab === 'favorite' ? 'active' : null}
+          className={selectedChatTab === 'favorite' ? 'active' : ''}
           onClick={() => onSelectChatTab('favorite')}
         >
           <Icon icon="star" />
@@ -33,7 +34,7 @@ export default function Tabs() {
       )}
       {classChannelIds.length > 0 && (
         <nav
-          className={selectedChatTab === 'class' ? 'active' : null}
+          className={selectedChatTab === 'class' ? 'active' : ''}
           onClick={() => onSelectChatTab('class')}
         >
           <Icon icon="chalkboard-teacher" />

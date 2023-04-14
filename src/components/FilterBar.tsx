@@ -1,21 +1,19 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 
-FilterBar.propTypes = {
-  children: PropTypes.node,
-  className: PropTypes.string,
-  color: PropTypes.string,
-  bordered: PropTypes.bool,
-  dropdownButton: PropTypes.node,
-  innerRef: PropTypes.func,
-  inverted: PropTypes.bool,
-  style: PropTypes.object
-};
-
+interface Props {
+  color?: string;
+  bordered?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  innerRef?: React.RefObject<any>;
+  inverted?: boolean;
+  dropdownButton?: any;
+  style?: any;
+}
 export default function FilterBar({
   color,
   bordered,
@@ -25,7 +23,7 @@ export default function FilterBar({
   inverted,
   dropdownButton,
   style
-}) {
+}: Props) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     alert: { color: alertColor },
