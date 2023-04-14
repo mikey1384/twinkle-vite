@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import Subchannel from './Subchannel';
@@ -8,16 +7,15 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
-SubChannels.propTypes = {
-  currentChannel: PropTypes.object,
-  currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  displayedThemeColor: PropTypes.string,
-  selectedChannelId: PropTypes.number,
-  subchannelIds: PropTypes.arrayOf(PropTypes.number),
-  subchannelObj: PropTypes.object,
-  subchannelPath: PropTypes.string
-};
-
+interface Props {
+  currentChannel: any;
+  currentPathId: string | number;
+  displayedThemeColor: string;
+  selectedChannelId: number;
+  subchannelIds: number[];
+  subchannelObj: any;
+  subchannelPath: string;
+}
 export default function SubChannels({
   currentChannel,
   currentPathId,
@@ -26,7 +24,7 @@ export default function SubChannels({
   subchannelIds,
   subchannelObj,
   subchannelPath
-}) {
+}: Props) {
   const {
     chatUnread: { color: chatUnreadColor }
   } = useKeyContext((v) => v.theme);

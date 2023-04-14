@@ -1,20 +1,26 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { Link } from 'react-router-dom';
 
-Subchannel.propTypes = {
-  chatUnreadColor: PropTypes.string,
-  currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  selectedChannelId: PropTypes.number,
-  subchannel: PropTypes.object.isRequired,
-  subchannelPath: PropTypes.string,
-  onUpdateLastSubchannelPath: PropTypes.func.isRequired
-};
-
+interface Props {
+  chatUnreadColor: string;
+  currentPathId: string | number;
+  selectedChannelId: number;
+  subchannel: any;
+  subchannelPath: string;
+  onUpdateLastSubchannelPath: ({
+    channelId,
+    path,
+    currentSubchannelPath
+  }: {
+    channelId: number;
+    path: string;
+    currentSubchannelPath: string;
+  }) => void;
+}
 export default function Subchannel({
   chatUnreadColor,
   currentPathId,
@@ -22,7 +28,7 @@ export default function Subchannel({
   subchannel,
   subchannelPath,
   onUpdateLastSubchannelPath
-}) {
+}: Props) {
   const { userId } = useKeyContext((v) => v.myState);
   const subchannelSelected = useMemo(
     () => subchannelPath === subchannel.path,
