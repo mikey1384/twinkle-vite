@@ -1,17 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 
-ExtractedThumb.propTypes = {
-  isHidden: PropTypes.bool,
-  onThumbnailLoad: PropTypes.func,
-  src: PropTypes.string.isRequired,
-  style: PropTypes.object,
-  thumbUrl: PropTypes.string,
-  onThumbnailLoadFail: PropTypes.func
-};
-
+interface Props {
+  isHidden?: boolean;
+  src: string;
+  onThumbnailLoad?: (thumbnail: string) => void;
+  style?: React.CSSProperties;
+  thumbUrl?: string;
+  onThumbnailLoadFail?: () => void;
+}
 export default function ExtractedThumb({
   isHidden,
   src,
@@ -19,16 +17,16 @@ export default function ExtractedThumb({
   style,
   thumbUrl,
   onThumbnailLoadFail
-}) {
+}: Props) {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [metadataLoaded, setMetadataLoaded] = useState(false);
   const [seeked, setSeeked] = useState(false);
   const [loadingThumb, setLoadingThumb] = useState(false);
-  const [thumbnail, setThumbnail] = useState(null);
+  const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [suspended, setSuspended] = useState(false);
   const [thumbnailBroken, setThumbnailBroken] = useState(false);
-  const videoRef = useRef({});
-  const canvasRef = useRef(null);
+  const videoRef: React.RefObject<any> = useRef<Record<string, any>>({});
+  const canvasRef: React.RefObject<any> = useRef<Record<string, any>>(null);
 
   useEffect(() => {
     if (thumbUrl) {
@@ -48,23 +46,24 @@ export default function ExtractedThumb({
     function handleLoadThumbnail() {
       setLoadingThumb(true);
       try {
-        canvasRef.current.height = videoRef.current.videoHeight;
-        canvasRef.current.width = videoRef.current.videoWidth;
+        if (canvasRef.current && videoRef.current) {
+          canvasRef.current.height = videoRef.current.videoHeight;
+          canvasRef.current.width = videoRef.current.videoWidth;
 
-        canvasRef.current.getContext('2d').drawImage(videoRef.current, 0, 0);
-        const thumbnail = canvasRef.current.toDataURL('image/png');
+          canvasRef.current.getContext('2d').drawImage(videoRef.current, 0, 0);
+          const thumbnail = canvasRef.current.toDataURL('image/png');
 
-        videoRef.current.src = '';
-        videoRef.current.remove();
-        videoRef.current.remove();
-        setThumbnail(thumbnail);
-
-        if (onThumbnailLoad) {
-          onThumbnailLoad(thumbnail);
+          videoRef.current.src = '';
+          videoRef.current.remove();
+          videoRef.current.remove();
+          setThumbnail(thumbnail);
+          if (onThumbnailLoad) {
+            onThumbnailLoad(thumbnail);
+          }
         }
-        setLoadingThumb(false);
       } catch (error) {
         console.error(error);
+      } finally {
         setLoadingThumb(false);
       }
     }

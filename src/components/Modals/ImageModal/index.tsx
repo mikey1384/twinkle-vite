@@ -1,23 +1,10 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import Caption from './Caption';
 import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
 import { stringIsEmpty, finalizeEmoji } from '~/helpers/stringHelpers';
-
-ImageModal.propTypes = {
-  caption: PropTypes.string,
-  downloadable: PropTypes.bool,
-  hasCaption: PropTypes.bool,
-  modalOverModal: PropTypes.bool,
-  onEditCaption: PropTypes.func,
-  onHide: PropTypes.func.isRequired,
-  fileName: PropTypes.string,
-  src: PropTypes.string,
-  userIsUploader: PropTypes.bool
-};
 
 export default function ImageModal({
   caption,
