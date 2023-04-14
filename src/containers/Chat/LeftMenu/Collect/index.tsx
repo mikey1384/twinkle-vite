@@ -1,5 +1,4 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo } from 'react';
 import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -7,12 +6,6 @@ import { AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import AICards from './AICards';
 import Vocabulary from './Vocabulary';
-
-Collect.propTypes = {
-  aiCardSelected: PropTypes.bool,
-  vocabSelected: PropTypes.bool.isRequired,
-  onClick: PropTypes.func.isRequired
-};
 
 function Collect({ aiCardSelected, vocabSelected, onClick }) {
   const { collectType } = useKeyContext((v) => v.myState);
