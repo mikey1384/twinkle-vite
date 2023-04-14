@@ -15,7 +15,7 @@ export default function useInfiniteScroll({
   const prevFeedsLength = useRef(0);
   const scrollHeightRef = useRef(0);
   const scrollPositionRef = useRef({ desktop: 0, mobile: 0 });
-  const timerRef = useRef(null);
+  const timerRef = useRef(0);
 
   useEffect(() => {
     addEvent(window, 'scroll', onScroll);
@@ -25,18 +25,18 @@ export default function useInfiniteScroll({
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         if (
-          document.getElementById('App').scrollHeight >
-            scrollHeightRef.current ||
+          document.getElementById('App')?.scrollHeight ||
+          0 > scrollHeightRef.current ||
           BodyRef.scrollTop > scrollHeightRef.current
         ) {
           scrollHeightRef.current = Math.max(
-            document.getElementById('App').scrollHeight,
+            document.getElementById('App')?.scrollHeight || 0,
             BodyRef.scrollTop
           );
         }
         if (scrollable && scrollHeightRef.current !== 0) {
           scrollPositionRef.current = {
-            desktop: document.getElementById('App').scrollTop,
+            desktop: document.getElementById('App')?.scrollTop || 0,
             mobile: BodyRef.scrollTop
           };
           if (
