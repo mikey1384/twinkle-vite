@@ -1,27 +1,23 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import TextareaAutosize from 'react-textarea-autosize';
 
-Textarea.propTypes = {
-  className: PropTypes.string,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  maxRows: PropTypes.number,
-  type: PropTypes.string
-};
-
 export default function Textarea({
   className,
   innerRef,
-  type = 'text',
   maxRows = 20,
   ...props
+}: {
+  className?: string;
+  innerRef?: any;
+  maxRows?: number;
+  [key: string]: any;
 }) {
   return (
     <TextareaAutosize
       {...props}
       maxRows={maxRows}
-      type={type}
       ref={innerRef}
       className={`${className} ${css`
         font-family: 'Noto Sans', Helvetica, sans-serif, Arial;

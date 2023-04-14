@@ -10,6 +10,12 @@ export default function Caption({
   editedCaption,
   onSetEditedCaption,
   userIsUploader
+}: {
+  caption: string;
+  isEditing: boolean;
+  editedCaption: string;
+  onSetEditedCaption: (text: string) => void;
+  userIsUploader: boolean;
 }) {
   return (
     <ErrorBoundary componentPath="ImageModal/Caption">

@@ -1,15 +1,16 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 
-CaptionEditor.propTypes = {
-  style: PropTypes.object,
-  text: PropTypes.string,
-  onSetText: PropTypes.func.isRequired
-};
-
-export default function CaptionEditor({ text, onSetText, style }) {
+export default function CaptionEditor({
+  text,
+  onSetText,
+  style
+}: {
+  text: string;
+  onSetText: (text: string) => void;
+  style?: React.CSSProperties;
+}) {
   const commentExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -30,13 +31,15 @@ export default function CaptionEditor({ text, onSetText, style }) {
         }}
         minRows={3}
         value={text}
-        onChange={(event) => onSetText(event.target.value)}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+          onSetText(event.target.value)
+        }
         onKeyUp={handleKeyUp}
       />
     </div>
   );
 
-  function handleKeyUp(event) {
+  function handleKeyUp(event: { key: string; target: { value: string } }) {
     if (event.key === ' ') {
       onSetText(addEmoji(event.target.value));
     }

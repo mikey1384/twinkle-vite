@@ -1,20 +1,17 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ProgressBar from '~/components/ProgressBar';
 import { Color } from '~/constants/css';
-
-FileUploadStatusIndicator.propTypes = {
-  fileName: PropTypes.string,
-  uploadProgress: PropTypes.number,
-  style: PropTypes.object,
-  theme: PropTypes.string
-};
 
 export default function FileUploadStatusIndicator({
   fileName,
   style,
   theme,
   uploadProgress
+}: {
+  fileName?: string;
+  style?: React.CSSProperties;
+  theme?: string;
+  uploadProgress: number;
 }) {
   const uploadComplete = useMemo(
     () => uploadProgress > 0.995,
