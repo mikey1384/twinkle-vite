@@ -88,7 +88,9 @@ function Channel({
     }
     return false;
   }, [currentPathId, chatType, pathIdMatches, channelId, selectedChannelId]);
-  const lastMessage = useMemo(() => {
+  const lastMessage: {
+    [key: string]: any;
+  } = useMemo(() => {
     const lastMessageId = messageIds?.[0];
     let mostRecentMessage = messagesObj?.[lastMessageId];
     if (Object.values(subchannelObj).length > 0) {
@@ -130,6 +132,46 @@ function Channel({
       isDraw,
       transferDetails,
       transactionDetails
+    }: {
+      content?: string;
+      fileName?: string;
+      gameWinnerId?: number;
+      userId?: number;
+      username?: string;
+      isAbort?: boolean;
+      isDraw?: boolean;
+      transferDetails?: {
+        askId?: number;
+        offerId?: number;
+        from?: number;
+        to?: number;
+        card?: {
+          id: number;
+          name: string;
+          image: string;
+        };
+      };
+      transactionDetails?: {
+        from?: number;
+        to?: number;
+        offer: {
+          cards: {
+            id: number;
+            name: string;
+            image: string;
+          }[];
+          coins?: number;
+          id: number;
+          name: string;
+          image: string;
+        };
+        type?: string;
+        card?: {
+          id: number;
+          name: string;
+          image: string;
+        };
+      };
     }) {
       const messageSender = senderId
         ? senderId === userId
@@ -160,8 +202,8 @@ function Channel({
         );
       }
       if (transferDetails) {
-        const isPurchase = !!transferDetails?.askId;
-        const isSale = !!transferDetails?.offerId;
+        const isPurchase = !!transferDetails.askId;
+        const isSale = !!transferDetails.offerId;
         const buyer = transferDetails.to === userId ? 'You' : otherMember;
         const seller = transferDetails.from === userId ? 'You' : otherMember;
         if (isPurchase) {
@@ -304,7 +346,9 @@ function Channel({
                   color:
                     channelId === 2
                       ? Color[generalChatColor]()
-                      : !effectiveChannelName && !otherMember && '#7c7c7c',
+                      : !effectiveChannelName && !otherMember
+                      ? Color.lighterGray()
+                      : undefined,
                   fontWeight: 'bold',
                   margin: 0,
                   padding: 0,
