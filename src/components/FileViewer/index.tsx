@@ -1,22 +1,10 @@
-import { useRef, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef, useMemo, useState } from 'react';
 import FileInfo from './FileInfo';
 import ReactPlayer from 'react-player';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ImageModal from '~/components/Modals/ImageModal';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-
-FileViewer.propTypes = {
-  isOnModal: PropTypes.bool,
-  small: PropTypes.bool,
-  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  src: PropTypes.string.isRequired,
-  style: PropTypes.object,
-  onThumbnailLoad: PropTypes.func,
-  thumbUrl: PropTypes.string,
-  showImageModalOnClick: PropTypes.bool
-};
 
 export default function FileViewer({
   fileSize,

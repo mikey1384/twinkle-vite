@@ -1,5 +1,4 @@
-import { useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useRef } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -10,19 +9,23 @@ import { isMobile } from '~/helpers';
 const deviceIsMobile = isMobile(navigator);
 const outsideClickMethod = deviceIsMobile ? useOutsideTap : useOutsideClick;
 
-DropdownList.propTypes = {
-  xAdjustment: PropTypes.number,
-  children: PropTypes.node,
-  className: PropTypes.string,
-  dropdownContext: PropTypes.object,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  style: PropTypes.object,
-  direction: PropTypes.string,
-  onMouseEnter: PropTypes.func,
-  onMouseLeave: PropTypes.func,
-  zIndex: PropTypes.number
-};
-
+interface Props {
+  xAdjustment?: number;
+  children: React.ReactNode;
+  className?: string;
+  dropdownContext: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  innerRef?: React.RefObject<any>;
+  style?: React.CSSProperties;
+  onHideMenu?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  zIndex?: number;
+}
 export default function DropdownList({
   xAdjustment = 0,
   children,
@@ -34,7 +37,7 @@ export default function DropdownList({
   onMouseEnter = () => {},
   onMouseLeave = () => {},
   zIndex = 100_000_000
-}) {
+}: Props) {
   const MenuRef = useRef(null);
   const { x, y, width, height } = dropdownContext;
   outsideClickMethod(MenuRef, onHideMenu);
@@ -107,6 +110,6 @@ export default function DropdownList({
         </ul>
       </div>
     </ErrorBoundary>,
-    document.getElementById('outer-layer')
+    document.getElementById('outer-layer') as HTMLElement
   );
 }
