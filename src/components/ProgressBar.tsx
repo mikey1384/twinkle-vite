@@ -1,19 +1,8 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { borderRadius, Color, innerBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
-
-ProgressBar.propTypes = {
-  className: PropTypes.string,
-  noBorderRadius: PropTypes.bool,
-  progress: PropTypes.number.isRequired,
-  color: PropTypes.string,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  text: PropTypes.string
-};
 
 export default function ProgressBar({
   className,
@@ -23,6 +12,14 @@ export default function ProgressBar({
   style = {},
   theme,
   text
+}: {
+  className?: string;
+  color?: string;
+  noBorderRadius?: boolean;
+  progress: number;
+  style?: React.CSSProperties;
+  theme?: string;
+  text?: string;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
@@ -60,9 +57,9 @@ export default function ProgressBar({
       `} ${className}`}
       style={{
         ...style,
-        borderLeft: noBorderRadius && 'none',
-        borderRight: noBorderRadius && 'none',
-        borderRadius: noBorderRadius && 0
+        borderLeft: noBorderRadius ? 'none' : undefined,
+        borderRight: noBorderRadius ? 'none' : undefined,
+        borderRadius: noBorderRadius ? 0 : undefined
       }}
     >
       <section
@@ -74,7 +71,7 @@ export default function ProgressBar({
           opacity: progress > 0 ? 1 : 0,
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: noBorderRadius && 0
+          borderRadius: noBorderRadius ? 0 : undefined
         }}
       >
         <span

@@ -1,7 +1,7 @@
 import React from 'react';
 import parse from 'html-react-parser';
 import Link from '~/components/Link';
-import { charLimit, CharLimit } from '~/constants/defaultValues';
+import { charLimit } from '~/constants/defaultValues';
 
 const urlRegex =
   /(\b((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n"' ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)\b(?:\/)?)/giu;
@@ -372,8 +372,8 @@ export function exceedsCharLimit({
   contentType,
   text
 }: {
-  inputType: string;
-  contentType: keyof CharLimit;
+  inputType?: string;
+  contentType: string;
   text: string;
 }): {
   style: { color: string; borderColor: string };
@@ -384,8 +384,8 @@ export function exceedsCharLimit({
     contentType === 'comment' ||
     contentType === 'rewardComment' ||
     contentType === 'statusMsg'
-      ? (charLimit[contentType] as number)
-      : (charLimit[contentType] as { [key: string]: number })[inputType];
+      ? charLimit[contentType]
+      : (charLimit[contentType] as { [key: string]: number })[inputType || ''];
   return targetText.length > limit
     ? {
         style: {
