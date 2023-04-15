@@ -2172,11 +2172,11 @@ export default function ChatReducer(state, action) {
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
-            ...state.channelsObj[action.channelId],
+            ...(state.channelsObj[action.channelId] || {}),
             messagesObj: {
-              ...state.channelsObj[action.channelId].messagesObj,
+              ...state.channelsObj[action.channelId]?.messagesObj,
               [action.messageId]: {
-                ...state.channelsObj[action.channelId].messagesObj[
+                ...state.channelsObj[action.channelId]?.messagesObj[
                   action.messageId
                 ],
                 ...action.newState
