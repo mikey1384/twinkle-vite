@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { truncateText } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
@@ -8,11 +7,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 
 const fallbackImage = '/img/link.png';
 
-WebsiteContent.propTypes = {
-  attachment: PropTypes.object.isRequired
-};
-
-export default function WebsiteContent({ attachment }) {
+export default function WebsiteContent({ attachment }: { attachment: any }) {
   const navigate = useNavigate();
   const [imageUrl, setImageUrl] = useState('');
   const { content, thumbUrl } = useContentState({

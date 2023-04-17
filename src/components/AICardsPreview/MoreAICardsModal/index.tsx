@@ -1,21 +1,20 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import CardItem from './CardItem';
 
-MoreAICardsModal.propTypes = {
-  cards: PropTypes.array.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  onHide: PropTypes.func,
-  modalOverModal: PropTypes.bool
-};
-
+interface Props {
+  cards: any[];
+  onSetAICardModalCardId?: (cardId: string) => void;
+  onHide: () => void;
+  modalOverModal?: boolean;
+}
 export default function MoreAICardsModal({
   cards,
   onSetAICardModalCardId,
   onHide,
   modalOverModal
-}) {
+}: Props) {
   return (
     <Modal modalOverModal={modalOverModal} onHide={onHide}>
       <header>Selected Cards</header>
@@ -25,7 +24,7 @@ export default function MoreAICardsModal({
             <CardItem
               key={card.id}
               card={card}
-              onClick={() => onSetAICardModalCardId(card.id)}
+              onClick={() => onSetAICardModalCardId?.(card.id)}
             />
           ))}
         </div>
