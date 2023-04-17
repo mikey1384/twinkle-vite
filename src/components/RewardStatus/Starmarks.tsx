@@ -1,12 +1,7 @@
-import { memo, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useMemo } from 'react';
 import Icon from '~/components/Icon';
 
-Starmarks.propTypes = {
-  stars: PropTypes.number.isRequired
-};
-
-function Starmarks({ stars }) {
+function Starmarks({ stars }: { stars: number }) {
   const Marks = useMemo(() => {
     const baselines = [
       { baseline: 10, icon: ['far', 'star-half-alt'] },

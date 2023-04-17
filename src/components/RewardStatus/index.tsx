@@ -1,5 +1,4 @@
-import { memo, useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useState, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
@@ -14,18 +13,17 @@ import localize from '~/constants/localize';
 
 const showMoreRewardRecordsLabel = localize('showMoreRewardRecords');
 
-RewardStatus.propTypes = {
-  className: PropTypes.string,
-  contentType: PropTypes.string,
-  contentId: PropTypes.number,
-  rewardLevel: PropTypes.number,
-  noMarginForEditButton: PropTypes.bool,
-  onCommentEdit: PropTypes.func,
-  rewards: PropTypes.array,
-  style: PropTypes.object,
-  theme: PropTypes.string
-};
-
+interface Props {
+  contentType: string;
+  contentId: number;
+  className?: string;
+  rewardLevel: number;
+  noMarginForEditButton?: boolean;
+  onCommentEdit?: () => void;
+  rewards?: any[];
+  style?: any;
+  theme?: any;
+}
 function RewardStatus({
   contentType,
   contentId,
@@ -36,7 +34,7 @@ function RewardStatus({
   rewards = [],
   style,
   theme
-}) {
+}: Props) {
   const { userId, profileTheme } = useKeyContext((v) => v.myState);
   const {
     info: { color: infoColor }
@@ -139,7 +137,6 @@ function RewardStatus({
             noMarginForEditButton={noMarginForEditButton}
             key={reward.id}
             reward={reward}
-            myId={userId}
             onEditDone={onCommentEdit}
           />
         ))}

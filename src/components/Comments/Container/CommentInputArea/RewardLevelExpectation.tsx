@@ -1,16 +1,15 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
-RewardLevelExpectation.propTypes = {
-  rewardLevel: PropTypes.number.isRequired
-};
-
-export default function RewardLevelExpectation({ rewardLevel }) {
+export default function RewardLevelExpectation({
+  rewardLevel
+}: {
+  rewardLevel: number;
+}) {
   const theme = useKeyContext((v) => v.theme);
   const rewardLevelExpectation = useMemo(() => {
     switch (rewardLevel) {

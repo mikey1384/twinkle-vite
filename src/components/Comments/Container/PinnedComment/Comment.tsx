@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { memo, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Likers from '~/components/Likers';
@@ -36,41 +36,40 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 
-Comment.propTypes = {
-  comment: PropTypes.shape({
-    commentId: PropTypes.number,
-    content: PropTypes.string.isRequired,
-    id: PropTypes.number.isRequired,
-    likes: PropTypes.array,
-    numReplies: PropTypes.number,
-    profilePicUrl: PropTypes.string,
-    recommendationInterfaceShown: PropTypes.bool,
-    recommendations: PropTypes.array,
-    replies: PropTypes.array,
-    replyId: PropTypes.number,
-    rewards: PropTypes.array,
-    targetObj: PropTypes.object,
-    targetUserName: PropTypes.string,
-    targetUserId: PropTypes.number,
-    timeStamp: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-      .isRequired,
-    uploader: PropTypes.object.isRequired,
-    filePath: PropTypes.string,
-    fileName: PropTypes.string,
-    fileSize: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    thumbUrl: PropTypes.string,
-    isNotification: PropTypes.oneOfType([PropTypes.number, PropTypes.bool])
-  }).isRequired,
-  innerRef: PropTypes.func,
-  isPreview: PropTypes.bool,
-  parent: PropTypes.object,
-  rootContent: PropTypes.shape({
-    contentType: PropTypes.string
-  }),
-  subject: PropTypes.object,
-  theme: PropTypes.string
-};
-
+interface Props {
+  comment: {
+    commentId: number;
+    content: string;
+    id: number;
+    likes: any[];
+    numReplies: number;
+    profilePicUrl: string;
+    recommendationInterfaceShown: boolean;
+    recommendations: any[];
+    replies: any[];
+    replyId: number;
+    rewards: any[];
+    targetObj: any;
+    targetUserName: string;
+    targetUserId: number;
+    timeStamp: number | string;
+    uploader: any;
+    filePath: string;
+    fileName: string;
+    fileSize: number | string;
+    thumbUrl: string;
+    isNotification: number | boolean;
+  };
+  innerRef?: (ref: any) => void;
+  isPreview?: boolean;
+  parent?: any;
+  rootContent?: {
+    contentType?: string;
+    rewardLevel?: number;
+  };
+  subject?: any;
+  theme?: string;
+}
 function Comment({
   comment,
   innerRef,
@@ -92,7 +91,7 @@ function Comment({
     isNotification,
     thumbUrl: originalThumbUrl
   }
-}) {
+}: Props) {
   subject = subject || comment.targetObj?.subject || {};
   const subjectUploaderId = useMemo(
     () => subject.uploader?.id || subject?.userId,
@@ -151,7 +150,7 @@ function Comment({
     contentId: subject.id
   });
   const { onDelete, onEditDone, onLikeClick, onRewardCommentEdit } =
-    useContext(LocalContext);
+    useContext<{ [key: string]: any }>(LocalContext);
 
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
@@ -188,7 +187,10 @@ function Comment({
     if (parent.contentType === 'subject' && parent.rewardLevel > 0) {
       return parent.rewardLevel;
     }
-    if (rootContent.contentType === 'subject' && rootContent.rewardLevel > 0) {
+    if (
+      rootContent.contentType === 'subject' &&
+      (rootContent.rewardLevel || 0) > 0
+    ) {
       return rootContent.rewardLevel;
     }
     if (parent.contentType === 'video' || parent.contentType === 'url') {
@@ -206,7 +208,7 @@ function Comment({
       if (subject?.rewardLevel) {
         return subject?.rewardLevel;
       }
-      if (rootContent.rewardLevel > 0) {
+      if ((rootContent.rewardLevel || 0) > 0) {
         return 1;
       }
     }
@@ -644,7 +646,6 @@ function Comment({
                 }}
                 rewards={rewards}
                 theme={theme}
-                uploaderName={uploader.username}
               />
             )}
           </section>
@@ -667,7 +668,7 @@ function Comment({
     </>
   );
 
-  async function handleEditDone(editedComment) {
+  async function handleEditDone(editedComment: string) {
     try {
       await editContent({
         editedComment,
@@ -686,7 +687,13 @@ function Comment({
     }
   }
 
-  function handleLikeClick({ likes, isUnlike }) {
+  function handleLikeClick({
+    likes,
+    isUnlike
+  }: {
+    likes: any[];
+    isUnlike: boolean;
+  }) {
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
         contentId: comment.id,

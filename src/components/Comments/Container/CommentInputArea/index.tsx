@@ -1,5 +1,4 @@
-import { useContext, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useMemo, useState } from 'react';
 import InputForm from '~/components/Forms/InputForm';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import LocalContext from '../../Context';
@@ -10,24 +9,23 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import RewardLevelExpectation from './RewardLevelExpectation';
 
-CommentInputArea.propTypes = {
-  autoFocus: PropTypes.bool,
-  disableReason: PropTypes.string,
-  inputTypeLabel: PropTypes.string,
-  innerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
-  InputFormRef: PropTypes.object,
-  numInputRows: PropTypes.number,
-  onSubmit: PropTypes.func.isRequired,
-  onViewSecretAnswer: PropTypes.func,
-  parent: PropTypes.object.isRequired,
-  rootCommentId: PropTypes.number,
-  subjectId: PropTypes.number,
-  style: PropTypes.object,
-  subjectRewardLevel: PropTypes.number,
-  targetCommentId: PropTypes.number,
-  theme: PropTypes.string
-};
-
+interface Props {
+  autoFocus?: boolean;
+  disableReason?: string;
+  innerRef?: React.RefObject<any>;
+  inputTypeLabel: string;
+  InputFormRef?: React.RefObject<any>;
+  numInputRows?: number;
+  onSubmit: (v: any) => void;
+  onViewSecretAnswer?: () => void;
+  parent: any;
+  rootCommentId?: string;
+  subjectId?: string;
+  style?: React.CSSProperties;
+  subjectRewardLevel?: number;
+  targetCommentId?: number;
+  theme?: any;
+}
 export default function CommentInputArea({
   autoFocus,
   disableReason,
@@ -44,7 +42,7 @@ export default function CommentInputArea({
   subjectRewardLevel,
   targetCommentId,
   theme
-}) {
+}: Props) {
   const [uploading, setUploading] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);
   const placeholderLabel = useMemo(() => {
@@ -71,7 +69,9 @@ export default function CommentInputArea({
     () => targetCommentId || subjectId || parent.contentId,
     [parent, targetCommentId, subjectId]
   );
-  const { onSubmitWithAttachment } = useContext(LocalContext);
+  const { onSubmitWithAttachment } = useContext<{ [key: string]: any }>(
+    LocalContext
+  );
   const state = useInputContext((v) => v.state);
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
@@ -129,7 +129,7 @@ export default function CommentInputArea({
     </div>
   );
 
-  async function handleSubmit(text) {
+  async function handleSubmit(text: string) {
     try {
       if (attachment) {
         onSetUploadingFile({
