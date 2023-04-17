@@ -1,9 +1,10 @@
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
-export function timeSince(dateText) {
-  const date = Number(dateText);
-  const seconds = Math.floor((new Date() - date * 1000) / 1000);
-  let interval = Math.floor(seconds / 31536000);
+export function timeSince(dateText: string) {
+  const date = new Date(Number(dateText) * 1000);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  let interval: string | number = Math.floor(seconds / 31536000);
   let s = 's';
   if (interval >= 1) {
     if (interval === 1 && SELECTED_LANGUAGE === 'en') {
