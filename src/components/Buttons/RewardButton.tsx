@@ -1,22 +1,21 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
 import { useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
 
-RewardButton.propTypes = {
-  className: PropTypes.string,
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  disableReason: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  skeuomorphic: PropTypes.bool,
-  style: PropTypes.object,
-  theme: PropTypes.string
-};
-
 const rewardLabel = localize('reward');
 
+interface Props {
+  className?: string;
+  contentId: number;
+  contentType: string;
+  disableReason?: string;
+  skeuomorphic?: boolean;
+  style?: any;
+  theme?: any;
+}
 export default function RewardButton({
   className,
   contentId,
@@ -25,7 +24,7 @@ export default function RewardButton({
   skeuomorphic,
   style,
   theme
-}) {
+}: Props) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown

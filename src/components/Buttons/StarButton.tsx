@@ -1,6 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useContentState } from '~/helpers/hooks';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import DropdownList from '~/components/DropdownList';
@@ -17,21 +16,20 @@ import localize from '~/constants/localize';
 const setRewardLevelLabel = localize('setRewardLevel');
 const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
 
-StarButton.propTypes = {
-  byUser: PropTypes.bool,
-  contentId: PropTypes.number,
-  rewardLevel: PropTypes.number,
-  defaultDescription: PropTypes.string,
-  filePath: PropTypes.string,
-  filled: PropTypes.bool,
-  onSetRewardLevel: PropTypes.func,
-  onToggleByUser: PropTypes.func,
-  style: PropTypes.object,
-  contentType: PropTypes.string.isRequired,
-  skeuomorphic: PropTypes.bool,
-  uploader: PropTypes.object
-};
-
+interface Props {
+  byUser: boolean;
+  contentId: number;
+  contentType: string;
+  defaultDescription: string;
+  filePath: string;
+  rewardLevel: number;
+  filled?: boolean;
+  onSetRewardLevel: (v: any) => void;
+  onToggleByUser: (v: any) => void;
+  uploader: any;
+  skeuomorphic?: boolean;
+  style?: any;
+}
 export default function StarButton({
   byUser,
   contentId,
@@ -45,7 +43,7 @@ export default function StarButton({
   uploader,
   skeuomorphic,
   style = {}
-}) {
+}: Props) {
   const { canReward, canEditRewardLevel, userId } = useKeyContext(
     (v) => v.myState
   );
@@ -55,7 +53,7 @@ export default function StarButton({
   const [moderatorName, setModeratorName] = useState('');
   const [rewardLevelModalShown, setRewardLevelModalShown] = useState(false);
   const [dropdownContext, setDropdownContext] = useState(null);
-  const coolDownRef = useRef(null);
+  const coolDownRef: React.MutableRefObject<any> = useRef(null);
 
   const writtenByButtonShown = useMemo(
     () =>
@@ -74,7 +72,7 @@ export default function StarButton({
         (contentType === 'subject' && (filePath || writtenByButtonShown)))
     );
   }, [contentType, filePath, uploader, writtenByButtonShown]);
-  const StarButtonRef = useRef(null);
+  const StarButtonRef: React.RefObject<any> = useRef(null);
   const byUserLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       const makerLabel =

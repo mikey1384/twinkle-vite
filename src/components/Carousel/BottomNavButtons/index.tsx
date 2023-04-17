@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
 import ConditionalButton from './ConditionalButton';
 import localize from '~/constants/localize';
@@ -7,16 +7,16 @@ const finishLabel = localize('finish');
 const nextLabel = localize('next');
 const prevLabel = localize('prev');
 
-BottomNavButtons.propTypes = {
-  conditionPassStatus: PropTypes.string,
-  currentSlide: PropTypes.number.isRequired,
-  nextButtonDisabled: PropTypes.bool,
-  onPrev: PropTypes.func,
-  onNext: PropTypes.func.isRequired,
-  onFinish: PropTypes.func,
-  slideCount: PropTypes.number.isRequired,
-  onCheckNavCondition: PropTypes.func
-};
+interface Props {
+  currentSlide: number;
+  nextButtonDisabled: boolean;
+  onPrev: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+  slideCount: number;
+  onCheckNavCondition?: (onNext: () => void) => void;
+  conditionPassStatus: string;
+}
 export default function BottomNavButtons({
   currentSlide,
   nextButtonDisabled,
@@ -26,7 +26,7 @@ export default function BottomNavButtons({
   slideCount,
   onCheckNavCondition,
   conditionPassStatus
-}) {
+}: Props) {
   return conditionPassStatus && conditionPassStatus === 'complete' ? null : (
     <div
       style={{

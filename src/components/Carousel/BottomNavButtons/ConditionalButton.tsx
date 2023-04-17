@@ -1,16 +1,14 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
-
-ConditionalButton.propTypes = {
-  conditionPassStatus: PropTypes.string.isRequired,
-  onCheckNavCondition: PropTypes.func.isRequired,
-  nextButtonDisabled: PropTypes.bool
-};
 
 export default function ConditionalButton({
   conditionPassStatus,
   onCheckNavCondition,
   nextButtonDisabled
+}: {
+  conditionPassStatus: string;
+  onCheckNavCondition: () => void;
+  nextButtonDisabled: boolean;
 }) {
   return conditionPassStatus === 'fail' ? null : (
     <Button

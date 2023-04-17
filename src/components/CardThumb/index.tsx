@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import {
   cardLevelHash,
@@ -10,14 +9,17 @@ import { useKeyContext } from '~/contexts';
 import Simple from './Simple';
 import Detailed from './Detailed';
 
-CardThumb.propTypes = {
-  card: PropTypes.object.isRequired,
-  detailed: PropTypes.bool,
-  style: PropTypes.object,
-  onClick: PropTypes.func
-};
-
-export default function CardThumb({ card, detailed, style, onClick }) {
+export default function CardThumb({
+  card,
+  detailed,
+  style,
+  onClick
+}: {
+  card: any;
+  detailed?: boolean;
+  style?: any;
+  onClick?: () => void;
+}) {
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);

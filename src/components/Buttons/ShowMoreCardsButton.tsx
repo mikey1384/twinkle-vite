@@ -1,13 +1,14 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-ShowMoreCardsButton.propTypes = {
-  onClick: PropTypes.func,
-  numMore: PropTypes.number
-};
-
-export default function ShowMoreCardsButton({ onClick, numMore }) {
+export default function ShowMoreCardsButton({
+  onClick,
+  numMore
+}: {
+  onClick?: () => void;
+  numMore?: number;
+}) {
   return (
     <div style={{ marginTop: '2.5rem', display: 'flex' }}>
       <div
