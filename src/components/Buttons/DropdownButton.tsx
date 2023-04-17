@@ -1,37 +1,31 @@
-import PropTypes from 'prop-types';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import DropdownList from '~/components/DropdownList';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 
-DropdownButton.propTypes = {
-  buttonStyle: PropTypes.object,
-  className: PropTypes.string,
-  icon: PropTypes.string,
-  iconSize: PropTypes.string,
-  direction: PropTypes.string,
-  innerRef: PropTypes.object,
-  isMenuShownWhenMounted: PropTypes.bool,
-  onButtonClick: PropTypes.func,
-  listStyle: PropTypes.object,
-  menuProps: PropTypes.arrayOf(
-    PropTypes.shape({
-      label: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
-      onClick: PropTypes.func
-    })
-  ),
-  noBorderRadius: PropTypes.bool,
-  onDropdownShown: PropTypes.func,
-  opacity: PropTypes.number,
-  stretch: PropTypes.bool,
-  style: PropTypes.object,
-  transparent: PropTypes.bool,
-  text: PropTypes.any,
-  xAdjustment: PropTypes.number
-};
-
+interface Props {
+  buttonStyle?: any;
+  color?: string;
+  className?: string;
+  isMenuShownWhenMounted?: boolean;
+  onDropdownShown?: (isShown: boolean) => void;
+  opacity?: number;
+  style?: any;
+  icon?: string;
+  iconSize?: string;
+  listStyle?: any;
+  menuProps?: any;
+  noBorderRadius?: boolean;
+  onButtonClick?: (arg: any) => void;
+  text?: string;
+  stretch?: boolean;
+  innerRef?: any;
+  transparent?: boolean;
+  xAdjustment?: number;
+  skeuomorphic?: boolean;
+}
 export default function DropdownButton({
   buttonStyle = {},
   className,
@@ -51,10 +45,10 @@ export default function DropdownButton({
   transparent,
   xAdjustment,
   ...props
-}) {
+}: Props) {
   const [dropdownContext, setDropdownContext] = useState(null);
-  const coolDownRef = useRef(null);
-  const ButtonRef = useRef(null);
+  const coolDownRef: React.MutableRefObject<any> = useRef(null);
+  const ButtonRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
     if (isMenuShownWhenMounted) {
@@ -142,7 +136,7 @@ export default function DropdownButton({
   }
 
   function renderMenu() {
-    return menuProps.map((prop, index) => {
+    return menuProps.map((prop: any, index: number) => {
       if (prop.separator) {
         return <hr key={index} />;
       }
@@ -168,7 +162,7 @@ export default function DropdownButton({
     });
   }
 
-  function handleMenuClick(action) {
+  function handleMenuClick(action: any) {
     action?.();
     setDropdownContext(null);
   }

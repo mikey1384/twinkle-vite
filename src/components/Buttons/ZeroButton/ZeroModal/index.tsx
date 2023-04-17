@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ZeroMessage from './ZeroMessage';
@@ -11,21 +10,21 @@ import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-ZeroModal.propTypes = {
-  contentId: PropTypes.number,
-  contentType: PropTypes.string,
-  onHide: PropTypes.func.isRequired,
-  modalOverModal: PropTypes.bool,
-  content: PropTypes.string
-};
+interface Props {
+  contentId?: string;
+  contentType?: string;
+  onHide: () => void;
+  modalOverModal?: boolean;
+  content?: any;
+}
 export default function ZeroModal({
   contentId,
   contentType,
   onHide,
   modalOverModal,
   content
-}) {
-  const [loadingType, setLoadingType] = useState(null);
+}: Props) {
+  const [loadingType, setLoadingType] = useState('');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [response, setResponse] = useState(null);
   useEffect(() => {

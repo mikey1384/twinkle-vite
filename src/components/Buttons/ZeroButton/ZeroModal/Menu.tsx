@@ -1,20 +1,18 @@
-import { useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useMemo } from 'react';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
-Menu.propTypes = {
-  content: PropTypes.string.isRequired,
-  loadingType: PropTypes.string,
-  onSetLoadingType: PropTypes.func.isRequired,
-  onSetResponse: PropTypes.func.isRequired,
-  onSetLoadingProgress: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
-
+interface Props {
+  content: any;
+  style?: any;
+  loadingType: string;
+  onSetLoadingType: (loadingType: string) => void;
+  onSetLoadingProgress: (loadingProgress: number) => void;
+  onSetResponse: (response: any) => void;
+}
 export default function Menu({
   content,
   style,
@@ -22,7 +20,7 @@ export default function Menu({
   onSetLoadingType,
   onSetLoadingProgress,
   onSetResponse
-}) {
+}: Props) {
   const getZerosReview = useAppContext((v) => v.requestHelpers.getZerosReview);
   const [selectedStyle, setSelectedStyle] = useState('zero');
   const [wordLevel, setWordLevel] = useState('intermediate');
@@ -51,7 +49,7 @@ export default function Menu({
     if (selectedStyle === 'zero') {
       return `Please make the text above sound more natural using ${wordLevel} words.`;
     } else {
-      return `Please rewrite the text above ${styleLabelObj.label.toLowerCase()} using ${wordLevel} words.`;
+      return `Please rewrite the text above ${styleLabelObj?.label?.toLowerCase()} using ${wordLevel} words.`;
     }
   }, [selectedStyle, wordLevel, styleLabelObj]);
 
@@ -177,10 +175,10 @@ export default function Menu({
     </div>
   );
 
-  async function handleButtonClick(type) {
+  async function handleButtonClick(type: string) {
     onSetLoadingType(type);
     const response = await getZerosReview({ type, content, command });
-    onSetLoadingType(null);
+    onSetLoadingType('');
     onSetResponse(response);
     onSetLoadingProgress(0);
   }
