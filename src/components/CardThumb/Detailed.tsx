@@ -1,17 +1,7 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
-
-CardThumb.propTypes = {
-  borderColor: PropTypes.string,
-  card: PropTypes.object.isRequired,
-  cardColor: PropTypes.string,
-  style: PropTypes.object,
-  onClick: PropTypes.func,
-  displayedBurnXP: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  xpNumberColor: PropTypes.string.isRequired
-};
 
 export default function CardThumb({
   card,

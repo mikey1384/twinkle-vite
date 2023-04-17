@@ -1,23 +1,22 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import CloseButton from '~/components/Buttons/CloseButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import WebsiteContent from './WebsiteContent';
 import FileContent from '~/components/FileContent';
 
-Attachment.propTypes = {
-  attachment: PropTypes.object.isRequired,
-  onClose: PropTypes.func.isRequired,
-  onThumbnailLoad: PropTypes.func,
-  style: PropTypes.object
-};
-
+interface Props {
+  attachment: any;
+  onClose: () => void;
+  onThumbnailLoad?: () => void;
+  style?: any;
+}
 export default function Attachment({
   attachment,
   attachment: { contentType = 'file', fileType },
   onClose,
   onThumbnailLoad,
   style
-}) {
+}: Props) {
   return (
     <ErrorBoundary
       componentPath="Attachment/index"
