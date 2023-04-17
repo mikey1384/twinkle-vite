@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import zero from './zero.png';
@@ -7,14 +6,17 @@ import { css } from '@emotion/css';
 import { desktopMinWidth } from '~/constants/css';
 import ZeroModal from './ZeroModal';
 
-ZeroButton.propTypes = {
-  contentId: PropTypes.number,
-  contentType: PropTypes.string,
-  style: PropTypes.object,
-  content: PropTypes.string
-};
-
-export default function ZeroButton({ contentId, contentType, content, style }) {
+export default function ZeroButton({
+  contentId,
+  contentType,
+  content,
+  style
+}: {
+  contentId: string;
+  contentType: string;
+  content: any;
+  style?: any;
+}) {
   const [modalShown, setModalShown] = useState(false);
   return (
     <ErrorBoundary componentPath="Buttons/ZeroButton">

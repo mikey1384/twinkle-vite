@@ -1,13 +1,21 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-ButtonGroup.propTypes = {
-  buttons: PropTypes.array.isRequired,
-  style: PropTypes.object
-};
-
-export default function ButtonGroup({ buttons, style }) {
+export default function ButtonGroup({
+  buttons,
+  style
+}: {
+  buttons: {
+    label: string;
+    color: string;
+    hoverColor?: string;
+    onClick: () => void;
+  }[];
+  style?: {
+    [key: string]: any;
+  };
+}) {
   return (
     <ErrorBoundary
       componentPath="ButtonGroup"
@@ -17,7 +25,7 @@ export default function ButtonGroup({ buttons, style }) {
         return (
           <Button
             key={index}
-            style={{ marginLeft: index !== 0 && '1rem' }}
+            style={{ marginLeft: index !== 0 ? '1rem' : 0 }}
             {...button}
             hoverColor={button.hoverColor || button.color}
           >
