@@ -1,8 +1,8 @@
-type EventType = keyof GlobalEventHandlersEventMap;
+type EventType = keyof GlobalEventHandlersEventMap | 'readystatechange';
 type EventListener = (event: Event) => void;
 
 export function addEvent(
-  elem: Window | HTMLElement | null,
+  elem: Window | Document | HTMLElement | null,
   type: EventType,
   eventHandle: EventListener
 ): void {
@@ -19,7 +19,7 @@ export function addEvent(
 }
 
 export function removeEvent(
-  elem: Window | HTMLElement | null,
+  elem: Window | Document | HTMLElement | null,
   type: EventType,
   eventHandle: EventListener
 ): void {
