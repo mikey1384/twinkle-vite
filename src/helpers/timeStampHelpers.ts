@@ -1,6 +1,6 @@
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
-export function timeSince(dateText: string) {
+export function timeSince(dateText: string | number) {
   const date = new Date(Number(dateText) * 1000);
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);

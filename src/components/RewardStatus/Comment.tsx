@@ -1,5 +1,4 @@
-import { memo, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useMemo, useState } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import LongText from '~/components/Texts/LongText';
@@ -21,15 +20,6 @@ const editLabel = localize('edit');
 const revokeLabel = localize('revoke');
 const revokeRewardLabel = localize('revokeReward');
 
-Comment.propTypes = {
-  contentType: PropTypes.string,
-  contentId: PropTypes.number,
-  maxRewardables: PropTypes.number.isRequired,
-  noMarginForEditButton: PropTypes.bool,
-  onEditDone: PropTypes.func,
-  reward: PropTypes.object.isRequired
-};
-
 function Comment({
   contentType,
   contentId,
@@ -37,6 +27,13 @@ function Comment({
   noMarginForEditButton,
   onEditDone = () => {},
   reward
+}: {
+  contentType: string;
+  contentId: number;
+  maxRewardables: number;
+  noMarginForEditButton?: boolean;
+  onEditDone?: (arg: any) => void;
+  reward: any;
 }) {
   const editRewardComment = useAppContext(
     (v) => v.requestHelpers.editRewardComment
@@ -177,7 +174,9 @@ function Comment({
               display: 'flex',
               flexDirection: 'column',
               justifyContent:
-                stringIsEmpty(reward.rewardComment) && !isEditing && 'center'
+                stringIsEmpty(reward.rewardComment) && !isEditing
+                  ? 'center'
+                  : ''
             }}
           >
             <div
@@ -190,7 +189,6 @@ function Comment({
                   id: reward.rewarderId,
                   username: reward.rewarderUsername
                 }}
-                userId={userId}
               />
               {rewardStatusLabel}{' '}
               <span style={{ fontSize: '1.2rem', color: Color.gray() }}>
@@ -254,7 +252,7 @@ function Comment({
     }
   }
 
-  async function handleSubmitEdit(editedComment) {
+  async function handleSubmitEdit(editedComment: string) {
     try {
       await editRewardComment({ editedComment, contentId: reward.id });
       onEditDone({ id: reward.id, text: editedComment });

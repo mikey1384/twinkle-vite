@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import UserListModal from '~/components/Modals/UserListModal';
 import { Color } from '~/constants/css';
@@ -12,18 +11,16 @@ const recommendedByLabel = localize('recommendedBy');
 const youLabel = localize('you');
 const othersLabel = localize('others');
 
-RecommendationStatus.propTypes = {
-  contentType: PropTypes.string.isRequired,
-  recommendations: PropTypes.array.isRequired,
-  style: PropTypes.object,
-  theme: PropTypes.string
-};
-
 export default function RecommendationStatus({
   contentType,
   recommendations = [],
   style,
   theme
+}: {
+  contentType: string;
+  recommendations: any[];
+  style?: React.CSSProperties;
+  theme?: any;
 }) {
   const { userId, profileTheme } = useKeyContext((v) => v.myState);
   const {
