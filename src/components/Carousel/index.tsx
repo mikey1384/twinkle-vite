@@ -1,8 +1,7 @@
-import { Children, useEffect, useRef, useState } from 'react';
+import React, { Children, useEffect, useRef, useState } from 'react';
 import NavButton from './NavButton';
 import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import * as d3Ease from 'd3-ease';
 import { Animate } from 'react-move';
@@ -15,29 +14,28 @@ import localize from '~/constants/localize';
 
 const showAllLabel = localize('showAll');
 
-Carousel.propTypes = {
-  afterSlide: PropTypes.func,
-  allowDrag: PropTypes.bool,
-  beforeSlide: PropTypes.func,
-  children: PropTypes.array.isRequired,
-  cellSpacing: PropTypes.number,
-  className: PropTypes.string,
-  conditionPassStatus: PropTypes.string,
-  framePadding: PropTypes.string,
-  nextButtonDisabled: PropTypes.bool,
-  onCheckNavCondition: PropTypes.func,
-  onFinish: PropTypes.func,
-  onShowAll: PropTypes.func,
-  progressBar: PropTypes.bool,
-  showAllButton: PropTypes.bool,
-  slideIndex: PropTypes.number,
-  slidesToScroll: PropTypes.number.isRequired,
-  slidesToShow: PropTypes.number,
-  slideWidthMultiplier: PropTypes.number,
-  style: PropTypes.object,
-  title: PropTypes.any
-};
-
+interface Props {
+  allowDrag?: boolean;
+  afterSlide?: (v: number) => void;
+  beforeSlide?: (v: number) => void;
+  className?: string;
+  cellSpacing?: number;
+  children: any;
+  conditionPassStatus?: string;
+  framePadding?: string;
+  nextButtonDisabled: boolean;
+  onCheckNavCondition: (onNext: () => void) => boolean;
+  onFinish: () => void;
+  onShowAll?: () => void;
+  progressBar?: boolean;
+  slideIndex?: number;
+  slidesToScroll?: number;
+  slidesToShow?: number;
+  slideWidthMultiplier?: number;
+  showAllButton?: boolean;
+  style?: any;
+  title?: string;
+}
 export default function Carousel({
   allowDrag = true,
   afterSlide = () => {},
@@ -59,7 +57,7 @@ export default function Carousel({
   showAllButton,
   style,
   title
-}) {
+}: Props) {
   const {
     carouselProgress: { color: carouselProgressColor },
     carouselProgressComplete: { color: carouselProgressCompleteColor }
@@ -73,9 +71,9 @@ export default function Carousel({
   const [dragging, setDragging] = useState(false);
   const [slideWidth, setSlideWidth] = useState(0);
   const [slideCount, setSlideCount] = useState(Children.count(children));
-  const [touchObject, setTouchObject] = useState({});
+  const [touchObject, setTouchObject] = useState<any>({});
   const FrameRef = useRef(null);
-  const scrollYRef = useRef(null);
+  const scrollYRef: React.MutableRefObject<any> = useRef(null);
 
   useEffect(() => {
     addEvent(window, 'resize', onResize);
@@ -218,12 +216,12 @@ export default function Carousel({
           }}
           onMouseUp={(e) => {
             if (dragging) {
-              handleSwipe(e);
+              handleSwipe();
             }
           }}
           onMouseLeave={(e) => {
             if (dragging) {
-              handleSwipe(e);
+              handleSwipe();
             }
           }}
         >
@@ -237,11 +235,11 @@ export default function Carousel({
                 ty,
                 timing: {
                   duration: DEFAULT_DURATION,
-                  ease: d3Ease[easing]
+                  ease: d3Ease[easing as keyof typeof d3Ease]
                 },
                 events: {
                   end: () => {
-                    const newLeft = getTargetLeft();
+                    const newLeft = getTargetLeft(0, 0);
                     if (newLeft !== left) {
                       setLeft(newLeft);
                     }
@@ -326,7 +324,15 @@ export default function Carousel({
     </ErrorBoundary>
   );
 
-  function formatChildren({ children, slideWidth, cellSpacing }) {
+  function formatChildren({
+    children,
+    slideWidth,
+    cellSpacing
+  }: {
+    children: React.ReactNode;
+    slideWidth: number;
+    cellSpacing: number;
+  }) {
     return Children.map(children, (child, index) => (
       <li
         style={{
@@ -349,27 +355,27 @@ export default function Carousel({
     ));
   }
 
-  function getTargetLeft(touchOffset, slide) {
+  function getTargetLeft(touchOffset: number, slide: number) {
     const target = slide || currentSlide;
-    const offset = 0 - cellSpacing * target - (touchOffset || 0);
+    const offset = 0 - cellSpacing * target - touchOffset;
     const left = slideWidth * target;
     return (left - offset) * -1;
   }
 
   function getOffsetDeltas() {
-    const offset = getTargetLeft(touchObject.length * touchObject.direction);
+    const offset = getTargetLeft(touchObject.length * touchObject.direction, 0);
     return {
       tx: [offset],
       ty: [0]
     };
   }
 
-  function goToSlide(index) {
+  function goToSlide(index: number) {
     if (index >= slideCount || index < 0 || currentSlide === index) {
       return;
     }
     setEasing(DEFAULT_EASING);
-    beforeSlide(currentSlide, index);
+    beforeSlide(currentSlide);
     setLeft(getTargetLeft(slideWidth, currentSlide));
     setCurrentSlide(index);
     afterSlide(index);
@@ -420,7 +426,7 @@ export default function Carousel({
     renderDimensions(FrameRef);
   }
 
-  function renderDimensions(ref) {
+  function renderDimensions(ref: React.RefObject<any>) {
     const firstSlide = ref.current.childNodes[0].childNodes[0];
     if (firstSlide) {
       firstSlide.style.height = 'auto';
@@ -432,7 +438,7 @@ export default function Carousel({
     );
   }
 
-  function swipeDirection(x1, x2, y1, y2) {
+  function swipeDirection(x1: number, x2: number, y1: number, y2: number) {
     const xDist = x1 - x2;
     const yDist = y1 - y2;
     const r = Math.atan2(yDist, xDist);

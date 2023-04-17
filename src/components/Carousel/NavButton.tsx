@@ -1,16 +1,18 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 
-NavButton.propTypes = {
-  disabled: PropTypes.bool,
-  onGoToNextSlide: PropTypes.func,
-  left: PropTypes.bool
-};
-
-export default function NavButton({ disabled, onGoToNextSlide, left }) {
+export default function NavButton({
+  disabled,
+  onGoToNextSlide,
+  left
+}: {
+  disabled: boolean;
+  onGoToNextSlide: () => void;
+  left?: boolean;
+}) {
   return disabled ? null : (
     <ErrorBoundary componentPath="Carousel/NavButton">
       <Button
@@ -29,8 +31,7 @@ export default function NavButton({ disabled, onGoToNextSlide, left }) {
     </ErrorBoundary>
   );
 
-  function handleClick(event) {
-    event.preventDefault();
+  function handleClick() {
     onGoToNextSlide();
   }
 }

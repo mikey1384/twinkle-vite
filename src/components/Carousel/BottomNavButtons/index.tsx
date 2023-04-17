@@ -15,7 +15,7 @@ interface Props {
   onFinish: () => void;
   slideCount: number;
   onCheckNavCondition?: (onNext: () => void) => void;
-  conditionPassStatus: string;
+  conditionPassStatus?: string;
 }
 export default function BottomNavButtons({
   currentSlide,
