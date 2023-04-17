@@ -1,16 +1,11 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
 
-ChangePicture.propTypes = {
-  shown: PropTypes.bool
-};
-
 const changePictureLabel = localize('changePicture');
 
-export default function ChangePicture({ shown }) {
+export default function ChangePicture({ shown }: { shown: boolean }) {
   const [opacity, setOpacity] = useState(0);
   useEffect(() => {
     setOpacity(shown ? 1 : 0);

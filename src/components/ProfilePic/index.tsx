@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import ChangePicture from './ChangePicture';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -8,20 +7,19 @@ import StatusTag from './StatusTag';
 
 const deviceIsMobile = isMobile(navigator);
 
-ProfilePic.propTypes = {
-  className: PropTypes.string,
-  isAway: PropTypes.bool,
-  isBusy: PropTypes.bool,
-  isProfilePage: PropTypes.bool,
-  large: PropTypes.bool,
-  onClick: PropTypes.func,
-  online: PropTypes.bool,
-  profilePicUrl: PropTypes.string,
-  statusShown: PropTypes.bool,
-  style: PropTypes.object,
-  userId: PropTypes.number
-};
-
+interface Props {
+  className?: string;
+  isAway?: boolean;
+  isBusy?: boolean;
+  isProfilePage?: boolean;
+  large?: boolean;
+  onClick?: () => void;
+  userId: number;
+  online?: boolean;
+  profilePicUrl: string;
+  statusShown?: boolean;
+  style?: React.CSSProperties;
+}
 export default function ProfilePic({
   className,
   isAway,
@@ -34,7 +32,7 @@ export default function ProfilePic({
   profilePicUrl,
   statusShown,
   style
-}) {
+}: Props) {
   const userObj = useAppContext((v) => v.user.state.userObj);
   const { userId: myId } = useKeyContext((v) => v.myState);
   const [changePictureShown, setChangePictureShown] = useState(false);
@@ -87,7 +85,11 @@ export default function ProfilePic({
       />
       {!deviceIsMobile && (
         <ChangePicture
-          shown={myId === userId && isProfilePage && changePictureShown}
+          shown={
+            myId === userId && isProfilePage && changePictureShown
+              ? true
+              : false
+          }
         />
       )}
       {statusTagShown && (
