@@ -242,7 +242,9 @@ export const reactionsObj = {
   }
 };
 
-export const cardProps = {
+export const cardProps: {
+  [key: string]: string[];
+} = {
   common: [],
   superior: ['glowy'],
   rare: ['glowy', 'glossy'],

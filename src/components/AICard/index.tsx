@@ -1,17 +1,9 @@
-import { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef, useState } from 'react';
 import Card from './Card';
 import { useGesture } from '@use-gesture/react';
 import { cardProps } from '~/constants/defaultValues';
 import { useSpring } from 'react-spring';
 import $ from 'jquery';
-
-AICard.propTypes = {
-  animateOnMouseLeave: PropTypes.bool,
-  card: PropTypes.object.isRequired,
-  detailShown: PropTypes.bool,
-  onClick: PropTypes.func
-};
 
 const $style = $('#animation');
 const MAX_ROTATE_X = 15;
@@ -26,10 +18,15 @@ export default function AICard({
   card,
   detailShown,
   onClick
+}: {
+  animateOnMouseLeave: boolean;
+  card: any;
+  detailShown: boolean;
+  onClick?: () => void;
 }) {
   const [isAnimated, setIsAnimated] = useState(false);
-  const timerRef = useRef(null);
-  const CardRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const CardRef: React.RefObject<any> = useRef(null);
   const [{ x, y, rotateX, rotateY, rotateZ }, api] = useSpring(() => ({
     rotateX: 0,
     rotateY: 0,
@@ -43,7 +40,7 @@ export default function AICard({
   const bind = useGesture({
     onMove: ({ xy: [px, py] }) => {
       const { left, top, width, height } =
-        CardRef.current.getBoundingClientRect();
+        CardRef.current?.getBoundingClientRect?.();
 
       // Calculate the position of the center of the card.
       const centerX = left + width / 2;
@@ -91,14 +88,13 @@ export default function AICard({
         innerRef={CardRef}
         isAnimated={isAnimated}
         cardStyle={cardStyle}
-        animateOnMouseLeave={animateOnMouseLeave}
         onMouseLeave={handleMouseLeave}
         onMouseMove={handleMouseMove}
       />
     </div>
   );
 
-  function calcX(py) {
+  function calcX(py: number) {
     // Calculate the rotation value based on the mouse position.
     // This should be proportional to the mouse position.
     let rotateX = py * ROTATE_X_FACTOR;
@@ -111,7 +107,7 @@ export default function AICard({
     return rotateX;
   }
 
-  function calcY(px) {
+  function calcY(px: number) {
     // Calculate the rotation value based on the mouse position.
     // This should be proportional to the mouse position.
     let rotateY = px * ROTATE_Y_FACTOR;
@@ -133,7 +129,7 @@ export default function AICard({
     }
   }
 
-  function handleMouseMove(event) {
+  function handleMouseMove(event: any) {
     const { left, top, width, height } =
       CardRef.current.getBoundingClientRect();
     const px = event.clientX - left;
