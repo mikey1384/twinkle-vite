@@ -1,5 +1,4 @@
-import PropTypes from 'prop-types';
-import { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -10,17 +9,6 @@ import localize from '~/constants/localize';
 const likeLabel = localize('like');
 const likedLabel = localize('liked');
 
-LikeButton.propTypes = {
-  className: PropTypes.string,
-  contentType: PropTypes.string.isRequired,
-  contentId: PropTypes.number.isRequired,
-  filled: PropTypes.bool,
-  likes: PropTypes.array,
-  onClick: PropTypes.func,
-  style: PropTypes.object,
-  theme: PropTypes.string
-};
-
 function LikeButton({
   className,
   contentId,
@@ -30,6 +18,15 @@ function LikeButton({
   style,
   theme,
   onClick = () => {}
+}: {
+  className?: string;
+  contentId: number;
+  contentType: string;
+  filled?: boolean;
+  likes: Array<{ id: number }>;
+  style?: object;
+  theme?: string;
+  onClick?: (v: any) => void;
 }) {
   const likeContent = useAppContext((v) => v.requestHelpers.likeContent);
   const onLikeContent = useContentContext((v) => v.actions.onLikeContent);
@@ -50,7 +47,6 @@ function LikeButton({
   return (
     <ErrorBoundary componentPath="LikeButton">
       <Button
-        componentPath="LikeButton"
         loading={loading}
         className={className}
         color={

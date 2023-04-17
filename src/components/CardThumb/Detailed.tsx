@@ -3,6 +3,15 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 
+interface Props {
+  card: any;
+  displayedBurnXP: string | number;
+  borderColor?: string;
+  cardColor?: string;
+  style?: any;
+  onClick?: () => void;
+  xpNumberColor: string;
+}
 export default function CardThumb({
   card,
   displayedBurnXP,
@@ -11,7 +20,7 @@ export default function CardThumb({
   style,
   onClick,
   xpNumberColor
-}) {
+}: Props) {
   return (
     <div
       style={{

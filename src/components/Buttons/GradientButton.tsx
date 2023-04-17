@@ -1,19 +1,18 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 
-GradientButton.propTypes = {
-  disabled: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
-  isFlat: PropTypes.bool,
-  onClick: PropTypes.func,
-  children: PropTypes.node,
-  loading: PropTypes.bool,
-  fontSize: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  mobileFontSize: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  style: PropTypes.object
-};
-
+interface Props {
+  isFlat?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+  children?: any;
+  fontSize?: string;
+  mobileFontSize?: string;
+  loading?: boolean;
+  style?: any;
+}
 export default function GradientButton({
   isFlat,
   disabled,
@@ -23,7 +22,7 @@ export default function GradientButton({
   mobileFontSize = '2rem',
   loading,
   style
-}) {
+}: Props) {
   return (
     <button
       style={style}

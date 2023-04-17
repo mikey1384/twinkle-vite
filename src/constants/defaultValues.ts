@@ -287,7 +287,12 @@ export const wordleGuessReaction = {
   4: 'IMPRESSIVE'
 };
 
-export const cardLevelHash = {
+export const cardLevelHash: {
+  [key: number]: {
+    color: string;
+    label: string;
+  };
+} = {
   1: {
     color: 'logoBlue',
     label: 'blue'

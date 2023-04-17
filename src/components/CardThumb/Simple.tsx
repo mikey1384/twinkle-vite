@@ -1,15 +1,7 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-
-Simple.propTypes = {
-  card: PropTypes.object.isRequired,
-  borderColor: PropTypes.string.isRequired,
-  cardColor: PropTypes.string.isRequired,
-  displayedBurnXP: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  xpNumberColor: PropTypes.string.isRequired
-};
 
 export default function Simple({
   card,
@@ -17,6 +9,12 @@ export default function Simple({
   cardColor,
   displayedBurnXP,
   xpNumberColor
+}: {
+  card: any;
+  borderColor?: string;
+  cardColor?: string;
+  displayedBurnXP: number | string;
+  xpNumberColor: string;
 }) {
   return (
     <div
