@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import useAICard from '~/helpers/hooks/useAICard';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -10,18 +9,16 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { cloudFrontURL, returnCardBurnXP } from '~/constants/defaultValues';
 import { animated } from 'react-spring';
 
-Card.propTypes = {
-  animateOnMouseLeave: PropTypes.bool,
-  bind: PropTypes.func.isRequired,
-  card: PropTypes.object.isRequired,
-  cardStyle: PropTypes.object.isRequired,
-  detailShown: PropTypes.bool,
-  innerRef: PropTypes.object.isRequired,
-  isAnimated: PropTypes.bool.isRequired,
-  onMouseLeave: PropTypes.func.isRequired,
-  onMouseMove: PropTypes.func.isRequired
-};
-
+interface Props {
+  bind: () => any;
+  card: any;
+  cardStyle: any;
+  detailShown: boolean;
+  innerRef: any;
+  isAnimated: boolean;
+  onMouseLeave: () => void;
+  onMouseMove: (event: any) => void;
+}
 export default function Card({
   bind,
   card,
@@ -31,7 +28,7 @@ export default function Card({
   isAnimated,
   onMouseLeave,
   onMouseMove
-}) {
+}: Props) {
   const {
     userLink: { color: userLinkColor },
     xpNumber: { color: xpNumberColor }
