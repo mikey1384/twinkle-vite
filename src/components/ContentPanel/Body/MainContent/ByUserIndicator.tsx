@@ -1,21 +1,18 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
-ByUserIndicator.propTypes = {
-  contentType: PropTypes.string.isRequired,
-  byUser: PropTypes.bool,
-  subjectIsAttachedToVideo: PropTypes.bool,
-  byUserIndicatorColor: PropTypes.string,
-  byUserIndicatorOpacity: PropTypes.number,
-  byUserIndicatorTextColor: PropTypes.string,
-  byUserIndicatorTextShadowColor: PropTypes.string,
-  uploader: PropTypes.shape({
-    username: PropTypes.string.isRequired
-  }).isRequired,
-  filePath: PropTypes.string
-};
-
+interface Props {
+  contentType: string;
+  byUser: any;
+  subjectIsAttachedToVideo: boolean;
+  byUserIndicatorColor: string;
+  byUserIndicatorOpacity: number;
+  byUserIndicatorTextColor: string;
+  byUserIndicatorTextShadowColor: string;
+  uploader: any;
+  filePath: string;
+}
 export default function ByUserIndicator({
   contentType,
   byUser,
@@ -26,7 +23,7 @@ export default function ByUserIndicator({
   byUserIndicatorTextShadowColor,
   uploader,
   filePath
-}) {
+}: Props) {
   if ((contentType !== 'url' && contentType !== 'subject') || !byUser)
     return null;
   return (

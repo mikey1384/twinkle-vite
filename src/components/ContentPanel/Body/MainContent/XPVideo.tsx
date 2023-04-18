@@ -1,23 +1,22 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
 import { isMobile } from '~/helpers';
 
 const displayIsMobile = isMobile(navigator);
 
-XPVideo.propTypes = {
-  contentType: PropTypes.string.isRequired,
-  subjectIsAttachedToVideo: PropTypes.bool,
-  isEditing: PropTypes.bool,
-  rewardLevel: PropTypes.number,
-  byUser: PropTypes.bool,
-  title: PropTypes.string,
-  uploader: PropTypes.object,
-  contentId: PropTypes.number,
-  content: PropTypes.string,
-  rootId: PropTypes.number,
-  rootObj: PropTypes.object
-};
-
+interface Props {
+  contentType: string;
+  subjectIsAttachedToVideo: boolean;
+  isEditing: boolean;
+  rewardLevel: number;
+  byUser: boolean;
+  title: string;
+  uploader: any;
+  contentId: number;
+  content: string;
+  rootId: number;
+  rootObj: any;
+}
 export default function XPVideo({
   contentType,
   subjectIsAttachedToVideo,
@@ -30,7 +29,7 @@ export default function XPVideo({
   content,
   rootId,
   rootObj
-}) {
+}: Props) {
   if (contentType !== 'video' && !subjectIsAttachedToVideo) return null;
   return (
     <XPVideoPlayer
@@ -39,8 +38,6 @@ export default function XPVideo({
         contentType === 'subject' ? rootObj.rewardLevel : rewardLevel
       }
       byUser={!!(rootObj.byUser || (contentType === 'video' && byUser))}
-      onEdit={isEditing}
-      title={rootObj.title || title}
       uploader={rootObj.uploader || uploader}
       videoId={contentType === 'video' ? contentId : rootId}
       videoCode={contentType === 'video' ? content : rootObj.content}

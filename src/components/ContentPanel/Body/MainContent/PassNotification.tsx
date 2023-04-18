@@ -1,18 +1,16 @@
+import React from 'react';
 import PassContent from '../PassContent';
-import PropTypes from 'prop-types';
-
-PassNotification.propTypes = {
-  contentType: PropTypes.string,
-  theme: PropTypes.string,
-  uploader: PropTypes.object,
-  rootObj: PropTypes.object
-};
 
 export default function PassNotification({
   contentType,
   theme,
   uploader,
   rootObj
+}: {
+  contentType: string;
+  theme: string;
+  uploader: any;
+  rootObj: any;
 }) {
   if (contentType !== 'pass') return null;
   return <PassContent theme={theme} uploader={uploader} rootObj={rootObj} />;

@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef } from 'react';
 import Embedly from '~/components/Embedly';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import XPVideoAdditionalInfo from './XPVideoAdditionalInfo';
@@ -16,15 +15,6 @@ import { useContentState, useTheme } from '~/helpers/hooks';
 import { useKeyContext, useContentContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 
-MainContent.propTypes = {
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  onClickSecretAnswer: PropTypes.func.isRequired,
-  secretHidden: PropTypes.bool,
-  theme: PropTypes.string,
-  userId: PropTypes.number
-};
-
 export default function MainContent({
   contentId,
   contentType,
@@ -32,6 +22,13 @@ export default function MainContent({
   secretHidden,
   theme,
   userId
+}: {
+  contentId: number;
+  contentType: string;
+  onClickSecretAnswer: () => void;
+  secretHidden: boolean;
+  theme: string;
+  userId: number;
 }) {
   const ContainerRef = useRef(null);
   const navigate = useNavigate();
@@ -82,7 +79,7 @@ export default function MainContent({
     content: { color: contentColor }
   } = useTheme(theme || profileTheme);
   const { fileType } = useMemo(
-    () => (fileName ? getFileInfoFromFileName(fileName) : ''),
+    () => (fileName ? getFileInfoFromFileName(fileName) : { fileType: '' }),
     [fileName]
   );
   const subjectIsAttachedToVideo = useMemo(

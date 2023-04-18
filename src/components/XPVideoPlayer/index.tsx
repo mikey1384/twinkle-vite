@@ -18,19 +18,18 @@ import {
 
 const intervalLength = 2000;
 
-XPVideoPlayer.propTypes = {
-  isChat: PropTypes.bool,
-  isLink: PropTypes.bool,
-  byUser: PropTypes.bool,
-  minimized: PropTypes.bool,
-  onPlay: PropTypes.func,
-  rewardLevel: PropTypes.number,
-  style: PropTypes.object,
-  uploader: PropTypes.object.isRequired,
-  videoCode: PropTypes.string.isRequired,
-  videoId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
-};
-
+interface Props {
+  isChat?: boolean;
+  isLink?: boolean;
+  byUser?: boolean;
+  rewardLevel?: number;
+  minimized?: boolean;
+  onPlay?: () => void;
+  style?: any;
+  uploader?: any;
+  videoCode?: string;
+  videoId?: number;
+}
 function XPVideoPlayer({
   isChat,
   isLink,
@@ -42,7 +41,7 @@ function XPVideoPlayer({
   uploader,
   videoCode,
   videoId
-}) {
+}: Props) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const addVideoView = useAppContext((v) => v.requestHelpers.addVideoView);
   const checkCurrentlyWatchingAnotherVideo = useAppContext(

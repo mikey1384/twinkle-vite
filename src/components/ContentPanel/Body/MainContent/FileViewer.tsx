@@ -1,23 +1,26 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import LoginToViewContent from '~/components/LoginToViewContent';
 
-FileViewer.propTypes = {
-  contentType: PropTypes.string.isRequired,
-  filePath: PropTypes.string,
-  secretHidden: PropTypes.bool,
-  userId: PropTypes.number,
-  theme: PropTypes.string,
-  contentId: PropTypes.number.isRequired,
-  fileName: PropTypes.string,
-  fileSize: PropTypes.string,
-  thumbUrl: PropTypes.string,
-  byUser: PropTypes.bool,
-  fileType: PropTypes.string,
-  rewardLevel: PropTypes.number,
-  onSetMediaStarted: PropTypes.func.isRequired
-};
-
+interface Props {
+  contentType: string;
+  filePath: string;
+  secretHidden?: boolean;
+  userId: number;
+  theme: string;
+  contentId: number;
+  fileName: string;
+  fileSize: number;
+  thumbUrl: string;
+  byUser: boolean;
+  fileType: string;
+  rewardLevel: number;
+  onSetMediaStarted: (v: {
+    contentType: string;
+    contentId: number;
+    started: boolean;
+  }) => void;
+}
 export default function FileViewer({
   contentType,
   filePath,
@@ -32,7 +35,7 @@ export default function FileViewer({
   fileType,
   rewardLevel,
   onSetMediaStarted
-}) {
+}: Props) {
   if (
     (contentType !== 'subject' && contentType !== 'comment') ||
     !filePath ||
