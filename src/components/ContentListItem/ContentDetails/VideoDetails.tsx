@@ -1,13 +1,15 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color } from '~/constants/css';
 
-VideoDetails.propTypes = {
-  description: PropTypes.string,
-  title: PropTypes.string,
-  uploader: PropTypes.object
-};
-
-export default function VideoDetails({ description, title, uploader }) {
+export default function VideoDetails({
+  description,
+  title,
+  uploader
+}: {
+  description: string;
+  title: string;
+  uploader: any;
+}) {
   return (
     <>
       <div style={{ marginLeft: '1rem' }}>

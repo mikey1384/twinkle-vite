@@ -1,14 +1,15 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { truncateTopic } from '~/helpers/stringHelpers';
 
-AIStoryDetails.propTypes = {
-  story: PropTypes.string,
-  topic: PropTypes.string
-};
-
-export default function AIStoryDetails({ story, topic }) {
+export default function AIStoryDetails({
+  story,
+  topic
+}: {
+  story: string;
+  topic: string;
+}) {
   return (
     <div
       style={{

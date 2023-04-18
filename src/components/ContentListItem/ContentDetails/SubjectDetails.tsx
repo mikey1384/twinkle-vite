@@ -1,14 +1,16 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-SubjectDetails.propTypes = {
-  description: PropTypes.string,
-  title: PropTypes.string,
-  uploader: PropTypes.object
-};
-
-export default function SubjectDetails({ description, title, uploader }) {
+export default function SubjectDetails({
+  description,
+  title,
+  uploader
+}: {
+  description: string;
+  title: string;
+  uploader: any;
+}) {
   return (
     <div
       style={{
