@@ -1,17 +1,7 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-
-BottomRewardLevelDisplay.propTypes = {
-  contentType: PropTypes.string.isRequired,
-  rewardLevel: PropTypes.number,
-  rootObj: PropTypes.object,
-  byUser: PropTypes.bool,
-  isEditing: PropTypes.bool,
-  rootType: PropTypes.string,
-  secretHidden: PropTypes.bool
-};
 
 export default function BottomRewardLevelDisplay({
   contentType,
@@ -21,6 +11,14 @@ export default function BottomRewardLevelDisplay({
   isEditing,
   rootType,
   secretHidden
+}: {
+  contentType: string;
+  rewardLevel: number;
+  rootObj: any;
+  byUser: any;
+  isEditing: boolean;
+  rootType: string;
+  secretHidden: boolean;
 }) {
   if (contentType !== 'subject' || !rewardLevel || (!rootObj.id && !byUser)) {
     return null;
