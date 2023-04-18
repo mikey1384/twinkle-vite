@@ -1,5 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef
+} from 'react';
 import Button from '~/components/Button';
 import TextEditSection from './TextEditSection';
 import { useInputContext, useKeyContext } from '~/contexts';
@@ -18,20 +24,19 @@ import localize from '~/constants/localize';
 const cancelLabel = localize('cancel');
 const doneLabel = localize('done');
 
-ContentEditor.propTypes = {
-  comment: PropTypes.string,
-  content: PropTypes.string,
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  description: PropTypes.string,
-  filePath: PropTypes.string,
-  onDismiss: PropTypes.func.isRequired,
-  onEditContent: PropTypes.func.isRequired,
-  secretAnswer: PropTypes.string,
-  style: PropTypes.object,
-  title: PropTypes.string
-};
-
+interface Props {
+  comment: string;
+  content: string;
+  contentId: number;
+  contentType: string;
+  description: string;
+  filePath: string;
+  onDismiss: () => void;
+  onEditContent: (args: any) => void;
+  secretAnswer: string;
+  style?: React.CSSProperties;
+  title: string;
+}
 function ContentEditor({
   comment,
   content,
@@ -44,7 +49,7 @@ function ContentEditor({
   secretAnswer = '',
   style,
   title
-}) {
+}: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const { banned } = useKeyContext((v) => v.myState);
   const {
@@ -210,7 +215,7 @@ function ContentEditor({
     urlExceedsCharLimit
   ]);
 
-  const handleSetInputState = useCallback((newState) => {
+  const handleSetInputState = useCallback((newState: object | null) => {
     setInputState(newState);
     inputStateRef.current = newState;
   }, []);
@@ -221,7 +226,7 @@ function ContentEditor({
   }, [handleSetInputState, onDismiss]);
 
   const handleSubmit = useCallback(
-    async (event) => {
+    async (event: any) => {
       if (banned?.posting) {
         return;
       }
@@ -340,7 +345,6 @@ function ContentEditor({
         >
           <Button
             color={doneColor}
-            type="submit"
             loading={isEditing}
             disabled={editButtonDisabled}
           >

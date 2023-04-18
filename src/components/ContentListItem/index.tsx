@@ -1,5 +1,4 @@
-import { memo, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useEffect } from 'react';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
@@ -13,18 +12,21 @@ import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
 
-ContentListItem.propTypes = {
-  contentObj: PropTypes.object.isRequired,
-  expandable: PropTypes.bool,
-  modalOverModal: PropTypes.bool,
-  onClick: PropTypes.func,
-  onContentIsDeleted: PropTypes.func,
-  selectable: PropTypes.bool,
-  selected: PropTypes.bool,
-  style: PropTypes.object,
-  innerStyle: PropTypes.object
-};
-
+interface Props {
+  onClick?: () => void;
+  contentObj: {
+    id: number;
+    contentType: string;
+    notFound?: boolean;
+  };
+  expandable?: boolean;
+  modalOverModal?: boolean;
+  onContentIsDeleted?: (contentId: number) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  style?: any;
+  innerStyle?: any;
+}
 function ContentListItem({
   onClick = () => {},
   contentObj,
@@ -36,7 +38,7 @@ function ContentListItem({
   selected,
   style,
   innerStyle
-}) {
+}: Props) {
   const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
   const {
@@ -63,7 +65,7 @@ function ContentListItem({
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   useEffect(() => {
     if (!loaded) {
-      onInitContent({ contentId, contentType, ...contentObj });
+      onInitContent({ contentId, ...contentObj });
     }
     if (rootObj) {
       onInitContent({
@@ -219,7 +221,7 @@ function ContentListItem({
               }
             `}
             style={{
-              paddingBottom: !!rewardLevel && '1rem'
+              paddingBottom: !!rewardLevel ? '1rem' : ''
             }}
           >
             <RewardLevelBar

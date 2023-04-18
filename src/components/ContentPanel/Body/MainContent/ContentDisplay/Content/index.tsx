@@ -1,30 +1,35 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { borderRadius, Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import LongText from '~/components/Texts/LongText';
 import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
 
-Content.propTypes = {
-  content: PropTypes.string,
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  description: PropTypes.string,
-  isNotification: PropTypes.bool,
-  navigate: PropTypes.func.isRequired,
-  onClickSecretAnswer: PropTypes.func,
-  rootId: PropTypes.number,
-  secretAnswer: PropTypes.string,
-  secretAttachment: PropTypes.object,
-  secretHidden: PropTypes.bool,
-  story: PropTypes.string,
-  targetObj: PropTypes.object,
-  theme: PropTypes.string,
-  title: PropTypes.string,
-  uploader: PropTypes.object.isRequired
-};
-
+interface Props {
+  content: string;
+  contentId: number;
+  contentType: string;
+  description: string;
+  isNotification: boolean;
+  navigate: (url: string) => void;
+  onClickSecretAnswer: (subjectId: number, uploaderId: number) => void;
+  rootId: number;
+  secretAnswer: string;
+  secretAttachment: any;
+  secretHidden: boolean;
+  story: string;
+  targetObj: {
+    subject: {
+      id: number;
+    };
+  };
+  theme: string;
+  title: string;
+  uploader: {
+    id: number;
+    username: string;
+  };
+}
 export default function Content({
   content,
   contentId,
@@ -42,7 +47,7 @@ export default function Content({
   theme,
   title,
   uploader
-}) {
+}: Props) {
   const Description = useMemo(() => {
     return !stringIsEmpty(description)
       ? description
