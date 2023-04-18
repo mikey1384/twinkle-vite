@@ -11,7 +11,7 @@ interface Props {
   className?: string;
   contentId: number;
   contentType: string;
-  disableReason?: string | false;
+  disableReason?: string | boolean;
   skeuomorphic?: boolean;
   style?: any;
   theme?: any;

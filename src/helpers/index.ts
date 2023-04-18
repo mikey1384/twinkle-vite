@@ -128,7 +128,7 @@ export function parseChannelPath(pathId: string | number) {
 }
 
 export function scrollElementToCenter(
-  element: HTMLElement | null,
+  element: any,
   adjustment: number = -50
 ): void {
   if (!element) return;
