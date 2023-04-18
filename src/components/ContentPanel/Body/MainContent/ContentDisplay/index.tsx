@@ -1,32 +1,42 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ContentEditor from '../../ContentEditor';
 import Content from './Content';
 import { useAppContext, useContentContext } from '~/contexts';
 
-ContentDisplay.propTypes = {
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  isEditing: PropTypes.bool,
-  content: PropTypes.string,
-  displayedContent: PropTypes.string,
-  description: PropTypes.string,
-  filePath: PropTypes.string,
-  navigate: PropTypes.func.isRequired,
-  secretAnswer: PropTypes.string,
-  secretAttachment: PropTypes.object,
-  title: PropTypes.string,
-  theme: PropTypes.string,
-  onSetIsEditing: PropTypes.func.isRequired,
-  uploader: PropTypes.object,
-  targetObj: PropTypes.object,
-  rootId: PropTypes.number,
-  contentColor: PropTypes.string,
-  story: PropTypes.string,
-  secretHidden: PropTypes.bool,
-  isNotification: PropTypes.bool,
-  onClickSecretAnswer: PropTypes.func.isRequired
-};
-
+interface Props {
+  contentId: number;
+  contentType: string;
+  isEditing: boolean;
+  content: string;
+  displayedContent: string;
+  description: string;
+  filePath: string;
+  navigate: (url: string) => void;
+  secretAnswer: string;
+  secretAttachment: any;
+  title: string;
+  theme: string;
+  onSetIsEditing: (v: {
+    contentId: number;
+    contentType: string;
+    isEditing: boolean;
+  }) => void;
+  uploader: {
+    id: number;
+    username: string;
+  };
+  targetObj: {
+    subject: {
+      id: number;
+    };
+  };
+  rootId: number;
+  contentColor: string;
+  story: string;
+  secretHidden: boolean;
+  isNotification: boolean;
+  onClickSecretAnswer: (subjectId: number, uploaderId: number) => void;
+}
 export default function ContentDisplay({
   contentId,
   contentType,
@@ -49,7 +59,7 @@ export default function ContentDisplay({
   secretHidden,
   isNotification,
   onClickSecretAnswer
-}) {
+}: Props) {
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
 
@@ -59,11 +69,13 @@ export default function ContentDisplay({
         marginTop: contentType === 'subject' && filePath ? '0.5rem' : '1rem',
         marginBottom: isEditing
           ? 0
-          : contentType !== 'video' && !secretHidden && '1rem',
+          : contentType !== 'video' && !secretHidden
+          ? '1rem'
+          : 0,
         padding: '1rem',
         whiteSpace: 'pre-wrap',
         overflowWrap: 'break-word',
-        wordBrea: 'break-word'
+        wordBreak: 'break-word'
       }}
     >
       {isEditing ? (
@@ -80,7 +92,7 @@ export default function ContentDisplay({
           secretAnswer={secretAnswer}
           style={{
             marginTop:
-              (contentType === 'video' || contentType === 'subject') && '1rem'
+              contentType === 'video' || contentType === 'subject' ? '1rem' : 0
           }}
           title={title}
           contentType={contentType}
@@ -88,7 +100,6 @@ export default function ContentDisplay({
       ) : (
         <Content
           content={content}
-          contentColor={contentColor}
           contentId={contentId}
           contentType={contentType}
           description={description}
@@ -109,7 +120,7 @@ export default function ContentDisplay({
     </div>
   );
 
-  async function handleEditContent(params) {
+  async function handleEditContent(params: object) {
     const data = await editContent(params);
     onEditContent({ data, contentType, contentId });
   }
