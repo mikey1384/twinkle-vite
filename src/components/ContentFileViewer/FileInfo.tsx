@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import {
@@ -12,15 +11,6 @@ import { useKeyContext } from '~/contexts';
 import { useTheme } from '~/helpers/hooks';
 import { renderFileSize } from '~/helpers/stringHelpers';
 
-FileInfo.propTypes = {
-  fileName: PropTypes.string.isRequired,
-  fileType: PropTypes.string.isRequired,
-  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  isThumb: PropTypes.bool,
-  src: PropTypes.string.isRequired,
-  theme: PropTypes.string
-};
-
 export default function FileInfo({
   fileName,
   fileType,
@@ -28,6 +18,13 @@ export default function FileInfo({
   isThumb,
   src,
   theme
+}: {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  isThumb?: boolean;
+  src: string;
+  theme?: string;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
@@ -39,8 +36,8 @@ export default function FileInfo({
       style={{
         width: '100%',
         height: '100%',
-        background: !isThumb && Color.wellGray(),
-        padding: !isThumb && '1rem',
+        background: !isThumb ? Color.wellGray() : '',
+        padding: !isThumb ? '1rem' : '',
         borderRadius
       }}
     >

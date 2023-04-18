@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import FileInfo from './FileInfo';
 import ImagePreview from './ImagePreview';
 import MediaPlayer from './MediaPlayer';
@@ -9,24 +8,23 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 
-ContentFileViewer.propTypes = {
-  contentId: PropTypes.number,
-  contentType: PropTypes.string.isRequired,
-  isSecretAttachment: PropTypes.bool,
-  isThumb: PropTypes.bool,
-  filePath: PropTypes.string.isRequired,
-  fileName: PropTypes.string.isRequired,
-  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  modalOverModal: PropTypes.bool,
-  onMediaPause: PropTypes.func,
-  onMediaPlay: PropTypes.func,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  thumbHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  thumbUrl: PropTypes.string,
-  videoHeight: PropTypes.string
-};
-
+interface Props {
+  contentId?: number;
+  contentType: string;
+  isSecretAttachment?: boolean;
+  isThumb?: boolean;
+  filePath: string;
+  fileName: string;
+  fileSize: number;
+  modalOverModal?: boolean;
+  onMediaPause?: () => void;
+  onMediaPlay?: () => void;
+  style?: React.CSSProperties;
+  theme?: string;
+  thumbHeight?: string;
+  thumbUrl?: string;
+  videoHeight?: string;
+}
 export default function ContentFileViewer({
   contentId,
   contentType,
@@ -43,7 +41,7 @@ export default function ContentFileViewer({
   thumbHeight,
   thumbUrl,
   videoHeight
-}) {
+}: Props) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     link: { color: linkColor }
@@ -97,7 +95,7 @@ export default function ContentFileViewer({
             <div
               style={{
                 width: '100%',
-                padding: isDisplayedOnHome && '0 1rem 0 1rem'
+                padding: isDisplayedOnHome ? '0 1rem 0 1rem' : ''
               }}
             >
               <div
