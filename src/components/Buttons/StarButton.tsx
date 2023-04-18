@@ -20,7 +20,7 @@ interface Props {
   byUser: boolean;
   contentId: number;
   contentType: string;
-  defaultDescription: string;
+  defaultDescription?: string;
   filePath: string;
   rewardLevel: number;
   filled?: boolean;

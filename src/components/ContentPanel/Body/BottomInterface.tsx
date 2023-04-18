@@ -1,5 +1,4 @@
-import { useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useMemo } from 'react';
 import LikeButton from '~/components/Buttons/LikeButton';
 import StarButton from '~/components/Buttons/StarButton';
 import Button from '~/components/Button';
@@ -27,40 +26,36 @@ const replyLabel = localize('reply');
 const respondLabel = localize('respond');
 const deviceIsMobile = isMobile(navigator);
 
-BottomInterface.propTypes = {
-  authLevel: PropTypes.number,
-  autoExpand: PropTypes.bool,
-  canDelete: PropTypes.bool,
-  canEdit: PropTypes.bool,
-  canReward: PropTypes.bool,
-  commentsShown: PropTypes.bool,
-  CommentInputAreaRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape({ current: PropTypes.instanceOf(Element) })
-  ]),
-  contentObj: PropTypes.object,
-  finalRewardLevel: PropTypes.number,
-  isEditing: PropTypes.bool,
-  isRecommendedByUser: PropTypes.bool,
-  onByUserStatusChange: PropTypes.func,
-  onExpandComments: PropTypes.func,
-  onSetCloseConfirmModalShown: PropTypes.func,
-  onSetDeleteConfirmModalShown: PropTypes.func,
-  onSetIsEditing: PropTypes.func,
-  onSetRecommendationInterfaceShown: PropTypes.func,
-  onSetRewardLevel: PropTypes.func,
-  onSetUserListModalShown: PropTypes.func,
-  onSetXpRewardInterfaceShown: PropTypes.func,
-  recommendationInterfaceShown: PropTypes.bool,
-  rewardColor: PropTypes.string,
-  secretHidden: PropTypes.bool,
-  subjectUploaderId: PropTypes.number,
-  theme: PropTypes.string,
-  userCanRewardThis: PropTypes.bool,
-  userId: PropTypes.number,
-  xpRewardInterfaceShown: PropTypes.bool
-};
-
+interface Props {
+  authLevel: number;
+  autoExpand: boolean;
+  canDelete: boolean;
+  canEdit: boolean;
+  canReward: boolean;
+  commentsShown: boolean;
+  CommentInputAreaRef: any;
+  contentObj: any;
+  finalRewardLevel: number;
+  isEditing: boolean;
+  isRecommendedByUser: boolean;
+  onByUserStatusChange: (state: object) => void;
+  onExpandComments: () => void;
+  onSetCloseConfirmModalShown: (status: boolean) => void;
+  onSetDeleteConfirmModalShown: (status: boolean) => void;
+  onSetIsEditing: (state: object) => void;
+  onSetRecommendationInterfaceShown: (status: boolean) => void;
+  onSetRewardLevel: (level: number) => void;
+  onSetUserListModalShown: (arg: boolean) => void;
+  onSetXpRewardInterfaceShown: (state: object) => void;
+  recommendationInterfaceShown: boolean;
+  rewardColor: string;
+  secretHidden: boolean;
+  subjectUploaderId: number;
+  theme: string;
+  userCanRewardThis: boolean;
+  userId: number;
+  xpRewardInterfaceShown: boolean;
+}
 export default function BottomInterface({
   authLevel,
   autoExpand,
@@ -90,7 +85,7 @@ export default function BottomInterface({
   userCanRewardThis,
   userId,
   xpRewardInterfaceShown
-}) {
+}: Props) {
   const {
     contentId,
     contentType,
@@ -107,7 +102,11 @@ export default function BottomInterface({
   } = contentObj;
   const [copiedShown, setCopiedShown] = useState(false);
   const isRewardedByUser = useMemo(() => {
-    return rewards.filter((reward) => reward.rewarderId === userId).length > 0;
+    return (
+      rewards.filter(
+        (reward: { rewarderId: number }) => reward.rewarderId === userId
+      ).length > 0
+    );
   }, [rewards, userId]);
   const xpButtonDisabled = useMemo(
     () =>
@@ -275,8 +274,9 @@ export default function BottomInterface({
           likes.length > 0 &&
           !(rewards.length > 0) &&
           !commentsShown &&
-          !xpRewardInterfaceShown &&
-          '0.5rem'
+          !xpRewardInterfaceShown
+            ? '0.5rem'
+            : ''
       }}
     >
       <div
@@ -321,7 +321,6 @@ export default function BottomInterface({
                 likes={likes}
                 key="likeButton"
                 onClick={handleLikeClick}
-                small
                 theme={theme}
               />
             )}
@@ -412,7 +411,6 @@ export default function BottomInterface({
                   marginLeft: secretHidden ? 0 : '1rem',
                   display: 'inline-block'
                 }}
-                size={contentType !== 'subject' ? 'sm' : null}
                 menuProps={editMenuItems}
               />
             ) : null}
@@ -498,7 +496,7 @@ export default function BottomInterface({
     scrollElementToCenter(CommentInputAreaRef.current);
   }
 
-  async function handleLikeClick({ isUnlike }) {
+  async function handleLikeClick({ isUnlike }: { isUnlike: boolean }) {
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
         contentType,
@@ -530,7 +528,7 @@ export default function BottomInterface({
     }
   }
 
-  function handleToggleByUser(byUser) {
+  function handleToggleByUser(byUser: boolean) {
     onByUserStatusChange({ byUser, contentId, contentType });
   }
 }

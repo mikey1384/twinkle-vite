@@ -14,7 +14,7 @@ export default function ZeroButton({
 }: {
   contentId: number;
   contentType: string;
-  content: any;
+  content?: any;
   style?: any;
 }) {
   const [modalShown, setModalShown] = useState(false);

@@ -1,15 +1,7 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { css } from '@emotion/css';
 import RewardLevelBar from '~/components/RewardLevelBar';
 import { mobileMaxWidth } from '~/constants/css';
-
-RewardLevelDisplay.propTypes = {
-  contentType: PropTypes.string.isRequired,
-  rootObj: PropTypes.object,
-  byUser: PropTypes.bool,
-  rewardLevel: PropTypes.number,
-  rootType: PropTypes.string
-};
 
 export default function RewardLevelDisplay({
   contentType,
@@ -17,6 +9,12 @@ export default function RewardLevelDisplay({
   byUser,
   rewardLevel,
   rootType
+}: {
+  contentType: string;
+  rootObj: any;
+  byUser: boolean;
+  rewardLevel: number;
+  rootType: string;
 }) {
   if (contentType !== 'subject' || !!rootObj.id || byUser || !rewardLevel)
     return null;

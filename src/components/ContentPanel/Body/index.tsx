@@ -1,5 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import LocalContext from '../Context';
 import UserListModal from '~/components/Modals/UserListModal';
 import Comments from '~/components/Comments';
@@ -21,16 +20,6 @@ import localize from '~/constants/localize';
 import BottomInterface from './BottomInterface';
 
 const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
-
-Body.propTypes = {
-  autoExpand: PropTypes.bool,
-  contentObj: PropTypes.object.isRequired,
-  commentsShown: PropTypes.bool,
-  inputAtBottom: PropTypes.bool,
-  numPreviewComments: PropTypes.number,
-  onChangeSpoilerStatus: PropTypes.func.isRequired,
-  theme: PropTypes.string
-};
 
 export default function Body({
   autoExpand,
