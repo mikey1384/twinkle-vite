@@ -9,12 +9,7 @@ import { v1 as uuidv1 } from 'uuid';
 interface Props {
   disableReason?: string;
   innerRef?: React.RefObject<any>;
-  onSubmit: (args: {
-    content: string;
-    rootCommentId?: number;
-    subjectId: number;
-    targetCommentId: number;
-  }) => Promise<void>;
+  onSubmit: (args: any) => void;
   onSubmitWithAttachment: (args: any) => void;
   parent: {
     contentId: number;

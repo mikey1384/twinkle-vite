@@ -14,16 +14,9 @@ interface Props {
   disableReason?: string;
   isSubjectPannelComment?: boolean;
   subject?: any;
-  onPinReply?: (v: any) => void;
+  onPinReply: (v: any) => void;
   parent: any;
-  replies: {
-    id: number;
-    lastReplyId: number;
-    userId: number;
-    isLoadMoreButton: boolean;
-    rootReplyId: number;
-    commentId: number;
-  }[];
+  replies: any[];
   pinnedCommentId?: number;
   ReplyRefs?: any;
   rootContent?: any;

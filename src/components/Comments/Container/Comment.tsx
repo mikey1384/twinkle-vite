@@ -1,5 +1,12 @@
+import React, {
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import PropTypes from 'prop-types';
-import { memo, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Likers from '~/components/Likers';
 import UserListModal from '~/components/Modals/UserListModal';
@@ -55,49 +62,24 @@ const removeCommentLabel = localize('removeComment');
 const repliesLabel = localize('replies');
 const replyLabel = localize('reply');
 
-Comment.propTypes = {
-  isSubjectPannelComment: PropTypes.bool,
-  comment: PropTypes.shape({
-    commentId: PropTypes.number,
-    content: PropTypes.string.isRequired,
-    isDeleted: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
-    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-    likes: PropTypes.array,
-    numReplies: PropTypes.number,
-    profilePicUrl: PropTypes.string,
-    recommendationInterfaceShown: PropTypes.bool,
-    recommendations: PropTypes.array,
-    replies: PropTypes.array,
-    replyId: PropTypes.number,
-    rewards: PropTypes.array,
-    targetObj: PropTypes.object,
-    targetUserName: PropTypes.string,
-    targetUserId: PropTypes.number,
-    timeStamp: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-      .isRequired,
-    uploader: PropTypes.object.isRequired,
-    filePath: PropTypes.string,
-    fileName: PropTypes.string,
-    fileSize: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    thumbUrl: PropTypes.string,
-    isDeleteNotification: PropTypes.oneOfType([
-      PropTypes.number,
-      PropTypes.bool
-    ]),
-    isNotification: PropTypes.oneOfType([PropTypes.number, PropTypes.bool])
-  }).isRequired,
-  disableReason: PropTypes.string,
-  innerRef: PropTypes.func,
-  isPreview: PropTypes.bool,
-  parent: PropTypes.object,
-  pinnedCommentId: PropTypes.number,
-  rootContent: PropTypes.shape({
-    contentType: PropTypes.string
-  }),
-  subject: PropTypes.object,
-  theme: PropTypes.string
-};
-
+interface Props {
+  comment: any;
+  disableReason?: string;
+  innerRef?: (ref: any) => void;
+  isSubjectPannelComment?: boolean;
+  isPreview?: boolean;
+  parent?: any;
+  pinnedCommentId?: number;
+  rootContent?: {
+    contentType?: string;
+    rewardLevel?: number;
+    uploader?: {
+      id: number;
+    };
+  };
+  subject?: any;
+  theme?: string;
+}
 function Comment({
   comment,
   disableReason,
@@ -124,7 +106,7 @@ function Comment({
     isDeleteNotification,
     thumbUrl: originalThumbUrl
   }
-}) {
+}: Props) {
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
@@ -218,11 +200,11 @@ function Comment({
   useLazyLoad({
     PanelRef,
     inView,
-    onSetPlaceholderHeight: (height) => {
+    onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
     },
-    onSetVisible: (visible) => {
+    onSetVisible: (visible: boolean) => {
       setVisible(visible);
       visibleRef.current = visible;
     },
@@ -240,8 +222,8 @@ function Comment({
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [replying, setReplying] = useState(false);
   const prevReplies = useRef(replies);
-  const ReplyInputAreaRef = useRef(null);
-  const ReplyRefs = {};
+  const ReplyInputAreaRef: React.RefObject<any> = useRef(null);
+  const ReplyRefs: { [key: number]: React.RefObject<any> } = {};
   const RewardInterfaceRef = useRef(null);
 
   const subjectId = useMemo(
@@ -268,13 +250,17 @@ function Comment({
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(
-        (recommendation) => recommendation.userId === userId
+        (recommendation: { userId: number }) => recommendation.userId === userId
       ).length > 0
     );
   }, [recommendations, userId]);
 
   const isRewardedByUser = useMemo(() => {
-    return rewards.filter((reward) => reward.rewarderId === userId).length > 0;
+    return (
+      rewards.filter(
+        (reward: { rewarderId: number }) => reward.rewarderId === userId
+      ).length > 0
+    );
   }, [rewards, userId]);
 
   const rewardLevel = useMemo(() => {
@@ -282,7 +268,10 @@ function Comment({
     if (parent.contentType === 'subject' && parent.rewardLevel > 0) {
       return parent.rewardLevel;
     }
-    if (rootContent.contentType === 'subject' && rootContent.rewardLevel > 0) {
+    if (
+      rootContent.contentType === 'subject' &&
+      (rootContent.rewardLevel || 0) > 0
+    ) {
       return rootContent.rewardLevel;
     }
     if (parent.contentType === 'video' || parent.contentType === 'url') {
@@ -300,7 +289,7 @@ function Comment({
       if (subject?.rewardLevel) {
         return subject?.rewardLevel;
       }
-      if (rootContent.rewardLevel > 0) {
+      if ((rootContent.rewardLevel || 0) > 0) {
         return 1;
       }
     }
@@ -917,7 +906,6 @@ function Comment({
                     }}
                     theme={theme}
                     rewards={rewards}
-                    uploaderName={uploader?.username}
                   />
                 )}
                 {!isPreview && !isNotification && !isHidden && (
@@ -926,7 +914,6 @@ function Comment({
                       <ReplyInputArea
                         disableReason={disableReason}
                         innerRef={ReplyInputAreaRef}
-                        numReplies={numReplies}
                         onSubmit={handleSubmitReply}
                         onSubmitWithAttachment={handleSubmitWithAttachment}
                         parent={parent}
@@ -954,9 +941,7 @@ function Comment({
                       comment={comment}
                       parent={parent}
                       rootContent={rootContent}
-                      onLoadMoreReplies={onLoadMoreReplies}
                       onPinReply={handlePinComment}
-                      onReplySubmit={onReplySubmit}
                       ReplyRefs={ReplyRefs}
                       theme={theme}
                     />
@@ -987,7 +972,7 @@ function Comment({
     </div>
   ) : null;
 
-  async function handleEditDone(editedComment) {
+  async function handleEditDone(editedComment: string) {
     try {
       const { content } = await editContent({
         editedComment,
@@ -1006,7 +991,13 @@ function Comment({
     }
   }
 
-  function handleLikeClick({ likes, isUnlike }) {
+  function handleLikeClick({
+    likes,
+    isUnlike
+  }: {
+    likes: any[];
+    isUnlike: boolean;
+  }) {
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
         contentId: comment.id,
@@ -1021,7 +1012,7 @@ function Comment({
     onLikeClick({ commentId: comment.id, likes });
   }
 
-  async function handlePinComment(commentId) {
+  async function handlePinComment(commentId: number) {
     const root = parent.contentType === 'comment' ? rootContent : parent;
     let contentId = isSubjectPannelComment
       ? subject.id
@@ -1062,12 +1053,12 @@ function Comment({
     if (!isDeleteNotification) ReplyInputAreaRef.current.focus();
   }
 
-  async function handleSubmitWithAttachment(params) {
+  async function handleSubmitWithAttachment(params: object) {
     setReplying(true);
     await onSubmitWithAttachment(params);
   }
 
-  async function handleSubmitReply(reply) {
+  async function handleSubmitReply(reply: string) {
     try {
       setReplying(true);
       setIsPostingReply(true);
