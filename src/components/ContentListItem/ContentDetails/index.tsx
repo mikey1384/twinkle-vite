@@ -1,18 +1,8 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import VideoDetails from './VideoDetails';
 import SubjectDetails from './SubjectDetails';
 import UrlDetails from './UrlDetails';
 import AIStoryDetails from './AIStoryDetails';
-
-ContentDetails.propTypes = {
-  contentType: PropTypes.string.isRequired,
-  description: PropTypes.string,
-  story: PropTypes.string,
-  title: PropTypes.string,
-  uploader: PropTypes.object,
-  contentId: PropTypes.number,
-  topic: PropTypes.string
-};
 
 export default function ContentDetails({
   contentType,
@@ -22,6 +12,14 @@ export default function ContentDetails({
   uploader,
   contentId,
   topic
+}: {
+  contentType: string;
+  description: string;
+  story: string;
+  title: string;
+  uploader: any;
+  contentId: number;
+  topic: string;
 }) {
   return (
     <div

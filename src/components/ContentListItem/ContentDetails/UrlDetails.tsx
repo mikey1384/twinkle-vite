@@ -1,12 +1,13 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Embedly from '~/components/Embedly';
 
-UrlDetails.propTypes = {
-  contentId: PropTypes.number.isRequired,
-  title: PropTypes.string
-};
-
-export default function UrlDetails({ contentId, title }) {
+export default function UrlDetails({
+  contentId,
+  title
+}: {
+  contentId: number;
+  title: string;
+}) {
   return (
     <div>
       <span
