@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import Input from '~/components/Texts/Input';
 import { edit } from '~/constants/placeholders';
@@ -11,25 +10,24 @@ import {
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-TextEditSection.propTypes = {
-  editedComment: PropTypes.string,
-  editedDescription: PropTypes.string,
-  editedSecretAnswer: PropTypes.string,
-  editedUrl: PropTypes.string,
-  editedTitle: PropTypes.string,
-  contentType: PropTypes.string,
-  onSecretAnswerChange: PropTypes.func.isRequired,
-  onTextAreaChange: PropTypes.func.isRequired,
-  onTextAreaKeyUp: PropTypes.func.isRequired,
-  onTitleChange: PropTypes.func.isRequired,
-  onTitleKeyUp: PropTypes.func.isRequired,
-  onUrlChange: PropTypes.func.isRequired,
-  urlExceedsCharLimit: PropTypes.object,
-  descriptionExceedsCharLimit: PropTypes.object,
-  secretAnswerExceedsCharLimit: PropTypes.object,
-  titleExceedsCharLimit: PropTypes.object
-};
-
+interface Props {
+  editedComment?: string;
+  editedDescription?: string;
+  editedSecretAnswer?: string;
+  editedUrl?: string;
+  editedTitle?: string;
+  contentType: string;
+  onSecretAnswerChange: (event: any) => void;
+  onTextAreaChange: (event: any) => void;
+  onTextAreaKeyUp: (event: any) => void;
+  onTitleChange: (text: string) => void;
+  onTitleKeyUp: (event: any) => void;
+  onUrlChange: (url: string) => void;
+  urlExceedsCharLimit?: any;
+  descriptionExceedsCharLimit?: any;
+  secretAnswerExceedsCharLimit?: any;
+  titleExceedsCharLimit?: any;
+}
 export default function TextEditSection({
   editedComment,
   editedDescription,
@@ -47,8 +45,8 @@ export default function TextEditSection({
   descriptionExceedsCharLimit,
   secretAnswerExceedsCharLimit,
   titleExceedsCharLimit
-}) {
-  const timerRef = useRef(null);
+}: Props) {
+  const timerRef: React.MutableRefObject<any> = useRef(null);
   const [urlError, setUrlError] = useState(false);
   useEffect(() => {
     clearTimeout(timerRef.current);
@@ -80,7 +78,8 @@ export default function TextEditSection({
           />
           {(urlExceedsCharLimit || urlError) && (
             <small style={{ color: 'red', lineHeight: 0.5 }}>
-              {urlExceedsCharLimit?.message || 'Please check the url'}
+              {(urlExceedsCharLimit?.message as React.ReactNode) ||
+                'Please check the url'}
             </small>
           )}
         </div>
@@ -95,7 +94,7 @@ export default function TextEditSection({
             style={titleExceedsCharLimit?.style}
           />
           <small style={titleExceedsCharLimit?.style}>
-            {titleExceedsCharLimit?.message}
+            {titleExceedsCharLimit?.message as React.ReactNode}
           </small>
         </>
       )}
@@ -126,7 +125,7 @@ export default function TextEditSection({
             value={editedSecretAnswer}
             style={{
               marginTop: '0.7rem',
-              ...(secretAnswerExceedsCharLimit?.style || {})
+              ...((secretAnswerExceedsCharLimit?.style || {}) as object)
             }}
           />
           {secretAnswerExceedsCharLimit && (

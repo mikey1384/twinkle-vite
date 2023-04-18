@@ -1,14 +1,16 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Loading from '~/components/Loading';
 
-VideoThumbnail.propTypes = {
-  content: PropTypes.string,
-  contentId: PropTypes.number.isRequired,
-  rewardLevel: PropTypes.number
-};
-
-export default function VideoThumbnail({ content, contentId, rewardLevel }) {
+export default function VideoThumbnail({
+  content,
+  contentId,
+  rewardLevel
+}: {
+  content: string;
+  contentId: number;
+  rewardLevel: number;
+}) {
   return (
     <div
       style={{
