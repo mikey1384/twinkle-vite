@@ -1,21 +1,19 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Color } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
-InnerContent.propTypes = {
-  likes: PropTypes.array,
-  userId: PropTypes.number,
-  wordBreakEnabled: PropTypes.bool,
-  onLinkClick: PropTypes.func,
-  target: PropTypes.string,
-  defaultText: PropTypes.string,
-  theme: PropTypes.string
-};
-
+interface Props {
+  likes?: Array<{ id: number; username: string }>;
+  userId: number;
+  wordBreakEnabled?: boolean;
+  onLinkClick?: (v: any) => void;
+  target?: string;
+  defaultText?: string;
+  theme?: any;
+}
 export default function InnerContent({
   likes = [],
   userId,
@@ -24,7 +22,7 @@ export default function InnerContent({
   target,
   defaultText = '',
   theme
-}) {
+}: Props) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     link: { color: linkColor }

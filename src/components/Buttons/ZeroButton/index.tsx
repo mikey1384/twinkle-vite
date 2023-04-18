@@ -12,7 +12,7 @@ export default function ZeroButton({
   content,
   style
 }: {
-  contentId: string;
+  contentId: number;
   contentType: string;
   content: any;
   style?: any;

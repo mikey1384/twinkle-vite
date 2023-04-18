@@ -1,5 +1,4 @@
-import { memo, useContext, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useContext, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../../Context';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -49,53 +48,48 @@ const removeReplyLabel = localize('removeReply');
 const repliesLabel = localize('replies');
 const replyLabel = localize('reply');
 
-Reply.propTypes = {
-  comment: PropTypes.shape({
-    id: PropTypes.number.isRequired
-  }),
-  disableReason: PropTypes.string,
-  innerRef: PropTypes.func,
-  deleteReply: PropTypes.func.isRequired,
-  isSubjectPannelComment: PropTypes.bool,
-  onLoadRepliesOfReply: PropTypes.func,
-  onPinReply: PropTypes.func,
-  onSubmitWithAttachment: PropTypes.func.isRequired,
-  parent: PropTypes.object.isRequired,
-  pinnedCommentId: PropTypes.number,
-  reply: PropTypes.shape({
-    commentId: PropTypes.number.isRequired,
-    content: PropTypes.string.isRequired,
-    isExpanded: PropTypes.bool,
-    isDeleted: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
-    filePath: PropTypes.string,
-    fileName: PropTypes.string,
-    fileSize: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    thumbUrl: PropTypes.string,
-    id: PropTypes.number.isRequired,
-    likes: PropTypes.array,
-    numReplies: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    originType: PropTypes.string,
-    recommendations: PropTypes.array,
-    profilePicUrl: PropTypes.string,
-    replyId: PropTypes.number,
-    rewards: PropTypes.array,
-    targetObj: PropTypes.object,
-    targetUserId: PropTypes.number,
-    targetUserName: PropTypes.string,
-    isDeleteNotification: PropTypes.oneOfType([
-      PropTypes.bool,
-      PropTypes.number
-    ]),
-    timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-      .isRequired,
-    uploader: PropTypes.object.isRequired
-  }),
-  rootContent: PropTypes.object,
-  subject: PropTypes.object,
-  onSubmitReply: PropTypes.func.isRequired,
-  theme: PropTypes.string
-};
-
+interface Props {
+  comment: {
+    id: number;
+  };
+  disableReason?: string;
+  innerRef?: (v: any) => void;
+  deleteReply: (v: any) => void;
+  isSubjectPannelComment?: boolean;
+  onLoadRepliesOfReply: (v: any) => void;
+  onPinReply: (v: any) => void;
+  onSubmitWithAttachment: (v: any) => void;
+  parent: any;
+  pinnedCommentId?: number;
+  reply: {
+    commentId?: number;
+    content: string;
+    isExpanded?: boolean;
+    isDeleted?: boolean | number;
+    filePath?: string;
+    fileName: string;
+    fileSize?: number | string;
+    thumbUrl?: string;
+    id: number;
+    likes: any[];
+    numReplies: number;
+    originType?: string;
+    recommendations?: any[];
+    profilePicUrl?: string;
+    replyId?: number;
+    rewards?: any[];
+    targetObj?: any;
+    targetUserId?: number;
+    targetUserName?: string;
+    isDeleteNotification?: boolean | number;
+    timeStamp: string | number;
+    uploader?: any;
+  };
+  rootContent?: any;
+  subject: any;
+  onSubmitReply: (v: any) => void;
+  theme?: string;
+}
 function Reply({
   comment,
   innerRef = () => {},
@@ -124,7 +118,7 @@ function Reply({
   onSubmitReply,
   subject,
   theme
-}) {
+}: Props) {
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadReplies = useAppContext((v) => v.requestHelpers.loadReplies);
   const {
@@ -163,7 +157,7 @@ function Reply({
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
-  const ReplyInputAreaRef = useRef(null);
+  const ReplyInputAreaRef: React.RefObject<any> = useRef(null);
   const RewardInterfaceRef = useRef(null);
   const userIsUploader = userId === uploader.id;
   const subjectUploaderId = useMemo(
@@ -503,7 +497,6 @@ function Reply({
                             onClick={handleLikeClick}
                             likes={likes}
                             theme={theme}
-                            small
                           />
                         )}
                         {isDeleteNotification &&
@@ -642,7 +635,6 @@ function Reply({
                   marginTop: '0.5rem'
                 }}
                 rewards={rewards}
-                uploaderName={uploader.username}
               />
             )}
             <div style={{ position: 'relative' }}>
@@ -693,7 +685,7 @@ function Reply({
     </ErrorBoundary>
   ) : null;
 
-  async function handleEditDone(editedReply) {
+  async function handleEditDone(editedReply: string) {
     try {
       const { content } = await editContent({
         editedComment: editedReply,
@@ -712,7 +704,13 @@ function Reply({
     }
   }
 
-  function handleLikeClick({ likes, isUnlike }) {
+  function handleLikeClick({
+    likes,
+    isUnlike
+  }: {
+    likes: object[];
+    isUnlike: boolean;
+  }) {
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
         contentId: reply.id,
@@ -758,7 +756,7 @@ function Reply({
     }
   }
 
-  async function handleSubmitReply(params) {
+  async function handleSubmitReply(params: object) {
     try {
       setIsPostingReply(true);
       await onSubmitReply(params);

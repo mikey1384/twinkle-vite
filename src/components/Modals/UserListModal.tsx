@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import RoundList from '~/components/RoundList';
@@ -11,20 +10,23 @@ import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
-UserListModal.propTypes = {
-  description: PropTypes.string,
-  descriptionShown: PropTypes.func,
-  descriptionColor: PropTypes.string,
-  loadMoreButtonShown: PropTypes.bool,
-  loading: PropTypes.bool,
-  loadingMore: PropTypes.bool,
-  onHide: PropTypes.func.isRequired,
-  onLoadMore: PropTypes.func,
-  title: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
-  users: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.number.isRequired }))
-    .isRequired
-};
-
+interface Props {
+  description?: string;
+  descriptionColor?: string;
+  descriptionShown?: (v: object) => void | boolean;
+  loadMoreButtonShown?: boolean;
+  loading?: boolean;
+  loadingMore?: boolean;
+  onHide?: () => void;
+  onLoadMore?: () => void;
+  title?: string;
+  users: Array<{
+    id: number;
+    username: string;
+    profilePicUrl: string;
+    authLevel: number;
+  }>;
+}
 export default function UserListModal({
   description = '',
   descriptionColor = Color.green(),
@@ -36,7 +38,7 @@ export default function UserListModal({
   onLoadMore,
   title,
   users
-}) {
+}: Props) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
@@ -106,7 +108,7 @@ export default function UserListModal({
                           fontWeight: 'bold'
                         }}
                       >
-                        {userStatusDisplayed && description}
+                        {userStatusDisplayed ? description : null}
                       </span>
                     </div>
                   </div>
@@ -144,7 +146,12 @@ export default function UserListModal({
     </Modal>
   );
 
-  async function handleTalkClick(user) {
+  async function handleTalkClick(user: {
+    id: number;
+    username: string;
+    profilePicUrl: string;
+    authLevel: number;
+  }) {
     if (user.id !== userId) {
       const { channelId, pathId } = await loadDMChannel({ recipient: user });
       if (!pathId) {

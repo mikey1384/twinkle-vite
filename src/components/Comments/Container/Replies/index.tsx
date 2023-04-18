@@ -1,5 +1,4 @@
-import { memo, useContext, useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useContext, useEffect, useRef, useState } from 'react';
 import LocalContext from '../../Context';
 import Reply from './Reply';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -7,30 +6,30 @@ import { useTheme } from '~/helpers/hooks';
 import { scrollElementToCenter } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 
-Replies.propTypes = {
-  comment: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    loadMoreButton: PropTypes.bool
-  }).isRequired,
-  disableReason: PropTypes.string,
-  isSubjectPannelComment: PropTypes.bool,
-  subject: PropTypes.object,
-  onPinReply: PropTypes.func,
-  parent: PropTypes.object.isRequired,
-  replies: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-      userId: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-        .isRequired
-    })
-  ).isRequired,
-  pinnedCommentId: PropTypes.number,
-  ReplyRefs: PropTypes.object,
-  rootContent: PropTypes.object,
-  theme: PropTypes.string,
-  userId: PropTypes.number
-};
-
+interface Props {
+  comment: {
+    id: number;
+    loadMoreButton: boolean;
+  };
+  disableReason?: string;
+  isSubjectPannelComment?: boolean;
+  subject?: any;
+  onPinReply?: (v: any) => void;
+  parent: any;
+  replies: {
+    id: number;
+    lastReplyId: number;
+    userId: number;
+    isLoadMoreButton: boolean;
+    rootReplyId: number;
+    commentId: number;
+  }[];
+  pinnedCommentId?: number;
+  ReplyRefs?: any;
+  rootContent?: any;
+  theme?: string;
+  userId?: number;
+}
 function Replies({
   replies,
   userId,
@@ -44,7 +43,7 @@ function Replies({
   rootContent,
   ReplyRefs,
   theme
-}) {
+}: Props) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     onDelete,
@@ -125,14 +124,12 @@ function Replies({
           />
         ) : (
           <Reply
-            index={index}
             innerRef={(ref) => (ReplyRefs[reply.id] = ref)}
             disableReason={disableReason}
             isSubjectPannelComment={isSubjectPannelComment}
             key={reply.id}
             comment={comment}
             reply={reply}
-            userId={userId}
             deleteReply={handleDeleteReply}
             onLoadRepliesOfReply={onLoadRepliesOfReply}
             onPinReply={onPinReply}
@@ -160,7 +157,7 @@ function Replies({
         contentId: parent.contentId
       });
       setLoadingMoreReplies(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error.response, error);
     }
   }
@@ -170,6 +167,11 @@ function Replies({
     rootReplyId,
     commentId,
     loadMoreButtonId
+  }: {
+    lastReplyId: number;
+    rootReplyId: number;
+    commentId: number;
+    loadMoreButtonId: number;
   }) {
     setLoadingMoreRepliesOfReply(true);
     const { replies, loadMoreButton } = await loadReplies({
@@ -192,18 +194,18 @@ function Replies({
     setLoadingMoreRepliesOfReply(false);
   }
 
-  function handleDeleteReply(replyId) {
+  function handleDeleteReply(replyId: number) {
     setDeleting(true);
     onDelete(replyId);
   }
 
-  async function handleSubmitReply(params) {
+  async function handleSubmitReply(params: any) {
     setReplying(true);
     await onReplySubmit(params);
     return Promise.resolve();
   }
 
-  async function handleSubmitWithAttachment(params) {
+  async function handleSubmitWithAttachment(params: any) {
     setReplying(true);
     // this "await" here is very important!!
     await onSubmitWithAttachment(params);
