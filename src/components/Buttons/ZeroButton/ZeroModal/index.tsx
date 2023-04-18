@@ -11,7 +11,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 interface Props {
-  contentId?: string;
+  contentId?: number;
   contentType?: string;
   onHide: () => void;
   modalOverModal?: boolean;

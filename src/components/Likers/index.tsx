@@ -1,23 +1,6 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InnerContent from './InnerContent';
-
-Likers.propTypes = {
-  className: PropTypes.string,
-  defaultText: PropTypes.string,
-  likes: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      username: PropTypes.string.isRequired
-    })
-  ).isRequired,
-  onLinkClick: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  target: PropTypes.string,
-  wordBreakEnabled: PropTypes.bool,
-  theme: PropTypes.string,
-  userId: PropTypes.number
-};
 
 export default function Likers({
   likes,
@@ -29,6 +12,16 @@ export default function Likers({
   defaultText,
   theme,
   wordBreakEnabled
+}: {
+  likes?: any[];
+  target?: string;
+  userId: number;
+  onLinkClick?: (e: any) => void;
+  style?: React.CSSProperties;
+  className?: string;
+  defaultText?: string;
+  theme?: string;
+  wordBreakEnabled?: boolean;
 }) {
   return (
     <ErrorBoundary componentPath="Likers/index">
