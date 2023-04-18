@@ -1,18 +1,8 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import SearchedComment from './SearchedComment';
 import { useAppContext } from '~/contexts';
-
-Searched.propTypes = {
-  parent: PropTypes.object,
-  rootContent: PropTypes.object,
-  loadMoreButtonColor: PropTypes.string,
-  poster: PropTypes.object,
-  subject: PropTypes.object,
-  theme: PropTypes.string
-};
 
 export default function Searched({
   parent,
@@ -21,11 +11,32 @@ export default function Searched({
   poster,
   subject,
   theme
+}: {
+  parent: {
+    contentId: number;
+    contentType: string;
+    subjectId: number;
+  };
+  rootContent: {
+    contentId: number;
+    contentType: string;
+    subjectId: number;
+  };
+  loadMoreButtonColor: string;
+  poster: {
+    id: number;
+    username: string;
+  };
+  subject: {
+    id: number;
+    title: string;
+  };
+  theme: any;
 }) {
   const loadCommentsByPoster = useAppContext(
     (v) => v.requestHelpers.loadCommentsByPoster
   );
-  const [comments, setComments] = useState([]);
+  const [comments, setComments] = useState<any[]>([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);

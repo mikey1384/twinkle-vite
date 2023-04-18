@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InputForm from '~/components/Forms/InputForm';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
@@ -7,20 +6,31 @@ import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { v1 as uuidv1 } from 'uuid';
 
-ReplyInputArea.propTypes = {
-  disableReason: PropTypes.string,
-  rootCommentId: PropTypes.number,
-  innerRef: PropTypes.object,
-  onSubmit: PropTypes.func.isRequired,
-  onSubmitWithAttachment: PropTypes.func.isRequired,
-  parent: PropTypes.object.isRequired,
-  rows: PropTypes.number,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  targetCommentId: PropTypes.number,
-  targetCommentPoster: PropTypes.object
-};
-
+interface Props {
+  disableReason?: string;
+  innerRef?: React.RefObject<any>;
+  onSubmit: (args: {
+    content: string;
+    rootCommentId?: number;
+    subjectId: number;
+    targetCommentId: number;
+  }) => Promise<void>;
+  onSubmitWithAttachment: (args: any) => void;
+  parent: {
+    contentId: number;
+    contentType: string;
+    subjectId: number;
+  };
+  rootCommentId?: number;
+  style?: React.CSSProperties;
+  targetCommentId: number;
+  targetCommentPoster?: {
+    id: number;
+    username: string;
+  };
+  theme: any;
+  rows?: number;
+}
 export default function ReplyInputArea({
   disableReason,
   innerRef,
@@ -33,7 +43,7 @@ export default function ReplyInputArea({
   targetCommentPoster,
   theme,
   rows = 1
-}) {
+}: Props) {
   const state = useInputContext((v) => v.state);
   const { userId } = useKeyContext((v) => v.myState);
   const onSetCommentAttachment = useInputContext(
@@ -91,7 +101,7 @@ export default function ReplyInputArea({
     </ErrorBoundary>
   );
 
-  async function handleSubmit(text) {
+  async function handleSubmit(text: string) {
     try {
       if (attachment) {
         onSetUploadingFile({

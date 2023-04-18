@@ -1,5 +1,5 @@
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Likers from '~/components/Likers';
 import UserListModal from '~/components/Modals/UserListModal';
@@ -36,39 +36,38 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 
-SearchedComment.propTypes = {
-  comment: PropTypes.shape({
-    commentId: PropTypes.number,
-    content: PropTypes.string.isRequired,
-    id: PropTypes.number.isRequired,
-    likes: PropTypes.array,
-    numReplies: PropTypes.number,
-    profilePicUrl: PropTypes.string,
-    recommendationInterfaceShown: PropTypes.bool,
-    recommendations: PropTypes.array,
-    replies: PropTypes.array,
-    replyId: PropTypes.number,
-    rewards: PropTypes.array,
-    targetObj: PropTypes.object,
-    targetUserName: PropTypes.string,
-    targetUserId: PropTypes.number,
-    timeStamp: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-      .isRequired,
-    uploader: PropTypes.object.isRequired,
-    filePath: PropTypes.string,
-    fileName: PropTypes.string,
-    fileSize: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    thumbUrl: PropTypes.string,
-    isNotification: PropTypes.oneOfType([PropTypes.number, PropTypes.bool])
-  }).isRequired,
-  parent: PropTypes.object,
-  rootContent: PropTypes.shape({
-    contentType: PropTypes.string
-  }),
-  subject: PropTypes.object,
-  theme: PropTypes.string
-};
-
+interface Props {
+  comment: {
+    commentId?: number;
+    content: string;
+    id: number;
+    likes?: any[];
+    numReplies: number;
+    profilePicUrl?: string;
+    recommendationInterfaceShown?: boolean;
+    recommendations?: [];
+    replies?: any[];
+    replyId?: number;
+    rewards?: any[];
+    targetObj?: any;
+    targetUserName?: string;
+    targetUserId?: number;
+    timeStamp: number | string;
+    uploader?: any;
+    filePath?: string;
+    fileName: string;
+    fileSize?: number | string;
+    thumbUrl?: string;
+    isNotification?: number | boolean;
+  };
+  parent: any;
+  rootContent: {
+    rewardLevel?: number;
+    contentType?: string;
+  };
+  subject: any;
+  theme: string;
+}
 export default function SearchedComment({
   comment,
   parent,
@@ -85,7 +84,7 @@ export default function SearchedComment({
     isNotification,
     thumbUrl: originalThumbUrl
   }
-}) {
+}: Props) {
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const {
@@ -192,20 +191,27 @@ export default function SearchedComment({
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(
-        (recommendation) => recommendation.userId === userId
+        (recommendation: { userId: number }) => recommendation.userId === userId
       ).length > 0
     );
   }, [recommendations, userId]);
 
   const isRewardedByUser = useMemo(() => {
-    return rewards.filter((reward) => reward.rewarderId === userId).length > 0;
+    return (
+      rewards.filter(
+        (reward: { rewarderId: number }) => reward.rewarderId === userId
+      ).length > 0
+    );
   }, [rewards, userId]);
 
   const rewardLevel = useMemo(() => {
     if (parent.contentType === 'subject' && parent.rewardLevel > 0) {
       return parent.rewardLevel;
     }
-    if (rootContent.contentType === 'subject' && rootContent.rewardLevel > 0) {
+    if (
+      rootContent.contentType === 'subject' &&
+      (rootContent.rewardLevel || 0) > 0
+    ) {
       return rootContent.rewardLevel;
     }
     if (parent.contentType === 'video' || parent.contentType === 'url') {
@@ -223,7 +229,7 @@ export default function SearchedComment({
       if (subject?.rewardLevel) {
         return subject?.rewardLevel;
       }
-      if (rootContent.rewardLevel > 0) {
+      if ((rootContent.rewardLevel || 0) > 0) {
         return 1;
       }
     }
@@ -651,7 +657,6 @@ export default function SearchedComment({
               }}
               rewards={rewards}
               theme={theme}
-              uploaderName={uploader.username}
             />
           </section>
         </div>
@@ -673,7 +678,7 @@ export default function SearchedComment({
     </>
   );
 
-  async function handleEditDone(editedComment) {
+  async function handleEditDone(editedComment: string) {
     try {
       await editContent({
         editedComment,
@@ -692,7 +697,13 @@ export default function SearchedComment({
     }
   }
 
-  function handleLikeClick({ likes, isUnlike }) {
+  function handleLikeClick({
+    likes,
+    isUnlike
+  }: {
+    likes: any[];
+    isUnlike: boolean;
+  }) {
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
         contentId: comment.id,
