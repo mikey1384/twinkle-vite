@@ -1,16 +1,17 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 
-SubjectLink.propTypes = {
-  subject: PropTypes.object.isRequired,
-  theme: PropTypes.string
-};
-
-export default function SubjectLink({ subject, theme }) {
+export default function SubjectLink({
+  subject,
+  theme
+}: {
+  subject: any;
+  theme?: any;
+}) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     content: { color: contentColor }

@@ -9,17 +9,17 @@ import { useContentContext } from '~/contexts';
 interface Props {
   autoExpand?: boolean;
   autoFocus?: boolean;
-  banned?: boolean;
+  banned?: any;
   CommentInputAreaRef?: React.RefObject<any>;
-  CommentRefs?: React.RefObject<any>[];
-  comments?: any[];
+  CommentRefs?: any;
+  comments: any[];
   commentsHidden?: boolean;
   commentsShown?: boolean;
   commentsLoadLimit?: number;
   disableReason?: string;
   inputAtBottom?: boolean;
   inputAreaInnerRef?: React.RefObject<any>;
-  inputTypeLabel?: string;
+  inputTypeLabel: string;
   isLoading?: boolean;
   isPreview?: boolean;
   isSubjectPannelComments?: boolean;
@@ -28,17 +28,17 @@ interface Props {
   noInput?: boolean;
   numInputRows?: number;
   numPreviews?: number;
-  onCommentSubmit?: (comment: any) => void;
-  onLoadMoreComments?: () => void;
-  onSetCommentSubmitted?: (comment: any) => void;
+  onCommentSubmit: (comment: any) => void;
+  onLoadMoreComments: () => void;
+  onSetCommentSubmitted: (comment: any) => void;
   parent: any;
   previewComments?: any[];
   showSecretButtonAvailable?: boolean;
   subject?: any;
-  subjectId?: string;
+  subjectId?: number;
   theme?: any;
-  uploadComment?: (comment: any) => void;
-  userId?: string;
+  uploadComment: (comment: any) => void;
+  userId?: number;
   rootContent?: any;
 }
 export default function Container({

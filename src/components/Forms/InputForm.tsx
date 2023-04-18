@@ -35,22 +35,6 @@ const viewSecretMessageWithoutRespondingLabel = localize(
   'viewSecretMessageWithoutResponding'
 );
 
-InputForm.propTypes = {
-  autoFocus: PropTypes.bool,
-  className: PropTypes.string,
-  disableReason: PropTypes.string,
-  formGroupStyle: PropTypes.object,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  onSubmit: PropTypes.func.isRequired,
-  parent: PropTypes.object.isRequired,
-  placeholder: PropTypes.string,
-  rows: PropTypes.number,
-  onViewSecretAnswer: PropTypes.func,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  targetCommentId: PropTypes.number
-};
-
 function InputForm({
   autoFocus,
   className = '',
