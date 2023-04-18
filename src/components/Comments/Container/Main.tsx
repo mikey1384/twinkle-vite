@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import Comment from './Comment';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -7,42 +6,6 @@ import PinnedComment from './PinnedComment';
 import CommentInputArea from './CommentInputArea';
 import { useAppContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-
-Main.propTypes = {
-  autoFocus: PropTypes.bool,
-  autoExpand: PropTypes.bool,
-  banned: PropTypes.object,
-  CommentRefs: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
-  comments: PropTypes.arrayOf(PropTypes.object),
-  commentsHidden: PropTypes.bool,
-  disableReason: PropTypes.string,
-  CommentInputAreaRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
-  commentsShown: PropTypes.bool,
-  commentsLoadLimit: PropTypes.number,
-  inputAtBottom: PropTypes.bool,
-  inputAreaInnerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
-  inputTypeLabel: PropTypes.string,
-  isLoading: PropTypes.bool,
-  isPreview: PropTypes.bool,
-  isSubjectPannelComments: PropTypes.bool,
-  loadMoreShown: PropTypes.bool,
-  loadMoreButtonColor: PropTypes.string,
-  noInput: PropTypes.bool,
-  numInputRows: PropTypes.number,
-  numPreviews: PropTypes.number,
-  onLoadMoreComments: PropTypes.func,
-  onCommentSubmit: PropTypes.func,
-  onSetCommentSubmitted: PropTypes.func,
-  parent: PropTypes.object,
-  previewComments: PropTypes.arrayOf(PropTypes.object),
-  showSecretButtonAvailable: PropTypes.bool,
-  subject: PropTypes.object,
-  subjectId: PropTypes.number,
-  theme: PropTypes.string,
-  uploadComment: PropTypes.func,
-  userId: PropTypes.number,
-  rootContent: PropTypes.object
-};
 
 export default function Main({
   autoExpand,

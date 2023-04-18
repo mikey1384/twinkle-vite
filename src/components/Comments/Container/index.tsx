@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Main from './Main';
 import SearchPosterInput from './SearchPosterInput';
@@ -6,42 +6,41 @@ import Searched from './Searched';
 import { useContentState } from '~/helpers/hooks';
 import { useContentContext } from '~/contexts';
 
-Container.propTypes = {
-  autoFocus: PropTypes.bool,
-  autoExpand: PropTypes.bool,
-  banned: PropTypes.object,
-  CommentRefs: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
-  comments: PropTypes.arrayOf(PropTypes.object),
-  commentsHidden: PropTypes.bool,
-  CommentInputAreaRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
-  commentsShown: PropTypes.bool,
-  commentsLoadLimit: PropTypes.number,
-  disableReason: PropTypes.string,
-  inputAtBottom: PropTypes.bool,
-  inputAreaInnerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
-  inputTypeLabel: PropTypes.string,
-  isLoading: PropTypes.bool,
-  isPreview: PropTypes.bool,
-  isSubjectPannelComments: PropTypes.bool,
-  loadMoreShown: PropTypes.bool,
-  loadMoreButtonColor: PropTypes.string,
-  noInput: PropTypes.bool,
-  numInputRows: PropTypes.number,
-  numPreviews: PropTypes.number,
-  onLoadMoreComments: PropTypes.func,
-  onCommentSubmit: PropTypes.func,
-  onSetCommentSubmitted: PropTypes.func,
-  parent: PropTypes.object,
-  previewComments: PropTypes.arrayOf(PropTypes.object),
-  showSecretButtonAvailable: PropTypes.bool,
-  subject: PropTypes.object,
-  subjectId: PropTypes.number,
-  theme: PropTypes.string,
-  uploadComment: PropTypes.func,
-  userId: PropTypes.number,
-  rootContent: PropTypes.object
-};
-
+interface Props {
+  autoExpand?: boolean;
+  autoFocus?: boolean;
+  banned?: boolean;
+  CommentInputAreaRef?: React.RefObject<any>;
+  CommentRefs?: React.RefObject<any>[];
+  comments?: any[];
+  commentsHidden?: boolean;
+  commentsShown?: boolean;
+  commentsLoadLimit?: number;
+  disableReason?: string;
+  inputAtBottom?: boolean;
+  inputAreaInnerRef?: React.RefObject<any>;
+  inputTypeLabel?: string;
+  isLoading?: boolean;
+  isPreview?: boolean;
+  isSubjectPannelComments?: boolean;
+  loadMoreShown?: boolean;
+  loadMoreButtonColor: string;
+  noInput?: boolean;
+  numInputRows?: number;
+  numPreviews?: number;
+  onCommentSubmit?: (comment: any) => void;
+  onLoadMoreComments?: () => void;
+  onSetCommentSubmitted?: (comment: any) => void;
+  parent: any;
+  previewComments?: any[];
+  showSecretButtonAvailable?: boolean;
+  subject?: any;
+  subjectId?: string;
+  theme?: any;
+  uploadComment?: (comment: any) => void;
+  userId?: string;
+  rootContent?: any;
+}
 export default function Container({
   autoExpand,
   autoFocus,
@@ -76,7 +75,7 @@ export default function Container({
   uploadComment,
   userId,
   rootContent
-}) {
+}: Props) {
   const { searchedPoster } = useContentState({
     contentType: parent.contentType,
     contentId: parent.contentId
@@ -89,8 +88,6 @@ export default function Container({
     <ErrorBoundary componentPath="Comments/Container">
       {!isPreview && (loadMoreShown || !!searchedPoster) ? (
         <SearchPosterInput
-          contentId={parent.contentId}
-          contentType={parent.contentType}
           selectedUser={searchedPoster}
           onSetSelectedUser={(poster) =>
             onSetSearchedPoster({
