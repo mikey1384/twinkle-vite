@@ -14,15 +14,13 @@ export default function PinnedComment({
   parent,
   rootContent,
   subject,
-  theme,
-  userId
+  theme
 }: {
   commentId: number;
   parent: any;
   rootContent: any;
   subject: any;
   theme: any;
-  userId: number;
 }) {
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);

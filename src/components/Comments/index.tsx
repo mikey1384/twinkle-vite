@@ -1,5 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import Context from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Container from './Container';
@@ -15,52 +21,51 @@ import {
   useKeyContext
 } from '~/contexts';
 
-Comments.propTypes = {
-  autoExpand: PropTypes.bool,
-  autoFocus: PropTypes.bool,
-  commentsHidden: PropTypes.bool,
-  numPreviews: PropTypes.number,
-  className: PropTypes.string,
-  commentsShown: PropTypes.bool,
-  comments: PropTypes.array.isRequired,
-  commentsLoadLimit: PropTypes.number,
-  disableReason: PropTypes.string,
-  inputAreaInnerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
-  inputAtBottom: PropTypes.bool,
-  inputTypeLabel: PropTypes.string,
-  isSubjectPannelComments: PropTypes.bool,
-  isLoading: PropTypes.bool,
-  loadMoreButton: PropTypes.bool.isRequired,
-  numInputRows: PropTypes.number,
-  noInput: PropTypes.bool,
-  onCommentSubmit: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEditDone: PropTypes.func.isRequired,
-  onLikeClick: PropTypes.func.isRequired,
-  onLoadMoreComments: PropTypes.func.isRequired,
-  onLoadMoreReplies: PropTypes.func.isRequired,
-  onPreviewClick: PropTypes.func,
-  onLoadRepliesOfReply: PropTypes.func,
-  onReplySubmit: PropTypes.func.isRequired,
-  onRewardCommentEdit: PropTypes.func.isRequired,
-  parent: PropTypes.shape({
-    id: PropTypes.number,
-    commentId: PropTypes.number,
-    contentId: PropTypes.number.isRequired,
-    contentType: PropTypes.string.isRequired,
-    pinnedCommentId: PropTypes.number,
-    rewardLevel: PropTypes.number,
-    secretAnswer: PropTypes.string,
-    secretAttachment: PropTypes.object
-  }).isRequired,
-  rootContent: PropTypes.object,
-  showSecretButtonAvailable: PropTypes.bool,
-  style: PropTypes.object,
-  subject: PropTypes.object,
-  theme: PropTypes.string,
-  userId: PropTypes.number
-};
-
+interface Props {
+  autoFocus?: boolean;
+  autoExpand?: boolean;
+  comments?: any[];
+  commentsHidden?: boolean;
+  commentsLoadLimit?: number;
+  commentsShown?: boolean;
+  className?: string;
+  disableReason?: string;
+  inputAreaInnerRef?: any;
+  inputAtBottom?: boolean;
+  inputTypeLabel: string;
+  isSubjectPannelComments?: boolean;
+  isLoading?: boolean;
+  loadMoreButton?: boolean;
+  noInput?: boolean;
+  numInputRows?: number;
+  numPreviews?: number;
+  onCommentSubmit: (v: any) => void;
+  onDelete: (v: any) => void;
+  onEditDone?: (v: any) => void;
+  onLikeClick?: (v: any) => void;
+  onLoadRepliesOfReply?: (v: any) => void;
+  onLoadMoreComments: () => void;
+  onLoadMoreReplies?: (v: any) => void;
+  onPreviewClick?: (v: any) => void;
+  onReplySubmit: (v: any) => void;
+  onRewardCommentEdit?: (v: any) => void;
+  parent: {
+    id: number;
+    commentId: number;
+    contentId: number;
+    contentType: string;
+    pinnedCommentId: number;
+    rewardLevel: number;
+    secretAnswer: string;
+    secretAttachment: any;
+  };
+  rootContent?: any;
+  showSecretButtonAvailable?: boolean;
+  subject?: any;
+  style?: any;
+  theme?: string;
+  userId?: number;
+}
 function Comments({
   autoFocus,
   autoExpand,
@@ -78,7 +83,7 @@ function Comments({
   loadMoreButton,
   noInput,
   numInputRows,
-  numPreviews,
+  numPreviews = 0,
   onCommentSubmit,
   onDelete,
   onEditDone,
@@ -96,7 +101,7 @@ function Comments({
   style,
   theme,
   userId
-}) {
+}: Props) {
   const { banned, profileTheme } = useKeyContext((v) => v.myState);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const {
@@ -118,7 +123,7 @@ function Comments({
   const [prevComments, setPrevComments] = useState(comments);
   const ContainerRef = useRef(null);
   const CommentInputAreaRef = useRef(null);
-  const CommentRefs = {};
+  const CommentRefs: any = {};
   const subjectId = useMemo(
     () => (parent.contentType === 'subject' ? parent.contentId : subject?.id),
     [parent.contentId, parent.contentType, subject?.id]
@@ -136,6 +141,17 @@ function Comments({
       subjectId,
       targetCommentId,
       isReply
+    }: {
+      attachment: any;
+      commentContent: string;
+      contentType: string;
+      contentId: number;
+      filePath: string;
+      file: any;
+      rootCommentId: number;
+      subjectId: number;
+      targetCommentId: number;
+      isReply: boolean;
     }) => {
       if (banned?.posting) {
         return;
@@ -218,7 +234,13 @@ function Comments({
         console.error(error);
       }
 
-      function handleUploadProgress({ loaded, total }) {
+      function handleUploadProgress({
+        loaded,
+        total
+      }: {
+        loaded: number;
+        total: number;
+      }) {
         const userChanged = checkUserChange(userId);
         if (userChanged) {
           return;
@@ -235,7 +257,15 @@ function Comments({
   );
 
   const handleSubmitReply = useCallback(
-    async ({ content, rootCommentId, targetCommentId }) => {
+    async ({
+      content,
+      rootCommentId,
+      targetCommentId
+    }: {
+      content: string;
+      rootCommentId: number;
+      targetCommentId: number;
+    }) => {
       if (banned?.posting) {
         return;
       }
@@ -264,7 +294,7 @@ function Comments({
   );
 
   const handleDeleteComment = useCallback(
-    async (commentId) => {
+    async (commentId: number) => {
       setDeleting(true);
       await deleteContent({ id: commentId, contentType: 'comment' });
       onDelete(commentId);

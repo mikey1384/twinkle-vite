@@ -16,11 +16,11 @@ interface Props {
   inputTypeLabel: string;
   InputFormRef?: React.RefObject<any>;
   numInputRows?: number;
-  onSubmit: (v: any) => void;
-  onViewSecretAnswer?: () => void;
+  onSubmit: (v: any) => any;
+  onViewSecretAnswer?: (() => any) | null;
   parent: any;
   rootCommentId?: string;
-  subjectId?: string;
+  subjectId?: number;
   style?: React.CSSProperties;
   subjectRewardLevel?: number;
   targetCommentId?: number;

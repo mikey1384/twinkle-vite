@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Comment from './Comment';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -7,6 +7,45 @@ import CommentInputArea from './CommentInputArea';
 import { useAppContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 
+interface Props {
+  autoExpand?: boolean;
+  autoFocus?: boolean;
+  banned?: {
+    posting?: boolean;
+  };
+  CommentInputAreaRef?: React.RefObject<any>;
+  CommentRefs: {
+    [key: string]: React.RefObject<any>;
+  };
+  comments: any[];
+  commentsHidden?: boolean;
+  commentsShown?: boolean;
+  commentsLoadLimit?: number;
+  disableReason?: string;
+  inputAtBottom?: boolean;
+  inputAreaInnerRef?: React.RefObject<any>;
+  inputTypeLabel: string;
+  isLoading?: boolean;
+  isPreview?: boolean;
+  isSubjectPannelComments?: boolean;
+  loadMoreShown?: boolean;
+  loadMoreButtonColor?: string;
+  noInput?: boolean;
+  numInputRows?: number;
+  numPreviews?: number;
+  onCommentSubmit: (comment: any) => void;
+  onLoadMoreComments: (data: any) => void;
+  onSetCommentSubmitted: (comment: any) => void;
+  parent: any;
+  previewComments?: any[];
+  showSecretButtonAvailable?: boolean;
+  subject?: any;
+  subjectId?: number;
+  theme?: any;
+  uploadComment: (comment: any) => any;
+  userId?: number;
+  rootContent?: any;
+}
 export default function Main({
   autoExpand,
   autoFocus,
@@ -41,7 +80,7 @@ export default function Main({
   uploadComment,
   userId,
   rootContent
-}) {
+}: Props) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const rootContentState = useContentState({
@@ -69,7 +108,7 @@ export default function Main({
   ]);
 
   const renderInputArea = useCallback(
-    (style) => {
+    (style?: React.CSSProperties) => {
       return (
         <CommentInputArea
           autoFocus={autoFocus}
@@ -157,7 +196,7 @@ export default function Main({
             contentType: parent.contentType
           });
           setIsLoadingMore(false);
-        } catch (error) {
+        } catch (error: any) {
           console.error(error.response || error);
         }
       }
@@ -188,7 +227,8 @@ export default function Main({
         !noInput &&
         (commentsShown || autoExpand) &&
         renderInputArea()}
-      {(commentsShown || autoExpand || numPreviews > 0) && !commentsHidden ? (
+      {(commentsShown || autoExpand || (numPreviews || 0) > 0) &&
+      !commentsHidden ? (
         <div style={{ width: '100%' }}>
           {isLoading && <Loading theme={theme} />}
           {!isLoading &&
@@ -200,7 +240,6 @@ export default function Main({
                 rootContent={rootContent}
                 subject={subject}
                 commentId={pinnedCommentId}
-                userId={userId}
                 theme={theme}
               />
             )}
@@ -209,7 +248,7 @@ export default function Main({
             loadMoreShown &&
             renderLoadMoreButton()}
           {!isLoading &&
-            (isPreview ? previewComments : comments).map((comment) => (
+            (isPreview ? previewComments : comments)?.map((comment) => (
               <Comment
                 disableReason={disableReason}
                 isSubjectPannelComment={isSubjectPannelComments}
@@ -222,7 +261,6 @@ export default function Main({
                 comment={comment}
                 pinnedCommentId={pinnedCommentId}
                 key={comment.id}
-                userId={userId}
               />
             ))}
           {(!inputAtBottom || isRepliesOfReply) &&
@@ -242,6 +280,11 @@ export default function Main({
     rootCommentId,
     subjectId,
     targetCommentId
+  }: {
+    content: string;
+    rootCommentId?: number;
+    subjectId?: number;
+    targetCommentId?: number;
   }) {
     if (banned?.posting) {
       return;

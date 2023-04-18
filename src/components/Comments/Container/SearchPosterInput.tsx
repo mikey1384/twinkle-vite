@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
 import SelectedUser from '~/components/Texts/SelectedUser';
@@ -8,12 +7,13 @@ import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { useSearch } from '~/helpers/hooks';
 
-SearchPosterInput.propTypes = {
-  selectedUser: PropTypes.object,
-  onSetSelectedUser: PropTypes.func.isRequired
-};
-
-export default function SearchPosterInput({ selectedUser, onSetSelectedUser }) {
+export default function SearchPosterInput({
+  selectedUser,
+  onSetSelectedUser
+}: {
+  selectedUser: any;
+  onSetSelectedUser: (user: any) => void;
+}) {
   const [searchedUsers, setSearchedUsers] = useState([]);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const [searchText, setSearchText] = useState('');
@@ -73,13 +73,13 @@ export default function SearchPosterInput({ selectedUser, onSetSelectedUser }) {
     </div>
   );
 
-  function handleSelectUser(user) {
+  function handleSelectUser(user: any) {
     onSetSelectedUser(user);
     setSearchedUsers([]);
     setSearchText('');
   }
 
-  async function handleUserSearch(text) {
+  async function handleUserSearch(text: string) {
     const users = await searchUsers(text);
     setSearchedUsers(users);
   }
