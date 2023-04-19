@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Context from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Heading from './Heading';
@@ -18,19 +17,18 @@ import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import localize from '~/constants/localize';
 
-ContentPanel.propTypes = {
-  alwaysShow: PropTypes.bool,
-  autoExpand: PropTypes.bool,
-  className: PropTypes.string,
-  commentsLoadLimit: PropTypes.number,
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  numPreviewComments: PropTypes.number,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  zIndex: PropTypes.number
-};
-
+interface Props {
+  alwaysShow?: boolean;
+  autoExpand?: boolean;
+  className?: string;
+  commentsLoadLimit?: number;
+  contentId: number;
+  contentType: string;
+  numPreviewComments?: number;
+  style?: React.CSSProperties;
+  theme: string;
+  zIndex?: number;
+}
 export default function ContentPanel({
   alwaysShow,
   autoExpand,
@@ -42,7 +40,7 @@ export default function ContentPanel({
   style = {},
   theme,
   zIndex = 1
-}) {
+}: Props) {
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
@@ -113,15 +111,15 @@ export default function ContentPanel({
     previousPlaceholderHeight
   );
   const [visible, setVisible] = useState(previousVisible);
-  const visibleRef = useRef(null);
+  const visibleRef: React.MutableRefObject<any> = useRef(null);
   useLazyLoad({
     PanelRef,
     inView,
-    onSetPlaceholderHeight: (height) => {
+    onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
     },
-    onSetVisible: (visible) => {
+    onSetVisible: (visible: boolean) => {
       setVisible(visible);
       visibleRef.current = visible;
     },
@@ -235,7 +233,7 @@ export default function ContentPanel({
               <div
                 ref={PanelRef}
                 style={{
-                  height: !loaded && '15rem',
+                  height: !loaded ? '15rem' : '',
                   position: 'relative',
                   zIndex
                 }}
@@ -296,7 +294,6 @@ export default function ContentPanel({
                 )}
                 {contentState.loaded && targetObj?.subject?.id && (
                   <ContentListItem
-                    comments={contentState.comments}
                     style={{
                       zIndex: 1,
                       position: 'relative'
@@ -310,7 +307,6 @@ export default function ContentPanel({
                       ...targetObj.subject,
                       contentType: 'subject'
                     }}
-                    onChangeSpoilerStatus={onChangeSpoilerStatus}
                   />
                 )}
                 {contentType === 'comment' &&

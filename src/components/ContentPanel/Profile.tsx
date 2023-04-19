@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import RankBar from '~/components/RankBar';
 import UserDetails from '~/components/UserDetails';

@@ -13,7 +13,7 @@ export default function Loading({
   text?: string;
   innerStyle?: CSSProperties;
   style?: CSSProperties;
-  theme?: 'light' | 'dark';
+  theme?: string;
 }) {
   return (
     <div
