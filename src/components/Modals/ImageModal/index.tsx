@@ -10,7 +10,7 @@ interface Props {
   caption?: string;
   hasCaption?: boolean;
   modalOverModal?: boolean;
-  onEditCaption: (caption: string) => void;
+  onEditCaption?: (caption: string) => void;
   onHide: () => void;
   fileName?: string;
   src: string;
@@ -18,7 +18,7 @@ interface Props {
   userIsUploader?: boolean;
 }
 export default function ImageModal({
-  caption,
+  caption = '',
   hasCaption,
   modalOverModal,
   onEditCaption,
@@ -26,7 +26,7 @@ export default function ImageModal({
   fileName,
   src,
   downloadable = true,
-  userIsUploader
+  userIsUploader = false
 }: Props) {
   const {
     done: { color: doneColor }
@@ -92,7 +92,7 @@ export default function ImageModal({
               loading={submitting}
               onClick={async () => {
                 setSubmitting(true);
-                await onEditCaption(finalizeEmoji(editedCaption));
+                await onEditCaption?.(finalizeEmoji(editedCaption));
                 setSubmitting(false);
                 setIsEditing(false);
               }}
