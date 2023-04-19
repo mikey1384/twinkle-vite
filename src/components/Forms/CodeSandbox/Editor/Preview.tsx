@@ -1,16 +1,19 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import PreviewErrorBoundary from './PreviewErrorBoundary';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 
-Preview.propTypes = {
-  evaling: PropTypes.bool,
-  style: PropTypes.object,
-  children: PropTypes.node,
-  onError: PropTypes.func
-};
-
-export default function Preview({ evaling, style, children, onError }) {
+export default function Preview({
+  evaling,
+  style,
+  children,
+  onError
+}: {
+  evaling: any;
+  style: any;
+  children: any;
+  onError: any;
+}) {
   return (
     <PreviewErrorBoundary
       onError={onError}
