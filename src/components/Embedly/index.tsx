@@ -1,4 +1,4 @@
-import {
+import React, {
   createElement,
   memo,
   useCallback,
@@ -28,27 +28,26 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 
 const API_URL = `${URL}/content`;
 
-Embedly.propTypes = {
-  contentId: PropTypes.number,
-  contentType: PropTypes.string,
-  directUrl: PropTypes.string,
-  defaultThumbUrl: PropTypes.string,
-  defaultActualTitle: PropTypes.string,
-  defaultActualDescription: PropTypes.string,
-  extractedUrl: PropTypes.string,
-  imageWidth: PropTypes.string,
-  imageOnly: PropTypes.bool,
-  loadingHeight: PropTypes.string,
-  mobileLoadingHeight: PropTypes.string,
-  noLink: PropTypes.bool,
-  onHideAttachment: PropTypes.func,
-  small: PropTypes.bool,
-  style: PropTypes.object,
-  userCanEditThis: PropTypes.bool,
-  videoWidth: PropTypes.string,
-  videoHeight: PropTypes.string
-};
-
+interface Props {
+  contentId: number;
+  contentType?: string;
+  directUrl?: string;
+  defaultThumbUrl?: string;
+  defaultActualTitle?: string;
+  defaultActualDescription?: string;
+  extractedUrl?: string;
+  imageWidth?: string;
+  imageOnly?: boolean;
+  loadingHeight?: string;
+  mobileLoadingHeight?: string;
+  noLink?: boolean;
+  onHideAttachment?: () => void;
+  small?: boolean;
+  style?: React.CSSProperties;
+  userCanEditThis?: boolean;
+  videoWidth?: string;
+  videoHeight?: string;
+}
 function Embedly({
   contentId,
   contentType = 'url',
@@ -68,7 +67,7 @@ function Embedly({
   userCanEditThis,
   videoWidth,
   videoHeight
-}) {
+}: Props) {
   const navigate = useNavigate();
   const makeThumbnailSecure = useAppContext(
     (v) => v.requestHelpers.makeThumbnailSecure
@@ -120,7 +119,7 @@ function Embedly({
 
   const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(false);
-  const [twinkleVideoId, setTwinkleVideoId] = useState(false);
+  const [twinkleVideoId, setTwinkleVideoId] = useState('');
   const [timeAt, setTimeAt] = useState(0);
   const [startingPosition, setStartingPosition] = useState(0);
   const { notFound } = useContentState({
@@ -130,7 +129,7 @@ function Embedly({
   const isYouTube = useMemo(() => {
     return contentType === 'chat' && isValidYoutubeUrl(url);
   }, [contentType, url]);
-  const YTPlayerRef = useRef(null);
+  const YTPlayerRef: React.RefObject<any> = useRef(null);
   const loadingRef = useRef(false);
   const fallbackImage = '/img/link.png';
   const contentCss = useMemo(
@@ -185,7 +184,7 @@ function Embedly({
         onSetActualDescription({ contentId, contentType, description });
         onSetActualTitle({ contentId, contentType, title });
         onSetSiteUrl({ contentId, contentType, siteUrl: site });
-      } catch (error) {
+      } catch (error: any) {
         setImageUrl(fallbackImage);
         onHideAttachment();
         console.error(error.response || error);
