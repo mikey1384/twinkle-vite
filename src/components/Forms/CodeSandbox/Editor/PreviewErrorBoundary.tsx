@@ -1,25 +1,27 @@
-import { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Color, borderRadius } from '~/constants/css';
 import Button from '~/components/Button';
 
-export default class PreviewErrorBoundary extends Component {
-  static propTypes = {
-    children: PropTypes.node,
-    innerRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
-    onError: PropTypes.func,
-    userId: PropTypes.number,
-    username: PropTypes.string
-  };
-
-  constructor(props) {
+interface Props {
+  className: string;
+  onError: () => void;
+  children: any;
+  innerRef?: any;
+  style: any;
+}
+interface State {
+  hasError: boolean;
+}
+export default class PreviewErrorBoundary extends Component<Props, State> {
+  private onError: (arg: any) => void;
+  constructor(props: any) {
     super(props);
     this.state = { hasError: false };
     this.onError = this.props.onError;
   }
 
-  componentDidCatch(error) {
+  componentDidCatch(error: any) {
     this.setState({ hasError: true });
     this.onError(error.toString());
   }
