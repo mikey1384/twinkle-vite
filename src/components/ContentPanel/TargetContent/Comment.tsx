@@ -1,5 +1,4 @@
-import { memo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -17,24 +16,6 @@ import { useContentState } from '~/helpers/hooks';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useAppContext, useContentContext } from '~/contexts';
 
-Comment.propTypes = {
-  comment: PropTypes.shape({
-    id: PropTypes.number,
-    content: PropTypes.string,
-    filePath: PropTypes.string,
-    fileName: PropTypes.string,
-    fileSize: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    thumbUrl: PropTypes.string,
-    timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-  }).isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEditDone: PropTypes.func.isRequired,
-  profilePicUrl: PropTypes.string,
-  theme: PropTypes.string,
-  userId: PropTypes.number,
-  username: PropTypes.string.isRequired
-};
-
 function Comment({
   comment,
   comment: { id, content, fileName, filePath, fileSize, timeStamp, thumbUrl },
@@ -44,6 +25,14 @@ function Comment({
   theme,
   userId,
   username
+}: {
+  comment: any;
+  onDelete: (arg0: any) => void;
+  onEditDone: (arg0: any) => void;
+  profilePicUrl: string;
+  theme: string;
+  userId: number;
+  username: string;
 }) {
   const navigate = useNavigate();
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
@@ -204,7 +193,7 @@ function Comment({
     onDelete(comment.id);
   }
 
-  async function handleEditComment(editedComment) {
+  async function handleEditComment(editedComment: string) {
     try {
       await editContent({
         editedComment,

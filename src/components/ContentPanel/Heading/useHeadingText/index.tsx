@@ -5,7 +5,17 @@ import { useKeyContext } from '~/contexts';
 import renderEnglishMessage from './localization/english';
 import renderKoreanMessage from './localization/korean';
 
-export default function useHeadingText({ action, contentObj, rootObj, theme }) {
+export default function useHeadingText({
+  action,
+  contentObj,
+  rootObj,
+  theme
+}: {
+  action: string;
+  contentObj: any;
+  rootObj: any;
+  theme: string;
+}) {
   const {
     id,
     byUser,

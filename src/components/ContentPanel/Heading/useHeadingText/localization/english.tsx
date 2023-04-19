@@ -1,9 +1,27 @@
+import React from 'react';
 import { Color } from '~/constants/css';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
-import localize from '~/constants/localize';
+import { cardLevelHash } from '~/constants/defaultValues';
 
-export default function renderKoreanMessage({
+interface Props {
+  id: string;
+  action: string;
+  byUser: any;
+  contentColor: string;
+  commentId: number;
+  contentObj: any;
+  contentType: string;
+  linkColor: string;
+  replyId: number;
+  rootObj: any;
+  rootType: string;
+  targetObj: any;
+  theme: string;
+  uploader: any;
+  userLinkColor: string;
+}
+export default function renderEnglishMessage({
   id,
   action,
   byUser,
@@ -19,9 +37,15 @@ export default function renderKoreanMessage({
   theme,
   uploader,
   userLinkColor
-}) {
+}: Props) {
   let contentLabel =
-    rootType === 'url' ? 'link' : rootType === 'subject' ? 'subject' : rootType;
+    rootType === 'aiStory'
+      ? 'AI Story'
+      : rootType === 'url'
+      ? 'link'
+      : rootType === 'subject'
+      ? 'subject'
+      : rootType;
   const isSubjectComment =
     contentType === 'comment' &&
     targetObj?.subject &&
@@ -35,103 +59,104 @@ export default function renderKoreanMessage({
     case 'video':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} />
-          님이 동영상을 게시했습니다:{' '}
+          <UsernameText user={uploader} color={Color[linkColor]()} /> uploaded a
+          video:{' '}
           <ContentLink
-            theme={theme}
             content={contentObj}
             contentType={contentType}
+            theme={theme}
           />{' '}
         </>
       );
     case 'comment':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} />
-          님이{' '}
+          <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
           <ContentLink
-            theme={theme}
-            content={isSubjectComment ? targetObj?.subject : rootObj}
-            contentType={isSubjectComment ? 'subject' : rootType}
-          />
-          ({localize(contentLabel)})에 {renderTargetAction()}
-          <ContentLink
-            theme={theme}
             content={{ id, title: action }}
             contentType={contentType}
             style={{ color: contentLinkColor }}
+            theme={theme}
+          />
+          {renderTargetAction()} {contentLabel}:{' '}
+          <ContentLink
+            content={isSubjectComment ? targetObj?.subject : rootObj}
+            contentType={isSubjectComment ? 'subject' : rootType}
+            theme={theme}
           />{' '}
         </>
       );
     case 'url':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> 님이
-          링크를 공유했습니다:{' '}
+          <UsernameText user={uploader} color={Color[linkColor]()} /> shared a
+          link:&nbsp;
           <ContentLink
-            theme={theme}
             content={contentObj}
             contentType={contentType}
+            theme={theme}
           />{' '}
         </>
       );
     case 'subject':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} />
-          님이{' '}
-          {rootObj.id && (
-            <>
-              {localize(contentLabel)}(
-              <ContentLink
-                theme={theme}
-                content={rootObj}
-                contentType={rootType}
-              />
-              )에{' '}
-            </>
-          )}
+          <UsernameText user={uploader} color={Color[linkColor]()} /> started a{' '}
           <ContentLink
-            theme={theme}
-            content={{ id, title: '주제를' }}
+            content={{ id, title: 'subject ' }}
             contentType={contentType}
+            theme={theme}
             style={{
               color: byUser ? Color[userLinkColor]() : contentLinkColor
             }}
-          />{' '}
-          개설했습니다{' '}
+          />
+          {rootObj.id && (
+            <>
+              on {contentLabel}:{' '}
+              <ContentLink
+                content={rootObj}
+                contentType={rootType}
+                theme={theme}
+              />{' '}
+            </>
+          )}
         </>
       );
     case 'pass':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} />
-          님이{' '}
+          <UsernameText user={uploader} color={Color[linkColor]()} /> completed
+          a{' '}
           <ContentLink
-            theme={theme}
             content={{
               id: rootObj.id,
-              title: `${rootObj.isTask ? '과제' : '임무'}(${rootObj.title})`,
+              title: `${rootObj.isTask ? 'task' : 'mission'}: ${rootObj.title}`,
               missionType: rootObj.missionType,
               rootMissionType: rootObj.rootMission?.missionType
             }}
             contentType="mission"
             style={{ color: Color.orange() }}
-          />
-          를 완료했습니다{' '}
+            theme={theme}
+          />{' '}
         </>
       );
     case 'aiStory':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} />
-          님이{' '}
+          <UsernameText user={uploader} color={Color[linkColor]()} /> cleared a{' '}
+          <b
+            style={{
+              color: Color?.[cardLevelHash?.[contentObj?.difficulty]?.color]?.()
+            }}
+          >
+            Level {contentObj.difficulty} AI Story
+          </b>
+          :{' '}
           <ContentLink
-            theme={theme}
             content={contentObj}
             contentType={contentType}
-          />
-          에 대한 AI 스토리를 게시했습니다{' '}
+            theme={theme}
+          />{' '}
         </>
       );
     default:
@@ -142,25 +167,26 @@ export default function renderKoreanMessage({
     if (targetObj?.comment && !targetObj?.comment.notFound) {
       return (
         <span>
+          {' '}
           <UsernameText
             user={targetObj.comment.uploader}
             color={Color[linkColor]()}
           />
-          님이 남기신{' '}
+          {"'s "}
           <ContentLink
-            theme={theme}
             content={{
               id: replyId || commentId,
               title: replyId
-                ? localize('reply')
+                ? 'reply '
                 : rootType === 'user'
-                ? localize('message')
-                : localize('comment')
+                ? 'message '
+                : 'comment '
             }}
             contentType="comment"
             style={{ color: contentLinkColor }}
+            theme={theme}
           />
-          에{' '}
+          {!replyId && rootType === 'user' ? 'to' : 'on'}
         </span>
       );
     }
