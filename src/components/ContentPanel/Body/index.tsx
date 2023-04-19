@@ -21,9 +21,18 @@ import BottomInterface from './BottomInterface';
 
 const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
 
+interface Props {
+  autoExpand?: boolean;
+  commentsShown?: boolean;
+  contentObj: any;
+  inputAtBottom?: boolean;
+  numPreviewComments?: number;
+  onChangeSpoilerStatus: (params: object) => void;
+  theme: string;
+}
 export default function Body({
-  autoExpand,
-  commentsShown,
+  autoExpand = false,
+  commentsShown = false,
   contentObj,
   contentObj: {
     commentsLoaded,
@@ -44,10 +53,10 @@ export default function Body({
     uploader = {}
   },
   inputAtBottom,
-  numPreviewComments,
+  numPreviewComments = 0,
   onChangeSpoilerStatus,
   theme
-}) {
+}: Props) {
   const closeContent = useAppContext((v) => v.requestHelpers.closeContent);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
@@ -145,7 +154,7 @@ export default function Body({
     onReplySubmit,
     onSetCommentsShown,
     onSetRewardLevel
-  } = useContext(LocalContext);
+  } = useContext<{ [key: string]: any }>(LocalContext);
   const [userListModalShown, setUserListModalShown] = useState(false);
   const [moderatorName, setModeratorName] = useState('');
   const [cannotChangeModalShown, setCannotChangeModalShown] = useState(false);
@@ -154,13 +163,13 @@ export default function Body({
   const [loadingComments, setLoadingComments] = useState(false);
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
-  const CommentInputAreaRef = useRef(null);
+  const CommentInputAreaRef: React.RefObject<any> = useRef(null);
   const RewardInterfaceRef = useRef(null);
 
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(
-        (recommendation) => recommendation.userId === userId
+        (recommendation: { userId: number }) => recommendation.userId === userId
       ).length > 0
     );
   }, [recommendations, userId]);
@@ -231,7 +240,7 @@ export default function Body({
         contentObj?.isClosedBy ? contentType : rootType
       }`;
     }
-    return null;
+    return undefined;
   }, [
     contentObj?.isClosedBy,
     contentType,
@@ -245,7 +254,7 @@ export default function Body({
       loadInitialComments(numPreviewComments);
     }
 
-    async function loadInitialComments(numPreviewComments) {
+    async function loadInitialComments(numPreviewComments: number) {
       if (!numPreviewComments) {
         setLoadingComments(true);
       }
@@ -354,7 +363,6 @@ export default function Body({
         {xpRewardInterfaceShown && contentType !== 'aiStory' && (
           <XPRewardInterface
             innerRef={RewardInterfaceRef}
-            isRecommendedByUser={isRecommendedByUser}
             contentType={contentType}
             contentId={contentId}
             onReward={() =>
@@ -395,7 +403,6 @@ export default function Body({
             comments={comments}
             commentsLoadLimit={commentsLoadLimit}
             commentsShown={commentsShown && !secretHidden}
-            contentId={contentId}
             disableReason={disableReason}
             inputAreaInnerRef={CommentInputAreaRef}
             inputAtBottom={inputAtBottom}
@@ -472,7 +479,7 @@ export default function Body({
     </ErrorBoundary>
   );
 
-  async function handleCommentSubmit(params) {
+  async function handleCommentSubmit(params: object) {
     if (
       contentType === 'subject' &&
       (contentObj.secretAnswer || contentObj.secretAttachment) &&
