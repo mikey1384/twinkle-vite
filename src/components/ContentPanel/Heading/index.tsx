@@ -1,5 +1,4 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import { useNavigate } from 'react-router-dom';
 import { timeSince } from '~/helpers/timeStampHelpers';
@@ -7,31 +6,15 @@ import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
 import useHeadingText from './useHeadingText';
 
-Heading.propTypes = {
-  action: PropTypes.string.isRequired,
-  theme: PropTypes.string,
-  contentObj: PropTypes.shape({
-    id: PropTypes.number,
-    byUser: PropTypes.oneOfType([PropTypes.number, PropTypes.bool]),
-    commentId: PropTypes.number,
-    contentType: PropTypes.string,
-    replyId: PropTypes.number,
-    rootObj: PropTypes.object,
-    rootId: PropTypes.number,
-    rootType: PropTypes.string,
-    subjectId: PropTypes.number,
-    targetObj: PropTypes.object,
-    timeStamp: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-      .isRequired,
-    uploader: PropTypes.object
-  }).isRequired
-};
-
 function Heading({
   action,
   theme,
   contentObj,
   contentObj: { contentType, id, rootType, rootId, timeStamp, uploader = {} }
+}: {
+  action: string;
+  theme: string;
+  contentObj: any;
 }) {
   const rootObj = useContentState({
     contentType: rootType,
