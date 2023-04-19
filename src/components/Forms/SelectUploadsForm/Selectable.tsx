@@ -1,5 +1,4 @@
-import { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef, useState } from 'react';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
@@ -9,14 +8,6 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 
-Selectable.propTypes = {
-  item: PropTypes.object,
-  selected: PropTypes.bool,
-  onSelect: PropTypes.func,
-  onDeselect: PropTypes.func,
-  contentType: PropTypes.string
-};
-
 const deviceIsMobile = isMobile(navigator);
 
 export default function Selectable({
@@ -25,13 +16,19 @@ export default function Selectable({
   onSelect,
   onDeselect,
   selected
+}: {
+  contentType?: string;
+  item: any;
+  onSelect: (id: string) => void;
+  onDeselect: (id: string) => void;
+  selected: boolean;
 }) {
   const {
     itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
   } = useKeyContext((v) => v.theme);
   const [onTitleHover, setOnTitleHover] = useState(false);
   const highlightColor = Color[itemSelectedColor](itemSelectedOpacity);
-  const ThumbLabelRef = useRef(null);
+  const ThumbLabelRef: React.RefObject<any> = useRef(null);
 
   return (
     <ErrorBoundary

@@ -1,5 +1,4 @@
-import { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
@@ -12,17 +11,6 @@ import {
 } from '~/helpers/stringHelpers';
 import { edit } from '~/constants/placeholders';
 
-EditTitleForm.propTypes = {
-  autoFocus: PropTypes.bool,
-  inputStyle: PropTypes.object,
-  maxLength: PropTypes.number,
-  onClickOutSide: PropTypes.func.isRequired,
-  onEditSubmit: PropTypes.func.isRequired,
-  savingEdit: PropTypes.bool,
-  style: PropTypes.object,
-  title: PropTypes.string.isRequired
-};
-
 export default function EditTitleForm({
   autoFocus,
   maxLength = 100,
@@ -32,6 +20,15 @@ export default function EditTitleForm({
   onEditSubmit,
   savingEdit,
   ...props
+}: {
+  autoFocus?: boolean;
+  inputStyle?: any;
+  maxLength?: number;
+  onClickOutSide: () => void;
+  onEditSubmit: (title: string) => void;
+  savingEdit?: boolean;
+  style?: any;
+  title: string;
 }) {
   const {
     success: { color: successColor }
@@ -70,7 +67,7 @@ export default function EditTitleForm({
       <div>
         <small
           style={{
-            color: title?.length > maxLength && 'red',
+            color: title?.length > maxLength ? 'red' : '',
             fontSize: '1.3rem',
             lineHeight: '2rem'
           }}
@@ -81,7 +78,7 @@ export default function EditTitleForm({
     </div>
   );
 
-  function handleKeyUp(event) {
+  function handleKeyUp(event: any) {
     setTitle(addEmoji(event.target.value));
     if (event.keyCode === 13) {
       handleEditSubmit();

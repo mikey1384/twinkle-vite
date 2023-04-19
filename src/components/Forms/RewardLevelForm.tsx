@@ -1,24 +1,10 @@
-import { useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect } from 'react';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
 const clearLabel = localize('clear');
-
-RewardLevelForm.propTypes = {
-  alreadyPosted: PropTypes.bool,
-  extendedRewardLevels: PropTypes.bool,
-  icon: PropTypes.string,
-  isMadeByUser: PropTypes.bool,
-  isFromContentInput: PropTypes.bool,
-  isFromSubjectInput: PropTypes.bool,
-  rewardLevel: PropTypes.number.isRequired,
-  onSetRewardLevel: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  themed: PropTypes.bool
-};
 
 export default function RewardLevelForm({
   alreadyPosted,
@@ -31,6 +17,17 @@ export default function RewardLevelForm({
   rewardLevel,
   onSetRewardLevel,
   style
+}: {
+  alreadyPosted: boolean;
+  extendedRewardLevels: boolean;
+  icon?: string;
+  isMadeByUser: boolean;
+  isFromContentInput: boolean;
+  isFromSubjectInput: boolean;
+  themed?: boolean;
+  rewardLevel: number;
+  onSetRewardLevel: (rewardLevel: number) => void;
+  style?: React.CSSProperties;
 }) {
   const { authLevel } = useKeyContext((v) => v.myState);
   const {

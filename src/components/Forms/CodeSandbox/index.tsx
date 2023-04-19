@@ -1,5 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState, useRef } from 'react';
 import Editor from './Editor';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -8,19 +7,18 @@ import { scrollElementToCenter } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { parse } from '@babel/parser';
 
-CodeSandbox.propTypes = {
-  code: PropTypes.string,
-  initialCode: PropTypes.string,
-  hasError: PropTypes.bool,
-  onSetCode: PropTypes.func.isRequired,
-  onSetErrorMsg: PropTypes.func,
-  onRunCode: PropTypes.func,
-  passed: PropTypes.bool,
-  prevUserId: PropTypes.number,
-  runButtonLabel: PropTypes.string,
-  style: PropTypes.object
-};
-
+interface Props {
+  code: string;
+  initialCode: string;
+  hasError: boolean;
+  onSetCode: (code: string) => void;
+  onSetErrorMsg: (errorMsg: string) => void;
+  onRunCode?: (arg: any) => void;
+  passed: boolean;
+  prevUserId: number;
+  runButtonLabel?: string;
+  style?: React.CSSProperties;
+}
 export default function CodeSandbox({
   code: globalCode,
   initialCode,
@@ -32,10 +30,10 @@ export default function CodeSandbox({
   prevUserId,
   runButtonLabel = 'Run',
   style
-}) {
+}: Props) {
   const formatCode = useAppContext((v) => v.requestHelpers.formatCode);
   const { userId } = useKeyContext((v) => v.myState);
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
   const ComponentRef = useRef(null);
   const [runButtonDisabled, setRunButtonDisabled] = useState(false);
   const [code, setCode] = useState(globalCode || initialCode);
@@ -67,7 +65,6 @@ export default function CodeSandbox({
         onSetAst={setAst}
         ast={ast}
         onParse={handleParse}
-        onClearTimeout={() => clearTimeout(timerRef.current)}
         onSetErrorMsg={onSetErrorMsg}
       />
       <div
@@ -135,7 +132,7 @@ export default function CodeSandbox({
     scrollElementToCenter(ComponentRef.current, -250);
   }
 
-  function handleParse(code) {
+  function handleParse(code: string) {
     return parse(code, {
       sourceType: 'module',
       plugins: ['jsx']
@@ -146,7 +143,7 @@ export default function CodeSandbox({
     onRunCode?.({ ast, code });
   }
 
-  function handleSetCode(text) {
+  function handleSetCode(text: string) {
     clearTimeout(timerRef.current);
     onSetErrorMsg?.('');
     setCode(text);

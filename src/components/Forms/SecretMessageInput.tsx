@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import {
@@ -41,10 +41,17 @@ export default function SecretMessageInput({
   onSetSecretAttachment,
   onThumbnailLoad,
   secretAnswer
+}: {
+  autoFocus?: boolean;
+  secretAnswer: string;
+  secretAttachment: any;
+  onSetSecretAnswer: (secretAnswer: string) => void;
+  onSetSecretAttachment: (secretAttachment: any) => void;
+  onThumbnailLoad: (thumbnail: string) => void;
 }) {
   const [onHover, setOnHover] = useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const FileInputRef = useRef(null);
+  const FileInputRef: React.RefObject<any> = useRef(null);
   const { authLevel, fileUploadLvl, twinkleXP, userId } = useKeyContext(
     (v) => v.myState
   );
@@ -97,10 +104,10 @@ export default function SecretMessageInput({
             value={secretAnswer}
             minRows={4}
             placeholder={enterSecretMessageLabel}
-            onChange={(event) =>
+            onChange={(event: any) =>
               onSetSecretAnswer(addEmoji(event.target.value))
             }
-            onKeyUp={(event) => {
+            onKeyUp={(event: any) => {
               if (event.key === ' ') {
                 onSetSecretAnswer(addEmoji(event.target.value));
               }
@@ -176,7 +183,7 @@ export default function SecretMessageInput({
     </div>
   );
 
-  function handleUpload(event) {
+  function handleUpload(event: any) {
     const fileObj = event.target.files[0];
     if (fileObj.size / mb > maxSize) {
       return setAlertModalShown(true);
@@ -184,7 +191,7 @@ export default function SecretMessageInput({
     const { fileType } = getFileInfoFromFileName(fileObj.name);
     if (fileType === 'image') {
       const reader = new FileReader();
-      reader.onload = (upload) => {
+      reader.onload = (upload: any) => {
         const payload = upload.target.result;
         const extension = fileObj.name.split('.').pop();
         if (extension === 'gif') {
