@@ -1,5 +1,4 @@
 import React, { useMemo, createElement, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import SimpleEditor from 'react-simple-code-editor';
 import okaidia from 'prism-react-renderer/themes/okaidia';
 import Preview from './Preview';
@@ -7,17 +6,6 @@ import Highlight, { Prism } from 'prism-react-renderer';
 import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
-
-Editor.propTypes = {
-  value: PropTypes.string,
-  valueOnTextEditor: PropTypes.string,
-  onChange: PropTypes.func,
-  onSetAst: PropTypes.func.isRequired,
-  ast: PropTypes.object,
-  onParse: PropTypes.func.isRequired,
-  onSetErrorMsg: PropTypes.func,
-  style: PropTypes.object
-};
 
 export default function Editor({
   ast,
@@ -28,11 +16,20 @@ export default function Editor({
   onParse,
   onSetErrorMsg,
   style
+}: {
+  ast: any;
+  value: string;
+  valueOnTextEditor: string;
+  onChange: (v: string) => void;
+  onSetAst: (v: any) => void;
+  onParse: (v: string) => any;
+  onSetErrorMsg: (v: string) => void;
+  style: any;
 }) {
   const lintCode = useAppContext((v) => v.requestHelpers.lintCode);
   const processAst = useAppContext((v) => v.requestHelpers.processAst);
   const [error, setError] = useState('');
-  const [errorLineNumber, setErrorLineNumber] = useState(null);
+  const [errorLineNumber, setErrorLineNumber] = useState(0);
   const [elementObj, setElementObj] = useState(null);
   const [evaling, setEvaling] = useState(false);
 
@@ -47,7 +44,7 @@ export default function Editor({
     setErrorLineNumber(0);
     handleTranspile(value);
 
-    async function handleTranspile(code) {
+    async function handleTranspile(code: string) {
       try {
         const results = await lintCode(code);
         if (results[0]) {
@@ -58,7 +55,7 @@ export default function Editor({
         }
         const ast = onParse(code);
         onSetAst(ast);
-      } catch (error) {
+      } catch (error: any) {
         const errorString = error.toString();
         handleSetError({
           error: errorString,
@@ -81,12 +78,12 @@ export default function Editor({
         setElementObj(result);
       }
 
-      async function handleEvalCode(ast) {
+      async function handleEvalCode(ast: string) {
         try {
           const resultCode = await processAst(ast);
           const res = new Function('React', `return ${resultCode}`);
           return Promise.resolve(res(React));
-        } catch (error) {
+        } catch (error: any) {
           setError(error.toString());
           return null;
         }
@@ -96,7 +93,7 @@ export default function Editor({
   }, [ast]);
 
   const CompiledComponent = useMemo(() => {
-    const component = handleGenerateComponent(elementObj, (error) => {
+    const component = handleGenerateComponent(elementObj, (error: any) => {
       const errorString = error.toString();
       handleSetError({
         error: errorString,
@@ -105,12 +102,12 @@ export default function Editor({
     });
     return createElement(component, null);
 
-    function handleGenerateComponent(code, errorCallback) {
+    function handleGenerateComponent(code: any, errorCallback: any) {
       return errorBoundary(code, errorCallback);
-      function errorBoundary(Element, errorCallback) {
+      function errorBoundary(Element: any, errorCallback: any) {
         class ErrorBoundary extends React.Component {
           state = { hasError: false };
-          componentDidCatch(error) {
+          componentDidCatch(error: any) {
             return errorCallback(error);
           }
           render() {
@@ -191,14 +188,14 @@ export default function Editor({
     </div>
   );
 
-  function getErrorLineNumber(errorString) {
+  function getErrorLineNumber(errorString: string) {
     const firstCut = errorString?.split('(')?.[1];
     const secondCut = firstCut?.split(':')?.[0];
     const errorLineNumber = Number(secondCut);
     return isNaN(errorLineNumber) || !errorLineNumber ? 0 : errorLineNumber;
   }
 
-  function handleHighlightCode({ code, theme }) {
+  function handleHighlightCode({ code, theme }: { code: string; theme: any }) {
     return (
       <Highlight Prism={Prism} code={code} theme={theme} language="jsx">
         {({ tokens, getLineProps, getTokenProps }) => (
@@ -216,7 +213,7 @@ export default function Editor({
                       backgroundColor:
                         errorLineNumber === i + 1
                           ? Color.red(0.3)
-                          : lineStyle?.backgroundColor
+                          : ((lineStyle?.backgroundColor || '') as string)
                     }
                   }}
                 >
@@ -233,7 +230,13 @@ export default function Editor({
     );
   }
 
-  function handleSetError({ error, lineNumber }) {
+  function handleSetError({
+    error,
+    lineNumber
+  }: {
+    error: string;
+    lineNumber: number;
+  }) {
     setError(error);
     setErrorLineNumber(lineNumber);
     if (error) {
@@ -241,18 +244,18 @@ export default function Editor({
     }
   }
 
-  function handleTransformBeforeCompilation(ast) {
+  function handleTransformBeforeCompilation(ast: any) {
     try {
       traverse(ast, {
-        VariableDeclaration(path) {
+        VariableDeclaration(path: any) {
           if (path.parent.type === 'Program') {
             path.replaceWith(path.node.declarations[0].init);
           }
         },
-        ImportDeclaration(path) {
+        ImportDeclaration(path: { remove: any }) {
           path.remove();
         },
-        ExportDefaultDeclaration(path) {
+        ExportDefaultDeclaration(path: any) {
           if (
             path.node.declaration.type === 'ArrowFunctionExpression' ||
             path.node.declaration.type === 'FunctionDeclaration'
@@ -263,14 +266,14 @@ export default function Editor({
           }
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       setError(error);
     }
     return ast;
   }
 
-  function traverse(ast, visitor) {
-    function visit(node, parentNode) {
+  function traverse(ast: any, visitor: any) {
+    function visit(node: any, parentNode: any) {
       if (!node) return;
       const visitorFunc = visitor[node.type];
       if (visitorFunc) {
@@ -278,7 +281,7 @@ export default function Editor({
       }
 
       if (node.type === 'Program' || node.type === 'BlockStatement') {
-        node.body.forEach((childNode) => visit(childNode, node));
+        node.body.forEach((childNode: any) => visit(childNode, node));
       }
     }
 
