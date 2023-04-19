@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
@@ -13,7 +12,15 @@ import localize from '~/constants/localize';
 const taskCompleteLabel = localize('taskComplete');
 const missionAccomplishedLabel = localize('missionAccomplished');
 
-export default function PassContent({ uploader, rootObj: mission, theme }) {
+export default function PassContent({
+  uploader,
+  rootObj: mission,
+  theme
+}: {
+  uploader: any;
+  rootObj: any;
+  theme: string;
+}) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     link: { color: linkColor },

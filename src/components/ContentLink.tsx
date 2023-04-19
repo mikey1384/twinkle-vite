@@ -1,26 +1,9 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
 import { removeLineBreaks, truncateTopic } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
-
-ContentLink.propTypes = {
-  content: PropTypes.shape({
-    byUser: PropTypes.oneOfType([PropTypes.number, PropTypes.bool]),
-    content: PropTypes.string,
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    missionType: PropTypes.string,
-    rootMissionType: PropTypes.string,
-    title: PropTypes.string,
-    topic: PropTypes.string,
-    username: PropTypes.string
-  }).isRequired,
-  style: PropTypes.object,
-  contentType: PropTypes.string,
-  theme: PropTypes.string
-};
 
 export default function ContentLink({
   style,
@@ -36,6 +19,11 @@ export default function ContentLink({
   },
   contentType,
   theme
+}: {
+  style?: any;
+  content: any;
+  contentType: string;
+  theme?: string;
 }) {
   const truncatedTopic = useMemo(() => {
     return topic ? truncateTopic(topic) : '';
