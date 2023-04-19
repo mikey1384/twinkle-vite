@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useContext, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useContext, useState } from 'react';
 import LocalContext from '../Context';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
@@ -46,18 +45,17 @@ const commentRemovedLabel = localize('commentRemoved');
 const replyLabel = localize('reply');
 const deviceIsMobile = isMobile(navigator);
 
-TargetContent.propTypes = {
-  className: PropTypes.string,
-  contentId: PropTypes.number,
-  contentType: PropTypes.string,
-  rootObj: PropTypes.object,
-  rootType: PropTypes.string.isRequired,
-  onShowTCReplyInput: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  targetObj: PropTypes.object
-};
-
+interface Props {
+  className?: string;
+  contentId: number;
+  contentType: string;
+  rootObj: any;
+  rootType: string;
+  onShowTCReplyInput: (arg0: any) => void;
+  style?: any;
+  theme: string;
+  targetObj: any;
+}
 export default function TargetContent({
   className,
   contentId,
@@ -74,7 +72,7 @@ export default function TargetContent({
     subject,
     contentType: type
   }
-}) {
+}: Props) {
   const navigate = useNavigate();
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
@@ -108,7 +106,7 @@ export default function TargetContent({
     onEditComment,
     onEditRewardComment,
     onUploadTargetComment
-  } = useContext(LocalContext);
+  } = useContext<{ [key: string]: any }>(LocalContext);
   const { xpRewardInterfaceShown, fileUploadProgress, uploadingFile } =
     useContentState({
       contentType: 'comment',
@@ -129,11 +127,11 @@ export default function TargetContent({
   const attachment = state['comment' + comment.id]?.attachment;
   const { fileType } = comment?.fileName
     ? getFileInfoFromFileName(comment?.fileName)
-    : '';
+    : { fileType: '' };
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
   const [userListModalShown, setUserListModalShown] = useState(false);
-  const InputFormRef = useRef(null);
+  const InputFormRef: React.RefObject<any> = useRef(null);
   const RewardInterfaceRef = useRef(null);
   const userCanRewardThis = useMemo(() => {
     let canRewardThis;
@@ -174,15 +172,17 @@ export default function TargetContent({
   const isRecommendedByUser = useMemo(() => {
     return comment
       ? comment.recommendations?.filter(
-          (recommendation) => recommendation.userId === userId
+          (recommendation: { userId: number }) =>
+            recommendation.userId === userId
         ).length > 0
       : false;
   }, [comment, userId]);
 
   const isRewardedByUser = useMemo(() => {
     return comment
-      ? comment.rewards?.filter((reward) => reward.rewarderId === userId)
-          .length > 0
+      ? comment.rewards?.filter(
+          (reward: { rewarderId: number }) => reward.rewarderId === userId
+        ).length > 0
       : false;
   }, [comment, userId]);
 
@@ -415,7 +415,7 @@ export default function TargetContent({
                       style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        paddingBottom: comment.likes.length === 0 && '1rem'
+                        paddingBottom: comment.likes.length === 0 ? '1rem' : ''
                       }}
                     >
                       <div
@@ -429,7 +429,6 @@ export default function TargetContent({
                           contentId={comment.id}
                           onClick={handleLikeClick}
                           likes={comment.likes}
-                          small
                         />
                         <Button
                           style={{ marginLeft: '1rem' }}
@@ -540,7 +539,6 @@ export default function TargetContent({
                 rewardLevel={finalRewardLevel}
                 onCommentEdit={onEditRewardComment}
                 rewards={comment.rewards}
-                uploaderName={uploader.username}
               />
               {replyInputShown && !contentHidden && !uploadingFile && (
                 <InputForm
@@ -571,8 +569,10 @@ export default function TargetContent({
               {comments.length > 0 && (
                 <div>
                   {comments
-                    .filter((comment) => !comment.isDeleted)
-                    .map((comment) => (
+                    .filter(
+                      (comment: { isDeleted: boolean }) => !comment.isDeleted
+                    )
+                    .map((comment: { id: number }) => (
                       <Comment
                         key={comment.id}
                         comment={comment}
@@ -599,7 +599,7 @@ export default function TargetContent({
     </ErrorBoundary>
   );
 
-  function handleLikeClick({ isUnlike }) {
+  function handleLikeClick({ isUnlike }: { isUnlike: boolean }) {
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
         contentType: 'comment',
@@ -623,7 +623,7 @@ export default function TargetContent({
     }
   }
 
-  async function handleSubmit(text) {
+  async function handleSubmit(text: string) {
     try {
       if (attachment) {
         onSetUploadingFile({
@@ -699,7 +699,13 @@ export default function TargetContent({
       console.error(error);
     }
 
-    function handleUploadProgress({ loaded, total }) {
+    function handleUploadProgress({
+      loaded,
+      total
+    }: {
+      loaded: number;
+      total: number;
+    }) {
       const userChanged = checkUserChange(userId);
       if (userChanged) {
         return;

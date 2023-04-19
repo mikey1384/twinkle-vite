@@ -1,5 +1,11 @@
-import { memo, useCallback, useState, useMemo, useRef, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, {
+  memo,
+  useCallback,
+  useState,
+  useMemo,
+  useRef,
+  useEffect
+} from 'react';
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '../Icon';
@@ -35,6 +41,21 @@ const viewSecretMessageWithoutRespondingLabel = localize(
   'viewSecretMessageWithoutResponding'
 );
 
+interface Props {
+  autoFocus?: boolean;
+  className?: string;
+  disableReason?: string;
+  formGroupStyle?: any;
+  innerRef?: any;
+  onSubmit?: (text: string, attachment?: any) => void;
+  parent: any;
+  placeholder?: string;
+  rows?: number;
+  onViewSecretAnswer?: (text: string) => void;
+  style?: any;
+  theme?: string;
+  targetCommentId?: number;
+}
 function InputForm({
   autoFocus,
   className = '',
@@ -49,7 +70,7 @@ function InputForm({
   style = {},
   theme,
   targetCommentId
-}) {
+}: Props) {
   const { userId, authLevel, profileTheme, twinkleXP, fileUploadLvl } =
     useKeyContext((v) => v.myState);
   const {
