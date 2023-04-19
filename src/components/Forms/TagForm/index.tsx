@@ -20,7 +20,7 @@ interface Props {
   selectedItems: any[];
   onNotFound?: ({ messageShown }: { messageShown: boolean }) => void;
   onRemoveItem: (id: number) => void;
-  onSearch?: (text: string) => void;
+  onSearch: (text: string) => any;
   onSubmit?: () => void;
   renderDropdownLabel: (item: any) => any;
   renderTagLabel?: (label?: string) => string;

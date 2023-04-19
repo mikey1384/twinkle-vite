@@ -47,11 +47,11 @@ interface Props {
   disableReason?: string;
   formGroupStyle?: any;
   innerRef?: any;
-  onSubmit?: (text: string, attachment?: any) => void;
+  onSubmit: (text: string, attachment?: any) => void;
   parent: any;
   placeholder?: string;
   rows?: number;
-  onViewSecretAnswer?: (text: string) => void;
+  onViewSecretAnswer: () => void;
   style?: any;
   theme?: string;
   targetCommentId?: number;
@@ -91,7 +91,7 @@ function InputForm({
   const [secretViewMessageSubmitting, setSecretViewMessageSubmitting] =
     useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const FileInputRef = useRef(null);
+  const FileInputRef: React.RefObject<any> = useRef(null);
   const secretViewMessageSubmittingRef = useRef(false);
   const state = useInputContext((v) => v.state);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
@@ -154,7 +154,7 @@ function InputForm({
     try {
       await onSubmit(finalizeEmoji(text));
       handleSetText('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form:', error.message);
     } finally {
       setSubmitting(false);
@@ -162,7 +162,7 @@ function InputForm({
   }, [onSubmit, text]);
 
   const handleUpload = useCallback(
-    (event) => {
+    (event: any) => {
       const fileObj = event.target.files[0];
       if (fileObj.size / mb > maxSize) {
         return setAlertModalShown(true);
@@ -170,7 +170,7 @@ function InputForm({
       const { fileType } = getFileInfoFromFileName(fileObj.name);
       if (fileType === 'image') {
         const reader = new FileReader();
-        reader.onload = (upload) => {
+        reader.onload = (upload: any) => {
           const payload = upload.target.result;
           const extension = fileObj.name.split('.').pop();
           if (extension === 'gif') {
@@ -418,17 +418,17 @@ function InputForm({
     </div>
   );
 
-  function handleKeyUp(event) {
+  function handleKeyUp(event: any) {
     if (event.key === ' ') {
       handleSetText(addEmoji(event.target.value));
     }
   }
 
-  function handleOnChange(event) {
+  function handleOnChange(event: any) {
     handleSetText(event.target.value);
   }
 
-  function handleSetText(text) {
+  function handleSetText(text: string) {
     setText(text);
     textRef.current = text;
   }

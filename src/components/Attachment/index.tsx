@@ -7,7 +7,7 @@ import FileContent from '~/components/FileContent';
 interface Props {
   attachment: any;
   onClose: () => void;
-  onThumbnailLoad?: () => void;
+  onThumbnailLoad?: (arg: any) => void;
   style?: any;
 }
 export default function Attachment({

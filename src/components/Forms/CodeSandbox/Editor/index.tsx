@@ -24,7 +24,7 @@ export default function Editor({
   onSetAst: (v: any) => void;
   onParse: (v: string) => any;
   onSetErrorMsg: (v: string) => void;
-  style: any;
+  style?: any;
 }) {
   const lintCode = useAppContext((v) => v.requestHelpers.lintCode);
   const processAst = useAppContext((v) => v.requestHelpers.processAst);
@@ -126,7 +126,7 @@ export default function Editor({
     <div style={{ width: '100%', ...style }}>
       {elementObj ? (
         <Preview
-          onError={(error) => handleSetError({ error, lineNumber: 0 })}
+          onError={(error: any) => handleSetError({ error, lineNumber: 0 })}
           evaling={evaling}
           style={{ marginBottom: '5rem' }}
         >
@@ -171,7 +171,7 @@ export default function Editor({
       )}
       {elementObj ? (
         <Preview
-          onError={(error) => handleSetError({ error, lineNumber: 0 })}
+          onError={(error: any) => handleSetError({ error, lineNumber: 0 })}
           evaling={evaling}
           style={{ marginTop: '5rem' }}
         >

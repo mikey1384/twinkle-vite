@@ -232,7 +232,7 @@ export function useSearch({
   onClear,
   onSetSearchText
 }: {
-  onSearch: (text: string) => Promise<void>;
+  onSearch: (text: string) => any;
   onEmptyQuery?: () => void;
   onClear?: () => void;
   onSetSearchText: (text: string) => void;

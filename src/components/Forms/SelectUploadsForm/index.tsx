@@ -1,22 +1,21 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Selectable from './Selectable';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 
-SelectUploadsForm.propTypes = {
-  contentType: PropTypes.string,
-  loaded: PropTypes.bool,
-  loading: PropTypes.bool,
-  loadingMore: PropTypes.bool,
-  loadMoreUploads: PropTypes.func,
-  loadMoreButton: PropTypes.bool,
-  onSelect: PropTypes.func.isRequired,
-  onDeselect: PropTypes.func.isRequired,
-  selectedUploads: PropTypes.array.isRequired,
-  uploads: PropTypes.array.isRequired,
-  contentObjs: PropTypes.object.isRequired
-};
-
+interface Props {
+  contentObjs: any;
+  contentType?: string;
+  loaded?: boolean;
+  loading?: boolean;
+  loadingMore?: boolean;
+  loadMoreUploads?: () => void;
+  loadMoreButton?: boolean;
+  onSelect: (id: string) => void;
+  onDeselect: (id: string) => void;
+  selectedUploads: any[];
+  uploads: any[];
+}
 export default function SelectUploadsForm({
   contentObjs,
   contentType = 'video',
@@ -29,7 +28,7 @@ export default function SelectUploadsForm({
   onDeselect,
   selectedUploads,
   uploads
-}) {
+}: Props) {
   return (
     <div
       style={{
@@ -47,7 +46,7 @@ export default function SelectUploadsForm({
             width: '100%',
             display: 'flex',
             justifyContent: 'center',
-            alignItmes: 'center',
+            alignItems: 'center',
             fontSize: '2.5rem',
             padding: '3rem'
           }}
