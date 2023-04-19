@@ -6,11 +6,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 
-Profile.propTypes = {
-  profile: PropTypes.object.isRequired
-};
-
-export default function Profile({ profile }) {
+export default function Profile({ profile }: { profile: any }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const { userId } = useKeyContext((v) => v.myState);
   return (
