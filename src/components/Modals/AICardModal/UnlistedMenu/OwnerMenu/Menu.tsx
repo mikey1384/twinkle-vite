@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -9,14 +8,6 @@ import { cardLevelHash, qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
-Menu.propTypes = {
-  burnXP: PropTypes.number.isRequired,
-  cardLevel: PropTypes.number.isRequired,
-  cardQuality: PropTypes.string.isRequired,
-  onBurnConfirm: PropTypes.func.isRequired,
-  onSetSellModalShown: PropTypes.func.isRequired,
-  xpNumberColor: PropTypes.string.isRequired
-};
 export default function Menu({
   burnXP,
   cardLevel,
@@ -24,6 +15,13 @@ export default function Menu({
   onBurnConfirm,
   onSetSellModalShown,
   xpNumberColor
+}: {
+  burnXP: number;
+  cardLevel: number;
+  cardQuality: string;
+  onBurnConfirm: () => void;
+  onSetSellModalShown: (v: boolean) => void;
+  xpNumberColor: string;
 }) {
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   return (

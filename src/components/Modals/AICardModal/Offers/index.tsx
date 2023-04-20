@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import OfferPriceListItem from './OfferPriceListItem';
@@ -9,21 +8,20 @@ import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
-Offers.propTypes = {
-  cardId: PropTypes.number.isRequired,
-  getOffersForCard: PropTypes.func.isRequired,
-  offers: PropTypes.array.isRequired,
-  onUserMenuShownChange: PropTypes.func.isRequired,
-  onSetOffers: PropTypes.func.isRequired,
-  onSetLoadMoreShown: PropTypes.func.isRequired,
-  loaded: PropTypes.bool.isRequired,
-  loadMoreShown: PropTypes.bool.isRequired,
-  onSetActiveTab: PropTypes.func.isRequired,
-  onSetOfferModalShown: PropTypes.func.isRequired,
-  ownerId: PropTypes.number.isRequired,
-  usermenuShown: PropTypes.bool
-};
-
+interface Props {
+  cardId: number;
+  getOffersForCard: any;
+  offers: any[];
+  onSetOffers: (v: any) => void;
+  onSetLoadMoreShown: (v: boolean) => void;
+  onUserMenuShownChange: (v: boolean) => void;
+  loaded: boolean;
+  loadMoreShown: boolean;
+  onSetActiveTab: (v: string) => void;
+  onSetOfferModalShown: (v: boolean) => void;
+  ownerId: number;
+  usermenuShown: boolean;
+}
 export default function Offers({
   cardId,
   getOffersForCard,
@@ -37,7 +35,7 @@ export default function Offers({
   onSetOfferModalShown,
   ownerId,
   usermenuShown
-}) {
+}: Props) {
   const { userId } = useKeyContext((v) => v.myState);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -106,10 +104,14 @@ export default function Offers({
           ) : (
             offers.map((offer) => {
               let offerers = offer.users;
-              const myOffer = offerers.find((offerer) => offerer.id === userId);
+              const myOffer = offerers.find(
+                (offerer: { id: number }) => offerer.id === userId
+              );
               if (myOffer) {
                 offerers = [myOffer].concat(
-                  offerers.filter((offerer) => offerer.id !== userId)
+                  offerers.filter(
+                    (offerer: { id: number }) => offerer.id !== userId
+                  )
                 );
               }
               return (
@@ -153,7 +155,7 @@ export default function Offers({
       cardId,
       lastId
     });
-    onSetOffers((prevOffers) => [...prevOffers, ...loadedOffers]);
+    onSetOffers((prevOffers: any[]) => [...prevOffers, ...loadedOffers]);
     onSetLoadMoreShown(loadMoreShown);
   }
 }

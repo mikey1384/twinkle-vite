@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -12,17 +11,6 @@ import { css } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);
 
-OfferPriceListItem.propTypes = {
-  cardId: PropTypes.number.isRequired,
-  offer: PropTypes.object.isRequired,
-  offerers: PropTypes.array.isRequired,
-  ownerId: PropTypes.number.isRequired,
-  onSetActiveTab: PropTypes.func.isRequired,
-  onUserMenuShownChange: PropTypes.func.isRequired,
-  userId: PropTypes.number,
-  usermenuShown: PropTypes.bool
-};
-
 export default function OfferPriceListItem({
   cardId,
   offer,
@@ -32,6 +20,15 @@ export default function OfferPriceListItem({
   onUserMenuShownChange,
   usermenuShown,
   userId
+}: {
+  cardId: number;
+  offer: any;
+  offerers: any[];
+  ownerId: number;
+  onSetActiveTab: (v: string) => void;
+  onUserMenuShownChange: (v: boolean) => void;
+  usermenuShown: boolean;
+  userId: number;
 }) {
   const [offerDetailModalShown, setOfferDetailModalShown] = useState(false);
   const {

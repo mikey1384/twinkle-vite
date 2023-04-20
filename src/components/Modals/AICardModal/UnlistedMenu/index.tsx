@@ -1,25 +1,24 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import OwnerMenu from './OwnerMenu';
 import NonOwnerMenu from './NonOwnerMenu';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-UnlistedMenu.propTypes = {
-  burnXP: PropTypes.number.isRequired,
-  cardId: PropTypes.number.isRequired,
-  cardLevel: PropTypes.number.isRequired,
-  cardQuality: PropTypes.string.isRequired,
-  myId: PropTypes.number,
-  myOffer: PropTypes.object,
-  onSetSellModalShown: PropTypes.func.isRequired,
-  onUserMenuShownChange: PropTypes.func.isRequired,
-  owner: PropTypes.object.isRequired,
-  userIsOwner: PropTypes.bool.isRequired,
-  onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
-  onSetOfferModalShown: PropTypes.func.isRequired
-};
-
+interface Props {
+  burnXP: number;
+  cardId: number;
+  cardLevel: number;
+  cardQuality: string;
+  myId: number;
+  myOffer: any;
+  onSetSellModalShown: (v: boolean) => void;
+  onUserMenuShownChange: (v: boolean) => void;
+  owner: any;
+  userIsOwner: boolean;
+  onSetWithdrawOfferModalShown: (v: boolean) => void;
+  onSetOfferModalShown: (v: boolean) => void;
+}
 export default function UnlistedMenu({
   burnXP,
   cardId,
@@ -33,7 +32,7 @@ export default function UnlistedMenu({
   onSetWithdrawOfferModalShown,
   onSetOfferModalShown,
   onUserMenuShownChange
-}) {
+}: Props) {
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
