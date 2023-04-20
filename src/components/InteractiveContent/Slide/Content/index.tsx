@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Attachment from '../../Attachment';
 import ForkButtons from './ForkButtons';
 import LongText from '~/components/Texts/LongText';
@@ -10,27 +9,26 @@ import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 
-Content.propTypes = {
-  centerRef: PropTypes.func,
-  forkedFrom: PropTypes.number,
-  heading: PropTypes.string,
-  interactiveId: PropTypes.number,
-  isPublished: PropTypes.bool,
-  isPortal: PropTypes.bool,
-  description: PropTypes.string,
-  attachment: PropTypes.object,
-  forkButtonIds: PropTypes.array,
-  forkButtonsObj: PropTypes.object,
-  isOnModal: PropTypes.bool,
-  onForkButtonClick: PropTypes.func,
-  onPortalButtonClick: PropTypes.func,
-  onSetEmbedProps: PropTypes.func,
-  onThumbnailUpload: PropTypes.func,
-  portalButton: PropTypes.object,
-  slideId: PropTypes.number,
-  selectedForkButtonId: PropTypes.number
-};
-
+interface Props {
+  centerRef: (v: any) => void;
+  forkedFrom: number;
+  heading: string;
+  interactiveId: number;
+  isPublished: boolean;
+  isPortal: boolean;
+  description: string;
+  attachment: any;
+  forkButtonIds: number[];
+  forkButtonsObj: any;
+  isOnModal: boolean;
+  onForkButtonClick: (v: any) => void;
+  onPortalButtonClick: (v: any) => void;
+  onSetEmbedProps: (v: any) => void;
+  onThumbnailUpload: (v: any) => void;
+  portalButton: any;
+  slideId: number;
+  selectedForkButtonId: number;
+}
 export default function Content({
   centerRef,
   forkedFrom,
@@ -50,7 +48,7 @@ export default function Content({
   portalButton,
   slideId,
   selectedForkButtonId
-}) {
+}: Props) {
   const {
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor }

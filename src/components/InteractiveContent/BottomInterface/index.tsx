@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -6,16 +6,6 @@ import AddSlide from './AddSlide';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
-
-BottomInterface.propTypes = {
-  className: PropTypes.string,
-  interactiveId: PropTypes.number.isRequired,
-  isPublished: PropTypes.bool,
-  lastFork: PropTypes.object,
-  archivedSlides: PropTypes.array,
-  onPublishInteractive: PropTypes.func,
-  style: PropTypes.object
-};
 
 export default function BottomInterface({
   archivedSlides,
@@ -25,6 +15,17 @@ export default function BottomInterface({
   lastFork,
   onPublishInteractive,
   style
+}: {
+  archivedSlides: any[];
+  className?: string;
+  interactiveId: number;
+  isPublished: boolean;
+  lastFork: any;
+  onPublishInteractive: (arg0: {
+    interactiveId: number;
+    numUpdates: number;
+  }) => void;
+  style?: React.CSSProperties;
 }) {
   const [publishing, setPublishing] = useState(false);
   const publishInteractive = useAppContext(

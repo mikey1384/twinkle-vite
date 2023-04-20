@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import {
   addEmoji,
@@ -24,15 +23,6 @@ import localize from '~/constants/localize';
 
 const secretMessageLabel = localize('secretMessage');
 const enterSecretMessageLabel = localize('enterSecretMessage');
-
-SecretMessageInput.propTypes = {
-  autoFocus: PropTypes.bool,
-  secretAnswer: PropTypes.string,
-  secretAttachment: PropTypes.object,
-  onSetSecretAnswer: PropTypes.func.isRequired,
-  onSetSecretAttachment: PropTypes.func.isRequired,
-  onThumbnailLoad: PropTypes.func.isRequired
-};
 
 export default function SecretMessageInput({
   autoFocus = true,
