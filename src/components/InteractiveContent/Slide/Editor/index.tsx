@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useAppContext,
   useInputContext,
@@ -29,26 +28,25 @@ import { edit } from '~/constants/placeholders';
 import { isEqual } from 'lodash';
 import { v1 as uuidv1 } from 'uuid';
 
-Editor.propTypes = {
-  attachment: PropTypes.object,
-  heading: PropTypes.string,
-  description: PropTypes.string,
-  fileUploadProgress: PropTypes.number,
-  forkedFrom: PropTypes.number,
-  isFork: PropTypes.bool,
-  isPortal: PropTypes.bool,
-  forkButtonIds: PropTypes.array,
-  forkButtonsObj: PropTypes.object,
-  portalButton: PropTypes.object,
-  paths: PropTypes.object,
-  interactiveId: PropTypes.number,
-  onHideDeletedMessages: PropTypes.func,
-  slideId: PropTypes.number,
-  slideObj: PropTypes.object,
-  isLastSlide: PropTypes.bool,
-  uploadingFile: PropTypes.bool
-};
-
+interface Props {
+  attachment: any;
+  description: string;
+  fileUploadProgress: number;
+  forkedFrom: number;
+  heading: string;
+  interactiveId: number;
+  isFork: boolean;
+  isPortal: boolean;
+  forkButtonIds: number[];
+  forkButtonsObj: { [key: string]: any };
+  onHideDeletedMessages: (arg: any) => void;
+  portalButton: any;
+  paths: any[];
+  slideId: number;
+  slideObj: any;
+  isLastSlide: boolean;
+  uploadingFile: boolean;
+}
 export default function Editor({
   attachment,
   description,
@@ -67,12 +65,13 @@ export default function Editor({
   slideId,
   slideObj,
   uploadingFile
-}) {
+}: Props) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const { userId } = useKeyContext((v) => v.myState);
+
   const defaultInputState = useMemo(
     () => ({
       editedPortalButton: portalButton || {
@@ -146,6 +145,8 @@ export default function Editor({
     editedDescription = '',
     editedForkButtonIds,
     editedForkButtonsObj
+  }: {
+    [key: string]: any;
   } = editForm;
 
   const pathsExist = useMemo(() => {
@@ -260,7 +261,9 @@ export default function Editor({
       return true;
     }
     if (editedIsFork) {
-      for (let button of Object.values(editedForkButtonsObj)) {
+      for (let button of Object.values(editedForkButtonsObj) as {
+        label: string;
+      }[]) {
         if (
           stringIsEmpty(button.label) ||
           exceedsCharLimit({
@@ -354,14 +357,14 @@ export default function Editor({
           />
           <Textarea
             minRows={4}
-            onChange={(event) => {
+            onChange={(event: any) => {
               const { value } = event.target;
               handleSetInputState({
                 ...editForm,
                 editedDescription: value
               });
             }}
-            onKeyUp={(event) => {
+            onKeyUp={(event: any) => {
               const { value } = event.target;
               handleSetInputState({
                 ...editForm,
@@ -380,7 +383,7 @@ export default function Editor({
             linkUrl={editedAttachment?.linkUrl || ''}
             thumbUrl={editedAttachment?.thumbUrl || ''}
             newAttachment={editedAttachment?.newAttachment || null}
-            onThumbnailLoad={(thumbnail) => {
+            onThumbnailLoad={(thumbnail: string) => {
               handleSetInputState({
                 ...editForm,
                 editedAttachment: {
@@ -396,7 +399,7 @@ export default function Editor({
                 }
               });
             }}
-            onSetAttachmentState={(newState) => {
+            onSetAttachmentState={(newState: any) => {
               handleSetInputState({
                 ...editForm,
                 editedAttachment: {
@@ -550,12 +553,12 @@ export default function Editor({
     </div>
   );
 
-  function handleSetInputState(newState) {
+  function handleSetInputState(newState: any) {
     setInputState(newState);
     inputStateRef.current = newState;
   }
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: any) {
     event.preventDefault();
     const deletingAttachment =
       !!editedAttachment?.isChanging && !editedAttachment?.newAttachment;
@@ -653,7 +656,13 @@ export default function Editor({
       onHideDeletedMessages(slideId);
     }
 
-    function handleUploadProgress({ loaded, total }) {
+    function handleUploadProgress({
+      loaded,
+      total
+    }: {
+      loaded: number;
+      total: number;
+    }) {
       const userChanged = checkUserChange(userId);
       if (userChanged) {
         return;
