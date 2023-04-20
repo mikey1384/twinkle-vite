@@ -1,9 +1,9 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { isEqual } from 'lodash';
 
-const availableIcons = [
+const availableIcons: any[] = [
   'align-justify',
   ['fab', 'android'],
   ['fab', 'apple'],
@@ -96,12 +96,13 @@ const availableIcons = [
   ['fab', 'windows']
 ];
 
-IconMenu.propTypes = {
-  onSelectIcon: PropTypes.func.isRequired,
-  selectedIcon: PropTypes.oneOfType([PropTypes.string, PropTypes.array])
-};
-
-export default function IconMenu({ onSelectIcon, selectedIcon }) {
+export default function IconMenu({
+  onSelectIcon,
+  selectedIcon
+}: {
+  onSelectIcon: (arg0: any) => void;
+  selectedIcon: any;
+}) {
   return (
     <div>
       {availableIcons.map((icon) => {

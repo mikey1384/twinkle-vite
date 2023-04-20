@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
@@ -10,15 +9,6 @@ import { exceedsCharLimit } from '~/helpers/stringHelpers';
 import SelectDestinationModal from './SelectDestinationModal';
 import GoBackToMissionItem from './GoBackToMissionItem';
 
-GoBackField.propTypes = {
-  style: PropTypes.object,
-  button: PropTypes.object,
-  forkedFrom: PropTypes.number,
-  interactiveId: PropTypes.number,
-  onSetButtonState: PropTypes.func.isRequired,
-  slideObj: PropTypes.object
-};
-
 export default function GoBackField({
   style,
   button,
@@ -26,6 +16,13 @@ export default function GoBackField({
   interactiveId,
   onSetButtonState,
   slideObj
+}: {
+  style?: React.CSSProperties;
+  button: any;
+  forkedFrom: number;
+  interactiveId: number;
+  onSetButtonState: (arg0: any) => void;
+  slideObj: any;
 }) {
   const textExceedsCharLimit = useMemo(
     () =>
@@ -121,7 +118,7 @@ export default function GoBackField({
     </div>
   );
 
-  function handleSelectDestination(selectedId) {
+  function handleSelectDestination(selectedId: number) {
     onSetButtonState({ destination: selectedId });
     setSelectDestinationModalShown(false);
   }
