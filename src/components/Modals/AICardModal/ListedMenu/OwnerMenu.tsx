@@ -1,16 +1,17 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 
-OwnerMenu.propTypes = {
-  cardId: PropTypes.number.isRequired,
-  style: PropTypes.object
-};
-
-export default function OwnerMenu({ cardId, style }) {
+export default function OwnerMenu({
+  cardId,
+  style
+}: {
+  cardId: number;
+  style?: React.CSSProperties;
+}) {
   const delistAICard = useAppContext((v) => v.requestHelpers.delistAICard);
   const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
 

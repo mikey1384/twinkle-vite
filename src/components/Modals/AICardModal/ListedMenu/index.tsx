@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -6,17 +6,6 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import OwnerMenu from './OwnerMenu';
 import NonOwnerMenu from './NonOwnerMenu';
 import { useKeyContext } from '~/contexts';
-
-ListedMenu.propTypes = {
-  askPrice: PropTypes.number.isRequired,
-  burnXP: PropTypes.number.isRequired,
-  cardId: PropTypes.number.isRequired,
-  myId: PropTypes.number.isRequired,
-  myOffer: PropTypes.object,
-  onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
-  onSetOfferModalShown: PropTypes.func.isRequired,
-  userIsOwner: PropTypes.bool.isRequired
-};
 
 export default function ListedMenu({
   burnXP,
@@ -27,6 +16,15 @@ export default function ListedMenu({
   onSetOfferModalShown,
   userIsOwner,
   askPrice
+}: {
+  burnXP: number;
+  cardId: number;
+  myId: number;
+  myOffer: any;
+  onSetWithdrawOfferModalShown: (v: boolean) => void;
+  onSetOfferModalShown: (v: boolean) => void;
+  userIsOwner: boolean;
+  askPrice: number;
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -129,11 +127,7 @@ export default function ListedMenu({
         )}
       </div>
       {userIsOwner ? (
-        <OwnerMenu
-          burnXP={burnXP}
-          style={{ marginTop: '1rem' }}
-          cardId={cardId}
-        />
+        <OwnerMenu style={{ marginTop: '1rem' }} cardId={cardId} />
       ) : (
         <NonOwnerMenu
           myId={myId}

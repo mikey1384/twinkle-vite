@@ -9,19 +9,6 @@ const areYouSureLabel = localize('areYouSure');
 const cancelLabel = localize('cancel');
 const confirmLabel = localize('confirm');
 
-ConfirmModal.propTypes = {
-  description: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
-  disabled: PropTypes.bool,
-  descriptionFontSize: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number
-  ]),
-  modalOverModal: PropTypes.bool,
-  onHide: PropTypes.func.isRequired,
-  title: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
-  onConfirm: PropTypes.func.isRequired
-};
-
 export default function ConfirmModal({
   disabled = false,
   description = areYouSureLabel,
@@ -30,6 +17,14 @@ export default function ConfirmModal({
   onHide,
   title,
   onConfirm
+}: {
+  disabled?: boolean;
+  description?: any;
+  descriptionFontSize?: string;
+  modalOverModal?: boolean;
+  onHide: () => void;
+  title: any;
+  onConfirm: () => void;
 }) {
   const {
     done: { color: doneColor }
