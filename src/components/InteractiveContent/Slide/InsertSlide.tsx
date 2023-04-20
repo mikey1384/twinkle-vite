@@ -1,20 +1,9 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useInteractiveContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import SelectArchivedSlideModal from '../SelectArchivedSlideModal';
-
-InsertSlide.propTypes = {
-  archivedSlides: PropTypes.array,
-  forkedFrom: PropTypes.number,
-  interactiveId: PropTypes.number,
-  slideId: PropTypes.number,
-  className: PropTypes.string,
-  slideObj: PropTypes.object,
-  style: PropTypes.object
-};
 
 export default function InsertSlide({
   archivedSlides,
@@ -24,6 +13,14 @@ export default function InsertSlide({
   slideObj,
   className,
   style
+}: {
+  archivedSlides: any[];
+  interactiveId: number;
+  forkedFrom: number;
+  slideId: number;
+  slideObj: any;
+  className?: string;
+  style?: any;
 }) {
   const [insertingSlide, setInsertingSlide] = useState(false);
   const insertArchivedSlide = useAppContext(
@@ -113,7 +110,7 @@ export default function InsertSlide({
     </div>
   );
 
-  async function handleInsertArchivedSlide(selectedSlideId) {
+  async function handleInsertArchivedSlide(selectedSlideId: number) {
     const numUpdates = await insertArchivedSlide({
       interactiveId,
       slideId,

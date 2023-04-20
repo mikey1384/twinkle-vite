@@ -9,7 +9,7 @@ interface Props {
   color?: string;
   disabled?: boolean;
   loading?: boolean;
-  onClick?: () => void;
+  onClick?: (arg: any) => void;
   onHover?: boolean;
   children?: ReactNode;
   hoverColor?: string;

@@ -1,18 +1,19 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
 
-Deleted.propTypes = {
-  onRemoveInteractiveSlide: PropTypes.func.isRequired,
-  onUndeleteSlide: PropTypes.func.isRequired
-};
-
 const deviceIsMobile = isMobile(navigator);
 
-export default function Deleted({ onRemoveInteractiveSlide, onUndeleteSlide }) {
+export default function Deleted({
+  onRemoveInteractiveSlide,
+  onUndeleteSlide
+}: {
+  onRemoveInteractiveSlide: () => void;
+  onUndeleteSlide: () => void;
+}) {
   return (
     <div
       style={{
