@@ -1,22 +1,20 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
-MyOffer.propTypes = {
-  className: PropTypes.string,
-  myOffer: PropTypes.object,
-  onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
-
 export default function MyOffer({
   myOffer,
   style,
   className,
   onSetWithdrawOfferModalShown
+}: {
+  myOffer: any;
+  style?: React.CSSProperties;
+  className?: string;
+  onSetWithdrawOfferModalShown: (isShown: boolean) => void;
 }) {
   return (
     <div

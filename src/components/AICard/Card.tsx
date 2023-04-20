@@ -13,7 +13,7 @@ interface Props {
   bind: () => any;
   card: any;
   cardStyle: any;
-  detailShown: boolean;
+  detailShown?: boolean;
   innerRef: any;
   isAnimated: boolean;
   onMouseLeave: () => void;

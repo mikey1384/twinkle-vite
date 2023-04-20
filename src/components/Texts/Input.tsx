@@ -8,7 +8,7 @@ interface Props {
   hasError?: boolean;
   autoComplete?: string;
   inputRef?: RefObject<any>;
-  onChange: (value: string) => void;
+  onChange: (value: any) => void;
   type?: string;
   className?: string;
   style?: React.CSSProperties;

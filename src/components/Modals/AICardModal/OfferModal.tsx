@@ -1,21 +1,10 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
-
-OfferModal.propTypes = {
-  askPrice: PropTypes.number,
-  cardId: PropTypes.number.isRequired,
-  onHide: PropTypes.func.isRequired,
-  myId: PropTypes.number.isRequired,
-  myUsername: PropTypes.string.isRequired,
-  onSetOffers: PropTypes.func.isRequired,
-  twinkleCoins: PropTypes.number.isRequired
-};
 
 export default function OfferModal({
   askPrice,
@@ -25,6 +14,14 @@ export default function OfferModal({
   myUsername,
   onSetOffers,
   twinkleCoins
+}: {
+  askPrice: number;
+  cardId: number;
+  onHide: () => void;
+  myId: number;
+  myUsername: string;
+  onSetOffers: (arg: any) => void;
+  twinkleCoins: number;
 }) {
   const [posting, setPosting] = useState(false);
   const [amount, setAmount] = useState(0);
@@ -98,7 +95,7 @@ export default function OfferModal({
     </Modal>
   );
 
-  function handleAmountChange(amount) {
+  function handleAmountChange(amount: string) {
     const newAmount = Number(amount.replace(/[^0-9]/g, ''));
     const amounts = [newAmount, twinkleCoins];
     if (askPriceIsLargerThanOne) {
@@ -110,7 +107,7 @@ export default function OfferModal({
   async function handlePostOffer() {
     setPosting(true);
     const coins = await postAICardOffer({ cardId, price: amount });
-    onSetOffers((prevOffers) => {
+    onSetOffers((prevOffers: any[]) => {
       const result = [];
       let found = false;
       for (let offer of prevOffers) {

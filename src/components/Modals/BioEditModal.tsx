@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -10,15 +9,17 @@ import { addEmoji, finalizeEmoji } from '~/helpers/stringHelpers';
 
 const MAX_CHAR = 150;
 
-BioEditModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  firstLine: PropTypes.string,
-  secondLine: PropTypes.string,
-  thirdLine: PropTypes.string
-};
-
-export default function BioEditModal({ onHide, onSubmit, ...props }) {
+export default function BioEditModal({
+  onHide,
+  onSubmit,
+  ...props
+}: {
+  onHide: () => void;
+  onSubmit: (arg: any) => void;
+  firstLine?: string;
+  secondLine?: string;
+  thirdLine?: string;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -65,7 +66,7 @@ export default function BioEditModal({ onHide, onSubmit, ...props }) {
             placeholder="Write something"
           />
           <small
-            style={{ color: firstLine.length > MAX_CHAR && 'red' }}
+            style={{ color: firstLine.length > MAX_CHAR ? 'red' : '' }}
           >{`(${firstLine.length}/${MAX_CHAR} characters)`}</small>
           <p>
             {
@@ -84,7 +85,7 @@ export default function BioEditModal({ onHide, onSubmit, ...props }) {
             placeholder="Write something"
           />
           <small
-            style={{ color: secondLine.length > MAX_CHAR && 'red' }}
+            style={{ color: secondLine.length > MAX_CHAR ? 'red' : '' }}
           >{`(${secondLine.length}/${MAX_CHAR} characters)`}</small>
           <p>
             {`What do you love doing? What do you normally do when you play with your friends? What would you do all day if your parents allowed you to do anything you want? Don't like these questions? Then feel free to write anything you want (ideally about your favorite activity)`}
@@ -101,7 +102,7 @@ export default function BioEditModal({ onHide, onSubmit, ...props }) {
             placeholder="Write something"
           />
           <small
-            style={{ color: thirdLine.length > MAX_CHAR && 'red' }}
+            style={{ color: thirdLine.length > MAX_CHAR ? 'red' : '' }}
           >{`(${thirdLine.length}/${MAX_CHAR} characters)`}</small>
           <p>
             {
@@ -123,7 +124,6 @@ export default function BioEditModal({ onHide, onSubmit, ...props }) {
               thirdLine: finalizeEmoji(thirdLine)
             })
           }
-          type="submit"
           disabled={
             firstLine.length > MAX_CHAR ||
             secondLine.length > MAX_CHAR ||

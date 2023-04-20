@@ -19,9 +19,9 @@ export default function AICard({
   detailShown,
   onClick
 }: {
-  animateOnMouseLeave: boolean;
+  animateOnMouseLeave?: boolean;
   card: any;
-  detailShown: boolean;
+  detailShown?: boolean;
   onClick?: () => void;
 }) {
   const [isAnimated, setIsAnimated] = useState(false);

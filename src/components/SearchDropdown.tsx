@@ -11,7 +11,7 @@ interface Props {
   onUpdate: () => void;
   style?: any;
   onItemClick: (item: any) => void;
-  renderItemLabel: (item: any) => any;
+  renderItemLabel?: (item: any) => any;
   renderItemUrl?: (item: any) => string;
 }
 export default function SearchDropdown({
@@ -88,7 +88,7 @@ export default function SearchDropdown({
                 }}
                 onClick={(e) => e.preventDefault()}
               >
-                {renderItemLabel(item)}
+                {renderItemLabel?.(item)}
               </a>
             </nav>
           );

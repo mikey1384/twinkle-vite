@@ -1,5 +1,4 @@
-import PropTypes from 'prop-types';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -23,13 +22,15 @@ import Offers from './Offers';
 import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
 
-AICardModal.propTypes = {
-  cardId: PropTypes.number.isRequired,
-  modalOverModal: PropTypes.bool,
-  onHide: PropTypes.func.isRequired
-};
-
-export default function AICardModal({ cardId, modalOverModal, onHide }) {
+export default function AICardModal({
+  cardId,
+  modalOverModal,
+  onHide
+}: {
+  cardId: number;
+  modalOverModal?: boolean;
+  onHide?: () => void;
+}) {
   const {
     link: { color: linkColor },
     userLink: { color: userLinkColor }
@@ -65,7 +66,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
   const [generatingImage, setGeneratingImage] = useState(false);
   const [prevCardId, setPrevCardId] = useState(null);
   const [nextCardId, setNextCardId] = useState(null);
-  const [offers, setOffers] = useState([]);
+  const [offers, setOffers] = useState<any[]>([]);
   const [offersLoaded, setOffersLoaded] = useState(false);
   const [offersLoadMoreShown, setOffersLoadMoreShown] = useState(false);
   const [offerPrice, setOfferPrice] = useState(0);
@@ -125,7 +126,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
     socket.on('ai_card_sold', handleAICardSold);
 
-    function handleAICardOfferPosted({ card, feed }) {
+    function handleAICardOfferPosted({ card, feed }: { card: any; feed: any }) {
       const { offer: incomingOffer } = feed;
       if (card.id === cardId) {
         setOffers((prevOffers) => {
@@ -149,7 +150,15 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
         });
       }
     }
-    function handleAICardOfferCancel({ cardId, price, offererId }) {
+    function handleAICardOfferCancel({
+      cardId,
+      price,
+      offererId
+    }: {
+      cardId: number;
+      price: number;
+      offererId: number;
+    }) {
       if (card.id === cardId) {
         setOffers((prevOffers) => {
           const result = [];
@@ -157,7 +166,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
             const newOffer = { ...offer };
             if (offer.price === price) {
               newOffer.users = offer.users.filter(
-                (user) => user.id !== offererId
+                (user: { id: number }) => user.id !== offererId
               );
             }
             if (newOffer.users.length) {
@@ -169,7 +178,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
       }
     }
 
-    function handleAICardSold({ card, feed }) {
+    function handleAICardSold({ card, feed }: { card: any; feed: any }) {
       if (card.id === cardId) {
         setOffers((prevOffers) => {
           const result = [];
@@ -179,7 +188,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
             const { offer: acceptedOffer } = transfer;
             if (offer.price === acceptedOffer.price) {
               newOffer.users = offer.users.filter(
-                (user) => user.id !== acceptedOffer.userId
+                (user: { id: number }) => user.id !== acceptedOffer.userId
               );
             }
             if (newOffer.users.length) {
@@ -546,7 +555,9 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
     setOffers((prevOffers) => {
       return prevOffers.reduce((acc, offer) => {
         if (offer.price === card.myOffer.price) {
-          let newUsers = offer.users.filter((user) => user.id !== userId);
+          let newUsers = offer.users.filter(
+            (user: { id: number }) => user.id !== userId
+          );
           if (newUsers.length > 0) {
             acc.push({ ...offer, users: newUsers });
           }

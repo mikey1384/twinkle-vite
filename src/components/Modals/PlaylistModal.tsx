@@ -1,22 +1,20 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Playlist from '~/components/Playlist';
 import Link from '~/components/Link';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-PlaylistModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  onLinkClick: PropTypes.func,
-  playlistId: PropTypes.number.isRequired,
-  title: PropTypes.string.isRequired
-};
-
 export default function PlaylistModal({
   onHide,
   onLinkClick,
   playlistId,
   title
+}: {
+  onHide: () => void;
+  onLinkClick: () => void;
+  playlistId: number;
+  title: string;
 }) {
   return (
     <Modal onHide={onHide}>

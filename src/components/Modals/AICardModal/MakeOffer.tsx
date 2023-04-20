@@ -1,20 +1,18 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-
-MakeOffer.propTypes = {
-  myId: PropTypes.number,
-  className: PropTypes.string,
-  onSetOfferModalShown: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 
 export default function MakeOffer({
   myId,
   className,
   onSetOfferModalShown,
   style
+}: {
+  myId: string;
+  className?: string;
+  onSetOfferModalShown: (isShown: boolean) => void;
+  style?: React.CSSProperties;
 }) {
   return (
     <div
