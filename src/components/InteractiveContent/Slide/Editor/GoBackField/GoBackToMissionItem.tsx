@@ -9,8 +9,8 @@ export default function GoBackToMissionItem({
   selectedSlideId,
   onClick
 }: {
-  style: any;
-  selectedSlideId: number;
+  style?: any;
+  selectedSlideId?: number | null;
   onClick: () => void;
 }) {
   const {

@@ -1,21 +1,18 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import IconMenu from './IconMenu';
 import { isEqual } from 'lodash';
 import { useKeyContext } from '~/contexts';
 
-IconSelectionModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  onSelectIcon: PropTypes.func.isRequired,
-  selectedIcon: PropTypes.oneOfType([PropTypes.string, PropTypes.array])
-};
-
 export default function IconSelectionModal({
   onHide,
   onSelectIcon,
   selectedIcon: prevSelectedIcon
+}: {
+  onHide: () => void;
+  onSelectIcon: (arg0: any) => void;
+  selectedIcon: any;
 }) {
   const {
     done: { color: doneColor }
@@ -28,7 +25,7 @@ export default function IconSelectionModal({
         <IconMenu
           selectedIcon={selectedIcon}
           onSelectIcon={(icon) =>
-            setSelectedIcon((prevIcon) => {
+            setSelectedIcon((prevIcon: any) => {
               if (isEqual(prevIcon, icon)) return null;
               return icon;
             })

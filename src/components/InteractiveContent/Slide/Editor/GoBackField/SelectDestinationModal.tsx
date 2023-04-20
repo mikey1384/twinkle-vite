@@ -1,18 +1,9 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SlideListItem from '../../../SlideListItem';
 import GoBackToMissionItem from './GoBackToMissionItem';
 import { useKeyContext } from '~/contexts';
-
-SelectDestinationModal.propTypes = {
-  interactiveId: PropTypes.number.isRequired,
-  onHide: PropTypes.func.isRequired,
-  onDone: PropTypes.func.isRequired,
-  originForkId: PropTypes.number,
-  slideObj: PropTypes.object
-};
 
 export default function SelectDestinationModal({
   interactiveId,
@@ -20,17 +11,23 @@ export default function SelectDestinationModal({
   onHide,
   originForkId,
   slideObj
+}: {
+  interactiveId: number;
+  onDone: (arg: any) => void;
+  onHide: () => void;
+  originForkId: number;
+  slideObj: any;
 }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
-  const [forkIds, setForkIds] = useState([]);
-  const [selectedSlideId, setSelectedSlideId] = useState(null);
+  const [forkIds, setForkIds] = useState<number[]>([]);
+  const [selectedSlideId, setSelectedSlideId] = useState<number | null>(null);
 
   useEffect(() => {
     addForkIds(originForkId);
 
-    function addForkIds(forkId) {
+    function addForkIds(forkId: number) {
       setForkIds((forkIds) =>
         forkIds.includes(forkId) ? forkIds : forkIds.concat(forkId)
       );
