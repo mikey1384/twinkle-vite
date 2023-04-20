@@ -1,5 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import FileViewer from '~/components/FileViewer';
@@ -11,16 +10,15 @@ import { returnImageFileFromUrl } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-FileField.propTypes = {
-  isChanging: PropTypes.bool,
-  fileUrl: PropTypes.string,
-  newAttachment: PropTypes.object,
-  onSetAttachmentState: PropTypes.func.isRequired,
-  thumbUrl: PropTypes.string,
-  uploadingFile: PropTypes.bool,
-  onThumbnailLoad: PropTypes.func
-};
-
+interface Props {
+  isChanging: boolean;
+  fileUrl: string;
+  newAttachment: any;
+  onSetAttachmentState: any;
+  onThumbnailLoad: any;
+  thumbUrl: string;
+  uploadingFile: boolean;
+}
 export default function FileField({
   isChanging,
   fileUrl,
@@ -29,14 +27,14 @@ export default function FileField({
   onThumbnailLoad,
   thumbUrl,
   uploadingFile
-}) {
+}: Props) {
   const { fileUploadLvl } = useKeyContext((v) => v.myState);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
   );
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const FileInputRef = useRef(null);
+  const FileInputRef: React.RefObject<any> = useRef(null);
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
@@ -141,7 +139,7 @@ export default function FileField({
     </div>
   );
 
-  function handleFileSelection(event) {
+  function handleFileSelection(event: any) {
     const fileObj = event.target.files[0];
     if (fileObj.size / mb > maxSize) {
       return setAlertModalShown(true);
@@ -149,7 +147,7 @@ export default function FileField({
     const { fileType } = getFileInfoFromFileName(fileObj.name);
     if (fileType === 'image') {
       const reader = new FileReader();
-      reader.onload = (upload) => {
+      reader.onload = (upload: any) => {
         const payload = upload.target.result;
         const extension = fileObj.name.split('.').pop();
         if (extension === 'gif') {

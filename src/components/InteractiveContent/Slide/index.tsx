@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   useAppContext,
   useInteractiveContext,
@@ -17,42 +16,41 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useInView } from 'react-intersection-observer';
 
-Slide.propTypes = {
-  archivedSlides: PropTypes.array,
-  attachment: PropTypes.object,
-  cannotMoveUp: PropTypes.bool,
-  cannotMoveDown: PropTypes.bool,
-  displayedSlideIds: PropTypes.array,
-  fileUploadProgress: PropTypes.number,
-  innerRef: PropTypes.func,
-  index: PropTypes.number,
-  insertButtonShown: PropTypes.bool,
-  interactiveId: PropTypes.number,
-  style: PropTypes.object,
-  heading: PropTypes.string,
-  isDeleted: PropTypes.bool,
-  isEditing: PropTypes.bool,
-  isPublished: PropTypes.bool,
-  isLastSlide: PropTypes.bool,
-  isFork: PropTypes.bool,
-  isOnModal: PropTypes.bool,
-  isPortal: PropTypes.bool,
-  forkedFrom: PropTypes.number,
-  description: PropTypes.string,
-  onExpandPath: PropTypes.func,
-  onMoveSlide: PropTypes.func,
-  forkButtonIds: PropTypes.array,
-  forkButtonsObj: PropTypes.object,
-  onCurrentSlideIdChange: PropTypes.func,
-  onGoBackToMission: PropTypes.func,
-  portalButton: PropTypes.object,
-  slideId: PropTypes.number,
-  slideObj: PropTypes.object,
-  paths: PropTypes.object,
-  selectedForkButtonId: PropTypes.number,
-  uploadingFile: PropTypes.bool
-};
-
+interface Props {
+  archivedSlides: any[];
+  attachment: any;
+  cannotMoveUp: boolean;
+  cannotMoveDown: boolean;
+  displayedSlideIds: number[];
+  fileUploadProgress: number;
+  innerRef: any;
+  index: number;
+  insertButtonShown: boolean;
+  interactiveId: number;
+  style: any;
+  heading: string;
+  isDeleted: boolean;
+  isEditing: boolean;
+  isPublished: boolean;
+  isLastSlide: boolean;
+  isFork: boolean;
+  isOnModal: boolean;
+  isPortal: boolean;
+  forkedFrom: number;
+  description: string;
+  onExpandPath: any;
+  onMoveSlide: any;
+  forkButtonIds: number[];
+  forkButtonsObj: any;
+  onCurrentSlideIdChange: any;
+  onGoBackToMission: any;
+  portalButton: any;
+  slideId: number;
+  slideObj: { [key: string]: any };
+  paths: any;
+  selectedForkButtonId: number;
+  uploadingFile: boolean;
+}
 export default function Slide({
   archivedSlides,
   cannotMoveUp,
@@ -87,7 +85,7 @@ export default function Slide({
   slideObj,
   style,
   uploadingFile
-}) {
+}: Props) {
   const [ComponentRef, inView] = useInView({
     threshold: 1
   });
@@ -359,7 +357,11 @@ export default function Slide({
     handleDeleteSlide();
   }
 
-  async function handleDeleteSlide({ noUndelete } = {}) {
+  async function handleDeleteSlide({
+    noUndelete
+  }: {
+    noUndelete?: boolean;
+  } = {}) {
     const numUpdates = await deleteInteractiveSlide(slideId);
     onChangeNumUpdates({ interactiveId, numUpdates });
     if (noUndelete) {
@@ -378,7 +380,7 @@ export default function Slide({
     }
   }
 
-  function handleHideDeletedMessages(forkSlideId) {
+  function handleHideDeletedMessages(forkSlideId: number) {
     for (let slideId of displayedSlideIds) {
       if (
         displayedSlideIds.indexOf(slideId) >
@@ -390,13 +392,13 @@ export default function Slide({
     }
   }
 
-  function handleForkButtonClick(buttonId) {
+  function handleForkButtonClick(buttonId: number) {
     if (onExpandPath) {
       onExpandPath({ newSlides: paths[buttonId], slideId, buttonId });
     }
   }
 
-  function handlePortalButtonClick(forkId) {
+  function handlePortalButtonClick(forkId: number) {
     if (forkId === 0) {
       for (let slideId of displayedSlideIds) {
         if (slideObj[slideId]?.isFork) {
@@ -431,7 +433,7 @@ export default function Slide({
     });
   }
 
-  async function handleSetEmbedProps(params) {
+  async function handleSetEmbedProps(params: object) {
     onSetSlideState({
       interactiveId,
       slideId,
@@ -444,7 +446,7 @@ export default function Slide({
     });
   }
 
-  function handleThumbnailUpload(thumbUrl) {
+  function handleThumbnailUpload(thumbUrl: string) {
     onSetSlideState({
       interactiveId,
       slideId,

@@ -9,12 +9,12 @@ export default function FileInfo({
   src,
   fileType,
   fileName,
-  fileSize
+  fileSize = 0
 }: {
   src: string;
   fileType: string;
   fileName: string;
-  fileSize: number;
+  fileSize?: number;
 }) {
   const {
     link: { color: linkColor }

@@ -7,7 +7,7 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 
 interface Props {
-  fileSize: number;
+  fileSize?: number;
   isOnModal?: boolean;
   onThumbnailLoad?: (thumbUrl: string) => void;
   small?: boolean;
