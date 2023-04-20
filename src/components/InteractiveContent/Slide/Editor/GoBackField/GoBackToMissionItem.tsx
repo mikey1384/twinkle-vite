@@ -1,19 +1,17 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import { Color, borderRadius } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-GoBackToMissionItem.propTypes = {
-  style: PropTypes.object,
-  selectedSlideId: PropTypes.number,
-  onClick: PropTypes.func.isRequired
-};
-
 export default function GoBackToMissionItem({
   style,
   selectedSlideId,
   onClick
+}: {
+  style: any;
+  selectedSlideId: number;
+  onClick: () => void;
 }) {
   const {
     itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }

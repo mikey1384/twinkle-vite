@@ -1,22 +1,19 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import ForkButtonItem from './ForkButtonItem';
 import ReorderButtonsModal from './ReorderButtonsModal';
-
-ForkButtonsField.propTypes = {
-  editedForkButtonIds: PropTypes.array.isRequired,
-  editedForkButtonsObj: PropTypes.object.isRequired,
-  onSetInputState: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 
 export default function ForkButtonsField({
   editedForkButtonIds,
   editedForkButtonsObj,
   onSetInputState,
   style
+}: {
+  editedForkButtonIds: number[];
+  editedForkButtonsObj: any;
+  onSetInputState: (arg0: any) => void;
+  style?: any;
 }) {
   const [reorderButtonsModalShown, setReorderButtonsModalShown] =
     useState(false);

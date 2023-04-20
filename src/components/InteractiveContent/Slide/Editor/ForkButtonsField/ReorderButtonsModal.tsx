@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Modal from '~/components/Modal';
@@ -25,6 +25,11 @@ export default function ReorderButtonsModal({
   forkButtonsObj,
   forkButtonIds: initialButtonIds,
   onSubmit
+}: {
+  onHide: () => void;
+  forkButtonsObj: any;
+  forkButtonIds: number[];
+  onSubmit: (arg: any) => void;
 }) {
   const {
     done: { color: doneColor }
@@ -63,7 +68,13 @@ export default function ReorderButtonsModal({
     </ErrorBoundary>
   );
 
-  function handleMove({ sourceId, targetId }) {
+  function handleMove({
+    sourceId,
+    targetId
+  }: {
+    sourceId: number;
+    targetId: number;
+  }) {
     const sourceIndex = forkButtonIds.indexOf(sourceId);
     const targetIndex = forkButtonIds.indexOf(targetId);
     const newForkButtonIds = [...forkButtonIds];
