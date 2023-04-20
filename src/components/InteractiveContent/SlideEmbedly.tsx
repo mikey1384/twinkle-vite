@@ -1,22 +1,8 @@
-import { memo, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useInteractiveContext } from '~/contexts';
-
-SlideEmbedly.propTypes = {
-  actualDescription: PropTypes.string,
-  actualTitle: PropTypes.string,
-  interactiveId: PropTypes.number.isRequired,
-  onSetEmbedProps: PropTypes.func.isRequired,
-  prevUrl: PropTypes.string,
-  siteUrl: PropTypes.string,
-  slideId: PropTypes.number,
-  style: PropTypes.object,
-  thumbUrl: PropTypes.string,
-  url: PropTypes.string
-};
 
 function SlideEmbedly({
   style,
@@ -29,6 +15,17 @@ function SlideEmbedly({
   prevUrl,
   siteUrl,
   slideId
+}: {
+  style?: any;
+  onSetEmbedProps: (props: any) => void;
+  url: string;
+  thumbUrl: string;
+  actualTitle: string;
+  actualDescription: string;
+  interactiveId: number;
+  prevUrl: string;
+  siteUrl: string;
+  slideId: number;
 }) {
   const fetchUrlEmbedData = useAppContext(
     (v) => v.requestHelpers.fetchUrlEmbedData
@@ -69,7 +66,7 @@ function SlideEmbedly({
           siteUrl: site
         });
         onChangeNumUpdates({ interactiveId, numUpdates });
-      } catch (error) {
+      } catch (error: any) {
         setLoading(false);
         onSetEmbedProps({ thumbUrl: fallbackImage });
         console.error(error.response || error);

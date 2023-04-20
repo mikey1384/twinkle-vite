@@ -16,7 +16,7 @@ export default function Likers({
   likes?: any[];
   target?: string;
   userId: number;
-  onLinkClick?: (e: any) => void;
+  onLinkClick: () => void;
   style?: React.CSSProperties;
   className?: string;
   defaultText?: string;

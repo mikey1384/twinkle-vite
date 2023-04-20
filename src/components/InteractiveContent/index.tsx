@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef } from 'react';
 import Slide from './Slide';
 import Loading from '~/components/Loading';
 import BottomInterface from './BottomInterface';
@@ -12,17 +11,6 @@ import {
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-InteractiveContent.propTypes = {
-  autoFocus: PropTypes.bool,
-  currentTutorialSlideId: PropTypes.number,
-  interactiveId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  onGoBackToMission: PropTypes.func,
-  onCurrentSlideIdChange: PropTypes.func,
-  onScrollElementTo: PropTypes.func.isRequired,
-  onScrollElementToCenter: PropTypes.func.isRequired,
-  isOnModal: PropTypes.bool
-};
-
 export default function InteractiveContent({
   autoFocus,
   currentTutorialSlideId,
@@ -32,7 +20,17 @@ export default function InteractiveContent({
   onScrollElementTo,
   onScrollElementToCenter,
   isOnModal
+}: {
+  autoFocus: boolean;
+  currentTutorialSlideId: number;
+  interactiveId: number;
+  onCurrentSlideIdChange: (slideId: number) => void;
+  onGoBackToMission: () => void;
+  onScrollElementTo: (element: any) => void;
+  onScrollElementToCenter: (element: any) => void;
+  isOnModal: boolean;
 }) {
+  const SlideRefs: any = useRef({});
   useEffect(() => {
     if (currentTutorialSlideId) {
       onScrollElementToCenter(SlideRefs.current[currentTutorialSlideId]);
@@ -73,7 +71,6 @@ export default function InteractiveContent({
   );
   const { managementLevel, userId } = useKeyContext((v) => v.myState);
   const expanded = useRef(false);
-  const SlideRefs = useRef({});
   const prevDisplayedSlideIds = useRef([]);
 
   const canEdit = useMemo(() => managementLevel >= 2, [managementLevel]);
@@ -87,13 +84,20 @@ export default function InteractiveContent({
     isPublished
   } = useMemo(() => state[interactiveId] || {}, [interactiveId, state]);
   const displayedSlidesThatAreNotDeleted = useMemo(
-    () => displayedSlideIds?.filter((slideId) => !slideObj[slideId].isDeleted),
+    () =>
+      displayedSlideIds?.filter(
+        (slideId: number) => !slideObj[slideId].isDeleted
+      ),
     [displayedSlideIds, slideObj]
   );
 
   const lastFork = useMemo(() => {
-    const slides = displayedSlideIds?.map((slideId) => slideObj[slideId]);
-    const forks = slides?.filter((slide) => slide.isFork && !slide.isDeleted);
+    const slides = displayedSlideIds?.map(
+      (slideId: number) => slideObj[slideId]
+    );
+    const forks = slides?.filter(
+      (slide: any) => slide.isFork && !slide.isDeleted
+    );
     if (forks?.length > 0) {
       return forks[forks.length - 1];
     }
@@ -102,8 +106,8 @@ export default function InteractiveContent({
 
   const archivedSlides = useMemo(() => {
     return archivedSlideIds
-      ?.map((slideId) => slideObj[slideId])
-      .filter((slide) => !slide.isFork);
+      ?.map((slideId: number) => slideObj[slideId])
+      .filter((slide: any) => !slide.isFork);
   }, [archivedSlideIds, slideObj]);
   useEffect(() => {
     if (pageVisible) {
@@ -214,14 +218,14 @@ export default function InteractiveContent({
     >
       {(isPublished || canEdit) && (
         <>
-          {displayedSlideIds.map((slideId, index) => (
+          {displayedSlideIds.map((slideId: number, index: number) => (
             <Slide
               {...slideObj[slideId]}
               key={slideId}
               archivedSlides={archivedSlides}
               displayedSlideIds={displayedSlideIds}
               index={index}
-              innerRef={(ref) => (SlideRefs.current[slideId] = ref)}
+              innerRef={(ref: any) => (SlideRefs.current[slideId] = ref)}
               insertButtonShown={canEdit}
               cannotMoveUp={
                 index === 0 || !!slideObj[displayedSlideIds[index - 1]]?.isFork
@@ -271,7 +275,15 @@ export default function InteractiveContent({
     <Loading />
   );
 
-  function handleExpandPath({ newSlides, slideId, buttonId }) {
+  function handleExpandPath({
+    newSlides,
+    slideId,
+    buttonId
+  }: {
+    newSlides: number[];
+    slideId: number;
+    buttonId: number;
+  }) {
     if (buttonId !== slideObj[slideId].selectedForkButtonId) {
       onSetSlideState({
         interactiveId,
@@ -311,6 +323,10 @@ export default function InteractiveContent({
     direction,
     interactiveId,
     slideId
+  }: {
+    direction: string;
+    interactiveId: number;
+    slideId: number;
   }) {
     const numUpdates = await moveInteractiveSlide({
       direction,

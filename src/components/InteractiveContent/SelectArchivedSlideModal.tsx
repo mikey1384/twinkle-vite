@@ -1,27 +1,24 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SlideListItem from './SlideListItem';
 import { useKeyContext } from '~/contexts';
-
-SelectArchivedSlideModal.propTypes = {
-  interactiveId: PropTypes.number.isRequired,
-  onHide: PropTypes.func.isRequired,
-  archivedSlides: PropTypes.array.isRequired,
-  onDone: PropTypes.func.isRequired
-};
 
 export default function SelectArchivedSlideModal({
   interactiveId,
   onDone,
   onHide,
   archivedSlides
+}: {
+  interactiveId: number;
+  onDone: (slideId: number | null) => void;
+  onHide: () => void;
+  archivedSlides: any[];
 }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
-  const [selectedSlideId, setSelectedSlideId] = useState(null);
+  const [selectedSlideId, setSelectedSlideId] = useState<number | null>(null);
 
   return (
     <Modal onHide={onHide}>
