@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   exceedsCharLimit,
   stringIsEmpty,
@@ -13,19 +12,6 @@ import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 
-AttachmentField.propTypes = {
-  isChanging: PropTypes.bool,
-  isYouTubeVideo: PropTypes.bool,
-  type: PropTypes.string,
-  fileUrl: PropTypes.string,
-  linkUrl: PropTypes.string,
-  thumbUrl: PropTypes.string,
-  newAttachment: PropTypes.object,
-  onSetAttachmentState: PropTypes.func.isRequired,
-  onThumbnailLoad: PropTypes.func,
-  uploadingFile: PropTypes.bool
-};
-
 export default function AttachmentField({
   isChanging,
   isYouTubeVideo,
@@ -37,6 +23,17 @@ export default function AttachmentField({
   onSetAttachmentState,
   onThumbnailLoad,
   uploadingFile
+}: {
+  isChanging: boolean;
+  isYouTubeVideo: boolean;
+  type: string;
+  fileUrl: string;
+  linkUrl: string;
+  thumbUrl: string;
+  newAttachment: any;
+  onSetAttachmentState: any;
+  onThumbnailLoad: any;
+  uploadingFile: boolean;
 }) {
   const editedUrl = useMemo(() => {
     if (type === 'link') {
@@ -44,7 +41,7 @@ export default function AttachmentField({
     }
     return '';
   }, [linkUrl, type]);
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
   const [urlError, setUrlError] = useState(false);
 
   useEffect(() => {
@@ -98,7 +95,7 @@ export default function AttachmentField({
             { icon: 'link', type: 'link' },
             { icon: 'paperclip', type: 'file' }
           ]
-            .filter((item) => item !== type)
+            .filter((item) => item.type !== type)
             .map((item) => ({
               label: (
                 <>
@@ -153,7 +150,7 @@ export default function AttachmentField({
     </div>
   );
 
-  function handleUrlChange(text) {
+  function handleUrlChange(text: string) {
     onSetAttachmentState({
       linkUrl: text,
       isYouTubeVideo: isValidYoutubeUrl(text)

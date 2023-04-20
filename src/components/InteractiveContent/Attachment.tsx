@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ReactPlayer from 'react-player';
 import FileViewer from '~/components/FileViewer';
 import SlideEmbedly from './SlideEmbedly';
@@ -9,25 +9,24 @@ import { v1 as uuidv1 } from 'uuid';
 import { css } from '@emotion/css';
 import { returnImageFileFromUrl } from '~/helpers';
 
-Attachment.propTypes = {
-  small: PropTypes.bool,
-  type: PropTypes.string,
-  fileUrl: PropTypes.string,
-  interactiveId: PropTypes.number,
-  linkUrl: PropTypes.string,
-  isOnModal: PropTypes.bool,
-  isYouTubeVideo: PropTypes.bool,
-  onSetEmbedProps: PropTypes.func.isRequired,
-  thumbUrl: PropTypes.string,
-  actualTitle: PropTypes.string,
-  actualDescription: PropTypes.string,
-  onThumbnailUpload: PropTypes.func,
-  prevUrl: PropTypes.string,
-  slideId: PropTypes.number,
-  siteUrl: PropTypes.string,
-  videoHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-};
-
+interface Props {
+  small?: boolean;
+  type: string;
+  fileUrl: string;
+  interactiveId: number;
+  linkUrl: string;
+  isOnModal: boolean;
+  isYouTubeVideo: boolean;
+  onSetEmbedProps: (arg0: any) => void;
+  thumbUrl: string;
+  actualTitle: string;
+  actualDescription: string;
+  onThumbnailUpload: (arg0: any) => void;
+  prevUrl: string;
+  slideId: number;
+  siteUrl: string;
+  videoHeight?: number;
+}
 export default function Attachment({
   small,
   type,
@@ -45,7 +44,7 @@ export default function Attachment({
   slideId,
   siteUrl,
   videoHeight
-}) {
+}: Props) {
   const uploadThumbForInteractiveSlide = useAppContext(
     (v) => v.requestHelpers.uploadThumbForInteractiveSlide
   );
@@ -113,7 +112,6 @@ export default function Attachment({
         )
       ) : (
         <SlideEmbedly
-          className="unselectable"
           style={{ marginTop: '3rem', width: '50%' }}
           url={linkUrl}
           onSetEmbedProps={onSetEmbedProps}
@@ -130,7 +128,7 @@ export default function Attachment({
       return null;
   }
 
-  function handleThumbnailLoad(thumb) {
+  function handleThumbnailLoad(thumb: string) {
     const file = returnImageFileFromUrl({ imageUrl: thumb });
     handleUploadThumb();
 
