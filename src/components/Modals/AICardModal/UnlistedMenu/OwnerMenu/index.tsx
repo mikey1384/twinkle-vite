@@ -1,14 +1,5 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Menu from './Menu';
-
-OwnerMenu.propTypes = {
-  burnXP: PropTypes.number.isRequired,
-  xpNumberColor: PropTypes.string.isRequired,
-  cardLevel: PropTypes.number.isRequired,
-  cardQuality: PropTypes.string.isRequired,
-  onBurnConfirm: PropTypes.func.isRequired,
-  onSetSellModalShown: PropTypes.func.isRequired
-};
 
 export default function OwnerMenu({
   burnXP,
@@ -17,6 +8,13 @@ export default function OwnerMenu({
   onSetSellModalShown,
   onBurnConfirm,
   xpNumberColor
+}: {
+  burnXP: number;
+  cardLevel: number;
+  cardQuality: string;
+  onSetSellModalShown: (v: boolean) => void;
+  onBurnConfirm: () => void;
+  xpNumberColor: string;
 }) {
   return (
     <div style={{ width: '100%', marginTop: 0 }}>

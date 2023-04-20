@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -6,17 +6,6 @@ import { useKeyContext } from '~/contexts';
 import UsernameText from '~/components/Texts/UsernameText';
 import MakeOffer from '../MakeOffer';
 import MyOffer from '../MyOffer';
-
-NonOwnerMenu.propTypes = {
-  burnXP: PropTypes.number.isRequired,
-  xpNumberColor: PropTypes.string.isRequired,
-  owner: PropTypes.object.isRequired,
-  onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
-  onSetOfferModalShown: PropTypes.func.isRequired,
-  onUserMenuShownChange: PropTypes.func.isRequired,
-  myId: PropTypes.number,
-  myOffer: PropTypes.object
-};
 
 export default function NonOwnerMenu({
   burnXP,
@@ -27,6 +16,15 @@ export default function NonOwnerMenu({
   onUserMenuShownChange,
   myId,
   myOffer
+}: {
+  burnXP: number;
+  xpNumberColor: string;
+  owner: any;
+  onSetWithdrawOfferModalShown: (v: boolean) => void;
+  onSetOfferModalShown: (v: boolean) => void;
+  onUserMenuShownChange: (v: boolean) => void;
+  myId: number;
+  myOffer: any;
 }) {
   const {
     userLink: { color: userLinkColor }
