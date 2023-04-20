@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -12,18 +11,6 @@ import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
-OfferDetailModal.propTypes = {
-  cardId: PropTypes.number.isRequired,
-  onHide: PropTypes.func.isRequired,
-  ownerId: PropTypes.number.isRequired,
-  price: PropTypes.number.isRequired,
-  onSetActiveTab: PropTypes.func.isRequired,
-  onUserMenuShownChange: PropTypes.func.isRequired,
-  userLinkColor: PropTypes.string.isRequired,
-  usermenuShown: PropTypes.bool,
-  userId: PropTypes.number
-};
-
 export default function OfferDetailModal({
   onHide,
   cardId,
@@ -34,11 +21,23 @@ export default function OfferDetailModal({
   userLinkColor,
   usermenuShown,
   userId
+}: {
+  onHide: () => void;
+  cardId: number;
+  onUserMenuShownChange: (v: boolean) => void;
+  onSetActiveTab: (v: string) => void;
+  ownerId: number;
+  price: number;
+  userLinkColor: string;
+  usermenuShown: boolean;
+  userId: number;
 }) {
   const isAcceptingRef = useRef(false);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const [offerAcceptModalObj, setOfferAcceptModalObj] = useState(null);
-  const [offers, setOffers] = useState([]);
+  const [offerAcceptModalObj, setOfferAcceptModalObj] = useState<{
+    [key: string]: any;
+  } | null>(null);
+  const [offers, setOffers] = useState<{ [key: string]: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
@@ -138,10 +137,10 @@ export default function OfferDetailModal({
     if (!isAcceptingRef.current) {
       isAcceptingRef.current = true;
       const coins = await sellAICard({
-        offerId: offerAcceptModalObj.id,
+        offerId: offerAcceptModalObj?.id,
         cardId,
-        price: offerAcceptModalObj.price,
-        offererId: offerAcceptModalObj.userId
+        price: offerAcceptModalObj?.price,
+        offererId: offerAcceptModalObj?.userId
       });
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       setOfferAcceptModalObj(null);

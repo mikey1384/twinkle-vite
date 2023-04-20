@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import moment from 'moment';
@@ -9,15 +8,6 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-OfferListItem.propTypes = {
-  offer: PropTypes.object.isRequired,
-  onAcceptClick: PropTypes.func.isRequired,
-  ownerId: PropTypes.number.isRequired,
-  userLinkColor: PropTypes.string.isRequired,
-  onUserMenuShownChange: PropTypes.func.isRequired,
-  userId: PropTypes.number
-};
-
 export default function OfferListItem({
   offer,
   onUserMenuShownChange,
@@ -25,6 +15,13 @@ export default function OfferListItem({
   ownerId,
   userLinkColor,
   userId
+}: {
+  offer: any;
+  onUserMenuShownChange: (v: boolean) => void;
+  onAcceptClick: (offer: any) => void;
+  ownerId: number;
+  userLinkColor: string;
+  userId: number;
 }) {
   const displayedTimeStamp = useMemo(
     () => moment.unix(offer.timeStamp).format('lll'),

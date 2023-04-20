@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -10,17 +10,6 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
-NonOwnerMenu.propTypes = {
-  cardId: PropTypes.number.isRequired,
-  className: PropTypes.string,
-  myId: PropTypes.number.isRequired,
-  myOffer: PropTypes.object,
-  onSetWithdrawOfferModalShown: PropTypes.func.isRequired,
-  onSetOfferModalShown: PropTypes.func.isRequired,
-  price: PropTypes.number.isRequired,
-  style: PropTypes.object
-};
-
 export default function NonOwnerMenu({
   cardId,
   className,
@@ -30,6 +19,15 @@ export default function NonOwnerMenu({
   onSetOfferModalShown,
   price,
   style
+}: {
+  cardId: number;
+  className?: string;
+  myId: number;
+  myOffer?: any;
+  onSetWithdrawOfferModalShown: (v: boolean) => void;
+  onSetOfferModalShown: (v: boolean) => void;
+  price: number;
+  style?: React.CSSProperties;
 }) {
   const buyAICard = useAppContext((v) => v.requestHelpers.buyAICard);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
