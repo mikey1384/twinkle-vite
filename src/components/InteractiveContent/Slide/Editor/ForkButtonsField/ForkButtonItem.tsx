@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -8,20 +7,18 @@ import { exceedsCharLimit } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
-ForkButtonItem.propTypes = {
-  onSetInputState: PropTypes.func.isRequired,
-  forkButton: PropTypes.object,
-  style: PropTypes.object,
-  editedForkButtonIds: PropTypes.array,
-  editedForkButtonsObj: PropTypes.object
-};
-
 export default function ForkButtonItem({
   editedForkButtonIds,
   editedForkButtonsObj,
   forkButton,
   style,
   onSetInputState
+}: {
+  editedForkButtonIds: number[];
+  editedForkButtonsObj: any;
+  forkButton: any;
+  style: any;
+  onSetInputState: (arg0: any) => void;
 }) {
   const [iconSelectionModalShown, setIconSelectionModalShown] = useState(false);
   const headingExceedsCharLimit = useMemo(
