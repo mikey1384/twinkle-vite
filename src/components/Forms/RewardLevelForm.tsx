@@ -18,12 +18,12 @@ export default function RewardLevelForm({
   onSetRewardLevel,
   style
 }: {
-  alreadyPosted: boolean;
-  extendedRewardLevels: boolean;
+  alreadyPosted?: boolean;
+  extendedRewardLevels?: boolean;
   icon?: string;
-  isMadeByUser: boolean;
-  isFromContentInput: boolean;
-  isFromSubjectInput: boolean;
+  isMadeByUser?: boolean;
+  isFromContentInput?: boolean;
+  isFromSubjectInput?: boolean;
   themed?: boolean;
   rewardLevel: number;
   onSetRewardLevel: (rewardLevel: number) => void;

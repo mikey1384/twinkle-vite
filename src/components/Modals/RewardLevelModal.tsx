@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -15,20 +14,18 @@ const setLabel = localize('set');
 const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
 const setRewardLevelLabel = localize('setRewardLevel');
 
-RewardLevelModal.propTypes = {
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  rewardLevel: PropTypes.number,
-  onHide: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired
-};
-
 export default function RewardLevelModal({
   contentId,
   contentType,
   rewardLevel: initialRewardLevel = 0,
   onSubmit,
   onHide
+}: {
+  contentId: number;
+  contentType: string;
+  rewardLevel?: number;
+  onSubmit: (params: object) => void;
+  onHide: () => void;
 }) {
   const {
     done: { color: doneColor }
