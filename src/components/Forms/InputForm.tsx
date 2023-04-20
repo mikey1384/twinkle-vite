@@ -51,7 +51,7 @@ interface Props {
   parent: any;
   placeholder?: string;
   rows?: number;
-  onViewSecretAnswer: () => void;
+  onViewSecretAnswer?: () => void;
   style?: any;
   theme?: string;
   targetCommentId?: number;
@@ -237,7 +237,7 @@ function InputForm({
     secretViewMessageSubmittingRef.current = true;
     setSecretViewMessageSubmitting(true);
     try {
-      await onViewSecretAnswer();
+      await onViewSecretAnswer?.();
       setSecretViewMessageSubmitting(false);
       secretViewMessageSubmittingRef.current = false;
     } catch (error) {

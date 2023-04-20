@@ -1,18 +1,9 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Attachment from './Attachment';
 import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useInteractiveContext, useKeyContext } from '~/contexts';
-
-SlideListItem.propTypes = {
-  interactiveId: PropTypes.number.isRequired,
-  onClick: PropTypes.func.isRequired,
-  selectedSlideId: PropTypes.number,
-  slide: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
 
 export default function SlideListItem({
   interactiveId,
@@ -20,6 +11,12 @@ export default function SlideListItem({
   selectedSlideId,
   slide,
   style
+}: {
+  interactiveId: number;
+  onClick: (slideId: number) => void;
+  selectedSlideId: number | null;
+  slide: any;
+  style?: any;
 }) {
   const {
     itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
@@ -106,7 +103,7 @@ export default function SlideListItem({
     </div>
   );
 
-  async function handleSetEmbedProps(params) {
+  async function handleSetEmbedProps(params: object) {
     onSetSlideState({
       interactiveId,
       slideId: slide.id,
@@ -119,7 +116,7 @@ export default function SlideListItem({
     });
   }
 
-  function handleThumbnailUpload(thumbUrl) {
+  function handleThumbnailUpload(thumbUrl: string) {
     onSetSlideState({
       interactiveId,
       slideId: slide.id,

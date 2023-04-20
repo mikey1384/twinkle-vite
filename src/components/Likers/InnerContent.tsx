@@ -9,7 +9,7 @@ interface Props {
   likes?: Array<{ id: number; username: string }>;
   userId: number;
   wordBreakEnabled?: boolean;
-  onLinkClick?: (v: any) => void;
+  onLinkClick: () => void;
   target?: string;
   defaultText?: string;
   theme?: any;
