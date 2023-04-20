@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -7,20 +6,18 @@ import Icon from '~/components/Icon';
 import { useAppContext, useChatContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 
-SellModal.propTypes = {
-  card: PropTypes.object.isRequired,
-  offerPrice: PropTypes.number.isRequired,
-  offers: PropTypes.array.isRequired,
-  offersLoaded: PropTypes.bool.isRequired,
-  onHide: PropTypes.func.isRequired
-};
-
 export default function SellModal({
   card,
   offerPrice,
   offers,
   offersLoaded,
   onHide
+}: {
+  card: any;
+  offerPrice: number;
+  offers: any[];
+  offersLoaded: boolean;
+  onHide: () => void;
 }) {
   const [posting, setPosting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -122,7 +119,7 @@ export default function SellModal({
     </Modal>
   );
 
-  function handleAmountChange(amount) {
+  function handleAmountChange(amount: string) {
     setErrorMessage('');
     const newAmount = Number(amount.replace(/[^0-9]/g, ''));
     setAmount(Math.min(newAmount, 999_999_999));

@@ -6,7 +6,7 @@ import Icon from '~/components/Icon';
 import DropdownList from './DropdownList';
 
 interface Props {
-  onClickOutSide: () => void;
+  onClickOutSide?: () => void;
   searchResults?: any[];
   addonColor?: string;
   autoFocus?: boolean;
@@ -18,8 +18,8 @@ interface Props {
   placeholder?: string;
   onClear?: () => void;
   onFocus?: () => void;
-  onSelect: (item: any) => void;
-  renderItemLabel: (item: any) => any;
+  onSelect?: (item: any) => void;
+  renderItemLabel?: (item: any) => any;
   renderItemUrl?: (item: any) => string;
   style?: any;
   value?: string;
@@ -129,7 +129,7 @@ export default function SearchInput({
       if (event.keyCode === 13) {
         event.preventDefault();
         let item = searchResults[index];
-        onSelect(item);
+        onSelect?.(item);
       }
 
       if (event.keyCode === 9) {

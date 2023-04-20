@@ -1,15 +1,19 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
 
-AlertModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  modalOverModal: PropTypes.bool,
-  title: PropTypes.string.isRequired,
-  content: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired
-};
-export default function AlertModal({ onHide, modalOverModal, title, content }) {
+export default function AlertModal({
+  onHide,
+  modalOverModal,
+  title,
+  content
+}: {
+  onHide: () => void;
+  modalOverModal?: boolean;
+  title: string;
+  content: string | React.ReactNode;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);

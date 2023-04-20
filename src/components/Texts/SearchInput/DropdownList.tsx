@@ -4,11 +4,11 @@ import { useOutsideClick } from '~/helpers/hooks';
 
 interface Props {
   indexToHighlight: number;
-  renderItemLabel: (item: any) => any;
+  renderItemLabel?: (item: any) => any;
   renderItemUrl?: (item: any) => string;
   searchResults: any[];
-  onClickOutSide: () => void;
-  onSelect: (item: any) => void;
+  onClickOutSide?: () => void;
+  onSelect?: (item: any) => void;
   onSetIndexToHighlight: (index: number) => void;
 }
 export default function DropdownList({
@@ -28,7 +28,7 @@ export default function DropdownList({
       searchResults={searchResults}
       onUpdate={() => onSetIndexToHighlight(0)}
       indexToHighlight={indexToHighlight}
-      onItemClick={(item) => onSelect(item)}
+      onItemClick={(item) => onSelect?.(item)}
       renderItemLabel={renderItemLabel}
       renderItemUrl={renderItemUrl}
     />

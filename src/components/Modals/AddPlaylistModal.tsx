@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Modal from '~/components/Modal';
@@ -39,6 +39,13 @@ export default function AddPlaylistModal({
   modalOverModal,
   onUploadPlaylist,
   title: initialTitle = ''
+}: {
+  existingVideoIds?: string[];
+  focusPlaylistPanelAfterUpload?: () => void;
+  onHide: () => void;
+  modalOverModal?: boolean;
+  onUploadPlaylist: (arg: any) => void;
+  title?: string;
 }) {
   const {
     done: { color: doneColor }
@@ -55,7 +62,7 @@ export default function AddPlaylistModal({
   const [description, setDescription] = useState('');
   const [allVideos, setAllVideos] = useState([]);
   const [searchedVideos, setSearchedVideos] = useState([]);
-  const [selectedVideos, setSelectedVideos] = useState([]);
+  const [selectedVideos, setSelectedVideos] = useState<any[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreButton, setLoadMoreButton] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -65,7 +72,7 @@ export default function AddPlaylistModal({
     onClear: () => setSearchedVideos([]),
     onSetSearchText: setSearchText
   });
-  const playlistVideoObjects = useRef({});
+  const playlistVideoObjects: React.MutableRefObject<any> = useRef({});
 
   useEffect(() => {
     loadVideos();
@@ -76,7 +83,7 @@ export default function AddPlaylistModal({
         excludeContentIds: existingVideoIds
       });
       playlistVideoObjects.current = objectify(loadedVideos);
-      setAllVideos(loadedVideos.map((video) => video.id));
+      setAllVideos(loadedVideos.map((video: { id: number }) => video.id));
       setLoadMoreButton(loadMoreButton);
       setLoaded(true);
     }
@@ -138,7 +145,7 @@ export default function AddPlaylistModal({
                   placeholder="Enter Playlist Title"
                   value={title}
                   onChange={(text) => setTitle(text)}
-                  onKeyUp={(event) => {
+                  onKeyUp={(event: any) => {
                     if (event.key === ' ') {
                       setTitle(addEmoji(event.target.value));
                     }
@@ -157,8 +164,8 @@ export default function AddPlaylistModal({
                   placeholder="Enter Description (Optional)"
                   minRows={4}
                   value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  onKeyUp={(event) => {
+                  onChange={(event: any) => setDescription(event.target.value)}
+                  onKeyUp={(event: any) => {
                     if (event.key === ' ') {
                       setDescription(addEmoji(event.target.value));
                     }
@@ -271,7 +278,6 @@ export default function AddPlaylistModal({
           ) : (
             <Button
               color={doneColor}
-              type="submit"
               disabled={
                 (section === 0 &&
                   (stringIsEmpty(title) ||
@@ -330,7 +336,9 @@ export default function AddPlaylistModal({
         ...objectify(loadedVideos)
       };
       setSearchedVideos(
-        searchedVideos.concat(loadedVideos.map((video) => video.id))
+        searchedVideos.concat(
+          loadedVideos.map((video: { id: number }) => video.id)
+        )
       );
       setLoadingMore(false);
       setSearchLoadMoreButton(loadMoreButton);
@@ -344,13 +352,15 @@ export default function AddPlaylistModal({
         ...playlistVideoObjects.current,
         ...objectify(loadedVideos)
       };
-      setAllVideos(allVideos.concat(loadedVideos.map((video) => video.id)));
+      setAllVideos(
+        allVideos.concat(loadedVideos.map((video: { id: number }) => video.id))
+      );
       setLoadingMore(false);
       setLoadMoreButton(loadMoreButton);
     }
   }
 
-  async function searchVideo(text) {
+  async function searchVideo(text: string) {
     const { results: searchResults, loadMoreButton } = await searchContent({
       filter: 'video',
       searchText: text
@@ -359,7 +369,7 @@ export default function AddPlaylistModal({
       ...playlistVideoObjects.current,
       ...objectify(searchResults)
     };
-    setSearchedVideos(searchResults.map((video) => video.id));
+    setSearchedVideos(searchResults.map((video: {id: number}) => video.id));
     setSearchLoadMoreButton(loadMoreButton);
   }
 }

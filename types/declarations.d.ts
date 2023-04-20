@@ -32,6 +32,22 @@ declare module '*.svg' {
   export default src;
 }
 
+declare module 'react-sanitized-html' {
+  import { ComponentType } from 'react';
+
+  export interface SanitizedHTMLProps {
+    allowedAttributes?: {
+      [key: string]: string[];
+    };
+    allowedTags?: string[];
+    html: string;
+  }
+
+  const SanitizedHTML: ComponentType<SanitizedHTMLProps>;
+
+  export default SanitizedHTML;
+}
+
 declare module 'html-react-parser' {
   import { ReactNode } from 'react';
 
