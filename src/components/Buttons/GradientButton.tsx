@@ -6,7 +6,7 @@ import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 interface Props {
   isFlat?: boolean;
   disabled?: boolean;
-  onClick?: () => void;
+  onClick?: (arg: any) => any;
   children?: any;
   fontSize?: string;
   mobileFontSize?: string;

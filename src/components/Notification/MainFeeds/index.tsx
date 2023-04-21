@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import RoundList from '~/components/RoundList';
 import Banner from '~/components/Banner';
 import GradientButton from '~/components/Buttons/GradientButton';
@@ -18,17 +17,6 @@ const tapToCollectRewardsLabel = localize('tapToCollectRewards');
 const yourXPLabel = localize('yourXP');
 const yourTwinkleCoinsLabel = localize('yourTwinkleCoins');
 
-MainFeeds.propTypes = {
-  loadingNotifications: PropTypes.bool,
-  loadMoreNotificationsButton: PropTypes.bool,
-  loadMoreRewardsButton: PropTypes.bool,
-  activeTab: PropTypes.string,
-  notifications: PropTypes.array,
-  rewards: PropTypes.array,
-  selectNotiTab: PropTypes.func,
-  style: PropTypes.object
-};
-
 export default function MainFeeds({
   activeTab,
   loadingNotifications,
@@ -38,6 +26,15 @@ export default function MainFeeds({
   rewards,
   selectNotiTab,
   style
+}: {
+  activeTab: string;
+  loadingNotifications: boolean;
+  loadMoreNotificationsButton: boolean;
+  loadMoreRewardsButton: boolean;
+  notifications: any[];
+  rewards: any[];
+  selectNotiTab: Function;
+  style?: object;
 }) {
   const {
     action: { color: actionColor },
@@ -181,7 +178,7 @@ export default function MainFeeds({
               style={{ marginBottom: '1rem', width: '100%' }}
               fontSize="2.2rem"
               mobileFontSize="1.7rem"
-              onClick={totalRewardAmount > 0 ? handleCollectReward : null}
+              onClick={totalRewardAmount > 0 ? handleCollectReward : undefined}
             >
               <div>
                 <p>{tapToCollectRewardsLabel}</p>
