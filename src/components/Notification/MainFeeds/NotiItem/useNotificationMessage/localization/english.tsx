@@ -1,7 +1,51 @@
+import React from 'react';
 import { stringIsEmpty, truncateText } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import ContentLink from '~/components/ContentLink';
 
+interface Props {
+  actionObj: {
+    amount: number;
+    content: string;
+    contentType: string;
+    id: number;
+    userId: number;
+  };
+  actionColor: string;
+  infoColor: string;
+  isNotification: boolean;
+  isReply: boolean;
+  isSubjectResponse: boolean;
+  isTask: boolean;
+  linkColor: string;
+  mentionColor: string;
+  missionColor: string;
+  recommendationColor: string;
+  rewardRootId: number;
+  rewardType: string;
+  rewardColor: string;
+  rewardRootMissionType: string;
+  rewardRootType: string;
+  rootMissionType: string;
+  targetComment: {
+    content: string;
+    id: number;
+    userId: number;
+  };
+  targetObj: {
+    content: string;
+    contentType: string;
+    id: number;
+    missionTitle: string;
+    missionType: string;
+    userId: number;
+  };
+  targetSubject: {
+    content: string;
+    id: number;
+    userId: number;
+  };
+}
 export default function renderEnglishMessage({
   actionObj,
   actionColor,
@@ -23,7 +67,7 @@ export default function renderEnglishMessage({
   targetComment,
   targetObj,
   targetSubject
-}) {
+}: Props) {
   const displayedContent =
     targetObj.contentType === 'pass'
       ? targetObj.missionTitle
