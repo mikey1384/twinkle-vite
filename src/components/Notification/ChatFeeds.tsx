@@ -1,6 +1,5 @@
-import { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { useInterval } from '~/helpers/hooks';
-import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
 import RoundList from '~/components/RoundList';
@@ -20,18 +19,6 @@ const joinConversationLabel = localize('joinConversation');
 const broughtBackByLabel = localize('broughtBackBy');
 const startedByLabel = localize('startedBy');
 
-ChatFeeds.propTypes = {
-  content: PropTypes.string,
-  myId: PropTypes.number,
-  reloadedBy: PropTypes.number,
-  reloaderName: PropTypes.string,
-  reloadTimeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  style: PropTypes.object,
-  timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  userId: PropTypes.number,
-  username: PropTypes.string
-};
-
 function ChatFeeds({
   content,
   myId,
@@ -42,6 +29,16 @@ function ChatFeeds({
   timeStamp,
   userId,
   username
+}: {
+  content: string;
+  myId: number;
+  reloadedBy: number;
+  reloaderName: string;
+  reloadTimeStamp: string | number;
+  style: React.CSSProperties;
+  timeStamp: string | number;
+  userId: number;
+  username: string;
 }) {
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId

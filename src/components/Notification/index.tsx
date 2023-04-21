@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import MainFeeds from './MainFeeds';
 import TodayStats from './TodayStats';
@@ -26,8 +26,18 @@ Notification.propTypes = {
   trackScrollPosition: PropTypes.bool
 };
 
-function Notification({ className, location, style, trackScrollPosition }) {
-  const ContainerRef = useRef(null);
+function Notification({
+  className,
+  location,
+  style,
+  trackScrollPosition
+}: {
+  className?: string;
+  location?: string;
+  style?: React.CSSProperties;
+  trackScrollPosition?: boolean;
+}) {
+  const ContainerRef: React.RefObject<any> = useRef(null);
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
   );
@@ -154,7 +164,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
         >
           {userId && <TodayStats />}
           <div style={{ position: 'relative' }}>
-            {userId && (numNewNotis > 0 || !!notifications.length > 0) && (
+            {userId && (numNewNotis > 0 || !!(notifications.length > 0)) && (
               <FilterBar
                 bordered
                 style={{
@@ -230,13 +240,13 @@ function Notification({ className, location, style, trackScrollPosition }) {
     </ErrorBoundary>
   );
 
-  async function handleFetchNotifications(userId) {
+  async function handleFetchNotifications(userId: number) {
     if (notifications.length === 0 && userId) {
       handleFetchNews(userId);
     }
   }
 
-  async function handleFetchNews(userId) {
+  async function handleFetchNews(userId: number) {
     if (!loadingNotificationRef.current) {
       setLoadingNotifications(true);
       loadingNotificationRef.current = true;
@@ -267,7 +277,7 @@ function Notification({ className, location, style, trackScrollPosition }) {
     }
   }
 
-  function handleScroll(event) {
+  function handleScroll(event: any) {
     if (!trackScrollPosition || activeTab !== 'notification') return;
     onRecordScrollPosition({
       section: `notification-${location}`,

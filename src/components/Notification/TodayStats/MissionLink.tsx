@@ -1,16 +1,8 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Link from '~/components/Link';
 import { Color } from '~/constants/css';
 import RewardText from '~/components/Texts/RewardText';
 import { css } from '@emotion/css';
-
-MissionLink.propTypes = {
-  missionName: PropTypes.string,
-  missionType: PropTypes.string,
-  xpReward: PropTypes.number,
-  coinReward: PropTypes.number,
-  rootMissionType: PropTypes.string
-};
 
 export default function MissionLink({
   missionName,
@@ -18,6 +10,12 @@ export default function MissionLink({
   xpReward,
   coinReward,
   rootMissionType
+}: {
+  missionName: string;
+  missionType: string;
+  xpReward: number;
+  coinReward: number;
+  rootMissionType: string;
 }) {
   return (
     <div

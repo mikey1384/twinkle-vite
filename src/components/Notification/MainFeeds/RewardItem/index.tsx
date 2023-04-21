@@ -7,10 +7,10 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 interface Props {
   actionColor: string;
-  contentId: number;
-  contentType: string;
+  contentId?: number;
+  contentType?: string;
   infoColor: string;
-  isTask: boolean;
+  isTask?: boolean;
   linkColor: string;
   reward: any;
   rewardColor: string;
