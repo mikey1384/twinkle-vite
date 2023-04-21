@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { Color } from '~/constants/css';
@@ -8,18 +7,32 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import useNotificationMessage from './useNotificationMessage';
 import UsernameText from '~/components/Texts/UsernameText';
 
-NotiItem.propTypes = {
-  actionColor: PropTypes.string,
-  infoColor: PropTypes.string,
-  linkColor: PropTypes.string,
-  mentionColor: PropTypes.string,
-  missionColor: PropTypes.string,
-  recommendationColor: PropTypes.string,
-  rewardColor: PropTypes.string,
-  userId: PropTypes.number,
-  notification: PropTypes.object.isRequired
-};
-
+interface Props {
+  actionColor?: string;
+  infoColor?: string;
+  linkColor: string;
+  mentionColor?: string;
+  missionColor?: string;
+  recommendationColor?: string;
+  rewardColor?: string;
+  userId?: number;
+  notification: {
+    id: number;
+    actionObj?: any;
+    targetComment?: any;
+    targetObj?: any;
+    targetSubject?: any;
+    timeStamp: string;
+    user?: any;
+    rewardType?: string;
+    rewardRootId?: number;
+    rewardRootType?: string;
+    rewardRootMissionType?: string;
+    isNotification?: boolean;
+    isTask?: boolean;
+    rootMissionType?: string;
+  };
+}
 export default function NotiItem({
   actionColor,
   infoColor,
@@ -45,7 +58,7 @@ export default function NotiItem({
     isTask,
     rootMissionType
   }
-}) {
+}: Props) {
   const NotificationMessage = useNotificationMessage({
     actionColor,
     actionObj,
