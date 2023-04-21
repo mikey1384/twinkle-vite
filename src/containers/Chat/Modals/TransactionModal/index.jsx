@@ -79,9 +79,9 @@ export default function TransactionModal({
       (cardId) =>
         cardObj[cardId] &&
         !cardObj[cardId].isBurned &&
-        cardObj[cardId].ownerId === partner.id
+        cardObj[cardId].ownerId === partner?.id
     );
-  }, [cardObj, partner.id, selectedCardIdsObj.want]);
+  }, [cardObj, partner?.id, selectedCardIdsObj.want]);
   const validSelectedOfferCardIds = useMemo(() => {
     return selectedCardIdsObj.offer.filter(
       (cardId) =>
