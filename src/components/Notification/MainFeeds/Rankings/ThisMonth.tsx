@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import localize from '~/constants/localize';
@@ -15,15 +14,6 @@ const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
 const notRankedForThisMonthLabel = localize('notRankedForThisMonth');
 
-ThisMonth.propTypes = {
-  allMonthly: PropTypes.array,
-  loading: PropTypes.bool,
-  top30sMonthly: PropTypes.array,
-  myId: PropTypes.number,
-  myMonthlyRank: PropTypes.number,
-  myMonthlyXP: PropTypes.number
-};
-
 export default function ThisMonth({
   allMonthly,
   loading,
@@ -31,6 +21,13 @@ export default function ThisMonth({
   myId,
   myMonthlyRank,
   myMonthlyXP
+}: {
+  allMonthly: any[];
+  loading: boolean;
+  top30sMonthly: any[];
+  myId: number;
+  myMonthlyRank: number;
+  myMonthlyXP: number;
 }) {
   const [allSelected, setAllSelected] = useState(!!myId);
   const users = useMemo(() => {
