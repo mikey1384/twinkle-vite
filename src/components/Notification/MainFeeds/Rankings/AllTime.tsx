@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import localize from '~/constants/localize';
@@ -14,15 +13,6 @@ const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
 const notRankedDescriptionLabel = localize('notRankedDescription');
 
-AllTime.propTypes = {
-  allRanks: PropTypes.array,
-  loading: PropTypes.bool,
-  top30s: PropTypes.array,
-  myId: PropTypes.number,
-  myAllTimeRank: PropTypes.number,
-  myAllTimeXP: PropTypes.number
-};
-
 export default function AllTime({
   allRanks,
   loading,
@@ -30,6 +20,13 @@ export default function AllTime({
   myAllTimeRank,
   myAllTimeXP,
   top30s
+}: {
+  allRanks: any[];
+  loading: boolean;
+  myId: number;
+  myAllTimeRank: number;
+  myAllTimeXP: number;
+  top30s: any[];
 }) {
   const [allSelected, setAllSelected] = useState(!!myId);
   const users = useMemo(() => {

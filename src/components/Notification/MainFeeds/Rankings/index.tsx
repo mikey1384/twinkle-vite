@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import ThisMonth from './ThisMonth';
@@ -10,11 +9,7 @@ import { useKeyContext, useNotiContext } from '~/contexts';
 
 const allTimeLabel = localize('allTime');
 
-Rankings.propTypes = {
-  loadingFeeds: PropTypes.bool
-};
-
-export default function Rankings({ loadingFeeds }) {
+export default function Rankings({ loadingFeeds }: { loadingFeeds: boolean }) {
   const { userId } = useKeyContext((v) => v.myState);
   const [thisMonthSelected, setThisMonthSelected] = useState(!!userId);
   const allRanks = useNotiContext((v) => v.state.allRanks);
