@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ChannelDetail from './ChannelDetail';
 import Button from '~/components/Button';
@@ -28,6 +28,7 @@ export default function Invitation({
   onAcceptGroupInvitation,
   sender
 }) {
+  const [accepting, setAccepting] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);
   const {
     chatInvitation: { color: chatInvitationColor }
@@ -114,6 +115,7 @@ export default function Invitation({
   }, [invitationChannel, sender.id, userId]);
 
   const handleAcceptGroupInvitation = useCallback(() => {
+    setAccepting(true);
     onAcceptGroupInvitation(invitePath);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invitePath]);
@@ -150,6 +152,7 @@ export default function Invitation({
           filled
           color={chatInvitationColor}
           onClick={handleAcceptGroupInvitation}
+          loading={accepting}
           disabled={alreadyJoined}
         >
           {alreadyJoined ? alreadyJoinedLabel : acceptGroupInvitationLabel}

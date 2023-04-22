@@ -225,7 +225,15 @@ export default function TakeScreenshot({ attachment, missionId, style }) {
           payload,
           function (img) {
             Tesseract.recognize(img, 'eng').then(async ({ data: { text } }) => {
-              if (text.includes(expectedText) && text.includes(username)) {
+              function stripNonAlphanumeric(text) {
+                return text.replace(/[^a-zA-Z0-9\s]+/g, '');
+              }
+              const strippedText = stripNonAlphanumeric(text);
+              const strippedUsername = stripNonAlphanumeric(username);
+              if (
+                strippedText.includes(expectedText) &&
+                strippedText.includes(strippedUsername)
+              ) {
                 const { success, newXpAndRank, newCoins } =
                   await uploadMissionAttempt({
                     missionId,
