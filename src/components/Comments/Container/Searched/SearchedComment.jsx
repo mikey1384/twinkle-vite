@@ -89,13 +89,15 @@ export default function SearchedComment({
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const {
+    isDeleted,
     isEditing,
     likes = comment?.likes || [],
     recommendations = comment?.recommendations || [],
     rewards = comment?.rewards || [],
     loaded,
     thumbUrl: thumbUrlFromContext,
-    xpRewardInterfaceShown
+    xpRewardInterfaceShown,
+    content
   } = useContentState({
     contentType: 'comment',
     contentId: comment.id
@@ -393,7 +395,7 @@ export default function SearchedComment({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subjectId, subjectState.prevSecretViewerId, userId]);
 
-  return (
+  return isDeleted ? null : (
     <>
       <div className={commentContainer}>
         <div className="content-wrapper">
@@ -475,7 +477,7 @@ export default function SearchedComment({
                       style={{
                         display: 'flex',
                         justifyContent: 'center',
-                        marginBottom: stringIsEmpty(comment.content)
+                        marginBottom: stringIsEmpty(content)
                           ? fileType === 'audio'
                             ? '2rem'
                             : '1rem'
@@ -492,7 +494,7 @@ export default function SearchedComment({
                   style={{ marginBottom: '1rem' }}
                   contentType="comment"
                   contentId={comment.id}
-                  text={comment.content}
+                  text={content}
                   onCancel={() =>
                     onSetIsEditing({
                       contentId: comment.id,
@@ -520,14 +522,14 @@ export default function SearchedComment({
                       {uploader.username} viewed the secret message
                     </div>
                   ) : (
-                    !stringIsEmpty(comment.content) && (
+                    !stringIsEmpty(content) && (
                       <LongText
                         contentType="comment"
                         contentId={commentId}
                         section="pinned"
                         className="comment__content"
                       >
-                        {comment.content}
+                        {content}
                       </LongText>
                     )
                   )}
@@ -618,7 +620,7 @@ export default function SearchedComment({
                 onHide={() => setRecommendationInterfaceShown(false)}
                 recommendations={recommendations}
                 rewardLevel={rewardLevel}
-                content={comment.content}
+                content={content}
                 theme={theme}
                 uploaderId={uploader.id}
               />
