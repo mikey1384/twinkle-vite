@@ -1,4 +1,7 @@
-import { defaultContentState } from '~/constants/defaultValues';
+import {
+  defaultContentState,
+  defaultPlaylistState
+} from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
 
 export default function ContentReducer(state, action) {
@@ -9,7 +12,9 @@ export default function ContentReducer(state, action) {
   const defaultState = {
     contentType: action.contentType,
     contentId: action.contentId,
-    ...defaultContentState
+    ...(action.contentType === 'playlist'
+      ? defaultPlaylistState
+      : defaultContentState)
   };
   const prevContentState = state[contentKey] || defaultState;
   switch (action.type) {
@@ -847,6 +852,25 @@ export default function ContentReducer(state, action) {
             }
             return comment;
           })
+        }
+      };
+    case 'LOAD_PLAYLIST_VIDEOS':
+      return {
+        ...state,
+        [contentKey]: {
+          ...prevContentState,
+          videos: action.videos,
+          loadMoreShown: action.loadMoreShown,
+          loaded: true
+        }
+      };
+    case 'LOAD_MORE_PLAYLIST_VIDEOS':
+      return {
+        ...state,
+        [contentKey]: {
+          ...prevContentState,
+          videos: prevContentState.videos.concat(action.videos),
+          loadMoreShown: action.loadMoreShown
         }
       };
     case 'LOAD_REPLIES_OF_REPLY':

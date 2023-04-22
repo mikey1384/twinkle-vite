@@ -7,7 +7,8 @@ import Link from '~/components/Link';
 import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { useContentState } from '~/helpers/hooks';
 import localize from '~/constants/localize';
 
 const eitherRemovedOrNeverExistedLabel = localize(
@@ -35,13 +36,22 @@ export default function Playlist({
     link: { color: linkColor },
     userLink: { color: userLinkColor }
   } = useKeyContext((v) => v.theme);
-  const [videos, setVideos] = useState([]);
-  const [loadMoreButton, setLoadMoreButton] = useState(false);
+  const { loadMoreShown, videos, loaded } = useContentState({
+    contentType: 'playlist',
+    contentId: playlistId
+  });
+  const onLoadPlaylistVideos = useContentContext(
+    (v) => v.actions.onLoadPlaylistVideos
+  );
+  const onLoadMorePlaylistVideos = useContentContext(
+    (v) => v.actions.onLoadMorePlaylistVideos
+  );
   const [loading, setLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    handleLoadPlaylistVideos();
+    if (!loaded) {
+      handleLoadPlaylistVideos();
+    }
     async function handleLoadPlaylistVideos() {
       const {
         title,
@@ -53,9 +63,11 @@ export default function Playlist({
       if (typeof onLoad === 'function') {
         onLoad({ exists: videos.length > 0, title });
       }
-      setVideos(videos);
-      setLoaded(true);
-      setLoadMoreButton(loadMoreButton);
+      onLoadPlaylistVideos({
+        playlistId,
+        videos,
+        loadMoreShown: loadMoreButton
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -116,7 +128,7 @@ export default function Playlist({
           </div>
         </div>
       ))}
-      {loadMoreButton && (
+      {loadMoreShown && (
         <LoadMoreButton
           style={{ marginTop: '1.5em' }}
           loading={loading}
@@ -133,8 +145,11 @@ export default function Playlist({
       playlistId,
       shownVideos: videos
     });
-    setVideos(videos.concat(loadedVideos));
-    setLoadMoreButton(loadMoreButton);
+    onLoadMorePlaylistVideos({
+      playlistId,
+      videos: loadedVideos,
+      loadMoreShown: loadMoreButton
+    });
     setLoading(false);
   }
 }
