@@ -374,6 +374,24 @@ export default function ContentActions(dispatch: Dispatch) {
         contentType
       });
     },
+    onLoadPlaylistVideos({ playlistId, videos, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_PLAYLIST_VIDEOS',
+        contentId: playlistId,
+        contentType: 'playlist',
+        videos,
+        loadMoreShown
+      });
+    },
+    onLoadMorePlaylistVideos({ playlistId, videos, loadMoreShown }) {
+      return dispatch({
+        type: 'LOAD_MORE_PLAYLIST_VIDEOS',
+        contentId: playlistId,
+        contentType: 'playlist',
+        videos,
+        loadMoreShown
+      });
+    },
     onLoadReplies({
       commentId,
       loadMoreButton,
