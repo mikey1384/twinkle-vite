@@ -49,14 +49,7 @@ export default function WordleModal({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const { wordleStrictMode: isStrictMode } = useKeyContext((v) => v.myState);
-  const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
-  const timeDifference = useMemo(
-    () =>
-      standardTimeStamp
-        ? new Date(standardTimeStamp).getTime() - Date.now()
-        : 0,
-    [standardTimeStamp]
-  );
+  const { timeDifference } = useNotiContext((v) => v.state.todayStats);
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [streaksTab, setStreaksTab] = useState(
@@ -225,7 +218,8 @@ export default function WordleModal({
                 `}
                 date={nextDayTimeStamp}
                 now={() => {
-                  return Date.now() + timeDifference;
+                  const now = Date.now() + timeDifference;
+                  return now;
                 }}
                 daysInHours={true}
                 onComplete={handleCountdownComplete}
