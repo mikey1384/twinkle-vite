@@ -35,6 +35,7 @@ Game.propTypes = {
   isGameLost: PropTypes.bool,
   isRevealing: PropTypes.bool,
   isStrictMode: PropTypes.bool,
+  nextDayTimeStamp: PropTypes.number,
   onSetIsRevealing: PropTypes.func.isRequired,
   onSetOverviewModalShown: PropTypes.func.isRequired,
   socketConnected: PropTypes.bool,
@@ -52,6 +53,7 @@ export default function Game({
   solution,
   isRevealing,
   isStrictMode,
+  nextDayTimeStamp,
   onSetIsRevealing,
   socketConnected
 }) {
@@ -124,6 +126,11 @@ export default function Game({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    setAlertMessage({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nextDayTimeStamp]);
 
   return (
     <ErrorBoundary componentPath="WordleModal/Game">
