@@ -36,7 +36,7 @@ import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/io';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
-import { finalizeEmoji } from '~/helpers/stringHelpers';
+import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
 import { useMyState, useTheme, useScrollPosition } from '~/helpers/hooks';
 import {
   isMobile,
@@ -493,6 +493,10 @@ function App() {
       title
     }) => {
       const { file, thumbnail, contentType } = attachment ?? {};
+      const appliedFileName = generateFileName(attachment?.file?.name || '');
+      const appliedSecretFileName = generateFileName(
+        secretAttachment?.file?.name || ''
+      );
       try {
         const promises = [];
         const secretAttachmentFilePath = uuidv1();
@@ -501,6 +505,7 @@ function App() {
             uploadFile({
               filePath,
               file,
+              fileName: appliedFileName,
               onUploadProgress: handleUploadProgress
             })
           );
@@ -510,6 +515,7 @@ function App() {
             uploadFile({
               filePath: secretAttachmentFilePath,
               file: secretAttachment?.file,
+              fileName: appliedSecretFileName,
               onUploadProgress: handleSecretAttachmentUploadProgress
             })
           );
@@ -565,12 +571,12 @@ function App() {
           ...(hasSecretAnswer && secretAttachment
             ? {
                 secretAttachmentFilePath,
-                secretAttachmentFileName: secretAttachment.file.name,
+                secretAttachmentFileName: appliedSecretFileName,
                 secretAttachmentFileSize: secretAttachment.file.size
               }
             : {}),
           ...(contentType === 'file'
-            ? { filePath, fileName: file.name, fileSize: file.size }
+            ? { filePath, fileName: appliedFileName, fileSize: file.size }
             : {}),
           ...(attachment && contentType !== 'file'
             ? { rootId: attachment.id, rootType: contentType }

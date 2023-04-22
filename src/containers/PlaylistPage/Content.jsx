@@ -3,9 +3,14 @@ import Playlist from '~/components/Playlist';
 import { useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { useContentState } from '~/helpers/hooks';
 
 export default function Content() {
   const { contentId } = useParams();
+  const { videos, loaded } = useContentState({
+    contentType: 'playlist',
+    contentId: contentId
+  });
   const [background, setBackground] = useState();
   const [title, setTitle] = useState('');
   return (
@@ -15,7 +20,9 @@ export default function Content() {
         padding: '1rem'
       }}
       className={css`
-        border: 1px solid ${Color.borderGray()};
+        border: ${videos?.length && loaded
+          ? `1px solid ${Color.borderGray()}`
+          : ''};
         @media (max-width: ${mobileMaxWidth}) {
           border-top: none;
           border-left: none;
