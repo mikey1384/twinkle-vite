@@ -1,5 +1,4 @@
-import { useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -15,12 +14,13 @@ import localize from '~/constants/localize';
 const viewProfileLabel = localize('viewProfile');
 const changePictureLabel = localize('changePicture');
 
-ProfileWidget.propTypes = {
-  onLoadImage: PropTypes.func,
-  onShowAlert: PropTypes.func
-};
-
-export default function ProfileWidget({ onLoadImage, onShowAlert }) {
+export default function ProfileWidget({
+  onLoadImage,
+  onShowAlert
+}: {
+  onLoadImage: Function;
+  onShowAlert: Function;
+}) {
   const navigate = useNavigate();
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
