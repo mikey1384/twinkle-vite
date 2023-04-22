@@ -228,12 +228,17 @@ function App() {
         standardTimeStamp,
         unansweredChessMsgChannelId
       } = await fetchTodayStats();
+      let timeDifference = 0;
+      if (standardTimeStamp) {
+        timeDifference = new Date(standardTimeStamp).getTime() - Date.now();
+      }
       onUpdateTodayStats({
         newStats: {
           xpEarned,
           coinsEarned,
           nextMission,
           standardTimeStamp,
+          timeDifference,
           unansweredChessMsgChannelId
         }
       });
