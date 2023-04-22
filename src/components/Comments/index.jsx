@@ -8,6 +8,7 @@ import { returnImageFileFromUrl, scrollElementToCenter } from '~/helpers';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useTheme } from '~/helpers/hooks';
+import { generateFileName } from '~/helpers/stringHelpers';
 import {
   useAppContext,
   useContentContext,
@@ -146,6 +147,7 @@ function Comments({
         ? 'subject'
         : contentType;
       const finalContentId = targetCommentId || subjectId || contentId;
+      const appliedFileName = generateFileName(file.name);
       try {
         setCommentSubmitted(true);
         const promises = [];
@@ -153,6 +155,7 @@ function Comments({
           uploadFile({
             filePath,
             file,
+            fileName: appliedFileName,
             onUploadProgress: handleUploadProgress
           })
         );
@@ -187,7 +190,7 @@ function Comments({
           targetCommentId,
           attachment,
           filePath,
-          fileName: file.name,
+          fileName: appliedFileName,
           fileSize: file.size,
           thumbUrl
         });
