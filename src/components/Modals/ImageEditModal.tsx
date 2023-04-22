@@ -27,7 +27,7 @@ export default function ImageEditModal({
   modalOverModal?: boolean;
   onEditDone: (params: { pictures: any[]; filePath: string }) => void;
   onHide: () => void;
-  imageUri: string;
+  imageUri: any;
 }) {
   const [captionText, setCaptionText] = useState('');
   const isUploadingRef = useRef(false);

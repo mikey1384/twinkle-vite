@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
@@ -38,13 +38,15 @@ const viewProfileLabel = localize('viewProfile');
 const visitWebsiteLabel = localize('visitWebsite');
 const visitYoutubeLabel = localize('visitYoutube');
 
-ProfilePanel.propTypes = {
-  expandable: PropTypes.bool,
-  profileId: PropTypes.number,
-  style: PropTypes.object
-};
-
-function ProfilePanel({ expandable, profileId, style }) {
+function ProfilePanel({
+  expandable,
+  profileId,
+  style
+}: {
+  expandable?: boolean;
+  profileId: number;
+  style?: React.CSSProperties;
+}) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const [chatLoading, setChatLoading] = useState(false);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
@@ -129,11 +131,11 @@ function ProfilePanel({ expandable, profileId, style }) {
   useLazyLoad({
     PanelRef,
     inView,
-    onSetPlaceholderHeight: (height) => {
+    onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
     },
-    onSetVisible: (visible) => {
+    onSetVisible: (visible: boolean) => {
       setVisible(visible);
       visibleRef.current = visible;
     },
@@ -172,12 +174,12 @@ function ProfilePanel({ expandable, profileId, style }) {
 
   const [bioEditModalShown, setBioEditModalShown] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
-  const [imageUri, setImageUri] = useState();
+  const [imageUri, setImageUri] = useState<any>(null);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [mouseEnteredProfile, setMouseEnteredProfile] = useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const CommentInputAreaRef = useRef(null);
-  const FileInputRef = useRef(null);
+  const CommentInputAreaRef: React.RefObject<any> = useRef(null);
+  const FileInputRef: React.RefObject<any> = useRef(null);
   const loading = useRef(false);
 
   useEffect(() => {
@@ -359,7 +361,7 @@ function ProfilePanel({ expandable, profileId, style }) {
                         color="orange"
                         transparent
                         style={{
-                          color: mouseEnteredProfile && Color.orange(),
+                          color: mouseEnteredProfile ? Color.orange() : '',
                           padding: '0.5rem'
                         }}
                         onClick={() => navigate(`/users/${profileName}`)}
@@ -522,7 +524,7 @@ function ProfilePanel({ expandable, profileId, style }) {
                       imageUri={imageUri}
                       onEditDone={handleImageEditDone}
                       onHide={() => {
-                        setImageUri(undefined);
+                        setImageUri(null);
                         setImageEditModalShown(false);
                       }}
                     />
@@ -536,7 +538,6 @@ function ProfilePanel({ expandable, profileId, style }) {
                   comments={comments}
                   commentsLoadLimit={5}
                   commentsShown={commentsShown}
-                  contentId={profileId}
                   inputAreaInnerRef={CommentInputAreaRef}
                   inputTypeLabel={`message to ${profileName}`}
                   isLoading={loadingComments}
@@ -577,7 +578,7 @@ function ProfilePanel({ expandable, profileId, style }) {
     </div>
   );
 
-  function handleImageEditDone({ filePath }) {
+  function handleImageEditDone({ filePath }: { filePath: string }) {
     onSetUserState({
       userId,
       newState: { profilePicUrl: `/profile/${filePath}` }
@@ -585,7 +586,7 @@ function ProfilePanel({ expandable, profileId, style }) {
     setImageEditModalShown(false);
   }
 
-  function handlePicture(event) {
+  function handlePicture(event: any) {
     const reader = new FileReader();
     const file = event.target.files[0];
     if (file.size / 1000 > MAX_PROFILE_PIC_SIZE) {
@@ -593,7 +594,7 @@ function ProfilePanel({ expandable, profileId, style }) {
     }
     reader.onload = (upload) => {
       setImageEditModalShown(true);
-      setImageUri(upload.target.result);
+      setImageUri(upload.target?.result);
     };
     reader.readAsDataURL(file);
     event.target.value = null;
@@ -662,7 +663,7 @@ function ProfilePanel({ expandable, profileId, style }) {
     if (profileId !== userId) CommentInputAreaRef.current?.focus?.();
   }
 
-  async function handleUploadBio(params) {
+  async function handleUploadBio(params: object) {
     const data = await uploadBio({
       ...params,
       profileId

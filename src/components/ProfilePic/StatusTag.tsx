@@ -1,17 +1,19 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 
-StatusTag.propTypes = {
-  large: PropTypes.bool,
-  status: PropTypes.string,
-  isProfilePage: PropTypes.bool
-};
-
 const deviceIsMobile = isMobile(navigator);
 
-export default function StatusTag({ isProfilePage, large, status = 'online' }) {
+export default function StatusTag({
+  isProfilePage,
+  large,
+  status = 'online'
+}: {
+  isProfilePage?: boolean;
+  large?: boolean;
+  status?: 'online' | 'busy' | 'away';
+}) {
   const backgroundColor = {
     online: Color.green(),
     busy: Color.red(),

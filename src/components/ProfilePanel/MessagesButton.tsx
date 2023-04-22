@@ -1,18 +1,7 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-
-MessagesButton.propTypes = {
-  commentsShown: PropTypes.bool,
-  loading: PropTypes.bool,
-  profileId: PropTypes.number.isRequired,
-  myId: PropTypes.number,
-  onMessagesButtonClick: PropTypes.func.isRequired,
-  numMessages: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  style: PropTypes.object
-};
 
 export default function MessagesButton({
   commentsShown,
@@ -22,6 +11,14 @@ export default function MessagesButton({
   onMessagesButtonClick,
   numMessages,
   style
+}: {
+  commentsShown: boolean;
+  loading: boolean;
+  profileId: number;
+  myId: number;
+  onMessagesButtonClick: () => void;
+  numMessages: number;
+  style: React.CSSProperties;
 }) {
   const leaveMessageLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
