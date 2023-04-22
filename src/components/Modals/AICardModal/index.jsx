@@ -69,6 +69,7 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
   const [offersLoaded, setOffersLoaded] = useState(false);
   const [offersLoadMoreShown, setOffersLoadMoreShown] = useState(false);
   const [offerPrice, setOfferPrice] = useState(0);
+  const [copied, setCopied] = useState(false);
   const userSwitchedTab = useRef(false);
   const card = cardObj[cardId];
 
@@ -460,6 +461,19 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
         )}
       </main>
       <footer>
+        <Button
+          onClick={() => {
+            setCopied(true);
+            handleCopyToClipboard();
+            setTimeout(() => setCopied(false), 1000);
+          }}
+          transparent
+        >
+          {copied ? null : <Icon icon="copy" />}
+          <span style={{ marginLeft: copied ? 0 : '1rem' }}>
+            {copied ? 'Link Copied!' : 'Copy'}
+          </span>
+        </Button>
         <div
           className={css`
             font-size: 1.5rem;
@@ -467,7 +481,11 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
               font-size: 1.2rem;
             }
           `}
-          style={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}
+          style={{
+            flexGrow: 1,
+            display: 'flex',
+            justifyContent: 'center'
+          }}
         >
           <div>
             {prevCardId && (
@@ -475,7 +493,6 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
                 style={{
                   opacity: loading ? 0.5 : 1,
                   textDecoration: 'none',
-                  marginLeft: '7rem',
                   fontWeight: 'bold',
                   color: Color[linkColor]()
                 }}
@@ -535,6 +552,15 @@ export default function AICardModal({ cardId, modalOverModal, onHide }) {
       )}
     </Modal>
   );
+
+  async function handleCopyToClipboard() {
+    const contentUrl = `https://www.twin-kle.com/ai-cards/?cardId=${cardId}`;
+    try {
+      await navigator.clipboard.writeText(contentUrl);
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   async function handleWithdrawOffer() {
     const coins = await deleteAICardOffer({
