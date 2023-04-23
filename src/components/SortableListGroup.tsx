@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
@@ -6,15 +6,6 @@ import SortableListItem from './SortableListItem';
 import { borderRadius, Color } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
-
-SortableListGroup.propTypes = {
-  listItemObj: PropTypes.object.isRequired,
-  listItemLabel: PropTypes.string,
-  onMove: PropTypes.func.isRequired,
-  itemIds: PropTypes.array.isRequired,
-  numbered: PropTypes.bool,
-  style: PropTypes.object
-};
 
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 
@@ -25,6 +16,13 @@ export default function SortableListGroup({
   itemIds,
   numbered,
   style
+}: {
+  listItemObj: any;
+  listItemLabel?: string;
+  onMove: (arg0: { sourceId: number; targetId: number }) => void;
+  itemIds: any[];
+  numbered?: boolean;
+  style?: React.CSSProperties;
 }) {
   return (
     <DndProvider backend={Backend}>

@@ -1,16 +1,7 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
-
-SelectEmail.propTypes = {
-  email: PropTypes.string,
-  hiddenEmail: PropTypes.string,
-  verifiedEmail: PropTypes.string,
-  hiddenVerifiedEmail: PropTypes.string,
-  userId: PropTypes.number.isRequired
-};
 
 export default function SelectEmail({
   email,
@@ -18,11 +9,17 @@ export default function SelectEmail({
   verifiedEmail,
   hiddenVerifiedEmail,
   userId
+}: {
+  email: string;
+  hiddenEmail: string;
+  verifiedEmail: string;
+  hiddenVerifiedEmail: string;
+  userId: number;
 }) {
   const sendVerificationEmail = useAppContext(
     (v) => v.requestHelpers.sendVerificationEmail
   );
-  const [emailSent, setEmailSent] = useState({});
+  const [emailSent, setEmailSent] = useState<any>({});
 
   return (
     <div style={{ fontSize: '1.7rem' }}>
@@ -80,8 +77,8 @@ export default function SelectEmail({
     </div>
   );
 
-  function handleSendEmail(email) {
+  function handleSendEmail(email: string) {
     sendVerificationEmail({ email, userId, isPasswordReset: true });
-    setEmailSent((obj) => ({ ...obj, [email]: true }));
+    setEmailSent((obj: any) => ({ ...obj, [email]: true }));
   }
 }

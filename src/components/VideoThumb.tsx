@@ -1,4 +1,4 @@
-import { memo, useEffect, useCallback, useRef, useState } from 'react';
+import React, { memo, useEffect, useCallback, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Link } from 'react-router-dom';
@@ -32,8 +32,20 @@ VideoThumb.propTypes = {
   }).isRequired
 };
 
-function VideoThumb({ className, style, to, user, video }) {
-  const timerRef = useRef(null);
+function VideoThumb({
+  className,
+  style,
+  to,
+  user,
+  video
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+  to: string;
+  user: any;
+  video: any;
+}) {
+  const timerRef: React.MutableRefObject<any> = useRef(null);
   const {
     link: { color: linkColor },
     userLink: { color: userLinkColor }
@@ -43,8 +55,8 @@ function VideoThumb({ className, style, to, user, video }) {
     contentId: video.id
   });
   const [titleContext, setTitleContext] = useState(null);
-  const ThumbLabelRef = useRef(null);
-  const ThumbLabelContainerRef = useRef(null);
+  const ThumbLabelRef: React.RefObject<any> = useRef(null);
+  const ThumbLabelContainerRef: React.RefObject<any> = useRef(null);
   const onMouseOver = useCallback(() => {
     if (textIsOverflown(ThumbLabelRef.current)) {
       const parentElementDimensions =

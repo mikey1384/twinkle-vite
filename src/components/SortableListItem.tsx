@@ -1,18 +1,8 @@
-import { useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
 import ItemTypes from '~/constants/itemTypes';
 import Icon from '~/components/Icon';
 import { useDrag, useDrop } from 'react-dnd';
 import { Color } from '~/constants/css';
-
-SortableListItem.propTypes = {
-  index: PropTypes.number,
-  listItemId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  listItemLabel: PropTypes.string,
-  numbered: PropTypes.bool,
-  onMove: PropTypes.func.isRequired,
-  listItemType: PropTypes.string
-};
 
 export default function SortableListItem({
   index,
@@ -21,6 +11,13 @@ export default function SortableListItem({
   listItemType,
   numbered,
   onMove
+}: {
+  index: number;
+  listItemId: number;
+  listItemLabel: string;
+  listItemType?: string;
+  numbered?: boolean;
+  onMove: (arg0: { sourceId: number; targetId: number }) => void;
 }) {
   const Draggable = useRef(null);
   const [{ opacity }, drag] = useDrag({
@@ -36,7 +33,7 @@ export default function SortableListItem({
   });
   const [, drop] = useDrop({
     accept: ItemTypes.LIST_ITEM,
-    hover(item) {
+    hover(item: any) {
       if (!Draggable.current) {
         return;
       }
@@ -52,10 +49,10 @@ export default function SortableListItem({
 
   return (
     <nav
-      ref={drag(drop(Draggable))}
+      ref={drag(drop(Draggable)) as any}
       style={{
         opacity,
-        borderTop: index === 0 && `1px solid ${Color.borderGray()}`,
+        borderTop: index === 0 ? `1px solid ${Color.borderGray()}` : '',
         color: Color.darkerGray()
       }}
     >
