@@ -1,14 +1,6 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
-
-FullTextReveal.propTypes = {
-  className: PropTypes.string,
-  direction: PropTypes.string,
-  show: PropTypes.bool,
-  style: PropTypes.object,
-  text: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired
-};
 
 export default function FullTextReveal({
   direction = 'right',
@@ -16,6 +8,12 @@ export default function FullTextReveal({
   show,
   text,
   className
+}: {
+  className?: string;
+  direction?: string;
+  show: boolean;
+  style?: React.CSSProperties;
+  text: string | React.ReactNode;
 }) {
   return (
     <ErrorBoundary

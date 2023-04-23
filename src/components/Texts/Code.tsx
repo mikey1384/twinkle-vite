@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Highlight, { Prism } from 'prism-react-renderer';
 import { Color } from '~/constants/css';
 import dracula from 'prism-react-renderer/themes/dracula';
@@ -7,16 +6,9 @@ import github from 'prism-react-renderer/themes/github';
 import okaidia from 'prism-react-renderer/themes/okaidia';
 import vsDark from 'prism-react-renderer/themes/vsDark';
 
-Code.propTypes = {
-  children: PropTypes.string,
-  className: PropTypes.string,
-  language: PropTypes.string,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  codeRef: PropTypes.oneOfType([PropTypes.object, PropTypes.func])
-};
-
-const availableThemes = {
+const availableThemes: {
+  [key: string]: any;
+} = {
   dracula,
   github,
   okaidia,
@@ -30,6 +22,13 @@ export default function Code({
   style,
   theme,
   codeRef
+}: {
+  children: any;
+  className: string;
+  language: any;
+  style: React.CSSProperties;
+  theme: any;
+  codeRef: React.RefObject<any>;
 }) {
   const selectedTheme = useMemo(
     () => availableThemes?.[theme] || okaidia,
@@ -47,7 +46,6 @@ export default function Code({
         className: defaultClassName,
         style: defaultStyle,
         tokens,
-        transformToken,
         getLineProps,
         getTokenProps
       }) => {
@@ -66,9 +64,6 @@ export default function Code({
               <div key={i} {...getLineProps({ line, key: i })}>
                 {line.map((token, key) => {
                   const tokenProps = getTokenProps({ token, key });
-                  if (transformToken) {
-                    return transformToken(tokenProps);
-                  }
                   return <span key={key} {...tokenProps} />;
                 })}
               </div>

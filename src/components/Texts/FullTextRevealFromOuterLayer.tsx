@@ -1,20 +1,18 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { createPortal } from 'react-dom';
-
-FullTextRevealFromOuterLayer.propTypes = {
-  className: PropTypes.string,
-  style: PropTypes.object,
-  textContext: PropTypes.object,
-  text: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired
-};
 
 export default function FullTextRevealFromOuterLayer({
   textContext,
   style,
   text,
   className
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+  textContext: any;
+  text: string | React.ReactNode;
 }) {
   const { x, y, width, height } = textContext;
 
@@ -50,6 +48,6 @@ export default function FullTextRevealFromOuterLayer({
         {text}
       </div>
     </ErrorBoundary>,
-    document.getElementById('outer-layer')
+    document.getElementById('outer-layer') as HTMLElement
   );
 }

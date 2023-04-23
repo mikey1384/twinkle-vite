@@ -1,20 +1,23 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import {
   limitBrs,
   processMentionLink,
   processedStringWithURL
 } from '~/helpers/stringHelpers';
 
-Bio.propTypes = {
-  firstRow: PropTypes.string,
-  secondRow: PropTypes.string,
-  thirdRow: PropTypes.string,
-  small: PropTypes.bool,
-  style: PropTypes.object
-};
-
-export default function Bio({ firstRow, secondRow, thirdRow, small, style }) {
+export default function Bio({
+  firstRow,
+  secondRow,
+  thirdRow,
+  small,
+  style
+}: {
+  firstRow: string;
+  secondRow: string;
+  thirdRow: string;
+  small?: boolean;
+  style?: React.CSSProperties;
+}) {
   const processedFirstRow = useMemo(
     () => processMentionLink(limitBrs(processedStringWithURL(firstRow))),
     [firstRow]
