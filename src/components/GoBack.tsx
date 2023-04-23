@@ -1,17 +1,8 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
-
-GoBack.propTypes = {
-  isAtTop: PropTypes.bool,
-  bordered: PropTypes.bool,
-  to: PropTypes.string,
-  isMobile: PropTypes.bool,
-  style: PropTypes.object,
-  text: PropTypes.string
-};
 
 export default function GoBack({
   isAtTop = true,
@@ -20,6 +11,13 @@ export default function GoBack({
   to,
   style,
   text
+}: {
+  isAtTop?: boolean;
+  bordered?: boolean;
+  isMobile?: boolean;
+  to: string;
+  style?: React.CSSProperties;
+  text: string;
 }) {
   const navigate = useNavigate();
   return (

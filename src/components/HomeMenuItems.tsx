@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -250,7 +250,8 @@ export default function HomeMenuItems({ style = {} }) {
 
   function handleStoryClick() {
     if (location.pathname === '/') {
-      document.getElementById('App').scrollTop = 0;
+      const appElement = document.getElementById('App');
+      if (appElement) appElement.scrollTop = 0;
       BodyRef.scrollTop = 0;
       return;
     }
