@@ -1,13 +1,5 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import PartOfSpeechBlock from './PartOfSpeechBlock';
-
-Remove.propTypes = {
-  editedDefinitionOrder: PropTypes.object.isRequired,
-  deletedDefIds: PropTypes.array.isRequired,
-  onListItemClick: PropTypes.func.isRequired,
-  poses: PropTypes.array.isRequired,
-  posObj: PropTypes.object.isRequired
-};
 
 export default function Remove({
   editedDefinitionOrder,
@@ -15,6 +7,12 @@ export default function Remove({
   onListItemClick,
   poses,
   posObj
+}: {
+  editedDefinitionOrder: any;
+  deletedDefIds: number[];
+  onListItemClick: (id: number) => void;
+  poses: string[];
+  posObj: any;
 }) {
   return (
     <div>

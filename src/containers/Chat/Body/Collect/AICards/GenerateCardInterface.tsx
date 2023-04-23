@@ -1,17 +1,8 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { useKeyContext } from '~/contexts';
 import { MAX_NUM_SUMMONS, priceTable } from '~/constants/defaultValues';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
-
-GenerateCardInterface.propTypes = {
-  numSummoned: PropTypes.number.isRequired,
-  canGenerateAICard: PropTypes.bool,
-  loading: PropTypes.bool,
-  posting: PropTypes.bool,
-  onGenerateAICard: PropTypes.func.isRequired
-};
 
 export default function GenerateCardInterface({
   numSummoned,
@@ -19,6 +10,12 @@ export default function GenerateCardInterface({
   loading,
   onGenerateAICard,
   posting
+}: {
+  numSummoned: number;
+  canGenerateAICard: boolean;
+  loading: boolean;
+  onGenerateAICard: () => void;
+  posting: boolean;
 }) {
   const maxSummoned = useMemo(
     () => numSummoned >= MAX_NUM_SUMMONS,
