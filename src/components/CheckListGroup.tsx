@@ -1,26 +1,20 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { css } from '@emotion/css';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 
-CheckListGroup.propTypes = {
-  inputType: PropTypes.string,
-  listItems: PropTypes.arrayOf(
-    PropTypes.shape({
-      checked: PropTypes.bool.isRequired,
-      label: PropTypes.string.isRequired
-    })
-  ).isRequired,
-  onSelect: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
-
+interface Props {
+  listItems: any;
+  inputType?: string;
+  onSelect: any;
+  style?: React.CSSProperties;
+}
 export default function CheckListGroup({
   listItems,
   inputType = 'checkbox',
   onSelect,
   style = {}
-}) {
+}: Props) {
   return (
     <div
       className={css`
@@ -49,7 +43,7 @@ export default function CheckListGroup({
       `}
       style={style}
     >
-      {listItems.map((listItem, index) => {
+      {listItems.map((listItem: any, index: number) => {
         return (
           <nav
             className={css`

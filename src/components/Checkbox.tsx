@@ -1,17 +1,7 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { innerBorderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
-
-Checkbox.propTypes = {
-  className: PropTypes.string,
-  backgroundColor: PropTypes.string,
-  checked: PropTypes.bool,
-  label: PropTypes.string,
-  onClick: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  textIsClickable: PropTypes.bool
-};
 
 export default function Checkbox({
   backgroundColor = Color.inputGray(),
@@ -21,6 +11,14 @@ export default function Checkbox({
   onClick,
   style,
   textIsClickable
+}: {
+  backgroundColor?: string;
+  className?: string;
+  checked: boolean;
+  label?: string;
+  onClick: () => void;
+  style?: React.CSSProperties;
+  textIsClickable?: boolean;
 }) {
   const {
     switch: { color: switchColor }
@@ -32,7 +30,6 @@ export default function Checkbox({
       style={{
         display: 'flex',
         alignItems: 'center',
-        postion: 'relative',
         width: '100%',
         fontSize: '1.2rem',
         ...style
