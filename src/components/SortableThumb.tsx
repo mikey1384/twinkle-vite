@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import ItemTypes from '~/constants/itemTypes';
 import { useDrag, useDrop } from 'react-dnd';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
@@ -11,18 +10,20 @@ import { css } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);
 
-SortableThumb.propTypes = {
-  id: PropTypes.number.isRequired,
-  onMove: PropTypes.func.isRequired,
-  video: PropTypes.object.isRequired
-};
-
-export default function SortableThumb({ id, onMove, video }) {
+export default function SortableThumb({
+  id,
+  onMove,
+  video
+}: {
+  id: number;
+  onMove: (arg0: any) => void;
+  video: any;
+}) {
   const [titleContext, setTitleContext] = useState(null);
   const Draggable = useRef(null);
-  const timerRef = useRef(null);
-  const ThumbLabelContainerRef = useRef(null);
-  const ThumbLabelRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const ThumbLabelContainerRef: React.RefObject<any> = useRef(null);
+  const ThumbLabelRef: React.RefObject<any> = useRef(null);
   const [{ isDragging }, drag] = useDrag({
     type: ItemTypes.THUMB,
     item: { id },
@@ -32,7 +33,7 @@ export default function SortableThumb({ id, onMove, video }) {
   });
   const [, drop] = useDrop({
     accept: ItemTypes.THUMB,
-    hover(item) {
+    hover(item: any) {
       if (!Draggable.current) {
         return;
       }
@@ -53,7 +54,7 @@ export default function SortableThumb({ id, onMove, video }) {
 
   return (
     <div
-      ref={drag(drop(Draggable))}
+      ref={drag(drop(Draggable)) as any}
       key={video.id}
       className={css`
         width: 16%;
