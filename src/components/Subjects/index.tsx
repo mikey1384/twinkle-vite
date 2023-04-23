@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import SubjectPanel from './SubjectPanel';
 import StartNewSubjectPanel from './StartNewSubjectPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -7,33 +6,32 @@ import LocalContext from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext } from '~/contexts';
 
-Subjects.propTypes = {
-  className: PropTypes.string,
-  contentId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  subjects: PropTypes.array,
-  loadMoreButton: PropTypes.bool,
-  onLoadMoreSubjects: PropTypes.func.isRequired,
-  onSubjectEditDone: PropTypes.func.isRequired,
-  onSubjectDelete: PropTypes.func.isRequired,
-  onLoadSubjectComments: PropTypes.func.isRequired,
-  rootRewardLevel: PropTypes.number,
-  onSetRewardLevel: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  contentType: PropTypes.string,
-  uploadSubject: PropTypes.func.isRequired,
-  commentActions: PropTypes.shape({
-    editRewardComment: PropTypes.func.isRequired,
-    onDelete: PropTypes.func.isRequired,
-    onEditDone: PropTypes.func.isRequired,
-    onLikeClick: PropTypes.func.isRequired,
-    onLoadMoreComments: PropTypes.func.isRequired,
-    onLoadMoreReplies: PropTypes.func.isRequired,
-    onLoadRepliesOfReply: PropTypes.func.isRequired,
-    onUploadComment: PropTypes.func.isRequired,
-    onUploadReply: PropTypes.func.isRequired
-  })
-};
-
+interface Props {
+  className?: string;
+  subjects: any[];
+  loadMoreButton?: boolean;
+  style?: any;
+  contentId: number;
+  contentType: string;
+  uploadSubject: any;
+  onLoadMoreSubjects: any;
+  onLoadSubjectComments: any;
+  onSetRewardLevel: any;
+  onSubjectEditDone: any;
+  onSubjectDelete: any;
+  rootRewardLevel: number;
+  commentActions: {
+    editRewardComment: any;
+    onDelete: any;
+    onEditDone: any;
+    onLikeClick: any;
+    onLoadMoreComments: any;
+    onLoadMoreReplies: any;
+    onLoadRepliesOfReply: any;
+    onUploadComment: any;
+    onUploadReply: any;
+  };
+}
 export default function Subjects({
   className,
   subjects,
@@ -59,7 +57,7 @@ export default function Subjects({
     onUploadComment,
     onUploadReply
   }
-}) {
+}: Props) {
   const loadSubjects = useAppContext((v) => v.requestHelpers.loadSubjects);
   const [loadingMore, setLoadingMore] = useState(false);
   return (

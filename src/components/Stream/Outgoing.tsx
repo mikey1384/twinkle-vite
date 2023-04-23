@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useChatContext } from '~/contexts';
 
 export default function Outgoing() {
-  const myStreamRef = useRef(null);
+  const myStreamRef: React.MutableRefObject<any> = useRef(null);
   const myStream = useChatContext((v) => v.state.myStream);
   const onSetMyStream = useChatContext((v) => v.actions.onSetMyStream);
   useEffect(() => {

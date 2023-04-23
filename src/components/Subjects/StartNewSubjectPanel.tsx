@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import SubjectInputForm from './SubjectInputForm';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -14,17 +14,14 @@ const enterSubjectLabel = localize('enterSubject');
 const enterDetailsLabel = localize('enterDetails');
 const optionalLabel = localize('optional');
 
-StartNewSubjectPanel.propTypes = {
-  onUploadSubject: PropTypes.func.isRequired,
-  contentId: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-    .isRequired,
-  contentType: PropTypes.string.isRequired
-};
-
 export default function StartNewSubjectPanel({
   contentId,
   contentType,
   onUploadSubject
+}: {
+  contentId: number;
+  contentType: string;
+  onUploadSubject: any;
 }) {
   const uploadSubject = useAppContext((v) => v.requestHelpers.uploadSubject);
   const { canEditRewardLevel } = useKeyContext((v) => v.myState);
@@ -97,6 +94,15 @@ export default function StartNewSubjectPanel({
     secretAttachmentFileName,
     secretAttachmentFileSize,
     secretAttachmentThumbUrl
+  }: {
+    title: string;
+    description: string;
+    rewardLevel: number;
+    secretAnswer: string;
+    secretAttachmentFilePath: string;
+    secretAttachmentFileName: string;
+    secretAttachmentFileSize: number;
+    secretAttachmentThumbUrl: string;
   }) {
     const data = await uploadSubject({
       title,

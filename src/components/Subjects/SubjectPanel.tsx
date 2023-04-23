@@ -1,5 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import UsernameText from '~/components/Texts/UsernameText';
 import Comments from '~/components/Comments';
@@ -43,25 +42,23 @@ const removeLabel = localize('remove');
 const secretMessageLabel = localize('secretMessage');
 const postedLabel = localize('posted');
 
-SubjectPanel.propTypes = {
-  description: PropTypes.string,
-  rewardLevel: PropTypes.number,
-  loadMoreCommentsButton: PropTypes.bool.isRequired,
-  numComments: PropTypes.string,
-  rootRewardLevel: PropTypes.number,
-  secretAnswer: PropTypes.string,
-  secretAttachment: PropTypes.object,
-  timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-    .isRequired,
-  title: PropTypes.string.isRequired,
-  userId: PropTypes.number,
-  username: PropTypes.string.isRequired,
-  uploaderAuthLevel: PropTypes.number.isRequired,
-  rootType: PropTypes.string.isRequired,
-  rootId: PropTypes.number.isRequired,
-  subjectId: PropTypes.number.isRequired
-};
-
+interface Props {
+  rootId: number;
+  rootType: string;
+  description: string;
+  title: string;
+  rewardLevel: number;
+  uploaderAuthLevel: number;
+  username: string;
+  userId: number;
+  timeStamp: number;
+  numComments: number;
+  loadMoreCommentsButton: boolean;
+  rootRewardLevel: number;
+  secretAnswer: string;
+  secretAttachment: any;
+  subjectId: number;
+}
 export default function SubjectPanel({
   rootId,
   rootType,
@@ -78,7 +75,7 @@ export default function SubjectPanel({
   secretAnswer,
   secretAttachment,
   subjectId
-}) {
+}: Props) {
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
@@ -178,8 +175,9 @@ export default function SubjectPanel({
   }, [byUser, rootRewardLevel]);
   const isRecommendedByUser = useMemo(() => {
     return (
-      recommendations.filter((recommendation) => recommendation.userId === myId)
-        .length > 0
+      recommendations.filter(
+        (recommendation: { userId: number }) => recommendation.userId === myId
+      ).length > 0
     );
   }, [recommendations, myId]);
 
@@ -200,8 +198,8 @@ export default function SubjectPanel({
     description,
     secretAnswer
   ]);
-  const CommentsRef = useRef(null);
-  const RewardInterfaceRef = useRef(null);
+  const CommentsRef: React.RefObject<any> = useRef(null);
+  const RewardInterfaceRef: React.RefObject<any> = useRef(null);
 
   return !isDeleted ? (
     <div
@@ -308,7 +306,9 @@ export default function SubjectPanel({
               onChange={(text) => {
                 setEditedTitle(text);
               }}
-              onKeyUp={(event) => setEditedTitle(addEmoji(event.target.value))}
+              onKeyUp={(event: any) =>
+                setEditedTitle(addEmoji(event.target.value))
+              }
             />
           </form>
         )}
@@ -319,7 +319,7 @@ export default function SubjectPanel({
               style={{ marginTop: '1rem' }}
               minRows={5}
               value={editedDescription}
-              onChange={(event) => {
+              onChange={(event: any) => {
                 setEditedDescription(event.target.value);
               }}
             />
@@ -332,7 +332,7 @@ export default function SubjectPanel({
                 placeholder="Enter Secret Message (Optional)"
                 minRows={5}
                 value={editedSecretAnswer}
-                onChange={(event) => {
+                onChange={(event: any) => {
                   setEditedSecretAnswer(event.target.value);
                 }}
               />
@@ -547,7 +547,7 @@ export default function SubjectPanel({
                   authLevel: uploaderAuthLevel
                 }
               }}
-              showSecretButtonAvailable={subjectId && secretHidden}
+              showSecretButtonAvailable={!!(subjectId && secretHidden)}
             />
           </div>
         )}
@@ -584,7 +584,7 @@ export default function SubjectPanel({
     }
   }
 
-  async function handleCommentSubmit(params) {
+  async function handleCommentSubmit(params: any) {
     onChangeSpoilerStatus({
       shown: true,
       subjectId,
@@ -602,7 +602,7 @@ export default function SubjectPanel({
     });
   }
 
-  async function handleExpand(revealingSecret) {
+  async function handleExpand(revealingSecret: boolean) {
     setExpanded(true);
     try {
       setLoadingComments(true);
@@ -621,7 +621,7 @@ export default function SubjectPanel({
       }
       setLoadingComments(false);
       CommentsRef.current.focus();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error.response || error);
     }
   }
@@ -639,11 +639,11 @@ export default function SubjectPanel({
     setEditDoneButtonDisabled(true);
   }
 
-  function handleToggleByUser(byUser) {
+  function handleToggleByUser(byUser: boolean) {
     onSetByUserStatus({ byUser, contentId: subjectId, contentType: 'subject' });
   }
 
-  function handleLoadMoreComments(data) {
+  function handleLoadMoreComments(data: any) {
     onLoadMoreComments({ ...data, subjectId });
   }
 }

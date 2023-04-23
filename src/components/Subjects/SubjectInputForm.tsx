@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   stringIsEmpty,
   addEmoji,
   finalizeEmoji
 } from '~/helpers/stringHelpers';
-import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -26,21 +25,6 @@ import localize from '~/constants/localize';
 const cancelLabel = localize('cancel');
 const submitLabel = localize('submit3');
 
-SubjectInputForm.propTypes = {
-  autoFocus: PropTypes.bool,
-  canEditRewardLevel: PropTypes.bool,
-  contentId: PropTypes.number,
-  contentType: PropTypes.string,
-  descriptionMaxChar: PropTypes.number,
-  descriptionPlaceholder: PropTypes.string,
-  isSubject: PropTypes.bool,
-  onClose: PropTypes.func,
-  onSubmit: PropTypes.func,
-  rows: PropTypes.number,
-  titleMaxChar: PropTypes.number,
-  titlePlaceholder: PropTypes.string
-};
-
 export default function SubjectInputForm({
   autoFocus,
   canEditRewardLevel,
@@ -54,6 +38,19 @@ export default function SubjectInputForm({
   descriptionMaxChar = 5000,
   descriptionPlaceholder,
   onSubmit
+}: {
+  autoFocus?: boolean;
+  canEditRewardLevel?: boolean;
+  contentId: number;
+  contentType: string;
+  isSubject?: boolean;
+  onClose: () => void;
+  rows?: any;
+  titlePlaceholder?: string;
+  titleMaxChar?: number;
+  descriptionMaxChar?: number;
+  descriptionPlaceholder?: string;
+  onSubmit: any;
 }) {
   const {
     done: { color: doneColor }
@@ -126,11 +123,13 @@ export default function SubjectInputForm({
               placeholder={titlePlaceholder}
               value={title}
               style={{
-                borderColor: title.length > titleMaxChar && 'red',
-                color: title.length > titleMaxChar && 'red'
+                borderColor: title.length > titleMaxChar ? 'red' : '',
+                color: title.length > titleMaxChar ? 'red' : ''
               }}
               onChange={handleSetTitle}
-              onKeyUp={(event) => handleSetTitle(addEmoji(event.target.value))}
+              onKeyUp={(event: any) =>
+                handleSetTitle(addEmoji(event.target.value))
+              }
             />
             {title.length > titleMaxChar && (
               <small style={{ color: 'red', fontSize: '1.6rem' }}>
@@ -148,8 +147,10 @@ export default function SubjectInputForm({
                 minRows={rows}
                 placeholder={descriptionPlaceholder}
                 value={description}
-                onChange={(event) => handleSetDescription(event.target.value)}
-                onKeyUp={(event) =>
+                onChange={(event: any) =>
+                  handleSetDescription(event.target.value)
+                }
+                onKeyUp={(event: any) =>
                   handleSetDescription(addEmoji(event.target.value))
                 }
               />
@@ -240,23 +241,23 @@ export default function SubjectInputForm({
     onClose();
   }
 
-  function handleSetTitle(text) {
+  function handleSetTitle(text: string) {
     setTitle(text);
     titleRef.current = text;
   }
 
-  function handleSetDescription(text) {
+  function handleSetDescription(text: string) {
     setDescription(text);
     descriptionRef.current = text;
   }
 
-  function handleSetSecretAnswer(text) {
+  function handleSetSecretAnswer(text: string) {
     setSecretAnswer(text);
     secretAnswerRef.current = text;
   }
 
-  function handleSetSecretAttachment(attachment) {
-    setSecretAttachment((prev) =>
+  function handleSetSecretAttachment(attachment: any) {
+    setSecretAttachment((prev: any) =>
       attachment
         ? {
             ...prev,
@@ -267,7 +268,7 @@ export default function SubjectInputForm({
     secretAttachmentRef.current = attachment;
   }
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: any) {
     event.preventDefault();
     setSubmitting(true);
     const filePath = uuidv1();
@@ -279,7 +280,13 @@ export default function SubjectInputForm({
           uploadFile({
             filePath,
             file: secretAttachment?.file,
-            onUploadProgress: ({ loaded, total }) =>
+            onUploadProgress: ({
+              loaded,
+              total
+            }: {
+              loaded: number;
+              total: number;
+            }) =>
               onUpdateSecretFileUploadProgress({
                 contentId,
                 contentType,

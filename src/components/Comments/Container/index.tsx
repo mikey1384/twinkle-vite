@@ -29,7 +29,7 @@ interface Props {
   numInputRows?: number;
   numPreviews?: number;
   onCommentSubmit: (comment: any) => void;
-  onLoadMoreComments: () => void;
+  onLoadMoreComments: (v: any) => void;
   onSetCommentSubmitted: (comment: any) => void;
   parent: any;
   previewComments?: any[];
