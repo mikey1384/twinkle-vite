@@ -1,15 +1,6 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import PartOfSpeechBlock from './PartOfSpeechBlock';
 import PartOfSpeechesList from './PartOfSpeechesList';
-
-Reorder.propTypes = {
-  deletedDefIds: PropTypes.array.isRequired,
-  editedDefinitionOrder: PropTypes.object.isRequired,
-  onSetEditedDefinitionOrder: PropTypes.func.isRequired,
-  onSetPoses: PropTypes.func.isRequired,
-  poses: PropTypes.array.isRequired,
-  posObj: PropTypes.object.isRequired
-};
 
 export default function Reorder({
   deletedDefIds,
@@ -18,6 +9,13 @@ export default function Reorder({
   onSetPoses,
   poses,
   posObj
+}: {
+  deletedDefIds: number[];
+  editedDefinitionOrder: { [key: string]: number[] };
+  onSetEditedDefinitionOrder: (arg0: { [key: string]: number[] }) => void;
+  onSetPoses: (arg0: string[]) => void;
+  poses: string[];
+  posObj: { [key: string]: { [key: number]: { title: string } } };
 }) {
   return (
     <div style={{ display: 'flex', width: '100%' }}>
@@ -62,19 +60,37 @@ export default function Reorder({
     </div>
   );
 
-  function handleDefinitionsMove({ sourceId, targetId, ids, pos, setIds }) {
+  function handleDefinitionsMove({
+    sourceId,
+    targetId,
+    ids,
+    pos,
+    setIds
+  }: {
+    sourceId: number;
+    targetId: number;
+    ids: number[];
+    pos: string;
+    setIds: (v: any) => any;
+  }) {
     const newIds = [...ids];
     const sourceIndex = newIds.indexOf(sourceId);
     const targetIndex = newIds.indexOf(targetId);
     newIds.splice(sourceIndex, 1);
     newIds.splice(targetIndex, 0, sourceId);
-    setIds((ids) => ({
+    setIds((ids: any[]) => ({
       ...ids,
       [pos]: newIds
     }));
   }
 
-  function handlePosMove({ sourceId: sourcePos, targetId: targetPos }) {
+  function handlePosMove({
+    sourceId: sourcePos,
+    targetId: targetPos
+  }: {
+    sourceId: string;
+    targetId: string;
+  }) {
     const newPoses = [...poses];
     const sourceIndex = newPoses.indexOf(sourcePos);
     const targetIndex = newPoses.indexOf(targetPos);
