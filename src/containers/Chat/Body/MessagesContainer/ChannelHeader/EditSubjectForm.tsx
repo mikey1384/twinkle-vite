@@ -1,5 +1,4 @@
-import PropTypes from 'prop-types';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   addEmoji,
   finalizeEmoji,
@@ -19,22 +18,21 @@ import Loading from '~/components/Loading';
 import { edit } from '~/constants/placeholders';
 import { css } from '@emotion/css';
 
-EditSubjectForm.propTypes = {
-  autoFocus: PropTypes.bool,
-  channelId: PropTypes.number,
-  currentSubjectId: PropTypes.number,
-  displayedThemeColor: PropTypes.string,
-  maxLength: PropTypes.number,
-  onChange: PropTypes.func.isRequired,
-  onClickOutSide: PropTypes.func.isRequired,
-  onEditSubmit: PropTypes.func.isRequired,
-  onReloadChatSubject: PropTypes.func,
-  searchResults: PropTypes.array,
-  title: PropTypes.string.isRequired,
-  theme: PropTypes.string,
-  userIsOwner: PropTypes.bool
-};
-
+interface Props {
+  autoFocus?: boolean;
+  channelId: number;
+  currentSubjectId: number;
+  displayedThemeColor: string;
+  maxLength?: number;
+  onChange: (input: string) => void;
+  onClickOutSide: () => void;
+  onEditSubmit: (input: string) => void;
+  onReloadChatSubject: (subjectId: number) => void;
+  searchResults: any[];
+  title: string;
+  theme?: string;
+  userIsOwner: boolean;
+}
 export default function EditSubjectForm({
   autoFocus,
   channelId,
@@ -47,7 +45,7 @@ export default function EditSubjectForm({
   onClickOutSide,
   userIsOwner,
   ...props
-}) {
+}: Props) {
   const {
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
@@ -57,7 +55,7 @@ export default function EditSubjectForm({
   const [readyForSubmit, setReadyForSubmit] = useState(false);
   const [subjectsModalShown, setSubjectsModalShown] = useState(false);
   const EditSubjectFormRef = useRef(null);
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
   useOutsideClick(EditSubjectFormRef, () => {
     if (!subjectsModalShown) onClickOutSide();
   });
@@ -70,7 +68,7 @@ export default function EditSubjectForm({
     } else {
       setReadyForSubmit(true);
     }
-    async function handleChangeInput(input) {
+    async function handleChangeInput(input: string) {
       await onChange(input);
       const content = input ? `${input[0].toUpperCase()}${input.slice(1)}` : '';
       for (let i = 0; i < searchResults.length; i++) {
@@ -135,7 +133,6 @@ export default function EditSubjectForm({
                   onUpdate={onUpdate}
                   onItemClick={onItemClick}
                   renderItemLabel={renderItemLabel}
-                  startingIndex={-1}
                   style={{ width: '100%' }}
                   indexToHighlight={highlightedIndex}
                   searchResults={searchResults}
@@ -165,7 +162,7 @@ export default function EditSubjectForm({
           </div>
         </div>
         <div style={{ background: '#fff' }}>
-          <small style={{ color: title.length > maxLength && 'red' }}>
+          <small style={{ color: title.length > maxLength ? 'red' : '' }}>
             {title.length}/{maxLength} Characters
           </small>
           {title.length <= maxLength && (
@@ -179,7 +176,7 @@ export default function EditSubjectForm({
     </ErrorBoundary>
   );
 
-  function onKeyDown(event) {
+  function onKeyDown(event: any) {
     let index = highlightedIndex;
     if (searchResults.length > 0 && !exactMatchExists) {
       if (event.keyCode === 40) {
@@ -193,7 +190,7 @@ export default function EditSubjectForm({
     }
   }
 
-  function onKeyUp(event) {
+  function onKeyUp(event: any) {
     if (event.keyCode === 13) {
       handleEditSubmit();
     } else {
@@ -201,7 +198,7 @@ export default function EditSubjectForm({
     }
   }
 
-  function onInputChange(text) {
+  function onInputChange(text: string) {
     setTitle(text);
     setHighlightedIndex(-1);
     setExactMatchExists(false);
@@ -238,13 +235,13 @@ export default function EditSubjectForm({
     }
   }
 
-  function onItemClick(item) {
+  function onItemClick(item: any) {
     const { id: subjectId } = item;
     if (subjectId === currentSubjectId) return onClickOutSide();
     onReloadChatSubject(subjectId);
   }
 
-  function renderItemLabel(item) {
+  function renderItemLabel(item: any) {
     return (
       <div>
         <div
