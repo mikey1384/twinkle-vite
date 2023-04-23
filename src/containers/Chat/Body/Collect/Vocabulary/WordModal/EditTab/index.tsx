@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
 import Reorder from './Reorder';
@@ -10,18 +9,17 @@ import { isEqual } from 'lodash';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { capitalize } from '~/helpers/stringHelpers';
 
-EditTab.propTypes = {
-  deletedDefIds: PropTypes.array.isRequired,
-  editedDefinitionOrder: PropTypes.object.isRequired,
-  onEditWord: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired,
-  originalDefinitionOrder: PropTypes.object.isRequired,
-  originalPosOrder: PropTypes.array.isRequired,
-  posObj: PropTypes.object.isRequired,
-  onSetEditedDefinitionOrder: PropTypes.func.isRequired,
-  word: PropTypes.string.isRequired
-};
-
+interface Props {
+  deletedDefIds: number[];
+  editedDefinitionOrder: { [key: string]: number[] };
+  onEditWord: (v: any) => any;
+  onHide: () => void;
+  originalDefinitionOrder: { [key: string]: number[] };
+  originalPosOrder: string[];
+  posObj: { [key: string]: { [key: number]: { title: string } } };
+  onSetEditedDefinitionOrder: (arg0: { [key: string]: number[] }) => void;
+  word: string;
+}
 export default function EditTab({
   deletedDefIds: originalDeletedIds = [],
   editedDefinitionOrder,
@@ -32,7 +30,7 @@ export default function EditTab({
   posObj,
   onSetEditedDefinitionOrder,
   word
-}) {
+}: Props) {
   const editWord = useAppContext((v) => v.requestHelpers.editWord);
   const { canDelete } = useKeyContext((v) => v.myState);
   const {
@@ -40,7 +38,7 @@ export default function EditTab({
   } = useKeyContext((v) => v.theme);
   const [selectedTab, setSelectedTab] = useState('reorder');
   const [posting, setPosting] = useState(false);
-  const [poses, setPoses] = useState([]);
+  const [poses, setPoses] = useState<string[]>([]);
   const [deletedDefIds, setDeletedDefIds] = useState(originalDeletedIds);
 
   const disabled = useMemo(() => {
@@ -141,7 +139,13 @@ export default function EditTab({
     </>
   );
 
-  async function handleEditDone({ poses, editedDefinitionOrder }) {
+  async function handleEditDone({
+    poses,
+    editedDefinitionOrder
+  }: {
+    poses: string[];
+    editedDefinitionOrder: { [key: string]: number[] };
+  }) {
     setPosting(true);
     await editWord({
       editedDefinitionOrder,
@@ -158,7 +162,7 @@ export default function EditTab({
     setPosting(false);
   }
 
-  function handleRemoveListItemClick(defId) {
+  function handleRemoveListItemClick(defId: number) {
     setDeletedDefIds((defIds) => {
       if (defIds.includes(defId)) {
         return defIds.filter((id) => id !== defId);

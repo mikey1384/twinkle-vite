@@ -1,14 +1,15 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import SortableListItem from '~/components/SortableListItem';
 import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 
-PartOfSpeechesList.propTypes = {
-  onListItemMove: PropTypes.func.isRequired,
-  partOfSpeeches: PropTypes.array.isRequired
-};
-
-export default function PartOfSpeechesList({ onListItemMove, partOfSpeeches }) {
+export default function PartOfSpeechesList({
+  onListItemMove,
+  partOfSpeeches
+}: {
+  onListItemMove: (v: any) => void;
+  partOfSpeeches: string[];
+}) {
   return (
     <div
       className={css`
@@ -39,7 +40,6 @@ export default function PartOfSpeechesList({ onListItemMove, partOfSpeeches }) {
           <SortableListItem
             numbered
             key={pos}
-            id={pos}
             index={index}
             listItemId={pos}
             listItemLabel={pos}

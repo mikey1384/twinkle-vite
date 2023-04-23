@@ -13,11 +13,11 @@ export default function SortableListItem({
   onMove
 }: {
   index: number;
-  listItemId: number;
+  listItemId: number | string;
   listItemLabel: string;
   listItemType?: string;
   numbered?: boolean;
-  onMove: (arg0: { sourceId: number; targetId: number }) => void;
+  onMove: (arg0: any) => void;
 }) {
   const Draggable = useRef(null);
   const [{ opacity }, drag] = useDrag({

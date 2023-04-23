@@ -1,16 +1,7 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import SortableListItem from '~/components/SortableListItem';
 import { borderRadius, Color } from '~/constants/css';
 import { css } from '@emotion/css';
-
-PartOfSpeechBlock.propTypes = {
-  deletedDefIds: PropTypes.array.isRequired,
-  type: PropTypes.string,
-  onListItemMove: PropTypes.func.isRequired,
-  defIds: PropTypes.array.isRequired,
-  posObject: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
 
 export default function PartOfSpeechBlock({
   deletedDefIds,
@@ -19,6 +10,13 @@ export default function PartOfSpeechBlock({
   defIds,
   posObject,
   style
+}: {
+  deletedDefIds: number[];
+  type: string;
+  onListItemMove: (v: any) => void;
+  defIds: number[];
+  posObject: { [key: number]: any };
+  style?: React.CSSProperties;
 }) {
   return defIds?.length > 0 ? (
     <div style={style}>
@@ -58,7 +56,6 @@ export default function PartOfSpeechBlock({
               <SortableListItem
                 numbered
                 key={id}
-                id={id}
                 index={index}
                 listItemId={id}
                 listItemLabel={posObject[id]?.title}

@@ -1,5 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import Input from './Input';
 import Loading from '~/components/Loading';
 import ActivitiesContainer from './ActivitiesContainer';
@@ -30,12 +35,13 @@ const loadingLabel = localize('loading');
 const lookingUpLabel = localize('lookingUp');
 const typeWordInBoxBelowLabel = localize('typeWordInBoxBelow');
 
-Vocabulary.propTypes = {
-  loadingVocabulary: PropTypes.bool
-};
-export default function Vocabulary({ loadingVocabulary }) {
+export default function Vocabulary({
+  loadingVocabulary
+}: {
+  loadingVocabulary: boolean;
+}) {
   const navigate = useNavigate();
-  const [searchedWord, setSearchedWord] = useState(null);
+  const [searchedWord, setSearchedWord] = useState<any>({});
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const lookUpWord = useAppContext((v) => v.requestHelpers.lookUpWord);
   const registerWord = useAppContext((v) => v.requestHelpers.registerWord);
@@ -64,7 +70,7 @@ export default function Vocabulary({ loadingVocabulary }) {
 
   const text = useRef(null);
   const inputRef = useRef(null);
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
 
   const inputTextIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
 
@@ -77,7 +83,7 @@ export default function Vocabulary({ loadingVocabulary }) {
         timerRef.current = setTimeout(() => changeInput(inputText), 1000);
       }
     }
-    async function changeInput(input) {
+    async function changeInput(input: string) {
       const word = await lookUpWord(input);
       if (word.notFound || (word.content && word.content === text.current)) {
         onSetWordsObj(word);
@@ -215,12 +221,13 @@ export default function Vocabulary({ loadingVocabulary }) {
           width: '100%',
           height: widgetHeight,
           boxShadow:
-            !wordRegisterStatus &&
-            inputTextIsEmpty &&
-            `0 -5px 6px -3px ${Color.gray()}`,
+            !wordRegisterStatus && inputTextIsEmpty
+              ? `0 -5px 6px -3px ${Color.gray()}`
+              : '',
           borderTop:
-            (!!wordRegisterStatus || !inputTextIsEmpty) &&
-            `1px solid ${Color.borderGray()}`
+            !!wordRegisterStatus || !inputTextIsEmpty
+              ? `1px solid ${Color.borderGray()}`
+              : ''
         }}
       >
         {inputTextIsEmpty && !!wordRegisterStatus && <WordRegisterStatus />}

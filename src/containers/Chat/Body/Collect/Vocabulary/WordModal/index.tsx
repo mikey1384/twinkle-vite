@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
-import PropTypes from 'prop-types';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import FilterBar from '~/components/FilterBar';
@@ -10,14 +9,15 @@ import { DndProvider } from 'react-dnd';
 import { isMobile } from '~/helpers';
 import { useChatContext } from '~/contexts';
 
-WordModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  word: PropTypes.string.isRequired
-};
-
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 
-export default function WordModal({ onHide, word }) {
+export default function WordModal({
+  onHide,
+  word
+}: {
+  onHide: () => void;
+  word: string;
+}) {
   const wordsObj = useChatContext((v) => v.state.wordsObj);
   const onEditWord = useChatContext((v) => v.actions.onEditWord);
   const [selectedTab, setSelectedTab] = useState('dictionary');
@@ -48,7 +48,7 @@ export default function WordModal({ onHide, word }) {
       'other'
     ]
   } = wordObj;
-  const partOfSpeeches = useMemo(() => {
+  const partOfSpeeches = useMemo<Record<string, any>>(() => {
     return {
       noun,
       verb,
@@ -63,7 +63,7 @@ export default function WordModal({ onHide, word }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wordObj]);
   const posObj = useMemo(() => {
-    const result = {
+    const result: Record<string, any> = {
       adjective: {},
       adverb: {},
       conjunction: {},
@@ -85,7 +85,7 @@ export default function WordModal({ onHide, word }) {
     return result;
   }, [partOfSpeeches]);
   const posOrder = partOfSpeechOrder.filter(
-    (pos) => Object.keys(posObj[pos] || {}).length > 0
+    (pos: any) => Object.keys(posObj[pos] || {}).length > 0
   );
   const title = useMemo(() => {
     if (selectedTab === 'edit') return `Edit Definitions of "${word}"`;
