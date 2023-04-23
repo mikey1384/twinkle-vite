@@ -1,15 +1,5 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-
-Body.propTypes = {
-  emptyMessage: PropTypes.string,
-  searchQuery: PropTypes.string,
-  isSearching: PropTypes.bool,
-  isEmpty: PropTypes.bool,
-  loadMoreButtonShown: PropTypes.bool,
-  statusMsgStyle: PropTypes.string,
-  content: PropTypes.node
-};
 
 export default function Body({
   emptyMessage,
@@ -19,6 +9,14 @@ export default function Body({
   statusMsgStyle,
   content,
   loadMoreButtonShown
+}: {
+  emptyMessage?: string;
+  searchQuery: string;
+  isSearching?: boolean;
+  isEmpty?: boolean;
+  statusMsgStyle: string;
+  content: React.ReactNode;
+  loadMoreButtonShown?: boolean;
 }) {
   return (
     <div style={{ width: '100%' }}>

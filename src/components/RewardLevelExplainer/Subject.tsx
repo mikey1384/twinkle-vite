@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -7,12 +6,13 @@ import { Color } from '~/constants/css';
 
 const forEveryStarYouAddLabel = localize('forEveryStarYouAddSubject');
 
-Subject.propTypes = {
-  rewardLevel: PropTypes.number,
-  style: PropTypes.object
-};
-
-export default function Subject({ rewardLevel, style }) {
+export default function Subject({
+  rewardLevel,
+  style
+}: {
+  rewardLevel: number;
+  style: React.CSSProperties;
+}) {
   const rewardLevelExpectation = useMemo(() => {
     switch (rewardLevel) {
       case 3:

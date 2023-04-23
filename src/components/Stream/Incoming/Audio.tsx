@@ -1,11 +1,6 @@
-import { useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef } from 'react';
 
-Audio.propTypes = {
-  stream: PropTypes.object.isRequired
-};
-
-export default function Audio({ stream }) {
+export default function Audio({ stream }: { stream: any }) {
   const audioRef = useRef(stream);
   useEffect(() => {
     const currentAudio = audioRef.current;
@@ -14,7 +9,7 @@ export default function Audio({ stream }) {
       audioRef.current.srcObject = clonedStream;
     }
     return function cleanUp() {
-      currentAudio.srcObject?.getTracks()?.forEach?.((track) => {
+      currentAudio.srcObject?.getTracks()?.forEach?.((track: any) => {
         track.stop();
       });
     };

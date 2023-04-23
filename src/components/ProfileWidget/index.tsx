@@ -18,7 +18,7 @@ export default function ProfileWidget({
   onLoadImage,
   onShowAlert
 }: {
-  onLoadImage: Function;
+  onLoadImage: any;
   onShowAlert: Function;
 }) {
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ export default function ProfileWidget({
   const { profilePicUrl, realName, userId, username } = useKeyContext(
     (v) => v.myState
   );
-  const FileInputRef = useRef(null);
+  const FileInputRef: React.RefObject<any> = useRef(null);
 
   return (
     <ErrorBoundary componentPath="ProfileWidget/index">
@@ -95,7 +95,7 @@ export default function ProfileWidget({
     </ErrorBoundary>
   );
 
-  function handlePicture(event) {
+  function handlePicture(event: any) {
     const reader = new FileReader();
     const file = event.target.files[0];
     if (file.size / 1000 > MAX_PROFILE_PIC_SIZE) {

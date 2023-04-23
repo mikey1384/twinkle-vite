@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 
@@ -6,12 +6,13 @@ const logInLabel = localize('logIn2');
 const tapHereLabel = localize('tapHere');
 const toAccessAllFeaturesLabel = localize('toAccessAllFeatures');
 
-WelcomeMessage.propTypes = {
-  userId: PropTypes.number,
-  openSigninModal: PropTypes.func
-};
-
-export default function WelcomeMessage({ userId, openSigninModal }) {
+export default function WelcomeMessage({
+  userId,
+  openSigninModal
+}: {
+  userId: number;
+  openSigninModal: () => any;
+}) {
   return (
     <div
       style={{
