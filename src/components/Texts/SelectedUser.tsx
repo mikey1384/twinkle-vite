@@ -1,14 +1,16 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import CloseButton from '~/components/Buttons/CloseButton';
 import { Color } from '~/constants/css';
 
-SelectedUser.propTypes = {
-  selectedUser: PropTypes.string,
-  onClear: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
-
-export default function SelectedUser({ selectedUser, onClear, style }) {
+export default function SelectedUser({
+  selectedUser,
+  onClear,
+  style
+}: {
+  selectedUser: string;
+  onClear: () => void;
+  style?: React.CSSProperties;
+}) {
   return (
     <div
       style={{

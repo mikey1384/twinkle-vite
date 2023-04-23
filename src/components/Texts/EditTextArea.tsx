@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import { useInputContext, useKeyContext } from '~/contexts';
@@ -11,22 +10,21 @@ import {
   replaceFakeAtSymbol
 } from '~/helpers/stringHelpers';
 
-EditTextArea.propTypes = {
-  allowEmptyText: PropTypes.bool,
-  autoFocus: PropTypes.bool,
-  contentId: PropTypes.number,
-  contentType: PropTypes.string,
-  disabled: PropTypes.bool,
-  marginTop: PropTypes.string,
-  maxRows: PropTypes.number,
-  onCancel: PropTypes.func.isRequired,
-  onEditDone: PropTypes.func.isRequired,
-  placeholder: PropTypes.string,
-  rows: PropTypes.number,
-  style: PropTypes.object,
-  text: PropTypes.string.isRequired
-};
-
+interface Props {
+  allowEmptyText?: boolean;
+  autoFocus?: boolean;
+  contentId: number;
+  contentType: string;
+  disabled?: boolean;
+  marginTop?: string;
+  maxRows?: number;
+  onCancel: () => any;
+  onEditDone: (text: string) => any;
+  placeholder?: string;
+  rows?: number;
+  style?: React.CSSProperties;
+  text: string;
+}
 export default function EditTextArea({
   allowEmptyText,
   autoFocus = false,
@@ -41,7 +39,7 @@ export default function EditTextArea({
   rows = 4,
   style,
   text
-}) {
+}: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const { banned } = useKeyContext((v) => v.myState);
   const {
@@ -150,7 +148,7 @@ export default function EditTextArea({
     </div>
   );
 
-  function handleChange(event) {
+  function handleChange(event: any) {
     handleSetEditText(event.target.value);
   }
 
@@ -159,13 +157,13 @@ export default function EditTextArea({
     onCancel();
   }
 
-  function handleKeyUp(event) {
+  function handleKeyUp(event: any) {
     if (event.key === ' ') {
       handleSetEditText(addEmoji(event.target.value));
     }
   }
 
-  function handleSetEditText(text) {
+  function handleSetEditText(text: string) {
     setEditText(text);
     editTextRef.current = text;
   }

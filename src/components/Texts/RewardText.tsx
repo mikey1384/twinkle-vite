@@ -1,29 +1,28 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
-RewardText.propTypes = {
-  checked: PropTypes.bool,
-  xpReward: PropTypes.number,
-  coinReward: PropTypes.number,
-  isRepeating: PropTypes.bool,
-  labelClassName: PropTypes.string,
-  rewardClassName: PropTypes.string,
-  style: PropTypes.object
-};
-
+interface Props {
+  checked?: boolean;
+  xpReward?: number;
+  coinReward?: number;
+  isRepeating?: boolean;
+  labelClassName?: string;
+  rewardClassName?: string;
+  style?: React.CSSProperties;
+}
 export default function RewardText({
   checked,
-  xpReward,
-  coinReward,
+  xpReward = 0,
+  coinReward = 0,
   isRepeating,
   labelClassName,
   rewardClassName,
   style
-}) {
+}: Props) {
   const displayedXpReward = useMemo(
     () => addCommasToNumber(xpReward),
     [xpReward]
@@ -54,7 +53,7 @@ export default function RewardText({
         }
         style={{ display: 'flex', alignItems: 'center', marginLeft: '0.7rem' }}
       >
-        {xpReward && (
+        {!!xpReward && (
           <div>
             <span style={{ fontWeight: 'bold', color: Color.logoGreen() }}>
               {displayedXpReward}
@@ -63,7 +62,7 @@ export default function RewardText({
             {coinReward && ','}
           </div>
         )}
-        {coinReward && (
+        {!!coinReward && (
           <div
             style={{
               color: Color.brownOrange(),
