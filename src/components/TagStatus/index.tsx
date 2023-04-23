@@ -1,5 +1,4 @@
-import { memo, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import PlaylistModal from '~/components/Modals/PlaylistModal';
 import TagModal from './TagModal';
 import { hashify } from '~/helpers/stringHelpers';
@@ -12,16 +11,6 @@ import localize from '~/constants/localize';
 
 const addVideoToPlaylistsLabel = localize('addVideoToPlaylists');
 
-TagStatus.propTypes = {
-  onAddTags: PropTypes.func.isRequired,
-  onAddTagToContents: PropTypes.func,
-  onLoadTags: PropTypes.func,
-  contentId: PropTypes.number.isRequired,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  tags: PropTypes.array.isRequired
-};
-
 function TagStatus({
   contentId,
   onAddTags,
@@ -30,6 +19,14 @@ function TagStatus({
   style,
   theme,
   tags
+}: {
+  contentId: number;
+  onAddTags: (v: any) => void;
+  onAddTagToContents: (v: any) => void;
+  onLoadTags: (v: any) => void;
+  style: React.CSSProperties;
+  theme: string;
+  tags: any[];
 }) {
   const { canEditPlaylists, profileTheme } = useKeyContext((v) => v.myState);
   const {
@@ -43,7 +40,7 @@ function TagStatus({
   const [tagModalShown, setTagModalShown] = useState(false);
 
   useEffect(() => {
-    if (onLoadTags) {
+    if (!!onLoadTags) {
       loadTags();
     }
     async function loadTags() {
@@ -149,7 +146,7 @@ function TagStatus({
     </div>
   );
 
-  function onTagSubmit(selectedTags) {
+  function onTagSubmit(selectedTags: any[]) {
     onAddTags({ tags: selectedTags, contentType: 'video', contentId });
     setTagModalShown(false);
   }

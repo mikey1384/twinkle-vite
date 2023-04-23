@@ -1,20 +1,10 @@
-import { memo, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import TagForm from '~/components/Forms/TagForm';
 import AddPlaylistModal from '~/components/Modals/AddPlaylistModal';
 import { capitalize, hashify } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
-
-TagModal.propTypes = {
-  currentPlaylists: PropTypes.array.isRequired,
-  title: PropTypes.string.isRequired,
-  onHide: PropTypes.func.isRequired,
-  videoId: PropTypes.number.isRequired,
-  onAddPlaylist: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired
-};
 
 function TagModal({
   currentPlaylists,
@@ -23,6 +13,13 @@ function TagModal({
   onHide,
   onSubmit,
   videoId
+}: {
+  currentPlaylists: any[];
+  title: string;
+  onHide: () => any;
+  videoId: number;
+  onAddPlaylist: (playlist: any) => any;
+  onSubmit: (playlists: any[]) => any;
 }) {
   const {
     done: { color: doneColor }
@@ -37,7 +34,7 @@ function TagModal({
   const [searchResults, setSearchResults] = useState([]);
   const [selectedPlaylists, setSelectedPlaylists] = useState([]);
   const [posting, setPosting] = useState(false);
-  const InputRef = useRef(null);
+  const InputRef: React.RefObject<any> = useRef(null);
   const searchTextRef = useRef('');
   const dropdownFooter = useMemo(
     () =>
@@ -73,13 +70,13 @@ function TagModal({
           onAddItem={(playlist) => {
             setAddPlaylistModalShown(false);
             setNotFoundMessageShown(false);
-            setSelectedPlaylists(selectedPlaylists.concat([playlist]));
+            setSelectedPlaylists(selectedPlaylists.concat(playlist));
           }}
           onNotFound={({ messageShown }) =>
             setNotFoundMessageShown(messageShown)
           }
           onRemoveItem={onRemovePlaylist}
-          onSubmit={selectedPlaylists.length > 0 && handleSubmit}
+          onSubmit={selectedPlaylists.length > 0 ? handleSubmit : undefined}
           renderDropdownLabel={(item) => <span>{item.title}</span>}
           renderTagLabel={(label) => hashify(label)}
           searchPlaceholder="Search for playlists here..."
@@ -116,26 +113,28 @@ function TagModal({
     </Modal>
   );
 
-  function handleAddPlaylist(playlist) {
+  function handleAddPlaylist(playlist: any) {
     onAddPlaylist({
       videoIds: playlist?.playlist
-        ?.map((video) => video.videoId)
-        ?.filter((id) => id !== videoId),
+        ?.map((video: any) => video.videoId)
+        ?.filter((id: number) => id !== videoId),
       playlistId: playlist.id,
       playlistTitle: playlist.title
     });
     setAddPlaylistModalShown(false);
     setNotFoundMessageShown(false);
-    setSelectedPlaylists(selectedPlaylists.concat([playlist]));
+    setSelectedPlaylists(selectedPlaylists.concat(playlist));
   }
 
   function onClearSearchResults() {
     setSearchResults([]);
   }
 
-  function onRemovePlaylist(playlistId) {
+  function onRemovePlaylist(playlistId: number) {
     setSelectedPlaylists(
-      selectedPlaylists.filter((playlist) => playlist.id !== playlistId)
+      selectedPlaylists.filter(
+        (playlist: { id: number }) => playlist.id !== playlistId
+      )
     );
   }
 
@@ -143,13 +142,13 @@ function TagModal({
     setPosting(true);
     await addVideoToPlaylists({
       videoId,
-      playlistIds: selectedPlaylists.map((playlist) => playlist.id)
+      playlistIds: selectedPlaylists.map((playlist: {id: number}) => playlist.id)
     });
     setSearchText('');
     onSubmit(selectedPlaylists);
   }
 
-  async function onSearchPlaylists(text) {
+  async function onSearchPlaylists(text: string) {
     searchTextRef.current = text;
     const { results, searchText } = await searchContent({
       filter: 'playlist',
