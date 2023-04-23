@@ -1,21 +1,19 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
-PosBlock.propTypes = {
-  contentObj: PropTypes.object.isRequired,
-  definitionIds: PropTypes.array.isRequired,
-  deletedDefIds: PropTypes.array.isRequired,
-  partOfSpeech: PropTypes.string.isRequired,
-  style: PropTypes.object
-};
 export default function PosBlock({
   contentObj,
   definitionIds,
   deletedDefIds,
   partOfSpeech,
   style
+}: {
+  contentObj: any;
+  definitionIds: number[];
+  deletedDefIds: number[];
+  partOfSpeech: string;
+  style?: React.CSSProperties;
 }) {
   const filteredDefinitionIds = useMemo(
     () => definitionIds.filter((id) => !deletedDefIds.includes(id)),

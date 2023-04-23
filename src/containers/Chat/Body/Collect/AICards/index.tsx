@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import GenerateCardInterface from './GenerateCardInterface';
 import FilterBar from '~/components/FilterBar';
 import ActivitiesContainer from './ActivitiesContainer';
@@ -10,11 +10,11 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import StatusInterface from './StatusInterface';
 
-AICards.propTypes = {
-  loadingAICardChat: PropTypes.bool
-};
-
-export default function AICards({ loadingAICardChat }) {
+export default function AICards({
+  loadingAICardChat
+}: {
+  loadingAICardChat: boolean;
+}) {
   const { userId, canGenerateAICard } = useKeyContext((v) => v.myState);
   const getOpenAiImage = useAppContext((v) => v.requestHelpers.getOpenAiImage);
   const postAICard = useAppContext((v) => v.requestHelpers.postAICard);

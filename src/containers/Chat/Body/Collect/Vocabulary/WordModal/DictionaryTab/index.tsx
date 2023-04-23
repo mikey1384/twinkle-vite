@@ -1,17 +1,8 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import PosBlock from './PosBlock';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-
-DictionaryTab.propTypes = {
-  deletedDefIds: PropTypes.array.isRequired,
-  definitionOrder: PropTypes.object.isRequired,
-  onHide: PropTypes.func.isRequired,
-  posObj: PropTypes.object.isRequired,
-  posOrder: PropTypes.array.isRequired,
-  word: PropTypes.string.isRequired
-};
 
 export default function DictionaryTab({
   deletedDefIds,
@@ -20,6 +11,13 @@ export default function DictionaryTab({
   posObj,
   posOrder,
   word
+}: {
+  deletedDefIds: number[];
+  definitionOrder: { [key: string]: number[] };
+  onHide: () => void;
+  posObj: { [key: string]: { [key: number]: { title: string } } };
+  posOrder: string[];
+  word: string;
 }) {
   return (
     <>

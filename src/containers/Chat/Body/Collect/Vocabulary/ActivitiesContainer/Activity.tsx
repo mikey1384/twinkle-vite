@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import WordModal from '../WordModal';
@@ -18,14 +17,6 @@ import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
 import { MessageStyle } from '../../../../Styles';
 
-Activity.propTypes = {
-  activity: PropTypes.object.isRequired,
-  setScrollToBottom: PropTypes.func.isRequired,
-  isLastActivity: PropTypes.bool,
-  myId: PropTypes.number,
-  onReceiveNewActivity: PropTypes.func.isRequired
-};
-
 export default function Activity({
   activity,
   activity: {
@@ -41,6 +32,12 @@ export default function Activity({
   isLastActivity,
   myId,
   onReceiveNewActivity
+}: {
+  activity: any;
+  setScrollToBottom: () => void;
+  isLastActivity: boolean;
+  myId: number;
+  onReceiveNewActivity: () => void;
 }) {
   const {
     link: { color: linkColor },

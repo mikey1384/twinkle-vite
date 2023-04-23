@@ -1,17 +1,17 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import WordModal from '../WordModal';
 import PosBlock from './PosBlock';
 import { css } from '@emotion/css';
 
-Definition.propTypes = {
-  style: PropTypes.object,
-  wordObj: PropTypes.object.isRequired
-};
-
-export default function Definition({ style, wordObj }) {
+export default function Definition({
+  style,
+  wordObj
+}: {
+  style?: React.CSSProperties;
+  wordObj: any;
+}) {
   const [wordModalShown, setWordModalShown] = useState(false);
   const {
     partOfSpeechOrder = [
@@ -47,8 +47,8 @@ export default function Definition({ style, wordObj }) {
         </div>
       )}
       {partOfSpeechOrder
-        .filter((pos) => wordObj[pos]?.length > 0)
-        .map((pos) => {
+        .filter((pos: any) => wordObj[pos]?.length > 0)
+        .map((pos: any) => {
           return <PosBlock key={pos} wordObj={wordObj} pos={pos} />;
         })}
       {wordModalShown && (

@@ -1,15 +1,16 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useChatContext } from '~/contexts';
 
-StatusInterface.propTypes = {
-  posting: PropTypes.bool,
-  statusMessage: PropTypes.string
-};
-
-export default function StatusInterface({ posting, statusMessage }) {
+export default function StatusInterface({
+  posting,
+  statusMessage
+}: {
+  posting: boolean;
+  statusMessage: string;
+}) {
   const aiCardErrorMessage = useChatContext((v) => v.state.aiCardErrorMessage);
   return (
     <div

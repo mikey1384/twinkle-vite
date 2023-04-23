@@ -1,16 +1,7 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import { borderRadius, Color } from '~/constants/css';
 import { css } from '@emotion/css';
-
-PartOfSpeechBlock.propTypes = {
-  deletedDefIds: PropTypes.array.isRequired,
-  type: PropTypes.string,
-  onListItemClick: PropTypes.func.isRequired,
-  defIds: PropTypes.array.isRequired,
-  posObject: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
 
 export default function PartOfSpeechBlock({
   deletedDefIds,
@@ -19,6 +10,13 @@ export default function PartOfSpeechBlock({
   defIds,
   posObject,
   style
+}: {
+  deletedDefIds: number[];
+  type: string;
+  onListItemClick: (id: number) => void;
+  defIds: number[];
+  posObject: any;
+  style?: React.CSSProperties;
 }) {
   return defIds.length > 0 ? (
     <div style={style}>
@@ -58,7 +56,7 @@ export default function PartOfSpeechBlock({
               style={{
                 opacity: deletedDefIds.includes(id) ? 0.5 : 1,
                 cursor: 'pointer',
-                borderTop: index === 0 && `1px solid ${Color.borderGray()}`,
+                borderTop: index === 0 ? `1px solid ${Color.borderGray()}` : '',
                 color: Color.darkerGray()
               }}
             >

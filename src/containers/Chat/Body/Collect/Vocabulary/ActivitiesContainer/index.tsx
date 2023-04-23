@@ -1,26 +1,24 @@
-import { useEffect, useRef, useState, startTransition } from 'react';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { checkScrollIsAtTheBottom } from '~/helpers';
+import React, {
+  memo,
+  useEffect,
+  useRef,
+  useState,
+  startTransition
+} from 'react';
 import Activity from './Activity';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { checkScrollIsAtTheBottom } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
-export default function ActivitiesContainer() {
-  const { userId: myId } = useKeyContext((v) => v.myState);
-  const loadAICardFeeds = useAppContext(
-    (v) => v.requestHelpers.loadAICardFeeds
-  );
-  const aiCardLoadMoreButton = useChatContext(
-    (v) => v.state.aiCardLoadMoreButton
-  );
-  const onLoadMoreAICards = useChatContext((v) => v.actions.onLoadMoreAICards);
+function ActivitiesContainer({ style }: { style?: React.CSSProperties }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [scrollAtBottom, setScrollAtBottom] = useState(false);
   const [scrollHeight, setScrollHeight] = useState(0);
-  const timerRef = useRef(null);
-  const loadingMoreRef = useRef(false);
-  const ActivitiesContainerRef = useRef(null);
-  const ContentRef = useRef(null);
+  const ActivitiesContainerRef: React.RefObject<any> = useRef(null);
+  const ContentRef: React.RefObject<any> = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const { userId } = useKeyContext((v) => v.myState);
   useEffect(() => {
     handleSetScrollToBottom();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -39,27 +37,37 @@ export default function ActivitiesContainer() {
         if (ActivitiesContainerRef.current?.scrollTop === 0) {
           handleLoadMore();
         }
-      }, 100);
+      }, 200);
     }
   });
-  useEffect(() => {
-    if (scrollHeight) {
-      (ActivitiesContainerRef.current || {}).scrollTop =
-        ContentRef.current?.offsetHeight - scrollHeight;
-    }
-  }, [scrollHeight]);
+  const loadVocabulary = useAppContext((v) => v.requestHelpers.loadVocabulary);
+  const vocabActivities = useChatContext((v) => v.state.vocabActivities);
+  const wordsObj = useChatContext((v) => v.state.wordsObj);
+  const vocabActivitiesLoadMoreButton = useChatContext(
+    (v) => v.state.vocabActivitiesLoadMoreButton
+  );
+  const onLoadMoreVocabulary = useChatContext(
+    (v) => v.actions.onLoadMoreVocabulary
+  );
+
   const fillerHeight =
     ActivitiesContainerRef.current?.offsetHeight >
     ContentRef.current?.offsetHeight
       ? ActivitiesContainerRef.current?.offsetHeight -
         ContentRef.current?.offsetHeight
       : 20;
-  const aiCardFeeds = useChatContext((v) => v.state.aiCardFeeds);
-  const cardObj = useChatContext((v) => v.state.cardObj);
+
+  useEffect(() => {
+    if (scrollHeight) {
+      (ActivitiesContainerRef.current || {}).scrollTop =
+        ContentRef.current?.offsetHeight - scrollHeight;
+    }
+  }, [scrollHeight]);
 
   return (
     <div
       ref={ActivitiesContainerRef}
+      style={{ paddingLeft: '1rem', ...style }}
       onScroll={() => {
         if (
           checkScrollIsAtTheBottom({
@@ -72,14 +80,8 @@ export default function ActivitiesContainer() {
           setScrollAtBottom(false);
         }
       }}
-      style={{
-        zIndex: 5,
-        width: '100%',
-        height: 'CALC(100% - 6.5rem)',
-        overflow: 'scroll'
-      }}
     >
-      {aiCardLoadMoreButton ? (
+      {vocabActivitiesLoadMoreButton ? (
         <div
           style={{
             marginTop: '1rem',
@@ -102,22 +104,17 @@ export default function ActivitiesContainer() {
           }}
         />
       )}
-      <div
-        style={{
-          position: 'relative'
-        }}
-        ref={ContentRef}
-      >
-        {aiCardFeeds.map((feed, index) => {
+      <div style={{ position: 'relative' }} ref={ContentRef}>
+        {vocabActivities.map((vocab: string, index: number) => {
+          const word = wordsObj[vocab] || {};
           return (
             <Activity
-              key={feed.id}
-              feed={feed}
-              cardObj={cardObj}
-              isLastActivity={index === aiCardFeeds.length - 1}
+              key={word.id}
+              activity={word}
+              setScrollToBottom={handleSetScrollToBottom}
+              isLastActivity={index === vocabActivities.length - 1}
+              myId={userId}
               onReceiveNewActivity={handleReceiveNewActivity}
-              onSetScrollToBottom={handleSetScrollToBottom}
-              myId={myId}
             />
           );
         })}
@@ -126,27 +123,21 @@ export default function ActivitiesContainer() {
   );
 
   async function handleLoadMore() {
-    try {
-      if (aiCardLoadMoreButton) {
-        const prevContentHeight = ContentRef.current?.offsetHeight || 0;
-        if (!loadingMore && !loadingMoreRef.current) {
-          loadingMoreRef.current = true;
-          setLoadingMore(true);
-          const { cardFeeds, cardObj, loadMoreShown } = await loadAICardFeeds(
-            aiCardFeeds[0].id
-          );
-          onLoadMoreAICards({ cardFeeds, cardObj, loadMoreShown });
+    if (vocabActivitiesLoadMoreButton) {
+      const prevContentHeight = ContentRef.current?.offsetHeight || 0;
+      if (!loadingMore) {
+        setLoadingMore(true);
+        try {
+          const data = await loadVocabulary(wordsObj[vocabActivities[0]]?.id);
+          onLoadMoreVocabulary(data);
           startTransition(() => {
             setScrollHeight(prevContentHeight);
-            setLoadingMore(false);
-            loadingMoreRef.current = false;
           });
+        } catch (error) {
+          console.error(error);
         }
+        setLoadingMore(false);
       }
-    } catch (error) {
-      console.error(error);
-      setLoadingMore(false);
-      loadingMoreRef.current = false;
     }
   }
 
@@ -168,3 +159,5 @@ export default function ActivitiesContainer() {
     if (ContentRef.current?.offsetHeight) setScrollAtBottom(true);
   }
 }
+
+export default memo(ActivitiesContainer);

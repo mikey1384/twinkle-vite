@@ -1,12 +1,12 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 
-PosBlock.propTypes = {
-  pos: PropTypes.string,
-  wordObj: PropTypes.object.isRequired
-};
-
-export default function PosBlock({ pos, wordObj }) {
+export default function PosBlock({
+  pos,
+  wordObj
+}: {
+  pos: string;
+  wordObj: any;
+}) {
   const {
     noun = [],
     verb = [],
@@ -20,7 +20,9 @@ export default function PosBlock({ pos, wordObj }) {
     deletedDefIds = [],
     definitionOrder
   } = wordObj;
-  const partOfSpeeches = useMemo(() => {
+  const partOfSpeeches = useMemo<{
+    [key: string]: any[];
+  }>(() => {
     return {
       noun,
       verb,
@@ -45,7 +47,7 @@ export default function PosBlock({ pos, wordObj }) {
   ]);
 
   const posObj = useMemo(() => {
-    const result = {
+    const result: { [key: string]: any } = {
       adjective: {},
       adverb: {},
       conjunction: {},
@@ -71,20 +73,33 @@ export default function PosBlock({ pos, wordObj }) {
     const definitionIds = definitionOrder?.[pos];
     if (definitionIds) {
       return definitionIds
-        .filter((id) => !deletedDefIds.includes(id) && !!posObj[pos][id])
-        .map((id, index) => (
+        .filter(
+          (id: number) => !deletedDefIds.includes(id) && !!posObj[pos][id]
+        )
+        .map((id: number, index: number) => (
           <div key={id}>
             {index + 1}. {posObj[pos][id]?.title}
           </div>
         ));
     }
     return wordObj[pos]
-      .filter(({ id }) => !deletedDefIds.includes(id))
-      .map(({ id, definition }, index) => (
-        <div key={id}>
-          {index + 1}. {definition}
-        </div>
-      ));
+      .filter(({ id }: { id: number }) => !deletedDefIds.includes(id))
+      .map(
+        (
+          {
+            id,
+            definition
+          }: {
+            id: number;
+            definition: string;
+          },
+          index: number
+        ) => (
+          <div key={id}>
+            {index + 1}. {definition}
+          </div>
+        )
+      );
   }, [definitionOrder, deletedDefIds, pos, posObj, wordObj]);
 
   return (
