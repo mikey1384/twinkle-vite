@@ -146,7 +146,7 @@ export const karmaPointTable = {
   }
 };
 
-export const videoRewardHash = {
+export const videoRewardHash: { [key: string]: any } = {
   0: {
     xp: 20,
     coin: 2
