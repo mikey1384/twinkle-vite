@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
@@ -28,6 +28,10 @@ export default function Playlist({
   onLinkClick = () => {},
   onLoad,
   playlistId
+}: {
+  onLinkClick?: () => void;
+  onLoad?: (params: any) => void;
+  playlistId: number;
 }) {
   const loadPlaylistVideos = useAppContext(
     (v) => v.requestHelpers.loadPlaylistVideos
@@ -84,7 +88,7 @@ export default function Playlist({
           <Loading text={`${loadingLabel}...`} />
         )
       ) : null}
-      {videos.map((video, index) => (
+      {videos.map((video: any, index: number) => (
         <div
           key={video.id}
           style={{

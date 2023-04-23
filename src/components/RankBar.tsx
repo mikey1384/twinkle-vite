@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, mobileMaxWidth, Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -9,13 +8,15 @@ import localize from '~/constants/localize';
 
 const rankLabel = localize('rank');
 
-RankBar.propTypes = {
-  className: PropTypes.string,
-  profile: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
-
-export default function RankBar({ className, profile, style }) {
+export default function RankBar({
+  className,
+  profile,
+  style
+}: {
+  className?: string;
+  profile: any;
+  style?: any;
+}) {
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
@@ -61,11 +62,11 @@ export default function RankBar({ className, profile, style }) {
     );
     return SELECTED_LANGUAGE === 'kr' ? (
       <>
-        <span style={{ color: profile.rank > 3 ? Color.darkGray() : null }}>
+        <span style={{ color: profile.rank > 3 ? Color.darkGray() : '' }}>
           (
         </span>
         {innerComponent}
-        <span style={{ color: profile.rank > 3 ? Color.darkGray() : null }}>
+        <span style={{ color: profile.rank > 3 ? Color.darkGray() : '' }}>
           )
         </span>
       </>

@@ -9,7 +9,7 @@ export default function InvalidPage({
 }: {
   title: string;
   text: string;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   return (
     <div
