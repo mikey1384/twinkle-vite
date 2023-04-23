@@ -1,5 +1,4 @@
-import { memo, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ProgressBar from '~/components/ProgressBar';
 import Icon from '~/components/Icon';
@@ -19,28 +18,26 @@ const notGainXPLabel = localize('notGainXP');
 const watchingLabel = localize('watching');
 const perMinuteLabel = localize('perMinute');
 
-XPBar.propTypes = {
-  isChat: PropTypes.bool,
-  playing: PropTypes.bool,
-  rewardLevel: PropTypes.number,
-  reachedMaxWatchDuration: PropTypes.bool,
-  started: PropTypes.bool,
-  startingPosition: PropTypes.number,
-  userId: PropTypes.number,
-  videoId: PropTypes.number.isRequired,
-  xpWarningShown: PropTypes.bool
-};
-
 function XPBar({
   isChat,
   playing,
-  rewardLevel,
+  rewardLevel = 0,
   started,
-  startingPosition,
+  startingPosition = 0,
   userId,
   reachedMaxWatchDuration,
   videoId,
   xpWarningShown
+}: {
+  isChat?: boolean;
+  playing?: boolean;
+  rewardLevel?: number;
+  started?: boolean;
+  startingPosition?: number;
+  userId?: number;
+  reachedMaxWatchDuration?: boolean;
+  videoId: number;
+  xpWarningShown?: boolean;
 }) {
   const [xpHovered, setXPHovered] = useState(false);
   const watching = startingPosition > 0;

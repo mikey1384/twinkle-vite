@@ -34,13 +34,13 @@ interface Props {
   style?: any;
   uploader?: any;
   videoCode?: string;
-  videoId?: number;
+  videoId: number;
 }
 function XPVideoPlayer({
   isChat,
   isLink,
   byUser,
-  rewardLevel,
+  rewardLevel = 0,
   minimized,
   onPlay,
   style = {},
@@ -129,9 +129,9 @@ function XPVideoPlayer({
   const [myViewDuration, setMyViewDuration] = useState(0);
   const [xpWarningShown, setXpWarningShown] = useState(false);
   const requiredDurationForCoin = 60;
-  const PlayerRef = useRef(null);
-  const timerRef = useRef(null);
-  const timerRef2 = useRef(null);
+  const PlayerRef: React.RefObject<any> = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef2: React.MutableRefObject<any> = useRef(null);
   const timeWatchedRef = useRef(prevTimeWatched);
   const totalDurationRef = useRef(0);
   const userIdRef = useRef(userId);
@@ -229,7 +229,7 @@ function XPVideoPlayer({
   }, [myViewDuration]);
 
   const handleIncreaseMeter = useCallback(
-    async ({ userId }) => {
+    async ({ userId }: { userId: number }) => {
       const timeAt = PlayerRef.current.getCurrentTime();
       if (!totalDurationRef.current) {
         onVideoReady();
@@ -270,7 +270,7 @@ function XPVideoPlayer({
               onSetUserState({ userId, newState: { twinkleCoins: coins } });
             }
             rewardingCoin.current = false;
-          } catch (error) {
+          } catch (error: any) {
             console.error(error.response || error);
             rewardingCoin.current = false;
           }
@@ -294,7 +294,7 @@ function XPVideoPlayer({
             }
             rewardingXP.current = false;
             rewarded = true;
-          } catch (error) {
+          } catch (error: any) {
             console.error(error.response || error);
             rewardingXP.current = false;
           }
@@ -344,7 +344,7 @@ function XPVideoPlayer({
   );
 
   const onVideoPlay = useCallback(
-    async ({ userId }) => {
+    async ({ userId }: { userId: number }) => {
       onSetMediaStarted({
         contentType: 'video',
         contentId: videoId,
@@ -428,13 +428,13 @@ function XPVideoPlayer({
           padding-top: 56.25%;
         `}${minimized ? ' desktop' : ''}`}
         style={{
-          display: minimized && !started && 'none',
+          display: minimized && !started ? 'none' : '',
           width: started && minimized && '39rem',
           paddingTop: started && minimized && '22rem',
           position: started && minimized && 'absolute',
           bottom: started && minimized && '1rem',
           right: started && minimized && '1rem',
-          cursor: !isEditing && !started && 'pointer'
+          cursor: !isEditing && !started ? 'pointer' : ''
         }}
       >
         {isLink && (
@@ -454,7 +454,6 @@ function XPVideoPlayer({
                   no-repeat center;
                 background-size: 100% auto;
               `}
-              alt="video_thumb"
             >
               <img
                 style={{ width: '45px', height: '45px' }}

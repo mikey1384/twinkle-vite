@@ -1,3 +1,4 @@
+import React from 'react';
 import { useKeyContext } from '~/contexts';
 
 export default function AskForHelp() {

@@ -1,20 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from '~/components/Link';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-
-AlreadyPosted.propTypes = {
-  changingPage: PropTypes.bool,
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  url: PropTypes.string.isRequired,
-  style: PropTypes.object,
-  uploaderId: PropTypes.number,
-  videoCode: PropTypes.string
-};
 
 export default function AlreadyPosted({
   contentId,
@@ -24,6 +13,14 @@ export default function AlreadyPosted({
   uploaderId,
   url,
   videoCode
+}: {
+  contentId: number;
+  contentType: 'url' | 'video';
+  changingPage: boolean;
+  style?: React.CSSProperties;
+  uploaderId?: number;
+  url?: string;
+  videoCode?: string;
 }) {
   const {
     alreadyPostedByThisUser: { color: alreadyPostedByThisUserColor },
