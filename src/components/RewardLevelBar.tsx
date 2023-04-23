@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
@@ -9,13 +9,15 @@ import localize from '~/constants/localize';
 
 const rewardLevelLabel = localize('rewardLevel');
 
-RewardLevelBar.propTypes = {
-  className: PropTypes.string,
-  rewardLevel: PropTypes.number.isRequired,
-  style: PropTypes.object
-};
-
-export default function RewardLevelBar({ className, rewardLevel, style }) {
+export default function RewardLevelBar({
+  className,
+  rewardLevel,
+  style
+}: {
+  className: string;
+  rewardLevel: number;
+  style: React.CSSProperties;
+}) {
   const theme = useKeyContext((v) => v.theme);
   const stars = useMemo(() => {
     const result = [];

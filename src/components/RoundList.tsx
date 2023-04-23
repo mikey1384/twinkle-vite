@@ -1,19 +1,17 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-
-RoundList.propTypes = {
-  children: PropTypes.node.isRequired,
-  width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  mobileWidth: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  style: PropTypes.object
-};
 
 export default function RoundList({
   children,
   width = '100%',
   mobileWidth,
   style
+}: {
+  children: any;
+  width?: string;
+  mobileWidth?: string;
+  style?: React.CSSProperties;
 }) {
   return (
     <div
