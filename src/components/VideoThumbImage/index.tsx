@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
@@ -25,6 +25,13 @@ function VideoThumbImage({
   src,
   style,
   videoId
+}: {
+  height?: string;
+  rewardLevel?: number;
+  onClick?: (v: any) => any;
+  src: string;
+  style?: any;
+  videoId?: number;
 }) {
   const theme = useKeyContext((v) => v.theme);
   const loadVideoWatchPercentage = useAppContext(

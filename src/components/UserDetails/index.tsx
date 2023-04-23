@@ -1,5 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import Link from '~/components/Link';
 import StatusInput from './StatusInput';
 import Button from '~/components/Button';
@@ -23,18 +22,17 @@ import localize from '~/constants/localize';
 
 const doesNotHaveBioLabel = localize('doesNotHaveBio');
 
-UserDetails.propTypes = {
-  noLink: PropTypes.bool,
-  onSetBioEditModalShown: PropTypes.func,
-  profile: PropTypes.object.isRequired,
-  removeStatusMsg: PropTypes.func,
-  style: PropTypes.object,
-  unEditable: PropTypes.bool,
-  updateStatusMsg: PropTypes.func,
-  userId: PropTypes.number,
-  small: PropTypes.bool
-};
-
+interface Props {
+  noLink?: boolean;
+  onSetBioEditModalShown?: (v: any) => any;
+  profile: any;
+  removeStatusMsg?: any;
+  style?: any;
+  unEditable?: boolean;
+  updateStatusMsg?: any;
+  userId?: number;
+  small?: boolean;
+}
 export default function UserDetails({
   noLink,
   profile,
@@ -45,7 +43,7 @@ export default function UserDetails({
   unEditable,
   updateStatusMsg,
   userId
-}) {
+}: Props) {
   const auth = useAppContext((v) => v.requestHelpers.auth);
   const onReloadContent = useContentContext((v) => v.actions.onReloadContent);
   const editedStatusColor = useInputContext((v) => v.state.editedStatusColor);
@@ -62,7 +60,7 @@ export default function UserDetails({
     onSetEditedStatusColor('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
-  const StatusInputRef = useRef(null);
+  const StatusInputRef: React.RefObject<any> = useRef(null);
   const { profileFirstRow, profileSecondRow, profileThirdRow } = profile;
   const statusColor = useMemo(() => {
     return (
@@ -93,7 +91,7 @@ export default function UserDetails({
       }}
     >
       <Link
-        to={noLink ? null : `/users/${profile.username}`}
+        to={noLink ? undefined : `/users/${profile.username}`}
         onClick={handleReloadProfile}
         style={{
           fontSize: small ? '3rem' : '3.5rem',
@@ -130,7 +128,7 @@ export default function UserDetails({
           statusColor={statusColor}
           editedStatusMsg={editedStatusMsg}
           setColor={onSetEditedStatusColor}
-          onTextChange={(event) => {
+          onTextChange={(event: any) => {
             onSetEditedStatusMsg(addEmoji(renderText(event.target.value)));
             if (!event.target.value) {
               onSetEditedStatusColor('');

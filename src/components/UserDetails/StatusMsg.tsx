@@ -1,18 +1,16 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import LongText from '~/components/Texts/LongText';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-
-StatusMsg.propTypes = {
-  statusColor: PropTypes.string,
-  statusMsg: PropTypes.string.isRequired,
-  style: PropTypes.object
-};
 
 export default function StatusMsg({
   statusColor = 'logoBlue',
   statusMsg,
   style
+}: {
+  statusColor?: string;
+  statusMsg: string;
+  style?: React.CSSProperties;
 }) {
   return (
     <div

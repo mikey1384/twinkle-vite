@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import SelectRewardAmount from './SelectRewardAmount';
 import Icon from '~/components/Icon';
@@ -35,7 +34,7 @@ interface Props {
   innerRef: any;
   rewardLevel: number;
   noPadding?: boolean;
-  onReward: (reward: any) => void;
+  onReward: () => void;
   rewards: any[];
   uploaderId: number;
   uploaderAuthLevel: number;
@@ -116,7 +115,7 @@ export default function XPRewardInterface({
     !authLevel || authLevel < 2 || uploaderAuthLevel >= authLevel;
 
   useEffect(() => {
-    setSelectedAmount((selectedAmount) =>
+    setSelectedAmount((selectedAmount: number) =>
       Math.min(selectedAmount, rewardables)
     );
     if (rewardables === 0 && !rewardingRef.current) {
@@ -267,7 +266,7 @@ export default function XPRewardInterface({
           `}
           minRows={3}
           value={comment}
-          onChange={(event) => {
+          onChange={(event: any) => {
             handleSetComment(addEmoji(event.target.value));
           }}
           placeholder={rewardReasonLabel}
@@ -352,12 +351,12 @@ export default function XPRewardInterface({
     }
   }
 
-  function handleSetComment(text) {
+  function handleSetComment(text: string) {
     setComment(text);
     commentRef.current = text;
   }
 
-  function handleSetSelectedAmount(amount) {
+  function handleSetSelectedAmount(amount: number) {
     setSelectedAmount(amount);
     selectedAmountRef.current = amount;
   }
