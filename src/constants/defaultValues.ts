@@ -56,10 +56,7 @@ export const MIKEY_ID = 5;
 export const ZERO_TWINKLE_ID = Number(import.meta.env.VITE_ZERO_TWINKLE_ID);
 
 export interface CharLimit {
-  comment: number;
-  rewardComment: number;
-  statusMsg: number;
-  [key: string]: number | { [key: string]: number };
+  [key: string]: any;
 }
 export const charLimit: CharLimit = {
   chat: {

@@ -45,21 +45,12 @@ interface Props {
   onEditDone?: (v: any) => void;
   onLikeClick?: (v: any) => void;
   onLoadRepliesOfReply?: (v: any) => void;
-  onLoadMoreComments: () => void;
+  onLoadMoreComments: (v: any) => void;
   onLoadMoreReplies?: (v: any) => void;
   onPreviewClick?: (v: any) => void;
   onReplySubmit: (v: any) => void;
   onRewardCommentEdit?: (v: any) => void;
-  parent: {
-    id: number;
-    commentId: number;
-    contentId: number;
-    contentType: string;
-    pinnedCommentId: number;
-    rewardLevel: number;
-    secretAnswer: string;
-    secretAttachment: any;
-  };
+  parent: any;
   rootContent?: any;
   showSecretButtonAvailable?: boolean;
   subject?: any;

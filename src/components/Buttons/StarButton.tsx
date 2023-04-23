@@ -17,11 +17,11 @@ const setRewardLevelLabel = localize('setRewardLevel');
 const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
 
 interface Props {
-  byUser: boolean;
+  byUser?: boolean;
   contentId: number;
   contentType: string;
   defaultDescription?: string;
-  filePath: string;
+  filePath?: string;
   rewardLevel: number;
   filled?: boolean;
   onSetRewardLevel: (v: any) => void;
