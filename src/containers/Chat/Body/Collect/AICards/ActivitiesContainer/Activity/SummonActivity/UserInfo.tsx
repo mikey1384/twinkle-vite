@@ -1,15 +1,16 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
 
-UserInfo.propTypes = {
-  user: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
-
-export default function UserInfo({ user, style }) {
+export default function UserInfo({
+  user,
+  style
+}: {
+  user: any;
+  style: React.CSSProperties;
+}) {
   return (
     <div
       style={{

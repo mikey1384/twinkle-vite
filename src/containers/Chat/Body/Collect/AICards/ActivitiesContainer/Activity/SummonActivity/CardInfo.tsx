@@ -1,14 +1,15 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { qualityProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 
-CardInfo.propTypes = {
-  style: PropTypes.object,
-  quality: PropTypes.string
-};
-
-export default function CardInfo({ quality, style }) {
+export default function CardInfo({
+  quality,
+  style
+}: {
+  quality: string;
+  style: any;
+}) {
   return (
     <div style={style}>
       <div
