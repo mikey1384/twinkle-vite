@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import HomeMenuItems from '~/components/HomeMenuItems';
 import ProfileWidget from '~/components/ProfileWidget';
 import Notification from '~/components/Notification';
@@ -13,11 +12,7 @@ import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
-MobileMenu.propTypes = {
-  onClose: PropTypes.func.isRequired
-};
-
-export default function MobileMenu({ onClose }) {
+export default function MobileMenu({ onClose }: { onClose: () => void }) {
   const location = useLocation();
   const styles = useSpring({
     to: { marginLeft: '0' },
@@ -69,7 +64,7 @@ export default function MobileMenu({ onClose }) {
       >
         <ProfileWidget
           onShowAlert={() => setAlertModalShown(true)}
-          onLoadImage={(upload) =>
+          onLoadImage={(upload: any) =>
             setImageEditStatus({
               ...imageEditStatus,
               imageEditModalShown: true,
@@ -135,7 +130,7 @@ export default function MobileMenu({ onClose }) {
     </ErrorBoundary>
   );
 
-  function handleImageEditDone({ filePath }) {
+  function handleImageEditDone({ filePath }: { filePath: string }) {
     onSetUserState({
       userId,
       newState: { profilePicUrl: `/profile/${filePath}` }

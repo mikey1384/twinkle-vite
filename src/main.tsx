@@ -143,11 +143,26 @@ import { install } from 'resize-observer';
 if (!window.ResizeObserver) install();
 
 declare global {
+  interface Document {
+    msHidden?: boolean;
+    webkitHidden?: boolean;
+    msvisibilitychange?: string;
+    webkitvisibilitychange?: string;
+  }
   interface Window {
     loadImage: (
       imageUri: string,
       callback: (img: any) => void,
       options?: any
+    ) => void;
+    gtag: (
+      type: string,
+      eventName: string,
+      options: {
+        page_path?: string;
+        page_search?: string;
+        page_hash?: string;
+      }
     ) => void;
   }
 }

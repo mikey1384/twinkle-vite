@@ -173,9 +173,9 @@ function App() {
     () => channelsObj[selectedChannelId] || {},
     [channelsObj, selectedChannelId]
   );
-  const visibilityChangeRef = useRef(null);
-  const hiddenRef = useRef(null);
-  const authRef = useRef(null);
+  const visibilityChangeRef: React.MutableRefObject<any> = useRef(null);
+  const hiddenRef: React.MutableRefObject<any> = useRef(null);
+  const authRef: React.MutableRefObject<any> = useRef(null);
   const usingChat = useMemo(
     () => getSectionFromPathname(location?.pathname)?.section === 'chat',
     [location?.pathname]
@@ -297,7 +297,7 @@ function App() {
     }
     addEvent(document, visibilityChangeRef.current, handleVisibilityChange);
     function handleVisibilityChange() {
-      const visible = !document[hiddenRef.current];
+      const visible = !document[hiddenRef.current as keyof Document];
       socket.emit('change_away_status', visible);
       onChangePageVisibility(visible);
     }
@@ -336,6 +336,18 @@ function App() {
       subchannelId,
       subjectId,
       thumbnail
+    }: {
+      channelId: number;
+      content: string;
+      fileName: string;
+      filePath: string;
+      fileToUpload: File;
+      recipientId: number;
+      messageId: number;
+      targetMessageId: number;
+      subchannelId: number;
+      subjectId: number;
+      thumbnail: string;
     }) => {
       if (channelId === 0 && !recipientId) {
         reportError({
@@ -455,7 +467,13 @@ function App() {
         });
         navigate(`/chat/${channel.pathId}`, { replace: true });
       }
-      function handleUploadProgress({ loaded, total }) {
+      function handleUploadProgress({
+        loaded,
+        total
+      }: {
+        loaded: number;
+        total: number;
+      }) {
         const userChanged = checkUserChange(userId);
         if (userChanged) {
           return;
@@ -491,6 +509,16 @@ function App() {
       secretAnswer,
       secretAttachment,
       title
+    }: {
+      attachment: any;
+      byUser: any;
+      description: string;
+      filePath: string;
+      hasSecretAnswer: boolean;
+      rewardLevel: number;
+      secretAnswer: string;
+      secretAttachment: any;
+      title: string;
     }) => {
       const { file, thumbnail, contentType } = attachment ?? {};
       const appliedFileName = generateFileName(attachment?.file?.name || '');
@@ -593,10 +621,22 @@ function App() {
       } catch (error) {
         console.error(error);
       }
-      function handleSecretAttachmentUploadProgress({ loaded, total }) {
+      function handleSecretAttachmentUploadProgress({
+        loaded,
+        total
+      }: {
+        loaded: number;
+        total: number;
+      }) {
         onUpdateSecretAttachmentUploadProgress(loaded / total);
       }
-      function handleUploadProgress({ loaded, total }) {
+      function handleUploadProgress({
+        loaded,
+        total
+      }: {
+        loaded: number;
+        total: number;
+      }) {
         const userChanged = checkUserChange(userId);
         if (userChanged) {
           return;
@@ -608,7 +648,7 @@ function App() {
     [userId]
   );
 
-  function checkUserChange(userId) {
+  function checkUserChange(userId: number) {
     return userId !== prevUserId.current;
   }
 
@@ -631,10 +671,7 @@ function App() {
         }}
       >
         {mobileMenuShown && (
-          <MobileMenu
-            username={username}
-            onClose={() => setMobileMenuShown(false)}
-          />
+          <MobileMenu onClose={() => setMobileMenuShown(false)} />
         )}
         {updateNoticeShown && (
           <div
@@ -733,7 +770,7 @@ function App() {
             <Route path="*" element={<InvalidPage />} />
           </Routes>
         </div>
-        {signinModalShown && <SigninModal show onHide={onCloseSigninModal} />}
+        {signinModalShown && <SigninModal onHide={onCloseSigninModal} />}
         {channelOnCall.incomingShown && <Incoming />}
         {outgoingShown && <Outgoing />}
         <div

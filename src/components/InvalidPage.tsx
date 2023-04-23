@@ -7,8 +7,8 @@ export default function InvalidPage({
   text,
   style
 }: {
-  title: string;
-  text: string;
+  title?: string;
+  text?: string;
   style?: React.CSSProperties;
 }) {
   return (
