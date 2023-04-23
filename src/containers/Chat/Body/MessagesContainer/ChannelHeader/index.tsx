@@ -1,5 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
@@ -36,18 +35,6 @@ const menuLabel = deviceIsMobile ? '' : localize('menu');
 const settingsLabel = localize('settings');
 const startedByLabel = localize('startedBy');
 
-ChannelHeader.propTypes = {
-  currentChannel: PropTypes.object.isRequired,
-  displayedThemeColor: PropTypes.string,
-  onFavoriteClick: PropTypes.func.isRequired,
-  onInputFocus: PropTypes.func.isRequired,
-  onSetInviteUsersModalShown: PropTypes.func,
-  onSetLeaveConfirmModalShown: PropTypes.func,
-  onSetSettingsModalShown: PropTypes.func,
-  selectedChannelId: PropTypes.number,
-  subchannel: PropTypes.object
-};
-
 export default function ChannelHeader({
   currentChannel,
   displayedThemeColor,
@@ -58,6 +45,16 @@ export default function ChannelHeader({
   onSetSettingsModalShown,
   selectedChannelId,
   subchannel
+}: {
+  currentChannel: any;
+  displayedThemeColor: string;
+  onFavoriteClick: (arg0: any) => void;
+  onInputFocus: () => void;
+  onSetInviteUsersModalShown: (arg0: boolean) => void;
+  onSetLeaveConfirmModalShown: (arg0: boolean) => void;
+  onSetSettingsModalShown: (arg0: boolean) => void;
+  selectedChannelId: number;
+  subchannel: any;
 }) {
   const {
     actions: {
@@ -127,7 +124,7 @@ export default function ChannelHeader({
   const [timeSinceReload, setTimeSinceReload] = useState(
     timeSince(reloadTimeStamp)
   );
-  const HeaderLabelRef = useRef(null);
+  const HeaderLabelRef: React.RefObject<any> = useRef(null);
 
   const loaded = useMemo(() => {
     return currentChannel.subjectObj?.loaded;
@@ -184,7 +181,7 @@ export default function ChannelHeader({
 
   const subjectDetails = useMemo(() => {
     const isReloaded = reloader && reloader.id;
-    let posterString = '';
+    let posterString: any = '';
     if (uploader.id && timeSincePost) {
       posterString = (
         <span>
@@ -417,8 +414,8 @@ export default function ChannelHeader({
                     style={{
                       marginTop: '0.7rem',
                       width: 'auto',
-                      minWidth: null,
-                      maxWidth: null,
+                      minWidth: '',
+                      maxWidth: '',
                       padding: '1rem'
                     }}
                   />
@@ -464,7 +461,7 @@ export default function ChannelHeader({
     }
   }
 
-  async function handleReloadChatSubject(subjectId) {
+  async function handleReloadChatSubject(subjectId: number) {
     if (!reloadingChatSubject.current) {
       reloadingChatSubject.current = true;
       const { message, subject } = await reloadChatSubject({
@@ -495,7 +492,7 @@ export default function ChannelHeader({
     }
   }
 
-  async function handleSearchChatSubject(text) {
+  async function handleSearchChatSubject(text: string) {
     const data = await searchChatSubject({
       text,
       channelId: selectedChannelId
@@ -503,7 +500,7 @@ export default function ChannelHeader({
     onSearchChatSubject(data);
   }
 
-  async function handleSubjectSubmit(text) {
+  async function handleSubjectSubmit(text: string) {
     if (!submitting) {
       setSubmitting(true);
       try {
