@@ -1,15 +1,18 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 
-ActionBlock.propTypes = {
-  action: PropTypes.string.isRequired,
-  target: PropTypes.string.isRequired,
-  style: PropTypes.object,
-  type: PropTypes.string.isRequired,
-  username: PropTypes.string
-};
-
-export default function ActionBlock({ action, target, style, type, username }) {
+export default function ActionBlock({
+  action,
+  target,
+  style,
+  type,
+  username
+}: {
+  action: string;
+  target: string;
+  style: React.CSSProperties;
+  type: string;
+  username: string;
+}) {
   const displayedAction = useMemo(() => {
     if (action === 'attempt') {
       if (target === 'mission') {

@@ -1,17 +1,17 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import moment from 'moment';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ActionBlock from './ActionBlock';
 
-ChangeListItem.propTypes = {
-  change: PropTypes.object.isRequired,
-  balance: PropTypes.number.isRequired
-};
-
-export default function ChangeListItem({ change, balance }) {
+export default function ChangeListItem({
+  change,
+  balance
+}: {
+  change: any;
+  balance: number;
+}) {
   const displayedTimeStamp = useMemo(
     () => moment.unix(change.timeStamp).format('lll'),
     [change?.timeStamp]

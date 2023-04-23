@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ChangeListItem from './ChangeListItem';
@@ -11,22 +10,18 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 
-BalanceModal.propTypes = {
-  onHide: PropTypes.func.isRequired
-};
-
-export default function BalanceModal({ onHide }) {
+export default function BalanceModal({ onHide }: { onHide: () => void }) {
   const { twinkleCoins, userId } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const loadCoinHistory = useAppContext(
     (v) => v.requestHelpers.loadCoinHistory
   );
-  const [changes, setChanges] = useState([]);
+  const [changes, setChanges] = useState<any[]>([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const ListRef = useRef(null);
-  const timeoutRef = useRef(null);
+  const ListRef: React.RefObject<any> = useRef(null);
+  const timeoutRef: React.MutableRefObject<any> = useRef(null);
 
   useEffect(() => {
     init();
@@ -107,10 +102,10 @@ export default function BalanceModal({ onHide }) {
               }
             `}
           >
-            {changes.map((change) => {
+            {changes.map((change: any) => {
               const accumulatedChanges = changes
-                .filter((v) => v.id > change.id)
-                .reduce((acc, v) => {
+                .filter((v: { id: number }) => v.id > change.id)
+                .reduce((acc, v: { amount: number; type: string }) => {
                   if (v.type === 'increase') {
                     return acc - v.amount;
                   } else {

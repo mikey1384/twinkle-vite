@@ -1,5 +1,4 @@
-import { memo, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useMemo } from 'react';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
@@ -14,12 +13,13 @@ const profileLabel = localize('Profile');
 const managementLabel = localize('management');
 const logOutLabel = localize('logOut');
 
-AccountMenu.propTypes = {
-  className: PropTypes.string,
-  onSetBalanceModalShown: PropTypes.func.isRequired
-};
-
-function AccountMenu({ className, onSetBalanceModalShown }) {
+function AccountMenu({
+  className,
+  onSetBalanceModalShown
+}: {
+  className?: string;
+  onSetBalanceModalShown: () => void;
+}) {
   const navigate = useNavigate();
   const { loggedIn, username, userId, managementLevel, twinkleCoins } =
     useKeyContext((v) => v.myState);
@@ -100,7 +100,6 @@ function AccountMenu({ className, onSetBalanceModalShown }) {
               {username}
             </div>
           }
-          shape="button"
           icon="caret-down"
           iconSize="lg"
           menuProps={menuProps}

@@ -1,5 +1,4 @@
-import { memo, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
@@ -14,17 +13,6 @@ import {
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
-Nav.propTypes = {
-  alert: PropTypes.bool,
-  className: PropTypes.string,
-  children: PropTypes.node,
-  imgLabel: PropTypes.string,
-  isHome: PropTypes.bool,
-  profileUsername: PropTypes.string,
-  to: PropTypes.string,
-  style: PropTypes.object
-};
-
 function Nav({
   alert,
   className,
@@ -34,6 +22,15 @@ function Nav({
   profileUsername,
   to,
   style
+}: {
+  alert?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  imgLabel?: string;
+  isHome?: boolean;
+  profileUsername?: string;
+  to: string;
+  style?: React.CSSProperties;
 }) {
   const {
     alert: { color: alertColor }
@@ -155,7 +152,8 @@ function Nav({
 
   function handleNavClick() {
     if (!to) return;
-    document.getElementById('App').scrollTop = 0;
+    const appElement = document.getElementById('App');
+    if (appElement) appElement.scrollTop = 0;
     BodyRef.scrollTop = 0;
     if (to.includes('/users/') && to === pathname) {
       const username = to.split('/users/')[1].split('/')[0];

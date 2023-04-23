@@ -19,7 +19,7 @@ interface Props {
   menuProps?: any;
   noBorderRadius?: boolean;
   onButtonClick?: (arg: any) => void;
-  text?: string;
+  text?: any;
   stretch?: boolean;
   innerRef?: any;
   transparent?: boolean;
