@@ -35,7 +35,7 @@ export default function Header({
   style = {}
 }: {
   onMobileMenuOpen: any;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   const [balanceModalShown, setBalanceModalShown] = useState(false);
   const { pathname, search } = useLocation();

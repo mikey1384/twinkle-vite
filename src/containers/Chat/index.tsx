@@ -5,7 +5,7 @@ import Router from './Router';
 export default function Chat({
   onFileUpload
 }: {
-  onFileUpload: (file: File) => void;
+  onFileUpload: (v: any) => void;
 }) {
   return (
     <Routes>

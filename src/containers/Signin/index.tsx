@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import LoginForm from './LoginForm';
@@ -7,11 +7,7 @@ import RestoreAccount from './RestoreAccount';
 import Main from './Main';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-Signin.propTypes = {
-  onHide: PropTypes.func.isRequired
-};
-
-export default function Signin({ onHide }) {
+export default function Signin({ onHide }: { onHide: () => void }) {
   const [username, setUsername] = useState('');
   const [currentPage, setCurrentPage] = useState('main');
   return (

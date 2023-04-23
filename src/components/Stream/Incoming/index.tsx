@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useChatContext } from '~/contexts';
 import Audio from './Audio';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 export default function Incoming() {
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
@@ -14,7 +15,13 @@ export default function Incoming() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return Object.entries(peerStreams)
-    .filter(([peerId]) => !channelOnCall?.members[peerId]?.streamHidden)
-    .map(([peerId, stream]) => <Audio key={peerId} stream={stream} />);
+  return (
+    <ErrorBoundary componentPath="Stream/Incoming">
+      {Object.entries(peerStreams)
+        .filter(([peerId]) => !channelOnCall?.members[peerId]?.streamHidden)
+        .map(([peerId, stream]) => (
+          <Audio key={peerId} stream={stream} />
+        ))}
+    </ErrorBoundary>
+  );
 }
