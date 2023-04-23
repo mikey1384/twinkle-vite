@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import RewardText from '~/components/Texts/RewardText';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -8,15 +7,6 @@ import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 import { checkMultiMissionPassStatus } from '~/helpers/userDataHelpers';
 import { returnMissionThumb } from '~/constants/defaultValues';
 
-MissionItem.propTypes = {
-  isRepeatable: PropTypes.bool,
-  style: PropTypes.object,
-  locked: PropTypes.bool,
-  mission: PropTypes.object.isRequired,
-  missionLink: PropTypes.string.isRequired,
-  showStatus: PropTypes.bool
-};
-
 export default function MissionItem({
   isRepeatable,
   style,
@@ -24,6 +14,13 @@ export default function MissionItem({
   mission,
   missionLink,
   showStatus = true
+}: {
+  isRepeatable?: boolean;
+  style?: React.CSSProperties;
+  locked?: boolean;
+  mission: any;
+  missionLink: string;
+  showStatus?: boolean;
 }) {
   const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
@@ -139,7 +136,6 @@ export default function MissionItem({
                   font-size: 1.2rem;
                 }
               `}
-              rewardStyle={{ fontSize: '1.2rem' }}
               isRepeating={isRepeatable}
               coinReward={
                 isRepeatable ? mission.repeatCoinReward : mission.coinReward

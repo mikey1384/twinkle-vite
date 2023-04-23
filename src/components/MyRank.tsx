@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -9,20 +9,18 @@ import localize from '~/constants/localize';
 
 const unrankedLabel = localize('unranked');
 
-MyRank.propTypes = {
-  myId: PropTypes.number,
-  noBorderRadius: PropTypes.bool,
-  rank: PropTypes.number,
-  style: PropTypes.object,
-  twinkleXP: PropTypes.number
-};
-
 export default function MyRank({
   myId,
   noBorderRadius,
   rank,
   style,
   twinkleXP
+}: {
+  myId: number;
+  noBorderRadius: boolean;
+  rank: number;
+  style: React.CSSProperties;
+  twinkleXP: number;
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -57,7 +55,7 @@ export default function MyRank({
               ? Color.black()
               : '#fff'
             : '#fff'
-          : null,
+          : '',
         ...style
       }}
       className={css`
