@@ -1,18 +1,20 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import Image from '~/components/Image';
 import FileIcon from '~/components/FileIcon';
 import { cloudFrontURL } from '~/constants/defaultValues';
 
-FileInfo.propTypes = {
-  fileName: PropTypes.string,
-  fileType: PropTypes.string,
-  filePath: PropTypes.string,
-  thumbUrl: PropTypes.string
-};
-
-export default function FileInfo({ fileType, fileName, filePath, thumbUrl }) {
+export default function FileInfo({
+  fileType,
+  fileName,
+  filePath,
+  thumbUrl
+}: {
+  fileName: string;
+  fileType: string;
+  filePath: string;
+  thumbUrl: string;
+}) {
   const src = useMemo(() => {
     if (!filePath || (fileType !== 'image' && fileType !== 'video')) {
       return '';

@@ -1,13 +1,26 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import TargetMessage from './TargetMessage';
 import WordleResult from './WordleResult';
 
-TargetMessagePreview.propTypes = {
-  onClose: PropTypes.func.isRequired,
-  replyTarget: PropTypes.object
-};
-
-export default function TargetMessagePreview({ onClose, replyTarget }) {
+export default function TargetMessagePreview({
+  onClose,
+  replyTarget
+}: {
+  onClose: () => void;
+  replyTarget: {
+    userId: number;
+    username: string;
+    timeStamp: number;
+    wordleResult: {
+      result: string;
+      solution: string;
+      solutionId: number;
+      solutionType: string;
+      solutionUserId: number;
+      solutionUsername: string;
+    };
+  };
+}) {
   return (
     <div
       style={{
