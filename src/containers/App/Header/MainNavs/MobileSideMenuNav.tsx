@@ -1,16 +1,16 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 
-MobileSideMenuNav.propTypes = {
-  alert: PropTypes.bool,
-  onClick: PropTypes.func
-};
-
-export default function MobileSideMenuNav({ alert, onClick }) {
+export default function MobileSideMenuNav({
+  alert,
+  onClick
+}: {
+  alert: boolean;
+  onClick: () => void;
+}) {
   const {
     alert: { color: alertColor }
   } = useKeyContext((v) => v.theme);

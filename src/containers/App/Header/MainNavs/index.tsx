@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef } from 'react';
+import React, { memo, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Nav from './Nav';
 import MobileSideMenuNav from './MobileSideMenuNav';
@@ -37,6 +37,18 @@ const exploreLabel = localize('explore');
 const missionsLabel = localize('missions');
 const chatLabel = localize('chat');
 
+interface Props {
+  loggedIn: boolean;
+  numChatUnreads: number;
+  numNewNotis: number;
+  numNewPosts: number;
+  onMobileMenuOpen: () => void;
+  pathname: string;
+  search: string;
+  defaultSearchFilter: string;
+  onSetBalanceModalShown: () => void;
+  totalRewardAmount: number;
+}
 function MainNavs({
   loggedIn,
   numChatUnreads,
@@ -48,7 +60,7 @@ function MainNavs({
   defaultSearchFilter,
   totalRewardAmount,
   onSetBalanceModalShown
-}) {
+}: Props) {
   const { twinkleCoins, userId, banned, lastChatPath } = useKeyContext(
     (v) => v.myState
   );
@@ -103,8 +115,7 @@ function MainNavs({
     () =>
       matchPath(
         {
-          path: '/',
-          exact: true
+          path: '/'
         },
         pathname
       ),
@@ -115,8 +126,7 @@ function MainNavs({
     () =>
       matchPath(
         {
-          path: '/users',
-          exact: true
+          path: '/users'
         },
         pathname
       ),
@@ -127,8 +137,7 @@ function MainNavs({
     () =>
       matchPath(
         {
-          path: '/earn',
-          exact: true
+          path: '/earn'
         },
         pathname
       ),
@@ -139,8 +148,7 @@ function MainNavs({
     () =>
       matchPath(
         {
-          path: '/store',
-          exact: true
+          path: '/store'
         },
         pathname
       ),
@@ -150,50 +158,43 @@ function MainNavs({
   const contentPageMatch = useMemo(() => {
     const cardPageMatch = matchPath(
       {
-        path: '/ai-cards/:id',
-        exact: true
+        path: '/ai-cards/:id'
       },
       pathname
     );
     const subjectPageMatch = matchPath(
       {
-        path: '/subjects/:id',
-        exact: true
+        path: '/subjects/:id'
       },
       pathname
     );
     const playlistsMatch = matchPath(
       {
-        path: '/playlists/:id',
-        exact: true
+        path: '/playlists/:id'
       },
       pathname
     );
     const videoPageMatch = matchPath(
       {
-        path: '/videos/:id',
-        exact: true
+        path: '/videos/:id'
       },
       pathname
     );
     const videoQuestionPageMatch = matchPath(
       {
-        path: '/videos/:id/questions',
-        exact: true
+        path: '/videos/:id/questions'
       },
       pathname
     );
     const linkPageMatch = matchPath(
       {
-        path: '/links/:id',
-        exact: true
+        path: '/links/:id'
       },
       pathname
     );
     const commentPageMatch = matchPath(
       {
-        path: '/comments/:id',
-        exact: true
+        path: '/comments/:id'
       },
       pathname
     );
@@ -328,14 +329,7 @@ function MainNavs({
         alert={numNewNotis > 0 || totalRewardAmount > 0}
         onClick={onMobileMenuOpen}
       />
-      {profileNav && (
-        <Nav
-          to={profileNav}
-          pathname={pathname}
-          className="mobile"
-          imgLabel="user"
-        />
-      )}
+      {profileNav && <Nav to={profileNav} className="mobile" imgLabel="user" />}
       <Nav
         to={homeNav}
         isHome
@@ -343,30 +337,18 @@ function MainNavs({
         imgLabel="home"
         alert={pathname === '/' && (numNewPosts > 0 || feedsOutdated)}
       />
-      <Nav
-        to={`/${exploreCategory}`}
-        pathname={pathname}
-        className="mobile"
-        imgLabel="search"
-      />
+      <Nav to={`/${exploreCategory}`} className="mobile" imgLabel="search" />
       {contentNav && (
         <Nav
           to={`/${contentPath}`}
-          pathname={pathname}
           className="mobile"
           imgLabel={contentIconType}
         />
       )}
-      <Nav
-        to={`/missions`}
-        pathname={pathname}
-        className="mobile"
-        imgLabel="tasks"
-      />
+      <Nav to={`/missions`} className="mobile" imgLabel="tasks" />
       {!banned?.chat && (
         <Nav
           to={chatButtonPath}
-          pathname={pathname}
           className="mobile"
           imgLabel="comments"
           alert={chatAlertShown}
@@ -376,7 +358,6 @@ function MainNavs({
         <Nav
           to={profileNav}
           profileUsername={profileUsername}
-          pathname={pathname}
           className="desktop"
           style={{ marginRight: '2rem' }}
           imgLabel="user"
@@ -387,7 +368,6 @@ function MainNavs({
       <Nav
         to={homeNav}
         isHome
-        pathname={pathname}
         className="desktop"
         imgLabel="home"
         alert={pathname === '/' && !usersMatch && numNewPosts > 0}
@@ -399,7 +379,6 @@ function MainNavs({
       </Nav>
       <Nav
         to={`/${exploreCategory}`}
-        pathname={pathname}
         className="desktop"
         style={{ marginLeft: '2rem' }}
         imgLabel="search"
@@ -409,7 +388,6 @@ function MainNavs({
       {contentNav && (
         <Nav
           to={`/${contentPath}`}
-          pathname={pathname}
           className="desktop"
           style={{ marginLeft: '2rem' }}
           imgLabel={contentIconType}
@@ -419,7 +397,6 @@ function MainNavs({
       )}
       <Nav
         to={`/missions`}
-        pathname={pathname}
         className="desktop"
         style={{ marginLeft: '2rem' }}
         imgLabel="tasks"
@@ -437,7 +414,6 @@ function MainNavs({
         {!banned?.chat && (
           <Nav
             to={chatButtonPath}
-            pathname={pathname}
             className="desktop"
             imgLabel="comments"
             alert={chatAlertShown}
