@@ -7,7 +7,7 @@ export default function Image({
   backgroundColor,
   onClick
 }: {
-  backgroundColor: string;
+  backgroundColor?: string;
   imageUrl: string;
   onClick?: () => void;
 }) {

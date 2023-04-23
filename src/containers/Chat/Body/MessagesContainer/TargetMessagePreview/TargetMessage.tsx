@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import FileInfo from './FileInfo';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
@@ -7,16 +6,17 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import moment from 'moment';
 
-TargetMessage.propTypes = {
-  onClose: PropTypes.func.isRequired,
-  replyTarget: PropTypes.object
-};
-
-export default function TargetMessage({ onClose, replyTarget }) {
+export default function TargetMessage({
+  onClose,
+  replyTarget
+}: {
+  onClose: () => void;
+  replyTarget: any;
+}) {
   const fileType = useMemo(() => {
     return replyTarget.fileName
       ? getFileInfoFromFileName(replyTarget.fileName)?.fileType
-      : null;
+      : '';
   }, [replyTarget.fileName]);
   const hasFileAttachment = useMemo(
     () => fileType && replyTarget.fileName,
