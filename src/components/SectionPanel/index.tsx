@@ -1,5 +1,4 @@
-import { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef, useState } from 'react';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Body from './Body';
 import SearchInput from '~/components/Texts/SearchInput';
@@ -16,29 +15,28 @@ import localize from '~/constants/localize';
 
 const editLabel = localize('edit');
 
-SectionPanel.propTypes = {
-  canEdit: PropTypes.bool,
-  title: PropTypes.node,
-  button: PropTypes.node,
-  emptyMessage: PropTypes.string,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  inverted: PropTypes.bool,
-  isEmpty: PropTypes.bool,
-  isSearching: PropTypes.bool,
-  loaded: PropTypes.bool,
-  onLoadMore: PropTypes.func,
-  children: PropTypes.node,
-  loadMoreButtonShown: PropTypes.bool,
-  onEditTitle: PropTypes.func,
-  onSearch: PropTypes.func,
-  placeholder: PropTypes.string,
-  searchPlaceholder: PropTypes.string,
-  searchQuery: PropTypes.string,
-  style: PropTypes.object,
-  customColorTheme: PropTypes.string,
-  innerStyle: PropTypes.object
-};
-
+interface Props {
+  canEdit?: boolean;
+  title: string;
+  button?: React.ReactNode;
+  emptyMessage?: string;
+  innerRef?: React.RefObject<any>;
+  inverted?: boolean;
+  isEmpty?: boolean;
+  isSearching?: boolean;
+  loaded?: boolean;
+  onLoadMore: () => void;
+  children?: React.ReactNode;
+  loadMoreButtonShown?: boolean;
+  onEditTitle: (title: string) => void;
+  onSearch?: (query: string) => void;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  searchQuery?: string;
+  style?: React.CSSProperties;
+  customColorTheme?: string;
+  innerStyle?: React.CSSProperties;
+}
 export default function SectionPanel({
   button,
   canEdit,
@@ -60,7 +58,7 @@ export default function SectionPanel({
   style,
   innerStyle = {},
   title
-}) {
+}: Props) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const [savingEdit, setSavingEdit] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -154,7 +152,7 @@ export default function SectionPanel({
                   placeholder={placeholder}
                   autoFocus
                   onChange={(text) => setEditedTitle(addEmoji(text))}
-                  onKeyPress={(event) => {
+                  onKeyPress={(event: any) => {
                     if (!stringIsEmpty(editedTitle) && event.key === 'Enter') {
                       onChangeTitle(editedTitle);
                     }
@@ -287,7 +285,7 @@ export default function SectionPanel({
     </div>
   );
 
-  async function onChangeTitle(title) {
+  async function onChangeTitle(title: string) {
     if (savingEdit) return;
     setSavingEdit(true);
     await onEditTitle(title);

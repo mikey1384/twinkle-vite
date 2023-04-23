@@ -1,16 +1,17 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-Video.propTypes = {
-  rewardLevel: PropTypes.number,
-  style: PropTypes.object
-};
-
-export default function Video({ rewardLevel, style }) {
+export default function Video({
+  rewardLevel,
+  style
+}: {
+  rewardLevel: number;
+  style: React.CSSProperties;
+}) {
   const forEveryStarYouAddLabel = localize('forEveryStarYouAdd');
   const rewardLevelDescription = useMemo(() => {
     switch (rewardLevel) {
