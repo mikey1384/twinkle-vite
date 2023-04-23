@@ -1,5 +1,4 @@
-import { memo, useMemo, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useMemo, useEffect } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LongText from '~/components/Texts/LongText';
 import ContentFileViewer from '~/components/ContentFileViewer';
@@ -15,18 +14,17 @@ import localize from '~/constants/localize';
 
 const submitYourResponseLabel = localize('submitYourResponse');
 
-SecretAnswer.propTypes = {
-  answer: PropTypes.string,
-  attachment: PropTypes.object,
-  mediaDisabled: PropTypes.bool,
-  modalOverModal: PropTypes.bool,
-  onClick: PropTypes.func,
-  style: PropTypes.object,
-  subjectId: PropTypes.number,
-  theme: PropTypes.string,
-  uploaderId: PropTypes.number
-};
-
+interface Props {
+  answer: string;
+  attachment: any;
+  mediaDisabled: boolean;
+  modalOverModal: boolean;
+  onClick: () => void;
+  style: React.CSSProperties;
+  subjectId: number;
+  theme: string;
+  uploaderId: number;
+}
 function SecretAnswer({
   answer,
   attachment,
@@ -37,7 +35,7 @@ function SecretAnswer({
   subjectId,
   theme,
   uploaderId
-}) {
+}: Props) {
   const checkIfUserResponded = useAppContext(
     (v) => v.requestHelpers.checkIfUserResponded
   );
@@ -87,7 +85,7 @@ function SecretAnswer({
           }`,
           borderRadius,
           wordBreak: 'break-word',
-          textAlign: spoilerShown ? '' : 'center',
+          textAlign: spoilerShown ? undefined : 'center',
           padding: '1rem',
           ...style
         }}

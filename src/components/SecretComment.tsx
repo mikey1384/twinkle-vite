@@ -1,16 +1,17 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { borderRadius, Color, desktopMinWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 
 const submitYourResponseLabel = localize('submitYourResponse2');
 
-SecretComment.propTypes = {
-  onClick: PropTypes.func,
-  style: PropTypes.object
-};
-
-export default function SecretComment({ onClick, style }) {
+export default function SecretComment({
+  onClick,
+  style
+}: {
+  onClick: () => void;
+  style: React.CSSProperties;
+}) {
   return (
     <div
       style={{

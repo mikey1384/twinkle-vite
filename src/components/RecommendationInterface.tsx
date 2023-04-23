@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -19,18 +18,6 @@ const noLabel = localize('no');
 const rewardableLabel = localize('rewardable');
 const deviceIsMobile = isMobile(navigator);
 
-RecommendationInterface.propTypes = {
-  contentId: PropTypes.number.isRequired,
-  contentType: PropTypes.string.isRequired,
-  onHide: PropTypes.func.isRequired,
-  recommendations: PropTypes.array,
-  rewardLevel: PropTypes.number.isRequired,
-  content: PropTypes.string,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  uploaderId: PropTypes.number
-};
-
 export default function RecommendationInterface({
   contentId,
   contentType,
@@ -41,6 +28,16 @@ export default function RecommendationInterface({
   style,
   theme,
   uploaderId
+}: {
+  contentId: number;
+  contentType: string;
+  onHide: () => void;
+  recommendations: any[];
+  rewardLevel: number;
+  content?: string;
+  style?: React.CSSProperties;
+  theme?: string;
+  uploaderId?: number;
 }) {
   const { userId, twinkleCoins, authLevel } = useKeyContext((v) => v.myState);
   const [recommending, setRecommending] = useState(false);

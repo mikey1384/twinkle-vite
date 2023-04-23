@@ -1,20 +1,10 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-
-RankingsListItem.propTypes = {
-  myId: PropTypes.number,
-  small: PropTypes.bool,
-  style: PropTypes.object,
-  target: PropTypes.string,
-  user: PropTypes.object,
-  onUsermenuShownChange: PropTypes.func
-};
 
 export default function RankingsListItem({
   myId,
@@ -23,6 +13,13 @@ export default function RankingsListItem({
   target = 'twinkleXP',
   user,
   onUsermenuShownChange = () => {}
+}: {
+  myId: number;
+  small: boolean;
+  style: any;
+  target: string;
+  user: any;
+  onUsermenuShownChange: (v: boolean) => void;
 }) {
   const {
     xpNumber: { color: xpNumberColor }
@@ -125,7 +122,6 @@ export default function RankingsListItem({
               (user.rank <= 10 ? Color.logoBlue() : Color.darkGray())
             }
             user={{ ...user, username: user.username }}
-            userId={myId}
             onMenuShownChange={onUsermenuShownChange}
             className={css`
               max-width: 15rem;
