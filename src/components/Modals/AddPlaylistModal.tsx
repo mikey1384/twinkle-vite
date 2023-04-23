@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -21,15 +20,6 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile, objectify } from '~/helpers';
 import { css } from '@emotion/css';
 
-AddPlaylistModal.propTypes = {
-  existingVideoIds: PropTypes.array,
-  focusPlaylistPanelAfterUpload: PropTypes.func,
-  modalOverModal: PropTypes.bool,
-  onHide: PropTypes.func,
-  onUploadPlaylist: PropTypes.func,
-  title: PropTypes.string
-};
-
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 
 export default function AddPlaylistModal({
@@ -40,7 +30,7 @@ export default function AddPlaylistModal({
   onUploadPlaylist,
   title: initialTitle = ''
 }: {
-  existingVideoIds?: string[];
+  existingVideoIds?: number[];
   focusPlaylistPanelAfterUpload?: () => void;
   onHide: () => void;
   modalOverModal?: boolean;
@@ -369,7 +359,7 @@ export default function AddPlaylistModal({
       ...playlistVideoObjects.current,
       ...objectify(searchResults)
     };
-    setSearchedVideos(searchResults.map((video: {id: number}) => video.id));
+    setSearchedVideos(searchResults.map((video: { id: number }) => video.id));
     setSearchLoadMoreButton(loadMoreButton);
   }
 }
