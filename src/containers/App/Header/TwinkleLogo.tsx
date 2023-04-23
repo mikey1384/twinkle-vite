@@ -1,14 +1,14 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-TwinkleLogo.propTypes = {
-  style: PropTypes.object
-};
-
-export default function TwinkleLogo({ style }) {
+export default function TwinkleLogo({
+  style
+}: {
+  style?: React.CSSProperties;
+}) {
   const { logoTwin, logoKle } = useKeyContext((v) => v.theme);
   const twinColor = useMemo(() => Color[logoTwin.color](), [logoTwin]);
   const kleColor = useMemo(() => Color[logoKle.color](), [logoKle]);
@@ -27,7 +27,10 @@ export default function TwinkleLogo({ style }) {
       }}
     >
       <div
-        onClick={() => (document.getElementById('App').scrollTop = 0)}
+        onClick={() => {
+          const appElement = document.getElementById('App');
+          if (appElement) appElement.scrollTop = 0;
+        }}
         className={css`
           font-size: 2rem;
           font-weight: bold;

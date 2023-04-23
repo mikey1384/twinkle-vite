@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AccountMenu from './AccountMenu';
 import MainNavs from './MainNavs';
 import TwinkleLogo from './TwinkleLogo';
@@ -31,12 +30,13 @@ import {
   AI_CARD_CHAT_TYPE
 } from '~/constants/defaultValues';
 
-Header.propTypes = {
-  onMobileMenuOpen: PropTypes.func,
-  style: PropTypes.object
-};
-
-export default function Header({ onMobileMenuOpen, style = {} }) {
+export default function Header({
+  onMobileMenuOpen,
+  style = {}
+}: {
+  onMobileMenuOpen: any;
+  style: React.CSSProperties;
+}) {
   const [balanceModalShown, setBalanceModalShown] = useState(false);
   const { pathname, search } = useLocation();
   const navigate = useNavigate();
@@ -102,7 +102,9 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     const [, result] = pathname.split(currentPathId)?.[1]?.split('/') || [];
     return result;
   }, [currentPathId, pathname]);
-  const currentChannel = useMemo(
+  const currentChannel = useMemo<{
+    subchannelObj: Record<string, any>;
+  }>(
     () => channelsObj[selectedChannelId] || {},
     [channelsObj, selectedChannelId]
   );
@@ -280,10 +282,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
   );
 
   const prevProfilePicUrl = useRef(profilePicUrl);
-  const peersRef = useRef({});
+  const peersRef: React.MutableRefObject<any> = useRef({});
   const prevMyStreamRef = useRef(null);
   const prevIncomingShown = useRef(false);
-  const membersOnCall = useRef({});
+  const membersOnCall: React.MutableRefObject<any> = useRef({});
   const receivedCallSignals = useRef([]);
 
   useEffect(() => {
@@ -431,6 +433,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       sellerCoins,
       buyerId,
       sellerId
+    }: {
+      feed: any;
+      card: any;
+      sellerCoins: number;
+      buyerId: number;
+      sellerId: number;
     }) {
       onRemoveListedAICard(card.id);
       onUpdateAICard({
@@ -451,7 +459,17 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    async function handleAICardSold({ feed, card, offerId, sellerId }) {
+    async function handleAICardSold({
+      feed,
+      card,
+      offerId,
+      sellerId
+    }: {
+      feed: any;
+      card: any;
+      offerId: number;
+      sellerId: number;
+    }) {
       if (card.ownerId === userId) {
         onWithdrawOutgoingOffer(offerId);
         onAddMyAICard(card);
@@ -471,7 +489,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       });
     }
 
-    async function handleAICardBurned(cardId) {
+    async function handleAICardBurned(cardId: number) {
       onUpdateAICard({ cardId, newState: { isBurning: true } });
       await new Promise((resolve) => setTimeout(resolve, 2000));
       onUpdateAICard({
@@ -482,13 +500,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       });
     }
 
-    function handleAICardListed(card) {
+    function handleAICardListed(card: any) {
       if (card.ownerId !== userId) {
         onAddListedAICard(card);
       }
     }
 
-    function handleAICardDelisted(cardId) {
+    function handleAICardDelisted(cardId: number) {
       onRemoveListedAICard(cardId);
     }
 
@@ -498,6 +516,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       feedId,
       offerId,
       offererId
+    }: {
+      cardId: number;
+      coins: number;
+      feedId: number;
+      offerId: number;
+      offererId: number;
     }) {
       onAICardOfferWithdrawal(feedId);
       if (offererId === userId) {
@@ -507,7 +531,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleAICardOfferPosted({ card, feed }) {
+    function handleAICardOfferPosted({ card, feed }: { card: any; feed: any }) {
       onPostAICardFeed({
         feed,
         card
@@ -521,7 +545,17 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleAssetsSent({ cards, coins, from, to }) {
+    function handleAssetsSent({
+      cards,
+      coins,
+      from,
+      to
+    }: {
+      cards: any;
+      coins: number;
+      from: number;
+      to: number;
+    }) {
       if (from === userId) {
         onSetUserState({
           userId,
@@ -546,11 +580,17 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleBanStatusUpdate(banStatus) {
+    function handleBanStatusUpdate(banStatus: any) {
       onSetUserState({ userId, newState: { banned: banStatus } });
     }
 
-    function handleChessRewind({ channelId, message }) {
+    function handleChessRewind({
+      channelId,
+      message
+    }: {
+      channelId: number;
+      message: any;
+    }) {
       onUpdateRecentChessMessage({ channelId, message });
       onSetChessGameState({
         channelId,
@@ -562,7 +602,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       });
     }
 
-    function handleChessRewindRequest({ channelId, messageId }) {
+    function handleChessRewindRequest({
+      channelId,
+      messageId
+    }: {
+      channelId: number;
+      messageId: number;
+    }) {
       onSetChessGameState({
         channelId,
         newState: { rewindRequestId: messageId }
@@ -575,6 +621,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       cancelMessage,
       sender,
       timeStamp
+    }: {
+      channelId: number;
+      messageId: number;
+      cancelMessage: string;
+      sender: any;
+      timeStamp: number;
     }) {
       onSubmitMessage({
         message: {
@@ -598,6 +650,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       messageId,
       sender,
       timeStamp
+    }: {
+      channelId: number;
+      declineMessage: string;
+      messageId: number;
+      sender: any;
+      timeStamp: number;
     }) {
       onSubmitMessage({
         message: {
@@ -615,7 +673,15 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       onSetChessGameState({ channelId, newState: { rewindRequestId: null } });
     }
 
-    function handleChangeChannelOwner({ channelId, message, newOwner }) {
+    function handleChangeChannelOwner({
+      channelId,
+      message,
+      newOwner
+    }: {
+      channelId: number;
+      message: any;
+      newOwner: any;
+    }) {
       updateChatLastRead(channelId);
       onChangeChannelOwner({ channelId, message, newOwner });
     }
@@ -639,7 +705,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         handleLoadChat(selectedChannelId);
       }
 
-      async function handleLoadChat(selectedChannelId) {
+      async function handleLoadChat(selectedChannelId: number) {
         try {
           onSetReconnecting(true);
           const pathId = Number(currentPathId);
@@ -658,7 +724,11 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
           socket.emit(
             'check_online_users',
             selectedChannelId,
-            ({ onlineUsers }) => {
+            ({
+              onlineUsers
+            }: {
+              onlineUsers: { userId: number; username: string }[];
+            }) => {
               onSetOnlineUsers({
                 channelId: selectedChannelId,
                 onlineUsers
@@ -701,22 +771,50 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleTransactionIdUpdate({ channelId, senderId, transactionId }) {
+    function handleTransactionIdUpdate({
+      channelId,
+      senderId,
+      transactionId
+    }: {
+      channelId: number;
+      senderId: number;
+      transactionId: number;
+    }) {
       if (senderId !== userId) {
         onUpdateCurrentTransactionId({ channelId, transactionId });
       }
     }
 
-    function handleOnlineStatusChange({ userId, member, isOnline }) {
+    function handleOnlineStatusChange({
+      userId,
+      member,
+      isOnline
+    }: {
+      userId: number;
+      member: any;
+      isOnline: boolean;
+    }) {
       onChangeOnlineStatus({ userId, member, isOnline });
     }
-    function handleAwayStatusChange({ userId, isAway }) {
+    function handleAwayStatusChange({
+      userId,
+      isAway
+    }: {
+      userId: number;
+      isAway: boolean;
+    }) {
       if (chatStatus[userId] && chatStatus[userId].isAway !== isAway) {
         onChangeAwayStatus({ userId, isAway });
       }
     }
 
-    function handleBusyStatusChange({ userId, isBusy }) {
+    function handleBusyStatusChange({
+      userId,
+      isBusy
+    }: {
+      userId: number;
+      isBusy: boolean;
+    }) {
       if (chatStatus[userId] && chatStatus[userId].isBusy !== isBusy) {
         onChangeBusyStatus({ userId, isBusy });
       }
@@ -734,11 +832,19 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       receivedCallSignals.current = [];
     }
 
-    function handleCallReceptionConfirm(channelId) {
+    function handleCallReceptionConfirm(channelId: number) {
       onCallReceptionConfirm(channelId);
     }
 
-    function handleCallSignal({ peerId, signal, to }) {
+    function handleCallSignal({
+      peerId,
+      signal,
+      to
+    }: {
+      peerId: string;
+      signal: any;
+      to: number;
+    }) {
       if (to === userId && peersRef.current[peerId]) {
         if (peersRef.current[peerId].signal) {
           try {
@@ -756,13 +862,19 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       isTwoPeople,
       isClass,
       pathId
+    }: {
+      message: any;
+      members: any[];
+      isTwoPeople: boolean;
+      isClass: boolean;
+      pathId: number;
     }) {
       let isDuplicate = false;
       if (selectedChannelId === 0) {
         if (
           members.filter((member) => member.userId !== userId)[0].userId ===
           channelsObj[selectedChannelId].members.filter(
-            (member) => member.userId !== userId
+            (member: { userId: number }) => member.userId !== userId
           )[0].userId
         ) {
           isDuplicate = true;
@@ -779,12 +891,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       });
     }
 
-    function handleDisconnect(reason) {
+    function handleDisconnect(reason: string) {
       console.log('disconnected from socket. reason: ', reason);
       onChangeSocketStatus(false);
     }
 
-    async function handleLeftChatFromAnotherTab(channelId) {
+    async function handleLeftChatFromAnotherTab(channelId: number) {
       if (selectedChannelId === channelId) {
         onLeaveChannel({ channelId, userId });
         if (usingChat) {
@@ -802,6 +914,10 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       includesCoinReward,
       includesXpReward,
       missionId
+    }: {
+      includesCoinReward: boolean;
+      includesXpReward: boolean;
+      missionId: number;
     }) {
       if (includesCoinReward) {
         handleUpdateMyCoins();
@@ -815,7 +931,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       });
     }
 
-    function handleNewNotification({ likes, target }) {
+    function handleNewNotification({
+      likes,
+      target
+    }: {
+      likes: any[];
+      target: any;
+    }) {
       if (likes) {
         onLikeContent({
           likes,
@@ -826,7 +948,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       onIncreaseNumNewNotis();
     }
 
-    function handleNewPost({ comment, target }) {
+    function handleNewPost({ comment, target }: { comment: any; target: any }) {
       if (comment) {
         if (target.commentId || target.replyId) {
           onUploadReply({
@@ -850,6 +972,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       recommenderId,
       target,
       newlyRecommended
+    }: {
+      uploaderId: number;
+      recommendations: any[];
+      recommenderId: number;
+      target: any;
+      newlyRecommended: boolean;
     }) {
       if (state[target.contentType + target.contentId]) {
         onRecommendContent({
@@ -867,7 +995,15 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    async function handleNewReward({ target, reward, receiverId }) {
+    async function handleNewReward({
+      target,
+      reward,
+      receiverId
+    }: {
+      target: any;
+      reward: any;
+      receiverId: number;
+    }) {
       if (reward.rewarderId !== userId) {
         onAttachReward({
           reward,
@@ -901,14 +1037,28 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleNewCallMember({ socketId, memberId }) {
+    function handleNewCallMember({
+      socketId,
+      memberId
+    }: {
+      socketId: string;
+      memberId: number;
+    }) {
       if (!channelOnCall.members?.[memberId]) {
         onSetMembersOnCall({ [memberId]: socketId });
       }
       membersOnCall.current[socketId] = true;
     }
 
-    function handleNewCall({ memberId, channelId, peerId }) {
+    function handleNewCall({
+      memberId,
+      channelId,
+      peerId
+    }: {
+      memberId: number;
+      channelId: number;
+      peerId: string;
+    }) {
       if (!channelOnCall.id) {
         if (memberId !== userId && !membersOnCall.current[peerId]) {
           onSetCall({
@@ -934,6 +1084,12 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       user,
       message,
       pathId
+    }: {
+      channelId: number;
+      channelName: string;
+      user: any;
+      message: any;
+      pathId: string;
     }) {
       const isForCurrentChannel = channelId === selectedChannelId;
       if (isForCurrentChannel) {
@@ -963,7 +1119,15 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handlePeerAccepted({ channelId, to, peerId }) {
+    function handlePeerAccepted({
+      channelId,
+      to,
+      peerId
+    }: {
+      channelId: number;
+      to: number;
+      peerId: string;
+    }) {
       if (to === userId) {
         try {
           handleNewPeer({
@@ -977,7 +1141,15 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handlePeerHungUp({ channelId, memberId, peerId }) {
+    function handlePeerHungUp({
+      channelId,
+      memberId,
+      peerId
+    }: {
+      channelId: number;
+      memberId: number;
+      peerId: string;
+    }) {
       if (
         Number(channelId) === Number(channelOnCall.id) &&
         membersOnCall.current[peerId]
@@ -987,7 +1159,13 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleProfilePicChange({ userId, profilePicUrl }) {
+    function handleProfilePicChange({
+      userId,
+      profilePicUrl
+    }: {
+      userId: number;
+      profilePicUrl: string;
+    }) {
       onSetUserState({ userId, newState: { profilePicUrl } });
     }
 
@@ -996,6 +1174,11 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       channel,
       newMembers,
       isNotification
+    }: {
+      message: any;
+      channel: any;
+      newMembers: any[];
+      isNotification: boolean;
     }) {
       const messageIsForCurrentChannel =
         message.channelId === selectedChannelId;
@@ -1036,22 +1219,42 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleUserTypeUpdate({ userId, userType, userTypeProps }) {
+    function handleUserTypeUpdate({
+      userId,
+      userType,
+      userTypeProps
+    }: {
+      userId: number;
+      userType: string;
+      userTypeProps: any;
+    }) {
       onSetUserState({ userId, newState: { userType, ...userTypeProps } });
     }
 
-    function handleUsernameChange({ userId, newUsername }) {
+    function handleUsernameChange({
+      userId,
+      newUsername
+    }: {
+      userId: number;
+      newUsername: string;
+    }) {
       onSetUserState({ userId, newState: { username: newUsername } });
     }
 
-    function handleNewAICardSummon({ feed, card }) {
+    function handleNewAICardSummon({ feed, card }: { feed: any; card: any }) {
       const senderIsNotTheUser = card.creator.id !== userId;
       if (senderIsNotTheUser) {
         onNewAICardSummon({ card, feed });
       }
     }
 
-    function handleReceiveVocabActivity(activity) {
+    function handleReceiveVocabActivity(activity: {
+      userId: number;
+      username: string;
+      profilePicUrl: string;
+      numWordsCollected: number;
+      rank: number;
+    }) {
       const senderIsNotTheUser = activity.userId !== userId;
       if (senderIsNotTheUser) {
         onReceiveVocabActivity({
@@ -1068,18 +1271,36 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
       }
     }
 
-    function handleTopicChange({ channelId, subchannelId, subject }) {
+    function handleTopicChange({
+      channelId,
+      subchannelId,
+      subject
+    }: {
+      channelId: number;
+      subchannelId: number;
+      subject: string;
+    }) {
       if (channelId === GENERAL_CHAT_ID && !subchannelId) {
         onNotifyChatSubjectChange(subject);
       }
       onChangeChatSubject({ subject, channelId, subchannelId });
     }
 
-    function handleTransactionAccept({ transactionId }) {
+    function handleTransactionAccept({
+      transactionId
+    }: {
+      transactionId: number;
+    }) {
       onAcceptTransaction({ transactionId });
     }
 
-    function handleTransactionCancel({ transactionId, cancelReason }) {
+    function handleTransactionCancel({
+      transactionId,
+      cancelReason
+    }: {
+      transactionId: number;
+      cancelReason: string;
+    }) {
       onCancelTransaction({ transactionId, reason: cancelReason });
     }
   });
@@ -1088,9 +1309,15 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     socket.emit(
       'check_online_users',
       selectedChannelId,
-      ({ callData, onlineUsers }) => {
+      ({
+        callData,
+        onlineUsers
+      }: {
+        callData: any;
+        onlineUsers: { [key: string]: any }[];
+      }) => {
         if (callData && Object.keys(membersOnCall.current).length === 0) {
-          const membersHash = {};
+          const membersHash: { [key: string]: any } = {};
           for (let member of Object.values(onlineUsers).filter(
             (member) => !!callData.peers[member.socketId]
           )) {
@@ -1271,15 +1498,25 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
     </ErrorBoundary>
   );
 
-  function handleNewPeer({ peerId, channelId, initiator, stream }) {
+  function handleNewPeer({
+    peerId,
+    channelId,
+    initiator,
+    stream
+  }: {
+    peerId: string;
+    channelId: number;
+    initiator?: boolean;
+    stream?: MediaStream;
+  }) {
     if (initiator || channelOnCall.members[userId]) {
       peersRef.current[peerId] = new Peer({
         config: {
           iceServers: [
             {
               urls: 'turn:13.230.133.153:3478',
-              username: TURN_USERNAME,
-              credential: TURN_PASSWORD
+              username: TURN_USERNAME as string,
+              credential: TURN_PASSWORD as string
             },
             {
               urls: 'stun:stun.l.google.com:19302'
@@ -1290,7 +1527,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         stream
       });
 
-      peersRef.current[peerId].on('signal', (signal) => {
+      peersRef.current[peerId].on('signal', (signal: any) => {
         socket.emit('send_signal', {
           socketId: peerId,
           signal,
@@ -1298,7 +1535,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         });
       });
 
-      peersRef.current[peerId].on('stream', (stream) => {
+      peersRef.current[peerId].on('stream', (stream: any) => {
         onShowIncoming();
         onSetPeerStreams({ peerId, stream });
       });
@@ -1311,7 +1548,7 @@ export default function Header({ onMobileMenuOpen, style = {} }) {
         delete peersRef.current[peerId];
       });
 
-      peersRef.current[peerId].on('error', (e) => {
+      peersRef.current[peerId].on('error', (e: any) => {
         console.error('Peer error %s:', peerId, e);
       });
     }
