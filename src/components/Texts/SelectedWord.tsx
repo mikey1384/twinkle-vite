@@ -1,15 +1,17 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import CloseButton from '~/components/Buttons/CloseButton';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-SelectedWord.propTypes = {
-  selectedWord: PropTypes.string,
-  onClear: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
-
-export default function SelectedWord({ selectedWord, onClear, style }) {
+export default function SelectedWord({
+  selectedWord,
+  onClear,
+  style
+}: {
+  selectedWord: string;
+  onClear: () => void;
+  style?: React.CSSProperties;
+}) {
   return (
     <div
       style={{

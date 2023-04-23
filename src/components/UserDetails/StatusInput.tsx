@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import ColorSelector from '~/components/ColorSelector';
@@ -9,18 +8,6 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { exceedsCharLimit } from '~/helpers/stringHelpers';
-
-StatusInput.propTypes = {
-  autoFocus: PropTypes.bool,
-  profile: PropTypes.object.isRequired,
-  statusColor: PropTypes.string,
-  editedStatusMsg: PropTypes.string,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]).isRequired,
-  onCancel: PropTypes.func.isRequired,
-  onStatusSubmit: PropTypes.func.isRequired,
-  onTextChange: PropTypes.func.isRequired,
-  setColor: PropTypes.func.isRequired
-};
 
 export default function StatusInput({
   autoFocus,
@@ -32,6 +19,16 @@ export default function StatusInput({
   onStatusSubmit,
   onTextChange,
   setColor
+}: {
+  autoFocus?: boolean;
+  profile: any;
+  editedStatusMsg: string;
+  innerRef: React.RefObject<any>;
+  onCancel: () => void;
+  statusColor: string;
+  onStatusSubmit: () => void;
+  onTextChange: (text: string) => void;
+  setColor: (color: string) => void;
 }) {
   const {
     done: { color: doneColor }

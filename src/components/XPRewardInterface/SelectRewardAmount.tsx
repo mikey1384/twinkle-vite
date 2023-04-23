@@ -1,18 +1,16 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-
-SelectRewardAmount.propTypes = {
-  selectedAmount: PropTypes.number,
-  onSetSelectedAmount: PropTypes.func,
-  rewardables: PropTypes.number
-};
 
 export default function SelectRewardAmount({
   selectedAmount,
   onSetSelectedAmount,
   rewardables
+}: {
+  selectedAmount: number;
+  onSetSelectedAmount: (index: number) => void;
+  rewardables: number;
 }) {
   return (
     <div
@@ -29,7 +27,7 @@ export default function SelectRewardAmount({
       `}
     >
       {Array(rewardables)
-        .fill()
+        .fill(null)
         .map((elem, index) => (
           <Icon
             key={index}
