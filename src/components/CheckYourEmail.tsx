@@ -1,14 +1,15 @@
-import { useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect } from 'react';
 import { useAppContext } from '~/contexts';
 
-CheckYourEmail.propTypes = {
-  email: PropTypes.string,
-  hiddenEmail: PropTypes.string,
-  userId: PropTypes.number.isRequired
-};
-
-export default function CheckYourEmail({ email, hiddenEmail, userId }) {
+export default function CheckYourEmail({
+  email,
+  hiddenEmail,
+  userId
+}: {
+  email: string;
+  hiddenEmail: string;
+  userId: number;
+}) {
   const sendVerificationEmail = useAppContext(
     (v) => v.requestHelpers.sendVerificationEmail
   );

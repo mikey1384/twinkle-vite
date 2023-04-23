@@ -1,18 +1,9 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
-
-ColorSelector.propTypes = {
-  colors: PropTypes.array.isRequired,
-  twinkleXP: PropTypes.number.isRequired,
-  setColor: PropTypes.func.isRequired,
-  selectedColor: PropTypes.string,
-  style: PropTypes.object
-};
 
 export default function ColorSelector({
   colors,
@@ -20,9 +11,17 @@ export default function ColorSelector({
   selectedColor,
   style,
   twinkleXP
+}: {
+  colors: string[];
+  setColor: (color: string) => void;
+  selectedColor: string;
+  style?: React.CSSProperties;
+  twinkleXP: number;
 }) {
-  const [hovered, setHovered] = useState();
-  const requirement = {
+  const [hovered, setHovered] = useState('');
+  const requirement: {
+    [key: string]: number;
+  } = {
     black: 35_000,
     rose: 70_000,
     red: 1_500_000,
@@ -74,7 +73,7 @@ export default function ColorSelector({
                 : () => {}
             }
             onMouseEnter={() => setHovered(color)}
-            onMouseLeave={() => setHovered(undefined)}
+            onMouseLeave={() => setHovered('')}
           >
             {twinkleXP < (requirement[color] || -1) && (
               <Icon

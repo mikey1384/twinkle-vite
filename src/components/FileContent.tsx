@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import FileIcon from '~/components/FileIcon';
 import Image from '~/components/Image';
@@ -27,8 +27,18 @@ export default function FileContent({
   fileNameLength,
   imageBackgroundColor,
   onThumbnailLoad
+}: {
+  imageUrl: string;
+  file: any;
+  fileType: string;
+  style: React.CSSProperties;
+  fileIconSize: string;
+  fileNameStyle: React.CSSProperties;
+  fileNameLength: number;
+  imageBackgroundColor: string;
+  onThumbnailLoad: () => void;
 }) {
-  const [videoSrc, setVideoSrc] = useState(null);
+  const [videoSrc, setVideoSrc] = useState('');
   useEffect(() => {
     if (fileType === 'video') {
       const url = URL.createObjectURL(file);

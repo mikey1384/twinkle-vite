@@ -1,19 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-
-Banner.propTypes = {
-  children: PropTypes.node,
-  color: PropTypes.string,
-  innerRef: PropTypes.func,
-  loading: PropTypes.bool,
-  style: PropTypes.object,
-  onClick: PropTypes.func,
-  spinnerDelay: PropTypes.number
-};
 
 export default function Banner({
   children,
@@ -23,11 +13,19 @@ export default function Banner({
   onClick,
   spinnerDelay = 1000,
   style = {}
+}: {
+  children: React.ReactNode;
+  color?: string;
+  innerRef?: React.RefObject<any>;
+  loading?: boolean;
+  onClick?: () => void;
+  spinnerDelay?: number;
+  style?: React.CSSProperties;
 }) {
   const {
     warning: { color: warningColor }
   } = useKeyContext((v) => v.theme);
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
   const [spinnerShown, setSpinnerShown] = useState(false);
 
   useEffect(() => {

@@ -1,14 +1,17 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 
-FileIcon.propTypes = {
-  fileType: PropTypes.string.isRequired,
-  onClick: PropTypes.func,
-  size: PropTypes.string,
-  style: PropTypes.object
-};
-
-export default function FileIcon({ fileType, size = '7x', onClick, style }) {
+export default function FileIcon({
+  fileType,
+  size = '7x',
+  onClick,
+  style
+}: {
+  fileType: string;
+  onClick?: () => void;
+  size: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <div
       style={{
