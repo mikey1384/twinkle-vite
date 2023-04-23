@@ -1,5 +1,4 @@
-import { useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo } from 'react';
 import AICard from '~/components/AICard';
 import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
@@ -9,20 +8,18 @@ import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
-SummonActivity.propTypes = {
-  card: PropTypes.object.isRequired,
-  isLastActivity: PropTypes.bool,
-  myId: PropTypes.number,
-  onReceiveNewActivity: PropTypes.func.isRequired,
-  onSetScrollToBottom: PropTypes.func.isRequired
-};
-
 export default function SummonActivity({
   card,
   isLastActivity,
   myId,
   onReceiveNewActivity,
   onSetScrollToBottom
+}: {
+  card: any;
+  isLastActivity: boolean;
+  myId: number;
+  onReceiveNewActivity: () => void;
+  onSetScrollToBottom: () => void;
 }) {
   const navigate = useNavigate();
   const displayedTime = useMemo(

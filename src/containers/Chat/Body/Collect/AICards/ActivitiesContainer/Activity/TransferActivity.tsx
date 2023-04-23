@@ -1,20 +1,9 @@
-import { useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import CardThumb from '~/components/CardThumb';
-
-TransferActivity.propTypes = {
-  card: PropTypes.object.isRequired,
-  feed: PropTypes.object.isRequired,
-  myId: PropTypes.number,
-  onReceiveNewActivity: PropTypes.func.isRequired,
-  onSetUsermenuShown: PropTypes.func.isRequired,
-  onSetScrollToBottom: PropTypes.func.isRequired,
-  isLastActivity: PropTypes.bool
-};
 
 export default function TransferActivity({
   card,
@@ -24,6 +13,14 @@ export default function TransferActivity({
   onSetUsermenuShown,
   onSetScrollToBottom,
   isLastActivity
+}: {
+  card: any;
+  feed: any;
+  myId: number;
+  onReceiveNewActivity: () => void;
+  onSetUsermenuShown: (arg0: boolean) => void;
+  onSetScrollToBottom: () => void;
+  isLastActivity: boolean;
 }) {
   const isPurchase = useMemo(() => !!feed?.transfer?.askId, [feed]);
   const isSale = useMemo(() => !!feed?.transfer?.offerId, [feed]);

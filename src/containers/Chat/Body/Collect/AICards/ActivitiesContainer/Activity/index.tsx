@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SummonActivity from './SummonActivity';
 import OfferActivity from './OfferActivity';
@@ -8,15 +7,6 @@ import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import TransferActivity from './TransferActivity';
 
-Activity.propTypes = {
-  cardObj: PropTypes.object.isRequired,
-  feed: PropTypes.object.isRequired,
-  isLastActivity: PropTypes.bool,
-  myId: PropTypes.number,
-  onReceiveNewActivity: PropTypes.func.isRequired,
-  onSetScrollToBottom: PropTypes.func.isRequired
-};
-
 export default function Activity({
   isLastActivity,
   cardObj,
@@ -24,6 +14,13 @@ export default function Activity({
   myId,
   onReceiveNewActivity,
   onSetScrollToBottom
+}: {
+  isLastActivity: boolean;
+  cardObj: any;
+  feed: any;
+  myId: number;
+  onReceiveNewActivity: () => void;
+  onSetScrollToBottom: () => void;
 }) {
   const [usermenuShown, setUsermenuShown] = useState(false);
   const navigate = useNavigate();
