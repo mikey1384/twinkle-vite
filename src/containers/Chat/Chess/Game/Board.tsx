@@ -1,23 +1,10 @@
-import { useMemo, Fragment } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, Fragment } from 'react';
 import getPiece from '../helpers/piece';
 import Square from '../Square';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import CastlingButton from './CastlingButton';
-
-Board.propTypes = {
-  interactable: PropTypes.bool,
-  myColor: PropTypes.string,
-  onBoardClick: PropTypes.func,
-  onCastling: PropTypes.func,
-  onSpoilerClick: PropTypes.func,
-  onClick: PropTypes.func,
-  opponentName: PropTypes.string,
-  spoilerOff: PropTypes.bool,
-  squares: PropTypes.array
-};
 
 export default function Board({
   interactable,
@@ -29,6 +16,16 @@ export default function Board({
   opponentName,
   spoilerOff,
   squares
+}: {
+  interactable: boolean;
+  myColor: string;
+  onBoardClick: () => void;
+  onCastling: (v: string) => void;
+  onClick: (v: number) => void;
+  onSpoilerClick: () => void;
+  opponentName: string;
+  spoilerOff: boolean;
+  squares: any[];
 }) {
   const madeNewMoveLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
@@ -93,9 +90,9 @@ export default function Board({
       <div
         onClick={spoilerOff ? onBoardClick : undefined}
         className={css`
-          cursor: ${spoilerOff && onBoardClick ? 'pointer' : ''};
-          display: ${spoilerOff === false ? 'flex' : 'grid'};
-          align-items: ${spoilerOff === false ? 'center' : ''};
+          cursor: ${spoilerOff && !!onBoardClick ? 'pointer' : ''};
+          display: ${!spoilerOff ? 'flex' : 'grid'};
+          align-items: ${!spoilerOff ? 'center' : ''};
           width: 100%;
           height: 100%;
           grid-template-areas:
@@ -118,7 +115,7 @@ export default function Board({
           }}
         >
           {Array(8)
-            .fill()
+            .fill(null)
             .map((elem, index) => (
               <div
                 style={{
@@ -185,7 +182,7 @@ export default function Board({
       <div
         onClick={spoilerOff ? onBoardClick : undefined}
         className={css`
-          cursor: ${spoilerOff && onBoardClick ? 'pointer' : ''};
+          cursor: ${spoilerOff && !!onBoardClick ? 'pointer' : ''};
           display: ${spoilerOff === false ? 'flex' : 'grid'};
           align-items: ${spoilerOff === false ? 'center' : ''};
           width: 100%;
@@ -238,7 +235,7 @@ export default function Board({
     );
   } else return null;
 
-  function isEven(num) {
+  function isEven(num: number) {
     return num % 2 === 0;
   }
 }

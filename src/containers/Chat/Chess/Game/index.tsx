@@ -1,22 +1,21 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Loading from '~/components/Loading';
 import Board from './Board';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
-Game.propTypes = {
-  interactable: PropTypes.bool,
-  loading: PropTypes.bool,
-  onClick: PropTypes.func.isRequired,
-  squares: PropTypes.array.isRequired,
-  myColor: PropTypes.string.isRequired,
-  onCastling: PropTypes.func.isRequired,
-  spoilerOff: PropTypes.bool,
-  opponentName: PropTypes.string,
-  onBoardClick: PropTypes.func,
-  onSpoilerClick: PropTypes.func
-};
-
+interface Props {
+  interactable: boolean;
+  loading: boolean;
+  onClick: (v: number) => void;
+  squares: any[];
+  myColor: string;
+  onCastling: (v: string) => void;
+  spoilerOff: boolean;
+  opponentName: string;
+  onBoardClick: () => void;
+  onSpoilerClick: () => void;
+}
 export default function Game({
   interactable,
   loading,
@@ -28,7 +27,7 @@ export default function Game({
   onSpoilerClick,
   opponentName,
   spoilerOff
-}) {
+}: Props) {
   return (
     <div
       className={css`
