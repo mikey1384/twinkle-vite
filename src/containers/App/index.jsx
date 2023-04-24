@@ -631,20 +631,22 @@ function App() {
         )}
         {updateNoticeShown && (
           <div
+            style={{
+              fontSize: '17px',
+              top: '20px',
+              zIndex: 100_000,
+              background: Color.blue(),
+              color: '#fff',
+              padding: '10px',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              position: 'fixed'
+            }}
             className={css`
-              position: fixed;
               width: 80%;
               left: 10%;
-              top: 2rem;
-              z-index: ${100_000};
-              background: ${Color.blue()};
-              color: #fff;
-              padding: 1rem;
-              text-align: center;
-              font-size: 2rem;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
                 left: 0;
@@ -655,20 +657,12 @@ function App() {
               The website has been updated. Click the button below to apply the
               update.
             </p>
-            <p style={{ fontSize: '1.3em' }}>
-              {
-                "Warning: Update is mandatory. Some features will not work properly if you don't update!"
-              }
-            </p>
-            {updateDetail && (
-              <p style={{ color: Color.gold() }}>{updateDetail}</p>
-            )}
             <Button
               color="gold"
               filled
               style={{
-                marginTop: '3rem',
-                fontSize: '3rem',
+                marginTop: '10px',
+                fontSize: '30px',
                 minWidth: '20%',
                 alignSelf: 'center'
               }}
@@ -676,6 +670,14 @@ function App() {
             >
               Update!
             </Button>
+            <p style={{ fontSize: '1.3rem', marginTop: '1rem' }}>
+              {
+                "Warning: Update is mandatory. Some features will not work properly if you don't update!"
+              }
+            </p>
+            {updateDetail && (
+              <p style={{ color: Color.gold() }}>{updateDetail}</p>
+            )}
           </div>
         )}
         <Header onMobileMenuOpen={() => setMobileMenuShown(true)} />
