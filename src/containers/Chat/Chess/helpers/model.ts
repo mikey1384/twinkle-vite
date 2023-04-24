@@ -1,6 +1,14 @@
 import getPiece from './piece';
 
-export function initializeChessBoard({ initialState, loading, myId }) {
+export function initializeChessBoard({
+  initialState,
+  loading,
+  myId
+}: {
+  initialState?: any;
+  loading: boolean;
+  myId: number;
+}) {
   if (loading) return [];
   let myColor = 'white';
   const blackPieces = [
@@ -42,7 +50,15 @@ export function initializeChessBoard({ initialState, loading, myId }) {
   let resultBoard;
   let defaultBoard = [...blackPieces, ...Array(32).fill({}), ...whitePieces];
   if (initialState) {
-    let { board, playerColors, move } = { ...initialState };
+    let {
+      board,
+      playerColors,
+      move
+    }: {
+      board: any;
+      playerColors: any;
+      move: any;
+    } = { ...initialState };
     if (typeof move?.srcIndex === 'number') {
       board[myColor === 'black' ? 63 - move.srcIndex : move.srcIndex] =
         move.piece;
@@ -56,7 +72,7 @@ export function initializeChessBoard({ initialState, loading, myId }) {
   return resultBoard || defaultBoard;
 }
 
-export function chessStateJSONToFen(chessStateJSON) {
+export function chessStateJSONToFen(chessStateJSON: any) {
   if (!chessStateJSON) return '';
   const board = chessStateJSON.board;
   let fenString = '';
@@ -97,7 +113,7 @@ export function chessStateJSONToFen(chessStateJSON) {
   fenString += fullMove;
   return fenString;
 
-  function getPieceSymbol(piece) {
+  function getPieceSymbol(piece: any) {
     let pieceSymbol = '';
     if (piece.color === 'white') {
       if (piece.type === 'knight') {
@@ -115,9 +131,10 @@ export function chessStateJSONToFen(chessStateJSON) {
     return pieceSymbol;
   }
 
-  function getCastlingStatus(chessStateJSON) {
+  function getCastlingStatus(chessStateJSON: any) {
     const king = chessStateJSON.board.find(
-      (p) => p.isPiece && p.type === 'king' && p.color === 'white'
+      (p: { isPiece: boolean; type: string; color: string }) =>
+        p.isPiece && p.type === 'king' && p.color === 'white'
     );
     const kingIndex = chessStateJSON.board.indexOf(king);
     let castlingStatus = 'KQkq';
@@ -141,35 +158,51 @@ export function chessStateJSONToFen(chessStateJSON) {
   }
 }
 
-export function checkerPos({ squares, kingIndex, myColor }) {
+export function checkerPos({
+  squares,
+  kingIndex,
+  myColor
+}: {
+  squares: { type: string; color: string }[];
+  kingIndex: number;
+  myColor: string;
+}) {
   const result = [];
   for (let i = 0; i < squares.length; i++) {
     if (!squares[i].color || squares[i].color === squares[kingIndex].color) {
       continue;
     }
-    if (
-      getPiece({ piece: squares[i], myColor })?.isMovePossible({
-        src: i,
-        dest: kingIndex,
-        isDestEnemyOccupied: true,
-        color: squares[i].color,
-        myColor
-      }) &&
-      isMoveLegal({
-        srcToDestPath: getPiece({
-          piece: squares[i],
+    const piece = getPiece({ piece: squares[i], myColor });
+    if (piece) {
+      if (
+        piece.isMovePossible?.({
+          src: i,
+          dest: kingIndex,
+          isDestEnemyOccupied: true,
+          color: squares[i].color,
           myColor
-        }).getSrcToDestPath(i, kingIndex),
-        squares
-      })
-    ) {
-      result.push(i);
+        }) &&
+        isMoveLegal({
+          srcToDestPath: piece.getSrcToDestPath?.(i, kingIndex) || [],
+          squares
+        })
+      ) {
+        result.push(i);
+      }
     }
   }
   return result;
 }
 
-export function getPieceIndex({ color, squares, type }) {
+export function getPieceIndex({
+  color,
+  squares,
+  type
+}: {
+  color: string;
+  squares: { type: string; color: string }[];
+  type: string;
+}) {
   let result = -1;
   for (let i = 0; i < squares.length; i++) {
     if (squares[i].type === type && squares[i].color === color) {
@@ -180,13 +213,19 @@ export function getPieceIndex({ color, squares, type }) {
   return result;
 }
 
-export function getOpponentPlayerColor(color) {
+export function getOpponentPlayerColor(color: string) {
   return color === 'white' ? 'black' : 'white';
 }
 
-export function getPlayerPieces({ color, squares }) {
+export function getPlayerPieces({
+  color,
+  squares
+}: {
+  color: string;
+  squares: { type: string; color: string }[];
+}) {
   let kingIndex = -1;
-  const playerPieces = squares.reduce((prev, curr, index) => {
+  const playerPieces = squares.reduce((prev: any, curr: any, index: number) => {
     if (curr.color && curr.color === color) {
       if (curr.type === 'king') {
         kingIndex = index;
@@ -204,9 +243,14 @@ export function highlightPossiblePathsFromSrc({
   src,
   enPassantTarget,
   myColor
+}: {
+  squares: { type: string; color: string; isPiece: boolean }[];
+  src: number;
+  enPassantTarget: number;
+  myColor: string;
 }) {
   const actualSquares = squares.map((square) => (square.isPiece ? square : {}));
-  return actualSquares.map((square, index) =>
+  return actualSquares.map((square: any, index) =>
     index === src ||
     isPossibleAndLegal({
       src,
@@ -230,7 +274,15 @@ export function highlightPossiblePathsFromSrc({
   );
 }
 
-export function isGameOver({ squares, enPassantTarget, myColor }) {
+export function isGameOver({
+  squares,
+  enPassantTarget,
+  myColor
+}: {
+  squares: { type: string; color: string; isPiece: boolean }[];
+  enPassantTarget: number;
+  myColor: string;
+}) {
   const opponentColor = getOpponentPlayerColor(myColor);
   const squaresFromOpponentsPointOfView = squares.map(
     (square, index) => squares[squares.length - 1 - index]
@@ -308,8 +360,8 @@ export function isGameOver({ squares, enPassantTarget, myColor }) {
     kingIndex + 8,
     kingIndex + 9
   ];
-  let checkers = [];
-  const kingPiece = squaresFromOpponentsPointOfView[kingIndex];
+  let checkers: any[] = [];
+  const kingPiece: any = squaresFromOpponentsPointOfView[kingIndex];
   if (kingPiece.state === 'check') {
     isChecked = true;
     checkers = checkerPos({
@@ -338,7 +390,6 @@ export function isGameOver({ squares, enPassantTarget, myColor }) {
     const newSquares = returnBoardAfterMove({
       src: kingIndex,
       dest,
-      myColor: opponentColor,
       squares: squaresFromOpponentsPointOfView
     });
     const potentialKingSlayers = kingWillBeCapturedBy({
@@ -367,7 +418,6 @@ export function isGameOver({ squares, enPassantTarget, myColor }) {
           const newSquares = returnBoardAfterMove({
             src: piece.index,
             dest: checkers[0],
-            myColor: opponentColor,
             squares: squaresFromOpponentsPointOfView
           });
           const potentialKingSlayers = kingWillBeCapturedBy({
@@ -392,7 +442,6 @@ export function isGameOver({ squares, enPassantTarget, myColor }) {
               src: piece.index,
               dest: (targetRow - 1) * 8 + targetColumn,
               enPassantTarget,
-              myColor: opponentColor,
               squares: squaresFromOpponentsPointOfView
             });
             const potentialKingSlayers = kingWillBeCapturedBy({
@@ -409,12 +458,13 @@ export function isGameOver({ squares, enPassantTarget, myColor }) {
     }
     const allBlockPoints = [];
     for (let checker of checkers) {
-      const trajectory = getPiece({
-        piece: squaresFromOpponentsPointOfView[checker],
-        myColor: opponentColor
-      }).getSrcToDestPath(checker, kingIndex);
+      const trajectory =
+        getPiece({
+          piece: squaresFromOpponentsPointOfView[checker],
+          myColor: opponentColor
+        })?.getSrcToDestPath?.(checker, kingIndex) || [];
       if (trajectory.length === 0) return 'Checkmate';
-      const blockPoints = [];
+      const blockPoints: any[] = [];
       for (let square of trajectory) {
         for (let piece of playerPieces) {
           if (
@@ -430,7 +480,6 @@ export function isGameOver({ squares, enPassantTarget, myColor }) {
             const newSquares = returnBoardAfterMove({
               src: piece.index,
               dest: square,
-              myColor: opponentColor,
               squares: squaresFromOpponentsPointOfView
             });
             const potentialKingSlayers = kingWillBeCapturedBy({
@@ -475,7 +524,6 @@ export function isGameOver({ squares, enPassantTarget, myColor }) {
           const newSquares = returnBoardAfterMove({
             src: piece.index,
             dest: i,
-            myColor: opponentColor,
             squares: squaresFromOpponentsPointOfView
           });
           if (
@@ -494,7 +542,13 @@ export function isGameOver({ squares, enPassantTarget, myColor }) {
   return 'Stalemate';
 }
 
-export function isMoveLegal({ srcToDestPath, squares }) {
+export function isMoveLegal({
+  srcToDestPath,
+  squares
+}: {
+  srcToDestPath: number[];
+  squares: any[];
+}) {
   for (let i = 0; i < srcToDestPath.length; i++) {
     if (squares[srcToDestPath[i]].isPiece) {
       return false;
@@ -509,6 +563,12 @@ export function isPossibleAndLegal({
   myColor,
   squares,
   enPassantTarget
+}: {
+  src: number;
+  dest: number;
+  myColor: string;
+  squares: any[];
+  enPassantTarget: number;
 }) {
   if (squares[dest].color === squares[src].color) {
     return false;
@@ -523,16 +583,25 @@ export function isPossibleAndLegal({
       myColor
     }) &&
     isMoveLegal({
-      srcToDestPath: getPiece({
-        piece: squares[src],
-        myColor
-      }).getSrcToDestPath(src, dest),
+      srcToDestPath:
+        getPiece({
+          piece: squares[src],
+          myColor
+        }).getSrcToDestPath?.(src, dest) || [],
       squares
     })
   );
 }
 
-export function kingWillBeCapturedBy({ kingIndex, squares, myColor }) {
+export function kingWillBeCapturedBy({
+  kingIndex,
+  squares,
+  myColor
+}: {
+  kingIndex: number;
+  squares: any[];
+  myColor: string;
+}) {
   const checkerPositions = checkerPos({
     squares,
     kingIndex,
@@ -545,9 +614,16 @@ export function returnBoardAfterMove({
   squares,
   src,
   dest,
-  enPassantTarget,
+  enPassantTarget = 0,
   kingEndDest,
   isCastling
+}: {
+  squares: any[];
+  src: number;
+  dest: number;
+  enPassantTarget?: number;
+  kingEndDest?: number;
+  isCastling?: boolean;
 }) {
   const srcColumn = src % 8;
   const destColumn = dest % 8;
@@ -583,7 +659,13 @@ export function returnBoardAfterMove({
   return newSquares;
 }
 
-export function getPositionId({ index, myColor }) {
+export function getPositionId({
+  index,
+  myColor
+}: {
+  index: number;
+  myColor: string;
+}) {
   const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   if (myColor === 'black') letters.reverse();
   const row =

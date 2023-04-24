@@ -18,6 +18,10 @@ export default function getPiece({
   piece: { type, color },
   myColor,
   interactable
+}: {
+  piece: { type: string; color: string };
+  myColor: string;
+  interactable?: boolean;
 }) {
   const initialPawnPositions = {
     [myColor]: [48, 49, 50, 51, 52, 53, 54, 55],
@@ -41,6 +45,13 @@ export default function getPiece({
           enPassantTarget,
           color,
           myColor
+        }: {
+          src: number;
+          dest: number;
+          isDestEnemyOccupied: boolean;
+          enPassantTarget?: number;
+          color: string;
+          myColor: string;
         }) {
           const srcRow = Math.floor(src / 8);
           const srcColumn = src % 8;
@@ -74,7 +85,7 @@ export default function getPiece({
           }
           return false;
         },
-        getSrcToDestPath(src, dest) {
+        getSrcToDestPath(src: number, dest: number) {
           const srcRow = Math.floor(src / 8);
           const destRow = Math.floor(dest / 8);
           const result = [];
@@ -97,7 +108,7 @@ export default function getPiece({
           },
           src: color === 'white' ? WhiteBishop : BlackBishop
         },
-        isMovePossible({ src, dest }) {
+        isMovePossible({ src, dest }: { src: number; dest: number }) {
           const srcRow = Math.floor(src / 8);
           const srcColumn = src % 8;
           const destRow = Math.floor(dest / 8);
@@ -106,7 +117,7 @@ export default function getPiece({
             Math.abs(srcRow - destRow) === Math.abs(srcColumn - destColumn)
           );
         },
-        getSrcToDestPath(src, dest) {
+        getSrcToDestPath(src: number, dest: number) {
           let path = [];
           let pathStart;
           let pathEnd;
@@ -142,7 +153,7 @@ export default function getPiece({
           },
           src: color === 'white' ? WhiteKnight : BlackKnight
         },
-        isMovePossible({ src, dest }) {
+        isMovePossible({ src, dest }: { src: number; dest: number }) {
           const srcRow = Math.floor(src / 8);
           const srcColumn = src % 8;
           const destRow = Math.floor(dest / 8);
@@ -172,14 +183,14 @@ export default function getPiece({
           },
           src: color === 'white' ? WhiteRook : BlackRook
         },
-        isMovePossible({ src, dest }) {
+        isMovePossible({ src, dest }: { src: number; dest: number }) {
           const srcRow = Math.floor(src / 8);
           const srcColumn = src % 8;
           const destRow = Math.floor(dest / 8);
           const destColumn = dest % 8;
           return srcRow === destRow || srcColumn === destColumn;
         },
-        getSrcToDestPath(src, dest) {
+        getSrcToDestPath(src: number, dest: number) {
           let path = [];
           let pathStart;
           let pathEnd;
@@ -215,7 +226,7 @@ export default function getPiece({
           },
           src: color === 'white' ? WhiteQueen : BlackQueen
         },
-        isMovePossible({ src, dest }) {
+        isMovePossible({ src, dest }: { src: number; dest: number }) {
           const srcRow = Math.floor(src / 8);
           const srcColumn = src % 8;
           const destRow = Math.floor(dest / 8);
@@ -227,7 +238,7 @@ export default function getPiece({
             srcColumn === destColumn
           );
         },
-        getSrcToDestPath(src, dest) {
+        getSrcToDestPath(src: number, dest: number) {
           let path = [];
           let pathStart;
           let pathEnd;
@@ -272,7 +283,7 @@ export default function getPiece({
           },
           src: color === 'white' ? WhiteKing : BlackKing
         },
-        isMovePossible({ src, dest }) {
+        isMovePossible({ src, dest }: { src: number; dest: number }) {
           const srcRow = Math.floor(src / 8);
           const srcColumn = src % 8;
           const destRow = Math.floor(dest / 8);

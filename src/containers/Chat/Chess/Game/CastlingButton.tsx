@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -9,18 +9,16 @@ const BlackKing = `${cloudFrontURL}/assets/chess/BlackKing.svg`;
 const WhiteRook = `${cloudFrontURL}/assets/chess/WhiteRook.svg`;
 const WhiteKing = `${cloudFrontURL}/assets/chess/WhiteKing.svg`;
 
-CastlingButton.propTypes = {
-  interactable: PropTypes.bool,
-  myColor: PropTypes.string,
-  onCastling: PropTypes.func,
-  squares: PropTypes.array
-};
-
 export default function CastlingButton({
   interactable,
   myColor,
   onCastling,
   squares
+}: {
+  interactable: boolean;
+  myColor: string;
+  onCastling: (v: string) => void;
+  squares: any[];
 }) {
   const top = 'CALC(100% - 6rem)';
   const mobileTop = 'CALC(50vw + 0.5rem)';
