@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';

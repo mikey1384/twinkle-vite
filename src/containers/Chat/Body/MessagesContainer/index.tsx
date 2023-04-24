@@ -1,4 +1,4 @@
-import {
+import React, {
   memo,
   useCallback,
   useContext,
@@ -7,7 +7,6 @@ import {
   useRef,
   useState
 } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -61,18 +60,6 @@ const leaveLabel = localize('leave');
 const menuLabel = deviceIsMobile ? '' : localize('menu');
 const settingsLabel = localize('settings');
 
-MessagesContainer.propTypes = {
-  channelName: PropTypes.string,
-  partner: PropTypes.object,
-  currentChannel: PropTypes.object.isRequired,
-  currentPathId: PropTypes.string,
-  displayedThemeColor: PropTypes.string,
-  isAICardModalShown: PropTypes.bool,
-  onSetAICardModalCardId: PropTypes.func,
-  subchannelId: PropTypes.number,
-  subchannelPath: PropTypes.string
-};
-
 function MessagesContainer({
   channelName,
   partner,
@@ -83,6 +70,16 @@ function MessagesContainer({
   onSetAICardModalCardId,
   subchannelId,
   subchannelPath
+}: {
+  channelName?: string;
+  partner?: any;
+  currentChannel: any;
+  currentPathId: string;
+  displayedThemeColor: string;
+  isAICardModalShown: boolean;
+  onSetAICardModalCardId: (arg: any) => void;
+  subchannelId?: number;
+  subchannelPath?: string;
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const declineChessRewind = useAppContext(
@@ -175,14 +172,21 @@ function MessagesContainer({
     () => inputState['chat' + selectedChannelId]?.text || '',
     [selectedChannelId, inputState]
   );
-  const [chessCountdownObj, setChessCountdownObj] = useState({});
+  const [chessCountdownObj, setChessCountdownObj] = useState<
+    Record<string, any>
+  >({});
   const [textAreaHeight, setTextAreaHeight] = useState(0);
   const [inviteUsersModalShown, setInviteUsersModalShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [selectVideoModalShown, setSelectVideoModalShown] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [deleteModal, setDeleteModal] = useState({
+  const [deleteModal, setDeleteModal] = useState<{
+    shown: boolean;
+    fileName: string;
+    filePath: string;
+    messageId: number | null;
+  }>({
     shown: false,
     fileName: '',
     filePath: '',
@@ -200,10 +204,10 @@ function MessagesContainer({
     useState(false);
   const [hideModalShown, setHideModalShown] = useState(false);
   const [addToFavoritesShown, setAddToFavoritesShown] = useState(false);
-  const MessagesRef = useRef(null);
-  const ChatInputRef = useRef(null);
+  const MessagesRef: React.RefObject<any> = useRef(null);
+  const ChatInputRef: React.RefObject<any> = useRef(null);
   const favoritingRef = useRef(false);
-  const timerRef = useRef(null);
+  const timerRef: React.RefObject<any> = useRef(null);
   const prevScrollPosition = useRef(null);
 
   const subchannel = useMemo(() => {
@@ -271,7 +275,7 @@ function MessagesContainer({
       ? subchannel?.messagesObj
       : messagesObj;
     const result = [];
-    const dupe = {};
+    const dupe: { [key: string]: any } = {};
     for (let messageId of displayedMessageIds) {
       if (!dupe[messageId]) {
         const message = displayedMessagesObj[messageId];
@@ -467,14 +471,20 @@ function MessagesContainer({
     socket.on('chess_countdown_number_received', onReceiveCountdownNumber);
     socket.on('new_message_received', handleReceiveMessage);
 
-    function handleChessTimerCleared({ channelId }) {
+    function handleChessTimerCleared({ channelId }: { channelId: number }) {
       setChessCountdownObj((chessCountdownObj) => ({
         ...chessCountdownObj,
         [channelId]: null
       }));
     }
 
-    function onReceiveCountdownNumber({ channelId, number }) {
+    function onReceiveCountdownNumber({
+      channelId,
+      number
+    }: {
+      channelId: number;
+      number: number;
+    }) {
       if (channelId === selectedChannelId) {
         if (number === 0) {
           onSetChessModalShown(false);
@@ -493,7 +503,7 @@ function MessagesContainer({
         }));
       }
     }
-    function handleReceiveMessage({ message }) {
+    function handleReceiveMessage({ message }: { message: any }) {
       if (message.isChessMsg) {
         setChessCountdownObj((chessCountdownObj) => ({
           ...chessCountdownObj,
@@ -573,7 +583,15 @@ function MessagesContainer({
   }, [selectedChannelId]);
 
   const handleSetChessTarget = useCallback(
-    ({ channelId, messageId, chessState }) => {
+    ({
+      channelId,
+      messageId,
+      chessState
+    }: {
+      channelId: number;
+      messageId: number;
+      chessState: any;
+    }) => {
       onSetChessTarget({ channelId, messageId, target: chessState });
       ChatInputRef.current.focus();
     },
@@ -582,7 +600,7 @@ function MessagesContainer({
   );
 
   const handleSubmitChessTargetMessage = useCallback(
-    async (message) => {
+    async (message: any) => {
       const messageId = uuidv1();
       onSubmitMessage({
         messageId,
@@ -602,7 +620,7 @@ function MessagesContainer({
   );
 
   const handleRequestChessRewind = useCallback(
-    async (chessTarget) => {
+    async (chessTarget: any) => {
       const messageId = uuidv1();
       onSubmitMessage({
         messageId,
@@ -621,7 +639,19 @@ function MessagesContainer({
   );
 
   const handleConfirmChessMove = useCallback(
-    async ({ state, isCheckmate, isStalemate, moveNumber, previousState }) => {
+    async ({
+      state,
+      isCheckmate,
+      isStalemate,
+      moveNumber,
+      previousState
+    }: {
+      state: any;
+      isCheckmate: boolean;
+      isStalemate: boolean;
+      moveNumber: number;
+      previousState: any;
+    }) => {
       const gameWinnerId = isCheckmate ? userId : isStalemate ? 0 : null;
       const params = {
         userId,
@@ -648,7 +678,7 @@ function MessagesContainer({
               channelId: selectedChannelId,
               moveNumber
             },
-            (success) => {
+            (success: boolean) => {
               if (success) {
                 const messageId = uuidv1();
                 onSubmitMessage({
@@ -731,6 +761,11 @@ function MessagesContainer({
       editedIsClosed,
       editedCanChangeSubject,
       editedTheme
+    }: {
+      editedChannelName: string;
+      editedIsClosed: boolean;
+      editedCanChangeSubject: boolean;
+      editedTheme: string;
     }) => {
       await editChannelSettings({
         channelName: editedChannelName,
@@ -762,7 +797,15 @@ function MessagesContainer({
   );
 
   const handleInviteUsersDone = useCallback(
-    async ({ users, message, isClass }) => {
+    async ({
+      users,
+      message,
+      isClass
+    }: {
+      users: any[];
+      message: any;
+      isClass: boolean;
+    }) => {
       if (isClass) {
         const channelData = {
           id: selectedChannelId,
@@ -936,7 +979,7 @@ function MessagesContainer({
   ]);
 
   const handleAcceptGroupInvitation = useCallback(
-    async (invitationChannelPath) => {
+    async (invitationChannelPath: string) => {
       const invitationChannelId =
         channelPathIdHash[invitationChannelPath] ||
         parseChannelPath(invitationChannelPath);
@@ -984,7 +1027,7 @@ function MessagesContainer({
   }, [profilePicUrl, selectedChannelId, userId, username]);
 
   const handleAcceptRewind = useCallback(
-    async (chessState) => {
+    async (chessState: boolean) => {
       onSetChessGameState({
         channelId: selectedChannelId,
         newState: { rewindRequestId: null }
@@ -1030,7 +1073,19 @@ function MessagesContainer({
   }, [selectedChannelId]);
 
   const handleMessageSubmit = useCallback(
-    async ({ content, rewardAmount, rewardReason, target, subchannelId }) => {
+    async ({
+      content,
+      rewardAmount,
+      rewardReason,
+      target,
+      subchannelId
+    }: {
+      content: string;
+      rewardAmount?: number;
+      rewardReason?: string;
+      target: string;
+      subchannelId?: number;
+    }) => {
       setTextAreaHeight(0);
       if (chessTarget) {
         return handleSubmitChessTargetMessage(content);
@@ -1138,7 +1193,15 @@ function MessagesContainer({
   }, []);
 
   const handleRewardMessageSubmit = useCallback(
-    async ({ amount, reasonId, message }) => {
+    async ({
+      amount,
+      reasonId,
+      message
+    }: {
+      amount: number;
+      reasonId: string;
+      message: any;
+    }) => {
       handleMessageSubmit({
         content: rewardReasons[reasonId].message,
         rewardAmount: amount,
@@ -1162,7 +1225,7 @@ function MessagesContainer({
   );
 
   const handleSelectNewOwner = useCallback(
-    async ({ newOwner, andLeave }) => {
+    async ({ newOwner, andLeave }: { newOwner: string; andLeave: boolean }) => {
       const notificationMsg = await changeChannelOwner({
         channelId: selectedChannelId,
         newOwner
@@ -1241,8 +1304,8 @@ function MessagesContainer({
                   marginTop: '0.5rem',
                   fontSize: '1.3rem',
                   width: 'auto',
-                  minWidth: null,
-                  maxWidth: null,
+                  minWidth: undefined,
+                  maxWidth: undefined,
                   padding: '1rem'
                 }}
               />
@@ -1318,7 +1381,6 @@ function MessagesContainer({
                 <Message
                   key={message.id || message.tempMessageId}
                   channelId={selectedChannelId}
-                  channelName={channelName}
                   chessCountdownNumber={chessCountdownNumber}
                   partner={partner}
                   currentChannel={currentChannel}
@@ -1347,7 +1409,6 @@ function MessagesContainer({
                   onSetChessTarget={handleSetChessTarget}
                   onSetTransactionModalShown={setTransactionModalShown}
                   onScrollToBottom={handleScrollToBottom}
-                  recipientId={recipientId}
                   onShowSubjectMsgsModal={({ subjectId, content }) =>
                     setSubjectMsgsModal({ shown: true, subjectId, content })
                   }
@@ -1390,7 +1451,12 @@ function MessagesContainer({
       {deleteModal.shown && (
         <ConfirmModal
           onHide={() =>
-            setDeleteModal({ shown: false, filePath: '', messageId: null })
+            setDeleteModal({
+              shown: false,
+              fileName: '',
+              filePath: '',
+              messageId: null
+            })
           }
           title="Remove Message"
           onConfirm={handleDelete}
@@ -1428,11 +1494,9 @@ function MessagesContainer({
           innerRef={ChatInputRef}
           loading={loadingAnimationShown}
           socketConnected={socketConnected}
-          myId={userId}
           inputState={inputState}
           isRespondingToSubject={appliedIsRespondingToSubject}
           isTwoPeopleChannel={currentChannel.twoPeople}
-          currentChannel={currentChannel}
           onChessButtonClick={handleChessModalShown}
           onWordleButtonClick={handleWordleModalShown}
           onMessageSubmit={({ message, subchannelId }) =>
@@ -1451,7 +1515,6 @@ function MessagesContainer({
           onSetTextAreaHeight={setTextAreaHeight}
           onSetTransactionModalShown={setTransactionModalShown}
           recipientId={recipientId}
-          partnerName={partner?.username}
           chessTarget={chessTarget}
           replyTarget={replyTarget}
           subchannelId={subchannel?.id}
@@ -1470,7 +1533,6 @@ function MessagesContainer({
           onAcceptRewind={handleAcceptRewind}
           onCancelRewindRequest={handleCancelRewindRequest}
           onDeclineRewind={handleDeclineRewind}
-          onSetChessCountdownObj={setChessCountdownObj}
           onSpoilerClick={handleChessSpoilerClick}
           opponentId={partner?.id}
           opponentName={partner?.username}
@@ -1566,7 +1628,7 @@ function MessagesContainer({
     </ErrorBoundary>
   );
 
-  function handleChessSpoilerClick(senderId) {
+  function handleChessSpoilerClick(senderId: number) {
     socket.emit('start_chess_timer', {
       currentChannel: {
         id: selectedChannelId,
@@ -1608,7 +1670,15 @@ function MessagesContainer({
     }
   }
 
-  function handleShowDeleteModal({ fileName, filePath, messageId }) {
+  function handleShowDeleteModal({
+    fileName,
+    filePath,
+    messageId
+  }: {
+    fileName: string;
+    filePath: string;
+    messageId: number;
+  }) {
     setDeleteModal({
       shown: true,
       fileName,

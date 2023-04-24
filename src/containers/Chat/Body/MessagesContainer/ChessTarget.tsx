@@ -1,17 +1,20 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Chess from '../../Chess';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
-ChessTarget.propTypes = {
-  myId: PropTypes.number.isRequired,
-  channelId: PropTypes.number.isRequired,
-  chessTarget: PropTypes.object.isRequired,
-  onClose: PropTypes.func.isRequired
-};
-
-export default function ChessTarget({ myId, channelId, chessTarget, onClose }) {
+export default function ChessTarget({
+  myId,
+  channelId,
+  chessTarget,
+  onClose
+}: {
+  myId: number;
+  channelId: number;
+  chessTarget: any;
+  onClose: () => any;
+}) {
   return (
     <div
       className={css`

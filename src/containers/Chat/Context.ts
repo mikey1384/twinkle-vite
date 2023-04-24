@@ -4,5 +4,6 @@ const ChatContext = createContext<{
   actions: any;
   requests: any;
   state: any;
-}>({ actions: {}, requests: {}, state: {} });
+  inputState: any;
+}>({ actions: {}, requests: {}, state: {}, inputState: {} });
 export default ChatContext;

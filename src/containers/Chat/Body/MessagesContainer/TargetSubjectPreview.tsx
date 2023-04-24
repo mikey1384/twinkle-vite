@@ -1,14 +1,15 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import { defaultChatSubject } from '~/constants/defaultValues';
 import { Color, borderRadius } from '~/constants/css';
 
-TargetSubjectPreview.propTypes = {
-  subjectObj: PropTypes.object,
-  onClose: PropTypes.func.isRequired
-};
-
-export default function TargetSubjectPreview({ subjectObj, onClose }) {
+export default function TargetSubjectPreview({
+  subjectObj,
+  onClose
+}: {
+  subjectObj: any;
+  onClose: any;
+}) {
   return (
     <div
       style={{
