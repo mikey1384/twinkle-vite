@@ -1104,7 +1104,7 @@ export default function ContentReducer(state, action) {
               : prevContentState.recommendations,
           comments:
             action.contentType === 'comment'
-              ? prevContentState.comments.map((comment) => ({
+              ? (prevContentState.comments || []).map((comment) => ({
                   ...comment,
                   recommendations:
                     comment.id === action.contentId
