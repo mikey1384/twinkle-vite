@@ -670,7 +670,7 @@ function App() {
             >
               Update!
             </Button>
-            <p style={{ fontSize: '1.3rem', marginTop: '1rem' }}>
+            <p style={{ fontSize: '13px', marginTop: '10px' }}>
               {
                 "Warning: Update is mandatory. Some features will not work properly if you don't update!"
               }
