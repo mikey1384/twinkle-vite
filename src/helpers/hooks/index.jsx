@@ -11,7 +11,6 @@ export { default as useScrollToBottom } from './useScrollToBottom';
 export { default as useInfiniteScroll } from './useInfiniteScroll';
 import {
   defaultContentState,
-  defaultPlaylistState,
   wordleGuessReaction,
   wordLevelHash,
   DEFAULT_PROFILE_THEME,
@@ -27,11 +26,7 @@ export function useContentState({ contentType, contentId }) {
     (v) => v.state[contentType + contentId]
   );
   const state = allContentState[contentType + contentId];
-  return state
-    ? { ...defaultContentState, ...state }
-    : contentType === 'playlist'
-    ? defaultPlaylistState
-    : defaultContentState;
+  return state ? { ...defaultContentState, ...state } : defaultContentState;
 }
 
 export function useInterval(callback, interval) {
