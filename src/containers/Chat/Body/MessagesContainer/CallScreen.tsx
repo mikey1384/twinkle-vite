@@ -1,5 +1,4 @@
-import { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useMemo } from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import ProfilePic from '~/components/ProfilePic';
@@ -10,11 +9,7 @@ import localize from '~/constants/localize';
 
 const callingLabel = localize('calling');
 
-CallScreen.propTypes = {
-  style: PropTypes.object
-};
-
-export default function CallScreen({ style }) {
+export default function CallScreen({ style }: { style?: React.CSSProperties }) {
   const {
     state: { channelOnCall, chatStatus },
     actions: { onShowIncoming }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '~/components/Icon';
@@ -16,15 +16,6 @@ import localize from '~/constants/localize';
 const deviceIsMobile = isMobile(navigator);
 const typeWordLabel = localize('typeWord');
 
-Input.propTypes = {
-  innerRef: PropTypes.object,
-  loading: PropTypes.bool,
-  registerButtonShown: PropTypes.bool,
-  onInput: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  isSubmitting: PropTypes.bool
-};
-
 export default function Input({
   innerRef,
   loading,
@@ -32,6 +23,13 @@ export default function Input({
   onSubmit,
   registerButtonShown,
   isSubmitting
+}: {
+  innerRef: React.RefObject<any>;
+  loading?: boolean;
+  onInput: () => void;
+  onSubmit: (text: string) => void;
+  registerButtonShown: boolean;
+  isSubmitting: boolean;
 }) {
   const state = useInputContext((v) => v.state);
   const onEnterComment = useInputContext((v) => v.actions.onEnterComment);
@@ -91,7 +89,7 @@ export default function Input({
     </div>
   );
 
-  function handleChange(event) {
+  function handleChange(event: any) {
     const regex = /[^a-zA-Z\-'\s]/gi;
     const isInvalid = regex.test(event.target.value.trim());
     if (isInvalid) {
@@ -118,7 +116,7 @@ export default function Input({
     });
   }
 
-  function handleKeyDown(event) {
+  function handleKeyDown(event: any) {
     const enterKeyPressed = event.keyCode === 13;
     if (enterKeyPressed && !messageExceedsCharLimit && !loading) {
       event.preventDefault();

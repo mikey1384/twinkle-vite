@@ -355,7 +355,9 @@ export const wordLevelHash: {
   }
 };
 
-export const rewardReasons = {
+export const rewardReasons: {
+  [key: string]: any;
+} = {
   1: {
     color: 'pink',
     icon: 'certificate',

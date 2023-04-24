@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MessagesContainer from './MessagesContainer';
 import Collect from './Collect';
@@ -7,18 +7,6 @@ import LocalContext from '../Context';
 import { mobileMaxWidth, Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
-
-Body.propTypes = {
-  channelName: PropTypes.string,
-  partner: PropTypes.object,
-  currentChannel: PropTypes.object,
-  currentPathId: PropTypes.string,
-  displayedThemeColor: PropTypes.string,
-  isAICardModalShown: PropTypes.bool,
-  onSetAICardModalCardId: PropTypes.func,
-  subchannelId: PropTypes.number,
-  subchannelPath: PropTypes.string
-};
 
 export default function Body({
   channelName,
@@ -30,6 +18,16 @@ export default function Body({
   onSetAICardModalCardId,
   subchannelId,
   subchannelPath
+}: {
+  channelName: string;
+  partner: any;
+  currentChannel: any;
+  currentPathId: string;
+  displayedThemeColor: string;
+  isAICardModalShown: boolean;
+  onSetAICardModalCardId: (v: number) => void;
+  subchannelId: number;
+  subchannelPath: string;
 }) {
   const {
     state: { chatType, loadingVocabulary, loadingAICardChat }

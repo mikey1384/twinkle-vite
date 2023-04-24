@@ -1,19 +1,7 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
-
-AddButtons.propTypes = {
-  channelId: PropTypes.number.isRequired,
-  currentTransactionId: PropTypes.number,
-  disabled: PropTypes.bool,
-  isTwoPeopleChannel: PropTypes.bool,
-  myId: PropTypes.number.isRequired,
-  onUploadButtonClick: PropTypes.func.isRequired,
-  onSelectVideoButtonClick: PropTypes.func.isRequired,
-  onSetTransactionModalShown: PropTypes.func.isRequired
-};
 
 export default function AddButtons({
   channelId,
@@ -24,6 +12,15 @@ export default function AddButtons({
   onUploadButtonClick,
   onSelectVideoButtonClick,
   onSetTransactionModalShown
+}: {
+  channelId: number;
+  currentTransactionId: number;
+  disabled: boolean;
+  isTwoPeopleChannel: boolean;
+  myId: number;
+  onUploadButtonClick: () => any;
+  onSelectVideoButtonClick: () => any;
+  onSetTransactionModalShown: (v: boolean) => any;
 }) {
   const [transactionButtonIsGlowing, setTransactionButtonIsGlowing] =
     useState(false);
@@ -77,7 +74,7 @@ export default function AddButtons({
         onClick={onUploadButtonClick}
         color={buttonColor}
         hoverColor={buttonHoverColor}
-        mobilePadding={isTwoPeopleChannel ? '0.5rem' : null}
+        mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
         style={{ marginLeft: isTwoPeopleChannel ? '0.5rem' : 0 }}
       >
         <Icon size="lg" icon="upload" />
@@ -88,7 +85,7 @@ export default function AddButtons({
         color={buttonColor}
         hoverColor={buttonHoverColor}
         onClick={onSelectVideoButtonClick}
-        mobilePadding={isTwoPeopleChannel ? '0.5rem' : null}
+        mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
         style={{ marginLeft: '0.5rem' }}
       >
         <Icon size="lg" icon="film" />

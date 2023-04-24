@@ -1,4 +1,4 @@
-import {
+import React, {
   useCallback,
   useContext,
   useEffect,
@@ -6,7 +6,6 @@ import {
   useRef,
   useState
 } from 'react';
-import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -35,35 +34,34 @@ import localize from '~/constants/localize';
 
 const enterMessageLabel = localize('enterMessage');
 
-MessageInput.propTypes = {
-  currentTransactionId: PropTypes.number,
-  selectedChannelId: PropTypes.number,
-  innerRef: PropTypes.object,
-  inputState: PropTypes.object,
-  isBanned: PropTypes.bool,
-  isRespondingToSubject: PropTypes.bool,
-  isZeroChannel: PropTypes.bool,
-  isRestrictedChannel: PropTypes.bool,
-  isTwoPeopleChannel: PropTypes.oneOfType([PropTypes.number, PropTypes.bool]),
-  loading: PropTypes.bool,
-  onChessButtonClick: PropTypes.func.isRequired,
-  onWordleButtonClick: PropTypes.func.isRequired,
-  onHeightChange: PropTypes.func.isRequired,
-  onMessageSubmit: PropTypes.func.isRequired,
-  onSelectVideoButtonClick: PropTypes.func.isRequired,
-  onSetTextAreaHeight: PropTypes.func.isRequired,
-  onSetTransactionModalShown: PropTypes.func.isRequired,
-  chessTarget: PropTypes.object,
-  replyTarget: PropTypes.object,
-  recipientId: PropTypes.number,
-  socketConnected: PropTypes.bool,
-  subchannelId: PropTypes.number,
-  subjectId: PropTypes.number,
-  subjectObj: PropTypes.object
-};
-
 const deviceIsMobile = isMobile(navigator);
 
+interface Props {
+  currentTransactionId: number;
+  selectedChannelId: number;
+  innerRef: any;
+  inputState: any;
+  isBanned: boolean;
+  isZeroChannel: boolean;
+  isRestrictedChannel: boolean;
+  isRespondingToSubject: boolean;
+  isTwoPeopleChannel: number | boolean;
+  loading: boolean;
+  onChessButtonClick: () => any;
+  onWordleButtonClick: () => any;
+  onHeightChange: (v: number) => any;
+  onMessageSubmit: (v: any) => any;
+  onSelectVideoButtonClick: () => any;
+  onSetTextAreaHeight: (v: number) => any;
+  onSetTransactionModalShown: (v: boolean) => any;
+  chessTarget: any;
+  replyTarget: any;
+  recipientId: number;
+  socketConnected: boolean;
+  subchannelId: number;
+  subjectId: number;
+  subjectObj: any;
+}
 export default function MessageInput({
   currentTransactionId,
   selectedChannelId = 0,
@@ -89,7 +87,7 @@ export default function MessageInput({
   subchannelId,
   subjectId,
   subjectObj
-}) {
+}: Props) {
   const textForThisChannel = useMemo(
     () =>
       inputState[
@@ -115,7 +113,7 @@ export default function MessageInput({
       onSetReplyTarget
     }
   } = useContext(LocalContext);
-  const FileInputRef = useRef(null);
+  const FileInputRef: React.RefObject<any> = useRef(null);
   const prevChannelId = useRef(selectedChannelId);
   const prevSubchannelId = useRef(subchannelId);
   const maxSize = useMemo(
@@ -124,8 +122,8 @@ export default function MessageInput({
   );
   const textRef = useRef(textForThisChannel);
   const inputCoolingDown = useRef(false);
-  const timerRef = useRef(null);
-  const timerRef2 = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef2: React.MutableRefObject<any> = useRef(null);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [fileObj, setFileObj] = useState(null);
   const [uploadModalShown, setUploadModalShown] = useState(false);
@@ -243,7 +241,7 @@ export default function MessageInput({
     inputText
   ]);
 
-  const handleSetText = (newText) => {
+  const handleSetText = (newText: string) => {
     setInputText(newText);
     clearTimeout(timerRef2.current);
     timerRef2.current = setTimeout(() => {
@@ -258,7 +256,7 @@ export default function MessageInput({
   };
 
   const handleKeyDown = useCallback(
-    (event) => {
+    (event: any) => {
       const shiftKeyPressed = event.shiftKey;
       const enterKeyPressed = event.keyCode === 13;
       if (
@@ -279,7 +277,7 @@ export default function MessageInput({
   );
 
   const handleImagePaste = useCallback(
-    (file) => {
+    (file: any) => {
       if (file.size / mb > maxSize) {
         return setAlertModalShown(true);
       }
@@ -290,7 +288,7 @@ export default function MessageInput({
   );
 
   const handleUpload = useCallback(
-    (event) => {
+    (event: any) => {
       const file = event.target.files[0];
       if (file.size / mb > maxSize) {
         return setAlertModalShown(true);
@@ -303,7 +301,7 @@ export default function MessageInput({
   );
 
   const handleChange = useCallback(
-    (event) => {
+    (event: any) => {
       setTimeout(() => {
         onHeightChange(innerRef.current?.clientHeight);
       }, 0);
@@ -314,7 +312,7 @@ export default function MessageInput({
   );
 
   const handlePaste = useCallback(
-    (event) => {
+    (event: any) => {
       const { items } = event.clipboardData;
       for (let i = 0; i < items.length; i++) {
         if (!items[i].type.includes('image')) continue;
@@ -338,7 +336,6 @@ export default function MessageInput({
     >
       {isRespondingToSubject ? (
         <TargetSubjectPreview
-          channelId={selectedChannelId}
           subjectObj={subjectObj}
           onClose={() =>
             onSetIsRespondingToSubject({
@@ -447,7 +444,7 @@ export default function MessageInput({
           onKeyDown={handleKeyDown}
           value={inputText}
           onChange={handleChange}
-          onKeyUp={(event) => {
+          onKeyUp={(event: any) => {
             if (event.key === ' ') {
               handleSetText(addEmoji(event.target.value));
             }
