@@ -1,7 +1,4 @@
-import {
-  defaultContentState,
-  defaultPlaylistState
-} from '~/constants/defaultValues';
+import { defaultContentState } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
 
 interface Reward {
@@ -43,9 +40,7 @@ export default function ContentReducer(
   const defaultState = {
     contentType: action.contentType,
     contentId: action.contentId,
-    ...(action.contentType === 'playlist'
-      ? defaultPlaylistState
-      : defaultContentState)
+    ...defaultContentState
   };
   const prevContentState = state[contentKey] || defaultState;
   switch (action.type) {
