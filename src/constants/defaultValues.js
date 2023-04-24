@@ -3,11 +3,6 @@ import { Color } from '~/constants/css';
 
 export const clientVersion = '1.7.65';
 export const defaultChatSubject = 'Welcome!';
-export const defaultPlaylistState = {
-  videos: [],
-  loadMoreShown: false,
-  loaded: false
-};
 export const defaultContentState = {
   isEditing: false,
   placeholderHeight: 0,
@@ -23,7 +18,10 @@ export const defaultContentState = {
   commentsLoadMoreButton: false,
   subjectsLoadMoreButton: false,
   rootObj: {},
-  profileTheme: 'logoBlue'
+  profileTheme: 'logoBlue',
+  videos: [],
+  loadMoreShown: false,
+  loaded: false
 };
 
 export const cloudFrontURL = `https://${
