@@ -1,22 +1,7 @@
-import { useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect } from 'react';
 import { getStatuses } from '../helpers/statuses';
 import Key from './Key';
 import { ENTER_TEXT, DELETE_TEXT } from '../../constants/strings';
-
-Keyboard.propTypes = {
-  isChecking: PropTypes.bool,
-  isDeleteReady: PropTypes.bool,
-  isEnterReady: PropTypes.bool,
-  onChar: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEnter: PropTypes.func.isRequired,
-  guesses: PropTypes.array,
-  isRevealing: PropTypes.bool,
-  maxWordLength: PropTypes.number,
-  solution: PropTypes.string,
-  style: PropTypes.object
-};
 
 export default function Keyboard({
   isChecking,
@@ -30,10 +15,22 @@ export default function Keyboard({
   maxWordLength,
   solution,
   style
+}: {
+  isChecking: boolean;
+  isDeleteReady: boolean;
+  isEnterReady: boolean;
+  onChar: (value: string) => void;
+  onDelete: () => void;
+  onEnter: () => void;
+  guesses: string[];
+  isRevealing: boolean;
+  maxWordLength: number;
+  solution: string;
+  style: React.CSSProperties;
 }) {
   const charStatuses = getStatuses({ guesses, solution });
 
-  const onClick = (value) => {
+  const onClick = (value: string) => {
     if (value === 'ENTER') {
       onEnter();
     } else if (value === 'DELETE') {
@@ -44,7 +41,7 @@ export default function Keyboard({
   };
 
   useEffect(() => {
-    const listener = (e) => {
+    const listener = (e: any) => {
       if (isChecking) return;
       if (e.code === 'Enter') {
         onEnter();

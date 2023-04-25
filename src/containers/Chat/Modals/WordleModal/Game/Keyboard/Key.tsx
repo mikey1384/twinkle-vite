@@ -1,18 +1,6 @@
-import { useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useRef } from 'react';
 import { borderRadius, Color } from '~/constants/css';
 import { REVEAL_TIME_MS } from '../../constants/settings';
-
-Key.propTypes = {
-  children: PropTypes.node,
-  isChecking: PropTypes.bool,
-  value: PropTypes.string,
-  width: PropTypes.number,
-  onClick: PropTypes.func,
-  isRevealing: PropTypes.bool,
-  maxWordLength: PropTypes.number,
-  status: PropTypes.string
-};
 
 export default function Key({
   children,
@@ -21,13 +9,22 @@ export default function Key({
   value,
   onClick,
   isRevealing,
-  maxWordLength,
-  status
+  maxWordLength = 0,
+  status = ''
+}: {
+  children?: React.ReactNode;
+  isChecking?: boolean;
+  width?: number;
+  value?: string;
+  onClick: (v: any) => void;
+  isRevealing?: boolean;
+  maxWordLength?: number;
+  status?: string;
 }) {
   const keyDelayMs = REVEAL_TIME_MS * maxWordLength;
   const prevBackgroundColor = useRef('');
   const backgroundColor = useMemo(() => {
-    const colorKeys = {
+    const colorKeys: Record<string, string> = {
       ready: 'blue',
       canDelete: 'cranberry',
       correct: 'limeGreen',
@@ -67,7 +64,7 @@ export default function Key({
     </button>
   );
 
-  function handleClick(event) {
+  function handleClick(event: any) {
     onClick(value);
     event.currentTarget.blur();
   }
