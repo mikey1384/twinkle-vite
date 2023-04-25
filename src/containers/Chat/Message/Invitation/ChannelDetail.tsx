@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
@@ -10,16 +9,6 @@ import localize from '~/constants/localize';
 
 const membersLabel = localize('members');
 
-ChannelDetail.propTypes = {
-  allMemberIds: PropTypes.array.isRequired,
-  invitePath: PropTypes.number.isRequired,
-  alreadyJoined: PropTypes.bool.isRequired,
-  channelId: PropTypes.number.isRequired,
-  channelName: PropTypes.string.isRequired,
-  creatorId: PropTypes.number.isRequired,
-  members: PropTypes.array.isRequired
-};
-
 export default function ChannelDetail({
   allMemberIds,
   alreadyJoined,
@@ -28,6 +17,18 @@ export default function ChannelDetail({
   creatorId,
   invitePath,
   members
+}: {
+  allMemberIds: number[];
+  alreadyJoined: boolean;
+  channelName: string;
+  channelId: number;
+  creatorId: number;
+  invitePath: string;
+  members: {
+    id: number;
+    username: string;
+    profilePicUrl: string;
+  }[];
 }) {
   const navigate = useNavigate();
   const {
@@ -40,11 +41,13 @@ export default function ChannelDetail({
   const onLoadMoreChannelMembers = useChatContext(
     (v) => v.actions.onLoadMoreChannelMembers
   );
-  const [shownMembers, setShownMembers] = useState([]);
+  const [shownMembers, setShownMembers] = useState<
+    { id: number; username: string }[]
+  >([]);
   const [userListModalShown, setUserListModalShown] = useState(false);
   const [loadMoreButtonShown, setLoadMoreButtonShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [more, setMore] = useState(null);
+  const [more, setMore] = useState<number | null>(null);
   useEffect(() => {
     if (allMemberIds.length > 3) {
       setShownMembers(members.filter((member, index) => index < 3));
@@ -157,7 +160,9 @@ export default function ChannelDetail({
     });
     onLoadMoreChannelMembers({
       channelId,
-      members: loadedMembers.filter((member) => member.id !== creatorId)
+      members: loadedMembers.filter(
+        (member: { id: number }) => member.id !== creatorId
+      )
     });
     setLoadingMore(false);
   }

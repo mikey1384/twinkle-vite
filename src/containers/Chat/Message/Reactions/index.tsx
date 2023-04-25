@@ -1,14 +1,5 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Reaction from './Reaction';
-
-Reactions.propTypes = {
-  reactions: PropTypes.array,
-  onRemoveReaction: PropTypes.func,
-  onAddReaction: PropTypes.func,
-  reactionsMenuShown: PropTypes.bool,
-  theme: PropTypes.string
-};
 
 export default function Reactions({
   reactions,
@@ -16,9 +7,15 @@ export default function Reactions({
   onAddReaction,
   reactionsMenuShown,
   theme
+}: {
+  reactions: any[];
+  onRemoveReaction: (reaction: string) => void;
+  onAddReaction: (reaction: string) => void;
+  reactionsMenuShown: boolean;
+  theme: string;
 }) {
   const reactionList = useMemo(() => {
-    const result = [];
+    const result: any[] = [];
     if (!reactions) return result;
     for (const reaction of reactions) {
       if (!result.includes(reaction.type)) {
@@ -28,7 +25,7 @@ export default function Reactions({
     return result;
   }, [reactions]);
   const reactionObj = useMemo(() => {
-    const result = {};
+    const result: Record<string, any> = {};
     if (!reactions) return result;
     for (const reaction of reactions) {
       if (!result[reaction.type]) {
@@ -47,7 +44,9 @@ export default function Reactions({
           key={reaction}
           reaction={reaction}
           reactionCount={reactionObj[reaction].length}
-          reactedUserIds={reactionObj[reaction].map(({ userId }) => userId)}
+          reactedUserIds={reactionObj[reaction].map(
+            ({ userId }: { userId: number }) => userId
+          )}
           onRemoveReaction={() => onRemoveReaction(reaction)}
           onAddReaction={() => onAddReaction(reaction)}
           reactionsMenuShown={reactionsMenuShown}
