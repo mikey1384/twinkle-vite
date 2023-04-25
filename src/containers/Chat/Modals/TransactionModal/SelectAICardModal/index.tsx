@@ -19,10 +19,10 @@ export default function SelectAICardModal({
 }: {
   aiCardModalType: string;
   currentlySelectedCardIds: any[];
-  onHide: () => any;
+  onHide?: () => any;
   onSetAICardModalCardId: (v: any) => any;
   onSelectDone: (v: any) => any;
-  onDropdownShown: () => any;
+  onDropdownShown: (v?: any) => any;
   partner: any;
 }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);

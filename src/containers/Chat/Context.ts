@@ -5,5 +5,12 @@ const ChatContext = createContext<{
   requests: any;
   state: any;
   inputState: any;
-}>({ actions: {}, requests: {}, state: {}, inputState: {} });
+  onFileUpload: any;
+}>({
+  actions: {},
+  requests: {},
+  state: {},
+  inputState: {},
+  onFileUpload: null
+});
 export default ChatContext;

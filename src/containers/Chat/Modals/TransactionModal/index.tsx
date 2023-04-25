@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SelectAICardModal from './SelectAICardModal';
@@ -10,15 +9,6 @@ import TransactionInitiator from './TransactionInitiator';
 import Loading from '~/components/Loading';
 import TransactionHandler from './TransactionHandler';
 
-TransactionModal.propTypes = {
-  currentTransactionId: PropTypes.number,
-  channelId: PropTypes.number.isRequired,
-  isAICardModalShown: PropTypes.bool.isRequired,
-  onHide: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  partner: PropTypes.object.isRequired
-};
-
 export default function TransactionModal({
   currentTransactionId,
   channelId,
@@ -26,10 +16,17 @@ export default function TransactionModal({
   onHide,
   onSetAICardModalCardId,
   partner
+}: {
+  currentTransactionId: number;
+  channelId: number;
+  isAICardModalShown: boolean;
+  onHide: () => any;
+  onSetAICardModalCardId: (v: any) => any;
+  partner: any;
 }) {
   const ModalRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [pendingTransaction, setPendingTransaction] = useState(null);
+  const [pendingTransaction, setPendingTransaction] = useState<any>(null);
   const { userId: myId } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
@@ -136,7 +133,7 @@ export default function TransactionModal({
     <ErrorBoundary componentPath="Chat/Modals/TransactionModal">
       <Modal
         innerRef={ModalRef}
-        onHide={isAICardModalShown || dropdownShown ? null : onHide}
+        onHide={isAICardModalShown || dropdownShown ? undefined : onHide}
       >
         <header>{title}</header>
         <main>
@@ -176,7 +173,7 @@ export default function TransactionModal({
           <Button
             transparent
             style={{ marginRight: '0.7rem' }}
-            onClick={isAICardModalShown ? null : onHide}
+            onClick={isAICardModalShown ? undefined : onHide}
           >
             {pendingTransaction ? 'Close' : 'Cancel'}
           </Button>
@@ -208,7 +205,7 @@ export default function TransactionModal({
             }}
             onHide={
               isAICardModalShown || dropdownShown
-                ? null
+                ? undefined
                 : () => setAICardModalType(null)
             }
           />
@@ -250,6 +247,11 @@ export default function TransactionModal({
     coinsOffered,
     offeredCardIds,
     wantedCardIds
+  }: {
+    coinsWanted: number;
+    coinsOffered: number;
+    offeredCardIds: number[];
+    wantedCardIds: number[];
   }) {
     await postTradeRequest({
       type: selectedOption,

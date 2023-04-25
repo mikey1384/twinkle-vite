@@ -9,7 +9,7 @@ export default function FileIcon({
 }: {
   fileType: string;
   onClick?: () => void;
-  size: string;
+  size?: string;
   style?: React.CSSProperties;
 }) {
   return (
