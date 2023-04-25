@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import CardThumb from '~/components/CardThumb';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -7,23 +6,21 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
-TransferMessage.propTypes = {
-  myId: PropTypes.number.isRequired,
-  myUsername: PropTypes.string.isRequired,
-  partner: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    username: PropTypes.string.isRequired
-  }).isRequired,
-  transferDetails: PropTypes.object.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired
-};
-
 export default function TransferMessage({
   myId,
   myUsername,
   partner,
   transferDetails,
   onSetAICardModalCardId
+}: {
+  myId: number;
+  myUsername: string;
+  partner: {
+    id: number;
+    username: string;
+  };
+  transferDetails: any;
+  onSetAICardModalCardId: (cardId: number) => void;
 }) {
   const [usermenuShown, setUsermenuShown] = useState(false);
   const isPurchase = useMemo(() => !!transferDetails?.askId, [transferDetails]);

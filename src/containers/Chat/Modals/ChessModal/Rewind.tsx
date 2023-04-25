@@ -1,17 +1,6 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Chess from '../../Chess';
 import { useAppContext } from '~/contexts';
-
-Rewind.propTypes = {
-  channelId: PropTypes.number.isRequired,
-  countdownNumber: PropTypes.number,
-  myId: PropTypes.number.isRequired,
-  onCancelRewindRequest: PropTypes.func.isRequired,
-  onAcceptRewind: PropTypes.func.isRequired,
-  onDeclineRewind: PropTypes.func.isRequired,
-  rewindRequestId: PropTypes.number
-};
 
 export default function Rewind({
   channelId,
@@ -21,11 +10,19 @@ export default function Rewind({
   onCancelRewindRequest,
   onDeclineRewind,
   rewindRequestId
+}: {
+  channelId: number;
+  countdownNumber: number;
+  myId: number;
+  onAcceptRewind: () => void;
+  onCancelRewindRequest: () => void;
+  onDeclineRewind: () => void;
+  rewindRequestId: number;
 }) {
   const fetchCurrentRewindRequest = useAppContext(
     (v) => v.requestHelpers.fetchCurrentRewindRequest
   );
-  const [rewindRequestMessage, setRewindRequestMessage] = useState({});
+  const [rewindRequestMessage, setRewindRequestMessage] = useState<any>({});
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {

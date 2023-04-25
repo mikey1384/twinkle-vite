@@ -1,5 +1,4 @@
-import { useEffect, useRef, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -27,22 +26,21 @@ const abortChessMatchLabel = localize('abortChessMatch');
 const resignChessMatchLabel = localize('resignChessMatch');
 const startNewGameLabel = localize('startNewGame');
 
-ChessModal.propTypes = {
-  channelId: PropTypes.number,
-  currentChannel: PropTypes.object,
-  myId: PropTypes.number,
-  onConfirmChessMove: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired,
-  countdownNumber: PropTypes.number,
-  onAcceptRewind: PropTypes.func,
-  onCancelRewindRequest: PropTypes.func,
-  onDeclineRewind: PropTypes.func,
-  onSpoilerClick: PropTypes.func.isRequired,
-  opponentId: PropTypes.number,
-  opponentName: PropTypes.string,
-  socketConnected: PropTypes.bool
-};
-
+interface Props {
+  currentChannel: any;
+  channelId: number;
+  myId: number;
+  onConfirmChessMove: (arg0: any) => void;
+  onHide: () => void;
+  countdownNumber: number;
+  onCancelRewindRequest: () => void;
+  onAcceptRewind: () => void;
+  onDeclineRewind: () => void;
+  onSpoilerClick: (v: any) => void;
+  opponentId: number;
+  opponentName: string;
+  socketConnected: boolean;
+}
 export default function ChessModal({
   currentChannel,
   channelId,
@@ -57,7 +55,7 @@ export default function ChessModal({
   opponentId,
   opponentName,
   socketConnected
-}) {
+}: Props) {
   const [activeTab, setActiveTab] = useState('game');
   const [message, setMessage] = useState({});
   const { banned, userId, username, profilePicUrl } = useKeyContext(
@@ -78,14 +76,14 @@ export default function ChessModal({
     (v) => v.actions.onUpdateLastChessMoveViewerId
   );
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
-  const [initialState, setInitialState] = useState();
-  const [newChessState, setNewChessState] = useState();
+  const [initialState, setInitialState] = useState<Object | null>(null);
+  const [newChessState, setNewChessState] = useState<Object | null>(null);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [userMadeLastMove, setUserMadeLastMove] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
 
-  const boardState = useMemo(
+  const boardState: any = useMemo(
     () => (initialState ? { ...initialState } : null),
     [initialState]
   );
@@ -98,7 +96,7 @@ export default function ChessModal({
 
   const gameEndButtonShown = useMemo(
     () =>
-      !!boardState?.move?.number > 0 &&
+      boardState?.move?.number > 0 &&
       !newChessState &&
       !gameFinished &&
       !userMadeLastMove,
@@ -115,7 +113,7 @@ export default function ChessModal({
   const drawButtonShown = useMemo(() => {
     return (
       !drawOffererId &&
-      !!boardState?.move?.number > 0 &&
+      boardState?.move?.number > 0 &&
       !newChessState &&
       !gameFinished &&
       userMadeLastMove
@@ -154,13 +152,13 @@ export default function ChessModal({
               }}
             >
               <nav
-                className={activeTab === 'game' ? 'active' : null}
+                className={activeTab === 'game' ? 'active' : ''}
                 onClick={() => setActiveTab('game')}
               >
                 Chess
               </nav>
               <nav
-                className={activeTab === 'rewind' ? 'active' : null}
+                className={activeTab === 'rewind' ? 'active' : ''}
                 onClick={() => setActiveTab('rewind')}
               >
                 Rewind Request

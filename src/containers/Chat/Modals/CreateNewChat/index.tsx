@@ -1,22 +1,20 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Modal from '~/components/Modal';
 import RegularMenu from './RegularMenu';
 import TeacherMenu from './TeacherMenu';
 import { useKeyContext } from '~/contexts';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-CreateNewChatModal.propTypes = {
-  channelId: PropTypes.number,
-  creatingChat: PropTypes.bool,
-  onDone: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired
-};
-
 export default function CreateNewChatModal({
   channelId,
   creatingChat,
   onHide,
   onDone
+}: {
+  channelId: number;
+  creatingChat: boolean;
+  onHide: () => void;
+  onDone: () => void;
 }) {
   const { authLevel } = useKeyContext((v) => v.myState);
   return (

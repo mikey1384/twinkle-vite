@@ -1,29 +1,27 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import Chess from '../../Chess';
 
-Game.propTypes = {
-  boardState: PropTypes.object,
-  countdownNumber: PropTypes.number,
-  channelId: PropTypes.number,
-  currentChannel: PropTypes.object,
-  initialState: PropTypes.object,
-  message: PropTypes.object,
-  myId: PropTypes.number,
-  newChessState: PropTypes.object,
-  onSetInitialState: PropTypes.func,
-  onSetMessage: PropTypes.func,
-  onSetNewChessState: PropTypes.func,
-  onSetUserMadeLastMove: PropTypes.func,
-  onSpoilerClick: PropTypes.func,
-  onUpdateLastChessMoveViewerId: PropTypes.func,
-  opponentId: PropTypes.number,
-  opponentName: PropTypes.string,
-  setChessMoveViewTimeStamp: PropTypes.func,
-  userMadeLastMove: PropTypes.bool
-};
-
+interface Props {
+  boardState: any;
+  countdownNumber: number;
+  channelId: number;
+  currentChannel: any;
+  initialState: any;
+  message: any;
+  myId: number;
+  newChessState: any;
+  onSetInitialState: (arg0: any) => void;
+  onSetMessage: (arg0: any) => void;
+  onSetNewChessState: (arg0: any) => void;
+  onSetUserMadeLastMove: (arg0: boolean) => void;
+  onSpoilerClick: (v: any) => void;
+  onUpdateLastChessMoveViewerId: (v: any) => void;
+  opponentId: number;
+  opponentName: string;
+  setChessMoveViewTimeStamp: (v: any) => void;
+  userMadeLastMove: boolean;
+}
 export default function Game({
   boardState,
   countdownNumber,
@@ -43,13 +41,13 @@ export default function Game({
   opponentName,
   setChessMoveViewTimeStamp,
   userMadeLastMove
-}) {
+}: Props) {
   const fetchCurrentChessState = useAppContext(
     (v) => v.requestHelpers.fetchCurrentChessState
   );
-  const [uploaderId, setUploaderId] = useState();
+  const [uploaderId, setUploaderId] = useState(0);
   const [loaded, setLoaded] = useState(false);
-  const loading = useRef(null);
+  const loading: React.MutableRefObject<any> = useRef(null);
   useEffect(() => {
     init();
     async function init() {
