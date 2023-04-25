@@ -1,20 +1,9 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { MAX_GUESSES } from '../../constants/settings';
 import CompletedRow from './CompletedRow';
 import CurrentRow from './CurrentRow';
 import EmptyRow from './EmptyRow';
 import { gridContainer } from './Styles';
-
-Grid.propTypes = {
-  guesses: PropTypes.array,
-  currentGuess: PropTypes.string,
-  isRevealing: PropTypes.bool,
-  isWaving: PropTypes.bool,
-  currentRowClassName: PropTypes.string,
-  maxWordLength: PropTypes.number,
-  solution: PropTypes.string
-};
 
 export default function Grid({
   guesses,
@@ -24,11 +13,19 @@ export default function Grid({
   currentRowClassName,
   maxWordLength,
   solution
+}: {
+  guesses: string[];
+  currentGuess: string;
+  isRevealing: boolean;
+  isWaving: boolean;
+  currentRowClassName: string;
+  maxWordLength: number;
+  solution: string;
 }) {
   const empties = useMemo(() => {
     const guessLength = guesses?.length || 0;
     if (guessLength < MAX_GUESSES - 1) {
-      return Array(MAX_GUESSES - 1 - guessLength).fill();
+      return Array(MAX_GUESSES - 1 - guessLength).fill(null);
     }
     return [];
   }, [guesses?.length]);

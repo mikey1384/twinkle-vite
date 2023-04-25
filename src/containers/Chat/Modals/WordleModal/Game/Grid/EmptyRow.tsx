@@ -1,10 +1,7 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Cell from './Cell';
 
-EmptyRow.propTypes = {
-  maxWordLength: PropTypes.number
-};
-export default function EmptyRow({ maxWordLength }) {
+export default function EmptyRow({ maxWordLength }: { maxWordLength: number }) {
   const emptyCells = Array.from(Array(maxWordLength));
 
   return (
