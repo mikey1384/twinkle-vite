@@ -568,7 +568,7 @@ export function isPossibleAndLegal({
   dest: number;
   myColor: string;
   squares: any[];
-  enPassantTarget: number;
+  enPassantTarget?: number;
 }) {
   if (squares[dest].color === squares[src].color) {
     return false;

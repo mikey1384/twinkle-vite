@@ -1,19 +1,25 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo } from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-Square.propTypes = {
-  className: PropTypes.string,
-  count: PropTypes.number,
-  color: PropTypes.string,
-  img: PropTypes.object,
-  onClick: PropTypes.func,
-  shade: PropTypes.string,
-  style: PropTypes.object
-};
-
-function Square({ count, className, img, shade, onClick, color, style }) {
+interface Props {
+  count: number;
+  className?: string;
+  img?: any;
+  shade?: string;
+  onClick?: () => void;
+  color?: string;
+  style?: React.CSSProperties;
+}
+function Square({
+  count,
+  className,
+  img,
+  shade,
+  onClick,
+  color,
+  style
+}: Props) {
   return (
     <div
       className={`${css`
