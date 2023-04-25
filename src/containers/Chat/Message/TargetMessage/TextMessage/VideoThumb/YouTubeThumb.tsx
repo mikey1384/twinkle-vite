@@ -1,18 +1,20 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import YouTubeIcon from '~/assets/YoutubeIcon.svg';
 import YTVideoModal from './YTVideoModal';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-YouTubeThumb.propTypes = {
-  messageId: PropTypes.number.isRequired,
-  style: PropTypes.object,
-  thumbUrl: PropTypes.string,
-  videoUrl: PropTypes.string
-};
-
-export default function YouTubeThumb({ messageId, style, thumbUrl, videoUrl }) {
+export default function YouTubeThumb({
+  messageId,
+  style,
+  thumbUrl,
+  videoUrl
+}: {
+  messageId: number;
+  style: React.CSSProperties;
+  thumbUrl: string;
+  videoUrl: string;
+}) {
   const [modalShown, setModalShown] = useState(false);
   return (
     <div style={style}>

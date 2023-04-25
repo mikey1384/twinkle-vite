@@ -13,7 +13,7 @@ interface Props {
   onCastling: (v: string) => void;
   spoilerOff: boolean;
   opponentName: string;
-  onBoardClick: () => void;
+  onBoardClick?: () => void;
   onSpoilerClick: () => void;
 }
 export default function Game({

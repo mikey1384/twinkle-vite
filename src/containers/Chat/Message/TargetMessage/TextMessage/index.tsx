@@ -1,5 +1,4 @@
-import { useContext, useMemo, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useMemo, useEffect, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import LongText from '~/components/Texts/LongText';
 import VideoThumb from './VideoThumb';
@@ -17,11 +16,7 @@ import {
 } from '~/helpers/stringHelpers';
 import LocalContext from '../../../Context';
 
-TextMessage.propTypes = {
-  message: PropTypes.object.isRequired
-};
-
-export default function TextMessage({ message }) {
+export default function TextMessage({ message }: { message: any }) {
   const {
     actions: { onSetEmbeddedUrl }
   } = useContext(LocalContext);

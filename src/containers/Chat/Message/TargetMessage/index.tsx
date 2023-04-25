@@ -1,14 +1,10 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import TextMessage from './TextMessage';
 import WordleResult from './WordleResult';
 
-TargetMessage.propTypes = {
-  message: PropTypes.object.isRequired
-};
-
-export default function TargetMessage({ message }) {
+export default function TargetMessage({ message }: { message: any }) {
   return (
     <div
       className={css`

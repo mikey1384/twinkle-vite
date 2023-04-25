@@ -1,23 +1,22 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Chess from '../../Chess';
 import { borderRadius, Color } from '~/constants/css';
 import ProposeButton from './ProposeButton';
 
-TargetChessPosition.propTypes = {
-  chessState: PropTypes.object.isRequired,
-  channelId: PropTypes.number.isRequired,
-  gameState: PropTypes.object.isRequired,
-  lastChessMessageId: PropTypes.number.isRequired,
-  messageId: PropTypes.number,
-  myId: PropTypes.number.isRequired,
-  userId: PropTypes.number.isRequired,
-  username: PropTypes.string.isRequired,
-  onCancelRewindRequest: PropTypes.func.isRequired,
-  onAcceptRewind: PropTypes.func.isRequired,
-  onDeclineRewind: PropTypes.func.isRequired,
-  onRequestRewind: PropTypes.func.isRequired
-};
-
+interface Props {
+  chessState: any;
+  channelId: number;
+  gameState: any;
+  lastChessMessageId: number;
+  messageId: number;
+  myId: number;
+  userId: number;
+  username: string;
+  onCancelRewindRequest: () => void;
+  onAcceptRewind: () => void;
+  onDeclineRewind: () => void;
+  onRequestRewind: (v: any) => void;
+}
 export default function TargetChessPosition({
   chessState,
   channelId,
@@ -31,7 +30,7 @@ export default function TargetChessPosition({
   onAcceptRewind,
   onDeclineRewind,
   onRequestRewind
-}) {
+}: Props) {
   return (
     <div
       style={{

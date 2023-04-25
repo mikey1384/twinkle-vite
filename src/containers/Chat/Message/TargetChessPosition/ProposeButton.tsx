@@ -1,15 +1,17 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-ProposeButton.propTypes = {
-  label: PropTypes.string.isRequired,
-  onClick: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
-
-export default function ProposeButton({ label, onClick, style }) {
+export default function ProposeButton({
+  label,
+  onClick,
+  style
+}: {
+  label: string;
+  onClick: () => void;
+  style?: React.CSSProperties;
+}) {
   return (
     <div
       style={{

@@ -1,5 +1,4 @@
-import { useContext, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useState } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import LocalContext from '../../../../Context';
 import playButtonImg from '~/assets/play-button-image.png';
@@ -9,14 +8,17 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { v1 as uuidv1 } from 'uuid';
 
-VideoThumb.propTypes = {
-  messageId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  thumbUrl: PropTypes.string,
-  src: PropTypes.string,
-  onClick: PropTypes.func
-};
-
-export default function VideoThumb({ messageId, onClick, thumbUrl, src }) {
+export default function VideoThumb({
+  messageId,
+  onClick,
+  thumbUrl,
+  src
+}: {
+  messageId: number;
+  onClick: () => void;
+  thumbUrl: string;
+  src: string;
+}) {
   const [thumbnailLoadFail, setThumbnailLoadFail] = useState(false);
   const {
     requests: { uploadThumb }
@@ -69,7 +71,7 @@ export default function VideoThumb({ messageId, onClick, thumbUrl, src }) {
     </ErrorBoundary>
   );
 
-  function handleThumbnailLoad(thumb) {
+  function handleThumbnailLoad(thumb: string) {
     const file = returnImageFileFromUrl({ imageUrl: thumb });
     uploadThumb({
       contentType: 'chat',

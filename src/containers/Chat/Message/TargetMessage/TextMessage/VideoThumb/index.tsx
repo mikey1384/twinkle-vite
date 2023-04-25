@@ -1,15 +1,7 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import YouTubeThumb from './YouTubeThumb';
 import TwinkleVideoThumb from './TwinkleVideoThumb';
-
-VideoThumb.propTypes = {
-  isYouTube: PropTypes.bool,
-  style: PropTypes.object,
-  thumbUrl: PropTypes.string,
-  messageId: PropTypes.number.isRequired,
-  videoUrl: PropTypes.string
-};
 
 export default function VideoThumb({
   isYouTube,
@@ -17,6 +9,12 @@ export default function VideoThumb({
   messageId,
   style,
   videoUrl
+}: {
+  isYouTube: boolean;
+  thumbUrl: string;
+  messageId: number;
+  style: React.CSSProperties;
+  videoUrl: string;
 }) {
   return (
     <ErrorBoundary componentPath="Message/TargetMessage/VideoThumb/index">
@@ -28,11 +26,7 @@ export default function VideoThumb({
           videoUrl={videoUrl}
         />
       ) : (
-        <TwinkleVideoThumb
-          style={style}
-          messageId={messageId}
-          videoUrl={videoUrl}
-        />
+        <TwinkleVideoThumb messageId={messageId} videoUrl={videoUrl} />
       )}
     </ErrorBoundary>
   );

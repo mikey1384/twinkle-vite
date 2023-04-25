@@ -1,24 +1,27 @@
-import { useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
-import ReactPlayer from 'react-player';
+import ReactPlayer from 'react-player/youtube';
+import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import { mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
 
 const closelLabel = localize('close');
 
-VideoModal.propTypes = {
-  fileName: PropTypes.string.isRequired,
-  messageId: PropTypes.number.isRequired,
-  onHide: PropTypes.func.isRequired,
-  src: PropTypes.string.isRequired
-};
-
-export default function VideoModal({ fileName, messageId, onHide, src }) {
+export default function YTVideoModal({
+  messageId,
+  onHide,
+  url
+}: {
+  messageId: number;
+  onHide: () => void;
+  url: string;
+}) {
+  const YTPlayerRef: React.RefObject<any> = useRef(null);
+  const [timeAt, setTimeAt] = useState(0);
+  const [startingPosition, setStartingPosition] = useState(0);
   const onSetVideoCurrentTime = useContentContext(
     (v) => v.actions.onSetVideoCurrentTime
   );
@@ -26,28 +29,25 @@ export default function VideoModal({ fileName, messageId, onHide, src }) {
     contentType: 'chat',
     contentId: messageId
   });
-  const timeAtRef = useRef(0);
-  const PlayerRef = useRef(null);
-
-  useEffect(() => {
-    if (currentTime > 0) {
-      PlayerRef.current?.seekTo(currentTime);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setStartingPosition(currentTime), []);
   useEffect(() => {
     return function setCurrentTimeBeforeUnmount() {
-      if (timeAtRef.current > 0) {
+      if (timeAt > 0) {
         onSetVideoCurrentTime({
           contentType: 'chat',
           contentId: messageId,
-          currentTime: timeAtRef.current
+          currentTime: timeAt
         });
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [timeAt]);
+
+  const videoUrl = useMemo(
+    () => `${url}${startingPosition > 0 ? `?t=${startingPosition}` : ''}`,
+    [startingPosition, url]
+  );
 
   return (
     <Modal large onHide={onHide}>
@@ -71,34 +71,13 @@ export default function VideoModal({ fileName, messageId, onHide, src }) {
           `}
         >
           <div
-            style={{
-              width: '100%'
-            }}
-          >
-            <a
-              className={css`
-                font-weight: bold;
-                font-size: 1.7rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.5rem;
-                }
-              `}
-              href={src}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {fileName}
-            </a>
-          </div>
-          <div
             className={css`
               position: relative;
               padding-top: 56.25%;
             `}
           >
             <ReactPlayer
-              ref={PlayerRef}
-              playsinline
+              ref={YTPlayerRef}
               width="100%"
               height="100%"
               className={css`
@@ -107,7 +86,7 @@ export default function VideoModal({ fileName, messageId, onHide, src }) {
                 left: 0;
                 z-index: 1;
               `}
-              url={src}
+              url={videoUrl}
               controls
               onProgress={handleVideoProgress}
             />
@@ -123,6 +102,6 @@ export default function VideoModal({ fileName, messageId, onHide, src }) {
   );
 
   function handleVideoProgress() {
-    timeAtRef.current = PlayerRef.current.getCurrentTime();
+    setTimeAt(YTPlayerRef.current.getCurrentTime());
   }
 }
