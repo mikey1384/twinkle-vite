@@ -1,18 +1,9 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import YouTubeIcon from '~/assets/YoutubeIcon.svg';
 import RewardAmountInfo from '../../../RewardAmountInfo';
 import RewardLevelInfo from '../../../RewardLevelInfo';
 import TwinkleVideoModal from '../../../TwinkleVideoModal';
 import { css } from '@emotion/css';
-
-TwinkleVideoLink.propTypes = {
-  messageId: PropTypes.number.isRequired,
-  rewardLevel: PropTypes.number,
-  title: PropTypes.string,
-  videoCode: PropTypes.string.isRequired,
-  videoId: PropTypes.number.isRequired
-};
 
 export default function TwinkleVideoLink({
   title,
@@ -20,6 +11,12 @@ export default function TwinkleVideoLink({
   videoCode,
   videoId,
   messageId
+}: {
+  title: string;
+  rewardLevel: number;
+  videoCode: string;
+  videoId: number;
+  messageId: number;
 }) {
   const [modalShown, setModalShown] = useState(false);
   return (

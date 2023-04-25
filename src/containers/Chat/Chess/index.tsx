@@ -5,7 +5,6 @@ import React, {
   useRef,
   useState
 } from 'react';
-import PropTypes from 'prop-types';
 import Game from './Game';
 import FallenPieces from './FallenPieces';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -48,17 +47,17 @@ interface Props {
   newChessState?: any;
   onBoardClick?: () => void;
   onChessMove?: (v: any) => void;
-  onAcceptRewind: (v: any) => void;
-  onCancelRewindRequest: () => void;
-  onDeclineRewind: () => void;
+  onAcceptRewind?: (v: any) => void;
+  onCancelRewindRequest?: () => void;
+  onDeclineRewind?: () => void;
   onDiscussClick?: () => void;
   onRewindClick?: () => void;
   onSpoilerClick?: (v: number) => void;
   opponentId?: number;
   opponentName?: string;
-  rewindRequestId: number;
+  rewindRequestId?: number;
   senderId: number;
-  senderName: string;
+  senderName?: string;
   spoilerOff?: boolean;
   style: React.CSSProperties;
 }
@@ -1155,7 +1154,7 @@ export default function Chess({
           <RewindRequestButton
             isMyMessage={userId === senderId}
             onCancelRewindRequest={onCancelRewindRequest}
-            onAcceptRewind={() => onAcceptRewind(boardState)}
+            onAcceptRewind={() => onAcceptRewind?.(boardState)}
             onDeclineRewind={onDeclineRewind}
             username={senderName}
           />

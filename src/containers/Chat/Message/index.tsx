@@ -1,4 +1,4 @@
-import {
+import React, {
   memo,
   useCallback,
   useContext,
@@ -49,40 +49,39 @@ const rewardLabel = localize('reward');
 const removeLabel = localize('remove');
 const editLabel = localize('edit');
 
-Message.propTypes = {
-  chessCountdownNumber: PropTypes.number,
-  partner: PropTypes.object,
-  channelId: PropTypes.number,
-  currentChannel: PropTypes.object,
-  displayedThemeColor: PropTypes.string,
-  forceRefreshForMobile: PropTypes.func,
-  isAICardModalShown: PropTypes.bool,
-  message: PropTypes.object,
-  onDelete: PropTypes.func,
-  index: PropTypes.number,
-  isBanned: PropTypes.bool,
-  isLastMsg: PropTypes.bool,
-  isNotification: PropTypes.bool,
-  isRestricted: PropTypes.bool,
-  loading: PropTypes.bool,
-  onAcceptGroupInvitation: PropTypes.func.isRequired,
-  onChessBoardClick: PropTypes.func,
-  onChessSpoilerClick: PropTypes.func,
-  onCancelRewindRequest: PropTypes.func,
-  onAcceptRewind: PropTypes.func,
-  onDeclineRewind: PropTypes.func,
-  onReceiveNewMessage: PropTypes.func,
-  onReplyClick: PropTypes.func,
-  onRequestRewind: PropTypes.func,
-  onSetAICardModalCardId: PropTypes.func,
-  onSetChessTarget: PropTypes.func,
-  onSetTransactionModalShown: PropTypes.func,
-  onRewardMessageSubmit: PropTypes.func.isRequired,
-  onScrollToBottom: PropTypes.func.isRequired,
-  onShowSubjectMsgsModal: PropTypes.func,
-  zIndex: PropTypes.number
-};
-
+interface Props {
+  chessCountdownNumber: number;
+  partner: any;
+  channelId: number;
+  currentChannel: any;
+  displayedThemeColor: string;
+  forceRefreshForMobile: () => void;
+  isAICardModalShown: boolean;
+  message: any;
+  onDelete: (v: any) => void;
+  index: number;
+  isBanned: boolean;
+  isLastMsg: boolean;
+  isNotification: boolean;
+  isRestricted: boolean;
+  loading: boolean;
+  onAcceptGroupInvitation: () => void;
+  onChessBoardClick: () => void;
+  onChessSpoilerClick: (v: number) => void;
+  onCancelRewindRequest: () => void;
+  onAcceptRewind: () => void;
+  onDeclineRewind: () => void;
+  onReceiveNewMessage: () => void;
+  onReplyClick: () => void;
+  onRequestRewind: (v: any) => void;
+  onSetAICardModalCardId: () => void;
+  onSetChessTarget: (v: any) => void;
+  onSetTransactionModalShown: (v: boolean) => void;
+  onRewardMessageSubmit: (v: any) => void;
+  onScrollToBottom: () => void;
+  onShowSubjectMsgsModal: () => void;
+  zIndex: number;
+}
 function Message({
   channelId,
   chessCountdownNumber,
@@ -152,7 +151,7 @@ function Message({
   onScrollToBottom,
   onShowSubjectMsgsModal,
   zIndex
-}) {
+}: Props) {
   const {
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
@@ -254,7 +253,9 @@ function Message({
     () =>
       filesBeingUploaded[
         channelId + (subchannelId ? `/${subchannelId}` : '')
-      ]?.filter(({ filePath: path }) => path === filePath) || [],
+      ]?.filter(
+        ({ filePath: path }: { filePath: string }) => path === filePath
+      ) || [],
     [channelId, filePath, filesBeingUploaded, subchannelId]
   );
   let {
@@ -404,7 +405,7 @@ function Message({
   );
 
   const dropdownMenuItems = useMemo(() => {
-    const result = [];
+    const result: any[] = [];
     if (isBanned) return result;
     if (!isRestricted) {
       result.push({
@@ -541,7 +542,7 @@ function Message({
   }, [onChessSpoilerClick, channelId, message, userId]);
 
   const handleRewardMessageSubmit = useCallback(
-    ({ reasonId, amount }) => {
+    ({ reasonId, amount }: { reasonId: number; amount: number }) => {
       onRewardMessageSubmit({ amount, reasonId, message });
     },
     [message, onRewardMessageSubmit]
@@ -557,7 +558,7 @@ function Message({
   }, [messageId]);
 
   const handleEditDone = useCallback(
-    async (editedMessage) => {
+    async (editedMessage: any) => {
       const messageIsSubject = !!isSubject || !!isReloadedSubject;
       try {
         const subjectChanged = await editChatMessage({
@@ -597,7 +598,7 @@ function Message({
   );
 
   const handleAddReaction = useCallback(
-    async (reaction) => {
+    async (reaction: any) => {
       if (message.reactions) {
         for (const reactionObj of message.reactions) {
           if (reactionObj.type === reaction && reactionObj.userId === myId) {
@@ -619,7 +620,7 @@ function Message({
   );
 
   const handleRemoveReaction = useCallback(
-    async (reaction) => {
+    async (reaction: any) => {
       onRemoveReactionFromMessage({
         channelId,
         messageId,
@@ -864,7 +865,6 @@ function Message({
                         displayedThemeColor={displayedThemeColor}
                         extractedUrl={extractedUrl}
                         forceRefreshForMobile={forceRefreshForMobile}
-                        myId={myId}
                         messageId={messageId}
                         numMsgs={numMsgs}
                         isNotification={isNotification}
@@ -879,7 +879,6 @@ function Message({
                         subchannelId={subchannelId}
                         subjectId={subjectId}
                         thumbUrl={thumbUrl}
-                        targetMessage={targetMessage}
                         userCanEditThis={userCanEditThis}
                       />
                     )}

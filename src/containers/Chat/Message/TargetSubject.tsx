@@ -1,12 +1,12 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-TargetSubject.propTypes = {
-  subject: PropTypes.object.isRequired
-};
-
-export default function TargetSubject({ subject }) {
+export default function TargetSubject({
+  subject
+}: {
+  subject: { content: string };
+}) {
   return (
     <div
       style={{

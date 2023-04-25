@@ -26,7 +26,7 @@ export default function Invitation({
   sender: {
     id: number;
     username: string;
-    profilePicUrl: string;
+    profilePicUrl?: string;
   };
 }) {
   const [accepting, setAccepting] = useState(false);

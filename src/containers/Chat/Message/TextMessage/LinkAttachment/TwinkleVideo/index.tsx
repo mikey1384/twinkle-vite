@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect } from 'react';
 import Loading from '~/components/Loading';
 import XPVideoPlayer from '../../../XPVideoPlayer';
 import TwinkleVideoLink from './TwinkleVideoLink';
@@ -10,20 +9,18 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-TwinkleVideo.propTypes = {
-  messageId: PropTypes.number.isRequired,
-  onPlay: PropTypes.func,
-  style: PropTypes.object,
-  title: PropTypes.string,
-  videoId: PropTypes.number.isRequired
-};
-
 export default function TwinkleVideo({
   messageId,
   title,
   onPlay,
   style,
   videoId
+}: {
+  messageId: number;
+  title: string;
+  onPlay: () => void;
+  style: React.CSSProperties;
+  videoId: number;
 }) {
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);

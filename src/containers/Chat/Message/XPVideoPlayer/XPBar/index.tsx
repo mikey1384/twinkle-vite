@@ -1,5 +1,4 @@
-import { memo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import XPProgressBar from './XPProgressBar';
 import RewardLevelInfo from '../../RewardLevelInfo';
@@ -7,18 +6,6 @@ import { useContentState } from '~/helpers/hooks';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import Link from '~/components/Link';
-
-XPBar.propTypes = {
-  loaded: PropTypes.bool,
-  playing: PropTypes.bool,
-  rewardLevel: PropTypes.number,
-  reachedMaxWatchDuration: PropTypes.bool,
-  started: PropTypes.bool,
-  startingPosition: PropTypes.number,
-  userId: PropTypes.number,
-  videoId: PropTypes.number.isRequired,
-  xpWarningShown: PropTypes.bool
-};
 
 function XPBar({
   loaded,
@@ -30,6 +17,16 @@ function XPBar({
   reachedMaxWatchDuration,
   videoId,
   xpWarningShown
+}: {
+  loaded: boolean;
+  playing: boolean;
+  rewardLevel: number;
+  started: boolean;
+  startingPosition: number;
+  userId: number;
+  reachedMaxWatchDuration: boolean;
+  videoId: number;
+  xpWarningShown: boolean;
 }) {
   const { videoProgress = 0 } = useContentState({
     contentType: 'video',

@@ -1,15 +1,10 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import {
   limitBrs,
   processMentionLink,
   processedStringWithURL
 } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
-
-Spoiler.propTypes = {
-  content: PropTypes.string
-};
 
 export default function Spoiler({ content = '' }) {
   const [spoilerShown, setSpoilerShown] = useState(false);
@@ -21,6 +16,7 @@ export default function Spoiler({ content = '' }) {
     if ((content || '').startsWith('/secret ')) {
       return content.substring(8).length;
     }
+    return 0;
   }, [content]);
 
   const processedText = useMemo(() => {
@@ -30,6 +26,7 @@ export default function Spoiler({ content = '' }) {
     if ((content || '').startsWith('/secret ')) {
       return processedStringWithURL(content.substring(8));
     }
+    return '';
   }, [content]);
 
   const finalText = useMemo(

@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
@@ -12,14 +11,12 @@ const continueLabel = localize('continue');
 const watchingLabel = localize('watching');
 const perMinuteLabel = localize('perMinute');
 
-RewardAmountInfo.propTypes = {
-  rewardLevel: PropTypes.number,
-  startingPosition: PropTypes.number
-};
-
 export default function RewardAmountInfo({
   rewardLevel,
   startingPosition = 0
+}: {
+  rewardLevel: number;
+  startingPosition: number;
 }) {
   const theme = useKeyContext((v) => v.theme);
   const xpLevelColor = useMemo(

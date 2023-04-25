@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -21,21 +21,19 @@ const reactions = [
   'thumb'
 ];
 
-ReactionButton.propTypes = {
-  style: PropTypes.object,
-  onReactionClick: PropTypes.func,
-  onSetReactionsMenuShown: PropTypes.func,
-  reactionsMenuShown: PropTypes.bool
-};
-
 export default function ReactionButton({
   style,
   onReactionClick,
   onSetReactionsMenuShown,
   reactionsMenuShown
+}: {
+  style?: React.CSSProperties;
+  onReactionClick: (reaction: string) => void;
+  onSetReactionsMenuShown: (v: any) => void;
+  reactionsMenuShown: boolean;
 }) {
   const BarRef = useRef(null);
-  const coolDownRef = useRef(null);
+  const coolDownRef: React.MutableRefObject<any> = useRef(null);
   useOutsideClick(BarRef, () => {
     if (!deviceIsMobile || !reactionsMenuShown) return;
     coolDownRef.current = true;
@@ -122,13 +120,13 @@ export default function ReactionButton({
   function handleReactionBarShown() {
     if (coolDownRef.current) return;
     coolDownRef.current = true;
-    onSetReactionsMenuShown((shown) => !shown);
+    onSetReactionsMenuShown((shown: boolean) => !shown);
     setTimeout(() => {
       coolDownRef.current = false;
     }, 100);
   }
 
-  function handleReactionClick(reaction) {
+  function handleReactionClick(reaction: any) {
     onReactionClick(reaction);
     onSetReactionsMenuShown(false);
   }
