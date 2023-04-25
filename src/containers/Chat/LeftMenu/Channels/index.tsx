@@ -4,8 +4,7 @@ import React, {
   useEffect,
   useMemo,
   useRef,
-  useState,
-  RefObject
+  useState
 } from 'react';
 import Channel from './Channel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -38,8 +37,8 @@ function Channels({ currentPathId }: { currentPathId?: string | number }) {
 
   const [channelsLoading, setChannelsLoading] = useState(false);
   const [prevChannelIds, setPrevChannelIds] = useState(homeChannelIds);
-  const ChannelListRef: RefObject<any> = useRef(null);
-  const timeoutRef = useRef(0);
+  const ChannelListRef: React.RefObject<any> = useRef(null);
+  const timeoutRef: React.MutableRefObject<any> = useRef(0);
   const selectedChatTabRef = useRef('home');
   const loading = useRef(false);
   const channelIds = useMemo(() => {
