@@ -1,20 +1,10 @@
-import { useEffect, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ReactPlayer from 'react-player';
 import { v1 as uuidv1 } from 'uuid';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
-
-MediaPlayer.propTypes = {
-  messageId: PropTypes.number,
-  fileType: PropTypes.string,
-  onPause: PropTypes.func,
-  onPlay: PropTypes.func,
-  src: PropTypes.string,
-  thumbUrl: PropTypes.string
-};
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -25,6 +15,13 @@ export default function MediaPlayer({
   onPlay = () => {},
   src,
   thumbUrl
+}: {
+  messageId: number;
+  fileType: string;
+  onPause?: () => void;
+  onPlay?: () => void;
+  src: string;
+  thumbUrl: string;
 }) {
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onSetThumbUrl = useContentContext((v) => v.actions.onSetThumbUrl);
@@ -36,7 +33,7 @@ export default function MediaPlayer({
     contentId: messageId
   });
   const timeAtRef = useRef(0);
-  const PlayerRef = useRef(null);
+  const PlayerRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
     if (currentTime > 0) {
@@ -116,7 +113,7 @@ export default function MediaPlayer({
     }
   }
 
-  function handleThumbnailLoad(thumb) {
+  function handleThumbnailLoad(thumb: string) {
     const file = returnImageFileFromUrl({
       imageUrl: thumb
     });

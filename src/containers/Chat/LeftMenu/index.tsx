@@ -15,6 +15,18 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 
 const newChatLabel = localize('newChat');
 
+interface Props {
+  currentChannel: any;
+  currentPathId: string;
+  displayedThemeColor: string;
+  loadingVocabulary: boolean;
+  loadingAICardChat: boolean;
+  onNewButtonClick: () => void;
+  selectedChannelId: number;
+  subchannelIds: any[];
+  subchannelObj: any;
+  subchannelPath: string;
+}
 export default function LeftMenu({
   currentChannel,
   currentPathId,
@@ -26,7 +38,7 @@ export default function LeftMenu({
   subchannelIds,
   subchannelObj,
   subchannelPath
-}) {
+}: Props) {
   const { collectType } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,8 +46,7 @@ export default function LeftMenu({
     () =>
       matchPath(
         {
-          path: `/chat/${VOCAB_CHAT_TYPE}`,
-          exact: true
+          path: `/chat/${VOCAB_CHAT_TYPE}`
         },
         location.pathname
       ),
@@ -45,8 +56,7 @@ export default function LeftMenu({
     () =>
       matchPath(
         {
-          path: `/chat/${AI_CARD_CHAT_TYPE}`,
-          exact: true
+          path: `/chat/${AI_CARD_CHAT_TYPE}`
         },
         location.pathname
       ),

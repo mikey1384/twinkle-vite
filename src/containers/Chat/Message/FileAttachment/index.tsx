@@ -1,5 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import LocalContext from '../../Context';
 import FileInfo from './FileInfo';
 import ImagePreview from './ImagePreview';
@@ -10,15 +9,6 @@ import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useTheme } from '~/helpers/hooks';
 import { cloudFrontURL } from '~/constants/defaultValues';
 
-FileAttachment.propTypes = {
-  messageId: PropTypes.number,
-  fileName: PropTypes.string,
-  filePath: PropTypes.string,
-  fileSize: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  theme: PropTypes.string,
-  thumbUrl: PropTypes.string
-};
-
 export default function FileAttachment({
   messageId,
   fileName,
@@ -26,6 +16,13 @@ export default function FileAttachment({
   fileSize,
   theme,
   thumbUrl
+}: {
+  messageId: number;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  theme: string;
+  thumbUrl: string;
 }) {
   const {
     actions: { onSetMediaStarted }

@@ -1,16 +1,17 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import ImageModal from '~/components/Modals/ImageModal';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-ImagePreview.propTypes = {
-  src: PropTypes.string.isRequired,
-  fileName: PropTypes.string.isRequired,
-  onSetImageWorks: PropTypes.func.isRequired
-};
-
-export default function ImagePreview({ src, fileName, onSetImageWorks }) {
+export default function ImagePreview({
+  src,
+  fileName,
+  onSetImageWorks
+}: {
+  src: string;
+  fileName: string;
+  onSetImageWorks: (works: boolean) => void;
+}) {
   const [imageModalShown, setImageModalShown] = useState(false);
   return (
     <div

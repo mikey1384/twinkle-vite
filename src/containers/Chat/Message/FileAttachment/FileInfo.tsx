@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import {
@@ -11,15 +10,19 @@ import {
 import { useTheme } from '~/helpers/hooks';
 import { renderFileSize } from '~/helpers/stringHelpers';
 
-FileInfo.propTypes = {
-  fileName: PropTypes.string.isRequired,
-  fileType: PropTypes.string.isRequired,
-  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  src: PropTypes.string.isRequired,
-  theme: PropTypes.string
-};
-
-export default function FileInfo({ fileName, fileType, fileSize, src, theme }) {
+export default function FileInfo({
+  fileName,
+  fileType,
+  fileSize,
+  src,
+  theme
+}: {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  src: string;
+  theme?: string;
+}) {
   const {
     link: { color: linkColor }
   } = useTheme(theme);
@@ -86,8 +89,6 @@ export default function FileInfo({ fileName, fileType, fileSize, src, theme }) {
               }
             `}
             style={{
-              displahy: 'flex',
-              flexDirection: 'column',
               width: '100%'
             }}
           >
