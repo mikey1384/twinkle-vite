@@ -1,7 +1,13 @@
 import { VALID_GUESSES } from '../../constants/validGuesses';
 import { default as GraphemeSplitter } from 'grapheme-splitter';
 
-export const checkWordleAttemptStrictness = ({ guesses, solution }) => {
+export const checkWordleAttemptStrictness = ({
+  guesses,
+  solution
+}: {
+  guesses: string[];
+  solution: string;
+}) => {
   if (guesses.length === 1) return { isPass: true };
   let index = 1;
   while (index < guesses.length) {
@@ -37,14 +43,14 @@ export const checkWordleAttemptStrictness = ({ guesses, solution }) => {
   return { isPass: true };
 };
 
-export const isWordInWordList = (word) => {
+export const isWordInWordList = (word: string) => {
   return VALID_GUESSES.includes(word.toLowerCase());
 };
 
-export const unicodeSplit = (word) => {
+export const unicodeSplit = (word: string) => {
   return new GraphemeSplitter().splitGraphemes(word);
 };
 
-export const unicodeLength = (word) => {
+export const unicodeLength = (word: string) => {
   return unicodeSplit(word).length;
 };

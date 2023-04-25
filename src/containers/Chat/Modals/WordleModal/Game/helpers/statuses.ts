@@ -1,7 +1,13 @@
 import { unicodeSplit } from './words';
 
-export function getStatuses({ guesses, solution }) {
-  const charObj = {};
+export function getStatuses({
+  guesses,
+  solution
+}: {
+  guesses: string[];
+  solution: string;
+}) {
+  const charObj: Record<string, string> = {};
   const splitSolution = unicodeSplit(solution);
 
   guesses.forEach((word) => {
@@ -23,13 +29,19 @@ export function getStatuses({ guesses, solution }) {
   return charObj;
 }
 
-export function getGuessStatuses({ guess, solution }) {
+export function getGuessStatuses({
+  guess,
+  solution
+}: {
+  guess: string;
+  solution: string;
+}) {
   const splitSolution = unicodeSplit(solution);
   const splitGuess = unicodeSplit(guess);
 
   const statuses = Array.from(Array(guess.length));
   const indexesOnHold = [];
-  const correctLetters = {};
+  const correctLetters: Record<string, string | boolean> = {};
 
   for (let i = 0; i < splitGuess.length; i++) {
     const letter = splitGuess[i];

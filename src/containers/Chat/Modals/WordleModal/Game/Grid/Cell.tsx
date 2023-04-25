@@ -1,17 +1,7 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { borderRadius, Color } from '~/constants/css';
 import { REVEAL_TIME_MS } from '../../constants/settings';
 import { css } from '@emotion/css';
-
-Cell.propTypes = {
-  isCompleted: PropTypes.bool,
-  isRevealing: PropTypes.bool,
-  isWaving: PropTypes.bool,
-  status: PropTypes.string,
-  value: PropTypes.string,
-  position: PropTypes.number
-};
 
 export default function Cell({
   isCompleted,
@@ -20,6 +10,13 @@ export default function Cell({
   value,
   isWaving,
   position = 0
+}: {
+  isCompleted?: boolean;
+  isRevealing?: boolean;
+  status?: string;
+  value?: string;
+  isWaving?: boolean;
+  position?: number;
 }) {
   const shouldWave = isWaving && isCompleted;
   const shouldReveal = isRevealing && isCompleted;

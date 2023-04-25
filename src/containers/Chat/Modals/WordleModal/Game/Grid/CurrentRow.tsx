@@ -1,15 +1,16 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Cell from './Cell';
 import { unicodeSplit } from '../helpers/words';
 
-CurrentRow.propTypes = {
-  guess: PropTypes.string,
-  className: PropTypes.string,
-  maxWordLength: PropTypes.number
-};
-
-export default function CurrentRow({ guess, className, maxWordLength }) {
+export default function CurrentRow({
+  guess,
+  className,
+  maxWordLength
+}: {
+  guess: string;
+  className: string;
+  maxWordLength: number;
+}) {
   const splitGuess = unicodeSplit(guess);
   const emptyCells = useMemo(
     () =>

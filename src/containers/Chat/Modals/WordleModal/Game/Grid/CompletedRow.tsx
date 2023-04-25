@@ -1,20 +1,18 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Cell from './Cell';
 import { getGuessStatuses } from '../helpers/statuses';
 import { unicodeSplit } from '../helpers/words';
-
-CompletedRow.propTypes = {
-  guess: PropTypes.string.isRequired,
-  isRevealing: PropTypes.bool,
-  isWaving: PropTypes.bool,
-  solution: PropTypes.string
-};
 
 export default function CompletedRow({
   guess,
   isRevealing,
   isWaving,
   solution
+}: {
+  guess: string;
+  isRevealing: boolean;
+  isWaving: boolean;
+  solution: string;
 }) {
   const statuses = getGuessStatuses({ guess, solution });
   const splitGuess = unicodeSplit(guess);
