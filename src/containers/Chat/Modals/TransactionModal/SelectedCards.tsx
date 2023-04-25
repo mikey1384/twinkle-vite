@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import CardThumb from '~/components/CardThumb';
 import CloseButton from '~/components/Buttons/CloseButton';
@@ -8,16 +8,6 @@ import ShowMoreCardsButton from '~/components/Buttons/ShowMoreCardsButton';
 
 const deviceIsMobile = isMobile(navigator);
 
-SelectedCards.propTypes = {
-  selectedCardIds: PropTypes.array.isRequired,
-  style: PropTypes.object,
-  onDeselect: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  onShowAICardSelector: PropTypes.func.isRequired,
-  partnerId: PropTypes.number,
-  type: PropTypes.string.isRequired
-};
-
 export default function SelectedCards({
   selectedCardIds,
   style,
@@ -26,6 +16,14 @@ export default function SelectedCards({
   onSetAICardModalCardId,
   onShowAICardSelector,
   partnerId
+}: {
+  selectedCardIds: number[];
+  style?: React.CSSProperties;
+  type: 'want' | 'offer' | 'send';
+  onDeselect: (v: any) => any;
+  onSetAICardModalCardId: (v: any) => any;
+  onShowAICardSelector: () => any;
+  partnerId?: number;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const cardObj = useChatContext((v) => v.state.cardObj);

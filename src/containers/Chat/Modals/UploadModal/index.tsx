@@ -1,4 +1,4 @@
-import {
+import React, {
   memo,
   useCallback,
   useContext,
@@ -6,7 +6,6 @@ import {
   useMemo,
   useState
 } from 'react';
-import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
@@ -23,19 +22,18 @@ import {
 } from '~/helpers/stringHelpers';
 import LocalContext from '../../Context';
 
-UploadModal.propTypes = {
-  initialCaption: PropTypes.string,
-  isRespondingToSubject: PropTypes.bool,
-  channelId: PropTypes.number,
-  fileObj: PropTypes.object,
-  onHide: PropTypes.func.isRequired,
-  onUpload: PropTypes.func.isRequired,
-  recipientId: PropTypes.number,
-  replyTarget: PropTypes.object,
-  subjectId: PropTypes.number,
-  subchannelId: PropTypes.number
-};
-
+interface Props {
+  initialCaption?: string;
+  isRespondingToSubject?: boolean;
+  channelId?: number;
+  fileObj?: any;
+  onHide: () => any;
+  onUpload: () => any;
+  recipientId?: number;
+  replyTarget?: any;
+  subjectId?: number;
+  subchannelId?: number;
+}
 function UploadModal({
   initialCaption = '',
   isRespondingToSubject,
@@ -47,7 +45,7 @@ function UploadModal({
   recipientId,
   subjectId,
   subchannelId
-}) {
+}: Props) {
   const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
@@ -58,8 +56,8 @@ function UploadModal({
   } = useContext(LocalContext);
   const [caption, setCaption] = useState(initialCaption);
   const [imageUrl, setImageUrl] = useState('');
-  const [videoSrc, setVideoSrc] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [videoSrc, setVideoSrc] = useState('');
+  const [selectedFile, setSelectedFile] = useState<any>(null);
   const [videoThumbnail, setVideoThumbnail] = useState('');
   const { fileType } = useMemo(
     () => getFileInfoFromFileName(fileObj.name),
@@ -75,7 +73,7 @@ function UploadModal({
   useEffect(() => {
     if (fileType === 'image') {
       const reader = new FileReader();
-      reader.onload = (upload) => {
+      reader.onload = (upload: any) => {
         const extension = fileObj.name.split('.').pop();
         const payload = upload.target.result;
         if (extension === 'gif') {
@@ -198,7 +196,7 @@ function UploadModal({
           Cancel
         </Button>
         <Button
-          disabled={captionExceedsCharLimit || !selectedFile}
+          disabled={!!captionExceedsCharLimit || !selectedFile}
           color={doneColor}
           onClick={handleSubmit}
         >

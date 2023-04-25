@@ -1,24 +1,25 @@
-import { useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo } from 'react';
 import MyWant from './MyWant';
 import MyOffer from './MyOffer';
 import Options from './Options';
 
-TransactionInitiator.propTypes = {
-  coinAmountObj: PropTypes.object.isRequired,
-  isSelectAICardModalShown: PropTypes.bool,
-  onSetCoinAmountObj: PropTypes.func.isRequired,
-  onSetSelectedOption: PropTypes.func.isRequired,
-  onSetAICardModalType: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  onSetSelectedCardIdsObj: PropTypes.func.isRequired,
-  ModalRef: PropTypes.object,
-  partner: PropTypes.object.isRequired,
-  selectedCardIdsObj: PropTypes.object.isRequired,
-  selectedOption: PropTypes.string,
-  validSelectedWantCardIds: PropTypes.array.isRequired
-};
-
+interface Props {
+  coinAmountObj: {
+    want: number;
+    offer: number;
+  };
+  isSelectAICardModalShown: boolean;
+  onSetCoinAmountObj: (v: any) => any;
+  onSetSelectedOption: (v: any) => any;
+  onSetAICardModalType: (v: any) => any;
+  onSetAICardModalCardId: (v: any) => any;
+  onSetSelectedCardIdsObj: (v: any) => any;
+  ModalRef: React.RefObject<any>;
+  partner: any;
+  selectedCardIdsObj: any;
+  selectedOption: string;
+  validSelectedWantCardIds: any[];
+}
 export default function TransactionInitiator({
   coinAmountObj,
   isSelectAICardModalShown,
@@ -32,7 +33,7 @@ export default function TransactionInitiator({
   selectedCardIdsObj,
   selectedOption,
   validSelectedWantCardIds
-}) {
+}: Props) {
   const offerMenuShown = useMemo(() => {
     if (selectedOption === 'offer' || selectedOption === 'send') {
       return true;
@@ -70,7 +71,7 @@ export default function TransactionInitiator({
           style={{ marginTop: '3rem' }}
           coinAmount={coinAmountObj.want}
           onSetCoinAmount={(amount) =>
-            onSetCoinAmountObj((prevState) => ({
+            onSetCoinAmountObj((prevState: any) => ({
               ...prevState,
               want: amount
             }))
@@ -79,9 +80,9 @@ export default function TransactionInitiator({
           onSetAICardModalCardId={onSetAICardModalCardId}
           onShowAICardSelector={() => onSetAICardModalType('want')}
           onDeselect={(cardId) =>
-            onSetSelectedCardIdsObj((prevState) => ({
+            onSetSelectedCardIdsObj((prevState: any) => ({
               ...prevState,
-              want: prevState.want.filter((id) => id !== cardId)
+              want: prevState.want.filter((id: number) => id !== cardId)
             }))
           }
           partnerId={partner.id}
@@ -98,16 +99,16 @@ export default function TransactionInitiator({
           style={{ marginTop: '3rem' }}
           onSetAICardModalCardId={onSetAICardModalCardId}
           onSetCoinAmount={(amount) =>
-            onSetCoinAmountObj((prevState) => ({
+            onSetCoinAmountObj((prevState: any) => ({
               ...prevState,
               offer: amount
             }))
           }
           onShowAICardSelector={() => onSetAICardModalType('offer')}
           onDeselect={(cardId) =>
-            onSetSelectedCardIdsObj((prevState) => ({
+            onSetSelectedCardIdsObj((prevState: any) => ({
               ...prevState,
-              offer: prevState.offer.filter((id) => id !== cardId)
+              offer: prevState.offer.filter((id: number) => id !== cardId)
             }))
           }
         />

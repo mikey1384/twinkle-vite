@@ -1,5 +1,4 @@
-import { useRef, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef, useEffect } from 'react';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
@@ -8,20 +7,19 @@ import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
-MyOffer.propTypes = {
-  focusOnMount: PropTypes.bool,
-  coinAmount: PropTypes.number.isRequired,
-  isSelectAICardModalShown: PropTypes.bool,
-  onShowAICardSelector: PropTypes.func.isRequired,
-  selectedCardIds: PropTypes.array.isRequired,
-  selectedOption: PropTypes.string.isRequired,
-  onDeselect: PropTypes.func.isRequired,
-  onSetCoinAmount: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  ModalRef: PropTypes.object
-};
-
+interface Props {
+  focusOnMount?: boolean;
+  isSelectAICardModalShown: boolean;
+  coinAmount: number;
+  onShowAICardSelector: () => any;
+  selectedCardIds: any[];
+  selectedOption: string;
+  onDeselect: (v: any) => any;
+  onSetCoinAmount: (v: any) => any;
+  onSetAICardModalCardId: (v: any) => any;
+  style?: React.CSSProperties;
+  ModalRef: React.RefObject<any>;
+}
 export default function MyOffer({
   focusOnMount,
   isSelectAICardModalShown,
@@ -34,8 +32,8 @@ export default function MyOffer({
   onSetAICardModalCardId,
   style,
   ModalRef
-}) {
-  const ContainerRef = useRef(null);
+}: Props) {
+  const ContainerRef: React.RefObject<any> = useRef(null);
   useEffect(() => {
     if (focusOnMount) {
       if (!isSelectAICardModalShown) {
@@ -154,7 +152,7 @@ export default function MyOffer({
     </div>
   );
 
-  function handleAmountChange(amount) {
+  function handleAmountChange(amount: any) {
     const newAmount = Number(amount.replace(/[^0-9]/g, ''));
     const amounts = [newAmount, twinkleCoins];
     onSetCoinAmount(Math.min(...amounts));

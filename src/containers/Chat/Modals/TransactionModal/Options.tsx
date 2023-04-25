@@ -1,16 +1,14 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
-
-Options.propTypes = {
-  partnerName: PropTypes.string.isRequired,
-  onSelectOption: PropTypes.func.isRequired,
-  selectedOption: PropTypes.string.isRequired
-};
 
 export default function Options({
   partnerName,
   onSelectOption,
   selectedOption
+}: {
+  partnerName: string;
+  onSelectOption: (v: any) => any;
+  selectedOption: string;
 }) {
   return (
     <div>

@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
@@ -6,17 +6,6 @@ import SelectedCards from './SelectedCards';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
-
-MyWant.propTypes = {
-  coinAmount: PropTypes.number.isRequired,
-  style: PropTypes.object,
-  onSetCoinAmount: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  onShowAICardSelector: PropTypes.func.isRequired,
-  selectedCardIds: PropTypes.array.isRequired,
-  onDeselect: PropTypes.func.isRequired,
-  partnerId: PropTypes.number.isRequired
-};
 
 export default function MyWant({
   coinAmount,
@@ -27,6 +16,15 @@ export default function MyWant({
   selectedCardIds,
   onDeselect,
   partnerId
+}: {
+  coinAmount: number;
+  style?: React.CSSProperties;
+  onSetCoinAmount: (v: any) => any;
+  onSetAICardModalCardId: (v: any) => any;
+  onShowAICardSelector: () => any;
+  selectedCardIds: any[];
+  onDeselect: (v: any) => any;
+  partnerId: number;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   return (
@@ -129,7 +127,7 @@ export default function MyWant({
     </div>
   );
 
-  function handleAmountChange(amount) {
+  function handleAmountChange(amount: any) {
     const newAmount = Number(amount.replace(/[^0-9]/g, ''));
     onSetCoinAmount(Math.min(newAmount, 999_999_999));
   }

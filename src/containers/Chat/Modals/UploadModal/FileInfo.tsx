@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import Image from '~/components/Image';
 import FileIcon from '~/components/FileIcon';
@@ -10,15 +9,6 @@ import {
   renderFileSize
 } from '~/helpers/stringHelpers';
 
-FileInfo.propTypes = {
-  captionExceedsCharLimit: PropTypes.object,
-  caption: PropTypes.string,
-  fileObj: PropTypes.object.isRequired,
-  fileType: PropTypes.string,
-  imageUrl: PropTypes.string,
-  onCaptionChange: PropTypes.func.isRequired
-};
-
 export default function FileInfo({
   caption,
   captionExceedsCharLimit,
@@ -26,6 +16,13 @@ export default function FileInfo({
   fileType,
   imageUrl,
   onCaptionChange
+}: {
+  caption: string;
+  captionExceedsCharLimit: any;
+  fileObj: any;
+  fileType: string;
+  imageUrl: string;
+  onCaptionChange: any;
 }) {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -83,7 +80,7 @@ export default function FileInfo({
               ...(captionExceedsCharLimit?.style || {})
             }}
             value={caption}
-            onChange={(event) => onCaptionChange(event.target.value)}
+            onChange={(event: any) => onCaptionChange(event.target.value)}
             onKeyUp={handleKeyUp}
             minRows={3}
           />
@@ -103,7 +100,7 @@ export default function FileInfo({
     </div>
   );
 
-  function handleKeyUp(event) {
+  function handleKeyUp(event: any) {
     if (event.key === ' ') {
       onCaptionChange(addEmoji(event.target.value));
     }
