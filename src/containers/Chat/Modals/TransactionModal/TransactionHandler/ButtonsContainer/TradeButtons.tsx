@@ -1,19 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext } from '~/contexts';
-
-TradeButtons.propTypes = {
-  channelId: PropTypes.number.isRequired,
-  isDeclining: PropTypes.bool.isRequired,
-  myId: PropTypes.number.isRequired,
-  onAcceptTrade: PropTypes.func.isRequired,
-  onCounterPropose: PropTypes.func.isRequired,
-  onWithdrawTransaction: PropTypes.func.isRequired,
-  transactionId: PropTypes.number.isRequired
-};
 
 export default function TradeButtons({
   channelId,
@@ -23,13 +12,21 @@ export default function TradeButtons({
   onCounterPropose,
   onWithdrawTransaction,
   transactionId
+}: {
+  channelId: number;
+  isDeclining: boolean;
+  myId: number;
+  onAcceptTrade: () => any;
+  onCounterPropose: (v: any) => any;
+  onWithdrawTransaction: (v: any) => any;
+  transactionId: number;
 }) {
   const acceptTrade = useAppContext((v) => v.requestHelpers.acceptTrade);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [checking, setChecking] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
-  const [disableReasonObj, setDisableReasonObj] = useState({});
+  const [disableReasonObj, setDisableReasonObj] = useState<any>({});
   const checkTransactionPossible = useAppContext(
     (v) => v.requestHelpers.checkTransactionPossible
   );

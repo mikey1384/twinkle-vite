@@ -1,16 +1,6 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-
-ProposeTradeButtons.propTypes = {
-  style: PropTypes.object,
-  onCounterPropose: PropTypes.func.isRequired,
-  onCloseTransaction: PropTypes.func.isRequired,
-  partner: PropTypes.object.isRequired,
-  type: PropTypes.string.isRequired,
-  withdrawing: PropTypes.bool
-};
 
 export default function ProposeTradeButtons({
   style,
@@ -19,6 +9,13 @@ export default function ProposeTradeButtons({
   partner,
   type,
   withdrawing
+}: {
+  style: React.CSSProperties;
+  onCounterPropose: (v: any) => any;
+  onCloseTransaction: (v: any) => any;
+  partner: any;
+  type: string;
+  withdrawing: boolean;
 }) {
   const promptText = useMemo(() => {
     if (type === 'trade') {

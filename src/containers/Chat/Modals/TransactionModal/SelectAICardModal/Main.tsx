@@ -1,28 +1,26 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import CardItem from './CardItem';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-Main.propTypes = {
-  aiCardModalType: PropTypes.string,
-  cards: PropTypes.array,
-  loading: PropTypes.bool,
-  loadFilteredAICards: PropTypes.func.isRequired,
-  myUsername: PropTypes.string,
-  partnerName: PropTypes.string,
-  selectedCardIds: PropTypes.array,
-  successColor: PropTypes.string,
-  loadMoreShown: PropTypes.bool,
-  onSetCardIds: PropTypes.func.isRequired,
-  onSetLoadMoreShown: PropTypes.func.isRequired,
-  onSetSelectedCardIds: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  onUpdateAICard: PropTypes.func.isRequired
-};
-
+interface Props {
+  aiCardModalType: string;
+  cards: any[];
+  loading: boolean;
+  loadFilteredAICards: (v: any) => any;
+  myUsername: string;
+  partnerName: string;
+  selectedCardIds: any[];
+  successColor: string;
+  loadMoreShown: boolean;
+  onSetCardIds: (v: any) => any;
+  onSetLoadMoreShown: (v: any) => any;
+  onSetSelectedCardIds: (v: any) => any;
+  onSetAICardModalCardId: (v: any) => any;
+  onUpdateAICard: (v: any) => any;
+}
 export default function Main({
   aiCardModalType,
   cards,
@@ -38,7 +36,7 @@ export default function Main({
   onSetSelectedCardIds,
   onSetAICardModalCardId,
   onUpdateAICard
-}) {
+}: Props) {
   const [loadingMore, setLoadingMore] = useState(false);
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
@@ -51,10 +49,13 @@ export default function Main({
             card={card}
             selected={selectedCardIds.includes(card.id)}
             onSelect={() =>
-              onSetSelectedCardIds((prevIds) => [...prevIds, card.id])
+              onSetSelectedCardIds((prevIds: { id: number }[]) => [
+                ...prevIds,
+                card.id
+              ])
             }
             onDeselect={() =>
-              onSetSelectedCardIds((prevIds) =>
+              onSetSelectedCardIds((prevIds: { id: number }[]) =>
                 prevIds.filter((id) => id !== card.id)
               )
             }
@@ -111,9 +112,9 @@ export default function Main({
     for (let card of newCards) {
       onUpdateAICard({ cardId: card.id, newState: card });
     }
-    onSetCardIds((prevCardIds) => [
+    onSetCardIds((prevCardIds: number[]) => [
       ...prevCardIds,
-      ...newCards.map((card) => card.id)
+      ...newCards.map((card: { id: number }) => card.id)
     ]);
     onSetLoadMoreShown(loadMoreShown);
     setLoadingMore(false);
