@@ -1,16 +1,8 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { useState } from 'react';
 import { Color } from '~/constants/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-
-RewindRequestButton.propTypes = {
-  isMyMessage: PropTypes.bool.isRequired,
-  onCancelRewindRequest: PropTypes.func.isRequired,
-  onAcceptRewind: PropTypes.func.isRequired,
-  onDeclineRewind: PropTypes.func.isRequired,
-  username: PropTypes.string.isRequired
-};
 
 export default function RewindRequestButton({
   isMyMessage,
@@ -18,6 +10,12 @@ export default function RewindRequestButton({
   onAcceptRewind,
   onDeclineRewind,
   username
+}: {
+  isMyMessage: boolean;
+  onCancelRewindRequest: () => void;
+  onAcceptRewind: (chessState: any) => void;
+  onDeclineRewind: () => void;
+  username: string;
 }) {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);

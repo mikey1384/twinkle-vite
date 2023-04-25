@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import PropTypes from 'prop-types';
 import Game from './Game';
 import FallenPieces from './FallenPieces';
@@ -26,37 +32,36 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
 
-Chess.propTypes = {
-  channelId: PropTypes.number,
-  rewindRequestMessageSenderId: PropTypes.number,
-  countdownNumber: PropTypes.number,
-  gameWinnerId: PropTypes.number,
-  interactable: PropTypes.bool,
-  initialState: PropTypes.object,
-  isFromModal: PropTypes.bool,
-  lastChessMessageId: PropTypes.number,
-  loaded: PropTypes.bool,
-  messageId: PropTypes.number,
-  moveViewed: PropTypes.bool,
-  myId: PropTypes.number,
-  newChessState: PropTypes.object,
-  onBoardClick: PropTypes.func,
-  onChessMove: PropTypes.func,
-  onAcceptRewind: PropTypes.func,
-  onCancelRewindRequest: PropTypes.func,
-  onDeclineRewind: PropTypes.func,
-  onDiscussClick: PropTypes.func,
-  onRewindClick: PropTypes.func,
-  onSpoilerClick: PropTypes.func,
-  opponentId: PropTypes.number,
-  opponentName: PropTypes.string,
-  rewindRequestId: PropTypes.number,
-  senderId: PropTypes.number,
-  senderName: PropTypes.string,
-  spoilerOff: PropTypes.bool,
-  style: PropTypes.object
-};
-
+interface Props {
+  channelId: number;
+  rewindRequestMessageSenderId: number;
+  countdownNumber: number;
+  gameWinnerId: number;
+  interactable: boolean;
+  initialState: any;
+  isFromModal: boolean;
+  lastChessMessageId: number;
+  loaded: boolean;
+  messageId: number;
+  moveViewed: boolean;
+  myId: number;
+  newChessState: any;
+  onBoardClick: () => void;
+  onChessMove: (v: any) => void;
+  onAcceptRewind: (v: any) => void;
+  onCancelRewindRequest: () => void;
+  onDeclineRewind: () => void;
+  onDiscussClick: () => void;
+  onRewindClick: () => void;
+  onSpoilerClick: (v: number) => void;
+  opponentId: number;
+  opponentName: string;
+  rewindRequestId: number;
+  senderId: number;
+  senderName: string;
+  spoilerOff: boolean;
+  style: React.CSSProperties;
+}
 export default function Chess({
   countdownNumber,
   channelId,
@@ -84,7 +89,7 @@ export default function Chess({
   senderName,
   spoilerOff,
   style
-}) {
+}: Props) {
   const { userId, banned } = useKeyContext((v) => v.myState);
   const creatingNewDMChannel = useChatContext(
     (v) => v.state.creatingNewDMChannel
@@ -94,20 +99,20 @@ export default function Chess({
     [userId]: 'white',
     [opponentId]: 'black'
   });
-  const [squares, setSquares] = useState([]);
+  const [squares, setSquares] = useState<any[]>([]);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
-  const [whiteFallenPieces, setWhiteFallenPieces] = useState([]);
-  const [blackFallenPieces, setBlackFallenPieces] = useState([]);
+  const [whiteFallenPieces, setWhiteFallenPieces] = useState<any[]>([]);
+  const [blackFallenPieces, setBlackFallenPieces] = useState<any[]>([]);
   const [highlighted, setHighlighted] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [status, setStatus] = useState('');
-  const [gameOverMsg, setGameOverMsg] = useState();
-  const fallenPieces = useRef({
+  const [gameOverMsg, setGameOverMsg] = useState('');
+  const fallenPieces: React.MutableRefObject<any> = useRef({
     white: [],
     black: []
   });
-  const enPassantTarget = useRef(null);
-  const capturedPiece = useRef(null);
+  const enPassantTarget: React.MutableRefObject<any> = useRef(null);
+  const capturedPiece: React.MutableRefObject<any> = useRef(null);
   const boardState = useMemo(
     () => (initialState ? { ...initialState } : null),
     [initialState]
@@ -239,7 +244,21 @@ export default function Chess({
   ]);
 
   const handleMove = useCallback(
-    ({ newSquares, dest, isCheck, isDraw, isCheckmate, isStalemate }) => {
+    ({
+      newSquares,
+      dest,
+      isCheck,
+      isDraw,
+      isCheckmate,
+      isStalemate
+    }: {
+      newSquares: any[];
+      dest?: number;
+      isCheck: boolean;
+      isDraw?: boolean;
+      isCheckmate: boolean;
+      isStalemate: boolean;
+    }) => {
       const moveNumber = move.number ? move.number + 1 : 1;
       const moveDetail =
         typeof dest === 'number'
@@ -295,10 +314,20 @@ export default function Chess({
   );
 
   const processResult = useCallback(
-    ({ myKingIndex, newSquares, dest, src }) => {
+    ({
+      myKingIndex,
+      newSquares,
+      dest,
+      src
+    }: {
+      myKingIndex: number;
+      newSquares: any[];
+      dest?: number;
+      src?: number;
+    }) => {
       let isCheck = false;
-      const newWhiteFallenPieces = [...whiteFallenPieces];
-      const newBlackFallenPieces = [...blackFallenPieces];
+      const newWhiteFallenPieces: any[] = [...whiteFallenPieces];
+      const newBlackFallenPieces: any[] = [...blackFallenPieces];
       const potentialCapturers = kingWillBeCapturedBy({
         kingIndex: myKingIndex,
         myColor,
@@ -323,7 +352,7 @@ export default function Chess({
         return {};
       }
       if (typeof dest === 'number') {
-        if (squares[src].type === 'pawn') {
+        if (typeof src === 'number' && squares[src].type === 'pawn') {
           if (enPassantTarget.current) {
             const srcColumn = src % 8;
             const destRow = Math.floor(dest / 8);
@@ -380,11 +409,13 @@ export default function Chess({
         black: newBlackFallenPieces
       };
       setStatus('');
-      const target =
-        newSquares[dest]?.type === 'pawn' && dest === src - 16
-          ? 63 - dest
-          : null;
-      enPassantTarget.current = target;
+      if (typeof dest === 'number' && typeof src === 'number') {
+        const target =
+          newSquares[dest]?.type === 'pawn' && dest === src - 16
+            ? 63 - dest
+            : null;
+        enPassantTarget.current = target;
+      }
       const gameOver = isGameOver({
         squares: newSquares,
         enPassantTarget: enPassantTarget.current,
@@ -414,32 +445,30 @@ export default function Chess({
   );
 
   const handleClick = useCallback(
-    (i) => {
+    (index: number) => {
       if (!interactable || newChessState || userMadeLastMove) return;
       if (selectedIndex === -1) {
-        if (!squares[i] || squares[i].color !== myColor) {
+        if (!squares[index] || squares[index].color !== myColor) {
           return;
         }
         setSquares((squares) =>
           highlightPossiblePathsFromSrc({
-            color: myColor,
             squares,
-            src: i,
+            src: index,
             enPassantTarget: enPassantTarget.current,
             myColor
           })
         );
         setStatus('');
-        setSelectedIndex(i);
+        setSelectedIndex(index);
       } else {
-        if (squares[i] && squares[i].color === myColor) {
-          setSelectedIndex(i);
+        if (squares[index] && squares[index].color === myColor) {
+          setSelectedIndex(index);
           setStatus('');
           setSquares((squares) =>
             highlightPossiblePathsFromSrc({
-              color: myColor,
               squares,
-              src: i,
+              src: index,
               enPassantTarget: enPassantTarget.current,
               myColor
             })
@@ -448,7 +477,7 @@ export default function Chess({
           if (
             isPossibleAndLegal({
               src: selectedIndex,
-              dest: i,
+              dest: index,
               squares,
               enPassantTarget: enPassantTarget.current,
               myColor
@@ -457,8 +486,7 @@ export default function Chess({
             const newSquares = returnBoardAfterMove({
               squares,
               src: selectedIndex,
-              dest: i,
-              myColor,
+              dest: index,
               enPassantTarget: enPassantTarget.current
             });
             const myKingIndex = getPieceIndex({
@@ -470,13 +498,13 @@ export default function Chess({
               processResult({
                 myKingIndex,
                 newSquares,
-                dest: i,
+                dest: index,
                 src: selectedIndex
               });
             if (moved) {
               handleMove({
                 newSquares,
-                dest: i,
+                dest: index,
                 isCheck,
                 isCheckmate,
                 isStalemate,
@@ -520,7 +548,7 @@ export default function Chess({
   ]);
 
   const handleCastling = useCallback(
-    (direction) => {
+    (direction: string) => {
       const actualSquares = squares.map((square) =>
         square.isPiece ? square : {}
       );
@@ -592,12 +620,10 @@ export default function Chess({
           squares: actualSquares,
           src: kingPos,
           dest: kingEndDest,
-          myColor,
           isCastling: true
         }),
         src: rookPos,
         dest: rookDest,
-        myColor,
         kingEndDest,
         isCastling: true
       });

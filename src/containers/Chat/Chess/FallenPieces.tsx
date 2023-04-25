@@ -1,19 +1,20 @@
-import { memo, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useMemo } from 'react';
 import Square from './Square';
 import getPiece from './helpers/piece';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
-FallenPieces.propTypes = {
-  whiteFallenPieces: PropTypes.array,
-  blackFallenPieces: PropTypes.array,
-  myColor: PropTypes.string
-};
-
-function FallenPieces({ whiteFallenPieces, blackFallenPieces, myColor }) {
+function FallenPieces({
+  whiteFallenPieces,
+  blackFallenPieces,
+  myColor
+}: {
+  whiteFallenPieces?: any[];
+  blackFallenPieces?: any[];
+  myColor: string;
+}) {
   const whiteFallenPiecesCompressed = useMemo(() => {
-    const whiteFallenHash = {};
+    const whiteFallenHash: Record<string, any> = {};
     if (whiteFallenPieces) {
       for (let piece of whiteFallenPieces) {
         if (!whiteFallenHash[piece.type]) {
@@ -27,7 +28,7 @@ function FallenPieces({ whiteFallenPieces, blackFallenPieces, myColor }) {
   }, [whiteFallenPieces]);
 
   const blackFallenPiecesCompressed = useMemo(() => {
-    const blackFallenHash = {};
+    const blackFallenHash: Record<string, any> = {};
     if (blackFallenPieces) {
       for (let piece of blackFallenPieces) {
         if (!blackFallenHash[piece.type]) {
@@ -49,7 +50,6 @@ function FallenPieces({ whiteFallenPieces, blackFallenPieces, myColor }) {
             return (
               <Square
                 key={index}
-                piece={fallenPiece}
                 className={css`
                   height: 4rem;
                   width: 4rem;
@@ -73,7 +73,6 @@ function FallenPieces({ whiteFallenPieces, blackFallenPieces, myColor }) {
             return (
               <Square
                 key={index}
-                piece={fallenPiece}
                 className={css`
                   height: 4rem;
                   width: 4rem;
