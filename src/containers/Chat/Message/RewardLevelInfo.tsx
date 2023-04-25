@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import Icon from '~/components/Icon';
 import { useContentState } from '~/helpers/hooks';
@@ -11,20 +10,18 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-RewardLevelInfo.propTypes = {
-  playing: PropTypes.bool,
-  reachedMaxWatchDuration: PropTypes.bool,
-  rewardLevel: PropTypes.number,
-  videoId: PropTypes.number.isRequired,
-  xpWarningShown: PropTypes.bool
-};
-
 export default function RewardLevelInfo({
   playing,
   reachedMaxWatchDuration,
   rewardLevel,
   videoId,
   xpWarningShown
+}: {
+  playing: boolean;
+  reachedMaxWatchDuration: boolean;
+  rewardLevel: number;
+  videoId: number;
+  xpWarningShown: boolean;
 }) {
   const theme = useKeyContext((v) => v.theme);
   const { numCoinsEarned = 0, numXpEarned = 0 } = useContentState({

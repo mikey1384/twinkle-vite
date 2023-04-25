@@ -1,16 +1,17 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { rewardReasons } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-RewardMessage.propTypes = {
-  rewardReason: PropTypes.number,
-  rewardAmount: PropTypes.number
-};
-
-export default function RewardMessage({ rewardReason, rewardAmount }) {
+export default function RewardMessage({
+  rewardReason,
+  rewardAmount
+}: {
+  rewardReason: number;
+  rewardAmount: number;
+}) {
   return (
     <div
       className={css`

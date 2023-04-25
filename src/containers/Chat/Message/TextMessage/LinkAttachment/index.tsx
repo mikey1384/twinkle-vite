@@ -1,5 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import request from 'axios';
 import ReactPlayer from 'react-player/youtube';
 import Icon from '~/components/Icon';
@@ -23,15 +29,6 @@ const fallbackImage = '/img/link.png';
 const API_URL = `${URL}/content`;
 const deviceIsMobile = isMobile(navigator);
 
-LinkAttachment.propTypes = {
-  messageId: PropTypes.number,
-  defaultThumbUrl: PropTypes.string,
-  extractedUrl: PropTypes.string,
-  onHideAttachment: PropTypes.func,
-  style: PropTypes.object,
-  userCanEditThis: PropTypes.bool
-};
-
 function LinkAttachment({
   messageId,
   defaultThumbUrl,
@@ -39,6 +36,13 @@ function LinkAttachment({
   onHideAttachment = () => {},
   style,
   userCanEditThis
+}: {
+  messageId: number;
+  defaultThumbUrl: string;
+  extractedUrl: string;
+  onHideAttachment?: () => void;
+  style: React.CSSProperties;
+  userCanEditThis: boolean;
 }) {
   const makeThumbnailSecure = useAppContext(
     (v) => v.requestHelpers.makeThumbnailSecure
@@ -105,7 +109,7 @@ function LinkAttachment({
         : '',
     [url, isYouTube]
   );
-  const YTPlayerRef = useRef(null);
+  const YTPlayerRef: React.RefObject<any> = useRef(null);
   const loadingRef = useRef(false);
 
   useEffect(() => {
@@ -151,7 +155,7 @@ function LinkAttachment({
           title: ytDetails.ytTitle
         });
         return Promise.resolve();
-      } catch (error) {
+      } catch (error: any) {
         console.error(error.response || error);
         return Promise.reject();
       }

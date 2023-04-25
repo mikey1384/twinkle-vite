@@ -1,5 +1,4 @@
-import { memo, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -10,15 +9,6 @@ import localize from '~/constants/localize';
 const chessEndedInDrawLabel = localize('chessEndedInDraw');
 const chessWasAbortedLabel = localize('chessWasAborted');
 
-GameOverMessage.propTypes = {
-  opponentName: PropTypes.string,
-  myId: PropTypes.number.isRequired,
-  winnerId: PropTypes.number,
-  isAbort: PropTypes.bool,
-  isDraw: PropTypes.bool,
-  isResign: PropTypes.bool
-};
-
 function GameOverMessage({
   myId,
   opponentName,
@@ -26,6 +16,13 @@ function GameOverMessage({
   isAbort,
   isDraw,
   isResign
+}: {
+  myId: number;
+  opponentName: string;
+  winnerId: number;
+  isAbort: boolean;
+  isDraw: boolean;
+  isResign: boolean;
 }) {
   const {
     abort: { color: abortColor },

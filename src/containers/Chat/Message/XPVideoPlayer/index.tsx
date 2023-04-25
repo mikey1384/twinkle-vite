@@ -1,5 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import ReactPlayer from 'react-player/youtube';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import XPBar from './XPBar';
@@ -15,15 +21,6 @@ import {
 
 const intervalLength = 2000;
 
-XPVideoPlayer.propTypes = {
-  loaded: PropTypes.bool,
-  onPlay: PropTypes.func,
-  rewardLevel: PropTypes.number,
-  style: PropTypes.object,
-  videoCode: PropTypes.string.isRequired,
-  videoId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
-};
-
 function XPVideoPlayer({
   loaded,
   rewardLevel,
@@ -31,6 +28,13 @@ function XPVideoPlayer({
   style = {},
   videoCode,
   videoId
+}: {
+  loaded: boolean;
+  rewardLevel: number;
+  onPlay: () => void;
+  style?: React.CSSProperties;
+  videoCode: string;
+  videoId: number;
 }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const addVideoView = useAppContext((v) => v.requestHelpers.addVideoView);
@@ -105,9 +109,9 @@ function XPVideoPlayer({
   const [myViewDuration, setMyViewDuration] = useState(0);
   const [xpWarningShown, setXpWarningShown] = useState(false);
   const requiredDurationForCoin = 60;
-  const PlayerRef = useRef(null);
-  const timerRef = useRef(null);
-  const timerRef2 = useRef(null);
+  const PlayerRef: React.RefObject<any> = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const timerRef2: React.MutableRefObject<any> = useRef(null);
   const timeWatchedRef = useRef(prevTimeWatched);
   const totalDurationRef = useRef(0);
   const userIdRef = useRef(userId);
@@ -210,7 +214,7 @@ function XPVideoPlayer({
   }, [myViewDuration]);
 
   const handleIncreaseMeter = useCallback(
-    async ({ userId }) => {
+    async ({ userId }: { userId: number }) => {
       const timeAt = PlayerRef.current.getCurrentTime();
       if (!totalDurationRef.current) {
         onVideoReady();
@@ -250,7 +254,7 @@ function XPVideoPlayer({
             });
             onSetUserState({ userId, newState: { twinkleCoins: coins } });
             rewardingCoin.current = false;
-          } catch (error) {
+          } catch (error: any) {
             console.error(error.response || error);
             rewardingCoin.current = false;
           }
@@ -274,7 +278,7 @@ function XPVideoPlayer({
             }
             rewardingXP.current = false;
             rewarded = true;
-          } catch (error) {
+          } catch (error: any) {
             console.error(error.response || error);
             rewardingXP.current = false;
           }
@@ -324,7 +328,7 @@ function XPVideoPlayer({
   );
 
   const onVideoPlay = useCallback(
-    async ({ userId }) => {
+    async ({ userId }: { userId: number }) => {
       onSetMediaStarted({
         contentType: 'video',
         contentId: videoId,

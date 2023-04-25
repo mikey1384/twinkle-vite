@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ProgressBar from '~/components/ProgressBar';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
@@ -9,16 +8,6 @@ import localize from '~/constants/localize';
 
 const notGainXPLabel = localize('notGainXP');
 
-XPProgressBar.propTypes = {
-  playing: PropTypes.bool,
-  rewardLevel: PropTypes.number,
-  started: PropTypes.bool,
-  startingPosition: PropTypes.number,
-  userId: PropTypes.number,
-  xpWarningShown: PropTypes.bool,
-  videoProgress: PropTypes.number
-};
-
 export default function XPProgressBar({
   playing,
   rewardLevel,
@@ -27,6 +16,14 @@ export default function XPProgressBar({
   userId,
   videoProgress,
   xpWarningShown
+}: {
+  playing: boolean;
+  rewardLevel: number;
+  started: boolean;
+  startingPosition: number;
+  userId: number;
+  videoProgress: number;
+  xpWarningShown: boolean;
 }) {
   const theme = useKeyContext((v) => v.theme);
   const xpLevelColor = useMemo(

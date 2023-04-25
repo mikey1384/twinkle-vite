@@ -12,10 +12,10 @@ export default function RewindRequestButton({
   username
 }: {
   isMyMessage: boolean;
-  onCancelRewindRequest: () => void;
+  onCancelRewindRequest?: () => void;
   onAcceptRewind: (chessState: any) => void;
-  onDeclineRewind: () => void;
-  username: string;
+  onDeclineRewind?: () => void;
+  username?: string;
 }) {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
@@ -44,7 +44,7 @@ export default function RewindRequestButton({
             <Button
               onClick={() => {
                 setIsCanceling(true);
-                onCancelRewindRequest();
+                onCancelRewindRequest?.();
               }}
               loading={isCanceling}
               style={{ paddingBottom: '0.5rem' }}
@@ -72,7 +72,7 @@ export default function RewindRequestButton({
             <Button
               onClick={() => {
                 setIsDeclining(true);
-                onDeclineRewind();
+                onDeclineRewind?.();
               }}
               loading={isDeclining}
               style={{ paddingBottom: '0.5rem' }}

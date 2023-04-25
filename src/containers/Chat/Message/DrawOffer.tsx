@@ -1,17 +1,19 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
-DrawOffer.propTypes = {
-  myId: PropTypes.number,
-  onClick: PropTypes.func.isRequired,
-  userId: PropTypes.number,
-  username: PropTypes.string
-};
-
-export default function DrawOffer({ onClick, username, userId, myId }) {
+export default function DrawOffer({
+  onClick,
+  username,
+  userId,
+  myId
+}: {
+  onClick: () => void;
+  username: string;
+  userId: number;
+  myId: number;
+}) {
   const displayedUserLabel = useMemo(() => {
     if (userId === myId) {
       if (SELECTED_LANGUAGE === 'kr') {

@@ -1,5 +1,10 @@
-import { memo, useContext, useCallback, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, {
+  memo,
+  useContext,
+  useCallback,
+  useEffect,
+  useMemo
+} from 'react';
 import Button from '~/components/Button';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -14,30 +19,29 @@ import LocalContext from '../../Context';
 
 const deviceIsMobile = isMobile(navigator);
 
-TextMessage.propTypes = {
-  attachmentHidden: PropTypes.bool,
-  channelId: PropTypes.number,
-  content: PropTypes.string.isRequired,
-  displayedThemeColor: PropTypes.string,
-  extractedUrl: PropTypes.string,
-  isNotification: PropTypes.bool,
-  isReloadedSubject: PropTypes.bool,
-  isSubject: PropTypes.bool,
-  forceRefreshForMobile: PropTypes.func,
-  messageId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  MessageStyle: PropTypes.object,
-  numMsgs: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  isEditing: PropTypes.bool,
-  onEditCancel: PropTypes.func.isRequired,
-  onEditDone: PropTypes.func.isRequired,
-  onShowSubjectMsgsModal: PropTypes.func.isRequired,
-  socketConnected: PropTypes.bool,
-  subchannelId: PropTypes.number,
-  subjectId: PropTypes.number,
-  thumbUrl: PropTypes.string,
-  userCanEditThis: PropTypes.bool
-};
-
+interface Props {
+  attachmentHidden: boolean;
+  channelId: number;
+  content: string;
+  displayedThemeColor: string;
+  extractedUrl: string;
+  isNotification: boolean;
+  isReloadedSubject: boolean;
+  isSubject: boolean;
+  forceRefreshForMobile: () => void;
+  messageId: number;
+  MessageStyle: any;
+  numMsgs: number;
+  isEditing: boolean;
+  onEditCancel: () => void;
+  onEditDone: (content: string) => void;
+  onShowSubjectMsgsModal: (v: any) => void;
+  socketConnected: boolean;
+  subchannelId: number;
+  subjectId: number;
+  thumbUrl: string;
+  userCanEditThis: boolean;
+}
 function TextMessage({
   attachmentHidden,
   channelId,
@@ -60,7 +64,7 @@ function TextMessage({
   subchannelId,
   thumbUrl,
   userCanEditThis
-}) {
+}: Props) {
   const {
     requests: { hideChatAttachment },
     actions: { onHideAttachment }
