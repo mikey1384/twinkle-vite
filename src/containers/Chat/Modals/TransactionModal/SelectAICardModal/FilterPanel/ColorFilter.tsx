@@ -1,19 +1,16 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import { Color } from '~/constants/css';
 import { capitalize } from '~/helpers/stringHelpers';
-
-ColorFilter.propTypes = {
-  selectedColor: PropTypes.string,
-  onSelectColor: PropTypes.func,
-  onDropdownShown: PropTypes.func
-};
 
 export default function ColorFilter({
   selectedColor = 'any',
   onSelectColor,
   onDropdownShown
+}: {
+  selectedColor?: string;
+  onSelectColor: (v: string) => void;
+  onDropdownShown: () => void;
 }) {
   const menuProps = useMemo(() => {
     const colors = ['any', 'blue', 'pink', 'orange', 'magenta', 'gold'];
@@ -51,7 +48,6 @@ export default function ColorFilter({
       <div className="label">Color</div>
       <div style={{ marginTop: '0.5rem' }}>
         <DropdownButton
-          mobilePadding="0.5rem 1rem"
           skeuomorphic
           color={
             selectedColor === 'any'

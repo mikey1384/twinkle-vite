@@ -1,19 +1,16 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import { Color } from '~/constants/css';
 import { capitalize } from '~/helpers/stringHelpers';
-
-QualityFilter.propTypes = {
-  selectedQuality: PropTypes.string,
-  onSelectQuality: PropTypes.func,
-  onDropdownShown: PropTypes.func
-};
 
 export default function QualityFilter({
   selectedQuality = 'any',
   onSelectQuality,
   onDropdownShown
+}: {
+  selectedQuality?: string;
+  onSelectQuality: (v: string) => void;
+  onDropdownShown: () => void;
 }) {
   const menuProps = useMemo(() => {
     const qualities = [
