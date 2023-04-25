@@ -1,20 +1,18 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ColorFilter from './ColorFilter';
 import QualityFilter from './QualityFilter';
 import WordFilter from './WordFilter';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
-FilterPanel.propTypes = {
-  filters: PropTypes.object.isRequired,
-  onDropdownShown: PropTypes.func.isRequired,
-  onSetFilters: PropTypes.func.isRequired
-};
-
 export default function FilterPanel({
   filters,
   onDropdownShown,
   onSetFilters
+}: {
+  filters: any;
+  onDropdownShown: () => void;
+  onSetFilters: (filters: any) => void;
 }) {
   return (
     <div
@@ -64,22 +62,22 @@ export default function FilterPanel({
     </div>
   );
 
-  function handleSelectColor(color) {
-    onSetFilters((prevFilters) => ({
+  function handleSelectColor(color: string) {
+    onSetFilters((prevFilters: any) => ({
       ...prevFilters,
       color
     }));
   }
 
-  function handleSelectQuality(quality) {
-    onSetFilters((prevFilters) => ({
+  function handleSelectQuality(quality: string) {
+    onSetFilters((prevFilters: any) => ({
       ...prevFilters,
       quality
     }));
   }
 
-  function handleSelectWord(word) {
-    onSetFilters((prevFilters) => ({
+  function handleSelectWord(word: string) {
+    onSetFilters((prevFilters: any) => ({
       ...prevFilters,
       word
     }));
