@@ -193,9 +193,10 @@ export default function Main({
             contentId: parent.contentId,
             contentType: parent.contentType
           });
-          setIsLoadingMore(false);
         } catch (error) {
           console.error(error.response || error);
+        } finally {
+          setIsLoadingMore(false);
         }
       }
     }
