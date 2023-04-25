@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -7,18 +6,16 @@ import { useWordleLabels } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import moment from 'moment';
 
-WordleResult.propTypes = {
-  username: PropTypes.string.isRequired,
-  userId: PropTypes.number.isRequired,
-  timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  wordleResult: PropTypes.object.isRequired
-};
-
 export default function WordleResult({
   userId,
   username,
   timeStamp,
   wordleResult
+}: {
+  userId: number;
+  username: string;
+  timeStamp: number;
+  wordleResult: any;
 }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
   const { numGuesses } = wordleResult;

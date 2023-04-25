@@ -34,32 +34,32 @@ const deviceIsMobile = isMobile(navigator);
 
 interface Props {
   channelId: number;
-  rewindRequestMessageSenderId: number;
-  countdownNumber: number;
-  gameWinnerId: number;
-  interactable: boolean;
+  rewindRequestMessageSenderId?: number;
+  countdownNumber?: number;
+  gameWinnerId?: number;
+  interactable?: boolean;
   initialState: any;
-  isFromModal: boolean;
-  lastChessMessageId: number;
+  isFromModal?: boolean;
+  lastChessMessageId?: number;
   loaded: boolean;
   messageId: number;
-  moveViewed: boolean;
+  moveViewed?: boolean;
   myId: number;
-  newChessState: any;
-  onBoardClick: () => void;
-  onChessMove: (v: any) => void;
+  newChessState?: any;
+  onBoardClick?: () => void;
+  onChessMove?: (v: any) => void;
   onAcceptRewind: (v: any) => void;
   onCancelRewindRequest: () => void;
   onDeclineRewind: () => void;
-  onDiscussClick: () => void;
-  onRewindClick: () => void;
-  onSpoilerClick: (v: number) => void;
-  opponentId: number;
-  opponentName: string;
+  onDiscussClick?: () => void;
+  onRewindClick?: () => void;
+  onSpoilerClick?: (v: number) => void;
+  opponentId?: number;
+  opponentName?: string;
   rewindRequestId: number;
   senderId: number;
   senderName: string;
-  spoilerOff: boolean;
+  spoilerOff?: boolean;
   style: React.CSSProperties;
 }
 export default function Chess({
@@ -80,10 +80,10 @@ export default function Chess({
   onCancelRewindRequest,
   onDeclineRewind,
   onDiscussClick,
-  onRewindClick,
+  onRewindClick = () => {},
   onSpoilerClick,
-  opponentId,
-  opponentName,
+  opponentId = 0,
+  opponentName = '',
   rewindRequestId,
   senderId,
   senderName,
@@ -273,7 +273,7 @@ export default function Chess({
               srcIndex: myColor === 'black' ? 63 - selectedIndex : selectedIndex
             }
           : {};
-      onChessMove({
+      onChessMove?.({
         state: {
           move: {
             number: moveNumber,
@@ -536,7 +536,7 @@ export default function Chess({
     ) {
       return;
     }
-    onSpoilerClick(senderId);
+    onSpoilerClick?.(senderId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     banned?.chess,
@@ -730,7 +730,7 @@ export default function Chess({
       if (spoilerIsShownAndGameIsInProgress) {
         return setConfirmModalShown(true);
       }
-      onDiscussClick();
+      onDiscussClick?.();
     }
   }, [
     initialState?.previousState,
@@ -1003,7 +1003,7 @@ export default function Chess({
           <Game
             loading={!loaded || (!isDiscussion && !opponentId)}
             spoilerOff={!!gameWinnerId || chessBoardShown}
-            interactable={interactable && !newChessState && !userMadeLastMove}
+            interactable={!!interactable && !newChessState && !userMadeLastMove}
             squares={squares}
             myColor={myColor}
             onClick={handleClick}
@@ -1144,7 +1144,7 @@ export default function Chess({
           descriptionFontSize="1.7rem"
           description="Are you sure? The chess move you just made will be seen by your opponent."
           onConfirm={() => {
-            onDiscussClick();
+            onDiscussClick?.();
             setConfirmModalShown(false);
           }}
         />

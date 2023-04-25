@@ -1,17 +1,17 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Loading from '~/components/Loading';
 import TwinkleVideoModal from '../../../TwinkleVideoModal';
 import { useContentState } from '~/helpers/hooks';
 import { extractVideoIdFromTwinkleVideoUrl } from '~/helpers/stringHelpers';
 
-TwinkleVideoThumb.propTypes = {
-  messageId: PropTypes.number.isRequired,
-  videoUrl: PropTypes.string.isRequired
-};
-
-export default function TwinkleVideoThumb({ messageId, videoUrl }) {
+export default function TwinkleVideoThumb({
+  messageId,
+  videoUrl
+}: {
+  messageId: number;
+  videoUrl: string;
+}) {
   const [modalShown, setModalShown] = useState(false);
   const videoId = useMemo(
     () => extractVideoIdFromTwinkleVideoUrl(videoUrl),

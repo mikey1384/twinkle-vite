@@ -3,7 +3,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 interface Props {
-  count: number;
+  count?: number;
   className?: string;
   img?: any;
   shade?: string;
@@ -12,7 +12,7 @@ interface Props {
   style?: React.CSSProperties;
 }
 function Square({
-  count,
+  count = 0,
   className,
   img,
   shade,

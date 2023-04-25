@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Image from '~/components/Image';
 import FileIcon from '~/components/FileIcon';
 import ImageModal from '~/components/Modals/ImageModal';
@@ -13,20 +12,18 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-FileThumb.propTypes = {
-  fileName: PropTypes.string,
-  filePath: PropTypes.string,
-  fileType: PropTypes.string,
-  messageId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  thumbUrl: PropTypes.string
-};
-
 export default function FileThumb({
   filePath,
   fileName,
   fileType,
   messageId,
   thumbUrl
+}: {
+  filePath: string;
+  fileName: string;
+  fileType: string;
+  messageId: number;
+  thumbUrl: string;
 }) {
   const src = useMemo(() => {
     if (!filePath) return '';

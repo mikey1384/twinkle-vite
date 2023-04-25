@@ -19,7 +19,7 @@ export default function Board({
 }: {
   interactable: boolean;
   myColor: string;
-  onBoardClick: () => void;
+  onBoardClick?: () => void;
   onCastling: (v: string) => void;
   onClick: (v: number) => void;
   onSpoilerClick: () => void;
