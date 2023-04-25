@@ -1,20 +1,18 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { rewardReasons } from '~/constants/defaultValues';
-
-RewardReason.propTypes = {
-  reasonId: PropTypes.number.isRequired,
-  selectedReasonId: PropTypes.number,
-  onSelectReasonId: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 
 export default function RewardReason({
   selectedReasonId,
   reasonId,
   onSelectReasonId,
   style
+}: {
+  selectedReasonId: number;
+  reasonId: number;
+  onSelectReasonId: (v: number) => void;
+  style: React.CSSProperties;
 }) {
   return (
     <Button

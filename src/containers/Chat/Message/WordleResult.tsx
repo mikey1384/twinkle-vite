@@ -1,5 +1,4 @@
-import { useContext, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useMemo, useRef, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
@@ -13,17 +12,16 @@ import moment from 'moment';
 const deviceIsMobile = isMobile(navigator);
 const replyLabel = localize('reply2');
 
-WordleResult.propTypes = {
-  channelId: PropTypes.number,
-  messageId: PropTypes.number,
-  myId: PropTypes.number,
-  userId: PropTypes.number,
-  username: PropTypes.string,
-  onReplyClick: PropTypes.func.isRequired,
-  timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  wordleResult: PropTypes.object.isRequired
-};
-
+interface Props {
+  channelId: number;
+  messageId: number;
+  myId: number;
+  userId: number;
+  username: string;
+  onReplyClick: () => void;
+  timeStamp: number;
+  wordleResult: any;
+}
 export default function WordleResult({
   channelId,
   messageId,
@@ -33,7 +31,7 @@ export default function WordleResult({
   onReplyClick,
   wordleResult,
   timeStamp
-}) {
+}: Props) {
   const [dropdownShown, setDropdownShown] = useState(false);
   const {
     actions: { onSetReplyTarget }

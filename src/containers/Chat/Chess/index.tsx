@@ -41,7 +41,7 @@ interface Props {
   isFromModal?: boolean;
   lastChessMessageId?: number;
   loaded: boolean;
-  messageId: number;
+  messageId?: number;
   moveViewed?: boolean;
   myId: number;
   newChessState?: any;
@@ -59,7 +59,7 @@ interface Props {
   senderId: number;
   senderName?: string;
   spoilerOff?: boolean;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 }
 export default function Chess({
   countdownNumber,

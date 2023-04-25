@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
@@ -11,13 +11,15 @@ import { useContentState } from '~/helpers/hooks';
 
 const closelLabel = localize('close');
 
-TwinkleVideoModal.propTypes = {
-  videoId: PropTypes.number.isRequired,
-  messageId: PropTypes.number.isRequired,
-  onHide: PropTypes.func.isRequired
-};
-
-export default function TwinkleVideoModal({ videoId, onHide, messageId }) {
+export default function TwinkleVideoModal({
+  videoId,
+  onHide,
+  messageId
+}: {
+  videoId: number;
+  messageId: number;
+  onHide: () => void;
+}) {
   const onSetMediaStarted = useContentContext(
     (v) => v.actions.onSetMediaStarted
   );

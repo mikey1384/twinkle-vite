@@ -23,7 +23,7 @@ interface Props {
   onSearch: (text: string) => any;
   onSubmit?: () => void;
   renderDropdownLabel: (item: any) => any;
-  renderTagLabel: (label: string) => string;
+  renderTagLabel?: (label: string) => string;
   searchPlaceholder?: string;
   subTitle?: string;
   style?: CSSProperties;

@@ -8,7 +8,7 @@ export default function Tag({
 }: {
   label: string;
   onClick: () => void;
-  renderTagLabel: (label: string) => string;
+  renderTagLabel?: (label: string) => string;
 }) {
   return (
     <div

@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import RewardReason from './RewardReason';
 import RewardLevelForm from '~/components/Forms/RewardLevelForm';
@@ -8,13 +7,15 @@ import { rewardReasons } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 
-MessageRewardModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  userToReward: PropTypes.object,
-  onSubmit: PropTypes.func.isRequired
-};
-
-export default function MessageRewardModal({ onHide, userToReward, onSubmit }) {
+export default function MessageRewardModal({
+  onHide,
+  userToReward,
+  onSubmit
+}: {
+  onHide: () => void;
+  userToReward: any;
+  onSubmit: (v: { reasonId: number; amount: number }) => void;
+}) {
   const { isCreator } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
