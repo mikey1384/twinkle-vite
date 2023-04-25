@@ -19,12 +19,12 @@ interface Props {
   loadingMore?: boolean;
   onHide?: () => void;
   onLoadMore?: () => void;
-  title?: string;
+  title?: any;
   users: Array<{
     id: number;
     username: string;
     profilePicUrl: string;
-    authLevel: number;
+    authLevel?: number;
   }>;
 }
 export default function UserListModal({
@@ -150,7 +150,7 @@ export default function UserListModal({
     id: number;
     username: string;
     profilePicUrl: string;
-    authLevel: number;
+    authLevel?: number;
   }) {
     if (user.id !== userId) {
       const { channelId, pathId } = await loadDMChannel({ recipient: user });

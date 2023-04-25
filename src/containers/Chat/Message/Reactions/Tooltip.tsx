@@ -1,20 +1,9 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { createPortal } from 'react-dom';
-
-Tooltip.propTypes = {
-  myId: PropTypes.number,
-  onMouseEnter: PropTypes.func.isRequired,
-  onMouseLeave: PropTypes.func.isRequired,
-  parentContext: PropTypes.object.isRequired,
-  displayedReactedUsers: PropTypes.array,
-  reactedUserIds: PropTypes.array,
-  onShowAllReactedUsers: PropTypes.func
-};
 
 export default function Tooltip({
   myId,
@@ -24,6 +13,14 @@ export default function Tooltip({
   displayedReactedUsers,
   reactedUserIds,
   onShowAllReactedUsers
+}: {
+  myId: number;
+  parentContext: any;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  displayedReactedUsers: any[];
+  reactedUserIds: number[];
+  onShowAllReactedUsers: () => void;
 }) {
   const { x, y, width, height } = parentContext;
   const displaysToTheRight = useMemo(() => {
@@ -136,6 +133,6 @@ export default function Tooltip({
         {peopleWhoReactedText}
       </div>
     </ErrorBoundary>,
-    document.getElementById('outer-layer')
+    document.getElementById('outer-layer') as HTMLElement
   );
 }

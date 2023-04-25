@@ -211,7 +211,7 @@ export const priceTable = {
   reward: 2
 };
 
-export const reactionsObj = {
+export const reactionsObj: Record<string, any> = {
   thumb: {
     label: 'thumb',
     position: '84% 82.5%'

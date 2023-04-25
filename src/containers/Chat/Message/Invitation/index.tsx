@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ChannelDetail from './ChannelDetail';
 import Button from '~/components/Button';
 import { mobileMaxWidth } from '~/constants/css';
@@ -11,15 +10,6 @@ import localize from '~/constants/localize';
 
 const alreadyJoinedLabel = localize('alreadyJoined');
 
-Invitation.propTypes = {
-  invitationChannelId: PropTypes.number,
-  invitePath: PropTypes.number.isRequired,
-  channelId: PropTypes.number.isRequired,
-  messageId: PropTypes.number.isRequired,
-  onAcceptGroupInvitation: PropTypes.func.isRequired,
-  sender: PropTypes.object.isRequired
-};
-
 export default function Invitation({
   invitationChannelId,
   invitePath,
@@ -27,6 +17,17 @@ export default function Invitation({
   messageId,
   onAcceptGroupInvitation,
   sender
+}: {
+  invitationChannelId: number;
+  invitePath: string;
+  channelId: number;
+  messageId: number;
+  onAcceptGroupInvitation: (channelId: string) => void;
+  sender: {
+    id: number;
+    username: string;
+    profilePicUrl: string;
+  };
 }) {
   const [accepting, setAccepting] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);

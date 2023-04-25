@@ -1,4 +1,4 @@
-import {
+import React, {
   memo,
   useCallback,
   useContext,
@@ -23,16 +23,6 @@ import localize from '~/constants/localize';
 const deviceIsMobile = isMobile(navigator);
 const youLabel = localize('You');
 
-Reaction.propTypes = {
-  reaction: PropTypes.string,
-  reactionCount: PropTypes.number,
-  reactedUserIds: PropTypes.array,
-  onRemoveReaction: PropTypes.func,
-  onAddReaction: PropTypes.func,
-  reactionsMenuShown: PropTypes.bool,
-  theme: PropTypes.string
-};
-
 function Reaction({
   reaction,
   reactionCount,
@@ -41,16 +31,26 @@ function Reaction({
   onAddReaction,
   reactionsMenuShown,
   theme
+}: {
+  reaction: string;
+  reactionCount: number;
+  reactedUserIds: number[];
+  onRemoveReaction: () => void;
+  onAddReaction: () => void;
+  reactionsMenuShown: boolean;
+  theme: any;
 }) {
   const {
     actions: { onSetUserState },
     state: { userObj }
   } = useContext(LocalContext);
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
-  const ReactionRef = useRef(null);
-  const hideTimerRef = useRef(null);
-  const hideTimerRef2 = useRef(null);
-  const prevReactedUserIdsExcludingMine = useRef([]);
+  const ReactionRef: React.MutableRefObject<any> = useRef(null);
+  const hideTimerRef: React.MutableRefObject<any> = useRef(null);
+  const hideTimerRef2: React.MutableRefObject<any> = useRef(null);
+  const prevReactedUserIdsExcludingMine: React.MutableRefObject<any> = useRef(
+    []
+  );
   const [loadingOtherUsers, setLoadingOtherUsers] = useState(false);
   const [tooltipContext, setTooltipContext] = useState(null);
   const [userListModalShown, setUserListModalShown] = useState(false);
@@ -85,7 +85,7 @@ function Reaction({
       prevReactedUserIdsExcludingMine.current = reactedUserIdsExcludingMine;
     }
 
-    async function handleLoadProfile(userId) {
+    async function handleLoadProfile(userId: number) {
       if (!userObj[userId]?.username) {
         const data = await loadProfile(userId);
         onSetUserState({
