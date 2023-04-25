@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import moment from 'moment';
@@ -8,19 +7,6 @@ import { useKeyContext } from '~/contexts';
 
 const marginHeight = 1;
 const subjectTitleHeight = 24;
-
-SubjectItem.propTypes = {
-  id: PropTypes.number,
-  currentSubjectId: PropTypes.number,
-  displayedThemeColor: PropTypes.string,
-  content: PropTypes.string,
-  userId: PropTypes.number,
-  username: PropTypes.string,
-  onDeleteSubject: PropTypes.func,
-  onSelectSubject: PropTypes.func,
-  timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  userIsOwner: PropTypes.bool
-};
 
 export default function SubjectItem({
   currentSubjectId,
@@ -33,10 +19,21 @@ export default function SubjectItem({
   username,
   timeStamp,
   userIsOwner
+}: {
+  currentSubjectId: number;
+  displayedThemeColor: string;
+  onDeleteSubject: () => void;
+  onSelectSubject: () => void;
+  id: number;
+  content: string;
+  userId: number;
+  username: string;
+  timeStamp: number;
+  userIsOwner?: boolean;
 }) {
   const [marginBottom, setMarginBottom] = useState(`${marginHeight}rem`);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
-  const SubjectTitleRef = useRef(null);
+  const SubjectTitleRef: React.RefObject<any> = useRef(null);
   const { authLevel, canDelete } = useKeyContext((v) => v.myState);
 
   useEffect(() => {

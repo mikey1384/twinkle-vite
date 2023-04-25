@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SelectNewOwnerModal from '../SelectNewOwnerModal';
@@ -18,23 +17,22 @@ import localize from '~/constants/localize';
 
 const changeThemeLabel = localize('changeTheme');
 
-SettingsModal.propTypes = {
-  channelId: PropTypes.number,
-  canChangeSubject: PropTypes.string,
-  members: PropTypes.array,
-  onDone: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired,
-  channelName: PropTypes.string,
-  isClass: PropTypes.bool,
-  isClosed: PropTypes.bool,
-  userIsChannelOwner: PropTypes.bool,
-  onSelectNewOwner: PropTypes.func,
-  onScrollToBottom: PropTypes.func,
-  onPurchaseSubject: PropTypes.func,
-  theme: PropTypes.string,
-  unlockedThemes: PropTypes.array
-};
-
+interface Props {
+  channelId: number;
+  channelName: string;
+  canChangeSubject: string;
+  isClass: boolean;
+  isClosed: boolean;
+  members: any[];
+  onDone: (v: any) => void;
+  onHide: () => void;
+  onPurchaseSubject: () => void;
+  onSelectNewOwner: (v: any) => void;
+  onScrollToBottom: () => void;
+  theme: string;
+  unlockedThemes: string[];
+  userIsChannelOwner: boolean;
+}
 export default function SettingsModal({
   channelId,
   channelName,
@@ -50,7 +48,7 @@ export default function SettingsModal({
   theme,
   unlockedThemes,
   userIsChannelOwner
-}) {
+}: Props) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const buyChatSubject = useAppContext((v) => v.requestHelpers.buyChatSubject);
   const buyChatTheme = useAppContext((v) => v.requestHelpers.buyChatTheme);
@@ -274,7 +272,6 @@ export default function SettingsModal({
               >
                 <Button
                   onClick={() => setSelectNewOwnerModalShown(true)}
-                  default
                   filled
                 >
                   Change Owner
@@ -347,7 +344,7 @@ export default function SettingsModal({
     </Modal>
   );
 
-  function handleSetColor(color) {
+  function handleSetColor(color: string) {
     if (
       unlockedThemes.includes(color) ||
       color === 'green' ||

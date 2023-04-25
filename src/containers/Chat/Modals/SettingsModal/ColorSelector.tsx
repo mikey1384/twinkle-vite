@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Icon from '~/components/Icon';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -7,23 +6,21 @@ import { priceTable } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 
-ColorSelector.propTypes = {
-  unlocked: PropTypes.array.isRequired,
-  colors: PropTypes.array.isRequired,
-  onSetColor: PropTypes.func.isRequired,
-  selectedColor: PropTypes.string,
-  style: PropTypes.object
-};
-
 export default function ColorSelector({
   unlocked,
   colors,
   onSetColor,
   selectedColor,
   style
+}: {
+  unlocked: string[];
+  colors: string[];
+  onSetColor: (v: string) => void;
+  selectedColor: string;
+  style: React.CSSProperties;
 }) {
   const { twinkleCoins } = useKeyContext((v) => v.myState);
-  const [hovered, setHovered] = useState();
+  const [hovered, setHovered] = useState('');
 
   return (
     <div
@@ -70,7 +67,7 @@ export default function ColorSelector({
               }}
               onClick={() => (cannotAfford ? null : onSetColor(color))}
               onMouseEnter={() => setHovered(color)}
-              onMouseLeave={() => setHovered(undefined)}
+              onMouseLeave={() => setHovered('')}
             >
               {locked && (
                 <Icon

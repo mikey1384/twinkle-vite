@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -9,15 +8,6 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
-SubjectsModal.propTypes = {
-  channelId: PropTypes.number.isRequired,
-  currentSubjectId: PropTypes.number,
-  displayedThemeColor: PropTypes.string,
-  onHide: PropTypes.func,
-  onSelectSubject: PropTypes.func,
-  userIsOwner: PropTypes.bool
-};
-
 export default function SubjectsModal({
   channelId,
   currentSubjectId,
@@ -25,6 +15,13 @@ export default function SubjectsModal({
   onHide,
   onSelectSubject,
   userIsOwner
+}: {
+  channelId: number;
+  currentSubjectId: number;
+  displayedThemeColor: string;
+  onHide: () => void;
+  onSelectSubject: (v: number) => void;
+  userIsOwner: boolean;
 }) {
   const deleteChatSubject = useAppContext(
     (v) => v.requestHelpers.deleteChatSubject
@@ -35,7 +32,7 @@ export default function SubjectsModal({
   const loadMoreChatSubjects = useAppContext(
     (v) => v.requestHelpers.loadMoreChatSubjects
   );
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [mySubjects, setMySubjects] = useState({
     subjects: [],
@@ -58,7 +55,7 @@ export default function SubjectsModal({
         setMySubjects(mySubjects);
         setAllSubjects(allSubjects);
         setLoaded(true);
-      } catch (error) {
+      } catch (error: any) {
         console.error(error.response || error);
       }
     }
@@ -80,16 +77,25 @@ export default function SubjectsModal({
             >
               My Topics
             </h3>
-            {mySubjects.subjects.map((subject) => (
-              <SubjectItem
-                key={subject.id}
-                currentSubjectId={currentSubjectId}
-                displayedThemeColor={displayedThemeColor}
-                onDeleteSubject={() => setDeleteTarget(subject.id)}
-                onSelectSubject={() => onSelectSubject(subject.id)}
-                {...subject}
-              />
-            ))}
+            {mySubjects.subjects.map(
+              (subject: {
+                id: number;
+                content: string;
+                userId: number;
+                username: string;
+                timeStamp: number;
+                userIsOwner?: boolean;
+              }) => (
+                <SubjectItem
+                  key={subject.id}
+                  currentSubjectId={currentSubjectId}
+                  displayedThemeColor={displayedThemeColor}
+                  onDeleteSubject={() => setDeleteTarget(subject.id)}
+                  onSelectSubject={() => onSelectSubject(subject.id)}
+                  {...subject}
+                />
+              )
+            )}
             {mySubjects.loadMoreButton && (
               <LoadMoreButton
                 filled
@@ -119,17 +125,26 @@ export default function SubjectsModal({
         {loaded && allSubjects.subjects.length === 0 && (
           <div>{`There aren't any subjects here, yet`}</div>
         )}
-        {allSubjects.subjects.map((subject) => (
-          <SubjectItem
-            key={subject.id}
-            currentSubjectId={currentSubjectId}
-            displayedThemeColor={displayedThemeColor}
-            onDeleteSubject={() => setDeleteTarget(subject.id)}
-            onSelectSubject={() => onSelectSubject(subject.id)}
-            userIsOwner={userIsOwner}
-            {...subject}
-          />
-        ))}
+        {allSubjects.subjects.map(
+          (subject: {
+            id: number;
+            content: string;
+            userId: number;
+            username: string;
+            timeStamp: number;
+            userIsOwner?: boolean;
+          }) => (
+            <SubjectItem
+              key={subject.id}
+              currentSubjectId={currentSubjectId}
+              displayedThemeColor={displayedThemeColor}
+              onDeleteSubject={() => setDeleteTarget(subject.id)}
+              onSelectSubject={() => onSelectSubject(subject.id)}
+              userIsOwner={userIsOwner}
+              {...subject}
+            />
+          )
+        )}
         {allSubjects.loadMoreButton && (
           <LoadMoreButton
             filled
@@ -154,24 +169,24 @@ export default function SubjectsModal({
     </Modal>
   );
 
-  async function handleDeleteSubject(subjectId) {
+  async function handleDeleteSubject(subjectId: number) {
     await deleteChatSubject(subjectId);
     setMySubjects({
       ...mySubjects,
       subjects: mySubjects.subjects.filter(
-        (subject) => subject.id !== subjectId
+        (subject: { id: number }) => subject.id !== subjectId
       )
     });
     setAllSubjects({
       ...allSubjects,
       subjects: allSubjects.subjects.filter(
-        (subject) => subject.id !== subjectId
+        (subject: { id: number }) => subject.id !== subjectId
       )
     });
     setDeleteTarget(0);
   }
 
-  async function handleLoadMoreSubjects(mineOnly) {
+  async function handleLoadMoreSubjects(mineOnly: boolean) {
     if (mineOnly) {
       setMySubjects({ ...mySubjects, loading: true });
     } else {

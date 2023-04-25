@@ -1,20 +1,19 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Input from '~/components/Texts/Input';
 import { Color } from '~/constants/css';
 
-NameChanger.propTypes = {
-  actualChannelName: PropTypes.string.isRequired,
-  editedChannelName: PropTypes.string.isRequired,
-  onSetEditedChannelName: PropTypes.func.isRequired,
-  usingCustomName: PropTypes.bool,
-  userIsChannelOwner: PropTypes.bool
-};
 export default function NameChanger({
   actualChannelName,
   editedChannelName,
   onSetEditedChannelName,
   usingCustomName,
   userIsChannelOwner
+}: {
+  actualChannelName: string;
+  editedChannelName: string;
+  onSetEditedChannelName: (v: string) => void;
+  usingCustomName: boolean;
+  userIsChannelOwner: boolean;
 }) {
   return (
     <div style={{ width: '100%' }}>

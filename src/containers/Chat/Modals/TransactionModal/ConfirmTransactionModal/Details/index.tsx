@@ -1,17 +1,6 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import OfferDetail from './OfferDetail';
 import WantDetail from './WantDetail';
-
-Details.propTypes = {
-  coinsOffered: PropTypes.number.isRequired,
-  coinsWanted: PropTypes.number.isRequired,
-  cardIdsOffered: PropTypes.array.isRequired,
-  cardIdsWanted: PropTypes.array.isRequired,
-  isAICardModalShown: PropTypes.bool,
-  selectedOption: PropTypes.string.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  partner: PropTypes.object.isRequired
-};
 
 export default function Details({
   coinsOffered,
@@ -22,6 +11,15 @@ export default function Details({
   selectedOption,
   onSetAICardModalCardId,
   partner
+}: {
+  coinsOffered: number;
+  coinsWanted: number;
+  cardIdsOffered: number[];
+  cardIdsWanted: number[];
+  isAICardModalShown: boolean;
+  selectedOption: string;
+  onSetAICardModalCardId: (cardId: number) => void;
+  partner: any;
 }) {
   return (
     <div style={{ width: '100%' }}>

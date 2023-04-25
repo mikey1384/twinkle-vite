@@ -5,7 +5,7 @@ import CardItem from './CardItem';
 
 interface Props {
   cards: any[];
-  onSetAICardModalCardId?: (cardId: string) => void;
+  onSetAICardModalCardId?: (cardId: number) => void;
   onHide: () => void;
   modalOverModal?: boolean;
 }
