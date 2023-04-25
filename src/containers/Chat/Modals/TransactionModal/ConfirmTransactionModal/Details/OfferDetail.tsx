@@ -1,19 +1,8 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import AICardsPreview from '~/components/AICardsPreview';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
-
-OfferDetail.propTypes = {
-  isAICardModalShown: PropTypes.bool,
-  isShowing: PropTypes.bool,
-  selectedOption: PropTypes.string.isRequired,
-  cardIds: PropTypes.array.isRequired,
-  coins: PropTypes.number.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  partner: PropTypes.object.isRequired
-};
 
 export default function OfferDetail({
   isAICardModalShown,
@@ -23,6 +12,17 @@ export default function OfferDetail({
   coins,
   onSetAICardModalCardId,
   partner
+}: {
+  isAICardModalShown: boolean;
+  isShowing: boolean;
+  selectedOption: string;
+  cardIds: number[];
+  coins: number;
+  onSetAICardModalCardId: (v: number) => void;
+  partner: {
+    id: number;
+    username: string;
+  };
 }) {
   const actionLabel = useMemo(() => {
     if (selectedOption === 'want') {
@@ -109,11 +109,9 @@ export default function OfferDetail({
           </div>
         )}
         <AICardsPreview
-          modalOverModal
           isAICardModalShown={isAICardModalShown}
           cardIds={cardIds}
           onSetAICardModalCardId={onSetAICardModalCardId}
-          partnerId={partner.id}
         />
       </div>
     </div>

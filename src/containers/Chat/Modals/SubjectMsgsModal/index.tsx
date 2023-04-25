@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -14,20 +14,16 @@ import URL from '~/constants/URL';
 
 const API_URL = `${URL}/chat`;
 
-SubjectMsgsModal.propTypes = {
-  channelId: PropTypes.number,
-  displayedThemeColor: PropTypes.string,
-  onHide: PropTypes.func,
-  subjectId: PropTypes.number,
-  subjectTitle: PropTypes.string,
-  theme: PropTypes.string
-};
-
 export default function SubjectMsgsModal({
-  displayedThemeColor,
+  displayedThemeColor = '',
   onHide,
   subjectId,
   subjectTitle
+}: {
+  displayedThemeColor?: string;
+  onHide: () => void;
+  subjectId: number;
+  subjectTitle: string;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
@@ -35,7 +31,7 @@ export default function SubjectMsgsModal({
   } = useTheme(displayedThemeColor || profileTheme);
   const [loading, setLoading] = useState(false);
   const [loadMoreButtonShown, setLoadMoreButtonShown] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [usermenuShown, setUsermenuShown] = useState(false);
   useEffect(() => {
     handleLoadMessages();
@@ -48,7 +44,7 @@ export default function SubjectMsgsModal({
         );
         setMessages(messages);
         setLoadMoreButtonShown(loadMoreButtonShown);
-      } catch (error) {
+      } catch (error: any) {
         console.error(error.response || error);
       }
     }
@@ -109,7 +105,7 @@ export default function SubjectMsgsModal({
       setLoading(false);
       setMessages(loadedMsgs.concat(messages));
       setLoadMoreButtonShown(loadMoreButtonShown);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error.response || error);
     }
   }

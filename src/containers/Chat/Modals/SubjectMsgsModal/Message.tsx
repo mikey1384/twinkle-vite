@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentFileViewer from '~/components/ContentFileViewer';
@@ -9,22 +8,21 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import moment from 'moment';
 import { css } from '@emotion/css';
 
-Message.propTypes = {
-  id: PropTypes.number,
-  content: PropTypes.string,
-  displayedThemeColor: PropTypes.string,
-  fileName: PropTypes.string,
-  filePath: PropTypes.string,
-  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  isReloadedSubject: PropTypes.number,
-  onUsermenuShownChange: PropTypes.func,
-  profilePicUrl: PropTypes.string,
-  timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  thumbUrl: PropTypes.string,
-  userId: PropTypes.number,
-  username: PropTypes.string
-};
-
+interface Props {
+  content: string;
+  displayedThemeColor: string;
+  id: number;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  userId: number;
+  username: string;
+  profilePicUrl: string;
+  thumbUrl: string;
+  timeStamp: number;
+  isReloadedSubject: boolean;
+  onUsermenuShownChange: (isShown: boolean) => void;
+}
 export default function Message({
   content,
   displayedThemeColor,
@@ -39,7 +37,7 @@ export default function Message({
   timeStamp,
   isReloadedSubject,
   onUsermenuShownChange
-}) {
+}: Props) {
   const displayedTime = useMemo(
     () => moment.unix(timeStamp).format('lll'),
     [timeStamp]
@@ -93,7 +91,6 @@ export default function Message({
             modalOverModal
             contentId={messageId}
             contentType="chat"
-            content={content}
             filePath={filePath}
             fileName={fileName}
             fileSize={fileSize}

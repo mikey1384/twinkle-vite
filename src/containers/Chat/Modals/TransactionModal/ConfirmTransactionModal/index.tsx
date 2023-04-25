@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
@@ -8,18 +7,6 @@ import { useKeyContext } from '~/contexts';
 
 const cancelLabel = localize('cancel');
 const confirmLabel = localize('confirm');
-
-ConfirmTransactionModal.propTypes = {
-  isAICardModalShown: PropTypes.bool,
-  onHide: PropTypes.func.isRequired,
-  onConfirm: PropTypes.func.isRequired,
-  selectedOption: PropTypes.string.isRequired,
-  coinAmountObj: PropTypes.object.isRequired,
-  offeredCardIds: PropTypes.array.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  partner: PropTypes.object.isRequired,
-  wantedCardIds: PropTypes.array.isRequired
-};
 
 export default function ConfirmTransactionModal({
   isAICardModalShown,
@@ -31,6 +18,16 @@ export default function ConfirmTransactionModal({
   offeredCardIds,
   wantedCardIds,
   partner
+}: {
+  isAICardModalShown: boolean;
+  onHide: () => void;
+  onConfirm: (v: any) => void;
+  selectedOption: string;
+  coinAmountObj: any;
+  onSetAICardModalCardId: (v: number) => void;
+  offeredCardIds: number[];
+  wantedCardIds: number[];
+  partner: any;
 }) {
   const {
     done: { color: doneColor }

@@ -15,9 +15,9 @@ export default function AICardsPreview({
   onSetAICardModalCardId
 }: {
   isAICardModalShown: boolean;
-  isOnModal: boolean;
+  isOnModal?: boolean;
   cardIds: number[];
-  onSetAICardModalCardId?: (cardId: string) => void;
+  onSetAICardModalCardId?: (cardId: number) => void;
 }) {
   const cardObj = useChatContext((v) => v.state.cardObj);
   const { numMore, cards, displayedCards } = useMemo(() => {
@@ -45,7 +45,7 @@ export default function AICardsPreview({
               onClick={
                 onSetAICardModalCardId
                   ? () => onSetAICardModalCardId(card.id)
-                  : null
+                  : undefined
               }
             />
           </div>
@@ -55,7 +55,7 @@ export default function AICardsPreview({
             onClick={
               onSetAICardModalCardId
                 ? () => setMoreAICardsModalShown(true)
-                : null
+                : undefined
             }
             numMore={numMore}
           />
