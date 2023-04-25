@@ -1,28 +1,9 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import CardItem from './CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-
-Filtered.propTypes = {
-  aiCardModalType: PropTypes.string,
-  cardObj: PropTypes.object,
-  color: PropTypes.string,
-  quality: PropTypes.string,
-  loadFilteredAICards: PropTypes.func.isRequired,
-  myId: PropTypes.number,
-  myUsername: PropTypes.string,
-  onUpdateAICard: PropTypes.func.isRequired,
-  onSetSelectedCardIds: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  partnerId: PropTypes.number,
-  partnerName: PropTypes.string,
-  selectedCardIds: PropTypes.array,
-  successColor: PropTypes.string,
-  word: PropTypes.string
-};
 
 export default function Filtered({
   aiCardModalType,
@@ -40,11 +21,27 @@ export default function Filtered({
   selectedCardIds,
   successColor,
   word
+}: {
+  aiCardModalType: string;
+  cardObj: any;
+  color: string;
+  quality: string;
+  loadFilteredAICards: (v: any) => any;
+  myId: number;
+  myUsername: string;
+  onUpdateAICard: (v: any) => any;
+  onSetSelectedCardIds: (v: any) => any;
+  onSetAICardModalCardId: (v: any) => any;
+  partnerId: number;
+  partnerName: string;
+  selectedCardIds: any[];
+  successColor: string;
+  word: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
-  const [cardIds, setCardIds] = useState([]);
+  const [cardIds, setCardIds] = useState<any[]>([]);
   const cards = cardIds
     .map((cardId) => cardObj[cardId])
     .filter(
@@ -69,7 +66,7 @@ export default function Filtered({
             ...(!word ? {} : { word })
           }
         });
-        setCardIds(cards.map((card) => card.id));
+        setCardIds(cards.map((card: { id: number }) => card.id));
         for (let card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
@@ -95,10 +92,10 @@ export default function Filtered({
             card={card}
             selected={selectedCardIds.includes(card.id)}
             onSelect={() =>
-              onSetSelectedCardIds((prevIds) => [...prevIds, card.id])
+              onSetSelectedCardIds((prevIds: number[]) => [...prevIds, card.id])
             }
             onDeselect={() =>
-              onSetSelectedCardIds((prevIds) =>
+              onSetSelectedCardIds((prevIds: number[]) =>
                 prevIds.filter((id) => id !== card.id)
               )
             }
@@ -157,9 +154,9 @@ export default function Filtered({
     for (let card of newCards) {
       onUpdateAICard({ cardId: card.id, newState: card });
     }
-    setCardIds((prevCardIds) => [
+    setCardIds((prevCardIds: any) => [
       ...prevCardIds,
-      ...newCards.map((card) => card.id)
+      ...newCards.map((card: { id: number }) => card.id)
     ]);
     setLoadMoreShown(loadMoreShown);
     setLoadingMore(false);

@@ -1,22 +1,8 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import CardItem from './CardItem';
 import { mobileMaxWidth } from '~/constants/css';
 import { cardLevelHash } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-
-Selected.propTypes = {
-  aiCardModalType: PropTypes.string,
-  cardIds: PropTypes.array,
-  cardObj: PropTypes.object,
-  color: PropTypes.string,
-  partnerId: PropTypes.number,
-  quality: PropTypes.string,
-  myId: PropTypes.number,
-  onSetSelectedCardIds: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  successColor: PropTypes.string
-};
 
 export default function Selected({
   aiCardModalType,
@@ -29,6 +15,17 @@ export default function Selected({
   onSetSelectedCardIds,
   onSetAICardModalCardId,
   successColor
+}: {
+  aiCardModalType: string;
+  cardIds: number[];
+  cardObj: { [key: number]: any };
+  color: string;
+  partnerId: number;
+  quality: string;
+  myId: number;
+  onSetSelectedCardIds: (v: any) => any;
+  onSetAICardModalCardId: (v: any) => any;
+  successColor: string;
 }) {
   const appliedColor = color === 'blue' ? 'logoBlue' : color;
   const cards = cardIds
@@ -77,10 +74,10 @@ export default function Selected({
             card={card}
             selected
             onSelect={() =>
-              onSetSelectedCardIds((prevIds) => [...prevIds, card.id])
+              onSetSelectedCardIds((prevIds: number[]) => [...prevIds, card.id])
             }
             onDeselect={() =>
-              onSetSelectedCardIds((prevIds) =>
+              onSetSelectedCardIds((prevIds: number[]) =>
                 prevIds.filter((id) => id !== card.id)
               )
             }

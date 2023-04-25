@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import FilterPanel from './FilterPanel';
@@ -9,16 +8,6 @@ import Filtered from './Filtered';
 import Selected from './Selected';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
-SelectAICardModal.propTypes = {
-  aiCardModalType: PropTypes.string.isRequired,
-  currentlySelectedCardIds: PropTypes.array.isRequired,
-  onHide: PropTypes.func,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  onSelectDone: PropTypes.func.isRequired,
-  onDropdownShown: PropTypes.func.isRequired,
-  partner: PropTypes.object.isRequired
-};
-
 export default function SelectAICardModal({
   aiCardModalType,
   currentlySelectedCardIds,
@@ -27,11 +16,19 @@ export default function SelectAICardModal({
   onSelectDone,
   onDropdownShown,
   partner
+}: {
+  aiCardModalType: string;
+  currentlySelectedCardIds: any[];
+  onHide: () => any;
+  onSetAICardModalCardId: (v: any) => any;
+  onSelectDone: (v: any) => any;
+  onDropdownShown: () => any;
+  partner: any;
 }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [isSelectedTab, setIsSelectedTab] = useState(false);
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState<Record<string, any>>({});
   const [cardIds, setCardIds] = useState(currentlySelectedCardIds);
   const [loading, setLoading] = useState(false);
   const [filterPanelShown, setFilterPanelShown] = useState(false);
@@ -58,7 +55,7 @@ export default function SelectAICardModal({
             owner: aiCardModalType === 'want' ? partner.username : username
           }
         });
-        setCardIds(cards.map((card) => card.id));
+        setCardIds(cards.map((card: { id: number }) => card.id));
         for (let card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }

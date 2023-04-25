@@ -1,5 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState, useMemo } from 'react';
 import TransactionDetails from '../../../TransactionDetails';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -8,19 +7,18 @@ import { useChatContext } from '~/contexts';
 import ButtonsContainer from './ButtonsContainer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-TransactionHandler.propTypes = {
-  currentTransactionId: PropTypes.number,
-  isAICardModalShown: PropTypes.bool,
-  onAcceptTrade: PropTypes.func.isRequired,
-  onCounterPropose: PropTypes.func.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  onSetPendingTransaction: PropTypes.func.isRequired,
-  myId: PropTypes.number.isRequired,
-  partner: PropTypes.object.isRequired,
-  transactionDetails: PropTypes.object.isRequired,
-  channelId: PropTypes.number.isRequired
-};
-
+interface Props {
+  currentTransactionId: number;
+  isAICardModalShown: boolean;
+  onAcceptTrade: (v: any) => any;
+  onCounterPropose: (v: any) => any;
+  onSetAICardModalCardId: (v: any) => any;
+  onSetPendingTransaction: (v: any) => any;
+  myId: number;
+  partner: any;
+  transactionDetails: any;
+  channelId: number;
+}
 export default function TransactionHandler({
   currentTransactionId,
   isAICardModalShown,
@@ -32,11 +30,11 @@ export default function TransactionHandler({
   partner,
   transactionDetails,
   channelId
-}) {
+}: Props) {
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
   );
-  const [cancelReason, setCancelReason] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
   const cancelExplainText = useMemo(() => {
     switch (cancelReason) {
       case 'withdraw':
@@ -44,7 +42,7 @@ export default function TransactionHandler({
       case 'decline':
         return 'You have declined the transaction.';
       default:
-        return null;
+        return '';
     }
   }, [cancelReason]);
 
@@ -134,7 +132,7 @@ export default function TransactionHandler({
               filled
               color="blue"
               onClick={() => {
-                setCancelReason(null);
+                setCancelReason('');
                 onSetPendingTransaction(null);
                 onUpdateCurrentTransactionId({
                   channelId,

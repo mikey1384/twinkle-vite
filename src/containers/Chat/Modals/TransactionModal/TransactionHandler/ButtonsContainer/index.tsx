@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import TradeButtons from './TradeButtons';
@@ -7,21 +6,20 @@ import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/io';
 import ProposeTradeButtons from './ProposeTradeButtons';
 
-ButtonsContainer.propTypes = {
-  onAcceptTrade: PropTypes.func.isRequired,
-  channelId: PropTypes.number.isRequired,
-  isFromMe: PropTypes.bool,
-  isExpressionOfInterest: PropTypes.bool,
-  myId: PropTypes.number.isRequired,
-  onCounterPropose: PropTypes.func.isRequired,
-  onSetPendingTransaction: PropTypes.func.isRequired,
-  onSetCancelReason: PropTypes.func.isRequired,
-  onUpdateCurrentTransactionId: PropTypes.func.isRequired,
-  partner: PropTypes.object.isRequired,
-  transactionId: PropTypes.number.isRequired,
-  type: PropTypes.string.isRequired
-};
-
+interface Props {
+  onAcceptTrade: any;
+  channelId: number;
+  isFromMe: boolean;
+  isExpressionOfInterest: boolean;
+  myId: number;
+  onCounterPropose: (v: any) => any;
+  onSetPendingTransaction: (v: any) => any;
+  onSetCancelReason: (v: any) => any;
+  onUpdateCurrentTransactionId: (v: any) => any;
+  partner: any;
+  transactionId: number;
+  type: string;
+}
 export default function ButtonsContainer({
   channelId,
   isFromMe,
@@ -35,7 +33,7 @@ export default function ButtonsContainer({
   partner,
   transactionId,
   type
-}) {
+}: Props) {
   const [withdrawing, setWithdrawing] = useState(false);
   const closeTransaction = useAppContext(
     (v) => v.requestHelpers.closeTransaction
@@ -112,7 +110,11 @@ export default function ButtonsContainer({
     </div>
   );
 
-  async function handleCloseTransaction({ cancelReason }) {
+  async function handleCloseTransaction({
+    cancelReason
+  }: {
+    cancelReason?: string;
+  }) {
     try {
       setWithdrawing(true);
       await closeTransaction({

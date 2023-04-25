@@ -1,18 +1,9 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import CardThumb from '~/components/CardThumb';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-
-CardItem.propTypes = {
-  card: PropTypes.object.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  onDeselect: PropTypes.func.isRequired,
-  onSelect: PropTypes.func.isRequired,
-  selected: PropTypes.bool.isRequired,
-  successColor: PropTypes.string.isRequired
-};
 
 export default function CardItem({
   card,
@@ -21,6 +12,13 @@ export default function CardItem({
   onSelect,
   selected,
   successColor
+}: {
+  card: any;
+  onSetAICardModalCardId: (v: any) => void;
+  onDeselect: () => void;
+  onSelect: (v: any) => void;
+  selected: boolean;
+  successColor: string;
 }) {
   return (
     <div
@@ -31,7 +29,7 @@ export default function CardItem({
         justifyContent: 'center',
         flexDirection: 'column',
         padding: '1rem',
-        boxShadow: selected ? `0 0 5px ${successColor}` : null,
+        boxShadow: selected ? `0 0 5px ${successColor}` : '',
         border: `1px solid ${Color[selected ? successColor : 'borderGray']()}`,
         borderRadius
       }}
