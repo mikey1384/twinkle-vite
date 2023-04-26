@@ -10,17 +10,17 @@ import localize from '~/constants/localize';
 const searchUsersLabel = localize('searchUsers');
 
 export default function SelectNewOwnerModal({
-  andLeave,
+  andLeave = false,
   isClass,
   members,
   modalOverModal,
   onHide,
   onSubmit
 }: {
-  andLeave: boolean;
+  andLeave?: boolean;
   isClass: boolean;
   members: any[];
-  modalOverModal: boolean;
+  modalOverModal?: boolean;
   onHide: () => void;
   onSubmit: (arg0: { newOwner: any; andLeave: boolean }) => void;
 }) {

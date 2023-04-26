@@ -5,9 +5,13 @@ import Main from './Main';
 export default function Router({
   onFileUpload
 }: {
-  onFileUpload: (file: File) => void
+  onFileUpload: (file: File) => void;
 }) {
-  const { currentPathId } = useParams();
+  const {
+    currentPathId
+  }: {
+    currentPathId?: string;
+  } = useParams();
   return (
     <Routes>
       <Route

@@ -19,7 +19,7 @@ const changeThemeLabel = localize('changeTheme');
 
 interface Props {
   channelId: number;
-  channelName: string;
+  channelName?: string;
   canChangeSubject: string;
   isClass: boolean;
   isClosed: boolean;

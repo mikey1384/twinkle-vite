@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import OfferPanel from './OfferPanel';
 import WantPanel from './WantPanel';
 import Heading from './Heading';
@@ -8,26 +7,25 @@ import Body from './Body';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, Color } from '~/constants/css';
 
-Trade.propTypes = {
-  isAccepted: PropTypes.bool,
-  isOnModal: PropTypes.bool,
-  isCurrent: PropTypes.bool,
-  isCancelled: PropTypes.bool,
-  isAICardModalShown: PropTypes.bool,
-  cancelReason: PropTypes.string,
-  myId: PropTypes.number.isRequired,
-  myUsername: PropTypes.string.isRequired,
-  partner: PropTypes.object.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  wantCardIds: PropTypes.array,
-  wantCoins: PropTypes.number,
-  offerCardIds: PropTypes.array,
-  offerCoins: PropTypes.number,
-  onClick: PropTypes.func,
-  fromId: PropTypes.number.isRequired,
-  toId: PropTypes.number.isRequired
-};
-
+interface Props {
+  isAccepted: boolean;
+  isOnModal?: boolean;
+  isCurrent: boolean;
+  isCancelled: boolean;
+  isAICardModalShown: boolean;
+  cancelReason: string;
+  myId: number;
+  myUsername: string;
+  partner: { id: number; username: string };
+  onSetAICardModalCardId: (cardId: number) => void;
+  wantCardIds: number[];
+  wantCoins: number;
+  offerCardIds: number[];
+  offerCoins: number;
+  onClick?: () => void;
+  fromId: number;
+  toId: number;
+}
 export default function Trade({
   isAccepted,
   isOnModal,
@@ -46,7 +44,7 @@ export default function Trade({
   wantCardIds,
   wantCoins,
   fromId
-}) {
+}: Props) {
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
   }, [fromId, myId, myUsername, partner]);

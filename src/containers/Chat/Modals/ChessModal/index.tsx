@@ -34,7 +34,7 @@ interface Props {
   onHide: () => void;
   countdownNumber: number;
   onCancelRewindRequest: () => void;
-  onAcceptRewind: () => void;
+  onAcceptRewind: (v: any) => void;
   onDeclineRewind: () => void;
   onSpoilerClick: (v: any) => void;
   opponentId: number;

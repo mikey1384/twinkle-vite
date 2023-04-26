@@ -74,7 +74,7 @@ function MessagesContainer({
   channelName?: string;
   partner?: any;
   currentChannel: any;
-  currentPathId: string;
+  currentPathId: string | number;
   displayedThemeColor: string;
   isAICardModalShown: boolean;
   onSetAICardModalCardId: (arg: any) => void;
@@ -194,7 +194,7 @@ function MessagesContainer({
   });
   const [subjectMsgsModal, setSubjectMsgsModal] = useState({
     shown: false,
-    subjectId: null,
+    subjectId: 0,
     content: ''
   });
   const [TransactionModalShown, setTransactionModalShown] = useState(false);
@@ -1467,12 +1467,10 @@ function MessagesContainer({
           displayedThemeColor={displayedThemeColor}
           subjectId={subjectMsgsModal.subjectId}
           subjectTitle={subjectMsgsModal.content}
-          channelId={selectedChannelId}
-          theme={currentChannel.theme}
           onHide={() =>
             setSubjectMsgsModal({
               shown: false,
-              subjectId: null,
+              subjectId: 0,
               content: ''
             })
           }

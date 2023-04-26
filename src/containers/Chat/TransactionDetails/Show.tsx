@@ -1,25 +1,23 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Heading from './Heading';
 import Body from './Body';
 import OfferPanel from './OfferPanel';
 import UsernameText from '~/components/Texts/UsernameText';
 
-Show.propTypes = {
-  cardIds: PropTypes.array,
-  coins: PropTypes.number,
-  isAICardModalShown: PropTypes.bool,
-  isCurrent: PropTypes.bool,
-  isOnModal: PropTypes.bool,
-  fromId: PropTypes.number.isRequired,
-  toId: PropTypes.number.isRequired,
-  myId: PropTypes.number.isRequired,
-  myUsername: PropTypes.string.isRequired,
-  onClick: PropTypes.func,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  partner: PropTypes.object.isRequired
-};
-
+interface Props {
+  cardIds: number[];
+  coins: number;
+  fromId: number;
+  isAICardModalShown: boolean;
+  isOnModal?: boolean;
+  isCurrent: boolean;
+  myId: number;
+  myUsername: string;
+  onClick?: () => void;
+  onSetAICardModalCardId: (cardId: number) => void;
+  partner: { id: number; username: string };
+  toId: number;
+}
 export default function Show({
   cardIds,
   coins,
@@ -33,7 +31,7 @@ export default function Show({
   onClick,
   onSetAICardModalCardId,
   partner
-}) {
+}: Props) {
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
   }, [fromId, myId, myUsername, partner]);

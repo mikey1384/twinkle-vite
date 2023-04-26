@@ -1,13 +1,14 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-Body.propTypes = {
-  children: PropTypes.node,
-  onClick: PropTypes.func
-};
-
-export default function Body({ children, onClick }) {
+export default function Body({
+  children,
+  onClick
+}: {
+  children: any;
+  onClick?: () => void;
+}) {
   return (
     <div
       style={{

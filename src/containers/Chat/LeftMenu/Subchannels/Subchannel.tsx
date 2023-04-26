@@ -10,7 +10,7 @@ interface Props {
   currentPathId: string | number;
   selectedChannelId: number;
   subchannel: any;
-  subchannelPath: string;
+  subchannelPath?: string;
   onUpdateLastSubchannelPath: ({
     channelId,
     path,
@@ -26,7 +26,7 @@ export default function Subchannel({
   currentPathId,
   selectedChannelId,
   subchannel,
-  subchannelPath,
+  subchannelPath = '',
   onUpdateLastSubchannelPath
 }: Props) {
   const { userId } = useKeyContext((v) => v.myState);

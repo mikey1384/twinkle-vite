@@ -22,15 +22,7 @@ interface Props {
   creatingChat: boolean;
   onBackClick?: () => void;
   onHide: () => void;
-  onDone: ({
-    channelName,
-    isClosed,
-    userId
-  }: {
-    channelName: string;
-    isClosed: boolean;
-    userId: number;
-  }) => void;
+  onDone: (v: any) => void;
 }
 export default function RegularMenu({
   creatingChat,

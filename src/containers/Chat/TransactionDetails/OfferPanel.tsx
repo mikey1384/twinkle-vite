@@ -1,30 +1,26 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
 import Icon from '~/components/Icon';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
-WantPanel.propTypes = {
-  isAICardModalShown: PropTypes.bool,
-  isOnModal: PropTypes.bool,
-  isTrade: PropTypes.bool.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  wantCardIds: PropTypes.array.isRequired,
-  wantCoins: PropTypes.number.isRequired,
-  showCardDetailsOnThumbClick: PropTypes.bool,
-  style: PropTypes.object
-};
-
-export default function WantPanel({
+export default function OfferPanel({
   isAICardModalShown,
   isOnModal,
   isTrade,
+  offerCardIds,
+  offerCoins,
   onSetAICardModalCardId,
-  wantCardIds,
-  wantCoins,
-  showCardDetailsOnThumbClick,
-  style
+  showCardDetailsOnThumbClick
+}: {
+  isAICardModalShown: boolean;
+  isOnModal?: boolean;
+  isTrade?: boolean;
+  offerCardIds: number[];
+  offerCoins: number;
+  onSetAICardModalCardId: (cardId: number) => void;
+  showCardDetailsOnThumbClick: boolean;
 }) {
   return (
     <div
@@ -32,15 +28,13 @@ export default function WantPanel({
       style={{
         width: '100%',
         borderRadius,
-        fontFamily: 'Roboto, monospace',
-        border: `1px solid ${Color.borderGray()}`,
-        ...style
+        border: `1px solid ${Color.borderGray()}`
       }}
     >
       {isTrade ? (
         <div
           className={css`
-            font-size: 1.7rem;
+            font-size: 1.6rem;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.5rem;
             }
@@ -53,7 +47,7 @@ export default function WantPanel({
             borderBottom: `1px solid ${Color.borderGray()}`
           }}
         >
-          in exchange for...
+          Offered...
         </div>
       ) : null}
       <div
@@ -66,17 +60,17 @@ export default function WantPanel({
           flexDirection: 'column'
         }}
       >
-        {wantCardIds.length ? (
+        {offerCardIds.length ? (
           <div style={{ textAlign: 'center' }}>
             <AICardsPreview
               isAICardModalShown={isAICardModalShown}
               isOnModal={isOnModal}
-              cardIds={wantCardIds}
+              cardIds={offerCardIds}
               onSetAICardModalCardId={
-                showCardDetailsOnThumbClick ? onSetAICardModalCardId : null
+                showCardDetailsOnThumbClick ? onSetAICardModalCardId : undefined
               }
             />
-            {wantCoins > 0 && (
+            {offerCoins > 0 && (
               <div
                 style={{
                   padding: '0.5rem',
@@ -89,7 +83,7 @@ export default function WantPanel({
             )}
           </div>
         ) : null}
-        {wantCoins > 0 && (
+        {offerCoins > 0 && (
           <div>
             <Icon
               style={{ color: Color.brownOrange() }}
@@ -103,7 +97,7 @@ export default function WantPanel({
                 marginLeft: '0.3rem'
               }}
             >
-              {addCommasToNumber(wantCoins)}
+              {addCommasToNumber(offerCoins)}
             </span>
           </div>
         )}

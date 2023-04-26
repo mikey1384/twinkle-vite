@@ -37,8 +37,18 @@ import {
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-export default function Main({ currentPathId, onFileUpload }) {
-  const { subchannelPath } = useParams();
+export default function Main({
+  currentPathId = '',
+  onFileUpload
+}: {
+  currentPathId?: number | string;
+  onFileUpload: (file: File) => void;
+}) {
+  const {
+    subchannelPath
+  }: {
+    subchannelPath?: string;
+  } = useParams();
   const { search } = useLocation();
   const { pathname } = useLocation();
   const { lastChatPath, userId, profileTheme } = useKeyContext(
@@ -136,7 +146,10 @@ export default function Main({ currentPathId, onFileUpload }) {
     (v) => v.state.allFavoriteChannelIds
   );
   const chatType = useChatContext((v) => v.state.chatType);
-  const chatStatus = useChatContext((v) => v.state.chatStatus);
+  const chatStatus: {
+    id: number;
+    isOnline: boolean;
+  }[] = useChatContext((v) => v.state.chatStatus);
   const chessModalShown = useChatContext((v) => v.state.chessModalShown);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
@@ -287,15 +300,29 @@ export default function Main({ currentPathId, onFileUpload }) {
   const allRanks = useNotiContext((v) => v.state.allRanks);
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const onGetRanks = useNotiContext((v) => v.actions.onGetRanks);
-  const [aiCardModalCardId, setAICardModalCardId] = useState(null);
+  const [aiCardModalCardId, setAICardModalCardId] = useState<number | null>(
+    null
+  );
   const [creatingChat, setCreatingChat] = useState(false);
   const [createNewChatModalShown, setCreateNewChatModalShown] = useState(false);
   const loadingRef = useRef(false);
-  const prevPathId = useRef('');
+  const prevPathId: React.MutableRefObject<any> = useRef('');
   const prevUserId = useRef(null);
   const currentPathIdRef = useRef(currentPathId);
   const currentSelectedChannelIdRef = useRef(selectedChannelId);
-  const currentChannel = useMemo(
+  const currentChannel: {
+    id: number;
+    pathId: number | string;
+    members: any[];
+    subchannelObj: {
+      [key: string]: {
+        path: string;
+      };
+    };
+    theme: string;
+    subchannelIds: number[];
+    twoPeople: boolean;
+  } = useMemo(
     () => channelsObj[selectedChannelId] || {},
     [channelsObj, selectedChannelId]
   );
@@ -354,7 +381,7 @@ export default function Main({ currentPathId, onFileUpload }) {
       selectedChannelId === parseChannelPath(currentPathId)
     ) {
       for (let subchannel of Object.values(currentChannel?.subchannelObj)) {
-        if (subchannel.path === subchannelPath) {
+        if (subchannel?.path === subchannelPath) {
           subchannelPathExistsAndIsInvalid = false;
         }
       }
@@ -403,7 +430,7 @@ export default function Main({ currentPathId, onFileUpload }) {
         handleEnterAICardChat();
       }
     } else {
-      if (!stringIsEmpty(currentPathId)) {
+      if (!stringIsEmpty(currentPathId as string)) {
         onUpdateChatType('default');
       }
       if (currentPathId === 'new') {
@@ -426,7 +453,13 @@ export default function Main({ currentPathId, onFileUpload }) {
       }
     }
 
-    async function handleChannelEnter({ pathId, subchannelPath }) {
+    async function handleChannelEnter({
+      pathId,
+      subchannelPath
+    }: {
+      pathId: string | number;
+      subchannelPath?: string;
+    }) {
       loadingRef.current = true;
       onUpdateChatType('default');
       const { isAccessible } = await checkChatAccessible(pathId);
@@ -490,7 +523,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   useEffect(() => {
     if (
       !prevPathId.current &&
-      !isNaN(currentChannel.pathId) &&
+      !isNaN(currentChannel.pathId as number) &&
       Number(currentChannel.pathId) !== Number(currentPathId)
     ) {
       navigate(`/chat/${currentChannel.pathId}`, { replace: true });
@@ -523,7 +556,7 @@ export default function Main({ currentPathId, onFileUpload }) {
       } else if (chatType === AI_CARD_CHAT_TYPE) {
         prevPathId.current = AI_CARD_CHAT_TYPE;
         navigate(`/chat/${AI_CARD_CHAT_TYPE}`, { replace: true });
-      } else if (!isNaN(currentChannel.pathId)) {
+      } else if (!isNaN(currentChannel.pathId as number)) {
         prevPathId.current = currentChannel.pathId;
         navigate(`/chat/${currentChannel.pathId}`, { replace: true });
       }
@@ -611,7 +644,17 @@ export default function Main({ currentPathId, onFileUpload }) {
     socket.on('subject_changed', handleTopicChange);
     socket.on('member_left', handleMemberLeft);
 
-    async function handleMemberLeft({ channelId, leaver }) {
+    async function handleMemberLeft({
+      channelId,
+      leaver
+    }: {
+      channelId: number;
+      leaver: {
+        userId: number;
+        username: string;
+        profilePicUrl: string;
+      };
+    }) {
       updateChatLastRead(channelId);
       const { userId, username, profilePicUrl } = leaver;
       onNotifyThatMemberLeftChannel({
@@ -622,7 +665,7 @@ export default function Main({ currentPathId, onFileUpload }) {
       });
     }
 
-    function onNotifiedMoveMade({ channelId }) {
+    function onNotifiedMoveMade({ channelId }: { channelId: number }) {
       if (channelId === selectedChannelId) {
         onSetChessModalShown(false);
       }
@@ -647,7 +690,7 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [selectedChannelId]);
 
   const currentOnlineUsers = useMemo(() => {
-    const result = {};
+    const result: any = {};
     for (let user of Object.values(chatStatus)) {
       if (user?.isOnline) {
         result[user.id] = user;
@@ -657,7 +700,15 @@ export default function Main({ currentPathId, onFileUpload }) {
   }, [chatStatus]);
 
   const handleCreateNewChannel = useCallback(
-    async ({ userId, channelName, isClosed }) => {
+    async ({
+      userId,
+      channelName,
+      isClosed
+    }: {
+      userId: number;
+      channelName: string;
+      isClosed: boolean;
+    }) => {
       setCreatingChat(true);
       const { message, members, pathId } = await createNewChat({
         userId,
@@ -675,7 +726,17 @@ export default function Main({ currentPathId, onFileUpload }) {
   );
 
   const handleTopicChange = useCallback(
-    ({ message, channelId, pathId, channelName }) => {
+    ({
+      message,
+      channelId,
+      pathId,
+      channelName
+    }: {
+      message: any;
+      channelId: number;
+      pathId: number | string;
+      channelName: string;
+    }) => {
       let messageIsForCurrentChannel = message.channelId === selectedChannelId;
       let senderIsUser = message.userId === userId;
       if (senderIsUser) return;

@@ -20,7 +20,7 @@ import {
 interface Props {
   attemptState: any;
   channelId: number;
-  channelName: string;
+  channelName?: string;
   guesses: string[];
   nextDayTimeStamp: number;
   solution: string;
