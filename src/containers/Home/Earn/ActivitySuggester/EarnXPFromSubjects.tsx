@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import ContentListItem from '~/components/ContentListItem';
@@ -43,7 +43,7 @@ export default function EarnXPFromSubjects() {
             <Loading />
           ) : (
             <>
-              {subjects.map((subject) => (
+              {subjects.map((subject: { id: number; contentType: string }) => (
                 <ContentListItem key={subject.id} contentObj={subject} />
               ))}
             </>
@@ -100,14 +100,20 @@ export default function EarnXPFromSubjects() {
     </ErrorBoundary>
   );
 
-  function handleSetTopMenuSection(section) {
+  function handleSetTopMenuSection(section: string) {
     onSetTopMenuSectionSection(section);
-    document.getElementById('App').scrollTop = 0;
+    const appElement = document.getElementById('App');
+    if (appElement) {
+      appElement.scrollTop = 0;
+    }
     BodyRef.scrollTop = 0;
   }
 
   async function handleLoadAnotherSubjectClick() {
-    document.getElementById('App').scrollTop = 0;
+    const appElement = document.getElementById('App');
+    if (appElement) {
+      appElement.scrollTop = 0;
+    }
     BodyRef.scrollTop = 0;
     handleLoadHighXPSubjects();
   }
