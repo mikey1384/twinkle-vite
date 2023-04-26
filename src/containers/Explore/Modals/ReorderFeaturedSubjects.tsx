@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SortableListGroup from '~/components/SortableListGroup';
@@ -7,14 +6,12 @@ import { objectify } from '~/helpers';
 import { isEqual } from 'lodash';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 
-ReorderFeaturedSubjects.propTypes = {
-  subjectIds: PropTypes.array.isRequired,
-  onHide: PropTypes.func.isRequired
-};
-
 export default function ReorderFeaturedSubjects({
   onHide,
   subjectIds: initialSubjectIds
+}: {
+  onHide: () => void;
+  subjectIds: number[];
 }) {
   const {
     done: { color: doneColor }
@@ -49,7 +46,7 @@ export default function ReorderFeaturedSubjects({
         <Button
           disabled={isEqual(
             subjectIds,
-            featuredSubjects.map((subject) => subject.id)
+            featuredSubjects.map((subject: { id: number }) => subject.id)
           )}
           loading={isReordering}
           color={doneColor}
@@ -61,7 +58,13 @@ export default function ReorderFeaturedSubjects({
     </Modal>
   );
 
-  function handleMove({ sourceId, targetId }) {
+  function handleMove({
+    sourceId,
+    targetId
+  }: {
+    sourceId: number;
+    targetId: number;
+  }) {
     const sourceIndex = subjectIds.indexOf(sourceId);
     const targetIndex = subjectIds.indexOf(targetId);
     const newSubjectIds = [...subjectIds];

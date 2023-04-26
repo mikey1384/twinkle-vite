@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -13,14 +12,12 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isEqual } from 'lodash';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 
-SelectFeaturedPlaylists.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  selectedPlaylists: PropTypes.array.isRequired
-};
-
 export default function SelectFeaturedPlaylists({
   onHide,
   selectedPlaylists: initialSelectedPlaylists
+}: {
+  onHide: () => void;
+  selectedPlaylists: any[];
 }) {
   const {
     done: { color: doneColor }
@@ -49,7 +46,7 @@ export default function SelectFeaturedPlaylists({
   );
 
   const [selectTabActive, setSelectTabActive] = useState(true);
-  const [selectedPlaylists, setSelectedPlaylists] = useState([]);
+  const [selectedPlaylists, setSelectedPlaylists] = useState<any[]>([]);
   const [searchedPlaylists, setSearchedPlaylists] = useState([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -58,7 +55,7 @@ export default function SelectFeaturedPlaylists({
   const playlistsToPinObjectRef = useRef({});
   const pinnedPlaylistsObjectRef = useRef({});
   const searchedPlaylistsObjectRef = useRef({});
-  const playlistObjectsRef = useRef({});
+  const playlistObjectsRef: React.MutableRefObject<any> = useRef({});
   const { handleSearch, searching } = useSearch({
     onSearch: handlePlaylistSearch,
     onClear: () => setSearchedPlaylists([]),
@@ -67,7 +64,10 @@ export default function SelectFeaturedPlaylists({
 
   useEffect(() => {
     pinnedPlaylistsObjectRef.current = featuredPlaylists.reduce(
-      (prev, playlist) => ({ ...prev, [playlist.id]: playlist.title }),
+      (prev: any, playlist: any) => ({
+        ...prev,
+        [playlist.id]: playlist.title
+      }),
       {}
     );
     setSelectedPlaylists(initialSelectedPlaylists);
@@ -76,7 +76,10 @@ export default function SelectFeaturedPlaylists({
 
   useEffect(() => {
     playlistsToPinObjectRef.current = playlistsToPin.reduce(
-      (prev, playlist) => ({ ...prev, [playlist.id]: playlist.title }),
+      (prev: any, playlist: any) => ({
+        ...prev,
+        [playlist.id]: playlist.title
+      }),
       {}
     );
   }, [playlistsToPin]);
@@ -206,7 +209,7 @@ export default function SelectFeaturedPlaylists({
     </Modal>
   );
 
-  async function handleLoadMore(playlistId) {
+  async function handleLoadMore(playlistId: number) {
     setLoadingMore(true);
     if (stringIsEmpty(searchText)) {
       const data = await loadPlaylistList(playlistId);
@@ -222,7 +225,10 @@ export default function SelectFeaturedPlaylists({
     searchedPlaylistsObjectRef.current = {
       ...searchedPlaylistsObjectRef.current,
       ...results.reduce(
-        (prev, playlist) => ({ ...prev, [playlist.id]: playlist.title }),
+        (prev: any, playlist: any) => ({
+          ...prev,
+          [playlist.id]: playlist.title
+        }),
         {}
       )
     };
@@ -233,21 +239,24 @@ export default function SelectFeaturedPlaylists({
     setSearchLoadMoreButton(loadMoreShown);
   }
 
-  async function handlePlaylistSearch(text) {
+  async function handlePlaylistSearch(text: string) {
     const { loadMoreButton: loadMoreShown, results } = await searchContent({
       limit: 10,
       filter: 'playlist',
       searchText: text
     });
     searchedPlaylistsObjectRef.current = results.reduce(
-      (prev, playlist) => ({ ...prev, [playlist.id]: playlist.title }),
+      (prev: any, playlist: any) => ({
+        ...prev,
+        [playlist.id]: playlist.title
+      }),
       {}
     );
     setSearchedPlaylists(results);
     setSearchLoadMoreButton(loadMoreShown);
   }
 
-  function handleSelect(index) {
+  function handleSelect(index: number) {
     const playlists = searchText ? searchedPlaylists : playlistsToPin;
     let playlistId = playlists[index].id;
     setSelectedPlaylists(
@@ -257,7 +266,7 @@ export default function SelectFeaturedPlaylists({
     );
   }
 
-  function handleDeselect(selectedIndex) {
+  function handleDeselect(selectedIndex: number) {
     const newSelectedPlaylists = selectedPlaylists.filter(
       (playlist, index) => index !== selectedIndex
     );
@@ -275,7 +284,7 @@ export default function SelectFeaturedPlaylists({
 
   function renderListItems() {
     const playlists = searchText ? searchedPlaylists : playlistsToPin;
-    return playlists.map((playlist) => ({
+    return playlists.map((playlist: any) => ({
       label: playlist.title,
       checked: selectedPlaylists.includes(playlist.id)
     }));

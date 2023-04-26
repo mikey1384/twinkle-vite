@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import ContentListItem from '~/components/ContentListItem';
@@ -12,16 +11,14 @@ import { useSearch } from '~/helpers/hooks';
 import { objectify } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 
-SelectFeaturedSubjectsModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  subjects: PropTypes.array.isRequired
-};
-
 export default function SelectFeaturedSubjectsModal({
   subjects,
   onHide,
   onSubmit
+}: {
+  subjects: any[];
+  onHide: () => void;
+  onSubmit: (arg0: any[]) => void;
 }) {
   const {
     done: { color: doneColor }
@@ -35,8 +32,8 @@ export default function SelectFeaturedSubjectsModal({
   const [loadMoreButton, setLoadMoreButton] = useState(false);
   const [searchLoadMoreButton, setSearchLoadMoreButton] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [subjectObj, setSubjectObj] = useState({});
-  const [selected, setSelected] = useState([]);
+  const [subjectObj, setSubjectObj] = useState<Record<string, any>>({});
+  const [selected, setSelected] = useState<number[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectTabActive, setSelectTabActive] = useState(true);
@@ -63,7 +60,7 @@ export default function SelectFeaturedSubjectsModal({
         ...objectify(results),
         ...objectify(subjects)
       });
-      setAllSubjects(results.map((subject) => subject.id));
+      setAllSubjects(results.map((subject: { id: number }) => subject.id));
       setLoadMoreButton(loadMoreShown);
       setLoaded(true);
     }
@@ -203,7 +200,7 @@ export default function SelectFeaturedSubjectsModal({
     </Modal>
   );
 
-  async function handleSubjectSearch(text) {
+  async function handleSubjectSearch(text: string) {
     const { loadMoreButton: loadMoreShown, results } = await searchContent({
       limit: 10,
       filter: 'subject',
@@ -213,7 +210,7 @@ export default function SelectFeaturedSubjectsModal({
       ...subjectObj,
       ...objectify(results)
     }));
-    setSearchedSubjects(results.map((result) => result.id));
+    setSearchedSubjects(results.map((result: { id: number }) => result.id));
     setSearchLoadMoreButton(loadMoreShown);
   }
 
@@ -244,7 +241,7 @@ export default function SelectFeaturedSubjectsModal({
       ? setAllSubjects
       : setSearchedSubjects;
     setSubjectsMethod((subjects) =>
-      subjects.concat(results.map((subject) => subject.id))
+      subjects.concat(results.map((subject: { id: number }) => subject.id))
     );
     setLoadingMore(false);
     const setLoadMoreButtonMethod = stringIsEmpty(searchText)
@@ -253,7 +250,7 @@ export default function SelectFeaturedSubjectsModal({
     setLoadMoreButtonMethod(loadMoreShown);
   }
 
-  function handleSelect(selectedId) {
+  function handleSelect(selectedId: number) {
     if (selected.includes(selectedId)) {
       setSelected((selected) => selected.filter((id) => id !== selectedId));
     } else {
