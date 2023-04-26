@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SortableListGroup from '~/components/SortableListGroup';
@@ -7,14 +6,12 @@ import { objectify } from '~/helpers';
 import { isEqual } from 'lodash';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 
-ReorderFeaturedPlaylists.propTypes = {
-  playlistIds: PropTypes.array.isRequired,
-  onHide: PropTypes.func.isRequired
-};
-
 export default function ReorderFeaturedPlaylists({
   onHide,
   playlistIds: initialPlaylistIds
+}: {
+  onHide: () => void;
+  playlistIds: number[];
 }) {
   const {
     done: { color: doneColor }
@@ -50,7 +47,7 @@ export default function ReorderFeaturedPlaylists({
         <Button
           disabled={isEqual(
             playlistIds,
-            featuredPlaylists.map((playlist) => playlist.id)
+            featuredPlaylists.map((playlist: { id: number }) => playlist.id)
           )}
           loading={isSubmitting}
           color={doneColor}
@@ -62,7 +59,13 @@ export default function ReorderFeaturedPlaylists({
     </Modal>
   );
 
-  function handleMove({ sourceId, targetId }) {
+  function handleMove({
+    sourceId,
+    targetId
+  }: {
+    sourceId: number;
+    targetId: number;
+  }) {
     const sourceIndex = playlistIds.indexOf(sourceId);
     const targetIndex = playlistIds.indexOf(targetId);
     const newPlaylistIds = [...playlistIds];
