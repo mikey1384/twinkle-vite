@@ -1,16 +1,5 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import CheckListGroup from '~/components/CheckListGroup';
-
-Question.propTypes = {
-  question: PropTypes.string.isRequired,
-  choices: PropTypes.array.isRequired,
-  isGraded: PropTypes.bool,
-  selectedChoiceIndex: PropTypes.number,
-  onSelectChoice: PropTypes.func.isRequired,
-  style: PropTypes.object,
-  answerIndex: PropTypes.number
-};
 
 export default function Question({
   question,
@@ -20,6 +9,14 @@ export default function Question({
   onSelectChoice,
   answerIndex,
   style
+}: {
+  question: string;
+  choices: string[];
+  isGraded: boolean;
+  selectedChoiceIndex: number;
+  onSelectChoice: (index: number) => void;
+  answerIndex: number;
+  style: React.CSSProperties;
 }) {
   const listItems = useMemo(
     () =>

@@ -1,15 +1,10 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-ReactionText.propTypes = {
-  difficulty: PropTypes.number.isRequired
-};
-
-export default function ReactionText({ difficulty }) {
+export default function ReactionText({ difficulty }: { difficulty: number }) {
   const {
     grammarGameScorePerfect: { color: colorPerfect },
     grammarGameScoreA: { color: colorA },
