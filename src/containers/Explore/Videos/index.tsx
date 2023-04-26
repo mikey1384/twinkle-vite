@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import FeaturedPlaylistsPanel from './FeaturedPlaylistsPanel';
 import PlaylistsPanel from './PlaylistsPanel';
@@ -130,7 +130,7 @@ export default function Videos() {
     </div>
   );
 
-  async function handleSearchPlaylist(text) {
+  async function handleSearchPlaylist(text: string) {
     const { results, loadMoreButton } = await searchContent({
       filter: 'playlist',
       searchText: text,

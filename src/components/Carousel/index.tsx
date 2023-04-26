@@ -23,9 +23,9 @@ interface Props {
   children: any;
   conditionPassStatus?: string;
   framePadding?: string;
-  nextButtonDisabled: boolean;
-  onCheckNavCondition: (onNext: () => void) => boolean;
-  onFinish: () => void;
+  nextButtonDisabled?: boolean;
+  onCheckNavCondition?: (onNext: () => void) => boolean;
+  onFinish?: () => void;
   onShowAll?: () => void;
   progressBar?: boolean;
   slideIndex?: number;

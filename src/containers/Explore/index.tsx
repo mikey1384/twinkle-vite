@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -20,17 +19,13 @@ const subjectsLabel = localize('subjects');
 const videosLabel = localize('videos2');
 const linksLabel = localize('links');
 
-Explore.propTypes = {
-  category: PropTypes.string.isRequired
-};
-
-export default function Explore({ category }) {
+export default function Explore({ category }: { category: string }) {
   const searchText = useExploreContext((v) => v.state.search.searchText);
   const onSetPrevUserId = useExploreContext((v) => v.actions.onSetPrevUserId);
   const { userId } = useKeyContext((v) => v.myState);
   const disconnected = useRef(false);
-  const ContainerRef = useRef({});
-  const SearchBoxRef = useRef(null);
+  const ContainerRef: React.RefObject<any> = useRef({});
+  const SearchBoxRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
     onSetPrevUserId(userId);

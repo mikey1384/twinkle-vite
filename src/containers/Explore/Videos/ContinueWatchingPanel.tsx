@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
@@ -105,7 +105,7 @@ export default function ContinueWatchingPanel() {
             marginBottom: '1rem'
           }}
         >
-          {continueWatchingVideos.map((video, index) => (
+          {continueWatchingVideos.map((video: any, index: number) => (
             <VideoThumb
               to={`videos/${video.id}${
                 showingRecommendedVideos ? '' : '?continue=true'

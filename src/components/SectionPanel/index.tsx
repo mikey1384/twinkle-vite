@@ -17,7 +17,7 @@ const editLabel = localize('edit');
 
 interface Props {
   canEdit?: boolean;
-  title: string;
+  title: React.ReactNode | string;
   button?: React.ReactNode;
   emptyMessage?: string;
   innerRef?: React.RefObject<any>;
@@ -63,7 +63,9 @@ export default function SectionPanel({
   const [savingEdit, setSavingEdit] = useState(false);
   const [loading, setLoading] = useState(false);
   const [onEdit, setOnEdit] = useState(false);
-  const [editedTitle, setEditedTitle] = useState(title);
+  const [editedTitle, setEditedTitle] = useState(
+    typeof title === 'string' ? title : ''
+  );
   const {
     success: { color: successColor },
     sectionPanel: { color: sectionPanelColor },
@@ -76,7 +78,7 @@ export default function SectionPanel({
   const TitleInputRef = useRef(null);
   useOutsideClick(TitleInputRef, () => {
     setOnEdit(false);
-    setEditedTitle(title);
+    setEditedTitle(typeof title === 'string' ? title : '');
   });
 
   return (
@@ -204,7 +206,7 @@ export default function SectionPanel({
                   style={{ cursor: 'pointer' }}
                   onClick={() => {
                     setOnEdit(true);
-                    setEditedTitle(title);
+                    setEditedTitle(typeof title === 'string' ? title : '');
                   }}
                 >
                   <Icon icon="pencil-alt" />

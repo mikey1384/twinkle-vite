@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import PlaylistCarousel from '../PlaylistCarousel';
 import SectionPanel from '~/components/SectionPanel';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
@@ -9,21 +9,20 @@ const noPlaylistsLabel = localize('noPlaylists');
 const searchPlaylistsLabel = localize('searchPlaylists');
 const allPlaylistsLabel = localize('allPlaylists');
 
-PlaylistsPanel.propTypes = {
-  buttonGroup: PropTypes.func,
-  buttonGroupShown: PropTypes.bool,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  isSearching: PropTypes.bool,
-  loaded: PropTypes.bool.isRequired,
-  loadMoreButton: PropTypes.bool,
-  onSearch: PropTypes.func,
-  playlists: PropTypes.array.isRequired,
-  searchQuery: PropTypes.string,
-  style: PropTypes.object,
-  title: PropTypes.string.isRequired,
-  userId: PropTypes.number
-};
-
+interface Props {
+  buttonGroupShown?: boolean;
+  buttonGroup: () => React.ReactNode;
+  innerRef?: React.RefObject<any>;
+  isSearching?: boolean;
+  loaded: boolean;
+  loadMoreButton?: boolean;
+  onSearch?: (query: string) => void;
+  playlists: any[];
+  searchQuery?: string;
+  style?: React.CSSProperties;
+  title?: string;
+  userId?: number;
+}
 export default function PlaylistsPanel({
   buttonGroupShown = true,
   buttonGroup,
@@ -37,7 +36,7 @@ export default function PlaylistsPanel({
   style,
   title = allPlaylistsLabel,
   userId
-}) {
+}: Props) {
   const loadPlaylists = useAppContext((v) => v.requestHelpers.loadPlaylists);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
   const onLoadMorePlaylists = useExploreContext(

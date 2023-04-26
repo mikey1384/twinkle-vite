@@ -12,7 +12,7 @@ export default function PlaylistModal({
   title
 }: {
   onHide: () => void;
-  onLinkClick: () => void;
+  onLinkClick?: () => void;
   playlistId: number;
   title: string;
 }) {
