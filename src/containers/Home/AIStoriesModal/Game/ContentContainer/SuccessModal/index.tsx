@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SuccessText from './SuccessText';
@@ -6,18 +6,16 @@ import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
-SuccessModal.propTypes = {
-  difficulty: PropTypes.number.isRequired,
-  onHide: PropTypes.func.isRequired,
-  numQuestions: PropTypes.number.isRequired,
-  rewardTable: PropTypes.object.isRequired
-};
-
 export default function SuccessModal({
   difficulty,
   onHide,
   numQuestions,
   rewardTable
+}: {
+  difficulty: number;
+  onHide: () => void;
+  numQuestions: number;
+  rewardTable: any;
 }) {
   const {
     xpNumber: { color: xpNumberColor }

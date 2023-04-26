@@ -1,5 +1,4 @@
-import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Question from './Question';
 import Button from '~/components/Button';
 import GradientButton from '~/components/Buttons/GradientButton';
@@ -7,19 +6,18 @@ import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
 import { Color } from '~/constants/css';
 
-Questions.propTypes = {
-  isGrading: PropTypes.bool,
-  solveObj: PropTypes.object.isRequired,
-  onGrade: PropTypes.func.isRequired,
-  questions: PropTypes.array.isRequired,
-  questionsLoaded: PropTypes.bool,
-  onReadAgain: PropTypes.func.isRequired,
-  onRetryLoadingQuestions: PropTypes.func.isRequired,
-  onSetUserChoiceObj: PropTypes.func.isRequired,
-  questionsLoadError: PropTypes.bool,
-  userChoiceObj: PropTypes.object.isRequired
-};
-
+interface Props {
+  isGrading: boolean;
+  solveObj: any;
+  onGrade: () => void;
+  questions: any[];
+  onReadAgain: () => void;
+  questionsLoaded: boolean;
+  onRetryLoadingQuestions: () => void;
+  onSetUserChoiceObj: (userChoiceObj: any) => void;
+  questionsLoadError: boolean;
+  userChoiceObj: any;
+}
 export default function Questions({
   isGrading,
   solveObj,
@@ -31,7 +29,7 @@ export default function Questions({
   questionsLoadError,
   userChoiceObj,
   onSetUserChoiceObj
-}) {
+}: Props) {
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   useEffect(() => {
@@ -83,7 +81,7 @@ export default function Questions({
           selectedChoiceIndex={userChoiceObj[question.id]}
           answerIndex={question.answerIndex}
           onSelectChoice={(index) =>
-            onSetUserChoiceObj((obj) => ({
+            onSetUserChoiceObj((obj: any) => ({
               ...obj,
               [question.id]: index
             }))
@@ -111,11 +109,9 @@ export default function Questions({
             <div
               style={{
                 color:
-                  solveObj.numCorrect === questions.length
-                    ? Color.green()
-                    : null,
+                  solveObj.numCorrect === questions.length ? Color.green() : '',
                 fontWeight:
-                  solveObj.numCorrect === questions.length ? 'bold' : null
+                  solveObj.numCorrect === questions.length ? 'bold' : ''
               }}
             >
               {solveObj.numCorrect} / {questions.length} correct
