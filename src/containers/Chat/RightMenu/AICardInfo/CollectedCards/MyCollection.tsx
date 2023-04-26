@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import CardItem from '../CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
@@ -11,15 +11,18 @@ export default function MyCollection() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
   const loadingMoreRef = useRef(false);
-  const CardItemsRef = useRef(null);
-  const timeoutRef = useRef(null);
+  const CardItemsRef: React.RefObject<any> = useRef(null);
+  const timeoutRef: React.MutableRefObject<any> = useRef(null);
   const loadMyAICardCollections = useAppContext(
     (v) => v.requestHelpers.loadMyAICardCollections
   );
   const myCardIds = useChatContext((v) => v.state.myCardIds);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const myCards = useMemo(
-    () => myCardIds.filter((id) => !!cardObj[id]).map((id) => cardObj[id]),
+    () =>
+      myCardIds
+        .filter((id: number) => !!cardObj[id])
+        .map((id: number) => cardObj[id]),
     [myCardIds, cardObj]
   );
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
@@ -46,7 +49,7 @@ export default function MyCollection() {
   }, [socketConnected]);
 
   useEffect(() => {
-    const container = CardItemsRef.current || {};
+    const container: any = CardItemsRef.current || {};
     setOverflown(container.offsetHeight < container.scrollHeight);
   }, [myCards]);
 
@@ -96,7 +99,7 @@ export default function MyCollection() {
           <b style={{ color: Color.darkerGray() }}>No cards collected</b>
         </div>
       ) : (
-        myCards.map((card, index) => (
+        myCards.map((card: any, index: number) => (
           <CardItem
             isOverflown={overflown}
             isLast={index === myCards.length - 1}

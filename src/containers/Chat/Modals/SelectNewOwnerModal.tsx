@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SearchInput from '~/components/Texts/SearchInput';
@@ -10,15 +9,6 @@ import localize from '~/constants/localize';
 
 const searchUsersLabel = localize('searchUsers');
 
-SelectNewOwnerModal.propTypes = {
-  andLeave: PropTypes.bool,
-  isClass: PropTypes.bool,
-  members: PropTypes.array.isRequired,
-  modalOverModal: PropTypes.bool,
-  onHide: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired
-};
-
 export default function SelectNewOwnerModal({
   andLeave,
   isClass,
@@ -26,6 +16,13 @@ export default function SelectNewOwnerModal({
   modalOverModal,
   onHide,
   onSubmit
+}: {
+  andLeave: boolean;
+  isClass: boolean;
+  members: any[];
+  modalOverModal: boolean;
+  onHide: () => void;
+  onSubmit: (arg0: { newOwner: any; andLeave: boolean }) => void;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const {
@@ -40,7 +37,7 @@ export default function SelectNewOwnerModal({
         (!isClass || member.authLevel > 2)
     );
   }, [isClass, members, searchText, userId]);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   return (
     <Modal modalOverModal={modalOverModal} onHide={onHide}>
@@ -56,7 +53,7 @@ export default function SelectNewOwnerModal({
             />
             <CheckListGroup
               style={{ marginTop: '1.5rem' }}
-              onSelect={(index) => setSelectedUser(shownMembers[index])}
+              onSelect={(index: number) => setSelectedUser(shownMembers[index])}
               listItems={shownMembers.map((member) => ({
                 label: member.username,
                 checked: member.id === selectedUser?.id

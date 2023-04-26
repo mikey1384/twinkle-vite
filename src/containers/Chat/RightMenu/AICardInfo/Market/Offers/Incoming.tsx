@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CardItem from '../../CardItem';
@@ -16,8 +16,8 @@ import {
 
 export default function Incoming() {
   const { userId } = useKeyContext((v) => v.myState);
-  const CardItemsRef = useRef(null);
-  const timeoutRef = useRef(null);
+  const CardItemsRef: React.RefObject<any> = useRef(null);
+  const timeoutRef: React.MutableRefObject<any> = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
@@ -31,7 +31,7 @@ export default function Incoming() {
   );
   const cardObj = useChatContext((v) => v.state.cardObj);
   const displayedIncomingOffers = useMemo(() => {
-    return incomingOffers.map((offer) => ({
+    return incomingOffers.map((offer: any) => ({
       ...offer,
       card: cardObj[offer.card.id]
     }));
@@ -44,7 +44,7 @@ export default function Incoming() {
   );
 
   useEffect(() => {
-    const container = CardItemsRef.current || {};
+    const container: any = CardItemsRef.current || {};
     setOverflown(container.offsetHeight < container.scrollHeight);
   }, [displayedIncomingOffers]);
 
@@ -64,17 +64,23 @@ export default function Incoming() {
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
     socket.on('ai_card_sold', handleAICardSold);
 
-    function handleAICardOfferPosted({ card }) {
+    function handleAICardOfferPosted({ card }: { card: any }) {
       if (card.ownerId === userId) {
         init();
       }
     }
-    function handleAICardOfferCancel({ ownerId }) {
+    function handleAICardOfferCancel({ ownerId }: { ownerId: number }) {
       if (ownerId === userId) {
         init();
       }
     }
-    function handleAICardSold({ card, sellerId }) {
+    function handleAICardSold({
+      card,
+      sellerId
+    }: {
+      card: any;
+      sellerId: number;
+    }) {
       if (card.ownerId === userId || sellerId === userId) {
         init();
       }
@@ -145,7 +151,7 @@ export default function Incoming() {
             <b style={{ color: Color.darkerGray() }}>{`No incoming offers`}</b>
           </div>
         ) : (
-          displayedIncomingOffers.map((offer, index) => (
+          displayedIncomingOffers.map((offer: any, index: number) => (
             <CardItem
               isOverflown={overflown}
               isLast={index === displayedIncomingOffers.length - 1}

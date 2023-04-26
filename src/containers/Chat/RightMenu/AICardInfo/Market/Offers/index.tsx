@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import Incoming from './Incoming';
@@ -6,12 +6,13 @@ import Outgoing from './Outgoing';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
-Offers.propTypes = {
-  onSetSelectedSubTab: PropTypes.func,
-  selectedSubTab: PropTypes.string
-};
-
-export default function Offers({ onSetSelectedSubTab, selectedSubTab }) {
+export default function Offers({
+  onSetSelectedSubTab,
+  selectedSubTab
+}: {
+  onSetSelectedSubTab: (subTab: string) => void;
+  selectedSubTab: string;
+}) {
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Bids">
       <FilterBar

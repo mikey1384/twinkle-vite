@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SelectUploadsForm from '~/components/Forms/SelectUploadsForm';
@@ -9,12 +8,13 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 
-SelectVideoModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  onDone: PropTypes.func.isRequired
-};
-
-export default function SelectVideoModal({ onDone, onHide }) {
+export default function SelectVideoModal({
+  onDone,
+  onHide
+}: {
+  onDone: (arg0: { videoId: number }) => void;
+  onHide: () => void;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -22,7 +22,7 @@ export default function SelectVideoModal({ onDone, onHide }) {
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const [searchedUploads, setSearchedUploads] = useState([]);
-  const [selectedUpload, setSelectedUpload] = useState([]);
+  const [selectedUpload, setSelectedUpload] = useState<any[]>([]);
   const [allUploads, setAllUploads] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [loadMoreButton, setLoadMoreButton] = useState(false);
@@ -50,7 +50,7 @@ export default function SelectVideoModal({ onDone, onHide }) {
           ...result
         });
       }
-      setAllUploads(results.map((result) => result.id));
+      setAllUploads(results.map((result: { id: number }) => result.id));
       contentObjs.current = objectify(results);
       setLoadMoreButton(loadMoreButton);
       setLoaded(true);
@@ -121,7 +121,9 @@ export default function SelectVideoModal({ onDone, onHide }) {
         ...objectify(results)
       };
       setSearchedUploads((searchedUploads) =>
-        searchedUploads.concat(results.map((result) => result.id))
+        searchedUploads.concat(
+          results.map((result: { id: number }) => result.id)
+        )
       );
       setLoadingMore(false);
       setSearchLoadMoreButton(loadMoreButton);
@@ -143,14 +145,14 @@ export default function SelectVideoModal({ onDone, onHide }) {
         ...objectify(results)
       };
       setAllUploads((allUploads) =>
-        allUploads.concat(results.map((result) => result.id))
+        allUploads.concat(results.map((result: { id: number }) => result.id))
       );
       setLoadingMore(false);
       setLoadMoreButton(loadMoreButton);
     }
   }
 
-  async function onSearch(text) {
+  async function onSearch(text: string) {
     const { results: searchedUploads, loadMoreButton } = await searchContent({
       filter: 'video',
       searchText: text
@@ -159,7 +161,9 @@ export default function SelectVideoModal({ onDone, onHide }) {
       ...contentObjs.current,
       ...objectify(searchedUploads)
     };
-    setSearchedUploads(searchedUploads.map((upload) => upload.id));
+    setSearchedUploads(
+      searchedUploads.map((upload: { id: number }) => upload.id)
+    );
     setSearchLoadMoreButton(loadMoreButton);
   }
 }
