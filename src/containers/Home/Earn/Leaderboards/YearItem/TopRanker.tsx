@@ -1,18 +1,9 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Link from '~/components/Link';
-
-TopRanker.propTypes = {
-  userId: PropTypes.number,
-  profilePicUrl: PropTypes.string,
-  style: PropTypes.object,
-  username: PropTypes.string,
-  rank: PropTypes.number
-};
 
 export default function TopRanker({
   userId,
@@ -20,6 +11,12 @@ export default function TopRanker({
   style,
   username,
   rank
+}: {
+  userId: number;
+  profilePicUrl: string;
+  style?: React.CSSProperties;
+  username: string;
+  rank: number;
 }) {
   const navigate = useNavigate();
   const rankColor = useMemo(() => {

@@ -1,3 +1,4 @@
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import localize from '~/constants/localize';
 import { css } from '@emotion/css';
@@ -61,7 +62,7 @@ export default function Earn() {
     </ErrorBoundary>
   );
 
-  function handleInputModalButtonClick(modalType) {
+  function handleInputModalButtonClick(modalType: string) {
     navigate('/');
     onSetInputModalShown({ shown: true, modalType });
   }

@@ -1,16 +1,8 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Bubble from './Bubble';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
-
-ProgressBar.propTypes = {
-  isOnStreak: PropTypes.bool,
-  isCompleted: PropTypes.bool,
-  questions: PropTypes.arrayOf(PropTypes.object).isRequired,
-  selectedIndex: PropTypes.number.isRequired,
-  style: PropTypes.object
-};
 
 export default function ProgressBar({
   isOnStreak,
@@ -18,6 +10,12 @@ export default function ProgressBar({
   questions,
   selectedIndex,
   style
+}: {
+  isOnStreak: boolean;
+  isCompleted: boolean;
+  questions: any[];
+  selectedIndex: number;
+  style: React.CSSProperties;
 }) {
   const {
     grammarGameScoreS: { color: colorS },

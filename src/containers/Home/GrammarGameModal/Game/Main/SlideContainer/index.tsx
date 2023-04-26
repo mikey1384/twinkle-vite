@@ -1,19 +1,9 @@
-import { Children, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { Children, useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ProgressBar from './ProgressBar';
 import ReactionText from './ReactionText';
 import { useSpring, animated } from 'react-spring';
 import { scrollElementToCenter } from '~/helpers';
-
-SlideContainer.propTypes = {
-  children: PropTypes.node,
-  isCompleted: PropTypes.bool,
-  isOnStreak: PropTypes.bool,
-  onCountdownStart: PropTypes.func,
-  questions: PropTypes.array,
-  selectedIndex: PropTypes.number
-};
 
 export default function SlideContainer({
   children,
@@ -22,21 +12,28 @@ export default function SlideContainer({
   onCountdownStart,
   questions,
   selectedIndex = 0
+}: {
+  children: any;
+  isCompleted: boolean;
+  isOnStreak: boolean;
+  onCountdownStart: Function;
+  questions: any;
+  selectedIndex: number;
 }) {
   const [streakEffectOff, setStreakEffectOff] = useState(false);
   const questionsStyle = useSpring({ opacity: isCompleted ? 0 : 1 });
-  const SlideRefs = useRef({});
+  const SlideRefs: React.RefObject<any> = useRef({});
   const childrenArray = useMemo(() => Children.toArray(children), [children]);
   const DisplayedSlide = useMemo(() => {
-    const SlideComponent = childrenArray.filter(
-      (child, index) => index === selectedIndex
+    const SlideComponent: any = childrenArray.filter(
+      (_, index) => index === selectedIndex
     )[0];
     return {
       ...SlideComponent,
       props: {
         ...SlideComponent?.props,
         onCountdownStart,
-        innerRef: (ref) => (SlideRefs.current[selectedIndex] = ref),
+        innerRef: (ref: any) => (SlideRefs.current[selectedIndex] = ref),
         index: selectedIndex,
         isCompleted
       }

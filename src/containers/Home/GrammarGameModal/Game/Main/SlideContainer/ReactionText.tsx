@@ -1,16 +1,11 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { scoreTable, perfectScoreBonus } from '../../../constants';
 
-ReactionText.propTypes = {
-  questions: PropTypes.array.isRequired
-};
-
-export default function ReactionText({ questions }) {
+export default function ReactionText({ questions }: { questions: any[] }) {
   const {
     grammarGameScorePerfect: { color: colorPerfect },
     grammarGameScoreA: { color: colorA },

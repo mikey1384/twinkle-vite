@@ -9,7 +9,7 @@ import StartMenu from './StartMenu';
 export default function ActivitySuggester({
   style
 }: {
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   const topMenuSection = useHomeContext((v) => v.state.topMenuSection);
 
