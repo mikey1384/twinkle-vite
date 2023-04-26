@@ -46,9 +46,9 @@ export default function UsernameText({
     [location?.pathname]
   );
   const coolDownRef = useRef(false);
-  const showTimerRef = useRef(0);
-  const hideTimerRef = useRef(0);
-  const hideTimerRef2 = useRef(0);
+  const showTimerRef: React.MutableRefObject<any> = useRef(0);
+  const hideTimerRef: React.MutableRefObject<any> = useRef(0);
+  const hideTimerRef2: React.MutableRefObject<any> = useRef(0);
   const UsernameTextRef = useRef<HTMLDivElement | null>(null);
   const mouseEntered = useRef(false);
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);

@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useCallback, useMemo, useState } from 'react';
 import Members from './Members';
 import ChannelDetails from './ChannelDetails';
 import { css } from '@emotion/css';
@@ -16,15 +15,6 @@ import localize from '~/constants/localize';
 const madeCallLabel = localize('madeCall');
 const onlineLabel = localize('online');
 
-ChatInfo.propTypes = {
-  channelName: PropTypes.string,
-  channelOnCall: PropTypes.object,
-  currentChannel: PropTypes.object.isRequired,
-  currentOnlineUsers: PropTypes.object.isRequired,
-  displayedThemeColor: PropTypes.string,
-  selectedChannelId: PropTypes.number
-};
-
 export default function ChatInfo({
   selectedChannelId,
   channelOnCall,
@@ -32,6 +22,13 @@ export default function ChatInfo({
   currentOnlineUsers,
   displayedThemeColor,
   channelName
+}: {
+  selectedChannelId: number;
+  channelOnCall: any;
+  currentChannel: any;
+  currentOnlineUsers: any[];
+  displayedThemeColor: string;
+  channelName: string;
 }) {
   const {
     userId: myId,
@@ -46,7 +43,9 @@ export default function ChatInfo({
 
   const allMemberIds = useMemo(() => {
     if (currentChannel?.twoPeople) {
-      return (currentChannel?.members || []).map((member) => member.id);
+      return (currentChannel?.members || []).map(
+        (member: { id: number }) => member.id
+      );
     }
     return currentChannel?.allMemberIds || [];
   }, [
@@ -94,7 +93,8 @@ export default function ChatInfo({
 
   const displayedChannelMembers = useMemo(() => {
     const offlineChannelMembers = (currentChannel?.members || []).filter(
-      (member) => !onlineChannelMembers?.map((m) => m.id)?.includes(member.id)
+      (member: { id: number }) =>
+        !onlineChannelMembers?.map((m) => m.id)?.includes(member.id)
     );
     return [...onlineChannelMembers, ...offlineChannelMembers];
   }, [currentChannel?.members, onlineChannelMembers]);
@@ -104,8 +104,8 @@ export default function ChatInfo({
       if (onlineChannelMembers?.length === 1) {
         const messageId = uuidv1();
         const partnerName = currentChannel?.members
-          ?.map((member) => member.username)
-          ?.filter((memberName) => memberName !== username)?.[0];
+          ?.map((member: { username: string }) => member.username)
+          ?.filter((memberName: string) => memberName !== username)?.[0];
         return onSubmitMessage({
           messageId,
           message: {

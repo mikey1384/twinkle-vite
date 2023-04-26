@@ -1,23 +1,24 @@
-import { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useRef, useState } from 'react';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useChatContext } from '~/contexts';
 import { isMobile, textIsOverflown } from '~/helpers';
 
-ChannelDetails.propTypes = {
-  channelId: PropTypes.number,
-  channelName: PropTypes.string,
-  style: PropTypes.object
-};
-
 const deviceIsMobile = isMobile(navigator);
 
-export default function ChannelDetails({ channelId, channelName, style }) {
+export default function ChannelDetails({
+  channelId,
+  channelName,
+  style
+}: {
+  channelId: number;
+  channelName: string;
+  style: React.CSSProperties;
+}) {
   const customChannelNames = useChatContext((v) => v.state.customChannelNames);
   const [channelNameHovered, setChannelNameHovered] = useState(false);
-  const ChannelNameRef = useRef(null);
+  const ChannelNameRef: React.RefObject<any> = useRef(null);
   return (
     <div
       onClick={() => setChannelNameHovered((hovered) => !hovered)}
