@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
 import Story from './Story';
@@ -33,26 +32,25 @@ const rewardTable = {
   }
 };
 
-ContentContainer.propTypes = {
-  attemptId: PropTypes.number,
-  difficulty: PropTypes.number.isRequired,
-  displayedSection: PropTypes.string.isRequired,
-  loading: PropTypes.bool.isRequired,
-  loadComplete: PropTypes.bool.isRequired,
-  questions: PropTypes.array,
-  storyObj: PropTypes.object.isRequired,
-  onLoadQuestions: PropTypes.func.isRequired,
-  onReset: PropTypes.func.isRequired,
-  onSetSolveObj: PropTypes.func.isRequired,
-  onScrollToTop: PropTypes.func.isRequired,
-  onSetDisplayedSection: PropTypes.func.isRequired,
-  onSetUserChoiceObj: PropTypes.func.isRequired,
-  questionsLoadError: PropTypes.bool,
-  questionsLoaded: PropTypes.bool,
-  solveObj: PropTypes.object.isRequired,
-  userChoiceObj: PropTypes.object.isRequired
-};
-
+interface Props {
+  attemptId: number;
+  difficulty: number;
+  displayedSection: string;
+  loading: boolean;
+  loadComplete: boolean;
+  questions: any[];
+  storyObj: any;
+  onLoadQuestions: () => void;
+  onReset: () => void;
+  onSetDisplayedSection: (section: string) => void;
+  onSetSolveObj: (solveObj: any) => void;
+  onSetUserChoiceObj: (userChoiceObj: any) => void;
+  onScrollToTop: () => void;
+  questionsLoadError: boolean;
+  questionsLoaded: boolean;
+  solveObj: any;
+  userChoiceObj: any;
+}
 export default function ContentContainer({
   attemptId,
   difficulty,
@@ -71,7 +69,7 @@ export default function ContentContainer({
   questionsLoaded,
   solveObj,
   userChoiceObj
-}) {
+}: Props) {
   const { userId } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const uploadAIStoryAttempt = useAppContext(

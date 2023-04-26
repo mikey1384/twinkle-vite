@@ -1,11 +1,11 @@
-import PropTypes from 'prop-types';
+import React, { useEffect } from 'react';
 import Button from '~/components/Button';
 import ContentContainer from './ContentContainer';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import GradientButton from '~/components/Buttons/GradientButton';
 import { useAppContext } from '~/contexts';
 
-const levelHash = {
+const levelHash: { [key: string]: string } = {
   1: 'Level 1 (AR 1)',
   2: 'Level 2 (AR 5)',
   3: 'Level 3 (TOEFL JR)',
@@ -13,46 +13,45 @@ const levelHash = {
   5: 'Level 5 (SAT)'
 };
 
-Game.propTypes = {
-  attemptId: PropTypes.number,
-  difficulty: PropTypes.number.isRequired,
-  displayedSection: PropTypes.string.isRequired,
-  generateButtonPressed: PropTypes.bool.isRequired,
-  loadStoryComplete: PropTypes.bool.isRequired,
-  loadingStory: PropTypes.bool.isRequired,
-  loadingTopic: PropTypes.bool.isRequired,
-  MainRef: PropTypes.object.isRequired,
-  onHide: PropTypes.func.isRequired,
-  onLoadTopic: PropTypes.func.isRequired,
-  onSetAttemptId: PropTypes.func.isRequired,
-  onSetResetNumber: PropTypes.func.isRequired,
-  onSetDifficulty: PropTypes.func.isRequired,
-  onSetDisplayedSection: PropTypes.func.isRequired,
-  onSetDropdownShown: PropTypes.func.isRequired,
-  onSetGenerateButtonPressed: PropTypes.func.isRequired,
-  onSetLoadingStory: PropTypes.func.isRequired,
-  onSetLoadStoryComplete: PropTypes.func.isRequired,
-  onSetQuestions: PropTypes.func.isRequired,
-  onSetQuestionsLoaded: PropTypes.func.isRequired,
-  onSetQuestionsLoadError: PropTypes.func.isRequired,
-  onSetTopicLoadError: PropTypes.func.isRequired,
-  onSetSolveObj: PropTypes.func.isRequired,
-  onSetStoryLoadError: PropTypes.func.isRequired,
-  onSetStoryObj: PropTypes.func.isRequired,
-  onSetUserChoiceObj: PropTypes.func.isRequired,
-  questions: PropTypes.array,
-  questionsLoaded: PropTypes.bool,
-  questionsLoadError: PropTypes.bool,
-  solveObj: PropTypes.object.isRequired,
-  storyLoadError: PropTypes.bool.isRequired,
-  storyObj: PropTypes.object.isRequired,
-  storyType: PropTypes.string.isRequired,
-  topic: PropTypes.string.isRequired,
-  topicKey: PropTypes.string.isRequired,
-  topicLoadError: PropTypes.bool.isRequired,
-  userChoiceObj: PropTypes.object.isRequired
-};
-
+interface Props {
+  attemptId: number;
+  difficulty: number;
+  displayedSection: string;
+  generateButtonPressed: boolean;
+  loadStoryComplete: boolean;
+  loadingStory: boolean;
+  loadingTopic: boolean;
+  MainRef: React.RefObject<any>;
+  onHide: () => void;
+  onLoadTopic: (v: any) => void;
+  onSetAttemptId: (v: number) => void;
+  onSetDifficulty: (v: number) => void;
+  onSetDisplayedSection: (v: string) => void;
+  onSetDropdownShown: (v: boolean) => void;
+  onSetGenerateButtonPressed: (v: boolean) => void;
+  onSetLoadingStory: (v: boolean) => void;
+  onSetLoadStoryComplete: (v: boolean) => void;
+  onSetTopicLoadError: (v: boolean) => void;
+  onSetQuestions: (v: any) => void;
+  onSetQuestionsLoaded: (v: boolean) => void;
+  onSetQuestionsLoadError: (v: boolean) => void;
+  onSetResetNumber: (v: any) => void;
+  onSetSolveObj: (v: any) => void;
+  onSetStoryLoadError: (v: boolean) => void;
+  onSetStoryObj: (v: any) => void;
+  onSetUserChoiceObj: (v: any) => void;
+  questions: any[];
+  questionsLoaded: boolean;
+  questionsLoadError: boolean;
+  solveObj: any;
+  storyLoadError: boolean;
+  storyObj: any;
+  storyType: string;
+  topic: string;
+  topicKey: string;
+  topicLoadError: boolean;
+  userChoiceObj: any;
+}
 export default function Game({
   attemptId,
   difficulty,
@@ -91,7 +90,7 @@ export default function Game({
   topicKey,
   topicLoadError,
   userChoiceObj
-}) {
+}: Props) {
   const loadAIStoryQuestions = useAppContext(
     (v) => v.requestHelpers.loadAIStoryQuestions
   );
@@ -134,7 +133,6 @@ export default function Game({
           difficulty={Number(difficulty)}
           displayedSection={displayedSection}
           loading={loadingStory}
-          loadingTopic={loadingTopic}
           loadComplete={loadStoryComplete}
           storyObj={storyObj}
           questions={questions}
@@ -203,7 +201,7 @@ export default function Game({
                 style={{ marginTop: '3rem' }}
                 onClick={() => {
                   onSetTopicLoadError(false);
-                  onLoadTopic(difficulty);
+                  onLoadTopic({ difficulty });
                 }}
               >
                 Retry
@@ -278,7 +276,7 @@ export default function Game({
   }
 
   function handleReset() {
-    onSetResetNumber((prevNumber) => prevNumber + 1);
+    onSetResetNumber((prevNumber: number) => prevNumber + 1);
     onSetLoadStoryComplete(false);
     onSetQuestionsLoaded(false);
     onSetQuestions([]);

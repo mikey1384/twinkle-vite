@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
@@ -7,11 +7,6 @@ import { useKeyContext } from '~/contexts';
 import { truncateTopic } from '~/helpers/stringHelpers';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-
-ContentPreview.propTypes = {
-  contentObj: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
 
 export default function ContentPreview({
   contentObj: {
@@ -27,6 +22,24 @@ export default function ContentPreview({
     thumbUrl
   },
   style
+}: {
+  contentObj: {
+    id: number;
+    contentType: string;
+    uploader: {
+      id: number;
+      username: string;
+      profilePicUrl: string;
+    };
+    content: string;
+    story: string;
+    fileName: string;
+    filePath: string;
+    fileSize: number;
+    topic: string;
+    thumbUrl: string;
+  };
+  style: React.CSSProperties;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();

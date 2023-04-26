@@ -1,17 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import { useAppContext } from '~/contexts';
 import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import Rankings from './Rankings';
 
-AIStoriesModal.propTypes = {
-  onHide: PropTypes.func.isRequired
-};
-
-export default function AIStoriesModal({ onHide }) {
-  const MainRef = useRef();
+export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
+  const MainRef: React.RefObject<any> = useRef(null);
   const [solveObj, setSolveObj] = useState({
     numCorrect: 0,
     isGraded: false
@@ -20,7 +15,7 @@ export default function AIStoriesModal({ onHide }) {
   const [activeTab, setActiveTab] = useState('game');
   const [displayedSection, setDisplayedSection] = useState('story');
   const [rankingsTab, setRankingsTab] = useState('all');
-  const [attemptId, setAttemptId] = useState(null);
+  const [attemptId, setAttemptId] = useState(0);
   const loadedDifficulty = localStorage.getItem('story-difficulty');
   const [difficulty, setDifficulty] = useState(Number(loadedDifficulty) || 3);
   const [loadStoryComplete, onSetLoadStoryComplete] = useState(false);
@@ -41,10 +36,10 @@ export default function AIStoriesModal({ onHide }) {
   const [storyType, setStoryType] = useState('');
   const [loadingTopic, setLoadingTopic] = useState(false);
   const [topicLoadError, setTopicLoadError] = useState(false);
-  const requestRef = useRef();
+  const requestRef: React.MutableRefObject<any> = useRef(null);
 
   useEffect(() => {
-    localStorage.setItem('story-difficulty', difficulty);
+    localStorage.setItem('story-difficulty', String(difficulty));
     const currentRequestId = Math.random();
     requestRef.current = currentRequestId;
     if (difficulty && currentRequestId) {
@@ -74,13 +69,13 @@ export default function AIStoriesModal({ onHide }) {
             }}
           >
             <nav
-              className={activeTab === 'game' ? 'active' : null}
+              className={activeTab === 'game' ? 'active' : ''}
               onClick={() => setActiveTab('game')}
             >
               Game
             </nav>
             <nav
-              className={activeTab === 'rankings' ? 'active' : null}
+              className={activeTab === 'rankings' ? 'active' : ''}
               onClick={() => setActiveTab('rankings')}
             >
               Rankings
@@ -158,7 +153,13 @@ export default function AIStoriesModal({ onHide }) {
     </Modal>
   );
 
-  async function handleLoadTopic({ difficulty, currentRequestId }) {
+  async function handleLoadTopic({
+    difficulty,
+    currentRequestId
+  }: {
+    difficulty: number;
+    currentRequestId: number;
+  }) {
     setLoadingTopic(true);
     try {
       const { topic, topicKey, type } = await tryLoadTopic({
@@ -179,6 +180,11 @@ export default function AIStoriesModal({ onHide }) {
         retries,
         timeout,
         currentRequestId
+      }: {
+        difficulty: number;
+        retries: number;
+        timeout: number;
+        currentRequestId: number;
       }) {
         for (let i = 0; i < retries; i++) {
           try {
@@ -199,7 +205,7 @@ export default function AIStoriesModal({ onHide }) {
         }
         throw new Error('Failed to load topic after maximum retries');
       }
-      function sleep(ms) {
+      function sleep(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
     } catch (error) {
