@@ -15,7 +15,7 @@ export default function ContentPreview({
     uploader,
     content,
     story,
-    fileName,
+    fileName = '',
     filePath,
     fileSize,
     topic,
@@ -33,13 +33,13 @@ export default function ContentPreview({
     };
     content: string;
     story: string;
-    fileName: string;
-    filePath: string;
-    fileSize: number;
-    topic: string;
-    thumbUrl: string;
+    fileName?: string;
+    filePath?: string;
+    fileSize?: number;
+    topic?: string;
+    thumbUrl?: string;
   };
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const navigate = useNavigate();

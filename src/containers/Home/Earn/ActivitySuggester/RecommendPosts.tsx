@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import ContentPreview from './ContentPreview';
@@ -15,7 +15,7 @@ export default function RecommendPosts() {
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
   );
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<any[]>([]);
   const [skipping, setSkipping] = useState(false);
   const [loading, setLoading] = useState(false);
   const loadPostsToRecommend = useAppContext(
@@ -59,9 +59,21 @@ export default function RecommendPosts() {
             >{`Wow, it looks like there aren't any post left to recommend!`}</div>
           ) : (
             <>
-              {posts.map((post) => (
-                <ContentPreview key={post.id} contentObj={post} />
-              ))}
+              {posts.map(
+                (post: {
+                  id: number;
+                  contentType: string;
+                  content: string;
+                  story: string;
+                  uploader: {
+                    id: number;
+                    username: string;
+                    profilePicUrl: string;
+                  };
+                }) => (
+                  <ContentPreview key={post.id} contentObj={post} />
+                )
+              )}
             </>
           )}
         </div>
@@ -116,9 +128,12 @@ export default function RecommendPosts() {
     </ErrorBoundary>
   );
 
-  function handleSetTopMenuSection(section) {
+  function handleSetTopMenuSection(section: string) {
     onSetTopMenuSectionSection(section);
-    document.getElementById('App').scrollTop = 0;
+    const appElement = document.getElementById('App');
+    if (appElement) {
+      appElement.scrollTop = 0;
+    }
     BodyRef.scrollTop = 0;
   }
 
@@ -133,7 +148,10 @@ export default function RecommendPosts() {
       });
       setSkipping(false);
     }
-    document.getElementById('App').scrollTop = 0;
+    const appElement = document.getElementById('App');
+    if (appElement) {
+      appElement.scrollTop = 0;
+    }
     BodyRef.scrollTop = 0;
     handleLoadPostsToRecommend();
   }

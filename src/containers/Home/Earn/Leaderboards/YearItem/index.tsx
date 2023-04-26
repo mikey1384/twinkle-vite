@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import CurrentMonth from './CurrentMonth';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -32,7 +32,15 @@ YearItem.propTypes = {
   year: PropTypes.number
 };
 
-export default function YearItem({ style, year, currentYear }) {
+export default function YearItem({
+  style,
+  year,
+  currentYear
+}: {
+  style?: React.CSSProperties;
+  year: number;
+  currentYear: number;
+}) {
   const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const loadMonthlyLeaderboards = useAppContext(
     (v) => v.requestHelpers.loadMonthlyLeaderboards
@@ -70,7 +78,7 @@ export default function YearItem({ style, year, currentYear }) {
     if (year === currentYear) {
       return expanded
         ? leaderboards.filter(
-            (leaderboard) => leaderboard.month !== currentMonth
+            (leaderboard: { month: any }) => leaderboard.month !== currentMonth
           )
         : [];
     }
@@ -94,7 +102,7 @@ export default function YearItem({ style, year, currentYear }) {
       {year === currentYear || leaderboardsObj?.[year]?.loaded ? (
         <div style={{ marginTop: '2rem', position: 'relative' }}>
           {year === currentYear ? <CurrentMonth /> : null}
-          {displayedLeaderBoards.map((leaderboard) => (
+          {displayedLeaderBoards.map((leaderboard: any) => (
             <MonthItem
               key={leaderboard.id}
               style={{ marginTop: '1rem' }}
