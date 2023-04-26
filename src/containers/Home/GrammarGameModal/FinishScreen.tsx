@@ -1,6 +1,5 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import GradientButton from '~/components/Buttons/GradientButton';
 import { useKeyContext } from '~/contexts';
@@ -10,16 +9,14 @@ import { scoreTable, perfectScoreBonus } from './constants';
 
 const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
 
-FinishScreen.propTypes = {
-  scoreArray: PropTypes.array,
-  onBackToStart: PropTypes.func.isRequired,
-  timesPlayedToday: PropTypes.number.isRequired
-};
-
 export default function FinishScreen({
   scoreArray,
   onBackToStart,
   timesPlayedToday
+}: {
+  scoreArray: any[];
+  onBackToStart: () => any;
+  timesPlayedToday: number;
 }) {
   const {
     grammarGameScoreS: { color: colorS },
@@ -30,7 +27,7 @@ export default function FinishScreen({
     grammarGameScoreF: { color: colorF }
   } = useKeyContext((v) => v.theme);
 
-  const letterColor = {
+  const letterColor: { [key: string]: string } = {
     S: colorS,
     A: colorA,
     B: colorB,
@@ -60,7 +57,14 @@ export default function FinishScreen({
   }, [score]);
 
   const numLetterGrades = useMemo(() => {
-    const resultObj = { S: 0, A: 0, B: 0, C: 0, D: 0, F: 0 };
+    const resultObj: { [key: string]: number } = {
+      S: 0,
+      A: 0,
+      B: 0,
+      C: 0,
+      D: 0,
+      F: 0
+    };
     for (let score of scoreArray) {
       if (!resultObj[score]) {
         resultObj[score] = 1;
