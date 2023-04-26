@@ -27,7 +27,7 @@ const deviceIsMobile = isMobile(navigator);
 
 interface Props {
   channelId: number;
-  channelName: string;
+  channelName?: string;
   guesses: string[];
   isGameOver: boolean;
   isGameWon: boolean;

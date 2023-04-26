@@ -7,7 +7,6 @@ import React, {
   useRef,
   useState
 } from 'react';
-import PropTypes from 'prop-types';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -65,22 +64,22 @@ interface Props {
   isNotification: boolean;
   isRestricted: boolean;
   loading: boolean;
-  onAcceptGroupInvitation: () => void;
+  onAcceptGroupInvitation: (v: any) => void;
   onChessBoardClick: () => void;
   onChessSpoilerClick: (v: number) => void;
   onCancelRewindRequest: () => void;
-  onAcceptRewind: () => void;
+  onAcceptRewind: (v: any) => void;
   onDeclineRewind: () => void;
   onReceiveNewMessage: () => void;
   onReplyClick: () => void;
   onRequestRewind: (v: any) => void;
-  onSetAICardModalCardId: () => void;
+  onSetAICardModalCardId: (v: any) => void;
   onSetChessTarget: (v: any) => void;
   onSetTransactionModalShown: (v: boolean) => void;
   onRewardMessageSubmit: (v: any) => void;
   onScrollToBottom: () => void;
-  onShowSubjectMsgsModal: () => void;
-  zIndex: number;
+  onShowSubjectMsgsModal: (v: any) => void;
+  zIndex?: number;
 }
 function Message({
   channelId,
@@ -660,7 +659,7 @@ function Message({
           currentChannel.currentTransactionId &&
           currentChannel.currentTransactionId === transactionDetails.id
             ? () => onSetTransactionModalShown(true)
-            : null
+            : undefined
         }
         onSetAICardModalCardId={onSetAICardModalCardId}
         transaction={transactionDetails}

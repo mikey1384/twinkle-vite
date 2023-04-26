@@ -13,7 +13,7 @@ interface Props {
   userId: number;
   username: string;
   onCancelRewindRequest: () => void;
-  onAcceptRewind: () => void;
+  onAcceptRewind: (v: any) => void;
   onDeclineRewind: () => void;
   onRequestRewind: (v: any) => void;
 }

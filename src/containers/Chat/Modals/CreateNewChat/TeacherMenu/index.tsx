@@ -12,7 +12,7 @@ export default function TeacherMenu({
 }: {
   channelId: number;
   creatingChat: boolean;
-  onCreateRegularChat: () => void;
+  onCreateRegularChat: (v: any) => void;
   onHide: () => void;
 }) {
   const [section, setSection] = useState('select');

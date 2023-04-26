@@ -22,12 +22,12 @@ export default function Body({
   channelName: string;
   partner: any;
   currentChannel: any;
-  currentPathId: string;
+  currentPathId: string | number;
   displayedThemeColor: string;
   isAICardModalShown: boolean;
   onSetAICardModalCardId: (v: number) => void;
   subchannelId: number;
-  subchannelPath: string;
+  subchannelPath?: string;
 }) {
   const {
     state: { chatType, loadingVocabulary, loadingAICardChat }

@@ -1,28 +1,28 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
 import Icon from '~/components/Icon';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
-OfferPanel.propTypes = {
-  isAICardModalShown: PropTypes.bool,
-  isOnModal: PropTypes.bool,
-  isTrade: PropTypes.bool,
-  offerCardIds: PropTypes.array,
-  offerCoins: PropTypes.number,
-  onSetAICardModalCardId: PropTypes.func,
-  showCardDetailsOnThumbClick: PropTypes.bool
-};
-
-export default function OfferPanel({
+export default function WantPanel({
   isAICardModalShown,
   isOnModal,
   isTrade,
-  offerCardIds,
-  offerCoins,
   onSetAICardModalCardId,
-  showCardDetailsOnThumbClick
+  wantCardIds,
+  wantCoins,
+  showCardDetailsOnThumbClick,
+  style
+}: {
+  isAICardModalShown: boolean;
+  isOnModal?: boolean;
+  isTrade: boolean;
+  onSetAICardModalCardId: (cardId: number) => void;
+  wantCardIds: number[];
+  wantCoins: number;
+  showCardDetailsOnThumbClick: boolean;
+  style: React.CSSProperties;
 }) {
   return (
     <div
@@ -30,13 +30,15 @@ export default function OfferPanel({
       style={{
         width: '100%',
         borderRadius,
-        border: `1px solid ${Color.borderGray()}`
+        fontFamily: 'Roboto, monospace',
+        border: `1px solid ${Color.borderGray()}`,
+        ...style
       }}
     >
       {isTrade ? (
         <div
           className={css`
-            font-size: 1.6rem;
+            font-size: 1.7rem;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.5rem;
             }
@@ -49,7 +51,7 @@ export default function OfferPanel({
             borderBottom: `1px solid ${Color.borderGray()}`
           }}
         >
-          Offered...
+          in exchange for...
         </div>
       ) : null}
       <div
@@ -62,17 +64,17 @@ export default function OfferPanel({
           flexDirection: 'column'
         }}
       >
-        {offerCardIds.length ? (
+        {wantCardIds.length ? (
           <div style={{ textAlign: 'center' }}>
             <AICardsPreview
               isAICardModalShown={isAICardModalShown}
               isOnModal={isOnModal}
-              cardIds={offerCardIds}
+              cardIds={wantCardIds}
               onSetAICardModalCardId={
-                showCardDetailsOnThumbClick ? onSetAICardModalCardId : null
+                showCardDetailsOnThumbClick ? onSetAICardModalCardId : undefined
               }
             />
-            {offerCoins > 0 && (
+            {wantCoins > 0 && (
               <div
                 style={{
                   padding: '0.5rem',
@@ -85,7 +87,7 @@ export default function OfferPanel({
             )}
           </div>
         ) : null}
-        {offerCoins > 0 && (
+        {wantCoins > 0 && (
           <div>
             <Icon
               style={{ color: Color.brownOrange() }}
@@ -99,7 +101,7 @@ export default function OfferPanel({
                 marginLeft: '0.3rem'
               }}
             >
-              {addCommasToNumber(offerCoins)}
+              {addCommasToNumber(wantCoins)}
             </span>
           </div>
         )}

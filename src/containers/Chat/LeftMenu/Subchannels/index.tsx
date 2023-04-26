@@ -14,7 +14,7 @@ interface Props {
   selectedChannelId: number;
   subchannelIds: number[];
   subchannelObj: any;
-  subchannelPath: string;
+  subchannelPath?: string;
 }
 export default function SubChannels({
   currentChannel,

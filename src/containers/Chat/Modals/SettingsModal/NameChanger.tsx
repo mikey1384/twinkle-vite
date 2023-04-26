@@ -9,7 +9,7 @@ export default function NameChanger({
   usingCustomName,
   userIsChannelOwner
 }: {
-  actualChannelName: string;
+  actualChannelName?: string;
   editedChannelName: string;
   onSetEditedChannelName: (v: string) => void;
   usingCustomName: boolean;

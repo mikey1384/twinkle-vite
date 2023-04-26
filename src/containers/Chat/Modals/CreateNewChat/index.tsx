@@ -14,7 +14,7 @@ export default function CreateNewChatModal({
   channelId: number;
   creatingChat: boolean;
   onHide: () => void;
-  onDone: () => void;
+  onDone: (v: any) => void;
 }) {
   const { authLevel } = useKeyContext((v) => v.myState);
   return (

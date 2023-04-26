@@ -1,5 +1,4 @@
-import { memo, useContext, useRef, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useContext, useRef, useEffect } from 'react';
 import ChatInfo from './ChatInfo';
 import VocabInfo from './VocabInfo';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -9,15 +8,6 @@ import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import LocalContext from '../Context';
 import AICardInfo from './AICardInfo';
 
-RightMenu.propTypes = {
-  channelName: PropTypes.string,
-  channelOnCall: PropTypes.object,
-  currentChannel: PropTypes.object,
-  currentOnlineUsers: PropTypes.object,
-  displayedThemeColor: PropTypes.string,
-  selectedChannelId: PropTypes.number
-};
-
 function RightMenu({
   channelName,
   channelOnCall,
@@ -25,11 +15,18 @@ function RightMenu({
   currentOnlineUsers,
   displayedThemeColor,
   selectedChannelId
+}: {
+  channelName: string;
+  channelOnCall: any;
+  currentChannel: any;
+  currentOnlineUsers: any[];
+  displayedThemeColor: string;
+  selectedChannelId: number;
 }) {
   const {
     state: { chatType }
   } = useContext(LocalContext);
-  const MenuRef = useRef(null);
+  const MenuRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
     (MenuRef.current || {}).scrollTop = 0;

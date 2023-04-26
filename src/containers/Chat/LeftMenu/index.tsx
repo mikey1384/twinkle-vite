@@ -17,7 +17,7 @@ const newChatLabel = localize('newChat');
 
 interface Props {
   currentChannel: any;
-  currentPathId: string;
+  currentPathId: number | string;
   displayedThemeColor: string;
   loadingVocabulary: boolean;
   loadingAICardChat: boolean;
@@ -25,7 +25,7 @@ interface Props {
   selectedChannelId: number;
   subchannelIds: any[];
   subchannelObj: any;
-  subchannelPath: string;
+  subchannelPath?: string;
 }
 export default function LeftMenu({
   currentChannel,

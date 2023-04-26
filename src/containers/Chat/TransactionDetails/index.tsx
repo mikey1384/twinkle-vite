@@ -1,21 +1,9 @@
-import { useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect } from 'react';
 import Trade from './Trade';
 import Show from './Show';
 import Send from './Send';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useChatContext, useKeyContext } from '~/contexts';
-
-TransactionDetails.propTypes = {
-  isAICardModalShown: PropTypes.bool,
-  isOnModal: PropTypes.bool,
-  currentTransactionId: PropTypes.number,
-  onClick: PropTypes.func,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  partner: PropTypes.object.isRequired,
-  style: PropTypes.object,
-  transaction: PropTypes.object.isRequired
-};
 
 export default function TransactionDetails({
   currentTransactionId,
@@ -26,6 +14,15 @@ export default function TransactionDetails({
   transaction,
   partner,
   style
+}: {
+  currentTransactionId: number;
+  onClick?: () => void;
+  isAICardModalShown: boolean;
+  isOnModal?: boolean;
+  onSetAICardModalCardId: (cardId: number) => void;
+  transaction: any;
+  partner: any;
+  style?: React.CSSProperties;
 }) {
   const { userId, username } = useKeyContext((v) => v.myState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
@@ -44,8 +41,8 @@ export default function TransactionDetails({
   const { type, want = {}, offer = {} } = transaction;
   const { cards: wantCards = [], coins: wantCoins = 0 } = want || {};
   const { cards: offerCards = [], coins: offerCoins = 0 } = offer || {};
-  const wantCardIds = wantCards.map((card) => card.id);
-  const offerCardIds = offerCards.map((card) => card.id);
+  const wantCardIds = wantCards.map((card: { id: number }) => card.id);
+  const offerCardIds = offerCards.map((card: { id: number }) => card.id);
 
   useEffect(() => {
     if (wantCards.length) {

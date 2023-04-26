@@ -1,14 +1,16 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-Heading.propTypes = {
-  isCurrent: PropTypes.bool,
-  color: PropTypes.string,
-  children: PropTypes.node
-};
-
-export default function Heading({ isCurrent, color, children }) {
+export default function Heading({
+  isCurrent,
+  color,
+  children
+}: {
+  isCurrent: boolean;
+  color: string;
+  children: any;
+}) {
   return (
     <div
       className={css`

@@ -14,7 +14,7 @@ export default function Rewind({
   channelId: number;
   countdownNumber: number;
   myId: number;
-  onAcceptRewind: () => void;
+  onAcceptRewind: (v: any) => void;
   onCancelRewindRequest: () => void;
   onDeclineRewind: () => void;
   rewindRequestId: number;
