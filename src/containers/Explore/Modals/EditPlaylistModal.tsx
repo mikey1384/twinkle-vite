@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
@@ -17,13 +16,6 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isMobile, objectify } from '~/helpers';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 
-EditPlaylistModal.propTypes = {
-  modalType: PropTypes.string.isRequired,
-  numPlaylistVids: PropTypes.number.isRequired,
-  onHide: PropTypes.func.isRequired,
-  playlistId: PropTypes.number.isRequired
-};
-
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 
 export default function EditPlaylistModal({
@@ -31,6 +23,11 @@ export default function EditPlaylistModal({
   numPlaylistVids,
   onHide,
   playlistId
+}: {
+  modalType: string;
+  numPlaylistVids: number;
+  onHide: () => void;
+  playlistId: number;
 }) {
   const {
     done: { color: doneColor }
@@ -49,19 +46,23 @@ export default function EditPlaylistModal({
   const onChangePlaylistVideos = useExploreContext(
     (v) => v.actions.onChangePlaylistVideos
   );
-  const [addedVideos, setAddedVideos] = useState([]);
+  const [addedVideos, setAddedVideos] = useState<any[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [modalVideos, setModalVideos] = useState([]);
+  const [modalVideos, setModalVideos] = useState<any[]>([]);
   const [searchedVideos, setSearchedVideos] = useState([]);
-  const [loadedOrSearchedVideos, setLoadedOrSearchedVideos] = useState([]);
+  const [loadedOrSearchedVideos, setLoadedOrSearchedVideos] = useState<any[]>(
+    []
+  );
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [removedVideoIds, setRemovedVideoIds] = useState({});
+  const [removedVideoIds, setRemovedVideoIds] = useState<Record<string, any>>(
+    {}
+  );
   const [loadMoreButton, setLoadMoreButton] = useState(false);
   const [removeVideosLoadMoreButton, setRemoveVideosLoadMoreButton] =
     useState(false);
-  const [selectedVideos, setSelectedVideos] = useState([]);
+  const [selectedVideos, setSelectedVideos] = useState<any[]>([]);
   const [searchLoadMoreButton, setSearchLoadMoreButton] = useState(false);
   const [mainTabActive, setMainTabActive] = useState(true);
   const mainTabActiveRef = useRef(true);
@@ -72,7 +73,7 @@ export default function EditPlaylistModal({
     onSetSearchText: setSearchText
   });
   const openedRemoveVideosTab = useRef(false);
-  const playlistVideoObjects = useRef({});
+  const playlistVideoObjects: React.MutableRefObject<any> = useRef({});
   const initialSelectedVideos = useRef([]);
 
   useEffect(() => {
@@ -96,12 +97,16 @@ export default function EditPlaylistModal({
           targetVideos: modalVids
         });
         if (!mainTabActiveRef.current) return;
-        initialSelectedVideos.current = results.map((video) => video.id);
+        initialSelectedVideos.current = results.map(
+          (video: { id: number }) => video.id
+        );
       } else {
-        initialSelectedVideos.current = modalVids.map((video) => video.id);
+        initialSelectedVideos.current = modalVids.map(
+          (video: { id: number }) => video.id
+        );
       }
       if (!openedRemoveVideosTab.current) {
-        setModalVideos(modalVids.map((video) => video.id));
+        setModalVideos(modalVids.map((video: { id: number }) => video.id));
         setSelectedVideos(initialSelectedVideos.current);
         setLoadMoreButton(loadMoreShown);
         setLoading(false);
@@ -384,8 +389,10 @@ export default function EditPlaylistModal({
       setLoadedOrSearchedVideos((loadedOrSearchedVideos) =>
         loadedOrSearchedVideos.concat(
           loadedVideos
-            .map((video) => video.id)
-            .filter((videoId) => !loadedOrSearchedVideos.includes(videoId))
+            .map((video: { id: number }) => video.id)
+            .filter(
+              (videoId: number) => !loadedOrSearchedVideos.includes(videoId)
+            )
         )
       );
       setRemoveVideosLoadMoreButton(removeVidsLoadMoreButton);
@@ -413,14 +420,16 @@ export default function EditPlaylistModal({
         ...objectify(loadedVideos)
       };
       setSearchedVideos((searchedVideos) =>
-        searchedVideos.concat(loadedVideos.map((video) => video.id))
+        searchedVideos.concat(
+          loadedVideos.map((video: { id: number }) => video.id)
+        )
       );
       setSelectedVideos((selectedVideos) =>
         selectedVideos.concat(
           playlistVideos
-            .map((video) => video.id)
+            .map((video: { id: number }) => video.id)
             .filter(
-              (videoId) =>
+              (videoId: number) =>
                 !selectedVideos.includes(videoId) && !removedVideoIds[videoId]
             )
         )
@@ -448,16 +457,16 @@ export default function EditPlaylistModal({
       setModalVideos(
         modalVideos.concat(
           loadedVideos
-            .map((video) => video.id)
-            .filter((videoId) => !modalVideos.includes(videoId))
+            .map((video: { id: number }) => video.id)
+            .filter((videoId: number) => !modalVideos.includes(videoId))
         )
       );
       setSelectedVideos((selectedVideos) =>
         selectedVideos.concat(
           playlistVideos
-            .map((video) => video.id)
+            .map((video: { id: number }) => video.id)
             .filter(
-              (videoId) =>
+              (videoId: number) =>
                 !selectedVideos.includes(videoId) && !removedVideoIds[videoId]
             )
         )
@@ -494,8 +503,8 @@ export default function EditPlaylistModal({
     setModalVideos(
       modalVideos.concat(
         loadedVideos
-          .map((video) => video.id)
-          .filter((videoId) => !modalVideos.includes(videoId))
+          .map((video: { id: number }) => video.id)
+          .filter((videoId: number) => !modalVideos.includes(videoId))
       )
     );
     setLoadingMore(false);
@@ -530,15 +539,17 @@ export default function EditPlaylistModal({
     setLoadedOrSearchedVideos((loadedOrSearchedVideos) =>
       loadedOrSearchedVideos.concat(
         loadedVideos
-          .map((video) => video.id)
-          .filter((videoId) => !loadedOrSearchedVideos.includes(videoId))
+          .map((video: { id: number }) => video.id)
+          .filter(
+            (videoId: number) => !loadedOrSearchedVideos.includes(videoId)
+          )
       )
     );
     setRemoveVideosLoadMoreButton(loadMoreButton);
     setLoading(false);
   }
 
-  async function handleSearchVideo(text) {
+  async function handleSearchVideo(text: string) {
     const { results: searchResults, loadMoreButton } = await searchContent({
       filter: 'video',
       searchText: text
@@ -551,13 +562,13 @@ export default function EditPlaylistModal({
       ...playlistVideoObjects.current,
       ...objectify(searchResults)
     };
-    setSearchedVideos(searchResults.map((video) => video.id));
+    setSearchedVideos(searchResults.map((video: { id: number }) => video.id));
     setSearchLoadMoreButton(loadMoreButton);
     setSelectedVideos((selectedVideos) =>
       selectedVideos.concat(
         playlistVideos
-          .map((video) => video.id)
-          .filter((id) => !selectedVideos.includes(id))
+          .map((video: { id: number }) => video.id)
+          .filter((id: number) => !selectedVideos.includes(id))
       )
     );
     setLoading(false);

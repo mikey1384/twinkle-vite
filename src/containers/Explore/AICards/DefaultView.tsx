@@ -1,18 +1,8 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import AICard from '~/components/AICard';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useExploreContext } from '~/contexts';
-
-DefaultView.propTypes = {
-  cards: PropTypes.array.isRequired,
-  cardObj: PropTypes.object.isRequired,
-  loading: PropTypes.bool.isRequired,
-  loadAICards: PropTypes.func.isRequired,
-  navigate: PropTypes.func.isRequired,
-  search: PropTypes.string.isRequired
-};
 
 export default function DefaultView({
   cards,
@@ -21,6 +11,13 @@ export default function DefaultView({
   loadAICards,
   navigate,
   search
+}: {
+  cards: any[];
+  cardObj: any;
+  loading: boolean;
+  loadAICards: (lastInteraction: number) => any;
+  navigate: (url: string) => any;
+  search: string;
 }) {
   const loadMoreShown = useExploreContext((v) => v.state.aiCards.loadMoreShown);
   const onLoadMoreAICards = useExploreContext(

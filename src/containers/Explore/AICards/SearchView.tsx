@@ -1,17 +1,8 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext, useExploreContext } from '~/contexts';
-
-SearchView.propTypes = {
-  cardObj: PropTypes.object.isRequired,
-  filters: PropTypes.object.isRequired,
-  navigate: PropTypes.func.isRequired,
-  onSetNumCards: PropTypes.func.isRequired,
-  search: PropTypes.string.isRequired
-};
 
 export default function SearchView({
   cardObj,
@@ -19,6 +10,12 @@ export default function SearchView({
   navigate,
   onSetNumCards,
   search
+}: {
+  cardObj: any;
+  filters: any;
+  navigate: (url: string) => any;
+  onSetNumCards: (numCards: number) => any;
+  search: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -89,7 +86,7 @@ export default function SearchView({
       {loading || !filteredLoaded ? (
         <Loading />
       ) : filteredCards.length ? (
-        filteredCards.map((card) => (
+        filteredCards.map((card: any) => (
           <div key={card.id} style={{ margin: '1rem' }}>
             <AICard
               card={cardObj[card.id] ? cardObj[card.id] : card}

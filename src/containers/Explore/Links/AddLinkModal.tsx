@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useRef, useState } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -15,11 +14,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 
-AddLinkModal.propTypes = {
-  onHide: PropTypes.func
-};
-
-export default function AddLinkModal({ onHide }) {
+export default function AddLinkModal({ onHide }: { onHide: () => void }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -31,7 +26,7 @@ export default function AddLinkModal({ onHide }) {
     title: '',
     description: ''
   });
-  const UrlFieldRef = useRef(null);
+  const UrlFieldRef: React.RefObject<any> = useRef(null);
   const descriptionExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -91,7 +86,7 @@ export default function AddLinkModal({ onHide }) {
           value={form.title}
           onChange={(text) => setForm({ ...form, title: text })}
           placeholder="Enter Title"
-          onKeyUp={(event) => {
+          onKeyUp={(event: any) => {
             if (event.key === ' ') {
               setForm({
                 ...form,
@@ -113,10 +108,10 @@ export default function AddLinkModal({ onHide }) {
           value={form.description}
           minRows={4}
           placeholder="Enter Description (Optional, you don't need to write this)"
-          onChange={(event) =>
+          onChange={(event: any) =>
             setForm({ ...form, description: event.target.value })
           }
-          onKeyUp={(event) => {
+          onKeyUp={(event: any) => {
             if (event.key === ' ') {
               setForm({
                 ...form,
@@ -137,7 +132,6 @@ export default function AddLinkModal({ onHide }) {
         </Button>
         <Button
           color={doneColor}
-          type="submit"
           onClick={handleSubmit}
           disabled={submitDisabled()}
         >
@@ -147,7 +141,7 @@ export default function AddLinkModal({ onHide }) {
     </Modal>
   );
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: any) {
     const { url, title, description } = form;
     event.preventDefault();
     if (!isValidUrl(url)) {
@@ -163,7 +157,7 @@ export default function AddLinkModal({ onHide }) {
     onHide();
   }
 
-  function handleUrlFieldChange(text) {
+  function handleUrlFieldChange(text: string) {
     setForm({
       ...form,
       url: text
