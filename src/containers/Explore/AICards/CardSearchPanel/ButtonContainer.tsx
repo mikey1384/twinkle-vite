@@ -1,11 +1,12 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 
-ButtonContainer.propTypes = {
-  children: PropTypes.node.isRequired,
-  label: PropTypes.string.isRequired
-};
-
-export default function ButtonContainer({ label, children }) {
+export default function ButtonContainer({
+  label,
+  children
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div
       style={{
