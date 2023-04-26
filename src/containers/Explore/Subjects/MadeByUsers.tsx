@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
@@ -9,15 +9,6 @@ import localize from '~/constants/localize';
 const madeByUsersLabel = localize('madeByUsers');
 const noUserMadeContentLabel = localize('noUserMadeContent');
 
-MadeByUsers.propTypes = {
-  expanded: PropTypes.bool,
-  loaded: PropTypes.bool,
-  loadMoreButton: PropTypes.bool,
-  onExpand: PropTypes.func.isRequired,
-  subjects: PropTypes.array,
-  style: PropTypes.object
-};
-
 export default function MadeByUsers({
   expanded,
   loaded,
@@ -25,6 +16,13 @@ export default function MadeByUsers({
   onExpand,
   subjects,
   style
+}: {
+  expanded: boolean;
+  loaded: boolean;
+  loadMoreButton: boolean;
+  onExpand: () => any;
+  subjects: any[];
+  style: React.CSSProperties;
 }) {
   const loadByUserUploads = useAppContext(
     (v) => v.requestHelpers.loadByUserUploads
