@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import ContentListItem from '~/components/ContentListItem';
@@ -8,15 +7,6 @@ import localize from '~/constants/localize';
 
 const recommendedSubjectsLabel = localize('recommendedSubjects');
 
-Recommended.propTypes = {
-  expanded: PropTypes.bool,
-  loaded: PropTypes.bool,
-  loadMoreButton: PropTypes.bool,
-  onExpand: PropTypes.func.isRequired,
-  subjects: PropTypes.array.isRequired,
-  style: PropTypes.object
-};
-
 export default function Recommended({
   expanded,
   subjects,
@@ -24,6 +14,13 @@ export default function Recommended({
   loadMoreButton,
   onExpand,
   style
+}: {
+  expanded: boolean;
+  subjects: any[];
+  loaded: boolean;
+  loadMoreButton: boolean;
+  onExpand: () => any;
+  style: React.CSSProperties;
 }) {
   const loadRecommendedUploads = useAppContext(
     (v) => v.requestHelpers.loadRecommendedUploads
