@@ -8,7 +8,7 @@ export default function ConditionalButton({
 }: {
   conditionPassStatus?: string;
   onCheckNavCondition: () => void;
-  nextButtonDisabled: boolean;
+  nextButtonDisabled?: boolean;
 }) {
   return conditionPassStatus === 'fail' ? null : (
     <Button

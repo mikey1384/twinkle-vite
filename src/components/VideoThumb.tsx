@@ -1,5 +1,4 @@
 import React, { memo, useEffect, useCallback, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Link } from 'react-router-dom';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
@@ -16,21 +15,6 @@ import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
 const addedByLabel = localize('addedBy');
-
-VideoThumb.propTypes = {
-  className: PropTypes.string,
-  style: PropTypes.object,
-  to: PropTypes.string.isRequired,
-  user: PropTypes.object.isRequired,
-  video: PropTypes.shape({
-    byUser: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
-    content: PropTypes.string.isRequired,
-    id: PropTypes.number.isRequired,
-    rewardLevel: PropTypes.number,
-    likes: PropTypes.array,
-    title: PropTypes.string.isRequired
-  }).isRequired
-};
 
 function VideoThumb({
   className,

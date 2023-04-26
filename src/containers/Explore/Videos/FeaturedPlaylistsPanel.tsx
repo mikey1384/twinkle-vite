@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import PlaylistsPanel from './PlaylistsPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
@@ -99,15 +99,19 @@ export default function FeaturedPlaylistsPanel() {
       />
       {selectFeaturedPlaylistsModalShown && (
         <SelectFeaturedPlaylists
-          selectedPlaylists={featuredPlaylists.map((playlist) => {
-            return playlist.id;
-          })}
+          selectedPlaylists={featuredPlaylists.map(
+            (playlist: { id: number }) => {
+              return playlist.id;
+            }
+          )}
           onHide={onCloseSelectFeaturedPlaylists}
         />
       )}
       {reorderFeaturedPlaylistsShown && (
         <ReorderFeaturedPlaylists
-          playlistIds={featuredPlaylists.map((playlist) => playlist.id)}
+          playlistIds={featuredPlaylists.map(
+            (playlist: { id: number }) => playlist.id
+          )}
           onHide={onCloseReorderFeaturedPlaylists}
         />
       )}

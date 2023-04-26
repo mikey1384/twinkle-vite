@@ -9,10 +9,10 @@ const prevLabel = localize('prev');
 
 interface Props {
   currentSlide: number;
-  nextButtonDisabled: boolean;
+  nextButtonDisabled?: boolean;
   onPrev: () => void;
   onNext: () => void;
-  onFinish: () => void;
+  onFinish?: () => void;
   slideCount: number;
   onCheckNavCondition?: (onNext: () => void) => void;
   conditionPassStatus?: string;

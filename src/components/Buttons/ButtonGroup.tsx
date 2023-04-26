@@ -9,7 +9,9 @@ export default function ButtonGroup({
   buttons: {
     label: string;
     color: string;
+    disabled?: boolean;
     hoverColor?: string;
+    skeuomorphic?: boolean;
     onClick: () => void;
   }[];
   style?: {

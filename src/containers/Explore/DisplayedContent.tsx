@@ -1,14 +1,10 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import AICards from './AICards';
 import Videos from './Videos';
 import Links from './Links';
 import Subjects from './Subjects';
 
-DisplayedContent.propTypes = {
-  category: PropTypes.string.isRequired
-};
-
-export default function DisplayedContent({ category }) {
+export default function DisplayedContent({ category }: { category: string }) {
   if (category === 'ai-cards') {
     return <AICards />;
   }

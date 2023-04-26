@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Checkbox from '~/components/Checkbox';
 import Link from '~/components/Link';
 import Icon from '~/components/Icon';
@@ -9,16 +8,14 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
-Categories.propTypes = {
-  filter: PropTypes.string.isRequired,
-  onSetDefaultSearchFilter: PropTypes.func,
-  style: PropTypes.object
-};
-
 export default function Categories({
   filter,
   onSetDefaultSearchFilter,
   style
+}: {
+  filter: string;
+  onSetDefaultSearchFilter?: () => void;
+  style?: React.CSSProperties;
 }) {
   const setDefaultSearchFilter = useAppContext(
     (v) => v.requestHelpers.setDefaultSearchFilter
@@ -174,7 +171,7 @@ export default function Categories({
     </div>
   );
 
-  function returnIcon(contentType) {
+  function returnIcon(contentType: string) {
     let icon = '';
     if (contentType === 'ai-cards') {
       icon = 'cards-blank';

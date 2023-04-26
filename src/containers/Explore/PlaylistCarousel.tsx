@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Carousel from '~/components/Carousel';
 import VideoThumb from '~/components/VideoThumb';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -24,16 +23,6 @@ const removePlaylistLabel = localize('removePlaylist');
 const cellSpacing = 12;
 const numSlides = 4;
 
-PlaylistCarousel.propTypes = {
-  userIsUploader: PropTypes.bool,
-  id: PropTypes.number.isRequired,
-  playlist: PropTypes.array.isRequired,
-  showAllButton: PropTypes.bool.isRequired,
-  title: PropTypes.string.isRequired,
-  uploader: PropTypes.string.isRequired,
-  numPlaylistVids: PropTypes.number.isRequired
-};
-
 export default function PlaylistCarousel({
   id: playlistId,
   numPlaylistVids,
@@ -42,6 +31,14 @@ export default function PlaylistCarousel({
   title,
   uploader,
   userIsUploader
+}: {
+  id: number;
+  numPlaylistVids: number;
+  playlist: any[];
+  showAllButton: boolean;
+  title: string;
+  uploader: string;
+  userIsUploader: boolean;
 }) {
   const deletePlaylist = useAppContext((v) => v.requestHelpers.deletePlaylist);
   const editPlaylistTitle = useAppContext(
@@ -251,7 +248,7 @@ export default function PlaylistCarousel({
     });
   }
 
-  async function handleEditedTitleSubmit(title) {
+  async function handleEditedTitleSubmit(title: string) {
     setSavingEdit(true);
     await editPlaylistTitle({ title, playlistId });
     onEditPlaylistTitle({ playlistId, title });
