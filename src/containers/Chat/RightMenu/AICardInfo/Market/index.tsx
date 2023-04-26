@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Color } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
 import Listings from './Listings';
@@ -11,7 +11,7 @@ export default function Market() {
 
   useEffect(() => {
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
-    function handleAICardOfferPosted({ card }) {
+    function handleAICardOfferPosted({ card }: { card: { ownerId: number } }) {
       if (card.ownerId === userId) {
         setActiveTab('sell');
         setSelectedSubTab('incoming');
