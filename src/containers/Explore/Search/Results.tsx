@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '~/components/Loading';
 import ContentListItem from '~/components/ContentListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -8,12 +7,13 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { useAppContext, useExploreContext } from '~/contexts';
 
-Results.propTypes = {
-  filter: PropTypes.string.isRequired,
-  searchText: PropTypes.string
-};
-
-export default function Results({ filter, searchText }) {
+export default function Results({
+  filter,
+  searchText
+}: {
+  filter: string;
+  searchText: string;
+}) {
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
   const results = useExploreContext((v) => v.state.search.results);
   const loadMoreButton = useExploreContext(
@@ -30,7 +30,7 @@ export default function Results({ filter, searchText }) {
   const [firstRun, setFirstRun] = useState(true);
   const prevFilter = useRef(filter);
   const prevSearchText = useRef(searchText);
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
 
   useEffect(() => {
     if (filter !== prevFilter.current) {
@@ -90,7 +90,7 @@ export default function Results({ filter, searchText }) {
       {(searching || filter !== prevFilter.current) && <Loading />}
       {!searching &&
         searchText.length > 1 &&
-        results.map((result) => (
+        results.map((result: { id: number; contentType: string }) => (
           <ContentListItem
             key={result.id}
             style={{ marginBottom: '1rem' }}

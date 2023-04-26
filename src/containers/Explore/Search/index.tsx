@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef } from 'react';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import TopFilter from './TopFilter';
@@ -9,12 +8,13 @@ import { useLocation } from 'react-router-dom';
 import { getSectionFromPathname } from '~/helpers';
 import { useExploreContext } from '~/contexts';
 
-Search.propTypes = {
-  innerRef: PropTypes.object,
-  style: PropTypes.object
-};
-
-export default function Search({ innerRef, style }) {
+export default function Search({
+  innerRef,
+  style
+}: {
+  innerRef: any;
+  style: React.CSSProperties;
+}) {
   const location = useLocation();
   const searchText = useExploreContext((v) => v.state.search.searchText);
   const onLoadSearchResults = useExploreContext(

@@ -1,5 +1,4 @@
-import { useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ContentListItem from '~/components/ContentListItem';
 import SectionPanel from '~/components/SectionPanel';
@@ -14,19 +13,18 @@ const noFeaturedSubjectsLabel = localize('noFeaturedSubjects');
 const reorderLabel = localize('reorder');
 const selectLabel = localize('select');
 
-Featured.propTypes = {
-  loaded: PropTypes.bool,
-  expanded: PropTypes.bool,
-  subjects: PropTypes.array,
-  onExpand: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired
-};
 export default function Featured({
   loaded,
   expanded,
   subjects,
   onExpand,
   onSubmit
+}: {
+  loaded: boolean;
+  expanded: boolean;
+  subjects: any[];
+  onExpand: () => void;
+  onSubmit: (arg0: any) => any;
 }) {
   const { userId, canPinPlaylists } = useKeyContext((v) => v.myState);
   const [reorderModalShown, setReorderModalShown] = useState(false);
