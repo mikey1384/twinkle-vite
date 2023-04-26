@@ -20,7 +20,7 @@ export default function CardSearchPanel({
   filters: any;
   onBuyNowSwitchClick: () => any;
   onSetSelectedFilter: (filter: string) => any;
-  onCardNumberSearch: (cardNumber: string | number) => any;
+  onCardNumberSearch: (cardNumber: string | number) => void;
 }) {
   const {
     success: { color: successColor }

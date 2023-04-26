@@ -28,7 +28,7 @@ interface Props {
   onLoadMore: () => void;
   children?: React.ReactNode;
   loadMoreButtonShown?: boolean;
-  onEditTitle: (title: string) => void;
+  onEditTitle?: (title: string) => void;
   onSearch?: (query: string) => void;
   placeholder?: string;
   searchPlaceholder?: string;
@@ -288,7 +288,7 @@ export default function SectionPanel({
   async function onChangeTitle(title: string) {
     if (savingEdit) return;
     setSavingEdit(true);
-    await onEditTitle(title);
+    await onEditTitle?.(title);
     setOnEdit(false);
     setSavingEdit(false);
   }

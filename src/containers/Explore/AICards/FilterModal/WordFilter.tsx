@@ -1,23 +1,20 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
 import SelectedWord from '~/components/Texts/SelectedWord';
 import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 
-WordFilter.propTypes = {
-  onSelectWord: PropTypes.func,
-  selectedWord: PropTypes.string,
-  selectedFilter: PropTypes.string,
-  style: PropTypes.object
-};
-
 export default function WordFilter({
   onSelectWord,
   selectedFilter,
   selectedWord,
   style
+}: {
+  onSelectWord: (word: string) => void;
+  selectedFilter: string;
+  selectedWord: string;
+  style: React.CSSProperties;
 }) {
   const searchAICardWords = useAppContext(
     (v) => v.requestHelpers.searchAICardWords
@@ -73,13 +70,13 @@ export default function WordFilter({
     </div>
   );
 
-  function handleSelectWord(word) {
+  function handleSelectWord(word: string) {
     onSelectWord(word);
     setSearchedWords([]);
     setSearchText('');
   }
 
-  async function handleWordSearch(text) {
+  async function handleWordSearch(text: string) {
     const words = await searchAICardWords(text);
     setSearchedWords(words);
   }

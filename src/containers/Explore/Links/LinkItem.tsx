@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import UserListModal from '~/components/Modals/UserListModal';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -24,23 +23,20 @@ import localize from '~/constants/localize';
 const editLabel = localize('edit');
 const removeLabel = localize('remove');
 
-LinkItem.propTypes = {
-  link: PropTypes.shape({
-    content: PropTypes.string.isRequired,
-    id: PropTypes.number.isRequired,
-    numComments: PropTypes.number,
-    siteUrl: PropTypes.string,
-    thumbUrl: PropTypes.string,
-    title: PropTypes.string.isRequired,
-    timeStamp: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-      .isRequired,
-    uploader: PropTypes.object.isRequired,
-    likes: PropTypes.array.isRequired
-  }).isRequired
-};
-
 export default function LinkItem({
   link: { id, numComments, likes, timeStamp, title, uploader, ...embedProps }
+}: {
+  link: {
+    content: string;
+    id: number;
+    numComments: number;
+    siteUrl: string;
+    thumbUrl: string;
+    title: string;
+    timeStamp: number;
+    uploader: { authLevel: number; id: number; username: string };
+    likes: { id: number; username: string; profilePicUrl: string }[];
+  };
 }) {
   const navigate = useNavigate();
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
@@ -184,7 +180,7 @@ export default function LinkItem({
         onMouseUp={() => {
           if (!onEdit) navigate(`/links/${id}`);
         }}
-        style={{ cursor: !onEdit && 'pointer' }}
+        style={{ cursor: !onEdit ? 'pointer' : '' }}
         className={css`
           position: relative;
           width: 15%;
@@ -327,7 +323,7 @@ export default function LinkItem({
     onDeleteContent({ contentType: 'url', contentId: id });
   }
 
-  async function handleEditedTitleSubmit(text) {
+  async function handleEditedTitleSubmit(text: string) {
     setSavingEdit(true);
     await editContent({ editedTitle: text, contentId: id, contentType: 'url' });
     onEditLinkTitle({ title: text, id });

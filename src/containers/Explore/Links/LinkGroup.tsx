@@ -1,12 +1,8 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import LinkItem from './LinkItem';
 import { css } from '@emotion/css';
 
-LinkGroup.propTypes = {
-  links: PropTypes.array.isRequired
-};
-
-export default function LinkGroup({ links }) {
+export default function LinkGroup({ links }: { links: any[] }) {
   return (
     <div
       className={css`

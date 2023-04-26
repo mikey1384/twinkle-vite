@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useExploreContext } from '~/contexts';
 import AICardModal from '~/components/Modals/AICardModal';
@@ -13,10 +13,12 @@ import { css } from '@emotion/css';
 export default function AICards() {
   const navigate = useNavigate();
   const { search } = useLocation();
-  const [selectedFilter, setSelectedFilter] = useState(null);
+  const [selectedFilter, setSelectedFilter] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [aiCardModalCardId, setAICardModalCardId] = useState(null);
-  const [filters, setFilters] = useState({});
+  const [aiCardModalCardId, setAICardModalCardId] = useState<number | null>(
+    null
+  );
+  const [filters, setFilters] = useState<any>({});
   const loadAICards = useAppContext((v) => v.requestHelpers.loadAICards);
   const loaded = useExploreContext((v) => v.state.aiCards.loaded);
   const cards = useExploreContext((v) => v.state.aiCards.cards);
@@ -33,10 +35,10 @@ export default function AICards() {
   useEffect(() => {
     const searchParams = new URLSearchParams(search.split('?')[1]);
     const paramsObject = Object.fromEntries(searchParams);
-    const searchObj = {};
+    const searchObj: { [key: string]: any } = {};
     Object.entries(paramsObject).forEach(([key, value]) => {
       const keys = key.split('[').map((k) => k.replace(/[\[\]]/g, ''));
-      let obj = searchObj;
+      let obj: { [key: string]: any } = searchObj;
       for (let i = 0; i < keys.length; i++) {
         if (i === keys.length - 1) {
           obj[keys[i]] = value;
@@ -157,9 +159,9 @@ export default function AICards() {
     </ErrorBoundary>
   );
 
-  function handleCardNumberSearch(cardNumber) {
+  function handleCardNumberSearch(cardNumber: string | number) {
     const searchParams = new URLSearchParams(search);
-    searchParams.set('cardId', cardNumber);
+    searchParams.set('cardId', cardNumber as string);
     const decodedURL = decodeURIComponent(searchParams.toString());
     navigate(`../ai-cards${decodedURL ? `/?${decodedURL}` : ''}`);
   }
