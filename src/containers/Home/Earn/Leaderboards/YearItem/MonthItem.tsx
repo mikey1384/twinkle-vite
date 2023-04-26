@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import TopRanker from './TopRanker';
@@ -8,14 +7,17 @@ import localize from '~/constants/localize';
 
 const noRankersThisMonthLabel = localize('noRankersThisMonth');
 
-MonthItem.propTypes = {
-  monthLabel: PropTypes.string,
-  yearLabel: PropTypes.string,
-  style: PropTypes.object,
-  top30: PropTypes.array
-};
-
-export default function MonthItem({ monthLabel, yearLabel, style, top30 }) {
+export default function MonthItem({
+  monthLabel,
+  yearLabel,
+  style,
+  top30
+}: {
+  monthLabel: string;
+  yearLabel: string;
+  style?: React.CSSProperties;
+  top30: any[];
+}) {
   const [top30ModalShown, setTop30ModalShown] = useState(false);
   const top3 = useMemo(() => {
     return top30.slice(0, 3);

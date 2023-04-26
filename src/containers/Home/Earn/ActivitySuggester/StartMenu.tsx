@@ -1,3 +1,4 @@
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
