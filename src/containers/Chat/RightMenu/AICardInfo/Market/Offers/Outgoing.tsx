@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CardItem from '../../CardItem';
@@ -9,8 +9,8 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
 
 export default function Outgoing() {
-  const CardItemsRef = useRef(null);
-  const timeoutRef = useRef(null);
+  const CardItemsRef: React.RefObject<any> = useRef(null);
+  const timeoutRef: React.MutableRefObject<any> = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
@@ -25,7 +25,7 @@ export default function Outgoing() {
   const cardObj = useChatContext((v) => v.state.cardObj);
   const displayedOutgoingOffers = useMemo(
     () =>
-      outgoingOffers.map((offer) => ({
+      outgoingOffers.map((offer: any) => ({
         ...offer,
         card: cardObj[offer.card.id]
       })),
@@ -39,7 +39,7 @@ export default function Outgoing() {
   );
 
   useEffect(() => {
-    const container = CardItemsRef.current || {};
+    const container: any = CardItemsRef.current || {};
     setOverflown(container.offsetHeight < container.scrollHeight);
   }, [outgoingOffers]);
 
@@ -107,7 +107,7 @@ export default function Outgoing() {
             </b>
           </div>
         ) : (
-          displayedOutgoingOffers.map((offer, index) => (
+          displayedOutgoingOffers.map((offer: any, index: number) => (
             <CardItem
               isOverflown={overflown}
               isLast={index === displayedOutgoingOffers.length - 1}

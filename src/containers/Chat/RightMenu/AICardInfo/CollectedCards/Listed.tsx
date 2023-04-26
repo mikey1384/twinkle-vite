@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import CardItem from '../CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
@@ -10,15 +10,15 @@ export default function Listed() {
   const [loaded, setLoaded] = useState(false);
   const [overflown, setOverflown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const CardItemsRef = useRef(null);
-  const timeoutRef = useRef(null);
+  const CardItemsRef: React.RefObject<any> = useRef(null);
+  const timeoutRef: React.MutableRefObject<any> = useRef(null);
   const loadMyListedAICards = useAppContext(
     (v) => v.requestHelpers.loadMyListedAICards
   );
   const myListedCardIds = useChatContext((v) => v.state.myListedCardIds);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const myListedCards = useMemo(
-    () => myListedCardIds.map((id) => cardObj[id]),
+    () => myListedCardIds.map((id: number) => cardObj[id]),
     [myListedCardIds, cardObj]
   );
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
@@ -47,7 +47,7 @@ export default function Listed() {
   }, [socketConnected]);
 
   useEffect(() => {
-    const container = CardItemsRef.current || {};
+    const container: any = CardItemsRef.current || {};
     setOverflown(container.offsetHeight < container.scrollHeight);
   }, [myListedCards]);
 
@@ -101,7 +101,7 @@ export default function Listed() {
           </b>
         </div>
       ) : (
-        myListedCards.map((card, index) => (
+        myListedCards.map((card: any, index: number) => (
           <CardItem
             isOverflown={overflown}
             isLast={index === myListedCards.length - 1}
