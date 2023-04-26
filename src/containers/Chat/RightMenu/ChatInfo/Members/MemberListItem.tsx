@@ -1,5 +1,4 @@
-import { memo, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -7,14 +6,17 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
-MemberListItem.propTypes = {
-  onlineMemberObj: PropTypes.object,
-  creatorId: PropTypes.number,
-  member: PropTypes.object,
-  style: PropTypes.object
-};
-
-function MemberListItem({ onlineMemberObj, creatorId, member, style }) {
+function MemberListItem({
+  onlineMemberObj,
+  creatorId,
+  member,
+  style
+}: {
+  onlineMemberObj: any;
+  creatorId: number;
+  member: any;
+  style?: React.CSSProperties;
+}) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const { username: memberName, profilePicUrl: memberProfilePicUrl } =
     useAppContext((v) => v.user.state.userObj[member.id] || {});

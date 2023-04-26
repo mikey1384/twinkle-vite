@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CardItem from '../CardItem';
@@ -9,8 +9,8 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function Listings() {
-  const CardItemsRef = useRef(null);
-  const timeoutRef = useRef(null);
+  const CardItemsRef: React.RefObject<any> = useRef(null);
+  const timeoutRef: React.MutableRefObject<any> = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
@@ -28,7 +28,10 @@ export default function Listings() {
   const listedCardIds = useChatContext((v) => v.state.listedCardIds);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const listedCards = useMemo(
-    () => listedCardIds.filter((id) => !!cardObj[id]).map((id) => cardObj[id]),
+    () =>
+      listedCardIds
+        .filter((id: number) => !!cardObj[id])
+        .map((id: number) => cardObj[id]),
     [listedCardIds, cardObj]
   );
   const listedCardsLoadMoreButton = useChatContext(
@@ -36,7 +39,7 @@ export default function Listings() {
   );
 
   useEffect(() => {
-    const container = CardItemsRef.current || {};
+    const container: any = CardItemsRef.current || {};
     setOverflown(container.offsetHeight < container.scrollHeight);
   }, [listedCards]);
 
@@ -108,7 +111,7 @@ export default function Listings() {
             </b>
           </div>
         ) : (
-          listedCards.map((card, index) => (
+          listedCards.map((card: any, index: number) => (
             <CardItem
               isOverflown={overflown}
               isLast={index === listedCards.length - 1}

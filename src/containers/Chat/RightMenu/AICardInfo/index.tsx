@@ -1,3 +1,4 @@
+import React from 'react';
 import CollectedCards from './CollectedCards';
 import Market from './Market';
 

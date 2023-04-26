@@ -1,19 +1,9 @@
-import { memo, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useMemo, useState } from 'react';
 import MemberListItem from './MemberListItem';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-
-Members.propTypes = {
-  channelId: PropTypes.number,
-  creatorId: PropTypes.number,
-  members: PropTypes.array.isRequired,
-  numMembers: PropTypes.number.isRequired,
-  onlineMemberObj: PropTypes.object.isRequired,
-  theme: PropTypes.string
-};
 
 function Members({
   channelId,
@@ -22,6 +12,13 @@ function Members({
   numMembers,
   onlineMemberObj,
   theme
+}: {
+  channelId: number;
+  creatorId: number;
+  members: any[];
+  numMembers: number;
+  onlineMemberObj: any;
+  theme: string;
 }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMoreChannelMembers = useAppContext(
@@ -132,7 +129,9 @@ function Members({
     });
     onLoadMoreChannelMembers({
       channelId,
-      members: members.filter((member) => member.id !== creatorId)
+      members: members.filter(
+        (member: { id: number }) => member.id !== creatorId
+      )
     });
     setLoadingMore(false);
   }

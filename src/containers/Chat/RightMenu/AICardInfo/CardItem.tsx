@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -11,14 +10,17 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CardThumb from '~/components/CardThumb';
 
-CardItem.propTypes = {
-  card: PropTypes.object.isRequired,
-  isOverflown: PropTypes.bool.isRequired,
-  isLast: PropTypes.bool.isRequired,
-  offerObj: PropTypes.object
-};
-
-export default function CardItem({ card, isOverflown, isLast, offerObj }) {
+export default function CardItem({
+  card,
+  isOverflown,
+  isLast,
+  offerObj
+}: {
+  card: any;
+  isOverflown: boolean;
+  isLast: boolean;
+  offerObj?: any;
+}) {
   const [userMenuShown, setUserMenuShown] = useState(false);
   const {
     userLink: { color: userLinkColor }
