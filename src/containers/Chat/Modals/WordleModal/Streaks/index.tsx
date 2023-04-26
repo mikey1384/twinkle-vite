@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import FilterBar from '~/components/FilterBar';
 import WinStreaks from './WinStreaks';
 import { css } from '@emotion/css';
@@ -6,18 +6,16 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import DoubleStreaks from './DoubleStreak';
 
-Streaks.propTypes = {
-  streaksTab: PropTypes.string,
-  onSetStreaksTab: PropTypes.func.isRequired,
-  channelId: PropTypes.number.isRequired,
-  theme: PropTypes.string
-};
-
 export default function Streaks({
   channelId,
   streaksTab,
   onSetStreaksTab,
   theme
+}: {
+  channelId: number;
+  streaksTab: string;
+  onSetStreaksTab: (tab: string) => void;
+  theme: string;
 }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
 

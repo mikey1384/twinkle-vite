@@ -1,21 +1,18 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-
-AttemptResult.propTypes = {
-  attemptState: PropTypes.object,
-  isSolved: PropTypes.bool,
-  numGuesses: PropTypes.number,
-  style: PropTypes.object
-};
 
 export default function AttemptResult({
   attemptState,
   isSolved,
   numGuesses,
   style
+}: {
+  attemptState: { xpRewardAmount: number; isStrict: boolean };
+  isSolved: boolean;
+  numGuesses: number;
+  style?: React.CSSProperties;
 }) {
   const xpRewarded = useMemo(
     () => addCommasToNumber(attemptState.xpRewardAmount),

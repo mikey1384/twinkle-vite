@@ -16,10 +16,10 @@ export default function RankingsListItem({
 }: {
   myId: number;
   small: boolean;
-  style: any;
+  style?: React.CSSProperties;
   target: string;
   user: any;
-  onUsermenuShownChange: (v: boolean) => void;
+  onUsermenuShownChange?: (v: boolean) => void;
 }) {
   const {
     xpNumber: { color: xpNumberColor }

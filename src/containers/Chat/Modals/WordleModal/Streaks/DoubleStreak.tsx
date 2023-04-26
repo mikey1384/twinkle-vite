@@ -1,27 +1,30 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import RoundList from '~/components/RoundList';
 import StreakItem from './StreakItem';
 import { useAppContext } from '~/contexts';
 
-WinStreaks.propTypes = {
-  channelId: PropTypes.number,
-  myId: PropTypes.number,
-  theme: PropTypes.string
-};
-
-export default function WinStreaks({ channelId, myId, theme }) {
+export default function DoubleStreaks({
+  channelId,
+  myId,
+  theme
+}: {
+  channelId: number;
+  myId: number;
+  theme: string;
+}) {
   const [streakObj, setStreakObj] = useState({});
   const [streaks, setStreaks] = useState([]);
-  const loadWordleStreaks = useAppContext(
-    (v) => v.requestHelpers.loadWordleStreaks
+  const loadWordleDoubleStreaks = useAppContext(
+    (v) => v.requestHelpers.loadWordleDoubleStreaks
   );
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     init();
     async function init() {
-      const { bestStreaks, bestStreakObj } = await loadWordleStreaks(channelId);
+      const { bestStreaks, bestStreakObj } = await loadWordleDoubleStreaks(
+        channelId
+      );
       setStreakObj(bestStreakObj);
       setStreaks(bestStreaks);
       setLoading(false);
