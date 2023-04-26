@@ -1,5 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
@@ -7,19 +6,11 @@ import Loading from '~/components/Loading';
 import correct from './correct_sound.mp3';
 import { isMobile } from '~/helpers';
 
-Main.propTypes = {
-  isOnStreak: PropTypes.bool,
-  onGameFinish: PropTypes.func.isRequired,
-  onSetQuestionObj: PropTypes.func.isRequired,
-  questionIds: PropTypes.array,
-  questionObj: PropTypes.object
-};
-
 const deviceIsMobile = isMobile(navigator);
 const delay = 1000;
 let elapsedTime = 0;
-let timer = null;
-let gotWrongTimer = null;
+let timer: any = null;
+let gotWrongTimer: any = null;
 
 export default function Main({
   isOnStreak,
@@ -27,11 +18,17 @@ export default function Main({
   onGameFinish,
   questionIds,
   questionObj
+}: {
+  isOnStreak: boolean;
+  onSetQuestionObj: any;
+  onGameFinish: any;
+  questionIds: any[];
+  questionObj: any;
 }) {
   const [isCompleted, setIsCompleted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
-  const correctSoundRef = useRef(null);
+  const correctSoundRef: React.RefObject<any> = useRef(null);
   const gotWrongRef = useRef(false);
   const loadingRef = useRef(false);
   const numWrong = useRef(0);
@@ -56,7 +53,7 @@ export default function Main({
         clearTimeout(timer);
         loadingRef.current = true;
         const score = handleReturnCalculatedScore(elapsedTime);
-        onSetQuestionObj((prev) => ({
+        onSetQuestionObj((prev: any) => ({
           ...prev,
           [currentIndex]: {
             ...prev[currentIndex],
@@ -78,12 +75,12 @@ export default function Main({
       }
     }
 
-    function handleSetGotWrong(index) {
+    function handleSetGotWrong(index: number) {
       numWrong.current = numWrong.current + 1;
       clearTimeout(gotWrongTimer);
       if (!loadingRef.current) {
         setGotWrong(true);
-        onSetQuestionObj((prev) => ({
+        onSetQuestionObj((prev: any) => ({
           ...prev,
           [currentIndex]: {
             ...prev[currentIndex],
@@ -93,7 +90,7 @@ export default function Main({
       }
       gotWrongRef.current = true;
       gotWrongTimer = setTimeout(() => {
-        onSetQuestionObj((prev) => ({
+        onSetQuestionObj((prev: any) => ({
           ...prev,
           [currentIndex]: {
             ...prev[currentIndex],
@@ -110,7 +107,7 @@ export default function Main({
       onGameFinish();
     }
 
-    function handleReturnCalculatedScore(elapsedTime) {
+    function handleReturnCalculatedScore(elapsedTime: number) {
       // Calculate the number of letters and words in the task
       let numLetters = 0;
       let numWords = 0;
@@ -167,7 +164,7 @@ export default function Main({
     </ErrorBoundary>
   );
 
-  function handleCalculatePenalty(numWrong) {
+  function handleCalculatePenalty(numWrong: number) {
     if (numWrong < 1) return 0;
     return numWrong * 200;
   }

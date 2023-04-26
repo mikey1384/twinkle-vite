@@ -1,13 +1,14 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
-Marble.propTypes = {
-  letterGrade: PropTypes.string,
-  style: PropTypes.object
-};
-
-export default function Marble({ letterGrade, style }) {
+export default function Marble({
+  letterGrade,
+  style
+}: {
+  letterGrade?: string;
+  style?: React.CSSProperties;
+}) {
   const theme = useKeyContext((v) => v.theme);
 
   return (

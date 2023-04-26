@@ -1,14 +1,6 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Loading from '~/components/Loading';
 import Main from './Main';
-
-Game.propTypes = {
-  isOnStreak: PropTypes.bool,
-  questionIds: PropTypes.array,
-  questionObj: PropTypes.object,
-  onGameFinish: PropTypes.func.isRequired,
-  onSetQuestionObj: PropTypes.func.isRequired
-};
 
 export default function Game({
   isOnStreak,
@@ -16,6 +8,12 @@ export default function Game({
   questionObj,
   onGameFinish,
   onSetQuestionObj
+}: {
+  isOnStreak: boolean;
+  questionIds: any[];
+  questionObj: any;
+  onGameFinish: any;
+  onSetQuestionObj: any;
 }) {
   return (
     <div style={{ width: '100%', paddingTop: '3.5rem' }}>

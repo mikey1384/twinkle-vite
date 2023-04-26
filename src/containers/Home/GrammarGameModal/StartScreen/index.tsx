@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
@@ -17,24 +16,22 @@ import { scoreTable, perfectScoreBonus } from '../constants';
 const grammarGameLabel = localize('grammarGame');
 const deviceIsMobile = isMobile(navigator);
 
-StartScreen.propTypes = {
-  loading: PropTypes.bool,
-  onGameStart: PropTypes.func.isRequired,
-  onSetTimesPlayedToday: PropTypes.func.isRequired,
-  timesPlayedToday: PropTypes.number.isRequired,
-  onHide: PropTypes.func.isRequired
-};
-
 export default function StartScreen({
   loading,
   onGameStart,
   timesPlayedToday,
   onSetTimesPlayedToday,
   onHide
+}: {
+  loading: boolean;
+  onGameStart: () => void;
+  timesPlayedToday: number;
+  onSetTimesPlayedToday: Function;
+  onHide: Function;
 }) {
   const navigate = useNavigate();
   const [results, setResults] = useState([]);
-  const [nextDayTimeStamp, setNextDayTimeStamp] = useState(null);
+  const [nextDayTimeStamp, setNextDayTimeStamp] = useState();
   const [earnedCoins, setEarnedCoins] = useState(false);
   const {
     fail: { color: failColor },
