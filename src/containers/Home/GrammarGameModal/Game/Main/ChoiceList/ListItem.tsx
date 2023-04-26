@@ -1,16 +1,6 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-
-ListItem.propTypes = {
-  answerIndex: PropTypes.number,
-  listItem: PropTypes.string.isRequired,
-  index: PropTypes.number,
-  isCompleted: PropTypes.bool,
-  onSelect: PropTypes.func.isRequired,
-  selectedChoiceIndex: PropTypes.number
-};
 
 export default function ListItem({
   listItem,
@@ -19,6 +9,13 @@ export default function ListItem({
   selectedChoiceIndex,
   onSelect,
   isCompleted
+}: {
+  listItem: string;
+  index: number;
+  answerIndex: number;
+  selectedChoiceIndex: number;
+  onSelect: Function;
+  isCompleted: boolean;
 }) {
   const isWrong = useMemo(
     () => selectedChoiceIndex === index && selectedChoiceIndex !== answerIndex,

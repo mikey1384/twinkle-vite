@@ -1,17 +1,16 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import YearItem from './YearItem';
 import moment from 'moment';
 import { useNotiContext } from '~/contexts';
 
-Leaderboards.propTypes = {
-  style: PropTypes.object
-};
-
 const firstYear = 2022;
 
-export default function Leaderboards({ style }) {
+export default function Leaderboards({
+  style
+}: {
+  style?: React.CSSProperties;
+}) {
   const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const currentYear = useMemo(() => {
     return moment.utc(standardTimeStamp || Date.now()).year();

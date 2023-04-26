@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import ListItem from './ListItem';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
@@ -9,19 +8,6 @@ import {
   innerBorderRadius,
   mobileMaxWidth
 } from '~/constants/css';
-
-ChoiceList.propTypes = {
-  answerIndex: PropTypes.number,
-  gotWrong: PropTypes.bool,
-  isCompleted: PropTypes.bool,
-  listItems: PropTypes.array.isRequired,
-  onCorrectAnswer: PropTypes.func.isRequired,
-  onCountdownStart: PropTypes.func.isRequired,
-  onSetGotWrong: PropTypes.func.isRequired,
-  questionLength: PropTypes.number,
-  selectedChoiceIndex: PropTypes.number,
-  style: PropTypes.object
-};
 
 export default function ChoiceList({
   answerIndex,
@@ -34,6 +20,17 @@ export default function ChoiceList({
   questionLength = 0,
   selectedChoiceIndex,
   style
+}: {
+  answerIndex: number;
+  gotWrong: boolean;
+  isCompleted: boolean;
+  listItems: string[];
+  onCorrectAnswer: Function;
+  onCountdownStart: Function;
+  onSetGotWrong: Function;
+  questionLength: number;
+  selectedChoiceIndex: number;
+  style: React.CSSProperties;
 }) {
   const {
     success: { color: successColor }
@@ -55,7 +52,7 @@ export default function ChoiceList({
   }, [shown]);
 
   useEffect(() => {
-    const listener = (e) => {
+    const listener = (e: any) => {
       if (!shownRef.current) {
         return;
       }
@@ -161,7 +158,7 @@ export default function ChoiceList({
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  function handleSelect(selectedIndex) {
+  function handleSelect(selectedIndex: number) {
     if (selectedIndex === answerIndex) {
       onCorrectAnswer();
     } else {

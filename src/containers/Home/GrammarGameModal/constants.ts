@@ -1,4 +1,4 @@
-export const scoreTable = {
+export const scoreTable: { [key: string]: number } = {
   S: 100,
   A: 90,
   B: 70,

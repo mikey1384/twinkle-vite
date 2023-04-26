@@ -1,19 +1,21 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import { useKeyContext } from '~/contexts';
 
-Top30Modal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  month: PropTypes.string.isRequired,
-  users: PropTypes.array.isRequired,
-  year: PropTypes.string.isRequired
-};
-
-export default function Top30Modal({ onHide, month, year, users }) {
+export default function Top30Modal({
+  onHide,
+  month,
+  year,
+  users
+}: {
+  onHide: () => void;
+  month: string;
+  users: any[];
+  year: string;
+}) {
   const { userId } = useKeyContext((v) => v.myState);
   const [usermenuShown, setUsermenuShown] = useState(false);
 

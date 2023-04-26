@@ -15,7 +15,7 @@ export default function RankingsListItem({
   onUsermenuShownChange = () => {}
 }: {
   myId: number;
-  small: boolean;
+  small?: boolean;
   style?: React.CSSProperties;
   target?: string;
   user: any;
