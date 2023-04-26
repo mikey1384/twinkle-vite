@@ -1,17 +1,7 @@
-import { useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect } from 'react';
 import LongText from '~/components/Texts/LongText';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
-
-Story.propTypes = {
-  isGraded: PropTypes.bool,
-  explanation: PropTypes.string,
-  onFinishRead: PropTypes.func.isRequired,
-  onLoadQuestions: PropTypes.func.isRequired,
-  questionsLoaded: PropTypes.bool,
-  story: PropTypes.string.isRequired
-};
 
 export default function Story({
   story,
@@ -20,6 +10,13 @@ export default function Story({
   onLoadQuestions,
   onFinishRead,
   questionsLoaded
+}: {
+  story: string;
+  isGraded: boolean;
+  explanation: string;
+  onLoadQuestions: () => void;
+  onFinishRead: () => void;
+  questionsLoaded: boolean;
 }) {
   useEffect(() => {
     if (!questionsLoaded) {
