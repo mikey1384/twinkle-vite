@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { panel } from '../Styles';
 import { useHomeContext } from '~/contexts';
 import EarnXPFromSubjects from './EarnXPFromSubjects';
@@ -6,11 +6,11 @@ import RecommendPosts from './RecommendPosts';
 import RewardPosts from './RewardPosts';
 import StartMenu from './StartMenu';
 
-ActivitySuggester.propTypes = {
-  style: PropTypes.object
-};
-
-export default function ActivitySuggester({ style }) {
+export default function ActivitySuggester({
+  style
+}: {
+  style: React.CSSProperties;
+}) {
   const topMenuSection = useHomeContext((v) => v.state.topMenuSection);
 
   return (
