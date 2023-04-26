@@ -23,10 +23,10 @@ export default function ChoiceList({
 }: {
   answerIndex: number;
   gotWrong: boolean;
-  isCompleted: boolean;
+  isCompleted?: boolean;
   listItems: string[];
   onCorrectAnswer: Function;
-  onCountdownStart: Function;
+  onCountdownStart?: Function;
   onSetGotWrong: Function;
   questionLength: number;
   selectedChoiceIndex: number;
@@ -40,7 +40,7 @@ export default function ChoiceList({
   useEffect(() => {
     setTimeout(() => {
       setShown(true);
-      onCountdownStart();
+      onCountdownStart?.();
     }, Math.max(1500, questionLength * 35));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

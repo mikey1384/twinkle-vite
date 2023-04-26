@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Marble from './Marble';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
@@ -13,12 +12,13 @@ const mobileXpFontSize = '1.5rem';
 const coinFontSize = '1.5rem';
 const mobileCoinFontSize = '1.3rem';
 
-TodayResult.propTypes = {
-  earnedCoins: PropTypes.number.isRequired,
-  results: PropTypes.array.isRequired
-};
-
-export default function TodayResult({ earnedCoins, results }) {
+export default function TodayResult({
+  earnedCoins,
+  results
+}: {
+  earnedCoins: boolean;
+  results: any[];
+}) {
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
@@ -27,7 +27,10 @@ export default function TodayResult({ earnedCoins, results }) {
     let totalScore = 0;
     for (let result of results) {
       if (!result?.length) continue;
-      const sum = result.reduce((acc, cur) => acc + scoreTable[cur], 0);
+      const sum = result.reduce(
+        (acc: number, cur: number) => acc + scoreTable[cur],
+        0
+      );
       if (sum === scoreTable.S * 10) {
         totalScore += perfectScore;
         continue;
@@ -37,7 +40,7 @@ export default function TodayResult({ earnedCoins, results }) {
     return totalScore;
   }, [perfectScore, results]);
   const firstRow = useMemo(() => {
-    const row = (results[0] || []).map((letterGrade, index) => (
+    const row = (results[0] || []).map((letterGrade: string, index: number) => (
       <Marble
         key={index}
         style={{ marginLeft: index === 0 ? 0 : '0.1rem' }}
@@ -46,7 +49,7 @@ export default function TodayResult({ earnedCoins, results }) {
     ));
     if (row.length === 0) {
       return Array(10)
-        .fill()
+        .fill(null)
         .map((_, index) => (
           <Marble
             key={index}
@@ -57,7 +60,7 @@ export default function TodayResult({ earnedCoins, results }) {
     return row;
   }, [results]);
   const secondRow = useMemo(() => {
-    const row = (results[1] || []).map((letterGrade, index) => (
+    const row = (results[1] || []).map((letterGrade: string, index: number) => (
       <Marble
         key={index}
         style={{ marginLeft: index === 0 ? 0 : '0.1rem' }}
@@ -66,7 +69,7 @@ export default function TodayResult({ earnedCoins, results }) {
     ));
     if (row.length === 0) {
       return Array(10)
-        .fill()
+        .fill(null)
         .map((_, index) => (
           <Marble
             key={index}
@@ -77,7 +80,7 @@ export default function TodayResult({ earnedCoins, results }) {
     return row;
   }, [results]);
   const thirdRow = useMemo(() => {
-    const row = (results[2] || []).map((letterGrade, index) => (
+    const row = (results[2] || []).map((letterGrade: string, index: number) => (
       <Marble
         key={index}
         style={{ marginLeft: index === 0 ? 0 : '0.1rem' }}
@@ -86,7 +89,7 @@ export default function TodayResult({ earnedCoins, results }) {
     ));
     if (row.length === 0) {
       return Array(10)
-        .fill()
+        .fill(null)
         .map((_, index) => (
           <Marble
             key={index}
@@ -97,7 +100,7 @@ export default function TodayResult({ earnedCoins, results }) {
     return row;
   }, [results]);
   const fourthRow = useMemo(() => {
-    const row = (results[3] || []).map((letterGrade, index) => (
+    const row = (results[3] || []).map((letterGrade: string, index: number) => (
       <Marble
         key={index}
         style={{ marginLeft: index === 0 ? 0 : '0.1rem' }}
@@ -106,7 +109,7 @@ export default function TodayResult({ earnedCoins, results }) {
     ));
     if (row.length === 0) {
       return Array(10)
-        .fill()
+        .fill(null)
         .map((_, index) => (
           <Marble
             key={index}
@@ -117,7 +120,7 @@ export default function TodayResult({ earnedCoins, results }) {
     return row;
   }, [results]);
   const fifthRow = useMemo(() => {
-    const row = (results[4] || []).map((letterGrade, index) => (
+    const row = (results[4] || []).map((letterGrade: string, index: number) => (
       <Marble
         key={index}
         style={{ marginLeft: index === 0 ? 0 : '0.1rem' }}
@@ -126,7 +129,7 @@ export default function TodayResult({ earnedCoins, results }) {
     ));
     if (row.length === 0) {
       return Array(10)
-        .fill()
+        .fill(null)
         .map((_, index) => (
           <Marble
             key={index}
