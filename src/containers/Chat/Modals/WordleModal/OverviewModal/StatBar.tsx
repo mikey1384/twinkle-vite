@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import {
   TOTAL_TRIES_TEXT,
   SUCCESS_RATE_TEXT,
@@ -7,11 +7,7 @@ import {
 } from '../constants/strings';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-StatItem.propTypes = {
-  label: PropTypes.string.isRequired,
-  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired
-};
-function StatItem({ label, value }) {
+function StatItem({ label, value }: { label: string; value: string | number }) {
   return (
     <div
       style={{
@@ -38,12 +34,15 @@ function StatItem({ label, value }) {
   );
 }
 
-StatBar.propTypes = {
-  isGameOver: PropTypes.bool,
-  stats: PropTypes.object.isRequired,
-  style: PropTypes.object
-};
-export default function StatBar({ stats, style, isGameOver }) {
+export default function StatBar({
+  stats,
+  style,
+  isGameOver
+}: {
+  stats: any;
+  style?: React.CSSProperties;
+  isGameOver: boolean;
+}) {
   return (
     <ErrorBoundary componentPath="WordleModal/OverviewModal/StatBar">
       <div style={{ display: 'flex', flexDirection: 'column', ...style }}>

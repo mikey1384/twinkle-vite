@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import FilterBar from '~/components/FilterBar';
 import localize from '~/constants/localize';
 import RoundList from '~/components/RoundList';
@@ -10,13 +9,15 @@ import { useAppContext, useKeyContext } from '~/contexts';
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
 
-Rankings.propTypes = {
-  channelId: PropTypes.number,
-  onSetRankingsTab: PropTypes.func.isRequired,
-  rankingsTab: PropTypes.string.isRequired
-};
-
-export default function Rankings({ channelId, rankingsTab, onSetRankingsTab }) {
+export default function Rankings({
+  channelId,
+  rankingsTab,
+  onSetRankingsTab
+}: {
+  channelId: number;
+  onSetRankingsTab: (arg0: string) => void;
+  rankingsTab: string;
+}) {
   const loadWordleRankings = useAppContext(
     (v) => v.requestHelpers.loadWordleRankings
   );
@@ -92,7 +93,7 @@ export default function Rankings({ channelId, rankingsTab, onSetRankingsTab }) {
         }}
       >
         <RoundList style={{ marginTop: 0 }} width="35rem" mobileWidth="100%">
-          {users.map((user) => (
+          {users.map((user: { id: number }) => (
             <RankingsListItem
               small
               key={user.id}

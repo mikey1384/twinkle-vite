@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import StatBar from './StatBar';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -6,18 +6,7 @@ import AttemptResult from './AttemptResult';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { borderRadius, Color } from '~/constants/css';
 
-OverviewModal.propTypes = {
-  attemptState: PropTypes.object,
-  isGameOver: PropTypes.bool,
-  isSolved: PropTypes.bool,
-  numGuesses: PropTypes.number,
-  solution: PropTypes.string,
-  wordLevel: PropTypes.number.isRequired,
-  wordleStats: PropTypes.object,
-  onHide: PropTypes.func
-};
-
-const wordLevelObj = {
+const wordLevelObj: Record<string, any> = {
   1: {
     label: 'basic',
     textColor: 'vantaBlack',
@@ -59,6 +48,15 @@ export default function OverviewModal({
   wordLevel,
   wordleStats,
   onHide
+}: {
+  attemptState: any;
+  isGameOver: boolean;
+  isSolved: boolean;
+  numGuesses: number;
+  solution: string;
+  wordLevel: number;
+  wordleStats: any;
+  onHide: () => void;
 }) {
   return (
     <Modal small modalOverModal onHide={onHide}>

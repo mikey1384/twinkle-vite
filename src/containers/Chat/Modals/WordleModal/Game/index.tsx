@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Grid from './Grid';
 import Keyboard from './Keyboard';
@@ -26,22 +25,21 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-Game.propTypes = {
-  channelId: PropTypes.number.isRequired,
-  channelName: PropTypes.string.isRequired,
-  guesses: PropTypes.array.isRequired,
-  isGameOver: PropTypes.bool,
-  isGameWon: PropTypes.bool,
-  isGameLost: PropTypes.bool,
-  isRevealing: PropTypes.bool,
-  isStrictMode: PropTypes.bool,
-  nextDayTimeStamp: PropTypes.number,
-  onSetIsRevealing: PropTypes.func.isRequired,
-  onSetOverviewModalShown: PropTypes.func.isRequired,
-  socketConnected: PropTypes.bool,
-  solution: PropTypes.string.isRequired
-};
-
+interface Props {
+  channelId: number;
+  channelName: string;
+  guesses: string[];
+  isGameOver: boolean;
+  isGameWon: boolean;
+  isGameLost: boolean;
+  isRevealing: boolean;
+  isStrictMode: boolean;
+  nextDayTimeStamp: number;
+  onSetIsRevealing: (isRevealing: boolean) => void;
+  onSetOverviewModalShown: (isShown: boolean) => void;
+  socketConnected: boolean;
+  solution: string;
+}
 export default function Game({
   channelId,
   channelName,
@@ -56,7 +54,7 @@ export default function Game({
   nextDayTimeStamp,
   onSetIsRevealing,
   socketConnected
-}) {
+}: Props) {
   const isProcessingGameResult = useRef(false);
   const onToggleWordleStrictMode = useAppContext(
     (v) => v.user.actions.onToggleWordleStrictMode
@@ -77,7 +75,7 @@ export default function Game({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const MAX_WORD_LENGTH = useMemo(() => solution?.length || 5, [solution]);
   const delayMs = REVEAL_TIME_MS * MAX_WORD_LENGTH;
-  const [alertMessage, setAlertMessage] = useState({});
+  const [alertMessage, setAlertMessage] = useState<any>({});
   const [isWaving, setIsWaving] = useState(false);
   const [currentGuess, setCurrentGuess] = useState('');
   const [currentRowClass, setCurrentRowClass] = useState('');
@@ -204,12 +202,12 @@ export default function Game({
     </ErrorBoundary>
   );
 
-  function handleToggleWordleStrictMode(isStrictMode) {
+  function handleToggleWordleStrictMode(isStrictMode: boolean) {
     toggleWordleStrictMode(isStrictMode);
     onToggleWordleStrictMode(isStrictMode);
   }
 
-  function handleChar(value) {
+  function handleChar(value: string) {
     if (
       unicodeLength(`${currentGuess}${value}`) <= MAX_WORD_LENGTH &&
       guesses.length < MAX_GUESSES &&
@@ -379,7 +377,20 @@ export default function Game({
     }
   }
 
-  function handleShowAlert({ status, message, options }) {
+  function handleShowAlert({
+    status,
+    message,
+    options
+  }: {
+    status: string;
+    message?: string;
+    options?: {
+      delayMs?: number;
+      persist?: boolean;
+      callback?: () => void;
+      durationMs?: number;
+    };
+  }) {
     const {
       delayMs = 0,
       persist,

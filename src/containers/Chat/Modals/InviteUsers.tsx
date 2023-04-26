@@ -1,22 +1,19 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import TagForm from '~/components/Forms/TagForm';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-
-InviteUsersModal.propTypes = {
-  currentChannel: PropTypes.object.isRequired,
-  onDone: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired,
-  selectedChannelId: PropTypes.number.isRequired
-};
 
 export default function InviteUsersModal({
   selectedChannelId,
   onDone,
   onHide,
   currentChannel
+}: {
+  currentChannel: any;
+  onDone: (data: any) => void;
+  onHide: () => void;
+  selectedChannelId: number;
 }) {
   const {
     done: { color: doneColor }
@@ -59,7 +56,7 @@ export default function InviteUsersModal({
           onClear={onClearUserSearchResults}
           onAddItem={onAddUser}
           onRemoveItem={onRemoveUser}
-          onSubmit={selectedUsers.length > 0 && handleDone}
+          onSubmit={selectedUsers.length > 0 ? handleDone : undefined}
           renderDropdownLabel={(item) => (
             <span>
               {item.username}{' '}
@@ -86,12 +83,14 @@ export default function InviteUsersModal({
     </Modal>
   );
 
-  function onAddUser(user) {
-    setSelectedUsers(selectedUsers.concat([user]));
+  function onAddUser(user: any) {
+    setSelectedUsers(selectedUsers.concat(user));
   }
 
-  function onRemoveUser(userId) {
-    setSelectedUsers(selectedUsers.filter((user) => user.id !== userId));
+  function onRemoveUser(userId: number) {
+    setSelectedUsers(
+      selectedUsers.filter((user: { id: number }) => user.id !== userId)
+    );
   }
 
   async function handleDone() {
@@ -116,7 +115,13 @@ export default function InviteUsersModal({
     }
   }
 
-  async function handleSearchUserToInvite({ channelId, searchText }) {
+  async function handleSearchUserToInvite({
+    channelId,
+    searchText
+  }: {
+    channelId: number;
+    searchText: string;
+  }) {
     const data = await searchUserToInvite({ channelId, searchText });
     onSearchUserToInvite(data);
   }

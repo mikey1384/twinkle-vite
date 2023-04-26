@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Game from './Game';
@@ -18,20 +17,19 @@ import {
   useNotiContext
 } from '~/contexts';
 
-WordleModal.propTypes = {
-  attemptState: PropTypes.object,
-  channelId: PropTypes.number,
-  channelName: PropTypes.string,
-  guesses: PropTypes.array,
-  nextDayTimeStamp: PropTypes.number,
-  solution: PropTypes.string,
-  wordLevel: PropTypes.number,
-  wordleStats: PropTypes.object,
-  onHide: PropTypes.func.isRequired,
-  socketConnected: PropTypes.bool,
-  theme: PropTypes.string
-};
-
+interface Props {
+  attemptState: any;
+  channelId: number;
+  channelName: string;
+  guesses: string[];
+  nextDayTimeStamp: number;
+  solution: string;
+  wordLevel: number;
+  wordleStats: any;
+  onHide: () => void;
+  socketConnected: boolean;
+  theme: string;
+}
 export default function WordleModal({
   channelId,
   channelName,
@@ -44,7 +42,7 @@ export default function WordleModal({
   onHide,
   socketConnected,
   theme
-}) {
+}: Props) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -101,19 +99,19 @@ export default function WordleModal({
             }}
           >
             <nav
-              className={activeTab === 'game' ? 'active' : null}
+              className={activeTab === 'game' ? 'active' : ''}
               onClick={() => setActiveTab('game')}
             >
               Wordle
             </nav>
             <nav
-              className={activeTab === 'rankings' ? 'active' : null}
+              className={activeTab === 'rankings' ? 'active' : ''}
               onClick={() => setActiveTab('rankings')}
             >
               Top Scorers
             </nav>
             <nav
-              className={activeTab === 'streaks' ? 'active' : null}
+              className={activeTab === 'streaks' ? 'active' : ''}
               onClick={() => setActiveTab('streaks')}
             >
               Top Streaks
@@ -195,7 +193,6 @@ export default function WordleModal({
               <Button
                 color={doneColor}
                 onClick={() => setOverviewModalShown(true)}
-                isGameWon={isGameWon}
               >
                 Show {isGameOver ? 'Overview' : 'Stats'}
               </Button>
