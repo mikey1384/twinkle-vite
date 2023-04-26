@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
@@ -12,23 +11,21 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-CardSearchPanel.propTypes = {
-  filters: PropTypes.object.isRequired,
-  onSetSelectedFilter: PropTypes.func.isRequired,
-  onBuyNowSwitchClick: PropTypes.func.isRequired,
-  onCardNumberSearch: PropTypes.func.isRequired
-};
-
 export default function CardSearchPanel({
   filters,
   onBuyNowSwitchClick,
   onSetSelectedFilter,
   onCardNumberSearch
+}: {
+  filters: any;
+  onBuyNowSwitchClick: () => any;
+  onSetSelectedFilter: (filter: string) => any;
+  onCardNumberSearch: (cardNumber: string | number) => any;
 }) {
   const {
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
-  const [cardNumber, setCardNumber] = useState('');
+  const [cardNumber, setCardNumber] = useState<string | number>('');
 
   return (
     <div
@@ -146,7 +143,7 @@ export default function CardSearchPanel({
           <div>
             <span className="label">Word</span>
             <Input
-              onFocus={(event) => {
+              onFocus={(event: any) => {
                 event.currentTarget.blur();
                 onSetSelectedFilter('word');
               }}
@@ -192,7 +189,7 @@ export default function CardSearchPanel({
                 fontSize: '1.5rem',
                 height: 'auto'
               }}
-              onKeyPress={(event) => {
+              onKeyPress={(event: any) => {
                 if (!!cardNumber && event.key === 'Enter') {
                   onCardNumberSearch(cardNumber);
                 }
@@ -248,7 +245,7 @@ export default function CardSearchPanel({
     </div>
   );
 
-  function handleSetCardNumber(text) {
+  function handleSetCardNumber(text: string) {
     const cardNumberInput = Number(text.replace(/[^0-9]/g, ''));
     setCardNumber(cardNumberInput);
   }

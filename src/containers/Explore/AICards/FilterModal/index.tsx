@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import OwnerFilter from './OwnerFilter';
@@ -8,18 +7,16 @@ import QualityFilter from './QualityFilter';
 import WordFilter from './WordFilter';
 import { useKeyContext } from '~/contexts';
 
-FilterModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  filters: PropTypes.object,
-  selectedFilter: PropTypes.string.isRequired,
-  onApply: PropTypes.func.isRequired
-};
-
 export default function FilterModal({
   filters,
   selectedFilter,
   onHide,
   onApply
+}: {
+  filters: any;
+  selectedFilter: string;
+  onHide: () => void;
+  onApply: (queryString: string) => void;
 }) {
   const {
     done: { color: doneColor }
@@ -123,7 +120,12 @@ export default function FilterModal({
   );
 
   function handleApply() {
-    const obj = {};
+    const obj: {
+      owner?: string;
+      word?: string;
+      color?: string;
+      quality?: string;
+    } = {};
     if (selectedOwner) {
       obj.owner = selectedOwner;
     }

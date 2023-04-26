@@ -1,16 +1,7 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import { capitalize } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
-
-ColorFilter.propTypes = {
-  selectedColor: PropTypes.string,
-  onDropdownShown: PropTypes.func,
-  onSelectColor: PropTypes.func,
-  selectedFilter: PropTypes.string,
-  style: PropTypes.object
-};
 
 export default function ColorFilter({
   selectedColor,
@@ -18,6 +9,12 @@ export default function ColorFilter({
   onSelectColor,
   selectedFilter,
   style
+}: {
+  selectedColor: string;
+  onDropdownShown: (v: any) => any;
+  onSelectColor: (color: string) => any;
+  selectedFilter: string;
+  style?: React.CSSProperties;
 }) {
   const menuProps = useMemo(() => {
     const colors = ['any', 'blue', 'pink', 'orange', 'magenta', 'gold'];
