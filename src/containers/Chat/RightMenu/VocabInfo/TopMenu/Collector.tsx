@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -10,15 +9,22 @@ import { useKeyContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
 
-Collector.propTypes = {
-  style: PropTypes.object,
-  user: PropTypes.object
-};
-
 const deviceIsMobile = isMobile(navigator);
 const collectedLabel = localize('collected');
 
-export default function Collector({ style, user }) {
+export default function Collector({
+  style,
+  user
+}: {
+  style: React.CSSProperties;
+  user: {
+    id: number;
+    rank: number;
+    username: string;
+    profilePicUrl: string;
+    numWordsCollected: number;
+  };
+}) {
   const { userId: myId } = useKeyContext((v) => v.myState);
   const rankColor = useMemo(() => {
     return user.rank === 1
@@ -79,7 +85,6 @@ export default function Collector({ style, user }) {
           <UsernameText
             color={textColor}
             user={{ ...user, username: user.username }}
-            userId={myId}
             className={css`
               max-width: 15rem;
               margin-top: 0.5rem;

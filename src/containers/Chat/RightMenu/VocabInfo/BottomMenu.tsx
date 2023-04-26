@@ -1,15 +1,18 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import MyRank from '~/components/MyRank';
 import RankingsListItem from '~/components/RankingsListItem';
 
-BottomMenu.propTypes = {
-  rank: PropTypes.number,
-  allRanks: PropTypes.array.isRequired,
-  twinkleXP: PropTypes.number,
-  userId: PropTypes.number.isRequired
-};
-
-export default function BottomMenu({ rank, allRanks, twinkleXP, userId }) {
+export default function BottomMenu({
+  rank,
+  allRanks,
+  twinkleXP,
+  userId
+}: {
+  rank: number;
+  allRanks: any[];
+  twinkleXP: number;
+  userId: number;
+}) {
   return (
     <div style={{ height: '50%', overflow: 'scroll' }}>
       <MyRank

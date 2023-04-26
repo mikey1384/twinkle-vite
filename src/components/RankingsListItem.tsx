@@ -17,7 +17,7 @@ export default function RankingsListItem({
   myId: number;
   small: boolean;
   style?: React.CSSProperties;
-  target: string;
+  target?: string;
   user: any;
   onUsermenuShownChange?: (v: boolean) => void;
 }) {

@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
@@ -7,13 +7,15 @@ import localize from '~/constants/localize';
 const callLabel = localize('call');
 const hangUpLabel = localize('hangUp');
 
-CallButton.propTypes = {
-  callOngoing: PropTypes.bool,
-  disabled: PropTypes.bool,
-  onCall: PropTypes.func
-};
-
-export default function CallButton({ callOngoing, disabled, onCall }) {
+export default function CallButton({
+  callOngoing,
+  disabled,
+  onCall
+}: {
+  callOngoing: boolean;
+  disabled: boolean;
+  onCall: () => void;
+}) {
   return (
     <button
       className={css`
