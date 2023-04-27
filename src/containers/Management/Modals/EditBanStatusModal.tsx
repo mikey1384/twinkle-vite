@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Modal from '~/components/Modal';
 import Table from '../Table';
@@ -10,12 +9,13 @@ import { Color } from '~/constants/css';
 import { isEqual } from 'lodash';
 import { useAppContext, useKeyContext, useManagementContext } from '~/contexts';
 
-EditBanStatusModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  target: PropTypes.object.isRequired
-};
-
-export default function EditBanStatusModal({ onHide, target }) {
+export default function EditBanStatusModal({
+  onHide,
+  target
+}: {
+  onHide: () => void;
+  target: any;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -27,14 +27,14 @@ export default function EditBanStatusModal({ onHide, target }) {
   );
   const [banStatus, setBanStatus] = useState(target.banned);
   const submitDisabled = useMemo(() => {
-    const bannedFeatures = {};
-    for (let key in banStatus) {
+    const bannedFeatures: Record<string, boolean> = {};
+    for (const key in banStatus) {
       if (banStatus[key]) {
         bannedFeatures[key] = true;
       }
     }
-    const prevBannedFeatures = {};
-    for (let key in target.banned) {
+    const prevBannedFeatures: Record<string, boolean> = {};
+    for (const key in target.banned) {
       if (target.banned[key]) {
         prevBannedFeatures[key] = true;
       }
@@ -111,8 +111,8 @@ export default function EditBanStatusModal({ onHide, target }) {
     </ErrorBoundary>
   );
 
-  function handleBanStatusClick(feature) {
-    setBanStatus((prevStatus) => ({
+  function handleBanStatusClick(feature: any) {
+    setBanStatus((prevStatus: any) => ({
       ...prevStatus,
       [feature]: !prevStatus[feature]
     }));

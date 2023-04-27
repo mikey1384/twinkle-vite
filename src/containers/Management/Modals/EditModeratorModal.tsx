@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -8,13 +7,15 @@ import { Color } from '~/constants/css';
 import { capitalize } from '~/helpers/stringHelpers';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 
-EditModeratorModal.propTypes = {
-  accountTypes: PropTypes.array,
-  onHide: PropTypes.func.isRequired,
-  target: PropTypes.object
-};
-
-export default function EditModeratorModal({ accountTypes, onHide, target }) {
+export default function EditModeratorModal({
+  accountTypes,
+  onHide,
+  target
+}: {
+  accountTypes: any;
+  onHide: () => void;
+  target: any;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -30,8 +31,11 @@ export default function EditModeratorModal({ accountTypes, onHide, target }) {
   );
   const editMenuItems = useMemo(() => {
     const dropdownMenu = accountTypes
-      .filter((accountType) => accountType.label !== selectedAccountType)
-      .map((accountType) => ({
+      .filter(
+        (accountType: { label: string }) =>
+          accountType.label !== selectedAccountType
+      )
+      .map((accountType: { label: string }) => ({
         label: capitalize(accountType.label),
         onClick: () => setSelectedAccountType(accountType.label)
       }));
