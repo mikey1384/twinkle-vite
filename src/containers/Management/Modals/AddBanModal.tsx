@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -15,18 +14,16 @@ import localize from '~/constants/localize';
 
 const searchUsersLabel = localize('searchUsers');
 
-AddBanModal.propTypes = {
-  onHide: PropTypes.func.isRequired
-};
-
-export default function AddBanModal({ onHide }) {
+export default function AddBanModal({ onHide }: { onHide: () => void }) {
   const { authLevel } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<Record<string, any>>({
+    banned: null
+  });
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const updateBanStatus = useAppContext(
     (v) => v.requestHelpers.updateBanStatus
@@ -39,10 +36,15 @@ export default function AddBanModal({ onHide }) {
     onClear: () => setSearchedUsers([]),
     onSetSearchText: setSearchText
   });
-  const [banStatus, setBanStatus] = useState(null);
+  const [banStatus, setBanStatus] = useState<Record<string, boolean>>({
+    all: false,
+    chat: false,
+    chess: false,
+    posting: false
+  });
   useEffect(() => {
     setBanStatus(
-      selectedUser?.banned || {
+      selectedUser.banned || {
         all: false,
         chat: false,
         chess: false,
@@ -51,15 +53,15 @@ export default function AddBanModal({ onHide }) {
     );
   }, [selectedUser]);
   const submitDisabled = useMemo(() => {
-    if (!selectedUser) return true;
-    const bannedFeatures = {};
-    for (let key in banStatus) {
+    if (!selectedUser.banned) return true;
+    const bannedFeatures: { [key: string]: boolean } = {};
+    for (const key in banStatus) {
       if (banStatus[key]) {
         bannedFeatures[key] = true;
       }
     }
-    const prevBannedFeatures = {};
-    for (let key in selectedUser.banned) {
+    const prevBannedFeatures: { [key: string]: boolean } = {};
+    for (const key in selectedUser.banned) {
       if (selectedUser.banned[key]) {
         prevBannedFeatures[key] = true;
       }
@@ -163,7 +165,7 @@ export default function AddBanModal({ onHide }) {
     </ErrorBoundary>
   );
 
-  function handleBanStatusClick(feature) {
+  function handleBanStatusClick(feature: string) {
     setBanStatus((prevStatus) => ({
       ...prevStatus,
       [feature]: !prevStatus[feature]
@@ -176,15 +178,17 @@ export default function AddBanModal({ onHide }) {
     onHide();
   }
 
-  function handleSelectUser(user) {
+  function handleSelectUser(user: Record<string, any>) {
     setSelectedUser(user);
     setSearchedUsers([]);
     setSearchText('');
   }
 
-  async function handleUserSearch(text) {
+  async function handleUserSearch(text: string) {
     const users = await searchUsers(text);
-    const result = users.filter((user) => user.authLevel < authLevel);
+    const result = users.filter(
+      (user: { authLevel: number }) => user.authLevel < authLevel
+    );
     setSearchedUsers(result);
   }
 }
