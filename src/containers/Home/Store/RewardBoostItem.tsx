@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import ItemPanel from './ItemPanel';
 import Icon from '~/components/Icon';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
@@ -32,7 +31,7 @@ const item = {
     `${boostRewardsFromWatchingXPVideosLabel} (level 10)`
   ],
   description: [...Array(10).keys()].map((key) => {
-    const rewardLevels = [1, 2, 3, 4, 5];
+    const rewardLevels: number[] = [1, 2, 3, 4, 5];
     const keyNumber = Number(key);
     const descriptionLabel =
       SELECTED_LANGUAGE === 'kr' ? (
@@ -168,11 +167,11 @@ const item = {
   })
 };
 
-RewardBoostItem.propTypes = {
-  style: PropTypes.object
-};
-
-export default function RewardBoostItem({ style }) {
+export default function RewardBoostItem({
+  style
+}: {
+  style?: React.CSSProperties;
+}) {
   const [unlocking, setUnlocking] = useState(false);
   const { rewardBoostLvl, karmaPoints, userId } = useKeyContext(
     (v) => v.myState
