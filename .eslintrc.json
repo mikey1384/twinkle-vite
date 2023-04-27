@@ -39,11 +39,15 @@
     "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
-    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-explicit-any": "off",
     "jsx-quotes": ["error", "prefer-double"],
     "no-dupe-keys": "error",
     "no-undef": "error",
-    "no-unused-vars": "error",
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "args": "none", "varsIgnorePattern": "^_" }
+    ],
     "no-duplicate-imports": "error",
     "quotes": [
       "error",
@@ -51,11 +55,21 @@
       { "avoidEscape": true, "allowTemplateLiterals": true }
     ],
     "react/function-component-definition": "off",
-    "react/no-unused-prop-types": "error",
     "react/no-children-prop": "error",
     "react/react-in-jsx-scope": "off",
-    "react/prop-types": "error",
+    "react/prop-types": "off",
     "react-hooks/exhaustive-deps": "warn",
     "semi": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["*.js", "*.jsx"],
+      "rules": {
+        "@typescript-eslint/consistent-type-definitions": "off",
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    }
+  ]
 }

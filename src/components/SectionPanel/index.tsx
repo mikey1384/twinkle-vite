@@ -20,16 +20,16 @@ interface Props {
   title: React.ReactNode | string;
   button?: React.ReactNode;
   emptyMessage?: string;
-  innerRef?: React.RefObject<any>;
+  innerRef?: React.RefObject<HTMLElement>;
   inverted?: boolean;
   isEmpty?: boolean;
   isSearching?: boolean;
   loaded?: boolean;
-  onLoadMore: () => void;
+  onLoadMore?: () => void;
   children?: React.ReactNode;
   loadMoreButtonShown?: boolean;
-  onEditTitle?: (title: string) => void;
-  onSearch?: (query: string) => void;
+  onEditTitle?: (v: string) => void;
+  onSearch?: (v: string) => void;
   placeholder?: string;
   searchPlaceholder?: string;
   searchQuery?: string;
@@ -154,7 +154,7 @@ export default function SectionPanel({
                   placeholder={placeholder}
                   autoFocus
                   onChange={(text) => setEditedTitle(addEmoji(text))}
-                  onKeyPress={(event: any) => {
+                  onKeyPress={(event: { key: string }) => {
                     if (!stringIsEmpty(editedTitle) && event.key === 'Enter') {
                       onChangeTitle(editedTitle);
                     }
@@ -298,7 +298,7 @@ export default function SectionPanel({
   async function handleLoadMore() {
     if (!loading) {
       setLoading(true);
-      await onLoadMore();
+      await onLoadMore?.();
       setLoading(false);
     }
   }

@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Table from '../Table';
@@ -19,11 +18,7 @@ const restrictedAccountsLabel = localize('restrictedAccounts');
 const restrictAccountLabel = localize('restrictAccount');
 const userLabel = localize('user');
 
-BannedUsers.propTypes = {
-  canManage: PropTypes.bool
-};
-
-export default function BannedUsers({ canManage }) {
+export default function BannedUsers({ canManage }: { canManage: boolean }) {
   const bannedUsers = useManagementContext((v) => v.state.bannedUsers);
   const bannedUsersLoaded = useManagementContext(
     (v) => v.state.bannedUsersLoaded
@@ -32,7 +27,16 @@ export default function BannedUsers({ canManage }) {
     tableHeader: { color: tableHeaderColor }
   } = useKeyContext((v) => v.theme);
   const [newBanModalShown, setNewBanModalShown] = useState(false);
-  const [banStatusModalTarget, setEditBanStatusModalTarget] = useState(null);
+  const [banStatusModalTarget, setEditBanStatusModalTarget] = useState<{
+    id: number;
+    username: string;
+    banned: {
+      all: boolean;
+      chat: boolean;
+      chess: boolean;
+      posting: boolean;
+    };
+  } | null>(null);
 
   return (
     <ErrorBoundary componentPath="Management/Main/BannedUsers">
@@ -78,38 +82,53 @@ export default function BannedUsers({ canManage }) {
             </tr>
           </thead>
           <tbody>
-            {bannedUsers.map(({ id, username, banned }) => (
-              <tr
-                onClick={() =>
-                  canManage
-                    ? setEditBanStatusModalTarget({ id, username, banned })
-                    : {}
-                }
-                key={id}
-                style={{ cursor: canManage && 'pointer' }}
-              >
-                <td
-                  style={{
-                    fontWeight: 'bold',
-                    fontSize: '1.6rem'
-                  }}
+            {bannedUsers.map(
+              ({
+                id,
+                username,
+                banned
+              }: {
+                id: number;
+                username: string;
+                banned: {
+                  all: boolean;
+                  chat: boolean;
+                  chess: boolean;
+                  posting: boolean;
+                };
+              }) => (
+                <tr
+                  onClick={() =>
+                    canManage
+                      ? setEditBanStatusModalTarget({ id, username, banned })
+                      : {}
+                  }
+                  key={id}
+                  style={{ cursor: canManage ? 'pointer' : '' }}
                 >
-                  {username}
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  {banned?.all && <RedTimes />}
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  {banned?.chat && <RedTimes />}
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  {banned?.chess && <RedTimes />}
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  {banned?.posting && <RedTimes />}
-                </td>
-              </tr>
-            ))}
+                  <td
+                    style={{
+                      fontWeight: 'bold',
+                      fontSize: '1.6rem'
+                    }}
+                  >
+                    {username}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    {banned?.all && <RedTimes />}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    {banned?.chat && <RedTimes />}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    {banned?.chess && <RedTimes />}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    {banned?.posting && <RedTimes />}
+                  </td>
+                </tr>
+              )
+            )}
           </tbody>
         </Table>
       </SectionPanel>

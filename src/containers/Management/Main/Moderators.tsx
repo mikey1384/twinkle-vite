@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
@@ -24,11 +23,7 @@ const searchModeratorsLabel = localize('searchModerators');
 const userLabel = localize('user');
 const deviceIsMobile = isMobile(navigator);
 
-Moderators.propTypes = {
-  canManage: PropTypes.bool.isRequired
-};
-
-export default function Moderators({ canManage }) {
+export default function Moderators({ canManage }: { canManage: boolean }) {
   const { userId } = useKeyContext((v) => v.myState);
   const {
     tableHeader: { color: tableHeaderColor }
@@ -49,7 +44,7 @@ export default function Moderators({ canManage }) {
   const [addModeratorModalShown, setAddModeratorModalShown] = useState(false);
   const [moderatorModalTarget, setModeratorModalTarget] = useState(null);
   const filteredModerators = useMemo(() => {
-    return moderators.filter((moderator) =>
+    return moderators.filter((moderator: { username: string }) =>
       searchQuery
         ? moderator.username.toLowerCase().includes(searchQuery.toLowerCase())
         : moderator
@@ -105,11 +100,11 @@ export default function Moderators({ canManage }) {
           </thead>
           <tbody>
             {filteredModerators
-              .filter((moderator, index) => index < numModeratorsShown)
-              .map((moderator) => (
+              .filter((_: any, index: number) => index < numModeratorsShown)
+              .map((moderator: any) => (
                 <tr
                   key={moderator.id}
-                  style={{ cursor: canManage && 'pointer' }}
+                  style={{ cursor: canManage ? 'pointer' : '' }}
                   onClick={() =>
                     canManage ? setModeratorModalTarget(moderator) : {}
                   }
