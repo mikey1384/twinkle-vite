@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MissionItem from '~/components/MissionItem';
 import { mobileMaxWidth } from '~/constants/css';
@@ -20,6 +20,19 @@ export default function SubMission({
   missionType,
   previousSubmissionPassed,
   subMissionProgress
+}: {
+  index: number;
+  isManager: boolean;
+  subMission: {
+    title: string;
+    tasks: any[];
+  };
+  missionType: string;
+  previousSubmissionPassed: boolean;
+  subMissionProgress: {
+    passed: boolean;
+    currentTaskIndex: number;
+  };
 }) {
   const subMissionIsLocked = useMemo(
     () => index !== 0 && !previousSubmissionPassed && !isManager,

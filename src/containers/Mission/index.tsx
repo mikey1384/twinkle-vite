@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Cover from './Cover';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Main from './Main';
@@ -50,7 +50,9 @@ export default function Mission() {
       const { missions, myAttempts, loadMoreButton } = await loadMissionList();
       let displayedMissions = missions;
       if (!isCreator) {
-        displayedMissions = missions.filter((mission) => !mission.isHidden);
+        displayedMissions = missions.filter(
+          (mission: { isHidden: boolean }) => !mission.isHidden
+        );
         onSetSelectedMissionsTab('missions');
       }
       setLoading(false);

@@ -1,18 +1,18 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import MissionItem from '~/components/MissionItem';
 import { css } from '@emotion/css';
 import { useMissionContext } from '~/contexts';
 import localize from '~/constants/localize';
 
-CurrentMission.propTypes = {
-  style: PropTypes.object,
-  missionId: PropTypes.number
-};
-
 const currentMissionLabel = localize('currentMission');
 
-export default function CurrentMission({ style, missionId }) {
+export default function CurrentMission({
+  style,
+  missionId
+}: {
+  style?: React.CSSProperties;
+  missionId: number;
+}) {
   const missionObj = useMissionContext((v) => v.state.missionObj);
   const mission = useMemo(
     () => missionObj[missionId] || {},

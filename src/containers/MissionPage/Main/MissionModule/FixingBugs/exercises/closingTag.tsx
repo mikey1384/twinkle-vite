@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   getAstProps,
   filterElementsByType,
@@ -33,7 +34,15 @@ export const initialCode = `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
+export async function onRunCode({
+  ast,
+  onSetErrorMsg,
+  onUpdateMissionStatus
+}: {
+  ast: any;
+  onSetErrorMsg: (arg0: any) => void;
+  onUpdateMissionStatus: () => void;
+}) {
   const jsxElements = getAstProps({
     ast,
     propType: 'JSXElement'
@@ -44,16 +53,16 @@ export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
     elements: jsxElements,
     filter: 'div'
   });
-  for (let divider of dividers) {
+  for (const divider of dividers) {
     const JSXChildren = divider.children.filter(
-      (child) => child.type === 'JSXElement'
+      (child: { type: string }) => child.type === 'JSXElement'
     );
     const thirdChild = JSXChildren?.[2];
     if (thirdChild) {
       const thirdChildStyleProps = getElementStyleProps(
         thirdChild.openingElement
       );
-      for (let prop of thirdChildStyleProps) {
+      for (const prop of thirdChildStyleProps) {
         if (prop?.key?.name === 'marginTop') {
           thirdMarginTop = prop?.value?.value;
         }
@@ -64,7 +73,7 @@ export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
       const fourthChildStyleProps = getElementStyleProps(
         fourthChild.openingElement
       );
-      for (let prop of fourthChildStyleProps) {
+      for (const prop of fourthChildStyleProps) {
         if (prop?.key?.name === 'marginTop') {
           fourthMarginTop = prop?.value?.value;
         }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MissionItem from '~/components/MissionItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -26,6 +26,11 @@ export default function MissionList({
   className,
   missions,
   missionObj
+}: {
+  style?: React.CSSProperties;
+  className?: string;
+  missions: number[];
+  missionObj: { [key: string]: any };
 }) {
   const selectedMissionListTab = useMissionContext(
     (v) => v.state.selectedMissionListTab
@@ -54,7 +59,7 @@ export default function MissionList({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ongoingMissions.length, selectedMissionListTab]);
-  let displayedMissions = useMemo(() => {
+  const displayedMissions: any[] = useMemo(() => {
     if (userId) {
       if (selectedMissionListTab === 'ongoing') {
         return ongoingMissions;
@@ -145,7 +150,13 @@ export default function MissionList({
     </ErrorBoundary>
   );
 
-  function returnPassStatus({ missionId, myAttempts }) {
+  function returnPassStatus({
+    missionId,
+    myAttempts
+  }: {
+    missionId: number;
+    myAttempts: { [key: string]: any };
+  }) {
     const mission = missionObj[missionId];
     if (mission.isMultiMission) {
       const { passed } = checkMultiMissionPassStatus({

@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import { isMobile } from '~/helpers';
 
@@ -7,7 +8,12 @@ RequiresComputer.propTypes = {
 
 const deviceIsMobile = isMobile(navigator);
 
-export default function RequiresComputer({ children, ...props }) {
+export default function RequiresComputer({
+  children,
+  ...props
+}: {
+  children: any;
+}) {
   if (deviceIsMobile) {
     return (
       <div

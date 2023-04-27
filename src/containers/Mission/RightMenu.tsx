@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
@@ -19,6 +20,11 @@ export default function RightMenu({
   selectedTab,
   onSelectTab,
   style
+}: {
+  className?: string;
+  selectedTab: string;
+  onSelectTab: (arg: string) => any;
+  style?: React.CSSProperties;
 }) {
   return (
     <div

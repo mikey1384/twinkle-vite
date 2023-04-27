@@ -1,3 +1,5 @@
+import React from 'react';
+
 export function getAstProps({ ast, propType }) {
   const results = [];
   for (let key in ast) {
@@ -73,6 +75,10 @@ export function returnInnerTextErrorMsg({
   targetName,
   correctValue,
   valueEntered
+}: {
+  targetName: string;
+  correctValue: string;
+  valueEntered: string;
 }) {
   let errorMsg;
   if (!valueEntered) {
@@ -107,6 +113,11 @@ export function returnStyleErrorMsg({
   propName,
   correctValue,
   valueEntered
+}: {
+  targetName: string;
+  propName: string;
+  correctValue: string | number;
+  valueEntered: string | number;
 }) {
   let errorMsg;
   if (!valueEntered) {

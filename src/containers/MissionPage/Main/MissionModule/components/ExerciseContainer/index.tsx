@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SuccessMessage from './SuccessMessage';
@@ -34,6 +34,17 @@ export default function ExerciseContainer({
   prevUserId,
   style,
   taskType
+}: {
+  codeObj: { [key: string]: string };
+  exercises: { [key: string]: any };
+  exerciseKey: string;
+  index: number;
+  prevExerciseKey: string;
+  prevUserId: number;
+  onOpenTutorial: () => void;
+  onSetCode: (code: string, exerciseKey: string) => void;
+  style?: React.CSSProperties;
+  taskType: string;
 }) {
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus

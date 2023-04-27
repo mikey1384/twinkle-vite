@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
@@ -20,6 +20,12 @@ export default function TaskComplete({
   taskId,
   passMessage,
   passMessageFontSize
+}: {
+  innerRef?: React.RefObject<any>;
+  style?: React.CSSProperties;
+  taskId: number;
+  passMessage: string;
+  passMessageFontSize?: number | string;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const uploadMissionAttempt = useAppContext(

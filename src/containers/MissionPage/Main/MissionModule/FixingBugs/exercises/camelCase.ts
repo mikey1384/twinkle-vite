@@ -29,7 +29,15 @@ export const initialCode = `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
+export async function onRunCode({
+  ast,
+  onSetErrorMsg,
+  onUpdateMissionStatus
+}: {
+  ast: any;
+  onSetErrorMsg: (errorMsg: any) => void;
+  onUpdateMissionStatus: () => void;
+}) {
   const jsxElements = getAstProps({
     ast,
     propType: 'JSXElement'
@@ -41,12 +49,12 @@ export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
   });
   let secondChild = null;
   const JSXChildren = dividers[0]?.children?.filter(
-    (child) => child.type === 'JSXElement'
+    (child: { type: string }) => child.type === 'JSXElement'
   );
   secondChild = JSXChildren?.[1];
   if (secondChild && secondChild.openingElement) {
     const styleProps = getElementStyleProps(secondChild.openingElement);
-    for (let prop of styleProps) {
+    for (const prop of styleProps) {
       if (prop?.key?.name === 'fontSize') {
         fontSize = prop?.value?.value;
       }
