@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
@@ -18,20 +17,18 @@ const deleteLabel = localize('delete');
 const deletePermanentlyLabel = localize('deletePermanently');
 const undoLabel = localize('undo');
 
-DeletedContent.propTypes = {
-  contentId: PropTypes.number,
-  contentType: PropTypes.string,
-  postId: PropTypes.number,
-  onDeletePermanently: PropTypes.func,
-  style: PropTypes.object
-};
-
 export default function DeletedContent({
   contentId,
   contentType,
   onDeletePermanently,
   postId,
   style
+}: {
+  contentId: number;
+  contentType: string;
+  postId: number;
+  onDeletePermanently: (v: number) => void;
+  style?: React.CSSProperties;
 }) {
   const { managementLevel } = useKeyContext((v) => v.myState);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
@@ -50,15 +47,30 @@ export default function DeletedContent({
     content,
     deleter,
     description,
-    fileName,
+    fileName = '',
     filePath,
-    fileSize,
-    isRecovered,
+    fileSize = 0,
+    isRecovered = false,
     rootObj,
     secretAnswer,
     title,
     thumbUrl,
     uploader = {}
+  }: {
+    actualTitle?: string;
+    actualDescription?: string;
+    content?: string;
+    deleter?: any;
+    description?: string;
+    fileName?: string;
+    filePath?: string;
+    fileSize?: number;
+    isRecovered?: boolean;
+    rootObj?: any;
+    secretAnswer?: string;
+    title?: string;
+    thumbUrl?: string;
+    uploader?: any;
   } = useMemo(() => contentObj, [contentObj]);
   useEffect(() => {
     init();
@@ -438,7 +450,7 @@ export default function DeletedContent({
     }
   }
 
-  async function handleUndoDelete({ redo }) {
+  async function handleUndoDelete({ redo }: { redo: boolean }) {
     const { success, isRecovered } = await deleteContent({
       id: contentId,
       contentType,

@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -9,11 +8,11 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 
-AddAccountTypeModal.propTypes = {
-  onHide: PropTypes.func.isRequired
-};
-
-export default function AddAccountTypeModal({ onHide }) {
+export default function AddAccountTypeModal({
+  onHide
+}: {
+  onHide: () => void;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -23,7 +22,7 @@ export default function AddAccountTypeModal({ onHide }) {
   );
   const [accountLabel, setAccountLabel] = useState('');
   const [authLevel, setAuthLevel] = useState(0);
-  const [perks, setPerks] = useState({
+  const [perks, setPerks] = useState<Record<string, boolean>>({
     canEdit: false,
     canDelete: false,
     canReward: false,
@@ -33,7 +32,7 @@ export default function AddAccountTypeModal({ onHide }) {
   });
   const disabled = useMemo(() => {
     if (stringIsEmpty(accountLabel)) return true;
-    for (let key in perks) {
+    for (const key in perks) {
       if (perks[key]) return false;
     }
     return true;
