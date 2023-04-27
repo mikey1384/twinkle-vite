@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 
@@ -16,6 +17,13 @@ export default function Question({
   onInputChange,
   question,
   style
+}: {
+  answer: string;
+  hasError: boolean;
+  innerRef: any;
+  onInputChange: (arg0: string) => void;
+  question: any;
+  style: React.CSSProperties;
 }) {
   return (
     <div style={style}>

@@ -15,14 +15,14 @@ export default function StepSlide({
   children,
   title,
   style,
-  index,
+  index = 0,
   innerRef
 }: {
-  children: any;
-  title: string;
-  style: React.CSSProperties;
-  index: number;
-  innerRef: React.RefObject<any>;
+  children?: any;
+  title: string | React.ReactNode;
+  style?: React.CSSProperties;
+  index?: number;
+  innerRef?: React.RefObject<any>;
 }) {
   return (
     <div

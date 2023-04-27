@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import GitHubVerifier from './GitHubVerifier';
@@ -10,7 +10,13 @@ GitHub.propTypes = {
   task: PropTypes.object.isRequired
 };
 
-export default function GitHub({ onSetMissionState, task }) {
+export default function GitHub({
+  onSetMissionState,
+  task
+}: {
+  onSetMissionState: (arg0: { missionId: any; newState: any }) => void;
+  task: any;
+}) {
   const { githubUsername } = useKeyContext((v) => v.myState);
   const conditionPassed = useMemo(() => !!githubUsername, [githubUsername]);
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
@@ -16,6 +17,12 @@ export default function ListItem({
   listItem,
   onSelect,
   index
+}: {
+  answerIndex: number;
+  conditionPassStatus: string;
+  listItem: any;
+  index: number;
+  onSelect: (index: number) => any;
 }) {
   return (
     <nav

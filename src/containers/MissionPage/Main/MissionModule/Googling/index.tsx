@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Question from './Question';
 import Button from '~/components/Button';
@@ -14,7 +14,15 @@ Googling.propTypes = {
   style: PropTypes.object
 };
 
-export default function Googling({ mission, onSetMissionState, style }) {
+export default function Googling({
+  mission,
+  onSetMissionState,
+  style
+}: {
+  mission: any;
+  onSetMissionState: (arg0: { missionId: any; newState: any }) => void;
+  style: React.CSSProperties;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -29,7 +37,7 @@ export default function Googling({ mission, onSetMissionState, style }) {
   const answersRef = useRef(mission.answers || {});
   const [hasErrorObj, setHasErrorObj] = useState(mission.hasErrorObj || {});
   const hasErrorObjRef = useRef(mission.hasErrorObj || {});
-  const QuestionRefs = useRef({});
+  const QuestionRefs: React.RefObject<any> = useRef({});
 
   useEffect(() => {
     return function onUnmount() {
@@ -46,7 +54,7 @@ export default function Googling({ mission, onSetMissionState, style }) {
 
   return (
     <div style={style}>
-      {mission.questions?.map((question) => (
+      {mission.questions?.map((question: { id: number }) => (
         <Question
           key={question.id}
           innerRef={(ref) => (QuestionRefs.current[question.id] = ref)}
@@ -82,9 +90,15 @@ export default function Googling({ mission, onSetMissionState, style }) {
     </div>
   );
 
-  function handleSetAnswers({ questionId, answer }) {
+  function handleSetAnswers({
+    questionId,
+    answer
+  }: {
+    questionId: number;
+    answer: any;
+  }) {
     handleSetHasErrorObj({ questionId, hasError: false });
-    setAnswers((answers) => ({
+    setAnswers((answers: any[]) => ({
       ...answers,
       [questionId]: answer
     }));
@@ -94,8 +108,14 @@ export default function Googling({ mission, onSetMissionState, style }) {
     };
   }
 
-  function handleSetHasErrorObj({ questionId, hasError }) {
-    setHasErrorObj((hasErrorObj) => ({
+  function handleSetHasErrorObj({
+    questionId,
+    hasError
+  }: {
+    questionId: number;
+    hasError: any;
+  }) {
+    setHasErrorObj((hasErrorObj: any) => ({
       ...hasErrorObj,
       [questionId]: hasError
     }));
@@ -107,7 +127,7 @@ export default function Googling({ mission, onSetMissionState, style }) {
 
   async function handleSubmit() {
     setSubmitDisabled(true);
-    for (let { id: questionId } of mission.questions) {
+    for (const { id: questionId } of mission.questions) {
       if (!answers[questionId] || stringIsEmpty(answers[questionId])) {
         handleSetHasErrorObj({
           questionId,
@@ -139,7 +159,8 @@ export default function Googling({ mission, onSetMissionState, style }) {
         missionId: mission.id,
         newState: { status: 'pending', tryingAgain: false }
       });
-      document.getElementById('App').scrollTop = 0;
+      const appElement = document.getElementById('App');
+      if (appElement) appElement.scrollTop = 0;
       BodyRef.scrollTop = 0;
     }
     setSubmitDisabled(false);

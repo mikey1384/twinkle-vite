@@ -42,7 +42,7 @@ export default function ExerciseContainer({
   prevExerciseKey: string;
   prevUserId: number;
   onOpenTutorial: () => void;
-  onSetCode: (code: string, exerciseKey: string) => void;
+  onSetCode: (v: { code: string; exerciseLabel: string }) => void;
   style?: React.CSSProperties;
   taskType: string;
 }) {

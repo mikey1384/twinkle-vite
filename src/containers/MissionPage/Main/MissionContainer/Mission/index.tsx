@@ -44,7 +44,7 @@ export default function Mission({
   onSetMissionState
 }: {
   style?: React.CSSProperties;
-  onSetMissionState: (arg0: any) => void;
+  onSetMissionState: (arg0: any) => any;
   mission: {
     fileUploadProgress: any;
     title: string;

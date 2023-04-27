@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
@@ -22,6 +22,13 @@ export default function StatusMessage({
   passMessage,
   failMessage,
   onBackToStart
+}: {
+  mission: any;
+  missionComplete: boolean;
+  status: string;
+  passMessage: string;
+  failMessage: string;
+  onBackToStart: () => any;
 }) {
   const {
     xpNumber: { color: xpNumberColor }

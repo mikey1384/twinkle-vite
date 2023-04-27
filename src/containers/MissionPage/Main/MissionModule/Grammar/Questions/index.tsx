@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import StatusMessage from './StatusMessage';
 import Loading from '~/components/Loading';
@@ -10,7 +10,13 @@ Questions.propTypes = {
   mission: PropTypes.object.isRequired
 };
 
-export default function Questions({ isRepeating, mission }) {
+export default function Questions({
+  isRepeating,
+  mission
+}: {
+  isRepeating: boolean;
+  mission: any;
+}) {
   const [submitDisabled, setSubmitDisabled] = useState(true);
   const { userId } = useKeyContext((v) => v.myState);
   const [repeatMissionComplete, setRepeatMissionComplete] = useState(false);
@@ -34,43 +40,46 @@ export default function Questions({ isRepeating, mission }) {
   const onSetMissionState = useMissionContext(
     (v) => v.actions.onSetMissionState
   );
-  const [questionIds, setQuestionIds] = useState([]);
-  const [questionObj, setQuestionObj] = useState({});
+  const [questionIds, setQuestionIds] = useState<number[]>([]);
+  const [questionObj, setQuestionObj] = useState<Record<string, any>>({});
   useEffect(() => {
     if (!mission.questions || mission.questions.length === 0) return;
-    const resultObj = mission.questions.reduce((prev, curr, index) => {
-      const choices = curr.choices.map((choice) => ({
-        label: choice,
-        checked: false
-      }));
-      return {
-        ...prev,
-        [index]: {
-          ...curr,
-          choices,
-          failMessage: renderFailMessage(),
-          selectedChoiceIndex: null
-        }
-      };
+    const resultObj = mission.questions.reduce(
+      (prev: any, curr: any, index: number) => {
+        const choices = curr.choices.map((choice: string) => ({
+          label: choice,
+          checked: false
+        }));
+        return {
+          ...prev,
+          [index]: {
+            ...curr,
+            choices,
+            failMessage: renderFailMessage(),
+            selectedChoiceIndex: null
+          }
+        };
 
-      function renderFailMessage() {
-        const answer = curr.choices[curr.answerIndex];
-        const answerInBold = answer
-          .split(' ')
-          .map((word) => `*${word}*`)
-          .join(' ');
-        return `Wrong. Correct sentence is "${curr.question.replace(
-          '_____',
-          answerInBold
-        )}"`;
-      }
-    }, {});
+        function renderFailMessage() {
+          const answer = curr.choices[curr.answerIndex];
+          const answerInBold = answer
+            .split(' ')
+            .map((word: string) => `*${word}*`)
+            .join(' ');
+          return `Wrong. Correct sentence is "${curr.question.replace(
+            '_____',
+            answerInBold
+          )}"`;
+        }
+      },
+      {}
+    );
     setQuestionObj(resultObj);
     setQuestionIds([...Array(mission.questions.length).keys()]);
   }, [mission.questions]);
 
-  const selectedAnswerIndex = useRef(null);
-  const statusRef = useRef(null);
+  const selectedAnswerIndex: React.MutableRefObject<any> = useRef(null);
+  const statusRef: React.MutableRefObject<any> = useRef(null);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [conditionPassStatus, setConditionPassStatus] = useState('');
   const objectiveMessage = useMemo(() => {
@@ -124,16 +133,23 @@ export default function Questions({ isRepeating, mission }) {
     </div>
   );
 
-  function handleSelectChoice({ selectedIndex, questionId }) {
+  function handleSelectChoice({
+    selectedIndex,
+    questionId
+  }: {
+    selectedIndex: number;
+    questionId: number;
+  }) {
     if (!statusRef.current) {
       setQuestionObj((questionObj) => ({
         ...questionObj,
         [questionId]: {
           ...questionObj[questionId],
-          choices: questionObj[questionId].choices.map((choice, index) =>
-            index === selectedIndex
-              ? { ...choice, checked: true }
-              : { ...choice, checked: false }
+          choices: questionObj[questionId].choices.map(
+            (choice: any, index: number) =>
+              index === selectedIndex
+                ? { ...choice, checked: true }
+                : { ...choice, checked: false }
           )
         },
         selectedChoiceIndex: selectedIndex
@@ -143,7 +159,7 @@ export default function Questions({ isRepeating, mission }) {
     }
   }
 
-  function handleCheckNavCondition(onNext) {
+  function handleCheckNavCondition(onNext: () => void) {
     if (statusRef.current === 'pass') {
       if (currentSlideIndex < questionIds.length - 1) {
         return onNext();
