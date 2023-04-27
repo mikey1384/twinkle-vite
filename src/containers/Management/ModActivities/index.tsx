@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import DeletedContent from './DeletedContent';
 import Loading from '~/components/Loading';
@@ -63,20 +63,24 @@ export default function ModActivities() {
             {noNewlyDeletedPostsLabel}
           </div>
         )}
-        {deletedPosts.map((post, index) => (
-          <DeletedContent
-            key={post.id}
-            onDeletePermanently={() =>
-              setDeletedPosts((deletedPosts) =>
-                deletedPosts.filter((deletedPost) => deletedPost.id !== post.id)
-              )
-            }
-            postId={post.id}
-            contentId={post.contentId}
-            contentType={post.type}
-            style={{ marginTop: index === 0 ? 0 : '1rem' }}
-          />
-        ))}
+        {deletedPosts.map(
+          (post: { id: number; contentId: number; type: string }, index) => (
+            <DeletedContent
+              key={post.id}
+              onDeletePermanently={() =>
+                setDeletedPosts((deletedPosts) =>
+                  deletedPosts.filter(
+                    (deletedPost: { id: number }) => deletedPost.id !== post.id
+                  )
+                )
+              }
+              postId={post.id}
+              contentId={post.contentId}
+              contentType={post.type}
+              style={{ marginTop: index === 0 ? 0 : '1rem' }}
+            />
+          )
+        )}
       </div>
       <div style={{ height: '10rem' }} />
     </div>
