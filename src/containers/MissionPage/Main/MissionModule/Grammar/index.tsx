@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Questions from './Questions';
 import StartScreen from './StartScreen';
@@ -9,7 +9,13 @@ Grammar.propTypes = {
   mission: PropTypes.object.isRequired
 };
 
-export default function Grammar({ isRepeating, mission }) {
+export default function Grammar({
+  isRepeating,
+  mission
+}: {
+  isRepeating: boolean;
+  mission: any;
+}) {
   const { userId } = useKeyContext((v) => v.myState);
   const loadMission = useAppContext((v) => v.requestHelpers.loadMission);
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
