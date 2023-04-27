@@ -1,5 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import AlertModal from '~/components/Modals/AlertModal';
@@ -21,12 +20,13 @@ const videoLabel = localize('video');
 const linkLabel = localize('link');
 const deviceIsMobile = isMobile(navigator);
 
-StartScreen.propTypes = {
-  navigateTo: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired
-};
-
-export default function StartScreen({ navigateTo, onHide }) {
+export default function StartScreen({
+  navigateTo,
+  onHide
+}: {
+  navigateTo: Function;
+  onHide: () => void;
+}) {
   const onSetSubjectAttachment = useInputContext(
     (v) => v.actions.onSetSubjectAttachment
   );
@@ -34,7 +34,7 @@ export default function StartScreen({ navigateTo, onHide }) {
     (v) => v.myState
   );
   const [alertModalShown, setAlertModalShown] = useState(false);
-  const FileInputRef = useRef(null);
+  const FileInputRef: React.MutableRefObject<any> = useRef(null);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
@@ -155,7 +155,7 @@ export default function StartScreen({ navigateTo, onHide }) {
     </ErrorBoundary>
   );
 
-  function handleUpload(event) {
+  function handleUpload(event: any) {
     const fileObj = event.target.files[0];
     if (fileObj.size / mb > maxSize) {
       return setAlertModalShown(true);
@@ -164,7 +164,7 @@ export default function StartScreen({ navigateTo, onHide }) {
     if (fileType === 'image') {
       const reader = new FileReader();
       const extension = fileObj.name.split('.').pop();
-      reader.onload = (upload) => {
+      reader.onload = (upload: any) => {
         const payload = upload.target.result;
         if (extension === 'gif') {
           onSetSubjectAttachment({

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import Banner from '~/components/Banner';
@@ -21,7 +21,7 @@ import localize from '~/constants/localize';
 
 const hiThereLabel = localize('hiThere');
 
-const categoryObj = {
+const categoryObj: Record<string, any> = {
   uploads: {
     filter: 'subject',
     orderBy: 'lastInteraction'
@@ -79,7 +79,7 @@ export default function Stories() {
   const [loadingFeeds, setLoadingFeeds] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingNewFeeds, setLoadingNewFeeds] = useState(false);
-  const categoryRef = useRef(null);
+  const categoryRef: React.MutableRefObject<any> = useRef(null);
   const ContainerRef = useRef(null);
   const hideWatchedRef = useRef(null);
   const subFilterRef = useRef(null);
@@ -216,7 +216,7 @@ export default function Stories() {
                   )}
                 </Banner>
               )}
-              {feeds.map((feed, index) => (
+              {feeds.map((feed: any, index: number) => (
                 <ContentPanel
                   key={category + subFilter + feed.contentId + feed.contentType}
                   style={{
@@ -227,7 +227,6 @@ export default function Stories() {
                   contentType={feed.contentType}
                   commentsLoadLimit={5}
                   numPreviewComments={1}
-                  userId={userId}
                 />
               ))}
               {loadMoreButton && (
@@ -255,7 +254,7 @@ export default function Stories() {
     </ErrorBoundary>
   );
 
-  async function handleApplyFilter(filter) {
+  async function handleApplyFilter(filter: string) {
     if (filter === subFilterRef.current) return;
     setLoadingFeeds(true);
     categoryRef.current = 'uploads';
@@ -298,7 +297,7 @@ export default function Stories() {
     setLoadingMore(false);
   }
 
-  async function handleChangeCategory(newCategory) {
+  async function handleChangeCategory(newCategory: string) {
     categoryRef.current = newCategory;
     onResetNumNewPosts();
     setLoadingFeeds(true);

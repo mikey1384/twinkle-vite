@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import StartScreen from './StartScreen';
@@ -14,7 +13,7 @@ const confirmLabel = localize('confirm');
 const selectVideoLabel = localize('selectVideo');
 const selectWebpageLabel = localize('selectWebpage');
 
-const sectionObj = {
+const sectionObj: Record<string, any> = {
   start: {
     title: attachContentToSubjectLabel
   },
@@ -26,17 +25,18 @@ const sectionObj = {
   }
 };
 
-AttachContentModal.propTypes = {
-  onConfirm: PropTypes.func.isRequired,
-  onHide: PropTypes.func.isRequired
-};
-
-export default function AttachContentModal({ onConfirm, onHide }) {
+export default function AttachContentModal({
+  onConfirm,
+  onHide
+}: {
+  onConfirm: Function;
+  onHide: () => void;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const [section, setSection] = useState('start');
-  const [selected, setSelected] = useState();
+  const [selected, setSelected] = useState<Record<string, any>>();
   return (
     <Modal
       modalOverModal
@@ -55,7 +55,7 @@ export default function AttachContentModal({ onConfirm, onHide }) {
         {section === 'selectVideo' && (
           <SelectAttachmentScreen
             contentType="video"
-            onSelect={(video) =>
+            onSelect={(video: { id: number; title: string }) =>
               setSelected({
                 contentType: 'video',
                 id: video.id,
@@ -68,7 +68,7 @@ export default function AttachContentModal({ onConfirm, onHide }) {
         {section === 'selectLink' && (
           <SelectAttachmentScreen
             contentType="url"
-            onSelect={(link) =>
+            onSelect={(link: { id: number; title: string }) =>
               setSelected({
                 contentType: 'url',
                 id: link.id,

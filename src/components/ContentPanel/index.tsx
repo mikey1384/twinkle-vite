@@ -26,7 +26,7 @@ interface Props {
   contentType: string;
   numPreviewComments?: number;
   style?: React.CSSProperties;
-  theme: string;
+  theme?: string;
   zIndex?: number;
 }
 export default function ContentPanel({
@@ -38,7 +38,7 @@ export default function ContentPanel({
   contentType,
   numPreviewComments = 0,
   style = {},
-  theme,
+  theme = 'logoBlue',
   zIndex = 1
 }: Props) {
   const [ComponentRef, inView] = useInView({

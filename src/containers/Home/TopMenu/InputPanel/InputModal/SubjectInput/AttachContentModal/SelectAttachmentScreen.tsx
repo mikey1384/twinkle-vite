@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearch } from '~/helpers/hooks';
 import PropTypes from 'prop-types';
 import SearchInput from '~/components/Texts/SearchInput';
@@ -11,16 +11,14 @@ import localize from '~/constants/localize';
 
 const searchLabel = localize('search');
 
-SelectAttachmentScreen.propTypes = {
-  onSelect: PropTypes.func.isRequired,
-  onDeselect: PropTypes.func.isRequired,
-  contentType: PropTypes.string.isRequired
-};
-
 export default function SelectAttachmentScreen({
   onSelect,
   onDeselect,
   contentType
+}: {
+  onSelect: Function;
+  onDeselect: Function;
+  contentType: string;
 }) {
   const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
@@ -29,11 +27,11 @@ export default function SelectAttachmentScreen({
   const [loadMoreButton, setLoadMoreButton] = useState(false);
   const [searchedUploads, setSearchedUploads] = useState([]);
   const [searchLoadMoreButton, setSearchLoadMoreButton] = useState(false);
-  const [selectedUpload, setSelectedUpload] = useState([]);
+  const [selectedUpload, setSelectedUpload] = useState<any[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const contentObjs = useRef({});
+  const contentObjs: React.MutableRefObject<any> = useRef({});
   const { handleSearch, searching } = useSearch({
     onSearch,
     onClear: () => setSearchedUploads([]),
@@ -50,7 +48,7 @@ export default function SelectAttachmentScreen({
       for (let result of results) {
         onInitContent({ contentId: result.id, contentType, ...result });
       }
-      setAllUploads(results.map((result) => result.id));
+      setAllUploads(results.map((result: { id: number }) => result.id));
       contentObjs.current = objectify(results);
       setLoadMoreButton(loadMoreButton);
       setLoaded(true);
@@ -111,7 +109,9 @@ export default function SelectAttachmentScreen({
         ...objectify(results)
       };
       setSearchedUploads((searchedUploads) =>
-        searchedUploads.concat(results.map((result) => result.id))
+        searchedUploads.concat(
+          results.map((result: { id: number }) => result.id)
+        )
       );
       setLoadingMore(false);
       setSearchLoadMoreButton(loadMoreButton);
@@ -129,14 +129,14 @@ export default function SelectAttachmentScreen({
         ...objectify(results)
       };
       setAllUploads((allUploads) =>
-        allUploads.concat(results.map((result) => result.id))
+        allUploads.concat(results.map((result: { id: number }) => result.id))
       );
       setLoadingMore(false);
       setLoadMoreButton(loadMoreButton);
     }
   }
 
-  async function onSearch(text) {
+  async function onSearch(text: string) {
     const { results: searchedUploads, loadMoreButton } = await searchContent({
       filter: contentType,
       searchText: text
@@ -145,7 +145,9 @@ export default function SelectAttachmentScreen({
       ...contentObjs.current,
       ...objectify(searchedUploads)
     };
-    setSearchedUploads(searchedUploads.map((upload) => upload.id));
+    setSearchedUploads(
+      searchedUploads.map((upload: { id: number }) => upload.id)
+    );
     setSearchLoadMoreButton(loadMoreButton);
   }
 }

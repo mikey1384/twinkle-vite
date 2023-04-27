@@ -1,15 +1,11 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ContentInput from './ContentInput';
 import SubjectInput from './SubjectInput';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 
-InputModal.propTypes = {
-  onHide: PropTypes.func.isRequired
-};
-
-export default function InputModal({ onHide }) {
+export default function InputModal({ onHide }: { onHide: () => void }) {
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel/InputModal">
       <Modal closeWhenClickedOutside={false} onHide={onHide}>
