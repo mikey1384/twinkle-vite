@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import ItemPanel from './ItemPanel';
 import Icon from '~/components/Icon';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
@@ -63,11 +63,11 @@ const youCanNowUploadLabel =
         maxSizes[maxSizes.length - 1]
       )} in size`;
 
-FileSizeItem.propTypes = {
-  style: PropTypes.object
-};
-
-export default function FileSizeItem({ style }) {
+export default function FileSizeItem({
+  style
+}: {
+  style?: React.CSSProperties
+}) {
   const {
     fileUploadLvl = 0,
     karmaPoints,

@@ -1,16 +1,15 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import ChangePasswordModal from './ChangePasswordModal';
 
 const changeMyPasswordLabel = localize('changeMyPassword');
 
-ChangePassword.propTypes = {
-  style: PropTypes.object
-};
-
-export default function ChangePassword({ style }) {
+export default function ChangePassword({
+  style
+}: {
+  style?: React.CSSProperties;
+}) {
   const [changePasswordModalShown, setChangePasswordModalShown] =
     useState(false);
   return (

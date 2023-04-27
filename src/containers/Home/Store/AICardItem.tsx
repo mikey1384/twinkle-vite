@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ItemPanel from './ItemPanel';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
@@ -18,6 +18,11 @@ export default function AICardItem({
   karmaPoints,
   style,
   userId
+}: {
+  canGenerateAICard: boolean;
+  karmaPoints: number;
+  style?: React.CSSProperties;
+  userId: number;
 }) {
   const [unlocking, setUnlocking] = useState(false);
   const unlockAICardGeneration = useAppContext(

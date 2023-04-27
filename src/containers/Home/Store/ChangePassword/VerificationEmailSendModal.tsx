@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import CheckYourEmail from '~/components/CheckYourEmail';
@@ -7,11 +6,11 @@ import SelectEmail from '~/components/SelectEmail';
 import AskForHelp from '~/components/AskForHelp';
 import { useKeyContext } from '~/contexts';
 
-VerificationEmailSendModal.propTypes = {
-  onHide: PropTypes.func.isRequired
-};
-
-export default function VerificationEmailSendModal({ onHide }) {
+export default function VerificationEmailSendModal({
+  onHide
+}: {
+  onHide: () => void;
+}) {
   const { email, verifiedEmail, userId } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
