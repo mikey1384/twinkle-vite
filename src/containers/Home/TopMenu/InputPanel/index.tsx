@@ -1,16 +1,15 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import InputModal from './InputModal';
 import { useHomeContext } from '~/contexts';
 
-InputPanel.propTypes = {
-  onInputModalButtonClick: PropTypes.func.isRequired
-};
-
-export default function InputPanel({ onInputModalButtonClick }) {
+export default function InputPanel({
+  onInputModalButtonClick
+}: {
+  onInputModalButtonClick: (v?: string) => void;
+}) {
   const inputModalShown = useHomeContext((v) => v.state.inputModalShown);
   const onSetInputModalShown = useHomeContext(
     (v) => v.actions.onSetInputModalShown

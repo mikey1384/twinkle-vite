@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InputPanel from './InputPanel';
 import {
@@ -16,18 +15,16 @@ import TopButton from './TopButton';
 
 const grammarGameLabel = localize('grammarGame');
 
-TopMenu.propTypes = {
-  onInputModalButtonClick: PropTypes.func.isRequired,
-  onPlayAIStories: PropTypes.func.isRequired,
-  onPlayGrammarGame: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
-
 export default function TopMenu({
   onInputModalButtonClick,
   onPlayAIStories,
   onPlayGrammarGame,
   style
+}: {
+  onInputModalButtonClick: (v?: string) => void;
+  onPlayAIStories: () => void;
+  onPlayGrammarGame: () => void;
+  style?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
   const chatLoadedRef = useRef(false);
@@ -145,7 +142,7 @@ export default function TopMenu({
     </ErrorBoundary>
   ) : null;
 
-  function handleWordleButtonClick() {
+  function handleWordleButtonClick(): any {
     setLoadingWordle(true);
     if (!chatLoadedRef.current) {
       return setTimeout(() => handleWordleButtonClick(), 500);
@@ -159,7 +156,7 @@ export default function TopMenu({
     }, 10);
   }
 
-  function handleChessButtonClick() {
+  function handleChessButtonClick(): any {
     setLoadingChess(true);
     if (!chatLoadedRef.current) {
       return setTimeout(() => handleChessButtonClick(), 500);
