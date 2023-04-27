@@ -1,14 +1,6 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-
-Table.propTypes = {
-  color: PropTypes.string,
-  headerFontSize: PropTypes.string,
-  columns: PropTypes.string.isRequired,
-  children: PropTypes.node,
-  style: PropTypes.object
-};
 
 export default function Table({
   color = 'logoBlue',
@@ -16,6 +8,12 @@ export default function Table({
   columns,
   children,
   style
+}: {
+  color?: string;
+  headerFontSize?: string;
+  columns: string;
+  children: React.ReactNode;
+  style?: React.CSSProperties;
 }) {
   return (
     <table

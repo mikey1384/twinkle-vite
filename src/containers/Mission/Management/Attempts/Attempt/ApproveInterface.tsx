@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -10,20 +9,18 @@ import {
   finalizeEmoji
 } from '~/helpers/stringHelpers';
 
-ApproveInterface.propTypes = {
-  activeTab: PropTypes.string.isRequired,
-  attempt: PropTypes.object.isRequired,
-  managementObj: PropTypes.object.isRequired,
-  onSetManagementObj: PropTypes.func.isRequired,
-  onSetAttemptObj: PropTypes.func.isRequired
-};
-
 export default function ApproveInterface({
   activeTab,
   attempt,
   managementObj,
   onSetManagementObj,
   onSetAttemptObj
+}: {
+  activeTab: string;
+  attempt: { id: number };
+  managementObj: { [key: string]: any };
+  onSetManagementObj: (arg0: any) => void;
+  onSetAttemptObj: (arg0: any) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
   const uploadMissionFeedback = useAppContext(
@@ -104,7 +101,7 @@ export default function ApproveInterface({
           <Textarea
             minRows={3}
             value={feedback}
-            onChange={(event) => {
+            onChange={(event: any) => {
               handleSetFeedback(addEmoji(event.target.value));
             }}
             placeholder={`Explain why you are approving/rejecting this mission attempt...`}
@@ -145,7 +142,7 @@ export default function ApproveInterface({
     if (success) {
       onSetManagementObj({
         [activeTab]: managementObj[activeTab].filter(
-          (attemptId) => attemptId !== attempt.id
+          (attemptId: number) => attemptId !== attempt.id
         )
       });
       onSetAttemptObj({
@@ -159,12 +156,12 @@ export default function ApproveInterface({
     setConfirming(false);
   }
 
-  function handleSetFeedback(text) {
+  function handleSetFeedback(text: string) {
     setFeedback(text);
     feedbackRef.current = text;
   }
 
-  function handleSetStatus(status) {
+  function handleSetStatus(status: string) {
     setStatus(status);
     statusRef.current = status;
   }

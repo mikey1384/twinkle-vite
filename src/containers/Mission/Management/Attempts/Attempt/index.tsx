@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import FileViewer from '~/components/FileViewer';
 import UsernameText from '~/components/Texts/UsernameText';
 import ApproveInterface from './ApproveInterface';
@@ -9,15 +9,6 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { useKeyContext } from '~/contexts';
 import { stringIsEmpty, processedStringWithURL } from '~/helpers/stringHelpers';
 
-Attempt.propTypes = {
-  activeTab: PropTypes.string.isRequired,
-  attempt: PropTypes.object.isRequired,
-  managementObj: PropTypes.object.isRequired,
-  onSetManagementObj: PropTypes.func.isRequired,
-  onSetAttemptObj: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
-
 export default function Attempt({
   activeTab,
   attempt,
@@ -25,6 +16,25 @@ export default function Attempt({
   onSetManagementObj,
   onSetAttemptObj,
   style
+}: {
+  activeTab: string;
+  attempt: {
+    id: number;
+    uploader: { id: number; username: string };
+    timeStamp: number;
+    answers: any[];
+    content: string;
+    filePath: string;
+    thumbUrl: string;
+    status: string;
+    reviewer: { id: number; username: string };
+    reviewTimeStamp: number;
+    feedback: string;
+  };
+  managementObj: { [key: string]: any };
+  onSetManagementObj: (arg0: any) => void;
+  onSetAttemptObj: (arg0: any) => void;
+  style?: React.CSSProperties;
 }) {
   const {
     link: { color: linkColor }
