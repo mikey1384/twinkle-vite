@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Main from './Main';
 import Notification from '~/components/Notification';
 import ModActivities from './ModActivities';
@@ -6,11 +6,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { Route, Routes, useLocation } from 'react-router-dom';
 
-ManagementRoutes.propTypes = {
-  className: PropTypes.string
-};
-
-export default function ManagementRoutes({ className }) {
+export default function ManagementRoutes({ className }: { className: string }) {
   const location = useLocation();
   return (
     <div className={className}>
