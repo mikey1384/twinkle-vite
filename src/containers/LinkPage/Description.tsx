@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import LongText from '~/components/Texts/LongText';
@@ -28,20 +27,6 @@ const enterDescriptionLabel = localize('enterDescription');
 const enterTitleLabel = localize('enterTitle');
 const enterUrlLabel = localize('enterUrl');
 
-Description.propTypes = {
-  description: PropTypes.string,
-  linkId: PropTypes.number.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEditDone: PropTypes.func.isRequired,
-  timeStamp: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-    .isRequired,
-  title: PropTypes.string.isRequired,
-  userCanEditThis: PropTypes.bool,
-  uploader: PropTypes.object,
-  userIsUploader: PropTypes.bool,
-  url: PropTypes.string.isRequired
-};
-
 export default function Description({
   description,
   onDelete,
@@ -53,8 +38,19 @@ export default function Description({
   url,
   userCanEditThis,
   userIsUploader
+}: {
+  description?: string;
+  onDelete: Function;
+  onEditDone: Function;
+  linkId: number;
+  timeStamp: number;
+  title: string;
+  uploader: { id: number; username: string };
+  url: string;
+  userCanEditThis: boolean;
+  userIsUploader: boolean;
 }) {
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
   const [urlHasError, setUrlHasError] = useState(false);
   const { canDelete, canEdit } = useKeyContext((v) => v.myState);
   const {
@@ -275,7 +271,7 @@ export default function Description({
                 placeholder={`${enterTitleLabel}...`}
                 value={editedTitle}
                 onChange={handleTitleChange}
-                onKeyUp={(event) => {
+                onKeyUp={(event: any) => {
                   if (event.key === ' ') {
                     handleTitleChange(addEmoji(event.target.value));
                   }
@@ -324,8 +320,10 @@ export default function Description({
               minRows={4}
               placeholder={`${enterDescriptionLabel}...`}
               value={editedDescription}
-              onChange={(event) => handleDescriptionChange(event.target.value)}
-              onKeyUp={(event) => {
+              onChange={(event: any) =>
+                handleDescriptionChange(event.target.value)
+              }
+              onKeyUp={(event: any) => {
                 if (event.key === ' ') {
                   handleDescriptionChange(addEmoji(event.target.value));
                 }
@@ -358,23 +356,23 @@ export default function Description({
             </div>
           </div>
         ) : (
-          <LongText lines={20}>{description || ''}</LongText>
+          <LongText maxLines={20}>{description || ''}</LongText>
         )}
       </div>
     </div>
   );
 
-  function handleTitleChange(text) {
+  function handleTitleChange(text: string) {
     setEditedTitle(text);
     editedTitleRef.current = text;
   }
 
-  function handleDescriptionChange(text) {
+  function handleDescriptionChange(text: string) {
     setEditedDescription(text);
     editedDescriptionRef.current = text;
   }
 
-  function handleUrlChange(text) {
+  function handleUrlChange(text: string) {
     setEditedUrl(text);
     editedUrlRef.current = text;
   }

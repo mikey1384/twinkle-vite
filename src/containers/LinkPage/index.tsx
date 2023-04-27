@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Embedly from '~/components/Embedly';
 import Comments from '~/components/Comments';
@@ -216,13 +216,17 @@ export default function LinkPage() {
   const isRecommendedByUser = useMemo(() => {
     return (
       recommendations.filter(
-        (recommendation) => recommendation.userId === userId
+        (recommendation: { userId: number }) => recommendation.userId === userId
       ).length > 0
     );
   }, [recommendations, userId]);
 
   const isRewardedByUser = useMemo(() => {
-    return rewards.filter((reward) => reward.rewarderId === userId).length > 0;
+    return (
+      rewards.filter(
+        (reward: { rewarderId: number }) => reward.rewarderId === userId
+      ).length > 0
+    );
   }, [rewards, userId]);
 
   const userIsUploader = useMemo(
@@ -309,7 +313,6 @@ export default function LinkPage() {
           key={'description' + linkId}
           uploader={uploader}
           timeStamp={timeStamp}
-          myId={userId}
           title={title}
           url={content}
           userCanEditThis={userCanEditThis}
@@ -495,7 +498,7 @@ export default function LinkPage() {
         onLoadMoreSubjects={onLoadMoreSubjects}
         onLoadSubjectComments={onLoadSubjectComments}
         onSubjectEditDone={onEditSubject}
-        onSubjectDelete={(subjectId) =>
+        onSubjectDelete={(subjectId: number) =>
           onDeleteContent({ contentType: 'subject', contentId: subjectId })
         }
         onSetRewardLevel={onSetRewardLevel}
@@ -559,7 +562,6 @@ export default function LinkPage() {
         <UserListModal
           key={'userlist' + linkId}
           users={likes}
-          userId={userId}
           title="People who liked this"
           onHide={() => setLikesModalShown(false)}
         />
@@ -576,7 +578,7 @@ export default function LinkPage() {
     onDeleteContent({ contentId: linkId, contentType: 'url' });
   }
 
-  function handleDeleteComment(data) {
+  function handleDeleteComment(data: any) {
     onDeleteComment(data);
     onUpdateNumLinkComments({
       id: linkId,
@@ -584,7 +586,7 @@ export default function LinkPage() {
     });
   }
 
-  async function handleEditLinkPage(params) {
+  async function handleEditLinkPage(params: any) {
     const data = await editContent(params);
     const { contentId, editedTitle: title, editedUrl: content } = params;
     onEditContent({
@@ -603,7 +605,13 @@ export default function LinkPage() {
     });
   }
 
-  function handleLikeLink({ likes, isUnlike }) {
+  function handleLikeLink({
+    likes,
+    isUnlike
+  }: {
+    likes: any[];
+    isUnlike: boolean;
+  }) {
     onLikeContent({ likes, contentType: 'url', contentId: linkId });
     onLikeLink({ likes, id: linkId });
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
@@ -619,11 +627,11 @@ export default function LinkPage() {
     }
   }
 
-  function handleSetByUserStatus(byUser) {
+  function handleSetByUserStatus(byUser: boolean) {
     onSetByUserStatus({ contentId: linkId, contentType: 'url', byUser });
   }
 
-  function handleUploadComment(params) {
+  function handleUploadComment(params: any) {
     onUploadComment(params);
     onUpdateNumLinkComments({
       id: linkId,
@@ -631,7 +639,7 @@ export default function LinkPage() {
     });
   }
 
-  function handleUploadReply(data) {
+  function handleUploadReply(data: any) {
     onUploadReply(data);
     onUpdateNumLinkComments({
       id: linkId,
