@@ -1,5 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -37,11 +36,7 @@ const postContentLabel = localize('postContent');
 const copyAndPasteUrlLabel = localize('copyAndPasteUrl');
 const youtubeVideoLabel = localize('youtubeVideo');
 
-ContentInput.propTypes = {
-  onModalHide: PropTypes.func.isRequired
-};
-
-function ContentInput({ onModalHide }) {
+function ContentInput({ onModalHide }: { onModalHide: Function }) {
   const checkContentUrl = useAppContext(
     (v) => v.requestHelpers.checkContentUrl
   );
@@ -118,9 +113,9 @@ function ContentInput({ onModalHide }) {
   const [submitting, setSubmitting] = useState(false);
   const urlHelperRef = useRef(prevUrlHelper);
   const [urlHelper, setUrlHelper] = useState(prevUrlHelper);
-  const UrlFieldRef = useRef(null);
-  const checkContentExistsTimerRef = useRef(null);
-  const showHelperMessageTimerRef = useRef(null);
+  const UrlFieldRef: React.RefObject<any> = useRef(null);
+  const checkContentExistsTimerRef: React.MutableRefObject<any> = useRef(null);
+  const showHelperMessageTimerRef: React.MutableRefObject<any> = useRef(null);
 
   const loadingYTDetails = useMemo(() => {
     return contentIsVideo && !youTubeVideoDetails && !urlError;
@@ -274,7 +269,7 @@ function ContentInput({ onModalHide }) {
                   value={title}
                   onChange={handleSetTitle}
                   placeholder={`${enterTitleHereLabel}...`}
-                  onKeyUp={(event) => {
+                  onKeyUp={(event: any) => {
                     if (event.key === ' ') {
                       handleSetTitle(addEmoji(event.target.value));
                     }
@@ -296,8 +291,10 @@ function ContentInput({ onModalHide }) {
                   value={description}
                   minRows={4}
                   placeholder={enterDescriptionOptionalLabel}
-                  onChange={(event) => handleSetDescription(event.target.value)}
-                  onKeyUp={(event) => {
+                  onChange={(event: any) =>
+                    handleSetDescription(event.target.value)
+                  }
+                  onKeyUp={(event: any) => {
                     if (event.key === ' ') {
                       handleSetDescription(addEmoji(event.target.value));
                     }
@@ -345,7 +342,6 @@ function ContentInput({ onModalHide }) {
           {descriptionFieldShown && (
             <div className="button-container">
               <Button
-                type="submit"
                 filled
                 color={successColor}
                 loading={submitting}
@@ -362,7 +358,7 @@ function ContentInput({ onModalHide }) {
     </ErrorBoundary>
   );
 
-  async function onSubmit(event) {
+  async function onSubmit(event: any) {
     if (banned?.posting) {
       return;
     }
@@ -400,7 +396,8 @@ function ContentInput({ onModalHide }) {
         handleSetContentUrlHelper('');
         handleSetContentDescriptionFieldShown(false);
         onLoadNewFeeds([data]);
-        document.getElementById('App').scrollTop = 0;
+        const appElement = document.getElementById('App');
+        if (appElement) appElement.scrollTop = 0;
         BodyRef.scrollTop = 0;
       }
       setSubmitting(false);
@@ -411,7 +408,7 @@ function ContentInput({ onModalHide }) {
     }
   }
 
-  function handleUrlFieldChange(text) {
+  function handleUrlFieldChange(text: string) {
     handleSetYouTubeVideoDetails(null);
     const urlIsValid = isValidUrl(text);
     handleSetContentAlreadyPosted(false);
@@ -443,7 +440,7 @@ function ContentInput({ onModalHide }) {
     }, 300);
   }
 
-  async function handleCheckUrl(url) {
+  async function handleCheckUrl(url: string) {
     const isVideo = isValidYoutubeUrl(url);
     const {
       exists,
@@ -462,52 +459,52 @@ function ContentInput({ onModalHide }) {
     return handleSetContentAlreadyPosted(exists ? content : false);
   }
 
-  function handleSetContentAlreadyPosted(content) {
+  function handleSetContentAlreadyPosted(content: any) {
     setAlreadyPosted(content);
     alreadyPostedRef.current = content;
   }
 
-  function handleSetContentIsVideo(isVideo) {
+  function handleSetContentIsVideo(isVideo: boolean) {
     setContentIsVideo(isVideo);
     contentIsVideoRef.current = isVideo;
   }
 
-  function handleSetContentTitleFieldShown(shown) {
+  function handleSetContentTitleFieldShown(shown: boolean) {
     setTitleFieldShown(shown);
     titleFieldShownRef.current = shown;
   }
 
-  function handleSetContentDescriptionFieldShown(shown) {
+  function handleSetContentDescriptionFieldShown(shown: boolean) {
     setDescriptionFieldShown(shown);
     descriptionFieldShownRef.current = shown;
   }
 
-  function handleSetContentUrlError(error) {
+  function handleSetContentUrlError(error: any) {
     setUrlError(error);
     urlErrorRef.current = error;
   }
 
-  function handleSetContentUrlHelper(helper) {
+  function handleSetContentUrlHelper(helper: string) {
     setUrlHelper(helper);
     urlHelperRef.current = helper;
   }
 
-  function handleSetYouTubeVideoDetails(details) {
+  function handleSetYouTubeVideoDetails(details: any) {
     setYouTubeVideoDetails(details);
     youTubeVideoDetailsRef.current = details;
   }
 
-  function handleSetTitle(text) {
+  function handleSetTitle(text: string) {
     setTitle(text);
     titleRef.current = text;
   }
 
-  function handleSetDescription(text) {
+  function handleSetDescription(text: string) {
     setDescription(text);
     descriptionRef.current = text;
   }
 
-  function handleSetUrl(text) {
+  function handleSetUrl(text: string) {
     setUrl(text);
     urlRef.current = text;
   }

@@ -11,7 +11,7 @@ export default function Subject({
   style
 }: {
   rewardLevel: number;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   const rewardLevelExpectation = useMemo(() => {
     switch (rewardLevel) {

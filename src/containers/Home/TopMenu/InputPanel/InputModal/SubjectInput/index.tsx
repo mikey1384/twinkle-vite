@@ -1,5 +1,11 @@
-import { useContext, memo, useMemo, useRef, useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, {
+  useContext,
+  memo,
+  useMemo,
+  useRef,
+  useState,
+  useEffect
+} from 'react';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Textarea from '~/components/Texts/Textarea';
@@ -42,11 +48,7 @@ const postSubjectLabel = localize('postSubject');
 const postSubjectPlaceholder = localize('postSubjectPlaceholder');
 const secretMessageLabel = localize('secretMessage');
 
-SubjectInput.propTypes = {
-  onModalHide: PropTypes.func.isRequired
-};
-
-function SubjectInput({ onModalHide }) {
+function SubjectInput({ onModalHide }: { onModalHide: Function }) {
   const inputModalType = useHomeContext((v) => v.state.inputModalType);
   const { onFileUpload } = useContext(LocalContext);
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
@@ -201,7 +203,7 @@ function SubjectInput({ onModalHide }) {
                 placeholder={postSubjectPlaceholder}
                 value={title}
                 onChange={handleInputChange}
-                onKeyUp={(event) => {
+                onKeyUp={(event: any) => {
                   handleSetTitle(addEmoji(event.target.value));
                 }}
                 style={titleExceedsCharLimit?.style}
@@ -274,10 +276,10 @@ function SubjectInput({ onModalHide }) {
                 value={description}
                 minRows={4}
                 placeholder={enterDescriptionOptionalLabel}
-                onChange={(event) =>
+                onChange={(event: any) =>
                   handleSetDescription(addEmoji(event.target.value))
                 }
-                onKeyUp={(event) => {
+                onKeyUp={(event: any) => {
                   if (event.key === ' ') {
                     handleSetDescription(addEmoji(event.target.value));
                   }
@@ -353,7 +355,6 @@ function SubjectInput({ onModalHide }) {
                 <Button
                   filled
                   color={successColor}
-                  type="submit"
                   loading={submittingSubject}
                   disabled={buttonDisabled}
                   onClick={handleSubmit}
@@ -386,7 +387,7 @@ function SubjectInput({ onModalHide }) {
       {attachContentModalShown && (
         <AttachContentModal
           onHide={() => setAttachContentModalShown(false)}
-          onConfirm={(content) => {
+          onConfirm={(content: any) => {
             onSetSubjectAttachment(content);
             setAttachContentModalShown(false);
           }}
@@ -404,6 +405,15 @@ function SubjectInput({ onModalHide }) {
     secretAnswer,
     secretAttachment,
     title
+  }: {
+    attachment: any;
+    byUser: boolean;
+    description: string;
+    hasSecretAnswer: boolean;
+    rewardLevel: number;
+    secretAnswer: string;
+    secretAttachment: any;
+    title: string;
   }) {
     if (banned?.posting) {
       return;
@@ -422,7 +432,7 @@ function SubjectInput({ onModalHide }) {
     });
   }
 
-  function handleInputChange(text) {
+  function handleInputChange(text: string) {
     handleSetTitle(text);
     handleSetDescriptionFieldShown(!!text.length);
     if (!text.length) {
@@ -430,7 +440,7 @@ function SubjectInput({ onModalHide }) {
     }
   }
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: any) {
     if (banned?.posting) {
       return;
     }
@@ -460,43 +470,43 @@ function SubjectInput({ onModalHide }) {
         rewardLevel,
         secretAnswer,
         secretAttachment,
-        title,
-        thumbnail
+        title
       });
       handleSetIsMadeByUser(false);
     } else {
       handleUploadSubject();
     }
-    document.getElementById('App').scrollTop = 0;
+    const appElement = document.getElementById('App');
+    if (appElement) appElement.scrollTop = 0;
     BodyRef.scrollTop = 0;
   }
 
-  function handleSetTitle(text) {
+  function handleSetTitle(text: string) {
     setTitle(text);
     titleRef.current = text;
   }
 
-  function handleSetDescription(text) {
+  function handleSetDescription(text: string) {
     setDescription(text);
     descriptionRef.current = text;
   }
 
-  function handleSetDescriptionFieldShown(shown) {
+  function handleSetDescriptionFieldShown(shown: boolean) {
     setDescriptionFieldShown(shown);
     descriptionFieldShownRef.current = shown;
   }
 
-  function handleSetIsMadeByUser(is) {
+  function handleSetIsMadeByUser(is: boolean) {
     setIsMadeByUser(is);
     isMadeByUserRef.current = is;
   }
 
-  function handleSetHasSecretAnswer(has) {
+  function handleSetHasSecretAnswer(has: boolean) {
     setHasSecretAnswer(has);
     hasSecretAnswerRef.current = has;
   }
 
-  function handleSetSecretAnswer(text) {
+  function handleSetSecretAnswer(text: string) {
     setSecretAnswer(text);
     secretAnswerRef.current = text;
   }

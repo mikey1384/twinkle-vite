@@ -10,7 +10,7 @@ export default function Video({
   style
 }: {
   rewardLevel: number;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   const forEveryStarYouAddLabel = localize('forEveryStarYouAdd');
   const rewardLevelDescription = useMemo(() => {

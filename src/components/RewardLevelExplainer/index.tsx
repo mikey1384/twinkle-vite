@@ -8,7 +8,7 @@ export default function RewardLevelExplainer({
   type
 }: {
   rewardLevel: number;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
   type: string;
 }) {
   if (type === 'video') {

@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { PropTypes } from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
@@ -19,7 +18,7 @@ const recommendedLabel = localize('recommended');
 const recommendedPostsLabel = localize('recommendedPosts');
 const xpVideosLabel = localize('xpVideos');
 const hideWatchedLabel = localize('hideWatched');
-const categoryObj = {
+const categoryObj: Record<string, any> = {
   uploads: {
     label: postsLabel,
     desc: newToOldLabel,
@@ -33,15 +32,6 @@ const categoryObj = {
   }
 };
 
-HomeFilter.propTypes = {
-  applyFilter: PropTypes.func.isRequired,
-  category: PropTypes.string.isRequired,
-  changeCategory: PropTypes.func.isRequired,
-  displayOrder: PropTypes.string.isRequired,
-  setDisplayOrder: PropTypes.func.isRequired,
-  selectedFilter: PropTypes.string.isRequired
-};
-
 export default function HomeFilter({
   applyFilter,
   category,
@@ -49,6 +39,13 @@ export default function HomeFilter({
   displayOrder,
   selectedFilter,
   setDisplayOrder
+}: {
+  applyFilter: Function;
+  category: string;
+  changeCategory: Function;
+  displayOrder: string;
+  setDisplayOrder: Function;
+  selectedFilter: string;
 }) {
   const onToggleHideWatched = useAppContext(
     (v) => v.user.actions.onToggleHideWatched
@@ -57,7 +54,7 @@ export default function HomeFilter({
     (v) => v.requestHelpers.toggleHideWatched
   );
   const { hideWatched, userId } = useKeyContext((v) => v.myState);
-  const [activeTab, setActiveTab] = useState();
+  const [activeTab, setActiveTab] = useState('');
 
   useEffect(() => {
     setActiveTab(category);
@@ -79,7 +76,8 @@ export default function HomeFilter({
             className={activeTab === elem ? 'active' : ''}
             style={{ width: elem !== 'recommended' ? '70%' : '100%' }}
             onClick={() => {
-              document.getElementById('App').scrollTop = 0;
+              const appElement = document.getElementById('App');
+              if (appElement) appElement.scrollTop = 0;
               changeCategory(elem);
             }}
           >
