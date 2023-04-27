@@ -22,9 +22,9 @@ interface Props {
   contentType: string;
   defaultDescription?: string;
   filePath?: string;
-  rewardLevel: number;
+  rewardLevel?: number;
   filled?: boolean;
-  onSetRewardLevel: (v: any) => void;
+  onSetRewardLevel?: (v: any) => void;
   onToggleByUser: (v: any) => void;
   uploader: any;
   skeuomorphic?: boolean;
@@ -169,7 +169,7 @@ export default function StarButton({
           contentId={contentId}
           rewardLevel={rewardLevel}
           onSubmit={(data) => {
-            onSetRewardLevel({ ...data, contentType, contentId });
+            onSetRewardLevel?.({ ...data, contentType, contentId });
             setRewardLevelModalShown(false);
           }}
           onHide={() => setRewardLevelModalShown(false)}

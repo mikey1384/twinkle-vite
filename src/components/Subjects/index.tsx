@@ -19,7 +19,7 @@ interface Props {
   onSetRewardLevel: any;
   onSubjectEditDone: any;
   onSubjectDelete: any;
-  rootRewardLevel: number;
+  rootRewardLevel?: number;
   commentActions: {
     editRewardComment: any;
     onDelete: any;

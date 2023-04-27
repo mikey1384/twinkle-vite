@@ -1,5 +1,4 @@
-import { memo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { memo, useState } from 'react';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
 import AlertModal from '~/components/Modals/AlertModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -16,12 +15,13 @@ import GrammarGameModal from './GrammarGameModal';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
 import { container, Left, Center, Right } from './Styles';
 
-Home.propTypes = {
-  onFileUpload: PropTypes.func,
-  section: PropTypes.string
-};
-
-function Home({ onFileUpload, section }) {
+function Home({
+  onFileUpload,
+  section
+}: {
+  onFileUpload: Function;
+  section: string;
+}) {
   const { userId } = useKeyContext((v) => v.myState);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const aiStoriesModalShown = useHomeContext(
@@ -51,7 +51,7 @@ function Home({ onFileUpload, section }) {
           <div className={Left}>
             <ProfileWidget
               onShowAlert={() => setAlertModalShown(true)}
-              onLoadImage={(upload) => {
+              onLoadImage={(upload: any) => {
                 setImageEditModalShown(true);
                 setImageUri(upload.target.result);
               }}
@@ -98,7 +98,7 @@ function Home({ onFileUpload, section }) {
     </ErrorBoundary>
   );
 
-  function handleImageEditDone({ filePath }) {
+  function handleImageEditDone({ filePath }: { filePath: string }) {
     onSetUserState({
       userId,
       newState: { profilePicUrl: `/profile/${filePath}` }
