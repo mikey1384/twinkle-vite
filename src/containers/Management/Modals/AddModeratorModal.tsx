@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import Loading from '~/components/Loading';
@@ -15,12 +14,13 @@ import localize from '~/constants/localize';
 
 const searchUsersLabel = localize('searchUsers');
 
-AddModeratorModal.propTypes = {
-  accountTypes: PropTypes.array,
-  onHide: PropTypes.func.isRequired
-};
-
-export default function AddModeratorModal({ accountTypes, onHide }) {
+export default function AddModeratorModal({
+  accountTypes,
+  onHide
+}: {
+  accountTypes: any[];
+  onHide: () => void;
+}) {
   const [loading, setLoading] = useState(false);
   const {
     done: { color: doneColor }
@@ -34,69 +34,76 @@ export default function AddModeratorModal({ accountTypes, onHide }) {
   const [dropdownShown, setDropdownShown] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const { handleSearch, searching } = useSearch({
     onSearch: handleUserSearch,
     onClear: () => setSearchedUsers([]),
     onSetSearchText: setSearchText
   });
   const TableContent = useMemo(() => {
-    return selectedUsers.map((user) => {
-      const dropdownMenu = accountTypes
-        .filter((accountType) => accountType.label !== user.userType)
-        .map((accountType) => ({
-          label: capitalize(accountType.label),
-          onClick: () =>
-            handleAccountTypeClick({
-              type: accountType.label,
-              userId: user.id
-            })
-        }));
-      if (user.userType) {
-        dropdownMenu.push({
-          label: (
-            <>
-              <Icon icon="trash-alt" />
-              <span style={{ marginLeft: '1rem' }}>Remove</span>
-            </>
-          ),
-          onClick: () =>
-            handleAccountTypeClick({
-              type: null,
-              userId: user.id
-            })
-        });
+    return selectedUsers.map(
+      (user: {
+        id: number;
+        username: string;
+        realName: string;
+        userType: string;
+      }) => {
+        const dropdownMenu: { label: any; onClick: () => void }[] = accountTypes
+          .filter((accountType) => accountType.label !== user.userType)
+          .map((accountType) => ({
+            label: capitalize(accountType.label),
+            onClick: () =>
+              handleAccountTypeClick({
+                type: accountType.label,
+                userId: user.id
+              })
+          }));
+        if (user.userType) {
+          dropdownMenu.push({
+            label: (
+              <>
+                <Icon icon="trash-alt" />
+                <span style={{ marginLeft: '1rem' }}>Remove</span>
+              </>
+            ),
+            onClick: () =>
+              handleAccountTypeClick({
+                type: '',
+                userId: user.id
+              })
+          });
+        }
+        return (
+          <tr key={user.id}>
+            <td>
+              <span style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
+                {user.username}
+              </span>
+              <small
+                style={{
+                  color: Color.lightGray(),
+                  marginLeft: '0.7rem',
+                  fontSize: '1rem'
+                }}
+              >
+                ({user.realName})
+              </small>
+            </td>
+            <td style={{ display: 'flex', alignItems: 'center' }}>
+              <DropdownButton
+                style={{ position: 'absolute' }}
+                icon="chevron-down"
+                skeuomorphic
+                text={user.userType || 'Not Selected'}
+                color="darkerGray"
+                onDropdownShown={setDropdownShown}
+                menuProps={dropdownMenu}
+              />
+            </td>
+          </tr>
+        );
       }
-      return (
-        <tr key={user.id}>
-          <td>
-            <span style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>
-              {user.username}
-            </span>
-            <small
-              style={{
-                color: Color.lightGray(),
-                marginLeft: '0.7rem',
-                fontSize: '1rem'
-              }}
-            >
-              ({user.realName})
-            </small>
-          </td>
-          <td style={{ display: 'flex', alignItems: 'center' }}>
-            <DropdownButton
-              style={{ position: 'absolute' }}
-              icon="chevron-down"
-              skeuomorphic
-              text={user.userType || 'Not Selected'}
-              color="darkerGray"
-              onDropdownShown={setDropdownShown}
-              menuProps={dropdownMenu}
-            />
-          </td>
-        </tr>
-      );
-    });
+    );
   }, [accountTypes, selectedUsers]);
 
   return (
@@ -158,7 +165,13 @@ export default function AddModeratorModal({ accountTypes, onHide }) {
     </Modal>
   );
 
-  function handleAccountTypeClick({ type, userId }) {
+  function handleAccountTypeClick({
+    type,
+    userId
+  }: {
+    type: string;
+    userId: number;
+  }) {
     setSelectedUsers((users) =>
       users.map((user) =>
         user.id === userId
@@ -171,7 +184,7 @@ export default function AddModeratorModal({ accountTypes, onHide }) {
     );
   }
 
-  function handleSelectUser(user) {
+  function handleSelectUser(user: any) {
     setSelectedUsers((users) => users.concat(user));
     setSearchedUsers([]);
     setSearchText('');
@@ -185,9 +198,11 @@ export default function AddModeratorModal({ accountTypes, onHide }) {
     onHide();
   }
 
-  async function handleUserSearch(text) {
+  async function handleUserSearch(text: string) {
     const users = await searchUsers(text);
-    const result = users.filter((user) => user.authLevel < authLevel);
+    const result = users.filter(
+      (user: { authLevel: number }) => user.authLevel < authLevel
+    );
     setSearchedUsers(result);
   }
 }
