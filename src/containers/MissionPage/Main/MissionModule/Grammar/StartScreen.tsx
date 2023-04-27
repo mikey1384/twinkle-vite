@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo } from 'react';
+import React, { useLayoutEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -28,13 +28,21 @@ export default function StartScreen({
   myAttempts,
   onInitMission,
   onStartButtonClick
+}: {
+  isRepeating: boolean;
+  loading: boolean;
+  mission: any;
+  myAttempts: any;
+  onInitMission: () => any;
+  onStartButtonClick: () => any;
 }) {
   const {
     success: { color: successColor },
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
   useLayoutEffect(() => {
-    document.getElementById('App').scrollTop = 0;
+    const appElement = document.getElementById('App');
+    if (appElement) appElement.scrollTop = 0;
     BodyRef.scrollTop = 0;
     onInitMission();
     // eslint-disable-next-line react-hooks/exhaustive-deps
