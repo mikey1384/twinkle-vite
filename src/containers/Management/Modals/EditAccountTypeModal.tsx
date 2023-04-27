@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -12,12 +11,13 @@ import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 
-EditAccountTypeModal.propTypes = {
-  onHide: PropTypes.func.isRequired,
-  target: PropTypes.object
-};
-
-export default function EditAccountTypeModal({ onHide, target }) {
+export default function EditAccountTypeModal({
+  onHide,
+  target
+}: {
+  onHide: () => void;
+  target: any;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -40,7 +40,7 @@ export default function EditAccountTypeModal({ onHide, target }) {
   const [accountLabel, setAccountLabel] = useState(accountTypeObj.label);
   const [deleteModalShown, setDeleteModalShown] = useState(false);
   const [authLevel, setAuthLevel] = useState(accountTypeObj.authLevel);
-  const [perks, setPerks] = useState({
+  const [perks, setPerks] = useState<any>({
     canEdit: false,
     canDelete: false,
     canReward: false,
@@ -50,9 +50,9 @@ export default function EditAccountTypeModal({ onHide, target }) {
   });
 
   useEffect(() => {
-    for (let key in accountTypeObj) {
+    for (const key in accountTypeObj) {
       if (key === 'label' || key === 'authLevel' || key === 'id') continue;
-      setPerks((perk) => ({
+      setPerks((perk: any) => ({
         ...perk,
         [key]: !!accountTypeObj[key]
       }));
@@ -60,7 +60,7 @@ export default function EditAccountTypeModal({ onHide, target }) {
   }, [accountTypeObj]);
 
   const disabled = useMemo(() => {
-    for (let key in perks) {
+    for (const key in perks) {
       if (!!accountTypeObj[key] !== perks[key]) return false;
     }
     if (!stringIsEmpty(accountLabel) && accountLabel !== accountTypeObj.label) {
@@ -132,7 +132,7 @@ export default function EditAccountTypeModal({ onHide, target }) {
             >
               <tr
                 onClick={() =>
-                  setPerks((perk) => ({
+                  setPerks((perk: any) => ({
                     ...perk,
                     canEdit: !perk.canEdit
                   }))
@@ -145,7 +145,7 @@ export default function EditAccountTypeModal({ onHide, target }) {
               </tr>
               <tr
                 onClick={() =>
-                  setPerks((perk) => ({
+                  setPerks((perk: any) => ({
                     ...perk,
                     canDelete: !perk.canDelete
                   }))
@@ -158,7 +158,7 @@ export default function EditAccountTypeModal({ onHide, target }) {
               </tr>
               <tr
                 onClick={() =>
-                  setPerks((perk) => ({
+                  setPerks((perk: any) => ({
                     ...perk,
                     canReward: !perk.canReward
                   }))
@@ -171,7 +171,7 @@ export default function EditAccountTypeModal({ onHide, target }) {
               </tr>
               <tr
                 onClick={() =>
-                  setPerks((perk) => ({
+                  setPerks((perk: any) => ({
                     ...perk,
                     canPinPlaylists: !perk.canPinPlaylists
                   }))
@@ -184,7 +184,7 @@ export default function EditAccountTypeModal({ onHide, target }) {
               </tr>
               <tr
                 onClick={() =>
-                  setPerks((perk) => ({
+                  setPerks((perk: any) => ({
                     ...perk,
                     canEditPlaylists: !perk.canEditPlaylists
                   }))
@@ -197,7 +197,7 @@ export default function EditAccountTypeModal({ onHide, target }) {
               </tr>
               <tr
                 onClick={() =>
-                  setPerks((perk) => ({
+                  setPerks((perk: any) => ({
                     ...perk,
                     canEditRewardLevel: !perk.canEditRewardLevel
                   }))

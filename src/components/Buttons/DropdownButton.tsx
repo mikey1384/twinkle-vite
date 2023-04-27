@@ -152,7 +152,7 @@ export default function DropdownButton({
           `} ${prop.className}
           `}
           onClick={
-            prop.disabled ? () => {} : () => handleMenuClick(prop.onClick)
+            prop.disabled ? () => null : () => handleMenuClick(prop.onClick)
           }
           key={index}
         >
