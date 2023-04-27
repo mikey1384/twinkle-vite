@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearch } from '~/helpers/hooks';
-import PropTypes from 'prop-types';
 import SearchInput from '~/components/Texts/SearchInput';
 import SelectUploadsForm from '~/components/Forms/SelectUploadsForm';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -16,8 +15,8 @@ export default function SelectAttachmentScreen({
   onDeselect,
   contentType
 }: {
-  onSelect: Function;
-  onDeselect: Function;
+  onSelect: (arg0: any) => void;
+  onDeselect: () => void;
   contentType: string;
 }) {
   const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
@@ -45,7 +44,7 @@ export default function SelectAttachmentScreen({
         limit: 18,
         contentType
       });
-      for (let result of results) {
+      for (const result of results) {
         onInitContent({ contentId: result.id, contentType, ...result });
       }
       setAllUploads(results.map((result: { id: number }) => result.id));
@@ -121,7 +120,7 @@ export default function SelectAttachmentScreen({
         contentType,
         contentId: allUploads[allUploads.length - 1]
       });
-      for (let result of results) {
+      for (const result of results) {
         onInitContent({ contentId: result.id, contentType, ...result });
       }
       contentObjs.current = {

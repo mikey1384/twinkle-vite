@@ -33,7 +33,7 @@ export default function MainFeeds({
   loadMoreRewardsButton: boolean;
   notifications: any[];
   rewards: any[];
-  selectNotiTab: Function;
+  selectNotiTab: () => void;
   style?: object;
 }) {
   const {

@@ -24,7 +24,7 @@ export default function StartScreen({
   navigateTo,
   onHide
 }: {
-  navigateTo: Function;
+  navigateTo: (arg0: string) => void;
   onHide: () => void;
 }) {
   const onSetSubjectAttachment = useInputContext(

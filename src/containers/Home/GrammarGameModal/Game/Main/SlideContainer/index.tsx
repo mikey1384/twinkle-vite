@@ -16,7 +16,7 @@ export default function SlideContainer({
   children: any;
   isCompleted: boolean;
   isOnStreak: boolean;
-  onCountdownStart: Function;
+  onCountdownStart: () => void;
   questions: any;
   selectedIndex: number;
 }) {

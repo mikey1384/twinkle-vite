@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Attempt from './Attempt';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
@@ -7,7 +6,9 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext } from '~/contexts';
 import localize from '~/constants/localize';
 
-const displayedStatus = {
+const displayedStatus: {
+  [key: string]: string;
+} = {
   fail: 'rejected',
   pending: 'pending',
   pass: 'approved'
@@ -17,15 +18,6 @@ const pendingLabel = localize('pending');
 const approvedLabel = localize('approved');
 const rejectedLabel = localize('rejected');
 
-Attempts.propTypes = {
-  attemptObj: PropTypes.object,
-  managementObj: PropTypes.object,
-  selectedTab: PropTypes.string,
-  onSelectTab: PropTypes.func.isRequired,
-  onSetAttemptObj: PropTypes.func.isRequired,
-  onSetManagementObj: PropTypes.func.isRequired
-};
-
 export default function Attempts({
   attemptObj,
   managementObj,
@@ -33,6 +25,13 @@ export default function Attempts({
   onSelectTab,
   onSetAttemptObj,
   onSetManagementObj
+}: {
+  attemptObj: any;
+  managementObj: any;
+  selectedTab: string;
+  onSelectTab: (tab: string) => void;
+  onSetAttemptObj: (arg0: any) => void;
+  onSetManagementObj: (arg0: any) => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -69,19 +68,19 @@ export default function Attempts({
         }}
       >
         <nav
-          className={selectedTab === 'pending' ? 'active' : null}
+          className={selectedTab === 'pending' ? 'active' : ''}
           onClick={() => onSelectTab('pending')}
         >
           {pendingLabel}
         </nav>
         <nav
-          className={selectedTab === 'pass' ? 'active' : null}
+          className={selectedTab === 'pass' ? 'active' : ''}
           onClick={() => onSelectTab('pass')}
         >
           {approvedLabel}
         </nav>
         <nav
-          className={selectedTab === 'fail' ? 'active' : null}
+          className={selectedTab === 'fail' ? 'active' : ''}
           onClick={() => onSelectTab('fail')}
         >
           {rejectedLabel}
@@ -104,20 +103,22 @@ export default function Attempts({
         </div>
       ) : (
         <>
-          {managementObj[selectedTab]?.map((attemptId, index) => {
-            const attempt = attemptObj[attemptId];
-            return (
-              <Attempt
-                key={attempt.id}
-                activeTab={selectedTab}
-                attempt={attempt}
-                managementObj={managementObj}
-                onSetManagementObj={onSetManagementObj}
-                onSetAttemptObj={onSetAttemptObj}
-                style={{ marginTop: index > 0 ? '1rem' : 0 }}
-              />
-            );
-          })}
+          {managementObj[selectedTab]?.map(
+            (attemptId: number, index: number) => {
+              const attempt = attemptObj[attemptId];
+              return (
+                <Attempt
+                  key={attempt.id}
+                  activeTab={selectedTab}
+                  attempt={attempt}
+                  managementObj={managementObj}
+                  onSetManagementObj={onSetManagementObj}
+                  onSetAttemptObj={onSetAttemptObj}
+                  style={{ marginTop: index > 0 ? '1rem' : 0 }}
+                />
+              );
+            }
+          )}
         </>
       )}
       {managementObj[`${selectedTab}LoadMoreButton`] && !loading && (

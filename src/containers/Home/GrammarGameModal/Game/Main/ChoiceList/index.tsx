@@ -25,9 +25,9 @@ export default function ChoiceList({
   gotWrong: boolean;
   isCompleted?: boolean;
   listItems: string[];
-  onCorrectAnswer: Function;
-  onCountdownStart?: Function;
-  onSetGotWrong: Function;
+  onCorrectAnswer: () => void;
+  onCountdownStart?: () => void;
+  onSetGotWrong: (arg0: number) => void;
   questionLength: number;
   selectedChoiceIndex: number;
   style: React.CSSProperties;

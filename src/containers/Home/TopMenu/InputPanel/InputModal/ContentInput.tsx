@@ -36,7 +36,7 @@ const postContentLabel = localize('postContent');
 const copyAndPasteUrlLabel = localize('copyAndPasteUrl');
 const youtubeVideoLabel = localize('youtubeVideo');
 
-function ContentInput({ onModalHide }: { onModalHide: Function }) {
+function ContentInput({ onModalHide }: { onModalHide: () => void }) {
   const checkContentUrl = useAppContext(
     (v) => v.requestHelpers.checkContentUrl
   );

@@ -19,7 +19,7 @@ export default function ProfileWidget({
   onShowAlert
 }: {
   onLoadImage: any;
-  onShowAlert: Function;
+  onShowAlert: () => void;
 }) {
   const navigate = useNavigate();
   const onOpenSigninModal = useAppContext(

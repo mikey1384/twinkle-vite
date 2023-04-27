@@ -48,7 +48,7 @@ const postSubjectLabel = localize('postSubject');
 const postSubjectPlaceholder = localize('postSubjectPlaceholder');
 const secretMessageLabel = localize('secretMessage');
 
-function SubjectInput({ onModalHide }: { onModalHide: Function }) {
+function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
   const inputModalType = useHomeContext((v) => v.state.inputModalType);
   const { onFileUpload } = useContext(LocalContext);
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
@@ -99,7 +99,7 @@ function SubjectInput({ onModalHide }: { onModalHide: Function }) {
 
   const {
     details,
-    details: { thumbnail, attachment, rewardLevel, secretAttachment }
+    details: { attachment, rewardLevel, secretAttachment }
   } = subject;
   const [attachContentModalShown, setAttachContentModalShown] = useState(false);
   const titleRef = useRef(details.title);

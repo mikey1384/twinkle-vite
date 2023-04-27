@@ -19,7 +19,7 @@ function Home({
   onFileUpload,
   section
 }: {
-  onFileUpload: Function;
+  onFileUpload: (file: any) => void;
   section: string;
 }) {
   const { userId } = useKeyContext((v) => v.myState);

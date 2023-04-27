@@ -14,7 +14,7 @@ export default function ListItem({
   index: number;
   answerIndex: number;
   selectedChoiceIndex: number;
-  onSelect: Function;
+  onSelect: (arg0: number) => void;
   isCompleted?: boolean;
 }) {
   const isWrong = useMemo(
