@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   getAstProps,
   filterElementsByType,
@@ -32,7 +33,15 @@ export const initialCode = `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
+export async function onRunCode({
+  ast,
+  onSetErrorMsg,
+  onUpdateMissionStatus
+}: {
+  ast: any;
+  onSetErrorMsg: (msg: React.ReactNode) => void;
+  onUpdateMissionStatus: () => void;
+}) {
   const jsxElements = getAstProps({
     ast,
     propType: 'JSXElement'
@@ -43,11 +52,11 @@ export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
     elements: jsxElements,
     filter: 'div'
   });
-  for (let divider of dividers) {
+  for (const divider of dividers) {
     innerText = getElementInnerText(divider);
     if (innerText === 'Third') {
       const styleProps = getElementStyleProps(divider.openingElement);
-      for (let prop of styleProps) {
+      for (const prop of styleProps) {
         if (prop?.key?.name === 'marginTop') {
           marginTop = prop?.value?.value;
         }

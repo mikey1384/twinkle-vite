@@ -1,3 +1,4 @@
+import React from 'react';
 export const title = `Formatting`;
 export const instruction = (
   <>
@@ -54,6 +55,10 @@ export async function onRunCode({
   code,
   onSetErrorMsg,
   onUpdateMissionStatus
+}: {
+  code: string;
+  onSetErrorMsg: (arg0: React.ReactNode) => void;
+  onUpdateMissionStatus: () => void;
 }) {
   if (code === formattedCode) {
     return await onUpdateMissionStatus();
