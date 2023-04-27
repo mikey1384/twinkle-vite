@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ExerciseContainer from '../components/ExerciseContainer';
@@ -14,12 +14,18 @@ FixingBugs.propTypes = {
 
 const exerciseKeys = Object.keys(exercises);
 
-export default function FixingBugs({ task, onSetMissionState }) {
+export default function FixingBugs({
+  task,
+  onSetMissionState
+}: {
+  task: any;
+  onSetMissionState: (arg0: { missionId: any; newState: any }) => void;
+}) {
   const { codeObj = {} } = task;
   const { missions } = useKeyContext((v) => v.myState);
   const allPassed = useMemo(() => {
     let passed = true;
-    for (let key of exerciseKeys) {
+    for (const key of exerciseKeys) {
       if (missions[task.missionType]?.[key] !== 'pass') {
         passed = false;
         break;
@@ -49,9 +55,15 @@ export default function FixingBugs({ task, onSetMissionState }) {
           exercises={exercises}
           index={index}
           exerciseKey={exerciseKey}
-          prevExerciseKey={index === 0 ? null : exerciseKeys[index - 1]}
+          prevExerciseKey={index === 0 ? '' : exerciseKeys[index - 1]}
           codeObj={codeObj}
-          onSetCode={({ code, exerciseLabel }) =>
+          onSetCode={({
+            code,
+            exerciseLabel
+          }: {
+            code: string;
+            exerciseLabel: string;
+          }) =>
             onSetMissionState({
               missionId: task.id,
               newState: { codeObj: { ...codeObj, [exerciseLabel]: code } }

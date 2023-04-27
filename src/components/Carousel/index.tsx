@@ -33,13 +33,13 @@ interface Props {
   slidesToShow?: number;
   slideWidthMultiplier?: number;
   showAllButton?: boolean;
-  style?: any;
-  title?: string;
+  style?: React.CSSProperties;
+  title?: string | React.ReactNode;
 }
 export default function Carousel({
   allowDrag = true,
-  afterSlide = () => {},
-  beforeSlide = () => {},
+  afterSlide = () => null,
+  beforeSlide = () => null,
   className,
   cellSpacing = 0,
   children,
@@ -202,7 +202,7 @@ export default function Carousel({
               if (direction !== 0) {
                 e.preventDefault();
               }
-              let length = Math.round(
+              const length = Math.round(
                 Math.sqrt(Math.pow(e.clientX - touchObject.startX, 2))
               );
               setTouchObject({

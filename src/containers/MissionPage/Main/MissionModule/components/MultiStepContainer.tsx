@@ -22,7 +22,7 @@ export default function MultiStepContainer({
   taskType
 }: {
   children: React.ReactNode;
-  buttons?: React.ReactNode[];
+  buttons?: object[];
   onOpenTutorial: () => void;
   taskId: number;
   taskType: string;

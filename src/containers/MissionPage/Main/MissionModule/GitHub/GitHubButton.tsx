@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import { GITHUB_APP_ID } from '~/constants/defaultValues';
 import Button from '~/components/Button';
@@ -7,7 +8,11 @@ GitHubButton.propTypes = {
   style: PropTypes.object
 };
 
-export default function GitHubButton({ style }) {
+export default function GitHubButton({
+  style
+}: {
+  style?: React.CSSProperties;
+}) {
   return (
     <Button
       style={{
@@ -26,6 +31,6 @@ export default function GitHubButton({ style }) {
   );
 
   function handleGitHubButtonClick() {
-    window.location = `https://github.com/login/oauth/authorize?scope=user&client_id=${GITHUB_APP_ID}`;
+    window.location.href = `https://github.com/login/oauth/authorize?scope=user&client_id=${GITHUB_APP_ID}`;
   }
 }

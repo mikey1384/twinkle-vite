@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Carousel from '~/components/Carousel';
 import QuestionSlide from './QuestionSlide';
@@ -30,10 +30,23 @@ export default function QuestionCarousel({
   questionObj,
   onSelectChoice,
   submitDisabled
+}: {
+  conditionPassStatus: string;
+  currentSlideIndex: number;
+  onAfterSlide: (index: number) => any;
+  onCheckNavCondition: (v: any) => any;
+  objectiveMessage: string;
+  questionIds: number[];
+  questionObj: any;
+  onSelectChoice: (params: {
+    selectedIndex: number;
+    questionId: number;
+  }) => any;
+  submitDisabled: boolean;
 }) {
   const CarouselRef = useRef(null);
   useEffect(() => {
-    let scrollModifier = deviceIsMobile ? -150 : -250;
+    const scrollModifier = deviceIsMobile ? -150 : -250;
     scrollElementToCenter(CarouselRef.current, scrollModifier);
   }, []);
 

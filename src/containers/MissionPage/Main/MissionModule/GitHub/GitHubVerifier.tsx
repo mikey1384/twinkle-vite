@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useLocation } from 'react-router-dom';
 import { Color } from '~/constants/css';
@@ -15,7 +15,13 @@ GitHubVerifier.propTypes = {
   task: PropTypes.object.isRequired
 };
 
-export default function GitHubVerifier({ onSetMissionState, task }) {
+export default function GitHubVerifier({
+  onSetMissionState,
+  task
+}: {
+  onSetMissionState: (arg0: { missionId: any; newState: any }) => void;
+  task: any;
+}) {
   const loadGitHubData = useAppContext((v) => v.requestHelpers.loadGitHubData);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const { userId } = useKeyContext((v) => v.myState);

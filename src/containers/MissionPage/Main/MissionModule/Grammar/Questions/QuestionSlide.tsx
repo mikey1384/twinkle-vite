@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import ChoiceList from './ChoiceList';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -19,6 +20,13 @@ export default function QuestionSlide({
   question,
   choices,
   onSelectChoice
+}: {
+  answerIndex: number;
+  conditionPassStatus: string;
+  gotWrong: boolean;
+  question: string;
+  choices: any[];
+  onSelectChoice: (index: number) => any;
 }) {
   return (
     <div
