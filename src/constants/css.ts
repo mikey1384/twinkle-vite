@@ -87,7 +87,13 @@ export const Color: {
 
 export const strongColors = ['rose', 'red', 'purple'];
 
-export function Theme(color = 'logoBlue') {
+export function Theme(color = 'logoBlue'): {
+  [key: string]: {
+    color: string;
+    opacity?: number;
+    shadow?: string;
+  };
+} {
   return {
     abort: {
       color: 'darkerGray'

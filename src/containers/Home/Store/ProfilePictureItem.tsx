@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import ItemPanel from './ItemPanel';
 import Icon from '~/components/Icon';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
@@ -25,11 +24,12 @@ const item = {
   ]
 };
 
-ProfilePictureItem.propTypes = {
-  style: PropTypes.object
-};
-
-export default function ProfilePictureItem({ style }) {
+export default function ProfilePictureItem({
+  style
+}: {
+  style?: React.CSSProperties;
+}) {
+  const [unlocking, setUnlocking] = useState(false);
   const { karmaPoints, numPics = 0, userId } = useKeyContext((v) => v.myState);
   const upgradeNumPics = useAppContext((v) => v.requestHelpers.upgradeNumPics);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -65,6 +65,7 @@ export default function ProfilePictureItem({ style }) {
       requiredKarmaPoints={karmaPointTable.profilePicture[numPics]}
       locked={!numPics}
       onUnlock={handleUpgrade}
+      unlocking={unlocking}
       itemName={item.name[numPics]}
       itemDescription={descriptionLabel}
       style={style}
@@ -79,9 +80,16 @@ export default function ProfilePictureItem({ style }) {
   );
 
   async function handleUpgrade() {
-    const success = await upgradeNumPics();
-    if (success) {
-      onSetUserState({ userId, newState: { numPics: numPics + 1 } });
+    setUnlocking(true);
+    try {
+      const success = await upgradeNumPics();
+      if (success) {
+        onSetUserState({ userId, newState: { numPics: numPics + 1 } });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setUnlocking(false);
     }
   }
 }

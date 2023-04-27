@@ -1,15 +1,17 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
-MaxLevelItemInfo.propTypes = {
-  icon: PropTypes.string,
-  title: PropTypes.string,
-  description: PropTypes.oneOfType([PropTypes.string, PropTypes.node])
-};
-
-export default function MaxLevelItemInfo({ icon, title, description }) {
+export default function MaxLevelItemInfo({
+  icon,
+  title,
+  description
+}: {
+  icon: string;
+  title: string;
+  description: React.ReactNode;
+}) {
   return (
     <div
       style={{

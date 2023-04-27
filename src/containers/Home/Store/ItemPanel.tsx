@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
@@ -12,22 +11,21 @@ import localize from '~/constants/localize';
 
 const freeLabel = localize('free');
 
-ItemPanel.propTypes = {
-  children: PropTypes.node,
-  currentLvl: PropTypes.number,
-  itemName: PropTypes.string,
-  itemDescription: PropTypes.node,
-  isLeveled: PropTypes.bool,
-  maxLvl: PropTypes.number,
-  karmaPoints: PropTypes.number,
-  locked: PropTypes.bool,
-  requiredKarmaPoints: PropTypes.number,
-  onUnlock: PropTypes.func,
-  style: PropTypes.object,
-  unlocking: PropTypes.bool,
-  upgradeIcon: PropTypes.node
-};
-
+interface Props {
+  children: React.ReactNode;
+  currentLvl: number;
+  itemName: string;
+  itemDescription: React.ReactNode;
+  isLeveled: boolean;
+  maxLvl: number;
+  karmaPoints: number;
+  locked: boolean;
+  requiredKarmaPoints: number;
+  onUnlock: () => void;
+  style?: React.CSSProperties;
+  unlocking: boolean;
+  upgradeIcon: React.ReactNode;
+}
 export default function ItemPanel({
   children,
   currentLvl,
@@ -42,7 +40,7 @@ export default function ItemPanel({
   requiredKarmaPoints,
   unlocking,
   upgradeIcon
-}) {
+}: Props) {
   const [highlighted, setHighlighted] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);
   const unlockProgress = useMemo(() => {
@@ -188,7 +186,7 @@ export default function ItemPanel({
               </div>
             )}
             <ProgressBar
-              color={unlockProgress === 100 ? Color.green() : null}
+              color={unlockProgress === 100 ? Color.green() : ''}
               progress={unlockProgress}
             />
             <p
