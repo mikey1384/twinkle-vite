@@ -1,11 +1,16 @@
 {
+  "parser": "@typescript-eslint/parser",
   "env": {
     "browser": true,
     "es2021": true,
     "node": true
   },
-  "plugins": ["react", "react-hooks"],
-  "extends": ["plugin:react/recommended"],
+  "plugins": ["react", "react-hooks", "@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended"
+  ],
   "parserOptions": {
     "ecmaFeatures": {
       "jsx": true
@@ -31,6 +36,10 @@
     "FormData": true
   },
   "rules": {
+    "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "warn",
     "jsx-quotes": ["error", "prefer-double"],
     "no-dupe-keys": "error",
     "no-undef": "error",

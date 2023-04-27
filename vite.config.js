@@ -3,10 +3,12 @@ import { defineConfig, splitVendorChunkPlugin } from 'vite';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import { resolve } from 'path';
 import inject from '@rollup/plugin-inject';
-import commonjsPlugin from 'vite-plugin-commonjs';
 
 export default defineConfig({
-  plugins: [react(), splitVendorChunkPlugin(), commonjsPlugin()],
+  plugins: [
+    react({ swcOptions: { jsc: { target: 'es2022' } }, check: true }),
+    splitVendorChunkPlugin()
+  ],
   server: {
     port: '3000'
   },
