@@ -1,4 +1,4 @@
-import { Children, useEffect, useMemo, useRef } from 'react';
+import React, { Children, useEffect, useMemo, useRef } from 'react';
 import Button from '~/components/Button';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -20,6 +20,12 @@ export default function MultiStepContainer({
   onOpenTutorial,
   taskId,
   taskType
+}: {
+  children: React.ReactNode;
+  buttons?: React.ReactNode[];
+  onOpenTutorial: () => void;
+  taskId: number;
+  taskType: string;
 }) {
   const { missions } = useKeyContext((v) => v.myState);
   const {
@@ -35,17 +41,18 @@ export default function MultiStepContainer({
     () => missions[taskType]?.selectedIndex || 0,
     [missions, taskType]
   );
-  const SlideRefs = useRef({});
+  const SlideRefs: React.RefObject<any> = useRef({});
   const childrenArray = useMemo(() => Children.toArray(children), [children]);
   const DisplayedSlide = useMemo(() => {
-    const SlideComponent = childrenArray.filter(
+    const SlideComponent: any = childrenArray.filter(
       (child, index) => index === selectedIndex
     )[0];
     return {
       ...SlideComponent,
       props: {
         ...SlideComponent?.props,
-        innerRef: (ref) => (SlideRefs.current[selectedIndex] = ref),
+        innerRef: (ref: React.RefObject<any>) =>
+          (SlideRefs.current[selectedIndex] = ref),
         index: selectedIndex
       }
     };
@@ -63,7 +70,7 @@ export default function MultiStepContainer({
         (buttonObj, index) =>
           index === selectedIndex && index < childrenArray.length - 1
       )
-      .map((buttonObj, index) =>
+      .map((buttonObj: any, index) =>
         buttonObj ? (
           <Button
             key={index}
@@ -148,7 +155,7 @@ export default function MultiStepContainer({
     </ErrorBoundary>
   );
 
-  async function handleUpdateSelectedIndex(newIndex) {
+  async function handleUpdateSelectedIndex(newIndex: number) {
     await updateMissionStatus({
       missionType: taskType,
       newStatus: { selectedIndex: newIndex }

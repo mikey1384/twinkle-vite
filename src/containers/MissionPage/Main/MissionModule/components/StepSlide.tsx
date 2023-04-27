@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -10,7 +11,19 @@ StepSlide.propTypes = {
   innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object])
 };
 
-export default function StepSlide({ children, title, style, index, innerRef }) {
+export default function StepSlide({
+  children,
+  title,
+  style,
+  index,
+  innerRef
+}: {
+  children: any;
+  title: string;
+  style: React.CSSProperties;
+  index: number;
+  innerRef: React.RefObject<any>;
+}) {
   return (
     <div
       ref={innerRef}

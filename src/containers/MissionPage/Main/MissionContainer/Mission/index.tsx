@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import LongText from '~/components/Texts/LongText';
 import MissionModule from '../../MissionModule';
@@ -42,6 +42,25 @@ export default function Mission({
   },
   style,
   onSetMissionState
+}: {
+  style?: React.CSSProperties;
+  onSetMissionState: (arg0: any) => void;
+  mission: {
+    fileUploadProgress: any;
+    title: string;
+    subtitle: string;
+    description: string;
+    objective: string;
+    id: number;
+    isMultiMission: boolean;
+    missionType: string;
+    xpReward: number;
+    coinReward: number;
+    repeatXpReward: number;
+    repeatable: boolean;
+    repeatCoinReward: number;
+    uploadingFile: boolean;
+  };
 }) {
   const [loading, setLoading] = useState(false);
   const checkMissionStatus = useAppContext(

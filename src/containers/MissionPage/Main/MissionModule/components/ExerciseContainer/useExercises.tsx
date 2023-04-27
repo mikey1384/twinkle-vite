@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 
 export default function useExercises({
   codeObj,
-  exercises,
-  exerciseKey,
+  exercises = {},
+  exerciseKey = '',
   prevExerciseKey,
   missions,
   onUpdateUserMissionState,
@@ -11,12 +11,23 @@ export default function useExercises({
   taskType,
   username,
   updateMissionStatus
+}: {
+  codeObj?: Record<string, any>;
+  exercises?: Record<string, any>;
+  exerciseKey?: string;
+  prevExerciseKey?: string;
+  missions?: any;
+  onUpdateUserMissionState?: any;
+  onSetCode?: any;
+  taskType?: any;
+  username?: any;
+  updateMissionStatus?: any;
 } = {}) {
   const [errorMsg, setErrorMsg] = useState('');
-  const [success, setSuccess] = useState();
+  const [success, setSuccess] = useState(false);
   const passObj = useMemo(() => {
-    const result = {};
-    for (let key of Object.keys(exercises)) {
+    const result: { [key: string]: any } = {};
+    for (const key of Object.keys(exercises)) {
       result[key] = missions[taskType]?.[key] === 'pass';
     }
     return result;
@@ -35,7 +46,7 @@ export default function useExercises({
 
   const exercise = useMemo(() => {
     return {
-      title: exercises[exerciseKey].title,
+      title: exercises?.[exerciseKey].title,
       code: codeObj?.[exerciseKey],
       initialCode:
         typeof exercises[exerciseKey].initialCode === 'function'
@@ -47,7 +58,7 @@ export default function useExercises({
           : exercises[exerciseKey].instruction,
       onNextClick: handleNextClick,
       onSetCode: handleSetCode,
-      onRunCode: ({ ast, code }) =>
+      onRunCode: ({ ast, code }: { ast: any; code: any }) =>
         exercises[exerciseKey].onRunCode({
           username,
           code,
@@ -75,7 +86,7 @@ export default function useExercises({
     });
   }
 
-  function handleSetCode(code) {
+  function handleSetCode(code: any) {
     onSetCode({ code, exerciseLabel: exerciseKey });
   }
 

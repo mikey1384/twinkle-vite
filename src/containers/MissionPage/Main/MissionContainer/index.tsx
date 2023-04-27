@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Mission from './Mission';
 import Tutorial from '../Tutorial';
@@ -17,6 +17,12 @@ export default function MissionContainer({
   mission,
   myAttempts,
   onSetMissionState
+}: {
+  mission: any;
+  myAttempts: {
+    [key: string]: any;
+  }[];
+  onSetMissionState: (arg0: any) => void;
 }) {
   const isRepeatMission = useMemo(() => {
     const repeatMissionTypes = ['grammar'];
@@ -38,7 +44,6 @@ export default function MissionContainer({
       ) : (
         <Tutorial
           mission={mission}
-          myAttempts={myAttempts}
           className={css`
             margin-top: 5rem;
             margin-bottom: 1rem;

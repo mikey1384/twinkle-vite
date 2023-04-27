@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
@@ -20,6 +20,11 @@ export default function EmailSubmitForm({
   onSetEmail,
   onSetEmailSent,
   submitButtonColor
+}: {
+  email: string;
+  onSetEmailSent: (value: boolean) => void;
+  onSetEmail: (value: string) => void;
+  submitButtonColor: string;
 }) {
   const sendVerificationOTPEmail = useAppContext(
     (v) => v.requestHelpers.sendVerificationOTPEmail
@@ -75,7 +80,7 @@ export default function EmailSubmitForm({
     </div>
   );
 
-  async function handleConfirmEmail(email) {
+  async function handleConfirmEmail(email: string) {
     if (sendingEmailRef.current) return;
     try {
       sendingEmailRef.current = true;

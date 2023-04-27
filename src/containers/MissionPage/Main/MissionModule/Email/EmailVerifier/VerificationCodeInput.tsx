@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Input from '~/components/Texts/Input';
@@ -11,7 +11,13 @@ VerificationCodeInput.propTypes = {
   onRetry: PropTypes.func.isRequired
 };
 
-export default function VerificationCodeInput({ onRetry, email }) {
+export default function VerificationCodeInput({
+  onRetry,
+  email
+}: {
+  email: string;
+  onRetry: () => void;
+}) {
   const {
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
@@ -80,7 +86,7 @@ export default function VerificationCodeInput({ onRetry, email }) {
     </ErrorBoundary>
   );
 
-  async function handleCodeInput(text) {
+  async function handleCodeInput(text: string) {
     setErrorMsg('');
     setVerificationCode(text);
     if (text.length === 6) {

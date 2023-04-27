@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -9,7 +9,11 @@ SuccessMessage.propTypes = {
   onNextClick: PropTypes.func.isRequired
 };
 
-export default function SuccessMessage({ onNextClick }) {
+export default function SuccessMessage({
+  onNextClick
+}: {
+  onNextClick: () => void;
+}) {
   const ComponentRef = useRef(null);
   useEffect(() => {
     scrollElementToCenter(ComponentRef.current);

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -9,14 +9,23 @@ MultiMission.propTypes = {
   mission: PropTypes.object.isRequired,
   myAttempts: PropTypes.object.isRequired
 };
-
 export default function MultiMission({
-  mission: { missionType, subMissions },
+  mission: { missionType, subMissions = [] },
   myAttempts
+}: {
+  mission: {
+    missionType: string;
+    subMissions?: any[];
+  };
+  myAttempts: {
+    [key: string]: {
+      status: string;
+    };
+  };
 }) {
   const { managementLevel } = useKeyContext((v) => v.myState);
   const missionProgress = useMemo(() => {
-    const result = {};
+    const result: { [key: string]: any } = {};
     for (let i = 0; i < subMissions.length; i++) {
       let passed = true;
       let currentTaskIndex = 0;

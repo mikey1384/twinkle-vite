@@ -1,13 +1,16 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
 
 FailMessage.propTypes = {
   message: PropTypes.oneOfType([PropTypes.string, PropTypes.node])
 };
-export default function FailMessage({ message }) {
+export default function FailMessage({
+  message
+}: {
+  message: string | React.ReactNode;
+}) {
   const ComponentRef = useRef(null);
-
   return (
     <div
       ref={ComponentRef}

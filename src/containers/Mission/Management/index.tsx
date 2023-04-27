@@ -1,17 +1,8 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import Attempts from './Attempts';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-
-Management.propTypes = {
-  attemptObj: PropTypes.object,
-  managementObj: PropTypes.object,
-  selectedTab: PropTypes.string,
-  onSelectTab: PropTypes.func.isRequired,
-  onSetAttemptObj: PropTypes.func.isRequired,
-  onSetManagementObj: PropTypes.func.isRequired
-};
 
 export default function Management({
   attemptObj,
@@ -20,6 +11,13 @@ export default function Management({
   onSelectTab,
   onSetAttemptObj,
   onSetManagementObj
+}: {
+  attemptObj: Record<string, any>;
+  managementObj: Record<string, any>;
+  selectedTab: string;
+  onSelectTab: (arg0: string) => void;
+  onSetAttemptObj: (arg0: Record<string, any>) => void;
+  onSetManagementObj: (arg0: Record<string, any>) => void;
 }) {
   return (
     <ErrorBoundary

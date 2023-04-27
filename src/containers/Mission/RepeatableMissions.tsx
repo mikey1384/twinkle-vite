@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MissionItem from '~/components/MissionItem';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
@@ -18,16 +18,23 @@ export default function RepeatableMissions({
   missionObj,
   myAttempts,
   style
+}: {
+  className?: string;
+  missions: number[];
+  missionObj: { [key: string]: any };
+  myAttempts: { [key: string]: any };
+  style?: React.CSSProperties;
 }) {
-  const repeatableMissions = useMemo(() => {
-    return missions.reduce((prevMissions, currMissionId) => {
-      const mission = missionObj[currMissionId];
-      if (mission.repeatable && myAttempts[mission.id]?.status === 'pass') {
-        return prevMissions.concat(mission);
-      }
-      return prevMissions;
-    }, []);
-  }, [missionObj, missions, myAttempts]);
+  const repeatableMissions: { id: number; missionType: string }[] =
+    useMemo(() => {
+      return missions.reduce((prevMissions, currMissionId) => {
+        const mission = missionObj[currMissionId];
+        if (mission.repeatable && myAttempts[mission.id]?.status === 'pass') {
+          return prevMissions.concat(mission);
+        }
+        return prevMissions;
+      }, []);
+    }, [missionObj, missions, myAttempts]);
 
   const repeatableMissionsLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {

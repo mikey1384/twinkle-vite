@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -12,13 +11,15 @@ import localize from '~/constants/localize';
 const completedLabel = localize('completed');
 const grammarRankLabel = localize('grammarRank');
 
-Cover.propTypes = {
-  missionIds: PropTypes.array.isRequired,
-  missionObj: PropTypes.object.isRequired,
-  myAttempts: PropTypes.object.isRequired
-};
-
-export default function Cover({ missionIds, missionObj, myAttempts }) {
+export default function Cover({
+  missionIds,
+  missionObj,
+  myAttempts
+}: {
+  missionIds: number[];
+  missionObj: { [key: string]: any };
+  myAttempts: { [key: string]: any };
+}) {
   const navigate = useNavigate();
   const { profilePicUrl, userId, username, profileTheme } = useKeyContext(
     (v) => v.myState
@@ -34,7 +35,7 @@ export default function Cover({ missionIds, missionObj, myAttempts }) {
   const [myGrammarRank, setMyGrammarRank] = useState(0);
   useEffect(() => {
     let numCompleteCount = 0;
-    for (let missionId of missionIds) {
+    for (const missionId of missionIds) {
       const mission = missionObj[missionId];
       if (mission.isMultiMission) {
         const { passed } = checkMultiMissionPassStatus({
@@ -48,12 +49,14 @@ export default function Cover({ missionIds, missionObj, myAttempts }) {
         numCompleteCount++;
       }
       if (mission.missionType === 'grammar') {
-        handleLoadRanking(missionId, (myRank) => setMyGrammarRank(myRank));
+        handleLoadRanking(missionId, (myRank: number) =>
+          setMyGrammarRank(myRank)
+        );
       }
     }
     setNumComplete(numCompleteCount);
 
-    async function handleLoadRanking(missionId, callback) {
+    async function handleLoadRanking(missionId: number, callback: any) {
       const { myRank } = await loadMissionRankings(missionId);
       callback(myRank);
     }

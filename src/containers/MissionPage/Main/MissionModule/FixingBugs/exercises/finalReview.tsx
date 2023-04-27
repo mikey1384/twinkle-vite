@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   getAstProps,
   getElementStyleProps,
@@ -59,7 +60,15 @@ export const initialCode = `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
+export async function onRunCode({
+  ast,
+  onSetErrorMsg,
+  onUpdateMissionStatus
+}: {
+  ast: any;
+  onSetErrorMsg: (arg0: any) => void;
+  onUpdateMissionStatus: () => void;
+}) {
   const jsxElements = getAstProps({
     ast,
     propType: 'JSXElement'
@@ -76,7 +85,7 @@ export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
   }
   const containerDivOpening = containerDiv?.openingElement;
   const containerStyleProps = getElementStyleProps(containerDivOpening);
-  for (let prop of containerStyleProps) {
+  for (const prop of containerStyleProps) {
     if (prop?.key?.name === 'flexDirection') {
       containerFlexDirection = prop?.value?.value;
     }
@@ -93,7 +102,7 @@ export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
     return onSetErrorMsg("Don't delete the welcome message");
   }
   const paragraphStyleProps = getElementStyleProps(paragraph?.openingElement);
-  for (let prop of paragraphStyleProps) {
+  for (const prop of paragraphStyleProps) {
     if (prop?.key?.name === 'fontFamily') {
       paragraphFontFamily = prop?.value?.value;
     }
@@ -114,7 +123,7 @@ export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
     return onSetErrorMsg("Don't delete the button");
   }
   const buttonStyleProps = getElementStyleProps(button?.openingElement);
-  for (let prop of buttonStyleProps) {
+  for (const prop of buttonStyleProps) {
     if (prop?.key?.name === 'marginTop') {
       buttonMarginTop = prop?.value?.value;
     }
