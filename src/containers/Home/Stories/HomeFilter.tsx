@@ -40,11 +40,11 @@ export default function HomeFilter({
   selectedFilter,
   setDisplayOrder
 }: {
-  applyFilter: Function;
+  applyFilter: (arg0: string) => void;
   category: string;
-  changeCategory: Function;
+  changeCategory: (arg0: string) => void;
   displayOrder: string;
-  setDisplayOrder: Function;
+  setDisplayOrder: (arg0: string) => void;
   selectedFilter: string;
 }) {
   const onToggleHideWatched = useAppContext(

@@ -40,8 +40,8 @@ export default function Description({
   userIsUploader
 }: {
   description?: string;
-  onDelete: Function;
-  onEditDone: Function;
+  onDelete: () => void;
+  onEditDone: (v: any) => void;
   linkId: number;
   timeStamp: number;
   title: string;

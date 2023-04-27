@@ -10,7 +10,7 @@ export default function PeopleFilterBar({
   style
 }: {
   dropdownLabel: string;
-  onSetOrderByText: Function;
+  onSetOrderByText: (arg0: string) => void;
   orderByText: string;
   style: React.CSSProperties;
 }) {

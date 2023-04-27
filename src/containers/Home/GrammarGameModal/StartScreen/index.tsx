@@ -26,8 +26,8 @@ export default function StartScreen({
   loading: boolean;
   onGameStart: () => void;
   timesPlayedToday: number;
-  onSetTimesPlayedToday: Function;
-  onHide: Function;
+  onSetTimesPlayedToday: (arg0: number) => void;
+  onHide: () => void;
 }) {
   const navigate = useNavigate();
   const [results, setResults] = useState([]);

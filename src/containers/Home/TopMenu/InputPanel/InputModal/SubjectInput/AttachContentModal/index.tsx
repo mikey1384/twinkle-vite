@@ -29,7 +29,7 @@ export default function AttachContentModal({
   onConfirm,
   onHide
 }: {
-  onConfirm: Function;
+  onConfirm: (arg0?: Record<string, any>) => void;
   onHide: () => void;
 }) {
   const {

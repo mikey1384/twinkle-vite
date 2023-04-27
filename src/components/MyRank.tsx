@@ -16,9 +16,9 @@ export default function MyRank({
   twinkleXP
 }: {
   myId: number;
-  noBorderRadius: boolean;
+  noBorderRadius?: boolean;
   rank: number;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
   twinkleXP: number;
 }) {
   const {
