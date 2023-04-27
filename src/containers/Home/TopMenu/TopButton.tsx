@@ -1,18 +1,7 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
-
-TopButton.propTypes = {
-  colorLeft: PropTypes.string,
-  colorMiddle: PropTypes.string,
-  colorRight: PropTypes.string,
-  children: PropTypes.node,
-  disabled: PropTypes.bool,
-  loading: PropTypes.bool,
-  onClick: PropTypes.func.isRequired,
-  style: PropTypes.object
-};
 
 export default function TopButton({
   colorLeft = '#f6d365',
@@ -23,6 +12,15 @@ export default function TopButton({
   disabled,
   onClick,
   style
+}: {
+  colorLeft?: string;
+  colorMiddle?: string;
+  colorRight?: string;
+  children: React.ReactNode;
+  loading?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+  style?: React.CSSProperties;
 }) {
   const buttonStyle = css`
     font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
