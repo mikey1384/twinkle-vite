@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
@@ -27,7 +27,7 @@ AccountTypes.propTypes = {
   canManage: PropTypes.bool.isRequired
 };
 
-export default function AccountTypes({ canManage }) {
+export default function AccountTypes({ canManage }: { canManage: boolean }) {
   const {
     tableHeader: { color: tableHeaderColor }
   } = useKeyContext((v) => v.theme);
@@ -37,7 +37,7 @@ export default function AccountTypes({ canManage }) {
   );
   const [addAccountTypeModalShown, setAddAccountTypeModalShown] =
     useState(false);
-  const [accountTypeModalTarget, setAccountTypeModalTarget] = useState(null);
+  const [accountTypeModalTarget, setAccountTypeModalTarget] = useState('');
 
   return (
     <ErrorBoundary componentPath="Management/Main/AccountTypes">
@@ -89,43 +89,58 @@ export default function AccountTypes({ canManage }) {
             </tr>
           </thead>
           <tbody>
-            {accountTypes.map((accountType) => (
-              <tr
-                onClick={() =>
-                  canManage ? setAccountTypeModalTarget(accountType.label) : {}
-                }
-                key={accountType.label}
-                style={{ cursor: canManage && 'pointer' }}
-              >
-                <td
-                  style={{
-                    fontWeight: 'bold',
-                    fontSize: '1.6rem'
-                  }}
+            {accountTypes.map(
+              (accountType: {
+                label: string;
+                authLevel: number;
+                canEdit: boolean;
+                canDelete: boolean;
+                canReward: boolean;
+                canPinPlaylists: boolean;
+                canEditPlaylists: boolean;
+                canEditRewardLevel: boolean;
+              }) => (
+                <tr
+                  onClick={() =>
+                    canManage
+                      ? setAccountTypeModalTarget(accountType.label)
+                      : {}
+                  }
+                  key={accountType.label}
+                  style={{ cursor: canManage ? 'pointer' : '' }}
                 >
-                  {accountType.label}
-                </td>
-                <td style={{ textAlign: 'center' }}>{accountType.authLevel}</td>
-                <td style={{ textAlign: 'center' }}>
-                  <Check checked={!!accountType.canEdit} />
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  <Check checked={!!accountType.canDelete} />
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  <Check checked={!!accountType.canReward} />
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  <Check checked={!!accountType.canPinPlaylists} />
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  <Check checked={!!accountType.canEditPlaylists} />
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  <Check checked={!!accountType.canEditRewardLevel} />
-                </td>
-              </tr>
-            ))}
+                  <td
+                    style={{
+                      fontWeight: 'bold',
+                      fontSize: '1.6rem'
+                    }}
+                  >
+                    {accountType.label}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    {accountType.authLevel}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <Check checked={!!accountType.canEdit} />
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <Check checked={!!accountType.canDelete} />
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <Check checked={!!accountType.canReward} />
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <Check checked={!!accountType.canPinPlaylists} />
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <Check checked={!!accountType.canEditPlaylists} />
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <Check checked={!!accountType.canEditRewardLevel} />
+                  </td>
+                </tr>
+              )
+            )}
           </tbody>
         </Table>
       </SectionPanel>
@@ -138,10 +153,11 @@ export default function AccountTypes({ canManage }) {
         <EditAccountTypeModal
           target={
             accountTypes.filter(
-              (accountType) => accountType.label === accountTypeModalTarget
+              (accountType: { label: string }) =>
+                accountType.label === accountTypeModalTarget
             )[0]
           }
-          onHide={() => setAccountTypeModalTarget(null)}
+          onHide={() => setAccountTypeModalTarget('')}
         />
       )}
     </ErrorBoundary>

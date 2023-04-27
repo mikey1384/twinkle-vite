@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Moderators from './Moderators';
 import AccountTypes from './AccountTypes';
