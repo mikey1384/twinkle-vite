@@ -11,9 +11,9 @@ export default function SelectEmail({
   userId
 }: {
   email: string;
-  hiddenEmail: string;
+  hiddenEmail?: string;
   verifiedEmail: string;
-  hiddenVerifiedEmail: string;
+  hiddenVerifiedEmail?: string;
   userId: number;
 }) {
   const sendVerificationEmail = useAppContext(

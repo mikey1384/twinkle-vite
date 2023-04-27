@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -10,11 +9,7 @@ import Button from '~/components/Button';
 import Rankings from './Rankings';
 import { useAppContext, useKeyContext } from '~/contexts';
 
-GrammarGameModal.propTypes = {
-  onHide: PropTypes.func.isRequired
-};
-
-export default function GrammarGameModal({ onHide }) {
+export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const { userId } = useKeyContext((v) => v.myState);
   const [gameLoading, setGameLoading] = useState(false);
   const uploadGrammarGameResult = useAppContext(
@@ -28,9 +23,9 @@ export default function GrammarGameModal({ onHide }) {
   const [rankingsTab, setRankingsTab] = useState('all');
   const [gameState, setGameState] = useState('notStarted');
   const [timesPlayedToday, setTimesPlayedToday] = useState(0);
-  const [questions, setQuestions] = useState([]);
-  const [questionIds, setQuestionIds] = useState(null);
-  const [questionObj, setQuestionObj] = useState({});
+  const [questions, setQuestions] = useState<Record<string, any>[]>([]);
+  const [questionIds, setQuestionIds] = useState<any[]>([]);
+  const [questionObj, setQuestionObj] = useState<Record<string, any>>({});
   const scoreArray = useMemo(() => {
     return questionIds
       ?.map((id) => questionObj[id].score)
@@ -74,13 +69,13 @@ export default function GrammarGameModal({ onHide }) {
             }}
           >
             <nav
-              className={activeTab === 'game' ? 'active' : null}
+              className={activeTab === 'game' ? 'active' : ''}
               onClick={() => setActiveTab('game')}
             >
               Game
             </nav>
             <nav
-              className={activeTab === 'rankings' ? 'active' : null}
+              className={activeTab === 'rankings' ? 'active' : ''}
               onClick={() => setActiveTab('rankings')}
             >
               Rankings
@@ -167,7 +162,9 @@ export default function GrammarGameModal({ onHide }) {
         if (isDuplicate) {
           return window.location.reload();
         }
-        const newState = { twinkleXP: newXp };
+        const newState: { twinkleXP?: number; twinkleCoins?: number } = {
+          twinkleXP: newXp
+        };
         if (newCoins) {
           newState.twinkleCoins = newCoins;
         }
@@ -177,7 +174,7 @@ export default function GrammarGameModal({ onHide }) {
         });
       })(),
       (async () => {
-        await new Promise((resolve) =>
+        await new Promise<void>((resolve) =>
           setTimeout(() => {
             setGameState('finished');
             resolve();

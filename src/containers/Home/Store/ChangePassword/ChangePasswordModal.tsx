@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -23,11 +22,11 @@ const incorrectPasswordLabel = localize('incorrectPassword');
 const retypeNewPasswordLabel = localize('retypeNewPassword');
 const retypePasswordDoesNotMatchLabel = localize('retypePasswordDoesNotMatch');
 
-ChangePasswordModal.propTypes = {
-  onHide: PropTypes.func.isRequired
-};
-
-export default function ChangePasswordModal({ onHide }) {
+export default function ChangePasswordModal({
+  onHide
+}: {
+  onHide: () => void;
+}) {
   const {
     done: { color: doneColor },
     link: { color: linkColor }
@@ -42,12 +41,16 @@ export default function ChangePasswordModal({ onHide }) {
   const [retypeNewPassword, setRetypeNewPassword] = useState('');
   const [verificationEmailSendModalShown, setVerificationEmailSendModalShown] =
     useState(false);
-  const [errorMsgObj, setErrorMsgObj] = useState({
+  const [errorMsgObj, setErrorMsgObj] = useState<{
+    currentPassword?: string;
+    newPassword?: string;
+    retypeNewPassword?: string;
+  }>({
     currentPassword: '',
     newPassword: ''
   });
-  const newPasswordTimerRef = useRef(null);
-  const retypeNewPasswordTimerRef = useRef(null);
+  const newPasswordTimerRef: React.MutableRefObject<any> = useRef(null);
+  const retypeNewPasswordTimerRef: React.MutableRefObject<any> = useRef(null);
   const passwordIsValid = useMemo(() => {
     return isValidPassword(newPassword);
   }, [newPassword]);

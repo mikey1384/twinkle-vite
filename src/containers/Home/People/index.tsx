@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
 import ProfilePanel from '~/components/ProfilePanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -116,7 +116,7 @@ function People() {
         )}
         {profilesLoaded &&
           stringIsEmpty(userSearchText) &&
-          profiles.map((profile, index) => (
+          profiles.map((profile: { id: number }, index: number) => (
             <ProfilePanel
               style={{ marginTop: index === 0 ? 0 : '1rem' }}
               expandable
@@ -127,7 +127,7 @@ function People() {
         {profilesLoaded &&
           !stringIsEmpty(userSearchText) &&
           !searching &&
-          searchedProfiles.map((profile, index) => (
+          searchedProfiles.map((profile: { id: number }, index: number) => (
             <ProfilePanel
               style={{
                 marginTop: index === 0 ? 0 : '1rem'
@@ -173,7 +173,7 @@ function People() {
     </div>
   );
 
-  async function handleSearchUsers(text) {
+  async function handleSearchUsers(text: string) {
     const { data: users } = await request.get(
       `${URL}/user/users/search?queryString=${text}`
     );

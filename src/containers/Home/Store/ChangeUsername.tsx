@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
@@ -23,7 +23,11 @@ ChangeUsername.propTypes = {
   style: PropTypes.object
 };
 
-export default function ChangeUsername({ style }) {
+export default function ChangeUsername({
+  style
+}: {
+  style?: React.CSSProperties;
+}) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const changeUsername = useAppContext((v) => v.requestHelpers.changeUsername);
   const checkIfUsernameExists = useAppContext(
@@ -35,7 +39,7 @@ export default function ChangeUsername({ style }) {
   const [newUsername, setNewUsername] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState(false);
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
   const disabled = useMemo(() => {
     return !usernameAvailable || twinkleCoins < priceTable.username;
   }, [twinkleCoins, usernameAvailable]);
@@ -52,7 +56,7 @@ export default function ChangeUsername({ style }) {
       }, 1000);
     }
 
-    async function handleUsernameInput(username) {
+    async function handleUsernameInput(username: string) {
       if (!isValidUsername(username)) {
         setErrorMessage(
           `${username}${isNotValidUsernameLabel}.${

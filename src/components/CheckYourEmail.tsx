@@ -7,7 +7,7 @@ export default function CheckYourEmail({
   userId
 }: {
   email: string;
-  hiddenEmail: string;
+  hiddenEmail?: string;
   userId: number;
 }) {
   const sendVerificationEmail = useAppContext(

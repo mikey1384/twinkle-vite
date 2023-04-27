@@ -1,20 +1,18 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-
-PeopleFilterBar.propTypes = {
-  dropdownLabel: PropTypes.string,
-  onSetOrderByText: PropTypes.func,
-  orderByText: PropTypes.string,
-  style: PropTypes.object
-};
 
 export default function PeopleFilterBar({
   dropdownLabel,
   onSetOrderByText,
   orderByText,
   style
+}: {
+  dropdownLabel: string;
+  onSetOrderByText: Function;
+  orderByText: string;
+  style: React.CSSProperties;
 }) {
   return (
     <div
