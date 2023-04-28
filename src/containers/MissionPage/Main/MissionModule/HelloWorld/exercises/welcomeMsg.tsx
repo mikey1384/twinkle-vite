@@ -1,3 +1,4 @@
+import React from 'react';
 import { WELCOME_MSG } from './constants';
 import {
   getAstProps,
@@ -45,7 +46,15 @@ export const initialCode = `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
+export async function onRunCode({
+  ast,
+  onSetErrorMsg,
+  onUpdateMissionStatus
+}: {
+  ast: any;
+  onSetErrorMsg: (msg: React.ReactNode) => void;
+  onUpdateMissionStatus: () => void;
+}) {
   const jsxElements = getAstProps({
     ast,
     propType: 'JSXElement'
@@ -55,8 +64,8 @@ export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
     elements: jsxElements,
     filter: 'p'
   });
-  for (let paragraph of paragraphs) {
-    for (let child of paragraph?.children) {
+  for (const paragraph of paragraphs) {
+    for (const child of paragraph?.children || []) {
       welcomeText = child?.value || '';
     }
   }

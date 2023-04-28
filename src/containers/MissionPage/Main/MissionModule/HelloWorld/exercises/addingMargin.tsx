@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   getAstProps,
   filterOpeningElementsByType,
@@ -57,7 +58,15 @@ export const initialCode = `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
+export async function onRunCode({
+  ast,
+  onSetErrorMsg,
+  onUpdateMissionStatus
+}: {
+  ast: any;
+  onSetErrorMsg: (v: any) => void;
+  onUpdateMissionStatus: () => void;
+}) {
   const jsxElements = getAstProps({
     ast,
     propType: 'JSXOpeningElement'
@@ -70,7 +79,7 @@ export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
   });
   const button = buttons[0];
   const styleProps = getElementStyleProps(button);
-  for (let prop of styleProps) {
+  for (const prop of styleProps) {
     if (prop?.key?.name === 'marginTop') {
       marginTop = prop?.value?.value;
     }

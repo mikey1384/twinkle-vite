@@ -1,3 +1,4 @@
+import React from 'react';
 import { WELCOME_MSG } from './constants';
 import {
   getAstProps,
@@ -56,7 +57,15 @@ export const initialCode = `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
+export async function onRunCode({
+  ast,
+  onSetErrorMsg,
+  onUpdateMissionStatus
+}: {
+  ast: any;
+  onSetErrorMsg: (msg: React.ReactNode) => void;
+  onUpdateMissionStatus: () => void;
+}) {
   const jsxElements = getAstProps({
     ast,
     propType: 'JSXOpeningElement'
@@ -69,7 +78,7 @@ export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
   });
   const paragraph = paragraphs[0];
   const styleProps = getElementStyleProps(paragraph);
-  for (let prop of styleProps) {
+  for (const prop of styleProps) {
     if (prop?.key?.name === 'fontSize') {
       fontSize = prop?.value?.value;
     }
