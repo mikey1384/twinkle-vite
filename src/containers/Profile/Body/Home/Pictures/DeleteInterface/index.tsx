@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Picture from './Picture';
@@ -12,6 +13,10 @@ export default function DeleteInterface({
   remainingPictures,
   numPictures,
   onSetRemainingPictures
+}: {
+  remainingPictures: any[];
+  numPictures: number;
+  onSetRemainingPictures: (arg0: any) => any;
 }) {
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Pictures/DeleteInterface/index">
@@ -30,7 +35,7 @@ export default function DeleteInterface({
             <Picture
               key={index}
               onDelete={(pictureId) =>
-                onSetRemainingPictures((pictures) =>
+                onSetRemainingPictures((pictures: { id: number }[]) =>
                   pictures.filter((picture) => picture.id !== pictureId)
                 )
               }

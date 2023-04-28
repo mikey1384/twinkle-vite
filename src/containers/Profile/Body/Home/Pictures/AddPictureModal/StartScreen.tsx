@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -18,12 +18,20 @@ StartScreen.propTypes = {
 
 const deviceIsMobile = isMobile(navigator);
 
-export default function StartScreen({ navigateTo, onHide, profileId }) {
+export default function StartScreen({
+  navigateTo,
+  onHide,
+  profileId
+}: {
+  navigateTo: (arg0: any) => any;
+  onHide: () => any;
+  profileId: number;
+}) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState(null);
-  const FileInputRef = useRef(null);
+  const FileInputRef: React.RefObject<any> = useRef(null);
 
   return (
     <ErrorBoundary
@@ -133,7 +141,7 @@ export default function StartScreen({ navigateTo, onHide, profileId }) {
     </ErrorBoundary>
   );
 
-  function handleImageEditDone({ pictures }) {
+  function handleImageEditDone({ pictures }: { pictures: any[] }) {
     onSetUserState({
       userId: profileId,
       newState: { pictures }
@@ -141,13 +149,13 @@ export default function StartScreen({ navigateTo, onHide, profileId }) {
     onHide();
   }
 
-  function handlePicture(event) {
+  function handlePicture(event: any) {
     const reader = new FileReader();
     const file = event.target.files[0];
     if (file.size / 1000 > MAX_PROFILE_PIC_SIZE) {
       return setAlertModalShown(true);
     }
-    reader.onload = (upload) => {
+    reader.onload = (upload: any) => {
       setImageEditModalShown(true);
       setImageUri(upload.target.result);
     };
