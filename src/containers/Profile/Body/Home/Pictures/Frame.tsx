@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ImageModal from '~/components/Modals/ImageModal';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
@@ -22,6 +22,13 @@ export default function Frame({
   picture,
   style,
   userIsUploader
+}: {
+  forCarousel?: boolean;
+  numPictures: number;
+  onUpdatePictureCaption: (arg0: any) => any;
+  picture: any;
+  style: React.CSSProperties;
+  userIsUploader: boolean;
 }) {
   const updateUserPictureCaption = useAppContext(
     (v) => v.requestHelpers.updateUserPictureCaption
@@ -83,7 +90,7 @@ export default function Frame({
     </div>
   );
 
-  async function handleEditCaption(text) {
+  async function handleEditCaption(text: string) {
     await updateUserPictureCaption({ caption: text, pictureId: picture.id });
     onUpdatePictureCaption({ caption: text, pictureId: picture.id });
   }

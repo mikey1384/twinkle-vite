@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import ItemTypes from '~/constants/itemTypes';
 import { css } from '@emotion/css';
@@ -13,7 +13,17 @@ Picture.propTypes = {
   onMove: PropTypes.func.isRequired
 };
 
-export default function Picture({ numPictures, picture, style, onMove }) {
+export default function Picture({
+  numPictures,
+  picture,
+  style,
+  onMove
+}: {
+  picture: any;
+  numPictures: number;
+  style: React.CSSProperties;
+  onMove: (arg0: any) => any;
+}) {
   const imageUrl = useMemo(() => {
     return picture?.src ? `${cloudFrontURL}${picture?.src}` : '';
   }, [picture]);
@@ -28,7 +38,7 @@ export default function Picture({ numPictures, picture, style, onMove }) {
   });
   const [, drop] = useDrop({
     accept: ItemTypes.PICTURE,
-    hover(item) {
+    hover(item: { id: number }) {
       if (!Draggable.current) {
         return;
       }
@@ -37,10 +47,11 @@ export default function Picture({ numPictures, picture, style, onMove }) {
       }
     }
   });
+  const PictureRef: any = drag(drop(Draggable));
 
   return (
     <div
-      ref={drag(drop(Draggable))}
+      ref={PictureRef}
       className={css`
         cursor: pointer;
         opacity: ${isDragging ? 0.5 : 1};
