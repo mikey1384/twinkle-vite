@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
@@ -16,6 +17,11 @@ export default function CategoryInput({
   categoryText,
   onSubmit,
   uploading
+}: {
+  onChange: (event: any) => void;
+  categoryText: string;
+  onSubmit: () => void;
+  uploading: boolean;
 }) {
   return (
     <div style={{ display: 'flex' }}>
@@ -24,7 +30,7 @@ export default function CategoryInput({
         placeholder="Enter category..."
         value={categoryText}
         style={{ width: '100%' }}
-        onKeyPress={(event) => {
+        onKeyPress={(event: any) => {
           if (
             !uploading &&
             !stringIsEmpty(categoryText) &&

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -28,6 +28,16 @@ export default function CategoryModal({
   onMoveQuestion,
   onSetCategories,
   onHide
+}: {
+  category: string;
+  categories: any[];
+  onEditGrammarCategory: (info: {
+    category: string;
+    newCategory: string;
+  }) => void;
+  onMoveQuestion: () => void;
+  onSetCategories: (categories: any) => void;
+  onHide: () => void;
 }) {
   const deleteGrammarCategory = useAppContext(
     (v) => v.requestHelpers.deleteGrammarCategory
@@ -42,7 +52,7 @@ export default function CategoryModal({
   const [loading, setLoading] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editiedCategory, setEditedCategory] = useState(category);
+  const [editedCategory, setEditedCategory] = useState(category);
   const [questions, setQuestions] = useState([]);
   useEffect(() => {
     init();
@@ -67,15 +77,12 @@ export default function CategoryModal({
                 placeholder="Enter a new label..."
                 autoFocus
                 onChange={(text) => setEditedCategory(text)}
-                onKeyPress={(event) => {
-                  if (
-                    !stringIsEmpty(editiedCategory) &&
-                    event.key === 'Enter'
-                  ) {
-                    handleChangeLabel(editiedCategory);
+                onKeyPress={(event: any) => {
+                  if (!stringIsEmpty(editedCategory) && event.key === 'Enter') {
+                    handleChangeLabel();
                   }
                 }}
-                value={editiedCategory}
+                value={editedCategory}
               />
             ) : (
               <span style={{ textTransform: 'capitalize' }}>{category}</span>
@@ -96,7 +103,7 @@ export default function CategoryModal({
               >
                 <small
                   style={{ opacity: changingLabel ? 0.5 : 1 }}
-                  onClick={changingLabel ? null : handleChangeLabel}
+                  onClick={changingLabel ? undefined : handleChangeLabel}
                 >
                   <Icon style={{ color: Color.green() }} icon="check" />
                   <span style={{ marginLeft: '0.7rem', color: Color.green() }}>
@@ -168,7 +175,7 @@ export default function CategoryModal({
                 <span style={{ fontSize: '2rem' }}>No questions</span>
               </div>
             )}
-            {questions.map((question, index) => (
+            {questions.map((question: { id: number }, index) => (
               <QuestionItem
                 key={question.id}
                 categories={categories}
@@ -193,8 +200,8 @@ export default function CategoryModal({
           onConfirm={async () => {
             await deleteGrammarCategory(category);
             setConfirmModalShown(false);
-            onSetCategories((categories) =>
-              categories.filter((c) => c !== category)
+            onSetCategories((categories: any[]) =>
+              categories.filter((c: string) => c !== category)
             );
             onHide();
           }}
@@ -203,15 +210,17 @@ export default function CategoryModal({
     </Modal>
   );
 
-  function handleMoveQuestion(questionId) {
-    setQuestions((questions) => questions.filter((q) => q.id !== questionId));
+  function handleMoveQuestion(questionId: number) {
+    setQuestions((questions) =>
+      questions.filter((q: { id: number }) => q.id !== questionId)
+    );
     onMoveQuestion();
   }
 
   async function handleChangeLabel() {
     setChangingLabel(true);
-    await editGrammarCategory({ category, newCategory: editiedCategory });
-    onEditGrammarCategory({ category, newCategory: editiedCategory });
+    await editGrammarCategory({ category, newCategory: editedCategory });
+    onEditGrammarCategory({ category, newCategory: editedCategory });
     setIsEditing(false);
     setChangingLabel(false);
   }
