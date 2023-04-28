@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -7,7 +8,11 @@ EnoughKarmaInstructions.propTypes = {
   requiredKarmaPoints: PropTypes.number
 };
 
-export default function EnoughKarmaInstructions({ requiredKarmaPoints }) {
+export default function EnoughKarmaInstructions({
+  requiredKarmaPoints
+}: {
+  requiredKarmaPoints: number;
+}) {
   return (
     <div
       className={css`

@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import AlertModal from '~/components/Modals/AlertModal';
@@ -19,7 +19,15 @@ TakeScreenshot.propTypes = {
 
 const expectedText = 'captured this screenshot';
 
-export default function TakeScreenshot({ attachment, missionId, style }) {
+export default function TakeScreenshot({
+  attachment,
+  missionId,
+  style
+}: {
+  attachment: any;
+  missionId: number;
+  style?: React.CSSProperties;
+}) {
   const [isReady, setIsReady] = useState(false);
   const [buttonShown, setButtonShown] = useState(false);
   const uploadMissionAttempt = useAppContext(
@@ -33,7 +41,7 @@ export default function TakeScreenshot({ attachment, missionId, style }) {
   const [isChecking, setIsChecking] = useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [isFailed, setIsFailed] = useState(false);
-  const FileInputRef = useRef(null);
+  const FileInputRef: React.RefObject<any> = useRef(null);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
@@ -209,7 +217,7 @@ export default function TakeScreenshot({ attachment, missionId, style }) {
     </div>
   );
 
-  function handleFileSelection(event) {
+  function handleFileSelection(event: any) {
     const fileObj = event.target.files[0];
     if (fileObj.size / mb > maxSize) {
       return setAlertModalShown(true);
@@ -217,7 +225,7 @@ export default function TakeScreenshot({ attachment, missionId, style }) {
     const { fileType } = getFileInfoFromFileName(fileObj.name);
     if (fileType === 'image') {
       const reader = new FileReader();
-      reader.onload = (upload) => {
+      reader.onload = (upload: any) => {
         const payload = upload.target.result;
         setIsFailed(false);
         setIsChecking(true);
@@ -225,7 +233,7 @@ export default function TakeScreenshot({ attachment, missionId, style }) {
           payload,
           function (img) {
             Tesseract.recognize(img, 'eng').then(async ({ data: { text } }) => {
-              function stripNonAlphanumeric(text) {
+              function stripNonAlphanumeric(text: string) {
                 return text.replace(/[^a-zA-Z0-9\s]+/g, '');
               }
               const strippedText = stripNonAlphanumeric(text);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactPlayer from 'react-player';
 import Button from '~/components/Button';
@@ -17,6 +17,10 @@ export default function PasteCode({
   initialCode,
   style,
   onCorrectCodeEntered
+}: {
+  initialCode: string;
+  style?: React.CSSProperties;
+  onCorrectCodeEntered: () => void;
 }) {
   const [watched, setWatched] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
@@ -130,7 +134,7 @@ export default function PasteCode({
     </div>
   );
 
-  function handleCodeInput(text) {
+  function handleCodeInput(text: string) {
     setErrorMsg('');
     setVerificationCode(text);
     if (text.length === 6) {

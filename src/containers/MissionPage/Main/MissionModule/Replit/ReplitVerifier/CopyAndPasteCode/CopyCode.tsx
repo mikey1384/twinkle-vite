@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Code from '~/components/Texts/Code';
 import Button from '~/components/Button';
@@ -15,7 +15,15 @@ CopyCode.propTypes = {
   style: PropTypes.object
 };
 
-export default function CopyCode({ className, codeToCopy, style }) {
+export default function CopyCode({
+  className,
+  codeToCopy,
+  style
+}: {
+  className?: string;
+  codeToCopy: string;
+  style: React.CSSProperties;
+}) {
   const [copiedShown, setCopiedShown] = useState(false);
   const codeRef = useRef(null);
   return (
@@ -79,11 +87,17 @@ export default function CopyCode({ className, codeToCopy, style }) {
     </div>
   );
 
-  function handleCopyToClipboard() {
-    const range = document.createRange();
-    range.selectNode(codeRef.current);
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
-    document.execCommand('copy');
+  async function handleCopyToClipboard() {
+    if (codeRef.current) {
+      const range = document.createRange();
+      range.selectNode(codeRef.current);
+      window.getSelection()?.removeAllRanges();
+      window.getSelection()?.addRange(range);
+    }
+    try {
+      await navigator.clipboard.writeText(codeToCopy);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
   }
 }

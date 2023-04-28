@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ReplitVerifier from './ReplitVerifier';
@@ -10,7 +10,13 @@ Replit.propTypes = {
   task: PropTypes.object.isRequired
 };
 
-export default function Replit({ task, onSetMissionState }) {
+export default function Replit({
+  task,
+  onSetMissionState
+}: {
+  onSetMissionState: (v: any) => void;
+  task: any;
+}) {
   const missionTypeIdHash = useMissionContext((v) => v.state.missionTypeIdHash);
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
   const copyAndPasteId = useMemo(
