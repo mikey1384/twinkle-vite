@@ -27,7 +27,7 @@ export default function MissionModule({
   style
 }: {
   mission: any;
-  isRepeating: boolean;
+  isRepeating?: boolean;
   onSetMissionState: (v: any) => void;
   style?: React.CSSProperties;
 }) {

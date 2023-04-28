@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -8,7 +9,13 @@ GoToNextTask.propTypes = {
   nextTaskType: PropTypes.string
 };
 
-export default function GoToNextTask({ style, nextTaskType }) {
+export default function GoToNextTask({
+  style,
+  nextTaskType
+}: {
+  style?: React.CSSProperties;
+  nextTaskType?: string;
+}) {
   const navigate = useNavigate();
   return (
     <div

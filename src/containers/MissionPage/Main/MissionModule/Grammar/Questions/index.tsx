@@ -14,7 +14,7 @@ export default function Questions({
   isRepeating,
   mission
 }: {
-  isRepeating: boolean;
+  isRepeating?: boolean;
   mission: any;
 }) {
   const [submitDisabled, setSubmitDisabled] = useState(true);

@@ -29,7 +29,7 @@ export default function StartScreen({
   onInitMission,
   onStartButtonClick
 }: {
-  isRepeating: boolean;
+  isRepeating?: boolean;
   loading: boolean;
   mission: any;
   myAttempts: any;

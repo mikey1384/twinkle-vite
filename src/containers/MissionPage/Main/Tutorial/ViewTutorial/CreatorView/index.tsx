@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Editor from './Editor';
@@ -18,6 +18,11 @@ export default function CreatorView({
   onSetMissionState,
   tutorialPrompt,
   tutorialButtonLabel
+}: {
+  missionId: number;
+  onSetMissionState: (info: { missionId: number; newState: any }) => void;
+  tutorialPrompt?: string;
+  tutorialButtonLabel?: string;
 }) {
   const {
     link: { color: linkColor }

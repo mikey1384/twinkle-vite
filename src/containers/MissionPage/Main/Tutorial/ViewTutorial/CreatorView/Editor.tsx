@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
@@ -21,6 +21,12 @@ export default function Editor({
   onSetMissionState,
   tutorialPrompt,
   tutorialButtonLabel
+}: {
+  missionId: number;
+  onClose: () => void;
+  onSetMissionState: (info: { missionId: number; newState: any }) => void;
+  tutorialPrompt?: string;
+  tutorialButtonLabel?: string;
 }) {
   const {
     done: { color: doneColor }

@@ -13,7 +13,7 @@ export default function Grammar({
   isRepeating,
   mission
 }: {
-  isRepeating: boolean;
+  isRepeating?: boolean;
   mission: any;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
