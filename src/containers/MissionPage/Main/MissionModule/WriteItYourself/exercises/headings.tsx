@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   getAstProps,
   filterElementsByType,
@@ -9,12 +10,12 @@ import {
 import { stringsAreCaseInsensitivelyEqual } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 
-const HEADING_LABEL = (username) => `${username}'s website`;
+const HEADING_LABEL = (username: string) => `${username}'s website`;
 const SUBHEADING_LABEL = 'click the buttons below';
 const MARGIN_BOTTOM = '10rem';
 
 export const title = `Add a Heading and a Subheading`;
-export const instruction = ({ username }) => (
+export const instruction = ({ username }: { username: string }) => (
   <>
     <div>
       Write{' '}
@@ -106,6 +107,11 @@ export async function onRunCode({
   onUpdateMissionStatus,
   onSetErrorMsg,
   username
+}: {
+  ast: any;
+  onUpdateMissionStatus: () => void;
+  onSetErrorMsg: (error: any) => void;
+  username: string;
 }) {
   let headingLabel = '';
   let subheadingLabel = '';
@@ -130,7 +136,7 @@ export async function onRunCode({
   if (subheadingElement) {
     subheadingLabel = getElementInnerText(subheadingElement);
     const styleProps = getElementStyleProps(subheadingElement.openingElement);
-    for (let prop of styleProps) {
+    for (const prop of styleProps) {
       const propName = prop?.key?.name;
       const propValue = prop?.value?.value;
       if (propName === 'marginBottom') {

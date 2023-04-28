@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import NotEnoughKarmaInstructions from './NotEnoughKarmaInstructions';
@@ -11,7 +11,7 @@ TwinkleStore.propTypes = {
   mission: PropTypes.object
 };
 
-export default function TwinkleStore({ mission }) {
+export default function TwinkleStore({ mission }: { mission: any }) {
   const { canChangeUsername, userId, karmaPoints } = useKeyContext(
     (v) => v.myState
   );

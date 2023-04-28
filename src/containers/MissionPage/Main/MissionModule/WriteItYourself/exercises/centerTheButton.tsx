@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   getAstProps,
   filterElementsByType,
@@ -43,7 +44,15 @@ export const initialCode = `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
+export async function onRunCode({
+  ast,
+  onUpdateMissionStatus,
+  onSetErrorMsg
+}: {
+  ast: any;
+  onUpdateMissionStatus: () => void;
+  onSetErrorMsg: (msg: React.ReactNode) => void;
+}) {
   let divWidth = '';
   let divDisplay = '';
   let divJustifyContent = '';
@@ -58,7 +67,7 @@ export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
   const divElement = divElements[0];
   if (divElement) {
     const styleProps = getElementStyleProps(divElement.openingElement);
-    for (let prop of styleProps) {
+    for (const prop of styleProps) {
       const propName = prop?.key?.name;
       const propValue = prop?.value?.value;
       if (propName === 'width') {

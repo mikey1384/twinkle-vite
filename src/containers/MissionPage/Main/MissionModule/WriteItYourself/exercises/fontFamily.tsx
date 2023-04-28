@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   getAstProps,
   getElementStyleProps,
@@ -33,7 +34,11 @@ export const instruction = (
     </div>
   </>
 );
-export const initialCode = ({ username }) => `function HomePage() {
+export const initialCode = ({
+  username
+}: {
+  username: string;
+}) => `function HomePage() {
   return (
     <div
       style={{
@@ -80,7 +85,15 @@ export const initialCode = ({ username }) => `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
+export async function onRunCode({
+  ast,
+  onUpdateMissionStatus,
+  onSetErrorMsg
+}: {
+  ast: any;
+  onUpdateMissionStatus: () => void;
+  onSetErrorMsg: (message: React.ReactNode) => void;
+}) {
   let headingFontFamily = '';
   let headingColor = '';
   let subheadingFontFamily = '';
@@ -98,7 +111,7 @@ export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
   const headingElement = headingElements[0];
   if (headingElement) {
     const styleProps = getElementStyleProps(headingElement);
-    for (let prop of styleProps) {
+    for (const prop of styleProps) {
       const propName = prop?.key?.name;
       const propValue = prop?.value?.value;
       if (propName === 'fontFamily') {
@@ -116,7 +129,7 @@ export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
   const subheadingElement = subheadingElements[0];
   if (subheadingElement) {
     const styleProps = getElementStyleProps(subheadingElement);
-    for (let prop of styleProps) {
+    for (const prop of styleProps) {
       const propName = prop?.key?.name;
       const propValue = prop?.value?.value;
       if (propName === 'fontFamily') {
@@ -134,7 +147,7 @@ export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
   const firstButton = buttons[0];
   if (firstButton) {
     const styleProps = getElementStyleProps(firstButton);
-    for (let prop of styleProps) {
+    for (const prop of styleProps) {
       const propName = prop?.key?.name;
       const propValue = prop?.value?.value;
       if (propName === 'fontFamily') {
@@ -145,7 +158,7 @@ export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
   const secondButton = buttons[1];
   if (secondButton) {
     const styleProps = getElementStyleProps(secondButton);
-    for (let prop of styleProps) {
+    for (const prop of styleProps) {
       const propName = prop?.key?.name;
       const propValue = prop?.value?.value;
       if (propName === 'fontFamily') {

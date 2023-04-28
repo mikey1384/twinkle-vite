@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
@@ -22,6 +23,12 @@ export default function ItemPanel({
   style,
   karmaPoints,
   unlockProgress
+}: {
+  className?: string;
+  requiredKarmaPoints: number;
+  style?: React.CSSProperties;
+  karmaPoints: number;
+  unlockProgress: number;
 }) {
   const { canChangeUsername } = useKeyContext((v) => v.myState);
 
@@ -86,7 +93,7 @@ export default function ItemPanel({
         </div>
       </div>
       <ProgressBar
-        color={unlockProgress === 100 ? Color.green() : null}
+        color={unlockProgress === 100 ? Color.green() : ''}
         progress={unlockProgress}
       />
       <p

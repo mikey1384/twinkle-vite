@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   getAstProps,
   filterElementsByType,
@@ -63,7 +64,15 @@ export const initialCode = `function HomePage() {
   return ();
 }`;
 
-export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
+export async function onRunCode({
+  ast,
+  onUpdateMissionStatus,
+  onSetErrorMsg
+}: {
+  ast: any;
+  onUpdateMissionStatus: () => void;
+  onSetErrorMsg: (msg: React.ReactNode) => void;
+}) {
   let buttonColor = '';
   let buttonTextColor = '';
   let buttonText = '';
@@ -82,7 +91,7 @@ export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
   let onClickFunc = null;
   if (button) {
     const styleProps = getElementStyleProps(button.openingElement);
-    for (let prop of styleProps) {
+    for (const prop of styleProps) {
       const propName = prop?.key?.name;
       const propValue = prop?.value?.value;
       if (propName === 'background' || propName === 'backgroundColor') {
