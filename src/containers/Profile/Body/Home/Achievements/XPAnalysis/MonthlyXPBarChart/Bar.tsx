@@ -14,7 +14,7 @@ export default function Bar({
   totalLength,
   ...props
 }: {
-  index: number;
+  index?: number;
   totalLength: number;
 }) {
   return (

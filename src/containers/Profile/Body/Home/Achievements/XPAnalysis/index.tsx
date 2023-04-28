@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
 import MonthlyXPBarChart from './MonthlyXPBarChart';
@@ -15,7 +15,15 @@ XPAnalysis.propTypes = {
   style: PropTypes.object
 };
 
-export default function XPAnalysis({ selectedTheme, userId, style }) {
+export default function XPAnalysis({
+  selectedTheme,
+  userId,
+  style
+}: {
+  selectedTheme: string;
+  userId: number;
+  style?: React.CSSProperties;
+}) {
   const loadMonthlyXp = useAppContext((v) => v.requestHelpers.loadMonthlyXp);
   const loadXpAcquisition = useAppContext(
     (v) => v.requestHelpers.loadXpAcquisition
@@ -62,7 +70,7 @@ export default function XPAnalysis({ selectedTheme, userId, style }) {
               xpAcquisitionData.length > 0 ? 'space-between' : 'center'
           }}
         >
-          <MonthlyXPBarChart data={monthlyXPData} colorTheme={selectedTheme} />
+          <MonthlyXPBarChart data={monthlyXPData} />
           {xpAcquisitionData.length > 0 && (
             <AcquisitionPieChart data={xpAcquisitionData} />
           )}
