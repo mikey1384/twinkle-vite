@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import GoBack from '~/components/GoBack';
 import Task from './Task';
@@ -16,7 +16,7 @@ TaskContainer.propTypes = {
   mission: PropTypes.object.isRequired
 };
 
-export default function TaskContainer({ mission }) {
+export default function TaskContainer({ mission }: { mission: any }) {
   const { taskType } = useParams();
   const { userId, managementLevel } = useKeyContext((v) => v.myState);
   const missionTypeIdHash = useMissionContext((v) => v.state.missionTypeIdHash);
@@ -74,8 +74,8 @@ export default function TaskContainer({ mission }) {
 
   const taskOrder = useMemo(() => {
     const result = [];
-    for (let subMission of mission?.subMissions || []) {
-      for (let task of subMission?.tasks || []) {
+    for (const subMission of mission?.subMissions || []) {
+      for (const task of subMission?.tasks || []) {
         result.push(task.missionType);
       }
     }
@@ -142,7 +142,6 @@ export default function TaskContainer({ mission }) {
         style={{ width: '100%', marginTop: '2rem' }}
         task={task}
         onSetMissionState={onSetMissionState}
-        tutorialRef={TutorialRef}
         nextTaskType={nextTask}
       />
       <GoBack
@@ -154,7 +153,6 @@ export default function TaskContainer({ mission }) {
       />
       <Tutorial
         mission={task}
-        myAttempts={myAttempts}
         innerRef={TutorialRef}
         className={css`
           margin-top: 5rem;

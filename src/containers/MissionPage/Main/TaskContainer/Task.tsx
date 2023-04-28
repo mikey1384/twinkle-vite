@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MissionModule from '../MissionModule';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -38,6 +38,11 @@ export default function Task({
   onSetMissionState,
   style,
   nextTaskType
+}: {
+  task: any;
+  onSetMissionState: (v: any) => void;
+  style?: React.CSSProperties;
+  nextTaskType?: string;
 }) {
   const checkMissionStatus = useAppContext(
     (v) => v.requestHelpers.checkMissionStatus
@@ -131,7 +136,7 @@ export default function Task({
         <div style={{ width: '20%', height: '100%' }}>
           {taskThumb && (
             <img
-              style={{ width: '100%', height: '100%', aspectFit: 'cover' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               src={taskThumb}
             />
           )}
@@ -175,9 +180,7 @@ export default function Task({
       {missionModuleShown && (
         <MissionModule
           mission={task}
-          fileUploadProgress={fileUploadProgress}
           onSetMissionState={onSetMissionState}
-          uploadingFile={uploadingFile}
           style={{ marginTop: '4.5rem' }}
         />
       )}

@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import GoBack from '~/components/GoBack';
@@ -8,7 +9,11 @@ NotUnlocked.propTypes = {
   missionTitle: PropTypes.string.isRequired
 };
 
-export default function NotUnlocked({ missionTitle }) {
+export default function NotUnlocked({
+  missionTitle
+}: {
+  missionTitle: string;
+}) {
   return (
     <div>
       <div
