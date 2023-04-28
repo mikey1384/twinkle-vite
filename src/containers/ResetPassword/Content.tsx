@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import PasswordForm from './PasswordForm';
 import { useParams } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
 
 export default function Content() {
-  const { token } = useParams();
+  const { token = '' } = useParams();
   const verifyEmail = useAppContext((v) => v.requestHelpers.verifyEmail);
   const [loaded, setLoaded] = useState(false);
   const [profilePicUrl, setProfilePicUrl] = useState(null);
@@ -31,7 +31,7 @@ export default function Content() {
         if (errorMsg) {
           setErrorMessage(errorMsg);
         }
-      } catch (error) {
+      } catch (error: any) {
         setLoaded(true);
         setExpired(error.response?.status === 401);
       }

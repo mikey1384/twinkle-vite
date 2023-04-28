@@ -1,3 +1,4 @@
+import React from 'react';
 import Content from './Content';
 import { Routes, Route } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';

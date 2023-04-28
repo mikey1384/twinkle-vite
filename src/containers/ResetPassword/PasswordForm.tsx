@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
@@ -12,7 +12,15 @@ PasswordForm.propTypes = {
   username: PropTypes.string.isRequired
 };
 
-export default function PasswordForm({ profilePicUrl, userId, username }) {
+export default function PasswordForm({
+  profilePicUrl,
+  userId,
+  username
+}: {
+  profilePicUrl: number;
+  userId: number;
+  username: string;
+}) {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -57,7 +65,7 @@ export default function PasswordForm({ profilePicUrl, userId, username }) {
       >
         <Button
           style={{ fontSize: '2rem' }}
-          disabled={errorMsg || stringIsEmpty(password)}
+          disabled={!!errorMsg || stringIsEmpty(password)}
           filled
           color="blue"
           onClick={handleSubmit}
@@ -78,7 +86,7 @@ export default function PasswordForm({ profilePicUrl, userId, username }) {
     navigate('/');
   }
 
-  function isValidPassword(password) {
+  function isValidPassword(password: string) {
     return password.length > 4 && !stringIsEmpty(password);
   }
 }

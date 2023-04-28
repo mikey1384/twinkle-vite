@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import ColorSelector from '~/components/ColorSelector';
@@ -31,6 +31,11 @@ export default function Cover({
   onSetTheme,
   profile,
   selectedTheme
+}: {
+  onSelectTheme: (theme: string) => void;
+  onSetTheme: () => void;
+  profile: any;
+  selectedTheme: string;
 }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -48,7 +53,7 @@ export default function Cover({
   const [imageModalShown, setImageModalShown] = useState(false);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState(null);
-  const FileInputRef = useRef(null);
+  const FileInputRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
     onSelectTheme(profileTheme || 'logoBlue');
@@ -141,7 +146,7 @@ export default function Cover({
               }
             `}
             style={{
-              background: colorSelectorShown && '#fff',
+              background: colorSelectorShown ? '#fff' : '',
               borderRadius,
               position: 'absolute',
               padding: '1rem',
@@ -152,7 +157,6 @@ export default function Cover({
             {!colorSelectorShown && (
               <Button
                 style={{ marginBottom: '-1rem', marginRight: '-1rem' }}
-                default
                 filled
                 onClick={() => setColorSelectorShown(true)}
               >
@@ -248,7 +252,7 @@ export default function Cover({
               ? () => FileInputRef.current.click()
               : profilePicUrl
               ? () => setImageModalShown(true)
-              : null
+              : undefined
           }
           profilePicUrl={profilePicUrl}
           online={chatStatus[profile.id]?.isOnline}
@@ -289,7 +293,7 @@ export default function Cover({
     setColorSelectorShown(false);
   }
 
-  function handleImageEditDone({ filePath }) {
+  function handleImageEditDone({ filePath }: { filePath: string }) {
     onSetUserState({
       userId,
       newState: { profilePicUrl: `/profile/${filePath}` }
@@ -302,13 +306,13 @@ export default function Cover({
     onSetTheme();
   }
 
-  function handlePicture(event) {
+  function handlePicture(event: any) {
     const reader = new FileReader();
     const file = event.target.files[0];
     if (file.size / 1000 > MAX_PROFILE_PIC_SIZE) {
       return setAlertModalShown(true);
     }
-    reader.onload = (upload) => {
+    reader.onload = (upload: any) => {
       setImageEditModalShown(true);
       setImageUri(upload.target.result);
     };
