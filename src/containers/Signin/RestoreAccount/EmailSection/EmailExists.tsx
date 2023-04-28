@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import CheckYourEmail from '~/components/CheckYourEmail';
 import SelectEmail from '~/components/SelectEmail';
@@ -10,16 +10,24 @@ EmailExists.propTypes = {
   userId: PropTypes.number.isRequired
 };
 
-export default function EmailExists({ email, userId, verifiedEmail }) {
+export default function EmailExists({
+  email,
+  userId,
+  verifiedEmail
+}: {
+  email: string;
+  userId: number;
+  verifiedEmail: string;
+}) {
   const hiddenEmail = useMemo(() => {
-    return hideEmail(email);
+    return hideEmail(email) || '';
   }, [email]);
   const hiddenVerifiedEmail = useMemo(() => {
     return !email || email !== verifiedEmail ? hideEmail(verifiedEmail) : '';
   }, [email, verifiedEmail]);
 
   const viableEmail = email || verifiedEmail;
-  const hiddenViableEmail = hiddenEmail || hiddenVerifiedEmail;
+  const hiddenViableEmail = hiddenEmail || hiddenVerifiedEmail || '';
 
   return (
     <div>
@@ -44,7 +52,7 @@ export default function EmailExists({ email, userId, verifiedEmail }) {
     </div>
   );
 
-  function hideEmail(email) {
+  function hideEmail(email: string) {
     if (!email) return null;
     let result = '';
     const emailAccountNamePart = email.split('@')[0];
