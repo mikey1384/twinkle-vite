@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
 import StatusMsg from '~/components/UserDetails/StatusMsg';
@@ -41,7 +41,13 @@ Intro.propTypes = {
   selectedTheme: PropTypes.string.isRequired
 };
 
-export default function Intro({ profile, selectedTheme }) {
+export default function Intro({
+  profile,
+  selectedTheme
+}: {
+  profile: any;
+  selectedTheme: string;
+}) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const auth = useAppContext((v) => v.requestHelpers.auth);
@@ -84,13 +90,13 @@ export default function Intro({ profile, selectedTheme }) {
     youtubeUrl
   } = profile;
 
-  const StatusInputRef = useRef(null);
+  const StatusInputRef: React.RefObject<any> = useRef(null);
   const bioExists = useMemo(
     () => profileFirstRow || profileSecondRow || profileThirdRow,
     [profileFirstRow, profileSecondRow, profileThirdRow]
   );
   const usernameColor = useMemo(() => Color[selectedTheme](), [selectedTheme]);
-  let defaultMessage = useMemo(() => {
+  const defaultMessage = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return (
         <p>
@@ -155,7 +161,7 @@ export default function Intro({ profile, selectedTheme }) {
                   statusColor={editedStatusColor || statusColor}
                   editedStatusMsg={editedStatusMsg}
                   setColor={(color) => onSetEditedStatusColor(color)}
-                  onTextChange={(event) => {
+                  onTextChange={(event: any) => {
                     onSetEditedStatusMsg(
                       addEmoji(renderText(event.target.value))
                     );
@@ -399,7 +405,7 @@ export default function Intro({ profile, selectedTheme }) {
     </ErrorBoundary>
   );
 
-  async function handleUploadBio(params) {
+  async function handleUploadBio(params: any) {
     if (banned?.posting) {
       return;
     }
@@ -411,7 +417,7 @@ export default function Intro({ profile, selectedTheme }) {
     setBioEditModalShown(false);
   }
 
-  async function handleEditGreeting(greeting) {
+  async function handleEditGreeting(greeting: string) {
     if (banned?.posting) {
       return;
     }

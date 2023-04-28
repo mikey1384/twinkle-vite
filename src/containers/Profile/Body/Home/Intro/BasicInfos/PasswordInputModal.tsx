@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -11,7 +11,13 @@ PasswordInputModal.propTypes = {
   onConfirm: PropTypes.func.isRequired
 };
 
-export default function PasswordInputModal({ onHide, onConfirm }) {
+export default function PasswordInputModal({
+  onHide,
+  onConfirm
+}: {
+  onHide: () => any;
+  onConfirm: () => any;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -34,7 +40,7 @@ export default function PasswordInputModal({ onHide, onConfirm }) {
           placeholder="Enter your password"
           type="password"
           hasError={!!errorMsg}
-          onKeyPress={(event) => {
+          onKeyPress={(event: any) => {
             if (
               !stringIsEmpty(password) &&
               event.key === 'Enter' &&

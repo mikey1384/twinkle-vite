@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -65,6 +65,23 @@ export default function BasicInfos({
   youtubeName,
   youtubeUrl,
   style
+}: {
+  authLevel: number;
+  className?: string;
+  email: string;
+  verifiedEmail: string;
+  online: boolean;
+  profilePicUrl: string;
+  profileTheme: string;
+  joinDate: number;
+  lastActive: string;
+  selectedTheme: string;
+  userId: number;
+  username: string;
+  website: string;
+  youtubeName: string;
+  youtubeUrl: string;
+  style?: React.CSSProperties;
 }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
@@ -198,7 +215,7 @@ export default function BasicInfos({
                     icon="check-circle"
                     onClick={
                       myId !== userId || emailVerified
-                        ? () => {}
+                        ? () => null
                         : onVerifyEmail
                     }
                   />
@@ -376,8 +393,8 @@ export default function BasicInfos({
   }
 
   function goToEmail() {
-    const emailProvider = 'http://www.' + email.split('@')[1];
-    window.location = emailProvider;
+    const emailProvider = 'https://www.' + email.split('@')[1];
+    window.location.href = emailProvider;
   }
 
   async function onEditedInfoSubmit({
@@ -385,6 +402,11 @@ export default function BasicInfos({
     website,
     youtubeName,
     youtubeUrl
+  }: {
+    email: string;
+    website: string;
+    youtubeName: string;
+    youtubeUrl: string;
   }) {
     if (banned?.posting) {
       return;
@@ -405,7 +427,15 @@ export default function BasicInfos({
     setVerificationEmailSent(true);
   }
 
-  function renderEditMessage({ email, youtubeUrl, website }) {
+  function renderEditMessage({
+    email,
+    youtubeUrl,
+    website
+  }: {
+    email: string;
+    youtubeUrl: string;
+    website: string;
+  }) {
     const unfilledItems = [
       { label: localize('email'), value: email },
       { label: localize('youtube'), value: youtubeUrl },

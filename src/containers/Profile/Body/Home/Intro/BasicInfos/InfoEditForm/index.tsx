@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
@@ -26,6 +26,13 @@ export default function InfoEditForm({
   website,
   youtubeName,
   youtubeUrl
+}: {
+  email: string;
+  onCancel: () => any;
+  onSubmit: (arg0: any) => any;
+  website: string;
+  youtubeName: string;
+  youtubeUrl: string;
 }) {
   const {
     done: { color: doneColor }
@@ -55,7 +62,7 @@ export default function InfoEditForm({
     youtubeError = '',
     editedYoutubeName = youtubeName || ''
   } = userInfo;
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
 
   return (
     <div>
@@ -132,13 +139,13 @@ export default function InfoEditForm({
     );
   }
 
-  function onEmailInputChange(text) {
+  function onEmailInputChange(text: string) {
     onSetEditedEmail(text);
     onSetEmailError('');
     checkEmail(text);
   }
 
-  function checkEmail(text) {
+  function checkEmail(text: string) {
     clearTimeout(timerRef.current);
     setChecking(true);
     timerRef.current = setTimeout(() => {
@@ -151,13 +158,13 @@ export default function InfoEditForm({
     }, 1000);
   }
 
-  function onWebsiteInputChange(text) {
+  function onWebsiteInputChange(text: string) {
     onSetEditedWebsite(text);
     onSetWebsiteError('');
     checkWebsiteUrl(text);
   }
 
-  function checkWebsiteUrl(text) {
+  function checkWebsiteUrl(text: string) {
     clearTimeout(timerRef.current);
     setChecking(true);
     timerRef.current = setTimeout(() => {
@@ -170,13 +177,13 @@ export default function InfoEditForm({
     }, 1000);
   }
 
-  function onYoutubeInputChange(text) {
+  function onYoutubeInputChange(text: string) {
     onSetEditedYoutubeUrl(text);
     onSetYoutubeError('');
     checkYoutubeUrl(text);
   }
 
-  function checkYoutubeUrl(text) {
+  function checkYoutubeUrl(text: string) {
     clearTimeout(timerRef.current);
     setChecking(true);
     timerRef.current = setTimeout(() => {
