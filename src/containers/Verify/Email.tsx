@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import Link from '~/components/Link';
 import { useParams } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
 
 export default function Email() {
-  const { token } = useParams();
+  const { token = '' } = useParams();
   const verifyEmail = useAppContext((v) => v.requestHelpers.verifyEmail);
   const [loaded, setLoaded] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -27,7 +27,7 @@ export default function Email() {
         } else if (errorMsg) {
           setErrorMessage(errorMsg);
         }
-      } catch (error) {
+      } catch (error: any) {
         setLoaded(true);
         setExpired(error.response?.status === 401);
       }

@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import LongText from '~/components/Texts/LongText';
@@ -33,6 +34,16 @@ export default function Description({
   onEdit,
   onEditCancel,
   onEditFinish
+}: {
+  description: string;
+  descriptionExceedsCharLimit: (v: string) => any;
+  determineEditButtonDoneStatus: () => boolean;
+  editedDescription: string;
+  onChange: (v: any) => void;
+  onKeyUp: (v: any) => void;
+  onEdit: boolean;
+  onEditCancel: () => void;
+  onEditFinish: () => void;
 }) {
   const {
     done: { color: doneColor }

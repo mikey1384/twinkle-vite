@@ -169,11 +169,11 @@ export default function Content({
 
   function numberCorrect() {
     const correctAnswers = questions.map((question) => question.correctChoice);
-    let numberCorrect = 0;
+    let number = 0;
     for (let i = 0; i < correctAnswers.length; i++) {
-      if (userAnswers[i] + 1 === correctAnswers[i]) numberCorrect++;
+      if (userAnswers[i] + 1 === correctAnswers[i]) number++;
     }
-    return numberCorrect;
+    return number;
   }
 
   function handleRenderSlides() {
