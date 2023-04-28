@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
@@ -10,7 +11,15 @@ NoPictures.propTypes = {
   profileId: PropTypes.number.isRequired
 };
 
-export default function NoPictures({ numPics, onAddButtonClick, profileId }) {
+export default function NoPictures({
+  numPics,
+  onAddButtonClick,
+  profileId
+}: {
+  numPics: number;
+  onAddButtonClick: () => void;
+  profileId: number;
+}) {
   const { userId } = useKeyContext((v) => v.myState);
 
   return (

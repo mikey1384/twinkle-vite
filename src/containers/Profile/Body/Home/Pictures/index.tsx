@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
@@ -34,13 +34,18 @@ export default function Pictures({
   profileId,
   pictures,
   selectedTheme
+}: {
+  numPics: number;
+  profileId: number;
+  pictures: any[];
+  selectedTheme: string;
 }) {
   const { userId, banned } = useKeyContext((v) => v.myState);
   const [saveDisabled, setSaveDisabled] = useState(false);
   const [addPictureModalShown, setAddPictureModalShown] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);
   const [deleteMode, setDeleteMode] = useState(false);
-  const [reorderedPictureIds, setReorderedPictureIds] = useState([]);
+  const [reorderedPictureIds, setReorderedPictureIds] = useState<number[]>([]);
   const [remainingPictures, setRemainingPictures] = useState(pictures || []);
   const deleteProfilePictures = useAppContext(
     (v) => v.requestHelpers.deleteProfilePictures
@@ -227,7 +232,7 @@ export default function Pictures({
                 numPictures={pictures.length}
                 onSetReorderedPictureIds={(pictureIds) =>
                   setReorderedPictureIds(
-                    pictureIds.map((pictureId) => Number(pictureId))
+                    pictureIds.map((pictureId: number) => Number(pictureId))
                   )
                 }
               />
@@ -277,7 +282,11 @@ export default function Pictures({
     </ErrorBoundary>
   );
 
-  async function handleAddPictures({ selectedPictureIds }) {
+  async function handleAddPictures({
+    selectedPictureIds
+  }: {
+    selectedPictureIds: number[];
+  }) {
     if (banned?.posting) {
       return;
     }
@@ -289,7 +298,13 @@ export default function Pictures({
     setAddPictureModalShown(false);
   }
 
-  function handleUpdatePictureCaption({ caption, pictureId }) {
+  function handleUpdatePictureCaption({
+    caption,
+    pictureId
+  }: {
+    caption: string;
+    pictureId: number;
+  }) {
     onSetUserState({
       userId: profileId,
       newState: {
