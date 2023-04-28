@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import StepSlide from '../components/StepSlide';
 import Button from '~/components/Button';
@@ -20,6 +20,12 @@ export default function ConnectReplToGitHub({
   okayPressed,
   onOpenTutorial,
   taskType
+}: {
+  index?: number;
+  innerRef?: React.RefObject<any>;
+  okayPressed: boolean;
+  onOpenTutorial: () => void;
+  taskType: string;
 }) {
   const {
     link: { color: linkColor }
@@ -125,7 +131,7 @@ export default function ConnectReplToGitHub({
     </StepSlide>
   );
 
-  async function handleUpdateSelectedIndex(newIndex) {
+  async function handleUpdateSelectedIndex(newIndex: number) {
     await updateMissionStatus({
       missionType: taskType,
       newStatus: { selectedIndex: newIndex }

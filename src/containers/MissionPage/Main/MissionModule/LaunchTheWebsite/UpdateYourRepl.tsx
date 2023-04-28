@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import StepSlide from '../components/StepSlide';
 import Code from '~/components/Texts/Code';
@@ -15,8 +15,14 @@ UpdateYourRepl.propTypes = {
   index: PropTypes.number
 };
 
-export default function UpdateYourRepl({ code, index }) {
-  const codeRef = useRef(null);
+export default function UpdateYourRepl({
+  code,
+  index
+}: {
+  code: string;
+  index?: number;
+}) {
+  const codeRef: React.RefObject<any> = useRef(null);
   const [copiedShown, setCopiedShown] = useState(false);
   return (
     <StepSlide
@@ -120,11 +126,13 @@ export default function UpdateYourRepl({ code, index }) {
     </StepSlide>
   );
 
-  function handleCopyToClipboard() {
-    const range = document.createRange();
-    range.selectNode(codeRef.current);
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
-    document.execCommand('copy');
+  async function handleCopyToClipboard() {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedShown(true);
+      setTimeout(() => setCopiedShown(false), 700);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
   }
 }
