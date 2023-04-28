@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ContentPanel from '~/components/ContentPanel';
@@ -30,6 +30,14 @@ export default function Feeds({
   section,
   selectedTheme,
   username
+}: {
+  feeds: any[];
+  filterTable: any;
+  loaded: boolean;
+  loadMoreButton: boolean;
+  section: string;
+  selectedTheme: string;
+  username: string;
 }) {
   const lastFeedIdRef = useRef(null);
   const { filter } = useParams();
@@ -70,7 +78,7 @@ export default function Feeds({
       }
     }
 
-    async function handleLoadByUserTab(section) {
+    async function handleLoadByUserTab(section: string) {
       selectedSection.current = filterTable[section];
       byUserSelected.current = true;
       setLoadingFeeds(true);
@@ -87,7 +95,7 @@ export default function Feeds({
       setLoadingFeeds(false);
     }
 
-    async function handleLoadTab(section) {
+    async function handleLoadTab(section: string) {
       selectedSection.current = filterTable[section];
       byUserSelected.current = false;
       setLoadingFeeds(true);
@@ -244,7 +252,7 @@ export default function Feeds({
                       <ContentPanel
                         key={filterTable[section] + feed.feedId}
                         style={{
-                          marginTop: index === 0 && '-1rem',
+                          marginTop: index === 0 ? '-1rem' : '',
                           marginBottom: '1rem',
                           zIndex: feeds.length - index
                         }}
@@ -315,7 +323,7 @@ export default function Feeds({
     </ErrorBoundary>
   );
 
-  function handleClickPostsMenu({ item }) {
+  function handleClickPostsMenu({ item }: { item: string }) {
     navigate(
       `/users/${username}/${
         item === 'url' ? 'link' : item === 'aiStory' ? 'ai-storie' : item

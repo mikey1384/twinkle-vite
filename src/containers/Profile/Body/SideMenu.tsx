@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -16,6 +17,12 @@ export default function SideMenu({
   menuItems,
   selectedKey,
   style
+}: {
+  className?: string;
+  menuItems: { key: string; label: string }[];
+  onMenuClick: (item: { item: string }) => void;
+  selectedKey: string;
+  style?: React.CSSProperties;
 }) {
   return (
     <div
@@ -52,7 +59,7 @@ export default function SideMenu({
             onClick={() => onMenuClick({ item: key })}
             style={{
               cursor: 'pointer',
-              color: selectedKey === key ? Color.black() : null
+              color: selectedKey === key ? Color.black() : ''
             }}
           >
             {label}
