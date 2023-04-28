@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
@@ -17,6 +18,12 @@ export default function AccountConfirm({
   matchingAccount,
   onNextClick,
   style
+}: {
+  notExist: boolean;
+  searching: boolean;
+  matchingAccount: any;
+  onNextClick: () => void;
+  style?: React.CSSProperties;
 }) {
   return (
     <ErrorBoundary

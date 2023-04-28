@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import EmailSection from './EmailSection';
@@ -13,7 +13,15 @@ RestoreAccount.propTypes = {
   onHide: PropTypes.func.isRequired
 };
 
-export default function RestoreAccount({ username, onShowLoginForm, onHide }) {
+export default function RestoreAccount({
+  username,
+  onShowLoginForm,
+  onHide
+}: {
+  username: string;
+  onShowLoginForm: () => void;
+  onHide: () => void;
+}) {
   const searchedProfiles = useAppContext((v) => v.user.state.searchedProfiles);
   const [section, setSection] = useState('username');
   const [searchText, setSearchText] = useState(username);
@@ -21,7 +29,7 @@ export default function RestoreAccount({ username, onShowLoginForm, onHide }) {
   const matchingAccount = useMemo(() => {
     if (
       searchedProfiles.filter(
-        (profile) =>
+        (profile: any) =>
           profile.username?.toLowerCase?.() === searchText?.toLowerCase?.()
       ).length > 0
     ) {

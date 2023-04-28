@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import AccountConfirm from './AccountConfirm';
@@ -22,6 +22,11 @@ export default function UsernameSection({
   onSetSearchText,
   onNextClick,
   searchText
+}: {
+  matchingAccount: any;
+  onSetSearchText: (text: string) => void;
+  onNextClick: () => void;
+  searchText: string;
 }) {
   const onClearUserSearch = useAppContext(
     (v) => v.user.actions.onClearUserSearch
@@ -78,7 +83,7 @@ export default function UsernameSection({
     </ErrorBoundary>
   );
 
-  async function handleSearchUsers(text) {
+  async function handleSearchUsers(text: string) {
     const { data: users } = await request.get(
       `${URL}/user/users/search?queryString=${text}`
     );

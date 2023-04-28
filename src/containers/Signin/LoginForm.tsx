@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -29,6 +29,11 @@ export default function LoginForm({
   onSetUsername,
   onShowForgotPasswordForm,
   onShowSignupForm
+}: {
+  username: string;
+  onSetUsername: (username: string) => void;
+  onShowForgotPasswordForm?: () => void;
+  onShowSignupForm?: () => void;
 }) {
   const onLogin = useAppContext((v) => v.user.actions.onLogin);
   const login = useAppContext((v) => v.requestHelpers.login);
@@ -57,7 +62,7 @@ export default function LoginForm({
                 onSetUsername(text);
               }}
               placeholder={enterYourUsernameLabel}
-              onKeyPress={(event) => {
+              onKeyPress={(event: any) => {
                 if (
                   !stringIsEmpty(username) &&
                   !stringIsEmpty(password) &&
@@ -78,7 +83,7 @@ export default function LoginForm({
               }}
               placeholder={enterYourPasswordLabel}
               type="password"
-              onKeyPress={(event) => {
+              onKeyPress={(event: any) => {
                 if (
                   !stringIsEmpty(username) &&
                   !stringIsEmpty(password) &&
@@ -137,7 +142,7 @@ export default function LoginForm({
       const data = await login({ username, password });
       onLogin(data);
       onSetUserState({ userId: data.id, newState: { ...data, loaded: true } });
-    } catch (error) {
+    } catch (error: any) {
       setErrorMessage(error);
     }
   }
