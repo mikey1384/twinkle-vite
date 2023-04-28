@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -17,6 +18,11 @@ export default function Main({
   myAttempts,
   onSetMissionState,
   style
+}: {
+  mission: any;
+  myAttempts: any;
+  onSetMissionState: (info: { missionId: number; newState: any }) => void;
+  style?: React.CSSProperties;
 }) {
   return (
     <ErrorBoundary

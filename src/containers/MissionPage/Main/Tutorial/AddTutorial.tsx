@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -9,7 +10,13 @@ AddTutorial.propTypes = {
   missionTitle: PropTypes.string
 };
 
-export default function AddTutorial({ missionId, missionTitle }) {
+export default function AddTutorial({
+  missionId,
+  missionTitle
+}: {
+  missionId: number;
+  missionTitle: string;
+}) {
   const attachMissionTutorial = useAppContext(
     (v) => v.requestHelpers.attachMissionTutorial
   );

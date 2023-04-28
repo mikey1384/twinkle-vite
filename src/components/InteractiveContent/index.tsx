@@ -21,14 +21,14 @@ export default function InteractiveContent({
   onScrollElementToCenter,
   isOnModal
 }: {
-  autoFocus: boolean;
-  currentTutorialSlideId: number;
+  autoFocus?: boolean;
+  currentTutorialSlideId?: number;
   interactiveId: number;
-  onCurrentSlideIdChange: (slideId: number) => void;
+  onCurrentSlideIdChange?: (slideId: number) => void;
   onGoBackToMission: () => void;
   onScrollElementTo: (element: any) => void;
   onScrollElementToCenter: (element: any) => void;
-  isOnModal: boolean;
+  isOnModal?: boolean;
 }) {
   const SlideRefs: any = useRef({});
   useEffect(() => {
@@ -305,7 +305,7 @@ export default function InteractiveContent({
       const validNewSlides = newSlides.filter(
         (slideId) => !!slideObj[slideId] && !slideObj[slideId]?.isDeleted
       );
-      for (let slideId of validNewSlides) {
+      for (const slideId of validNewSlides) {
         onSetSlideState({
           interactiveId,
           slideId,

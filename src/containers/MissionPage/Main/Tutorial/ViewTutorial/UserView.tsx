@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
@@ -12,6 +13,10 @@ export default function UserView({
   onStartClick,
   tutorialPrompt,
   tutorialButtonLabel
+}: {
+  onStartClick: () => void;
+  tutorialPrompt?: string;
+  tutorialButtonLabel?: string;
 }) {
   return (
     <div>

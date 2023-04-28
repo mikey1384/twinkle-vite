@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import UserView from './UserView';
 import CreatorView from './CreatorView';
@@ -21,6 +22,14 @@ export default function ViewTutorial({
   style,
   tutorialPrompt,
   tutorialButtonLabel
+}: {
+  canEditTutorial?: boolean;
+  missionId: number;
+  onStartClick: () => void;
+  onSetMissionState: (info: { missionId: number; newState: any }) => void;
+  style?: React.CSSProperties;
+  tutorialPrompt?: string;
+  tutorialButtonLabel?: string;
 }) {
   return (
     <div
