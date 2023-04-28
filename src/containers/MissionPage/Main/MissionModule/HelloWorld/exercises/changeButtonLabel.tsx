@@ -1,3 +1,4 @@
+import React from 'react';
 import { Color } from '~/constants/css';
 import { BUTTON_LABEL } from './constants';
 import {
@@ -50,7 +51,15 @@ export const initialCode = `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
+export async function onRunCode({
+  ast,
+  onUpdateMissionStatus,
+  onSetErrorMsg
+}: {
+  ast: any;
+  onUpdateMissionStatus: () => void;
+  onSetErrorMsg: (msg: React.ReactNode) => void;
+}) {
   let buttonText = '';
   const jsxElements = getAstProps({ ast, propType: 'JSXElement' });
   const buttonElements = filterElementsByType({

@@ -1,3 +1,4 @@
+import React from 'react';
 import { ALERT_MSG } from './constants';
 import {
   getAstProps,
@@ -47,7 +48,15 @@ export const initialCode = `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onSetErrorMsg, onUpdateMissionStatus }) {
+export async function onRunCode({
+  ast,
+  onSetErrorMsg,
+  onUpdateMissionStatus
+}: {
+  ast: any;
+  onSetErrorMsg: (msg: React.ReactNode) => void;
+  onUpdateMissionStatus: () => void;
+}) {
   const jsxElements = getAstProps({
     ast,
     propType: 'JSXOpeningElement'

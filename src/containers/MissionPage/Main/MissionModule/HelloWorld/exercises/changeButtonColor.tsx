@@ -1,3 +1,4 @@
+import React from 'react';
 import { Color } from '~/constants/css';
 import {
   getAstProps,
@@ -42,7 +43,15 @@ export const initialCode = `function HomePage() {
   );
 }`;
 
-export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
+export async function onRunCode({
+  ast,
+  onUpdateMissionStatus,
+  onSetErrorMsg
+}: {
+  ast: any;
+  onUpdateMissionStatus: () => void;
+  onSetErrorMsg: (msg: React.ReactNode) => void;
+}) {
   const jsxElements = getAstProps({
     ast,
     propType: 'JSXOpeningElement'
@@ -55,7 +64,7 @@ export async function onRunCode({ ast, onUpdateMissionStatus, onSetErrorMsg }) {
   const button = buttonElements[0];
   if (button) {
     const styleProps = getElementStyleProps(button);
-    for (let prop of styleProps) {
+    for (const prop of styleProps) {
       if (
         prop?.key?.name === 'background' ||
         prop?.key?.name === 'backgroundColor'
