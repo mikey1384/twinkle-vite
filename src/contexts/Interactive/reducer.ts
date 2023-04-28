@@ -75,7 +75,7 @@ export default function InteractiveReducer(
       const forkIndex = newDisplayedSlideIds.indexOf(action.forkId);
       newDisplayedSlideIds.length = forkIndex + 1;
       const newSlideObj = { ...state[action.interactiveId].slideObj };
-      for (let key of Object.keys(newSlideObj)) {
+      for (const key of Object.keys(newSlideObj)) {
         if (
           !newDisplayedSlideIds.includes(Number(key)) ||
           Number(key) === action.forkId
@@ -102,7 +102,7 @@ export default function InteractiveReducer(
         const lastFork =
           state[action.interactiveId].slideObj[action.forkedFrom];
         const { selectedForkButtonId, paths } = lastFork;
-        let newPath = [...lastFork.paths[selectedForkButtonId]];
+        const newPath = [...lastFork.paths[selectedForkButtonId]];
         const index = newPath.indexOf(action.slideId);
         newPath.splice(index, 0, action.newSlide.id);
         newLastFork = {

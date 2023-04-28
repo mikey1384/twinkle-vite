@@ -66,7 +66,7 @@ export default function ContentReducer(
     case 'ADD_TAG_TO_CONTENTS': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         newState[contentKey] = {
           ...prevContentState,
@@ -85,7 +85,7 @@ export default function ContentReducer(
     case 'ATTACH_REWARD': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         const contentMatches =
           prevContentState.contentId === action.contentId &&
@@ -192,7 +192,7 @@ export default function ContentReducer(
     case 'CHANGE_SPOILER_STATUS': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         const contentMatches =
           prevContentState.contentId === action.contentId &&
@@ -252,7 +252,7 @@ export default function ContentReducer(
     case 'DELETE_COMMENT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         const contentDeleteStatus: {
           isDeleted: boolean;
@@ -355,7 +355,7 @@ export default function ContentReducer(
     case 'DELETE_SUBJECT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         newState[contentKey] = {
           ...prevContentState,
@@ -369,7 +369,7 @@ export default function ContentReducer(
     case 'EDIT_COMMENT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         newState[contentKey] = {
           ...prevContentState,
@@ -437,7 +437,7 @@ export default function ContentReducer(
     case 'EDIT_CONTENT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         const contentMatches =
           prevContentState.contentId === action.contentId &&
@@ -518,7 +518,7 @@ export default function ContentReducer(
     case 'EDIT_REWARD_COMMENT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         newState[contentKey] = {
           ...prevContentState,
@@ -596,7 +596,7 @@ export default function ContentReducer(
     case 'EDIT_SUBJECT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         const contentMatches =
           prevContentState.contentId === action.subjectId &&
@@ -635,7 +635,7 @@ export default function ContentReducer(
     case 'LIKE_COMMENT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         newState[contentKey] = {
           ...prevContentState,
@@ -685,7 +685,7 @@ export default function ContentReducer(
     case 'LIKE_CONTENT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         newState[contentKey] = {
           ...prevContentState,
@@ -860,7 +860,7 @@ export default function ContentReducer(
       };
     case 'LOAD_MORE_SUBJECTS': {
       const subjectStates: { [key: string]: any } = {};
-      for (let subject of action.results) {
+      for (const subject of action.results) {
         subjectStates['subject' + subject.id] = subject;
       }
       return {
@@ -966,7 +966,7 @@ export default function ContentReducer(
               };
             }
             let containsRootReply = false;
-            for (let reply of comment.replies || []) {
+            for (const reply of comment.replies || []) {
               if (reply.id === action.replyId) {
                 containsRootReply = true;
                 break;
@@ -1041,7 +1041,7 @@ export default function ContentReducer(
               };
             }
             let containsRootReply = false;
-            for (let reply of comment.replies || []) {
+            for (const reply of comment.replies || []) {
               if (reply.id === action.replyId) {
                 containsRootReply = true;
                 break;
@@ -1083,7 +1083,7 @@ export default function ContentReducer(
       };
     case 'LOAD_SUBJECTS': {
       const subjectStates: { [key: string]: any } = {};
-      for (let subject of action.subjects) {
+      for (const subject of action.subjects) {
         subjectStates['subject' + subject.id] = subject;
       }
       return {
@@ -1130,7 +1130,7 @@ export default function ContentReducer(
     case 'RECOMMEND_CONTENT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         newState[contentKey] = {
           ...prevContentState,
@@ -1198,7 +1198,7 @@ export default function ContentReducer(
     case 'RECOMMEND_SUBJECT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         newState[contentKey] = {
           ...prevContentState,
@@ -1226,7 +1226,7 @@ export default function ContentReducer(
     case 'REVOKE_REWARD': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         const contentMatches =
           prevContentState.contentId === action.contentId &&
@@ -1454,7 +1454,7 @@ export default function ContentReducer(
     case 'SET_REWARD_LEVEL': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
-      for (let contentKey of contentKeys) {
+      for (const contentKey of contentKeys) {
         const prevContentState = newState[contentKey];
         const contentMatches =
           prevContentState.contentId === action.contentId &&
@@ -1663,7 +1663,7 @@ export default function ContentReducer(
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
       if (action.data.commentId || action.data.replyId) {
-        for (let contentKey of contentKeys) {
+        for (const contentKey of contentKeys) {
           const prevContentState = newState[contentKey];
           newState[contentKey] = {
             ...prevContentState,
@@ -1720,7 +1720,7 @@ export default function ContentReducer(
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
       if (action.data.commentId || action.data.replyId) {
-        for (let contentKey of contentKeys) {
+        for (const contentKey of contentKeys) {
           const prevContentState = newState[contentKey];
           newState[contentKey] = {
             ...prevContentState,
@@ -1757,7 +1757,7 @@ export default function ContentReducer(
           }
         };
       }
-      let commentId = action.data.replyId || action.data.commentId;
+      const commentId = action.data.replyId || action.data.commentId;
       const newComments = [...prevContentState.comments];
       if (
         prevContentState.contentType === 'comment' &&
@@ -1787,7 +1787,7 @@ export default function ContentReducer(
             if (comment.id === commentId) {
               match = true;
             } else {
-              for (let reply of comment.replies || []) {
+              for (const reply of comment.replies || []) {
                 if (reply.id === commentId) {
                   match = true;
                   break;

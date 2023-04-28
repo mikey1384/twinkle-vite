@@ -30,7 +30,7 @@ export default function MissionReducer(
     }
     case 'LOAD_MISSION_LIST': {
       const newMissionObj = state.missionObj || {};
-      for (let mission of action.missions) {
+      for (const mission of action.missions) {
         newMissionObj[mission.id] = {
           ...newMissionObj[mission.id],
           ...mission,
@@ -38,9 +38,9 @@ export default function MissionReducer(
           tutorialId: mission.tutorialId || 0
         };
       }
-      let newMyAttempts = action.myAttempts;
+      const newMyAttempts = action.myAttempts;
       if (action.prevUserId === state.prevUserId) {
-        for (let key in state.myAttempts) {
+        for (const key in state.myAttempts) {
           if (newMyAttempts[key] && state.myAttempts[key]?.tryingAgain) {
             newMyAttempts[key].tryingAgain = true;
           }

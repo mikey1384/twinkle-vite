@@ -1,5 +1,4 @@
 import React, { useReducer, ReactNode } from 'react';
-import { AxiosError } from 'axios';
 import { createContext } from 'use-context-selector';
 import UserActions from './User/actions';
 import UserReducer from './User/reducer';
@@ -85,11 +84,13 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     </ManagementContextProvider>
   );
 
-  function handleError(error: unknown) {
-    if (error instanceof Error && (error as AxiosError).response) {
-      const axiosError = error as AxiosError;
-      console.error(axiosError.response);
-      const { status } = axiosError.response!;
+  function handleError(error: any) {
+    if (error && error.response) {
+      const {
+        status
+      }: {
+        status: number;
+      } = error.response;
       if (status === 401) {
         localStorage.removeItem('token');
         userDispatch({
@@ -100,6 +101,6 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
         window.location.reload();
       }
     }
-    return Promise.reject((error as AxiosError)?.response || error);
+    return Promise.reject(error?.response || error);
   }
 }

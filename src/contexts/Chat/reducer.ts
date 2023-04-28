@@ -520,7 +520,7 @@ export default function ChatReducer(
         selectedChannelId: action.channel.id
       };
     }
-    case 'DELETE_MESSAGE':
+    case 'DELETE_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const subchannelObj = action.subchannelId
         ? {
@@ -548,6 +548,7 @@ export default function ChatReducer(
           }
         }
       };
+    }
     case 'DISPLAY_ATTACHED_FILE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const subchannelObj = action.subchannelId
@@ -905,7 +906,7 @@ export default function ChatReducer(
         vocabActivitiesLoadMoreButton = true;
       }
       action.data.vocabActivities.reverse();
-      let newChannelsObj = {
+      const newChannelsObj = {
         ...state.channelsObj,
         ...action.data.channelsObj
       };
@@ -918,7 +919,7 @@ export default function ChatReducer(
       const newCurrentChannel =
         action.data.channelsObj?.[action.data.currentChannelId];
       if (action.data.currentSubchannelId && action.data.channelsObj) {
-        for (let subchannel of Object.values<{ id: number }>(
+        for (const subchannel of Object.values<{ id: number }>(
           newCurrentChannel?.subchannelObj
         )) {
           newSubchannelObj[subchannel.id] = {
@@ -953,7 +954,7 @@ export default function ChatReducer(
         newChannelsObj[state.selectedChannelId] =
           state.channelsObj[state.selectedChannelId];
       }
-      for (let channelId in newChannelsObj) {
+      for (const channelId in newChannelsObj) {
         if (
           state.channelsObj[channelId]?.loaded &&
           Number(channelId) !== Number(state.selectedChannelId)
@@ -1171,7 +1172,7 @@ export default function ChatReducer(
         }
       }
       const newChannels = { ...state.channelsObj };
-      for (let channel of action.channels) {
+      for (const channel of action.channels) {
         newChannels[channel.id] = {
           ...state.channelsObj[channel.id],
           ...(state.channelsObj[channel.id]?.loaded ? {} : channel)
@@ -1890,7 +1891,7 @@ export default function ChatReducer(
                           )
                       ),
                       members: [
-                        ...prevChannelObj?.members,
+                        ...(prevChannelObj?.members || []),
                         ...action.newMembers.filter(
                           (newMember: { id: number }) =>
                             !(prevChannelObj?.members || [])
@@ -2265,7 +2266,7 @@ export default function ChatReducer(
       };
     case 'SET_RECONNECTING': {
       const newChannelsObj = { ...state.channelsObj };
-      for (let key in newChannelsObj) {
+      for (const key in newChannelsObj) {
         (newChannelsObj[key] || {}).loaded = false;
       }
       return {
