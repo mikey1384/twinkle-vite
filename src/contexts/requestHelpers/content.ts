@@ -2,7 +2,6 @@ import request from 'axios';
 import URL from '~/constants/URL';
 import { RequestHelpers } from '../types';
 import { queryStringForArray, stringIsEmpty } from '~/helpers/stringHelpers';
-import { AxiosProgressEvent } from 'axios';
 
 export default function contentRequestHelpers({
   auth,
@@ -1442,7 +1441,7 @@ export default function contentRequestHelpers({
       filePath: string;
       file: File;
       fileName?: string;
-      onUploadProgress?: (progressEvent: AxiosProgressEvent) => void;
+      onUploadProgress?: (progressEvent: any) => void;
     }) {
       const { data: url } = await request.get(
         `${URL}/content/sign-s3?fileSize=${

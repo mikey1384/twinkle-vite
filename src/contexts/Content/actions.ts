@@ -374,7 +374,15 @@ export default function ContentActions(dispatch: Dispatch) {
         contentType
       });
     },
-    onLoadPlaylistVideos({ playlistId, videos, loadMoreShown }) {
+    onLoadPlaylistVideos({
+      playlistId,
+      videos,
+      loadMoreShown
+    }: {
+      playlistId: number;
+      videos: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_PLAYLIST_VIDEOS',
         contentId: playlistId,
@@ -383,7 +391,15 @@ export default function ContentActions(dispatch: Dispatch) {
         loadMoreShown
       });
     },
-    onLoadMorePlaylistVideos({ playlistId, videos, loadMoreShown }) {
+    onLoadMorePlaylistVideos({
+      playlistId,
+      videos,
+      loadMoreShown
+    }: {
+      playlistId: number;
+      videos: object[];
+      loadMoreShown: boolean;
+    }) {
       return dispatch({
         type: 'LOAD_MORE_PLAYLIST_VIDEOS',
         contentId: playlistId,
