@@ -83,7 +83,7 @@ function Comments({
   onLoadRepliesOfReply,
   onLoadMoreComments,
   onLoadMoreReplies,
-  onPreviewClick = () => {},
+  onPreviewClick = () => null,
   onReplySubmit,
   onRewardCommentEdit,
   parent,
@@ -382,7 +382,7 @@ function Comments({
           } ${className}`}
           style={style}
           ref={ContainerRef}
-          onClick={isPreview ? onPreviewClick : () => {}}
+          onClick={isPreview ? onPreviewClick : () => null}
         >
           <Container
             autoFocus={autoFocus}

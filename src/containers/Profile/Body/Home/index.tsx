@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
 import Comments from '~/components/Comments';
@@ -19,7 +19,13 @@ Home.propTypes = {
   selectedTheme: PropTypes.string.isRequired
 };
 
-export default function Home({ profile, selectedTheme }) {
+export default function Home({
+  profile,
+  selectedTheme
+}: {
+  profile: any;
+  selectedTheme: string;
+}) {
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const { userId } = useKeyContext((v) => v.myState);
   const onDeleteComment = useContentContext((v) => v.actions.onDeleteComment);
@@ -95,11 +101,7 @@ export default function Home({ profile, selectedTheme }) {
           selectedTheme={selectedTheme}
         />
       )}
-      <Achievements
-        selectedTheme={selectedTheme}
-        profile={profile}
-        myId={userId}
-      />
+      <Achievements selectedTheme={selectedTheme} profile={profile} />
       {(userId !== profile.id || comments.length > 0 || loadingComments) && (
         <SectionPanel
           customColorTheme={selectedTheme}
@@ -111,7 +113,6 @@ export default function Home({ profile, selectedTheme }) {
             comments={comments}
             commentsLoadLimit={5}
             commentsShown={true}
-            contentId={id}
             inputAreaInnerRef={CommentInputAreaRef}
             inputTypeLabel={`message to ${username}`}
             isLoading={loadingComments}
