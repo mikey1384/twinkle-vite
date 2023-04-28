@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import UserListModal from '~/components/Modals/UserListModal';
 import Likers from '~/components/Likers';
@@ -37,6 +37,18 @@ export default function SideButtons({
   uploader,
   userId,
   videoId
+}: {
+  byUser: boolean;
+  changeByUserStatus: (v: any) => void;
+  className?: string;
+  rewardLevel: number;
+  likes: any[];
+  onLikeVideo: (v: any) => void;
+  onSetRewardLevel: (v: any) => void;
+  style?: React.CSSProperties;
+  uploader: any;
+  userId: number;
+  videoId: number;
 }) {
   const [userListModalShown, setUserListModalShown] = useState(false);
   return (
@@ -115,7 +127,7 @@ export default function SideButtons({
     </div>
   );
 
-  function handleToggleByUser(byUser) {
+  function handleToggleByUser(byUser: boolean) {
     changeByUserStatus({ byUser, contentId: videoId, contentType: 'video' });
   }
 }

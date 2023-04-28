@@ -22,10 +22,10 @@ function TagStatus({
 }: {
   contentId: number;
   onAddTags: (v: any) => void;
-  onAddTagToContents: (v: any) => void;
-  onLoadTags: (v: any) => void;
-  style: React.CSSProperties;
-  theme: string;
+  onAddTagToContents?: (v: any) => void;
+  onLoadTags?: (v: any) => void;
+  style?: React.CSSProperties;
+  theme?: string;
   tags: any[];
 }) {
   const { canEditPlaylists, profileTheme } = useKeyContext((v) => v.myState);
@@ -40,12 +40,12 @@ function TagStatus({
   const [tagModalShown, setTagModalShown] = useState(false);
 
   useEffect(() => {
-    if (!!onLoadTags) {
+    if (onLoadTags) {
       loadTags();
     }
     async function loadTags() {
       const tags = await fetchPlaylistsContaining({ videoId: contentId });
-      onLoadTags({ tags, contentId, contentType: 'video' });
+      onLoadTags?.({ tags, contentId, contentType: 'video' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentId]);

@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
@@ -50,6 +51,25 @@ export default function BasicInfos({
   titleExceedsCharLimit,
   uploader,
   urlExceedsCharLimit
+}: {
+  className?: string;
+  editedUrl: string;
+  editedTitle: string;
+  innerRef: React.RefObject<any>;
+  onMouseLeave: () => void;
+  onMouseOver: () => void;
+  onTitleChange: (v: any) => void;
+  onTitleKeyUp: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  onUrlChange: (v: any) => void;
+  onEdit: boolean;
+  onTitleClick: () => void;
+  style?: React.CSSProperties;
+  title: string;
+  titleHovered: boolean;
+  timeStamp: number;
+  titleExceedsCharLimit: (title: string) => any;
+  uploader: { id: number; username: string };
+  urlExceedsCharLimit: (url: string) => any;
 }) {
   return (
     <div className={className} style={style}>

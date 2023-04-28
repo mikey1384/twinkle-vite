@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Button from '~/components/Button';
@@ -88,6 +88,27 @@ export default function Details({
   timeStamp,
   videoId,
   videoViews
+}: {
+  addTags: (tags: string[]) => void;
+  byUser: boolean;
+  changeByUserStatus: (byUser: boolean) => void;
+  changingPage: boolean;
+  content: string;
+  description: string;
+  rewardLevel: number;
+  likes: any[];
+  onDelete: () => void;
+  onEditFinish: (v: any) => void;
+  onSetRewardLevel: (level: number) => void;
+  recommendations: any[];
+  tags: string[];
+  rewards: any[];
+  timeStamp: number;
+  title: string;
+  uploader: { id: number; username: string; authLevel: number };
+  userId: number;
+  videoId: number;
+  videoViews: number;
 }) {
   const {
     authLevel,
@@ -115,7 +136,7 @@ export default function Details({
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
   const [titleHovered, setTitleHovered] = useState(false);
-  const TitleRef = useRef(null);
+  const TitleRef: React.RefObject<any> = useRef(null);
   const RewardInterfaceRef = useRef(null);
   const editState = useMemo(
     () => inputState['edit' + 'video' + videoId],
@@ -352,7 +373,7 @@ export default function Details({
               editedTitle={editedTitle}
               onTitleChange={handleTitleChange}
               innerRef={TitleRef}
-              onTitleKeyUp={(event) => {
+              onTitleKeyUp={(event: any) => {
                 if (event.key === ' ') {
                   handleTitleChange(addEmoji(event.target.value));
                 }
@@ -386,7 +407,6 @@ export default function Details({
                 flexDirection: 'column'
               }}
               byUser={byUser}
-              canReward={canReward}
               changeByUserStatus={changeByUserStatus}
               rewardLevel={rewardLevel}
               likes={likes}
@@ -582,7 +602,13 @@ export default function Details({
     });
   }
 
-  function handleLikeVideo({ likes, isUnlike }) {
+  function handleLikeVideo({
+    likes,
+    isUnlike
+  }: {
+    likes: number;
+    isUnlike: boolean;
+  }) {
     onLikeVideo({ likes });
     if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
       onSetXpRewardInterfaceShown({
@@ -597,17 +623,17 @@ export default function Details({
     }
   }
 
-  function handleTitleChange(text) {
+  function handleTitleChange(text: string) {
     setEditedTitle(text);
     editedTitleRef.current = text;
   }
 
-  function handleDescriptionChange(text) {
+  function handleDescriptionChange(text: string) {
     setEditedDescription(text);
     editedDescriptionRef.current = text;
   }
 
-  function handleUrlChange(text) {
+  function handleUrlChange(text: string) {
     setEditedUrl(text);
     editedUrlRef.current = text;
   }
@@ -618,7 +644,7 @@ export default function Details({
     }
   }
 
-  function descriptionExceedsCharLimit(description) {
+  function descriptionExceedsCharLimit(description: string) {
     return exceedsCharLimit({
       contentType: 'video',
       inputType: 'description',
@@ -626,7 +652,7 @@ export default function Details({
     });
   }
 
-  function titleExceedsCharLimit(title) {
+  function titleExceedsCharLimit(title: string) {
     return exceedsCharLimit({
       contentType: 'video',
       inputType: 'title',
@@ -634,7 +660,7 @@ export default function Details({
     });
   }
 
-  function urlExceedsCharLimit(url) {
+  function urlExceedsCharLimit(url: string) {
     return exceedsCharLimit({
       contentType: 'video',
       inputType: 'url',
