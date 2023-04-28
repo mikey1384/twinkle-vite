@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
@@ -6,7 +7,7 @@ Question.propTypes = {
   question: PropTypes.object.isRequired
 };
 
-export default function Question({ question }) {
+export default function Question({ question }: { question: any }) {
   return (
     <div
       style={{
@@ -15,7 +16,7 @@ export default function Question({ question }) {
       }}
     >
       {question.content}
-      {question.choices.map((choice, index) => (
+      {question.choices.map((choice: any, index: number) => (
         <div
           key={index}
           style={{
