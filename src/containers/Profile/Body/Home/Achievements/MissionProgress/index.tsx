@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
@@ -31,6 +31,14 @@ export default function MissionProgress({
   style,
   userId,
   username
+}: {
+  missionsLoaded: boolean;
+  missions: any[];
+  selectedMissionListTab: string;
+  selectedTheme: string;
+  style: React.CSSProperties;
+  userId: number;
+  username: string;
 }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const loadMissionProgress = useAppContext(
@@ -68,10 +76,10 @@ export default function MissionProgress({
       handleLoadMissionProgress(userId);
     }
 
-    async function handleLoadMissionProgress(userId) {
+    async function handleLoadMissionProgress(userId: number) {
       const missions = await loadMissionProgress(userId);
       const passedMissions = [];
-      for (let mission of missions) {
+      for (const mission of missions) {
         if (mission.status === 'pass') {
           passedMissions.push(mission);
         }

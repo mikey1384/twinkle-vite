@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Link from '~/components/Link';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
@@ -26,8 +26,14 @@ export default function MissionItem({
   taskProgress,
   missionType,
   style
+}: {
+  completed: boolean;
+  missionName: string;
+  taskProgress: string;
+  missionType: string;
+  style: React.CSSProperties;
 }) {
-  const NameRef = useRef(null);
+  const NameRef: React.RefObject<any> = useRef(null);
   const [nameContext, setNameContext] = useState(null);
   const missionThumb = useMemo(
     () => returnMissionThumb(missionType),
