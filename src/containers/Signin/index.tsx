@@ -7,6 +7,9 @@ import RestoreAccount from './RestoreAccount';
 import Main from './Main';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
+Signin.propTypes = {
+  onHide: PropTypes.func.isRequired
+};
 export default function Signin({ onHide }: { onHide: () => void }) {
   const [username, setUsername] = useState('');
   const [currentPage, setCurrentPage] = useState('main');
@@ -43,7 +46,6 @@ export default function Signin({ onHide }: { onHide: () => void }) {
         {currentPage === 'restore' && (
           <RestoreAccount
             username={username}
-            onSetUsername={setUsername}
             onShowLoginForm={() => setCurrentPage('login')}
             onHide={onHide}
           />

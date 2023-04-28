@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -18,6 +19,10 @@ export default function Main({
   onShowForgotPasswordForm,
   onShowLoginForm,
   onShowSignUpForm
+}: {
+  onShowForgotPasswordForm: () => void;
+  onShowLoginForm: () => void;
+  onShowSignUpForm: () => void;
 }) {
   return (
     <ErrorBoundary componentPath="Signin/Main">

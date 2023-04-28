@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
@@ -43,6 +43,10 @@ export default function SignUpForm({
   username,
   onSetUsername,
   onShowLoginForm
+}: {
+  username: string;
+  onSetUsername: (username: string) => void;
+  onShowLoginForm: () => void;
 }) {
   const onSignup = useAppContext((v) => v.user.actions.onSignup);
   const signup = useAppContext((v) => v.requestHelpers.signup);
@@ -156,7 +160,7 @@ export default function SignUpForm({
                 setErrorMessage('');
                 onSetUsername(text.trim());
               }}
-              onKeyPress={(event) => {
+              onKeyPress={(event: any) => {
                 if (event.key === 'Enter' && !submitDisabled) {
                   onSubmit();
                 }
@@ -179,7 +183,7 @@ export default function SignUpForm({
                 setErrorMessage('');
                 setPassword(text.trim());
               }}
-              onKeyPress={(event) => {
+              onKeyPress={(event: any) => {
                 if (event.key === 'Enter' && !submitDisabled) {
                   onSubmit();
                 }
@@ -201,7 +205,7 @@ export default function SignUpForm({
                 setErrorMessage('');
                 setFirstname(text.trim());
               }}
-              onKeyPress={(event) => {
+              onKeyPress={(event: any) => {
                 if (event.key === 'Enter' && !submitDisabled) {
                   onSubmit();
                 }
@@ -222,7 +226,7 @@ export default function SignUpForm({
                 setErrorMessage('');
                 setLastname(text.trim());
               }}
-              onKeyPress={(event) => {
+              onKeyPress={(event: any) => {
                 if (event.key === 'Enter' && !submitDisabled) {
                   onSubmit();
                 }
@@ -242,7 +246,7 @@ export default function SignUpForm({
                 setErrorMessage('');
                 setKeyphrase(text);
               }}
-              onKeyPress={(event) => {
+              onKeyPress={(event: any) => {
                 if (event.key === 'Enter' && !submitDisabled) {
                   onSubmit();
                 }
@@ -262,7 +266,7 @@ export default function SignUpForm({
                 setErrorMessage('');
                 setEmail(text);
               }}
-              onKeyPress={(event) => {
+              onKeyPress={(event: any) => {
                 if (event.key === 'Enter' && !submitDisabled) {
                   onSubmit();
                 }
@@ -328,21 +332,21 @@ export default function SignUpForm({
       });
       onSignup(data);
       onSetUserState({ userId: data.id, newState: data });
-    } catch (error) {
+    } catch (error: any) {
       setErrorMessage(error?.data);
     }
     setSigningUp(false);
   }
 }
 
-function isValidEmailAddress(email) {
+function isValidEmailAddress(email: string) {
   const regex =
     '^(([^<>()\\[\\]\\\\.,;:\\s@"]+(\\.[^<>()\\[\\]\\.,;:\\s@"]+)*)|(".+"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$';
   const pattern = new RegExp(regex);
   return pattern.test(email);
 }
 
-function isValidRealname(realName) {
+function isValidRealname(realName: string) {
   const pattern = new RegExp(/^[a-zA-Z]+$/);
   return pattern.test(realName);
 }
