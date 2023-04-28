@@ -25,7 +25,7 @@ export default function QuestionItem({
   categories: any;
   question: any;
   index: number;
-  onMoveQuestion: (info: { questionId: number; categoryId: number }) => void;
+  onMoveQuestion: (v: number) => void;
 }) {
   const [activeTab, setActiveTab] = useState('question');
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
@@ -10,7 +10,11 @@ import CategoryModal from './CategoryModal';
 GrammarCategories.propTypes = {
   style: PropTypes.object
 };
-export default function GrammarCategories({ style }) {
+export default function GrammarCategories({
+  style
+}: {
+  style?: React.CSSProperties;
+}) {
   const {
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
@@ -20,8 +24,8 @@ export default function GrammarCategories({ style }) {
   const [uploading, setUploading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [categoryText, setCategoryText] = useState('');
-  const [categories, setCategories] = useState([]);
-  const [categoryObj, setCategoryObj] = useState({});
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoryObj, setCategoryObj] = useState<Record<string, any>>({});
   const loadGrammarCategories = useAppContext(
     (v) => v.requestHelpers.loadGrammarCategories
   );
@@ -125,6 +129,9 @@ export default function GrammarCategories({ style }) {
   function handleEditGrammarCategory({
     category,
     newCategory: editiedCategory
+  }: {
+    category: string;
+    newCategory: string;
   }) {
     setCategories((categories) => {
       const index = categories.indexOf(category);
