@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useViewContext } from '~/contexts';
@@ -31,7 +31,13 @@ Body.propTypes = {
   selectedTheme: PropTypes.string
 };
 
-export default function Body({ profile, selectedTheme }) {
+export default function Body({
+  profile,
+  selectedTheme
+}: {
+  profile: { id: number; username: string };
+  selectedTheme: string;
+}) {
   const onSetPageTitle = useViewContext((v) => v.actions.onSetPageTitle);
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,8 +47,7 @@ export default function Body({ profile, selectedTheme }) {
     () =>
       matchPath(
         {
-          path: '/users/:username',
-          exact: true
+          path: '/users/:username'
         },
         location.pathname
       ),
@@ -52,8 +57,7 @@ export default function Body({ profile, selectedTheme }) {
     () =>
       matchPath(
         {
-          path: '/users/:username/watched',
-          exact: true
+          path: '/users/:username/watched'
         },
         location.pathname
       ),
@@ -187,21 +191,11 @@ export default function Body({ profile, selectedTheme }) {
             <Route path="/likes" element={<Navigate replace to={`./all`} />} />
             <Route
               path="/likes/:section"
-              element={
-                <LikedPosts
-                  username={profile.username}
-                  selectedTheme={selectedTheme}
-                />
-              }
+              element={<LikedPosts selectedTheme={selectedTheme} />}
             />
             <Route
               path="/:section/*"
-              element={
-                <Posts
-                  username={profile.username}
-                  selectedTheme={selectedTheme}
-                />
-              }
+              element={<Posts selectedTheme={selectedTheme} />}
             />
             <Route
               path="*"

@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import InvalidPage from '~/components/InvalidPage';
 import Feeds from './Feeds';
@@ -17,8 +18,12 @@ const filterTable = {
   links: 'url'
 };
 
-export default function LikedPosts({ selectedTheme }) {
-  const { section, username } = useParams();
+export default function LikedPosts({
+  selectedTheme
+}: {
+  selectedTheme: string;
+}) {
+  const { section = '', username = '' } = useParams();
   const {
     likes: {
       [section]: profileFeeds,
