@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   BarChart,
@@ -21,10 +21,10 @@ MonthlyXPBarChart.propTypes = {
   data: PropTypes.array.isRequired
 };
 
-export default function MonthlyXPBarChart({ data = [] }) {
+export default function MonthlyXPBarChart({ data = [] }: { data: any[] }) {
   const barData = useMemo(() => {
     const result = [];
-    for (let bar of data) {
+    for (const bar of data) {
       result.push({ name: bar.label, XP: bar.value });
     }
     return result;
@@ -65,7 +65,7 @@ export default function MonthlyXPBarChart({ data = [] }) {
             <XAxis dataKey="name" />
             <YAxis tickFormatter={handleYAxisTickFormatting} />
             <Tooltip
-              formatter={(value) => addCommasToNumber(value)}
+              formatter={(value: any) => addCommasToNumber(value)}
               wrapperStyle={{ width: 100, backgroundColor: '#ccc' }}
             />
             <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
@@ -80,7 +80,7 @@ export default function MonthlyXPBarChart({ data = [] }) {
     </div>
   );
 
-  function handleYAxisTickFormatting(value) {
+  function handleYAxisTickFormatting(value: number) {
     if (value > 1_000_000) {
       return value / 1_000_000 + 'M';
     }

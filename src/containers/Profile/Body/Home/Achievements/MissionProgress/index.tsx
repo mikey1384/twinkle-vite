@@ -36,7 +36,7 @@ export default function MissionProgress({
   missions: any[];
   selectedMissionListTab: string;
   selectedTheme: string;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
   userId: number;
   username: string;
 }) {

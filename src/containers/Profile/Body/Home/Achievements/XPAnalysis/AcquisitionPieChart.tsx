@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -8,7 +9,7 @@ import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
 const xpAcquisitionLabel = localize('xpAcquisition');
-const colors = {
+const colors: Record<string, string> = {
   posting: Color.logoBlue(),
   watching: Color.passionFruit(),
   vocabulary: Color.orange(),
@@ -22,7 +23,7 @@ AcquisitionPieChart.propTypes = {
   data: PropTypes.array.isRequired
 };
 
-export default function AcquisitionPieChart({ data }) {
+export default function AcquisitionPieChart({ data }: { data: any[] }) {
   return (
     <div
       style={{
@@ -73,7 +74,7 @@ export default function AcquisitionPieChart({ data }) {
                         width: '100%'
                       }}
                     >
-                      {payload.reverse().map((entry, index) => (
+                      {payload?.reverse().map((entry, index) => (
                         <div
                           style={{
                             display: 'flex',
@@ -122,7 +123,11 @@ export default function AcquisitionPieChart({ data }) {
     </div>
   );
 
-  function handlePieLabelFormatting({ payload }) {
+  function handlePieLabelFormatting({
+    payload
+  }: {
+    payload: { value: number };
+  }) {
     if (payload.value > 1_000_000) {
       return Math.round(payload.value / 100_000) / 10 + 'M';
     }

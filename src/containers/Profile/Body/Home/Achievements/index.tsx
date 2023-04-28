@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import XPAnalysis from './XPAnalysis';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -13,6 +14,9 @@ export default function Achievements({
   profile,
   profile: { id, username, selectedMissionListTab, missions, missionsLoaded },
   selectedTheme
+}: {
+  profile: any;
+  selectedTheme: string;
 }) {
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Achievements/index">
