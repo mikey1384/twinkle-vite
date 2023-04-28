@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
@@ -24,6 +24,13 @@ export default function QuestionListItem({
   onSetIsEditing,
   question,
   style
+}: {
+  onApproveQuestion: (v: any) => void;
+  onDeleteQuestion: (v: any) => void;
+  onEditQuestion: (v: any) => void;
+  onSetIsEditing: (v: boolean) => void;
+  question: any;
+  style?: React.CSSProperties;
 }) {
   const approveGrammarQuestion = useAppContext(
     (v) => v.requestHelpers.approveGrammarQuestion
@@ -36,7 +43,7 @@ export default function QuestionListItem({
   }, [question.answerIndex, question.choices]);
   const wrongChoices = useMemo(() => {
     return question.choices.filter(
-      (choice, index) => index !== question.answerIndex
+      (_: any, index: number) => index !== question.answerIndex
     );
   }, [question.answerIndex, question.choices]);
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import GrammarQuestionGenerator from './GrammarQuestionGenerator';
@@ -13,7 +14,13 @@ GrammarManager.propTypes = {
   onSetMissionState: PropTypes.func.isRequired
 };
 
-export default function GrammarManager({ mission, onSetMissionState }) {
+export default function GrammarManager({
+  mission,
+  onSetMissionState
+}: {
+  mission: any;
+  onSetMissionState: (arg0: any) => void;
+}) {
   const { managementTab: activeTab = 'pending' } = mission;
 
   return (
@@ -35,7 +42,7 @@ export default function GrammarManager({ mission, onSetMissionState }) {
           }}
         >
           <nav
-            className={activeTab !== 'categories' ? 'active' : null}
+            className={activeTab !== 'categories' ? 'active' : ''}
             onClick={() =>
               onSetMissionState({
                 missionId: mission.id,
@@ -46,7 +53,7 @@ export default function GrammarManager({ mission, onSetMissionState }) {
             Questions
           </nav>
           <nav
-            className={activeTab === 'categories' ? 'active' : null}
+            className={activeTab === 'categories' ? 'active' : ''}
             onClick={() =>
               onSetMissionState({
                 missionId: mission.id,

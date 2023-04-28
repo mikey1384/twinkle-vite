@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { capitalize, stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
@@ -29,6 +29,16 @@ export default function QuestionEditForm({
   wrongChoice3,
   questionId,
   onCancel
+}: {
+  onEditQuestion: (v: any) => void;
+  correctChoice: string;
+  leftSideText: string;
+  rightSideText: string;
+  wrongChoice1: string;
+  wrongChoice2: string;
+  wrongChoice3: string;
+  questionId: number;
+  onCancel: () => void;
 }) {
   const [submitting, setSubmitting] = useState(false);
   const editGrammarQuestion = useAppContext(
@@ -45,10 +55,10 @@ export default function QuestionEditForm({
   const [editedWrongChoice2, setEditedWrongChoice2] = useState(wrongChoice2);
   const [editedWrongChoice3, setEditedWrongChoice3] = useState(wrongChoice3);
 
-  function finalizeLeftSideText(text) {
+  function finalizeLeftSideText(text: string) {
     return capitalize(text.trim());
   }
-  function finalizeRightSideText(text) {
+  function finalizeRightSideText(text: string) {
     if (stringIsEmpty(text)) {
       return '.';
     }

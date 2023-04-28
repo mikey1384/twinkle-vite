@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
@@ -18,6 +18,10 @@ export default function GrammarQuestionGenerator({
   mission,
   onSetMissionState,
   style
+}: {
+  mission: any;
+  onSetMissionState: (arg0: any) => void;
+  style?: React.CSSProperties;
 }) {
   const uploadGrammarQuestion = useAppContext(
     (v) => v.requestHelpers.uploadGrammarQuestion
@@ -57,7 +61,7 @@ export default function GrammarQuestionGenerator({
   }, [rightSideText]);
 
   const submitDisabled = useMemo(() => {
-    if (stringIsEmpty(leftSideText) & stringIsEmpty(rightSideText)) {
+    if (stringIsEmpty(leftSideText) && stringIsEmpty(rightSideText)) {
       return true;
     }
     if (
