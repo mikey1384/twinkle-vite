@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import React, { Route, Routes } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';

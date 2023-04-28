@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
@@ -22,6 +22,11 @@ export default function ApproveInterface({
   attempt,
   mission,
   onSetMissionState
+}: {
+  activeTab: string;
+  mission: any;
+  onSetMissionState: (arg0: any) => void;
+  attempt: any;
 }) {
   const [confirming, setConfirming] = useState(false);
   const uploadMissionFeedback = useAppContext(
@@ -102,7 +107,7 @@ export default function ApproveInterface({
           <Textarea
             minRows={3}
             value={feedback}
-            onChange={(event) => {
+            onChange={(event: any) => {
               handleSetFeedback(addEmoji(event.target.value));
             }}
             placeholder={`Explain why you are approving/rejecting this mission attempt...`}
@@ -145,7 +150,7 @@ export default function ApproveInterface({
         missionId: mission.id,
         newState: {
           [`${activeTab}AttemptIds`]: mission[`${activeTab}AttemptIds`].filter(
-            (attemptId) => attemptId !== attempt.id
+            (attemptId: number) => attemptId !== attempt.id
           ),
           attemptObj: {
             ...mission.attemptObj,
@@ -161,12 +166,12 @@ export default function ApproveInterface({
     setConfirming(false);
   }
 
-  function handleSetFeedback(text) {
+  function handleSetFeedback(text: string) {
     setFeedback(text);
     feedbackRef.current = text;
   }
 
-  function handleSetStatus(status) {
+  function handleSetStatus(status: string) {
     setStatus(status);
     statusRef.current = status;
   }

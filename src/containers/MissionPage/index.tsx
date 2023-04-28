@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Loading from '~/components/Loading';
 import Main from './Main';
 import RightMenu from './RightMenu';
@@ -18,7 +18,7 @@ import {
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 
 export default function MissionPage() {
-  const { missionType } = useParams();
+  const { missionType = '' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { loaded, userId, isCreator } = useKeyContext((v) => v.myState);

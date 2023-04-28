@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Main from './Main';
 import InvalidPage from '~/components/InvalidPage';
@@ -12,7 +13,15 @@ Management.propTypes = {
   onSetMissionState: PropTypes.func.isRequired
 };
 
-export default function Management({ mission, missionId, onSetMissionState }) {
+export default function Management({
+  mission,
+  missionId,
+  onSetMissionState
+}: {
+  mission: any;
+  missionId: number;
+  onSetMissionState: (arg0: any) => void;
+}) {
   const { isCreator } = useKeyContext((v) => v.myState);
   if (!isCreator) {
     return (
