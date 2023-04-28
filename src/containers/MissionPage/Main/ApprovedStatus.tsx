@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import FileViewer from '~/components/FileViewer';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -26,6 +26,13 @@ export default function ApprovedStatus({
   missionId,
   myAttempt,
   style
+}: {
+  isTask?: boolean;
+  xpReward?: number;
+  coinReward?: number;
+  missionId: number;
+  myAttempt: any;
+  style?: React.CSSProperties;
 }) {
   const {
     link: { color: linkColor },
@@ -97,7 +104,7 @@ export default function ApprovedStatus({
               ? Color.brownOrange()
               : myAttempt.status === 'fail'
               ? Color.black()
-              : null,
+              : '',
           color: '#fff'
         }}
       >

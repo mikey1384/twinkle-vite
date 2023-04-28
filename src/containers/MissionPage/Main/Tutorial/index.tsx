@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import AddTutorial from './AddTutorial';
 import ViewTutorial from './ViewTutorial';
@@ -21,6 +21,12 @@ export default function Tutorial({
   style,
   mission,
   innerRef
+}: {
+  onSetMissionState: (info: { missionId: number; newState: any }) => void;
+  className?: string;
+  style?: React.CSSProperties;
+  mission: any;
+  innerRef: React.RefObject<any>;
 }) {
   const { managementLevel } = useKeyContext((v) => v.myState);
   const myAttempts = useMissionContext((v) => v.state.myAttempts);

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import InteractiveContent from '~/components/InteractiveContent';
@@ -21,8 +21,14 @@ export default function TutorialModal({
   tutorialSlideId,
   onCurrentSlideIdChange,
   onHide
+}: {
+  missionTitle: string;
+  tutorialId: number;
+  tutorialSlideId: number;
+  onCurrentSlideIdChange: (slideId: number) => void;
+  onHide: () => void;
 }) {
-  const ModalBodyRef = useRef(null);
+  const ModalBodyRef: React.RefObject<any> = useRef(null);
   return (
     <Modal modalStyle={{ height: 'CALC(100vh - 7rem)' }} large onHide={onHide}>
       <header>{missionTitle}</header>
@@ -53,12 +59,18 @@ export default function TutorialModal({
     </Modal>
   );
 
-  function handleScrollElementTo({ element, amount }) {
+  function handleScrollElementTo({
+    element,
+    amount
+  }: {
+    element: HTMLElement;
+    amount: number;
+  }) {
     if (!element) return;
     let offsetTop = 0;
     addAllOffsetTop(element);
     ModalBodyRef.current.scrollTop = offsetTop + amount - 350;
-    function addAllOffsetTop(element) {
+    function addAllOffsetTop(element: any) {
       offsetTop += element.offsetTop;
       if (element.offsetParent) {
         addAllOffsetTop(element.offsetParent);
@@ -66,7 +78,7 @@ export default function TutorialModal({
     }
   }
 
-  function handleScrollElementToCenter(element, adjustment = -50) {
+  function handleScrollElementToCenter(element: any, adjustment = -50) {
     if (!element) return;
     let offsetTop = 0;
     addAllOffsetTop(element);
@@ -74,7 +86,7 @@ export default function TutorialModal({
       offsetTop +
       adjustment -
       (ModalBodyRef.current.clientHeight - element.clientHeight) / 2;
-    function addAllOffsetTop(element) {
+    function addAllOffsetTop(element: any) {
       offsetTop += element.offsetTop;
       if (element.offsetParent) {
         addAllOffsetTop(element.offsetParent);
