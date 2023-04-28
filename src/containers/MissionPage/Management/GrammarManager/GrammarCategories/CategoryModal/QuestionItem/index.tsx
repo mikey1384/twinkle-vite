@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { mobileMaxWidth } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
@@ -21,6 +21,11 @@ export default function QuestionItem({
   index,
   question,
   onMoveQuestion
+}: {
+  categories: any;
+  question: any;
+  index: number;
+  onMoveQuestion: (info: { questionId: number; categoryId: number }) => void;
 }) {
   const [activeTab, setActiveTab] = useState('question');
   return (

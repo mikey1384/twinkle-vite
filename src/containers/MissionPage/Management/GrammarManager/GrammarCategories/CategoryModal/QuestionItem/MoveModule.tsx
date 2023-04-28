@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -11,7 +11,15 @@ MoveModule.propTypes = {
   onMoveQuestion: PropTypes.func.isRequired
 };
 
-export default function MoveModule({ categories, questionId, onMoveQuestion }) {
+export default function MoveModule({
+  categories,
+  questionId,
+  onMoveQuestion
+}: {
+  categories: any[];
+  questionId: number;
+  onMoveQuestion: (v: number) => void;
+}) {
   const [moving, setMoving] = useState(false);
   const updateGrammarQuestionCategory = useAppContext(
     (v) => v.requestHelpers.updateGrammarQuestionCategory
@@ -55,7 +63,7 @@ export default function MoveModule({ categories, questionId, onMoveQuestion }) {
     </div>
   );
 
-  async function handleMoveQuestion(category) {
+  async function handleMoveQuestion(category: string) {
     setMoving(true);
     await updateGrammarQuestionCategory({ questionId, category });
     onMoveQuestion(questionId);
