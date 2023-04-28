@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Rectangle } from 'recharts';
 import { Color } from '~/constants/css';
@@ -8,7 +9,14 @@ Bar.propTypes = {
   fill: PropTypes.string
 };
 
-export default function Bar({ index, totalLength, ...props }) {
+export default function Bar({
+  index,
+  totalLength,
+  ...props
+}: {
+  index: number;
+  totalLength: number;
+}) {
   return (
     <Rectangle
       {...props}

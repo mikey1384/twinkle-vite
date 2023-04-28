@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import LoginToViewContent from '~/components/LoginToViewContent';
@@ -15,7 +15,13 @@ ActivityItem.propTypes = {
   style: PropTypes.object
 };
 
-export default function ActivityItem({ post, style }) {
+export default function ActivityItem({
+  post,
+  style
+}: {
+  post: any;
+  style: React.CSSProperties;
+}) {
   const { userId } = useKeyContext((v) => v.myState);
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus

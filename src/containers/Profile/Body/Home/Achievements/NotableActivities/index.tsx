@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -22,6 +22,11 @@ export default function NotableActivities({
   selectedTheme,
   userId,
   username
+}: {
+  profile: any;
+  selectedTheme: string;
+  userId: number;
+  username: string;
 }) {
   const loadingMoreRef = useRef(false);
   const [loading, setLoading] = useState(false);
@@ -71,7 +76,7 @@ export default function NotableActivities({
           {hasntEngagedLabel}
         </div>
       )}
-      {posts.map((post, index) => {
+      {posts.map((post: any, index: number) => {
         return (
           <ActivityItem
             key={post.feedId}

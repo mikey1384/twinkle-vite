@@ -9,7 +9,7 @@ export default function SecretComment({
   onClick,
   style
 }: {
-  onClick: () => void;
+  onClick?: () => void;
   style: React.CSSProperties;
 }) {
   return (
