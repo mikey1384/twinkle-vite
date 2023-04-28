@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import ListItem from './ListItem';
 import { css } from '@emotion/css';
@@ -16,6 +17,12 @@ export default function ChoiceList({
   listItems,
   onSelect,
   style
+}: {
+  answerIndex?: number;
+  conditionPassStatus: string;
+  listItems: any[];
+  onSelect: (v: any) => void;
+  style?: React.CSSProperties;
 }) {
   return (
     <div

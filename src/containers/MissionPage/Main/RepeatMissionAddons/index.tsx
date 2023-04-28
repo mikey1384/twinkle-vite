@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import GrammarReview from './GrammarReview';
 import FilterBar from '~/components/FilterBar';
@@ -11,7 +11,13 @@ RepeatMissionAddon.propTypes = {
   onSetMissionState: PropTypes.func.isRequired
 };
 
-export default function RepeatMissionAddon({ mission, onSetMissionState }) {
+export default function RepeatMissionAddon({
+  mission,
+  onSetMissionState
+}: {
+  mission: any;
+  onSetMissionState: (v: any) => void;
+}) {
   const loadGrammarAttempts = useAppContext(
     (v) => v.requestHelpers.loadGrammarAttempts
   );

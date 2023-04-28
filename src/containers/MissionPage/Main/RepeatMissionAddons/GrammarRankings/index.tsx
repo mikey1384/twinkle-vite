@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import Ranker from './Ranker';
@@ -15,7 +15,13 @@ GrammarRankings.propTypes = {
   myAttempts: PropTypes.object.isRequired
 };
 
-export default function GrammarRankings({ mission, myAttempts }) {
+export default function GrammarRankings({
+  mission,
+  myAttempts
+}: {
+  mission: any;
+  myAttempts: any;
+}) {
   const { userId } = useKeyContext((v) => v.myState);
   const {
     tableHeader: { color: tableHeaderColor }
@@ -104,7 +110,7 @@ export default function GrammarRankings({ mission, myAttempts }) {
             <div />
             <div style={{ justifySelf: 'center' }}>Times Completed</div>
           </div>
-          {rankers.map((ranker) => (
+          {rankers.map((ranker: { id: number }) => (
             <Ranker key={ranker.id} user={ranker} myId={userId} />
           ))}
         </div>

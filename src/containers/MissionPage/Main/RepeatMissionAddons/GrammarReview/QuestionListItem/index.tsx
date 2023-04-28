@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ChoiceList from './ChoiceList';
 import { css } from '@emotion/css';
@@ -12,10 +12,13 @@ QuestionListItem.propTypes = {
 export default function QuestionListItem({
   question: { question, choices: choiceLabels, answerIndex } = {},
   style
+}: {
+  question: any;
+  style?: React.CSSProperties;
 }) {
   const [passStatus, setPassStatus] = useState('');
   const [choices, setChoices] = useState(
-    choiceLabels.map((label) => ({ label, checked: false }))
+    choiceLabels.map((label: string) => ({ label, checked: false }))
   );
   return (
     <div
@@ -43,8 +46,8 @@ export default function QuestionListItem({
     </div>
   );
 
-  function handleSelect(selectedIndex) {
-    setChoices((choices) =>
+  function handleSelect(selectedIndex: number) {
+    setChoices((choices: any[]) =>
       choices.map((choice, index) =>
         index === selectedIndex
           ? { ...choice, checked: true }
