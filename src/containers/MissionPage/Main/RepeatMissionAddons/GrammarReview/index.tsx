@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
@@ -23,6 +23,12 @@ export default function GrammarReview({
   mission,
   onSetMissionState,
   style
+}: {
+  activeTab: string;
+  loadingReview: boolean;
+  mission: any;
+  onSetMissionState: (v: any) => void;
+  style?: React.CSSProperties;
 }) {
   const loadMoreGrammarAttempts = useAppContext(
     (v) => v.requestHelpers.loadMoreGrammarAttempts
@@ -87,15 +93,17 @@ export default function GrammarReview({
             </div>
           ) : (
             <>
-              {mission[`${activeTab}Attempts`]?.map((attempt, index) => {
-                return (
-                  <QuestionListItem
-                    key={attempt.id}
-                    question={mission.questionObj[attempt.rootId]}
-                    style={{ marginTop: index === 0 ? 0 : '1rem' }}
-                  />
-                );
-              })}
+              {mission[`${activeTab}Attempts`]?.map(
+                (attempt: any, index: number) => {
+                  return (
+                    <QuestionListItem
+                      key={attempt.id}
+                      question={mission.questionObj[attempt.rootId]}
+                      style={{ marginTop: index === 0 ? 0 : '1rem' }}
+                    />
+                  );
+                }
+              )}
             </>
           )}
           {loadMoreButtonShown && (
