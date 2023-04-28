@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Picture from './Picture';
@@ -21,6 +21,11 @@ export default function ReorderInterface({
   pictures,
   reorderedPictureIds,
   onSetReorderedPictureIds
+}: {
+  numPictures: number;
+  pictures: any[];
+  reorderedPictureIds: any[];
+  onSetReorderedPictureIds: (arg0: any) => any;
 }) {
   const pictureObj = useMemo(() => {
     return objectify(pictures);
