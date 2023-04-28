@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ContentPanel from '~/components/ContentPanel';
 import InvalidPage from '~/components/InvalidPage';
 import request from 'axios';
@@ -8,14 +8,13 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
-import { useViewContext, useKeyContext } from '~/contexts';
+import { useViewContext } from '~/contexts';
 
 export default function ContentPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { contentId: initialContentId } = useParams();
   const contentId = Number(initialContentId);
-  const { userId } = useKeyContext((v) => v.myState);
   const onSetContentNav = useViewContext((v) => v.actions.onSetContentNav);
   const rawContentType = location.pathname.split('/')[1].slice(0, -1);
   const contentType =
@@ -96,7 +95,6 @@ export default function ContentPage() {
               commentsLoadLimit={5}
               contentId={Number(contentId)}
               contentType={contentType}
-              userId={userId}
             />
           ) : (
             <InvalidPage />

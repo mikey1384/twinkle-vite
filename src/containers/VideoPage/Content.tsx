@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Carousel from '~/components/Carousel';
 import Button from '~/components/Button';
@@ -43,9 +43,20 @@ export default function Content({
   watchTabActive,
   uploader,
   videoId
+}: {
+  byUser?: boolean;
+  content: string;
+  isContinuing?: boolean;
+  playlistId?: number;
+  questions: any[];
+  rewardLevel?: number;
+  title: string;
+  watchTabActive?: boolean;
+  uploader: { id: number; authLevel: number };
+  videoId: number;
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [userAnswers, setUserAnswers] = useState({});
+  const [userAnswers, setUserAnswers] = useState<Record<string, any>>({});
   const [resultModalShown, setResultModalShown] = useState(false);
   const [questionsBuilderShown, setQuestionsBuilderShown] = useState(false);
   const uploadQuestions = useAppContext(
@@ -86,13 +97,11 @@ export default function Content({
       <div style={{ marginTop: '2rem' }}>
         {!questionsBuilderShown && (
           <XPVideoPlayer
-            autoplay
             rewardLevel={rewardLevel}
             byUser={!!byUser}
             key={videoId}
             videoId={videoId}
             videoCode={content}
-            title={title}
             uploader={uploader}
             minimized={!watchTabActive}
           />
@@ -178,12 +187,16 @@ export default function Content({
 
   function handleRenderSlides() {
     return questions.map((question, questionIndex) => {
-      const filteredChoices = question.choices.filter((choice) => !!choice);
+      const filteredChoices = question.choices.filter(
+        (choice: any) => !!choice
+      );
       const isCurrentSlide = currentSlide === questionIndex;
-      const listItems = filteredChoices.map((choice, choiceIndex) => ({
-        label: choice,
-        checked: isCurrentSlide && userAnswers[currentSlide] === choiceIndex
-      }));
+      const listItems = filteredChoices.map(
+        (choice: any, choiceIndex: number) => ({
+          label: choice,
+          checked: isCurrentSlide && userAnswers[currentSlide] === choiceIndex
+        })
+      );
 
       return (
         <div key={questionIndex}>
@@ -204,14 +217,14 @@ export default function Content({
     });
   }
 
-  function handleSelectChoice(newAnswer) {
+  function handleSelectChoice(newAnswer: number) {
     setUserAnswers((userAnswers) => ({
       ...userAnswers,
       [currentSlide]: newAnswer
     }));
   }
 
-  async function handleUploadQuestions(questions) {
+  async function handleUploadQuestions(questions: any[]) {
     const data = await uploadQuestions({ questions, videoId });
     onSetVideoQuestions({
       contentType: 'video',

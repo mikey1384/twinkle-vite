@@ -1,4 +1,5 @@
-import React, { Routes, Route } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
 import Email from './Email';
 

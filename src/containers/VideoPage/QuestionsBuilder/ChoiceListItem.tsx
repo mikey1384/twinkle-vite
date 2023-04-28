@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useDrag, useDrop } from 'react-dnd';
 import ItemTypes from '~/constants/itemTypes';
@@ -25,6 +25,15 @@ export default function ChoiceListItem({
   onSelect,
   placeholder,
   questionIndex
+}: {
+  checked: boolean;
+  checkDisabled: boolean;
+  id: number;
+  label: string;
+  onMove: (v: any) => void;
+  onSelect: (v: any) => void;
+  placeholder: string;
+  questionIndex: number;
 }) {
   const Draggable = useRef(null);
   const [{ opacity }, drag] = useDrag({
@@ -36,7 +45,7 @@ export default function ChoiceListItem({
   });
   const [, drop] = useDrop({
     accept: ItemTypes.LIST_ITEM,
-    hover(item) {
+    hover(item: any) {
       if (!Draggable.current) {
         return;
       }
@@ -50,12 +59,14 @@ export default function ChoiceListItem({
     }
   });
 
+  const NavRef: any = drag(drop(Draggable));
+
   return (
     <nav
-      ref={drag(drop(Draggable))}
+      ref={NavRef}
       style={{
         opacity,
-        cursor: !checkDisabled && 'ns-resize'
+        cursor: !checkDisabled ? 'ns-resize' : ''
       }}
       className="unselectable"
     >
@@ -67,7 +78,7 @@ export default function ChoiceListItem({
           <div
             style={{
               width: '90%',
-              color: !label && '#999'
+              color: !label ? '#999' : ''
             }}
           >
             {label || placeholder}
@@ -80,7 +91,7 @@ export default function ChoiceListItem({
           onChange={onSelect}
           checked={checked}
           disabled={checkDisabled}
-          style={{ cursor: !checkDisabled && 'pointer' }}
+          style={{ cursor: !checkDisabled ? 'pointer' : '' }}
         />
       </aside>
     </nav>

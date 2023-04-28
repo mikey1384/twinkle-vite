@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import InvalidPage from '~/components/InvalidPage';
 import Comments from '~/components/Comments';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -180,7 +180,7 @@ export default function VideoPage() {
           contentId: videoId,
           contentType: 'video'
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error(error.response || error);
       }
     }
@@ -281,7 +281,7 @@ export default function VideoPage() {
                     watchTabActive
                     uploader={uploader}
                     videoId={videoId}
-                    playlistId={playlistId}
+                    playlistId={Number(playlistId)}
                   />
                 }
               />
@@ -297,7 +297,7 @@ export default function VideoPage() {
                     title={title}
                     uploader={uploader}
                     videoId={videoId}
-                    playlistId={playlistId}
+                    playlistId={Number(playlistId)}
                   />
                 }
               />
@@ -347,7 +347,6 @@ export default function VideoPage() {
                   fontSize: '1.4rem'
                 }}
                 rewards={rewards}
-                uploaderName={uploader.username}
               />
             </div>
             <Subjects
@@ -356,7 +355,7 @@ export default function VideoPage() {
               onLoadMoreSubjects={onLoadMoreSubjects}
               onLoadSubjectComments={onLoadSubjectComments}
               onSubjectEditDone={onEditSubject}
-              onSubjectDelete={(subjectId) =>
+              onSubjectDelete={(subjectId: number) =>
                 onDeleteContent({
                   contentType: 'subject',
                   contentId: subjectId
@@ -446,7 +445,7 @@ export default function VideoPage() {
         {loaded && (
           <NavMenu
             videoId={videoId}
-            playlistId={playlistId}
+            playlistId={Number(playlistId)}
             isContinuing={!!isContinuing}
           />
         )}
@@ -459,7 +458,7 @@ export default function VideoPage() {
     onDeleteContent({ contentType: 'video', contentId: videoId });
   }
 
-  async function handleEditVideoPage(params) {
+  async function handleEditVideoPage(params: any) {
     const data = await editContent(params);
     const url = fetchedVideoCodeFromURL(params.editedUrl);
     onEditContent({
@@ -478,12 +477,28 @@ export default function VideoPage() {
     });
   }
 
-  function handleChangeByUserStatus({ contentId, contentType, byUser }) {
+  function handleChangeByUserStatus({
+    contentId,
+    contentType,
+    byUser
+  }: {
+    contentId: number;
+    contentType: string;
+    byUser: boolean;
+  }) {
     onSetByUserStatus({ contentId, contentType, byUser });
     onChangeVideoByUserStatus({ videoId, byUser });
   }
 
-  function handleSetRewardLevel({ contentId, contentType, rewardLevel }) {
+  function handleSetRewardLevel({
+    contentId,
+    contentType,
+    rewardLevel
+  }: {
+    contentId: number;
+    contentType: string;
+    rewardLevel: number;
+  }) {
     onSetRewardLevel({ contentType, contentId, rewardLevel });
     onSetThumbRewardLevel({ videoId, rewardLevel });
   }

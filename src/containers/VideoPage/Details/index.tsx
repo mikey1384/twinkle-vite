@@ -91,7 +91,7 @@ export default function Details({
 }: {
   addTags: (tags: string[]) => void;
   byUser: boolean;
-  changeByUserStatus: (byUser: boolean) => void;
+  changeByUserStatus: (v: any) => void;
   changingPage: boolean;
   content: string;
   description: string;
@@ -99,7 +99,7 @@ export default function Details({
   likes: any[];
   onDelete: () => void;
   onEditFinish: (v: any) => void;
-  onSetRewardLevel: (level: number) => void;
+  onSetRewardLevel: (v: any) => void;
   recommendations: any[];
   tags: string[];
   rewards: any[];

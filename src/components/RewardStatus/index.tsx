@@ -35,7 +35,7 @@ function RewardStatus({
   style,
   theme
 }: Props) {
-  const { userId, profileTheme } = useKeyContext((v) => v.myState);
+  const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     info: { color: infoColor }
   } = useTheme(theme || profileTheme);
