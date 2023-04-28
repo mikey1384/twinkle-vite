@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import TakeScreenshot from './TakeScreenshot';
 import CopyAndPaste from './CopyAndPaste';
@@ -13,31 +14,29 @@ import WriteItYourself from './WriteItYourself';
 import LaunchTheWebsite from './LaunchTheWebsite';
 
 MissionModule.propTypes = {
-  fileUploadProgress: PropTypes.number,
   isRepeating: PropTypes.bool,
   mission: PropTypes.object.isRequired,
   onSetMissionState: PropTypes.func,
-  style: PropTypes.object,
-  uploadingFile: PropTypes.bool
+  style: PropTypes.object
 };
 
 export default function MissionModule({
   mission,
-  fileUploadProgress,
   isRepeating,
   onSetMissionState,
-  style,
-  uploadingFile
+  style
+}: {
+  mission: any;
+  isRepeating: boolean;
+  onSetMissionState: (v: any) => void;
+  style?: React.CSSProperties;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', ...style }}>
       {mission.missionType === 'screenshot' && (
         <TakeScreenshot
           attachment={mission.attachment}
-          fileUploadProgress={fileUploadProgress}
           missionId={mission.id}
-          onSetMissionState={onSetMissionState}
-          uploadingFile={uploadingFile}
         />
       )}
       {mission.missionType === 'twinkle-store' && (

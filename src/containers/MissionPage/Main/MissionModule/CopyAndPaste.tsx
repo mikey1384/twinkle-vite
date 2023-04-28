@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
@@ -28,7 +28,15 @@ CopyAndPaste.propTypes = {
   style: PropTypes.object
 };
 
-export default function CopyAndPaste({ mission, onSetMissionState, style }) {
+export default function CopyAndPaste({
+  mission,
+  onSetMissionState,
+  style
+}: {
+  mission: any;
+  onSetMissionState: (arg0: any) => any;
+  style?: React.CSSProperties;
+}) {
   const [submitDisabled, setSubmitDisabled] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);
   const {
@@ -141,7 +149,8 @@ export default function CopyAndPaste({ mission, onSetMissionState, style }) {
         missionId: mission.id,
         newState: { status: 'pass' }
       });
-      document.getElementById('App').scrollTop = 0;
+      const appElement = document.getElementById('App');
+      if (appElement) appElement.scrollTop = 0;
       BodyRef.scrollTop = 0;
     }
     setSubmitDisabled(false);

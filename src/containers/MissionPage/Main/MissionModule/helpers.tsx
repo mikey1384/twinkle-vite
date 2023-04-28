@@ -1,12 +1,18 @@
 import React from 'react';
 
-export function getAstProps({ ast, propType }) {
-  const results = [];
-  for (let key in ast) {
+export function getAstProps({ ast, propType }: { ast: any; propType: any }) {
+  const results: any[] = [];
+  for (const key in ast) {
     _getAstProps({ astProp: ast[key], propType });
   }
 
-  function _getAstProps({ astProp, propType }) {
+  function _getAstProps({
+    astProp,
+    propType
+  }: {
+    astProp: any;
+    propType: any;
+  }) {
     if (astProp && typeof astProp === 'object') {
       if (
         (!propType && astProp?.type) ||
@@ -14,7 +20,7 @@ export function getAstProps({ ast, propType }) {
       ) {
         results.push(astProp);
       }
-      for (let key in astProp) {
+      for (const key in astProp) {
         _getAstProps({ astProp: astProp[key], propType });
       }
     }
@@ -22,9 +28,15 @@ export function getAstProps({ ast, propType }) {
   return results;
 }
 
-export function filterElementsByType({ elements, filter }) {
+export function filterElementsByType({
+  elements,
+  filter
+}: {
+  elements: any;
+  filter: any;
+}) {
   const results = [];
-  for (let element of elements) {
+  for (const element of elements) {
     if (element.openingElement.name.name === filter) {
       results.push(element);
     }
@@ -32,9 +44,15 @@ export function filterElementsByType({ elements, filter }) {
   return results;
 }
 
-export function filterOpeningElementsByType({ elements, filter }) {
+export function filterOpeningElementsByType({
+  elements,
+  filter
+}: {
+  elements: any;
+  filter: any;
+}) {
   const results = [];
-  for (let element of elements) {
+  for (const element of elements) {
     if (element?.name?.name === filter) {
       results.push(element);
     }
@@ -42,9 +60,15 @@ export function filterOpeningElementsByType({ elements, filter }) {
   return results;
 }
 
-export function getElementAttribute({ openingElement, attributeName }) {
+export function getElementAttribute({
+  openingElement,
+  attributeName
+}: {
+  openingElement: any;
+  attributeName: any;
+}) {
   if (openingElement?.attributes?.length > 0) {
-    for (let attribute of openingElement.attributes) {
+    for (const attribute of openingElement.attributes) {
       if (attribute?.name?.name === attributeName) {
         return attribute;
       }
@@ -53,7 +77,7 @@ export function getElementAttribute({ openingElement, attributeName }) {
   return null;
 }
 
-export function getElementStyleProps(openingElement) {
+export function getElementStyleProps(openingElement: any) {
   const style = getElementAttribute({
     openingElement,
     attributeName: 'style'
@@ -62,8 +86,8 @@ export function getElementStyleProps(openingElement) {
   return styleProps;
 }
 
-export function getElementInnerText(element) {
-  for (let child of element?.children || []) {
+export function getElementInnerText(element: any) {
+  for (const child of element?.children || []) {
     if (child.type === 'JSXText') {
       return child.value.trim();
     }
