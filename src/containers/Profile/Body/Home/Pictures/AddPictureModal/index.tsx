@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -20,6 +20,12 @@ export default function AddPictureModal({
   onConfirm,
   onHide,
   profileId
+}: {
+  currentPictures: any[];
+  maxNumSelectable: number;
+  onConfirm: (arg0: any) => any;
+  onHide: () => any;
+  profileId: number;
 }) {
   const {
     done: { color: doneColor }

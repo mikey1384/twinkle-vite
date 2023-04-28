@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -23,6 +23,12 @@ export default function ArchivedPicture({
   selectedPictureIds,
   style,
   onDeleteArchivedPicture
+}: {
+  onSelect: (id: number) => any;
+  picture: { id: number; src: string };
+  selectedPictureIds: number[];
+  style?: React.CSSProperties;
+  onDeleteArchivedPicture: (id: number) => any;
 }) {
   const {
     itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }

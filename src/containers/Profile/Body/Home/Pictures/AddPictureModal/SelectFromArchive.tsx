@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useAppContext } from '~/contexts';
 import Loading from '~/components/Loading';
@@ -15,6 +15,10 @@ export default function SelectFromArchive({
   currentPictures,
   selectedPictureIds,
   onSetSelectedPictureIds
+}: {
+  currentPictures: any[];
+  selectedPictureIds: number[];
+  onSetSelectedPictureIds: (arg0: any) => any;
 }) {
   const loadUserPictures = useAppContext(
     (v) => v.requestHelpers.loadUserPictures
@@ -22,7 +26,7 @@ export default function SelectFromArchive({
   const [loadMoreButtonShown, setLoadMoreButtonShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [pictures, setPictures] = useState([]);
+  const [pictures, setPictures] = useState<{ id: number; src: string }[]>([]);
 
   useEffect(() => {
     init();
@@ -60,17 +64,18 @@ export default function SelectFromArchive({
             onDeleteArchivedPicture={(pictureId) => {
               setPictures((pictures) =>
                 pictures.filter(
-                  (picture) => Number(picture.id) !== Number(pictureId)
+                  (picture: { id: number }) =>
+                    Number(picture.id) !== Number(pictureId)
                 )
               );
-              onSetSelectedPictureIds((selectedPictureIds) =>
+              onSetSelectedPictureIds((selectedPictureIds: number[]) =>
                 selectedPictureIds.filter(
                   (id) => Number(id) !== Number(pictureId)
                 )
               );
             }}
             onSelect={(pictureId) =>
-              onSetSelectedPictureIds((selectedPictureIds) =>
+              onSetSelectedPictureIds((selectedPictureIds: number[]) =>
                 selectedPictureIds.includes(pictureId)
                   ? selectedPictureIds.filter(
                       (id) => Number(id) !== Number(pictureId)

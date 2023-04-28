@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
@@ -12,7 +12,17 @@ Picture.propTypes = {
   style: PropTypes.object
 };
 
-export default function Picture({ numPictures, onDelete, picture, style }) {
+export default function Picture({
+  numPictures,
+  onDelete,
+  picture,
+  style
+}: {
+  picture: any;
+  numPictures: number;
+  onDelete: (arg0: any) => any;
+  style: React.CSSProperties;
+}) {
   const imageUrl = useMemo(() => {
     return picture?.src ? `${cloudFrontURL}${picture?.src}` : '';
   }, [picture]);
