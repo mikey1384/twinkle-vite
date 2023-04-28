@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import Button from '~/components/Button';
@@ -18,6 +18,11 @@ export default function Questions({
   onSetQuestionIds,
   onSetQuestionObj,
   pendingQuestions
+}: {
+  approvedQuestions: any[];
+  onSetQuestionIds: (arg0: any) => void;
+  onSetQuestionObj: (arg0: any) => void;
+  pendingQuestions: any[];
 }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
@@ -50,7 +55,7 @@ export default function Questions({
         }}
       >
         <nav
-          className={activeTab === 'pending' ? 'active' : null}
+          className={activeTab === 'pending' ? 'active' : ''}
           onClick={() => {
             setActiveTab('pending');
           }}
@@ -58,7 +63,7 @@ export default function Questions({
           Pending
         </nav>
         <nav
-          className={activeTab === 'approved' ? 'active' : null}
+          className={activeTab === 'approved' ? 'active' : ''}
           onClick={() => {
             setActiveTab('approved');
           }}
@@ -149,10 +154,10 @@ export default function Questions({
     </div>
   );
 
-  async function handleApprove(questionId) {
+  async function handleApprove(questionId: number) {
     setIsApproving(true);
     await approveGoogleQuestion(questionId);
-    onSetQuestionObj((prev) => ({
+    onSetQuestionObj((prev: any) => ({
       ...prev,
       [questionId]: {
         ...prev[questionId],
@@ -162,10 +167,10 @@ export default function Questions({
     setIsApproving(false);
   }
 
-  async function handleDisApprove(questionId) {
+  async function handleDisApprove(questionId: number) {
     setIsDisapproving(true);
     await disapproveGoogleQuestion(questionId);
-    onSetQuestionObj((prev) => ({
+    onSetQuestionObj((prev: any) => ({
       ...prev,
       [questionId]: {
         ...prev[questionId],
@@ -175,11 +180,13 @@ export default function Questions({
     setIsDisapproving(false);
   }
 
-  async function handleDelete(questionId) {
+  async function handleDelete(questionId: number) {
     setIsDeleting(true);
     await deleteGoogleQuestion(questionId);
-    onSetQuestionIds((prev) => prev.filter((id) => id !== questionId));
-    onSetQuestionObj((prev) => {
+    onSetQuestionIds((prev: any) =>
+      prev.filter((id: number) => id !== questionId)
+    );
+    onSetQuestionObj((prev: any) => {
       const newQuestionObj = { ...prev };
       delete newQuestionObj[questionId];
       return newQuestionObj;

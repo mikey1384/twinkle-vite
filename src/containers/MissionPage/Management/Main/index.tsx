@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import Attempts from './Attempts';
@@ -16,6 +17,11 @@ export default function Main({
   missionId,
   missionType,
   onSetMissionState
+}: {
+  mission: any;
+  missionId: number;
+  missionType: string;
+  onSetMissionState: (arg0: any) => void;
 }) {
   const { managementTab: activeTab = 'pending' } = mission;
   return (
@@ -28,7 +34,7 @@ export default function Main({
         }}
       >
         <nav
-          className={activeTab === 'pending' ? 'active' : null}
+          className={activeTab === 'pending' ? 'active' : ''}
           onClick={() => {
             onSetMissionState({
               missionId,
@@ -39,7 +45,7 @@ export default function Main({
           Pending
         </nav>
         <nav
-          className={activeTab === 'pass' ? 'active' : null}
+          className={activeTab === 'pass' ? 'active' : ''}
           onClick={() => {
             onSetMissionState({
               missionId,
@@ -50,7 +56,7 @@ export default function Main({
           Approved
         </nav>
         <nav
-          className={activeTab === 'fail' ? 'active' : null}
+          className={activeTab === 'fail' ? 'active' : ''}
           onClick={() =>
             onSetMissionState({
               missionId,
@@ -62,7 +68,7 @@ export default function Main({
         </nav>
         {missionType === 'google' && (
           <nav
-            className={activeTab === 'questions' ? 'active' : null}
+            className={activeTab === 'questions' ? 'active' : ''}
             onClick={() =>
               onSetMissionState({
                 missionId,

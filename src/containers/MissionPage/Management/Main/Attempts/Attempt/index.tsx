@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import FileViewer from '~/components/FileViewer';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -23,6 +24,12 @@ export default function Attempt({
   onSetMissionState,
   mission,
   style
+}: {
+  activeTab: string;
+  attempt: any;
+  onSetMissionState: (arg0: any) => void;
+  mission: any;
+  style?: React.CSSProperties;
 }) {
   const {
     link: { color: linkColor }
@@ -51,7 +58,7 @@ export default function Attempt({
       </div>
       {attempt.answers && (
         <div style={{ marginTop: '2rem', marginBottom: '3rem' }}>
-          {attempt.answers.map((answer, index) => (
+          {attempt.answers.map((answer: any, index: number) => (
             <div
               style={{
                 fontSize: '1.7rem',

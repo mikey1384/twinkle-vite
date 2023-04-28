@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Playlist from '~/components/Playlist';
 import { useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
@@ -11,7 +11,7 @@ export default function Content() {
     contentType: 'playlist',
     contentId: contentId
   });
-  const [background, setBackground] = useState();
+  const [background, setBackground] = useState('none');
   const [title, setTitle] = useState('');
   return (
     <div
@@ -36,7 +36,7 @@ export default function Content() {
           playlistId={Number(contentId)}
           onLoad={({ exists, title }) => {
             setTitle(title);
-            setBackground(exists ? '#fff' : null);
+            setBackground(exists ? '#fff' : 'none');
           }}
         />
       </div>

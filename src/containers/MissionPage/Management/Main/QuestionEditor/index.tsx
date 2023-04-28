@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useAppContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
@@ -13,11 +13,11 @@ QuestionEditor.propTypes = {
   missionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
 };
 
-export default function QuestionEditor({ missionId }) {
+export default function QuestionEditor({ missionId }: { missionId: number }) {
   const [isAdding, setIsAdding] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [questionIds, setQuestionIds] = useState([]);
-  const [questionObj, setQuestionObj] = useState({});
+  const [questionIds, setQuestionIds] = useState<number[]>([]);
+  const [questionObj, setQuestionObj] = useState<Record<string, any>>({});
   const [inputText, setInputText] = useState('');
   const loadGoogleMissionQuestions = useAppContext(
     (v) => v.requestHelpers.loadGoogleMissionQuestions
@@ -64,7 +64,7 @@ export default function QuestionEditor({ missionId }) {
             minRows={3}
             value={inputText}
             placeholder="Enter new questions here"
-            onChange={(event) => setInputText(event.target.value)}
+            onChange={(event: any) => setInputText(event.target.value)}
           />
           <Button
             style={{ marginTop: '1rem', alignSelf: 'flex-end' }}
@@ -85,10 +85,10 @@ export default function QuestionEditor({ missionId }) {
             onSetQuestionIds={setQuestionIds}
             onSetQuestionObj={setQuestionObj}
             approvedQuestions={questions.filter(
-              (question) => question.isApproved
+              (question: { isApproved: boolean }) => question.isApproved
             )}
             pendingQuestions={questions.filter(
-              (question) => !question.isApproved
+              (question: { isApproved: boolean }) => !question.isApproved
             )}
           />
         )}
