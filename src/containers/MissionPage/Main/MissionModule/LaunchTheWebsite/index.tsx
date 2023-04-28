@@ -26,7 +26,7 @@ export default function LaunchTheWebsite({
   task
 }: {
   onSetMissionState: (v: any) => void;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
   task: any;
 }) {
   const { missions, username } = useKeyContext((v) => v.myState);

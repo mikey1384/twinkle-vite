@@ -28,7 +28,6 @@ Mission.propTypes = {
 export default function Mission({
   mission,
   mission: {
-    fileUploadProgress,
     title,
     subtitle,
     description,
@@ -37,8 +36,7 @@ export default function Mission({
     xpReward,
     coinReward,
     repeatXpReward,
-    repeatCoinReward,
-    uploadingFile
+    repeatCoinReward
   },
   style,
   onSetMissionState
@@ -46,7 +44,6 @@ export default function Mission({
   style?: React.CSSProperties;
   onSetMissionState: (arg0: any) => any;
   mission: {
-    fileUploadProgress: any;
     title: string;
     subtitle: string;
     description: string;
@@ -59,7 +56,6 @@ export default function Mission({
     repeatXpReward: number;
     repeatable: boolean;
     repeatCoinReward: number;
-    uploadingFile: boolean;
   };
 }) {
   const [loading, setLoading] = useState(false);
@@ -229,9 +225,7 @@ export default function Mission({
         <MissionModule
           mission={mission}
           isRepeating={isRepeating}
-          fileUploadProgress={fileUploadProgress}
           onSetMissionState={onSetMissionState}
-          uploadingFile={uploadingFile}
           style={{ marginTop: '4.5rem' }}
         />
       )}

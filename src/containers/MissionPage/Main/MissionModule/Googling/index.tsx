@@ -21,7 +21,7 @@ export default function Googling({
 }: {
   mission: any;
   onSetMissionState: (arg0: { missionId: any; newState: any }) => void;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   const {
     done: { color: doneColor }
