@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import ProgressBar from '~/components/ProgressBar';
 import Icon from '~/components/Icon';
@@ -16,6 +17,10 @@ export default function NotEnoughKarmaInstructions({
   unlockProgress,
   requiredKarmaPoints,
   karmaPoints
+}: {
+  unlockProgress: number;
+  requiredKarmaPoints: number;
+  karmaPoints: number;
 }) {
   return (
     <div
@@ -100,7 +105,7 @@ export default function NotEnoughKarmaInstructions({
         <div style={{ width: '100%', padding: '0 1rem' }}>
           <ProgressBar
             style={{ width: '100%', marginTop: '1.5rem' }}
-            color={unlockProgress === 100 ? Color.green() : null}
+            color={unlockProgress === 100 ? Color.green() : ''}
             progress={unlockProgress}
           />
           <p
