@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
@@ -16,6 +16,10 @@ export default function SubmittedQuestions({
   style,
   mission,
   onSetMissionState
+}: {
+  style?: React.CSSProperties;
+  mission: any;
+  onSetMissionState: (v: any) => void;
 }) {
   const { isCreator } = useKeyContext((v) => v.myState);
   const {
@@ -61,7 +65,7 @@ export default function SubmittedQuestions({
         }}
       >
         <nav
-          className={activeTab === 'pending' ? 'active' : null}
+          className={activeTab === 'pending' ? 'active' : ''}
           onClick={() => {
             onSetMissionState({
               missionId: mission.id,
@@ -72,7 +76,7 @@ export default function SubmittedQuestions({
           Pending
         </nav>
         <nav
-          className={activeTab === 'approved' ? 'active' : null}
+          className={activeTab === 'approved' ? 'active' : ''}
           onClick={() => {
             onSetMissionState({
               missionId: mission.id,
@@ -99,77 +103,79 @@ export default function SubmittedQuestions({
         </div>
       ) : (
         <>
-          {mission[`${activeTab}QuestionIds`]?.map((questionId, index) => {
-            const question = mission.questionObj[questionId];
-            return (
-              <QuestionListItem
-                key={questionId}
-                question={question}
-                onSetIsEditing={(isEditing) =>
-                  onSetMissionState({
-                    missionId: mission.id,
-                    newState: {
-                      questionObj: {
-                        ...mission.questionObj,
-                        [questionId]: {
-                          ...mission.questionObj[questionId],
-                          isEditing
+          {mission[`${activeTab}QuestionIds`]?.map(
+            (questionId: number, index: number) => {
+              const question = mission.questionObj[questionId];
+              return (
+                <QuestionListItem
+                  key={questionId}
+                  question={question}
+                  onSetIsEditing={(isEditing) =>
+                    onSetMissionState({
+                      missionId: mission.id,
+                      newState: {
+                        questionObj: {
+                          ...mission.questionObj,
+                          [questionId]: {
+                            ...mission.questionObj[questionId],
+                            isEditing
+                          }
                         }
                       }
-                    }
-                  })
-                }
-                onEditQuestion={(editedQuestion) => {
-                  onSetMissionState({
-                    missionId: mission.id,
-                    newState: {
-                      questionObj: {
-                        ...mission.questionObj,
-                        [questionId]: {
-                          ...mission.questionObj[questionId],
-                          ...editedQuestion,
-                          isEditing: false
+                    })
+                  }
+                  onEditQuestion={(editedQuestion) => {
+                    onSetMissionState({
+                      missionId: mission.id,
+                      newState: {
+                        questionObj: {
+                          ...mission.questionObj,
+                          [questionId]: {
+                            ...mission.questionObj[questionId],
+                            ...editedQuestion,
+                            isEditing: false
+                          }
                         }
                       }
-                    }
-                  });
-                }}
-                onApproveQuestion={(isApproved) =>
-                  onSetMissionState({
-                    missionId: mission.id,
-                    newState: {
-                      [`${isApproved ? 'pending' : 'approved'}QuestionIds`]:
-                        mission[
-                          `${isApproved ? 'pending' : 'approved'}QuestionIds`
-                        ].filter((id) => id !== questionId),
-                      questionObj: {
-                        ...mission.questionObj,
-                        [questionId]: {
-                          ...mission.questionObj[questionId],
-                          isApproved
+                    });
+                  }}
+                  onApproveQuestion={(isApproved) =>
+                    onSetMissionState({
+                      missionId: mission.id,
+                      newState: {
+                        [`${isApproved ? 'pending' : 'approved'}QuestionIds`]:
+                          mission[
+                            `${isApproved ? 'pending' : 'approved'}QuestionIds`
+                          ].filter((id: number) => id !== questionId),
+                        questionObj: {
+                          ...mission.questionObj,
+                          [questionId]: {
+                            ...mission.questionObj[questionId],
+                            isApproved
+                          }
                         }
                       }
-                    }
-                  })
-                }
-                onDeleteQuestion={(questionId) =>
-                  onSetMissionState({
-                    missionId: mission.id,
-                    newState: {
-                      [`${activeTab}QuestionIds`]: mission[
-                        `${activeTab}QuestionIds`
-                      ].filter((id) => id !== questionId),
-                      questionObj: {
-                        ...mission.questionObj,
-                        [questionId]: null
+                    })
+                  }
+                  onDeleteQuestion={(questionId) =>
+                    onSetMissionState({
+                      missionId: mission.id,
+                      newState: {
+                        [`${activeTab}QuestionIds`]: mission[
+                          `${activeTab}QuestionIds`
+                        ].filter((id: number) => id !== questionId),
+                        questionObj: {
+                          ...mission.questionObj,
+                          [questionId]: null
+                        }
                       }
-                    }
-                  })
-                }
-                style={{ marginTop: index === 0 ? 0 : '1rem' }}
-              />
-            );
-          })}
+                    })
+                  }
+                  style={{ marginTop: index === 0 ? 0 : '1rem' }}
+                />
+              );
+            }
+          )}
         </>
       )}
       {loadMoreButton && (
