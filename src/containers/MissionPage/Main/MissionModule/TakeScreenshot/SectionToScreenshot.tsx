@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { scrollElementToCenter } from '~/helpers';
@@ -16,6 +16,10 @@ export default function SectionToScreenshot({
   nowString,
   username,
   onSetButtonShown
+}: {
+  nowString: string;
+  username: string;
+  onSetButtonShown: (value: boolean) => void;
 }) {
   const styles = useSpring({
     to: { marginLeft: '0' },

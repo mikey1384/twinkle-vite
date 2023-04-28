@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import MakeAccount from './MakeAccount';
@@ -15,7 +15,13 @@ ReplitVerifier.propTypes = {
   onSetMissionState: PropTypes.func.isRequired
 };
 
-export default function ReplitVerifier({ task, onSetMissionState }) {
+export default function ReplitVerifier({
+  task,
+  onSetMissionState
+}: {
+  task: any;
+  onSetMissionState: (v: any) => void;
+}) {
   const { missions } = useKeyContext((v) => v.myState);
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus
@@ -122,7 +128,7 @@ export default function ReplitVerifier({ task, onSetMissionState }) {
     </ErrorBoundary>
   );
 
-  async function handleUpdateTaskProgress(newState) {
+  async function handleUpdateTaskProgress(newState: any) {
     await updateMissionStatus({
       missionType: task.missionType,
       newStatus: newState

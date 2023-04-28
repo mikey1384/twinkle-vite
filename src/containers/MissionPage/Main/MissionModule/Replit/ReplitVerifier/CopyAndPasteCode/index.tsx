@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import CopyCode from './CopyCode';
 import PasteCode from './PasteCode';
@@ -45,7 +45,13 @@ function HomePage() {
 
 export default HomePage;`;
 
-export default function CopyAndPasteCode({ index, onCorrectCodeEntered }) {
+export default function CopyAndPasteCode({
+  index,
+  onCorrectCodeEntered
+}: {
+  index?: number;
+  onCorrectCodeEntered: () => void;
+}) {
   const [codeCopied, setCodeCopied] = useState(false);
 
   return (

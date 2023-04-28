@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import StepSlide from '../../components/StepSlide';
 import { css } from '@emotion/css';
@@ -9,7 +10,15 @@ CreateNewRepl.propTypes = {
   okayPressed: PropTypes.bool
 };
 
-export default function CreateNewRepl({ index, innerRef, okayPressed }) {
+export default function CreateNewRepl({
+  index,
+  innerRef,
+  okayPressed
+}: {
+  index?: number;
+  innerRef?: React.RefObject<any>;
+  okayPressed: boolean;
+}) {
   return (
     <StepSlide
       innerRef={innerRef}

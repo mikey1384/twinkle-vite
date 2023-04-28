@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import StepSlide from '../../components/StepSlide';
 import { css } from '@emotion/css';
@@ -9,7 +10,15 @@ MakeAccount.propTypes = {
   onSetOkayPressed: PropTypes.func.isRequired
 };
 
-export default function MakeAccount({ index, okayPressed, onSetOkayPressed }) {
+export default function MakeAccount({
+  index,
+  okayPressed,
+  onSetOkayPressed
+}: {
+  index?: number;
+  okayPressed: boolean;
+  onSetOkayPressed: (value: boolean) => void;
+}) {
   return (
     <StepSlide
       index={index}

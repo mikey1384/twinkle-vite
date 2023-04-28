@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import MissionItem from '~/components/MissionItem';
 import Loading from '~/components/Loading';
@@ -22,7 +22,7 @@ export default function DidNotPassCopyAndPaste() {
     if (!copyAndPasteMission && missionTypeIdHash?.['copy-and-paste']) {
       handleLoadCopyAndPasteMission(missionTypeIdHash?.['copy-and-paste']);
     }
-    async function handleLoadCopyAndPasteMission(missionId) {
+    async function handleLoadCopyAndPasteMission(missionId: number) {
       setLoading(true);
       const { page } = await loadMission({ missionId });
       onLoadMission({ mission: page });

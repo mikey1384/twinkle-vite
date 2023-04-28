@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -12,7 +12,15 @@ FinalStep.propTypes = {
   style: PropTypes.object
 };
 
-export default function FinalStep({ mission, style, userId }) {
+export default function FinalStep({
+  mission,
+  style,
+  userId
+}: {
+  mission: any;
+  userId: number;
+  style?: React.CSSProperties;
+}) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const uploadMissionAttempt = useAppContext(
     (v) => v.requestHelpers.uploadMissionAttempt
