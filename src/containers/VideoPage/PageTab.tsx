@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import localize from '~/constants/localize';
@@ -18,6 +19,11 @@ export default function PageTab({
   watchTabActive,
   playlistId,
   questions
+}: {
+  isContinuing?: boolean;
+  watchTabActive?: boolean;
+  playlistId?: number;
+  questions: any[];
 }) {
   const navigate = useNavigate();
   return (

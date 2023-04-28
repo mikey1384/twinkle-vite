@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import QuestionBlock from './QuestionBlock';
@@ -78,17 +78,23 @@ export default function QuestionsBuilder({
   questions: initialQuestions = [],
   title,
   videoCode
+}: {
+  onHide: () => void;
+  onSubmit: (arg0: any) => void;
+  questions: any[];
+  title: string;
+  videoCode: string;
 }) {
   const {
     success: { color: successColor },
     info: { color: infoColor }
   } = useKeyContext((v) => v.theme);
   const [reorderModeOn, setReorderModeOn] = useState(false);
-  const [questions, setQuestions] = useState({});
-  const [questionIds, setQuestionIds] = useState([]);
-  const LeftMenuRef = useRef(null);
-  const QuestionBlocksRef = useRef(null);
-  const QuestionsRef = useRef([]);
+  const [questions, setQuestions] = useState<Record<string, any>>({});
+  const [questionIds, setQuestionIds] = useState<any[]>([]);
+  const LeftMenuRef: React.RefObject<any> = useRef(null);
+  const QuestionBlocksRef: React.RefObject<any> = useRef(null);
+  const QuestionsRef: React.RefObject<any> = useRef([]);
 
   useEffect(() => {
     setQuestions(
@@ -120,7 +126,7 @@ export default function QuestionsBuilder({
             className={Styles.leftSection}
             ref={LeftMenuRef}
             style={{
-              width: reorderModeOn && '80%',
+              width: reorderModeOn ? '80%' : '',
               overflow: 'scroll',
               height: 'CALC(100vh - 21rem)'
             }}
@@ -129,7 +135,6 @@ export default function QuestionsBuilder({
               <QuestionsListGroup
                 questions={questions}
                 questionIds={questionIds}
-                onMove={onQuestionsRearrange}
                 onReorderDone={(questionIds) => {
                   setQuestionIds(questionIds);
                   setReorderModeOn(false);
@@ -156,7 +161,7 @@ export default function QuestionsBuilder({
                       }}
                       questionIndex={index}
                       errorMessage={question.errorMessage}
-                      innerRef={(ref) => {
+                      innerRef={(ref: any) => {
                         QuestionsRef.current[questionId] = ref;
                       }}
                       onSelectChoice={onSelectChoice}
@@ -268,7 +273,7 @@ export default function QuestionsBuilder({
     }, 0);
   }
 
-  function onRemoveQuestion(questionId) {
+  function onRemoveQuestion(questionId: number) {
     setQuestions({
       ...questions,
       [questionId]: {
@@ -279,7 +284,7 @@ export default function QuestionsBuilder({
     });
   }
 
-  function onUndoRemove(questionId) {
+  function onUndoRemove(questionId: number) {
     setQuestions({
       ...questions,
       [questionId]: {
@@ -294,6 +299,11 @@ export default function QuestionsBuilder({
     choices,
     choiceIds,
     editedQuestionTitle
+  }: {
+    questionId: number;
+    choices: any[];
+    choiceIds: number[];
+    editedQuestionTitle: string;
   }) {
     setQuestions({
       ...questions,
@@ -308,16 +318,13 @@ export default function QuestionsBuilder({
     });
   }
 
-  function onQuestionsRearrange({ sourceId, targetId }) {
-    const newQuestionOrder = [...questionIds];
-    const sourceIndex = newQuestionOrder.indexOf(sourceId);
-    const targetIndex = newQuestionOrder.indexOf(targetId);
-    newQuestionOrder.splice(sourceIndex, 1);
-    newQuestionOrder.splice(targetIndex, 0, sourceId);
-    setQuestionIds(newQuestionOrder);
-  }
-
-  function onSelectChoice({ questionId, choiceId }) {
+  function onSelectChoice({
+    questionId,
+    choiceId
+  }: {
+    questionId: number;
+    choiceId: number;
+  }) {
     setQuestions((questions) => ({
       ...questions,
       [questionId]: {
@@ -328,7 +335,15 @@ export default function QuestionsBuilder({
     }));
   }
 
-  function onChoicesRearrange({ questionIndex, sourceId, targetId }) {
+  function onChoicesRearrange({
+    questionIndex,
+    sourceId,
+    targetId
+  }: {
+    questionIndex: number;
+    sourceId: number;
+    targetId: number;
+  }) {
     const newIndices = [...questions[questionIndex].choiceIds];
     const sourceIndex = newIndices.indexOf(sourceId);
     const targetIndex = newIndices.indexOf(targetId);
@@ -356,8 +371,16 @@ export default function QuestionsBuilder({
     );
   }
 
-  function handleSave({ isSubmit } = {}) {
-    let errorObj = {
+  function handleSave({
+    isSubmit
+  }: {
+    isSubmit?: boolean;
+  } = {}) {
+    let errorObj: {
+      questionId: number | null;
+      message: string;
+      onEdit: boolean;
+    } = {
       questionId: null,
       message: '',
       onEdit: true
@@ -383,11 +406,12 @@ export default function QuestionsBuilder({
 
     for (let i = 0; i < questionIds.length; i++) {
       if (!questions[i].deleted) {
-        if (errorInQuestion(questions[i])) {
+        const errorType = errorInQuestion(questions[i]);
+        if (errorType) {
           errorObj = {
             questionId: i,
-            message: errorHash[errorInQuestion(questions[i])].message,
-            onEdit: errorHash[errorInQuestion(questions[i])].onEdit
+            message: errorHash[errorType].message,
+            onEdit: errorHash[errorType].onEdit
           };
           break;
         }
@@ -404,7 +428,7 @@ export default function QuestionsBuilder({
         }
       });
       setTimeout(
-        () => QuestionsRef.current[errorObj.questionId].scrollIntoView(),
+        () => QuestionsRef.current[errorObj.questionId || 0].scrollIntoView(),
         0
       );
       return;
@@ -419,7 +443,7 @@ export default function QuestionsBuilder({
       onHide();
     }
 
-    function errorInQuestion(question) {
+    function errorInQuestion(question: any) {
       if (question.onEdit) return 'notDone';
       if (!question.title || stringIsEmpty(question.title)) {
         return 'missingTitle';
@@ -436,15 +460,15 @@ export default function QuestionsBuilder({
     }
   }
 
-  function formatQuestions(questions) {
-    let questionsObject = {};
+  function formatQuestions(questions: any[]) {
+    const questionsObject: Record<string, any> = {};
     questions.forEach((question, index) => {
       questionsObject[index] = {
         correctChoice: question.correctChoice,
         title: question.title,
         onEdit: false,
         choicesObj: question.choices.reduce(
-          (result, choice, index) => ({
+          (result: any, choice: any, index: number) => ({
             ...result,
             [index + 1]: choice || ''
           }),
@@ -458,7 +482,7 @@ export default function QuestionsBuilder({
     return questionsObject;
   }
 
-  function newQuestion(questionId) {
+  function newQuestion(questionId: number) {
     return {
       [questionId]: {
         title: '',

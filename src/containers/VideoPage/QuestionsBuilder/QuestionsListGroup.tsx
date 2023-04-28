@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import QuestionsListItem from './QuestionsListItem';
 import RoundList from '~/components/RoundList';
@@ -20,6 +20,11 @@ export default function QuestionsListGroup({
   onReorderDone,
   questions,
   questionIds: initialQuestionIds
+}: {
+  onReorderCancel: () => void;
+  onReorderDone: (questionIds: number[]) => void;
+  questions: { [key: number]: any };
+  questionIds: number[];
 }) {
   const [questionIds, setQuestionIds] = useState(initialQuestionIds);
   return (
@@ -56,7 +61,13 @@ export default function QuestionsListGroup({
     </div>
   );
 
-  function handleMove({ sourceId, targetId }) {
+  function handleMove({
+    sourceId,
+    targetId
+  }: {
+    sourceId: number;
+    targetId: number;
+  }) {
     const newIndices = [...questionIds];
     const sourceIndex = newIndices.indexOf(sourceId);
     const targetIndex = newIndices.indexOf(targetId);

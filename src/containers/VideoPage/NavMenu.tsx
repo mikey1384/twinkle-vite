@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Link from '~/components/Link';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -40,7 +40,15 @@ NavMenu.propTypes = {
   isContinuing: PropTypes.bool
 };
 
-export default function NavMenu({ playlistId, videoId, isContinuing }) {
+export default function NavMenu({
+  playlistId,
+  videoId,
+  isContinuing
+}: {
+  playlistId?: number;
+  videoId: number | string;
+  isContinuing?: boolean;
+}) {
   const navVideos = useExploreContext((v) => v.state.videos.navVideos);
   const {
     nextVideos,
@@ -112,7 +120,7 @@ export default function NavMenu({ playlistId, videoId, isContinuing }) {
       socket.removeListener('new_reward_posted', handleNewReward);
     };
 
-    async function handleNewReward({ receiverId }) {
+    async function handleNewReward({ receiverId }: { receiverId: number }) {
       if (receiverId === userId) {
         handleLoadRewards();
       }
@@ -253,7 +261,7 @@ export default function NavMenu({ playlistId, videoId, isContinuing }) {
               <p>{upNextLabel}</p>
               {renderVideos({
                 videos: nextVideos,
-                arePlaylistVideos: playlistId && playlistVideos.length > 0
+                arePlaylistVideos: !!playlistId && playlistVideos.length > 0
               })}
             </section>
           )}
@@ -374,6 +382,10 @@ export default function NavMenu({ playlistId, videoId, isContinuing }) {
     videos,
     areContinueWatchingVideos,
     arePlaylistVideos
+  }: {
+    videos: any[];
+    areContinueWatchingVideos?: boolean;
+    arePlaylistVideos?: boolean;
   }) {
     return videos.map((video, index) => (
       <div

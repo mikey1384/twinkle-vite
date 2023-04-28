@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import React, { memo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 
@@ -18,9 +18,16 @@ function EditChoiceListItem({
   onSelect,
   placeholder,
   text
+}: {
+  checked: boolean;
+  choiceId: number;
+  onEdit: (v: any) => void;
+  onSelect: (v: any) => void;
+  placeholder: string;
+  text: string;
 }) {
   const handleEdit = useCallback(
-    (event) => {
+    (event: any) => {
       onEdit({ choiceId, text: event.target.value });
     },
     [choiceId, onEdit]

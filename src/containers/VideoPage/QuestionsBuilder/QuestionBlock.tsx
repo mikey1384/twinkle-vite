@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ChoiceListItem from './ChoiceListItem';
 import EditChoiceListItem from './EditChoiceListItem';
@@ -118,9 +118,28 @@ export default function QuestionBlock({
   onUndoRemove,
   questionIndex,
   title
+}: {
+  choiceIds: number[];
+  choicesObj: { [key: number]: string };
+  correctChoice: number;
+  deleted: boolean;
+  errorMessage: string;
+  questionId: number;
+  innerRef: React.RefObject<any>;
+  onEditDone: (arg0: any) => any;
+  onSelectChoice: (arg0: any) => any;
+  onRearrange: (arg0: any) => any;
+  onEdit: boolean;
+  onEditCancel: (v: number) => any;
+  onEditStart: (v: number) => any;
+  onRemove: (v: number) => any;
+  hideErrorMsg: (v: number) => any;
+  onUndoRemove: (v: number) => any;
+  questionIndex: number;
+  title: string;
 }) {
   const [editedQuestionTitle, setEditedQuestionTitle] = useState('');
-  const [choices, setChoices] = useState({});
+  const [choices, setChoices] = useState<Record<string, any>>({});
 
   useEffect(() => {
     setEditedQuestionTitle(title);
@@ -158,8 +177,8 @@ export default function QuestionBlock({
           {!onEdit ? (
             <h2
               style={{
-                opacity: deleted && '0.2',
-                color: !title && '#999'
+                opacity: deleted ? 0.2 : 1,
+                color: !title ? '#999' : ''
               }}
             >
               {title || questionTitleLabel}
@@ -169,7 +188,7 @@ export default function QuestionBlock({
               autoFocus
               placeholder={`${enterQuestionLabel}...`}
               value={editedQuestionTitle}
-              onChange={(event) => {
+              onChange={(event: any) => {
                 hideErrorMsg(questionId);
                 setEditedQuestionTitle(event.target.value);
               }}
@@ -193,7 +212,7 @@ export default function QuestionBlock({
           )}
         </div>
       </div>
-      <div className={Styles.choiceList} style={{ opacity: deleted && '0.2' }}>
+      <div className={Styles.choiceList} style={{ opacity: deleted ? 0.2 : 1 }}>
         {choiceIds.map((choiceId, index) => {
           return onEdit ? (
             <EditChoiceListItem
@@ -209,7 +228,6 @@ export default function QuestionBlock({
             <ChoiceListItem
               key={choiceId}
               id={choiceId}
-              deleted={deleted}
               questionIndex={questionIndex}
               onMove={({ sourceId, targetId }) =>
                 onRearrange({ questionIndex, sourceId, targetId })
@@ -234,7 +252,7 @@ export default function QuestionBlock({
           <Button
             transparent
             onClick={() => onEditStart(questionId)}
-            style={{ opacity: deleted && '0.2', fontSize: '2rem' }}
+            style={{ opacity: deleted ? 0.2 : 1, fontSize: '2rem' }}
             disabled={deleted && true}
           >
             <Icon icon="pencil-alt" />
@@ -258,7 +276,13 @@ export default function QuestionBlock({
     </div>
   );
 
-  function handleEditChoice({ choiceId, text }) {
+  function handleEditChoice({
+    choiceId,
+    text
+  }: {
+    choiceId: number;
+    text: string;
+  }) {
     hideErrorMsg(questionId);
     setChoices({
       ...choices,
@@ -266,7 +290,7 @@ export default function QuestionBlock({
     });
   }
 
-  function handleEditCancel(questionIndex) {
+  function handleEditCancel(questionIndex: number) {
     hideErrorMsg(questionId);
     setEditedQuestionTitle(title);
     onEditCancel(questionIndex);

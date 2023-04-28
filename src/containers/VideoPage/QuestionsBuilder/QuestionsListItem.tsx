@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { useDrag, useDrop } from 'react-dnd';
@@ -18,6 +18,10 @@ export default function QuestionsListItem({
   item: listItem,
   onMove,
   questionId
+}: {
+  item: { title: string; deleted: boolean };
+  onMove: (arg0: any) => any;
+  questionId: number;
 }) {
   const Draggable = useRef(null);
   const [{ opacity }, drag] = useDrag({
@@ -29,7 +33,7 @@ export default function QuestionsListItem({
   });
   const [, drop] = useDrop({
     accept: ItemTypes.LIST_ITEM,
-    hover(item) {
+    hover(item: any) {
       if (!Draggable.current) {
         return;
       }
@@ -39,14 +43,16 @@ export default function QuestionsListItem({
       onMove({ sourceId: item.questionId, targetId: questionId });
     }
   });
+  const NavRef: any = drag(drop(Draggable));
 
   return (
     <nav
-      ref={drag(drop(Draggable))}
+      ref={NavRef}
       style={{
         background: '#fff',
         opacity,
-        color: (!listItem.title || listItem.deleted) && Color.lighterGray,
+        color:
+          !listItem.title || listItem.deleted ? Color.lighterGray() : undefined,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
