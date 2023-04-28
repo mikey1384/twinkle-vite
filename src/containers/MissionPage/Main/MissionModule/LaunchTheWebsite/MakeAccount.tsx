@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import StepSlide from '../components/StepSlide';
 import { Color } from '~/constants/css';
@@ -15,6 +16,11 @@ export default function MakeAccount({
   innerRef,
   okayPressed,
   onSetOkayPressed
+}: {
+  index?: number;
+  innerRef?: React.RefObject<any>;
+  okayPressed: boolean;
+  onSetOkayPressed: (arg0: boolean) => void;
 }) {
   return (
     <StepSlide

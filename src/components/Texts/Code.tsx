@@ -26,8 +26,8 @@ export default function Code({
   children: any;
   className: string;
   language: any;
-  style: React.CSSProperties;
-  theme: any;
+  style?: React.CSSProperties;
+  theme?: any;
   codeRef: React.RefObject<any>;
 }) {
   const selectedTheme = useMemo(

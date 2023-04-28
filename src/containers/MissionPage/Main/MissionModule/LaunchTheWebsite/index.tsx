@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import MultiStepContainer from '../components/MultiStepContainer';
@@ -20,7 +20,15 @@ LaunchTheWebsite.propTypes = {
 
 const deviceIsMobile = isMobile(navigator);
 
-export default function LaunchTheWebsite({ onSetMissionState, style, task }) {
+export default function LaunchTheWebsite({
+  onSetMissionState,
+  style,
+  task
+}: {
+  onSetMissionState: (v: any) => void;
+  style: React.CSSProperties;
+  task: any;
+}) {
   const { missions, username } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
@@ -41,13 +49,13 @@ export default function LaunchTheWebsite({ onSetMissionState, style, task }) {
       label: 'Save and move on',
       color: doneColor,
       skeuomorphic: true,
-      onClick: async (onNext) => {
+      onClick: async (onNext: () => void) => {
         await handleSaveCode(taskState.code);
         onNext();
       }
     };
 
-    async function handleSaveCode(code) {
+    async function handleSaveCode(code: string) {
       await updateMissionStatus({
         missionType: task.missionType,
         newStatus: { code }
@@ -162,14 +170,14 @@ export default function LaunchTheWebsite({ onSetMissionState, style, task }) {
     </ErrorBoundary>
   );
 
-  function handleSetCode(code) {
+  function handleSetCode(code: string) {
     onUpdateUserMissionState({
       missionType: task.missionType,
       newState: { code }
     });
   }
 
-  async function handleUpdateTaskProgress(newState) {
+  async function handleUpdateTaskProgress(newState: any) {
     await updateMissionStatus({
       missionType: task.missionType,
       newStatus: newState

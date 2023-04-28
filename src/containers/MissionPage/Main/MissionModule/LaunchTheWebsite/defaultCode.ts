@@ -1,4 +1,8 @@
-const defaultCode = ({ username }) => `function HomePage() {
+const defaultCode = ({
+  username
+}: {
+  username: string;
+}) => `function HomePage() {
   return (
     <div
       style={{

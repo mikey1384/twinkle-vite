@@ -14,7 +14,7 @@ interface Props {
   onSetCode: (code: string) => void;
   onSetErrorMsg: (errorMsg: string) => void;
   onRunCode?: (arg: any) => void;
-  passed: boolean;
+  passed?: boolean;
   prevUserId: number;
   runButtonLabel?: string;
   style?: React.CSSProperties;

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import StepSlide from '../components/StepSlide';
@@ -14,7 +14,15 @@ LetsLaunch.propTypes = {
   taskId: PropTypes.number.isRequired
 };
 
-export default function LetsLaunch({ index, innerRef, taskId }) {
+export default function LetsLaunch({
+  index,
+  innerRef,
+  taskId
+}: {
+  index?: number;
+  innerRef?: React.RefObject<any>;
+  taskId: number;
+}) {
   const uploadMissionAttempt = useAppContext(
     (v) => v.requestHelpers.uploadMissionAttempt
   );
@@ -22,10 +30,10 @@ export default function LetsLaunch({ index, innerRef, taskId }) {
     (v) => v.actions.onUpdateMissionAttempt
   );
   const [url, setUrl] = useState('');
-  const [urlError, setUrlError] = useState(false);
+  const [urlError, setUrlError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
   const urlErrorRef = useRef('');
   const urlIsNotEmpty = useMemo(() => !stringIsEmpty(url), [url]);
 

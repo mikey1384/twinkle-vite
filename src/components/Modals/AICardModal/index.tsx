@@ -133,7 +133,7 @@ export default function AICardModal({
         setOffers((prevOffers) => {
           const result = [];
           let found = false;
-          for (let offer of prevOffers) {
+          for (const offer of prevOffers) {
             const newOffer = { ...offer };
             if (offer.price === incomingOffer.price) {
               found = true;
@@ -163,7 +163,7 @@ export default function AICardModal({
       if (card.id === cardId) {
         setOffers((prevOffers) => {
           const result = [];
-          for (let offer of prevOffers) {
+          for (const offer of prevOffers) {
             const newOffer = { ...offer };
             if (offer.price === price) {
               newOffer.users = offer.users.filter(
@@ -183,7 +183,7 @@ export default function AICardModal({
       if (card.id === cardId) {
         setOffers((prevOffers) => {
           const result = [];
-          for (let offer of prevOffers) {
+          for (const offer of prevOffers) {
             const newOffer = { ...offer };
             const { transfer } = feed;
             const { offer: acceptedOffer } = transfer;
@@ -581,7 +581,7 @@ export default function AICardModal({
     setOffers((prevOffers) => {
       return prevOffers.reduce((acc, offer) => {
         if (offer.price === card.myOffer.price) {
-          let newUsers = offer.users.filter(
+          const newUsers = offer.users.filter(
             (user: { id: number }) => user.id !== userId
           );
           if (newUsers.length > 0) {

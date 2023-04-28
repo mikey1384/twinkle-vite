@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import CodeSandbox from '~/components/Forms/CodeSandbox';
 import defaultCode from './defaultCode';
@@ -24,6 +24,12 @@ export default function FinalizeYourCode({
   task,
   username,
   onSetCode
+}: {
+  index?: number;
+  code: string;
+  task: any;
+  username: string;
+  onSetCode: (v: any) => void;
 }) {
   const {
     done: { color: doneColor }
