@@ -5,12 +5,9 @@ import { resolve } from 'path';
 import inject from '@rollup/plugin-inject';
 
 export default defineConfig({
-  plugins: [
-    react({ swcOptions: { jsc: { target: 'es2022' } }, check: true }),
-    splitVendorChunkPlugin()
-  ],
+  plugins: [react(), splitVendorChunkPlugin()],
   server: {
-    port: '3000'
+    port: 3000
   },
   optimizeDeps: {
     esbuildOptions: {
