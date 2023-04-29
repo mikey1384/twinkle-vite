@@ -1,8 +1,14 @@
-export function checkMultiMissionPassStatus({ mission, myAttempts }) {
+export function checkMultiMissionPassStatus({
+  mission,
+  myAttempts
+}: {
+  mission: any;
+  myAttempts: any;
+}) {
   let numTasks = 0;
   let numPassedTasks = 0;
-  for (let subMission of mission.subMissions) {
-    for (let task of subMission.tasks) {
+  for (const subMission of mission.subMissions) {
+    for (const task of subMission.tasks) {
       numTasks++;
       if (myAttempts[task.id]?.status === 'pass') {
         numPassedTasks++;

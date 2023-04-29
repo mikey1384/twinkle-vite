@@ -15,9 +15,9 @@ const color3 = '#69e4a5';
 const color4 = '#8ec5d6';
 const color5 = '#b98cce';
 
-export default function useAICard(card) {
+export default function useAICard(card: any) {
   const { cardColor, promptText } = useMemo(() => {
-    const cardObj = card?.level ? cardLevelHash[card.level] : {};
+    const cardObj: any = card?.level ? cardLevelHash[card.level] : {};
     const cardColor = Color[card?.isBurned ? 'black' : cardObj.color]?.();
     const promptText = card?.word
       ? getPromptText(card?.prompt, card?.word, cardObj.color)
@@ -26,7 +26,7 @@ export default function useAICard(card) {
     return { cardColor, promptText };
   }, [card?.level, card?.prompt, card?.word, card?.isBurned]);
 
-  function getPromptText(prompt, word, color) {
+  function getPromptText(prompt: string, word: string, color: string) {
     if (word) {
       const wordIndex = prompt.toLowerCase().indexOf(word.toLowerCase());
       const isCapitalized =

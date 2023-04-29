@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { addEvent, removeEvent } from '../listenerHelpers';
 
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -15,7 +15,7 @@ export default function useInfiniteScroll({
   const prevFeedsLength = useRef(0);
   const scrollHeightRef = useRef(0);
   const scrollPositionRef = useRef({ desktop: 0, mobile: 0 });
-  const timerRef = useRef(0);
+  const timerRef: React.MutableRefObject<any> = useRef(0);
 
   useEffect(() => {
     addEvent(window, 'scroll', onScroll);

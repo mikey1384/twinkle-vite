@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useLayoutEffect, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useLayoutEffect,
+  useRef,
+  useState
+} from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import { addEvent, removeEvent } from '../listenerHelpers';
 import { stringIsEmpty, addCommasToNumber } from '../stringHelpers';
@@ -18,10 +24,16 @@ import {
 } from '~/constants/defaultValues';
 import { Color, Theme } from '~/constants/css';
 
-const allContentState = {};
+const allContentState: Record<string, any> = {};
 const BodyRef = document.scrollingElement || document.documentElement;
 
-export function useContentState({ contentType, contentId }) {
+export function useContentState({
+  contentType,
+  contentId
+}: {
+  contentType: string;
+  contentId: number;
+}) {
   allContentState[contentType + contentId] = useContentContext(
     (v) => v.state[contentType + contentId]
   );
@@ -29,8 +41,8 @@ export function useContentState({ contentType, contentId }) {
   return state ? { ...defaultContentState, ...state } : defaultContentState;
 }
 
-export function useInterval(callback, interval) {
-  const timerRef = useRef(null);
+export function useInterval(callback: (v?: any) => any, interval: number) {
+  const timerRef: React.MutableRefObject<any> = useRef(null);
   useEffect(() => {
     timerRef.current = setInterval(callback, interval);
     return function cleanUp() {
@@ -45,8 +57,14 @@ export function useLazyLoad({
   onSetPlaceholderHeight,
   onSetVisible,
   delay
+}: {
+  PanelRef: React.RefObject<any>;
+  inView: boolean;
+  onSetPlaceholderHeight: (height: number) => void;
+  onSetVisible: (visible: boolean) => void;
+  delay?: number;
 }) {
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
   const currentInView = useRef(inView);
 
   useEffect(() => {
@@ -151,23 +169,26 @@ export function useMyState() {
   return result;
 }
 
-export function useTheme(color) {
+export function useTheme(color: string) {
   return useMemo(() => {
     return Theme(color);
   }, [color]);
 }
 
-export function useOutsideClick(ref, callback) {
+export function useOutsideClick(
+  ref: React.RefObject<any>,
+  callback: () => any
+) {
   const [insideClicked, setInsideClicked] = useState(false);
   useEffect(() => {
-    function upListener(event) {
+    function upListener(event: any) {
       if (insideClicked) return setInsideClicked(false);
       if (!ref.current || ref.current.contains(event.target)) {
         return;
       }
       callback?.();
     }
-    function downListener(event) {
+    function downListener(event: any) {
       if (ref.current?.contains(event.target)) {
         setInsideClicked(true);
       }
@@ -183,9 +204,9 @@ export function useOutsideClick(ref, callback) {
   });
 }
 
-export function useOutsideTap(ref, callback) {
+export function useOutsideTap(ref: React.RefObject<any>, callback: () => any) {
   useEffect(() => {
-    function downListener(event) {
+    function downListener(event: any) {
       if (!ref.current || ref.current.contains(event.target)) {
         return;
       }
@@ -200,7 +221,7 @@ export function useOutsideTap(ref, callback) {
   });
 }
 
-export function useProfileState(username) {
+export function useProfileState(username: string) {
   const state = useProfileContext((v) => v.state) || {};
   const { [username]: userState = {} } = state;
   const {
@@ -238,9 +259,9 @@ export function useSearch({
   onSetSearchText: (text: string) => void;
 }) {
   const [searching, setSearching] = useState(false);
-  const timerRef = useRef(null);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
 
-  function handleSearch(text) {
+  function handleSearch(text: string) {
     clearTimeout(timerRef.current);
     onSetSearchText(text);
     onClear?.();
@@ -263,21 +284,24 @@ export function useScrollPosition({
   onRecordScrollPosition,
   pathname,
   scrollPositions = {}
+}: {
+  isMobile: boolean;
+  onRecordScrollPosition: (v: any) => any;
+  pathname: string;
+  scrollPositions?: { [key: string]: number };
 }) {
   useEffect(() => {
-    (document.getElementById('App') || {}).scrollTop =
-      scrollPositions[pathname] || 0;
+    const appElement = document.getElementById('App');
+    if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
     (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
     setTimeout(() => {
-      (document.getElementById('App') || {}).scrollTop =
-        scrollPositions[pathname] || 0;
+      if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
       (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
     }, 0);
     // prevents bug on mobile devices where tapping stops working after user swipes left to go to previous page
     if (isMobile) {
       setTimeout(() => {
-        (document.getElementById('App') || {}).scrollTop =
-          scrollPositions[pathname] || 0;
+        if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
         (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
       }, 500);
     }
@@ -294,8 +318,10 @@ export function useScrollPosition({
     };
 
     function handleScroll() {
+      const appElement = document.getElementById('App');
+      const appElementScrollTopPosition = appElement?.scrollTop || 0;
       const position = Math.max(
-        (document.getElementById('App') || {}).scrollTop,
+        appElementScrollTopPosition,
         (BodyRef || {}).scrollTop
       );
       onRecordScrollPosition({ section: pathname, position });
@@ -313,6 +339,16 @@ export function useWordleLabels({
   username,
   userId,
   myId
+}: {
+  isSolved: boolean;
+  isStrict: boolean;
+  numGuesses: number;
+  solution: string;
+  wordLevel: number;
+  xpRewardAmount: number;
+  username: string;
+  userId: number;
+  myId: number;
 }) {
   const displayedUserLabel = useMemo(() => {
     if (userId === myId) {

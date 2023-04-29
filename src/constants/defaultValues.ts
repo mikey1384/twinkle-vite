@@ -280,7 +280,9 @@ export const qualityProps: {
   }
 };
 
-export const wordleGuessReaction = {
+export const wordleGuessReaction: {
+  [key: number]: string;
+} = {
   1: 'JACKPOT',
   2: 'UNBELIEVABLE',
   3: 'BRILLIANT',
