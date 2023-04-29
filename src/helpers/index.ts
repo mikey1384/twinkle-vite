@@ -37,7 +37,7 @@ export function determineUserCanRewardThis({
     moderatorCanReward = false;
   }
   if (authLevel <= MODERATOR_AUTH_LEVEL) {
-    for (let recommendation of recommendations) {
+    for (const recommendation of recommendations) {
       if (
         recommendation.authLevel > MODERATOR_AUTH_LEVEL &&
         !recommendation.rewardDisabled
@@ -117,7 +117,7 @@ export function last(array: any[]) {
 
 export function objectify(array: any[], id: any = 'id') {
   const result: any = {};
-  for (let elem of array) {
+  for (const elem of array) {
     result[elem[id]] = elem;
   }
   return result;
@@ -127,10 +127,7 @@ export function parseChannelPath(pathId: string | number) {
   return Number(pathId) - Number(CHAT_ID_BASE_NUMBER);
 }
 
-export function scrollElementToCenter(
-  element: any,
-  adjustment: number = -50
-): void {
+export function scrollElementToCenter(element: any, adjustment = -50): void {
   if (!element) return;
   let offsetTop = 0;
   const body: { scrollTop: number; clientHeight: number } = document

@@ -4,9 +4,9 @@ import Link from '~/components/Link';
 import { charLimit } from '~/constants/defaultValues';
 
 const urlRegex =
-  /(\b((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n"' ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)\b(?:\/)?)/giu;
+  /(\b((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n"' ]+((?:\([^)]*\))|[^.,;:?!"'\n)\]<* ])+)\b(?:\/)?)/giu;
 const urlRegex2 =
-  /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n"' ]+((?:\([^)]*\))|[^.,;:?!"'\n\)\]<* ])+)/i;
+  /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n"' ]+((?:\([^)]*\))|[^.,;:?!"'\n)\]<* ])+)/i;
 
 export function addCommasToNumber(number: number): string {
   const numArray = `${number}`.split('');
@@ -326,7 +326,7 @@ export function addEmoji(string: string): string {
 
   const emoticonRegex = new RegExp(
     `(${Object.keys(emoticons)
-      .map((key) => key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
+      .map((key) => key.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'))
       .join('|')})`,
     'gi'
   );
@@ -415,10 +415,10 @@ export function fetchURLFromText(text: string): string {
 export function fetchedVideoCodeFromURL(url: string): string {
   let videoCode = '';
   if (typeof url.split('v=')[1] !== 'undefined') {
-    let trimmedUrl = url?.split('v=')[1]?.split('#')[0];
+    const trimmedUrl = url?.split('v=')[1]?.split('#')[0];
     videoCode = trimmedUrl.split('&')[0];
   } else {
-    let trimmedUrl = url?.split('youtu.be/')[1]?.split('#')?.[0];
+    const trimmedUrl = url?.split('youtu.be/')[1]?.split('#')?.[0];
     videoCode = trimmedUrl?.split('&')[0]?.split('?')?.[0];
   }
   return videoCode || '';
@@ -505,8 +505,8 @@ export function isValidYoutubeUrl(url = '') {
   if (!url.includes('://') && !url.includes('www.')) {
     url = 'www.' + url;
   }
-  let trimOne = url.split('v=')[1];
-  let trimTwo = url.split('youtu.be/')[1];
+  const trimOne = url.split('v=')[1];
+  const trimTwo = url.split('youtu.be/')[1];
   return (
     urlRegex2.test(url) &&
     (typeof trimOne !== 'undefined' || typeof trimTwo !== 'undefined')
@@ -576,7 +576,7 @@ export function processedStringWithURL(string: string): string {
   let tempString = applyTextSize(
     string.replace(/&/g, '&amp').replace(/</g, '&lt').replace(/>/g, '&gt')
   )
-    .replace(urlRegex, `<a href=\"$1\" target=\"_blank\">$1</a>`)
+    .replace(urlRegex, `<a href="$1" target="_blank">$1</a>`)
     .replace(/\r?\n/g, '<br>');
   let newString = '';
   while (tempString.length > 0) {
@@ -681,35 +681,35 @@ export function applyTextEffects({
   hasMention?: boolean;
 }) {
   const italicRegex =
-    /(((?![0-9\.])\*\*[^\s*]+\*\*(?![0-9]))|(((\*\*[^\s]){1}((?!(\*\*))[^\n])+([^\s]\*\*){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])\*\*[^\s*]+\*\*(?![0-9]))|(((\*\*[^\s]){1}((?!(\*\*))[^\n])+([^\s]\*\*){1})(?![0-9.])))/gi;
   const boldRegex =
-    /(((?![0-9\.])\*[^\s*]+\*(?![0-9]))|(((\*[^\s]){1}((?!(\*))[^\n])+([^\s]\*){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])\*[^\s*]+\*(?![0-9]))|(((\*[^\s]){1}((?!(\*))[^\n])+([^\s]\*){1})(?![0-9.])))/gi;
   const underlineRegex =
-    /(((?![0-9\.])__([^\s][^_\n ]+)__(?![0-9]))|(((__[^_ ]){1}((?!(__))[^\n])+([^_ ]\__){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])__([^\s][^_\n ]+)__(?![0-9]))|(((__[^_ ]){1}((?!(__))[^\n])+([^_ ]__){1})(?![0-9.])))/gi;
   const lineThroughRegex =
-    /(((?![0-9\.])--([^\s][^\n- ]+)--(?![0-9]))|(((--[^- ]){1}((?!(--))[^\n])+([^-\- ]\--){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])--([^\s][^\n- ]+)--(?![0-9]))|(((--[^- ]){1}((?!(--))[^\n])+([^-\- ]--){1})(?![0-9.])))/gi;
   const blueRegex =
-    /(((?![0-9\.])b\|[^\s]+\|b(?![0-9]))|(((b\|[^\s]){1}((?!(b\||\|b))[^\n])+([^\s]\|b){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])b\|[^\s]+\|b(?![0-9]))|(((b\|[^\s]){1}((?!(b\||\|b))[^\n])+([^\s]\|b){1})(?![0-9.])))/gi;
   const grayRegex =
-    /(((?![0-9\.])gr\|[^\s]+\|gr(?![0-9]))|(((gr\|[^\s]){1}((?!(gr\||\|gr))[^\n])+([^\s]\|gr){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])gr\|[^\s]+\|gr(?![0-9]))|(((gr\|[^\s]){1}((?!(gr\||\|gr))[^\n])+([^\s]\|gr){1})(?![0-9.])))/gi;
   const greenRegex =
-    /(((?![0-9\.])g\|[^\s]+\|g(?![0-9]))|(((g\|[^\s]){1}((?!(g\||\|g))[^\n])+([^\s]\|g){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])g\|[^\s]+\|g(?![0-9]))|(((g\|[^\s]){1}((?!(g\||\|g))[^\n])+([^\s]\|g){1})(?![0-9.])))/gi;
   const limeRegex =
-    /(((?![0-9\.])l\|[^\s]+\|l(?![0-9]))|(((l\|[^\s]){1}((?!(l\||\|l))[^\n])+([^\s]\|l){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])l\|[^\s]+\|l(?![0-9]))|(((l\|[^\s]){1}((?!(l\||\|l))[^\n])+([^\s]\|l){1})(?![0-9.])))/gi;
   const logoBlueRegex =
-    /(((?![0-9\.])lb\|[^\s]+\|lb(?![0-9]))|(((lb\|[^\s]){1}((?!(lb\||\|lb))[^\n])+([^\s]\|lb){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])lb\|[^\s]+\|lb(?![0-9]))|(((lb\|[^\s]){1}((?!(lb\||\|lb))[^\n])+([^\s]\|lb){1})(?![0-9.])))/gi;
   const orangeRegex =
-    /(((?![0-9\.])o\|[^\s]+\|o(?![0-9]))|(((o\|[^\s]){1}((?!(o\||\|o))[^\n])+([^\s]\|o){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])o\|[^\s]+\|o(?![0-9]))|(((o\|[^\s]){1}((?!(o\||\|o))[^\n])+([^\s]\|o){1})(?![0-9.])))/gi;
   const passionFruitRegex =
-    /(((?![0-9\.])pf\|[^\s]+\|pf(?![0-9]))|(((pf\|[^\s]){1}((?!(pf\||\|pf))[^\n])+([^\s]\|pf){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])pf\|[^\s]+\|pf(?![0-9]))|(((pf\|[^\s]){1}((?!(pf\||\|pf))[^\n])+([^\s]\|pf){1})(?![0-9.])))/gi;
   const pinkRegex =
-    /(((?![0-9\.])p\|[^\s]+\|p(?![0-9]))|(((p\|[^\s]){1}((?!(p\||\|p))[^\n])+([^\s]\|p){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])p\|[^\s]+\|p(?![0-9]))|(((p\|[^\s]){1}((?!(p\||\|p))[^\n])+([^\s]\|p){1})(?![0-9.])))/gi;
   const purpleRegex =
-    /(((?![0-9\.])pu\|[^\s]+\|pu(?![0-9]))|(((pu\|[^\s]){1}((?!(pu\||\|pu))[^\n])+([^\s]\|pu){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])pu\|[^\s]+\|pu(?![0-9]))|(((pu\|[^\s]){1}((?!(pu\||\|pu))[^\n])+([^\s]\|pu){1})(?![0-9.])))/gi;
   const redRegex =
-    /(((?![0-9\.])r\|[^\s]+\|r(?![0-9]))|(((r\|[^\s]){1}((?!(r\||\|r))[^\n])+([^\s]\|r){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])r\|[^\s]+\|r(?![0-9]))|(((r\|[^\s]){1}((?!(r\||\|r))[^\n])+([^\s]\|r){1})(?![0-9.])))/gi;
   const yellowRegex =
-    /(((?![0-9\.])y\|[^\s]+\|y(?![0-9]))|(((y\|[^\s]){1}((?!(y\||\|y))[^\n])+([^\s]\|y){1})(?![0-9\.])))/gi;
+    /(((?![0-9.])y\|[^\s]+\|y(?![0-9]))|(((y\|[^\s]){1}((?!(y\||\|y))[^\n])+([^\s]\|y){1})(?![0-9.])))/gi;
   const fakeAtSymbolRegex = /＠/gi;
   const mentionRegex = /((?!([a-zA-Z1-9])).|^|\n)@[a-zA-Z0-9_]{3,}/gi;
 

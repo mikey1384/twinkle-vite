@@ -29,16 +29,21 @@ declare module '*.svg' {
 }
 
 declare module '*.svg' {
-  import React from 'react';
-  export const ReactComponent: React.FunctionComponent<
-    React.SVGProps<SVGSVGElement>
-  >;
+  import type { FunctionComponent, SVGProps } from 'react';
+
+  export const ReactComponent: FunctionComponent<SVGProps<SVGSVGElement>>;
+  const src: string;
+  export default src;
+}
+
+declare module '*.webp' {
   const src: string;
   export default src;
 }
 
 declare module 'react-sanitized-html' {
-  import { ComponentType } from 'react';
+  // eslint-disable-next-line no-duplicate-imports
+  import type { ComponentType } from 'react';
 
   export interface SanitizedHTMLProps {
     allowedAttributes?: {
@@ -54,7 +59,8 @@ declare module 'react-sanitized-html' {
 }
 
 declare module 'html-react-parser' {
-  import { ReactNode } from 'react';
+  // eslint-disable-next-line no-duplicate-imports
+  import type { ReactNode } from 'react';
 
   export interface Attributes {
     [key: string]: string | undefined;
