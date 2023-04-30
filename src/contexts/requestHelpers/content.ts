@@ -814,7 +814,7 @@ export default function contentRequestHelpers({
                   destinationVar: 'targetVideos'
                 })
               : ''
-          }&limit=${limit}`
+          }${limit ? `&limit=${limit}` : ''}`
         );
         return Promise.resolve({ title, results: videos, loadMoreButton });
       } catch (error) {
@@ -1078,7 +1078,9 @@ export default function contentRequestHelpers({
     }) {
       try {
         const { data } = await request.get(
-          `${URL}/content/search?filter=${filter}&limit=${limit}&searchText=${searchText}${
+          `${URL}/content/search?filter=${filter}&searchText=${searchText}${
+            limit ? `&limit=${limit}` : ''
+          }${
             shownResults
               ? `&${queryStringForArray({
                   array: shownResults,
