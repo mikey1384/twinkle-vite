@@ -33,7 +33,8 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      plugins: [inject({ Buffer: ['buffer', 'Buffer'], process: 'process' })]
+      plugins: [inject({ Buffer: ['buffer', 'Buffer'], process: 'process' })],
+      external: ['@babel/parser']
     },
     sourcemap: true
   }
