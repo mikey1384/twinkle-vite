@@ -258,7 +258,7 @@ export default function SelectFeaturedPlaylists({
 
   function handleSelect(index: number) {
     const playlists = searchText ? searchedPlaylists : playlistsToPin;
-    let playlistId = playlists[index].id;
+    const playlistId = playlists[index].id;
     setSelectedPlaylists(
       !selectedPlaylists.includes(playlistId)
         ? [playlistId].concat(selectedPlaylists)
