@@ -308,6 +308,7 @@ export default function contentRequestHelpers({
     }) {
       try {
         const filterString = Object.keys(filters)
+          .filter((key) => filters[key])
           .map((key) => `${key}=${filters[key]}`)
           .join('&');
         const {
