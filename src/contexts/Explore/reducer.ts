@@ -1,4 +1,4 @@
-import { Link, Playlist, Subject, Video } from '~/types';
+import { Link, PlaylistVideo, Playlist, Subject } from '~/types';
 
 export default function ExploreReducer(
   state: any,
@@ -380,14 +380,16 @@ export default function ExploreReducer(
         ...state,
         videos: {
           ...state.videos,
-          allVideoThumbs: state.videos.allVideoThumbs.map((video: Video) => {
-            return video.id === action.videoId
-              ? {
-                  ...video,
-                  likes: action.likes
-                }
-              : video;
-          }),
+          allVideoThumbs: state.videos.allVideoThumbs.map(
+            (video: PlaylistVideo) => {
+              return video.id === action.videoId
+                ? {
+                    ...video,
+                    likes: action.likes
+                  }
+                : video;
+            }
+          ),
           featuredPlaylists: state.videos.featuredPlaylists.map(
             (playlist: Playlist) => ({
               ...playlist,

@@ -11,6 +11,27 @@ export interface Comment {
   replies: Comment[];
 }
 
+export interface Content {
+  contentId?: number;
+  contentType?: string;
+  deleterId?: number;
+  description?: string;
+  id?: number;
+  isClosedBy?: number | User;
+  isTask?: boolean;
+  missionId?: number;
+  missionType?: string;
+  reviewTimeStamp?: number;
+  rootId?: number;
+  rootMissionId?: number;
+  rootObj?: Content | User;
+  rootType?: string;
+  settings?: any;
+  timeStamp?: number;
+  uploader?: User;
+  [key: string]: any;
+}
+
 export type Dispatch = (action: { type: string; [key: string]: any }) => void;
 
 export interface Link {
@@ -19,7 +40,7 @@ export interface Link {
   title: string;
 }
 
-export interface Video {
+export interface PlaylistVideo {
   id: number;
   videoId: number;
 }
@@ -27,7 +48,7 @@ export interface Video {
 export interface Playlist {
   id: number;
   title: string;
-  playlist: Video[];
+  playlist: PlaylistVideo[];
 }
 
 export interface RequestHelpers {
