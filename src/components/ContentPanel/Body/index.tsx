@@ -21,15 +21,6 @@ import BottomInterface from './BottomInterface';
 
 const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
 
-interface Props {
-  autoExpand?: boolean;
-  commentsShown?: boolean;
-  contentObj: any;
-  inputAtBottom?: boolean;
-  numPreviewComments?: number;
-  onChangeSpoilerStatus: (params: object) => void;
-  theme: string;
-}
 export default function Body({
   autoExpand = false,
   commentsShown = false,
@@ -56,7 +47,15 @@ export default function Body({
   numPreviewComments = 0,
   onChangeSpoilerStatus,
   theme
-}: Props) {
+}: {
+  autoExpand?: boolean;
+  commentsShown?: boolean;
+  contentObj: any;
+  inputAtBottom?: boolean;
+  numPreviewComments?: number;
+  onChangeSpoilerStatus: (params: object) => void;
+  theme: string;
+}) {
   const closeContent = useAppContext((v) => v.requestHelpers.closeContent);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
@@ -460,11 +459,11 @@ export default function Body({
         <ConfirmModal
           onConfirm={handleCloseThisContent}
           onHide={() => setCloseConfirmModalShown(false)}
-          title={`${!!disableReason ? 'Reopen' : 'Close'} ${
+          title={`${disableReason ? 'Reopen' : 'Close'} ${
             contentType.charAt(0).toUpperCase() + contentType.slice(1)
           }`}
           description={`Are you sure you want to ${
-            !!disableReason ? 'reopen' : 'close'
+            disableReason ? 'reopen' : 'close'
           } the comment section of this ${contentType}?`}
           descriptionFontSize="1.7rem"
         />

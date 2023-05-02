@@ -28,11 +28,11 @@ function SecretAnswer({
   answer: string;
   attachment: any;
   mediaDisabled: boolean;
-  modalOverModal: boolean;
-  onClick: () => void;
+  modalOverModal?: boolean;
+  onClick?: () => void;
   style: React.CSSProperties;
   subjectId: number;
-  theme: string;
+  theme?: string;
   uploaderId: number;
 }) {
   const checkIfUserResponded = useAppContext(

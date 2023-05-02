@@ -10,24 +10,6 @@ import {
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-interface Props {
-  editedComment?: string;
-  editedDescription?: string;
-  editedSecretAnswer?: string;
-  editedUrl?: string;
-  editedTitle?: string;
-  contentType: string;
-  onSecretAnswerChange: (event: any) => void;
-  onTextAreaChange: (event: any) => void;
-  onTextAreaKeyUp: (event: any) => void;
-  onTitleChange: (text: string) => void;
-  onTitleKeyUp: (event: any) => void;
-  onUrlChange: (url: string) => void;
-  urlExceedsCharLimit?: any;
-  descriptionExceedsCharLimit?: any;
-  secretAnswerExceedsCharLimit?: any;
-  titleExceedsCharLimit?: any;
-}
 export default function TextEditSection({
   editedComment,
   editedDescription,
@@ -45,7 +27,24 @@ export default function TextEditSection({
   descriptionExceedsCharLimit,
   secretAnswerExceedsCharLimit,
   titleExceedsCharLimit
-}: Props) {
+}: {
+  editedComment?: string;
+  editedDescription?: string;
+  editedSecretAnswer?: string;
+  editedUrl?: string;
+  editedTitle?: string;
+  contentType: string;
+  onSecretAnswerChange: (event: any) => void;
+  onTextAreaChange: (event: any) => void;
+  onTextAreaKeyUp: (event: any) => void;
+  onTitleChange: (text: string) => void;
+  onTitleKeyUp: (event: any) => void;
+  onUrlChange: (url: string) => void;
+  urlExceedsCharLimit?: any;
+  descriptionExceedsCharLimit?: any;
+  secretAnswerExceedsCharLimit?: any;
+  titleExceedsCharLimit?: any;
+}) {
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const [urlError, setUrlError] = useState(false);
   useEffect(() => {
