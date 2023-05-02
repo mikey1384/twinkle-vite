@@ -1,10 +1,31 @@
 import React, { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import DropdownList from '~/components/DropdownList';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 
+DropdownButton.propTypes = {
+  buttonStyle: PropTypes.object,
+  className: PropTypes.string,
+  isMenuShownWhenMounted: PropTypes.bool,
+  onDropdownShown: PropTypes.func,
+  opacity: PropTypes.number,
+  style: PropTypes.object,
+  icon: PropTypes.string,
+  iconSize: PropTypes.string,
+  listStyle: PropTypes.object,
+  menuProps: PropTypes.array,
+  noBorderRadius: PropTypes.bool,
+  onButtonClick: PropTypes.func,
+  text: PropTypes.string,
+  stretch: PropTypes.bool,
+  innerRef: PropTypes.any,
+  transparent: PropTypes.bool,
+  xAdjustment: PropTypes.number,
+  skeuomorphic: PropTypes.bool
+};
 export default function DropdownButton({
   buttonStyle = {},
   className,
@@ -15,7 +36,7 @@ export default function DropdownButton({
   icon = 'ellipsis-h',
   iconSize = '1x',
   listStyle = {},
-  menuProps,
+  menuProps = [],
   noBorderRadius,
   onButtonClick,
   text = '',
@@ -26,21 +47,20 @@ export default function DropdownButton({
   ...props
 }: {
   buttonStyle?: any;
-  color?: string;
   className?: string;
   isMenuShownWhenMounted?: boolean;
   onDropdownShown?: (isShown: boolean) => void;
   opacity?: number;
-  style?: any;
+  style?: React.CSSProperties;
   icon?: string;
   iconSize?: string;
-  listStyle?: any;
-  menuProps?: any;
+  listStyle?: React.CSSProperties;
+  menuProps?: any[];
   noBorderRadius?: boolean;
   onButtonClick?: (arg: any) => void;
-  text?: any;
+  text?: string;
   stretch?: boolean;
-  innerRef?: any;
+  innerRef?: React.RefObject<any>;
   transparent?: boolean;
   xAdjustment?: number;
   skeuomorphic?: boolean;
