@@ -28,17 +28,6 @@ import localize from '~/constants/localize';
 const clearLabel = localize('clear');
 const rewardLabel = localize('reward');
 
-interface Props {
-  contentId: number;
-  contentType: string;
-  innerRef: any;
-  rewardLevel: number;
-  noPadding?: boolean;
-  onReward: () => void;
-  rewards: any[];
-  uploaderId: number;
-  uploaderAuthLevel: number;
-}
 export default function XPRewardInterface({
   contentId,
   contentType,
@@ -49,7 +38,17 @@ export default function XPRewardInterface({
   rewards,
   uploaderId,
   uploaderAuthLevel
-}: Props) {
+}: {
+  contentId: number;
+  contentType: string;
+  innerRef: any;
+  rewardLevel: number;
+  noPadding?: boolean;
+  onReward: () => void;
+  rewards: any[];
+  uploaderId: number;
+  uploaderAuthLevel: number;
+}) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const rewardUser = useAppContext((v) => v.requestHelpers.rewardUser);
   const { authLevel, twinkleCoins, userId, banned } = useKeyContext(
@@ -87,7 +86,7 @@ export default function XPRewardInterface({
   }, [maxRewardAmountForOnePerson, rewards, userId]);
 
   const remainingRewards = useMemo(() => {
-    let currentRewards =
+    const currentRewards =
       rewards.length > 0
         ? rewards.reduce(
             (prev, reward) => prev + (reward?.rewardAmount || 0),

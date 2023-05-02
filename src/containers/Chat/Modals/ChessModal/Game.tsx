@@ -2,26 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import Chess from '../../Chess';
 
-interface Props {
-  boardState: any;
-  countdownNumber: number;
-  channelId: number;
-  currentChannel: any;
-  initialState: any;
-  message: any;
-  myId: number;
-  newChessState: any;
-  onSetInitialState: (arg0: any) => void;
-  onSetMessage: (arg0: any) => void;
-  onSetNewChessState: (arg0: any) => void;
-  onSetUserMadeLastMove: (arg0: boolean) => void;
-  onSpoilerClick: (v: any) => void;
-  onUpdateLastChessMoveViewerId: (v: any) => void;
-  opponentId: number;
-  opponentName: string;
-  setChessMoveViewTimeStamp: (v: any) => void;
-  userMadeLastMove: boolean;
-}
 export default function Game({
   boardState,
   countdownNumber,
@@ -41,7 +21,26 @@ export default function Game({
   opponentName,
   setChessMoveViewTimeStamp,
   userMadeLastMove
-}: Props) {
+}: {
+  boardState: any;
+  countdownNumber: number;
+  channelId: number;
+  currentChannel: any;
+  initialState: any;
+  message: any;
+  myId: number;
+  newChessState: any;
+  onSetInitialState: (arg0: any) => void;
+  onSetMessage: (arg0: any) => void;
+  onSetNewChessState: (arg0: any) => void;
+  onSetUserMadeLastMove: (arg0: boolean) => void;
+  onSpoilerClick: (v: any) => void;
+  onUpdateLastChessMoveViewerId: (v: any) => void;
+  opponentId: number;
+  opponentName: string;
+  setChessMoveViewTimeStamp: (v: any) => void;
+  userMadeLastMove: boolean;
+}) {
   const fetchCurrentChessState = useAppContext(
     (v) => v.requestHelpers.fetchCurrentChessState
   );

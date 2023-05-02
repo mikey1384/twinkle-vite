@@ -18,18 +18,17 @@ const youCanChangeThisSettingLaterLabel = localize(
   'youCanChangeThisSettingLater'
 );
 
-interface Props {
-  creatingChat: boolean;
-  onBackClick?: () => void;
-  onHide: () => void;
-  onDone: (v: any) => void;
-}
 export default function RegularMenu({
   creatingChat,
   onBackClick,
   onHide,
   onDone
-}: Props) {
+}: {
+  creatingChat: boolean;
+  onBackClick?: () => void;
+  onHide: () => void;
+  onDone: (v: any) => void;
+}) {
   const { userId } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }

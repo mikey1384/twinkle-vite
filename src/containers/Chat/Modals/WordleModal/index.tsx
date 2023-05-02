@@ -17,19 +17,6 @@ import {
   useNotiContext
 } from '~/contexts';
 
-interface Props {
-  attemptState: any;
-  channelId: number;
-  channelName?: string;
-  guesses: string[];
-  nextDayTimeStamp: number;
-  solution: string;
-  wordLevel: number;
-  wordleStats: any;
-  onHide: () => void;
-  socketConnected: boolean;
-  theme: string;
-}
 export default function WordleModal({
   channelId,
   channelName,
@@ -42,7 +29,19 @@ export default function WordleModal({
   onHide,
   socketConnected,
   theme
-}: Props) {
+}: {
+  attemptState: any;
+  channelId: number;
+  channelName?: string;
+  guesses: string[];
+  nextDayTimeStamp: number;
+  solution: string;
+  wordLevel: number;
+  wordleStats: any;
+  onHide: () => void;
+  socketConnected: boolean;
+  theme: string;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -50,9 +49,7 @@ export default function WordleModal({
   const { timeDifference } = useNotiContext((v) => v.state.todayStats);
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
-  const [streaksTab, setStreaksTab] = useState(
-    !!isStrictMode ? 'double' : 'win'
-  );
+  const [streaksTab, setStreaksTab] = useState(isStrictMode ? 'double' : 'win');
   const loadWordle = useAppContext((v) => v.requestHelpers.loadWordle);
   const getCurrentNextDayTimeStamp = useAppContext(
     (v) => v.requestHelpers.getCurrentNextDayTimeStamp
@@ -74,7 +71,7 @@ export default function WordleModal({
   );
 
   useEffect(() => {
-    setStreaksTab(!!isStrictMode ? 'double' : 'win');
+    setStreaksTab(isStrictMode ? 'double' : 'win');
   }, [isStrictMode]);
 
   useEffect(() => {

@@ -7,19 +7,6 @@ import StatusTag from './StatusTag';
 
 const deviceIsMobile = isMobile(navigator);
 
-interface Props {
-  className?: string;
-  isAway?: boolean;
-  isBusy?: boolean;
-  isProfilePage?: boolean;
-  large?: boolean;
-  onClick?: () => void;
-  userId: number;
-  online?: boolean;
-  profilePicUrl: string;
-  statusShown?: boolean;
-  style?: React.CSSProperties;
-}
 export default function ProfilePic({
   className,
   isAway,
@@ -32,7 +19,19 @@ export default function ProfilePic({
   profilePicUrl,
   statusShown,
   style
-}: Props) {
+}: {
+  className?: string;
+  isAway?: boolean;
+  isBusy?: boolean;
+  isProfilePage?: boolean;
+  large?: boolean;
+  onClick?: () => void;
+  userId: number;
+  online?: boolean;
+  profilePicUrl: string;
+  statusShown?: boolean;
+  style?: React.CSSProperties;
+}) {
   const userObj = useAppContext((v) => v.user.state.userObj);
   const { userId: myId } = useKeyContext((v) => v.myState);
   const [changePictureShown, setChangePictureShown] = useState(false);
@@ -67,7 +66,7 @@ export default function ProfilePic({
             : style?.cursor || 'default',
         ...style
       }}
-      onClick={onClick || (() => {})}
+      onClick={onClick || (() => null)}
       onMouseEnter={() => setChangePictureShown(true)}
       onMouseLeave={() => setChangePictureShown(false)}
     >

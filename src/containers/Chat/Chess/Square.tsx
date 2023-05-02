@@ -2,15 +2,6 @@ import React, { memo } from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-interface Props {
-  count?: number;
-  className?: string;
-  img?: any;
-  shade?: string;
-  onClick?: () => void;
-  color?: string;
-  style?: React.CSSProperties;
-}
 function Square({
   count = 0,
   className,
@@ -19,7 +10,15 @@ function Square({
   onClick,
   color,
   style
-}: Props) {
+}: {
+  count?: number;
+  className?: string;
+  img?: any;
+  shade?: string;
+  onClick?: () => void;
+  color?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <div
       className={`${css`

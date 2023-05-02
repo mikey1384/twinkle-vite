@@ -5,7 +5,14 @@ import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { Link } from 'react-router-dom';
 
-interface Props {
+export default function Subchannel({
+  chatUnreadColor,
+  currentPathId,
+  selectedChannelId,
+  subchannel,
+  subchannelPath = '',
+  onUpdateLastSubchannelPath
+}: {
   chatUnreadColor: string;
   currentPathId: string | number;
   selectedChannelId: number;
@@ -20,15 +27,7 @@ interface Props {
     path: string;
     currentSubchannelPath: string;
   }) => void;
-}
-export default function Subchannel({
-  chatUnreadColor,
-  currentPathId,
-  selectedChannelId,
-  subchannel,
-  subchannelPath = '',
-  onUpdateLastSubchannelPath
-}: Props) {
+}) {
   const { userId } = useKeyContext((v) => v.myState);
   const subchannelSelected = useMemo(
     () => subchannelPath === subchannel.path,

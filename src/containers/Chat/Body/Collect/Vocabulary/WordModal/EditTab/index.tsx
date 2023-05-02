@@ -9,17 +9,6 @@ import { isEqual } from 'lodash';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { capitalize } from '~/helpers/stringHelpers';
 
-interface Props {
-  deletedDefIds: number[];
-  editedDefinitionOrder: { [key: string]: number[] };
-  onEditWord: (v: any) => any;
-  onHide: () => void;
-  originalDefinitionOrder: { [key: string]: number[] };
-  originalPosOrder: string[];
-  posObj: { [key: string]: { [key: number]: { title: string } } };
-  onSetEditedDefinitionOrder: (arg0: { [key: string]: number[] }) => void;
-  word: string;
-}
 export default function EditTab({
   deletedDefIds: originalDeletedIds = [],
   editedDefinitionOrder,
@@ -30,7 +19,17 @@ export default function EditTab({
   posObj,
   onSetEditedDefinitionOrder,
   word
-}: Props) {
+}: {
+  deletedDefIds: number[];
+  editedDefinitionOrder: { [key: string]: number[] };
+  onEditWord: (v: any) => any;
+  onHide: () => void;
+  originalDefinitionOrder: { [key: string]: number[] };
+  originalPosOrder: string[];
+  posObj: { [key: string]: { [key: number]: { title: string } } };
+  onSetEditedDefinitionOrder: (arg0: { [key: string]: number[] }) => void;
+  word: string;
+}) {
   const editWord = useAppContext((v) => v.requestHelpers.editWord);
   const { canDelete } = useKeyContext((v) => v.myState);
   const {
@@ -44,7 +43,7 @@ export default function EditTab({
   const disabled = useMemo(() => {
     let deletedDefIdsAreTheSame = false;
     let deletedDefIdsAreIncludedInTheOriginal = true;
-    for (let deletedId of deletedDefIds) {
+    for (const deletedId of deletedDefIds) {
       if (!originalDeletedIds.includes(deletedId)) {
         deletedDefIdsAreIncludedInTheOriginal = false;
         break;

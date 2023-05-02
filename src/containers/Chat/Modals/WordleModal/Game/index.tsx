@@ -25,21 +25,6 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-interface Props {
-  channelId: number;
-  channelName?: string;
-  guesses: string[];
-  isGameOver: boolean;
-  isGameWon: boolean;
-  isGameLost: boolean;
-  isRevealing: boolean;
-  isStrictMode: boolean;
-  nextDayTimeStamp: number;
-  onSetIsRevealing: (isRevealing: boolean) => void;
-  onSetOverviewModalShown: (isShown: boolean) => void;
-  socketConnected: boolean;
-  solution: string;
-}
 export default function Game({
   channelId,
   channelName,
@@ -54,7 +39,21 @@ export default function Game({
   nextDayTimeStamp,
   onSetIsRevealing,
   socketConnected
-}: Props) {
+}: {
+  channelId: number;
+  channelName?: string;
+  guesses: string[];
+  isGameOver: boolean;
+  isGameWon: boolean;
+  isGameLost: boolean;
+  isRevealing: boolean;
+  isStrictMode: boolean;
+  nextDayTimeStamp: number;
+  onSetIsRevealing: (isRevealing: boolean) => void;
+  onSetOverviewModalShown: (isShown: boolean) => void;
+  socketConnected: boolean;
+  solution: string;
+}) {
   const isProcessingGameResult = useRef(false);
   const onToggleWordleStrictMode = useAppContext(
     (v) => v.user.actions.onToggleWordleStrictMode

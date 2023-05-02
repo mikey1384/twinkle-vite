@@ -4,16 +4,6 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { renderText } from '~/helpers/stringHelpers';
 
-interface Props {
-  hasError?: boolean;
-  autoComplete?: string;
-  inputRef?: RefObject<any>;
-  onChange: (value: any) => void;
-  type?: string;
-  className?: string;
-  style?: React.CSSProperties;
-  [key: string]: any;
-}
 export default function Input({
   hasError,
   autoComplete = 'off',
@@ -23,7 +13,16 @@ export default function Input({
   className,
   style,
   ...props
-}: Props) {
+}: {
+  hasError?: boolean;
+  autoComplete?: string;
+  inputRef?: RefObject<any>;
+  onChange: (value: any) => void;
+  type?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  [key: string]: any;
+}) {
   return (
     <ErrorBoundary componentPath="Input">
       {autoComplete === 'off' && (

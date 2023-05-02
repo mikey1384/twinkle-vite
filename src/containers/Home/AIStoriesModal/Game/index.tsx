@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Button from '~/components/Button';
 import ContentContainer from './ContentContainer';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -13,45 +13,6 @@ const levelHash: { [key: string]: string } = {
   5: 'Level 5 (SAT)'
 };
 
-interface Props {
-  attemptId: number;
-  difficulty: number;
-  displayedSection: string;
-  generateButtonPressed: boolean;
-  loadStoryComplete: boolean;
-  loadingStory: boolean;
-  loadingTopic: boolean;
-  MainRef: React.RefObject<any>;
-  onHide: () => void;
-  onLoadTopic: (v: any) => void;
-  onSetAttemptId: (v: number) => void;
-  onSetDifficulty: (v: number) => void;
-  onSetDisplayedSection: (v: string) => void;
-  onSetDropdownShown: (v: boolean) => void;
-  onSetGenerateButtonPressed: (v: boolean) => void;
-  onSetLoadingStory: (v: boolean) => void;
-  onSetLoadStoryComplete: (v: boolean) => void;
-  onSetTopicLoadError: (v: boolean) => void;
-  onSetQuestions: (v: any) => void;
-  onSetQuestionsLoaded: (v: boolean) => void;
-  onSetQuestionsLoadError: (v: boolean) => void;
-  onSetResetNumber: (v: any) => void;
-  onSetSolveObj: (v: any) => void;
-  onSetStoryLoadError: (v: boolean) => void;
-  onSetStoryObj: (v: any) => void;
-  onSetUserChoiceObj: (v: any) => void;
-  questions: any[];
-  questionsLoaded: boolean;
-  questionsLoadError: boolean;
-  solveObj: any;
-  storyLoadError: boolean;
-  storyObj: any;
-  storyType: string;
-  topic: string;
-  topicKey: string;
-  topicLoadError: boolean;
-  userChoiceObj: any;
-}
 export default function Game({
   attemptId,
   difficulty,
@@ -90,7 +51,45 @@ export default function Game({
   topicKey,
   topicLoadError,
   userChoiceObj
-}: Props) {
+}: {
+  attemptId: number;
+  difficulty: number;
+  displayedSection: string;
+  generateButtonPressed: boolean;
+  loadStoryComplete: boolean;
+  loadingStory: boolean;
+  loadingTopic: boolean;
+  MainRef: React.RefObject<any>;
+  onHide: () => void;
+  onLoadTopic: (v: any) => void;
+  onSetAttemptId: (v: number) => void;
+  onSetDifficulty: (v: number) => void;
+  onSetDisplayedSection: (v: string) => void;
+  onSetDropdownShown: (v: boolean) => void;
+  onSetGenerateButtonPressed: (v: boolean) => void;
+  onSetLoadingStory: (v: boolean) => void;
+  onSetLoadStoryComplete: (v: boolean) => void;
+  onSetTopicLoadError: (v: boolean) => void;
+  onSetQuestions: (v: any) => void;
+  onSetQuestionsLoaded: (v: boolean) => void;
+  onSetQuestionsLoadError: (v: boolean) => void;
+  onSetResetNumber: (v: any) => void;
+  onSetSolveObj: (v: any) => void;
+  onSetStoryLoadError: (v: boolean) => void;
+  onSetStoryObj: (v: any) => void;
+  onSetUserChoiceObj: (v: any) => void;
+  questions: any[];
+  questionsLoaded: boolean;
+  questionsLoadError: boolean;
+  solveObj: any;
+  storyLoadError: boolean;
+  storyObj: any;
+  storyType: string;
+  topic: string;
+  topicKey: string;
+  topicLoadError: boolean;
+  userChoiceObj: any;
+}) {
   const loadAIStoryQuestions = useAppContext(
     (v) => v.requestHelpers.loadAIStoryQuestions
   );

@@ -5,17 +5,6 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { notiFeedListItem } from '../../Styles';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
-interface Props {
-  actionColor: string;
-  contentId?: number;
-  contentType?: string;
-  infoColor: string;
-  isTask?: boolean;
-  linkColor: string;
-  reward: any;
-  rewardColor: string;
-  missionColor: string;
-}
 export default function RewardItem({
   actionColor,
   infoColor,
@@ -37,7 +26,17 @@ export default function RewardItem({
     targetObj,
     timeStamp
   }
-}: Props) {
+}: {
+  actionColor: string;
+  contentId?: number;
+  contentType?: string;
+  infoColor: string;
+  isTask?: boolean;
+  linkColor: string;
+  reward: any;
+  rewardColor: string;
+  missionColor: string;
+}) {
   const NotiText = useMemo(() => {
     const params = {
       actionColor,

@@ -11,21 +11,6 @@ import localize from '~/constants/localize';
 
 const freeLabel = localize('free');
 
-interface Props {
-  children: React.ReactNode;
-  currentLvl: number;
-  itemName: string;
-  itemDescription: React.ReactNode;
-  isLeveled: boolean;
-  maxLvl: number;
-  karmaPoints: number;
-  locked: boolean;
-  requiredKarmaPoints: number;
-  onUnlock: () => void;
-  style?: React.CSSProperties;
-  unlocking: boolean;
-  upgradeIcon: React.ReactNode;
-}
 export default function ItemPanel({
   children,
   currentLvl,
@@ -40,7 +25,21 @@ export default function ItemPanel({
   requiredKarmaPoints,
   unlocking,
   upgradeIcon
-}: Props) {
+}: {
+  children: React.ReactNode;
+  currentLvl: number;
+  itemName: string;
+  itemDescription: React.ReactNode;
+  isLeveled: boolean;
+  maxLvl: number;
+  karmaPoints: number;
+  locked: boolean;
+  requiredKarmaPoints: number;
+  onUnlock: () => void;
+  style?: React.CSSProperties;
+  unlocking: boolean;
+  upgradeIcon: React.ReactNode;
+}) {
   const [highlighted, setHighlighted] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);
   const unlockProgress = useMemo(() => {

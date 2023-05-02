@@ -17,22 +17,6 @@ import localize from '~/constants/localize';
 
 const changeThemeLabel = localize('changeTheme');
 
-interface Props {
-  channelId: number;
-  channelName?: string;
-  canChangeSubject: string;
-  isClass: boolean;
-  isClosed: boolean;
-  members: any[];
-  onDone: (v: any) => void;
-  onHide: () => void;
-  onPurchaseSubject: () => void;
-  onSelectNewOwner: (v: any) => void;
-  onScrollToBottom: () => void;
-  theme: string;
-  unlockedThemes: string[];
-  userIsChannelOwner: boolean;
-}
 export default function SettingsModal({
   channelId,
   channelName,
@@ -48,7 +32,22 @@ export default function SettingsModal({
   theme,
   unlockedThemes,
   userIsChannelOwner
-}: Props) {
+}: {
+  channelId: number;
+  channelName?: string;
+  canChangeSubject: string;
+  isClass: boolean;
+  isClosed: boolean;
+  members: any[];
+  onDone: (v: any) => void;
+  onHide: () => void;
+  onPurchaseSubject: () => void;
+  onSelectNewOwner: (v: any) => void;
+  onScrollToBottom: () => void;
+  theme: string;
+  unlockedThemes: string[];
+  userIsChannelOwner: boolean;
+}) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const buyChatSubject = useAppContext((v) => v.requestHelpers.buyChatSubject);
   const buyChatTheme = useAppContext((v) => v.requestHelpers.buyChatTheme);

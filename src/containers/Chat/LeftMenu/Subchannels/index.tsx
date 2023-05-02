@@ -7,15 +7,6 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
-interface Props {
-  currentChannel: any;
-  currentPathId: string | number;
-  displayedThemeColor: string;
-  selectedChannelId: number;
-  subchannelIds: number[];
-  subchannelObj: any;
-  subchannelPath?: string;
-}
 export default function SubChannels({
   currentChannel,
   currentPathId,
@@ -24,7 +15,15 @@ export default function SubChannels({
   subchannelIds,
   subchannelObj,
   subchannelPath
-}: Props) {
+}: {
+  currentChannel: any;
+  currentPathId: string | number;
+  displayedThemeColor: string;
+  selectedChannelId: number;
+  subchannelIds: number[];
+  subchannelObj: any;
+  subchannelPath?: string;
+}) {
   const {
     chatUnread: { color: chatUnreadColor }
   } = useKeyContext((v) => v.theme);
@@ -37,7 +36,7 @@ export default function SubChannels({
   );
   const subchannels = useMemo(() => {
     const result = [];
-    for (let subchannelId of subchannelIds) {
+    for (const subchannelId of subchannelIds) {
       const subchannel = subchannelObj[subchannelId];
       if (subchannel) {
         result.push(subchannel);

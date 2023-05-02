@@ -4,20 +4,6 @@ import Body from './Body';
 import OfferPanel from './OfferPanel';
 import UsernameText from '~/components/Texts/UsernameText';
 
-interface Props {
-  cardIds: number[];
-  coins: number;
-  fromId: number;
-  isAICardModalShown: boolean;
-  isOnModal?: boolean;
-  isCurrent: boolean;
-  myId: number;
-  myUsername: string;
-  onClick?: () => void;
-  onSetAICardModalCardId: (cardId: number) => void;
-  partner: { id: number; username: string };
-  toId: number;
-}
 export default function Show({
   cardIds,
   coins,
@@ -31,7 +17,20 @@ export default function Show({
   onClick,
   onSetAICardModalCardId,
   partner
-}: Props) {
+}: {
+  cardIds: number[];
+  coins: number;
+  fromId: number;
+  isAICardModalShown: boolean;
+  isOnModal?: boolean;
+  isCurrent: boolean;
+  myId: number;
+  myUsername: string;
+  onClick?: () => void;
+  onSetAICardModalCardId: (cardId: number) => void;
+  partner: { id: number; username: string };
+  toId: number;
+}) {
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
   }, [fromId, myId, myUsername, partner]);

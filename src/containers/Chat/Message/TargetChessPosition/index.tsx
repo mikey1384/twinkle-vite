@@ -3,20 +3,6 @@ import Chess from '../../Chess';
 import { borderRadius, Color } from '~/constants/css';
 import ProposeButton from './ProposeButton';
 
-interface Props {
-  chessState: any;
-  channelId: number;
-  gameState: any;
-  lastChessMessageId: number;
-  messageId: number;
-  myId: number;
-  userId: number;
-  username: string;
-  onCancelRewindRequest: () => void;
-  onAcceptRewind: (v: any) => void;
-  onDeclineRewind: () => void;
-  onRequestRewind: (v: any) => void;
-}
 export default function TargetChessPosition({
   chessState,
   channelId,
@@ -30,7 +16,20 @@ export default function TargetChessPosition({
   onAcceptRewind,
   onDeclineRewind,
   onRequestRewind
-}: Props) {
+}: {
+  chessState: any;
+  channelId: number;
+  gameState: any;
+  lastChessMessageId: number;
+  messageId: number;
+  myId: number;
+  userId: number;
+  username: string;
+  onCancelRewindRequest: () => void;
+  onAcceptRewind: (v: any) => void;
+  onDeclineRewind: () => void;
+  onRequestRewind: (v: any) => void;
+}) {
   return (
     <div
       style={{

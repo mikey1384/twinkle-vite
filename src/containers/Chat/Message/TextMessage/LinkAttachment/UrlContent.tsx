@@ -3,18 +3,6 @@ import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 
-interface Props {
-  actualTitle?: string;
-  actualDescription?: string;
-  fallbackImage?: string;
-  imageUrl?: string;
-  loading?: boolean;
-  onSetImageUrl: (v: any) => void;
-  thumbUrl?: string;
-  title?: string;
-  url?: string;
-  siteUrl?: string;
-}
 export default function UrlContent({
   actualTitle,
   actualDescription,
@@ -26,7 +14,18 @@ export default function UrlContent({
   title,
   url,
   siteUrl
-}: Props) {
+}: {
+  actualTitle?: string;
+  actualDescription?: string;
+  fallbackImage?: string;
+  imageUrl?: string;
+  loading?: boolean;
+  onSetImageUrl: (v: any) => void;
+  thumbUrl?: string;
+  title?: string;
+  url?: string;
+  siteUrl?: string;
+}) {
   return (
     <div
       className={`

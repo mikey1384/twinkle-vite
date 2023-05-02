@@ -8,21 +8,6 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import moment from 'moment';
 import { css } from '@emotion/css';
 
-interface Props {
-  content: string;
-  displayedThemeColor: string;
-  id: number;
-  fileName: string;
-  filePath: string;
-  fileSize: number;
-  userId: number;
-  username: string;
-  profilePicUrl: string;
-  thumbUrl: string;
-  timeStamp: number;
-  isReloadedSubject: boolean;
-  onUsermenuShownChange: (isShown: boolean) => void;
-}
 export default function Message({
   content,
   displayedThemeColor,
@@ -37,7 +22,21 @@ export default function Message({
   timeStamp,
   isReloadedSubject,
   onUsermenuShownChange
-}: Props) {
+}: {
+  content: string;
+  displayedThemeColor: string;
+  id: number;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  userId: number;
+  username: string;
+  profilePicUrl: string;
+  thumbUrl: string;
+  timeStamp: number;
+  isReloadedSubject: boolean;
+  onUsermenuShownChange: (isShown: boolean) => void;
+}) {
   const displayedTime = useMemo(
     () => moment.unix(timeStamp).format('lll'),
     [timeStamp]

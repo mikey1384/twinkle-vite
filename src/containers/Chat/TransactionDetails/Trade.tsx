@@ -7,25 +7,6 @@ import Body from './Body';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, Color } from '~/constants/css';
 
-interface Props {
-  isAccepted: boolean;
-  isOnModal?: boolean;
-  isCurrent: boolean;
-  isCancelled: boolean;
-  isAICardModalShown: boolean;
-  cancelReason: string;
-  myId: number;
-  myUsername: string;
-  partner: { id: number; username: string };
-  onSetAICardModalCardId: (cardId: number) => void;
-  wantCardIds: number[];
-  wantCoins: number;
-  offerCardIds: number[];
-  offerCoins: number;
-  onClick?: () => void;
-  fromId: number;
-  toId: number;
-}
 export default function Trade({
   isAccepted,
   isOnModal,
@@ -44,7 +25,25 @@ export default function Trade({
   wantCardIds,
   wantCoins,
   fromId
-}: Props) {
+}: {
+  isAccepted: boolean;
+  isOnModal?: boolean;
+  isCurrent: boolean;
+  isCancelled: boolean;
+  isAICardModalShown: boolean;
+  cancelReason: string;
+  myId: number;
+  myUsername: string;
+  partner: { id: number; username: string };
+  onSetAICardModalCardId: (cardId: number) => void;
+  wantCardIds: number[];
+  wantCoins: number;
+  offerCardIds: number[];
+  offerCoins: number;
+  onClick?: () => void;
+  fromId: number;
+  toId: number;
+}) {
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
   }, [fromId, myId, myUsername, partner]);
@@ -99,7 +98,7 @@ export default function Trade({
           />{' '}
           {isTrade
             ? `proposed a trade`
-            : !!wantCoins
+            : wantCoins
             ? `want${from.id === myId ? '' : 's'}`
             : `${from.id === myId ? 'are' : 'is'} interested in`}
         </div>

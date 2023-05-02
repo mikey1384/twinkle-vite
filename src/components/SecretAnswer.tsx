@@ -29,7 +29,7 @@ function SecretAnswer({
   attachment: any;
   mediaDisabled?: boolean;
   modalOverModal?: boolean;
-  onClick?: () => void;
+  onClick?: (v?: any) => void;
   style?: React.CSSProperties;
   subjectId: number;
   theme?: string;

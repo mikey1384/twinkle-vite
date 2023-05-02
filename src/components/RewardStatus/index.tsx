@@ -13,17 +13,6 @@ import localize from '~/constants/localize';
 
 const showMoreRewardRecordsLabel = localize('showMoreRewardRecords');
 
-interface Props {
-  contentType: string;
-  contentId: number;
-  className?: string;
-  rewardLevel: number;
-  noMarginForEditButton?: boolean;
-  onCommentEdit?: () => void;
-  rewards?: any[];
-  style?: any;
-  theme?: any;
-}
 function RewardStatus({
   contentType,
   contentId,
@@ -34,7 +23,17 @@ function RewardStatus({
   rewards = [],
   style,
   theme
-}: Props) {
+}: {
+  contentType: string;
+  contentId: number;
+  className?: string;
+  rewardLevel: number;
+  noMarginForEditButton?: boolean;
+  onCommentEdit?: () => void;
+  rewards?: any[];
+  style?: any;
+  theme?: any;
+}) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     info: { color: infoColor }

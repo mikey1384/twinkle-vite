@@ -10,21 +10,6 @@ import {
   replaceFakeAtSymbol
 } from '~/helpers/stringHelpers';
 
-interface Props {
-  allowEmptyText?: boolean;
-  autoFocus?: boolean;
-  contentId: number;
-  contentType: string;
-  disabled?: boolean;
-  marginTop?: string;
-  maxRows?: number;
-  onCancel: () => any;
-  onEditDone: (text: string) => any;
-  placeholder?: string;
-  rows?: number;
-  style?: React.CSSProperties;
-  text: string;
-}
 export default function EditTextArea({
   allowEmptyText,
   autoFocus = false,
@@ -39,7 +24,21 @@ export default function EditTextArea({
   rows = 4,
   style,
   text
-}: Props) {
+}: {
+  allowEmptyText?: boolean;
+  autoFocus?: boolean;
+  contentId: number;
+  contentType: string;
+  disabled?: boolean;
+  marginTop?: string;
+  maxRows?: number;
+  onCancel: () => any;
+  onEditDone: (text: string) => any;
+  placeholder?: string;
+  rows?: number;
+  style?: React.CSSProperties;
+  text: string;
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const { banned } = useKeyContext((v) => v.myState);
   const {
