@@ -1,8 +1,17 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 
+Simple.propTypes = {
+  card: PropTypes.object.isRequired,
+  borderColor: PropTypes.string,
+  cardColor: PropTypes.string,
+  displayedBurnXP: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+    .isRequired,
+  xpNumberColor: PropTypes.string.isRequired
+};
 export default function Simple({
   card,
   borderColor,

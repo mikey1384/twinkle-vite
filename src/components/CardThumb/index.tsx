@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
 import {
   cardLevelHash,
@@ -8,16 +9,23 @@ import {
 import { useKeyContext } from '~/contexts';
 import Simple from './Simple';
 import Detailed from './Detailed';
+import { Card } from '~/types';
 
+CardThumb.propTypes = {
+  card: PropTypes.object.isRequired,
+  detailed: PropTypes.bool,
+  style: PropTypes.object,
+  onClick: PropTypes.func
+};
 export default function CardThumb({
   card,
   detailed,
   style,
   onClick
 }: {
-  card: any;
+  card: Card;
   detailed?: boolean;
-  style?: any;
+  style?: React.CSSProperties;
   onClick?: () => void;
 }) {
   const {
