@@ -3,7 +3,28 @@ import { stringIsEmpty, truncateText } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import ContentLink from '~/components/ContentLink';
 
-interface Props {
+export default function renderEnglishMessage({
+  actionObj,
+  actionColor,
+  infoColor,
+  isNotification,
+  isReply,
+  isSubjectResponse,
+  isTask,
+  linkColor,
+  mentionColor,
+  missionColor,
+  recommendationColor,
+  rewardRootId,
+  rewardType,
+  rewardColor,
+  rewardRootMissionType,
+  rewardRootType,
+  rootMissionType,
+  targetComment,
+  targetObj,
+  targetSubject
+}: {
   actionObj: {
     amount: number;
     content: string;
@@ -45,29 +66,7 @@ interface Props {
     id: number;
     userId: number;
   };
-}
-export default function renderEnglishMessage({
-  actionObj,
-  actionColor,
-  infoColor,
-  isNotification,
-  isReply,
-  isSubjectResponse,
-  isTask,
-  linkColor,
-  mentionColor,
-  missionColor,
-  recommendationColor,
-  rewardRootId,
-  rewardType,
-  rewardColor,
-  rewardRootMissionType,
-  rewardRootType,
-  rootMissionType,
-  targetComment,
-  targetObj,
-  targetSubject
-}: Props) {
+}) {
   const displayedContent =
     targetObj.contentType === 'pass'
       ? targetObj.missionTitle

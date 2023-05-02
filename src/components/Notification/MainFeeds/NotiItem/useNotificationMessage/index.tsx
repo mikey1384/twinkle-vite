@@ -1,30 +1,8 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import renderEnglishMessage from './localization/english';
 import renderKoreanMessage from './localization/korean';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
-interface Props {
-  actionColor?: string;
-  actionObj?: any;
-  infoColor?: string;
-  isNotification?: boolean;
-  isTask?: boolean;
-  linkColor?: string;
-  mentionColor?: string;
-  missionColor?: string;
-  recommendationColor?: string;
-  rewardColor?: string;
-  rewardRootId?: number;
-  rewardType?: string;
-  rewardRootMissionType?: string;
-  rewardRootType?: string;
-  rootMissionType?: string;
-  targetComment?: any;
-  targetObj?: any;
-  targetSubject?: any;
-  user?: any;
-  myId?: number;
-}
 export default function useNotificationMessage({
   actionColor,
   actionObj,
@@ -46,7 +24,28 @@ export default function useNotificationMessage({
   rootMissionType,
   user,
   myId
-}: Props) {
+}: {
+  actionColor?: string;
+  actionObj?: any;
+  infoColor?: string;
+  isNotification?: boolean;
+  isTask?: boolean;
+  linkColor?: string;
+  mentionColor?: string;
+  missionColor?: string;
+  recommendationColor?: string;
+  rewardColor?: string;
+  rewardRootId?: number;
+  rewardType?: string;
+  rewardRootMissionType?: string;
+  rewardRootType?: string;
+  rootMissionType?: string;
+  targetComment?: any;
+  targetObj?: any;
+  targetSubject?: any;
+  user?: any;
+  myId?: number;
+}) {
   const NotificationMessage = useMemo(() => {
     const isReply = targetComment?.userId === myId;
     const isSubjectResponse = targetSubject?.userId === myId;
