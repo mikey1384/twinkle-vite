@@ -5,31 +5,6 @@ import LongText from '~/components/Texts/LongText';
 import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
 
-interface Props {
-  content: string;
-  contentId: number;
-  contentType: string;
-  description: string;
-  isNotification: boolean;
-  navigate: (url: string) => void;
-  onClickSecretAnswer: (subjectId: number, uploaderId: number) => void;
-  rootId: number;
-  secretAnswer: string;
-  secretAttachment: any;
-  secretHidden: boolean;
-  story: string;
-  targetObj: {
-    subject: {
-      id: number;
-    };
-  };
-  theme: string;
-  title: string;
-  uploader: {
-    id: number;
-    username: string;
-  };
-}
 export default function Content({
   content,
   contentId,
@@ -47,7 +22,31 @@ export default function Content({
   theme,
   title,
   uploader
-}: Props) {
+}: {
+  content: string;
+  contentId: number;
+  contentType: string;
+  description: string;
+  isNotification: boolean;
+  navigate: (url: string) => void;
+  onClickSecretAnswer?: () => void;
+  rootId: number;
+  secretAnswer: string;
+  secretAttachment: any;
+  secretHidden: boolean;
+  story: string;
+  targetObj: {
+    subject: {
+      id: number;
+    };
+  };
+  theme: string;
+  title: string;
+  uploader: {
+    id: number;
+    username: string;
+  };
+}) {
   const Description = useMemo(() => {
     return !stringIsEmpty(description)
       ? description

@@ -2,19 +2,6 @@ import React from 'react';
 import AlreadyPosted from '~/components/AlreadyPosted';
 import TagStatus from '~/components/TagStatus';
 
-interface Props {
-  contentType: string;
-  uploader: any;
-  contentId: number;
-  content: string;
-  loggedIn: boolean;
-  onAddTags: any;
-  onAddTagToContents: any;
-  onLoadTags: any;
-  rewardLevel: number;
-  tags: any;
-  theme: string;
-}
 export default function XPVideoAdditionalInfo({
   contentType,
   uploader,
@@ -27,7 +14,19 @@ export default function XPVideoAdditionalInfo({
   rewardLevel,
   tags,
   theme
-}: Props) {
+}: {
+  contentType: string;
+  uploader: any;
+  contentId: number;
+  content: string;
+  loggedIn: boolean;
+  onAddTags: any;
+  onAddTagToContents: any;
+  onLoadTags: any;
+  rewardLevel: number;
+  tags: any;
+  theme: string;
+}) {
   if (contentType !== 'video') return null;
   return (
     <>

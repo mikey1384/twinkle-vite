@@ -10,7 +10,18 @@ import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
-interface Props {
+export default function UserListModal({
+  description = '',
+  descriptionColor = Color.green(),
+  descriptionShown,
+  loadMoreButtonShown,
+  loading,
+  loadingMore,
+  onHide,
+  onLoadMore,
+  title,
+  users
+}: {
   description?: string;
   descriptionColor?: string;
   descriptionShown?: (v: object) => void | boolean;
@@ -26,19 +37,7 @@ interface Props {
     profilePicUrl: string;
     authLevel?: number;
   }>;
-}
-export default function UserListModal({
-  description = '',
-  descriptionColor = Color.green(),
-  descriptionShown,
-  loadMoreButtonShown,
-  loading,
-  loadingMore,
-  onHide,
-  onLoadMore,
-  title,
-  users
-}: Props) {
+}) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
@@ -52,7 +51,7 @@ export default function UserListModal({
   const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
   const allUsers = useMemo(() => {
     const otherUsers = users.filter((user) => user.id !== userId);
-    let userArray = [];
+    const userArray = [];
     for (let i = 0; i < users.length; i++) {
       if (users[i].id === userId) userArray.push(users[i]);
     }
@@ -68,7 +67,7 @@ export default function UserListModal({
             <Loading />
           ) : (
             allUsers.map((user) => {
-              let userStatusDisplayed =
+              const userStatusDisplayed =
                 typeof descriptionShown === 'function'
                   ? descriptionShown(user)
                   : user.id === userId;

@@ -4,32 +4,27 @@ import { isMobile } from '~/helpers';
 
 const displayIsMobile = isMobile(navigator);
 
-interface Props {
-  contentType: string;
-  subjectIsAttachedToVideo: boolean;
-  isEditing: boolean;
-  rewardLevel: number;
-  byUser: boolean;
-  title: string;
-  uploader: any;
-  contentId: number;
-  content: string;
-  rootId: number;
-  rootObj: any;
-}
 export default function XPVideo({
   contentType,
   subjectIsAttachedToVideo,
-  isEditing,
   rewardLevel,
   byUser,
-  title,
   uploader,
   contentId,
   content,
   rootId,
   rootObj
-}: Props) {
+}: {
+  contentType: string;
+  subjectIsAttachedToVideo: boolean;
+  rewardLevel: number;
+  byUser: boolean;
+  uploader: any;
+  contentId: number;
+  content: string;
+  rootId: number;
+  rootObj: any;
+}) {
   if (contentType !== 'video' && !subjectIsAttachedToVideo) return null;
   return (
     <XPVideoPlayer

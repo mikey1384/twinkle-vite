@@ -5,30 +5,6 @@ import Tag from './Tag';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { objectify } from '~/helpers';
 
-interface Props {
-  autoFocus?: boolean;
-  children?: any;
-  className?: string;
-  dropdownFooter?: any;
-  inputRef?: any;
-  filter: (value: any, index: number) => boolean;
-  itemLabel: string;
-  maxItems?: number;
-  onAddItem: (value: any) => void;
-  onClear: () => void;
-  searchResults: { id: number; title: string }[];
-  selectedItems: any[];
-  onNotFound?: ({ messageShown }: { messageShown: boolean }) => void;
-  onRemoveItem: (id: number) => void;
-  onSearch: (text: string) => any;
-  onSubmit?: () => void;
-  renderDropdownLabel: (item: any) => any;
-  renderTagLabel?: (label: string) => string;
-  searchPlaceholder?: string;
-  subTitle?: string;
-  style?: CSSProperties;
-  title?: string;
-}
 function TagForm({
   autoFocus,
   children,
@@ -52,7 +28,30 @@ function TagForm({
   subTitle,
   style,
   title
-}: Props) {
+}: {
+  autoFocus?: boolean;
+  children?: any;
+  className?: string;
+  dropdownFooter?: any;
+  inputRef?: any;
+  filter: (value: any, index: number) => boolean;
+  itemLabel: string;
+  maxItems?: number;
+  onAddItem: (value: any) => void;
+  onClear: () => void;
+  searchResults: { id: number; title: string }[];
+  selectedItems: any[];
+  onNotFound?: ({ messageShown }: { messageShown: boolean }) => void;
+  onRemoveItem: (id: number) => void;
+  onSearch: (text: string) => any;
+  onSubmit?: () => void;
+  renderDropdownLabel: (item: any) => any;
+  renderTagLabel?: (label: string) => string;
+  searchPlaceholder?: string;
+  subTitle?: string;
+  style?: CSSProperties;
+  title?: string;
+}) {
   const [searchText, setSearchText] = useState('');
   const { handleSearch, searching } = useSearch({
     onSearch,

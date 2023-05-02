@@ -16,41 +16,6 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useInView } from 'react-intersection-observer';
 
-interface Props {
-  archivedSlides: any[];
-  attachment: any;
-  cannotMoveUp: boolean;
-  cannotMoveDown: boolean;
-  displayedSlideIds: number[];
-  fileUploadProgress: number;
-  innerRef: any;
-  index: number;
-  insertButtonShown: boolean;
-  interactiveId: number;
-  style: any;
-  heading: string;
-  isDeleted: boolean;
-  isEditing: boolean;
-  isPublished: boolean;
-  isLastSlide: boolean;
-  isFork: boolean;
-  isOnModal: boolean;
-  isPortal: boolean;
-  forkedFrom: number;
-  description: string;
-  onExpandPath: any;
-  onMoveSlide: any;
-  forkButtonIds: number[];
-  forkButtonsObj: any;
-  onCurrentSlideIdChange: any;
-  onGoBackToMission: any;
-  portalButton: any;
-  slideId: number;
-  slideObj: { [key: string]: any };
-  paths: any;
-  selectedForkButtonId: number;
-  uploadingFile: boolean;
-}
 export default function Slide({
   archivedSlides,
   cannotMoveUp,
@@ -85,7 +50,41 @@ export default function Slide({
   slideObj,
   style,
   uploadingFile
-}: Props) {
+}: {
+  archivedSlides: any[];
+  attachment: any;
+  cannotMoveUp: boolean;
+  cannotMoveDown: boolean;
+  displayedSlideIds: number[];
+  fileUploadProgress: number;
+  innerRef: any;
+  index: number;
+  insertButtonShown: boolean;
+  interactiveId: number;
+  style: any;
+  heading: string;
+  isDeleted: boolean;
+  isEditing: boolean;
+  isPublished: boolean;
+  isLastSlide: boolean;
+  isFork: boolean;
+  isOnModal: boolean;
+  isPortal: boolean;
+  forkedFrom: number;
+  description: string;
+  onExpandPath: any;
+  onMoveSlide: any;
+  forkButtonIds: number[];
+  forkButtonsObj: any;
+  onCurrentSlideIdChange: any;
+  onGoBackToMission: any;
+  portalButton: any;
+  slideId: number;
+  slideObj: { [key: string]: any };
+  paths: any;
+  selectedForkButtonId: number;
+  uploadingFile: boolean;
+}) {
   const [ComponentRef, inView] = useInView({
     threshold: 1
   });
@@ -373,7 +372,7 @@ export default function Slide({
         newState: { isDeleted: true, selectedForkButtonId: null }
       });
     }
-    for (let [key, slide] of Object.entries(slideObj)) {
+    for (const [key, slide] of Object.entries(slideObj)) {
       if (slide.forkedFrom === slideId) {
         onArchiveSlide({ interactiveId, slideId: Number(key) });
       }
@@ -381,7 +380,7 @@ export default function Slide({
   }
 
   function handleHideDeletedMessages(forkSlideId: number) {
-    for (let slideId of displayedSlideIds) {
+    for (const slideId of displayedSlideIds) {
       if (
         displayedSlideIds.indexOf(slideId) >
           displayedSlideIds.indexOf(forkSlideId) &&
@@ -400,7 +399,7 @@ export default function Slide({
 
   function handlePortalButtonClick(forkId: number) {
     if (forkId === 0) {
-      for (let slideId of displayedSlideIds) {
+      for (const slideId of displayedSlideIds) {
         if (slideObj[slideId]?.isFork) {
           onGoBack({ interactiveId, forkId: slideId });
           return onGoBackToMission?.();

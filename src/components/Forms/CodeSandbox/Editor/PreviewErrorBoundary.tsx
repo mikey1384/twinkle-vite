@@ -3,17 +3,19 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { Color, borderRadius } from '~/constants/css';
 import Button from '~/components/Button';
 
-interface Props {
-  className: string;
-  onError: () => void;
-  children: any;
-  innerRef?: any;
-  style: any;
-}
 interface State {
   hasError: boolean;
 }
-export default class PreviewErrorBoundary extends Component<Props, State> {
+export default class PreviewErrorBoundary extends Component<
+  {
+    className: string;
+    onError: () => void;
+    children: any;
+    innerRef?: any;
+    style: any;
+  },
+  State
+> {
   private onError: (arg: any) => void;
   constructor(props: any) {
     super(props);

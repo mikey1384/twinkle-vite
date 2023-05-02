@@ -9,24 +9,6 @@ import { v1 as uuidv1 } from 'uuid';
 import { css } from '@emotion/css';
 import { returnImageFileFromUrl } from '~/helpers';
 
-interface Props {
-  small?: boolean;
-  type: string;
-  fileUrl: string;
-  interactiveId: number;
-  linkUrl: string;
-  isOnModal: boolean;
-  isYouTubeVideo: boolean;
-  onSetEmbedProps: (arg0: any) => void;
-  thumbUrl: string;
-  actualTitle: string;
-  actualDescription: string;
-  onThumbnailUpload: (arg0: any) => void;
-  prevUrl: string;
-  slideId: number;
-  siteUrl: string;
-  videoHeight?: number;
-}
 export default function Attachment({
   small,
   type,
@@ -44,7 +26,24 @@ export default function Attachment({
   slideId,
   siteUrl,
   videoHeight
-}: Props) {
+}: {
+  small?: boolean;
+  type: string;
+  fileUrl: string;
+  interactiveId: number;
+  linkUrl: string;
+  isOnModal: boolean;
+  isYouTubeVideo: boolean;
+  onSetEmbedProps: (arg0: any) => void;
+  thumbUrl: string;
+  actualTitle: string;
+  actualDescription: string;
+  onThumbnailUpload: (arg0: any) => void;
+  prevUrl: string;
+  slideId: number;
+  siteUrl: string;
+  videoHeight?: number;
+}) {
   const uploadThumbForInteractiveSlide = useAppContext(
     (v) => v.requestHelpers.uploadThumbForInteractiveSlide
   );

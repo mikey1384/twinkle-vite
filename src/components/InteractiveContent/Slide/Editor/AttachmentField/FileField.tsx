@@ -10,15 +10,6 @@ import { returnImageFileFromUrl } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-interface Props {
-  isChanging: boolean;
-  fileUrl: string;
-  newAttachment: any;
-  onSetAttachmentState: any;
-  onThumbnailLoad: any;
-  thumbUrl: string;
-  uploadingFile: boolean;
-}
 export default function FileField({
   isChanging,
   fileUrl,
@@ -27,7 +18,15 @@ export default function FileField({
   onThumbnailLoad,
   thumbUrl,
   uploadingFile
-}: Props) {
+}: {
+  isChanging: boolean;
+  fileUrl: string;
+  newAttachment: any;
+  onSetAttachmentState: any;
+  onThumbnailLoad: any;
+  thumbUrl: string;
+  uploadingFile: boolean;
+}) {
   const { fileUploadLvl } = useKeyContext((v) => v.myState);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),

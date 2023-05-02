@@ -28,25 +28,6 @@ import { edit } from '~/constants/placeholders';
 import { isEqual } from 'lodash';
 import { v1 as uuidv1 } from 'uuid';
 
-interface Props {
-  attachment: any;
-  description: string;
-  fileUploadProgress: number;
-  forkedFrom: number;
-  heading: string;
-  interactiveId: number;
-  isFork: boolean;
-  isPortal: boolean;
-  forkButtonIds: number[];
-  forkButtonsObj: { [key: string]: any };
-  onHideDeletedMessages: (arg: any) => void;
-  portalButton: any;
-  paths: any[];
-  slideId: number;
-  slideObj: any;
-  isLastSlide: boolean;
-  uploadingFile: boolean;
-}
 export default function Editor({
   attachment,
   description,
@@ -65,7 +46,25 @@ export default function Editor({
   slideId,
   slideObj,
   uploadingFile
-}: Props) {
+}: {
+  attachment: any;
+  description: string;
+  fileUploadProgress: number;
+  forkedFrom: number;
+  heading: string;
+  interactiveId: number;
+  isFork: boolean;
+  isPortal: boolean;
+  forkButtonIds: number[];
+  forkButtonsObj: { [key: string]: any };
+  onHideDeletedMessages: (arg: any) => void;
+  portalButton: any;
+  paths: any[];
+  slideId: number;
+  slideObj: any;
+  isLastSlide: boolean;
+  uploadingFile: boolean;
+}) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -151,7 +150,7 @@ export default function Editor({
 
   const pathsExist = useMemo(() => {
     if (!paths) return false;
-    for (let path of Object.values(paths)) {
+    for (const path of Object.values(paths)) {
       if (path.length > 0) return true;
     }
     return false;
@@ -261,7 +260,7 @@ export default function Editor({
       return true;
     }
     if (editedIsFork) {
-      for (let button of Object.values(editedForkButtonsObj) as {
+      for (const button of Object.values(editedForkButtonsObj) as {
         label: string;
       }[]) {
         if (

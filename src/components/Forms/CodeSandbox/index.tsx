@@ -7,18 +7,6 @@ import { scrollElementToCenter } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { parse } from '@babel/parser';
 
-interface Props {
-  code: string;
-  initialCode: string;
-  hasError: boolean;
-  onSetCode: (code: string) => void;
-  onSetErrorMsg: (errorMsg: string) => void;
-  onRunCode?: (arg: any) => void;
-  passed?: boolean;
-  prevUserId: number;
-  runButtonLabel?: string;
-  style?: React.CSSProperties;
-}
 export default function CodeSandbox({
   code: globalCode,
   initialCode,
@@ -30,7 +18,18 @@ export default function CodeSandbox({
   prevUserId,
   runButtonLabel = 'Run',
   style
-}: Props) {
+}: {
+  code: string;
+  initialCode: string;
+  hasError: boolean;
+  onSetCode: (code: string) => void;
+  onSetErrorMsg: (errorMsg: string) => void;
+  onRunCode?: (arg: any) => void;
+  passed?: boolean;
+  prevUserId: number;
+  runButtonLabel?: string;
+  style?: React.CSSProperties;
+}) {
   const formatCode = useAppContext((v) => v.requestHelpers.formatCode);
   const { userId } = useKeyContext((v) => v.myState);
   const timerRef: React.MutableRefObject<any> = useRef(null);

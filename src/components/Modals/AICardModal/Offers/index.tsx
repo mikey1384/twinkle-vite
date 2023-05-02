@@ -8,20 +8,6 @@ import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
-interface Props {
-  cardId: number;
-  getOffersForCard: any;
-  offers: any[];
-  onSetOffers: (v: any) => void;
-  onSetLoadMoreShown: (v: boolean) => void;
-  onUserMenuShownChange: (v: boolean) => void;
-  loaded: boolean;
-  loadMoreShown: boolean;
-  onSetActiveTab: (v: string) => void;
-  onSetOfferModalShown: (v: boolean) => void;
-  ownerId: number;
-  usermenuShown: boolean;
-}
 export default function Offers({
   cardId,
   getOffersForCard,
@@ -35,7 +21,20 @@ export default function Offers({
   onSetOfferModalShown,
   ownerId,
   usermenuShown
-}: Props) {
+}: {
+  cardId: number;
+  getOffersForCard: any;
+  offers: any[];
+  onSetOffers: (v: any) => void;
+  onSetLoadMoreShown: (v: boolean) => void;
+  onUserMenuShownChange: (v: boolean) => void;
+  loaded: boolean;
+  loadMoreShown: boolean;
+  onSetActiveTab: (v: string) => void;
+  onSetOfferModalShown: (v: boolean) => void;
+  ownerId: number;
+  usermenuShown: boolean;
+}) {
   const { userId } = useKeyContext((v) => v.myState);
   const [loadingMore, setLoadingMore] = useState(false);
 

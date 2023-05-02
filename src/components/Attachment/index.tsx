@@ -13,7 +13,7 @@ export default function Attachment({
 }: {
   attachment: any;
   onClose: () => void;
-  onThumbnailLoad?: () => void;
+  onThumbnailLoad?: (thumbnail: string) => void;
   style?: any;
 }) {
   return (

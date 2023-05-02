@@ -9,23 +9,6 @@ import { useOutsideClick } from '~/helpers/hooks';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-interface Props {
-  autoFocus?: boolean;
-  className?: string;
-  dropdownFooter?: any;
-  inputRef?: any;
-  onClickOutSide?: () => void;
-  loading?: boolean;
-  onAddItem: (item: object) => void;
-  onChange: (value: string) => void;
-  onNotFound?: ({ messageShown }: { messageShown: boolean }) => void;
-  placeholder?: string;
-  renderDropdownLabel: (item: any) => string;
-  searchResults?: { id: number; title: string }[];
-  selectedItems: { id: number }[];
-  style?: any;
-  value: string;
-}
 export default function TagInput({
   autoFocus,
   className,
@@ -42,7 +25,23 @@ export default function TagInput({
   selectedItems,
   style,
   value
-}: Props) {
+}: {
+  autoFocus?: boolean;
+  className?: string;
+  dropdownFooter?: any;
+  inputRef?: any;
+  onClickOutSide: () => any;
+  loading?: boolean;
+  onAddItem: (item: object) => void;
+  onChange: (value: string) => void;
+  onNotFound?: ({ messageShown }: { messageShown: boolean }) => void;
+  placeholder?: string;
+  renderDropdownLabel: (item: any) => string;
+  searchResults?: { id: number; title: string }[];
+  selectedItems: { id: number }[];
+  style?: any;
+  value: string;
+}) {
   const [results, setResults] = useState(searchResults);
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const TagInputRef = useRef(null);
@@ -129,19 +128,19 @@ export default function TagInput({
     if (searchResults.length > 0) {
       if (event.keyCode === 40) {
         event.preventDefault();
-        let highlightIndex = Math.min(++index, searchResults.length - 1);
+        const highlightIndex = Math.min(++index, searchResults.length - 1);
         setIndexToHighlight(highlightIndex);
       }
 
       if (event.keyCode === 38) {
         event.preventDefault();
-        let highlightIndex = Math.max(--index, 0);
+        const highlightIndex = Math.max(--index, 0);
         setIndexToHighlight(highlightIndex);
       }
 
       if (event.keyCode === 13) {
         event.preventDefault();
-        let user = searchResults[index];
+        const user = searchResults[index];
         onAddItem(user);
       }
     }

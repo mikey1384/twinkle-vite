@@ -28,7 +28,46 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 
 const API_URL = `${URL}/content`;
 
-interface Props {
+Embedly.propTypes = {
+  contentId: PropTypes.number.isRequired,
+  contentType: PropTypes.string,
+  defaultActualDescription: PropTypes.string,
+  defaultActualTitle: PropTypes.string,
+  defaultThumbUrl: PropTypes.string,
+  directUrl: PropTypes.string,
+  extractedUrl: PropTypes.string,
+  imageOnly: PropTypes.bool,
+  imageWidth: PropTypes.string,
+  loadingHeight: PropTypes.string,
+  mobileLoadingHeight: PropTypes.string,
+  noLink: PropTypes.bool,
+  onHideAttachment: PropTypes.func,
+  small: PropTypes.bool,
+  style: PropTypes.object,
+  userCanEditThis: PropTypes.bool,
+  videoHeight: PropTypes.string,
+  videoWidth: PropTypes.string
+};
+function Embedly({
+  contentId,
+  contentType = 'url',
+  directUrl,
+  defaultThumbUrl,
+  defaultActualTitle,
+  defaultActualDescription,
+  extractedUrl,
+  imageWidth,
+  imageOnly,
+  loadingHeight = '100%',
+  mobileLoadingHeight,
+  noLink,
+  onHideAttachment = () => null,
+  small,
+  style,
+  userCanEditThis,
+  videoWidth,
+  videoHeight
+}: {
   contentId: number;
   contentType?: string;
   directUrl?: string;
@@ -47,27 +86,7 @@ interface Props {
   userCanEditThis?: boolean;
   videoWidth?: string;
   videoHeight?: string;
-}
-function Embedly({
-  contentId,
-  contentType = 'url',
-  directUrl,
-  defaultThumbUrl,
-  defaultActualTitle,
-  defaultActualDescription,
-  extractedUrl,
-  imageWidth,
-  imageOnly,
-  loadingHeight = '100%',
-  mobileLoadingHeight,
-  noLink,
-  onHideAttachment = () => {},
-  small,
-  style,
-  userCanEditThis,
-  videoWidth,
-  videoHeight
-}: Props) {
+}) {
   const navigate = useNavigate();
   const makeThumbnailSecure = useAppContext(
     (v) => v.requestHelpers.makeThumbnailSecure
