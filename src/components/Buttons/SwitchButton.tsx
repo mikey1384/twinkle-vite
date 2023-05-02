@@ -1,10 +1,22 @@
-import React, { CSSProperties } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 
+SwitchButton.propTypes = {
+  color: PropTypes.string,
+  disabled: PropTypes.bool,
+  checked: PropTypes.bool,
+  label: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
+  small: PropTypes.bool,
+  theme: PropTypes.string,
+  labelStyle: PropTypes.object,
+  style: PropTypes.object
+};
 export default function SwitchButton({
   color,
   disabled,
@@ -19,12 +31,12 @@ export default function SwitchButton({
   color?: string;
   disabled?: boolean;
   checked?: boolean;
-  label?: any;
-  onChange?: () => void;
+  label?: string;
+  onChange: () => void;
   small?: boolean;
   theme?: string;
-  labelStyle?: CSSProperties;
-  style?: any;
+  labelStyle?: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {

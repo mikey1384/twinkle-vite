@@ -19,7 +19,7 @@ DropdownButton.propTypes = {
   menuProps: PropTypes.array,
   noBorderRadius: PropTypes.bool,
   onButtonClick: PropTypes.func,
-  text: PropTypes.string,
+  text: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
   stretch: PropTypes.bool,
   innerRef: PropTypes.any,
   transparent: PropTypes.bool,
@@ -58,7 +58,7 @@ export default function DropdownButton({
   menuProps?: any[];
   noBorderRadius?: boolean;
   onButtonClick?: (arg: any) => void;
-  text?: string;
+  text?: string | React.ReactNode;
   stretch?: boolean;
   innerRef?: React.RefObject<any>;
   transparent?: boolean;

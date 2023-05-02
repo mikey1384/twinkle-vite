@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -10,6 +11,12 @@ import localize from '~/constants/localize';
 const loadMoreLabel = localize('loadMore');
 const loadingLabel = localize('loading');
 
+LoadMoreButton.propTypes = {
+  label: PropTypes.string,
+  loading: PropTypes.bool,
+  color: PropTypes.string,
+  theme: PropTypes.string
+};
 export default function LoadMoreButton({
   label,
   loading,
