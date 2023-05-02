@@ -214,7 +214,7 @@ function MessagesContainer({
     if (!subchannelPath) {
       return null;
     }
-    for (let subchannelId of subchannelIds) {
+    for (const subchannelId of subchannelIds) {
       if (subchannelObj[subchannelId]?.path === subchannelPath) {
         return subchannelObj[subchannelId];
       }
@@ -276,7 +276,7 @@ function MessagesContainer({
       : messagesObj;
     const result = [];
     const dupe: { [key: string]: any } = {};
-    for (let messageId of displayedMessageIds) {
+    for (const messageId of displayedMessageIds) {
       if (!dupe[messageId]) {
         const message = displayedMessagesObj[messageId];
         if (message) {
@@ -831,7 +831,7 @@ function MessagesContainer({
         );
       } else {
         const recipientIds = [];
-        for (let user of users) {
+        for (const user of users) {
           if (!user.id) {
             reportError({
               componentPath: 'MessagesContainer/index',
@@ -1090,7 +1090,7 @@ function MessagesContainer({
       if (chessTarget) {
         return handleSubmitChessTargetMessage(content);
       }
-      let isFirstDirectMessage = selectedChannelId === 0;
+      const isFirstDirectMessage = selectedChannelId === 0;
       if (isFirstDirectMessage) {
         if (creatingNewDMChannel) return;
         if (!recipientId) {
