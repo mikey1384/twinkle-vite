@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import CardThumb from '~/components/CardThumb';
+import { Card } from '~/types';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -12,7 +13,7 @@ export default function CardItem({
   card,
   onClick
 }: {
-  card: any;
+  card: Card;
   onClick: () => void;
 }) {
   return (

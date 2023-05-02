@@ -1,9 +1,17 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import CloseButton from '~/components/Buttons/CloseButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import WebsiteContent from './WebsiteContent';
 import FileContent from '~/components/FileContent';
+import { Attachment as AttachmentType } from '~/types';
 
+Attachment.propTypes = {
+  attachment: PropTypes.object.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onThumbnailLoad: PropTypes.func,
+  style: PropTypes.object
+};
 export default function Attachment({
   attachment,
   attachment: { contentType = 'file', fileType },
@@ -11,10 +19,10 @@ export default function Attachment({
   onThumbnailLoad,
   style
 }: {
-  attachment: any;
+  attachment: AttachmentType;
   onClose: () => void;
   onThumbnailLoad?: (thumbnail: string) => void;
-  style?: any;
+  style?: React.CSSProperties;
 }) {
   return (
     <ErrorBoundary

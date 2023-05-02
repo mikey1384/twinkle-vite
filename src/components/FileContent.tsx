@@ -28,7 +28,7 @@ export default function FileContent({
   imageBackgroundColor,
   onThumbnailLoad
 }: {
-  imageUrl: string;
+  imageUrl?: string;
   file: any;
   fileType: string;
   style?: React.CSSProperties;
@@ -61,7 +61,7 @@ export default function FileContent({
           onThumbnailLoad={onThumbnailLoad}
         />
       )}
-      {fileType === 'image' ? (
+      {fileType === 'image' && imageUrl ? (
         <Image backgroundColor={imageBackgroundColor} imageUrl={imageUrl} />
       ) : (
         <FileIcon size={fileIconSize} fileType={fileType} />
