@@ -1,10 +1,19 @@
 import React, { useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
+Menu.propTypes = {
+  content: PropTypes.string.isRequired,
+  style: PropTypes.object,
+  loadingType: PropTypes.string.isRequired,
+  onSetLoadingType: PropTypes.func.isRequired,
+  onSetLoadingProgress: PropTypes.func.isRequired,
+  onSetResponse: PropTypes.func.isRequired
+};
 export default function Menu({
   content,
   style,
@@ -13,8 +22,8 @@ export default function Menu({
   onSetLoadingProgress,
   onSetResponse
 }: {
-  content: any;
-  style?: any;
+  content: string;
+  style?: React.CSSProperties;
   loadingType: string;
   onSetLoadingType: (loadingType: string) => void;
   onSetLoadingProgress: (loadingProgress: number) => void;

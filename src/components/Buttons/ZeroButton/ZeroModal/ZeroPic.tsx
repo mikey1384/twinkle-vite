@@ -1,7 +1,11 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import zeroFull from './zero-full.png';
 
-export default function ZeroPic({ style }: { style?: any }) {
+ZeroPic.propTypes = {
+  style: PropTypes.object
+};
+export default function ZeroPic({ style }: { style?: React.CSSProperties }) {
   return (
     <div
       style={{

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ImageModal from '~/components/Modals/ImageModal';
 import { mobileMaxWidth } from '~/constants/css';
@@ -10,12 +10,16 @@ ImagePreview.propTypes = {
   src: PropTypes.string.isRequired,
   fileName: PropTypes.string.isRequired
 };
-
 export default function ImagePreview({
   isThumb,
   modalOverModal,
   src,
   fileName
+}: {
+  isThumb?: boolean;
+  modalOverModal?: boolean;
+  src: string;
+  fileName: string;
 }) {
   const [imageModalShown, setImageModalShown] = useState(false);
   const [imageWorks, setImageWorks] = useState(true);
