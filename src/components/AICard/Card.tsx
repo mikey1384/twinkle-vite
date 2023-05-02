@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
 import useAICard from '~/helpers/hooks/useAICard';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -8,7 +9,18 @@ import { useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { cloudFrontURL, returnCardBurnXP } from '~/constants/defaultValues';
 import { animated } from 'react-spring';
+import { Card as CardType } from '~/types';
 
+Card.propTypes = {
+  bind: PropTypes.func.isRequired,
+  card: PropTypes.object.isRequired,
+  cardStyle: PropTypes.object.isRequired,
+  detailShown: PropTypes.bool,
+  innerRef: PropTypes.any,
+  isAnimated: PropTypes.bool,
+  onMouseLeave: PropTypes.func.isRequired,
+  onMouseMove: PropTypes.func.isRequired
+};
 export default function Card({
   bind,
   card,
@@ -20,8 +32,8 @@ export default function Card({
   onMouseMove
 }: {
   bind: () => any;
-  card: any;
-  cardStyle: any;
+  card: CardType;
+  cardStyle: React.CSSProperties;
   detailShown?: boolean;
   innerRef: any;
   isAnimated: boolean;

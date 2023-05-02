@@ -1,3 +1,14 @@
+export interface Card {
+  askPrice: number;
+  id: number;
+  imagePath: string;
+  isBurned: boolean;
+  isBurning?: boolean;
+  level: number;
+  owner: User;
+  quality: 'common' | 'superior' | 'rare' | 'elite' | 'legendary';
+  word: string;
+}
 export interface Comment {
   commentId: number;
   content: string;
@@ -72,4 +83,5 @@ export interface Subject {
 export interface User {
   id: number;
   userType: string;
+  username: string;
 }
