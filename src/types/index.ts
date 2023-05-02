@@ -1,3 +1,11 @@
+export interface Attachment {
+  contentType?: string;
+  id: number;
+  file: File;
+  fileType: string;
+  imageUrl?: string;
+  title: string;
+}
 export interface Card {
   askPrice: number;
   id: number;

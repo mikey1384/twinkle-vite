@@ -1,17 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { truncateText } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
 import YouTubeIcon from '~/assets/YoutubeIcon.svg';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { Attachment } from '~/types';
 
 const fallbackImage = '/img/link.png';
 
-export default function WebsiteContent({ attachment }: { attachment: any }) {
+WebsiteContent.propTypes = {
+  attachment: PropTypes.object.isRequired
+};
+export default function WebsiteContent({
+  attachment
+}: {
+  attachment: Attachment;
+}) {
   const navigate = useNavigate();
   const [imageUrl, setImageUrl] = useState('');
   const { content, thumbUrl } = useContentState({
-    contentType: attachment.contentType,
+    contentType: attachment.contentType || '',
     contentId: attachment.id
   });
   useEffect(() => {

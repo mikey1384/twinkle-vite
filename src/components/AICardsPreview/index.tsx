@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import CardThumb from '~/components/CardThumb';
 import ShowMoreCardsButton from '~/components/Buttons/ShowMoreCardsButton';
 import MoreAICardsModal from './MoreAICardsModal';
@@ -8,6 +9,12 @@ import { useChatContext } from '~/contexts';
 
 const deviceIsMobile = isMobile(navigator);
 
+AICardsPreview.propTypes = {
+  isAICardModalShown: PropTypes.bool.isRequired,
+  isOnModal: PropTypes.bool,
+  cardIds: PropTypes.array.isRequired,
+  onSetAICardModalCardId: PropTypes.func
+};
 export default function AICardsPreview({
   isAICardModalShown,
   isOnModal,
