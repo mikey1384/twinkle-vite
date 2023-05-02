@@ -5,27 +5,6 @@ import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 
-interface Props {
-  buttonStyle?: any;
-  color?: string;
-  className?: string;
-  isMenuShownWhenMounted?: boolean;
-  onDropdownShown?: (isShown: boolean) => void;
-  opacity?: number;
-  style?: any;
-  icon?: string;
-  iconSize?: string;
-  listStyle?: any;
-  menuProps?: any;
-  noBorderRadius?: boolean;
-  onButtonClick?: (arg: any) => void;
-  text?: any;
-  stretch?: boolean;
-  innerRef?: any;
-  transparent?: boolean;
-  xAdjustment?: number;
-  skeuomorphic?: boolean;
-}
 export default function DropdownButton({
   buttonStyle = {},
   className,
@@ -45,7 +24,27 @@ export default function DropdownButton({
   transparent,
   xAdjustment,
   ...props
-}: Props) {
+}: {
+  buttonStyle?: any;
+  color?: string;
+  className?: string;
+  isMenuShownWhenMounted?: boolean;
+  onDropdownShown?: (isShown: boolean) => void;
+  opacity?: number;
+  style?: any;
+  icon?: string;
+  iconSize?: string;
+  listStyle?: any;
+  menuProps?: any;
+  noBorderRadius?: boolean;
+  onButtonClick?: (arg: any) => void;
+  text?: any;
+  stretch?: boolean;
+  innerRef?: any;
+  transparent?: boolean;
+  xAdjustment?: number;
+  skeuomorphic?: boolean;
+}) {
   const [dropdownContext, setDropdownContext] = useState(null);
   const coolDownRef: React.MutableRefObject<any> = useRef(null);
   const ButtonRef: React.RefObject<any> = useRef(null);

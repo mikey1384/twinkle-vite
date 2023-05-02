@@ -1,5 +1,11 @@
-import React from 'react';
-import { memo, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Likers from '~/components/Likers';
 import UserListModal from '~/components/Modals/UserListModal';
@@ -36,7 +42,28 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 
-interface Props {
+function Comment({
+  comment,
+  innerRef,
+  isPreview,
+  parent,
+  rootContent = {},
+  subject,
+  theme,
+  comment: {
+    id: commentId,
+    likes = [],
+    recommendations = [],
+    rewards = [],
+    uploader,
+    numReplies,
+    filePath,
+    fileName,
+    fileSize,
+    isNotification,
+    thumbUrl: originalThumbUrl
+  }
+}: {
   comment: {
     commentId: number;
     content: string;
@@ -69,29 +96,7 @@ interface Props {
   };
   subject?: any;
   theme?: string;
-}
-function Comment({
-  comment,
-  innerRef,
-  isPreview,
-  parent,
-  rootContent = {},
-  subject,
-  theme,
-  comment: {
-    id: commentId,
-    likes = [],
-    recommendations = [],
-    rewards = [],
-    uploader,
-    numReplies,
-    filePath,
-    fileName,
-    fileSize,
-    isNotification,
-    thumbUrl: originalThumbUrl
-  }
-}: Props) {
+}) {
   subject = subject || comment.targetObj?.subject || {};
   const subjectUploaderId = useMemo(
     () => subject.uploader?.id || subject?.userId,

@@ -3,17 +3,6 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
-interface Props {
-  innerRef?: any;
-  dropdownFooter?: any;
-  indexToHighlight: number;
-  searchResults: any[];
-  onUpdate: () => void;
-  style?: any;
-  onItemClick: (item: any) => void;
-  renderItemLabel?: (item: any) => any;
-  renderItemUrl?: (item: any) => string;
-}
 export default function SearchDropdown({
   innerRef,
   dropdownFooter,
@@ -24,7 +13,17 @@ export default function SearchDropdown({
   onItemClick,
   renderItemLabel,
   renderItemUrl
-}: Props) {
+}: {
+  innerRef?: any;
+  dropdownFooter?: any;
+  indexToHighlight: number;
+  searchResults: any[];
+  onUpdate: () => void;
+  style?: any;
+  onItemClick: (item: any) => void;
+  renderItemLabel?: (item: any) => any;
+  renderItemUrl?: (item: any) => string;
+}) {
   useEffect(() => {
     onUpdate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,7 +62,7 @@ export default function SearchDropdown({
         `}
       >
         {searchResults.map((item, index) => {
-          let itemStyle =
+          const itemStyle =
             index === indexToHighlight
               ? { background: Color.highlightGray() }
               : {};

@@ -5,14 +5,6 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
-interface Props {
-  content: any;
-  style?: any;
-  loadingType: string;
-  onSetLoadingType: (loadingType: string) => void;
-  onSetLoadingProgress: (loadingProgress: number) => void;
-  onSetResponse: (response: any) => void;
-}
 export default function Menu({
   content,
   style,
@@ -20,7 +12,14 @@ export default function Menu({
   onSetLoadingType,
   onSetLoadingProgress,
   onSetResponse
-}: Props) {
+}: {
+  content: any;
+  style?: any;
+  loadingType: string;
+  onSetLoadingType: (loadingType: string) => void;
+  onSetLoadingProgress: (loadingProgress: number) => void;
+  onSetResponse: (response: any) => void;
+}) {
   const getZerosReview = useAppContext((v) => v.requestHelpers.getZerosReview);
   const [selectedStyle, setSelectedStyle] = useState('zero');
   const [wordLevel, setWordLevel] = useState('intermediate');

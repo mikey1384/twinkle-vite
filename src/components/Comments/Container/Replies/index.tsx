@@ -6,7 +6,19 @@ import { useTheme } from '~/helpers/hooks';
 import { scrollElementToCenter } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 
-interface Props {
+function Replies({
+  replies,
+  comment,
+  disableReason,
+  isSubjectPannelComment,
+  subject,
+  onPinReply,
+  parent,
+  pinnedCommentId,
+  rootContent,
+  ReplyRefs,
+  theme
+}: {
   comment: {
     id: number;
     loadMoreButton: boolean;
@@ -21,22 +33,7 @@ interface Props {
   ReplyRefs?: any;
   rootContent?: any;
   theme?: string;
-  userId?: number;
-}
-function Replies({
-  replies,
-  userId,
-  comment,
-  disableReason,
-  isSubjectPannelComment,
-  subject,
-  onPinReply,
-  parent,
-  pinnedCommentId,
-  rootContent,
-  ReplyRefs,
-  theme
-}: Props) {
+}) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     onDelete,
@@ -95,7 +92,7 @@ function Replies({
           onClick={handleLoadMoreReplies}
         />
       )}
-      {replies.map((reply, index) => {
+      {replies.map((reply) => {
         return reply.isLoadMoreButton ? (
           <LoadMoreButton
             key={reply.id}

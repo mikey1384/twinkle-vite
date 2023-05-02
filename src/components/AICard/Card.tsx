@@ -9,16 +9,6 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { cloudFrontURL, returnCardBurnXP } from '~/constants/defaultValues';
 import { animated } from 'react-spring';
 
-interface Props {
-  bind: () => any;
-  card: any;
-  cardStyle: any;
-  detailShown?: boolean;
-  innerRef: any;
-  isAnimated: boolean;
-  onMouseLeave: () => void;
-  onMouseMove: (event: any) => void;
-}
 export default function Card({
   bind,
   card,
@@ -28,7 +18,16 @@ export default function Card({
   isAnimated,
   onMouseLeave,
   onMouseMove
-}: Props) {
+}: {
+  bind: () => any;
+  card: any;
+  cardStyle: any;
+  detailShown?: boolean;
+  innerRef: any;
+  isAnimated: boolean;
+  onMouseLeave: () => void;
+  onMouseMove: (event: any) => void;
+}) {
   const {
     userLink: { color: userLinkColor },
     xpNumber: { color: xpNumberColor }

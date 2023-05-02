@@ -3,16 +3,6 @@ import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 
-interface Props {
-  isFlat?: boolean;
-  disabled?: boolean;
-  onClick?: (arg: any) => any;
-  children?: any;
-  fontSize?: string;
-  mobileFontSize?: string;
-  loading?: boolean;
-  style?: any;
-}
 export default function GradientButton({
   isFlat,
   disabled,
@@ -22,7 +12,16 @@ export default function GradientButton({
   mobileFontSize = '2rem',
   loading,
   style
-}: Props) {
+}: {
+  isFlat?: boolean;
+  disabled?: boolean;
+  onClick?: (arg: any) => any;
+  children?: any;
+  fontSize?: string;
+  mobileFontSize?: string;
+  loading?: boolean;
+  style?: any;
+}) {
   return (
     <button
       style={style}

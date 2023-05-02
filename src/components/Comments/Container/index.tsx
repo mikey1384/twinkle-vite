@@ -6,41 +6,6 @@ import Searched from './Searched';
 import { useContentState } from '~/helpers/hooks';
 import { useContentContext } from '~/contexts';
 
-interface Props {
-  autoExpand?: boolean;
-  autoFocus?: boolean;
-  banned?: any;
-  CommentInputAreaRef?: React.RefObject<any>;
-  CommentRefs?: any;
-  comments: any[];
-  commentsHidden?: boolean;
-  commentsShown?: boolean;
-  commentsLoadLimit?: number;
-  disableReason?: string;
-  inputAtBottom?: boolean;
-  inputAreaInnerRef?: React.RefObject<any>;
-  inputTypeLabel: string;
-  isLoading?: boolean;
-  isPreview?: boolean;
-  isSubjectPannelComments?: boolean;
-  loadMoreShown?: boolean;
-  loadMoreButtonColor: string;
-  noInput?: boolean;
-  numInputRows?: number;
-  numPreviews?: number;
-  onCommentSubmit: (comment: any) => void;
-  onLoadMoreComments: (v: any) => void;
-  onSetCommentSubmitted: (comment: any) => void;
-  parent: any;
-  previewComments?: any[];
-  showSecretButtonAvailable?: boolean;
-  subject?: any;
-  subjectId?: number;
-  theme?: any;
-  uploadComment: (comment: any) => void;
-  userId?: number;
-  rootContent?: any;
-}
 export default function Container({
   autoExpand,
   autoFocus,
@@ -73,9 +38,41 @@ export default function Container({
   subjectId,
   theme,
   uploadComment,
-  userId,
   rootContent
-}: Props) {
+}: {
+  autoExpand?: boolean;
+  autoFocus?: boolean;
+  banned?: any;
+  CommentInputAreaRef?: React.RefObject<any>;
+  CommentRefs?: any;
+  comments: any[];
+  commentsHidden?: boolean;
+  commentsShown?: boolean;
+  commentsLoadLimit?: number;
+  disableReason?: string;
+  inputAtBottom?: boolean;
+  inputAreaInnerRef?: React.RefObject<any>;
+  inputTypeLabel: string;
+  isLoading?: boolean;
+  isPreview?: boolean;
+  isSubjectPannelComments?: boolean;
+  loadMoreShown?: boolean;
+  loadMoreButtonColor: string;
+  noInput?: boolean;
+  numInputRows?: number;
+  numPreviews?: number;
+  onCommentSubmit: (comment: any) => void;
+  onLoadMoreComments: (v: any) => void;
+  onSetCommentSubmitted: (comment: any) => void;
+  parent: any;
+  previewComments?: any[];
+  showSecretButtonAvailable?: boolean;
+  subject?: any;
+  subjectId?: number;
+  theme?: any;
+  uploadComment: (comment: any) => void;
+  rootContent?: any;
+}) {
   const { searchedPoster } = useContentState({
     contentType: parent.contentType,
     contentId: parent.contentId
@@ -140,7 +137,6 @@ export default function Container({
           subjectId={subjectId}
           theme={theme}
           uploadComment={uploadComment}
-          userId={userId}
           rootContent={rootContent}
         />
       )}

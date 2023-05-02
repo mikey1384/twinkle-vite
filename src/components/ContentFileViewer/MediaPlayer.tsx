@@ -8,7 +8,19 @@ import { isMobile, returnImageFileFromUrl } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 
-interface Props {
+export default function MediaPlayer({
+  contentId,
+  contentType,
+  fileType,
+  isSecretAttachment,
+  isThumb,
+  onPause = () => null,
+  onPlay = () => null,
+  src,
+  thumbUrl,
+  thumbHeight = '7rem',
+  videoHeight
+}: {
   contentId?: number;
   contentType: string;
   fileType: string;
@@ -20,20 +32,7 @@ interface Props {
   thumbHeight?: string | number;
   thumbUrl?: string;
   videoHeight?: string | number;
-}
-export default function MediaPlayer({
-  contentId,
-  contentType,
-  fileType,
-  isSecretAttachment,
-  isThumb,
-  onPause = () => {},
-  onPlay = () => {},
-  src,
-  thumbUrl,
-  thumbHeight = '7rem',
-  videoHeight
-}: Props) {
+}) {
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const onSetThumbUrl = useContentContext((v) => v.actions.onSetThumbUrl);
   const onSetVideoCurrentTime = useContentContext(
@@ -42,7 +41,7 @@ export default function MediaPlayer({
   const {
     [isSecretAttachment ? 'secretAttachmentCurrentTime' : 'currentTime']:
       currentTime = 0
-  } = useContentState({ contentType, contentId });
+  } = useContentState({ contentType, contentId: contentId as number });
   const timeAtRef = useRef(0);
   const PlayerRef: React.RefObject<any> = useRef(null);
 

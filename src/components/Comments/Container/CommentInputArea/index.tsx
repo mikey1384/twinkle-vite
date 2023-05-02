@@ -9,23 +9,6 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import RewardLevelExpectation from './RewardLevelExpectation';
 
-interface Props {
-  autoFocus?: boolean;
-  disableReason?: string;
-  innerRef?: React.RefObject<any>;
-  inputTypeLabel: string;
-  InputFormRef?: React.RefObject<any>;
-  numInputRows?: number;
-  onSubmit: (v: any) => any;
-  onViewSecretAnswer?: (() => any) | null;
-  parent: any;
-  rootCommentId?: string;
-  subjectId?: number;
-  style?: React.CSSProperties;
-  subjectRewardLevel?: number;
-  targetCommentId?: number;
-  theme?: any;
-}
 export default function CommentInputArea({
   autoFocus,
   disableReason,
@@ -42,7 +25,23 @@ export default function CommentInputArea({
   subjectRewardLevel,
   targetCommentId,
   theme
-}: Props) {
+}: {
+  autoFocus?: boolean;
+  disableReason?: string;
+  innerRef?: React.RefObject<any>;
+  inputTypeLabel: string;
+  InputFormRef?: React.RefObject<any>;
+  numInputRows?: number;
+  onSubmit: (v: any) => any;
+  onViewSecretAnswer?: () => any;
+  parent: any;
+  rootCommentId?: string;
+  subjectId?: number;
+  style?: React.CSSProperties;
+  subjectRewardLevel?: number;
+  targetCommentId?: number;
+  theme?: any;
+}) {
   const [uploading, setUploading] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);
   const placeholderLabel = useMemo(() => {

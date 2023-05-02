@@ -7,16 +7,6 @@ const finishLabel = localize('finish');
 const nextLabel = localize('next');
 const prevLabel = localize('prev');
 
-interface Props {
-  currentSlide: number;
-  nextButtonDisabled?: boolean;
-  onPrev: () => void;
-  onNext: () => void;
-  onFinish?: () => void;
-  slideCount: number;
-  onCheckNavCondition?: (onNext: () => void) => void;
-  conditionPassStatus?: string;
-}
 export default function BottomNavButtons({
   currentSlide,
   nextButtonDisabled,
@@ -26,7 +16,16 @@ export default function BottomNavButtons({
   slideCount,
   onCheckNavCondition,
   conditionPassStatus
-}: Props) {
+}: {
+  currentSlide: number;
+  nextButtonDisabled?: boolean;
+  onPrev: () => void;
+  onNext: () => void;
+  onFinish?: () => void;
+  slideCount: number;
+  onCheckNavCondition?: (onNext: () => void) => void;
+  conditionPassStatus?: string;
+}) {
   return conditionPassStatus && conditionPassStatus === 'complete' ? null : (
     <div
       style={{
