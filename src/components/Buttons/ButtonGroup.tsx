@@ -1,7 +1,22 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
+ButtonGroup.propTypes = {
+  buttons: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      color: PropTypes.string.isRequired,
+      disabled: PropTypes.bool,
+      filled: PropTypes.bool,
+      hoverColor: PropTypes.string,
+      skeuomorphic: PropTypes.bool,
+      onClick: PropTypes.func.isRequired
+    })
+  ).isRequired,
+  style: PropTypes.object
+};
 export default function ButtonGroup({
   buttons,
   style
@@ -15,9 +30,7 @@ export default function ButtonGroup({
     skeuomorphic?: boolean;
     onClick: () => void;
   }[];
-  style?: {
-    [key: string]: any;
-  };
+  style?: React.CSSProperties;
 }) {
   return (
     <ErrorBoundary

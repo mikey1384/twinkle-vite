@@ -1,12 +1,17 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 
+CloseButton.propTypes = {
+  onClick: PropTypes.func.isRequired,
+  style: PropTypes.object
+};
 export default function CloseButton({
   onClick,
   style
 }: {
   onClick: () => void;
-  style?: any;
+  style?: React.CSSProperties;
 }) {
   return (
     <Icon
