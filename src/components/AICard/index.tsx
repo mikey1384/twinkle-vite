@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import Card from './Card';
 import { useGesture } from '@use-gesture/react';
 import { cardProps } from '~/constants/defaultValues';
 import { useSpring } from 'react-spring';
+import { Card as CardType } from '~/types';
 import $ from 'jquery';
 
 const $style = $('#animation');
@@ -13,6 +15,12 @@ const MAX_ROTATE_Y = 15;
 const ROTATE_X_FACTOR = -0.05;
 const ROTATE_Y_FACTOR = 0.1;
 
+AICard.propTypes = {
+  animateOnMouseLeave: PropTypes.bool,
+  card: PropTypes.object.isRequired,
+  detailShown: PropTypes.bool,
+  onClick: PropTypes.func
+};
 export default function AICard({
   animateOnMouseLeave,
   card,
@@ -20,7 +28,7 @@ export default function AICard({
   onClick
 }: {
   animateOnMouseLeave?: boolean;
-  card: any;
+  card: CardType;
   detailShown?: boolean;
   onClick?: () => void;
 }) {
@@ -39,22 +47,23 @@ export default function AICard({
   }));
   const bind = useGesture({
     onMove: ({ xy: [px, py] }) => {
-      const { left, top, width, height } =
-        CardRef.current?.getBoundingClientRect?.();
+      if (CardRef.current && CardRef.current.getBoundingClientRect) {
+        const { left, top, width, height } =
+          CardRef.current.getBoundingClientRect();
 
-      // Calculate the position of the center of the card.
-      const centerX = left + width / 2;
-      const centerY = top + height / 2;
+        // Calculate the position of the center of the card.
+        const centerX = left + width / 2;
+        const centerY = top + height / 2;
 
-      // Calculate the position of the mouse relative to the center of the card.
-      const relativeX = px - centerX;
-      const relativeY = py - centerY;
-
-      return api.start({
-        rotateX: calcX(relativeY),
-        rotateY: calcY(relativeX),
-        scale: 1.1
-      });
+        // Calculate the position of the mouse relative to the center of the card.
+        const relativeX = px - centerX;
+        const relativeY = py - centerY;
+        return api.start({
+          rotateX: calcX(relativeY),
+          rotateY: calcY(relativeX),
+          scale: 1.1
+        });
+      }
     },
     onHover: ({ hovering }) =>
       !hovering && api.start({ rotateX: 0, rotateY: 0, scale: 1 })
@@ -136,7 +145,7 @@ export default function AICard({
     const py = event.clientY - top;
     const percentageX = 50 - (px / width) * 100;
     const percentageY = 50 - (py / height) * 100;
-    let grad_pos = `background-position: ${50 + (percentageX - 50) / 3}% ${
+    const grad_pos = `background-position: ${50 + (percentageX - 50) / 3}% ${
       50 + (percentageY - 50) / 2
     }% !important;`;
     const sprk_pos = `background-position: ${50 + (percentageX - 50) / 15}% ${
