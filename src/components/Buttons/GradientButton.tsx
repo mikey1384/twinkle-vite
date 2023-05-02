@@ -1,8 +1,19 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 
+GradientButton.propTypes = {
+  isFlat: PropTypes.bool,
+  disabled: PropTypes.bool,
+  onClick: PropTypes.func.isRequired,
+  children: PropTypes.node,
+  fontSize: PropTypes.string,
+  mobileFontSize: PropTypes.string,
+  loading: PropTypes.bool,
+  style: PropTypes.object
+};
 export default function GradientButton({
   isFlat,
   disabled,
@@ -15,12 +26,12 @@ export default function GradientButton({
 }: {
   isFlat?: boolean;
   disabled?: boolean;
-  onClick?: (arg: any) => any;
-  children?: any;
+  onClick: () => any;
+  children?: React.ReactNode;
   fontSize?: string;
   mobileFontSize?: string;
   loading?: boolean;
-  style?: any;
+  style?: React.CSSProperties;
 }) {
   return (
     <button
