@@ -9,7 +9,18 @@ import { isMobile } from '~/helpers';
 const deviceIsMobile = isMobile(navigator);
 const outsideClickMethod = deviceIsMobile ? useOutsideTap : useOutsideClick;
 
-interface Props {
+export default function DropdownList({
+  xAdjustment = 0,
+  children,
+  className,
+  dropdownContext,
+  innerRef,
+  style = {},
+  onHideMenu = () => null,
+  onMouseEnter = () => null,
+  onMouseLeave = () => null,
+  zIndex = 100_000_000
+}: {
   xAdjustment?: number;
   children: React.ReactNode;
   className?: string;
@@ -25,19 +36,7 @@ interface Props {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   zIndex?: number;
-}
-export default function DropdownList({
-  xAdjustment = 0,
-  children,
-  className,
-  dropdownContext,
-  innerRef,
-  style = {},
-  onHideMenu = () => {},
-  onMouseEnter = () => {},
-  onMouseLeave = () => {},
-  zIndex = 100_000_000
-}: Props) {
+}) {
   const MenuRef = useRef(null);
   const { x, y, width, height } = dropdownContext;
   outsideClickMethod(MenuRef, onHideMenu);
