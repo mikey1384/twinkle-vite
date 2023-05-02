@@ -22,17 +22,6 @@ import localize from '~/constants/localize';
 
 const doesNotHaveBioLabel = localize('doesNotHaveBio');
 
-interface Props {
-  noLink?: boolean;
-  onSetBioEditModalShown?: (v: any) => any;
-  profile: any;
-  removeStatusMsg?: any;
-  style?: any;
-  unEditable?: boolean;
-  updateStatusMsg?: any;
-  userId?: number;
-  small?: boolean;
-}
 export default function UserDetails({
   noLink,
   profile,
@@ -43,7 +32,17 @@ export default function UserDetails({
   unEditable,
   updateStatusMsg,
   userId
-}: Props) {
+}: {
+  noLink?: boolean;
+  onSetBioEditModalShown?: (v: any) => any;
+  profile: any;
+  removeStatusMsg?: any;
+  style?: any;
+  unEditable?: boolean;
+  updateStatusMsg?: any;
+  userId?: number;
+  small?: boolean;
+}) {
   const auth = useAppContext((v) => v.requestHelpers.auth);
   const onReloadContent = useContentContext((v) => v.actions.onReloadContent);
   const editedStatusColor = useInputContext((v) => v.state.editedStatusColor);

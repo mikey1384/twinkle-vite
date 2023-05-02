@@ -37,18 +37,6 @@ const exploreLabel = localize('explore');
 const missionsLabel = localize('missions');
 const chatLabel = localize('chat');
 
-interface Props {
-  loggedIn: boolean;
-  numChatUnreads: number;
-  numNewNotis: number;
-  numNewPosts: number;
-  onMobileMenuOpen: () => void;
-  pathname: string;
-  search: string;
-  defaultSearchFilter: string;
-  onSetBalanceModalShown: () => void;
-  totalRewardAmount: number;
-}
 function MainNavs({
   loggedIn,
   numChatUnreads,
@@ -60,7 +48,18 @@ function MainNavs({
   defaultSearchFilter,
   totalRewardAmount,
   onSetBalanceModalShown
-}: Props) {
+}: {
+  loggedIn: boolean;
+  numChatUnreads: number;
+  numNewNotis: number;
+  numNewPosts: number;
+  onMobileMenuOpen: () => void;
+  pathname: string;
+  search: string;
+  defaultSearchFilter: string;
+  onSetBalanceModalShown: () => void;
+  totalRewardAmount: number;
+}) {
   const { twinkleCoins, userId, banned, lastChatPath } = useKeyContext(
     (v) => v.myState
   );

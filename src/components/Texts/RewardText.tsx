@@ -5,15 +5,15 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
-interface Props {
-  checked?: boolean;
-  xpReward?: number;
-  coinReward?: number;
-  isRepeating?: boolean;
-  labelClassName?: string;
-  rewardClassName?: string;
-  style?: React.CSSProperties;
-}
+RewardText.propTypes = {
+  checked: PropTypes.bool,
+  xpReward: PropTypes.number,
+  coinReward: PropTypes.number,
+  isRepeating: PropTypes.bool,
+  labelClassName: PropTypes.string,
+  rewardClassName: PropTypes.string,
+  style: PropTypes.object
+};
 export default function RewardText({
   checked,
   xpReward = 0,
@@ -22,7 +22,15 @@ export default function RewardText({
   labelClassName,
   rewardClassName,
   style
-}: Props) {
+}: {
+  checked?: boolean;
+  xpReward?: number;
+  coinReward?: number;
+  isRepeating?: boolean;
+  labelClassName?: string;
+  rewardClassName?: string;
+  style?: React.CSSProperties;
+}) {
   const displayedXpReward = useMemo(
     () => addCommasToNumber(xpReward),
     [xpReward]

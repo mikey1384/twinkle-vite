@@ -9,20 +9,6 @@ const noPlaylistsLabel = localize('noPlaylists');
 const searchPlaylistsLabel = localize('searchPlaylists');
 const allPlaylistsLabel = localize('allPlaylists');
 
-interface Props {
-  buttonGroupShown?: boolean;
-  buttonGroup: () => React.ReactNode;
-  innerRef?: React.RefObject<any>;
-  isSearching?: boolean;
-  loaded: boolean;
-  loadMoreButton?: boolean;
-  onSearch?: (query: string) => void;
-  playlists: any[];
-  searchQuery?: string;
-  style?: React.CSSProperties;
-  title?: string;
-  userId?: number;
-}
 export default function PlaylistsPanel({
   buttonGroupShown = true,
   buttonGroup,
@@ -36,7 +22,20 @@ export default function PlaylistsPanel({
   style,
   title = allPlaylistsLabel,
   userId
-}: Props) {
+}: {
+  buttonGroupShown?: boolean;
+  buttonGroup: () => React.ReactNode;
+  innerRef?: React.RefObject<any>;
+  isSearching?: boolean;
+  loaded: boolean;
+  loadMoreButton?: boolean;
+  onSearch?: (query: string) => void;
+  playlists: any[];
+  searchQuery?: string;
+  style?: React.CSSProperties;
+  title?: string;
+  userId?: number;
+}) {
   const loadPlaylists = useAppContext((v) => v.requestHelpers.loadPlaylists);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
   const onLoadMorePlaylists = useExploreContext(

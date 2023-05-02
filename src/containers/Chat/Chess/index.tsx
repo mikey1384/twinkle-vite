@@ -31,7 +31,34 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
 
-interface Props {
+export default function Chess({
+  countdownNumber,
+  channelId,
+  gameWinnerId,
+  interactable,
+  initialState,
+  isFromModal,
+  messageId,
+  lastChessMessageId,
+  loaded,
+  moveViewed,
+  newChessState,
+  onBoardClick,
+  onChessMove,
+  onAcceptRewind,
+  onCancelRewindRequest,
+  onDeclineRewind,
+  onDiscussClick,
+  onRewindClick = () => null,
+  onSpoilerClick,
+  opponentId = 0,
+  opponentName = '',
+  rewindRequestId,
+  senderId,
+  senderName,
+  spoilerOff,
+  style
+}: {
   channelId: number;
   rewindRequestMessageSenderId?: number;
   countdownNumber?: number;
@@ -60,35 +87,7 @@ interface Props {
   senderName?: string;
   spoilerOff?: boolean;
   style?: React.CSSProperties;
-}
-export default function Chess({
-  countdownNumber,
-  channelId,
-  gameWinnerId,
-  interactable,
-  initialState,
-  isFromModal,
-  messageId,
-  lastChessMessageId,
-  loaded,
-  moveViewed,
-  newChessState,
-  onBoardClick,
-  onChessMove,
-  onAcceptRewind,
-  onCancelRewindRequest,
-  onDeclineRewind,
-  onDiscussClick,
-  onRewindClick = () => {},
-  onSpoilerClick,
-  opponentId = 0,
-  opponentName = '',
-  rewindRequestId,
-  senderId,
-  senderName,
-  spoilerOff,
-  style
-}: Props) {
+}) {
   const { userId, banned } = useKeyContext((v) => v.myState);
   const creatingNewDMChannel = useChatContext(
     (v) => v.state.creatingNewDMChannel
@@ -555,7 +554,7 @@ export default function Chess({
         color: getOpponentPlayerColor(myColor),
         squares: actualSquares
       });
-      let kingPos = getPieceIndex({
+      const kingPos = getPieceIndex({
         color: myColor,
         squares: actualSquares,
         type: 'king'
@@ -584,7 +583,7 @@ export default function Chess({
         }
       }
 
-      for (let piece of playerPieces) {
+      for (const piece of playerPieces) {
         if (
           isPossibleAndLegal({
             src: piece.index,

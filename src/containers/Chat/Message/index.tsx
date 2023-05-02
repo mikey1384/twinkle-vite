@@ -48,39 +48,6 @@ const rewardLabel = localize('reward');
 const removeLabel = localize('remove');
 const editLabel = localize('edit');
 
-interface Props {
-  chessCountdownNumber: number;
-  partner: any;
-  channelId: number;
-  currentChannel: any;
-  displayedThemeColor: string;
-  forceRefreshForMobile: () => void;
-  isAICardModalShown: boolean;
-  message: any;
-  onDelete: (v: any) => void;
-  index: number;
-  isBanned: boolean;
-  isLastMsg: boolean;
-  isNotification: boolean;
-  isRestricted: boolean;
-  loading: boolean;
-  onAcceptGroupInvitation: (v: any) => void;
-  onChessBoardClick: () => void;
-  onChessSpoilerClick: (v: number) => void;
-  onCancelRewindRequest: () => void;
-  onAcceptRewind: (v: any) => void;
-  onDeclineRewind: () => void;
-  onReceiveNewMessage: () => void;
-  onReplyClick: () => void;
-  onRequestRewind: (v: any) => void;
-  onSetAICardModalCardId: (v: any) => void;
-  onSetChessTarget: (v: any) => void;
-  onSetTransactionModalShown: (v: boolean) => void;
-  onRewardMessageSubmit: (v: any) => void;
-  onScrollToBottom: () => void;
-  onShowSubjectMsgsModal: (v: any) => void;
-  zIndex?: number;
-}
 function Message({
   channelId,
   chessCountdownNumber,
@@ -150,7 +117,39 @@ function Message({
   onScrollToBottom,
   onShowSubjectMsgsModal,
   zIndex
-}: Props) {
+}: {
+  chessCountdownNumber: number;
+  partner: any;
+  channelId: number;
+  currentChannel: any;
+  displayedThemeColor: string;
+  forceRefreshForMobile: () => void;
+  isAICardModalShown: boolean;
+  message: any;
+  onDelete: (v: any) => void;
+  index: number;
+  isBanned: boolean;
+  isLastMsg: boolean;
+  isNotification: boolean;
+  isRestricted: boolean;
+  loading: boolean;
+  onAcceptGroupInvitation: (v: any) => void;
+  onChessBoardClick: () => void;
+  onChessSpoilerClick: (v: number) => void;
+  onCancelRewindRequest: () => void;
+  onAcceptRewind: (v: any) => void;
+  onDeclineRewind: () => void;
+  onReceiveNewMessage: () => void;
+  onReplyClick: () => void;
+  onRequestRewind: (v: any) => void;
+  onSetAICardModalCardId: (v: any) => void;
+  onSetChessTarget: (v: any) => void;
+  onSetTransactionModalShown: (v: boolean) => void;
+  onRewardMessageSubmit: (v: any) => void;
+  onScrollToBottom: () => void;
+  onShowSubjectMsgsModal: (v: any) => void;
+  zIndex?: number;
+}) {
   const {
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
@@ -257,7 +256,7 @@ function Message({
       ) || [],
     [channelId, filePath, filesBeingUploaded, subchannelId]
   );
-  let {
+  const {
     username,
     profilePicUrl,
     targetMessage,
@@ -266,13 +265,15 @@ function Message({
     tempMessageId,
     ...post
   } = message;
+  let appliedUsername = username;
+  let appliedProfilePicUrl = profilePicUrl;
   const [messageRewardModalShown, setMessageRewardModalShown] = useState(false);
   const [extractedUrl, setExtractedUrl] = useState(fetchURLFromText(content));
 
   if (fileToUpload && !userId) {
     userId = myId;
-    username = myUsername;
-    profilePicUrl = myProfilePicUrl;
+    appliedUsername = myUsername;
+    appliedProfilePicUrl = myProfilePicUrl;
   }
   useEffect(() => {
     if (isChessMsg && typeof messageId === 'number') {
@@ -686,7 +687,7 @@ function Message({
         myId={myId}
         messageId={message.id}
         userId={userId}
-        username={username}
+        username={appliedUsername}
         wordleResult={wordleResult}
         onReplyClick={onReplyClick}
         channelId={currentChannel.id}
@@ -732,7 +733,7 @@ function Message({
               <ProfilePic
                 style={{ width: '100%' }}
                 userId={userId}
-                profilePicUrl={profilePicUrl}
+                profilePicUrl={appliedProfilePicUrl}
               />
             </div>
             <div
@@ -761,7 +762,7 @@ function Message({
                   `}
                   user={{
                     id: userId,
-                    username
+                    username: appliedUsername
                   }}
                 />{' '}
                 <span className={MessageStyle.timeStamp}>
@@ -771,7 +772,7 @@ function Message({
               <div>
                 {invitePath ? (
                   <Invitation
-                    sender={{ id: userId, username }}
+                    sender={{ id: userId, username: appliedUsername }}
                     channelId={channelId}
                     invitationChannelId={invitationChannelId}
                     invitePath={invitePath}
@@ -782,7 +783,7 @@ function Message({
                   <DrawOffer
                     myId={myId}
                     userId={userId}
-                    username={username}
+                    username={appliedUsername}
                     onClick={onChessBoardClick}
                   />
                 ) : isChessMsg ? (
@@ -830,7 +831,7 @@ function Message({
                         messageId={messageId}
                         myId={myId}
                         userId={userId}
-                        username={username}
+                        username={appliedUsername}
                         gameState={currentChannel?.gameState?.chess || {}}
                         lastChessMessageId={currentChannel.lastChessMessageId}
                         onCancelRewindRequest={onCancelRewindRequest}
@@ -938,7 +939,7 @@ function Message({
             {messageRewardModalShown && (
               <MessageRewardModal
                 userToReward={{
-                  username,
+                  username: appliedUsername,
                   id: userId
                 }}
                 onSubmit={handleRewardMessageSubmit}

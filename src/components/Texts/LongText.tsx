@@ -14,21 +14,6 @@ import { css } from '@emotion/css';
 const readMoreLabel = localize('readMore');
 const lineHeight = 1.7;
 
-interface Props {
-  style?: any;
-  className?: string;
-  cleanString?: boolean;
-  children?: any;
-  contentId?: number;
-  contentType?: string;
-  isPreview?: boolean;
-  isStatusMsg?: boolean;
-  section?: string;
-  maxLines?: number;
-  readMoreHeightFixed?: boolean;
-  readMoreColor?: string;
-  theme?: string;
-}
 export default function LongText({
   style,
   className,
@@ -43,7 +28,21 @@ export default function LongText({
   readMoreHeightFixed,
   readMoreColor,
   theme
-}: Props) {
+}: {
+  style?: any;
+  className?: string;
+  cleanString?: boolean;
+  children?: any;
+  contentId?: number;
+  contentType?: string;
+  isPreview?: boolean;
+  isStatusMsg?: boolean;
+  section?: string;
+  maxLines?: number;
+  readMoreHeightFixed?: boolean;
+  readMoreColor?: string;
+  theme?: string;
+}) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     statusMsgLink: { color: statusMsgLinkColor },
@@ -55,7 +54,9 @@ export default function LongText({
   );
   const ContainerRef: React.RefObject<any> = useRef(null);
   const contentState =
-    contentType && section ? useContentState({ contentType, contentId }) : {};
+    contentType && section
+      ? useContentState({ contentType, contentId: contentId as number })
+      : {};
   const { fullTextState = {} } = contentState;
   const fullTextRef = useRef(fullTextState[section]);
   const [fullText, setFullText] = useState(

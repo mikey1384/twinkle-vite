@@ -7,19 +7,6 @@ import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 
-interface Props {
-  focusOnMount?: boolean;
-  isSelectAICardModalShown: boolean;
-  coinAmount: number;
-  onShowAICardSelector: () => any;
-  selectedCardIds: any[];
-  selectedOption: string;
-  onDeselect: (v: any) => any;
-  onSetCoinAmount: (v: any) => any;
-  onSetAICardModalCardId: (v: any) => any;
-  style?: React.CSSProperties;
-  ModalRef: React.RefObject<any>;
-}
 export default function MyOffer({
   focusOnMount,
   isSelectAICardModalShown,
@@ -32,7 +19,19 @@ export default function MyOffer({
   onSetAICardModalCardId,
   style,
   ModalRef
-}: Props) {
+}: {
+  focusOnMount?: boolean;
+  isSelectAICardModalShown: boolean;
+  coinAmount: number;
+  onShowAICardSelector: () => any;
+  selectedCardIds: any[];
+  selectedOption: string;
+  onDeselect: (v: any) => any;
+  onSetCoinAmount: (v: any) => any;
+  onSetAICardModalCardId: (v: any) => any;
+  style?: React.CSSProperties;
+  ModalRef: React.RefObject<any>;
+}) {
   const ContainerRef: React.RefObject<any> = useRef(null);
   useEffect(() => {
     if (focusOnMount) {

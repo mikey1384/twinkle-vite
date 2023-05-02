@@ -7,18 +7,6 @@ import { useChatContext } from '~/contexts';
 import ButtonsContainer from './ButtonsContainer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
-interface Props {
-  currentTransactionId: number;
-  isAICardModalShown: boolean;
-  onAcceptTrade: (v: any) => any;
-  onCounterPropose: (v: any) => any;
-  onSetAICardModalCardId: (v: any) => any;
-  onSetPendingTransaction: (v: any) => any;
-  myId: number;
-  partner: any;
-  transactionDetails: any;
-  channelId: number;
-}
 export default function TransactionHandler({
   currentTransactionId,
   isAICardModalShown,
@@ -30,7 +18,18 @@ export default function TransactionHandler({
   partner,
   transactionDetails,
   channelId
-}: Props) {
+}: {
+  currentTransactionId: number;
+  isAICardModalShown: boolean;
+  onAcceptTrade: (v: any) => any;
+  onCounterPropose: (v: any) => any;
+  onSetAICardModalCardId: (v: any) => any;
+  onSetPendingTransaction: (v: any) => any;
+  myId: number;
+  partner: any;
+  transactionDetails: any;
+  channelId: number;
+}) {
   const onUpdateCurrentTransactionId = useChatContext(
     (v) => v.actions.onUpdateCurrentTransactionId
   );

@@ -4,18 +4,6 @@ import Board from './Board';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
-interface Props {
-  interactable: boolean;
-  loading: boolean;
-  onClick: (v: number) => void;
-  squares: any[];
-  myColor: string;
-  onCastling: (v: string) => void;
-  spoilerOff: boolean;
-  opponentName: string;
-  onBoardClick?: () => void;
-  onSpoilerClick: () => void;
-}
 export default function Game({
   interactable,
   loading,
@@ -27,7 +15,18 @@ export default function Game({
   onSpoilerClick,
   opponentName,
   spoilerOff
-}: Props) {
+}: {
+  interactable: boolean;
+  loading: boolean;
+  onClick: (v: number) => void;
+  squares: any[];
+  myColor: string;
+  onCastling: (v: string) => void;
+  spoilerOff: boolean;
+  opponentName: string;
+  onBoardClick?: () => void;
+  onSpoilerClick: () => void;
+}) {
   return (
     <div
       className={css`

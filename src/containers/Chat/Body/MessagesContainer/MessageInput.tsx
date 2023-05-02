@@ -33,35 +33,8 @@ import LocalContext from '../../Context';
 import localize from '~/constants/localize';
 
 const enterMessageLabel = localize('enterMessage');
-
 const deviceIsMobile = isMobile(navigator);
 
-interface Props {
-  currentTransactionId: number;
-  selectedChannelId: number;
-  innerRef: any;
-  inputState: any;
-  isBanned: boolean;
-  isZeroChannel: boolean;
-  isRestrictedChannel: boolean;
-  isRespondingToSubject: boolean;
-  isTwoPeopleChannel: number | boolean;
-  loading: boolean;
-  onChessButtonClick: () => any;
-  onWordleButtonClick: () => any;
-  onHeightChange: (v: number) => any;
-  onMessageSubmit: (v: any) => any;
-  onSelectVideoButtonClick: () => any;
-  onSetTextAreaHeight: (v: number) => any;
-  onSetTransactionModalShown: (v: boolean) => any;
-  chessTarget: any;
-  replyTarget: any;
-  recipientId: number;
-  socketConnected: boolean;
-  subchannelId: number;
-  subjectId: number;
-  subjectObj: any;
-}
 export default function MessageInput({
   currentTransactionId,
   selectedChannelId = 0,
@@ -87,7 +60,32 @@ export default function MessageInput({
   subchannelId,
   subjectId,
   subjectObj
-}: Props) {
+}: {
+  currentTransactionId: number;
+  selectedChannelId: number;
+  innerRef: any;
+  inputState: any;
+  isBanned: boolean;
+  isZeroChannel: boolean;
+  isRestrictedChannel: boolean;
+  isRespondingToSubject: boolean;
+  isTwoPeopleChannel: number | boolean;
+  loading: boolean;
+  onChessButtonClick: () => any;
+  onWordleButtonClick: () => any;
+  onHeightChange: (v: number) => any;
+  onMessageSubmit: (v: any) => any;
+  onSelectVideoButtonClick: () => any;
+  onSetTextAreaHeight: (v: number) => any;
+  onSetTransactionModalShown: (v: boolean) => any;
+  chessTarget: any;
+  replyTarget: any;
+  recipientId: number;
+  socketConnected: boolean;
+  subchannelId: number;
+  subjectId: number;
+  subjectObj: any;
+}) {
   const textForThisChannel = useMemo(
     () =>
       inputState[

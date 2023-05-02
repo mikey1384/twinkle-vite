@@ -12,16 +12,6 @@ import moment from 'moment';
 const deviceIsMobile = isMobile(navigator);
 const replyLabel = localize('reply2');
 
-interface Props {
-  channelId: number;
-  messageId: number;
-  myId: number;
-  userId: number;
-  username: string;
-  onReplyClick: () => void;
-  timeStamp: number;
-  wordleResult: any;
-}
 export default function WordleResult({
   channelId,
   messageId,
@@ -31,7 +21,16 @@ export default function WordleResult({
   onReplyClick,
   wordleResult,
   timeStamp
-}: Props) {
+}: {
+  channelId: number;
+  messageId: number;
+  myId: number;
+  userId: number;
+  username: string;
+  onReplyClick: () => void;
+  timeStamp: number;
+  wordleResult: any;
+}) {
   const [dropdownShown, setDropdownShown] = useState(false);
   const {
     actions: { onSetReplyTarget }

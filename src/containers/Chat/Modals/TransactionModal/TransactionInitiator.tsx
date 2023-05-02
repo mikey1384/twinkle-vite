@@ -3,7 +3,20 @@ import MyWant from './MyWant';
 import MyOffer from './MyOffer';
 import Options from './Options';
 
-interface Props {
+export default function TransactionInitiator({
+  coinAmountObj,
+  isSelectAICardModalShown,
+  onSetCoinAmountObj,
+  onSetSelectedOption,
+  onSetAICardModalType,
+  onSetSelectedCardIdsObj,
+  onSetAICardModalCardId,
+  ModalRef,
+  partner,
+  selectedCardIdsObj,
+  selectedOption,
+  validSelectedWantCardIds
+}: {
   coinAmountObj: {
     want: number;
     offer: number;
@@ -19,21 +32,7 @@ interface Props {
   selectedCardIdsObj: any;
   selectedOption: string;
   validSelectedWantCardIds: any[];
-}
-export default function TransactionInitiator({
-  coinAmountObj,
-  isSelectAICardModalShown,
-  onSetCoinAmountObj,
-  onSetSelectedOption,
-  onSetAICardModalType,
-  onSetSelectedCardIdsObj,
-  onSetAICardModalCardId,
-  ModalRef,
-  partner,
-  selectedCardIdsObj,
-  selectedOption,
-  validSelectedWantCardIds
-}: Props) {
+}) {
   const offerMenuShown = useMemo(() => {
     if (selectedOption === 'offer' || selectedOption === 'send') {
       return true;
@@ -58,7 +57,7 @@ export default function TransactionInitiator({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: !!selectedOption ? 0 : '2rem'
+        paddingBottom: selectedOption ? 0 : '2rem'
       }}
     >
       <Options

@@ -42,23 +42,6 @@ const removeLabel = localize('remove');
 const secretMessageLabel = localize('secretMessage');
 const postedLabel = localize('posted');
 
-interface Props {
-  rootId: number;
-  rootType: string;
-  description: string;
-  title: string;
-  rewardLevel: number;
-  uploaderAuthLevel: number;
-  username: string;
-  userId: number;
-  timeStamp: number;
-  numComments: number;
-  loadMoreCommentsButton: boolean;
-  rootRewardLevel: number;
-  secretAnswer: string;
-  secretAttachment: any;
-  subjectId: number;
-}
 export default function SubjectPanel({
   rootId,
   rootType,
@@ -75,7 +58,23 @@ export default function SubjectPanel({
   secretAnswer,
   secretAttachment,
   subjectId
-}: Props) {
+}: {
+  rootId: number;
+  rootType: string;
+  description: string;
+  title: string;
+  rewardLevel: number;
+  uploaderAuthLevel: number;
+  username: string;
+  userId: number;
+  timeStamp: number;
+  numComments: number;
+  loadMoreCommentsButton: boolean;
+  rootRewardLevel: number;
+  secretAnswer: string;
+  secretAttachment: any;
+  subjectId: number;
+}) {
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);

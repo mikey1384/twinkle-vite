@@ -6,18 +6,6 @@ import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
 import { Color } from '~/constants/css';
 
-interface Props {
-  isGrading: boolean;
-  solveObj: any;
-  onGrade: () => void;
-  questions: any[];
-  onReadAgain: () => void;
-  questionsLoaded: boolean;
-  onRetryLoadingQuestions: () => void;
-  onSetUserChoiceObj: (userChoiceObj: any) => void;
-  questionsLoadError: boolean;
-  userChoiceObj: any;
-}
 export default function Questions({
   isGrading,
   solveObj,
@@ -29,7 +17,18 @@ export default function Questions({
   questionsLoadError,
   userChoiceObj,
   onSetUserChoiceObj
-}: Props) {
+}: {
+  isGrading: boolean;
+  solveObj: any;
+  onGrade: () => void;
+  questions: any[];
+  onReadAgain: () => void;
+  questionsLoaded: boolean;
+  onRetryLoadingQuestions: () => void;
+  onSetUserChoiceObj: (userChoiceObj: any) => void;
+  questionsLoadError: boolean;
+  userChoiceObj: any;
+}) {
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   useEffect(() => {

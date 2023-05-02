@@ -18,7 +18,19 @@ import Loading from '~/components/Loading';
 import { edit } from '~/constants/placeholders';
 import { css } from '@emotion/css';
 
-interface Props {
+export default function EditSubjectForm({
+  autoFocus,
+  channelId,
+  currentSubjectId,
+  displayedThemeColor,
+  onReloadChatSubject,
+  maxLength = 100,
+  searchResults,
+  onChange,
+  onClickOutSide,
+  userIsOwner,
+  ...props
+}: {
   autoFocus?: boolean;
   channelId: number;
   currentSubjectId: number;
@@ -32,20 +44,7 @@ interface Props {
   title: string;
   theme?: string;
   userIsOwner: boolean;
-}
-export default function EditSubjectForm({
-  autoFocus,
-  channelId,
-  currentSubjectId,
-  displayedThemeColor,
-  onReloadChatSubject,
-  maxLength = 100,
-  searchResults,
-  onChange,
-  onClickOutSide,
-  userIsOwner,
-  ...props
-}: Props) {
+}) {
   const {
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
@@ -205,7 +204,7 @@ export default function EditSubjectForm({
   }
 
   function onUpdate() {
-    let text = title ? `${title[0].toUpperCase()}${title.slice(1)}` : '';
+    const text = title ? `${title[0].toUpperCase()}${title.slice(1)}` : '';
     for (let i = 0; i < searchResults.length; i++) {
       if (text === searchResults[i].content) {
         setExactMatchExists(true);

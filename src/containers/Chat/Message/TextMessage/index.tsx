@@ -19,29 +19,6 @@ import LocalContext from '../../Context';
 
 const deviceIsMobile = isMobile(navigator);
 
-interface Props {
-  attachmentHidden: boolean;
-  channelId: number;
-  content: string;
-  displayedThemeColor: string;
-  extractedUrl: string;
-  isNotification: boolean;
-  isReloadedSubject: boolean;
-  isSubject: boolean;
-  forceRefreshForMobile: () => void;
-  messageId: number;
-  MessageStyle: any;
-  numMsgs: number;
-  isEditing: boolean;
-  onEditCancel: () => void;
-  onEditDone: (content: string) => void;
-  onShowSubjectMsgsModal: (v: any) => void;
-  socketConnected: boolean;
-  subchannelId: number;
-  subjectId: number;
-  thumbUrl: string;
-  userCanEditThis: boolean;
-}
 function TextMessage({
   attachmentHidden,
   channelId,
@@ -64,7 +41,29 @@ function TextMessage({
   subchannelId,
   thumbUrl,
   userCanEditThis
-}: Props) {
+}: {
+  attachmentHidden: boolean;
+  channelId: number;
+  content: string;
+  displayedThemeColor: string;
+  extractedUrl: string;
+  isNotification: boolean;
+  isReloadedSubject: boolean;
+  isSubject: boolean;
+  forceRefreshForMobile: () => void;
+  messageId: number;
+  MessageStyle: any;
+  numMsgs: number;
+  isEditing: boolean;
+  onEditCancel: () => void;
+  onEditDone: (content: string) => void;
+  onShowSubjectMsgsModal: (v: any) => void;
+  socketConnected: boolean;
+  subchannelId: number;
+  subjectId: number;
+  thumbUrl: string;
+  userCanEditThis: boolean;
+}) {
   const {
     requests: { hideChatAttachment },
     actions: { onHideAttachment }

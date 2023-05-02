@@ -26,21 +26,6 @@ const abortChessMatchLabel = localize('abortChessMatch');
 const resignChessMatchLabel = localize('resignChessMatch');
 const startNewGameLabel = localize('startNewGame');
 
-interface Props {
-  currentChannel: any;
-  channelId: number;
-  myId: number;
-  onConfirmChessMove: (arg0: any) => void;
-  onHide: () => void;
-  countdownNumber: number;
-  onCancelRewindRequest: () => void;
-  onAcceptRewind: (v: any) => void;
-  onDeclineRewind: () => void;
-  onSpoilerClick: (v: any) => void;
-  opponentId: number;
-  opponentName: string;
-  socketConnected: boolean;
-}
 export default function ChessModal({
   currentChannel,
   channelId,
@@ -55,7 +40,21 @@ export default function ChessModal({
   opponentId,
   opponentName,
   socketConnected
-}: Props) {
+}: {
+  currentChannel: any;
+  channelId: number;
+  myId: number;
+  onConfirmChessMove: (arg0: any) => void;
+  onHide: () => void;
+  countdownNumber: number;
+  onCancelRewindRequest: () => void;
+  onAcceptRewind: (v: any) => void;
+  onDeclineRewind: () => void;
+  onSpoilerClick: (v: any) => void;
+  opponentId: number;
+  opponentName: string;
+  socketConnected: boolean;
+}) {
   const [activeTab, setActiveTab] = useState('game');
   const [message, setMessage] = useState({});
   const { banned, userId, username, profilePicUrl } = useKeyContext(
@@ -76,8 +75,8 @@ export default function ChessModal({
     (v) => v.actions.onUpdateLastChessMoveViewerId
   );
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
-  const [initialState, setInitialState] = useState<Object | null>(null);
-  const [newChessState, setNewChessState] = useState<Object | null>(null);
+  const [initialState, setInitialState] = useState<object | null>(null);
+  const [newChessState, setNewChessState] = useState<object | null>(null);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [userMadeLastMove, setUserMadeLastMove] = useState(false);
   const [submitting, setSubmitting] = useState(false);

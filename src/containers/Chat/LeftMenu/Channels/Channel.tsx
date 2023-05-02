@@ -11,7 +11,23 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 
 const deletedLabel = localize('deleted');
 
-interface Props {
+function Channel({
+  customChannelNames,
+  currentPathId,
+  channel: {
+    id: channelId,
+    channelName,
+    messageIds = [],
+    messagesObj = {},
+    twoPeople,
+    members,
+    numUnreads,
+    pathId,
+    subchannelObj = {}
+  },
+  chatType,
+  selectedChannelId
+}: {
   customChannelNames: {
     [key: number]: string;
   };
@@ -34,24 +50,7 @@ interface Props {
   };
   chatType?: string;
   selectedChannelId?: number;
-}
-function Channel({
-  customChannelNames,
-  currentPathId,
-  channel: {
-    id: channelId,
-    channelName,
-    messageIds = [],
-    messagesObj = {},
-    twoPeople,
-    members,
-    numUnreads,
-    pathId,
-    subchannelObj = {}
-  },
-  chatType,
-  selectedChannelId
-}: Props) {
+}) {
   const {
     state: { lastSubchannelPaths }
   } = useContext(LocalContext);
@@ -95,7 +94,7 @@ function Channel({
     let mostRecentMessage = messagesObj?.[lastMessageId];
     if (Object.values(subchannelObj).length > 0) {
       let mostRecentSubchannelMessageId = 0;
-      for (let subchannel of Object.values(subchannelObj)) {
+      for (const subchannel of Object.values(subchannelObj)) {
         if (
           subchannel?.messageIds?.[0] &&
           Number(subchannel?.messageIds?.[0]) >
@@ -260,7 +259,7 @@ function Channel({
 
   const totalNumUnreads = useMemo(() => {
     let result = Number(numUnreads);
-    for (let subchannel of Object.values(subchannelObj)) {
+    for (const subchannel of Object.values(subchannelObj)) {
       result += Number(subchannel.numUnreads || 0);
     }
     return result;

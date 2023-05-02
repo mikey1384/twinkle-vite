@@ -4,24 +4,6 @@ import ContentLink from '~/components/ContentLink';
 import { Color } from '~/constants/css';
 import { truncateText } from '~/helpers/stringHelpers';
 
-interface Props {
-  actionColor: string;
-  contentId: number;
-  contentType: string;
-  infoColor: string;
-  isTask: boolean;
-  linkColor: string;
-  missionColor: string;
-  rewardColor: string;
-  rewardType: string;
-  rewardAmount: number;
-  rewarderId: number;
-  rewarderUsername: string;
-  rootId: number;
-  rootType: string;
-  rootMissionType: string;
-  targetObj: any;
-}
 export default function renderEnglishText({
   actionColor,
   contentId,
@@ -39,7 +21,24 @@ export default function renderEnglishText({
   rootType,
   rootMissionType,
   targetObj
-}: Props) {
+}: {
+  actionColor: string;
+  contentId: number;
+  contentType: string;
+  infoColor: string;
+  isTask: boolean;
+  linkColor: string;
+  missionColor: string;
+  rewardColor: string;
+  rewardType: string;
+  rewardAmount: number;
+  rewarderId: number;
+  rewarderUsername: string;
+  rootId: number;
+  rootType: string;
+  rootMissionType: string;
+  targetObj: any;
+}) {
   const missionLinkColor = Color[missionColor]();
   const contentLinkColor = Color[actionColor]();
 

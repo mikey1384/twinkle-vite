@@ -6,20 +6,6 @@ import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/io';
 import ProposeTradeButtons from './ProposeTradeButtons';
 
-interface Props {
-  onAcceptTrade: any;
-  channelId: number;
-  isFromMe: boolean;
-  isExpressionOfInterest: boolean;
-  myId: number;
-  onCounterPropose: (v: any) => any;
-  onSetPendingTransaction: (v: any) => any;
-  onSetCancelReason: (v: any) => any;
-  onUpdateCurrentTransactionId: (v: any) => any;
-  partner: any;
-  transactionId: number;
-  type: string;
-}
 export default function ButtonsContainer({
   channelId,
   isFromMe,
@@ -33,7 +19,20 @@ export default function ButtonsContainer({
   partner,
   transactionId,
   type
-}: Props) {
+}: {
+  onAcceptTrade: any;
+  channelId: number;
+  isFromMe: boolean;
+  isExpressionOfInterest: boolean;
+  myId: number;
+  onCounterPropose: (v: any) => any;
+  onSetPendingTransaction: (v: any) => any;
+  onSetCancelReason: (v: any) => any;
+  onUpdateCurrentTransactionId: (v: any) => any;
+  partner: any;
+  transactionId: number;
+  type: string;
+}) {
   const [withdrawing, setWithdrawing] = useState(false);
   const closeTransaction = useAppContext(
     (v) => v.requestHelpers.closeTransaction

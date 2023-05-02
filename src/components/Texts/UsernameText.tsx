@@ -13,7 +13,15 @@ const chatLabel = localize('chat2');
 const deletedLabel = localize('deleted');
 const profileLabel = localize('Profile');
 
-interface Props {
+export default function UsernameText({
+  className,
+  color,
+  onMenuShownChange,
+  style = {},
+  user = { id: 0 },
+  wordBreakEnabled,
+  displayedName
+}: {
   className?: string;
   color?: string;
   onMenuShownChange?: (v: boolean) => void;
@@ -28,16 +36,7 @@ interface Props {
   };
   wordBreakEnabled?: boolean;
   displayedName?: string;
-}
-export default function UsernameText({
-  className,
-  color,
-  onMenuShownChange,
-  style = {},
-  user = { id: 0 },
-  wordBreakEnabled,
-  displayedName
-}: Props) {
+}) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const location = useLocation();

@@ -6,32 +6,6 @@ import LocalContext from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext } from '~/contexts';
 
-interface Props {
-  className?: string;
-  subjects: any[];
-  loadMoreButton?: boolean;
-  style?: any;
-  contentId: number;
-  contentType: string;
-  uploadSubject: any;
-  onLoadMoreSubjects: any;
-  onLoadSubjectComments: any;
-  onSetRewardLevel: any;
-  onSubjectEditDone: any;
-  onSubjectDelete: any;
-  rootRewardLevel?: number;
-  commentActions: {
-    editRewardComment: any;
-    onDelete: any;
-    onEditDone: any;
-    onLikeClick: any;
-    onLoadMoreComments: any;
-    onLoadMoreReplies: any;
-    onLoadRepliesOfReply: any;
-    onUploadComment: any;
-    onUploadReply: any;
-  };
-}
 export default function Subjects({
   className,
   subjects,
@@ -57,7 +31,32 @@ export default function Subjects({
     onUploadComment,
     onUploadReply
   }
-}: Props) {
+}: {
+  className?: string;
+  subjects: any[];
+  loadMoreButton?: boolean;
+  style?: any;
+  contentId: number;
+  contentType: string;
+  uploadSubject: any;
+  onLoadMoreSubjects: any;
+  onLoadSubjectComments: any;
+  onSetRewardLevel: any;
+  onSubjectEditDone: any;
+  onSubjectDelete: any;
+  rootRewardLevel?: number;
+  commentActions: {
+    editRewardComment: any;
+    onDelete: any;
+    onEditDone: any;
+    onLikeClick: any;
+    onLoadMoreComments: any;
+    onLoadMoreReplies: any;
+    onLoadRepliesOfReply: any;
+    onUploadComment: any;
+    onUploadReply: any;
+  };
+}) {
   const loadSubjects = useAppContext((v) => v.requestHelpers.loadSubjects);
   const [loadingMore, setLoadingMore] = useState(false);
   return (

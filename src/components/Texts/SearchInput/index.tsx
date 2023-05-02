@@ -5,25 +5,6 @@ import Input from '../Input';
 import Icon from '~/components/Icon';
 import DropdownList from './DropdownList';
 
-interface Props {
-  onClickOutSide?: () => void;
-  searchResults?: any[];
-  addonColor?: string;
-  autoFocus?: boolean;
-  borderColor?: string;
-  className?: string;
-  innerRef?: RefObject<any>;
-  inputHeight?: string;
-  onChange: (text: string) => void;
-  placeholder?: string;
-  onClear?: () => void;
-  onFocus?: () => void;
-  onSelect?: (item: any) => void;
-  renderItemLabel?: (item: any) => any;
-  renderItemUrl?: (item: any) => string;
-  style?: any;
-  value?: string;
-}
 export default function SearchInput({
   onClickOutSide,
   searchResults = [],
@@ -42,7 +23,25 @@ export default function SearchInput({
   renderItemUrl,
   style,
   value = ''
-}: Props) {
+}: {
+  onClickOutSide: () => void;
+  searchResults?: any[];
+  addonColor?: string;
+  autoFocus?: boolean;
+  borderColor?: string;
+  className?: string;
+  innerRef?: RefObject<any>;
+  inputHeight?: string;
+  onChange: (text: string) => void;
+  placeholder?: string;
+  onClear?: () => void;
+  onFocus?: () => void;
+  onSelect?: (item: any) => void;
+  renderItemLabel?: (item: any) => any;
+  renderItemUrl?: (item: any) => string;
+  style?: any;
+  value?: string;
+}) {
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const SearchInputRef = useRef(null);
 
@@ -116,19 +115,19 @@ export default function SearchInput({
     if (searchResults.length > 0) {
       if (event.keyCode === 40) {
         event.preventDefault();
-        let highlightIndex = Math.min(++index, searchResults.length - 1);
+        const highlightIndex = Math.min(++index, searchResults.length - 1);
         setIndexToHighlight(highlightIndex);
       }
 
       if (event.keyCode === 38) {
         event.preventDefault();
-        let highlightIndex = Math.max(--index, 0);
+        const highlightIndex = Math.max(--index, 0);
         setIndexToHighlight(highlightIndex);
       }
 
       if (event.keyCode === 13) {
         event.preventDefault();
-        let item = searchResults[index];
+        const item = searchResults[index];
         onSelect?.(item);
       }
 

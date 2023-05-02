@@ -22,18 +22,6 @@ import {
 } from '~/helpers/stringHelpers';
 import LocalContext from '../../Context';
 
-interface Props {
-  initialCaption?: string;
-  isRespondingToSubject?: boolean;
-  channelId?: number;
-  fileObj?: any;
-  onHide: () => any;
-  onUpload: () => any;
-  recipientId?: number;
-  replyTarget?: any;
-  subjectId?: number;
-  subchannelId?: number;
-}
 function UploadModal({
   initialCaption = '',
   isRespondingToSubject,
@@ -45,7 +33,18 @@ function UploadModal({
   recipientId,
   subjectId,
   subchannelId
-}: Props) {
+}: {
+  initialCaption?: string;
+  isRespondingToSubject?: boolean;
+  channelId?: number;
+  fileObj?: any;
+  onHide: () => any;
+  onUpload: () => any;
+  recipientId?: number;
+  replyTarget?: any;
+  subjectId?: number;
+  subchannelId?: number;
+}) {
   const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }

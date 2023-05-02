@@ -15,28 +15,6 @@ import localize from '~/constants/localize';
 
 const editLabel = localize('edit');
 
-interface Props {
-  canEdit?: boolean;
-  title: React.ReactNode | string;
-  button?: React.ReactNode;
-  emptyMessage?: string;
-  innerRef?: React.RefObject<HTMLElement>;
-  inverted?: boolean;
-  isEmpty?: boolean;
-  isSearching?: boolean;
-  loaded?: boolean;
-  onLoadMore?: () => void;
-  children?: React.ReactNode;
-  loadMoreButtonShown?: boolean;
-  onEditTitle?: (v: string) => void;
-  onSearch?: (v: string) => void;
-  placeholder?: string;
-  searchPlaceholder?: string;
-  searchQuery?: string;
-  style?: React.CSSProperties;
-  customColorTheme?: string;
-  innerStyle?: React.CSSProperties;
-}
 export default function SectionPanel({
   button,
   canEdit,
@@ -58,7 +36,28 @@ export default function SectionPanel({
   style,
   innerStyle = {},
   title
-}: Props) {
+}: {
+  canEdit?: boolean;
+  title: React.ReactNode | string;
+  button?: React.ReactNode;
+  emptyMessage?: string;
+  innerRef?: React.RefObject<HTMLElement>;
+  inverted?: boolean;
+  isEmpty?: boolean;
+  isSearching?: boolean;
+  loaded?: boolean;
+  onLoadMore?: () => void;
+  children?: React.ReactNode;
+  loadMoreButtonShown?: boolean;
+  onEditTitle?: (v: string) => void;
+  onSearch?: (v: string) => void;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  searchQuery?: string;
+  style?: React.CSSProperties;
+  customColorTheme?: string;
+  innerStyle?: React.CSSProperties;
+}) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const [savingEdit, setSavingEdit] = useState(false);
   const [loading, setLoading] = useState(false);

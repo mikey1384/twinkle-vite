@@ -5,22 +5,6 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-interface Props {
-  aiCardModalType: string;
-  cards: any[];
-  loading: boolean;
-  loadFilteredAICards: (v: any) => any;
-  myUsername: string;
-  partnerName: string;
-  selectedCardIds: any[];
-  successColor: string;
-  loadMoreShown: boolean;
-  onSetCardIds: (v: any) => any;
-  onSetLoadMoreShown: (v: any) => any;
-  onSetSelectedCardIds: (v: any) => any;
-  onSetAICardModalCardId: (v: any) => any;
-  onUpdateAICard: (v: any) => any;
-}
 export default function Main({
   aiCardModalType,
   cards,
@@ -36,7 +20,22 @@ export default function Main({
   onSetSelectedCardIds,
   onSetAICardModalCardId,
   onUpdateAICard
-}: Props) {
+}: {
+  aiCardModalType: string;
+  cards: any[];
+  loading: boolean;
+  loadFilteredAICards: (v: any) => any;
+  myUsername: string;
+  partnerName: string;
+  selectedCardIds: any[];
+  successColor: string;
+  loadMoreShown: boolean;
+  onSetCardIds: (v: any) => any;
+  onSetLoadMoreShown: (v: any) => any;
+  onSetSelectedCardIds: (v: any) => any;
+  onSetAICardModalCardId: (v: any) => any;
+  onUpdateAICard: (v: any) => any;
+}) {
   const [loadingMore, setLoadingMore] = useState(false);
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
@@ -109,7 +108,7 @@ export default function Main({
         owner: aiCardModalType === 'want' ? partnerName : myUsername
       }
     });
-    for (let card of newCards) {
+    for (const card of newCards) {
       onUpdateAICard({ cardId: card.id, newState: card });
     }
     onSetCardIds((prevCardIds: number[]) => [
