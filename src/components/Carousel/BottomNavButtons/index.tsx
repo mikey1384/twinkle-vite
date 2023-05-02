@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import ConditionalButton from './ConditionalButton';
 import localize from '~/constants/localize';
@@ -7,6 +8,16 @@ const finishLabel = localize('finish');
 const nextLabel = localize('next');
 const prevLabel = localize('prev');
 
+BottomNavButtons.propTypes = {
+  currentSlide: PropTypes.number.isRequired,
+  nextButtonDisabled: PropTypes.bool,
+  onPrev: PropTypes.func.isRequired,
+  onNext: PropTypes.func.isRequired,
+  onFinish: PropTypes.func,
+  slideCount: PropTypes.number.isRequired,
+  onCheckNavCondition: PropTypes.func,
+  conditionPassStatus: PropTypes.string
+};
 export default function BottomNavButtons({
   currentSlide,
   nextButtonDisabled,

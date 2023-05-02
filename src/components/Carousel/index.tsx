@@ -1,4 +1,5 @@
 import React, { Children, useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import NavButton from './NavButton';
 import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
@@ -14,6 +15,28 @@ import localize from '~/constants/localize';
 
 const showAllLabel = localize('showAll');
 
+Carousel.propTypes = {
+  allowDrag: PropTypes.bool,
+  afterSlide: PropTypes.func,
+  beforeSlide: PropTypes.func,
+  className: PropTypes.string,
+  cellSpacing: PropTypes.number,
+  children: PropTypes.node.isRequired,
+  conditionPassStatus: PropTypes.string,
+  framePadding: PropTypes.string,
+  nextButtonDisabled: PropTypes.bool,
+  onCheckNavCondition: PropTypes.func,
+  onFinish: PropTypes.func,
+  onShowAll: PropTypes.func,
+  progressBar: PropTypes.bool,
+  slideIndex: PropTypes.number,
+  slidesToScroll: PropTypes.number,
+  slidesToShow: PropTypes.number,
+  slideWidthMultiplier: PropTypes.number,
+  showAllButton: PropTypes.bool,
+  style: PropTypes.object,
+  title: PropTypes.string
+};
 export default function Carousel({
   allowDrag = true,
   afterSlide = () => null,
@@ -41,7 +64,7 @@ export default function Carousel({
   beforeSlide?: (v: number) => void;
   className?: string;
   cellSpacing?: number;
-  children: any;
+  children: React.ReactNode;
   conditionPassStatus?: string;
   framePadding?: string;
   nextButtonDisabled?: boolean;
