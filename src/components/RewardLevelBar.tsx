@@ -9,14 +9,19 @@ import localize from '~/constants/localize';
 
 const rewardLevelLabel = localize('rewardLevel');
 
+RewardLevelBar.propTypes = {
+  className: PropTypes.string,
+  rewardLevel: PropTypes.number.isRequired,
+  style: PropTypes.object
+};
 export default function RewardLevelBar({
   className,
   rewardLevel,
   style
 }: {
-  className: string;
+  className?: string;
   rewardLevel: number;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   const theme = useKeyContext((v) => v.theme);
   const stars = useMemo(() => {

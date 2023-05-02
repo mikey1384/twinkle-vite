@@ -17,18 +17,6 @@ import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import localize from '~/constants/localize';
 
-interface Props {
-  alwaysShow?: boolean;
-  autoExpand?: boolean;
-  className?: string;
-  commentsLoadLimit?: number;
-  contentId: number;
-  contentType: string;
-  numPreviewComments?: number;
-  style?: React.CSSProperties;
-  theme?: string;
-  zIndex?: number;
-}
 export default function ContentPanel({
   alwaysShow,
   autoExpand,
@@ -40,7 +28,18 @@ export default function ContentPanel({
   style = {},
   theme = 'logoBlue',
   zIndex = 1
-}: Props) {
+}: {
+  alwaysShow?: boolean;
+  autoExpand?: boolean;
+  className?: string;
+  commentsLoadLimit?: number;
+  contentId: number;
+  contentType: string;
+  numPreviewComments?: number;
+  style?: React.CSSProperties;
+  theme?: string;
+  zIndex?: number;
+}) {
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });

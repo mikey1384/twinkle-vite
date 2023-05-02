@@ -24,19 +24,6 @@ import localize from '~/constants/localize';
 const cancelLabel = localize('cancel');
 const doneLabel = localize('done');
 
-interface Props {
-  comment: string;
-  content: string;
-  contentId: number;
-  contentType: string;
-  description: string;
-  filePath: string;
-  onDismiss: () => void;
-  onEditContent: (args: any) => void;
-  secretAnswer: string;
-  style?: React.CSSProperties;
-  title: string;
-}
 function ContentEditor({
   comment,
   content,
@@ -49,7 +36,19 @@ function ContentEditor({
   secretAnswer = '',
   style,
   title
-}: Props) {
+}: {
+  comment: string;
+  content: string;
+  contentId: number;
+  contentType: string;
+  description: string;
+  filePath: string;
+  onDismiss: () => void;
+  onEditContent: (args: any) => void;
+  secretAnswer: string;
+  style?: React.CSSProperties;
+  title: string;
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const { banned } = useKeyContext((v) => v.myState);
   const {

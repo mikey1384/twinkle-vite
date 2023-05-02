@@ -26,36 +26,6 @@ const replyLabel = localize('reply');
 const respondLabel = localize('respond');
 const deviceIsMobile = isMobile(navigator);
 
-interface Props {
-  authLevel: number;
-  autoExpand: boolean;
-  canDelete: boolean;
-  canEdit: boolean;
-  canReward: boolean;
-  commentsShown: boolean;
-  CommentInputAreaRef: any;
-  contentObj: any;
-  finalRewardLevel: number;
-  isEditing: boolean;
-  isRecommendedByUser: boolean;
-  onByUserStatusChange: (state: object) => void;
-  onExpandComments: () => void;
-  onSetCloseConfirmModalShown: (status: boolean) => void;
-  onSetDeleteConfirmModalShown: (status: boolean) => void;
-  onSetIsEditing: (state: object) => void;
-  onSetRecommendationInterfaceShown: (status: boolean) => void;
-  onSetRewardLevel: (level: number) => void;
-  onSetUserListModalShown: (arg: boolean) => void;
-  onSetXpRewardInterfaceShown: (state: object) => void;
-  recommendationInterfaceShown: boolean;
-  rewardColor: string;
-  secretHidden: boolean;
-  subjectUploaderId: number;
-  theme: string;
-  userCanRewardThis: boolean;
-  userId: number;
-  xpRewardInterfaceShown: boolean;
-}
 export default function BottomInterface({
   authLevel,
   autoExpand,
@@ -85,7 +55,36 @@ export default function BottomInterface({
   userCanRewardThis,
   userId,
   xpRewardInterfaceShown
-}: Props) {
+}: {
+  authLevel: number;
+  autoExpand: boolean;
+  canDelete: boolean;
+  canEdit: boolean;
+  canReward: boolean;
+  commentsShown: boolean;
+  CommentInputAreaRef: any;
+  contentObj: any;
+  finalRewardLevel: number;
+  isEditing: boolean;
+  isRecommendedByUser: boolean;
+  onByUserStatusChange: (state: object) => void;
+  onExpandComments: () => void;
+  onSetCloseConfirmModalShown: (status: boolean) => void;
+  onSetDeleteConfirmModalShown: (status: boolean) => void;
+  onSetIsEditing: (state: object) => void;
+  onSetRecommendationInterfaceShown: (status: boolean) => void;
+  onSetRewardLevel: (level: number) => void;
+  onSetUserListModalShown: (arg: boolean) => void;
+  onSetXpRewardInterfaceShown: (state: object) => void;
+  recommendationInterfaceShown: boolean;
+  rewardColor: string;
+  secretHidden: boolean;
+  subjectUploaderId: number;
+  theme: string;
+  userCanRewardThis: boolean;
+  userId: number;
+  xpRewardInterfaceShown: boolean;
+}) {
   const {
     contentId,
     contentType,

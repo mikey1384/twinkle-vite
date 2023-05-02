@@ -946,7 +946,6 @@ function Comment({
                       isSubjectPannelComment={isSubjectPannelComment}
                       pinnedCommentId={pinnedCommentId}
                       subject={subject || {}}
-                      userId={userId}
                       replies={replies}
                       comment={comment}
                       parent={parent}

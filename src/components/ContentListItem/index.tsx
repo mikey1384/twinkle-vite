@@ -12,7 +12,18 @@ import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
 
-interface Props {
+function ContentListItem({
+  onClick = () => null,
+  contentObj,
+  contentObj: { id: contentId, contentType, notFound },
+  expandable,
+  modalOverModal,
+  onContentIsDeleted,
+  selectable,
+  selected,
+  style,
+  innerStyle
+}: {
   onClick?: () => void;
   contentObj: {
     id: number;
@@ -26,19 +37,7 @@ interface Props {
   selected?: boolean;
   style?: any;
   innerStyle?: any;
-}
-function ContentListItem({
-  onClick = () => {},
-  contentObj,
-  contentObj: { id: contentId, contentType, notFound },
-  expandable,
-  modalOverModal,
-  onContentIsDeleted,
-  selectable,
-  selected,
-  style,
-  innerStyle
-}: Props) {
+}) {
   const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
   const {
@@ -123,7 +122,7 @@ function ContentListItem({
       <div
         onClick={
           expandable || selectable
-            ? () => {}
+            ? () => null
             : () =>
                 navigate(
                   `/${
@@ -221,7 +220,7 @@ function ContentListItem({
               }
             `}
             style={{
-              paddingBottom: !!rewardLevel ? '1rem' : ''
+              paddingBottom: rewardLevel ? '1rem' : ''
             }}
           >
             <RewardLevelBar
