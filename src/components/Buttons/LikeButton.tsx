@@ -17,7 +17,7 @@ function LikeButton({
   likes,
   style,
   theme,
-  onClick = () => {}
+  onClick = () => null
 }: {
   className?: string;
   contentId: number;
