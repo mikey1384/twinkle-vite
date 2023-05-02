@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState
 } from 'react';
+import PropTypes from 'prop-types';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Likers from '~/components/Likers';
 import UserListModal from '~/components/Modals/UserListModal';
@@ -41,7 +42,17 @@ import {
 } from '~/helpers/stringHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
+import { Content, Comment as CommentType } from '~/types';
 
+Comment.propTypes = {
+  comment: PropTypes.object.isRequired,
+  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
+  isPreview: PropTypes.bool,
+  parent: PropTypes.object.isRequired,
+  rootContent: PropTypes.object,
+  subject: PropTypes.object,
+  theme: PropTypes.string
+};
 function Comment({
   comment,
   innerRef,
@@ -64,32 +75,10 @@ function Comment({
     thumbUrl: originalThumbUrl
   }
 }: {
-  comment: {
-    commentId: number;
-    content: string;
-    id: number;
-    likes: any[];
-    numReplies: number;
-    profilePicUrl: string;
-    recommendationInterfaceShown: boolean;
-    recommendations: any[];
-    replies: any[];
-    replyId: number;
-    rewards: any[];
-    targetObj: any;
-    targetUserName: string;
-    targetUserId: number;
-    timeStamp: number | string;
-    uploader: any;
-    filePath: string;
-    fileName: string;
-    fileSize: number | string;
-    thumbUrl: string;
-    isNotification: number | boolean;
-  };
-  innerRef?: (ref: any) => void;
+  comment: CommentType;
+  innerRef?: React.RefObject<any>;
   isPreview?: boolean;
-  parent?: any;
+  parent: Content;
   rootContent?: {
     contentType?: string;
     rewardLevel?: number;
@@ -239,7 +228,7 @@ function Comment({
     [parent.contentType, parent.uploader?.id, userId]
   );
   const userIsHigherAuth = useMemo(
-    () => authLevel > uploader.authLevel,
+    () => authLevel > (uploader.authLevel || 0),
     [authLevel, uploader.authLevel]
   );
   const dropdownButtonShown = useMemo(() => {
@@ -406,7 +395,7 @@ function Comment({
               <ProfilePic
                 style={{ width: '100%' }}
                 userId={uploader?.id}
-                profilePicUrl={uploader?.profilePicUrl}
+                profilePicUrl={uploader?.profilePicUrl || ''}
               />
             </div>
           </div>
@@ -415,7 +404,6 @@ function Comment({
               <DropdownButton
                 skeuomorphic
                 icon="chevron-down"
-                color="darkerGray"
                 opacity={0.8}
                 menuProps={dropdownMenuItems}
               />
@@ -634,7 +622,7 @@ function Comment({
                     !isRecommendedByUser && twinkleCoins > 0
                   )
                 }
-                uploaderAuthLevel={uploader.authLevel}
+                uploaderAuthLevel={uploader.authLevel || 0}
                 uploaderId={uploader.id}
               />
             )}

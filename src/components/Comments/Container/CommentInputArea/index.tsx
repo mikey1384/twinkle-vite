@@ -1,4 +1,5 @@
 import React, { useContext, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import InputForm from '~/components/Forms/InputForm';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import LocalContext from '../../Context';
@@ -9,6 +10,23 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import RewardLevelExpectation from './RewardLevelExpectation';
 
+CommentInputArea.propTypes = {
+  autoFocus: PropTypes.bool,
+  disableReason: PropTypes.string,
+  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
+  inputTypeLabel: PropTypes.string.isRequired,
+  InputFormRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
+  numInputRows: PropTypes.number,
+  onSubmit: PropTypes.func.isRequired,
+  onViewSecretAnswer: PropTypes.func,
+  parent: PropTypes.object.isRequired,
+  rootCommentId: PropTypes.string,
+  subjectId: PropTypes.number,
+  style: PropTypes.object,
+  subjectRewardLevel: PropTypes.number,
+  targetCommentId: PropTypes.number,
+  theme: PropTypes.string
+};
 export default function CommentInputArea({
   autoFocus,
   disableReason,
@@ -40,7 +58,7 @@ export default function CommentInputArea({
   style?: React.CSSProperties;
   subjectRewardLevel?: number;
   targetCommentId?: number;
-  theme?: any;
+  theme?: string;
 }) {
   const [uploading, setUploading] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);

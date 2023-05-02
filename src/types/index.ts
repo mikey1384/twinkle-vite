@@ -20,19 +20,31 @@ export interface Card {
 export interface Comment {
   commentId: number;
   content: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
   id: number;
   isExpanded: boolean;
-  likes: object[];
+  isNotification: boolean;
+  likes: any[];
   loadMoreButton: boolean;
-  recommendations: object[];
+  numReplies: number;
+  parent: Content | User;
+  recommendations: Recommendation[];
   rewards: Reward[];
   replyId: number;
   replies: Comment[];
+  targetObj: any;
+  targetUserId: number;
+  targetUserName: string;
+  thumbUrl: string;
+  timeStamp: number;
+  uploader: User;
 }
 
 export interface Content {
   contentId?: number;
-  contentType?: string;
+  contentType: string;
   deleterId?: number;
   description?: string;
   id?: number;
@@ -70,6 +82,11 @@ export interface Playlist {
   playlist: PlaylistVideo[];
 }
 
+export interface Recommendation {
+  id: number;
+  userId: number;
+}
+
 export interface RequestHelpers {
   auth: () => any;
   handleError: (error: unknown) => void;
@@ -78,6 +95,7 @@ export interface RequestHelpers {
 
 export interface Reward {
   id: number;
+  rewarderId: number;
   rewardComment: string;
 }
 
@@ -89,7 +107,37 @@ export interface Subject {
 }
 
 export interface User {
+  authLevel?: number;
+  banned?: {
+    posting?: boolean;
+  };
+  canChangeUsername?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+  canEditPlaylists?: boolean;
+  canPinPlaylists?: boolean;
+  canEditRewardLevel?: boolean;
+  canGenerateAICard?: boolean;
+  canReward?: boolean;
+  chatType?: string;
+  collectType?: string;
+  fileUploadLvl?: number;
   id: number;
-  userType: string;
-  username: string;
+  isOnline?: boolean;
+  joinDate?: number;
+  karmaPoints?: number;
+  lastChannelId?: number;
+  managementLevel?: number;
+  numPics?: number;
+  numWordsCollected?: number;
+  otpHash?: string;
+  pictures?: any[];
+  profilePicUrl?: string;
+  rewardBoostLvl?: number;
+  state?: any;
+  twinkleCoins?: number;
+  twinkleXP?: number;
+  username?: string;
+  value?: number;
+  [key: string]: any;
 }
