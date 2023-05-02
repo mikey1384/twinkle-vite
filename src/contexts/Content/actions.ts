@@ -1,4 +1,4 @@
-import { Dispatch } from '../types';
+import { Dispatch } from '~/types';
 
 export default function ContentActions(dispatch: Dispatch) {
   return {

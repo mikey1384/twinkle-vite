@@ -1,4 +1,4 @@
-import { RequestHelpers } from '../types';
+import { RequestHelpers } from '~/types';
 import request from 'axios';
 import URL from '~/constants/URL';
 

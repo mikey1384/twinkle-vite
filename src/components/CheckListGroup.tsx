@@ -3,18 +3,17 @@ import { css } from '@emotion/css';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 
-interface Props {
-  listItems: any;
-  inputType?: string;
-  onSelect: any;
-  style?: React.CSSProperties;
-}
 export default function CheckListGroup({
   listItems,
   inputType = 'checkbox',
   onSelect,
   style = {}
-}: Props) {
+}: {
+  listItems: any;
+  inputType?: string;
+  onSelect: any;
+  style?: React.CSSProperties;
+}) {
   return (
     <div
       className={css`

@@ -5,6 +5,26 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
+Button.propTypes = {
+  className: PropTypes.string,
+  color: PropTypes.string,
+  disabled: PropTypes.bool,
+  loading: PropTypes.bool,
+  onClick: PropTypes.func.isRequired,
+  onHover: PropTypes.bool,
+  children: PropTypes.node.isRequired,
+  hoverColor: PropTypes.string,
+  filled: PropTypes.bool,
+  opacity: PropTypes.number,
+  stretch: PropTypes.bool,
+  onMouseEnter: PropTypes.func,
+  onMouseLeave: PropTypes.func,
+  skeuomorphic: PropTypes.bool,
+  style: PropTypes.object,
+  transparent: PropTypes.bool,
+  mobilePadding: PropTypes.string,
+  mobileBorderRadius: PropTypes.string
+};
 function Button({
   className,
   color = 'black',
@@ -24,7 +44,26 @@ function Button({
   transparent,
   mobilePadding,
   mobileBorderRadius
-}: Props) {
+}: {
+  className?: string;
+  color?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  onClick?: (arg: any) => any;
+  onHover?: boolean;
+  children?: ReactNode;
+  hoverColor?: string;
+  filled?: boolean;
+  opacity?: number;
+  stretch?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  skeuomorphic?: boolean;
+  style?: CSSProperties;
+  transparent?: boolean;
+  mobilePadding?: string;
+  mobileBorderRadius?: string;
+}) {
   const isDisabled = useMemo(() => disabled || loading, [disabled, loading]);
   const ButtonStyle = useMemo(() => {
     const colorKey = (onHover ? hoverColor : color) || 'black';
@@ -163,44 +202,3 @@ function Button({
 }
 
 export default memo(Button);
-
-Button.propTypes = {
-  className: PropTypes.string,
-  color: PropTypes.string,
-  disabled: PropTypes.bool,
-  loading: PropTypes.bool,
-  onClick: PropTypes.func,
-  onHover: PropTypes.bool,
-  children: PropTypes.node,
-  hoverColor: PropTypes.string,
-  filled: PropTypes.bool,
-  opacity: PropTypes.number,
-  stretch: PropTypes.bool,
-  onMouseEnter: PropTypes.func,
-  onMouseLeave: PropTypes.func,
-  skeuomorphic: PropTypes.bool,
-  style: PropTypes.object,
-  transparent: PropTypes.bool,
-  mobilePadding: PropTypes.string,
-  mobileBorderRadius: PropTypes.string
-};
-interface Props {
-  className?: string;
-  color?: string;
-  disabled?: boolean;
-  loading?: boolean;
-  onClick?: (arg: any) => any;
-  onHover?: boolean;
-  children?: ReactNode;
-  hoverColor?: string;
-  filled?: boolean;
-  opacity?: number;
-  stretch?: boolean;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
-  skeuomorphic?: boolean;
-  style?: CSSProperties;
-  transparent?: boolean;
-  mobilePadding?: string;
-  mobileBorderRadius?: string;
-}

@@ -1,4 +1,4 @@
-import { Dispatch } from '../types';
+import { Dispatch } from '~/types';
 
 export default function ViewActions(dispatch: Dispatch) {
   return {
