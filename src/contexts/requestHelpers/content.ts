@@ -1,6 +1,6 @@
 import request from 'axios';
 import URL from '~/constants/URL';
-import { RequestHelpers } from '../types';
+import { RequestHelpers } from '~/types';
 import { queryStringForArray, stringIsEmpty } from '~/helpers/stringHelpers';
 
 export default function contentRequestHelpers({

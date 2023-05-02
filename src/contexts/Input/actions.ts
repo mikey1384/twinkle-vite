@@ -1,4 +1,4 @@
-import { Dispatch } from '../types';
+import { Dispatch } from '~/types';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 
 export default function InputActions(dispatch: Dispatch) {
