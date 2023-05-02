@@ -19,7 +19,7 @@ export default function Link({
   onClick?: () => void;
   style?: CSSProperties;
   target?: string;
-  to?: string;
+  to: string;
 }) {
   const navigate = useNavigate();
   return to ? (
@@ -55,7 +55,7 @@ export default function Link({
   function handleLinkClick(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
     if (target) return window.open(to, target);
-    navigate(to!);
+    navigate(to);
     onClick();
   }
 }
