@@ -1,30 +1,6 @@
 import { defaultContentState } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
-
-interface Reward {
-  id: number;
-  rewardComment: string;
-}
-
-interface Comment {
-  commentId: number;
-  content: string;
-  id: number;
-  isExpanded: boolean;
-  likes: object[];
-  loadMoreButton: boolean;
-  recommendations: object[];
-  rewards: Reward[];
-  replyId: number;
-  replies: Comment[];
-}
-
-interface Subject {
-  id: number;
-  rewards: Reward[];
-  comments: Comment[];
-  rewardLevel: number;
-}
+import { Comment, Reward, Subject } from '~/types';
 
 export default function ContentReducer(
   state: any,
