@@ -1,7 +1,12 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
+ShowMoreCardsButton.propTypes = {
+  onClick: PropTypes.func,
+  numMore: PropTypes.number
+};
 export default function ShowMoreCardsButton({
   onClick,
   numMore
@@ -44,7 +49,7 @@ export default function ShowMoreCardsButton({
         `}
         onClick={onClick}
       >
-        {!!numMore ? `...${numMore} more` : '+ Add'}
+        {numMore ? `...${numMore} more` : '+ Add'}
       </div>
     </div>
   );
