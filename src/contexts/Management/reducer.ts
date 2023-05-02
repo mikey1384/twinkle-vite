@@ -1,7 +1,4 @@
-interface Moderator {
-  id: number;
-  userType: string;
-}
+import { User } from '~/types';
 
 export default function ManagementReducer(
   state: any,
@@ -21,9 +18,9 @@ export default function ManagementReducer(
         ...state,
         moderators: action.newModerators.concat(
           state.moderators.filter(
-            (moderator: Moderator) =>
+            (moderator: User) =>
               !action.newModerators
-                .map((newModerator: Moderator) => newModerator.id)
+                .map((newModerator: User) => newModerator.id)
                 .includes(moderator.id)
           )
         )
@@ -32,7 +29,7 @@ export default function ManagementReducer(
       return {
         ...state,
         moderators: action.selectedAccountType
-          ? state.moderators.map((moderator: Moderator) =>
+          ? state.moderators.map((moderator: User) =>
               moderator.id === action.userId
                 ? {
                     ...moderator,
@@ -41,7 +38,7 @@ export default function ManagementReducer(
                 : moderator
             )
           : state.moderators.filter(
-              (moderator: Moderator) => moderator.id !== action.userId
+              (moderator: User) => moderator.id !== action.userId
             )
       };
     case 'DELETE_ACCOUNT_TYPE':
@@ -52,8 +49,7 @@ export default function ManagementReducer(
             accountType.label !== action.accountTypeLabel
         ),
         moderators: state.moderators.filter(
-          (moderator: Moderator) =>
-            moderator.userType !== action.accountTypeLabel
+          (moderator: User) => moderator.userType !== action.accountTypeLabel
         )
       };
     case 'EDIT_ACCOUNT_TYPE':
@@ -67,7 +63,7 @@ export default function ManagementReducer(
               }
             : accountType
         ),
-        moderators: state.moderators.map((moderator: Moderator) => {
+        moderators: state.moderators.map((moderator: User) => {
           return {
             ...moderator,
             userType:

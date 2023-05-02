@@ -1,18 +1,16 @@
-import React, {
-  ReactNode,
-  CSSProperties,
-  Ref,
-  MouseEvent,
-  AnchorHTMLAttributes,
-  DetailedHTMLProps
-} from 'react';
+import React, { ReactNode, CSSProperties, Ref, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface LinkProps
-  extends DetailedHTMLProps<
-    AnchorHTMLAttributes<HTMLAnchorElement>,
-    HTMLAnchorElement
-  > {
+export default function Link({
+  innerRef,
+  className,
+  to,
+  onClick = () => null,
+  children,
+  style,
+  target,
+  ...props
+}: {
   innerRef?:
     | Ref<HTMLAnchorElement>
     | ((instance: HTMLAnchorElement | null) => void);
@@ -22,18 +20,7 @@ interface LinkProps
   style?: CSSProperties;
   target?: string;
   to?: string;
-}
-
-export default function Link({
-  innerRef,
-  className,
-  to,
-  onClick = () => {},
-  children,
-  style,
-  target,
-  ...props
-}: LinkProps) {
+}) {
   const navigate = useNavigate();
   return to ? (
     <a

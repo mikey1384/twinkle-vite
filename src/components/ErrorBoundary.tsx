@@ -1,4 +1,4 @@
-import React, { Component, ReactNode, RefObject } from 'react';
+import React, { Component } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import { clientVersion } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
@@ -12,23 +12,20 @@ install();
 const token = () =>
   typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
 
-interface ErrorBoundaryProps {
-  children: ReactNode;
-  innerRef?: RefObject<any> | ((instance: any) => void);
-  userId?: number;
-  username?: string;
-  componentPath: string;
-  style?: object;
-  className?: string;
-}
-
-interface ErrorBoundaryState {
+interface State {
   hasError: boolean;
 }
-
 export default class ErrorBoundary extends Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
+  {
+    children: React.ReactNode;
+    className?: string;
+    innerRef?: React.RefObject<any> | ((instance: any) => void);
+    userId?: number;
+    username?: string;
+    componentPath: string;
+    style?: React.CSSProperties;
+  },
+  State
 > {
   state = { hasError: false };
 

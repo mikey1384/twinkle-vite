@@ -8,11 +8,11 @@ interface State {
 }
 export default class PreviewErrorBoundary extends Component<
   {
+    children: React.ReactNode;
     className: string;
+    innerRef?: React.RefObject<any> | ((instance: any) => void);
     onError: () => void;
-    children: any;
-    innerRef?: any;
-    style: any;
+    style?: React.CSSProperties;
   },
   State
 > {

@@ -1,23 +1,4 @@
-interface Subject {
-  id: number;
-}
-
-interface Link {
-  id: number;
-  numComments: number;
-  title: string;
-}
-
-interface Video {
-  id: number;
-  videoId: number;
-}
-
-interface Playlist {
-  id: number;
-  title: string;
-  playlist: Video[];
-}
+import { Link, Playlist, Subject, Video } from '~/types';
 
 export default function ExploreReducer(
   state: any,
