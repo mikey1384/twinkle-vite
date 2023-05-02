@@ -45,17 +45,6 @@ const commentRemovedLabel = localize('commentRemoved');
 const replyLabel = localize('reply');
 const deviceIsMobile = isMobile(navigator);
 
-interface Props {
-  className?: string;
-  contentId: number;
-  contentType: string;
-  rootObj: any;
-  rootType: string;
-  onShowTCReplyInput: (arg0: any) => void;
-  style?: any;
-  theme: string;
-  targetObj: any;
-}
 export default function TargetContent({
   className,
   contentId,
@@ -72,7 +61,17 @@ export default function TargetContent({
     subject,
     contentType: type
   }
-}: Props) {
+}: {
+  className?: string;
+  contentId: number;
+  contentType: string;
+  rootObj: any;
+  rootType: string;
+  onShowTCReplyInput: (arg0: any) => void;
+  style?: any;
+  theme: string;
+  targetObj: any;
+}) {
   const navigate = useNavigate();
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
@@ -146,19 +145,10 @@ export default function TargetContent({
     }
     return canRewardThis;
   }, [authLevel, canReward, comment, userId]);
-
-  const uploader = useMemo(() => {
-    let result = {};
-    if (comment && !comment.notFound) {
-      result = comment.uploader;
-    }
-    return result;
-  }, [comment]);
   const subjectUploaderId = useMemo(
     () => subject?.uploader?.id || subject?.userId,
     [subject]
   );
-
   const finalRewardLevel = useMemo(() => {
     const rootRewardLevel =
       rootType === 'video' || rootType === 'url'

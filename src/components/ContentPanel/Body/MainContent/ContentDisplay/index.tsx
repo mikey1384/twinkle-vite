@@ -3,7 +3,28 @@ import ContentEditor from '../../ContentEditor';
 import Content from './Content';
 import { useAppContext, useContentContext } from '~/contexts';
 
-interface Props {
+export default function ContentDisplay({
+  contentId,
+  contentType,
+  isEditing,
+  content,
+  displayedContent,
+  description,
+  filePath,
+  navigate,
+  secretAnswer,
+  secretAttachment,
+  title,
+  theme,
+  onSetIsEditing,
+  uploader,
+  targetObj,
+  rootId,
+  story,
+  secretHidden,
+  isNotification,
+  onClickSecretAnswer
+}: {
   contentId: number;
   contentType: string;
   isEditing: boolean;
@@ -31,35 +52,11 @@ interface Props {
     };
   };
   rootId: number;
-  contentColor: string;
   story: string;
   secretHidden: boolean;
   isNotification: boolean;
-  onClickSecretAnswer: (subjectId: number, uploaderId: number) => void;
-}
-export default function ContentDisplay({
-  contentId,
-  contentType,
-  isEditing,
-  content,
-  displayedContent,
-  description,
-  filePath,
-  navigate,
-  secretAnswer,
-  secretAttachment,
-  title,
-  theme,
-  onSetIsEditing,
-  uploader,
-  targetObj,
-  rootId,
-  contentColor,
-  story,
-  secretHidden,
-  isNotification,
-  onClickSecretAnswer
-}: Props) {
+  onClickSecretAnswer: () => void;
+}) {
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
 

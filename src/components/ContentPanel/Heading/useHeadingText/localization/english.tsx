@@ -4,23 +4,6 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
 import { cardLevelHash } from '~/constants/defaultValues';
 
-interface Props {
-  id: string;
-  action: string;
-  byUser: any;
-  contentColor: string;
-  commentId: number;
-  contentObj: any;
-  contentType: string;
-  linkColor: string;
-  replyId: number;
-  rootObj: any;
-  rootType: string;
-  targetObj: any;
-  theme: string;
-  uploader: any;
-  userLinkColor: string;
-}
 export default function renderEnglishMessage({
   id,
   action,
@@ -37,7 +20,23 @@ export default function renderEnglishMessage({
   theme,
   uploader,
   userLinkColor
-}: Props) {
+}: {
+  id: string;
+  action: string;
+  byUser: any;
+  contentColor: string;
+  commentId: number;
+  contentObj: any;
+  contentType: string;
+  linkColor: string;
+  replyId: number;
+  rootObj: any;
+  rootType: string;
+  targetObj: any;
+  theme: string;
+  uploader: any;
+  userLinkColor: string;
+}) {
   let contentLabel =
     rootType === 'aiStory'
       ? 'AI Story'

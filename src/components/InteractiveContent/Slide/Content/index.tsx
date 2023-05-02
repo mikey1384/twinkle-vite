@@ -9,26 +9,6 @@ import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 
-interface Props {
-  centerRef: (v: any) => void;
-  forkedFrom: number;
-  heading: string;
-  interactiveId: number;
-  isPublished: boolean;
-  isPortal: boolean;
-  description: string;
-  attachment: any;
-  forkButtonIds: number[];
-  forkButtonsObj: any;
-  isOnModal: boolean;
-  onForkButtonClick: (v: any) => void;
-  onPortalButtonClick: (v: any) => void;
-  onSetEmbedProps: (v: any) => void;
-  onThumbnailUpload: (v: any) => void;
-  portalButton: any;
-  slideId: number;
-  selectedForkButtonId: number;
-}
 export default function Content({
   centerRef,
   forkedFrom,
@@ -48,7 +28,26 @@ export default function Content({
   portalButton,
   slideId,
   selectedForkButtonId
-}: Props) {
+}: {
+  centerRef: (v: any) => void;
+  forkedFrom: number;
+  heading: string;
+  interactiveId: number;
+  isPublished: boolean;
+  isPortal: boolean;
+  description: string;
+  attachment: any;
+  forkButtonIds: number[];
+  forkButtonsObj: any;
+  isOnModal: boolean;
+  onForkButtonClick: (v: any) => void;
+  onPortalButtonClick: (v: any) => void;
+  onSetEmbedProps: (v: any) => void;
+  onThumbnailUpload: (v: any) => void;
+  portalButton: any;
+  slideId: number;
+  selectedForkButtonId: number;
+}) {
   const {
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor }

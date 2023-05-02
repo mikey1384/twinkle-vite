@@ -4,14 +4,6 @@ import { useOutsideClick } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
-interface Props {
-  closeColor?: string;
-  closeWhenClickedOutside?: boolean;
-  children?: any;
-  className?: string;
-  onHide?: () => void;
-  style?: object;
-}
 export default function Content({
   closeColor,
   closeWhenClickedOutside,
@@ -19,7 +11,14 @@ export default function Content({
   className,
   onHide,
   style
-}: Props) {
+}: {
+  closeColor?: string;
+  closeWhenClickedOutside?: boolean;
+  children?: any;
+  className?: string;
+  onHide?: () => void;
+  style?: object;
+}) {
   const ContentRef = useRef(null);
   useOutsideClick(ContentRef, () =>
     closeWhenClickedOutside ? onHide?.() : null

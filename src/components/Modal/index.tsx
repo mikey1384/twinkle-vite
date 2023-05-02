@@ -5,20 +5,6 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Content from './Content';
 
-interface Props {
-  className?: string;
-  closeColor?: string;
-  closeWhenClickedOutside?: boolean;
-  children?: any;
-  innerRef?: RefObject<any> | ((instance: any) => void);
-  modalOverModal?: boolean;
-  onHide?: () => void;
-  small?: boolean;
-  medium?: boolean;
-  large?: boolean;
-  modalStyle?: object;
-  style?: object;
-}
 export default function Modal({
   className,
   closeColor,
@@ -32,7 +18,20 @@ export default function Modal({
   large,
   modalStyle,
   style
-}: Props) {
+}: {
+  className?: string;
+  closeColor?: string;
+  closeWhenClickedOutside?: boolean;
+  children?: any;
+  innerRef?: RefObject<any> | ((instance: any) => void);
+  modalOverModal?: boolean;
+  onHide?: () => void;
+  small?: boolean;
+  medium?: boolean;
+  large?: boolean;
+  modalStyle?: object;
+  style?: object;
+}) {
   const modalWidth = {
     small: '26%',
     medium: '35%',

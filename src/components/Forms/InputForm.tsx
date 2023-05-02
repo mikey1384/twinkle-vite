@@ -41,21 +41,6 @@ const viewSecretMessageWithoutRespondingLabel = localize(
   'viewSecretMessageWithoutResponding'
 );
 
-interface Props {
-  autoFocus?: boolean;
-  className?: string;
-  disableReason?: string;
-  formGroupStyle?: any;
-  innerRef?: any;
-  onSubmit: (text: string, attachment?: any) => void;
-  parent: any;
-  placeholder?: string;
-  rows?: number;
-  onViewSecretAnswer?: () => void;
-  style?: any;
-  theme?: string;
-  targetCommentId?: number;
-}
 function InputForm({
   autoFocus,
   className = '',
@@ -70,7 +55,21 @@ function InputForm({
   style = {},
   theme,
   targetCommentId
-}: Props) {
+}: {
+  autoFocus?: boolean;
+  className?: string;
+  disableReason?: string;
+  formGroupStyle?: any;
+  innerRef?: any;
+  onSubmit: (text: string, attachment?: any) => void;
+  parent: any;
+  placeholder?: string;
+  rows?: number;
+  onViewSecretAnswer?: () => void;
+  style?: any;
+  theme?: string;
+  targetCommentId?: number;
+}) {
   const { userId, authLevel, profileTheme, twinkleXP, fileUploadLvl } =
     useKeyContext((v) => v.myState);
   const {

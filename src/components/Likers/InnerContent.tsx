@@ -5,15 +5,6 @@ import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
-interface Props {
-  likes?: Array<{ id: number; username: string }>;
-  userId: number;
-  wordBreakEnabled?: boolean;
-  onLinkClick: () => void;
-  target?: string;
-  defaultText?: string;
-  theme?: any;
-}
 export default function InnerContent({
   likes = [],
   userId,
@@ -22,13 +13,21 @@ export default function InnerContent({
   target,
   defaultText = '',
   theme
-}: Props) {
+}: {
+  likes?: Array<{ id: number; username: string }>;
+  userId: number;
+  wordBreakEnabled?: boolean;
+  onLinkClick: () => void;
+  target?: string;
+  defaultText?: string;
+  theme?: any;
+}) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     link: { color: linkColor }
   } = useTheme(theme || profileTheme);
   const userLiked = useMemo(() => {
-    for (let like of likes) {
+    for (const like of likes) {
       if (like?.id === userId) {
         return true;
       }

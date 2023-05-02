@@ -36,7 +36,7 @@ export default function FileContent({
   fileNameStyle?: React.CSSProperties;
   fileNameLength?: number;
   imageBackgroundColor?: string;
-  onThumbnailLoad?: () => void;
+  onThumbnailLoad?: (thumbnail: string) => void;
 }) {
   const [videoSrc, setVideoSrc] = useState('');
   useEffect(() => {

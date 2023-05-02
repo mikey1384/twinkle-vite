@@ -3,19 +3,6 @@ import Selectable from './Selectable';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 
-interface Props {
-  contentObjs: any;
-  contentType?: string;
-  loaded?: boolean;
-  loading?: boolean;
-  loadingMore?: boolean;
-  loadMoreUploads?: () => void;
-  loadMoreButton?: boolean;
-  onSelect: (id: string) => void;
-  onDeselect: (id: string) => void;
-  selectedUploads: any[];
-  uploads: any[];
-}
 export default function SelectUploadsForm({
   contentObjs,
   contentType = 'video',
@@ -28,7 +15,19 @@ export default function SelectUploadsForm({
   onDeselect,
   selectedUploads,
   uploads
-}: Props) {
+}: {
+  contentObjs: any;
+  contentType?: string;
+  loaded?: boolean;
+  loading?: boolean;
+  loadingMore?: boolean;
+  loadMoreUploads?: () => void;
+  loadMoreButton?: boolean;
+  onSelect: (id: string) => void;
+  onDeselect: (id: string) => void;
+  selectedUploads: any[];
+  uploads: any[];
+}) {
   return (
     <div
       style={{

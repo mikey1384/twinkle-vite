@@ -27,10 +27,10 @@ function SecretAnswer({
 }: {
   answer: string;
   attachment: any;
-  mediaDisabled: boolean;
+  mediaDisabled?: boolean;
   modalOverModal?: boolean;
   onClick?: () => void;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
   subjectId: number;
   theme?: string;
   uploaderId: number;

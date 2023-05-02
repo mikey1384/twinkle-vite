@@ -2,7 +2,21 @@ import React from 'react';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import LoginToViewContent from '~/components/LoginToViewContent';
 
-interface Props {
+export default function FileViewer({
+  contentType,
+  filePath,
+  secretHidden,
+  userId,
+  theme,
+  contentId,
+  fileName,
+  fileSize,
+  thumbUrl,
+  byUser,
+  fileType,
+  rewardLevel,
+  onSetMediaStarted
+}: {
   contentType: string;
   filePath: string;
   secretHidden?: boolean;
@@ -20,22 +34,7 @@ interface Props {
     contentId: number;
     started: boolean;
   }) => void;
-}
-export default function FileViewer({
-  contentType,
-  filePath,
-  secretHidden,
-  userId,
-  theme,
-  contentId,
-  fileName,
-  fileSize,
-  thumbUrl,
-  byUser,
-  fileType,
-  rewardLevel,
-  onSetMediaStarted
-}: Props) {
+}) {
   if (
     (contentType !== 'subject' && contentType !== 'comment') ||
     !filePath ||

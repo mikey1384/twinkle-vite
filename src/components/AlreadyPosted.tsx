@@ -16,7 +16,7 @@ export default function AlreadyPosted({
 }: {
   contentId: number;
   contentType: 'url' | 'video';
-  changingPage: boolean;
+  changingPage?: boolean;
   style?: React.CSSProperties;
   uploaderId?: number;
   url?: string;
