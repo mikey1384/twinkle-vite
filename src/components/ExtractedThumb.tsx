@@ -2,14 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 
-interface Props {
-  isHidden?: boolean;
-  src: string;
-  onThumbnailLoad?: (thumbnail: string) => void;
-  style?: React.CSSProperties;
-  thumbUrl?: string;
-  onThumbnailLoadFail?: () => void;
-}
 export default function ExtractedThumb({
   isHidden,
   src,
@@ -17,7 +9,14 @@ export default function ExtractedThumb({
   style,
   thumbUrl,
   onThumbnailLoadFail
-}: Props) {
+}: {
+  isHidden?: boolean;
+  src: string;
+  onThumbnailLoad?: (thumbnail: string) => void;
+  style?: React.CSSProperties;
+  thumbUrl?: string;
+  onThumbnailLoadFail?: () => void;
+}) {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [metadataLoaded, setMetadataLoaded] = useState(false);
   const [seeked, setSeeked] = useState(false);

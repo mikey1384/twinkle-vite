@@ -4,16 +4,6 @@ import { useTheme } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 
-interface Props {
-  color?: string;
-  bordered?: boolean;
-  className?: string;
-  children?: React.ReactNode;
-  innerRef?: React.RefObject<any>;
-  inverted?: boolean;
-  dropdownButton?: any;
-  style?: any;
-}
 export default function FilterBar({
   color,
   bordered,
@@ -23,7 +13,16 @@ export default function FilterBar({
   inverted,
   dropdownButton,
   style
-}: Props) {
+}: {
+  color?: string;
+  bordered?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  innerRef?: React.RefObject<any>;
+  inverted?: boolean;
+  dropdownButton?: any;
+  style?: any;
+}) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     alert: { color: alertColor },

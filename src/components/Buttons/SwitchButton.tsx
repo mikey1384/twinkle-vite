@@ -5,17 +5,6 @@ import { css } from '@emotion/css';
 import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 
-interface Props {
-  color?: string;
-  disabled?: boolean;
-  checked?: boolean;
-  label?: any;
-  onChange?: () => void;
-  small?: boolean;
-  theme?: string;
-  labelStyle?: CSSProperties;
-  style?: any;
-}
 export default function SwitchButton({
   color,
   disabled,
@@ -26,7 +15,17 @@ export default function SwitchButton({
   theme,
   labelStyle = { fontSize: small ? '1.1rem' : '1.3rem' },
   style
-}: Props) {
+}: {
+  color?: string;
+  disabled?: boolean;
+  checked?: boolean;
+  label?: any;
+  onChange?: () => void;
+  small?: boolean;
+  theme?: string;
+  labelStyle?: CSSProperties;
+  style?: any;
+}) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     switch: { color: switchColor }
@@ -74,7 +73,7 @@ export default function SwitchButton({
             }
           `}
           checked={checked}
-          onChange={disabled ? () => {} : onChange}
+          onChange={disabled ? () => null : onChange}
           type="checkbox"
         />
         <span

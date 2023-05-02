@@ -22,42 +22,6 @@ import {
   useKeyContext
 } from '~/contexts';
 
-interface Props {
-  autoFocus?: boolean;
-  autoExpand?: boolean;
-  comments?: any[];
-  commentsHidden?: boolean;
-  commentsLoadLimit?: number;
-  commentsShown?: boolean;
-  className?: string;
-  disableReason?: string;
-  inputAreaInnerRef?: any;
-  inputAtBottom?: boolean;
-  inputTypeLabel: string;
-  isSubjectPannelComments?: boolean;
-  isLoading?: boolean;
-  loadMoreButton?: boolean;
-  noInput?: boolean;
-  numInputRows?: number;
-  numPreviews?: number;
-  onCommentSubmit: (v: any) => void;
-  onDelete: (v: any) => void;
-  onEditDone?: (v: any) => void;
-  onLikeClick?: (v: any) => void;
-  onLoadRepliesOfReply?: (v: any) => void;
-  onLoadMoreComments: (v: any) => void;
-  onLoadMoreReplies?: (v: any) => void;
-  onPreviewClick?: (v: any) => void;
-  onReplySubmit: (v: any) => void;
-  onRewardCommentEdit?: (v: any) => void;
-  parent: any;
-  rootContent?: any;
-  showSecretButtonAvailable?: boolean;
-  subject?: any;
-  style?: any;
-  theme?: string;
-  userId?: number;
-}
 function Comments({
   autoFocus,
   autoExpand,
@@ -93,7 +57,42 @@ function Comments({
   style,
   theme,
   userId
-}: Props) {
+}: {
+  autoFocus?: boolean;
+  autoExpand?: boolean;
+  comments?: any[];
+  commentsHidden?: boolean;
+  commentsLoadLimit?: number;
+  commentsShown?: boolean;
+  className?: string;
+  disableReason?: string;
+  inputAreaInnerRef?: any;
+  inputAtBottom?: boolean;
+  inputTypeLabel: string;
+  isSubjectPannelComments?: boolean;
+  isLoading?: boolean;
+  loadMoreButton?: boolean;
+  noInput?: boolean;
+  numInputRows?: number;
+  numPreviews?: number;
+  onCommentSubmit: (v: any) => void;
+  onDelete: (v: any) => void;
+  onEditDone?: (v: any) => void;
+  onLikeClick?: (v: any) => void;
+  onLoadRepliesOfReply?: (v: any) => void;
+  onLoadMoreComments: (v: any) => void;
+  onLoadMoreReplies?: (v: any) => void;
+  onPreviewClick?: (v: any) => void;
+  onReplySubmit: (v: any) => void;
+  onRewardCommentEdit?: (v: any) => void;
+  parent: any;
+  rootContent?: any;
+  showSecretButtonAvailable?: boolean;
+  subject?: any;
+  style?: any;
+  theme?: string;
+  userId?: number;
+}) {
   const { banned, profileTheme } = useKeyContext((v) => v.myState);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const {

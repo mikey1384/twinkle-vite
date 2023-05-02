@@ -62,24 +62,18 @@ const removeCommentLabel = localize('removeComment');
 const repliesLabel = localize('replies');
 const replyLabel = localize('reply');
 
-interface Props {
-  comment: any;
-  disableReason?: string;
-  innerRef?: (ref: any) => void;
-  isSubjectPannelComment?: boolean;
-  isPreview?: boolean;
-  parent?: any;
-  pinnedCommentId?: number;
-  rootContent?: {
-    contentType?: string;
-    rewardLevel?: number;
-    uploader?: {
-      id: number;
-    };
-  };
-  subject?: any;
-  theme?: string;
-}
+Comment.propTypes = {
+  comment: PropTypes.object.isRequired,
+  disableReason: PropTypes.string,
+  innerRef: PropTypes.func,
+  isSubjectPannelComment: PropTypes.bool,
+  isPreview: PropTypes.bool,
+  parent: PropTypes.object,
+  pinnedCommentId: PropTypes.number,
+  rootContent: PropTypes.object,
+  subject: PropTypes.object,
+  theme: PropTypes.string
+};
 function Comment({
   comment,
   disableReason,
@@ -106,7 +100,24 @@ function Comment({
     isDeleteNotification,
     thumbUrl: originalThumbUrl
   }
-}: Props) {
+}: {
+  comment: any;
+  disableReason?: string;
+  innerRef?: (ref: any) => void;
+  isSubjectPannelComment?: boolean;
+  isPreview?: boolean;
+  parent?: any;
+  pinnedCommentId?: number;
+  rootContent?: {
+    contentType?: string;
+    rewardLevel?: number;
+    uploader?: {
+      id: number;
+    };
+  };
+  subject?: any;
+  theme?: string;
+}) {
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
@@ -181,7 +192,6 @@ function Comment({
     onDelete,
     onEditDone,
     onLikeClick,
-    onLoadMoreReplies,
     onReplySubmit,
     onRewardCommentEdit,
     onSubmitWithAttachment
@@ -1014,7 +1024,7 @@ function Comment({
 
   async function handlePinComment(commentId: number) {
     const root = parent.contentType === 'comment' ? rootContent : parent;
-    let contentId = isSubjectPannelComment
+    const contentId = isSubjectPannelComment
       ? subject.id
       : root.contentId || root.id;
     const contentType = isSubjectPannelComment ? 'subject' : root.contentType;

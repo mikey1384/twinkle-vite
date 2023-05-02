@@ -48,7 +48,35 @@ const removeReplyLabel = localize('removeReply');
 const repliesLabel = localize('replies');
 const replyLabel = localize('reply');
 
-interface Props {
+function Reply({
+  comment,
+  innerRef = () => null,
+  deleteReply,
+  disableReason,
+  isSubjectPannelComment,
+  onLoadRepliesOfReply,
+  onPinReply,
+  onSubmitWithAttachment,
+  parent,
+  pinnedCommentId,
+  reply,
+  reply: {
+    isExpanded,
+    likes = [],
+    recommendations = [],
+    rewards = [],
+    uploader,
+    filePath,
+    fileName,
+    fileSize,
+    isDeleteNotification,
+    thumbUrl: initialThumbUrl
+  },
+  rootContent,
+  onSubmitReply,
+  subject,
+  theme
+}: {
   comment: {
     id: number;
   };
@@ -89,36 +117,7 @@ interface Props {
   subject: any;
   onSubmitReply: (v: any) => void;
   theme?: string;
-}
-function Reply({
-  comment,
-  innerRef = () => {},
-  deleteReply,
-  disableReason,
-  isSubjectPannelComment,
-  onLoadRepliesOfReply,
-  onPinReply,
-  onSubmitWithAttachment,
-  parent,
-  pinnedCommentId,
-  reply,
-  reply: {
-    isExpanded,
-    likes = [],
-    recommendations = [],
-    rewards = [],
-    uploader,
-    filePath,
-    fileName,
-    fileSize,
-    isDeleteNotification,
-    thumbUrl: initialThumbUrl
-  },
-  rootContent,
-  onSubmitReply,
-  subject,
-  theme
-}: Props) {
+}) {
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadReplies = useAppContext((v) => v.requestHelpers.loadReplies);
   const {

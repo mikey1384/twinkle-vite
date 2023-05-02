@@ -4,19 +4,18 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import WebsiteContent from './WebsiteContent';
 import FileContent from '~/components/FileContent';
 
-interface Props {
-  attachment: any;
-  onClose: () => void;
-  onThumbnailLoad?: (arg: any) => void;
-  style?: any;
-}
 export default function Attachment({
   attachment,
   attachment: { contentType = 'file', fileType },
   onClose,
   onThumbnailLoad,
   style
-}: Props) {
+}: {
+  attachment: any;
+  onClose: () => void;
+  onThumbnailLoad?: () => void;
+  style?: any;
+}) {
   return (
     <ErrorBoundary
       componentPath="Attachment/index"

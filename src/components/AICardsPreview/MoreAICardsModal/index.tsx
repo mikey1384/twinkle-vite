@@ -3,18 +3,17 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import CardItem from './CardItem';
 
-interface Props {
-  cards: any[];
-  onSetAICardModalCardId?: (cardId: number) => void;
-  onHide: () => void;
-  modalOverModal?: boolean;
-}
 export default function MoreAICardsModal({
   cards,
   onSetAICardModalCardId,
   onHide,
   modalOverModal
-}: Props) {
+}: {
+  cards: any[];
+  onSetAICardModalCardId?: (cardId: number) => void;
+  onHide: () => void;
+  modalOverModal?: boolean;
+}) {
   return (
     <Modal modalOverModal={modalOverModal} onHide={onHide}>
       <header>Selected Cards</header>

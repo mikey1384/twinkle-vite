@@ -8,7 +8,23 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 
-interface Props {
+export default function ContentFileViewer({
+  contentId,
+  contentType,
+  isSecretAttachment,
+  isThumb,
+  filePath,
+  fileName,
+  fileSize,
+  modalOverModal,
+  onMediaPause = () => null,
+  onMediaPlay = () => null,
+  style,
+  theme,
+  thumbHeight,
+  thumbUrl,
+  videoHeight
+}: {
   contentId?: number;
   contentType: string;
   isSecretAttachment?: boolean;
@@ -24,24 +40,7 @@ interface Props {
   thumbHeight?: string;
   thumbUrl?: string;
   videoHeight?: string;
-}
-export default function ContentFileViewer({
-  contentId,
-  contentType,
-  isSecretAttachment,
-  isThumb,
-  filePath,
-  fileName,
-  fileSize,
-  modalOverModal,
-  onMediaPause = () => {},
-  onMediaPlay = () => {},
-  style,
-  theme,
-  thumbHeight,
-  thumbUrl,
-  videoHeight
-}: Props) {
+}) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     link: { color: linkColor }

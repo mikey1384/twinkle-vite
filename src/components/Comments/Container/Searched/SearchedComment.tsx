@@ -36,7 +36,30 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 
-interface Props {
+SearchedComment.propTypes = {
+  comment: PropTypes.object.isRequired,
+  parent: PropTypes.object.isRequired,
+  rootContent: PropTypes.object,
+  subject: PropTypes.object,
+  theme: PropTypes.string
+};
+export default function SearchedComment({
+  comment,
+  parent,
+  rootContent = {},
+  subject,
+  theme,
+  comment: {
+    id: commentId,
+    uploader,
+    numReplies,
+    filePath,
+    fileName,
+    fileSize,
+    isNotification,
+    thumbUrl: originalThumbUrl
+  }
+}: {
   comment: {
     commentId?: number;
     content: string;
@@ -67,24 +90,7 @@ interface Props {
   };
   subject: any;
   theme: string;
-}
-export default function SearchedComment({
-  comment,
-  parent,
-  rootContent = {},
-  subject,
-  theme,
-  comment: {
-    id: commentId,
-    uploader,
-    numReplies,
-    filePath,
-    fileName,
-    fileSize,
-    isNotification,
-    thumbUrl: originalThumbUrl
-  }
-}: Props) {
+}) {
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const {

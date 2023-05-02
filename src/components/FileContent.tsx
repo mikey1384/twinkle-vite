@@ -31,12 +31,12 @@ export default function FileContent({
   imageUrl: string;
   file: any;
   fileType: string;
-  style: React.CSSProperties;
-  fileIconSize: string;
-  fileNameStyle: React.CSSProperties;
-  fileNameLength: number;
-  imageBackgroundColor: string;
-  onThumbnailLoad: () => void;
+  style?: React.CSSProperties;
+  fileIconSize?: string;
+  fileNameStyle?: React.CSSProperties;
+  fileNameLength?: number;
+  imageBackgroundColor?: string;
+  onThumbnailLoad?: () => void;
 }) {
   const [videoSrc, setVideoSrc] = useState('');
   useEffect(() => {

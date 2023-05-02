@@ -14,17 +14,6 @@ import localize from '~/constants/localize';
 
 const submitYourResponseLabel = localize('submitYourResponse');
 
-interface Props {
-  answer: string;
-  attachment: any;
-  mediaDisabled: boolean;
-  modalOverModal: boolean;
-  onClick: () => void;
-  style: React.CSSProperties;
-  subjectId: number;
-  theme: string;
-  uploaderId: number;
-}
 function SecretAnswer({
   answer,
   attachment,
@@ -35,7 +24,17 @@ function SecretAnswer({
   subjectId,
   theme,
   uploaderId
-}: Props) {
+}: {
+  answer: string;
+  attachment: any;
+  mediaDisabled: boolean;
+  modalOverModal: boolean;
+  onClick: () => void;
+  style: React.CSSProperties;
+  subjectId: number;
+  theme: string;
+  uploaderId: number;
+}) {
   const checkIfUserResponded = useAppContext(
     (v) => v.requestHelpers.checkIfUserResponded
   );
@@ -75,7 +74,7 @@ function SecretAnswer({
   return (
     <ErrorBoundary componentPath="SecretAnswer">
       <div
-        onClick={spoilerShown ? () => {} : onClick}
+        onClick={spoilerShown ? () => null : onClick}
         style={{
           cursor: spoilerShown ? '' : 'pointer',
           fontSize: '1.7rem',

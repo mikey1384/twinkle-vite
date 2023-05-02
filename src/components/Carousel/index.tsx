@@ -14,28 +14,6 @@ import localize from '~/constants/localize';
 
 const showAllLabel = localize('showAll');
 
-interface Props {
-  allowDrag?: boolean;
-  afterSlide?: (v: number) => void;
-  beforeSlide?: (v: number) => void;
-  className?: string;
-  cellSpacing?: number;
-  children: any;
-  conditionPassStatus?: string;
-  framePadding?: string;
-  nextButtonDisabled?: boolean;
-  onCheckNavCondition?: (onNext: () => void) => boolean;
-  onFinish?: () => void;
-  onShowAll?: () => void;
-  progressBar?: boolean;
-  slideIndex?: number;
-  slidesToScroll?: number;
-  slidesToShow?: number;
-  slideWidthMultiplier?: number;
-  showAllButton?: boolean;
-  style?: React.CSSProperties;
-  title?: string | React.ReactNode;
-}
 export default function Carousel({
   allowDrag = true,
   afterSlide = () => null,
@@ -57,7 +35,28 @@ export default function Carousel({
   showAllButton,
   style,
   title
-}: Props) {
+}: {
+  allowDrag?: boolean;
+  afterSlide?: (v: number) => void;
+  beforeSlide?: (v: number) => void;
+  className?: string;
+  cellSpacing?: number;
+  children: any;
+  conditionPassStatus?: string;
+  framePadding?: string;
+  nextButtonDisabled?: boolean;
+  onCheckNavCondition?: (onNext: () => void) => boolean;
+  onFinish?: () => void;
+  onShowAll?: () => void;
+  progressBar?: boolean;
+  slideIndex?: number;
+  slidesToScroll?: number;
+  slidesToShow?: number;
+  slideWidthMultiplier?: number;
+  showAllButton?: boolean;
+  style?: React.CSSProperties;
+  title?: string | React.ReactNode;
+}) {
   const {
     carouselProgress: { color: carouselProgressColor },
     carouselProgressComplete: { color: carouselProgressCompleteColor }
@@ -214,12 +213,12 @@ export default function Carousel({
               });
             }
           }}
-          onMouseUp={(e) => {
+          onMouseUp={() => {
             if (dragging) {
               handleSwipe();
             }
           }}
-          onMouseLeave={(e) => {
+          onMouseLeave={() => {
             if (dragging) {
               handleSwipe();
             }

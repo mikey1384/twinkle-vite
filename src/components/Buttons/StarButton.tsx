@@ -16,20 +16,6 @@ import localize from '~/constants/localize';
 const setRewardLevelLabel = localize('setRewardLevel');
 const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
 
-interface Props {
-  byUser?: boolean;
-  contentId: number;
-  contentType: string;
-  defaultDescription?: string;
-  filePath?: string;
-  rewardLevel?: number;
-  filled?: boolean;
-  onSetRewardLevel?: (v: any) => void;
-  onToggleByUser: (v: any) => void;
-  uploader: any;
-  skeuomorphic?: boolean;
-  style?: any;
-}
 export default function StarButton({
   byUser,
   contentId,
@@ -43,7 +29,20 @@ export default function StarButton({
   uploader,
   skeuomorphic,
   style = {}
-}: Props) {
+}: {
+  byUser?: boolean;
+  contentId: number;
+  contentType: string;
+  defaultDescription?: string;
+  filePath?: string;
+  rewardLevel?: number;
+  filled?: boolean;
+  onSetRewardLevel?: (v: any) => void;
+  onToggleByUser: (v: any) => void;
+  uploader: any;
+  skeuomorphic?: boolean;
+  style?: any;
+}) {
   const { canReward, canEditRewardLevel, userId } = useKeyContext(
     (v) => v.myState
   );

@@ -7,7 +7,40 @@ import CommentInputArea from './CommentInputArea';
 import { useAppContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 
-interface Props {
+export default function Main({
+  autoExpand,
+  autoFocus,
+  banned,
+  CommentInputAreaRef,
+  CommentRefs,
+  comments,
+  commentsHidden,
+  commentsShown,
+  commentsLoadLimit,
+  disableReason,
+  inputAtBottom,
+  inputAreaInnerRef,
+  inputTypeLabel,
+  isLoading,
+  isPreview,
+  isSubjectPannelComments,
+  loadMoreShown,
+  loadMoreButtonColor,
+  noInput,
+  numInputRows,
+  numPreviews,
+  onCommentSubmit,
+  onLoadMoreComments,
+  onSetCommentSubmitted,
+  parent,
+  previewComments,
+  showSecretButtonAvailable,
+  subject,
+  subjectId,
+  theme,
+  uploadComment,
+  rootContent
+}: {
   autoExpand?: boolean;
   autoFocus?: boolean;
   banned?: {
@@ -43,44 +76,8 @@ interface Props {
   subjectId?: number;
   theme?: any;
   uploadComment: (comment: any) => any;
-  userId?: number;
   rootContent?: any;
-}
-export default function Main({
-  autoExpand,
-  autoFocus,
-  banned,
-  CommentInputAreaRef,
-  CommentRefs,
-  comments,
-  commentsHidden,
-  commentsShown,
-  commentsLoadLimit,
-  disableReason,
-  inputAtBottom,
-  inputAreaInnerRef,
-  inputTypeLabel,
-  isLoading,
-  isPreview,
-  isSubjectPannelComments,
-  loadMoreShown,
-  loadMoreButtonColor,
-  noInput,
-  numInputRows,
-  numPreviews,
-  onCommentSubmit,
-  onLoadMoreComments,
-  onSetCommentSubmitted,
-  parent,
-  previewComments,
-  showSecretButtonAvailable,
-  subject,
-  subjectId,
-  theme,
-  uploadComment,
-  userId,
-  rootContent
-}: Props) {
+}) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const rootContentState = useContentState({
@@ -119,7 +116,7 @@ export default function Main({
           numInputRows={numInputRows}
           onSubmit={handleSubmitComment}
           onViewSecretAnswer={
-            showSecretButtonAvailable ? handleViewSecretAnswer : null
+            showSecretButtonAvailable ? handleViewSecretAnswer : undefined
           }
           parent={parent}
           rootCommentId={

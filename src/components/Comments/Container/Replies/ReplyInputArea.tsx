@@ -6,7 +6,19 @@ import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { v1 as uuidv1 } from 'uuid';
 
-interface Props {
+export default function ReplyInputArea({
+  disableReason,
+  innerRef,
+  onSubmit,
+  onSubmitWithAttachment,
+  parent,
+  rootCommentId,
+  style,
+  targetCommentId,
+  targetCommentPoster,
+  theme,
+  rows = 1
+}: {
   disableReason?: string;
   innerRef?: React.RefObject<any>;
   onSubmit: (args: any) => void;
@@ -25,20 +37,7 @@ interface Props {
   };
   theme: any;
   rows?: number;
-}
-export default function ReplyInputArea({
-  disableReason,
-  innerRef,
-  onSubmit,
-  onSubmitWithAttachment,
-  parent,
-  rootCommentId,
-  style,
-  targetCommentId,
-  targetCommentPoster,
-  theme,
-  rows = 1
-}: Props) {
+}) {
   const state = useInputContext((v) => v.state);
   const { userId } = useKeyContext((v) => v.myState);
   const onSetCommentAttachment = useInputContext(

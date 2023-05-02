@@ -10,20 +10,19 @@ import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-interface Props {
-  contentId?: number;
-  contentType?: string;
-  onHide: () => void;
-  modalOverModal?: boolean;
-  content?: any;
-}
 export default function ZeroModal({
   contentId,
   contentType,
   onHide,
   modalOverModal,
   content
-}: Props) {
+}: {
+  contentId?: number;
+  contentType?: string;
+  onHide: () => void;
+  modalOverModal?: boolean;
+  content?: any;
+}) {
   const [loadingType, setLoadingType] = useState('');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [response, setResponse] = useState(null);
@@ -36,8 +35,8 @@ export default function ZeroModal({
   }, [loadingProgress, loadingType]);
 
   const { content: contentFetchedFromContext } = useContentState({
-    contentId,
-    contentType
+    contentId: contentId as number,
+    contentType: contentType as string
   });
 
   return (
