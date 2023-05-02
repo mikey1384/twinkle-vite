@@ -5,20 +5,6 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-interface Props {
-  burnXP: number;
-  cardId: number;
-  cardLevel: number;
-  cardQuality: string;
-  myId: number;
-  myOffer: any;
-  onSetSellModalShown: (v: boolean) => void;
-  onUserMenuShownChange: (v: boolean) => void;
-  owner: any;
-  userIsOwner: boolean;
-  onSetWithdrawOfferModalShown: (v: boolean) => void;
-  onSetOfferModalShown: (v: boolean) => void;
-}
 export default function UnlistedMenu({
   burnXP,
   cardId,
@@ -32,7 +18,20 @@ export default function UnlistedMenu({
   onSetWithdrawOfferModalShown,
   onSetOfferModalShown,
   onUserMenuShownChange
-}: Props) {
+}: {
+  burnXP: number;
+  cardId: number;
+  cardLevel: number;
+  cardQuality: string;
+  myId: number;
+  myOffer: any;
+  onSetSellModalShown: (v: boolean) => void;
+  onUserMenuShownChange: (v: boolean) => void;
+  owner: any;
+  userIsOwner: boolean;
+  onSetWithdrawOfferModalShown: (v: boolean) => void;
+  onSetOfferModalShown: (v: boolean) => void;
+}) {
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);

@@ -7,32 +7,6 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import useNotificationMessage from './useNotificationMessage';
 import UsernameText from '~/components/Texts/UsernameText';
 
-interface Props {
-  actionColor?: string;
-  infoColor?: string;
-  linkColor: string;
-  mentionColor?: string;
-  missionColor?: string;
-  recommendationColor?: string;
-  rewardColor?: string;
-  userId?: number;
-  notification: {
-    id: number;
-    actionObj?: any;
-    targetComment?: any;
-    targetObj?: any;
-    targetSubject?: any;
-    timeStamp: string;
-    user?: any;
-    rewardType?: string;
-    rewardRootId?: number;
-    rewardRootType?: string;
-    rewardRootMissionType?: string;
-    isNotification?: boolean;
-    isTask?: boolean;
-    rootMissionType?: string;
-  };
-}
 export default function NotiItem({
   actionColor,
   infoColor,
@@ -58,7 +32,32 @@ export default function NotiItem({
     isTask,
     rootMissionType
   }
-}: Props) {
+}: {
+  actionColor?: string;
+  infoColor?: string;
+  linkColor: string;
+  mentionColor?: string;
+  missionColor?: string;
+  recommendationColor?: string;
+  rewardColor?: string;
+  userId?: number;
+  notification: {
+    id: number;
+    actionObj?: any;
+    targetComment?: any;
+    targetObj?: any;
+    targetSubject?: any;
+    timeStamp: string;
+    user?: any;
+    rewardType?: string;
+    rewardRootId?: number;
+    rewardRootType?: string;
+    rewardRootMissionType?: string;
+    isNotification?: boolean;
+    isTask?: boolean;
+    rootMissionType?: string;
+  };
+}) {
   const NotificationMessage = useNotificationMessage({
     actionColor,
     actionObj,
