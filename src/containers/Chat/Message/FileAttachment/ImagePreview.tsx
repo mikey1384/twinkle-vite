@@ -19,7 +19,7 @@ export default function ImagePreview({
         display: 'flex',
         height: '100%',
         width: 'auto',
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         alignItems: 'center'
       }}
     >
