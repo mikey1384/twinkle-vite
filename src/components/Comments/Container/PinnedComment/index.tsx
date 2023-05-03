@@ -14,9 +14,9 @@ const pinnedLabel = localize('pinned');
 PinnedComment.propTypes = {
   commentId: PropTypes.number.isRequired,
   parent: PropTypes.object.isRequired,
-  rootContent: PropTypes.object.isRequired,
+  rootContent: PropTypes.object,
   subject: PropTypes.object,
-  theme: PropTypes.string.isRequired
+  theme: PropTypes.string
 };
 export default function PinnedComment({
   commentId,
@@ -27,9 +27,9 @@ export default function PinnedComment({
 }: {
   commentId: number;
   parent: Content;
-  rootContent: Content;
+  rootContent?: Content;
   subject?: Subject;
-  theme: string;
+  theme?: string;
 }) {
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
