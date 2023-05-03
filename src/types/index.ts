@@ -105,9 +105,13 @@ export interface Reward {
 export interface Subject {
   comments: Comment[];
   id: number;
-  rewards: Reward[];
+  pinnedCommentId: number;
+  rewards?: Reward[];
+  secretAnswer: string;
+  secretAttachment: Attachment;
   title: string;
   rewardLevel: number;
+  uploader: User;
 }
 
 export interface User {

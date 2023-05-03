@@ -84,7 +84,7 @@ export default function SearchedComment({
     isNotification?: number | boolean;
   };
   parent: any;
-  rootContent: {
+  rootContent?: {
     rewardLevel?: number;
     contentType?: string;
   };

@@ -107,7 +107,7 @@ export default function Container({
   subjectId?: number;
   theme?: any;
   uploadComment: (comment: any) => void;
-  rootContent?: any;
+  rootContent?: Content;
 }) {
   const { searchedPoster } = useContentState({
     contentType: parent.contentType,

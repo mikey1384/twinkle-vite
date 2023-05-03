@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState
 } from 'react';
+import PropTypes from 'prop-types';
 import Context from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Container from './Container';
@@ -21,7 +22,44 @@ import {
   useInputContext,
   useKeyContext
 } from '~/contexts';
+import { Comment, Content, Subject } from '~/types';
 
+Comments.propTypes = {
+  autoFocus: PropTypes.bool,
+  autoExpand: PropTypes.bool,
+  comments: PropTypes.array,
+  commentsHidden: PropTypes.bool,
+  commentsLoadLimit: PropTypes.number,
+  commentsShown: PropTypes.bool,
+  className: PropTypes.string,
+  disableReason: PropTypes.string,
+  inputAreaInnerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
+  inputAtBottom: PropTypes.bool,
+  inputTypeLabel: PropTypes.string.isRequired,
+  isSubjectPannelComments: PropTypes.bool,
+  isLoading: PropTypes.bool,
+  loadMoreButton: PropTypes.bool,
+  noInput: PropTypes.bool,
+  numInputRows: PropTypes.number,
+  numPreviews: PropTypes.number,
+  onCommentSubmit: PropTypes.func,
+  onDelete: PropTypes.func,
+  onEditDone: PropTypes.func,
+  onLikeClick: PropTypes.func,
+  onLoadRepliesOfReply: PropTypes.func,
+  onLoadMoreComments: PropTypes.func.isRequired,
+  onLoadMoreReplies: PropTypes.func,
+  onPreviewClick: PropTypes.func,
+  onReplySubmit: PropTypes.func.isRequired,
+  onRewardCommentEdit: PropTypes.func,
+  parent: PropTypes.object.isRequired,
+  rootContent: PropTypes.object,
+  showSecretButtonAvailable: PropTypes.bool,
+  subject: PropTypes.object,
+  style: PropTypes.object,
+  theme: PropTypes.string,
+  userId: PropTypes.number
+};
 function Comments({
   autoFocus,
   autoExpand,
@@ -60,7 +98,7 @@ function Comments({
 }: {
   autoFocus?: boolean;
   autoExpand?: boolean;
-  comments?: any[];
+  comments?: Comment[];
   commentsHidden?: boolean;
   commentsLoadLimit?: number;
   commentsShown?: boolean;
@@ -85,11 +123,11 @@ function Comments({
   onPreviewClick?: (v: any) => void;
   onReplySubmit: (v: any) => void;
   onRewardCommentEdit?: (v: any) => void;
-  parent: any;
-  rootContent?: any;
+  parent: Content;
+  rootContent?: Content;
   showSecretButtonAvailable?: boolean;
-  subject?: any;
-  style?: any;
+  subject?: Subject;
+  style?: React.CSSProperties;
   theme?: string;
   userId?: number;
 }) {

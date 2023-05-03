@@ -17,7 +17,7 @@ Searched.propTypes = {
     contentId: PropTypes.number,
     contentType: PropTypes.string,
     subjectId: PropTypes.number
-  }).isRequired,
+  }),
   loadMoreButtonColor: PropTypes.string,
   poster: PropTypes.shape({
     id: PropTypes.number,
@@ -38,7 +38,7 @@ export default function Searched({
   theme
 }: {
   parent: Content;
-  rootContent: Content;
+  rootContent?: Content;
   loadMoreButtonColor: string;
   poster: User;
   subject?: Subject;
