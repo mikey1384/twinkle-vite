@@ -279,85 +279,82 @@ function ContentEditor({
         }
       `}
     >
-      <form onSubmit={handleSubmit}>
-        <TextEditSection
-          editedComment={editedComment}
-          editedDescription={editedDescription}
-          editedSecretAnswer={editedSecretAnswer}
-          editedUrl={editedUrl}
-          editedTitle={editedTitle}
-          contentType={contentType}
-          descriptionExceedsCharLimit={descriptionExceedsCharLimit}
-          urlExceedsCharLimit={urlExceedsCharLimit}
-          secretAnswerExceedsCharLimit={secretAnswerExceedsCharLimit}
-          titleExceedsCharLimit={titleExceedsCharLimit}
-          onSecretAnswerChange={(event) => {
-            const { value } = event.target;
-            handleSetInputState({
-              ...editForm,
-              editedSecretAnswer: value
-            });
-          }}
-          onTextAreaChange={(event) => {
-            const { value } = event.target;
-            handleSetInputState({
-              ...editForm,
-              [contentType === 'comment'
-                ? 'editedComment'
-                : 'editedDescription']: value
-            });
-          }}
-          onTextAreaKeyUp={(event) => {
-            const { value } = event.target;
-            handleSetInputState({
-              ...editForm,
-              [contentType === 'comment'
-                ? 'editedComment'
-                : 'editedDescription']: addEmoji(value)
-            });
-          }}
-          onTitleChange={(text) =>
-            handleSetInputState({
-              ...editForm,
-              editedTitle: text
-            })
-          }
-          onTitleKeyUp={(event) =>
-            handleSetInputState({
-              ...editForm,
-              editedTitle: addEmoji(event.target.value)
-            })
-          }
-          onUrlChange={(url) =>
-            handleSetInputState({
-              ...editForm,
-              editedUrl: url
-            })
-          }
-        />
-        <div
-          style={{
-            marginTop: '1rem',
-            display: 'flex',
-            flexDirection: 'row-reverse'
-          }}
+      <TextEditSection
+        editedComment={editedComment}
+        editedDescription={editedDescription}
+        editedSecretAnswer={editedSecretAnswer}
+        editedUrl={editedUrl}
+        editedTitle={editedTitle}
+        contentType={contentType}
+        descriptionExceedsCharLimit={descriptionExceedsCharLimit}
+        urlExceedsCharLimit={urlExceedsCharLimit}
+        secretAnswerExceedsCharLimit={secretAnswerExceedsCharLimit}
+        titleExceedsCharLimit={titleExceedsCharLimit}
+        onSecretAnswerChange={(event) => {
+          const { value } = event.target;
+          handleSetInputState({
+            ...editForm,
+            editedSecretAnswer: value
+          });
+        }}
+        onTextAreaChange={(event) => {
+          const { value } = event.target;
+          handleSetInputState({
+            ...editForm,
+            [contentType === 'comment' ? 'editedComment' : 'editedDescription']:
+              value
+          });
+        }}
+        onTextAreaKeyUp={(event) => {
+          const { value } = event.target;
+          handleSetInputState({
+            ...editForm,
+            [contentType === 'comment' ? 'editedComment' : 'editedDescription']:
+              addEmoji(value)
+          });
+        }}
+        onTitleChange={(text) =>
+          handleSetInputState({
+            ...editForm,
+            editedTitle: text
+          })
+        }
+        onTitleKeyUp={(event) =>
+          handleSetInputState({
+            ...editForm,
+            editedTitle: addEmoji(event.target.value)
+          })
+        }
+        onUrlChange={(url) =>
+          handleSetInputState({
+            ...editForm,
+            editedUrl: url
+          })
+        }
+      />
+      <div
+        style={{
+          marginTop: '1rem',
+          display: 'flex',
+          flexDirection: 'row-reverse'
+        }}
+      >
+        <Button
+          color={doneColor}
+          loading={isEditing}
+          disabled={editButtonDisabled}
+          onClick={handleSubmit}
         >
-          <Button
-            color={doneColor}
-            loading={isEditing}
-            disabled={editButtonDisabled}
-          >
-            {doneLabel}
-          </Button>
-          <Button
-            transparent
-            style={{ marginRight: '1rem' }}
-            onClick={handleDismiss}
-          >
-            {cancelLabel}
-          </Button>
-        </div>
-      </form>
+          {doneLabel}
+        </Button>
+        <Button
+          transparent
+          style={{ marginRight: '1rem' }}
+          onClick={handleDismiss}
+        >
+          {cancelLabel}
+        </Button>
+      </div>
     </div>
   );
 }
