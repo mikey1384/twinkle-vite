@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
 import FileInfo from './FileInfo';
 import ImagePreview from './ImagePreview';
 import MediaPlayer from './MediaPlayer';
@@ -8,6 +9,24 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 
+ContentFileViewer.propTypes = {
+  contentId: PropTypes.number,
+  contentType: PropTypes.string.isRequired,
+  isSecretAttachment: PropTypes.bool,
+  isThumb: PropTypes.bool,
+  filePath: PropTypes.string.isRequired,
+  fileName: PropTypes.string.isRequired,
+  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    .isRequired,
+  modalOverModal: PropTypes.bool,
+  onMediaPause: PropTypes.func,
+  onMediaPlay: PropTypes.func,
+  style: PropTypes.object,
+  theme: PropTypes.string,
+  thumbHeight: PropTypes.string,
+  thumbUrl: PropTypes.string,
+  videoHeight: PropTypes.string
+};
 export default function ContentFileViewer({
   contentId,
   contentType,
@@ -31,7 +50,7 @@ export default function ContentFileViewer({
   isThumb?: boolean;
   filePath: string;
   fileName: string;
-  fileSize: number;
+  fileSize: string | number;
   modalOverModal?: boolean;
   onMediaPause?: () => void;
   onMediaPlay?: () => void;

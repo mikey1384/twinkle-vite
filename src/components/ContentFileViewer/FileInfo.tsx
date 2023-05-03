@@ -15,7 +15,7 @@ import { renderFileSize } from '~/helpers/stringHelpers';
 FileInfo.propTypes = {
   fileName: PropTypes.string.isRequired,
   fileType: PropTypes.string.isRequired,
-  fileSize: PropTypes.number.isRequired,
+  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   isThumb: PropTypes.bool,
   src: PropTypes.string.isRequired,
   theme: PropTypes.string
@@ -30,7 +30,7 @@ export default function FileInfo({
 }: {
   fileName: string;
   fileType: string;
-  fileSize: number;
+  fileSize: number | string;
   isThumb?: boolean;
   src: string;
   theme?: string;
@@ -39,7 +39,10 @@ export default function FileInfo({
   const {
     link: { color: linkColor }
   } = useTheme(theme || profileTheme);
-  const displayedFileSize = useMemo(() => renderFileSize(fileSize), [fileSize]);
+  const displayedFileSize = useMemo(
+    () => renderFileSize(Number(fileSize)),
+    [fileSize]
+  );
   return (
     <div
       style={{
