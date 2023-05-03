@@ -8,7 +8,7 @@ import * as d3Ease from 'd3-ease';
 import { Animate } from 'react-move';
 import { Color } from '~/constants/css';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
-import { useExploreContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import BottomNavButtons from './BottomNavButtons';
 import localize from '~/constants/localize';
@@ -84,10 +84,6 @@ export default function Carousel({
     carouselProgress: { color: carouselProgressColor },
     carouselProgressComplete: { color: carouselProgressCompleteColor }
   } = useKeyContext((v) => v.theme);
-  const clickSafe = useExploreContext((v) => v.state.videos.clickSafe);
-  const onClickSafeOff = useExploreContext((v) => v.actions.onClickSafeOff);
-  const onClickSafeOn = useExploreContext((v) => v.actions.onClickSafeOn);
-
   const DEFAULT_DURATION = 300;
   const DEFAULT_EASING = 'easeCircleOut';
   const DEFAULT_EDGE_EASING = 'easeElasticOut';
@@ -250,7 +246,6 @@ export default function Carousel({
               handleSwipe();
             }
           }}
-          onClick={handleClick}
         >
           <Animate
             show
@@ -382,16 +377,6 @@ export default function Carousel({
     ));
   }
 
-  function handleClick(e: any) {
-    if (clickSafe) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.nativeEvent) {
-        e.nativeEvent.stopPropagation();
-      }
-    }
-  }
-
   function getTargetLeft(touchOffset?: number, slide?: number) {
     const target = slide || currentSlide;
     const offset = 0 - cellSpacing * target - (touchOffset || 0);
@@ -419,11 +404,6 @@ export default function Carousel({
   }
 
   function handleSwipe() {
-    if (typeof touchObject.length !== 'undefined' && touchObject.length > 44) {
-      onClickSafeOn();
-    } else {
-      onClickSafeOff();
-    }
     if (touchObject.length > slideWidth / slidesToShow / 5) {
       if (touchObject.direction === 1) {
         if (currentSlide >= slideCount - slidesToShow) {

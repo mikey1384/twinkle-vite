@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Main from './Main';
 import SearchPosterInput from './SearchPosterInput';
@@ -6,6 +7,40 @@ import Searched from './Searched';
 import { useContentState } from '~/helpers/hooks';
 import { useContentContext } from '~/contexts';
 
+Container.propTypes = {
+  autoExpand: PropTypes.bool,
+  autoFocus: PropTypes.bool,
+  banned: PropTypes.object,
+  CommentInputAreaRef: PropTypes.object,
+  CommentRefs: PropTypes.object,
+  comments: PropTypes.array.isRequired,
+  commentsHidden: PropTypes.bool,
+  commentsShown: PropTypes.bool,
+  commentsLoadLimit: PropTypes.number,
+  disableReason: PropTypes.string,
+  inputAtBottom: PropTypes.bool,
+  inputAreaInnerRef: PropTypes.object,
+  inputTypeLabel: PropTypes.string.isRequired,
+  isLoading: PropTypes.bool,
+  isPreview: PropTypes.bool,
+  isSubjectPannelComments: PropTypes.bool,
+  loadMoreShown: PropTypes.bool,
+  loadMoreButtonColor: PropTypes.string.isRequired,
+  noInput: PropTypes.bool,
+  numInputRows: PropTypes.number,
+  numPreviews: PropTypes.number,
+  onCommentSubmit: PropTypes.func.isRequired,
+  onLoadMoreComments: PropTypes.func.isRequired,
+  onSetCommentSubmitted: PropTypes.func.isRequired,
+  parent: PropTypes.object.isRequired,
+  previewComments: PropTypes.array,
+  showSecretButtonAvailable: PropTypes.bool,
+  subject: PropTypes.object,
+  subjectId: PropTypes.number,
+  theme: PropTypes.string,
+  uploadComment: PropTypes.func.isRequired,
+  rootContent: PropTypes.object
+};
 export default function Container({
   autoExpand,
   autoFocus,
