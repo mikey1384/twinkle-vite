@@ -1,4 +1,5 @@
 import React, { memo, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Embedly from '~/components/Embedly';
 import RewardLevelBar from '~/components/RewardLevelBar';
@@ -12,6 +13,17 @@ import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
 
+ContentListItem.propTypes = {
+  onClick: PropTypes.func,
+  contentObj: PropTypes.object.isRequired,
+  expandable: PropTypes.bool,
+  modalOverModal: PropTypes.bool,
+  onContentIsDeleted: PropTypes.func,
+  selectable: PropTypes.bool,
+  selected: PropTypes.bool,
+  style: PropTypes.object,
+  innerStyle: PropTypes.object
+};
 function ContentListItem({
   onClick = () => null,
   contentObj,
@@ -35,8 +47,8 @@ function ContentListItem({
   onContentIsDeleted?: (contentId: number) => void;
   selectable?: boolean;
   selected?: boolean;
-  style?: any;
-  innerStyle?: any;
+  style?: React.CSSProperties;
+  innerStyle?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
@@ -90,10 +102,10 @@ function ContentListItem({
         borderRadius,
         boxShadow: selected
           ? `0 0 5px ${Color[itemSelectedColor](itemSelectedOpacity)}`
-          : null,
+          : '',
         border: selected
           ? `0.5rem solid ${Color[itemSelectedColor](itemSelectedOpacity)}`
-          : null,
+          : '',
         ...style
       }}
       className={css`

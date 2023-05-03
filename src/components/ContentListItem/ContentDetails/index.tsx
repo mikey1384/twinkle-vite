@@ -8,26 +8,26 @@ import { User } from '~/types';
 
 ContentDetails.propTypes = {
   contentType: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
+  description: PropTypes.string,
   story: PropTypes.string,
-  title: PropTypes.string.isRequired,
+  title: PropTypes.string,
   uploader: PropTypes.object.isRequired,
   contentId: PropTypes.number.isRequired,
   topic: PropTypes.string
 };
 export default function ContentDetails({
   contentType,
-  description,
+  description = '',
   story,
-  title,
+  title = '',
   uploader,
   contentId,
   topic
 }: {
   contentType: string;
-  description: string;
+  description?: string;
   story: string;
-  title: string;
+  title?: string;
   uploader: User;
   contentId: number;
   topic: string;
