@@ -342,9 +342,11 @@ export default function contentRequestHelpers({
         const {
           data: { comments, loadMoreButton }
         } = await request.get(
-          `${URL}/content/comments?contentId=${contentId}&contentType=${contentType}&lastCommentId=${lastCommentId}&limit=${limit}${
+          `${URL}/content/comments?contentId=${contentId}&contentType=${contentType}&lastCommentId=${lastCommentId}${
             isPreview ? '&isPreview=1' : ''
-          }${isRepliesOfReply ? '&isRepliesOfReply=1' : ''}`
+          }${isRepliesOfReply ? '&isRepliesOfReply=1' : ''}${
+            limit ? `&limit=${limit}` : ''
+          }`
         );
         return Promise.resolve({ comments, loadMoreButton });
       } catch (error) {
