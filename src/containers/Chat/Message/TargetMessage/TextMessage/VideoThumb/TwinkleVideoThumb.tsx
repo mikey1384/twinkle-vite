@@ -18,7 +18,7 @@ export default function TwinkleVideoThumb({
     [videoUrl]
   );
   const { content, rewardLevel, notFound } = useContentState({
-    contentId: videoId,
+    contentId: Number(videoId),
     contentType: 'video'
   });
 

@@ -77,11 +77,9 @@ export default function CallScreen({ style }: { style?: React.CSSProperties }) {
             alignItems: 'center'
           }}
         >
-          <Button filled color="green">
+          <Button filled color="green" onClick={handleShowIncoming}>
             <Icon icon="phone-volume" />
-            <span style={{ marginLeft: '1rem' }} onClick={handleShowIncoming}>
-              Answer
-            </span>
+            <span style={{ marginLeft: '1rem' }}>Answer</span>
           </Button>
         </div>
       )}

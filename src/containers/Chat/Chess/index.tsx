@@ -54,7 +54,7 @@ export default function Chess({
   opponentId = 0,
   opponentName = '',
   rewindRequestId,
-  senderId,
+  senderId = 0,
   senderName,
   spoilerOff,
   style
@@ -83,7 +83,7 @@ export default function Chess({
   opponentId?: number;
   opponentName?: string;
   rewindRequestId?: number;
-  senderId: number;
+  senderId?: number;
   senderName?: string;
   spoilerOff?: boolean;
   style?: React.CSSProperties;

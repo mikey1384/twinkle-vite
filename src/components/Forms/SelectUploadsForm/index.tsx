@@ -9,7 +9,7 @@ export default function SelectUploadsForm({
   loaded = true,
   loading,
   loadingMore,
-  loadMoreUploads,
+  loadMoreUploads = () => null,
   loadMoreButton,
   onSelect,
   onDeselect,

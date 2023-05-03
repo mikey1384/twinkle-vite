@@ -205,7 +205,7 @@ export default function TransactionModal({
             }}
             onHide={
               isAICardModalShown || dropdownShown
-                ? undefined
+                ? () => null
                 : () => setAICardModalType(null)
             }
           />

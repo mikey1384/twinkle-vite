@@ -20,7 +20,7 @@ export default function UserListModal({
   loadingMore,
   modalOverModal,
   onHide,
-  onLoadMore,
+  onLoadMore = () => null,
   title,
   users
 }: {
@@ -31,7 +31,7 @@ export default function UserListModal({
   loading?: boolean;
   loadingMore?: boolean;
   modalOverModal?: boolean;
-  onHide?: () => void;
+  onHide: () => void;
   onLoadMore?: () => void;
   title?: any;
   users: Array<{

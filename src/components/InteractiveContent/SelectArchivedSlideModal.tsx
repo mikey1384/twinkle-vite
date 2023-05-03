@@ -11,7 +11,7 @@ export default function SelectArchivedSlideModal({
   archivedSlides
 }: {
   interactiveId: number;
-  onDone: (slideId: number | null) => void;
+  onDone: (slideId: number | null) => any;
   onHide: () => void;
   archivedSlides: any[];
 }) {

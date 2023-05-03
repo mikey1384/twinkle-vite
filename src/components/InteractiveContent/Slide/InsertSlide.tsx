@@ -110,7 +110,8 @@ export default function InsertSlide({
     </div>
   );
 
-  async function handleInsertArchivedSlide(selectedSlideId: number) {
+  async function handleInsertArchivedSlide(selectedSlideId: number | null) {
+    if (!selectedSlideId) return;
     const numUpdates = await insertArchivedSlide({
       interactiveId,
       slideId,
