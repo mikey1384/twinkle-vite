@@ -6,6 +6,7 @@ import React, {
   useState,
   useRef
 } from 'react';
+import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import TextEditSection from './TextEditSection';
 import { useInputContext, useKeyContext } from '~/contexts';
@@ -24,6 +25,19 @@ import localize from '~/constants/localize';
 const cancelLabel = localize('cancel');
 const doneLabel = localize('done');
 
+ContentEditor.propTypes = {
+  comment: PropTypes.string,
+  content: PropTypes.string,
+  contentId: PropTypes.number.isRequired,
+  contentType: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  filePath: PropTypes.string,
+  onDismiss: PropTypes.func.isRequired,
+  onEditContent: PropTypes.func.isRequired,
+  secretAnswer: PropTypes.string,
+  style: PropTypes.object,
+  title: PropTypes.string
+};
 function ContentEditor({
   comment,
   content,
@@ -42,7 +56,7 @@ function ContentEditor({
   contentId: number;
   contentType: string;
   description: string;
-  filePath: string;
+  filePath?: string;
   onDismiss: () => void;
   onEditContent: (args: any) => void;
   secretAnswer: string;
