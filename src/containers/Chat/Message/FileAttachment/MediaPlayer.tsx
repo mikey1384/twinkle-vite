@@ -11,8 +11,8 @@ const deviceIsMobile = isMobile(navigator);
 export default function MediaPlayer({
   messageId,
   fileType,
-  onPause = () => {},
-  onPlay = () => {},
+  onPause = () => null,
+  onPlay = () => null,
   src,
   thumbUrl
 }: {

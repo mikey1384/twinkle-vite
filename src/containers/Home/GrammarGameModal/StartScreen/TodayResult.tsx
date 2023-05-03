@@ -25,7 +25,7 @@ export default function TodayResult({
   const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
   const todaysScore = useMemo(() => {
     let totalScore = 0;
-    for (let result of results) {
+    for (const result of results) {
       if (!result?.length) continue;
       const sum = result.reduce(
         (acc: number, cur: number) => acc + scoreTable[cur],

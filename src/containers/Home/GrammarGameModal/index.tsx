@@ -33,7 +33,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   }, [questionIds, questionObj]);
   const isOnStreak = useMemo(() => {
     if (!scoreArray || scoreArray?.length < 2) return false;
-    for (let score of scoreArray) {
+    for (const score of scoreArray) {
       if (score !== 'S') {
         return false;
       }

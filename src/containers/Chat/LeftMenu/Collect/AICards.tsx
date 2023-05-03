@@ -27,10 +27,10 @@ export default function AICards() {
       return lastActivity?.offer?.user;
     }
     if (lastActivity?.type === 'transfer') {
-      if (!!lastActivity?.transfer?.askId) {
+      if (lastActivity?.transfer?.askId) {
         return lastActivity?.transfer?.to;
       }
-      if (!!lastActivity?.transfer?.offerId) {
+      if (lastActivity?.transfer?.offerId) {
         return lastActivity?.transfer?.from;
       }
     }
@@ -45,10 +45,10 @@ export default function AICards() {
       } for a${card?.quality === 'elite' ? 'n' : ''}`;
     }
     if (lastActivity?.type === 'transfer') {
-      if (!!lastActivity?.transfer?.askId) {
+      if (lastActivity?.transfer?.askId) {
         return `bought a${card?.quality === 'elite' ? 'n' : ''}`;
       }
-      if (!!lastActivity?.transfer?.offerId) {
+      if (lastActivity?.transfer?.offerId) {
         return `sold a${card?.quality === 'elite' ? 'n' : ''}`;
       }
     }

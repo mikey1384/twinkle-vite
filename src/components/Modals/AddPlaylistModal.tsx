@@ -227,7 +227,7 @@ export default function AddPlaylistModal({
                   id={videoId}
                   video={playlistVideoObjects.current[videoId]}
                   onMove={({ sourceId, targetId }) => {
-                    let selected = [...selectedVideos];
+                    const selected = [...selectedVideos];
                     const sourceIndex = selected.indexOf(sourceId);
                     const targetIndex = selected.indexOf(targetId);
                     selected.splice(sourceIndex, 1);

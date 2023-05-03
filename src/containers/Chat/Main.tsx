@@ -380,7 +380,7 @@ export default function Main({
       currentChannel?.subchannelObj &&
       selectedChannelId === parseChannelPath(currentPathId)
     ) {
-      for (let subchannel of Object.values(currentChannel?.subchannelObj)) {
+      for (const subchannel of Object.values(currentChannel?.subchannelObj)) {
         if (subchannel?.path === subchannelPath) {
           subchannelPathExistsAndIsInvalid = false;
         }
@@ -691,7 +691,7 @@ export default function Main({
 
   const currentOnlineUsers = useMemo(() => {
     const result: any = {};
-    for (let user of Object.values(chatStatus)) {
+    for (const user of Object.values(chatStatus)) {
       if (user?.isOnline) {
         result[user.id] = user;
       }
@@ -737,8 +737,9 @@ export default function Main({
       pathId: number | string;
       channelName: string;
     }) => {
-      let messageIsForCurrentChannel = message.channelId === selectedChannelId;
-      let senderIsUser = message.userId === userId;
+      const messageIsForCurrentChannel =
+        message.channelId === selectedChannelId;
+      const senderIsUser = message.userId === userId;
       if (senderIsUser) return;
       if (messageIsForCurrentChannel) {
         onReceiveMessage({ message, pageVisible });

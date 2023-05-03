@@ -5,6 +5,7 @@ import Loading from '~/components/Loading';
 import SearchedComment from './SearchedComment';
 import { useAppContext } from '~/contexts';
 import { Content, Subject, User } from '~/types';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 Searched.propTypes = {
   parent: PropTypes.shape({
@@ -13,8 +14,8 @@ Searched.propTypes = {
     subjectId: PropTypes.number
   }).isRequired,
   rootContent: PropTypes.shape({
-    contentId: PropTypes.number.isRequired,
-    contentType: PropTypes.string.isRequired,
+    contentId: PropTypes.number,
+    contentType: PropTypes.string,
     subjectId: PropTypes.number
   }).isRequired,
   loadMoreButtonColor: PropTypes.string,
@@ -25,7 +26,7 @@ Searched.propTypes = {
   subject: PropTypes.shape({
     id: PropTypes.number,
     title: PropTypes.string
-  }).isRequired,
+  }),
   theme: PropTypes.string
 };
 export default function Searched({
@@ -73,40 +74,42 @@ export default function Searched({
   }, []);
 
   return (
-    <div
-      style={{
-        width: '100%'
-      }}
-    >
-      {loading ? (
-        <Loading />
-      ) : (
-        comments.map((comment) => (
-          <SearchedComment
-            key={comment.id}
-            parent={parent}
-            rootContent={rootContent}
-            comment={comment}
-            subject={subject}
-            theme={theme}
+    <ErrorBoundary componentPath="Comments/Searched">
+      <div
+        style={{
+          width: '100%'
+        }}
+      >
+        {loading ? (
+          <Loading />
+        ) : (
+          comments.map((comment) => (
+            <SearchedComment
+              key={comment.id}
+              parent={parent}
+              rootContent={rootContent}
+              comment={comment}
+              subject={subject}
+              theme={theme}
+            />
+          ))
+        )}
+        {loadMoreShown && (
+          <LoadMoreButton
+            filled
+            color={loadMoreButtonColor}
+            loading={loadingMore}
+            onClick={handleLoadMore}
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              marginTop: '1rem'
+            }}
           />
-        ))
-      )}
-      {loadMoreShown && (
-        <LoadMoreButton
-          filled
-          color={loadMoreButtonColor}
-          loading={loadingMore}
-          onClick={handleLoadMore}
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            marginTop: '1rem'
-          }}
-        />
-      )}
-    </div>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 
   async function handleLoadMore() {

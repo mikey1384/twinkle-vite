@@ -8,6 +8,7 @@ import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
+import { User } from '~/types';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function UserListModal({
@@ -17,6 +18,7 @@ export default function UserListModal({
   loadMoreButtonShown,
   loading,
   loadingMore,
+  modalOverModal,
   onHide,
   onLoadMore,
   title,
@@ -24,10 +26,11 @@ export default function UserListModal({
 }: {
   description?: string;
   descriptionColor?: string;
-  descriptionShown?: (v: object) => void | boolean;
+  descriptionShown?: ((v: User) => boolean) | boolean;
   loadMoreButtonShown?: boolean;
   loading?: boolean;
   loadingMore?: boolean;
+  modalOverModal?: boolean;
   onHide?: () => void;
   onLoadMore?: () => void;
   title?: any;
@@ -59,7 +62,7 @@ export default function UserListModal({
   }, [userId, users]);
 
   return (
-    <Modal small onHide={onHide}>
+    <Modal modalOverModal={modalOverModal} small onHide={onHide}>
       <header>{title}</header>
       <main style={{ paddingTop: 0 }}>
         <RoundList>

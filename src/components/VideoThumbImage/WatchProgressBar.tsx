@@ -3,6 +3,11 @@ import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
+WatchProgressBar.propTypes = {
+  className: PropTypes.string,
+  percentage: PropTypes.number,
+  style: PropTypes.object
+};
 function WatchProgressBar({
   className,
   style,

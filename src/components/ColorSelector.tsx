@@ -70,7 +70,7 @@ export default function ColorSelector({
             onClick={
               twinkleXP >= (requirement[color] || -1)
                 ? () => setColor(color)
-                : () => {}
+                : () => null
             }
             onMouseEnter={() => setHovered(color)}
             onMouseLeave={() => setHovered('')}

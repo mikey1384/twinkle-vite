@@ -26,7 +26,7 @@ export default function Tutorial({
   className?: string;
   style?: React.CSSProperties;
   mission: any;
-  innerRef: React.RefObject<any>;
+  innerRef?: React.RefObject<any>;
 }) {
   const { managementLevel } = useKeyContext((v) => v.myState);
   const myAttempts = useMissionContext((v) => v.state.myAttempts);

@@ -138,7 +138,7 @@ export default function FilterModal({
     if (selectedQuality !== 'any') {
       obj.quality = selectedQuality;
     }
-    let queryString =
+    const queryString =
       Object.keys(obj).length > 0
         ? `/ai-cards/?${Object.entries(obj)
             .map(([key, value]) => `search[${key}]=${value}`)

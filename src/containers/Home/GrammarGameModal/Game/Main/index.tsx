@@ -113,7 +113,7 @@ export default function Main({
       let numWords = 0;
       if (questionObj[currentIndex]) {
         const { choices } = questionObj[currentIndex];
-        for (let choice of choices) {
+        for (const choice of choices) {
           numLetters += choice.length;
           numWords += choice.split(' ').length;
         }

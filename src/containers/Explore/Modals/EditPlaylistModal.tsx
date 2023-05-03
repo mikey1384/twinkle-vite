@@ -242,7 +242,7 @@ export default function EditPlaylistModal({
                         id={videoId}
                         video={playlistVideoObjects.current[videoId]}
                         onMove={({ sourceId, targetId }) => {
-                          let selected = [...videosToRearrange];
+                          const selected = [...videosToRearrange];
                           const sourceIndex = selected.indexOf(sourceId);
                           const targetIndex = selected.indexOf(targetId);
                           selected.splice(sourceIndex, 1);
@@ -376,7 +376,7 @@ export default function EditPlaylistModal({
         ...playlistVideoObjects.current,
         ...objectify(loadedVideos)
       };
-      for (let video of loadedVideos) {
+      for (const video of loadedVideos) {
         initialSelectedVideos.current = initialSelectedVideos.current
           .filter((videoId) => videoId !== video.id)
           .concat(video.id);
@@ -488,7 +488,7 @@ export default function EditPlaylistModal({
       ...playlistVideoObjects.current,
       ...objectify(loadedVideos)
     };
-    for (let video of loadedVideos) {
+    for (const video of loadedVideos) {
       initialSelectedVideos.current = initialSelectedVideos.current
         .filter((videoId) => videoId !== video.id)
         .concat(video.id);
@@ -531,7 +531,7 @@ export default function EditPlaylistModal({
       ...playlistVideoObjects.current,
       ...objectify(loadedVideos)
     };
-    for (let video of loadedVideos) {
+    for (const video of loadedVideos) {
       if (!selectedVideos.includes(video.id) && !removedVideoIds[video.id]) {
         setSelectedVideos((selectedVideos) => selectedVideos.concat(video.id));
       }

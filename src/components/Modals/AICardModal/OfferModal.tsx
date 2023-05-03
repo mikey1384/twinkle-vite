@@ -110,7 +110,7 @@ export default function OfferModal({
     onSetOffers((prevOffers: any[]) => {
       const result = [];
       let found = false;
-      for (let offer of prevOffers) {
+      for (const offer of prevOffers) {
         const newOffer = { ...offer };
         if (offer.price === amount) {
           found = true;

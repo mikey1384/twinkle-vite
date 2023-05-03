@@ -27,19 +27,27 @@ export default function Task({
     description,
     title,
     subtitle,
-    fileUploadProgress,
     objective,
     xpReward,
     coinReward,
     retryable,
-    missionType,
-    uploadingFile
+    missionType
   },
   onSetMissionState,
   style,
   nextTaskType
 }: {
-  task: any;
+  task: {
+    id: number;
+    description: string;
+    title: string;
+    subtitle: string;
+    objective: string;
+    xpReward: number;
+    coinReward: number;
+    retryable: boolean;
+    missionType: string;
+  };
   onSetMissionState: (v: any) => void;
   style?: React.CSSProperties;
   nextTaskType?: string;

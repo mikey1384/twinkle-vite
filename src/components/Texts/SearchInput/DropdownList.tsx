@@ -15,7 +15,7 @@ export default function DropdownList({
   renderItemLabel?: (item: any) => any;
   renderItemUrl?: (item: any) => string;
   searchResults: any[];
-  onClickOutSide: () => void;
+  onClickOutSide?: () => void;
   onSelect?: (item: any) => void;
   onSetIndexToHighlight: (index: number) => void;
 }) {

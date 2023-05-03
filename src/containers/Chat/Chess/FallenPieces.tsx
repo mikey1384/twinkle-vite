@@ -16,7 +16,7 @@ function FallenPieces({
   const whiteFallenPiecesCompressed = useMemo(() => {
     const whiteFallenHash: Record<string, any> = {};
     if (whiteFallenPieces) {
-      for (let piece of whiteFallenPieces) {
+      for (const piece of whiteFallenPieces) {
         if (!whiteFallenHash[piece.type]) {
           whiteFallenHash[piece.type] = { ...piece, count: 1 };
         } else {
@@ -30,7 +30,7 @@ function FallenPieces({
   const blackFallenPiecesCompressed = useMemo(() => {
     const blackFallenHash: Record<string, any> = {};
     if (blackFallenPieces) {
-      for (let piece of blackFallenPieces) {
+      for (const piece of blackFallenPieces) {
         if (!blackFallenHash[piece.type]) {
           blackFallenHash[piece.type] = { ...piece, count: 1 };
         } else {

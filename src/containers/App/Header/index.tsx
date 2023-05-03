@@ -110,7 +110,7 @@ export default function Header({
   );
   const subchannelId = useMemo(() => {
     if (!subchannelPath || !currentChannel?.subchannelObj) return null;
-    for (let subchannel of Object.values(currentChannel?.subchannelObj)) {
+    for (const subchannel of Object.values(currentChannel?.subchannelObj)) {
       if (subchannel.path === subchannelPath) {
         return subchannel.id;
       }
@@ -1318,7 +1318,7 @@ export default function Header({
       }) => {
         if (callData && Object.keys(membersOnCall.current).length === 0) {
           const membersHash: { [key: string]: any } = {};
-          for (let member of Object.values(onlineUsers).filter(
+          for (const member of Object.values(onlineUsers).filter(
             (member) => !!callData.peers[member.socketId]
           )) {
             membersHash[member.id] = member.socketId;
@@ -1348,7 +1348,7 @@ export default function Header({
       channelOnCall.incomingShown &&
       !channelOnCall.imCalling
     ) {
-      for (let peerId in membersOnCall.current) {
+      for (const peerId in membersOnCall.current) {
         socket.emit('inform_peer_signal_accepted', {
           peerId,
           channelId: channelOnCall.id
@@ -1412,7 +1412,7 @@ export default function Header({
       if (channelOnCall.imCalling) {
         socket.emit('start_new_call', channelOnCall.id);
       } else {
-        for (let peerId in membersOnCall.current) {
+        for (const peerId in membersOnCall.current) {
           try {
             if (peersRef.current[peerId]) {
               peersRef.current[peerId].addStream(myStream);

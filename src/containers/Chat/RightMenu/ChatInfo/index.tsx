@@ -74,7 +74,7 @@ export default function ChatInfo({
 
   const onlineChannelMembers = useMemo(() => {
     const me = { id: myId, username, profilePicUrl };
-    let onlineMembersOtherThanMe = Object.values(currentOnlineUsers).filter(
+    const onlineMembersOtherThanMe = Object.values(currentOnlineUsers).filter(
       (member) =>
         !!member.id &&
         member.id !== myId &&

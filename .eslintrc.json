@@ -25,6 +25,7 @@
     "document": false,
     "fetch": true,
     "Image": true,
+    "JSX": true,
     "spyOn": true,
     "navigator": false,
     "window": false,
@@ -60,6 +61,11 @@
     "react/prop-types": "off",
     "react-hooks/exhaustive-deps": "warn",
     "semi": "error"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
   },
   "overrides": [
     {

@@ -14,6 +14,12 @@ import URL from '~/constants/URL';
 
 const API_URL = `${URL}/chat`;
 
+SubjectMsgsModal.propTypes = {
+  displayedThemeColor: PropTypes.string,
+  onHide: PropTypes.func.isRequired,
+  subjectId: PropTypes.number.isRequired,
+  subjectTitle: PropTypes.string.isRequired
+};
 export default function SubjectMsgsModal({
   displayedThemeColor = '',
   onHide,

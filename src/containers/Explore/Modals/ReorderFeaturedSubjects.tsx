@@ -75,7 +75,7 @@ export default function ReorderFeaturedSubjects({
 
   async function handleSubmit() {
     setIsReordering(true);
-    for (let subjectId of subjectIds) {
+    for (const subjectId of subjectIds) {
       if (!subjectId) {
         return reportError({
           componentPath: 'Explore/Modals/ReorderFeaturedSubjects',

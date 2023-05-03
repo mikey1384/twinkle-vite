@@ -215,12 +215,12 @@ function XPBar({
         onClick={
           deviceIsMobile && reachedMaxWatchDuration
             ? () => setXPHovered((hovered) => !hovered)
-            : () => {}
+            : () => null
         }
         onMouseEnter={
           !deviceIsMobile && reachedMaxWatchDuration
             ? () => setXPHovered(true)
-            : () => {}
+            : () => null
         }
         onMouseLeave={() => setXPHovered(false)}
       >

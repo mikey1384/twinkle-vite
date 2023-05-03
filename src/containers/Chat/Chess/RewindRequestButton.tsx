@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Color } from '~/constants/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
