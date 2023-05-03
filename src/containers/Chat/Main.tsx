@@ -401,7 +401,7 @@ export default function Main({
   ]);
 
   useEffect(() => {
-    if (!isNaN(Number(currentPathId))) {
+    if (currentPathId && !isNaN(Number(currentPathId))) {
       const channelId = parseChannelPath(currentPathId);
       if (currentSelectedChannelIdRef.current !== channelId) {
         onUpdateSelectedChannelId(channelId);

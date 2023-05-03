@@ -1266,7 +1266,6 @@ function MessagesContainer({
           >
             <DropdownButton
               skeuomorphic
-              color="darkerGray"
               opacity={0.7}
               listStyle={{
                 width: '15rem'
