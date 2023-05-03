@@ -17,11 +17,11 @@ export default function RewardLevelInfo({
   videoId,
   xpWarningShown
 }: {
-  playing: boolean;
-  reachedMaxWatchDuration: boolean;
+  playing?: boolean;
+  reachedMaxWatchDuration?: boolean;
   rewardLevel: number;
   videoId: number;
-  xpWarningShown: boolean;
+  xpWarningShown?: boolean;
 }) {
   const theme = useKeyContext((v) => v.theme);
   const { numCoinsEarned = 0, numXpEarned = 0 } = useContentState({

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
 import localize from '~/constants/localize';
@@ -6,6 +6,7 @@ import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { User } from '~/types';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -15,7 +16,13 @@ Rankings.propTypes = {
   rankingsTab: PropTypes.string.isRequired
 };
 
-export default function Rankings({ rankingsTab, onSetRankingsTab }) {
+export default function Rankings({
+  rankingsTab,
+  onSetRankingsTab
+}: {
+  rankingsTab: string;
+  onSetRankingsTab: (tab: string) => void;
+}) {
   const loadAIStoryRankings = useAppContext(
     (v) => v.requestHelpers.loadAIStoryRankings
   );
@@ -87,7 +94,7 @@ export default function Rankings({ rankingsTab, onSetRankingsTab }) {
         }}
       >
         <RoundList style={{ marginTop: 0 }} width="35rem" mobileWidth="100%">
-          {users.map((user) => (
+          {users.map((user: User) => (
             <RankingsListItem
               small
               key={user.id}

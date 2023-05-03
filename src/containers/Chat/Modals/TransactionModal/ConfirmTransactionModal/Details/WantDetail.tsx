@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import AICardsPreview from '~/components/AICardsPreview';
@@ -9,17 +10,20 @@ WantDetail.propTypes = {
   isExpressingInterest: PropTypes.bool,
   cardIds: PropTypes.array.isRequired,
   coins: PropTypes.number.isRequired,
-  onSetAICardModalCardId: PropTypes.func.isRequired,
-  partner: PropTypes.object.isRequired
+  onSetAICardModalCardId: PropTypes.func.isRequired
 };
-
 export default function WantDetail({
   isAICardModalShown,
   isExpressingInterest,
   cardIds,
   coins,
-  onSetAICardModalCardId,
-  partner
+  onSetAICardModalCardId
+}: {
+  isAICardModalShown: boolean;
+  isExpressingInterest: boolean;
+  cardIds: number[];
+  coins: number;
+  onSetAICardModalCardId: (cardId: number) => void;
 }) {
   return (
     <div
@@ -77,11 +81,10 @@ export default function WantDetail({
           </div>
         )}
         <AICardsPreview
-          modalOverModal
+          isOnModal
           isAICardModalShown={isAICardModalShown}
           cardIds={cardIds}
           onSetAICardModalCardId={onSetAICardModalCardId}
-          partnerId={partner.id}
         />
       </div>
     </div>

@@ -15,18 +15,21 @@ LoadMoreButton.propTypes = {
   label: PropTypes.string,
   loading: PropTypes.bool,
   color: PropTypes.string,
+  onClick: PropTypes.func.isRequired,
   theme: PropTypes.string
 };
 export default function LoadMoreButton({
   label,
   loading,
   color,
+  onClick,
   theme,
   ...props
 }: {
   label?: string;
   loading?: boolean;
   color?: string;
+  onClick: () => any;
   theme?: string;
   [key: string]: any;
 }) {
@@ -48,6 +51,7 @@ export default function LoadMoreButton({
         <Button
           disabled={!!loading}
           color={color || loadMoreButtonColor}
+          onClick={onClick}
           {...props}
         >
           {loading ? loadingLabel : label || loadMoreLabel}

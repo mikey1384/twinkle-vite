@@ -10,7 +10,7 @@ import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 import { User } from '~/types';
 
 Body.propTypes = {
-  channelName: PropTypes.string.isRequired,
+  channelName: PropTypes.string,
   partner: PropTypes.object,
   currentChannel: PropTypes.object.isRequired,
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
@@ -32,7 +32,7 @@ export default function Body({
   subchannelId,
   subchannelPath
 }: {
-  channelName: string;
+  channelName?: string;
   partner?: User;
   currentChannel: any;
   currentPathId: string | number;

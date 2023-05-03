@@ -1,18 +1,26 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
+import { User } from '~/types';
 
 Ranker.propTypes = {
-  myId: PropTypes.number,
+  myId: PropTypes.number.isRequired,
   style: PropTypes.object,
   user: PropTypes.object
 };
-
-export default function Ranker({ myId, style, user }) {
+export default function Ranker({
+  myId,
+  style,
+  user
+}: {
+  myId: number;
+  style?: React.CSSProperties;
+  user: User;
+}) {
   const rankColor = useMemo(() => {
     return user.rank === 1
       ? Color.gold()
@@ -64,14 +72,13 @@ export default function Ranker({ myId, style, user }) {
           <div>
             <ProfilePic
               style={{ width: '3rem' }}
-              profilePicUrl={user.profilePicUrl}
+              profilePicUrl={user.profilePicUrl as string}
               userId={user.id}
             />
           </div>
           <UsernameText
             color={textColor}
             user={{ ...user, username: user.username }}
-            userId={myId}
             style={{
               marginTop: '0.5rem',
               textAlign: 'center',
