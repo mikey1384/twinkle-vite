@@ -39,8 +39,7 @@ export default defineConfig({
           Buffer: ['buffer', 'Buffer'],
           process: 'process'
         }) as any
-      ],
-      external: ['@babel/parser']
+      ]
     },
     sourcemap: true
   }
