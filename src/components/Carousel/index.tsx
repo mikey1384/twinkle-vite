@@ -49,7 +49,7 @@ export default function Carousel({
   nextButtonDisabled,
   onCheckNavCondition,
   onFinish,
-  onShowAll,
+  onShowAll = () => null,
   progressBar,
   slideIndex = 0,
   slidesToScroll = 1,

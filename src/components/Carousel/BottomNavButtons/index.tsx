@@ -23,7 +23,7 @@ export default function BottomNavButtons({
   nextButtonDisabled,
   onPrev,
   onNext,
-  onFinish,
+  onFinish = () => null,
   slideCount,
   onCheckNavCondition,
   conditionPassStatus
