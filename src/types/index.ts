@@ -26,14 +26,17 @@ export interface Comment {
   id: number;
   isExpanded: boolean;
   isNotification: boolean;
+  lastReplyId: number;
   likes: any[];
   loadMoreButton: boolean;
+  isLoadMoreButton: boolean;
   numReplies: number;
   parent: Content | User;
   recommendations: Recommendation[];
   rewards: Reward[];
   replyId: number;
   replies: Comment[];
+  rootReplyId: number;
   targetObj: any;
   targetUserId: number;
   targetUserName: string;
