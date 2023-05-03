@@ -1,14 +1,14 @@
 import React, { Children, useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import NavButton from './NavButton';
 import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
+import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import * as d3Ease from 'd3-ease';
 import { Animate } from 'react-move';
 import { Color } from '~/constants/css';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
-import { useKeyContext } from '~/contexts';
+import { useExploreContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import BottomNavButtons from './BottomNavButtons';
 import localize from '~/constants/localize';
@@ -16,12 +16,12 @@ import localize from '~/constants/localize';
 const showAllLabel = localize('showAll');
 
 Carousel.propTypes = {
-  allowDrag: PropTypes.bool,
   afterSlide: PropTypes.func,
+  allowDrag: PropTypes.bool,
   beforeSlide: PropTypes.func,
-  className: PropTypes.string,
+  children: PropTypes.array.isRequired,
   cellSpacing: PropTypes.number,
-  children: PropTypes.node.isRequired,
+  className: PropTypes.string,
   conditionPassStatus: PropTypes.string,
   framePadding: PropTypes.string,
   nextButtonDisabled: PropTypes.bool,
@@ -29,13 +29,13 @@ Carousel.propTypes = {
   onFinish: PropTypes.func,
   onShowAll: PropTypes.func,
   progressBar: PropTypes.bool,
+  showAllButton: PropTypes.bool,
   slideIndex: PropTypes.number,
-  slidesToScroll: PropTypes.number,
+  slidesToScroll: PropTypes.number.isRequired,
   slidesToShow: PropTypes.number,
   slideWidthMultiplier: PropTypes.number,
-  showAllButton: PropTypes.bool,
   style: PropTypes.object,
-  title: PropTypes.string
+  title: PropTypes.any
 };
 export default function Carousel({
   allowDrag = true,
@@ -59,31 +59,35 @@ export default function Carousel({
   style,
   title
 }: {
+  afterSlide?: (index: number) => any;
   allowDrag?: boolean;
-  afterSlide?: (v: number) => void;
-  beforeSlide?: (v: number) => void;
-  className?: string;
+  beforeSlide?: (currentSlide: number, index: any) => any;
   cellSpacing?: number;
-  children: React.ReactNode;
+  children: any;
+  className?: string;
   conditionPassStatus?: string;
   framePadding?: string;
   nextButtonDisabled?: boolean;
-  onCheckNavCondition?: (onNext: () => void) => boolean;
-  onFinish?: () => void;
-  onShowAll?: () => void;
+  onCheckNavCondition?: (v: any) => any;
+  onFinish?: () => any;
+  onShowAll?: () => any;
   progressBar?: boolean;
   slideIndex?: number;
   slidesToScroll?: number;
   slidesToShow?: number;
   slideWidthMultiplier?: number;
   showAllButton?: boolean;
-  style?: React.CSSProperties;
-  title?: string | React.ReactNode;
+  style?: any;
+  title?: any;
 }) {
   const {
     carouselProgress: { color: carouselProgressColor },
     carouselProgressComplete: { color: carouselProgressCompleteColor }
   } = useKeyContext((v) => v.theme);
+  const clickSafe = useExploreContext((v) => v.state.videos.clickSafe);
+  const onClickSafeOff = useExploreContext((v) => v.actions.onClickSafeOff);
+  const onClickSafeOn = useExploreContext((v) => v.actions.onClickSafeOn);
+
   const DEFAULT_DURATION = 300;
   const DEFAULT_EASING = 'easeCircleOut';
   const DEFAULT_EDGE_EASING = 'easeElasticOut';
@@ -246,6 +250,7 @@ export default function Carousel({
               handleSwipe();
             }
           }}
+          onClick={handleClick}
         >
           <Animate
             show
@@ -261,7 +266,7 @@ export default function Carousel({
                 },
                 events: {
                   end: () => {
-                    const newLeft = getTargetLeft(0, 0);
+                    const newLeft = getTargetLeft();
                     if (newLeft !== left) {
                       setLeft(newLeft);
                     }
@@ -377,15 +382,25 @@ export default function Carousel({
     ));
   }
 
-  function getTargetLeft(touchOffset: number, slide: number) {
+  function handleClick(e: any) {
+    if (clickSafe) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.nativeEvent) {
+        e.nativeEvent.stopPropagation();
+      }
+    }
+  }
+
+  function getTargetLeft(touchOffset?: number, slide?: number) {
     const target = slide || currentSlide;
-    const offset = 0 - cellSpacing * target - touchOffset;
+    const offset = 0 - cellSpacing * target - (touchOffset || 0);
     const left = slideWidth * target;
     return (left - offset) * -1;
   }
 
   function getOffsetDeltas() {
-    const offset = getTargetLeft(touchObject.length * touchObject.direction, 0);
+    const offset = getTargetLeft(touchObject.length * touchObject.direction);
     return {
       tx: [offset],
       ty: [0]
@@ -397,13 +412,18 @@ export default function Carousel({
       return;
     }
     setEasing(DEFAULT_EASING);
-    beforeSlide(currentSlide);
+    beforeSlide(currentSlide, index);
     setLeft(getTargetLeft(slideWidth, currentSlide));
     setCurrentSlide(index);
     afterSlide(index);
   }
 
   function handleSwipe() {
+    if (typeof touchObject.length !== 'undefined' && touchObject.length > 44) {
+      onClickSafeOn();
+    } else {
+      onClickSafeOff();
+    }
     if (touchObject.length > slideWidth / slidesToShow / 5) {
       if (touchObject.direction === 1) {
         if (currentSlide >= slideCount - slidesToShow) {
