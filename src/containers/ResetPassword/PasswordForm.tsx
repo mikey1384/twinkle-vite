@@ -17,7 +17,7 @@ export default function PasswordForm({
   userId,
   username
 }: {
-  profilePicUrl: number;
+  profilePicUrl: string;
   userId: number;
   username: string;
 }) {

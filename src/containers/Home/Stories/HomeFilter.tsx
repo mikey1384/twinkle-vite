@@ -118,7 +118,6 @@ export default function HomeFilter({
                         font-size: 1.2rem !important;
                       }
                     `}
-                    color="darkerGray"
                     icon="caret-down"
                     text={categoryObj.uploads[displayOrder]}
                     menuProps={[

@@ -486,6 +486,7 @@ export default function Main({
           ) {
             return;
           }
+          if (!selectedSubchannelId) return;
           const subchannel = await loadSubchannel({
             channelId,
             subchannelId: selectedSubchannelId

@@ -38,7 +38,7 @@ function Replies({
   disableReason?: string;
   isSubjectPannelComment?: boolean;
   subject?: Subject;
-  onPinReply: (v: number | null) => void;
+  onPinReply: (commentId: number | null) => Promise<any>;
   parent: Content;
   replies: Comment[];
   pinnedCommentId?: number;

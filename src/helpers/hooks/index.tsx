@@ -169,7 +169,7 @@ export function useMyState() {
   return result;
 }
 
-export function useTheme(color: string) {
+export function useTheme(color = 'logoBlue') {
   return useMemo(() => {
     return Theme(color);
   }, [color]);
