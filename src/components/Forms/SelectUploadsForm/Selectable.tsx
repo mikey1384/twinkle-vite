@@ -43,7 +43,7 @@ export default function Selectable({
         margin: '0.3%',
         cursor: 'pointer',
         boxShadow: `0 0 5px ${selected ? highlightColor : Color.darkerGray()}`,
-        border: selected && `0.5rem solid ${highlightColor}`,
+        border: selected ? `0.5rem solid ${highlightColor}` : '',
         background: Color.whiteGray()
       }}
     >

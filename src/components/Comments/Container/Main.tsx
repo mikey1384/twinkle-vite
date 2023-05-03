@@ -47,9 +47,7 @@ export default function Main({
     posting?: boolean;
   };
   CommentInputAreaRef?: React.RefObject<any>;
-  CommentRefs: {
-    [key: string]: React.RefObject<any>;
-  };
+  CommentRefs: Record<string, React.RefObject<any>>;
   comments: any[];
   commentsHidden?: boolean;
   commentsShown?: boolean;

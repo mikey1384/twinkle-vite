@@ -178,7 +178,7 @@ export default function MainFeeds({
               style={{ marginBottom: '1rem', width: '100%' }}
               fontSize="2.2rem"
               mobileFontSize="1.7rem"
-              onClick={totalRewardAmount > 0 ? handleCollectReward : undefined}
+              onClick={totalRewardAmount > 0 ? handleCollectReward : () => null}
             >
               <div>
                 <p>{tapToCollectRewardsLabel}</p>

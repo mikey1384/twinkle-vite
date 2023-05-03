@@ -6,10 +6,10 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useContentState } from '~/helpers/hooks';
 
 export default function Content() {
-  const { contentId } = useParams();
+  const { contentId = 0 } = useParams();
   const { videos, loaded } = useContentState({
     contentType: 'playlist',
-    contentId: contentId
+    contentId: Number(contentId)
   });
   const [background, setBackground] = useState('none');
   const [title, setTitle] = useState('');

@@ -83,7 +83,7 @@ function Comment({
   isPreview,
   parent,
   pinnedCommentId,
-  rootContent = {},
+  rootContent = { contentType: '', contentId: 0 },
   subject,
   theme,
   comment: {

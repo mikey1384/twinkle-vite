@@ -10,7 +10,7 @@ SwitchButton.propTypes = {
   color: PropTypes.string,
   disabled: PropTypes.bool,
   checked: PropTypes.bool,
-  label: PropTypes.string,
+  label: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
   onChange: PropTypes.func.isRequired,
   small: PropTypes.bool,
   theme: PropTypes.string,
@@ -31,7 +31,7 @@ export default function SwitchButton({
   color?: string;
   disabled?: boolean;
   checked?: boolean;
-  label?: string;
+  label?: string | React.ReactNode;
   onChange: () => void;
   small?: boolean;
   theme?: string;
