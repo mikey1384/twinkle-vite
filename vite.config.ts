@@ -32,9 +32,6 @@ export default defineConfig({
     }
   },
   build: {
-    rollupOptions: {
-      external: ['@babel/parser']
-    },
     sourcemap: true
   }
 });
