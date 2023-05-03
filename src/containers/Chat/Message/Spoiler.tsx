@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import {
   limitBrs,
   processMentionLink,
@@ -6,6 +7,9 @@ import {
 } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 
+Spoiler.propTypes = {
+  content: PropTypes.string
+};
 export default function Spoiler({ content = '' }) {
   const [spoilerShown, setSpoilerShown] = useState(false);
   const [grayness, setGrayness] = useState(105);
