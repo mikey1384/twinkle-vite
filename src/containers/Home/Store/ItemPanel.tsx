@@ -26,54 +26,57 @@ export default function ItemPanel({
   unlocking,
   upgradeIcon
 }: {
-  children: React.ReactNode;
-  currentLvl: number;
+  children?: React.ReactNode;
+  currentLvl?: number;
   itemName: string;
-  itemDescription: React.ReactNode;
-  isLeveled: boolean;
-  maxLvl: number;
-  karmaPoints: number;
-  locked: boolean;
-  requiredKarmaPoints: number;
-  onUnlock: () => void;
+  itemDescription?: React.ReactNode;
+  isLeveled?: boolean;
+  maxLvl?: number;
+  karmaPoints?: number;
+  locked?: boolean;
+  requiredKarmaPoints?: number;
+  onUnlock?: () => void;
   style?: React.CSSProperties;
   unlocking?: boolean;
-  upgradeIcon: React.ReactNode;
+  upgradeIcon?: React.ReactNode;
 }) {
   const [highlighted, setHighlighted] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);
   const unlockProgress = useMemo(() => {
-    return Math.floor(Math.min((karmaPoints * 100) / requiredKarmaPoints, 100));
+    return Math.floor(
+      Math.min(((karmaPoints || 0) * 100) / (requiredKarmaPoints || 0), 100)
+    );
   }, [karmaPoints, requiredKarmaPoints]);
   const locked = useMemo(() => {
-    return notUnlocked || (isLeveled && currentLvl < maxLvl);
+    return notUnlocked || (isLeveled && (currentLvl || 0) < (maxLvl || 0));
   }, [currentLvl, notUnlocked, isLeveled, maxLvl]);
   const notUpgraded = useMemo(() => {
-    return !notUnlocked && isLeveled && currentLvl < maxLvl;
+    return !notUnlocked && isLeveled && (currentLvl || 0) < (maxLvl || 0);
   }, [currentLvl, isLeveled, maxLvl, notUnlocked]);
   const requirementLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
-      return `${addCommasToNumber(requiredKarmaPoints)}KP 필요`;
+      return `${addCommasToNumber(requiredKarmaPoints || 0)}KP 필요`;
     }
-    return `Requires ${addCommasToNumber(requiredKarmaPoints)} KP`;
+    return `Requires ${addCommasToNumber(requiredKarmaPoints || 0)} KP`;
   }, [requiredKarmaPoints]);
   const requirementDescriptionLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return (
         <>
           본 아이템을 {notUpgraded ? '업그레이드' : '잠금 해제'}하시려면
-          카마포인트 <b>{addCommasToNumber(requiredKarmaPoints)}점</b>이
+          카마포인트 <b>{addCommasToNumber(requiredKarmaPoints || 0)}점</b>이
           필요합니다. 회원님의 카마포인트는 현재{' '}
-          <b>{addCommasToNumber(karmaPoints)}점</b>입니다
+          <b>{addCommasToNumber(karmaPoints || 0)}점</b>입니다
         </>
       );
     }
     return (
       <>
-        You need <b>{addCommasToNumber(requiredKarmaPoints)} karma points</b> to{' '}
+        You need{' '}
+        <b>{addCommasToNumber(requiredKarmaPoints || 0)} karma points</b> to{' '}
         {notUpgraded ? 'upgrade' : 'unlock'} this item. You have{' '}
         <b>
-          {addCommasToNumber(karmaPoints)} karma point
+          {addCommasToNumber(karmaPoints || 0)} karma point
           {karmaPoints === 1 ? '' : 's'}
         </b>
       </>

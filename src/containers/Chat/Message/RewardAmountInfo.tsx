@@ -16,7 +16,7 @@ export default function RewardAmountInfo({
   startingPosition = 0
 }: {
   rewardLevel: number;
-  startingPosition: number;
+  startingPosition?: number;
 }) {
   const theme = useKeyContext((v) => v.theme);
   const xpLevelColor = useMemo(

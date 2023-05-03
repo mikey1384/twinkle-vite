@@ -20,8 +20,8 @@ const yourUsernameAndPasswordLabel = localize('yourUsernameAndPassword');
 LoginForm.propTypes = {
   username: PropTypes.string,
   onSetUsername: PropTypes.func.isRequired,
-  onShowForgotPasswordForm: PropTypes.func,
-  onShowSignupForm: PropTypes.func
+  onShowForgotPasswordForm: PropTypes.func.isRequired,
+  onShowSignupForm: PropTypes.func.isRequired
 };
 
 export default function LoginForm({
@@ -32,8 +32,8 @@ export default function LoginForm({
 }: {
   username: string;
   onSetUsername: (username: string) => void;
-  onShowForgotPasswordForm?: () => void;
-  onShowSignupForm?: () => void;
+  onShowForgotPasswordForm: () => any;
+  onShowSignupForm: () => void;
 }) {
   const onLogin = useAppContext((v) => v.user.actions.onLogin);
   const login = useAppContext((v) => v.requestHelpers.login);

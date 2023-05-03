@@ -173,7 +173,7 @@ export default function TransactionModal({
           <Button
             transparent
             style={{ marginRight: '0.7rem' }}
-            onClick={isAICardModalShown ? undefined : onHide}
+            onClick={isAICardModalShown ? () => null : onHide}
           >
             {pendingTransaction ? 'Close' : 'Cancel'}
           </Button>

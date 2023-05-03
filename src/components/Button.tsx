@@ -49,7 +49,7 @@ function Button({
   color?: string;
   disabled?: boolean;
   loading?: boolean;
-  onClick?: (arg: any) => any;
+  onClick: (arg: any) => any;
   onHover?: boolean;
   children?: ReactNode;
   hoverColor?: string;

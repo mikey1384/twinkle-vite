@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import CurrentMission from './CurrentMission';
 import MissionList from './MissionList';
@@ -17,7 +17,6 @@ Main.propTypes = {
   myAttempts: PropTypes.object,
   userId: PropTypes.number
 };
-
 export default function Main({
   className,
   currentMissionId,
@@ -27,6 +26,15 @@ export default function Main({
   missionObj,
   myAttempts,
   userId
+}: {
+  className?: string;
+  currentMissionId: number;
+  isCreator: boolean;
+  loading: boolean;
+  missions: any[];
+  missionObj: any;
+  myAttempts: any;
+  userId: number;
 }) {
   const width = useMemo(
     () => (isCreator ? '100%' : 'CALC(100% - 5rem)'),
@@ -74,7 +82,6 @@ export default function Main({
             `}
           >
             <CurrentMission
-              mission={missionObj[currentMissionId]}
               missionId={currentMissionId}
               style={{ width: '100%' }}
             />

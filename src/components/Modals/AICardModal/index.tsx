@@ -29,7 +29,7 @@ export default function AICardModal({
 }: {
   cardId: number;
   modalOverModal?: boolean;
-  onHide?: () => void;
+  onHide: () => any;
 }) {
   const {
     link: { color: linkColor },
