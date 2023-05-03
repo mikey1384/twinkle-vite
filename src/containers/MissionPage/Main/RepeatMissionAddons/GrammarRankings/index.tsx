@@ -6,6 +6,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
+import { User } from '~/types';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -110,7 +111,7 @@ export default function GrammarRankings({
             <div />
             <div style={{ justifySelf: 'center' }}>Times Completed</div>
           </div>
-          {rankers.map((ranker: { id: number }) => (
+          {rankers.map((ranker: User) => (
             <Ranker key={ranker.id} user={ranker} myId={userId} />
           ))}
         </div>

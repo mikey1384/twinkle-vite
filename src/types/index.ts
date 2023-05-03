@@ -103,9 +103,10 @@ export interface Reward {
 }
 
 export interface Subject {
+  comments: Comment[];
   id: number;
   rewards: Reward[];
-  comments: Comment[];
+  title: string;
   rewardLevel: number;
 }
 
@@ -140,7 +141,7 @@ export interface User {
   state?: any;
   twinkleCoins?: number;
   twinkleXP?: number;
-  username?: string;
+  username: string;
   value?: number;
   [key: string]: any;
 }
