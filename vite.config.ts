@@ -3,6 +3,7 @@ import { defineConfig, splitVendorChunkPlugin } from 'vite';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import { resolve } from 'path';
 import eslint from 'vite-plugin-eslint';
+import inject from '@rollup/plugin-inject';
 
 export default defineConfig({
   plugins: [react(), splitVendorChunkPlugin(), eslint()],
@@ -32,6 +33,10 @@ export default defineConfig({
     }
   },
   build: {
+    rollupOptions: {
+      plugins: [inject({ Buffer: ['buffer', 'Buffer'], process: 'process' })],
+      external: ['@babel/parser']
+    },
     sourcemap: true
   }
 });
