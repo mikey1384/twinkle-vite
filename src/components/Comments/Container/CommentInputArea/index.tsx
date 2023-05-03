@@ -20,7 +20,7 @@ CommentInputArea.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   onViewSecretAnswer: PropTypes.func,
   parent: PropTypes.object.isRequired,
-  rootCommentId: PropTypes.string,
+  rootCommentId: PropTypes.number,
   subjectId: PropTypes.number,
   style: PropTypes.object,
   subjectRewardLevel: PropTypes.number,
@@ -53,7 +53,7 @@ export default function CommentInputArea({
   onSubmit: (v: any) => any;
   onViewSecretAnswer?: () => any;
   parent: any;
-  rootCommentId?: string;
+  rootCommentId?: number;
   subjectId?: number;
   style?: React.CSSProperties;
   subjectRewardLevel?: number;
