@@ -3,6 +3,7 @@ import Icon from '~/components/Icon';
 import AICardsPreview from '~/components/AICardsPreview';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
+import { User } from '~/types';
 
 export default function OfferDetail({
   isAICardModalShown,
@@ -19,10 +20,7 @@ export default function OfferDetail({
   cardIds: number[];
   coins: number;
   onSetAICardModalCardId: (v: number) => void;
-  partner: {
-    id: number;
-    username: string;
-  };
+  partner: User;
 }) {
   const actionLabel = useMemo(() => {
     if (selectedOption === 'want') {

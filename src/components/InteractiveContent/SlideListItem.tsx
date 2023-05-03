@@ -14,9 +14,9 @@ export default function SlideListItem({
 }: {
   interactiveId: number;
   onClick: (slideId: number) => void;
-  selectedSlideId: number | null;
+  selectedSlideId?: number | null;
   slide: any;
-  style?: any;
+  style?: React.CSSProperties;
 }) {
   const {
     itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
@@ -37,8 +37,8 @@ export default function SlideListItem({
     <div
       style={{
         ...style,
-        boxShadow: selected ? `0 0 3px ${highlightColor}` : null,
-        border: selected ? `0.3rem solid ${highlightColor}` : null
+        boxShadow: selected ? `0 0 3px ${highlightColor}` : '',
+        border: selected ? `0.3rem solid ${highlightColor}` : ''
       }}
       onClick={() => onClick(slide.id)}
       className={css`

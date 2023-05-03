@@ -1,6 +1,7 @@
 import React from 'react';
 import OfferDetail from './OfferDetail';
 import WantDetail from './WantDetail';
+import { User } from '~/types';
 
 export default function Details({
   coinsOffered,
@@ -19,7 +20,7 @@ export default function Details({
   isAICardModalShown: boolean;
   selectedOption: string;
   onSetAICardModalCardId: (cardId: number) => void;
-  partner: any;
+  partner: User;
 }) {
   return (
     <div style={{ width: '100%' }}>
@@ -30,7 +31,6 @@ export default function Details({
             isExpressingInterest={!cardIdsOffered.length && !coinsOffered}
             cardIds={cardIdsWanted}
             coins={coinsWanted}
-            partner={partner}
             onSetAICardModalCardId={onSetAICardModalCardId}
           />
         )}

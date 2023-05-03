@@ -6,6 +6,8 @@ export default function Link({
   className,
   to,
   onClick = () => null,
+  onMouseOver = () => null,
+  onMouseLeave = () => null,
   children,
   style,
   target,
@@ -17,6 +19,8 @@ export default function Link({
   className?: string;
   children?: ReactNode;
   onClick?: () => void;
+  onMouseOver?: () => void;
+  onMouseLeave?: () => void;
   style?: CSSProperties;
   target?: string;
   to: string;
@@ -26,6 +30,8 @@ export default function Link({
     <a
       {...props}
       ref={innerRef}
+      onMouseOver={onMouseOver}
+      onMouseLeave={onMouseLeave}
       className={className}
       style={{
         whiteSpace: 'pre-wrap',

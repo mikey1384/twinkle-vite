@@ -90,7 +90,7 @@ export default function UserDetails({
       }}
     >
       <Link
-        to={noLink ? undefined : `/users/${profile.username}`}
+        to={noLink ? '' : `/users/${profile.username}`}
         onClick={handleReloadProfile}
         style={{
           fontSize: small ? '3rem' : '3.5rem',

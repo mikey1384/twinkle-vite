@@ -19,7 +19,7 @@ export default function SelectAICardModal({
 }: {
   aiCardModalType: string;
   currentlySelectedCardIds: any[];
-  onHide?: () => any;
+  onHide: () => any;
   onSetAICardModalCardId: (v: any) => any;
   onSelectDone: (v: any) => any;
   onDropdownShown: (v?: any) => any;
