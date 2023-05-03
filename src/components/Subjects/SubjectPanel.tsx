@@ -533,16 +533,20 @@ export default function SubjectPanel({
                 }
               }}
               rootContent={{
+                contentId: rootId,
                 contentType: rootType
               }}
               subject={{
                 id: subjectId,
+                comments,
                 rewardLevel,
                 secretAnswer,
                 secretAttachment,
+                title,
                 pinnedCommentId,
                 uploader: {
                   id: userId,
+                  username,
                   authLevel: uploaderAuthLevel
                 }
               }}
