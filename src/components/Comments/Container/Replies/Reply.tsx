@@ -85,7 +85,7 @@ function Reply({
   deleteReply: (v: any) => void;
   isSubjectPannelComment?: boolean;
   onLoadRepliesOfReply: (v: any) => void;
-  onPinReply: (v: any) => void;
+  onPinReply: (v: number | null) => void;
   onSubmitWithAttachment: (v: any) => void;
   parent: any;
   pinnedCommentId?: number;
@@ -380,7 +380,6 @@ function Reply({
               <DropdownButton
                 skeuomorphic
                 icon="chevron-down"
-                color="darkerGray"
                 opacity={0.8}
                 menuProps={dropdownMenuItems}
               />
