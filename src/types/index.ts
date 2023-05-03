@@ -47,7 +47,7 @@ export interface Comment {
 
 export interface Content {
   contentId?: number;
-  contentType: string;
+  contentType?: string;
   deleterId?: number;
   description?: string;
   id?: number;

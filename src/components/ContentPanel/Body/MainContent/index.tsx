@@ -75,8 +75,7 @@ export default function MainContent({
     byUserIndicatorText: {
       color: byUserIndicatorTextColor,
       shadow: byUserIndicatorTextShadowColor
-    },
-    content: { color: contentColor }
+    }
   } = useTheme(theme || profileTheme);
   const { fileType } = useMemo(
     () => (fileName ? getFileInfoFromFileName(fileName) : { fileType: '' }),
@@ -114,10 +113,8 @@ export default function MainContent({
         <XPVideo
           contentType={contentType}
           subjectIsAttachedToVideo={subjectIsAttachedToVideo}
-          isEditing={isEditing}
           rewardLevel={rewardLevel}
           byUser={!!byUser}
-          title={title}
           uploader={uploader}
           contentId={contentId}
           content={displayedContent}
@@ -142,9 +139,9 @@ export default function MainContent({
           byUser={!!byUser}
           subjectIsAttachedToVideo={subjectIsAttachedToVideo}
           byUserIndicatorColor={byUserIndicatorColor}
-          byUserIndicatorOpacity={byUserIndicatorOpacity}
+          byUserIndicatorOpacity={byUserIndicatorOpacity || 1}
           byUserIndicatorTextColor={byUserIndicatorTextColor}
-          byUserIndicatorTextShadowColor={byUserIndicatorTextShadowColor}
+          byUserIndicatorTextShadowColor={byUserIndicatorTextShadowColor || ''}
           uploader={uploader}
           filePath={filePath}
         />
@@ -187,7 +184,6 @@ export default function MainContent({
           uploader={uploader}
           targetObj={targetObj}
           rootId={rootId}
-          contentColor={contentColor}
           story={story}
           secretHidden={secretHidden}
           isNotification={!!isNotification}

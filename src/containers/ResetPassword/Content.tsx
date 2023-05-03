@@ -8,7 +8,7 @@ export default function Content() {
   const { token = '' } = useParams();
   const verifyEmail = useAppContext((v) => v.requestHelpers.verifyEmail);
   const [loaded, setLoaded] = useState(false);
-  const [profilePicUrl, setProfilePicUrl] = useState(null);
+  const [profilePicUrl, setProfilePicUrl] = useState('');
   const [userId, setUserId] = useState(null);
   const [username, setUsername] = useState('');
   const [expired, setExpired] = useState(false);

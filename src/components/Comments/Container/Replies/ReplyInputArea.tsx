@@ -42,7 +42,7 @@ export default function ReplyInputArea({
 }: {
   disableReason?: string;
   innerRef?: React.RefObject<any>;
-  onSubmit: (params: object) => void;
+  onSubmit: (v: object) => void;
   onSubmitWithAttachment: (args: any) => void;
   parent: {
     contentId: number;

@@ -89,7 +89,6 @@ export default function Menu({
               icon="chevron-down"
               skeuomorphic
               text={styleLabelObj.label}
-              color="darkerGray"
               listStyle={{ minWidth: '30ch' }}
               menuProps={[
                 {
@@ -133,7 +132,6 @@ export default function Menu({
               icon="chevron-down"
               skeuomorphic
               text={wordLevel}
-              color="darkerGray"
               listStyle={{ minWidth: '25ch' }}
               menuProps={[
                 {

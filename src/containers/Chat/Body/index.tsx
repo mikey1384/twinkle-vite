@@ -7,17 +7,18 @@ import LocalContext from '../Context';
 import { mobileMaxWidth, Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
+import { User } from '~/types';
 
 Body.propTypes = {
   channelName: PropTypes.string.isRequired,
-  partner: PropTypes.object.isRequired,
+  partner: PropTypes.object,
   currentChannel: PropTypes.object.isRequired,
   currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
     .isRequired,
   displayedThemeColor: PropTypes.string.isRequired,
   isAICardModalShown: PropTypes.bool.isRequired,
   onSetAICardModalCardId: PropTypes.func.isRequired,
-  subchannelId: PropTypes.number.isRequired,
+  subchannelId: PropTypes.number,
   subchannelPath: PropTypes.string
 };
 export default function Body({
@@ -32,13 +33,13 @@ export default function Body({
   subchannelPath
 }: {
   channelName: string;
-  partner: any;
+  partner?: User;
   currentChannel: any;
   currentPathId: string | number;
   displayedThemeColor: string;
   isAICardModalShown: boolean;
   onSetAICardModalCardId: (v: number) => void;
-  subchannelId: number;
+  subchannelId?: number;
   subchannelPath?: string;
 }) {
   const {

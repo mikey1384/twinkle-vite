@@ -6,7 +6,13 @@ import eslint from 'vite-plugin-eslint';
 import inject from '@rollup/plugin-inject';
 
 export default defineConfig({
-  plugins: [react(), splitVendorChunkPlugin(), eslint()],
+  plugins: [
+    react(),
+    splitVendorChunkPlugin(),
+    eslint({
+      include: ['src/**/*.ts', 'src/**/*.tsx']
+    })
+  ],
   server: {
     port: 3000
   },

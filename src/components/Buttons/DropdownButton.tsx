@@ -29,6 +29,7 @@ DropdownButton.propTypes = {
 export default function DropdownButton({
   buttonStyle = {},
   className,
+  color = 'darkerGray',
   isMenuShownWhenMounted,
   onDropdownShown,
   opacity = 1,
@@ -47,6 +48,7 @@ export default function DropdownButton({
   ...props
 }: {
   buttonStyle?: any;
+  color?: string;
   className?: string;
   isMenuShownWhenMounted?: boolean;
   onDropdownShown?: (isShown: boolean) => void;
@@ -89,6 +91,7 @@ export default function DropdownButton({
       <div ref={ButtonRef}>
         <Button
           {...props}
+          color={color}
           filled={!!dropdownContext && !transparent}
           transparent={transparent}
           opacity={transparent ? 0 : dropdownContext ? 1 : opacity}

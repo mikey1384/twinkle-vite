@@ -50,6 +50,7 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
 import LocalContext from '../Context';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { Content } from '~/types';
 import localize from '~/constants/localize';
 
 const commentWasDeletedLabel = localize('commentWasDeleted');
@@ -108,13 +109,7 @@ function Comment({
   isPreview?: boolean;
   parent?: any;
   pinnedCommentId?: number;
-  rootContent?: {
-    contentType?: string;
-    rewardLevel?: number;
-    uploader?: {
-      id: number;
-    };
-  };
+  rootContent?: Content;
   subject?: any;
   theme?: string;
 }) {
@@ -1020,7 +1015,7 @@ function Comment({
     onLikeClick({ commentId: comment.id, likes });
   }
 
-  async function handlePinComment(commentId: number) {
+  async function handlePinComment(commentId: number | null) {
     const root = parent.contentType === 'comment' ? rootContent : parent;
     const contentId = isSubjectPannelComment
       ? subject.id
@@ -1066,7 +1061,7 @@ function Comment({
     await onSubmitWithAttachment(params);
   }
 
-  async function handleSubmitReply(reply: string) {
+  async function handleSubmitReply(reply: object) {
     try {
       setReplying(true);
       setIsPostingReply(true);

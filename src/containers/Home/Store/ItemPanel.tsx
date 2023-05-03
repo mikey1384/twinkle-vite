@@ -37,7 +37,7 @@ export default function ItemPanel({
   requiredKarmaPoints: number;
   onUnlock: () => void;
   style?: React.CSSProperties;
-  unlocking: boolean;
+  unlocking?: boolean;
   upgradeIcon: React.ReactNode;
 }) {
   const [highlighted, setHighlighted] = useState(false);
