@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import Comment from './Comment';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -6,7 +7,42 @@ import PinnedComment from './PinnedComment';
 import CommentInputArea from './CommentInputArea';
 import { useAppContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
+import { Content } from '~/types';
 
+Main.propTypes = {
+  autoExpand: PropTypes.bool,
+  autoFocus: PropTypes.bool,
+  banned: PropTypes.object,
+  CommentInputAreaRef: PropTypes.object,
+  CommentRefs: PropTypes.object.isRequired,
+  comments: PropTypes.array.isRequired,
+  commentsHidden: PropTypes.bool,
+  commentsShown: PropTypes.bool,
+  commentsLoadLimit: PropTypes.number,
+  disableReason: PropTypes.string,
+  inputAtBottom: PropTypes.bool,
+  inputAreaInnerRef: PropTypes.object,
+  inputTypeLabel: PropTypes.string.isRequired,
+  isLoading: PropTypes.bool,
+  isPreview: PropTypes.bool,
+  isSubjectPannelComments: PropTypes.bool,
+  loadMoreShown: PropTypes.bool,
+  loadMoreButtonColor: PropTypes.string,
+  noInput: PropTypes.bool,
+  numInputRows: PropTypes.number,
+  numPreviews: PropTypes.number,
+  onCommentSubmit: PropTypes.func.isRequired,
+  onLoadMoreComments: PropTypes.func.isRequired,
+  onSetCommentSubmitted: PropTypes.func.isRequired,
+  parent: PropTypes.object.isRequired,
+  previewComments: PropTypes.array,
+  showSecretButtonAvailable: PropTypes.bool,
+  subject: PropTypes.object,
+  subjectId: PropTypes.number,
+  theme: PropTypes.string,
+  uploadComment: PropTypes.func.isRequired,
+  rootContent: PropTypes.object
+};
 export default function Main({
   autoExpand,
   autoFocus,
@@ -67,20 +103,20 @@ export default function Main({
   onCommentSubmit: (comment: any) => void;
   onLoadMoreComments: (data: any) => void;
   onSetCommentSubmitted: (comment: any) => void;
-  parent: any;
+  parent: Content;
   previewComments?: any[];
   showSecretButtonAvailable?: boolean;
   subject?: any;
   subjectId?: number;
-  theme?: any;
+  theme?: string;
   uploadComment: (comment: any) => any;
-  rootContent?: any;
+  rootContent?: Content;
 }) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const rootContentState = useContentState({
-    contentType: rootContent?.contentType,
-    contentId: rootContent?.id
+    contentType: rootContent?.contentType || '',
+    contentId: rootContent?.id || 0
   });
   const isRepliesOfReply = useMemo(
     () => parent.contentType === 'comment' && parent.commentId !== parent.id,
@@ -131,7 +167,7 @@ export default function Main({
           style={style}
           theme={theme}
           targetCommentId={
-            parent.contentType === 'comment' ? parent.contentId : null
+            parent.contentType === 'comment' ? parent.contentId : 0
           }
         />
       );
