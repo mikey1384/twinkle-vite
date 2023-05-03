@@ -1,6 +1,13 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Color } from '~/constants/css';
+import { User } from '~/types';
 
+VideoDetails.propTypes = {
+  description: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  uploader: PropTypes.object.isRequired
+};
 export default function VideoDetails({
   description,
   title,
@@ -8,7 +15,7 @@ export default function VideoDetails({
 }: {
   description: string;
   title: string;
-  uploader: any;
+  uploader: User;
 }) {
   return (
     <>

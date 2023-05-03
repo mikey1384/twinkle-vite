@@ -1,7 +1,14 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { User } from '~/types';
 
+SubjectDetails.propTypes = {
+  description: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  uploader: PropTypes.object.isRequired
+};
 export default function SubjectDetails({
   description,
   title,
@@ -9,7 +16,7 @@ export default function SubjectDetails({
 }: {
   description: string;
   title: string;
-  uploader: any;
+  uploader: User;
 }) {
   return (
     <div

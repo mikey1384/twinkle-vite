@@ -4,6 +4,7 @@ import VideoDetails from './VideoDetails';
 import SubjectDetails from './SubjectDetails';
 import UrlDetails from './UrlDetails';
 import AIStoryDetails from './AIStoryDetails';
+import { User } from '~/types';
 
 ContentDetails.propTypes = {
   contentType: PropTypes.string.isRequired,
@@ -27,7 +28,7 @@ export default function ContentDetails({
   description: string;
   story: string;
   title: string;
-  uploader: any;
+  uploader: User;
   contentId: number;
   topic: string;
 }) {
