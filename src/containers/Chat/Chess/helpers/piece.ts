@@ -64,7 +64,7 @@ export default function getPiece({
               ? srcRow - destRow === 1
               : destRow - srcRow === 1
             : false;
-          let attackable = isDestEnemyOccupied && destCrossable;
+          const attackable = isDestEnemyOccupied && destCrossable;
           const enPassantPossible =
             enPassantTarget &&
             destCrossable &&
@@ -118,7 +118,7 @@ export default function getPiece({
           );
         },
         getSrcToDestPath(src: number, dest: number) {
-          let path = [];
+          const path = [];
           let pathStart;
           let pathEnd;
           let incrementBy;
@@ -191,7 +191,7 @@ export default function getPiece({
           return srcRow === destRow || srcColumn === destColumn;
         },
         getSrcToDestPath(src: number, dest: number) {
-          let path = [];
+          const path = [];
           let pathStart;
           let pathEnd;
           let incrementBy;
@@ -239,7 +239,7 @@ export default function getPiece({
           );
         },
         getSrcToDestPath(src: number, dest: number) {
-          let path = [];
+          const path = [];
           let pathStart;
           let pathEnd;
           let incrementBy;

@@ -15,13 +15,9 @@ MissionContainer.propTypes = {
 
 export default function MissionContainer({
   mission,
-  myAttempts,
   onSetMissionState
 }: {
   mission: any;
-  myAttempts: {
-    [key: string]: any;
-  }[];
   onSetMissionState: (arg0: any) => void;
 }) {
   const isRepeatMission = useMemo(() => {

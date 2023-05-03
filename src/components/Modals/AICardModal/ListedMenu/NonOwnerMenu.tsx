@@ -10,6 +10,16 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
+NonOwnerMenu.propTypes = {
+  cardId: PropTypes.number,
+  className: PropTypes.string,
+  myId: PropTypes.number,
+  myOffer: PropTypes.object,
+  onSetWithdrawOfferModalShown: PropTypes.func,
+  onSetOfferModalShown: PropTypes.func,
+  price: PropTypes.number,
+  style: PropTypes.object
+};
 export default function NonOwnerMenu({
   cardId,
   className,

@@ -24,7 +24,7 @@ export default function SearchInput({
   style,
   value = ''
 }: {
-  onClickOutSide: () => void;
+  onClickOutSide?: () => void;
   searchResults?: any[];
   addonColor?: string;
   autoFocus?: boolean;

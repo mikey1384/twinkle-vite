@@ -56,7 +56,7 @@ export default function SelectAICardModal({
           }
         });
         setCardIds(cards.map((card: { id: number }) => card.id));
-        for (let card of cards) {
+        for (const card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
         setFilterPanelShown(loadMoreShown);

@@ -177,7 +177,7 @@ export function useTheme(color: string) {
 
 export function useOutsideClick(
   ref: React.RefObject<any>,
-  callback: () => any
+  callback?: () => any
 ) {
   const [insideClicked, setInsideClicked] = useState(false);
   useEffect(() => {

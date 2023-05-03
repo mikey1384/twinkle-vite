@@ -5,6 +5,10 @@ import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
+Video.propTypes = {
+  rewardLevel: PropTypes.number.isRequired,
+  style: PropTypes.object
+};
 export default function Video({
   rewardLevel,
   style

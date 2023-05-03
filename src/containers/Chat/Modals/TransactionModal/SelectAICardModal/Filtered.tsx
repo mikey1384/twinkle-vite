@@ -67,7 +67,7 @@ export default function Filtered({
           }
         });
         setCardIds(cards.map((card: { id: number }) => card.id));
-        for (let card of cards) {
+        for (const card of cards) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
         setLoadMoreShown(loadMoreShown);
@@ -151,7 +151,7 @@ export default function Filtered({
         ...(!quality || quality === 'any' ? {} : { quality })
       }
     });
-    for (let card of newCards) {
+    for (const card of newCards) {
       onUpdateAICard({ cardId: card.id, newState: card });
     }
     setCardIds((prevCardIds: any) => [

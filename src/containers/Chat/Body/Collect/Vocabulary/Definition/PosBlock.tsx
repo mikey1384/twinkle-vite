@@ -58,8 +58,8 @@ export default function PosBlock({
       verb: {},
       other: {}
     };
-    for (let key in partOfSpeeches) {
-      for (let { id, definition } of partOfSpeeches[key]) {
+    for (const key in partOfSpeeches) {
+      for (const { id, definition } of partOfSpeeches[key]) {
         result[key][id] = {
           id,
           title: definition

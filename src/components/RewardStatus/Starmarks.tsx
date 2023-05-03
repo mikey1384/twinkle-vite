@@ -19,7 +19,7 @@ function Starmarks({ stars }: { stars: number }) {
         />
       );
     }
-    for (let { baseline, icon } of baselines) {
+    for (const { baseline, icon } of baselines) {
       if (stars <= baseline) break;
       starMarks = starMarks.map((starMark, index) =>
         index < Math.min(stars - baseline, baseline) ? (

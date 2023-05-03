@@ -33,7 +33,7 @@ function LinkAttachment({
   messageId,
   defaultThumbUrl,
   extractedUrl,
-  onHideAttachment = () => {},
+  onHideAttachment = () => null,
   style,
   userCanEditThis
 }: {

@@ -48,10 +48,10 @@ export function initializeChessBoard({
     { type: 'rook', color: 'white', isPiece: true }
   ];
   let resultBoard;
-  let defaultBoard = [...blackPieces, ...Array(32).fill({}), ...whitePieces];
+  const defaultBoard = [...blackPieces, ...Array(32).fill({}), ...whitePieces];
   if (initialState) {
-    let {
-      board,
+    const {
+      board: rawBoard,
       playerColors,
       move
     }: {
@@ -59,6 +59,7 @@ export function initializeChessBoard({
       playerColors: any;
       move: any;
     } = { ...initialState };
+    let board = rawBoard;
     if (typeof move?.srcIndex === 'number') {
       board[myColor === 'black' ? 63 - move.srcIndex : move.srcIndex] =
         move.piece;
@@ -77,7 +78,7 @@ export function chessStateJSONToFen(chessStateJSON: any) {
   const board = chessStateJSON.board;
   let fenString = '';
   for (let i = 0; i < board.length; i += 8) {
-    let rank = board.slice(i, i + 8);
+    const rank = board.slice(i, i + 8);
     let rankString = '';
     let emptyCount = 0;
     for (let j = 0; j < rank.length; j++) {
@@ -386,7 +387,7 @@ export function isGameOver({
     return false;
   }
   let kingCanMove = false;
-  for (let dest of possibleNextDest) {
+  for (const dest of possibleNextDest) {
     const newSquares = returnBoardAfterMove({
       src: kingIndex,
       dest,
@@ -404,7 +405,7 @@ export function isGameOver({
   if (kingCanMove) return false;
   if (isChecked) {
     if (checkers.length === 1) {
-      for (let piece of playerPieces) {
+      for (const piece of playerPieces) {
         if (
           piece.piece.type !== 'king' &&
           isPossibleAndLegal({
@@ -457,7 +458,7 @@ export function isGameOver({
       }
     }
     const allBlockPoints = [];
-    for (let checker of checkers) {
+    for (const checker of checkers) {
       const trajectory =
         getPiece({
           piece: squaresFromOpponentsPointOfView[checker],
@@ -465,8 +466,8 @@ export function isGameOver({
         })?.getSrcToDestPath?.(checker, kingIndex) || [];
       if (trajectory.length === 0) return 'Checkmate';
       const blockPoints: any[] = [];
-      for (let square of trajectory) {
-        for (let piece of playerPieces) {
+      for (const square of trajectory) {
+        for (const piece of playerPieces) {
           if (
             piece.piece.type !== 'king' &&
             isPossibleAndLegal({
@@ -511,7 +512,7 @@ export function isGameOver({
     return 'Checkmate';
   } else {
     for (let i = 0; i < squaresFromOpponentsPointOfView.length; i++) {
-      for (let piece of playerPieces) {
+      for (const piece of playerPieces) {
         if (
           isPossibleAndLegal({
             src: piece.index,

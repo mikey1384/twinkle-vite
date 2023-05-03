@@ -35,7 +35,7 @@ export default function Bubble({
           grade ? `graded${grade}${isOnStreak ? ' streak' : ''}` : ''
         }`}
       >
-        {!!grade ? question.score : ''}
+        {grade ? question.score : ''}
       </div>
     </div>
   );

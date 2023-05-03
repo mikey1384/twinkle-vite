@@ -25,7 +25,7 @@ Playlist.propTypes = {
 };
 
 export default function Playlist({
-  onLinkClick = () => {},
+  onLinkClick = () => null,
   onLoad,
   playlistId
 }: {

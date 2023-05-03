@@ -7,6 +7,15 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 
+BottomInterface.propTypes = {
+  archivedSlides: PropTypes.array.isRequired,
+  className: PropTypes.string,
+  interactiveId: PropTypes.number.isRequired,
+  isPublished: PropTypes.bool.isRequired,
+  lastFork: PropTypes.object,
+  onPublishInteractive: PropTypes.func.isRequired,
+  style: PropTypes.object
+};
 export default function BottomInterface({
   archivedSlides,
   className,

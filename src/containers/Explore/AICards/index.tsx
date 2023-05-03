@@ -37,7 +37,7 @@ export default function AICards() {
     const paramsObject = Object.fromEntries(searchParams);
     const searchObj: { [key: string]: any } = {};
     Object.entries(paramsObject).forEach(([key, value]) => {
-      const keys = key.split('[').map((k) => k.replace(/[\[\]]/g, ''));
+      const keys = key.split('[').map((k) => k.replace(/[[\]]/g, ''));
       let obj: { [key: string]: any } = searchObj;
       for (let i = 0; i < keys.length; i++) {
         if (i === keys.length - 1) {

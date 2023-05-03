@@ -261,7 +261,7 @@ export default function SelectFeaturedSubjectsModal({
   async function handleSubmit() {
     try {
       setSubmitting(true);
-      for (let selectedId of selected) {
+      for (const selectedId of selected) {
         if (!selectedId) {
           return reportError({
             componentPath: 'Explore/Modals/SelectFeaturedSubjects',

@@ -60,7 +60,7 @@ export function getGuessStatuses({
     }
     statuses[i] = 'correct';
     correctLetters[letter] = true;
-    for (let prevIndex of indexesOnHold) {
+    for (const prevIndex of indexesOnHold) {
       if (splitGuess[prevIndex] === letter) {
         statuses[prevIndex] = 'absent';
       }

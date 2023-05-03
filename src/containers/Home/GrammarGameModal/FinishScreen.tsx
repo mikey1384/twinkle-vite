@@ -65,7 +65,7 @@ export default function FinishScreen({
       D: 0,
       F: 0
     };
-    for (let score of scoreArray) {
+    for (const score of scoreArray) {
       if (!resultObj[score]) {
         resultObj[score] = 1;
       } else {

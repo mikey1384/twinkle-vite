@@ -15,7 +15,7 @@ export default function Image({
     <div
       onClick={onClick}
       style={{
-        cursor: !!onClick ? 'pointer' : 'default',
+        cursor: onClick ? 'pointer' : 'default',
         width: '100%',
         height: '100%',
         background: backgroundColor || Color.black()

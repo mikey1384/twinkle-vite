@@ -25,7 +25,7 @@ function Comment({
   contentId,
   maxRewardables,
   noMarginForEditButton,
-  onEditDone = () => {},
+  onEditDone = () => null,
   reward
 }: {
   contentType: string;
@@ -229,7 +229,6 @@ function Comment({
             <DropdownButton
               skeuomorphic
               icon="chevron-down"
-              color="darkerGray"
               menuProps={editMenuItems}
             />
           )}

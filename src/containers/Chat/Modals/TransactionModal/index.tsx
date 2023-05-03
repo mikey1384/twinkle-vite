@@ -117,7 +117,7 @@ export default function TransactionModal({
   }, [selectedOption]);
 
   const isTransactionHandlerShown = useMemo(() => {
-    if (!!pendingTransaction) {
+    if (pendingTransaction) {
       if (
         pendingTransaction.type === 'send' &&
         pendingTransaction.from === myId

@@ -45,7 +45,7 @@ export default function Stories() {
   const lastFeedRef = useRef(null);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
-  const { hideWatched, userId, username } = useKeyContext((v) => v.myState);
+  const { hideWatched, username } = useKeyContext((v) => v.myState);
   const {
     alert: { color: alertColor }
   } = useKeyContext((v) => v.theme);

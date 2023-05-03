@@ -21,6 +21,12 @@ const reactions = [
   'thumb'
 ];
 
+ReactionButton.propTypes = {
+  onReactionClick: PropTypes.func.isRequired,
+  onSetReactionsMenuShown: PropTypes.func.isRequired,
+  reactionsMenuShown: PropTypes.bool.isRequired,
+  style: PropTypes.object
+};
 export default function ReactionButton({
   style,
   onReactionClick,

@@ -23,6 +23,15 @@ import localize from '~/constants/localize';
 const deviceIsMobile = isMobile(navigator);
 const youLabel = localize('You');
 
+Reaction.propTypes = {
+  reaction: PropTypes.string.isRequired,
+  reactionCount: PropTypes.number.isRequired,
+  reactedUserIds: PropTypes.array.isRequired,
+  onRemoveReaction: PropTypes.func.isRequired,
+  onAddReaction: PropTypes.func.isRequired,
+  reactionsMenuShown: PropTypes.bool.isRequired,
+  theme: PropTypes.string
+};
 function Reaction({
   reaction,
   reactionCount,
@@ -38,7 +47,7 @@ function Reaction({
   onRemoveReaction: () => void;
   onAddReaction: () => void;
   reactionsMenuShown: boolean;
-  theme: any;
+  theme: string;
 }) {
   const {
     actions: { onSetUserState },
@@ -99,7 +108,7 @@ function Reaction({
 
   const reactedUsersExcludingMe = useMemo(() => {
     const users = [];
-    for (let reactedUserId of reactedUserIdsExcludingMine) {
+    for (const reactedUserId of reactedUserIdsExcludingMine) {
       if (userObj[reactedUserId]) {
         users.push(userObj[reactedUserId]);
       }
@@ -148,7 +157,7 @@ function Reaction({
     setTooltipContext(null);
     setLoadingOtherUsers(true);
     setUserListModalShown(true);
-    for (let reactedUserId of reactedUserIdsExcludingMine) {
+    for (const reactedUserId of reactedUserIdsExcludingMine) {
       if (!userObj[reactedUserId]?.username) {
         const data = await loadProfile(reactedUserId);
         onSetUserState({

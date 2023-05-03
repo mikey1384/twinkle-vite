@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import UserListModal from '~/components/Modals/UserListModal';
@@ -7,6 +7,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useTheme } from '~/helpers/hooks';
+import { User } from '~/types';
 import localize from '~/constants/localize';
 
 const youLabel = localize('You');
@@ -19,7 +20,19 @@ StreakItem.propTypes = {
   theme: PropTypes.string.isRequired
 };
 
-export default function StreakItem({ myId, streak, rank, streakObj, theme }) {
+export default function StreakItem({
+  myId,
+  streak,
+  rank,
+  streakObj,
+  theme
+}: {
+  myId: number;
+  rank: number;
+  streak: number;
+  streakObj: any;
+  theme: string;
+}) {
   const {
     link: { color: linkColor },
     active: { color: activeColor }
@@ -43,7 +56,7 @@ export default function StreakItem({ myId, streak, rank, streakObj, theme }) {
     return rank <= 5 ? '1.2rem' : '1rem';
   }, [rank]);
   const imIncluded = useMemo(() => {
-    for (let { id } of streakObj[streak]) {
+    for (const { id } of streakObj[streak]) {
       if (id === myId) {
         return true;
       }
@@ -52,7 +65,7 @@ export default function StreakItem({ myId, streak, rank, streakObj, theme }) {
   }, [myId, streak, streakObj]);
   const includedUsers = useMemo(() => {
     const users = [];
-    for (let user of streakObj[streak]) {
+    for (const user of streakObj[streak]) {
       if (user.id === myId) {
         users.unshift(user);
       } else {
@@ -179,7 +192,7 @@ export default function StreakItem({ myId, streak, rank, streakObj, theme }) {
           users={streakObj[streak]}
           onHide={() => setUserListModalShown(false)}
           descriptionColor={Color[activeColor]()}
-          descriptionShown={(user) => user.currentStreak === streak}
+          descriptionShown={(user: User) => user.currentStreak === streak}
           description="(active)"
         />
       )}

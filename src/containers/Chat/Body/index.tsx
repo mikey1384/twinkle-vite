@@ -8,6 +8,18 @@ import { mobileMaxWidth, Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 
+Body.propTypes = {
+  channelName: PropTypes.string.isRequired,
+  partner: PropTypes.object.isRequired,
+  currentChannel: PropTypes.object.isRequired,
+  currentPathId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    .isRequired,
+  displayedThemeColor: PropTypes.string.isRequired,
+  isAICardModalShown: PropTypes.bool.isRequired,
+  onSetAICardModalCardId: PropTypes.func.isRequired,
+  subchannelId: PropTypes.number.isRequired,
+  subchannelPath: PropTypes.string
+};
 export default function Body({
   channelName,
   partner,

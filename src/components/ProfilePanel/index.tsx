@@ -38,6 +38,11 @@ const viewProfileLabel = localize('viewProfile');
 const visitWebsiteLabel = localize('visitWebsite');
 const visitYoutubeLabel = localize('visitYoutube');
 
+ProfilePanel.propTypes = {
+  expandable: PropTypes.bool,
+  profileId: PropTypes.number.isRequired,
+  style: PropTypes.object
+};
 function ProfilePanel({
   expandable,
   profileId,
@@ -402,13 +407,13 @@ function ProfilePanel({
                   >
                     <UserDetails
                       profile={profile}
-                      removeStatusMsg={(userId) =>
+                      removeStatusMsg={(userId: number) =>
                         onSetUserState({
                           userId,
                           newState: { statusMsg: '', statusColor: '' }
                         })
                       }
-                      updateStatusMsg={(data) => {
+                      updateStatusMsg={(data: any) => {
                         if (banned?.posting) {
                           return;
                         }

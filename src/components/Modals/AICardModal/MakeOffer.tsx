@@ -9,7 +9,7 @@ export default function MakeOffer({
   onSetOfferModalShown,
   style
 }: {
-  myId: string;
+  myId: number;
   className?: string;
   onSetOfferModalShown: (isShown: boolean) => void;
   style?: React.CSSProperties;

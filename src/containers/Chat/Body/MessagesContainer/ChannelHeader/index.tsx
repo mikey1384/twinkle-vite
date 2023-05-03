@@ -205,7 +205,7 @@ export default function ChannelHeader({
   }, [reloader, timeSincePost, timeSinceReload, uploader]);
 
   const menuProps = useMemo(() => {
-    let result = [];
+    const result = [];
     if (
       ((selectedChannelId === GENERAL_CHAT_ID || canChangeSubject === 'mod') &&
         authLevel > 0) ||
@@ -374,7 +374,6 @@ export default function ChannelHeader({
                 {menuButtonShown && !banned?.chat && (
                   <DropdownButton
                     skeuomorphic
-                    color="darkerGray"
                     opacity={0.7}
                     style={{
                       marginLeft: '1rem'

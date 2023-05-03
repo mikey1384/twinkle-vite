@@ -41,7 +41,7 @@ export default function Checkbox({
             color: Color.darkerGray(),
             cursor: textIsClickable ? 'pointer' : 'default'
           }}
-          onClick={textIsClickable ? onClick : () => {}}
+          onClick={textIsClickable ? onClick : () => null}
         >
           {label}
           &nbsp;&nbsp;

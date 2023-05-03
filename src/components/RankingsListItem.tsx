@@ -12,7 +12,7 @@ export default function RankingsListItem({
   style,
   target = 'twinkleXP',
   user,
-  onUsermenuShownChange = () => {}
+  onUsermenuShownChange = () => null
 }: {
   myId: number;
   small?: boolean;

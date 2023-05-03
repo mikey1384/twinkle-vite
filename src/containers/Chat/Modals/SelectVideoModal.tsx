@@ -43,7 +43,7 @@ export default function SelectVideoModal({
         limit: 18,
         contentType: 'video'
       });
-      for (let result of results) {
+      for (const result of results) {
         onInitContent({
           contentId: result.id,
           contentType: 'video',
@@ -133,7 +133,7 @@ export default function SelectVideoModal({
         contentType: 'video',
         contentId: allUploads[allUploads.length - 1]
       });
-      for (let result of results) {
+      for (const result of results) {
         onInitContent({
           contentId: result.id,
           contentType: 'video',

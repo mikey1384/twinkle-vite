@@ -174,43 +174,42 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         setTopicKey(topicKey);
         setLoadingTopic(false);
       }
-
-      async function tryLoadTopic({
-        difficulty,
-        retries,
-        timeout,
-        currentRequestId
-      }: {
-        difficulty: number;
-        retries: number;
-        timeout: number;
-        currentRequestId: number;
-      }) {
-        for (let i = 0; i < retries; i++) {
-          try {
-            const { topic, topicKey, type } = await loadAIStoryTopic(
-              difficulty
-            );
-            if (currentRequestId === requestRef.current) {
-              return { topic, topicKey, type };
-            } else {
-              return {};
-            }
-          } catch (error) {
-            console.error(`Error on attempt ${i + 1}:`, error);
-            if (i < retries - 1) {
-              await sleep(timeout);
-            }
-          }
-        }
-        throw new Error('Failed to load topic after maximum retries');
-      }
-      function sleep(ms: number) {
-        return new Promise((resolve) => setTimeout(resolve, ms));
-      }
     } catch (error) {
       console.error('Failed to load topic:', error);
       setTopicLoadError(true);
     }
+  }
+
+  async function tryLoadTopic({
+    difficulty,
+    retries,
+    timeout,
+    currentRequestId
+  }: {
+    difficulty: number;
+    retries: number;
+    timeout: number;
+    currentRequestId: number;
+  }) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const { topic, topicKey, type } = await loadAIStoryTopic(difficulty);
+        if (currentRequestId === requestRef.current) {
+          return { topic, topicKey, type };
+        } else {
+          return {};
+        }
+      } catch (error) {
+        console.error(`Error on attempt ${i + 1}:`, error);
+        if (i < retries - 1) {
+          await sleep(timeout);
+        }
+      }
+    }
+    throw new Error('Failed to load topic after maximum retries');
+  }
+
+  function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
