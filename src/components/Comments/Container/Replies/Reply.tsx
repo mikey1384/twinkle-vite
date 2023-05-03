@@ -1,4 +1,5 @@
 import React, { memo, useContext, useMemo, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../../Context';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -37,6 +38,7 @@ import {
   stringIsEmpty
 } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
+import { Comment } from '~/types';
 
 const commentWasDeletedLabel = localize('commentWasDeleted');
 const editLabel = localize('edit');
@@ -48,6 +50,23 @@ const removeReplyLabel = localize('removeReply');
 const repliesLabel = localize('replies');
 const replyLabel = localize('reply');
 
+Reply.propTypes = {
+  comment: PropTypes.object.isRequired,
+  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
+  deleteReply: PropTypes.func.isRequired,
+  disableReason: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+  isSubjectPannelComment: PropTypes.bool,
+  onLoadRepliesOfReply: PropTypes.func.isRequired,
+  onPinReply: PropTypes.func.isRequired,
+  onSubmitWithAttachment: PropTypes.func.isRequired,
+  parent: PropTypes.object.isRequired,
+  pinnedCommentId: PropTypes.number,
+  reply: PropTypes.object.isRequired,
+  rootContent: PropTypes.object,
+  onSubmitReply: PropTypes.func.isRequired,
+  subject: PropTypes.object,
+  theme: PropTypes.string
+};
 function Reply({
   comment,
   innerRef = () => null,
@@ -77,11 +96,9 @@ function Reply({
   subject,
   theme
 }: {
-  comment: {
-    id: number;
-  };
+  comment: Comment;
   disableReason?: string;
-  innerRef?: (v: any) => void;
+  innerRef?: React.RefObject<any> | ((v?: any) => React.RefObject<any> | null);
   deleteReply: (v: any) => void;
   isSubjectPannelComment?: boolean;
   onLoadRepliesOfReply: (v: any) => void;
