@@ -551,7 +551,7 @@ export function processMentionLink(text: string): React.ReactNode {
         domNode.attribs?.class === 'mention'
       ) {
         const node = domNode.children?.[0];
-        return <Link to={domNode.attribs.href}>{node?.data}</Link>;
+        return <Link to={domNode.attribs.href || ''}>{node?.data}</Link>;
       }
     }
   });
