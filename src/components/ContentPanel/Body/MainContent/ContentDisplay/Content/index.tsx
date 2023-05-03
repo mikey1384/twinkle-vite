@@ -1,10 +1,30 @@
 import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import LongText from '~/components/Texts/LongText';
 import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
+import { Subject, User } from '~/types';
 
+Content.propTypes = {
+  content: PropTypes.string,
+  contentId: PropTypes.number,
+  contentType: PropTypes.string,
+  description: PropTypes.string,
+  isNotification: PropTypes.bool,
+  navigate: PropTypes.func.isRequired,
+  onClickSecretAnswer: PropTypes.func,
+  rootId: PropTypes.number,
+  secretAnswer: PropTypes.string,
+  secretAttachment: PropTypes.any,
+  secretHidden: PropTypes.bool,
+  story: PropTypes.string,
+  targetObj: PropTypes.object,
+  theme: PropTypes.string,
+  title: PropTypes.string,
+  uploader: PropTypes.object
+};
 export default function Content({
   content,
   contentId,
@@ -36,16 +56,11 @@ export default function Content({
   secretHidden: boolean;
   story: string;
   targetObj: {
-    subject: {
-      id: number;
-    };
+    subject: Subject;
   };
   theme: string;
   title: string;
-  uploader: {
-    id: number;
-    username: string;
-  };
+  uploader: User;
 }) {
   const Description = useMemo(() => {
     return !stringIsEmpty(description)

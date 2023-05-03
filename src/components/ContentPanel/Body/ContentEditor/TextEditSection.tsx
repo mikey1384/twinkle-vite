@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import Input from '~/components/Texts/Input';
 import { edit } from '~/constants/placeholders';
@@ -10,6 +11,24 @@ import {
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
+TextEditSection.propTypes = {
+  editedComment: PropTypes.string,
+  editedDescription: PropTypes.string,
+  editedSecretAnswer: PropTypes.string,
+  editedUrl: PropTypes.string,
+  editedTitle: PropTypes.string,
+  contentType: PropTypes.string.isRequired,
+  onSecretAnswerChange: PropTypes.func.isRequired,
+  onTextAreaChange: PropTypes.func.isRequired,
+  onTextAreaKeyUp: PropTypes.func.isRequired,
+  onTitleChange: PropTypes.func.isRequired,
+  onTitleKeyUp: PropTypes.func.isRequired,
+  onUrlChange: PropTypes.func.isRequired,
+  urlExceedsCharLimit: PropTypes.any,
+  descriptionExceedsCharLimit: PropTypes.any,
+  secretAnswerExceedsCharLimit: PropTypes.any,
+  titleExceedsCharLimit: PropTypes.any
+};
 export default function TextEditSection({
   editedComment,
   editedDescription,

@@ -1,8 +1,32 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import ContentEditor from '../../ContentEditor';
 import Content from './Content';
 import { useAppContext, useContentContext } from '~/contexts';
+import { Subject, User } from '~/types';
 
+ContentDisplay.propTypes = {
+  contentId: PropTypes.number,
+  contentType: PropTypes.string,
+  isEditing: PropTypes.bool,
+  content: PropTypes.string,
+  displayedContent: PropTypes.string,
+  description: PropTypes.string,
+  filePath: PropTypes.string,
+  navigate: PropTypes.func.isRequired,
+  secretAnswer: PropTypes.string,
+  secretAttachment: PropTypes.any,
+  title: PropTypes.string,
+  theme: PropTypes.string,
+  onSetIsEditing: PropTypes.func.isRequired,
+  uploader: PropTypes.object,
+  targetObj: PropTypes.object,
+  rootId: PropTypes.number,
+  story: PropTypes.string,
+  secretHidden: PropTypes.bool,
+  isNotification: PropTypes.bool,
+  onClickSecretAnswer: PropTypes.func
+};
 export default function ContentDisplay({
   contentId,
   contentType,
@@ -42,14 +66,9 @@ export default function ContentDisplay({
     contentType: string;
     isEditing: boolean;
   }) => void;
-  uploader: {
-    id: number;
-    username: string;
-  };
+  uploader: User;
   targetObj: {
-    subject: {
-      id: number;
-    };
+    subject: Subject;
   };
   rootId: number;
   story: string;
