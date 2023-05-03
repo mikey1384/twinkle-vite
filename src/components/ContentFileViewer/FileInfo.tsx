@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import {
@@ -11,6 +12,14 @@ import { useKeyContext } from '~/contexts';
 import { useTheme } from '~/helpers/hooks';
 import { renderFileSize } from '~/helpers/stringHelpers';
 
+FileInfo.propTypes = {
+  fileName: PropTypes.string.isRequired,
+  fileType: PropTypes.string.isRequired,
+  fileSize: PropTypes.number.isRequired,
+  isThumb: PropTypes.bool,
+  src: PropTypes.string.isRequired,
+  theme: PropTypes.string
+};
 export default function FileInfo({
   fileName,
   fileType,
