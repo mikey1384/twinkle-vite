@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
 import SelectedUser from '~/components/Texts/SelectedUser';
@@ -6,12 +7,17 @@ import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { useSearch } from '~/helpers/hooks';
+import { User } from '~/types';
 
+SearchPosterInput.propTypes = {
+  selectedUser: PropTypes.object,
+  onSetSelectedUser: PropTypes.func.isRequired
+};
 export default function SearchPosterInput({
   selectedUser,
   onSetSelectedUser
 }: {
-  selectedUser: any;
+  selectedUser: User;
   onSetSelectedUser: (user: any) => void;
 }) {
   const [searchedUsers, setSearchedUsers] = useState([]);
