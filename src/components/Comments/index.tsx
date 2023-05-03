@@ -114,7 +114,7 @@ function Comments({
   const [prevComments, setPrevComments] = useState(comments);
   const ContainerRef = useRef(null);
   const CommentInputAreaRef = useRef(null);
-  const CommentRefs: any = {};
+  const CommentRefs: Record<string, React.RefObject<any>> = {};
   const subjectId = useMemo(
     () => (parent.contentType === 'subject' ? parent.contentId : subject?.id),
     [parent.contentId, parent.contentType, subject?.id]
@@ -415,7 +415,6 @@ function Comments({
             subjectId={subjectId}
             theme={theme}
             uploadComment={uploadComment}
-            userId={userId}
             rootContent={rootContent}
           />
         </div>

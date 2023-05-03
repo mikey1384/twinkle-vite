@@ -41,7 +41,7 @@ export default function Searched({
   rootContent: Content;
   loadMoreButtonColor: string;
   poster: User;
-  subject: Subject;
+  subject?: Subject;
   theme: string;
 }) {
   const loadCommentsByPoster = useAppContext(

@@ -118,7 +118,7 @@ export default function AddSlide({
     </div>
   );
 
-  async function handleRecoverArchivedSlide(selectedSlideId: number) {
+  async function handleRecoverArchivedSlide(selectedSlideId: number | null) {
     const numUpdates = await recoverArchivedSlide({
       interactiveId,
       selectedSlideId,

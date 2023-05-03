@@ -6,13 +6,14 @@ import SearchPosterInput from './SearchPosterInput';
 import Searched from './Searched';
 import { useContentState } from '~/helpers/hooks';
 import { useContentContext } from '~/contexts';
+import { Comment, Content, Subject } from '~/types';
 
 Container.propTypes = {
   autoExpand: PropTypes.bool,
   autoFocus: PropTypes.bool,
   banned: PropTypes.object,
   CommentInputAreaRef: PropTypes.object,
-  CommentRefs: PropTypes.object,
+  CommentRefs: PropTypes.object.isRequired,
   comments: PropTypes.array.isRequired,
   commentsHidden: PropTypes.bool,
   commentsShown: PropTypes.bool,
@@ -77,10 +78,10 @@ export default function Container({
 }: {
   autoExpand?: boolean;
   autoFocus?: boolean;
-  banned?: any;
+  banned?: object;
   CommentInputAreaRef?: React.RefObject<any>;
-  CommentRefs?: any;
-  comments: any[];
+  CommentRefs: Record<string, React.RefObject<any>>;
+  comments: Comment[];
   commentsHidden?: boolean;
   commentsShown?: boolean;
   commentsLoadLimit?: number;
@@ -99,10 +100,10 @@ export default function Container({
   onCommentSubmit: (comment: any) => void;
   onLoadMoreComments: (v: any) => void;
   onSetCommentSubmitted: (comment: any) => void;
-  parent: any;
-  previewComments?: any[];
+  parent: Content;
+  previewComments?: Comment[];
   showSecretButtonAvailable?: boolean;
-  subject?: any;
+  subject?: Subject;
   subjectId?: number;
   theme?: any;
   uploadComment: (comment: any) => void;
