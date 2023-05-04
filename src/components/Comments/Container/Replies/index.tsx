@@ -104,7 +104,7 @@ function Replies({
           onClick={handleLoadMoreReplies}
         />
       )}
-      {replies.map((reply) => {
+      {replies.map((reply: Comment) => {
         return reply.isLoadMoreButton ? (
           <LoadMoreButton
             key={reply.id}
@@ -172,7 +172,7 @@ function Replies({
   }: {
     lastReplyId: number;
     rootReplyId: number;
-    commentId: number;
+    commentId: number | null;
     loadMoreButtonId: number;
   }) {
     setLoadingMoreRepliesOfReply(true);

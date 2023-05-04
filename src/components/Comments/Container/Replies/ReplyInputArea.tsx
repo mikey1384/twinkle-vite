@@ -49,9 +49,9 @@ export default function ReplyInputArea({
     contentType: string;
     subjectId?: number;
   };
-  rootCommentId?: number;
+  rootCommentId?: number | null;
   style?: React.CSSProperties;
-  targetCommentId: number;
+  targetCommentId: number | null;
   targetCommentPoster?: {
     id: number;
     username: string;
