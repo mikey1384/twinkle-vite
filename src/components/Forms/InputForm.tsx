@@ -6,6 +6,7 @@ import React, {
   useRef,
   useEffect
 } from 'react';
+import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '../Icon';
@@ -32,6 +33,7 @@ import {
 import { css } from '@emotion/css';
 import { useInputContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { Content } from '~/types';
 
 const areYouSureLabel = localize('areYouSure');
 const commentsMightNotBeRewardedLabel = localize('commentsMightNotBeRewarded');
@@ -41,6 +43,21 @@ const viewSecretMessageWithoutRespondingLabel = localize(
   'viewSecretMessageWithoutResponding'
 );
 
+InputForm.propTypes = {
+  autoFocus: PropTypes.bool,
+  className: PropTypes.string,
+  disableReason: PropTypes.string,
+  formGroupStyle: PropTypes.object,
+  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
+  onSubmit: PropTypes.func.isRequired,
+  parent: PropTypes.object.isRequired,
+  placeholder: PropTypes.string,
+  rows: PropTypes.number,
+  onViewSecretAnswer: PropTypes.func,
+  style: PropTypes.object,
+  theme: PropTypes.string,
+  targetCommentId: PropTypes.number
+};
 function InputForm({
   autoFocus,
   className = '',
@@ -62,11 +79,11 @@ function InputForm({
   formGroupStyle?: any;
   innerRef?: any;
   onSubmit: (text: string, attachment?: any) => void;
-  parent: any;
+  parent: Content;
   placeholder?: string;
   rows?: number;
   onViewSecretAnswer?: () => void;
-  style?: any;
+  style?: React.CSSProperties;
   theme?: string;
   targetCommentId?: number | null;
 }) {
