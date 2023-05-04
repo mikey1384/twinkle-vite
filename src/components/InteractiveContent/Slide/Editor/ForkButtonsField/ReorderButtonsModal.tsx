@@ -19,7 +19,6 @@ ReorderButtonsModal.propTypes = {
   forkButtonIds: PropTypes.array.isRequired,
   onSubmit: PropTypes.func.isRequired
 };
-
 export default function ReorderButtonsModal({
   onHide,
   forkButtonsObj,
