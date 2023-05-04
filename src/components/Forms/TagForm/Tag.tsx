@@ -1,6 +1,12 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { borderRadius } from '~/constants/css';
 
+Tag.propTypes = {
+  label: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
+  renderTagLabel: PropTypes.func
+};
 export default function Tag({
   label,
   onClick,
