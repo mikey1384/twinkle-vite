@@ -1,9 +1,21 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
 import { isMobile } from '~/helpers';
 
 const displayIsMobile = isMobile(navigator);
 
+XPVideo.propTypes = {
+  contentType: PropTypes.string.isRequired,
+  subjectIsAttachedToVideo: PropTypes.bool.isRequired,
+  rewardLevel: PropTypes.number,
+  byUser: PropTypes.bool.isRequired,
+  uploader: PropTypes.object.isRequired,
+  contentId: PropTypes.number.isRequired,
+  content: PropTypes.string,
+  rootId: PropTypes.number,
+  rootObj: PropTypes.object.isRequired
+};
 export default function XPVideo({
   contentType,
   subjectIsAttachedToVideo,
@@ -12,17 +24,17 @@ export default function XPVideo({
   uploader,
   contentId,
   content,
-  rootId,
+  rootId = 0,
   rootObj
 }: {
   contentType: string;
   subjectIsAttachedToVideo: boolean;
-  rewardLevel: number;
+  rewardLevel?: number;
   byUser: boolean;
   uploader: any;
   contentId: number;
-  content: string;
-  rootId: number;
+  content?: string;
+  rootId?: number;
   rootObj: any;
 }) {
   if (contentType !== 'video' && !subjectIsAttachedToVideo) return null;
