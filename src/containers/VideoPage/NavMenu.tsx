@@ -45,7 +45,7 @@ export default function NavMenu({
   videoId,
   isContinuing
 }: {
-  playlistId?: number;
+  playlistId?: number | null;
   videoId: number | string;
   isContinuing?: boolean;
 }) {
@@ -227,7 +227,7 @@ export default function NavMenu({
           {rewardsExist ? rewardsLabel : userId ? newsLabel : leaderboardLabel}
         </nav>
       </FilterBar>
-      {userId && videoTabActive && playlistId && (
+      {userId && videoTabActive && !!playlistId && (
         <section
           style={{
             display: 'flex',
@@ -274,7 +274,7 @@ export default function NavMenu({
               })}
             </section>
           )}
-          {playlistId && playlistVideos.length > 0 && (
+          {!!playlistId && playlistVideos.length > 0 && (
             <section
               key={videoId + 'playlist videos'}
               style={{
