@@ -445,7 +445,7 @@ export default function VideoPage() {
         {loaded && (
           <NavMenu
             videoId={videoId}
-            playlistId={Number(playlistId)}
+            playlistId={playlistId ? Number(playlistId) : null}
             isContinuing={!!isContinuing}
           />
         )}
