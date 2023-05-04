@@ -40,6 +40,7 @@ import { useNavigate } from 'react-router-dom';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
 import localize from '~/constants/localize';
+import { Comment as CommentType, Subject } from '~/types';
 
 const commentRemovedLabel = localize('commentRemoved');
 const replyLabel = localize('reply');
@@ -54,13 +55,7 @@ export default function TargetContent({
   onShowTCReplyInput,
   style,
   theme,
-  targetObj: {
-    comment,
-    comment: { comments = [] } = {},
-    replyInputShown,
-    subject,
-    contentType: type
-  }
+  targetObj: { comment, replyInputShown, subject, contentType: type }
 }: {
   className?: string;
   contentId: number;
@@ -68,10 +63,16 @@ export default function TargetContent({
   rootObj: any;
   rootType: string;
   onShowTCReplyInput: (arg0: any) => void;
-  style?: any;
+  style?: React.CSSProperties;
   theme: string;
-  targetObj: any;
+  targetObj: {
+    comment: CommentType;
+    replyInputShown: boolean;
+    subject: Subject;
+    contentType: string;
+  };
 }) {
+  const comments = comment?.comments || [];
   const navigate = useNavigate();
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
@@ -501,7 +502,7 @@ export default function TargetContent({
                   contentType={'comment'}
                   contentId={comment.id}
                   rewardLevel={finalRewardLevel}
-                  uploaderAuthLevel={comment.uploader.authLevel}
+                  uploaderAuthLevel={comment.uploader.authLevel || 0}
                   uploaderId={comment.uploader.id}
                   onReward={() =>
                     setRecommendationInterfaceShown(
@@ -562,7 +563,7 @@ export default function TargetContent({
                     .filter(
                       (comment: { isDeleted: boolean }) => !comment.isDeleted
                     )
-                    .map((comment: { id: number }) => (
+                    .map((comment: CommentType) => (
                       <Comment
                         key={comment.id}
                         comment={comment}

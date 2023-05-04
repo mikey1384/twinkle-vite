@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
@@ -8,17 +9,23 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { Content, User } from '~/types';
 
 const taskCompleteLabel = localize('taskComplete');
 const missionAccomplishedLabel = localize('missionAccomplished');
 
+PassContent.propTypes = {
+  uploader: PropTypes.object.isRequired,
+  rootObj: PropTypes.object.isRequired,
+  theme: PropTypes.string
+};
 export default function PassContent({
   uploader,
   rootObj: mission,
   theme
 }: {
-  uploader: any;
-  rootObj: any;
+  uploader: User;
+  rootObj: Content;
   theme: string;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);

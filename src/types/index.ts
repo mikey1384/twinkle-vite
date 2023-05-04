@@ -18,18 +18,21 @@ export interface Card {
   word: string;
 }
 export interface Comment {
+  id: number;
+  comments: Comment[];
   commentId: number;
   content: string;
   fileName: string;
   filePath: string;
   fileSize: number;
-  id: number;
+  isDeleted: boolean;
   isExpanded: boolean;
   isNotification: boolean;
   lastReplyId: number;
   likes: any[];
   loadMoreButton: boolean;
   isLoadMoreButton: boolean;
+  notFound: boolean;
   numReplies: number;
   parent: Content | User;
   recommendations: Recommendation[];
@@ -111,6 +114,7 @@ export interface Subject {
   secretAttachment: Attachment;
   title: string;
   rewardLevel: number;
+  userId: number;
   uploader: User;
 }
 
