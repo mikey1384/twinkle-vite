@@ -167,7 +167,7 @@ export default function Main({
           style={style}
           theme={theme}
           targetCommentId={
-            parent.contentType === 'comment' ? parent.contentId : 0
+            parent.contentType === 'comment' ? parent.contentId : null
           }
         />
       );
@@ -314,9 +314,9 @@ export default function Main({
     targetCommentId
   }: {
     content: string;
-    rootCommentId?: number;
+    rootCommentId?: number | null;
     subjectId?: number;
-    targetCommentId?: number;
+    targetCommentId?: number | null;
   }) {
     if (banned?.posting) {
       return;
