@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import Context from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Heading from './Heading';
@@ -17,6 +18,18 @@ import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import localize from '~/constants/localize';
 
+ContentPanel.propTypes = {
+  alwaysShow: PropTypes.bool,
+  autoExpand: PropTypes.bool,
+  className: PropTypes.string,
+  commentsLoadLimit: PropTypes.number,
+  contentId: PropTypes.number.isRequired,
+  contentType: PropTypes.string.isRequired,
+  numPreviewComments: PropTypes.number,
+  style: PropTypes.object,
+  theme: PropTypes.string,
+  zIndex: PropTypes.number
+};
 export default function ContentPanel({
   alwaysShow,
   autoExpand,

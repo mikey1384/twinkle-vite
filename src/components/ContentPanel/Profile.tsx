@@ -1,12 +1,23 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import RankBar from '~/components/RankBar';
 import UserDetails from '~/components/UserDetails';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
+import { User } from '~/types';
 
-export default function Profile({ profile }: { profile: any }) {
+Profile.propTypes = {
+  profile: PropTypes.shape({
+    id: PropTypes.number,
+    username: PropTypes.string,
+    profilePicUrl: PropTypes.string,
+    twinkleXP: PropTypes.number,
+    rank: PropTypes.number
+  })
+};
+export default function Profile({ profile }: { profile: User }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const { userId } = useKeyContext((v) => v.myState);
   return (
@@ -34,7 +45,7 @@ export default function Profile({ profile }: { profile: any }) {
           <ProfilePic
             style={{ width: '15rem', cursor: 'pointer' }}
             userId={profile.id}
-            profilePicUrl={profile.profilePicUrl}
+            profilePicUrl={profile.profilePicUrl || ''}
             online={chatStatus[profile.id]?.isOnline}
             statusShown
             large

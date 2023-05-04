@@ -179,7 +179,7 @@ function Comments({
       file: any;
       rootCommentId: number;
       subjectId: number;
-      targetCommentId: number;
+      targetCommentId: number | null;
       isReply: boolean;
     }) => {
       if (banned?.posting) {
@@ -294,8 +294,8 @@ function Comments({
       targetCommentId
     }: {
       content: string;
-      rootCommentId: number;
-      targetCommentId: number;
+      rootCommentId: number | null;
+      targetCommentId: number | null;
     }) => {
       if (banned?.posting) {
         return;

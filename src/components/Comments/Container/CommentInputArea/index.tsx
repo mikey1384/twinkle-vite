@@ -53,11 +53,11 @@ export default function CommentInputArea({
   onSubmit: (v: any) => any;
   onViewSecretAnswer?: () => any;
   parent: any;
-  rootCommentId?: number;
+  rootCommentId?: number | null;
   subjectId?: number;
   style?: React.CSSProperties;
   subjectRewardLevel?: number;
-  targetCommentId?: number;
+  targetCommentId?: number | null;
   theme?: string;
 }) {
   const [uploading, setUploading] = useState(false);

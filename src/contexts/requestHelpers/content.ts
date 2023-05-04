@@ -1230,7 +1230,7 @@ export default function contentRequestHelpers({
       parent: object;
       rootCommentId: number;
       subjectId: number;
-      targetCommentId: number;
+      targetCommentId: number | null;
       attachment: object;
       filePath: string;
       fileName: string;

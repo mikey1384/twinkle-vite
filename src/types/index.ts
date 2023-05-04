@@ -20,7 +20,7 @@ export interface Card {
 export interface Comment {
   id: number;
   comments: Comment[];
-  commentId: number;
+  commentId: number | null;
   content: string;
   fileName: string;
   filePath: string;

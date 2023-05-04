@@ -68,7 +68,7 @@ function InputForm({
   onViewSecretAnswer?: () => void;
   style?: any;
   theme?: string;
-  targetCommentId?: number;
+  targetCommentId?: number | null;
 }) {
   const { userId, authLevel, profileTheme, twinkleXP, fileUploadLvl } =
     useKeyContext((v) => v.myState);
