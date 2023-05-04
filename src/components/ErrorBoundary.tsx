@@ -18,7 +18,7 @@ interface State {
 }
 export default class ErrorBoundary extends Component<
   {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     className?: string;
     innerRef?: React.RefObject<any> | ((instance: any) => void);
     userId?: number;
@@ -29,7 +29,7 @@ export default class ErrorBoundary extends Component<
   State
 > {
   static propTypes = {
-    children: PropTypes.node.isRequired,
+    children: PropTypes.node,
     className: PropTypes.string,
     innerRef: PropTypes.any,
     userId: PropTypes.number,
