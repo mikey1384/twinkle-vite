@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import SearchDropdown from '~/components/SearchDropdown';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
@@ -9,6 +10,32 @@ import { useOutsideClick } from '~/helpers/hooks';
 import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
+TagInput.propTypes = {
+  autoFocus: PropTypes.bool,
+  className: PropTypes.string,
+  dropdownFooter: PropTypes.any,
+  inputRef: PropTypes.any,
+  onClickOutSide: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+  onAddItem: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onNotFound: PropTypes.func,
+  placeholder: PropTypes.string,
+  renderDropdownLabel: PropTypes.func.isRequired,
+  searchResults: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      title: PropTypes.string
+    })
+  ),
+  selectedItems: PropTypes.objectOf(
+    PropTypes.shape({
+      id: PropTypes.number
+    })
+  ),
+  style: PropTypes.object,
+  value: PropTypes.string.isRequired
+};
 export default function TagInput({
   autoFocus,
   className,
@@ -38,8 +65,8 @@ export default function TagInput({
   placeholder?: string;
   renderDropdownLabel: (item: any) => string;
   searchResults?: { id: number; title: string }[];
-  selectedItems: { id: number }[];
-  style?: any;
+  selectedItems: Record<string, { id: number }>;
+  style?: React.CSSProperties;
   value: string;
 }) {
   const [results, setResults] = useState(searchResults);
