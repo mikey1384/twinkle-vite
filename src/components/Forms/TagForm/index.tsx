@@ -1,10 +1,35 @@
 import React, { memo, useMemo, useState, CSSProperties } from 'react';
+import PropTypes from 'prop-types';
 import { useSearch } from '~/helpers/hooks';
 import TagInput from './TagInput';
 import Tag from './Tag';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { objectify } from '~/helpers';
 
+TagForm.propTypes = {
+  autoFocus: PropTypes.bool,
+  children: PropTypes.any,
+  className: PropTypes.string,
+  dropdownFooter: PropTypes.any,
+  inputRef: PropTypes.any,
+  filter: PropTypes.func.isRequired,
+  itemLabel: PropTypes.string.isRequired,
+  maxItems: PropTypes.number,
+  onAddItem: PropTypes.func.isRequired,
+  onClear: PropTypes.func.isRequired,
+  searchResults: PropTypes.array.isRequired,
+  selectedItems: PropTypes.array.isRequired,
+  onNotFound: PropTypes.func,
+  onRemoveItem: PropTypes.func.isRequired,
+  onSearch: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func,
+  renderDropdownLabel: PropTypes.func.isRequired,
+  renderTagLabel: PropTypes.func,
+  searchPlaceholder: PropTypes.string,
+  subTitle: PropTypes.string,
+  style: PropTypes.object,
+  title: PropTypes.string
+};
 function TagForm({
   autoFocus,
   children,
