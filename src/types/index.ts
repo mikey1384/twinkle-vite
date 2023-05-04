@@ -31,6 +31,7 @@ export interface Comment {
   lastReplyId: number;
   likes: any[];
   loadMoreButton: boolean;
+  isDeleteNotification: boolean;
   isLoadMoreButton: boolean;
   notFound: boolean;
   numReplies: number;
@@ -114,7 +115,7 @@ export interface Subject {
   secretAttachment: Attachment;
   title: string;
   rewardLevel: number;
-  userId: number;
+  userId?: number;
   uploader: User;
 }
 

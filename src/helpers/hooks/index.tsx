@@ -32,7 +32,7 @@ export function useContentState({
   contentId
 }: {
   contentType: string;
-  contentId: number;
+  contentId: number | null;
 }) {
   allContentState[contentType + contentId] = useContentContext(
     (v) => v.state[contentType + contentId]

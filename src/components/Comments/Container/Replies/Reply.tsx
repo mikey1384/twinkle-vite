@@ -106,30 +106,7 @@ function Reply({
   onSubmitWithAttachment: (v: any) => void;
   parent: any;
   pinnedCommentId?: number;
-  reply: {
-    commentId?: number;
-    content: string;
-    isExpanded?: boolean;
-    isDeleted?: boolean | number;
-    filePath?: string;
-    fileName: string;
-    fileSize?: number | string;
-    thumbUrl?: string;
-    id: number;
-    likes: any[];
-    numReplies: number;
-    originType?: string;
-    recommendations?: any[];
-    profilePicUrl?: string;
-    replyId?: number;
-    rewards?: any[];
-    targetObj?: any;
-    targetUserId?: number;
-    targetUserName?: string;
-    isDeleteNotification?: boolean | number;
-    timeStamp: string | number;
-    uploader?: any;
-  };
+  reply: Comment;
   rootContent?: any;
   subject: any;
   onSubmitReply: (v: any) => void;
@@ -199,7 +176,7 @@ function Reply({
     () => userId && rootContent?.uploader?.id === userId,
     [rootContent?.uploader?.id, userId]
   );
-  const userIsHigherAuth = authLevel > uploader.authLevel;
+  const userIsHigherAuth = authLevel > (uploader.authLevel || 0);
 
   const isRecommendedByUser = useMemo(() => {
     return (
@@ -387,7 +364,7 @@ function Reply({
                 <ProfilePic
                   style={{ width: '100%' }}
                   userId={uploader.id}
-                  profilePicUrl={uploader.profilePicUrl}
+                  profilePicUrl={uploader.profilePicUrl || ''}
                 />
               </div>
             </div>
@@ -634,7 +611,7 @@ function Reply({
                     !isRecommendedByUser && twinkleCoins > 0
                   )
                 }
-                uploaderAuthLevel={uploader.authLevel}
+                uploaderAuthLevel={uploader.authLevel || 0}
                 uploaderId={uploader.id}
               />
             )}
