@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import PropTypes from 'prop-types';
 import Editor from './Editor';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -7,6 +8,18 @@ import { scrollElementToCenter } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { parse } from '@babel/parser';
 
+CodeSandbox.propTypes = {
+  code: PropTypes.string,
+  initialCode: PropTypes.string.isRequired,
+  hasError: PropTypes.bool.isRequired,
+  onSetCode: PropTypes.func.isRequired,
+  onSetErrorMsg: PropTypes.func.isRequired,
+  onRunCode: PropTypes.func,
+  passed: PropTypes.bool,
+  prevUserId: PropTypes.number.isRequired,
+  runButtonLabel: PropTypes.string,
+  style: PropTypes.object
+};
 export default function CodeSandbox({
   code: globalCode,
   initialCode,
@@ -19,7 +32,7 @@ export default function CodeSandbox({
   runButtonLabel = 'Run',
   style
 }: {
-  code: string;
+  code?: string;
   initialCode: string;
   hasError: boolean;
   onSetCode: (code: string) => void;
