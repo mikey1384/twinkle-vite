@@ -1,9 +1,17 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
+ForkButtons.propTypes = {
+  descriptionShown: PropTypes.bool,
+  forkButtonIds: PropTypes.array.isRequired,
+  forkButtonsObj: PropTypes.object.isRequired,
+  onForkButtonClick: PropTypes.func.isRequired,
+  selectedForkButtonId: PropTypes.number
+};
 export default function ForkButtons({
   descriptionShown,
   forkButtonIds,
@@ -15,7 +23,7 @@ export default function ForkButtons({
   forkButtonIds: number[];
   forkButtonsObj: any;
   onForkButtonClick: (buttonId: number) => void;
-  selectedForkButtonId: number;
+  selectedForkButtonId?: number;
 }) {
   return (
     <div
