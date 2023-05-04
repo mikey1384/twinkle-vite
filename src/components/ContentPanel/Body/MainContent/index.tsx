@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
+import PropTypes from 'prop-types';
 import Embedly from '~/components/Embedly';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import XPVideoAdditionalInfo from './XPVideoAdditionalInfo';
@@ -15,6 +16,14 @@ import { useContentState, useTheme } from '~/helpers/hooks';
 import { useKeyContext, useContentContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 
+MainContent.propTypes = {
+  contentId: PropTypes.number.isRequired,
+  contentType: PropTypes.string.isRequired,
+  onClickSecretAnswer: PropTypes.func.isRequired,
+  secretHidden: PropTypes.bool.isRequired,
+  theme: PropTypes.string.isRequired,
+  userId: PropTypes.number
+};
 export default function MainContent({
   contentId,
   contentType,
