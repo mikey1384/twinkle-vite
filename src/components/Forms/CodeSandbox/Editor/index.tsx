@@ -1,4 +1,5 @@
 import React, { useMemo, createElement, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import SimpleEditor from 'react-simple-code-editor';
 import okaidia from 'prism-react-renderer/themes/okaidia';
 import Preview from './Preview';
@@ -7,6 +8,16 @@ import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
+Editor.propTypes = {
+  ast: PropTypes.any,
+  value: PropTypes.string,
+  valueOnTextEditor: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
+  onSetAst: PropTypes.func.isRequired,
+  onParse: PropTypes.func.isRequired,
+  onSetErrorMsg: PropTypes.func.isRequired,
+  style: PropTypes.object
+};
 export default function Editor({
   ast,
   value = '',
@@ -24,7 +35,7 @@ export default function Editor({
   onSetAst: (v: any) => void;
   onParse: (v: string) => any;
   onSetErrorMsg: (v: string) => void;
-  style?: any;
+  style?: React.CSSProperties;
 }) {
   const lintCode = useAppContext((v) => v.requestHelpers.lintCode);
   const processAst = useAppContext((v) => v.requestHelpers.processAst);

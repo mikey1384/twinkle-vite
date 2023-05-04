@@ -1,17 +1,24 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import PreviewErrorBoundary from './PreviewErrorBoundary';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 
+Preview.propTypes = {
+  evaling: PropTypes.bool.isRequired,
+  style: PropTypes.object.isRequired,
+  children: PropTypes.node.isRequired,
+  onError: PropTypes.any.isRequired
+};
 export default function Preview({
   evaling,
   style,
   children,
   onError
 }: {
-  evaling: any;
-  style: any;
-  children: any;
+  evaling: boolean;
+  style: React.CSSProperties;
+  children: React.ReactNode;
   onError: any;
 }) {
   return (
