@@ -1,7 +1,23 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import LoginToViewContent from '~/components/LoginToViewContent';
 
+FileViewer.propTypes = {
+  contentType: PropTypes.string.isRequired,
+  filePath: PropTypes.string,
+  secretHidden: PropTypes.bool,
+  userId: PropTypes.number,
+  theme: PropTypes.string.isRequired,
+  contentId: PropTypes.number.isRequired,
+  fileName: PropTypes.string,
+  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  thumbUrl: PropTypes.string,
+  byUser: PropTypes.bool.isRequired,
+  fileType: PropTypes.string.isRequired,
+  rewardLevel: PropTypes.number,
+  onSetMediaStarted: PropTypes.func.isRequired
+};
 export default function FileViewer({
   contentType,
   filePath,
@@ -9,8 +25,8 @@ export default function FileViewer({
   userId,
   theme,
   contentId,
-  fileName,
-  fileSize,
+  fileName = '',
+  fileSize = 0,
   thumbUrl,
   byUser,
   fileType,
@@ -18,17 +34,17 @@ export default function FileViewer({
   onSetMediaStarted
 }: {
   contentType: string;
-  filePath: string;
+  filePath?: string;
   secretHidden?: boolean;
-  userId: number;
+  userId?: number;
   theme: string;
   contentId: number;
-  fileName: string;
-  fileSize: number;
-  thumbUrl: string;
+  fileName?: string;
+  fileSize?: string | number;
+  thumbUrl?: string;
   byUser: boolean;
   fileType: string;
-  rewardLevel: number;
+  rewardLevel?: number;
   onSetMediaStarted: (v: {
     contentType: string;
     contentId: number;
