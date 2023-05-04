@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import UsernameText from '~/components/Texts/UsernameText';
 import { clientVersion } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
@@ -27,7 +28,20 @@ export default class ErrorBoundary extends Component<
   },
   State
 > {
-  state = { hasError: false };
+  static propTypes = {
+    children: PropTypes.node.isRequired,
+    className: PropTypes.string,
+    innerRef: PropTypes.any,
+    userId: PropTypes.number,
+    username: PropTypes.string,
+    componentPath: PropTypes.string.isRequired,
+    style: PropTypes.object
+  };
+
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
   async componentDidCatch(error: Error) {
     this.setState({ hasError: true });
