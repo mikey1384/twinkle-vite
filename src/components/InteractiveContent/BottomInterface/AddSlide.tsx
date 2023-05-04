@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import SelectArchivedSlideModal from '../SelectArchivedSlideModal';
@@ -6,6 +7,11 @@ import { useAppContext, useInteractiveContext } from '~/contexts';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
+AddSlide.propTypes = {
+  archivedSlides: PropTypes.array.isRequired,
+  interactiveId: PropTypes.number.isRequired,
+  lastFork: PropTypes.object
+};
 export default function AddSlide({
   archivedSlides,
   interactiveId,
@@ -13,7 +19,7 @@ export default function AddSlide({
 }: {
   archivedSlides: any[];
   interactiveId: number;
-  lastFork: any;
+  lastFork?: any;
 }) {
   const appendInteractiveSlide = useAppContext(
     (v) => v.requestHelpers.appendInteractiveSlide
