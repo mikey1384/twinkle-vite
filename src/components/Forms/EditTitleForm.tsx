@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
@@ -11,6 +12,15 @@ import {
 } from '~/helpers/stringHelpers';
 import { edit } from '~/constants/placeholders';
 
+EditTitleForm.propTypes = {
+  autoFocus: PropTypes.bool,
+  maxLength: PropTypes.number,
+  onClickOutSide: PropTypes.func.isRequired,
+  onEditSubmit: PropTypes.func.isRequired,
+  savingEdit: PropTypes.bool,
+  style: PropTypes.object,
+  title: PropTypes.string.isRequired
+};
 export default function EditTitleForm({
   autoFocus,
   maxLength = 100,
@@ -27,7 +37,7 @@ export default function EditTitleForm({
   onClickOutSide: () => void;
   onEditSubmit: (title: string) => void;
   savingEdit?: boolean;
-  style?: any;
+  style?: React.CSSProperties;
   title: string;
 }) {
   const {
