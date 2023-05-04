@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import LikeButton from '~/components/Buttons/LikeButton';
 import StarButton from '~/components/Buttons/StarButton';
 import Button from '~/components/Button';
@@ -26,6 +27,39 @@ const replyLabel = localize('reply');
 const respondLabel = localize('respond');
 const deviceIsMobile = isMobile(navigator);
 
+BottomInterface.propTypes = {
+  authLevel: PropTypes.number,
+  autoExpand: PropTypes.bool,
+  canDelete: PropTypes.bool,
+  canEdit: PropTypes.bool,
+  canReward: PropTypes.bool,
+  commentsShown: PropTypes.bool,
+  CommentInputAreaRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.any })
+  ]),
+  contentObj: PropTypes.object,
+  finalRewardLevel: PropTypes.number,
+  isEditing: PropTypes.bool,
+  isRecommendedByUser: PropTypes.bool,
+  onByUserStatusChange: PropTypes.func,
+  onExpandComments: PropTypes.func,
+  onSetCloseConfirmModalShown: PropTypes.func,
+  onSetDeleteConfirmModalShown: PropTypes.func,
+  onSetIsEditing: PropTypes.func,
+  onSetRewardLevel: PropTypes.func,
+  onSetRecommendationInterfaceShown: PropTypes.func,
+  onSetUserListModalShown: PropTypes.func,
+  onSetXpRewardInterfaceShown: PropTypes.func,
+  recommendationInterfaceShown: PropTypes.bool,
+  rewardColor: PropTypes.string,
+  secretHidden: PropTypes.bool,
+  subjectUploaderId: PropTypes.number,
+  theme: PropTypes.string,
+  userCanRewardThis: PropTypes.bool,
+  userId: PropTypes.number,
+  xpRewardInterfaceShown: PropTypes.bool
+};
 export default function BottomInterface({
   authLevel,
   autoExpand,
