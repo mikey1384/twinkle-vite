@@ -122,6 +122,8 @@ export default function LongText({
                   </a>
                 );
               },
+              em: (props: any) => <strong>{props.children}</strong>,
+              strong: (props: any) => <em>{props.children}</em>,
               table: (props: any) => {
                 return (
                   <div
