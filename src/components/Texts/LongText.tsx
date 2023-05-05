@@ -88,18 +88,6 @@ export default function LongText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (cleanString) {
-    return (
-      <div
-        ref={ContainerRef}
-        style={{ minWidth: '100%', width: 0, ...style }}
-        className={className}
-      >
-        {text}
-      </div>
-    );
-  }
-
   return (
     <ErrorBoundary componentPath="components/Texts/LongText">
       <div
@@ -121,50 +109,54 @@ export default function LongText({
           }
         `}`}
       >
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkEmoji, remarkBreaks]}
-          components={{
-            a: (props: any) => {
-              return (
-                <a href={props.href} target="_blank" rel="noreferrer">
-                  {props.children}
-                </a>
-              );
-            },
-            table: (props: any) => {
-              return (
-                <div
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <table
-                    style={{ width: '80%', borderCollapse: 'collapse' }}
-                    className={css`
-                      tr {
-                        width: 100%;
-                      }
-                      th,
-                      td {
-                        text-align: center;
-                        min-width: 33%;
-                        max-width: 25vw;
-                        border: 1px solid ${Color.borderGray()};
-                        padding: 0.5rem;
-                      }
-                    `}
-                  >
+        {cleanString ? (
+          text
+        ) : (
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkEmoji, remarkBreaks]}
+            components={{
+              a: (props: any) => {
+                return (
+                  <a href={props.href} target="_blank" rel="noreferrer">
                     {props.children}
-                  </table>
-                </div>
-              );
-            }
-          }}
-        >
-          {text}
-        </ReactMarkdown>
+                  </a>
+                );
+              },
+              table: (props: any) => {
+                return (
+                  <div
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <table
+                      style={{ width: '80%', borderCollapse: 'collapse' }}
+                      className={css`
+                        tr {
+                          width: 100%;
+                        }
+                        th,
+                        td {
+                          text-align: center;
+                          min-width: 33%;
+                          max-width: 25vw;
+                          border: 1px solid ${Color.borderGray()};
+                          padding: 0.5rem;
+                        }
+                      `}
+                    >
+                      {props.children}
+                    </table>
+                  </div>
+                );
+              }
+            }}
+          >
+            {text}
+          </ReactMarkdown>
+        )}
       </div>
       <div
         style={{
