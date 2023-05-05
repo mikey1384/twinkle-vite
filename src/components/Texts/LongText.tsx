@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
+import remarkBreaks from 'remark-breaks';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
@@ -90,6 +91,7 @@ export default function LongText({
   if (cleanString) {
     return (
       <div
+        ref={ContainerRef}
         style={{ minWidth: '100%', width: 0, ...style }}
         className={className}
       >
@@ -101,13 +103,16 @@ export default function LongText({
   return (
     <ErrorBoundary componentPath="components/Texts/LongText">
       <div
+        ref={ContainerRef}
         style={{ minWidth: '100%', width: 0, ...style }}
         className={`${className} ${css`
-          display: -webkit-box;
-          -webkit-line-clamp: ${!fullText ? maxLines : 'unset'};
+          ${fullText
+            ? ''
+            : `display: -webkit-box;
+          -webkit-line-clamp: ${maxLines};
           -webkit-box-orient: vertical;
           overflow: hidden;
-          text-overflow: ellipsis;
+          text-overflow: ellipsis;`}
           img {
             width: 100%;
             max-height: 400px;
@@ -115,10 +120,9 @@ export default function LongText({
             object-fit: contain;
           }
         `}`}
-        ref={ContainerRef}
       >
         <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkEmoji]}
+          remarkPlugins={[remarkGfm, remarkEmoji, remarkBreaks]}
           components={{
             a: (props: any) => {
               return (
