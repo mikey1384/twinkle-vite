@@ -42,6 +42,7 @@ export default function LongText({
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
+    statusMsgLink: { color: statusMsgLinkColor },
     link: { color: linkColor }
   } = useTheme(theme || profileTheme);
 
@@ -132,7 +133,7 @@ export default function LongText({
                   <Link to={replacedLink}>{props.children}</Link>
                 ) : (
                   <a
-                    style={{ color: Color[linkColor]() }}
+                    style={{ color: Color[statusMsgLinkColor]() }}
                     href={props.href}
                     target="_blank"
                     rel="noreferrer"
