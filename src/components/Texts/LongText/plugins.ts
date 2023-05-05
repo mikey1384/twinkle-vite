@@ -9,9 +9,7 @@ export function remarkMentions() {
     visit(tree, 'text', (node, index, parent) => {
       if (typeof node.value !== 'string') return;
       const mentions = node.value.split(/(@\w+|＠\w+)/g);
-
       if (mentions.length <= 1) return;
-
       const newNodes = mentions
         .filter((text: string) => text)
         .map((text: string) => {
