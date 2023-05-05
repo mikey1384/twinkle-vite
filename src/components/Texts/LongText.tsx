@@ -1,18 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  limitBrs,
-  processMentionLink,
-  processedStringWithURL
-} from '~/helpers/stringHelpers';
+import React, { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkEmoji from 'remark-emoji';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
+import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { css } from '@emotion/css';
 
 const readMoreLabel = localize('readMore');
-const lineHeight = 1.7;
 
 export default function LongText({
   style,
@@ -22,9 +19,8 @@ export default function LongText({
   contentId,
   contentType,
   isPreview,
-  isStatusMsg,
-  section = '',
   maxLines = 10,
+  section = '',
   readMoreHeightFixed,
   readMoreColor,
   theme
@@ -36,7 +32,6 @@ export default function LongText({
   contentId?: number;
   contentType?: string;
   isPreview?: boolean;
-  isStatusMsg?: boolean;
   section?: string;
   maxLines?: number;
   readMoreHeightFixed?: boolean;
@@ -45,7 +40,6 @@ export default function LongText({
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
-    statusMsgLink: { color: statusMsgLinkColor },
     link: { color: linkColor }
   } = useTheme(theme || profileTheme);
 
@@ -93,80 +87,105 @@ export default function LongText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const innerHTML = useMemo(() => {
-    if (cleanString) {
-      return limitBrs(text);
-    }
-    let processedText = processedStringWithURL(text);
-    if (!fullText && processedText && isOverflown) {
-      const splitText = processedText?.split('</');
-      if (splitText[splitText.length - 1] === 'a>') {
-        let finalTextArray = processedText?.split('<a');
-        finalTextArray = finalTextArray.filter(
-          (word, index) => index !== finalTextArray.length - 1
-        );
-        processedText = finalTextArray.join('<a') + '...';
-      }
-    }
-    const finalText = processMentionLink(limitBrs(processedText));
-    return finalText;
-  }, [cleanString, fullText, text, isOverflown]);
+  if (cleanString) {
+    return (
+      <div
+        style={{ minWidth: '100%', width: 0, ...style }}
+        className={className}
+      >
+        {text}
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary componentPath="components/Texts/LongText">
       <div
         style={{ minWidth: '100%', width: 0, ...style }}
-        className={className}
+        className={`${className} ${css`
+          display: -webkit-box;
+          -webkit-line-clamp: ${!fullText ? maxLines : 'unset'};
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          img {
+            width: 100%;
+            max-height: 400px;
+            display: block;
+            object-fit: contain;
+          }
+        `}`}
+        ref={ContainerRef}
       >
-        <span
-          ref={ContainerRef}
-          style={{
-            lineHeight,
-            width: '100%',
-            ...(fullText
-              ? {}
-              : {
-                  overflow: 'hidden',
-                  display: '-webkit-box',
-                  WebkitLineClamp: maxLines,
-                  WebkitBoxOrient: 'vertical'
-                })
-          }}
-          className={css`
-            a {
-              color: ${Color[
-                isStatusMsg ? statusMsgLinkColor : linkColor
-              ]()}!important;
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm, remarkEmoji]}
+          components={{
+            a: (props: any) => {
+              return (
+                <a href={props.href} target="_blank" rel="noreferrer">
+                  {props.children}
+                </a>
+              );
+            },
+            table: (props: any) => {
+              return (
+                <div
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <table
+                    style={{ width: '80%', borderCollapse: 'collapse' }}
+                    className={css`
+                      tr {
+                        width: 100%;
+                      }
+                      th,
+                      td {
+                        text-align: center;
+                        min-width: 33%;
+                        max-width: 25vw;
+                        border: 1px solid ${Color.borderGray()};
+                        padding: 0.5rem;
+                      }
+                    `}
+                  >
+                    {props.children}
+                  </table>
+                </div>
+              );
             }
-          `}
-        >
-          {innerHTML}
-        </span>
-        <div
-          style={{
-            height: readMoreHeightFixed ? '2rem' : 'auto',
-            display: 'flex',
-            alignItems: 'center'
           }}
         >
-          {!fullText && isOverflown && (
-            <a
-              style={{
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                color: readMoreColor || Color[linkColor](),
-                display: 'inline',
-                paddingTop: '1rem'
-              }}
-              onClick={() => {
-                setFullText(true);
-                fullTextRef.current = true;
-              }}
-            >
-              {readMoreLabel}
-            </a>
-          )}
-        </div>
+          {text}
+        </ReactMarkdown>
+      </div>
+      <div
+        style={{
+          height: readMoreHeightFixed ? '2rem' : 'auto',
+          display: 'flex',
+          alignItems: 'center'
+        }}
+      >
+        {!fullText && isOverflown && (
+          <a
+            style={{
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              color: readMoreColor || Color[linkColor](),
+              display: 'inline',
+              paddingTop: '1rem'
+            }}
+            onClick={() => {
+              setFullText(true);
+              fullTextRef.current = true;
+            }}
+          >
+            {readMoreLabel}
+          </a>
+        )}
       </div>
     </ErrorBoundary>
   );
