@@ -172,18 +172,29 @@ export default function LongText({
                     }}
                   >
                     <table
-                      style={{ width: '80%', borderCollapse: 'collapse' }}
+                      style={{ borderCollapse: 'collapse' }}
                       className={css`
+                        min-width: 25vw;
+                        width: 80%;
+                        max-width: 100%;
                         tr {
+                          display: table-row;
                           width: 100%;
                         }
                         th,
                         td {
                           text-align: center;
-                          min-width: 33%;
-                          max-width: 25vw;
+                          width: 33%;
                           border: 1px solid ${Color.borderGray()};
                           padding: 0.5rem;
+                          white-space: nowrap;
+                          &:first-child {
+                            width: 2%;
+                          }
+                        }
+                        td img {
+                          width: 100%;
+                          height: auto;
                         }
                       `}
                     >
