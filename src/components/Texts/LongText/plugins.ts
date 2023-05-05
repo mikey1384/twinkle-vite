@@ -36,7 +36,6 @@ export function remarkMentions() {
           }
           return { type: 'text', value: text };
         });
-
       parent.children.splice(index, 1, ...newNodes);
     });
   };
