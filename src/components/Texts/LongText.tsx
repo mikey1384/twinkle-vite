@@ -117,9 +117,10 @@ export default function LongText({
             remarkPlugins={[remarkGfm, remarkEmoji, remarkBreaks]}
             components={{
               a: (props: any) => {
-                const internalLink = isInternalLink(props.href);
-                const replacedLink = replaceURLPrefixes(props.href);
-                return internalLink ? (
+                const { isInternalLink, replacedLink } = processInternalLink(
+                  props.href
+                );
+                return isInternalLink ? (
                   <Link to={replacedLink}>{props.children}</Link>
                 ) : (
                   <a href={props.href} target="_blank" rel="noreferrer">
@@ -191,38 +192,11 @@ export default function LongText({
     </ErrorBoundary>
   );
 
-  function isInternalLink(url: string) {
-    const prefixes = [
-      'https://twin-kle.com',
-      'https://twinkle.network',
-      'http://twin-kle.com',
-      'http://twinkle.network',
-      'https://www.twin-kle.com',
-      'https://www.twinkle.network',
-      'http://www.twin-kle.com',
-      'http://www.twinkle.network',
-      'www.twin-kle.com',
-      'www.twinkle.network'
-    ];
-
-    return prefixes.some((prefix) => url.startsWith(prefix));
-  }
-  function replaceURLPrefixes(url: string) {
-    const prefixes = [
-      'https://twin-kle.com',
-      'https://twinkle.network',
-      'http://twin-kle.com',
-      'http://twinkle.network',
-      'https://www.twin-kle.com',
-      'https://www.twinkle.network',
-      'http://www.twin-kle.com',
-      'http://www.twinkle.network',
-      'www.twin-kle.com',
-      'www.twinkle.network'
-    ];
-    return prefixes.reduce(
-      (currentURL, prefix) => currentURL.replace(prefix, ''),
-      url
-    );
+  function processInternalLink(url: string) {
+    const regex =
+      /^(https?:\/\/(?:www\.)?|www\.)(twin-kle\.com|twinkle\.network|localhost:3000)/;
+    const isInternalLink = regex.test(url);
+    const replacedLink = url.replace(regex, '');
+    return { isInternalLink, replacedLink };
   }
 }
