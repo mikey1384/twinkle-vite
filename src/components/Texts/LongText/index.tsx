@@ -131,7 +131,12 @@ export default function LongText({
                 return isInternalLink || props.className === 'mention' ? (
                   <Link to={replacedLink}>{props.children}</Link>
                 ) : (
-                  <a href={props.href} target="_blank" rel="noreferrer">
+                  <a
+                    style={{ color: Color[linkColor]() }}
+                    href={props.href}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     {props.children}
                   </a>
                 );
