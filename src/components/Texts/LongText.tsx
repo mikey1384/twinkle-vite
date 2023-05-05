@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
 import remarkBreaks from 'remark-breaks';
+import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
@@ -116,14 +117,16 @@ export default function LongText({
             remarkPlugins={[remarkGfm, remarkEmoji, remarkBreaks]}
             components={{
               a: (props: any) => {
-                return (
+                const internalLink = isInternalLink(props.href);
+                const replacedLink = replaceURLPrefixes(props.href);
+                return internalLink ? (
+                  <Link to={replacedLink}>{props.children}</Link>
+                ) : (
                   <a href={props.href} target="_blank" rel="noreferrer">
                     {props.children}
                   </a>
                 );
               },
-              em: (props: any) => <strong>{props.children}</strong>,
-              strong: (props: any) => <em>{props.children}</em>,
               table: (props: any) => {
                 return (
                   <div
@@ -187,4 +190,39 @@ export default function LongText({
       </div>
     </ErrorBoundary>
   );
+
+  function isInternalLink(url: string) {
+    const prefixes = [
+      'https://twin-kle.com',
+      'https://twinkle.network',
+      'http://twin-kle.com',
+      'http://twinkle.network',
+      'https://www.twin-kle.com',
+      'https://www.twinkle.network',
+      'http://www.twin-kle.com',
+      'http://www.twinkle.network',
+      'www.twin-kle.com',
+      'www.twinkle.network'
+    ];
+
+    return prefixes.some((prefix) => url.startsWith(prefix));
+  }
+  function replaceURLPrefixes(url: string) {
+    const prefixes = [
+      'https://twin-kle.com',
+      'https://twinkle.network',
+      'http://twin-kle.com',
+      'http://twinkle.network',
+      'https://www.twin-kle.com',
+      'https://www.twinkle.network',
+      'http://www.twin-kle.com',
+      'http://www.twinkle.network',
+      'www.twin-kle.com',
+      'www.twinkle.network'
+    ];
+    return prefixes.reduce(
+      (currentURL, prefix) => currentURL.replace(prefix, ''),
+      url
+    );
+  }
 }
