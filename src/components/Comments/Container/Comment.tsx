@@ -698,6 +698,8 @@ function Comment({
                               ? fileType === 'audio'
                                 ? '2rem'
                                 : '1rem'
+                              : fileType === 'audio'
+                              ? '1rem'
                               : 0
                           }}
                         />

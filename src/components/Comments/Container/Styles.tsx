@@ -47,7 +47,8 @@ export const commentContainer = css`
     overflow-wrap: break-word;
     word-break: break-word;
     line-height: 1.5;
-    margin: 1.5rem 0 1.5rem 0;
+    padding-top: 1.5rem;
+    margin-bottom: 1rem;
   }
   .reply-button {
     margin-left: 0.5rem;

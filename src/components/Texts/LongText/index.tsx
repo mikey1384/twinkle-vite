@@ -21,6 +21,7 @@ export default function LongText({
   contentId,
   contentType,
   isPreview,
+  isStatusMsg,
   maxLines = 10,
   section = '',
   readMoreHeightFixed,
@@ -34,6 +35,7 @@ export default function LongText({
   contentId?: number;
   contentType?: string;
   isPreview?: boolean;
+  isStatusMsg?: boolean;
   section?: string;
   maxLines?: number;
   readMoreHeightFixed?: boolean;
@@ -94,7 +96,14 @@ export default function LongText({
     <ErrorBoundary componentPath="components/Texts/LongText">
       <div
         ref={ContainerRef}
-        style={{ minWidth: '100%', width: 0, ...style }}
+        style={{
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'break-word',
+          wordBreak: 'break-word',
+          minWidth: '100%',
+          width: 0,
+          ...style
+        }}
         className={`${className} ${css`
           p {
             margin: 0;
@@ -130,10 +139,21 @@ export default function LongText({
                   props.href
                 );
                 return isInternalLink || props.className === 'mention' ? (
-                  <Link to={replacedLink}>{props.children}</Link>
+                  <Link
+                    style={{
+                      color:
+                        Color[isStatusMsg ? statusMsgLinkColor : linkColor]()
+                    }}
+                    to={replacedLink}
+                  >
+                    {props.children}
+                  </Link>
                 ) : (
                   <a
-                    style={{ color: Color[statusMsgLinkColor]() }}
+                    style={{
+                      color:
+                        Color[isStatusMsg ? statusMsgLinkColor : linkColor]()
+                    }}
                     href={props.href}
                     target="_blank"
                     rel="noreferrer"
@@ -182,7 +202,8 @@ export default function LongText({
         style={{
           height: readMoreHeightFixed ? '2rem' : 'auto',
           display: 'flex',
-          alignItems: 'center'
+          alignItems: 'center',
+          paddingBottom: '1rem'
         }}
       >
         {!fullText && isOverflown && (

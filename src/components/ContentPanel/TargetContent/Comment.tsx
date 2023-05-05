@@ -150,9 +150,6 @@ function Comment({
               <LongText
                 theme={theme}
                 style={{
-                  whiteSpace: 'pre-wrap',
-                  overflowWrap: 'break-word',
-                  wordBreak: 'break-word',
                   margin: '0.5rem 0 1rem 0'
                 }}
               >
