@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
-import remarkBreaks from 'remark-breaks';
+import { remarkMentions } from './plugins';
 import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
@@ -95,6 +95,9 @@ export default function LongText({
         ref={ContainerRef}
         style={{ minWidth: '100%', width: 0, ...style }}
         className={`${className} ${css`
+          p {
+            margin: 0;
+          }
           ${fullText
             ? ''
             : `display: -webkit-box;
@@ -114,13 +117,13 @@ export default function LongText({
           text
         ) : (
           <ReactMarkdown
-            remarkPlugins={[remarkGfm, remarkEmoji, remarkBreaks]}
+            remarkPlugins={[remarkGfm, remarkEmoji, remarkMentions]}
             components={{
               a: (props: any) => {
                 const { isInternalLink, replacedLink } = processInternalLink(
                   props.href
                 );
-                return isInternalLink ? (
+                return isInternalLink || props.className === 'mention' ? (
                   <Link to={replacedLink}>{props.children}</Link>
                 ) : (
                   <a href={props.href} target="_blank" rel="noreferrer">
