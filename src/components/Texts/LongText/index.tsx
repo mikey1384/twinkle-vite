@@ -28,7 +28,7 @@ export default function LongText({
   readMoreColor,
   theme
 }: {
-  style?: any;
+  style?: React.CSSProperties;
   className?: string;
   cleanString?: boolean;
   children?: any;
