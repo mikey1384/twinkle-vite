@@ -1,4 +1,5 @@
 import { visit } from 'unist-util-visit';
+import { visitParents } from 'unist-util-visit-parents';
 
 type FontSize = 'huge' | 'big' | 'small' | 'tiny';
 type Color =
@@ -91,7 +92,12 @@ export function legacyTextSize() {
   };
 
   return (tree: any) => {
-    visit(tree, 'text', (node, index, parent) => {
+    visitParents(tree, (node, ancestors) => {
+      if (node.type !== 'text') return;
+
+      const parent = ancestors[ancestors.length - 1];
+      const index = parent.children.indexOf(node);
+
       if (typeof node.value !== 'string') return;
       const splitSentenceParts = splitStringBySizeMatch(node.value);
       const newNodes: any[] = [];
@@ -161,7 +167,12 @@ export function legacyTextColor() {
   };
 
   return (tree: any) => {
-    visit(tree, 'text', (node, index, parent) => {
+    visitParents(tree, (node, ancestors) => {
+      if (node.type !== 'text') return;
+
+      const parent = ancestors[ancestors.length - 1];
+      const index = parent.children.indexOf(node);
+
       if (typeof node.value !== 'string') return;
       const splitSentenceParts = splitStringByColorMatch(node.value);
       const newNodes: any[] = [];
