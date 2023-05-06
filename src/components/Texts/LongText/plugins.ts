@@ -74,6 +74,22 @@ export function legacyTextSize() {
     small: '0.7em',
     tiny: '0.5em'
   };
+  const textColors: {
+    [K in Color]: string;
+  } = {
+    blue: 'rgb(5,110,178)',
+    gray: 'gray',
+    green: 'rgb(40,182,44)',
+    lime: 'lawngreen',
+    logoBlue: 'rgb(65, 140, 235)',
+    orange: 'orange',
+    passionFruit: 'rgb(243,103,123)',
+    pink: 'rgb(255,105,180)',
+    purple: 'rgb(152,28,235)',
+    red: 'red',
+    yellow: 'rgb(255,210,0)'
+  };
+
   return (tree: any) => {
     visit(tree, 'text', (node, index, parent) => {
       if (typeof node.value !== 'string') return;
@@ -81,6 +97,24 @@ export function legacyTextSize() {
       const newNodes: any[] = [];
       for (const part of splitSentenceParts) {
         if (part.isMatch) {
+          const colorParts = splitStringByColorMatch(part.text);
+          const hChildren = colorParts.map((colorPart) => {
+            if (colorPart.isMatch) {
+              return {
+                type: 'element',
+                tagName: 'span',
+                properties: {
+                  role: 'span',
+                  style: colorPart.color
+                    ? `color: ${textColors[colorPart.color]};`
+                    : ''
+                },
+                children: [{ type: 'text', value: colorPart.text }]
+              };
+            } else {
+              return { type: 'text', value: colorPart.text };
+            }
+          });
           newNodes.push({
             type: 'text',
             data: {
@@ -89,7 +123,7 @@ export function legacyTextSize() {
                 role: 'span',
                 style: part.size ? `font-size: ${fontSizes[part.size]}` : ''
               },
-              hChildren: [{ type: 'text', value: part.text }]
+              hChildren
             }
           });
         } else {
