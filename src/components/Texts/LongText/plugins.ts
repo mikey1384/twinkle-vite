@@ -8,7 +8,7 @@ interface SplitString {
   size?: FontSize;
 }
 
-export function remarkMentions() {
+export function mentions() {
   const isFakeMention: {
     [key: string]: boolean;
   } = {};
@@ -48,7 +48,7 @@ export function remarkMentions() {
   };
 }
 
-export function remarkLegacyTextSize() {
+export function legacyTextSize() {
   const fontSizes: {
     [K in FontSize]: string;
   } = {
