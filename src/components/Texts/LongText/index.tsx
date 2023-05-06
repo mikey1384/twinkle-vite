@@ -205,7 +205,7 @@ export default function LongText({
               }
             }}
           >
-            {text}
+            {convertLineBreak(text)}
           </ReactMarkdown>
         )}
       </div>
@@ -244,5 +244,18 @@ export default function LongText({
     const isInternalLink = regex.test(url);
     const replacedLink = url.replace(regex, '');
     return { isInternalLink, replacedLink };
+  }
+
+  function convertLineBreak(text: string) {
+    const maxNbsp = 10;
+    let nbspCount = 0;
+    return text.replace(/\n/gi, () => {
+      nbspCount++;
+      if (nbspCount > 1 && nbspCount < maxNbsp) {
+        return '&nbsp;\n';
+      } else {
+        return '\n';
+      }
+    });
   }
 }
