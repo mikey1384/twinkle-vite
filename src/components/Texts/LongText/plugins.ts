@@ -26,6 +26,33 @@ interface SplitStringForColor {
   color?: Color;
 }
 
+const sizeRegexObj: { [K in FontSize]: RegExp } = {
+  huge: /h\[(.+?)\]h/,
+  big: /b\[(.+?)\]b/,
+  small: /s\[(.+?)\]s/,
+  tiny: /t\[(.+?)\]t/
+};
+const sizeRegexGlobal = /(?:h\[(.+?)\]h|b\[(.+?)\]b|s\[(.+?)\]s|t\[(.+?)\]t)/g;
+const colorRegexObj: { [K in Color]: RegExp } = {
+  blue: /(?:b\|)([\s\S]+?)(?:\|b)/,
+  gray: /(?:gr\|)([\s\S]+?)(?:\|gr)/,
+  green: /(?:g\|)([\s\S]+?)(?:\|g)/,
+  lime: /(?:l\|)([\s\S]+?)(?:\|l)/,
+  logoBlue: /(?:lb\|)([\s\S]+?)(?:\|lb)/,
+  orange: /(?:o\|)([\s\S]+?)(?:\|o)/,
+  passionFruit: /(?:pf\|)([\s\S]+?)(?:\|pf)/,
+  pink: /(?:p\|)([\s\S]+?)(?:\|p)/,
+  purple: /(?:pu\|)([\s\S]+?)(?:\|pu)/,
+  red: /(?:r\|)([\s\S]+?)(?:\|r)/,
+  yellow: /(?:y\|)([\s\S]+?)(?:\|y)/
+};
+const colorRegexGlobal = new RegExp(
+  Object.values(colorRegexObj)
+    .map((regex) => `(?:${regex.source})`)
+    .join('|'),
+  'gi'
+);
+
 export function mentions() {
   const isFakeMention: {
     [key: string]: boolean;
@@ -66,7 +93,7 @@ export function mentions() {
   };
 }
 
-export function legacyTextSize() {
+export function legacyTextStyling() {
   const fontSizes: {
     [K in FontSize]: string;
   } = {
@@ -99,26 +126,61 @@ export function legacyTextSize() {
       const index = parent.children.indexOf(node);
 
       if (typeof node.value !== 'string') return;
-      const splitSentenceParts = splitStringBySizeMatch(node.value);
+
+      const firstMatchType = getFirstMatchType(node.value);
+      let splitSentenceParts: {
+        text: string;
+        isMatch: boolean;
+        size?: FontSize;
+        color?: Color;
+      }[] = [];
+      if (firstMatchType === 'color') {
+        splitSentenceParts = splitStringByColorMatch(node.value);
+      } else if (firstMatchType === 'size') {
+        splitSentenceParts = splitStringBySizeMatch(node.value);
+      } else {
+        parent.children.splice(index, 1, { type: 'text', value: node.value });
+        return;
+      }
       const newNodes: any[] = [];
+
       for (const part of splitSentenceParts) {
         if (part.isMatch) {
-          const colorParts = splitStringByColorMatch(part.text);
-          const hChildren = colorParts.map((colorPart) => {
-            if (colorPart.isMatch) {
+          let subParts: {
+            text: string;
+            isMatch: boolean;
+            size?: FontSize;
+            color?: Color;
+          }[] = [];
+          if (firstMatchType === 'color') {
+            subParts = splitStringBySizeMatch(part.text);
+          } else {
+            subParts = splitStringByColorMatch(part.text);
+          }
+          const hChildren = subParts.map((subPart) => {
+            if (subPart.isMatch) {
               return {
                 type: 'element',
                 tagName: 'span',
                 properties: {
                   role: 'span',
-                  style: colorPart.color
-                    ? `color: ${textColors[colorPart.color]};`
-                    : ''
+                  style: `
+                    ${
+                      subPart.size
+                        ? `font-size: ${fontSizes[subPart.size]};`
+                        : ''
+                    }
+                    ${
+                      subPart.color
+                        ? `color: ${textColors[subPart.color]};`
+                        : ''
+                    }
+                  `.trim()
                 },
-                children: [{ type: 'text', value: colorPart.text }]
+                children: [{ type: 'text', value: subPart.text }]
               };
             } else {
-              return { type: 'text', value: colorPart.text };
+              return { type: 'text', value: subPart.text };
             }
           });
           newNodes.push({
@@ -127,7 +189,10 @@ export function legacyTextSize() {
               hName: 'span',
               hProperties: {
                 role: 'span',
-                style: part.size ? `font-size: ${fontSizes[part.size]}` : ''
+                style: `
+                  ${part.size ? `font-size: ${fontSizes[part.size]};` : ''}
+                  ${part.color ? `color: ${textColors[part.color]};` : ''}
+                `.trim()
               },
               hChildren
             }
@@ -141,98 +206,28 @@ export function legacyTextSize() {
   };
 }
 
-export function legacyTextColor() {
-  const fontSizes: {
-    [K in FontSize]: string;
-  } = {
-    huge: '1.9em',
-    big: '1.4em',
-    small: '0.7em',
-    tiny: '0.5em'
-  };
-  const textColors: {
-    [K in Color]: string;
-  } = {
-    blue: 'rgb(5,110,178)',
-    gray: 'gray',
-    green: 'rgb(40,182,44)',
-    lime: 'lawngreen',
-    logoBlue: 'rgb(65, 140, 235)',
-    orange: 'orange',
-    passionFruit: 'rgb(243,103,123)',
-    pink: 'rgb(255,105,180)',
-    purple: 'rgb(152,28,235)',
-    red: 'red',
-    yellow: 'rgb(255,210,0)'
-  };
+function getFirstMatchType(text: string): 'color' | 'size' | null {
+  colorRegexGlobal.lastIndex = 0;
+  sizeRegexGlobal.lastIndex = 0;
+  const colorMatch = colorRegexGlobal.exec(text);
+  const sizeMatch = sizeRegexGlobal.exec(text);
 
-  return (tree: any) => {
-    visitParents(tree, (node, ancestors) => {
-      if (node.type !== 'text') return;
+  if (!colorMatch && !sizeMatch) return null;
+  if (!colorMatch) return 'size';
+  if (!sizeMatch) return 'color';
 
-      const parent = ancestors[ancestors.length - 1];
-      const index = parent.children.indexOf(node);
-
-      if (typeof node.value !== 'string') return;
-      const splitSentenceParts = splitStringByColorMatch(node.value);
-      const newNodes: any[] = [];
-      for (const part of splitSentenceParts) {
-        if (part.isMatch) {
-          const sizeParts = splitStringBySizeMatch(part.text);
-          const hChildren = sizeParts.map((sizePart) => {
-            if (sizePart.isMatch) {
-              return {
-                type: 'element',
-                tagName: 'span',
-                properties: {
-                  role: 'span',
-                  style: sizePart.size
-                    ? `font-size: ${fontSizes[sizePart.size]}`
-                    : ''
-                },
-                children: [{ type: 'text', value: sizePart.text }]
-              };
-            } else {
-              return { type: 'text', value: sizePart.text };
-            }
-          });
-          newNodes.push({
-            type: 'text',
-            data: {
-              hName: 'span',
-              hProperties: {
-                role: 'span',
-                style: part.color ? `color: ${textColors[part.color]};` : ''
-              },
-              hChildren
-            }
-          });
-        } else {
-          newNodes.push({ type: 'text', value: part.text });
-        }
-      }
-      parent.children.splice(index, 1, ...newNodes);
-    });
-  };
+  return colorMatch.index < sizeMatch.index ? 'color' : 'size';
 }
 
 function splitStringBySizeMatch(str: string): SplitStringForFontSize[] {
-  const regexObj: { [K in FontSize]: RegExp } = {
-    huge: /h\[(.+?)\]h/,
-    big: /b\[(.+?)\]b/,
-    small: /s\[(.+?)\]s/,
-    tiny: /t\[(.+?)\]t/
-  };
-
-  const regexGlobal = /(?:h\[(.+?)\]h|b\[(.+?)\]b|s\[(.+?)\]s|t\[(.+?)\]t)/g;
-
+  sizeRegexGlobal.lastIndex = 0;
   function recursiveSplit(
     str: string,
     startIndex: number
   ): SplitStringForFontSize[] {
     let selectedKey: FontSize | null = null;
     const result: SplitStringForFontSize[] = [];
-    const match = regexGlobal.exec(str);
+    const match = sizeRegexGlobal.exec(str);
 
     if (!match) {
       return [{ text: str.slice(startIndex), isMatch: false }];
@@ -243,15 +238,16 @@ function splitStringBySizeMatch(str: string): SplitStringForFontSize[] {
       result.push({ text: beforeMatch, isMatch: false });
     }
 
-    let innerMatch: RegExpExecArray | null = match;
-    for (const key in regexObj) {
-      innerMatch = regexObj[key as FontSize].exec(match[0]);
-      if (innerMatch) {
+    let innerMatch: RegExpExecArray | null = null;
+    let minIndex = Infinity;
+    for (const key in sizeRegexObj) {
+      const currentMatch = sizeRegexObj[key as FontSize].exec(match[0]);
+      if (currentMatch && currentMatch.index < minIndex) {
+        innerMatch = currentMatch;
         selectedKey = key as FontSize;
-        break;
+        minIndex = currentMatch.index;
       }
     }
-
     result.push({
       text: innerMatch?.[1] || '',
       isMatch: true,
@@ -270,32 +266,14 @@ function splitStringBySizeMatch(str: string): SplitStringForFontSize[] {
 }
 
 function splitStringByColorMatch(str: string): SplitStringForColor[] {
-  const regexObj: { [K in Color]: RegExp } = {
-    blue: /(?:b\|)([\s\S]+?)(?:\|b)/,
-    gray: /(?:gr\|)([\s\S]+?)(?:\|gr)/,
-    green: /(?:g\|)([\s\S]+?)(?:\|g)/,
-    lime: /(?:l\|)([\s\S]+?)(?:\|l)/,
-    logoBlue: /(?:lb\|)([\s\S]+?)(?:\|lb)/,
-    orange: /(?:o\|)([\s\S]+?)(?:\|o)/,
-    passionFruit: /(?:pf\|)([\s\S]+?)(?:\|pf)/,
-    pink: /(?:p\|)([\s\S]+?)(?:\|p)/,
-    purple: /(?:pu\|)([\s\S]+?)(?:\|pu)/,
-    red: /(?:r\|)([\s\S]+?)(?:\|r)/,
-    yellow: /(?:y\|)([\s\S]+?)(?:\|y)/
-  };
-  const regexGlobal = new RegExp(
-    Object.values(regexObj)
-      .map((regex) => `(?:${regex.source})`)
-      .join('|'),
-    'gi'
-  );
+  colorRegexGlobal.lastIndex = 0;
   function recursiveSplit(
     str: string,
     startIndex: number
   ): SplitStringForColor[] {
     let selectedKey: Color | null = null;
     const result: SplitStringForColor[] = [];
-    const match = regexGlobal.exec(str);
+    const match = colorRegexGlobal.exec(str);
 
     if (!match) {
       return [{ text: str.slice(startIndex), isMatch: false }];
@@ -306,15 +284,17 @@ function splitStringByColorMatch(str: string): SplitStringForColor[] {
       result.push({ text: beforeMatch, isMatch: false });
     }
 
-    let innerMatch: RegExpExecArray | null = match;
-    for (const key in regexObj) {
-      innerMatch = regexObj[key as Color].exec(match[0]);
-      if (innerMatch) {
+    let innerMatch: RegExpExecArray | null = null;
+    let minIndex = Infinity;
+
+    for (const key in colorRegexObj) {
+      const currentMatch = colorRegexObj[key as Color].exec(match[0]);
+      if (currentMatch && currentMatch.index < minIndex) {
+        innerMatch = currentMatch;
         selectedKey = key as Color;
-        break;
+        minIndex = currentMatch.index;
       }
     }
-
     result.push({
       text: innerMatch?.[1] || '',
       isMatch: true,
