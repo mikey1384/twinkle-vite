@@ -128,10 +128,10 @@ export default function LongText({
         ) : (
           <ReactMarkdown
             remarkPlugins={[
+              legacyTextStyling,
               remarkGfm,
               remarkEmoji,
-              mentions,
-              legacyTextStyling
+              mentions
             ]}
             components={{
               a: (props: any) => {
