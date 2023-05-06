@@ -211,7 +211,7 @@ export default function Main({
           inputAtBottom && !isRepliesOfReply ? 0 : comments.length - 1;
         const lastCommentId = comments[lastCommentLocation]
           ? comments[lastCommentLocation].id
-          : 'undefined';
+          : null;
         try {
           const data = await loadComments({
             contentId: parent.contentId,

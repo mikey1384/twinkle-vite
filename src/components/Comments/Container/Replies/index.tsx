@@ -151,7 +151,7 @@ function Replies({
   async function handleLoadMoreReplies() {
     try {
       setLoadingMoreReplies(true);
-      const lastReplyId = replies[0] ? replies[0].id : 'undefined';
+      const lastReplyId = replies[0] ? replies[0].id : null;
       const data = await loadReplies({ lastReplyId, commentId: comment.id });
       onLoadMoreReplies({
         ...data,
