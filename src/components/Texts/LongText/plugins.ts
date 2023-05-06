@@ -93,32 +93,33 @@ function splitStringBySizeMatch(str: string): SplitString[] {
   };
 
   const regexGlobal = /(?:h\[(.+?)\]h|b\[(.+?)\]b|s\[(.+?)\]s|t\[(.+?)\]t)/g;
-  let match: RegExpExecArray | null;
   const result: SplitString[] = [];
-
-  let lastIndex = 0;
-
-  while ((match = regexGlobal.exec(str)) !== null) {
-    const beforeMatch = str.slice(lastIndex, match.index);
-    if (beforeMatch.length > 0) {
-      result.push({ text: beforeMatch, isMatch: false });
-    }
-
-    for (const key in regexObj) {
-      const innerMatch = regexObj[key as FontSize].exec(match[0]);
-      if (innerMatch) {
-        result.push({
-          text: innerMatch[1],
-          isMatch: true,
-          size: key as FontSize
-        });
-        break;
-      }
-    }
-
-    lastIndex = match.index + match[0].length;
+  let selectedKey: FontSize | null = null;
+  const match = regexGlobal.exec(str);
+  if (!match) return [{ text: str, isMatch: false }];
+  const beforeMatch = str.slice(0, match.index);
+  if (beforeMatch.length > 0) {
+    result.push({ text: beforeMatch, isMatch: false });
   }
-
+  let innerMatch: RegExpExecArray | null = match;
+  for (const key in regexObj) {
+    innerMatch = regexObj[key as FontSize].exec(match[0]);
+    if (innerMatch) {
+      selectedKey = key as FontSize;
+      break;
+    }
+  }
+  const innerBeforeMatch = str.slice(match.index, innerMatch?.index);
+  if (innerBeforeMatch.length > 0) {
+    result.push({ text: innerBeforeMatch, isMatch: false });
+  }
+  result.push({
+    text: innerMatch?.[1] || '',
+    isMatch: true,
+    size: selectedKey as FontSize
+  });
+  const lastIndex =
+    match.index + (innerMatch?.index || 0) + (innerMatch?.[0]?.length || 0);
   if (lastIndex < str.length) {
     result.push({ text: str.slice(lastIndex), isMatch: false });
   }
