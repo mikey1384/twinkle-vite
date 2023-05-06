@@ -60,7 +60,7 @@ export function remarkLegacyTextSize() {
   return (tree: any) => {
     visit(tree, 'text', (node, index, parent) => {
       if (typeof node.value !== 'string') return;
-      const splitSentenceParts = splitStringByMatch(node.value);
+      const splitSentenceParts = splitStringBySizeMatch(node.value);
       const newNodes: any[] = [];
       for (const part of splitSentenceParts) {
         if (part.isMatch) {
@@ -84,7 +84,7 @@ export function remarkLegacyTextSize() {
   };
 }
 
-function splitStringByMatch(str: string): SplitString[] {
+function splitStringBySizeMatch(str: string): SplitString[] {
   const regexObj: { [K in FontSize]: RegExp } = {
     huge: /h\[(.+?)\]h/,
     big: /b\[(.+?)\]b/,
