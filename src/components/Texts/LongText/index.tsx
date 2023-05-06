@@ -247,7 +247,7 @@ export default function LongText({
     return text.replace(/\n/gi, () => {
       nbspCount++;
       if (nbspCount > 1 && nbspCount < maxNbsp) {
-        return '&nbsp;\n';
+        return '\n';
       } else {
         return '\n';
       }

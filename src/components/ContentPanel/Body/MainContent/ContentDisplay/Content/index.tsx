@@ -95,31 +95,20 @@ export default function Content({
           );
         }
         return (
-          <div
-            style={{
-              whiteSpace: 'pre-wrap',
-              overflowWrap: 'break-word',
-              wordBreak: 'break-word'
-            }}
+          <LongText
+            contentId={contentId}
+            contentType={contentType}
+            section="content"
+            theme={theme}
           >
-            <LongText
-              contentId={contentId}
-              contentType={contentType}
-              section="content"
-              theme={theme}
-            >
-              {content}
-            </LongText>
-          </div>
+            {content}
+          </LongText>
         );
       case 'aiStory':
         return (
           <div
             style={{
               marginTop: 0,
-              whiteSpace: 'pre-wrap',
-              overflowWrap: 'break-word',
-              wordBreak: 'break-word',
               marginBottom: '0.5rem',
               backgroundColor: Color.extraLightGray(),
               padding: '1rem',
@@ -141,13 +130,10 @@ export default function Content({
           </div>
         );
       default:
-        return (
+        return Description ? (
           <div
             style={{
               marginTop: contentType === 'url' ? '-1rem' : 0,
-              whiteSpace: 'pre-wrap',
-              overflowWrap: 'break-word',
-              wordBreak: 'break-word',
               marginBottom:
                 contentType === 'url' || contentType === 'subject'
                   ? '1rem'
@@ -163,7 +149,7 @@ export default function Content({
               {Description}
             </LongText>
           </div>
-        );
+        ) : null;
     }
   }, [
     contentType,
