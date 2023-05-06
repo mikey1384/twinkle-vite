@@ -88,10 +88,7 @@ export default function ContentDisplay({
           : contentType !== 'video' && !secretHidden
           ? '1rem'
           : 0,
-        padding: '1rem',
-        whiteSpace: 'pre-wrap',
-        overflowWrap: 'break-word',
-        wordBreak: 'break-word'
+        padding: '1rem'
       }}
     >
       {isEditing ? (
