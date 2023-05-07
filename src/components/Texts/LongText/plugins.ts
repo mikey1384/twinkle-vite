@@ -121,14 +121,22 @@ export function legacyTextStyling() {
 
   return (tree: any) => {
     visitParents(tree, (node, ancestors) => {
-      if (node.type !== 'text') return;
+      if (node.type !== 'paragraph') return;
 
       const parent = ancestors[ancestors.length - 1];
       const index = parent.children.indexOf(node);
 
-      if (typeof node.value !== 'string') return;
+      const combinedChildren: any[] = [];
+      node.children.forEach((child: any) => {
+        if (child.type === 'text') {
+          combinedChildren.push(child.value);
+        } else {
+          combinedChildren.push(child);
+        }
+      });
+      const combinedText = combinedChildren.join('');
 
-      const firstMatchType = getFirstMatchType(node.value);
+      const firstMatchType = getFirstMatchType(combinedText);
       let splitSentenceParts: {
         text: string;
         isMatch: boolean;
@@ -136,11 +144,14 @@ export function legacyTextStyling() {
         color?: Color;
       }[] = [];
       if (firstMatchType === 'color') {
-        splitSentenceParts = splitStringByColorMatch(node.value);
+        splitSentenceParts = splitStringByColorMatch(combinedText);
       } else if (firstMatchType === 'size') {
-        splitSentenceParts = splitStringBySizeMatch(node.value);
+        splitSentenceParts = splitStringBySizeMatch(combinedText);
       } else {
-        parent.children.splice(index, 1, { type: 'text', value: node.value });
+        parent.children.splice(index, 1, {
+          type: 'paragraph',
+          children: [{ type: 'text', value: combinedText }]
+        });
         return;
       }
       const newNodes: any[] = [];
@@ -202,7 +213,11 @@ export function legacyTextStyling() {
           newNodes.push({ type: 'text', value: part.text });
         }
       }
-      parent.children.splice(index, 1, ...newNodes);
+      const newParagraphNode = {
+        type: 'paragraph',
+        children: newNodes
+      };
+      parent.children.splice(index, 1, newParagraphNode);
     });
   };
 }
