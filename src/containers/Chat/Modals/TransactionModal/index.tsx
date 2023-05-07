@@ -26,6 +26,7 @@ export default function TransactionModal({
 }) {
   const ModalRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  const [isCounterPropose, setIsCounterPropose] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
   const { userId: myId } = useKeyContext((v) => v.myState);
   const {
@@ -155,6 +156,7 @@ export default function TransactionModal({
           ) : (
             <TransactionInitiator
               coinAmountObj={coinAmountObj}
+              isCounterPropose={isCounterPropose}
               onSetAICardModalType={setAICardModalType}
               onSetCoinAmountObj={setCoinAmountObj}
               onSetSelectedOption={setSelectedOption}
@@ -239,6 +241,7 @@ export default function TransactionModal({
       want: pendingTransaction.offer?.cardIds || []
     });
     setPendingTransaction(null);
+    setIsCounterPropose(true);
     setSelectedOption('want');
   }
 
