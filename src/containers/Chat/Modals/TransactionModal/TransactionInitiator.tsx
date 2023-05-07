@@ -5,6 +5,7 @@ import Options from './Options';
 
 export default function TransactionInitiator({
   coinAmountObj,
+  isCounterPropose,
   isSelectAICardModalShown,
   onSetCoinAmountObj,
   onSetSelectedOption,
@@ -21,6 +22,7 @@ export default function TransactionInitiator({
     want: number;
     offer: number;
   };
+  isCounterPropose: boolean;
   isSelectAICardModalShown: boolean;
   onSetCoinAmountObj: (v: any) => any;
   onSetSelectedOption: (v: any) => any;
@@ -49,24 +51,12 @@ export default function TransactionInitiator({
     }
   }, [coinAmountObj.offer, coinAmountObj.want, onSetCoinAmountObj]);
 
-  return (
-    <div
-      style={{
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingBottom: selectedOption ? 0 : '2rem'
-      }}
-    >
-      <Options
-        onSelectOption={onSetSelectedOption}
-        partnerName={partner?.username}
-        selectedOption={selectedOption}
-      />
-      {selectedOption === 'want' ? (
+  const displayedMenus = useMemo(() => {
+    const result = [];
+    if (selectedOption === 'want' && !isCounterPropose) {
+      result.push(
         <MyWant
+          key="my-want"
           style={{ marginTop: '3rem' }}
           coinAmount={coinAmountObj.want}
           onSetCoinAmount={(amount) =>
@@ -86,16 +76,19 @@ export default function TransactionInitiator({
           }
           partnerId={partner.id}
         />
-      ) : null}
-      {!!offerMenuShown && (
+      );
+    }
+    if (offerMenuShown) {
+      result.push(
         <MyOffer
+          key="my-offer"
+          style={{ marginTop: '3rem' }}
           focusOnMount={selectedOption === 'want'}
           isSelectAICardModalShown={isSelectAICardModalShown}
           ModalRef={ModalRef}
           coinAmount={coinAmountObj.offer}
           selectedCardIds={selectedCardIdsObj.offer}
           selectedOption={selectedOption}
-          style={{ marginTop: '3rem' }}
           onSetAICardModalCardId={onSetAICardModalCardId}
           onSetCoinAmount={(amount) =>
             onSetCoinAmountObj((prevState: any) => ({
@@ -111,7 +104,64 @@ export default function TransactionInitiator({
             }))
           }
         />
-      )}
+      );
+    }
+    if (selectedOption === 'want' && isCounterPropose) {
+      result.push(
+        <MyWant
+          key="my-counter"
+          style={{ marginTop: '3rem' }}
+          coinAmount={coinAmountObj.want}
+          onSetCoinAmount={(amount) =>
+            onSetCoinAmountObj((prevState: any) => ({
+              ...prevState,
+              want: amount
+            }))
+          }
+          selectedCardIds={selectedCardIdsObj.want}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+          onShowAICardSelector={() => onSetAICardModalType('want')}
+          onDeselect={(cardId) =>
+            onSetSelectedCardIdsObj((prevState: any) => ({
+              ...prevState,
+              want: prevState.want.filter((id: number) => id !== cardId)
+            }))
+          }
+          partnerId={partner.id}
+        />
+      );
+    }
+    return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    ModalRef,
+    coinAmountObj.offer,
+    coinAmountObj.want,
+    isSelectAICardModalShown,
+    offerMenuShown,
+    partner.id,
+    selectedCardIdsObj.offer,
+    selectedCardIdsObj.want,
+    selectedOption
+  ]);
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingBottom: selectedOption ? 0 : '2rem'
+      }}
+    >
+      <Options
+        onSelectOption={onSetSelectedOption}
+        partnerName={partner?.username}
+        selectedOption={selectedOption}
+      />
+      {displayedMenus.length ? displayedMenus.map((menu) => menu) : null}
     </div>
   );
 }
