@@ -60,6 +60,7 @@ export function mentions() {
   return (tree: any) => {
     visit(tree, 'text', (node, index, parent) => {
       if (typeof node.value !== 'string') return;
+      if (parent.type === 'link') return;
       const mentions = node.value.split(/(@\w+|＠\w+)/g);
       if (mentions.length <= 1) return;
       const newNodes = mentions
