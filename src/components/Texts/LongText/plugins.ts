@@ -118,6 +118,7 @@ export function legacyTextStyling() {
     red: 'red',
     yellow: 'rgb(255,210,0)'
   };
+  const effectsTextStore: { [key: string]: string } = {};
 
   return (tree: any) => {
     visitParents(tree, (node, ancestors) => {
@@ -126,16 +127,22 @@ export function legacyTextStyling() {
       const parent = ancestors[ancestors.length - 1];
       const index = parent.children.indexOf(node);
 
+      // Combine the children's text and non-text elements
       const combinedChildren: any[] = [];
       node.children.forEach((child: any) => {
         if (child.type === 'text') {
           combinedChildren.push(child.value);
+        } else if (child.type === 'emphasis') {
+          const emphasisText = child.children[0].value;
+          effectsTextStore[emphasisText] = 'emphasis';
+          combinedChildren.push(emphasisText);
         } else {
           combinedChildren.push(child);
         }
       });
       const combinedText = combinedChildren.join('');
 
+      // Process combined text
       const firstMatchType = getFirstMatchType(combinedText);
       let splitSentenceParts: {
         text: string;
@@ -154,6 +161,7 @@ export function legacyTextStyling() {
         });
         return;
       }
+
       const newNodes: any[] = [];
 
       for (const part of splitSentenceParts) {
@@ -213,9 +221,42 @@ export function legacyTextStyling() {
           newNodes.push({ type: 'text', value: part.text });
         }
       }
+
+      // Process emphasis tags in newNodes
+      const newNode = newNodes[0];
+      newNode.data.hChildren = newNode.data.hChildren.flatMap((child: any) => {
+        if (child.type === 'text') {
+          const words = child.value.split(' ');
+          const processedWords = words.map((word: string) => {
+            const effectType = effectsTextStore[word];
+            if (effectType === 'emphasis') {
+              return {
+                type: 'element',
+                tagName: 'em',
+                properties: {
+                  role: 'em'
+                },
+                children: [{ type: 'text', value: word }]
+              };
+            } else {
+              return { type: 'text', value: word };
+            }
+          });
+
+          // Add spaces between words
+          for (let i = processedWords.length - 2; i >= 0; i--) {
+            processedWords.splice(i + 1, 0, { type: 'text', value: ' ' });
+          }
+
+          return processedWords;
+        }
+        return child;
+      });
+
+      // Add a paragraph node around newNodes
       const newParagraphNode = {
         type: 'paragraph',
-        children: newNodes
+        children: [newNode]
       };
       parent.children.splice(index, 1, newParagraphNode);
     });
