@@ -625,22 +625,25 @@ export function processedStringWithURL(string: string): string {
   });
 
   function applyTextSize(string: string): string {
-    type FontSize = 'huge' | 'big' | 'small' | 'tiny';
+    type FontSize = 'huge' | 'big' | 'legacy' | 'small' | 'tiny';
     const wordRegex: { [K in FontSize]: RegExp } = {
       huge: /(h\[[^\s]+\]h)/gi,
       big: /(b\[[^\s]+\]b)/gi,
+      legacy: /(l\[[^\s]+\]l)/gi,
       small: /(s\[[^\s]+\]s)/gi,
       tiny: /(t\[[^\s]+\]t)/gi
     };
     const sentenceRegex: { [K in FontSize]: RegExp } = {
       huge: /((h\[[^\s]){1}((?!(h\[|\]h))[^\n])+([^\s]\]h){1})/gi,
       big: /((b\[[^\s]){1}((?!(b\[|\]b))[^\n])+([^\s]\]b){1})/gi,
+      legacy: /((l\[[^\s]){1}((?!(l\[|\]l))[^\n])+([^\s]\]l){1})/gi,
       small: /((s\[[^\s]){1}((?!(s\[|\]s))[^\n])+([^\s]\]s){1})/gi,
       tiny: /((t\[[^\s]){1}((?!(t\[|\]t))[^\n])+([^\s]\]t){1})/gi
     };
     const fontSizes = {
       huge: '1.9em',
       big: '1.4em',
+      legacy: '1em',
       small: '0.7em',
       tiny: '0.5em'
     };
