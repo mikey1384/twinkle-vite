@@ -205,6 +205,10 @@ export default function RichText({
                   </a>
                 );
               },
+              code: (props: any) => {
+                const filteredChildren = removeNbsp(props.children);
+                return <code>{filteredChildren}</code>;
+              },
               em: (props: any) => {
                 return <strong>{props.children}</strong>;
               },
@@ -306,5 +310,16 @@ export default function RichText({
         return '\n';
       }
     });
+  }
+  function removeNbsp(content: any): any {
+    if (Array.isArray(content)) {
+      return content.map(removeNbsp);
+    }
+
+    if (typeof content === 'string') {
+      return content.replace(/&nbsp;/gi, '');
+    }
+
+    return content;
   }
 }
