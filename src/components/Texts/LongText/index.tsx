@@ -25,7 +25,8 @@ type Color =
   | 'purple'
   | 'red'
   | 'yellow';
-const legacySizeRegex = /(?:h\[(.+?)\]h|b\[(.+?)\]b|s\[(.+?)\]s|t\[(.+?)\]t)/g;
+const legacySizeRegex =
+  /(?:h\[(.+?)\]h|b\[(.+?)\]b|l\[(.+?)\]l|s\[(.+?)\]s|t\[(.+?)\]t)/;
 const legacyColorRegexObj: { [K in Color]: RegExp } = {
   blue: /(?:b\|)([\s\S]+?)(?:\|b)/,
   gray: /(?:gr\|)([\s\S]+?)(?:\|gr)/,
@@ -42,12 +43,10 @@ const legacyColorRegexObj: { [K in Color]: RegExp } = {
 const legacyColorRegex = new RegExp(
   Object.values(legacyColorRegexObj)
     .map((regex) => `(?:${regex.source})`)
-    .join('|'),
-  'gi'
+    .join('|')
 );
 const legacyStyleRegex = new RegExp(
-  `(${legacySizeRegex.source})|(${legacyColorRegex.source})`,
-  'gi'
+  `(${legacySizeRegex.source})|(${legacyColorRegex.source})`
 );
 
 export default function LongText({
@@ -203,6 +202,12 @@ export default function LongText({
                     {props.children}
                   </a>
                 );
+              },
+              em: (props: any) => {
+                return <strong>{props.children}</strong>;
+              },
+              strong: (props: any) => {
+                return <em>{props.children}</em>;
               },
               table: (props: any) => {
                 return (
