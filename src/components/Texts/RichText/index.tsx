@@ -96,7 +96,9 @@ export default function RichText({
       ? useContentState({ contentType, contentId: contentId as number })
       : {};
   const { fullTextState = {} } = contentState;
-  const [savedScrollPosition, setSavedScrollPosition] = useState(0);
+  const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(
+    null
+  );
   const fullTextRef = useRef(fullTextState[section]);
   const [fullText, setFullText] = useState(
     isPreview ? false : fullTextState[section]
@@ -119,10 +121,11 @@ export default function RichText({
   }, [isPreview]);
 
   useEffect(() => {
-    if (fullText) {
+    if (fullText && typeof savedScrollPosition === 'number') {
       const appElement = document.getElementById('App');
       if (appElement) appElement.scrollTop = savedScrollPosition;
       BodyRef.scrollTop = savedScrollPosition;
+      setSavedScrollPosition(null);
     }
   }, [fullText, savedScrollPosition]);
 
