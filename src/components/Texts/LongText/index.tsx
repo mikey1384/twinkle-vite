@@ -130,7 +130,7 @@ export default function LongText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isLegacyFormatting = useMemo(() => {
+  const isUseLegacyFormat = useMemo(() => {
     return !isUseNewFormat && !!legacyFormatRegex.exec(text);
   }, [isUseNewFormat, text]);
 
@@ -167,7 +167,7 @@ export default function LongText({
       >
         {cleanString ? (
           text
-        ) : isLegacyFormatting ? (
+        ) : isUseLegacyFormat ? (
           <LegacyFormat
             text={text}
             fullText={fullText}
