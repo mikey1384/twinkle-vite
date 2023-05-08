@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import MissionModule from '../../MissionModule';
 import MultiMission from './MultiMission';
 import RewardText from '~/components/Texts/RewardText';
@@ -162,7 +162,7 @@ export default function Mission({
           />
         </div>
       </div>
-      <LongText style={{ fontSize: '1.5rem' }}>{description}</LongText>
+      <RichText style={{ fontSize: '1.5rem' }}>{description}</RichText>
       {myAttempt?.status !== 'pending' && (
         <div
           style={{
@@ -178,7 +178,7 @@ export default function Mission({
             >
               Objective:
             </p>
-            <LongText
+            <RichText
               className={css`
                 font-size: 1.7rem;
                 margin-top: 0.5rem;
@@ -188,7 +188,7 @@ export default function Mission({
               `}
             >
               {objective}
-            </LongText>
+            </RichText>
           </div>
           <RewardText
             checked={isRepeating}

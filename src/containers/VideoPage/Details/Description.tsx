@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { edit } from '~/constants/placeholders';
@@ -94,7 +94,7 @@ export default function Description({
           </div>
         </>
       ) : (
-        <LongText
+        <RichText
           style={{
             whiteSpace: 'pre-wrap',
             overflowWrap: 'break-word',
@@ -105,7 +105,7 @@ export default function Description({
           }}
         >
           {stringIsEmpty(description) ? noDescriptionLabel : description}
-        </LongText>
+        </RichText>
       )}
     </div>
   );

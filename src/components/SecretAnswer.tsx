@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useEffect } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import { borderRadius, Color, desktopMinWidth } from '~/constants/css';
 import { useContentState } from '~/helpers/hooks';
@@ -122,12 +122,12 @@ function SecretAnswer({
               </div>
             )}
             {!stringIsEmpty(answer) && (
-              <LongText
+              <RichText
                 theme={theme}
                 style={{ marginTop: fileType === 'image' ? '1.3rem' : 0 }}
               >
                 {answer}
-              </LongText>
+              </RichText>
             )}
           </div>
         )}

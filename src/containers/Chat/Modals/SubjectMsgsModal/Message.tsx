@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentFileViewer from '~/components/ContentFileViewer';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import { MessageStyle } from '../../Styles';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import moment from 'moment';
@@ -99,14 +99,14 @@ export default function Message({
         )}
         <div>
           <div className={MessageStyle.messageWrapper}>
-            <LongText
+            <RichText
               style={{
                 color: isReloadedSubject && Color[displayedThemeColor](),
                 fontWeight: isReloadedSubject && 'bold'
               }}
             >
               {isReloadedSubject ? 'Brought back the topic' : content}
-            </LongText>
+            </RichText>
           </div>
         </div>
       </div>

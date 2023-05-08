@@ -1,6 +1,6 @@
 import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import CaptionEditor from '~/components/Texts/CaptionEditor';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 
@@ -26,7 +26,7 @@ export default function Caption({
           onSetText={onSetEditedCaption}
         />
       ) : !stringIsEmpty(caption) ? (
-        <LongText style={{ marginTop: '2rem' }}>{caption}</LongText>
+        <RichText style={{ marginTop: '2rem' }}>{caption}</RichText>
       ) : null}
     </ErrorBoundary>
   );

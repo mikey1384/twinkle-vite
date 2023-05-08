@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Attachment from '../../Attachment';
 import ForkButtons from './ForkButtons';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -187,7 +187,7 @@ export default function Content({
                 }
               `}
             >
-              <LongText maxLines={100}>{description}</LongText>
+              <RichText maxLines={100}>{description}</RichText>
             </div>
           )}
           {(attachment?.fileUrl || attachment?.linkUrl) && (

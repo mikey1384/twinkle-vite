@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
 
@@ -30,7 +30,7 @@ export default function Story({
       className="unselectable"
       style={{ width: '100%', fontFamily: '"Arial", sans-serif' }}
     >
-      <LongText maxLines={100}>{story}</LongText>
+      <RichText maxLines={100}>{story}</RichText>
       {story && (
         <div
           style={{
@@ -56,7 +56,7 @@ export default function Story({
           ===============================
         </div>
       )}
-      <LongText maxLines={100}>{explanation}</LongText>
+      <RichText maxLines={100}>{explanation}</RichText>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import LoginToViewContent from '~/components/LoginToViewContent';
@@ -147,14 +147,14 @@ function Comment({
             />
           ) : (
             <div style={{ paddingLeft: '0px' }}>
-              <LongText
+              <RichText
                 theme={theme}
                 style={{
                   margin: '0.5rem 0 1rem 0'
                 }}
               >
                 {content}
-              </LongText>
+              </RichText>
               {filePath &&
                 (userId ? (
                   <div style={{ width: '100%' }}>

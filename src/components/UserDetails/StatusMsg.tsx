@@ -1,5 +1,5 @@
 import React from 'react';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -26,13 +26,13 @@ export default function StatusMsg({
       `}
       style={style}
     >
-      <LongText
+      <RichText
         isStatusMsg
         theme={statusColor}
         readMoreColor={statusColor === 'ivory' ? 'black' : '#fff'}
       >
         {statusMsg}
-      </LongText>
+      </RichText>
     </div>
   );
 }

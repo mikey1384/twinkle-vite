@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
 import { Subject, User } from '~/types';
@@ -95,14 +95,14 @@ export default function Content({
           );
         }
         return (
-          <LongText
+          <RichText
             contentId={contentId}
             contentType={contentType}
             section="content"
             theme={theme}
           >
             {content}
-          </LongText>
+          </RichText>
         );
       case 'aiStory':
         return (
@@ -119,14 +119,14 @@ export default function Content({
               fontSize: '1.8rem'
             }}
           >
-            <LongText
+            <RichText
               contentId={contentId}
               contentType={contentType}
               section="description"
               theme={theme}
             >
               {story}
-            </LongText>
+            </RichText>
           </div>
         );
       default:
@@ -140,14 +140,14 @@ export default function Content({
                   : '0.5rem'
             }}
           >
-            <LongText
+            <RichText
               contentId={contentId}
               contentType={contentType}
               section="description"
               theme={theme}
             >
               {Description}
-            </LongText>
+            </RichText>
           </div>
         ) : null;
     }

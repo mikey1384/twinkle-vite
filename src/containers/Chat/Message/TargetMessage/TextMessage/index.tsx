@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useEffect, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import VideoThumb from './VideoThumb';
 import FileThumb from './FileThumb';
 import Spoiler from '../../Spoiler';
@@ -107,7 +107,7 @@ export default function TextMessage({ message }: { message: any }) {
         {isValidSpoiler(message.content) ? (
           <Spoiler content={message.content} />
         ) : (
-          <LongText
+          <RichText
             readMoreHeightFixed
             style={{ marginTop: '0.5rem' }}
             className={css`
@@ -117,7 +117,7 @@ export default function TextMessage({ message }: { message: any }) {
             `}
           >
             {message.content || message.fileName}
-          </LongText>
+          </RichText>
         )}
       </div>
       {embedlyShown && (extractedVideoId || videoCode) ? (
