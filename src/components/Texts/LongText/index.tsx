@@ -29,8 +29,8 @@ type Color =
   | 'purple'
   | 'red'
   | 'yellow';
-const sizeRegexGlobal = /(?:h\[(.+?)\]h|b\[(.+?)\]b|s\[(.+?)\]s|t\[(.+?)\]t)/g;
-const colorRegexObj: { [K in Color]: RegExp } = {
+const legacySizeRegex = /(?:h\[(.+?)\]h|b\[(.+?)\]b|s\[(.+?)\]s|t\[(.+?)\]t)/g;
+const legacyColorRegexObj: { [K in Color]: RegExp } = {
   blue: /(?:b\|)([\s\S]+?)(?:\|b)/,
   gray: /(?:gr\|)([\s\S]+?)(?:\|gr)/,
   green: /(?:g\|)([\s\S]+?)(?:\|g)/,
@@ -43,14 +43,14 @@ const colorRegexObj: { [K in Color]: RegExp } = {
   red: /(?:r\|)([\s\S]+?)(?:\|r)/,
   yellow: /(?:y\|)([\s\S]+?)(?:\|y)/
 };
-const colorRegexGlobal = new RegExp(
-  Object.values(colorRegexObj)
+const legacyColorRegex = new RegExp(
+  Object.values(legacyColorRegexObj)
     .map((regex) => `(?:${regex.source})`)
     .join('|'),
   'gi'
 );
-const combinedRegex = new RegExp(
-  `(${sizeRegexGlobal.source})|(${colorRegexGlobal.source})`,
+const legacyStyleRegex = new RegExp(
+  `(${legacySizeRegex.source})|(${legacyColorRegex.source})`,
   'gi'
 );
 
@@ -134,7 +134,7 @@ export default function LongText({
   }, []);
 
   const isLegacyFormatting = useMemo(() => {
-    return !!combinedRegex.exec(text);
+    return !!legacyStyleRegex.exec(text);
   }, [text]);
 
   return (
