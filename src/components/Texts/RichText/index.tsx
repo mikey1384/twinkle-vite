@@ -226,6 +226,9 @@ export default function RichText({
                 const filteredChildren = removeNbsp(props.children);
                 return <code>{filteredChildren}</code>;
               },
+              input: (props: any) => {
+                return <input {...props} disabled={false} />;
+              },
               li: (props: any) => {
                 return (
                   <li>
