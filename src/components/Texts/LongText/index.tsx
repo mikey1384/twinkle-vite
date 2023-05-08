@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
-import { mentions, legacyTextStyling } from './plugins';
+import { mentions } from './plugins';
 import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
@@ -127,12 +127,7 @@ export default function LongText({
           text
         ) : (
           <ReactMarkdown
-            remarkPlugins={[
-              legacyTextStyling,
-              remarkGfm,
-              remarkEmoji,
-              mentions
-            ]}
+            remarkPlugins={[remarkGfm, remarkEmoji, mentions]}
             components={{
               a: (props: any) => {
                 const { isInternalLink, replacedLink } = processInternalLink(
