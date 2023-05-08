@@ -12,6 +12,7 @@ import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
+const BodyRef = document.scrollingElement || document.documentElement;
 const readMoreLabel = localize('readMore');
 type Color =
   | 'blue'
@@ -95,6 +96,7 @@ export default function RichText({
       ? useContentState({ contentType, contentId: contentId as number })
       : {};
   const { fullTextState = {} } = contentState;
+  const [savedScrollPosition, setSavedScrollPosition] = useState(0);
   const fullTextRef = useRef(fullTextState[section]);
   const [fullText, setFullText] = useState(
     isPreview ? false : fullTextState[section]
@@ -115,6 +117,14 @@ export default function RichText({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPreview]);
+
+  useEffect(() => {
+    if (fullText) {
+      const appElement = document.getElementById('App');
+      if (appElement) appElement.scrollTop = savedScrollPosition;
+      BodyRef.scrollTop = savedScrollPosition;
+    }
+  }, [fullText, savedScrollPosition]);
 
   useEffect(() => {
     return function saveFullTextStateBeforeUnmount() {
@@ -227,7 +237,9 @@ export default function RichText({
                 return <code>{filteredChildren}</code>;
               },
               input: (props: any) => {
-                return <input {...props} disabled={false} />;
+                return (
+                  <input {...props} onChange={() => null} disabled={false} />
+                );
               },
               li: (props: any) => {
                 return (
@@ -314,6 +326,10 @@ export default function RichText({
               paddingTop: '1rem'
             }}
             onClick={() => {
+              const appElement = document.getElementById('App');
+              setSavedScrollPosition(
+                appElement?.scrollTop || BodyRef.scrollTop || 0
+              );
               setFullText(true);
               fullTextRef.current = true;
             }}
