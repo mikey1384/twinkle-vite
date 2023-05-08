@@ -4,7 +4,7 @@ import FileViewer from '~/components/FileViewer';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import { useMissionContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
@@ -123,7 +123,7 @@ export default function ApprovedStatus({
         />
       )}
       {myAttempt.content && myAttempt.status === 'fail' && (
-        <LongText style={{ marginTop: '3rem' }}>{myAttempt.content}</LongText>
+        <RichText style={{ marginTop: '3rem' }}>{myAttempt.content}</RichText>
       )}
       {myAttempt.reviewer && (
         <div
@@ -148,10 +148,10 @@ export default function ApprovedStatus({
             />
             <span>{timeSince(myAttempt.reviewTimeStamp)}</span>
           </div>
-          <LongText>
+          <RichText>
             {myAttempt.feedback ||
               (myAttempt.status === 'pass' ? 'Great job!' : 'Please try again')}
-          </LongText>
+          </RichText>
         </div>
       )}
       {myAttempt.status === 'fail' && (

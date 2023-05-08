@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import FileViewer from '~/components/FileViewer';
 import UsernameText from '~/components/Texts/UsernameText';
 import ApproveInterface from './ApproveInterface';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import { Color, borderRadius } from '~/constants/css';
 import { panel } from '../../../../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
@@ -89,7 +89,7 @@ export default function Attempt({
             paddingBottom: '1.5rem'
           }}
         >
-          <LongText>{attempt.content}</LongText>
+          <RichText>{attempt.content}</RichText>
         </div>
       )}
       {attempt.filePath && (
@@ -139,7 +139,7 @@ export default function Attempt({
                 borderRadius
               }}
             >
-              <LongText>{attempt.feedback}</LongText>
+              <RichText>{attempt.feedback}</RichText>
             </div>
           )}
         </div>

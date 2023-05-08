@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useState } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -205,7 +205,7 @@ function Comment({
                 wordBreak: 'break-word'
               }}
             >
-              {!isEditing && <LongText>{reward.rewardComment}</LongText>}
+              {!isEditing && <RichText>{reward.rewardComment}</RichText>}
               {isEditing && (
                 <EditTextArea
                   contentId={reward.id}

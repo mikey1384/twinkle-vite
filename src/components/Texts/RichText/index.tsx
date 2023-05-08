@@ -49,7 +49,7 @@ const legacyFormatRegex = new RegExp(
   `(${legacySizeRegex.source})|(${legacyColorRegex.source})`
 );
 
-export default function LongText({
+export default function RichText({
   style,
   className,
   cleanString,
@@ -131,11 +131,11 @@ export default function LongText({
   }, []);
 
   const isUseLegacyFormat = useMemo(() => {
-    return !isUseNewFormat && !!legacyFormatRegex.exec(text);
+    return !isUseNewFormat && legacyFormatRegex.test(text);
   }, [isUseNewFormat, text]);
 
   return (
-    <ErrorBoundary componentPath="components/Texts/LongText">
+    <ErrorBoundary componentPath="components/Texts/RichText">
       <div
         ref={ContainerRef}
         style={{

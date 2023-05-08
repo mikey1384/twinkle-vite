@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import Input from '~/components/Texts/Input';
@@ -356,7 +356,7 @@ export default function Description({
             </div>
           </div>
         ) : (
-          <LongText maxLines={20}>{description || ''}</LongText>
+          <RichText maxLines={20}>{description || ''}</RichText>
         )}
       </div>
     </div>

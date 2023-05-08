@@ -16,7 +16,7 @@ import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
 import LikeButton from '~/components/Buttons/LikeButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import RewardStatus from '~/components/RewardStatus';
 import RecommendationInterface from '~/components/RecommendationInterface';
 import RecommendationStatus from '~/components/RecommendationStatus';
@@ -506,14 +506,14 @@ function Comment({
                     </div>
                   ) : (
                     !stringIsEmpty(comment.content) && (
-                      <LongText
+                      <RichText
                         contentType="comment"
                         contentId={commentId}
                         section="pinned"
                         className="comment__content"
                       >
                         {comment.content}
-                      </LongText>
+                      </RichText>
                     )
                   )}
                   {!isPreview && !isHidden && !isNotification && (

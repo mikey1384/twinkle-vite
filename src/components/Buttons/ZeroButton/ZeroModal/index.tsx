@@ -6,7 +6,7 @@ import ZeroMessage from './ZeroMessage';
 import Menu from './Menu';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -104,7 +104,7 @@ export default function ZeroModal({
           </div>
           <div className="content">
             {response ? (
-              <LongText
+              <RichText
                 key={response}
                 style={{
                   marginBottom: '3rem',
@@ -114,7 +114,7 @@ export default function ZeroModal({
                 }}
               >
                 {response}
-              </LongText>
+              </RichText>
             ) : null}
             <p
               style={{

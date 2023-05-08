@@ -4,7 +4,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import Comments from '~/components/Comments';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Textarea from '~/components/Texts/Textarea';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
@@ -284,7 +284,7 @@ export default function SubjectPanel({
           </div>
         </div>
         {!onEdit && !!description && (
-          <LongText style={{ padding: '1rem 0' }}>{description}</LongText>
+          <RichText style={{ padding: '1rem 0' }}>{description}</RichText>
         )}
         {(secretAnswer || secretAttachment) && !onEdit && (
           <SecretAnswer

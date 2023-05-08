@@ -9,7 +9,7 @@ import Button from '~/components/Button';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LinkAttachment from './LinkAttachment';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
 import { isValidSpoiler, stringIsEmpty } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/io';
@@ -140,7 +140,7 @@ function TextMessage({
               {isSpoiler ? (
                 <Spoiler content={content} />
               ) : stringIsEmpty(content) ? null : (
-                <LongText
+                <RichText
                   theme={displayedThemeColor}
                   readMoreHeightFixed
                   style={{
@@ -150,7 +150,7 @@ function TextMessage({
                   }}
                 >
                   {content}
-                </LongText>
+                </RichText>
               )}
             </div>
             {!!isReloadedSubject && !!numMsgs && numMsgs > 0 && (

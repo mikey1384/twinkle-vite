@@ -18,7 +18,7 @@ import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
 import LikeButton from '~/components/Buttons/LikeButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import RewardStatus from '~/components/RewardStatus';
 import RecommendationInterface from '~/components/RecommendationInterface';
 import RecommendationStatus from '~/components/RecommendationStatus';
@@ -744,7 +744,7 @@ function Comment({
                             : commentWasDeletedLabel}
                         </div>
                       ) : !commentIsEmpty ? (
-                        <LongText
+                        <RichText
                           theme={theme}
                           contentId={commentId}
                           contentType="comment"
@@ -754,7 +754,7 @@ function Comment({
                           isPreview={isPreview}
                         >
                           {comment.content}
-                        </LongText>
+                        </RichText>
                       ) : null}
                       {!isPreview && !isHidden && !isNotification && (
                         <div

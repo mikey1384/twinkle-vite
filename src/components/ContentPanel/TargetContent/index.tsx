@@ -7,7 +7,7 @@ import Likers from '~/components/Likers';
 import UserListModal from '~/components/Modals/UserListModal';
 import InputForm from '~/components/Forms/InputForm';
 import Comment from './Comment';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import ContentLink from '~/components/ContentLink';
 import RecommendationStatus from '~/components/RecommendationStatus';
 import RecommendationInterface from '~/components/RecommendationInterface';
@@ -387,7 +387,7 @@ export default function TargetContent({
                         onClick={() => navigate(`/subjects/${subject.id}`)}
                       />
                     ) : (
-                      <LongText theme={theme}>{comment.content}</LongText>
+                      <RichText theme={theme}>{comment.content}</RichText>
                     )}
                   </div>
                 </div>

@@ -13,7 +13,7 @@ import Button from '~/components/Button';
 import LikeButton from '~/components/Buttons/LikeButton';
 import ReplyInputArea from './ReplyInputArea';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import LongText from '~/components/Texts/LongText';
+import RichText from '~/components/Texts/RichText';
 import RecommendationInterface from '~/components/RecommendationInterface';
 import RecommendationStatus from '~/components/RecommendationStatus';
 import LoginToViewContent from '~/components/LoginToViewContent';
@@ -463,7 +463,7 @@ function Reply({
                       {commentWasDeletedLabel}
                     </div>
                   ) : !replyIsEmpty ? (
-                    <LongText
+                    <RichText
                       theme={theme}
                       contentType="comment"
                       contentId={reply.id}
@@ -471,7 +471,7 @@ function Reply({
                       className="comment__content"
                     >
                       {reply.content}
-                    </LongText>
+                    </RichText>
                   ) : null}
                   <div
                     style={{
