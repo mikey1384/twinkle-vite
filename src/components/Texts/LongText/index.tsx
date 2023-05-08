@@ -26,7 +26,7 @@ type Color =
   | 'red'
   | 'yellow';
 const legacySizeRegex =
-  /(?:h\[(.+?)\]h|b\[(.+?)\]b|l\[(.+?)\]l|s\[(.+?)\]s|t\[(.+?)\]t)/;
+  /(?:h\[(.+?)\]h|b\[(.+?)\]b|o\[(.+?)\]o|s\[(.+?)\]s|t\[(.+?)\]t)/;
 const legacyColorRegexObj: { [K in Color]: RegExp } = {
   blue: /(?:b\|)([\s\S]+?)(?:\|b)/,
   gray: /(?:gr\|)([\s\S]+?)(?:\|gr)/,
