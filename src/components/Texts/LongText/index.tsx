@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
@@ -7,11 +7,52 @@ import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
+import {
+  limitBrs,
+  processMentionLink,
+  processedStringWithURL
+} from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 const readMoreLabel = localize('readMore');
+type Color =
+  | 'blue'
+  | 'gray'
+  | 'green'
+  | 'lime'
+  | 'logoBlue'
+  | 'orange'
+  | 'passionFruit'
+  | 'pink'
+  | 'purple'
+  | 'red'
+  | 'yellow';
+const sizeRegexGlobal = /(?:h\[(.+?)\]h|b\[(.+?)\]b|s\[(.+?)\]s|t\[(.+?)\]t)/g;
+const colorRegexObj: { [K in Color]: RegExp } = {
+  blue: /(?:b\|)([\s\S]+?)(?:\|b)/,
+  gray: /(?:gr\|)([\s\S]+?)(?:\|gr)/,
+  green: /(?:g\|)([\s\S]+?)(?:\|g)/,
+  lime: /(?:l\|)([\s\S]+?)(?:\|l)/,
+  logoBlue: /(?:lb\|)([\s\S]+?)(?:\|lb)/,
+  orange: /(?:o\|)([\s\S]+?)(?:\|o)/,
+  passionFruit: /(?:pf\|)([\s\S]+?)(?:\|pf)/,
+  pink: /(?:p\|)([\s\S]+?)(?:\|p)/,
+  purple: /(?:pu\|)([\s\S]+?)(?:\|pu)/,
+  red: /(?:r\|)([\s\S]+?)(?:\|r)/,
+  yellow: /(?:y\|)([\s\S]+?)(?:\|y)/
+};
+const colorRegexGlobal = new RegExp(
+  Object.values(colorRegexObj)
+    .map((regex) => `(?:${regex.source})`)
+    .join('|'),
+  'gi'
+);
+const combinedRegex = new RegExp(
+  `(${sizeRegexGlobal.source})|(${colorRegexGlobal.source})`,
+  'gi'
+);
 
 export default function LongText({
   style,
@@ -92,6 +133,10 @@ export default function LongText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isLegacyFormatting = useMemo(() => {
+    return !!combinedRegex.exec(text);
+  }, [text]);
+
   return (
     <ErrorBoundary componentPath="components/Texts/LongText">
       <div
@@ -125,6 +170,8 @@ export default function LongText({
       >
         {cleanString ? (
           text
+        ) : isLegacyFormatting ? (
+          handleProcessLegacyText(text)
         ) : (
           <ReactMarkdown
             remarkPlugins={[remarkGfm, remarkEmoji, mentions]}
@@ -252,5 +299,21 @@ export default function LongText({
         return '\n';
       }
     });
+  }
+
+  function handleProcessLegacyText(text: string) {
+    let processedText = processedStringWithURL(text);
+    if (!fullText && processedText && isOverflown) {
+      const splitText = processedText?.split('</');
+      if (splitText[splitText.length - 1] === 'a>') {
+        let finalTextArray = processedText?.split('<a');
+        finalTextArray = finalTextArray.filter(
+          (_, index) => index !== finalTextArray.length - 1
+        );
+        processedText = finalTextArray.join('<a') + '...';
+      }
+    }
+    const finalText = processMentionLink(limitBrs(processedText));
+    return finalText;
   }
 }
