@@ -139,15 +139,15 @@ export default function RichText({
       <div
         ref={ContainerRef}
         style={{
-          whiteSpace: 'pre-wrap',
-          overflowWrap: 'break-word',
-          wordBreak: 'break-word',
           minWidth: '100%',
           width: 0,
           ...style
         }}
         className={`${className} ${css`
           p {
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: break-word;
             margin: 0;
           }
           ${fullText
@@ -162,6 +162,25 @@ export default function RichText({
             max-height: 400px;
             display: block;
             object-fit: contain;
+          }
+          ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+          }
+          ul ul {
+            list-style-type: circle;
+          }
+          ul ul ul {
+            list-style-type: square;
+          }
+          ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+          }
+          li {
+            margin-bottom: 0.5rem;
           }
         `}`}
       >
@@ -317,7 +336,7 @@ export default function RichText({
     }
 
     if (typeof content === 'string') {
-      return content.replace(/&nbsp;/gi, '');
+      return content.replace(/&nbsp;/gi, '').replace(/```/, '');
     }
 
     return content;

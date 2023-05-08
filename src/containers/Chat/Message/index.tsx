@@ -743,9 +743,6 @@ function Message({
                 flex-direction: column;
                 margin-left: 2rem;
                 position: relative;
-                white-space: pre-wrap;
-                overflow-wrap: break-word;
-                word-break: break-word;
                 @media (max-width: ${mobileMaxWidth}) {
                   margin-left: 1rem;
                 }

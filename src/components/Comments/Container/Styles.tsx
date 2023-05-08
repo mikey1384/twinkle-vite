@@ -43,9 +43,6 @@ export const commentContainer = css`
     font-size: 1.8rem;
   }
   .comment__content {
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
-    word-break: break-word;
     line-height: 1.5;
     padding-top: 1.5rem;
     margin-bottom: 1rem;
