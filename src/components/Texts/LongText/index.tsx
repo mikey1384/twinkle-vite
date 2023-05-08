@@ -45,7 +45,7 @@ const legacyColorRegex = new RegExp(
     .map((regex) => `(?:${regex.source})`)
     .join('|')
 );
-const legacyStyleRegex = new RegExp(
+const legacyFormatRegex = new RegExp(
   `(${legacySizeRegex.source})|(${legacyColorRegex.source})`
 );
 
@@ -56,6 +56,7 @@ export default function LongText({
   children: text,
   contentId,
   contentType,
+  isUseNewFormat,
   isPreview,
   isStatusMsg,
   maxLines = 10,
@@ -70,6 +71,7 @@ export default function LongText({
   children?: any;
   contentId?: number;
   contentType?: string;
+  isUseNewFormat?: boolean;
   isPreview?: boolean;
   isStatusMsg?: boolean;
   section?: string;
@@ -129,8 +131,8 @@ export default function LongText({
   }, []);
 
   const isLegacyFormatting = useMemo(() => {
-    return !!legacyStyleRegex.exec(text);
-  }, [text]);
+    return !isUseNewFormat && !!legacyFormatRegex.exec(text);
+  }, [isUseNewFormat, text]);
 
   return (
     <ErrorBoundary componentPath="components/Texts/LongText">
