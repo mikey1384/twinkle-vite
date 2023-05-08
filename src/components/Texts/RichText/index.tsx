@@ -144,10 +144,10 @@ export default function RichText({
           ...style
         }}
         className={`${className} ${css`
+          white-space: pre-wrap;
+          overflow-wrap: break-word;
+          word-break: break-word;
           p {
-            white-space: pre-wrap;
-            overflow-wrap: break-word;
-            word-break: break-word;
             margin: 0;
           }
           ${fullText
@@ -164,9 +164,10 @@ export default function RichText({
             object-fit: contain;
           }
           ul {
+            margin: 0;
+            line-height: 1.2;
             list-style-type: disc;
             padding-left: 1.5rem;
-            margin-bottom: 1rem;
           }
           ul ul {
             list-style-type: circle;
@@ -175,12 +176,9 @@ export default function RichText({
             list-style-type: square;
           }
           ol {
+            margin: 0;
             list-style-type: decimal;
             padding-left: 1.5rem;
-            margin-bottom: 1rem;
-          }
-          li {
-            margin-bottom: 0.5rem;
           }
         `}`}
       >
@@ -228,6 +226,19 @@ export default function RichText({
                 const filteredChildren = removeNbsp(props.children);
                 return <code>{filteredChildren}</code>;
               },
+              li: (props: any) => {
+                return (
+                  <li>
+                    {props.children.map((child: any) =>
+                      typeof child === 'string'
+                        ? child.split('').map((text, index) => {
+                            return /\n/gi.test(text) && index === 0 ? '' : text;
+                          })
+                        : child
+                    )}
+                  </li>
+                );
+              },
               em: (props: any) => {
                 return <strong>{props.children}</strong>;
               },
@@ -246,8 +257,9 @@ export default function RichText({
                     <table
                       style={{ borderCollapse: 'collapse' }}
                       className={css`
+                        margin-top: 1.5rem;
                         min-width: 25vw;
-                        width: 80%;
+                        width: 85%;
                         max-width: 100%;
                         tr {
                           display: table-row;
