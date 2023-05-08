@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import LegacyFormat from './LegacyFormat';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
 import { mentions } from './plugins';
@@ -7,11 +8,6 @@ import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
-import {
-  limitBrs,
-  processMentionLink,
-  processedStringWithURL
-} from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -171,7 +167,11 @@ export default function LongText({
         {cleanString ? (
           text
         ) : isLegacyFormatting ? (
-          handleProcessLegacyText(text)
+          <LegacyFormat
+            text={text}
+            fullText={fullText}
+            isOverflown={isOverflown}
+          />
         ) : (
           <ReactMarkdown
             remarkPlugins={[remarkGfm, remarkEmoji, mentions]}
@@ -299,21 +299,5 @@ export default function LongText({
         return '\n';
       }
     });
-  }
-
-  function handleProcessLegacyText(text: string) {
-    let processedText = processedStringWithURL(text);
-    if (!fullText && processedText && isOverflown) {
-      const splitText = processedText?.split('</');
-      if (splitText[splitText.length - 1] === 'a>') {
-        let finalTextArray = processedText?.split('<a');
-        finalTextArray = finalTextArray.filter(
-          (_, index) => index !== finalTextArray.length - 1
-        );
-        processedText = finalTextArray.join('<a') + '...';
-      }
-    }
-    const finalText = processMentionLink(limitBrs(processedText));
-    return finalText;
   }
 }
