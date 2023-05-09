@@ -545,6 +545,7 @@ export default function SearchedComment({
                       </RichText>
                     )
                   )}
+                  <div style={{ height: '1em' }} />
                   {!isHidden && !isNotification && (
                     <div
                       style={{
