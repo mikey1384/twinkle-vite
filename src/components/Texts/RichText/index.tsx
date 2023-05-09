@@ -62,7 +62,6 @@ export default function RichText({
   isStatusMsg,
   maxLines = 10,
   section = '',
-  readMoreHeightFixed,
   readMoreColor,
   theme
 }: {
@@ -160,6 +159,7 @@ export default function RichText({
           white-space: pre-wrap;
           overflow-wrap: break-word;
           word-break: break-word;
+          line-height: 1.5;
           a {
             color: ${Color[isStatusMsg ? statusMsgLinkColor : linkColor]()};
           }
@@ -168,11 +168,17 @@ export default function RichText({
           }
           ${fullText
             ? ''
-            : `display: -webkit-box;
-          -webkit-line-clamp: ${maxLines};
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          text-overflow: ellipsis;`}
+            : `max-height: calc(1.4em * ${maxLines});
+                overflow: hidden;
+                &:after {
+                  width: 100%;
+                  height: 1.4em;
+                  background-image: linear-gradient(
+                    to bottom,
+                    rgba(255, 255, 255, 0),
+                    rgba(255, 255, 255, 1) 80%
+                  );
+                }`}
           img {
             width: 100%;
             max-height: 400px;
@@ -181,6 +187,7 @@ export default function RichText({
           }
           ul {
             margin: 0;
+            padding: 1rem;
             line-height: 1.2;
             list-style-type: disc;
             padding-left: 1.5rem;
@@ -193,8 +200,12 @@ export default function RichText({
           }
           ol {
             margin: 0;
+            padding: 1rem;
             list-style-type: decimal;
             padding-left: 1.5rem;
+          }
+          li {
+            margin-left: 1rem;
           }
         `}`}
       >
@@ -308,10 +319,9 @@ export default function RichText({
       </div>
       <div
         style={{
-          height: readMoreHeightFixed ? '2rem' : 'auto',
+          height: 'auto',
           display: 'flex',
-          alignItems: 'center',
-          paddingBottom: '1rem'
+          alignItems: 'center'
         }}
       >
         {!fullText && isOverflown && (

@@ -83,12 +83,12 @@ export default function ContentDisplay({
     <div
       style={{
         marginTop: contentType === 'subject' && filePath ? '0.5rem' : '1rem',
+        padding: '1rem',
         marginBottom: isEditing
           ? 0
           : contentType !== 'video' && !secretHidden
           ? '1rem'
-          : 0,
-        padding: '1rem'
+          : 0
       }}
     >
       {isEditing ? (
