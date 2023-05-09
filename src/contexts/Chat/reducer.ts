@@ -1044,9 +1044,9 @@ export default function ChatReducer(
           ...state.channelsObj,
           [state.selectedChannelId]: {
             ...state.channelsObj[state.selectedChannelId],
-            allMemberIds: state.channelsObj[
-              state.selectedChannelId
-            ]?.allMemberIds.concat(
+            allMemberIds: (
+              state.channelsObj[state.selectedChannelId]?.allMemberIds || []
+            ).concat(
               action.data.selectedUsers.map((user: { id: number }) => user.id)
             ),
             messageIds: [action.data.message.id].concat(
@@ -1081,11 +1081,9 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            allMemberIds: state.channelsObj[
-              action.channelId
-            ]?.allMemberIds.filter(
-              (memberId: number) => memberId !== action.userId
-            ),
+            allMemberIds: (
+              state.channelsObj[action.channelId]?.allMemberIds || []
+            ).filter((memberId: number) => memberId !== action.userId),
             loaded: false,
             members: (
               state.channelsObj[action.channelId]?.members || []
@@ -1587,11 +1585,9 @@ export default function ChatReducer(
               ...state.channelsObj,
               [action.channelId]: {
                 ...state.channelsObj[action.channelId],
-                allMemberIds: state.channelsObj[
-                  action.channelId
-                ]?.allMemberIds.filter(
-                  (memberId: number) => memberId !== action.userId
-                ),
+                allMemberIds: (
+                  state.channelsObj[action.channelId]?.allMemberIds || []
+                ).filter((memberId: number) => memberId !== action.userId),
                 messageIds: [messageId].concat(
                   state.channelsObj[action.channelId].messageIds
                 ),
