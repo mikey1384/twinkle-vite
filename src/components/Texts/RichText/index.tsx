@@ -247,22 +247,6 @@ export default function RichText({
                   </a>
                 );
               },
-              blockquote: ({ children }) => {
-                const newChildren = children.map((child: any, index) => {
-                  if (index === 1 && typeof child === 'object') {
-                    return {
-                      ...child,
-                      props: {
-                        ...(child?.props || {}),
-                        children: ['>', ...child.props.children]
-                      }
-                    };
-                  }
-                  return child;
-                });
-
-                return <>{newChildren}</>;
-              },
               code: (props: any) => {
                 const filteredChildren = removeNbsp(props.children);
                 return <code>{filteredChildren}</code>;
@@ -335,7 +319,7 @@ export default function RichText({
               }
             }}
           >
-            {convertLineBreak(text)}
+            {preprocessText(text)}
           </ReactMarkdown>
         )}
       </div>
@@ -379,10 +363,11 @@ export default function RichText({
     return { isInternalLink, replacedLink };
   }
 
-  function convertLineBreak(text: string) {
+  function preprocessText(text: string) {
     const maxNbsp = 10;
     let nbspCount = 0;
-    return (text || '').replace(/\n/gi, () => {
+    const escapedText = (text || '').replace(/></g, '&gt;&lt;');
+    return (escapedText || '').replace(/\n/gi, () => {
       nbspCount++;
       if (nbspCount > 1 && nbspCount < maxNbsp) {
         return '&nbsp;\n';
@@ -391,6 +376,7 @@ export default function RichText({
       }
     });
   }
+
   function removeNbsp(content: any): any {
     if (Array.isArray(content)) {
       return content.map(removeNbsp);
