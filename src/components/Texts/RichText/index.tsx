@@ -256,10 +256,10 @@ export default function RichText({
                   <input {...props} onChange={() => null} disabled={false} />
                 );
               },
-              li: (props: any) => {
+              li: (props: { children: any[] }) => {
                 return (
                   <li>
-                    {props.children.map((child: any) =>
+                    {(props.children || []).map((child: any) =>
                       typeof child === 'string'
                         ? child.split('').map((text, index) => {
                             return /\n/gi.test(text) && index === 0 ? '' : text;
