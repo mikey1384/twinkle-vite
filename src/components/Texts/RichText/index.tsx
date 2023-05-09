@@ -365,7 +365,15 @@ export default function RichText({
     let nbspCount = 0;
     const targetText = text || '';
     const escapedText = targetText.replace(/></g, '&gt;&lt;');
-    if (escapedText.includes('|')) return escapedText;
+    const orderedListRegex = /^\d+\./gm;
+    const unorderedListRegex = /^[-*+]\s+/gm;
+    const isOrderedList = orderedListRegex.test(targetText);
+    const isUnorderedList = unorderedListRegex.test(targetText);
+
+    if (escapedText.includes('|') || isOrderedList || isUnorderedList) {
+      return escapedText;
+    }
+
     return escapedText.replace(/\n/gi, () => {
       nbspCount++;
       if (nbspCount > 1 && nbspCount < maxNbsp) {
