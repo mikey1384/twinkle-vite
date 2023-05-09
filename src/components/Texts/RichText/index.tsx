@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
 import { mentions } from './plugins';
 import { Link } from 'react-router-dom';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -203,6 +203,12 @@ export default function RichText({
           }
           li {
             margin-left: 1rem;
+          }
+          @media (max-width: ${mobileMaxWidth}) {
+            ${fullText
+              ? ''
+              : `max-height: calc(1.7em * ${maxLines} - 10px);
+                overflow: hidden;`}
           }
         `}`}
       >
