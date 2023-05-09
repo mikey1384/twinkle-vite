@@ -187,7 +187,7 @@ export default function RichText({
           }
           ul {
             margin: 0;
-            padding: 1rem;
+            padding: 0;
             line-height: 1.2;
             list-style-type: disc;
             padding-left: 1.5rem;
@@ -200,7 +200,7 @@ export default function RichText({
           }
           ol {
             margin: 0;
-            padding: 1rem;
+            padding: 0;
             list-style-type: decimal;
             padding-left: 1.5rem;
           }
