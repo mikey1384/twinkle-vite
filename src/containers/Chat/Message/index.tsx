@@ -880,7 +880,7 @@ function Message({
                       />
                     )}
                     {!isEditing && !isNotification && (
-                      <div style={{ marginTop: '1rem', height: '2.5rem' }}>
+                      <div style={{ marginTop: '2rem', height: '2.5rem' }}>
                         {menuButtonsShown && (
                           <Reactions
                             reactions={message.reactions}
