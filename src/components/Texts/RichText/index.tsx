@@ -151,11 +151,11 @@ export default function RichText({
       <div
         ref={ContainerRef}
         style={{
-          minWidth: '100%',
-          width: 0,
+          width: '100%',
           ...style
         }}
         className={`${className} ${css`
+          width: 100%;
           white-space: pre-wrap;
           overflow-wrap: break-word;
           word-break: break-word;
@@ -184,6 +184,12 @@ export default function RichText({
             max-height: 400px;
             display: block;
             object-fit: contain;
+          }
+          pre {
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            width: 100%;
           }
           ul {
             margin: 0;
