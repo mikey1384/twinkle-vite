@@ -23,7 +23,7 @@ export default function LegacyFormat({
         finalTextArray = finalTextArray.filter(
           (_, index) => index !== finalTextArray.length - 1
         );
-        processedText = finalTextArray.join('<a') + '...';
+        processedText = finalTextArray.join('<a');
       }
     }
     const finalText = processMentionLink(limitBrs(processedText));
