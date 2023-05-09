@@ -1,7 +1,7 @@
 import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 
-export const clientVersion = '1.7.71';
+export const clientVersion = '1.7.72';
 export const defaultChatSubject = 'Welcome!';
 export const defaultContentState = {
   isEditing: false,
@@ -81,7 +81,7 @@ export const charLimit: CharLimit = {
     description: 20000
   },
   rewardComment: 5000,
-  statusMsg: 500,
+  statusMsg: 1000,
   url: {
     title: 300,
     description: 20000,
