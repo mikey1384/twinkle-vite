@@ -146,6 +146,34 @@ export default function RichText({
     return !isUseNewFormat && legacyFormatRegex.test(text);
   }, [isUseNewFormat, text]);
 
+  const preprocessedText = useMemo(() => {
+    return preprocessText(text);
+
+    function preprocessText(text: string) {
+      const maxNbsp = 10;
+      let nbspCount = 0;
+      const targetText = text || '';
+      const escapedText = targetText.replace(/></g, '&gt;&lt;');
+      const orderedListRegex = /^\d+\./gm;
+      const unorderedListRegex = /^[-*+]\s+/gm;
+      const isOrderedList = orderedListRegex.test(targetText);
+      const isUnorderedList = unorderedListRegex.test(targetText);
+
+      if (escapedText.includes('|') || isOrderedList || isUnorderedList) {
+        return escapedText;
+      }
+
+      return escapedText.replace(/\n/gi, () => {
+        nbspCount++;
+        if (nbspCount > 1 && nbspCount < maxNbsp) {
+          return '&nbsp;\n';
+        } else {
+          return '\n';
+        }
+      });
+    }
+  }, [text]);
+
   return (
     <ErrorBoundary componentPath="components/Texts/RichText">
       <div
@@ -316,7 +344,7 @@ export default function RichText({
               }
             }}
           >
-            {preprocessText(text)}
+            {preprocessedText}
           </ReactMarkdown>
         )}
       </div>
@@ -358,30 +386,6 @@ export default function RichText({
     const isInternalLink = regex.test(url);
     const replacedLink = url.replace(regex, '');
     return { isInternalLink, replacedLink };
-  }
-
-  function preprocessText(text: string) {
-    const maxNbsp = 10;
-    let nbspCount = 0;
-    const targetText = text || '';
-    const escapedText = targetText.replace(/></g, '&gt;&lt;');
-    const orderedListRegex = /^\d+\./gm;
-    const unorderedListRegex = /^[-*+]\s+/gm;
-    const isOrderedList = orderedListRegex.test(targetText);
-    const isUnorderedList = unorderedListRegex.test(targetText);
-
-    if (escapedText.includes('|') || isOrderedList || isUnorderedList) {
-      return escapedText;
-    }
-
-    return escapedText.replace(/\n/gi, () => {
-      nbspCount++;
-      if (nbspCount > 1 && nbspCount < maxNbsp) {
-        return '&nbsp;\n';
-      } else {
-        return '\n';
-      }
-    });
   }
 
   function removeNbsp(content: any): any {
