@@ -473,6 +473,7 @@ function Reply({
                       {reply.content}
                     </RichText>
                   ) : null}
+                  <div style={{ height: '1em' }} />
                   <div
                     style={{
                       marginTop: '1rem',
