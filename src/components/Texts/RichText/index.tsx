@@ -168,7 +168,7 @@ export default function RichText({
           }
           ${fullText
             ? ''
-            : `max-height: calc(1.4em * ${maxLines});
+            : `max-height: calc(1.5em * ${maxLines});
                 overflow: hidden;
                 &:after {
                   width: 100%;
