@@ -278,7 +278,6 @@ export default function TargetContent({
         border-radius: ${borderRadius};
         border: 1px solid ${Color.darkerBorderGray()};
         padding: 2rem 0 0.5rem 0;
-        line-height: 1.5;
         background: ${Color.whiteGray()};
         margin-top: -1rem;
         transition: background 0.5s;

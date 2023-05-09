@@ -43,7 +43,6 @@ export const commentContainer = css`
     font-size: 1.8rem;
   }
   .comment__content {
-    line-height: 1.5;
     padding-top: 1.5rem;
   }
   .reply-button {
