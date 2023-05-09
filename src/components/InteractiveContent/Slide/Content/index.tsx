@@ -181,7 +181,6 @@ export default function Content({
                 display: flex;
                 justify-content: center;
                 font-size: 2rem;
-                line-height: 1.6;
                 @media (max-width: ${mobileMaxWidth}) {
                   font-size: 1.5rem;
                 }

@@ -159,7 +159,7 @@ export default function RichText({
           white-space: pre-wrap;
           overflow-wrap: break-word;
           word-break: break-word;
-          line-height: 1.5;
+          line-height: 1.7em;
           a {
             color: ${Color[isStatusMsg ? statusMsgLinkColor : linkColor]()};
           }
@@ -168,17 +168,8 @@ export default function RichText({
           }
           ${fullText
             ? ''
-            : `max-height: calc(1.5em * ${maxLines});
-                overflow: hidden;
-                &:after {
-                  width: 100%;
-                  height: 1.4em;
-                  background-image: linear-gradient(
-                    to bottom,
-                    rgba(255, 255, 255, 0),
-                    rgba(255, 255, 255, 1) 80%
-                  );
-                }`}
+            : `max-height: calc(1.7em * ${maxLines});
+                overflow: hidden;`}
           img {
             width: 100%;
             max-height: 400px;
