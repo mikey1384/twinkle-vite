@@ -247,6 +247,22 @@ export default function RichText({
                   </a>
                 );
               },
+              blockquote: ({ children }) => {
+                const newChildren = children.map((child: any, index) => {
+                  if (index === 1 && typeof child === 'object') {
+                    return {
+                      ...child,
+                      props: {
+                        ...(child?.props || {}),
+                        children: ['>', ...child.props.children]
+                      }
+                    };
+                  }
+                  return child;
+                });
+
+                return <>{newChildren}</>;
+              },
               code: (props: any) => {
                 const filteredChildren = removeNbsp(props.children);
                 return <code>{filteredChildren}</code>;
