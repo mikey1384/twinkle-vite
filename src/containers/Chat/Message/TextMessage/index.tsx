@@ -169,7 +169,7 @@ function TextMessage({
         )}
         {extractedUrl && messageId && !attachmentHidden && !isSpoiler && (
           <LinkAttachment
-            style={{ marginTop: '1rem' }}
+            style={{ marginTop: '2rem' }}
             messageId={messageId}
             defaultThumbUrl={thumbUrl}
             extractedUrl={extractedUrl}
