@@ -160,6 +160,9 @@ export default function RichText({
           white-space: pre-wrap;
           overflow-wrap: break-word;
           word-break: break-word;
+          a {
+            color: ${Color[isStatusMsg ? statusMsgLinkColor : linkColor]()};
+          }
           p {
             margin: 0;
           }
@@ -212,15 +215,7 @@ export default function RichText({
                   props.href
                 );
                 return isInternalLink || props.className === 'mention' ? (
-                  <Link
-                    style={{
-                      color:
-                        Color[isStatusMsg ? statusMsgLinkColor : linkColor]()
-                    }}
-                    to={replacedLink}
-                  >
-                    {props.children}
-                  </Link>
+                  <Link to={replacedLink}>{props.children}</Link>
                 ) : (
                   <a
                     style={{
