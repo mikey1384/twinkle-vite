@@ -366,8 +366,10 @@ export default function RichText({
   function preprocessText(text: string) {
     const maxNbsp = 10;
     let nbspCount = 0;
-    const escapedText = (text || '').replace(/></g, '&gt;&lt;');
-    return (escapedText || '').replace(/\n/gi, () => {
+    const targetText = text || '';
+    const escapedText = targetText.replace(/></g, '&gt;&lt;');
+    if (escapedText.includes('|')) return escapedText;
+    return escapedText.replace(/\n/gi, () => {
       nbspCount++;
       if (nbspCount > 1 && nbspCount < maxNbsp) {
         return '&nbsp;\n';
