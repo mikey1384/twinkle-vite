@@ -78,7 +78,7 @@ export default function EditTab({
         <p
           className={css`
             font-weight: bold;
-            font-size: 3rem;
+            font-size: 2.5rem;
             width: 100%;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 2rem;
