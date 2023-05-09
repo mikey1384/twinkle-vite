@@ -756,6 +756,7 @@ function Comment({
                           {comment.content}
                         </RichText>
                       ) : null}
+                      <div style={{ height: '1em' }} />
                       {!isPreview && !isHidden && !isNotification && (
                         <div
                           style={{

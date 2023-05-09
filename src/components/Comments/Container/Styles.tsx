@@ -45,7 +45,6 @@ export const commentContainer = css`
   .comment__content {
     line-height: 1.5;
     padding-top: 1.5rem;
-    margin-bottom: 1rem;
   }
   .reply-button {
     margin-left: 0.5rem;
