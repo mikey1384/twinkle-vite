@@ -366,7 +366,7 @@ export default function RichText({
   function convertLineBreak(text: string) {
     const maxNbsp = 10;
     let nbspCount = 0;
-    return text.replace(/\n/gi, () => {
+    return (text || '').replace(/\n/gi, () => {
       nbspCount++;
       if (nbspCount > 1 && nbspCount < maxNbsp) {
         return '&nbsp;\n';
