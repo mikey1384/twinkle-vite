@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { unified } from 'unified';
 import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
+import remarkBreaks from 'remark-breaks';
 import remarkRehype from 'remark-rehype';
 import rehypeReact from 'rehype-react';
 
@@ -25,6 +26,7 @@ export default function Markdown({
     useEffect(() => {
       unified()
         .use(remarkParse)
+        .use(remarkBreaks)
         .use(remarkGfm)
         .use(remarkRehype)
         .use(rehypeReact, {
@@ -35,7 +37,6 @@ export default function Markdown({
               return <p>{props.children}</p>;
             },
             a: (props: React.ComponentPropsWithoutRef<'a'>) => {
-              console.log('here');
               const { isInternalLink, replacedLink } = processInternalLink(
                 props.href
               );
@@ -55,8 +56,7 @@ export default function Markdown({
               );
             },
             code: (props: React.ComponentPropsWithoutRef<'code'>) => {
-              const filteredChildren = removeNbsp(props.children);
-              return <code>{filteredChildren}</code>;
+              return <code>{props.children}</code>;
             },
             input: (props: React.ComponentPropsWithoutRef<'input'>) => {
               return (
@@ -131,18 +131,6 @@ export default function Markdown({
         .then((file) => {
           setContent(file.result);
         });
-
-      function removeNbsp(content: React.ReactNode): any {
-        if (Array.isArray(content)) {
-          return content.map(removeNbsp);
-        }
-
-        if (typeof content === 'string') {
-          return content.replace(/&nbsp;/gi, '').replace(/```/, '');
-        }
-
-        return content;
-      }
     }, [text]);
 
     return Content;
