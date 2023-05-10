@@ -568,63 +568,6 @@ export function processedQueryString(string: string): string {
     : '';
 }
 
-export function processedStringWithURL(string: string): string {
-  if (typeof string !== 'string') return string || null;
-  const maxChar = 100;
-  const trimmedString = (string: string) =>
-    string.length > maxChar ? `${string.substring(0, maxChar)}...` : string;
-  let tempString = applyTextSize(
-    string.replace(/&/g, '&amp').replace(/</g, '&lt').replace(/>/g, '&gt')
-  )
-    .replace(urlRegex, `<a href="$1" target="_blank">$1</a>`)
-    .replace(/\r?\n/g, '<br>');
-  let newString = '';
-  while (tempString.length > 0) {
-    const hrefPos = tempString.indexOf('href="');
-    if (hrefPos === -1) {
-      const headPos = tempString.indexOf('target="_blank">');
-      const tailPos = tempString.indexOf('</a>');
-      if (headPos !== -1) {
-        const wrapperHead = tempString
-          .substring(0, headPos + 16)
-          .replace(/&amp/g, '&')
-          .replace(/&lt/g, '<')
-          .replace(/&gt/g, '>');
-        const url = tempString.substring(headPos + 16, tailPos);
-        const wrapperTail = tempString.substring(tailPos, tempString.length);
-        newString += `${wrapperHead}${trimmedString(url)}${wrapperTail}`;
-      } else {
-        newString += tempString;
-      }
-      break;
-    }
-    newString += tempString.substring(0, hrefPos + 6);
-    tempString = tempString.substring(hrefPos + 6, tempString.length);
-    if (tempString.indexOf('://') > 8 || !tempString.includes('://')) {
-      newString += 'http://';
-    }
-  }
-  const splitNewString = newString.split('<a href');
-  const splitNewStringWithTextEffects = splitNewString.map((part) => {
-    const splitPart = part.split('</a>');
-    if (splitPart.length === 1) {
-      return applyTextEffects({
-        string: splitPart[0],
-        isFinalProcessing: false,
-        hasMention: !part.includes('</a>')
-      });
-    }
-    return [splitPart[0], applyTextEffects({ string: splitPart[1] })].join(
-      '</a>'
-    );
-  });
-  return applyTextEffects({
-    string: splitNewStringWithTextEffects.join('<a href'),
-    isFinalProcessing: true,
-    hasMention: false
-  });
-}
-
 export function applyTextSize(string: string): string {
   type FontSize = 'huge' | 'big' | 'legacy' | 'small' | 'tiny';
   const wordRegex: { [K in FontSize]: RegExp } = {
@@ -676,7 +619,6 @@ export function applyTextSize(string: string): string {
 
 export function applyTextEffects({
   string,
-  isFinalProcessing,
   hasMention = true
 }: {
   string: string;
@@ -812,7 +754,7 @@ export function applyTextEffects({
       return `${firstChar}<a class="mention" href="/users/${path}">@${path}</a>`;
     });
   }
-  return isFinalProcessing ? result.replace(fakeAtSymbolRegex, '@') : result;
+  return result.replace(fakeAtSymbolRegex, '@');
 }
 
 export function processedURL(url: string): string {

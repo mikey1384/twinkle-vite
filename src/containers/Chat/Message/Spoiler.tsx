@@ -1,10 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import {
-  limitBrs,
-  processMentionLink,
-  processedStringWithURL
-} from '~/helpers/stringHelpers';
+import { limitBrs, processMentionLink } from '~/helpers/stringHelpers';
+import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
 
 Spoiler.propTypes = {
@@ -25,10 +22,10 @@ export default function Spoiler({ content = '' }) {
 
   const processedText = useMemo(() => {
     if ((content || '').startsWith('/spoiler ')) {
-      return processedStringWithURL(content.substring(9));
+      return content.substring(9);
     }
     if ((content || '').startsWith('/secret ')) {
-      return processedStringWithURL(content.substring(8));
+      return content.substring(8);
     }
     return '';
   }, [content]);
@@ -41,14 +38,16 @@ export default function Spoiler({ content = '' }) {
   return (
     <div>
       {spoilerShown ? (
-        <span
+        <div
           style={{
+            display: 'inline-block',
+            padding: '0 0.5rem',
             background: Color.lighterGray(),
             borderRadius: '2px'
           }}
         >
-          {finalText}
-        </span>
+          <RichText>{finalText}</RichText>
+        </div>
       ) : (
         <div
           style={{

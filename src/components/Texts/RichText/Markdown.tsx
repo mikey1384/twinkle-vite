@@ -49,7 +49,7 @@ export default function Markdown({
       }
     }, [text]);
 
-    return <div>{Content}</div>;
+    return <>{Content}</>;
   }
   return useProcessor(children);
 
@@ -154,7 +154,7 @@ export default function Markdown({
         const attribs = { ...node.attribs };
 
         if (attribs.style) {
-          attribs.style = parseStyle(attribs.style);
+          attribs.style = keyToCamelCase(parseStyle(attribs.style));
         }
 
         if (attribs.class) {
@@ -238,6 +238,17 @@ export default function Markdown({
     });
   }
 
+  function keyToCamelCase(obj: { [key: string]: string } | null) {
+    const newObj: Record<string, any> = {};
+    for (const key in obj) {
+      const camelCaseKey = key.replace(/-([a-z])/g, (match, p1) =>
+        p1.toUpperCase()
+      );
+      newObj[camelCaseKey] = obj[key];
+    }
+    return newObj;
+  }
+
   function processInternalLink(url = '') {
     const regex =
       /^(https?:\/\/(?:www\.)?|www\.)(twin-kle\.com|twinkle\.network|localhost:3000)/;
@@ -266,70 +277,3 @@ export default function Markdown({
     return text.replace(/&nbsp;/gi, '');
   }
 }
-
-/*
-
-
-
-.use(rehypeReact, {
-              createElement,
-              Fragment,
-              components: {
-                p: (props: React.ComponentPropsWithoutRef<'p'>) => {
-                  return <p>{props.children}</p>;
-                },
-                a: (props: React.ComponentPropsWithoutRef<'a'>) => {
-                  const { isInternalLink, replacedLink } = processInternalLink(
-                    props.href
-                  );
-                  return isInternalLink || props.className === 'mention' ? (
-                    <Link to={replacedLink}>{props.children}</Link>
-                  ) : (
-                    <a
-                      style={{
-                        color:
-                          Color[isStatusMsg ? statusMsgLinkColor : linkColor]()
-                      }}
-                      href={props.href}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {props.children}
-                    </a>
-                  );
-                },
-                code: (props: React.ComponentPropsWithoutRef<'code'>) => {
-                  return <code>{props.children}</code>;
-                },
-                input: (props: React.ComponentPropsWithoutRef<'input'>) => {
-                  return (
-                    <input {...props} onChange={() => null} disabled={false} />
-                  );
-                },
-                li: (props: React.ComponentPropsWithoutRef<'li'>) => {
-                  return (
-                    <li>
-                      {((props.children as React.ReactNode[]) || []).map(
-                        (child: React.ReactNode) =>
-                          typeof child === 'string'
-                            ? child.split('').map((text, index) => {
-                                return /\n/gi.test(text) && index === 0
-                                  ? ''
-                                  : text;
-                              })
-                            : child
-                      )}
-                    </li>
-                  );
-                },
-                em: (props: any) => {
-                  return <strong>{props.children}</strong>;
-                },
-                strong: (props: any) => {
-                  return <em>{props.children}</em>;
-                },
-                
-              }
-            })
-
-*/
