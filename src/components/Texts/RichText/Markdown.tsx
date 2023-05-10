@@ -272,7 +272,7 @@ export default function Markdown({
   }
 
   function preprocessText(text: string) {
-    const maxNbsp = 5;
+    const maxNbsp = 6;
     let nbspCount = 0;
     const targetText = text || '';
     const escapedText = targetText.replace(/></g, '&gt;&lt;');
