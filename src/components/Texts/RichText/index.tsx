@@ -50,7 +50,7 @@ export default function RichText({
   style,
   className,
   cleanString,
-  children: text,
+  children: text = '',
   contentId,
   contentType,
   isUseNewFormat,
@@ -102,13 +102,13 @@ export default function RichText({
   const [isOverflown, setIsOverflown] = useState<boolean | null>(null);
   useEffect(() => {
     if (!fullTextRef.current) {
-      setFullText(false);
+      setFullText(text.split('\n').length <= maxLines);
       setIsOverflown(
         ContainerRef.current?.scrollHeight >
           ContainerRef.current?.clientHeight + 2
       );
     }
-  }, [Content, text, isPreview]);
+  }, [Content, text, isPreview, maxLines]);
 
   useEffect(() => {
     if (fullTextState[section] && !isPreview) {
