@@ -71,6 +71,7 @@ export default function RichText({
     null
   );
   const fullTextRef = useRef(fullTextState[section]);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [fullText, setFullText] = useState(
     isPreview ? false : fullTextState[section]
   );
@@ -83,7 +84,7 @@ export default function RichText({
       ContainerRef.current?.scrollHeight >
         ContainerRef.current?.clientHeight + 2
     );
-  }, [Content, text, isPreview, maxLines]);
+  }, [Content, imageLoaded, text, isPreview, maxLines]);
 
   useEffect(() => {
     if (fullTextState[section] && !isPreview) {
@@ -191,6 +192,7 @@ export default function RichText({
             linkColor={linkColor}
             Content={Content}
             onSetContent={setContent}
+            onSetImageLoaded={setImageLoaded}
           >
             {text}
           </Markdown>
