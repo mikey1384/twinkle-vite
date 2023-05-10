@@ -156,9 +156,8 @@ export default function RichText({
           ul {
             margin: 0;
             padding: 0;
-            line-height: 1.2;
             list-style-type: disc;
-            padding-left: 1.5rem;
+            list-style-position: inside;
           }
           ul ul {
             list-style-type: circle;
@@ -170,10 +169,15 @@ export default function RichText({
             margin: 0;
             padding: 0;
             list-style-type: decimal;
-            padding-left: 1.5rem;
+            list-style-position: inside;
           }
           li {
-            margin-left: 1rem;
+            > p {
+              display: inline;
+            }
+            ::marker {
+              color: ${Color.darkerGray()};
+            }
           }
           @media (max-width: ${mobileMaxWidth}) {
             ${fullText

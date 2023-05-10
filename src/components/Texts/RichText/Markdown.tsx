@@ -40,7 +40,7 @@ export default function Markdown({
           const result = convertStringToJSX(
             applyTextSize(
               applyTextEffects({
-                string: removeNbsp(markupString.value as string)
+                string: markupString.value as string
               })
             )
           );
@@ -93,13 +93,7 @@ export default function Markdown({
             case 'li': {
               return (
                 <li>
-                  {convertToJSX(
-                    domNode.children
-                      ? domNode.children.filter(
-                          (child, index) => child.data !== '\n' || index !== 0
-                        )
-                      : []
-                  )}
+                  {convertToJSX(domNode.children ? domNode.children : [])}
                 </li>
               );
             }
@@ -285,9 +279,5 @@ export default function Markdown({
         return '\n\n';
       }
     });
-  }
-
-  function removeNbsp(text: string) {
-    return text.replace(/&nbsp;/gi, '');
   }
 }
