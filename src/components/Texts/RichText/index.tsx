@@ -178,7 +178,7 @@ export default function RichText({
           @media (max-width: ${mobileMaxWidth}) {
             ${fullText
               ? ''
-              : `max-height: calc(1.6em * ${maxLines});
+              : `max-height: calc(1.5em * ${maxLines});
                 overflow: hidden;`}
           }
         `}`}
