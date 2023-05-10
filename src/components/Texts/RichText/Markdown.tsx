@@ -14,7 +14,8 @@ import { applyTextEffects, applyTextSize } from '~/helpers/stringHelpers';
 export default function Markdown({
   Content,
   children,
-  onSetContent
+  onSetContent,
+  onSetImageLoaded
 }: {
   Content: string;
   isStatusMsg: boolean;
@@ -22,6 +23,7 @@ export default function Markdown({
   statusMsgLinkColor: string;
   linkColor: string;
   onSetContent: (arg0: React.ReactNode) => void;
+  onSetImageLoaded: (arg0: boolean) => void;
 }) {
   function useProcessor(text: string) {
     useEffect(() => {
@@ -75,6 +77,15 @@ export default function Markdown({
             }
             case 'em': {
               return <strong>{convertToJSX(domNode.children || [])}</strong>;
+            }
+            case 'img': {
+              return (
+                <img
+                  src={domNode.attribs?.src}
+                  alt={domNode.attribs?.alt}
+                  onLoad={() => onSetImageLoaded(true)}
+                />
+              );
             }
             case 'strong': {
               return <em>{convertToJSX(domNode.children || [])}</em>;
@@ -212,6 +223,9 @@ export default function Markdown({
           }
           case 'strong': {
             return <em {...commonProps}>{children}</em>;
+          }
+          case 'img': {
+            return <img {...commonProps} />;
           }
           case 'input':
             if (attribs.type === 'checkbox') {
