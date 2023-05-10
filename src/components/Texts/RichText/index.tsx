@@ -1,17 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
+import Markdown from './Markdown';
 import LegacyFormat from './LegacyFormat';
-import remarkGfm from 'remark-gfm';
-import remarkEmoji from 'remark-emoji';
-import { mentions } from './plugins';
-import { Link } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import MediaComponent from './MediaComponent';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const readMoreLabel = localize('readMore');
@@ -147,34 +142,6 @@ export default function RichText({
     return !isUseNewFormat && legacyFormatRegex.test(text);
   }, [isUseNewFormat, text]);
 
-  const preprocessedText = useMemo(() => {
-    return preprocessText(text);
-
-    function preprocessText(text: string) {
-      const maxNbsp = 10;
-      let nbspCount = 0;
-      const targetText = text || '';
-      const escapedText = targetText.replace(/></g, '&gt;&lt;');
-      const orderedListRegex = /^\d+\./gm;
-      const unorderedListRegex = /^[-*+]\s+/gm;
-      const isOrderedList = orderedListRegex.test(targetText);
-      const isUnorderedList = unorderedListRegex.test(targetText);
-
-      if (escapedText.includes('|') || isOrderedList || isUnorderedList) {
-        return escapedText;
-      }
-
-      return escapedText.replace(/\n/gi, () => {
-        nbspCount++;
-        if (nbspCount > 1 && nbspCount < maxNbsp) {
-          return '&nbsp;\n';
-        } else {
-          return '\n';
-        }
-      });
-    }
-  }, [text]);
-
   return (
     <ErrorBoundary componentPath="components/Texts/RichText">
       <div
@@ -250,109 +217,13 @@ export default function RichText({
             isOverflown={isOverflown}
           />
         ) : (
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm, remarkEmoji, mentions]}
-            components={{
-              a: (props: React.ComponentPropsWithoutRef<'a'>) => {
-                const { isInternalLink, replacedLink } = processInternalLink(
-                  props.href
-                );
-                return isInternalLink || props.className === 'mention' ? (
-                  <Link to={replacedLink}>{props.children}</Link>
-                ) : (
-                  <a
-                    style={{
-                      color:
-                        Color[isStatusMsg ? statusMsgLinkColor : linkColor]()
-                    }}
-                    href={props.href}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {props.children}
-                  </a>
-                );
-              },
-              code: (props: React.ComponentPropsWithoutRef<'code'>) => {
-                const filteredChildren = removeNbsp(props.children);
-                return <code>{filteredChildren}</code>;
-              },
-              img: (props: React.ComponentPropsWithoutRef<any>) => {
-                return <MediaComponent src={props.src} />;
-              },
-              input: (props: React.ComponentPropsWithoutRef<'input'>) => {
-                return (
-                  <input {...props} onChange={() => null} disabled={false} />
-                );
-              },
-              li: (props: React.ComponentPropsWithoutRef<'li'>) => {
-                return (
-                  <li>
-                    {((props.children as React.ReactNode[]) || []).map(
-                      (child: React.ReactNode) =>
-                        typeof child === 'string'
-                          ? child.split('').map((text, index) => {
-                              return /\n/gi.test(text) && index === 0
-                                ? ''
-                                : text;
-                            })
-                          : child
-                    )}
-                  </li>
-                );
-              },
-              em: (props: any) => {
-                return <strong>{props.children}</strong>;
-              },
-              strong: (props: any) => {
-                return <em>{props.children}</em>;
-              },
-              table: (props: any) => {
-                return (
-                  <div
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <table
-                      style={{ borderCollapse: 'collapse' }}
-                      className={css`
-                        margin-top: 1.5rem;
-                        min-width: 25vw;
-                        width: 85%;
-                        max-width: 100%;
-                        tr {
-                          display: table-row;
-                          width: 100%;
-                        }
-                        th,
-                        td {
-                          text-align: center;
-                          width: 33%;
-                          border: 1px solid ${Color.borderGray()};
-                          padding: 0.5rem;
-                          white-space: nowrap;
-                          &:first-child {
-                            width: 2%;
-                          }
-                        }
-                        td img {
-                          width: 100%;
-                          height: auto;
-                        }
-                      `}
-                    >
-                      {props.children}
-                    </table>
-                  </div>
-                );
-              }
-            }}
+          <Markdown
+            isStatusMsg={!!isStatusMsg}
+            statusMsgLinkColor={statusMsgLinkColor}
+            linkColor={linkColor}
           >
-            {preprocessedText}
-          </ReactMarkdown>
+            {text}
+          </Markdown>
         )}
       </div>
       <div
@@ -386,24 +257,4 @@ export default function RichText({
       </div>
     </ErrorBoundary>
   );
-
-  function processInternalLink(url = '') {
-    const regex =
-      /^(https?:\/\/(?:www\.)?|www\.)(twin-kle\.com|twinkle\.network|localhost:3000)/;
-    const isInternalLink = regex.test(url);
-    const replacedLink = url.replace(regex, '');
-    return { isInternalLink, replacedLink };
-  }
-
-  function removeNbsp(content: React.ReactNode): any {
-    if (Array.isArray(content)) {
-      return content.map(removeNbsp);
-    }
-
-    if (typeof content === 'string') {
-      return content.replace(/&nbsp;/gi, '').replace(/```/, '');
-    }
-
-    return content;
-  }
 }
