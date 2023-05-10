@@ -1,6 +1,5 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useEffect, useRef, useState } from 'react';
 import Markdown from './Markdown';
-import LegacyFormat from './LegacyFormat';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
@@ -22,29 +21,6 @@ type Color =
   | 'purple'
   | 'red'
   | 'yellow';
-const legacySizeRegex =
-  /(?:h\[(.+?)\]h|b\[(.+?)\]b|o\[(.+?)\]o|s\[(.+?)\]s|t\[(.+?)\]t)/;
-const legacyColorRegexObj: { [K in Color]: RegExp } = {
-  blue: /(?:b\|)([\s\S]+?)(?:\|b)/,
-  gray: /(?:gr\|)([\s\S]+?)(?:\|gr)/,
-  green: /(?:g\|)([\s\S]+?)(?:\|g)/,
-  lime: /(?:l\|)([\s\S]+?)(?:\|l)/,
-  logoBlue: /(?:lb\|)([\s\S]+?)(?:\|lb)/,
-  orange: /(?:o\|)([\s\S]+?)(?:\|o)/,
-  passionFruit: /(?:pf\|)([\s\S]+?)(?:\|pf)/,
-  pink: /(?:p\|)([\s\S]+?)(?:\|p)/,
-  purple: /(?:pu\|)([\s\S]+?)(?:\|pu)/,
-  red: /(?:r\|)([\s\S]+?)(?:\|r)/,
-  yellow: /(?:y\|)([\s\S]+?)(?:\|y)/
-};
-const legacyColorRegex = new RegExp(
-  Object.values(legacyColorRegexObj)
-    .map((regex) => `(?:${regex.source})`)
-    .join('|')
-);
-const legacyFormatRegex = new RegExp(
-  `(${legacySizeRegex.source})|(${legacyColorRegex.source})`
-);
 
 export default function RichText({
   style,
@@ -53,7 +29,6 @@ export default function RichText({
   children: text = '',
   contentId,
   contentType,
-  isUseNewFormat,
   isPreview,
   isStatusMsg,
   maxLines = 10,
@@ -141,10 +116,6 @@ export default function RichText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isUseLegacyFormat = useMemo(() => {
-    return !isUseNewFormat && legacyFormatRegex.test(text);
-  }, [isUseNewFormat, text]);
-
   return (
     <ErrorBoundary componentPath="components/Texts/RichText">
       <div
@@ -213,12 +184,6 @@ export default function RichText({
       >
         {cleanString ? (
           text
-        ) : isUseLegacyFormat ? (
-          <LegacyFormat
-            text={text}
-            fullText={fullText}
-            isOverflown={isOverflown}
-          />
         ) : (
           <Markdown
             isStatusMsg={!!isStatusMsg}
