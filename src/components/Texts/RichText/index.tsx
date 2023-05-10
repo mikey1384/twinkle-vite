@@ -169,13 +169,15 @@ export default function RichText({
             margin: 0;
             padding: 0;
             list-style-type: decimal;
-            list-style-position: inside;
+            list-style-position: outside;
           }
           li {
+            margin-left: 2ch;
             > p {
               display: inline;
             }
             ::marker {
+              font-family: 'Roboto', 'Noto Sans';
               color: ${Color.darkerGray()};
             }
           }
