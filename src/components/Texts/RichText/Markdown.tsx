@@ -31,7 +31,13 @@ export default function Markdown({
             .use(remarkRehype)
             .use(rehypeStringify)
             .process(preprocessText(text));
-          const result = convertStringToJSX(markupString.value as string);
+          const result = convertStringToJSX(
+            applyTextSize(
+              applyTextEffects({
+                string: markupString.value as string
+              })
+            )
+          );
           onSetContent(result);
         } catch (error) {
           console.error('Error processing markdown:', error);
@@ -82,10 +88,8 @@ export default function Markdown({
       }
     });
   }
-}
 
-/*
- function applyTextEffects({
+  function applyTextEffects({
     string,
     isFinalProcessing,
     hasMention = true
@@ -128,6 +132,9 @@ export default function Markdown({
     const mentionRegex = /((?!([a-zA-Z1-9])).|^|\n)@[a-zA-Z0-9_]{3,}/gi;
 
     let result = string
+      .replace(/&nbsp;/gi, '')
+      .replace(/&#x26;nbsp;/gi, '')
+      .replace(/```/gi, '')
       .replace(/(<br>)/gi, '\n')
       .replace(
         blueRegex,
@@ -241,9 +248,61 @@ export default function Markdown({
         return `${firstChar}<a class="mention" href="/users/${path}">@${path}</a>`;
       });
     }
-    result = (result || '').replace(/\n/g, '<br>');
     return isFinalProcessing ? result.replace(fakeAtSymbolRegex, '@') : result;
   }
+
+  function applyTextSize(string: string): string {
+    type FontSize = 'huge' | 'big' | 'legacy' | 'small' | 'tiny';
+    const wordRegex: { [K in FontSize]: RegExp } = {
+      huge: /(h\[[^\s]+\]h)/gi,
+      big: /(b\[[^\s]+\]b)/gi,
+      legacy: /(o\[[^\s]+\]o)/gi,
+      small: /(s\[[^\s]+\]s)/gi,
+      tiny: /(t\[[^\s]+\]t)/gi
+    };
+    const sentenceRegex: { [K in FontSize]: RegExp } = {
+      huge: /((h\[[^\s]){1}((?!(h\[|\]h))[^\n])+([^\s]\]h){1})/gi,
+      big: /((b\[[^\s]){1}((?!(b\[|\]b))[^\n])+([^\s]\]b){1})/gi,
+      legacy: /((o\[[^\s]){1}((?!(l\[|\]l))[^\n])+([^\s]\]o){1})/gi,
+      small: /((s\[[^\s]){1}((?!(s\[|\]s))[^\n])+([^\s]\]s){1})/gi,
+      tiny: /((t\[[^\s]){1}((?!(t\[|\]t))[^\n])+([^\s]\]t){1})/gi
+    };
+    const fontSizes = {
+      huge: '1.9em',
+      big: '1.4em',
+      legacy: '1em',
+      small: '0.7em',
+      tiny: '0.5em'
+    };
+
+    let outputString = string;
+
+    Object.keys(wordRegex).forEach((key) => {
+      outputString = outputString.replace(
+        wordRegex[key as FontSize],
+        (string) =>
+          `<span style="font-size: ${
+            fontSizes[key as FontSize]
+          };">${string.substring(2, string.length - 2)}</span>`
+      );
+    });
+
+    Object.keys(sentenceRegex).forEach((key) => {
+      outputString = outputString.replace(
+        sentenceRegex[key as FontSize],
+        (string) =>
+          `<span style="font-size: ${
+            fontSizes[key as FontSize]
+          };">${string.substring(2, string.length - 2)}</span>`
+      );
+    });
+
+    return outputString;
+  }
+}
+
+/*
+
 
 
 .use(rehypeReact, {
