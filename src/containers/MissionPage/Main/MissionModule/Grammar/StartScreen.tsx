@@ -149,7 +149,7 @@ export default function StartScreen({
           </div>
         </div>
       )}
-      <h3>{correctlyAnswerAllQuestionsLabel}</h3>
+      <h1>{correctlyAnswerAllQuestionsLabel}</h1>
       <p style={{ marginTop: '1.5rem', fontSize: '1.7rem' }}>
         {whenReadyPressStartLabel}
       </p>
