@@ -130,7 +130,7 @@ export default function RichText({
           white-space: pre-wrap;
           overflow-wrap: break-word;
           word-break: break-word;
-          line-height: 1.6;
+          line-height: 1.7;
           a {
             color: ${Color[isStatusMsg ? statusMsgLinkColor : linkColor]()};
           }
