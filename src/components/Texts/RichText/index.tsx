@@ -78,11 +78,11 @@ export default function RichText({
   useEffect(() => {
     if (!fullTextRef.current) {
       setFullText(false);
-      setIsOverflown(
-        ContainerRef.current?.scrollHeight >
-          ContainerRef.current?.clientHeight + 2
-      );
     }
+    setIsOverflown(
+      ContainerRef.current?.scrollHeight >
+        ContainerRef.current?.clientHeight + 2
+    );
   }, [Content, text, isPreview, maxLines]);
 
   useEffect(() => {
