@@ -272,14 +272,14 @@ export default function Markdown({
   }
 
   function preprocessText(text: string) {
-    const maxNbsp = 10;
+    const maxNbsp = 5;
     let nbspCount = 0;
     const targetText = text || '';
     const escapedText = targetText.replace(/></g, '&gt;&lt;');
 
     return escapedText.replace(/\n{2}/gi, () => {
       nbspCount++;
-      if (nbspCount > 1 && nbspCount < maxNbsp) {
+      if (nbspCount > 1 && nbspCount <= maxNbsp) {
         return '&nbsp;\n\n';
       } else {
         return '\n\n';
