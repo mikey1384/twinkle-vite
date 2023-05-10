@@ -6,6 +6,7 @@ import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
 import parse from 'html-react-parser';
+import parseStyle from 'style-to-object';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { applyTextEffects, applyTextSize } from '~/helpers/stringHelpers';
@@ -37,7 +38,7 @@ export default function Markdown({
           const result = convertStringToJSX(
             applyTextSize(
               applyTextEffects({
-                string: markupString.value as string
+                string: removeNbsp(markupString.value as string)
               })
             )
           );
@@ -56,16 +57,18 @@ export default function Markdown({
     const result = parse(text, {
       replace: (domNode) => {
         if (domNode.type === 'tag') {
-          const children = domNode.children
-            ? convertToJSX(domNode.children)
-            : null;
-
           if (domNode.name === 'a') {
             const node = domNode.children?.[0];
             const href = domNode.attribs?.href || '';
             const { isInternalLink, replacedLink } = processInternalLink(href);
             if (isInternalLink || domNode.attribs?.class === 'mention') {
               return <Link to={replacedLink}>{node?.data}</Link>;
+            } else {
+              return (
+                <a href={href} target="_blank" rel="noopener noreferrer">
+                  {node?.data}
+                </a>
+              );
             }
           } else if (domNode.name === 'li') {
             return (
@@ -116,7 +119,7 @@ export default function Markdown({
                     }
                   `}
                 >
-                  {children}
+                  {convertToJSX(domNode.children || [])}
                 </table>
               </div>
             );
@@ -140,14 +143,72 @@ export default function Markdown({
           const attribs = { ...node.attribs };
 
           if (attribs.style) {
-            attribs.style = convertStyleStringToObject(attribs.style);
+            attribs.style = parseStyle(attribs.style);
           }
 
-          const commonProps = { key: index, ...attribs };
+          if (attribs.class) {
+            attribs.className = attribs.class;
+            delete attribs.class;
+          }
+
+          const commonProps = { key: node.type + index, ...attribs };
 
           switch (TagName) {
             case 'table':
-              return <table key={index}>{children}</table>;
+              return (
+                <div
+                  key={index}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <table
+                    style={{ borderCollapse: 'collapse' }}
+                    className={css`
+                      margin-top: 1.5rem;
+                      min-width: 25vw;
+                      width: 85%;
+                      max-width: 100%;
+                      tr {
+                        display: table-row;
+                        width: 100%;
+                      }
+                      th,
+                      td {
+                        text-align: center;
+                        width: 33%;
+                        border: 1px solid ${Color.borderGray()};
+                        padding: 0.5rem;
+                        white-space: nowrap;
+                        &:first-child {
+                          width: 2%;
+                        }
+                      }
+                      td img {
+                        width: 100%;
+                        height: auto;
+                      }
+                    `}
+                  >
+                    {children}
+                  </table>
+                </div>
+              );
+            case 'input':
+              if (attribs.type === 'checkbox') {
+                return (
+                  <input
+                    {...attribs}
+                    checked={Object.keys(attribs).includes('checked')}
+                    key={index}
+                    onChange={() => null}
+                    disabled={false}
+                  />
+                );
+              }
+              break;
             default: {
               const params = [TagName, commonProps];
               if (Array.isArray(children) && children.length > 0) {
@@ -160,19 +221,6 @@ export default function Markdown({
           }
         }
       });
-  }
-
-  function convertStyleStringToObject(styleString: string) {
-    const styleObject: { [key: string]: string } = {};
-
-    styleString.split(';').forEach((property) => {
-      const [key, value] = property.split(':');
-      if (key && value) {
-        styleObject[key.trim()] = value.trim();
-      }
-    });
-
-    return styleObject;
   }
 
   function processInternalLink(url = '') {
@@ -197,6 +245,10 @@ export default function Markdown({
         return '\n\n';
       }
     });
+  }
+
+  function removeNbsp(text: string) {
+    return text.replace(/&nbsp;/gi, '');
   }
 }
 
