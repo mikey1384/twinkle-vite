@@ -1,4 +1,4 @@
-import React, { useEffect, Fragment } from 'react';
+import React, { useEffect } from 'react';
 import { unified } from 'unified';
 import { Link } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -49,7 +49,7 @@ export default function Markdown({
       }
     }, [text]);
 
-    return <>{Content}</>;
+    return <div>{Content}</div>;
   }
   return useProcessor(children);
 
@@ -57,107 +57,44 @@ export default function Markdown({
     const result = parse(text, {
       replace: (domNode) => {
         if (domNode.type === 'tag') {
-          if (domNode.name === 'a') {
-            const node = domNode.children?.[0];
-            const href = domNode.attribs?.href || '';
-            const { isInternalLink, replacedLink } = processInternalLink(href);
-            if (isInternalLink || domNode.attribs?.class === 'mention') {
-              return <Link to={replacedLink}>{node?.data}</Link>;
-            } else {
+          switch (domNode.name) {
+            case 'a': {
+              const node = domNode.children?.[0];
+              const href = domNode.attribs?.href || '';
+              const { isInternalLink, replacedLink } =
+                processInternalLink(href);
+              if (isInternalLink || domNode.attribs?.class === 'mention') {
+                return <Link to={replacedLink}>{node?.data}</Link>;
+              } else {
+                return (
+                  <a href={href} target="_blank" rel="noopener noreferrer">
+                    {node?.data}
+                  </a>
+                );
+              }
+            }
+            case 'em': {
+              return <strong>{convertToJSX(domNode.children || [])}</strong>;
+            }
+            case 'strong': {
+              return <em>{convertToJSX(domNode.children || [])}</em>;
+            }
+            case 'li': {
               return (
-                <a href={href} target="_blank" rel="noopener noreferrer">
-                  {node?.data}
-                </a>
+                <li>
+                  {convertToJSX(
+                    domNode.children
+                      ? domNode.children.filter(
+                          (child, index) => child.data !== '\n' || index !== 0
+                        )
+                      : []
+                  )}
+                </li>
               );
             }
-          } else if (domNode.name === 'li') {
-            return (
-              <li>
-                {convertToJSX(
-                  domNode.children
-                    ? domNode.children.filter(
-                        (child, index) => child.data !== '\n' || index !== 0
-                      )
-                    : []
-                )}
-              </li>
-            );
-          } else if (domNode.name === 'table') {
-            return (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center'
-                }}
-              >
-                <table
-                  style={{ borderCollapse: 'collapse' }}
-                  className={css`
-                    margin-top: 1.5rem;
-                    min-width: 25vw;
-                    width: 85%;
-                    max-width: 100%;
-                    tr {
-                      display: table-row;
-                      width: 100%;
-                    }
-                    th,
-                    td {
-                      text-align: center;
-                      width: 33%;
-                      border: 1px solid ${Color.borderGray()};
-                      padding: 0.5rem;
-                      white-space: nowrap;
-                      &:first-child {
-                        width: 2%;
-                      }
-                    }
-                    td img {
-                      width: 100%;
-                      height: auto;
-                    }
-                  `}
-                >
-                  {convertToJSX(domNode.children || [])}
-                </table>
-              </div>
-            );
-          }
-        }
-      }
-    });
-    return result;
-  }
-
-  function convertToJSX(nodes: any[]): React.ReactNode {
-    return nodes
-      .filter((node) => node.data !== '\n')
-      .map((node, index) => {
-        if (node.type === 'text') {
-          return node.data.trim() !== '' ? node.data : null;
-        } else if (node.type === 'tag') {
-          const TagName = node.name;
-          const children = node.children ? convertToJSX(node.children) : null;
-
-          const attribs = { ...node.attribs };
-
-          if (attribs.style) {
-            attribs.style = parseStyle(attribs.style);
-          }
-
-          if (attribs.class) {
-            attribs.className = attribs.class;
-            delete attribs.class;
-          }
-
-          const commonProps = { key: node.type + index, ...attribs };
-
-          switch (TagName) {
-            case 'table':
+            case 'table': {
               return (
                 <div
-                  key={index}
                   style={{
                     width: '100%',
                     display: 'flex',
@@ -192,35 +129,113 @@ export default function Markdown({
                       }
                     `}
                   >
-                    {children}
+                    {convertToJSX(domNode.children || [])}
                   </table>
                 </div>
               );
-            case 'input':
-              if (attribs.type === 'checkbox') {
-                return (
-                  <input
-                    {...attribs}
-                    checked={Object.keys(attribs).includes('checked')}
-                    key={index}
-                    onChange={() => null}
-                    disabled={false}
-                  />
-                );
-              }
-              break;
-            default: {
-              const params = [TagName, commonProps];
-              if (Array.isArray(children) && children.length > 0) {
-                params.push(children);
-              }
-              return React.createElement(
-                ...(params as [string, object, any[]])
-              );
             }
+            default:
+              break;
           }
         }
-      });
+      }
+    });
+    return result;
+  }
+
+  function convertToJSX(nodes: any[]): React.ReactNode {
+    return nodes.map((node, index) => {
+      if (node.type === 'text') {
+        return node.data.trim() !== '' ? node.data : null;
+      } else if (node.type === 'tag') {
+        const TagName = node.name;
+        const children = node.children ? convertToJSX(node.children) : null;
+
+        const attribs = { ...node.attribs };
+
+        if (attribs.style) {
+          attribs.style = parseStyle(attribs.style);
+        }
+
+        if (attribs.class) {
+          attribs.className = attribs.class;
+          delete attribs.class;
+        }
+
+        const commonProps = { key: node.type + index, ...attribs };
+
+        switch (TagName) {
+          case 'table':
+            return (
+              <div
+                key={index}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}
+              >
+                <table
+                  style={{ borderCollapse: 'collapse' }}
+                  className={css`
+                    margin-top: 1.5rem;
+                    min-width: 25vw;
+                    width: 85%;
+                    max-width: 100%;
+                    tr {
+                      display: table-row;
+                      width: 100%;
+                    }
+                    th,
+                    td {
+                      text-align: center;
+                      width: 33%;
+                      border: 1px solid ${Color.borderGray()};
+                      padding: 0.5rem;
+                      white-space: nowrap;
+                      &:first-child {
+                        width: 2%;
+                      }
+                    }
+                    td img {
+                      width: 100%;
+                      height: auto;
+                    }
+                  `}
+                >
+                  {children}
+                </table>
+              </div>
+            );
+          case 'em': {
+            return <strong {...commonProps}>{children}</strong>;
+          }
+          case 'strong': {
+            return <em {...commonProps}>{children}</em>;
+          }
+          case 'input':
+            if (attribs.type === 'checkbox') {
+              return (
+                <input
+                  {...attribs}
+                  checked={Object.keys(attribs).includes('checked')}
+                  key={index}
+                  onChange={() => null}
+                  disabled={false}
+                />
+              );
+            }
+            break;
+          default: {
+            const params = [TagName, commonProps];
+            if (Array.isArray(children) && children.length > 0) {
+              params.push(children);
+            }
+            return React.createElement(...(params as [string, object, any[]]));
+          }
+        }
+      }
+    });
   }
 
   function processInternalLink(url = '') {
