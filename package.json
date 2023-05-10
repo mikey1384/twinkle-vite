@@ -50,6 +50,7 @@
     "remark-parse": "^10.0.1",
     "remark-rehype": "^10.1.0",
     "resize-observer": "^1.0.4",
+    "sanitize-html": "^2.10.0",
     "simple-peer": "^9.11.1",
     "socket.io-client": "^4.6.1",
     "source-map-support": "^0.5.21",
