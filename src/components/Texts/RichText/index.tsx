@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from './Markdown';
 import LegacyFormat from './LegacyFormat';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -91,6 +91,7 @@ export default function RichText({
       ? useContentState({ contentType, contentId: contentId as number })
       : {};
   const { fullTextState = {} } = contentState;
+  const [Content, setContent] = useState<any>(Fragment);
   const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(
     null
   );
@@ -105,7 +106,7 @@ export default function RichText({
       ContainerRef.current?.scrollHeight >
         ContainerRef.current?.clientHeight + 2
     );
-  }, [text, isPreview]);
+  }, [Content, text, isPreview]);
 
   useEffect(() => {
     if (fullTextState[section] && !isPreview) {
@@ -221,6 +222,8 @@ export default function RichText({
             isStatusMsg={!!isStatusMsg}
             statusMsgLinkColor={statusMsgLinkColor}
             linkColor={linkColor}
+            Content={Content}
+            onSetContent={setContent}
           >
             {text}
           </Markdown>
