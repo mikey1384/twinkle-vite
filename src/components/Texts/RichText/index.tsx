@@ -172,7 +172,7 @@ export default function RichText({
             list-style-position: outside;
           }
           li {
-            margin-left: 2ch;
+            margin-left: 3ch;
             > p {
               display: inline;
             }
