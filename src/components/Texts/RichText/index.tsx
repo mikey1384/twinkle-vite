@@ -11,6 +11,7 @@ import { useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import MediaComponent from './MediaComponent';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const readMoreLabel = localize('readMore');
@@ -275,6 +276,9 @@ export default function RichText({
               code: (props: React.ComponentPropsWithoutRef<'code'>) => {
                 const filteredChildren = removeNbsp(props.children);
                 return <code>{filteredChildren}</code>;
+              },
+              img: (props: React.ComponentPropsWithoutRef<any>) => {
+                return <MediaComponent src={props.src} />;
               },
               input: (props: React.ComponentPropsWithoutRef<'input'>) => {
                 return (
