@@ -1,9 +1,5 @@
-import React, { useMemo } from 'react';
-import {
-  limitBrs,
-  processMentionLink,
-  processedStringWithURL
-} from '~/helpers/stringHelpers';
+import React from 'react';
+import RichText from '~/components/Texts/RichText';
 
 export default function Bio({
   firstRow,
@@ -18,19 +14,6 @@ export default function Bio({
   small?: boolean;
   style?: React.CSSProperties;
 }) {
-  const processedFirstRow = useMemo(
-    () => processMentionLink(limitBrs(processedStringWithURL(firstRow))),
-    [firstRow]
-  );
-  const processedSecondRow = useMemo(
-    () => processMentionLink(limitBrs(processedStringWithURL(secondRow))),
-    [secondRow]
-  );
-  const processedThirdRow = useMemo(
-    () => processMentionLink(limitBrs(processedStringWithURL(thirdRow))),
-    [thirdRow]
-  );
-
   return (
     <ul
       style={{
@@ -48,9 +31,21 @@ export default function Bio({
         ...style
       }}
     >
-      {firstRow && <li>{processedFirstRow}</li>}
-      {secondRow && <li>{processedSecondRow}</li>}
-      {thirdRow && <li>{processedThirdRow}</li>}
+      {firstRow && (
+        <li>
+          <RichText>{firstRow}</RichText>
+        </li>
+      )}
+      {secondRow && (
+        <li>
+          <RichText>{secondRow}</RichText>
+        </li>
+      )}
+      {thirdRow && (
+        <li>
+          <RichText>{thirdRow}</RichText>
+        </li>
+      )}
     </ul>
   );
 }

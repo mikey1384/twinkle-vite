@@ -7,7 +7,7 @@ import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useKeyContext } from '~/contexts';
-import { stringIsEmpty, processedStringWithURL } from '~/helpers/stringHelpers';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 
 export default function Attempt({
   activeTab,
@@ -84,16 +84,7 @@ export default function Attempt({
               key={answer.questionId}
             >
               <p style={{ fontWeight: 'bold' }}>Q: {answer.question}</p>
-              <p
-                style={{
-                  whiteSpace: 'pre-wrap',
-                  overflowWrap: 'break-word',
-                  wordBreak: 'break-word'
-                }}
-                dangerouslySetInnerHTML={{
-                  __html: `A: ${processedStringWithURL(answer?.answer || '')}`
-                }}
-              />
+              <RichText>{'A: ' + answer?.answer || ''}</RichText>
             </div>
           ))}
         </div>

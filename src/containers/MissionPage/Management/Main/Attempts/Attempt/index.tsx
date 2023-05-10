@@ -8,7 +8,7 @@ import { Color, borderRadius } from '~/constants/css';
 import { panel } from '../../../../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useKeyContext } from '~/contexts';
-import { stringIsEmpty, processedStringWithURL } from '~/helpers/stringHelpers';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 
 Attempt.propTypes = {
   activeTab: PropTypes.string.isRequired,
@@ -67,16 +67,15 @@ export default function Attempt({
               key={answer.questionId}
             >
               <p style={{ fontWeight: 'bold' }}>Q: {answer.question}</p>
-              <p
+              <div
                 style={{
                   whiteSpace: 'pre-wrap',
                   overflowWrap: 'break-word',
                   wordBreak: 'break-word'
                 }}
-                dangerouslySetInnerHTML={{
-                  __html: `A: ${processedStringWithURL(answer?.answer || '')}`
-                }}
-              />
+              >
+                <RichText>{'A: ' + answer?.answer || ''}</RichText>
+              </div>
             </div>
           ))}
         </div>
