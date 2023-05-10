@@ -101,11 +101,13 @@ export default function RichText({
   );
   const [isOverflown, setIsOverflown] = useState<boolean | null>(null);
   useEffect(() => {
-    setFullText(false);
-    setIsOverflown(
-      ContainerRef.current?.scrollHeight >
-        ContainerRef.current?.clientHeight + 2
-    );
+    if (!fullTextRef.current) {
+      setFullText(false);
+      setIsOverflown(
+        ContainerRef.current?.scrollHeight >
+          ContainerRef.current?.clientHeight + 2
+      );
+    }
   }, [Content, text, isPreview]);
 
   useEffect(() => {
