@@ -623,55 +623,55 @@ export function processedStringWithURL(string: string): string {
     isFinalProcessing: true,
     hasMention: false
   });
+}
 
-  function applyTextSize(string: string): string {
-    type FontSize = 'huge' | 'big' | 'legacy' | 'small' | 'tiny';
-    const wordRegex: { [K in FontSize]: RegExp } = {
-      huge: /(h\[[^\s]+\]h)/gi,
-      big: /(b\[[^\s]+\]b)/gi,
-      legacy: /(o\[[^\s]+\]o)/gi,
-      small: /(s\[[^\s]+\]s)/gi,
-      tiny: /(t\[[^\s]+\]t)/gi
-    };
-    const sentenceRegex: { [K in FontSize]: RegExp } = {
-      huge: /((h\[[^\s]){1}((?!(h\[|\]h))[^\n])+([^\s]\]h){1})/gi,
-      big: /((b\[[^\s]){1}((?!(b\[|\]b))[^\n])+([^\s]\]b){1})/gi,
-      legacy: /((o\[[^\s]){1}((?!(l\[|\]l))[^\n])+([^\s]\]o){1})/gi,
-      small: /((s\[[^\s]){1}((?!(s\[|\]s))[^\n])+([^\s]\]s){1})/gi,
-      tiny: /((t\[[^\s]){1}((?!(t\[|\]t))[^\n])+([^\s]\]t){1})/gi
-    };
-    const fontSizes = {
-      huge: '1.9em',
-      big: '1.4em',
-      legacy: '1em',
-      small: '0.7em',
-      tiny: '0.5em'
-    };
+export function applyTextSize(string: string): string {
+  type FontSize = 'huge' | 'big' | 'legacy' | 'small' | 'tiny';
+  const wordRegex: { [K in FontSize]: RegExp } = {
+    huge: /(h\[[^\s]+\]h)/gi,
+    big: /(b\[[^\s]+\]b)/gi,
+    legacy: /(o\[[^\s]+\]o)/gi,
+    small: /(s\[[^\s]+\]s)/gi,
+    tiny: /(t\[[^\s]+\]t)/gi
+  };
+  const sentenceRegex: { [K in FontSize]: RegExp } = {
+    huge: /((h\[[^\s]){1}((?!(h\[|\]h))[^\n])+([^\s]\]h){1})/gi,
+    big: /((b\[[^\s]){1}((?!(b\[|\]b))[^\n])+([^\s]\]b){1})/gi,
+    legacy: /((o\[[^\s]){1}((?!(l\[|\]l))[^\n])+([^\s]\]o){1})/gi,
+    small: /((s\[[^\s]){1}((?!(s\[|\]s))[^\n])+([^\s]\]s){1})/gi,
+    tiny: /((t\[[^\s]){1}((?!(t\[|\]t))[^\n])+([^\s]\]t){1})/gi
+  };
+  const fontSizes = {
+    huge: '1.9em',
+    big: '1.4em',
+    legacy: '1em',
+    small: '0.7em',
+    tiny: '0.5em'
+  };
 
-    let outputString = string;
+  let outputString = string;
 
-    Object.keys(wordRegex).forEach((key) => {
-      outputString = outputString.replace(
-        wordRegex[key as FontSize],
-        (string) =>
-          `<span style="font-size: ${
-            fontSizes[key as FontSize]
-          };">${string.substring(2, string.length - 2)}</span>`
-      );
-    });
+  Object.keys(wordRegex).forEach((key) => {
+    outputString = outputString.replace(
+      wordRegex[key as FontSize],
+      (string) =>
+        `<span style="font-size: ${
+          fontSizes[key as FontSize]
+        };">${string.substring(2, string.length - 2)}</span>`
+    );
+  });
 
-    Object.keys(sentenceRegex).forEach((key) => {
-      outputString = outputString.replace(
-        sentenceRegex[key as FontSize],
-        (string) =>
-          `<span style="font-size: ${
-            fontSizes[key as FontSize]
-          };">${string.substring(2, string.length - 2)}</span>`
-      );
-    });
+  Object.keys(sentenceRegex).forEach((key) => {
+    outputString = outputString.replace(
+      sentenceRegex[key as FontSize],
+      (string) =>
+        `<span style="font-size: ${
+          fontSizes[key as FontSize]
+        };">${string.substring(2, string.length - 2)}</span>`
+    );
+  });
 
-    return outputString;
-  }
+  return outputString;
 }
 
 export function applyTextEffects({
@@ -683,14 +683,8 @@ export function applyTextEffects({
   isFinalProcessing?: boolean;
   hasMention?: boolean;
 }) {
-  const italicRegex =
-    /(((?![0-9.])\*\*[^\s*]+\*\*(?![0-9]))|(((\*\*[^\s]){1}((?!(\*\*))[^\n])+([^\s]\*\*){1})(?![0-9.])))/gi;
-  const boldRegex =
-    /(((?![0-9.])\*[^\s*]+\*(?![0-9]))|(((\*[^\s]){1}((?!(\*))[^\n])+([^\s]\*){1})(?![0-9.])))/gi;
   const underlineRegex =
     /(((?![0-9.])__([^\s][^_\n ]+)__(?![0-9]))|(((__[^_ ]){1}((?!(__))[^\n])+([^_ ]__){1})(?![0-9.])))/gi;
-  const lineThroughRegex =
-    /(((?![0-9.])--([^\s][^\n- ]+)--(?![0-9]))|(((--[^- ]){1}((?!(--))[^\n])+([^-\- ]--){1})(?![0-9.])))/gi;
   const blueRegex =
     /(((?![0-9.])b\|[^\s]+\|b(?![0-9]))|(((b\|[^\s]){1}((?!(b\||\|b))[^\n])+([^\s]\|b){1})(?![0-9.])))/gi;
   const grayRegex =
@@ -807,20 +801,8 @@ export function applyTextEffects({
         )}</span>`
     )
     .replace(
-      italicRegex,
-      (string) => `<i>${string.substring(2, string.length - 2)}</i>`
-    )
-    .replace(
-      boldRegex,
-      (string) => `<b>${string.substring(1, string.length - 1)}</b>`
-    )
-    .replace(
       underlineRegex,
       (string) => `<u>${string.substring(2, string.length - 2)}</u>`
-    )
-    .replace(
-      lineThroughRegex,
-      (string) => `<s>${string.substring(2, string.length - 2)}</s>`
     );
 
   if (hasMention) {
@@ -830,7 +812,6 @@ export function applyTextEffects({
       return `${firstChar}<a class="mention" href="/users/${path}">@${path}</a>`;
     });
   }
-  result = (result || '').replace(/\n/g, '<br>');
   return isFinalProcessing ? result.replace(fakeAtSymbolRegex, '@') : result;
 }
 
