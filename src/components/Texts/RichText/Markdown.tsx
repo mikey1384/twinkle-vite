@@ -269,7 +269,7 @@ export default function Markdown({
     const maxNbsp = 6;
     let nbspCount = 0;
     const targetText = text || '';
-    const escapedText = targetText.replace(/></g, '&gt;&lt;');
+    const escapedText = targetText.replace(/>/g, '&gt;').replace(/</g, '&lt;');
 
     return escapedText.replace(/\n{2}/gi, () => {
       nbspCount++;
