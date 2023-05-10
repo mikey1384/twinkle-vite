@@ -30,7 +30,7 @@ export default function Markdown({
             .use(remarkGfm)
             .use(remarkRehype)
             .use(rehypeStringify)
-            .process(text);
+            .process(preprocessText(text));
           const result = convertStringToJSX(markupString.value as string);
           onSetContent(result);
         } catch (error) {
@@ -65,6 +65,22 @@ export default function Markdown({
     const isInternalLink = regex.test(url);
     const replacedLink = url.replace(regex, '');
     return { isInternalLink, replacedLink };
+  }
+
+  function preprocessText(text: string) {
+    const maxNbsp = 10;
+    let nbspCount = 0;
+    const targetText = text || '';
+    const escapedText = targetText.replace(/></g, '&gt;&lt;');
+
+    return escapedText.replace(/\n{2}/gi, () => {
+      nbspCount++;
+      if (nbspCount > 1 && nbspCount < maxNbsp) {
+        return '&nbsp;\n\n';
+      } else {
+        return '\n\n';
+      }
+    });
   }
 }
 
