@@ -337,6 +337,9 @@ export function Theme(color = 'logoBlue'): {
           gold: 'oceanBlue'
         }[color] || 'blue'
     },
+    listItemMarker: {
+      color: 'darkerGray'
+    },
     loadMoreButton: {
       color:
         {
@@ -408,6 +411,9 @@ export function Theme(color = 'logoBlue'): {
     spinner: { color },
     statusMsgLink: {
       color: { ivory: 'blue', orange: 'yellow', red: 'yellow' }[color] || 'gold'
+    },
+    statusMsgListItemMarker: {
+      color: { ivory: 'darkerGray' }[color] || 'white'
     },
     success: { color: 'green' },
     switch: { color },

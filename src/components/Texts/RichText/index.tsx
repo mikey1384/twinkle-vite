@@ -54,7 +54,9 @@ export default function RichText({
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     statusMsgLink: { color: statusMsgLinkColor },
-    link: { color: linkColor }
+    link: { color: linkColor },
+    listItemMarker: { color: listItemMarkerColor },
+    statusMsgListItemMarker: { color: statusMsgListItemMarkerColor }
   } = useTheme(theme || profileTheme);
 
   const onSetFullTextState = useContentContext(
@@ -178,7 +180,9 @@ export default function RichText({
             }
             ::marker {
               font-family: 'Roboto', 'Noto Sans';
-              color: ${Color.darkerGray()};
+              color: ${Color[
+                isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor
+              ]()};
             }
           }
           @media (max-width: ${mobileMaxWidth}) {
