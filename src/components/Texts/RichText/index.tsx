@@ -272,7 +272,7 @@ export default function RichText({
                   </a>
                 );
               },
-              code: (props: any) => {
+              code: (props: React.ComponentProps<any>) => {
                 const filteredChildren = removeNbsp(props.children);
                 return <code>{filteredChildren}</code>;
               },
@@ -281,10 +281,10 @@ export default function RichText({
                   <input {...props} onChange={() => null} disabled={false} />
                 );
               },
-              li: (props: { children: any[] }) => {
+              li: (props: React.ComponentProps<any>) => {
                 return (
                   <li>
-                    {(props.children || []).map((child: any) =>
+                    {(props.children || []).map((child: React.ReactNode) =>
                       typeof child === 'string'
                         ? child.split('').map((text, index) => {
                             return /\n/gi.test(text) && index === 0 ? '' : text;
@@ -388,7 +388,7 @@ export default function RichText({
     return { isInternalLink, replacedLink };
   }
 
-  function removeNbsp(content: any): any {
+  function removeNbsp(content: string[] | string): any {
     if (Array.isArray(content)) {
       return content.map(removeNbsp);
     }
