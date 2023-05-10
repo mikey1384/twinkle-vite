@@ -2,9 +2,10 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
+import RichText from '~/components/Texts/RichText';
 import { useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
-import { addCommasToNumber, applyTextEffects } from '~/helpers/stringHelpers';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 StatusMessage.propTypes = {
   failMessage: PropTypes.string,
@@ -148,14 +149,15 @@ export default function StatusMessage({
               }}
               icon={status === 'pass' ? 'check' : 'times'}
             />
-            <span
-              style={{ marginLeft: '1.5rem', fontSize: '1.7rem' }}
-              dangerouslySetInnerHTML={{
-                __html: applyTextEffects({
-                  string: status === 'pass' ? passMessage : failMessage
-                })
+            <RichText
+              style={{
+                marginLeft: '1.5rem',
+                fontSize: '1.7rem',
+                display: 'inline'
               }}
-            />
+            >
+              {status === 'pass' ? passMessage : failMessage}
+            </RichText>
           </div>
           {status === 'fail' && (
             <div
