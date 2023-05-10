@@ -77,7 +77,7 @@ export default function RichText({
   const [isOverflown, setIsOverflown] = useState<boolean | null>(null);
   useEffect(() => {
     if (!fullTextRef.current) {
-      setFullText((text || '').split('\n').length <= maxLines);
+      setFullText(false);
       setIsOverflown(
         ContainerRef.current?.scrollHeight >
           ContainerRef.current?.clientHeight + 2

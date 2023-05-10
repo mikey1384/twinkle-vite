@@ -324,9 +324,9 @@ export default function Body({
         <BottomInterface
           authLevel={authLevel}
           autoExpand={autoExpand}
-          canDelete={canDelete}
-          canEdit={canEdit}
-          canReward={canReward}
+          canDelete={!!canDelete}
+          canEdit={!!canEdit}
+          canReward={!!canReward}
           commentsShown={commentsShown}
           CommentInputAreaRef={CommentInputAreaRef}
           contentObj={contentObj}
