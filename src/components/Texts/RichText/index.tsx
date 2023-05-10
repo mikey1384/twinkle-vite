@@ -252,7 +252,7 @@ export default function RichText({
           <ReactMarkdown
             remarkPlugins={[remarkGfm, remarkEmoji, mentions]}
             components={{
-              a: (props: any) => {
+              a: (props: React.ComponentPropsWithoutRef<'a'>) => {
                 const { isInternalLink, replacedLink } = processInternalLink(
                   props.href
                 );
@@ -272,24 +272,27 @@ export default function RichText({
                   </a>
                 );
               },
-              code: (props: React.ComponentProps<any>) => {
+              code: (props: React.ComponentPropsWithoutRef<'code'>) => {
                 const filteredChildren = removeNbsp(props.children);
                 return <code>{filteredChildren}</code>;
               },
-              input: (props: any) => {
+              input: (props: React.ComponentPropsWithoutRef<'input'>) => {
                 return (
                   <input {...props} onChange={() => null} disabled={false} />
                 );
               },
-              li: (props: React.ComponentProps<any>) => {
+              li: (props: React.ComponentPropsWithoutRef<'li'>) => {
                 return (
                   <li>
-                    {(props.children || []).map((child: React.ReactNode) =>
-                      typeof child === 'string'
-                        ? child.split('').map((text, index) => {
-                            return /\n/gi.test(text) && index === 0 ? '' : text;
-                          })
-                        : child
+                    {((props.children as React.ReactNode[]) || []).map(
+                      (child: React.ReactNode) =>
+                        typeof child === 'string'
+                          ? child.split('').map((text, index) => {
+                              return /\n/gi.test(text) && index === 0
+                                ? ''
+                                : text;
+                            })
+                          : child
                     )}
                   </li>
                 );
@@ -380,7 +383,7 @@ export default function RichText({
     </ErrorBoundary>
   );
 
-  function processInternalLink(url: string) {
+  function processInternalLink(url = '') {
     const regex =
       /^(https?:\/\/(?:www\.)?|www\.)(twin-kle\.com|twinkle\.network|localhost:3000)/;
     const isInternalLink = regex.test(url);
@@ -388,7 +391,7 @@ export default function RichText({
     return { isInternalLink, replacedLink };
   }
 
-  function removeNbsp(content: string[] | string): any {
+  function removeNbsp(content: React.ReactNode): any {
     if (Array.isArray(content)) {
       return content.map(removeNbsp);
     }
