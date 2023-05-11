@@ -117,11 +117,19 @@ export default function SearchView({
   );
 
   async function handleLoadMoreAICards() {
-    const lastInteraction =
-      filteredCards[filteredCards.length - 1]?.lastInteraction;
+    const lastCard = filteredCards[filteredCards.length - 1];
+    let lastInteraction, lastPrice, lastId;
+    if (filters.isBuyNow) {
+      lastPrice = lastCard.askPrice;
+      lastId = lastCard.id;
+    } else {
+      lastInteraction = lastCard.lastInteraction;
+    }
     setLoadingMore(true);
     const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
       lastInteraction,
+      lastPrice,
+      lastId,
       filters
     });
     onLoadMoreFilteredAICards({ cards: newCards, loadMoreShown });
