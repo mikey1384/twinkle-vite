@@ -141,9 +141,11 @@ export default function Listings() {
     try {
       setLoadingMore(true);
       loadingMoreRef.current = true;
-      const lastId = listedCards[listedCards.length - 1].id;
+      const lastCard = listedCards[listedCards.length - 1];
+      const lastPrice = lastCard.askPrice;
+      const lastId = lastCard.id;
       const { cards: newListedCards, loadMoreShown: listedCardsLoadMoreShown } =
-        await loadListedAICards(lastId);
+        await loadListedAICards({ lastPrice, lastId });
       onLoadMoreListedAICards({
         cards: newListedCards,
         loadMoreShown: listedCardsLoadMoreShown
