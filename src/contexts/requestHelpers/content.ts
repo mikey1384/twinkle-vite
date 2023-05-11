@@ -301,9 +301,13 @@ export default function contentRequestHelpers({
     },
     async loadFilteredAICards({
       lastInteraction,
+      lastPrice,
+      lastId,
       filters
     }: {
       lastInteraction: number;
+      lastPrice: number;
+      lastId: number;
       filters: { [key: string]: string };
     }) {
       try {
@@ -311,13 +315,21 @@ export default function contentRequestHelpers({
           .filter((key) => filters[key])
           .map((key) => `${key}=${filters[key]}`)
           .join('&');
+
+        let urlString = `${URL}/ai-card/search?${filterString}`;
+
+        if (filters.isBuyNow) {
+          if (lastPrice && lastId) {
+            urlString += `&lastPrice=${lastPrice}&lastId=${lastId}`;
+          }
+        } else if (lastInteraction) {
+          urlString += `&lastInteraction=${lastInteraction}`;
+        }
+
         const {
           data: { cards, loadMoreShown, numCards }
-        } = await request.get(
-          `${URL}/ai-card/search?${
-            lastInteraction ? `lastInteraction=${lastInteraction}&` : ''
-          }${filterString}`
-        );
+        } = await request.get(urlString);
+
         return Promise.resolve({ cards, loadMoreShown, numCards });
       } catch (error) {
         return handleError(error);
