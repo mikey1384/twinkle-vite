@@ -1,6 +1,6 @@
 import React, { Fragment, useEffect, useRef, useState } from 'react';
 import Markdown from './Markdown';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -141,7 +141,7 @@ export default function RichText({
           }
           ${fullText
             ? ''
-            : `max-height: calc(1.6em * ${maxLines});
+            : `max-height: calc(1.5em * ${maxLines});
                 overflow: hidden;`}
           img {
             width: 100%;
@@ -184,12 +184,6 @@ export default function RichText({
                 isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor
               ]()};
             }
-          }
-          @media (max-width: ${mobileMaxWidth}) {
-            ${fullText
-              ? ''
-              : `max-height: calc(1.5em * ${maxLines});
-                overflow: hidden;`}
           }
         `}`}
       >
