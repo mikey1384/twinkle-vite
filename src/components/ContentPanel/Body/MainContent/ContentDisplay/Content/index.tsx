@@ -108,6 +108,7 @@ export default function Content({
         return (
           <div
             style={{
+              width: '100%',
               marginTop: 0,
               marginBottom: '0.5rem',
               backgroundColor: Color.extraLightGray(),
@@ -133,6 +134,7 @@ export default function Content({
         return Description ? (
           <div
             style={{
+              width: '100%',
               marginTop: contentType === 'url' ? '-1rem' : 0,
               marginBottom:
                 contentType === 'url' || contentType === 'subject'
