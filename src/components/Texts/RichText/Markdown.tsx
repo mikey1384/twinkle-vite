@@ -170,6 +170,45 @@ export default function Markdown({
         const commonProps = { key: node.type + index, ...attribs };
 
         switch (TagName) {
+          case 'a': {
+            const href = attribs?.href || '';
+            const { isInternalLink, replacedLink } = processInternalLink(href);
+            if (isInternalLink || attribs?.class === 'mention') {
+              return (
+                <Link {...commonProps} to={replacedLink}>
+                  {children}
+                </Link>
+              );
+            } else {
+              return (
+                <a {...commonProps} target="_blank">
+                  {children}
+                </a>
+              );
+            }
+          }
+          case 'em': {
+            return <strong {...commonProps}>{children}</strong>;
+          }
+          case 'img': {
+            return <img {...commonProps} />;
+          }
+          case 'input':
+            if (attribs.type === 'checkbox') {
+              return (
+                <input
+                  {...attribs}
+                  checked={Object.keys(attribs).includes('checked')}
+                  key={index}
+                  onChange={() => null}
+                  disabled={false}
+                />
+              );
+            }
+            break;
+          case 'strong': {
+            return <em {...commonProps}>{children}</em>;
+          }
           case 'table':
             return (
               <div
@@ -212,28 +251,6 @@ export default function Markdown({
                 </table>
               </div>
             );
-          case 'em': {
-            return <strong {...commonProps}>{children}</strong>;
-          }
-          case 'strong': {
-            return <em {...commonProps}>{children}</em>;
-          }
-          case 'img': {
-            return <img {...commonProps} />;
-          }
-          case 'input':
-            if (attribs.type === 'checkbox') {
-              return (
-                <input
-                  {...attribs}
-                  checked={Object.keys(attribs).includes('checked')}
-                  key={index}
-                  onChange={() => null}
-                  disabled={false}
-                />
-              );
-            }
-            break;
           default: {
             const params = [TagName, commonProps];
             if (Array.isArray(children) && children.length > 0) {
