@@ -172,9 +172,11 @@ export default function RichText({
             padding: 0;
             list-style-type: decimal;
             list-style-position: outside;
+            > li {
+              margin-left: 3.5ch;
+            }
           }
           li {
-            margin-left: 3.5ch;
             > p {
               display: inline;
             }
