@@ -54,6 +54,7 @@ export function addEmoji(string: string): string {
     ':chess:': '♟',
     ':chicken:': '🐔',
     ':chill:': '😎',
+    ':check:': '✅',
     ':cherries:': '🍒',
     ':cherry:': '🍒',
     ':chestnut:': '🌰',
