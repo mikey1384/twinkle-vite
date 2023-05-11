@@ -13,7 +13,7 @@ import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { container } from './Styles';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
-import { useAppContext, useContentContext } from '~/contexts';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import localize from '~/constants/localize';
@@ -39,7 +39,7 @@ export default function ContentPanel({
   contentType,
   numPreviewComments = 0,
   style = {},
-  theme = 'logoBlue',
+  theme,
   zIndex = 1
 }: {
   alwaysShow?: boolean;
@@ -56,6 +56,7 @@ export default function ContentPanel({
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
+  const { profileTheme } = useKeyContext((v) => v.myState);
   const PanelRef = useRef(null);
   const navigate = useNavigate();
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
@@ -257,11 +258,11 @@ export default function ContentPanel({
                   }}
                   className={container}
                 >
-                  {!loaded && <Loading theme={theme} />}
+                  {!loaded && <Loading theme={theme || profileTheme} />}
                   {loaded && (
                     <>
                       <Heading
-                        theme={theme}
+                        theme={theme || profileTheme}
                         contentObj={contentState}
                         action={
                           commentId
@@ -283,7 +284,7 @@ export default function ContentPanel({
                           inputAtBottom={inputAtBottom}
                           numPreviewComments={numPreviewComments}
                           onChangeSpoilerStatus={onChangeSpoilerStatus}
-                          theme={theme}
+                          theme={theme || profileTheme}
                         />
                       </div>
                     </>
@@ -295,7 +296,7 @@ export default function ContentPanel({
                       position: 'relative',
                       zIndex: 2
                     }}
-                    theme={theme}
+                    theme={theme || profileTheme}
                     targetObj={targetObj}
                     rootObj={rootObj}
                     rootType={contentState.rootType}
