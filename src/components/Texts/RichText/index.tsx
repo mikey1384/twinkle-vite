@@ -174,7 +174,7 @@ export default function RichText({
             list-style-position: outside;
           }
           li {
-            margin-left: 3ch;
+            margin-left: 3.5ch;
             > p {
               display: inline;
             }
