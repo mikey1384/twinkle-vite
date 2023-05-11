@@ -74,36 +74,36 @@ export default function RichText({
   );
   const fullTextRef = useRef(fullTextState[section]);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [fullText, setFullText] = useState(
+  const [fullTextShown, setFullTextShown] = useState(
     isPreview ? false : fullTextState[section]
   );
   const [isOverflown, setIsOverflown] = useState<boolean | null>(null);
   useEffect(() => {
-    if (!fullTextRef.current) {
-      setFullText(false);
-    }
-    setIsOverflown(
+    const overflown =
       ContainerRef.current?.scrollHeight >
-        ContainerRef.current?.clientHeight + 2
-    );
+      ContainerRef.current?.clientHeight + 20;
+    if (!fullTextRef.current) {
+      setFullTextShown(!overflown);
+    }
+    setIsOverflown(overflown);
   }, [Content, imageLoaded, text, isPreview, maxLines]);
 
   useEffect(() => {
     if (fullTextState[section] && !isPreview) {
       fullTextRef.current = true;
-      setFullText(true);
+      setFullTextShown(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPreview]);
 
   useEffect(() => {
-    if (fullText && typeof savedScrollPosition === 'number') {
+    if (fullTextShown && typeof savedScrollPosition === 'number') {
       const appElement = document.getElementById('App');
       if (appElement) appElement.scrollTop = savedScrollPosition;
       BodyRef.scrollTop = savedScrollPosition;
       setSavedScrollPosition(null);
     }
-  }, [fullText, savedScrollPosition]);
+  }, [fullTextShown, savedScrollPosition]);
 
   useEffect(() => {
     return function saveFullTextStateBeforeUnmount() {
@@ -139,7 +139,7 @@ export default function RichText({
           p {
             margin: 0;
           }
-          ${fullText
+          ${fullTextShown
             ? ''
             : `max-height: calc(1.5em * ${maxLines});
                 overflow: hidden;`}
@@ -211,7 +211,7 @@ export default function RichText({
           alignItems: 'center'
         }}
       >
-        {!fullText && isOverflown && (
+        {!fullTextShown && isOverflown && (
           <a
             style={{
               fontWeight: 'bold',
@@ -225,7 +225,7 @@ export default function RichText({
               setSavedScrollPosition(
                 appElement?.scrollTop || BodyRef.scrollTop || 0
               );
-              setFullText(true);
+              setFullTextShown(true);
               fullTextRef.current = true;
             }}
           >
