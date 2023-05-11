@@ -809,14 +809,21 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async loadListedAICards(lastId: number) {
+    async loadListedAICards({
+      lastPrice,
+      lastId
+    }: {
+      lastPrice?: number;
+      lastId?: number;
+    } = {}) {
       try {
+        let url = `${URL}/chat/aiCard/listed`;
+        if (lastPrice && lastId) {
+          url += `?lastPrice=${lastPrice}&lastId=${lastId}`;
+        }
         const {
           data: { cards, loadMoreShown }
-        } = await request.get(
-          `${URL}/chat/aiCard/listed${lastId ? `?lastId=${lastId}` : ''}`,
-          auth()
-        );
+        } = await request.get(url, auth());
         return Promise.resolve({ cards, loadMoreShown });
       } catch (error) {
         return handleError(error);
