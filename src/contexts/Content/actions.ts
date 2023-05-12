@@ -982,11 +982,13 @@ export default function ContentActions(dispatch: Dispatch) {
     onSetVideoCurrentTime({
       contentType,
       contentId,
+      targetKey,
       currentTime,
       secretAttachmentCurrentTime
     }: {
       contentType: string;
       contentId: number;
+      targetKey?: string | number;
       currentTime: number;
       secretAttachmentCurrentTime: number;
     }) {
@@ -994,6 +996,7 @@ export default function ContentActions(dispatch: Dispatch) {
         type: 'SET_VIDEO_CURRENT_TIME',
         contentType,
         contentId,
+        targetKey,
         currentTime,
         secretAttachmentCurrentTime
       });
