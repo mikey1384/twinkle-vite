@@ -172,7 +172,9 @@ export default function Markdown({
   function convertToJSX(nodes: any[]): React.ReactNode {
     return nodes.map((node, index) => {
       if (node.type === 'text') {
-        return node.data.trim() !== '' || node.data === ' ' ? node.data : null;
+        return node.data.trim() !== '' || /^ +$/.test(node.data)
+          ? node.data
+          : null;
       } else if (node.type === 'tag') {
         const TagName = node.name;
         const children = node.children ? convertToJSX(node.children) : null;
