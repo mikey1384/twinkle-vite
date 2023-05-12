@@ -3,7 +3,7 @@ import ReactPlayer from 'react-player';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
-import playButtonImg from '~/assets/play-button-image.png';
+import YoutubeIcon from '~/assets/YoutubeIcon.svg';
 
 const displayIsMobile = isMobile(navigator);
 
@@ -16,28 +16,48 @@ export default function YouTubeVideo({
   onReady: () => void;
 }) {
   const [isStarted, setIsStarted] = useState(!displayIsMobile);
-  return isStarted ? (
-    <ReactPlayer {...commonProps} url={src} onReady={onReady} />
-  ) : (
+  return (
     <div
-      onClick={() => setIsStarted(true)}
       className={css`
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        top: 0;
-        left: 0;
-        z-index: 1;
-        width: 100%;
-        height: 100%;
-        background: url(https://i.ytimg.com/vi/${fetchedVideoCodeFromURL(
-            src
-          )}/mqdefault.jpg)
-          no-repeat center;
-        background-size: 100% auto;
+        position: relative;
+        padding-top: 56.25%;
       `}
     >
-      <img style={{ width: '45px', height: '45px' }} src={playButtonImg} />
+      {isStarted ? (
+        <ReactPlayer
+          {...commonProps}
+          url={src}
+          onReady={onReady}
+          width="100%"
+          height="100%"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0
+          }}
+        />
+      ) : (
+        <div
+          onClick={() => setIsStarted(true)}
+          className={css`
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            background: url(https://i.ytimg.com/vi/${fetchedVideoCodeFromURL(
+                src
+              )}/mqdefault.jpg)
+              no-repeat center;
+            background-size: cover;
+          `}
+        >
+          <img style={{ height: '8rem', width: '12rem' }} src={YoutubeIcon} />
+        </div>
+      )}
     </div>
   );
 }
