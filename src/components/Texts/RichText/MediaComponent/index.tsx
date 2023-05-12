@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactPlayer from 'react-player';
+import { isValidYoutubeUrl } from '~/helpers/stringHelpers';
 
 export default function MediaComponent({
   src,
@@ -11,7 +12,7 @@ export default function MediaComponent({
   alt: string;
   onLoad: () => void;
 }) {
-  const isYouTube = src.includes('youtube.com') || src.includes('youtu.be');
+  const isYouTube = isValidYoutubeUrl(src);
   return isYouTube ? (
     <ReactPlayer {...commonProps} url={src} onReady={onLoad} />
   ) : (
