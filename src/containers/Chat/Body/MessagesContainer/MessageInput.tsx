@@ -136,7 +136,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: prevChannelId.current,
-        subId: subchannelId,
+        targetKey: subchannelId,
         text: textRef.current
       });
       handleSetText('');
@@ -180,7 +180,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: prevChannelId.current,
-        subId: subchannelId,
+        targetKey: subchannelId,
         text: textRef.current
       });
     };
@@ -221,7 +221,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: selectedChannelId,
-        subId: subchannelId,
+        targetKey: subchannelId,
         text: ''
       });
     } catch (error) {
@@ -246,7 +246,7 @@ export default function MessageInput({
       onEnterComment({
         contentType: 'chat',
         contentId: selectedChannelId,
-        subId: subchannelId,
+        targetKey: subchannelId,
         text: newText
       });
     }, 700);

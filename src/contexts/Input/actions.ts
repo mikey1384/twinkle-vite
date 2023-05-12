@@ -7,18 +7,18 @@ export default function InputActions(dispatch: Dispatch) {
       contentId,
       contentType,
       text,
-      subId
+      targetKey
     }: {
       contentId: number;
       contentType: string;
       text: string;
-      subId?: number;
+      targetKey?: number;
     }) {
       return dispatch({
         type: 'ENTER_COMMENT',
         contentId,
         contentType,
-        subId,
+        targetKey,
         text:
           contentType === VOCAB_CHAT_TYPE || contentType === AI_CARD_CHAT_TYPE
             ? text.replace(/\s+/g, ' ').toLowerCase()
