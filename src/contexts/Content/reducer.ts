@@ -11,7 +11,9 @@ export default function ContentReducer(
 ) {
   const contentKey =
     action.contentType && action.contentId
-      ? action.contentType + action.contentId
+      ? action.contentType +
+        action.contentId +
+        (action.targetKey ? `/${action.targetKey}` : '')
       : 'temp';
   const defaultState = {
     contentType: action.contentType,

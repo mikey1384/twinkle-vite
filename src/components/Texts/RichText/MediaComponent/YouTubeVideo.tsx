@@ -1,21 +1,35 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ReactPlayer from 'react-player';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
+import { useContentContext } from '~/contexts';
+import { useContentState } from '~/helpers/hooks';
 import YoutubeIcon from '~/assets/YoutubeIcon.svg';
 
 const displayIsMobile = isMobile(navigator);
 
 export default function YouTubeVideo({
+  contentType,
+  contentId,
   src,
   onReady,
   ...commonProps
 }: {
+  contentType?: string;
+  contentId?: number;
   src: string;
   onReady: () => void;
 }) {
-  const [isStarted, setIsStarted] = useState(!displayIsMobile);
+  const onSetMediaStarted = useContentContext(
+    (v) => v.actions.onSetMediaStarted
+  );
+  const videoCode = useMemo(() => fetchedVideoCodeFromURL(src), [src]);
+  const { started } = useContentState({
+    contentType: contentType || '',
+    contentId: contentId || 0
+  });
+  const [isStarted, setIsStarted] = useState(!displayIsMobile || started);
   return (
     <div
       className={css`
@@ -38,7 +52,12 @@ export default function YouTubeVideo({
         />
       ) : (
         <div
-          onClick={() => setIsStarted(true)}
+          onClick={() => {
+            setIsStarted(true);
+            if (contentType && contentId) {
+              onSetMediaStarted({ contentId, contentType, started: true });
+            }
+          }}
           className={css`
             position: absolute;
             top: 0;
@@ -48,9 +67,7 @@ export default function YouTubeVideo({
             align-items: center;
             width: 100%;
             height: 100%;
-            background: url(https://i.ytimg.com/vi/${fetchedVideoCodeFromURL(
-                src
-              )}/mqdefault.jpg)
+            background: url(https://i.ytimg.com/vi/${videoCode}/mqdefault.jpg)
               no-repeat center;
             background-size: cover;
           `}
