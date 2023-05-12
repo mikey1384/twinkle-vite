@@ -29,15 +29,17 @@ const BodyRef = document.scrollingElement || document.documentElement;
 
 export function useContentState({
   contentType,
-  contentId
+  contentId,
+  targetKey
 }: {
   contentType: string;
   contentId: number | null;
+  targetKey?: string | null;
 }) {
-  allContentState[contentType + contentId] = useContentContext(
-    (v) => v.state[contentType + contentId]
-  );
-  const state = allContentState[contentType + contentId];
+  const contentKey =
+    contentType + contentId + (targetKey ? `/${targetKey}` : '');
+  allContentState[contentKey] = useContentContext((v) => v.state[contentKey]);
+  const state = allContentState[contentKey];
   return state ? { ...defaultContentState, ...state } : defaultContentState;
 }
 
