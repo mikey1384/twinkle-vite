@@ -43,25 +43,40 @@ export default function Mission() {
   );
 
   useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 3;
     init();
 
     async function init() {
       setLoading(true);
-      const { missions, myAttempts, loadMoreButton } = await loadMissionList();
-      let displayedMissions = missions;
-      if (!isCreator) {
-        displayedMissions = missions.filter(
-          (mission: { isHidden: boolean }) => !mission.isHidden
-        );
-        onSetSelectedMissionsTab('missions');
+      try {
+        const { missions, myAttempts, loadMoreButton } =
+          await loadMissionList();
+        let displayedMissions = missions;
+        if (!isCreator) {
+          displayedMissions = missions.filter(
+            (mission: { isHidden: boolean }) => !mission.isHidden
+          );
+          onSetSelectedMissionsTab('missions');
+        }
+        onLoadMissionList({
+          missions: displayedMissions,
+          myAttempts,
+          loadMoreButton,
+          prevUserId: userId
+        });
+        retryCount = 0; // Reset the retry count on successful load
+      } catch (error) {
+        console.error(error);
+        if (retryCount < maxRetries) {
+          retryCount += 1;
+          setTimeout(init, 3000); // Retry after 3 seconds if there's an error
+        } else {
+          console.error('Max retries exceeded');
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-      onLoadMissionList({
-        missions: displayedMissions,
-        myAttempts,
-        loadMoreButton,
-        prevUserId: userId
-      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, isCreator]);
