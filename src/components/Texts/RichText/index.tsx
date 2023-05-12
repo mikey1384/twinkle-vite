@@ -193,6 +193,8 @@ export default function RichText({
           text
         ) : (
           <Markdown
+            contentId={contentId}
+            contentType={contentType}
             isStatusMsg={!!isStatusMsg}
             statusMsgLinkColor={statusMsgLinkColor}
             linkColor={linkColor}
