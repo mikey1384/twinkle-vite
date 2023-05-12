@@ -920,16 +920,19 @@ export default function ContentActions(dispatch: Dispatch) {
     onSetMediaStarted({
       contentType,
       contentId,
+      targetKey,
       started
     }: {
       contentType: string;
       contentId: number;
+      targetKey?: string | number;
       started: boolean;
     }) {
       return dispatch({
         type: 'SET_MEDIA_STARTED',
         contentType,
         contentId,
+        targetKey,
         started
       });
     },

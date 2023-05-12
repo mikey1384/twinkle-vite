@@ -27,7 +27,8 @@ export default function YouTubeVideo({
   const videoCode = useMemo(() => fetchedVideoCodeFromURL(src), [src]);
   const { started } = useContentState({
     contentType: contentType || '',
-    contentId: contentId || 0
+    contentId: contentId || 0,
+    targetKey: 'youtube' + videoCode
   });
   const [isStarted, setIsStarted] = useState(!displayIsMobile || started);
   return (
@@ -55,7 +56,12 @@ export default function YouTubeVideo({
           onClick={() => {
             setIsStarted(true);
             if (contentType && contentId) {
-              onSetMediaStarted({ contentId, contentType, started: true });
+              onSetMediaStarted({
+                contentId,
+                contentType,
+                targetKey: 'youtube' + videoCode,
+                started: true
+              });
             }
           }}
           className={css`
