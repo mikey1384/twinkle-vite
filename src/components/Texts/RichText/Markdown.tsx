@@ -196,7 +196,7 @@ export default function Markdown({
           case 'a': {
             const href = attribs?.href || '';
             const { isInternalLink, replacedLink } = processInternalLink(href);
-            if (isInternalLink || attribs?.class === 'mention') {
+            if (isInternalLink || attribs?.className === 'mention') {
               return (
                 <Link {...commonProps} to={replacedLink}>
                   {children}
