@@ -15,7 +15,7 @@ export default function InputReducer(
       : action.contentType && typeof action.contentId === 'number'
       ? action.contentType +
         action.contentId +
-        (action.subId ? `/${action.subId}` : '')
+        (action.targetKey ? `/${action.targetKey}` : '')
       : 'temp';
   switch (action.type) {
     case 'ENTER_COMMENT':
