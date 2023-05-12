@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactPlayer from 'react-player';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
@@ -21,16 +21,43 @@ export default function YouTubeVideo({
   src: string;
   onReady: () => void;
 }) {
+  const timeAtRef = useRef(0);
+  const PlayerRef: React.RefObject<any> = useRef(null);
   const onSetMediaStarted = useContentContext(
     (v) => v.actions.onSetMediaStarted
   );
   const videoCode = useMemo(() => fetchedVideoCodeFromURL(src), [src]);
-  const { started } = useContentState({
+  const targetKey = 'youtube' + videoCode;
+  const onSetVideoCurrentTime = useContentContext(
+    (v) => v.actions.onSetVideoCurrentTime
+  );
+  const { started, currentTime } = useContentState({
     contentType: contentType || '',
     contentId: contentId || 0,
-    targetKey: 'youtube' + videoCode
+    targetKey
   });
   const [isStarted, setIsStarted] = useState(!displayIsMobile || started);
+  const videoUrl = useMemo(
+    () =>
+      `https://www.youtube.com/watch?v=${videoCode}${
+        currentTime > 0 ? `?t=${currentTime}` : ''
+      }`,
+    [currentTime, videoCode]
+  );
+  useEffect(() => {
+    return function setCurrentTimeBeforeUnmount() {
+      if (timeAtRef.current > 0) {
+        onSetVideoCurrentTime({
+          contentType,
+          contentId,
+          targetKey,
+          currentTime: timeAtRef.current
+        });
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div
       className={css`
@@ -41,10 +68,13 @@ export default function YouTubeVideo({
       {isStarted ? (
         <ReactPlayer
           {...commonProps}
-          url={src}
+          ref={PlayerRef}
+          url={videoUrl}
           onReady={onReady}
           width="100%"
           height="100%"
+          onProgress={handleVideoProgress}
+          controls
           style={{
             position: 'absolute',
             top: 0,
@@ -59,7 +89,7 @@ export default function YouTubeVideo({
               onSetMediaStarted({
                 contentId,
                 contentType,
-                targetKey: 'youtube' + videoCode,
+                targetKey,
                 started: true
               });
             }
@@ -83,4 +113,8 @@ export default function YouTubeVideo({
       )}
     </div>
   );
+
+  function handleVideoProgress() {
+    timeAtRef.current = PlayerRef.current.getCurrentTime();
+  }
 }
