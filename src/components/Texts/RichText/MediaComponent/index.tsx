@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactPlayer from 'react-player';
 
 export default function MediaComponent({
   src,
@@ -10,5 +11,10 @@ export default function MediaComponent({
   alt: string;
   onLoad: () => void;
 }) {
-  return <img {...commonProps} src={src} alt={alt} onLoad={onLoad} />;
+  const isYouTube = src.includes('youtube.com') || src.includes('youtu.be');
+  return isYouTube ? (
+    <ReactPlayer {...commonProps} url={src} onReady={onLoad} />
+  ) : (
+    <img {...commonProps} src={src} alt={alt} onLoad={onLoad} />
+  );
 }

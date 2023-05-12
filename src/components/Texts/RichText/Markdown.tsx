@@ -88,15 +88,29 @@ export default function Markdown({
                 />
               );
             }
-            case 'strong': {
-              return <em>{convertToJSX(domNode.children || [])}</em>;
-            }
             case 'li': {
               return (
                 <li>
                   {convertToJSX(domNode.children ? domNode.children : [])}
                 </li>
               );
+            }
+            case 'p': {
+              return (
+                <div
+                  style={{
+                    marginBlockStart: '1em',
+                    marginBlockEnd: '1em',
+                    marginInlineStart: '0px',
+                    marginInlineEnd: '0px'
+                  }}
+                >
+                  {convertToJSX(domNode.children || [])}
+                </div>
+              );
+            }
+            case 'strong': {
+              return <em>{convertToJSX(domNode.children || [])}</em>;
             }
             case 'table': {
               return (
