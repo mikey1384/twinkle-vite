@@ -13,11 +13,15 @@ import { css } from '@emotion/css';
 import { applyTextEffects, applyTextSize } from '~/helpers/stringHelpers';
 
 export default function Markdown({
+  contentId,
+  contentType,
   Content,
   children,
   onSetContent,
   onSetImageLoaded
 }: {
+  contentId?: number;
+  contentType?: string;
   Content: string;
   isStatusMsg: boolean;
   children: string;
@@ -82,6 +86,8 @@ export default function Markdown({
             case 'img': {
               return (
                 <MediaComponent
+                  contentId={contentId}
+                  contentType={contentType}
                   src={domNode.attribs?.src || ''}
                   alt={domNode.attribs?.alt || ''}
                   onLoad={() => onSetImageLoaded(true)}
@@ -206,7 +212,14 @@ export default function Markdown({
             return <strong {...commonProps}>{children}</strong>;
           }
           case 'img': {
-            return <MediaComponent {...commonProps} />;
+            return (
+              <MediaComponent
+                {...commonProps}
+                contentId={contentId}
+                contentType={contentType}
+                onLoad={() => onSetImageLoaded(true)}
+              />
+            );
           }
           case 'input':
             if (attribs.type === 'checkbox') {
