@@ -7,6 +7,7 @@ import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
 import parse from 'html-react-parser';
 import parseStyle from 'style-to-object';
+import MediaComponent from './MediaComponent';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { applyTextEffects, applyTextSize } from '~/helpers/stringHelpers';
@@ -80,9 +81,9 @@ export default function Markdown({
             }
             case 'img': {
               return (
-                <img
-                  src={domNode.attribs?.src}
-                  alt={domNode.attribs?.alt}
+                <MediaComponent
+                  src={domNode.attribs?.src || ''}
+                  alt={domNode.attribs?.alt || ''}
                   onLoad={() => onSetImageLoaded(true)}
                 />
               );
@@ -191,7 +192,7 @@ export default function Markdown({
             return <strong {...commonProps}>{children}</strong>;
           }
           case 'img': {
-            return <img {...commonProps} />;
+            return <MediaComponent {...commonProps} />;
           }
           case 'input':
             if (attribs.type === 'checkbox') {
