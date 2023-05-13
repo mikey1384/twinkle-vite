@@ -1,11 +1,22 @@
 import React, { useEffect, useMemo } from 'react';
-import { useAppContext, useMissionContext } from '~/contexts';
+import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
+import MissionItem from '~/components/MissionItem';
+import Loading from '~/components/Loading';
+import InvalidContent from '../InvalidContent';
+import LoginToViewContent from '~/components/LoginToViewContent';
 
 export default function MissionComponent({ src }: { src: string }) {
+  const { userId } = useKeyContext((v) => v.myState);
+  const [loading, setLoading] = React.useState(false);
+  const [hasError, setHasError] = React.useState(false);
   const missionTypeIdHash = useMissionContext((v) => v.state.missionTypeIdHash);
   const loadMissionTypeIdHash = useAppContext(
     (v) => v.requestHelpers.loadMissionTypeIdHash
   );
+  const loadMission = useAppContext((v) => v.requestHelpers.loadMission);
+  const onLoadMission = useMissionContext((v) => v.actions.onLoadMission);
+  const prevUserId = useMissionContext((v) => v.state.prevUserId);
+  const missionObj = useMissionContext((v) => v.state.missionObj);
   const onLoadMissionTypeIdHash = useMissionContext(
     (v) => v.actions.onLoadMissionTypeIdHash
   );
@@ -19,20 +30,65 @@ export default function MissionComponent({ src }: { src: string }) {
     return missionTypeIdHash?.[missionType];
   }, [missionTypeIdHash, missionType]);
 
+  const mission = useMemo(
+    () => missionObj[missionId] || {},
+    [missionId, missionObj]
+  );
+
+  const isTask = useMemo(() => {
+    const srcParts = src.split('/');
+    return !!srcParts[3];
+  }, [src]);
+
   useEffect(() => {
-    if (!missionId) {
-      getMissionId();
+    if (userId) {
+      setHasError(false);
+      if (!missionId) {
+        getMissionId();
+      } else if (!mission.loaded || (userId && prevUserId !== userId)) {
+        init();
+      }
     }
+
     async function getMissionId() {
-      const data = await loadMissionTypeIdHash();
-      onLoadMissionTypeIdHash(data);
+      try {
+        const data = await loadMissionTypeIdHash();
+        onLoadMissionTypeIdHash(data);
+      } catch (error) {
+        console.log(error);
+        setHasError(true);
+      }
+    }
+
+    async function init() {
+      try {
+        const { page } = await loadMission({ missionId, isTask });
+        onLoadMission({ mission: page, prevUserId: userId });
+      } catch (error) {
+        setHasError(true);
+      } finally {
+        setLoading(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [missionId, missionTypeIdHash]);
+  }, [userId, missionId, missionTypeIdHash]);
+
+  if (!userId) {
+    return <LoginToViewContent />;
+  }
+  if (loading) {
+    return <Loading />;
+  }
+  if (!missionId || hasError) {
+    return <InvalidContent />;
+  }
 
   return (
-    <div>
-      <div>this is a mission component {missionId}</div>
-    </div>
+    <MissionItem
+      showStatus={false}
+      style={{ marginTop: '1rem' }}
+      mission={mission}
+      missionLink={src}
+    />
   );
 }
