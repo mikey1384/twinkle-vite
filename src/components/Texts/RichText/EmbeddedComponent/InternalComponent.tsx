@@ -1,9 +1,10 @@
 import React from 'react';
+import ErrorBoundary from '~/components/ErrorBoundary';
 
 export default function InterfaceComponent({ src }: { src: string }) {
   return (
-    <div>
+    <ErrorBoundary componentPath="Texts/EmbeddedComponent/InternalComponent">
       <div>internal component {src}</div>
-    </div>
+    </ErrorBoundary>
   );
 }
