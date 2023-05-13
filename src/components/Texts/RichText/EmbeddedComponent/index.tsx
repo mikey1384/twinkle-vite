@@ -6,7 +6,7 @@ import {
   processInternalLink
 } from '~/helpers/stringHelpers';
 
-export default function MediaComponent({
+export default function EmbeddedComponent({
   contentType,
   contentId,
   src,
