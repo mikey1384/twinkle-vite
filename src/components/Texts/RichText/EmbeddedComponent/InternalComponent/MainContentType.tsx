@@ -16,7 +16,7 @@ export default function MainContentType({
     contentType: contentType === 'link' ? 'url' : contentType,
     contentId: Number(contentId)
   });
-  const { loaded, content } = contentState;
+  const { loaded, content, rewardLevel } = contentState;
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   useEffect(() => {
@@ -50,7 +50,13 @@ export default function MainContentType({
   }
   switch (contentType) {
     case 'video':
-      return <XPVideoPlayer videoId={Number(contentId)} videoCode={content} />;
+      return (
+        <XPVideoPlayer
+          videoId={Number(contentId)}
+          videoCode={content}
+          rewardLevel={rewardLevel}
+        />
+      );
     case 'link':
     case 'subject':
       return <ContentListItem contentObj={contentState} />;

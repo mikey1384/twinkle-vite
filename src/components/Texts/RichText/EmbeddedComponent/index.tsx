@@ -25,17 +25,21 @@ export default function EmbeddedComponent({
     [src]
   );
   const isYouTube = useMemo(() => isValidYoutubeUrl(src), [src]);
-  return isInternalLink ? (
-    <InternalComponent {...commonProps} src={replacedLink} />
-  ) : isYouTube ? (
-    <YouTubeVideo
-      {...commonProps}
-      contentType={contentType}
-      contentId={contentId}
-      src={src}
-      onReady={onLoad}
-    />
-  ) : (
-    <img {...commonProps} src={src} alt={alt} onLoad={onLoad} />
+  return (
+    <div style={{ padding: '1rem' }}>
+      {isInternalLink ? (
+        <InternalComponent {...commonProps} src={replacedLink} />
+      ) : isYouTube ? (
+        <YouTubeVideo
+          {...commonProps}
+          contentType={contentType}
+          contentId={contentId}
+          src={src}
+          onReady={onLoad}
+        />
+      ) : (
+        <img {...commonProps} src={src} alt={alt} onLoad={onLoad} />
+      )}
+    </div>
   );
 }
