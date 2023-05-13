@@ -13,7 +13,7 @@ export default function MainContentType({
 }) {
   const loadingRef = useRef(false);
   const contentState = useContentState({
-    contentType,
+    contentType: contentType === 'link' ? 'url' : contentType,
     contentId: Number(contentId)
   });
   const { loaded, content } = contentState;
@@ -25,7 +25,10 @@ export default function MainContentType({
     }
     async function onMount() {
       loadingRef.current = true;
-      const data = await loadContent({ contentId, contentType });
+      const data = await loadContent({
+        contentId,
+        contentType: contentType === 'link' ? 'url' : contentType
+      });
       onInitContent({
         ...data,
         feedId: contentState.feedId
