@@ -5,6 +5,7 @@ import XPVideoPlayer from '~/components/XPVideoPlayer';
 import ContentListItem from '~/components/ContentListItem';
 import Loading from '~/components/Loading';
 import { isMobile } from '~/helpers';
+import { Color, borderRadius } from '~/constants/css';
 
 const displayIsMobile = isMobile(navigator);
 
@@ -76,6 +77,18 @@ export default function MainContentType({
     case 'subject':
       return <ContentListItem contentObj={contentState} />;
     default:
-      return <div>Invalid Content</div>;
+      return (
+        <div
+          style={{
+            fontWeight: 'bold',
+            textAlign: 'center',
+            padding: '1.5rem',
+            border: `1px solid ${Color.borderGray()}`,
+            borderRadius
+          }}
+        >
+          Invalid Content
+        </div>
+      );
   }
 }
