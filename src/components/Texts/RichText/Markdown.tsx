@@ -7,7 +7,7 @@ import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
 import parse from 'html-react-parser';
 import parseStyle from 'style-to-object';
-import MediaComponent from './MediaComponent';
+import MediaComponent from './EmbeddedComponent';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import {
