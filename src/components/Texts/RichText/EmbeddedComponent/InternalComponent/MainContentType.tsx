@@ -3,6 +3,9 @@ import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext } from '~/contexts';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
 import ContentListItem from '~/components/ContentListItem';
+import { isMobile } from '~/helpers';
+
+const displayIsMobile = isMobile(navigator);
 
 export default function MainContentType({
   contentId,
@@ -52,6 +55,7 @@ export default function MainContentType({
     case 'video':
       return (
         <XPVideoPlayer
+          isLink={displayIsMobile}
           videoId={Number(contentId)}
           videoCode={content}
           rewardLevel={rewardLevel}
