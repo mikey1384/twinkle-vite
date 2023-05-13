@@ -20,10 +20,13 @@ export default function EmbeddedComponent({
   alt: string;
   onLoad: () => void;
 }) {
-  const { isInternalLink } = useMemo(() => processInternalLink(src), [src]);
+  const { isInternalLink, replacedLink } = useMemo(
+    () => processInternalLink(src),
+    [src]
+  );
   const isYouTube = useMemo(() => isValidYoutubeUrl(src), [src]);
   return isInternalLink ? (
-    <InternalComponent />
+    <InternalComponent {...commonProps} src={replacedLink} />
   ) : isYouTube ? (
     <YouTubeVideo
       {...commonProps}
