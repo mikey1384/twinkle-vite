@@ -12,7 +12,7 @@ export default function InternalComponent({ src }: { src: string }) {
       const contentType = linkType.slice(0, -1);
       return (
         <MainContentType contentType={contentType} contentId={contentId} />
-      ); // Passed contentId here
+      );
     }
     return (
       <div>
