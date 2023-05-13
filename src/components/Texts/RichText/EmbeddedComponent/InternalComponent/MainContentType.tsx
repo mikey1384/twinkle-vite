@@ -1,4 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useContentState } from '~/helpers/hooks';
+import { useAppContext, useContentContext } from '~/contexts';
+import XPVideoPlayer from '~/components/XPVideoPlayer';
+import ContentListItem from '~/components/ContentListItem';
 
 export default function MainContentType({
   contentId,
@@ -7,11 +11,47 @@ export default function MainContentType({
   contentId: string;
   contentType: string;
 }) {
-  return (
-    <div>
-      <div>
-        this is a normal content type {contentType} and id {contentId}
-      </div>
-    </div>
-  );
+  const loadingRef = useRef(false);
+  const contentState = useContentState({
+    contentType,
+    contentId: Number(contentId)
+  });
+  const { loaded, content } = contentState;
+  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  useEffect(() => {
+    if (!loaded && !loadingRef.current && !isNaN(Number(contentId))) {
+      onMount();
+    }
+    async function onMount() {
+      loadingRef.current = true;
+      const data = await loadContent({ contentId, contentType });
+      onInitContent({
+        ...data,
+        feedId: contentState.feedId
+      });
+      if (data.rootObj) {
+        onInitContent({
+          contentId: data.rootId,
+          contentType: data.rootType,
+          ...data.rootObj
+        });
+      }
+      loadingRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
+
+  if (isNaN(Number(contentId))) {
+    return <div>Invalid Content</div>;
+  }
+  switch (contentType) {
+    case 'video':
+      return <XPVideoPlayer videoId={Number(contentId)} videoCode={content} />;
+    case 'link':
+    case 'subject':
+      return <ContentListItem contentObj={contentState} />;
+    default:
+      return <div>Invalid Content</div>;
+  }
 }
