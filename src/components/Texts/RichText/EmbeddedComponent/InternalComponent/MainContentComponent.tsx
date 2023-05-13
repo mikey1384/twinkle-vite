@@ -9,7 +9,7 @@ import InvalidContent from '../InvalidContent';
 
 const displayIsMobile = isMobile(navigator);
 
-export default function MainContentType({
+export default function MainContentComponent({
   contentId,
   contentType
 }: {
