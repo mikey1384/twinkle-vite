@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import YouTubeVideo from './YouTubeVideo';
-import { isValidYoutubeUrl } from '~/helpers/stringHelpers';
+import InternalComponent from './InternalComponent';
+import {
+  isValidYoutubeUrl,
+  processInternalLink
+} from '~/helpers/stringHelpers';
 
 export default function MediaComponent({
   contentType,
@@ -16,8 +20,11 @@ export default function MediaComponent({
   alt: string;
   onLoad: () => void;
 }) {
-  const isYouTube = isValidYoutubeUrl(src);
-  return isYouTube ? (
+  const { isInternalLink } = useMemo(() => processInternalLink(src), [src]);
+  const isYouTube = useMemo(() => isValidYoutubeUrl(src), [src]);
+  return isInternalLink ? (
+    <InternalComponent />
+  ) : isYouTube ? (
     <YouTubeVideo
       {...commonProps}
       contentType={contentType}

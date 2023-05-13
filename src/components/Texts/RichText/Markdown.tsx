@@ -10,7 +10,11 @@ import parseStyle from 'style-to-object';
 import MediaComponent from './MediaComponent';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { applyTextEffects, applyTextSize } from '~/helpers/stringHelpers';
+import {
+  applyTextEffects,
+  applyTextSize,
+  processInternalLink
+} from '~/helpers/stringHelpers';
 
 export default function Markdown({
   contentId,
@@ -302,14 +306,6 @@ export default function Markdown({
       newObj[camelCaseKey] = obj[key];
     }
     return newObj;
-  }
-
-  function processInternalLink(url = '') {
-    const regex =
-      /^(https?:\/\/(?:www\.)?|www\.)(twin-kle\.com|twinkle\.network|localhost:3000)/;
-    const isInternalLink = regex.test(url);
-    const replacedLink = url.replace(regex, '');
-    return { isInternalLink, replacedLink };
   }
 
   function preprocessText(text: string) {

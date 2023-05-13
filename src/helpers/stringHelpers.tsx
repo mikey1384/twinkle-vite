@@ -762,6 +762,14 @@ export function processedURL(url: string): string {
   return url;
 }
 
+export function processInternalLink(url = '') {
+  const regex =
+    /^(https?:\/\/(?:www\.)?|www\.)(twin-kle\.com|twinkle\.network|localhost:3000)/;
+  const isInternalLink = regex.test(url);
+  const replacedLink = url.replace(regex, '');
+  return { isInternalLink, replacedLink };
+}
+
 export function queryStringForArray({
   array,
   originVar,
