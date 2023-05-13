@@ -5,7 +5,7 @@ import XPVideoPlayer from '~/components/XPVideoPlayer';
 import ContentListItem from '~/components/ContentListItem';
 import Loading from '~/components/Loading';
 import { isMobile } from '~/helpers';
-import { Color, borderRadius } from '~/constants/css';
+import InvalidContent from '../InvalidContent';
 
 const displayIsMobile = isMobile(navigator);
 
@@ -22,7 +22,7 @@ export default function MainContentType({
     contentType: contentType === 'link' ? 'url' : contentType,
     contentId: Number(contentId)
   });
-  const { loaded, content, rewardLevel } = contentState;
+  const { loaded, content, notFound, rewardLevel } = contentState;
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
 
@@ -37,6 +37,9 @@ export default function MainContentType({
           contentId,
           contentType: contentType === 'link' ? 'url' : contentType
         });
+        if (data.notFound) {
+          return setHasError(true);
+        }
         onInitContent({
           ...data,
           feedId: contentState.feedId
@@ -44,7 +47,7 @@ export default function MainContentType({
         if (data.rootObj) {
           onInitContent({
             contentId: data.rootId,
-            contentType: data.rootType,
+            contentType: data.rootType === 'url' ? 'link' : data.rootType,
             ...data.rootObj
           });
         }
@@ -57,8 +60,8 @@ export default function MainContentType({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
 
-  if (hasError || isNaN(Number(contentId))) {
-    return <div>Invalid Content</div>;
+  if (hasError || notFound || isNaN(Number(contentId))) {
+    return <InvalidContent />;
   }
   if (!loaded) {
     return <Loading />;
@@ -77,18 +80,6 @@ export default function MainContentType({
     case 'subject':
       return <ContentListItem contentObj={contentState} />;
     default:
-      return (
-        <div
-          style={{
-            fontWeight: 'bold',
-            textAlign: 'center',
-            padding: '1.5rem',
-            border: `1px solid ${Color.borderGray()}`,
-            borderRadius
-          }}
-        >
-          Invalid Content
-        </div>
-      );
+      return <InvalidContent />;
   }
 }
