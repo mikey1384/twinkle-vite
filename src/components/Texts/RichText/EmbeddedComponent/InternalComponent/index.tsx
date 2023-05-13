@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import MainContentType from './MainContentType';
+import MainContentComponent from './MainContentComponent';
+import MissionComponent from './MissionComponent';
 
 export default function InternalComponent({ src }: { src: string }) {
   const InnerComponent = useMemo(() => {
@@ -11,8 +12,11 @@ export default function InternalComponent({ src }: { src: string }) {
       const contentId = urlParts[2]?.split('?')[0];
       const contentType = linkType.slice(0, -1);
       return (
-        <MainContentType contentType={contentType} contentId={contentId} />
+        <MainContentComponent contentType={contentType} contentId={contentId} />
       );
+    }
+    if (linkType === 'missions') {
+      return <MissionComponent />;
     }
     return (
       <div>
