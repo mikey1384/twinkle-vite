@@ -69,6 +69,7 @@ export default function RichText({
       : {};
   const { fullTextState = {} } = contentState;
   const [Content, setContent] = useState<any>(<>{text}</>);
+  const [isParsed, setIsParsed] = useState(false);
   const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(
     null
   );
@@ -124,6 +125,7 @@ export default function RichText({
       <div
         ref={ContainerRef}
         style={{
+          opacity: isParsed ? 1 : 0,
           width: '100%',
           ...style
         }}
@@ -199,7 +201,10 @@ export default function RichText({
             statusMsgLinkColor={statusMsgLinkColor}
             linkColor={linkColor}
             Content={Content}
-            onSetContent={setContent}
+            onSetContent={(content) => {
+              setIsParsed(true);
+              setContent(content);
+            }}
             onSetImageLoaded={setImageLoaded}
           >
             {text}
