@@ -19,8 +19,16 @@ export default function DefaultComponent({
   return (
     <div>
       <div style={{ fontWeight: 'bold' }}>default page {src}</div>
-      <div style={{ display: 'flex', marginTop: '2rem', alignItems: 'center' }}>
-        <div style={{ width: '10rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          marginTop: '2rem',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%'
+        }}
+      >
+        <div style={{ width: '18rem' }}>
           <ProfilePic
             userId={profile.id}
             profilePicUrl={profile.profilePicUrl || ''}
@@ -29,7 +37,7 @@ export default function DefaultComponent({
             large
           />
         </div>
-        <div style={{ marginLeft: '2rem' }}>
+        <div style={{ marginLeft: '3rem', flexGrow: 1 }}>
           <UserDetails
             noLink
             small
