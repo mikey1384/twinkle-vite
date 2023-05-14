@@ -78,7 +78,9 @@ export default function UserComponent({ src }: { src: string }) {
     return (
       <div>
         <div>watched page</div>
-        <div>{src}</div>
+        <div>
+          {src} {profileId}
+        </div>
       </div>
     );
   }
@@ -86,7 +88,9 @@ export default function UserComponent({ src }: { src: string }) {
     return (
       <div>
         <div>likes page</div>
-        <div>{src}</div>
+        <div>
+          {src} {profileId}
+        </div>
       </div>
     );
   }
@@ -94,7 +98,9 @@ export default function UserComponent({ src }: { src: string }) {
     return (
       <div>
         <div>made by page</div>
-        <div>{src}</div>
+        <div>
+          {src} {profileId}
+        </div>
       </div>
     );
   }
@@ -102,7 +108,9 @@ export default function UserComponent({ src }: { src: string }) {
     return (
       <div>
         <div>all posts by page</div>
-        <div>{src}</div>
+        <div>
+          {src} {profileId}
+        </div>
       </div>
     );
   }
@@ -110,7 +118,9 @@ export default function UserComponent({ src }: { src: string }) {
     return (
       <div>
         <div>comments by page</div>
-        <div>{src}</div>
+        <div>
+          {src} {profileId}
+        </div>
       </div>
     );
   }
@@ -118,7 +128,9 @@ export default function UserComponent({ src }: { src: string }) {
     return (
       <div>
         <div>subjects made by page</div>
-        <div>{src}</div>
+        <div>
+          {src} {profileId}
+        </div>
       </div>
     );
   }
@@ -126,7 +138,9 @@ export default function UserComponent({ src }: { src: string }) {
     return (
       <div>
         <div>subjects by page</div>
-        <div>{src}</div>
+        <div>
+          {src} {profileId}
+        </div>
       </div>
     );
   }
@@ -134,7 +148,9 @@ export default function UserComponent({ src }: { src: string }) {
     return (
       <div>
         <div>ai stories by page</div>
-        <div>{src}</div>
+        <div>
+          {src} {profileId}
+        </div>
       </div>
     );
   }
@@ -142,7 +158,9 @@ export default function UserComponent({ src }: { src: string }) {
     return (
       <div>
         <div>videos made by page</div>
-        <div>{src}</div>
+        <div>
+          {src} {profileId}
+        </div>
       </div>
     );
   }
@@ -150,7 +168,9 @@ export default function UserComponent({ src }: { src: string }) {
     return (
       <div>
         <div>videos by page</div>
-        <div>{src}</div>
+        <div>
+          {src} {profileId}
+        </div>
       </div>
     );
   }
@@ -158,14 +178,18 @@ export default function UserComponent({ src }: { src: string }) {
     return (
       <div>
         <div>links made by page</div>
-        <div>{src}</div>
+        <div>
+          {src} {profileId}
+        </div>
       </div>
     );
   }
   return (
     <div>
       <div>user page</div>
-      <div>{src}</div>
+      <div>
+        {src} {profileId}
+      </div>
     </div>
   );
 }
