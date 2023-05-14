@@ -4,11 +4,9 @@ import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 const BodyRef = document.scrollingElement || document.documentElement;
-const readMoreLabel = localize('readMore');
 type Color =
   | 'blue'
   | 'gray'
@@ -74,18 +72,26 @@ export default function RichText({
   );
   const fullTextRef = useRef(fullTextState[section]);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [fullTextShown, setFullTextShown] = useState(
+  const [fullTextShown, setFullTextShown] = useState<boolean>(
     isPreview ? false : fullTextState[section]
   );
-  const [isOverflown, setIsOverflown] = useState<boolean | null>(null);
+  const [isOverflown, setIsOverflown] = useState<boolean | null>(
+    !!fullTextShown
+  );
+  const overflownRef = useRef(isOverflown);
   useEffect(() => {
-    const overflown =
-      ContainerRef.current?.scrollHeight >
-      ContainerRef.current?.clientHeight + 20;
-    if (!fullTextRef.current) {
-      setFullTextShown(!overflown);
+    if (!overflownRef.current) {
+      const overflown =
+        ContainerRef.current?.scrollHeight >
+        ContainerRef.current?.clientHeight + 20;
+      if (!fullTextRef.current) {
+        setFullTextShown(!overflown);
+      }
+      setIsOverflown(overflown);
+      if (!isPreview) {
+        overflownRef.current = overflown;
+      }
     }
-    setIsOverflown(overflown);
   }, [Content, imageLoaded, text, isPreview, maxLines]);
 
   useEffect(() => {
@@ -107,7 +113,7 @@ export default function RichText({
 
   useEffect(() => {
     return function saveFullTextStateBeforeUnmount() {
-      if (contentType && section && fullTextRef.current) {
+      if (contentType && section) {
         onSetFullTextState({
           contentId,
           contentType,
@@ -213,7 +219,7 @@ export default function RichText({
           alignItems: 'center'
         }}
       >
-        {!fullTextShown && isOverflown && (
+        {isOverflown && (
           <a
             style={{
               fontWeight: 'bold',
@@ -227,11 +233,11 @@ export default function RichText({
               setSavedScrollPosition(
                 appElement?.scrollTop || BodyRef.scrollTop || 0
               );
-              setFullTextShown(true);
-              fullTextRef.current = true;
+              setFullTextShown((shown) => !shown);
+              fullTextRef.current = !fullTextRef.current;
             }}
           >
-            {readMoreLabel}
+            {fullTextShown ? 'Show Less' : 'Show More'}
           </a>
         )}
       </div>
