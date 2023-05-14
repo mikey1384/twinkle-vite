@@ -19,7 +19,7 @@ export default function DefaultComponent({
   return (
     <div>
       <div style={{ fontWeight: 'bold' }}>default page {src}</div>
-      <div style={{ display: 'flex', marginTop: '2rem' }}>
+      <div style={{ display: 'flex', marginTop: '2rem', alignItems: 'center' }}>
         <div style={{ width: '10rem' }}>
           <ProfilePic
             userId={profile.id}
