@@ -8,7 +8,12 @@ import {
 import Loading from '~/components/Loading';
 
 export default function UserComponent({ src }: { src: string }) {
+  const parts = src.split('/');
+  const username = parts[2];
+  const pageType = parts[3];
+  const subPageType = parts[4];
   const [loading, setLoading] = useState(false);
+  const { notExist, profileId } = useProfileState(username || '');
   const loadProfileViaUsername = useAppContext(
     (v) => v.requestHelpers.loadProfileViaUsername
   );
@@ -17,11 +22,6 @@ export default function UserComponent({ src }: { src: string }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetProfileId = useProfileContext((v) => v.actions.onSetProfileId);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
-  const parts = src.split('/');
-  const username = parts[2];
-  const pageType = parts[3];
-  const subPageType = parts[4];
-  const { notExist, profileId } = useProfileState(username || '');
 
   useEffect(() => {
     let retries = 0;
