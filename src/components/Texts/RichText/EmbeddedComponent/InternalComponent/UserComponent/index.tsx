@@ -185,5 +185,5 @@ export default function UserComponent({ src }: { src: string }) {
       </div>
     );
   }
-  return <DefaultComponent src={src} profileId={profileId} />;
+  return <DefaultComponent src={src} profile={profile} profileId={profileId} />;
 }
