@@ -1,7 +1,22 @@
-import React, { useEffect } from 'react';
-import { useProfileState, useTheme } from '~/helpers/hooks';
+import React, { useEffect, useState } from 'react';
+import { useProfileState } from '~/helpers/hooks';
+import {
+  useAppContext,
+  useContentContext,
+  useProfileContext
+} from '~/contexts';
+import Loading from '~/components/Loading';
 
 export default function UserComponent({ src }: { src: string }) {
+  const [loading, setLoading] = useState(false);
+  const loadProfileViaUsername = useAppContext(
+    (v) => v.requestHelpers.loadProfileViaUsername
+  );
+  const profile = useAppContext((v) => v.user.state.userObj[profileId] || {});
+  const onUserNotExist = useProfileContext((v) => v.actions.onUserNotExist);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onSetProfileId = useProfileContext((v) => v.actions.onSetProfileId);
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const parts = src.split('/');
   const username = parts[2];
   const pageType = parts[3];
@@ -19,20 +34,18 @@ export default function UserComponent({ src }: { src: string }) {
     async function loadProfile() {
       setLoading(true);
       try {
-        const { pageNotExists, user } = await loadProfileViaUsername(
-          params.username
-        );
+        const { pageNotExists, user } = await loadProfileViaUsername(username);
         if (pageNotExists) {
           setLoading(false);
-          return onUserNotExist(params.username);
+          return onUserNotExist(username);
         }
-        onSetProfileId({ username: params.username, profileId: user.id });
+        onSetProfileId({ username, profileId: user.id });
         onSetUserState({
           userId: user.id,
           newState: {
             userId: user.id,
             contentId: user.id,
-            username: params.username,
+            username,
             ...user,
             loaded: true
           }
@@ -48,14 +61,18 @@ export default function UserComponent({ src }: { src: string }) {
           retries++;
           setTimeout(loadProfile, 500);
         } else {
-          onUserNotExist(params.username);
+          onUserNotExist(username);
           setLoading(false);
         }
       }
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.username, notExist, profile.loaded]);
+  }, [username, notExist, profile.loaded]);
+
+  if (loading) {
+    return <Loading />;
+  }
 
   if (pageType === 'watched') {
     return (
