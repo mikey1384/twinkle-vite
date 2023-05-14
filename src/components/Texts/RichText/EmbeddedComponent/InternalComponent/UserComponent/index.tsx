@@ -6,6 +6,7 @@ import {
   useProfileContext
 } from '~/contexts';
 import Loading from '~/components/Loading';
+import DefaultComponent from './DefaultComponent';
 
 export default function UserComponent({ src }: { src: string }) {
   const parts = src.split('/');
@@ -184,12 +185,5 @@ export default function UserComponent({ src }: { src: string }) {
       </div>
     );
   }
-  return (
-    <div>
-      <div>user page</div>
-      <div>
-        {src} {profileId}
-      </div>
-    </div>
-  );
+  return <DefaultComponent src={src} profileId={profileId} />;
 }
