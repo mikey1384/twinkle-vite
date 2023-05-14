@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import MainContentComponent from './MainContentComponent';
 import MissionComponent from './MissionComponent';
+import UserComponent from './UserComponent';
 
 export default function InternalComponent({ src }: { src: string }) {
   const InnerComponent = useMemo(() => {
@@ -17,6 +18,9 @@ export default function InternalComponent({ src }: { src: string }) {
     }
     if (linkType === 'missions') {
       return <MissionComponent src={src} />;
+    }
+    if (linkType === 'users') {
+      return <UserComponent src={src} />;
     }
     return (
       <div>
