@@ -117,6 +117,11 @@ function ContentListItem({
           color: ${Color.black()};
           transition: color 1s;
         }
+        small {
+          line-height: 0.7;
+          margin-bottom: 0.7rem;
+          font-size: 1.3rem;
+        }
         margin-top: ${expandable ? '-1rem' : '0'};
         transition: background 0.5s, border 0.5s;
         &:hover {
@@ -130,8 +135,11 @@ function ContentListItem({
           margin-top: -0.5rem;
           border-left: 0;
           border-right: 0;
+          small {
+            font-size: 1rem;
+          }
           .label {
-            font-size: 2rem;
+            font-size: 1.8rem;
           }
         }
       `}
