@@ -2,6 +2,7 @@ import React from 'react';
 import UserDetails from '~/components/UserDetails';
 import ProfilePic from '~/components/ProfilePic';
 import { useChatContext } from '~/contexts';
+import { borderRadius, Color } from '~/constants/css';
 
 export default function DefaultComponent({
   src,
@@ -17,7 +18,13 @@ export default function DefaultComponent({
 }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   return (
-    <div>
+    <div
+      style={{
+        padding: '1rem',
+        border: `1px solid ${Color.borderGray()}`,
+        borderRadius
+      }}
+    >
       <div style={{ fontWeight: 'bold' }}>default page {src}</div>
       <div
         style={{
