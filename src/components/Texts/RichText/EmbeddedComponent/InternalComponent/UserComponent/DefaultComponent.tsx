@@ -119,7 +119,7 @@ export default function DefaultComponent({
             large
           />
         </div>
-        <div style={{ marginLeft: '3rem', flexGrow: 1 }}>
+        <div style={{ marginLeft: '3rem', width: 'CALC(75% - 3rem)' }}>
           <UserDetails
             noLink
             small
