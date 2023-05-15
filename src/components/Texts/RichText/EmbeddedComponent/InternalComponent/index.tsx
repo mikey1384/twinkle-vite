@@ -17,7 +17,7 @@ export default function InternalComponent({ src }: { src: string }) {
         <MainContentComponent contentType={contentType} contentId={contentId} />
       );
     }
-    if (linkType === 'missions') {
+    if (linkType === 'missions' && contentId) {
       return <MissionComponent src={src} />;
     }
     if (linkType === 'users') {
