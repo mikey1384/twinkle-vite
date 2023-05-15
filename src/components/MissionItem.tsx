@@ -71,6 +71,7 @@ export default function MissionItem({
         padding: 1rem;
         border: 1px solid ${Color.borderGray()};
         border-radius: ${borderRadius};
+        transition: background 0.5s;
         cursor: ${locked ? 'default' : 'pointer'};
         opacity: ${locked ? 0.2 : 1};
         ${locked

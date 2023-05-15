@@ -3,6 +3,7 @@ import UserDetails from '~/components/UserDetails';
 import ProfilePic from '~/components/ProfilePic';
 import { useChatContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
+import { css } from '@emotion/css';
 
 export default function DefaultComponent({
   src,
@@ -24,6 +25,17 @@ export default function DefaultComponent({
         border: `1px solid ${Color.borderGray()}`,
         borderRadius
       }}
+      className={`${css`
+        background: #fff;
+        padding: 1rem;
+        transition: background 0.5s;
+        border: 1px solid ${Color.borderGray()};
+        border-radius: ${borderRadius};
+        cursor: pointer;
+        &:hover {
+          background: ${Color.highlightGray()};
+        }
+      `}`}
     >
       <div style={{ fontWeight: 'bold' }}>default page {src}</div>
       <div
