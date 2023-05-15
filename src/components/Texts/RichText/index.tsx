@@ -127,7 +127,10 @@ export default function RichText({
   }, []);
 
   return (
-    <ErrorBoundary componentPath="components/Texts/RichText">
+    <ErrorBoundary
+      style={{ width: '100%' }}
+      componentPath="components/Texts/RichText"
+    >
       <div
         ref={ContainerRef}
         style={{
