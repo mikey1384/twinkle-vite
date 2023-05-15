@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
 import MissionItem from '~/components/MissionItem';
 import Loading from '~/components/Loading';
@@ -7,8 +7,8 @@ import LoginToViewContent from '~/components/LoginToViewContent';
 
 export default function MissionComponent({ src }: { src: string }) {
   const { userId } = useKeyContext((v) => v.myState);
-  const [loading, setLoading] = React.useState(false);
-  const [hasError, setHasError] = React.useState(false);
+  const [loading, setLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const missionTypeIdHash = useMissionContext((v) => v.state.missionTypeIdHash);
   const loadMissionTypeIdHash = useAppContext(
     (v) => v.requestHelpers.loadMissionTypeIdHash
@@ -44,6 +44,7 @@ export default function MissionComponent({ src }: { src: string }) {
     if (userId) {
       setHasError(false);
       if (!missionId) {
+        setLoading(true);
         getMissionId();
       } else if (!mission.loaded || (userId && prevUserId !== userId)) {
         init();
@@ -61,6 +62,7 @@ export default function MissionComponent({ src }: { src: string }) {
     }
 
     async function init() {
+      setLoading(true);
       try {
         const { page } = await loadMission({ missionId, isTask });
         onLoadMission({ mission: page, prevUserId: userId });
