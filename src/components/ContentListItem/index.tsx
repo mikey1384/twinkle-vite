@@ -112,7 +112,7 @@ function ContentListItem({
         border: 1px solid ${Color.borderGray()};
         background: ${expandable ? Color.whiteGray() : '#fff'};
         .label {
-          font-size: 2.5rem;
+          font-size: 2.2rem;
           font-weight: bold;
           color: ${Color.black()};
           transition: color 1s;
