@@ -753,7 +753,7 @@ function Comment({
                           className="comment__content"
                           isPreview={isPreview}
                         >
-                          {comment.content}
+                          {(comment.content || '').trim()}
                         </RichText>
                       ) : null}
                       <div style={{ height: '1em' }} />

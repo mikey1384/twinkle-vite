@@ -541,7 +541,7 @@ export default function SearchedComment({
                         section="pinned"
                         className="comment__content"
                       >
-                        {content}
+                        {(content || '').trim()}
                       </RichText>
                     )
                   )}

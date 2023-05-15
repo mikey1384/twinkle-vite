@@ -470,7 +470,7 @@ function Reply({
                       section="reply"
                       className="comment__content"
                     >
-                      {reply.content}
+                      {(reply.content || '').trim()}
                     </RichText>
                   ) : null}
                   <div style={{ height: '1em' }} />
