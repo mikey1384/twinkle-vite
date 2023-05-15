@@ -360,7 +360,11 @@ export default function Intro({
               />
             )}
             <Bio
-              style={{ fontSize: '1.6rem', marginBottom: '1rem' }}
+              style={{
+                fontSize: '1.6rem',
+                marginBottom: '1rem',
+                width: '100%'
+              }}
               firstRow={profileFirstRow}
               secondRow={profileSecondRow}
               thirdRow={profileThirdRow}
