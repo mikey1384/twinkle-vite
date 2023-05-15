@@ -28,6 +28,7 @@ export default function StatusMsg({
     >
       <RichText
         isStatusMsg
+        isProfileComponent
         theme={statusColor}
         readMoreColor={statusColor === 'ivory' ? 'black' : '#fff'}
       >

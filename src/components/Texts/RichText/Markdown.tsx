@@ -7,7 +7,7 @@ import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
 import parse from 'html-react-parser';
 import parseStyle from 'style-to-object';
-import MediaComponent from './EmbeddedComponent';
+import EmbeddedComponent from './EmbeddedComponent';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import {
@@ -22,6 +22,7 @@ export default function Markdown({
   Content,
   children,
   isStatusMsg,
+  isProfileComponent,
   listItemMarkerColor,
   statusMsgLinkColor,
   statusMsgListItemMarkerColor,
@@ -33,6 +34,7 @@ export default function Markdown({
   contentType?: string;
   Content: string;
   isStatusMsg: boolean;
+  isProfileComponent?: boolean;
   children: string;
   statusMsgLinkColor: string;
   linkColor: string;
@@ -108,9 +110,10 @@ export default function Markdown({
             }
             case 'img': {
               return (
-                <MediaComponent
+                <EmbeddedComponent
                   contentId={contentId}
                   contentType={contentType}
+                  isProfileComponent={isProfileComponent}
                   src={domNode.attribs?.src || ''}
                   alt={domNode.attribs?.alt || ''}
                   onLoad={() => onSetImageLoaded(true)}
@@ -261,8 +264,9 @@ export default function Markdown({
           }
           case 'img': {
             return (
-              <MediaComponent
+              <EmbeddedComponent
                 {...commonProps}
+                isProfileComponent={isProfileComponent}
                 contentId={contentId}
                 contentType={contentType}
                 onLoad={() => onSetImageLoaded(true)}

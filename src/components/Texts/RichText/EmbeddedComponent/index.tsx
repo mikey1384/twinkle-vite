@@ -11,6 +11,7 @@ export default function EmbeddedComponent({
   contentId,
   src,
   alt,
+  isProfileComponent,
   onLoad,
   ...commonProps
 }: {
@@ -18,6 +19,7 @@ export default function EmbeddedComponent({
   contentId?: number;
   src: string;
   alt: string;
+  isProfileComponent?: boolean;
   onLoad: () => void;
 }) {
   const { isInternalLink, replacedLink } = useMemo(
@@ -27,7 +29,7 @@ export default function EmbeddedComponent({
   const isYouTube = useMemo(() => isValidYoutubeUrl(src), [src]);
   return (
     <div style={{ padding: '1rem', width: '100%' }}>
-      {isInternalLink ? (
+      {isInternalLink && !isProfileComponent ? (
         <InternalComponent {...commonProps} src={replacedLink} />
       ) : isYouTube ? (
         <YouTubeVideo
