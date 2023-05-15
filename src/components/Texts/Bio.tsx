@@ -34,7 +34,12 @@ export default function Bio({
     >
       {firstRow && (
         <nav
-          style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            width: '100%',
+            paddingBottom: '1rem'
+          }}
         >
           <div
             style={{
@@ -55,7 +60,12 @@ export default function Bio({
       )}
       {secondRow && (
         <nav
-          style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            width: '100%',
+            paddingBottom: '1rem'
+          }}
         >
           <div
             style={{
@@ -76,7 +86,12 @@ export default function Bio({
       )}
       {thirdRow && (
         <nav
-          style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            width: '100%',
+            paddingBottom: '1rem'
+          }}
         >
           <div
             style={{

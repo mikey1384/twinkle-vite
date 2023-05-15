@@ -169,7 +169,7 @@ function ProfilePanel({
   const uploadBio = useAppContext((v) => v.requestHelpers.uploadBio);
   const onResetProfile = useProfileContext((v) => v.actions.onResetProfile);
 
-  const { isCreator, userId, username, banned, authLevel } = useKeyContext(
+  const { userId, username, banned, authLevel } = useKeyContext(
     (v) => v.myState
   );
   const {
@@ -229,10 +229,7 @@ function ProfilePanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileId, userId, profileLoaded, commentsLoaded, previewLoaded]);
 
-  const canEdit = useMemo(
-    () => userId === profileId || isCreator,
-    [isCreator, profileId, userId]
-  );
+  const canEdit = useMemo(() => userId === profileId, [profileId, userId]);
   const noBio = useMemo(
     () => !profileFirstRow && !profileSecondRow && !profileThirdRow,
     [profileFirstRow, profileSecondRow, profileThirdRow]
@@ -425,6 +422,7 @@ function ProfilePanel({
                     {canEdit && (
                       <div
                         style={{
+                          marginTop: '1rem',
                           zIndex: 1,
                           display: 'flex',
                           flexDirection: 'column'
