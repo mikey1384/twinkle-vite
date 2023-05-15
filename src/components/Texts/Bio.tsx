@@ -37,6 +37,7 @@ export default function Bio({
           <div
             style={{
               padding: '0 1.5rem',
+              fontSize: '2rem',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center'
@@ -52,6 +53,7 @@ export default function Bio({
           <div
             style={{
               padding: '0 1.5rem',
+              fontSize: '2rem',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center'
@@ -69,6 +71,7 @@ export default function Bio({
           <div
             style={{
               padding: '0 1.5rem',
+              fontSize: '2rem',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center'
