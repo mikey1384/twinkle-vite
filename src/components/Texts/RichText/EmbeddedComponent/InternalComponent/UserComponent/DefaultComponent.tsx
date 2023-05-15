@@ -109,14 +109,7 @@ export default function DefaultComponent({
           width: '100%'
         }}
       >
-        <div
-          className={css`
-            width: 18rem !important;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 13rem !important;
-            }
-          `}
-        >
+        <div style={{ width: '25%' }}>
           <ProfilePic
             userId={profile.id}
             profilePicUrl={profile.profilePicUrl || ''}
