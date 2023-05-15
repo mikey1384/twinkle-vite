@@ -1,5 +1,6 @@
 import React from 'react';
 import RichText from '~/components/Texts/RichText';
+import { css } from '@emotion/css';
 
 export default function Bio({
   firstRow,
@@ -16,6 +17,17 @@ export default function Bio({
 }) {
   return (
     <section
+      className={css`
+        .dot {
+          font-size: 2rem;
+          font-family: 'Arial';
+          padding: 0 1.5rem;
+          display: flex;
+          line-height: 1.3;
+          justify-content: flex-start;
+          align-items: flex-start;
+        }
+      `}
       style={{
         display: 'flex',
         marginTop: '2rem',
@@ -41,18 +53,7 @@ export default function Bio({
             paddingBottom: '1rem'
           }}
         >
-          <div
-            style={{
-              padding: '0 1.5rem',
-              fontSize: '2rem',
-              display: 'flex',
-              lineHeight: 1.5,
-              justifyContent: 'flex-start',
-              alignItems: 'flex-start'
-            }}
-          >
-            •
-          </div>
+          <div className="dot">•</div>
           <RichText isProfileComponent style={{ width: 'CALC(100% - 2rem)' }}>
             {firstRow}
           </RichText>
@@ -67,18 +68,7 @@ export default function Bio({
             paddingBottom: '1rem'
           }}
         >
-          <div
-            style={{
-              padding: '0 1.5rem',
-              fontSize: '2rem',
-              display: 'flex',
-              lineHeight: 1.5,
-              justifyContent: 'flex-start',
-              alignItems: 'flex-start'
-            }}
-          >
-            •
-          </div>
+          <div className="dot">•</div>
           <RichText isProfileComponent style={{ width: 'CALC(100% - 2rem)' }}>
             {secondRow}
           </RichText>
@@ -93,18 +83,7 @@ export default function Bio({
             paddingBottom: '1rem'
           }}
         >
-          <div
-            style={{
-              padding: '0 1.5rem',
-              fontSize: '2rem',
-              display: 'flex',
-              lineHeight: 1.5,
-              justifyContent: 'flex-start',
-              alignItems: 'flex-start'
-            }}
-          >
-            •
-          </div>
+          <div className="dot">•</div>
           <RichText isProfileComponent style={{ width: 'CALC(100% - 2rem)' }}>
             {thirdRow}
           </RichText>
