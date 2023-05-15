@@ -22,6 +22,10 @@ export default function Markdown({
   Content,
   children,
   isStatusMsg,
+  listItemMarkerColor,
+  statusMsgLinkColor,
+  statusMsgListItemMarkerColor,
+  linkColor,
   onSetContent,
   onSetImageLoaded
 }: {
@@ -32,6 +36,8 @@ export default function Markdown({
   children: string;
   statusMsgLinkColor: string;
   linkColor: string;
+  listItemMarkerColor: string;
+  statusMsgListItemMarkerColor: string;
   onSetContent: (arg0: React.ReactNode) => void;
   onSetImageLoaded: (arg0: boolean) => void;
 }) {
@@ -80,7 +86,11 @@ export default function Markdown({
               } else {
                 return (
                   <a
-                    className={isStatusMsg ? 'status-message' : ''}
+                    style={{
+                      ...parseStyle(domNode.attribs?.style || ''),
+                      color:
+                        Color[isStatusMsg ? statusMsgLinkColor : linkColor]()
+                    }}
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -209,7 +219,10 @@ export default function Markdown({
               return (
                 <Link
                   {...commonProps}
-                  className={isStatusMsg ? 'status-message' : ''}
+                  style={{
+                    ...attribs.style,
+                    color: Color[isStatusMsg ? statusMsgLinkColor : linkColor]()
+                  }}
                   to={replacedLink}
                 >
                   {children}
@@ -219,7 +232,10 @@ export default function Markdown({
               return (
                 <a
                   {...commonProps}
-                  className={isStatusMsg ? 'status-message' : ''}
+                  style={{
+                    ...attribs.style,
+                    color: Color[isStatusMsg ? statusMsgLinkColor : linkColor]()
+                  }}
                   target="_blank"
                 >
                   {children}
@@ -257,7 +273,15 @@ export default function Markdown({
             return (
               <li
                 {...commonProps}
-                className={isStatusMsg ? 'status-message' : ''}
+                className={css`
+                  ::marker {
+                    color: ${Color[
+                      isStatusMsg
+                        ? statusMsgListItemMarkerColor
+                        : listItemMarkerColor
+                    ]()} !important;
+                  }
+                `}
               >
                 {children}
               </li>

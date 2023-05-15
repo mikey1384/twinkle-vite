@@ -141,14 +141,6 @@ export default function RichText({
           overflow-wrap: break-word;
           word-break: break-word;
           line-height: 1.6;
-          .status-message {
-            color: ${Color[statusMsgLinkColor]()} !important;
-            ::marker {
-              color: ${Color[
-                isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor
-              ]()};
-            }
-          }
           a {
             color: ${Color[isStatusMsg ? statusMsgLinkColor : linkColor]()};
           }
@@ -214,6 +206,8 @@ export default function RichText({
             isStatusMsg={!!isStatusMsg}
             statusMsgLinkColor={statusMsgLinkColor}
             linkColor={linkColor}
+            listItemMarkerColor={listItemMarkerColor}
+            statusMsgListItemMarkerColor={statusMsgListItemMarkerColor}
             Content={Content}
             onSetContent={(content) => {
               setIsParsed(true);
