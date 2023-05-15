@@ -23,6 +23,7 @@ export default function BioEditModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [firstLine, setFirstLine] = useState(props.firstLine || '');
   const [secondLine, setSecondLine] = useState(props.secondLine || '');
   const [thirdLine, setThirdLine] = useState(props.thirdLine || '');
@@ -117,13 +118,15 @@ export default function BioEditModal({
         </Button>
         <Button
           color={doneColor}
-          onClick={() =>
+          loading={isSubmitting}
+          onClick={() => {
+            setIsSubmitting(true);
             onSubmit({
               firstLine: finalizeEmoji(firstLine),
               secondLine: finalizeEmoji(secondLine),
               thirdLine: finalizeEmoji(thirdLine)
-            })
-          }
+            });
+          }}
           disabled={
             firstLine.length > MAX_CHAR ||
             secondLine.length > MAX_CHAR ||
