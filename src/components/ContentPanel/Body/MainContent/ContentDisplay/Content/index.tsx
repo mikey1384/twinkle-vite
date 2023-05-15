@@ -66,7 +66,7 @@ export default function Content({
     return !stringIsEmpty(description)
       ? description.trim()
       : contentType === 'video' || contentType === 'url'
-      ? (title || '').trim()
+      ? (title || '').trimEnd()
       : '';
   }, [contentType, description, title]);
   const RenderedContent = useMemo(() => {
@@ -101,7 +101,7 @@ export default function Content({
             section="content"
             theme={theme}
           >
-            {(content || '').trim()}
+            {(content || '').trimEnd()}
           </RichText>
         );
       case 'aiStory':

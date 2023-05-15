@@ -512,7 +512,7 @@ function Comment({
                         section="pinned"
                         className="comment__content"
                       >
-                        {(comment.content || '').trim()}
+                        {(comment.content || '').trimEnd()}
                       </RichText>
                     )
                   )}
