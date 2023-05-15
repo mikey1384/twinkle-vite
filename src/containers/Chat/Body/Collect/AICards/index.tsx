@@ -193,7 +193,8 @@ export default function AICards({
         ? `Couldn't generate the card's image at this time. Reload the website and try again.`
         : 'Payment failed. Try again.';
       onSetAICardStatusMessage(statusMessage);
+    } finally {
+      onSetIsGeneratingAICard(false);
     }
-    onSetIsGeneratingAICard(false);
   }
 }
