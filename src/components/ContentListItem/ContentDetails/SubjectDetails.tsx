@@ -37,7 +37,9 @@ export default function SubjectDetails({
         {title}
       </div>
       {uploader.username && (
-        <div style={{ color: Color.gray() }}>Posted by {uploader.username}</div>
+        <small style={{ color: Color.gray() }}>
+          Posted by {uploader.username}
+        </small>
       )}
       {description && (
         <div

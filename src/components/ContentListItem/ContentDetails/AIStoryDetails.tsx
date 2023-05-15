@@ -25,7 +25,6 @@ export default function AIStoryDetails({
     >
       <div
         style={{
-          fontSize: '2.5rem',
           fontWeight: 'bold',
           marginBottom: '0.5rem',
           overflowWrap: 'break-word',
@@ -35,9 +34,6 @@ export default function AIStoryDetails({
           margin-bottom: 0.5rem;
           overflow-wrap: break-word;
           word-break: break-word;
-          @media (max-width: ${mobileMaxWidth}) {
-            font-size: 2rem;
-          }
         `}`}
       >
         {truncateTopic(topic)}

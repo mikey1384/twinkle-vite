@@ -30,9 +30,9 @@ export default function VideoDetails({
         >
           {title}
         </div>
-        <div style={{ color: Color.gray() }}>
+        <small style={{ color: Color.gray() }}>
           Uploaded by {uploader.username}
-        </div>
+        </small>
       </div>
       <div
         style={{
