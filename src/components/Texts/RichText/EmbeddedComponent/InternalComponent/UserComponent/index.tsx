@@ -77,112 +77,57 @@ export default function UserComponent({ src }: { src: string }) {
 
   if (pageType === 'watched') {
     return (
-      <div>
-        <div>watched page</div>
-        <div>
-          {src} {profileId}
-        </div>
-      </div>
+      <DefaultComponent src={src} profile={profile} profileId={profileId} />
     );
   }
   if (pageType === 'likes') {
     return (
-      <div>
-        <div>likes page</div>
-        <div>
-          {src} {profileId}
-        </div>
-      </div>
+      <DefaultComponent src={src} profile={profile} profileId={profileId} />
     );
   }
   if (pageType === 'all' && subPageType === 'byuser') {
     return (
-      <div>
-        <div>made by page</div>
-        <div>
-          {src} {profileId}
-        </div>
-      </div>
+      <DefaultComponent src={src} profile={profile} profileId={profileId} />
     );
   }
   if (pageType === 'all') {
     return (
-      <div>
-        <div>all posts by page</div>
-        <div>
-          {src} {profileId}
-        </div>
-      </div>
+      <DefaultComponent src={src} profile={profile} profileId={profileId} />
     );
   }
   if (pageType === 'comments') {
     return (
-      <div>
-        <div>comments by page</div>
-        <div>
-          {src} {profileId}
-        </div>
-      </div>
+      <DefaultComponent src={src} profile={profile} profileId={profileId} />
     );
   }
   if (pageType === 'subjects' && subPageType === 'byuser') {
     return (
-      <div>
-        <div>subjects made by page</div>
-        <div>
-          {src} {profileId}
-        </div>
-      </div>
+      <DefaultComponent src={src} profile={profile} profileId={profileId} />
     );
   }
   if (pageType === 'subjects') {
     return (
-      <div>
-        <div>subjects by page</div>
-        <div>
-          {src} {profileId}
-        </div>
-      </div>
+      <DefaultComponent src={src} profile={profile} profileId={profileId} />
     );
   }
   if (pageType === 'ai-stories') {
     return (
-      <div>
-        <div>ai stories by page</div>
-        <div>
-          {src} {profileId}
-        </div>
-      </div>
+      <DefaultComponent src={src} profile={profile} profileId={profileId} />
     );
   }
   if (pageType === 'videos' && subPageType === 'byuser') {
     return (
-      <div>
-        <div>videos made by page</div>
-        <div>
-          {src} {profileId}
-        </div>
-      </div>
+      <DefaultComponent src={src} profile={profile} profileId={profileId} />
     );
   }
   if (pageType === 'videos') {
     return (
-      <div>
-        <div>videos by page</div>
-        <div>
-          {src} {profileId}
-        </div>
-      </div>
+      <DefaultComponent src={src} profile={profile} profileId={profileId} />
     );
   }
   if (pageType === 'links' && subPageType === 'byuser') {
     return (
-      <div>
-        <div>links made by page</div>
-        <div>
-          {src} {profileId}
-        </div>
-      </div>
+      <DefaultComponent src={src} profile={profile} profileId={profileId} />
     );
   }
   return <DefaultComponent src={src} profile={profile} profileId={profileId} />;

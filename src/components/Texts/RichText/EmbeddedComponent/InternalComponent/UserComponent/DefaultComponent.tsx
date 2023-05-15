@@ -40,11 +40,9 @@ export default function DefaultComponent({
         }
       `}`}
     >
-      <div style={{ fontWeight: 'bold' }}>default page {src}</div>
       <div
         style={{
           display: 'flex',
-          marginTop: '2rem',
           alignItems: 'center',
           justifyContent: 'space-between',
           width: '100%'
