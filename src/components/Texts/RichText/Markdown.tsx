@@ -74,6 +74,9 @@ export default function Markdown({
   function convertStringToJSX(text: string): React.ReactNode {
     const result = parse(text, {
       replace: (domNode) => {
+        if (domNode.type === 'text') {
+          domNode.data = (domNode.data || '').replace(/&nbsp;/g, '');
+        }
         if (domNode.type === 'tag') {
           switch (domNode.name) {
             case 'a': {
