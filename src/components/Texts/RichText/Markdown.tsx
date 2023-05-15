@@ -182,7 +182,7 @@ export default function Markdown({
     return nodes.map((node, index) => {
       if (node.type === 'text') {
         return node.data.trim() !== '' || /^ +$/.test(node.data)
-          ? node.data
+          ? node.data.replace(/&nbsp;/g, '')
           : null;
       } else if (node.type === 'tag') {
         const TagName = node.name;
