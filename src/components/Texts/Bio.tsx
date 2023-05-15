@@ -15,7 +15,7 @@ export default function Bio({
   style?: React.CSSProperties;
 }) {
   return (
-    <ul
+    <section
       style={{
         display: 'flex',
         marginTop: '2rem',
@@ -32,20 +32,23 @@ export default function Bio({
       }}
     >
       {firstRow && (
-        <li>
+        <nav style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ paddingRight: '5px' }}>•</span>
           <RichText>{firstRow}</RichText>
-        </li>
+        </nav>
       )}
       {secondRow && (
-        <li>
+        <nav style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ paddingRight: '5px' }}>•</span>
           <RichText>{secondRow}</RichText>
-        </li>
+        </nav>
       )}
       {thirdRow && (
-        <li>
+        <nav style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ paddingRight: '5px' }}>•</span>
           <RichText>{thirdRow}</RichText>
-        </li>
+        </nav>
       )}
-    </ul>
+    </section>
   );
 }
