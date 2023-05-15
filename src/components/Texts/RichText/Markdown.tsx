@@ -77,7 +77,7 @@ export default function Markdown({
     const result = parse(text, {
       replace: (domNode) => {
         if (domNode.type === 'text') {
-          domNode.data = (domNode.data || '').replace(/&nbsp;/g, '');
+          domNode.data = reversePreprocessing(domNode.data);
         }
         if (domNode.type === 'tag') {
           switch (domNode.name) {
@@ -208,7 +208,7 @@ export default function Markdown({
     return nodes.map((node, index) => {
       if (node.type === 'text') {
         return node.data.trim() !== '' || /^ +$/.test(node.data)
-          ? node.data.replace(/&nbsp;/g, '')
+          ? reversePreprocessing(node.data)
           : null;
       } else if (node.type === 'tag') {
         const TagName = node.name;
@@ -386,5 +386,12 @@ export default function Markdown({
         return '\n';
       }
     });
+  }
+
+  function reversePreprocessing(text?: string) {
+    return (text || '')
+      .replace(/&nbsp;/g, '')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>');
   }
 }
