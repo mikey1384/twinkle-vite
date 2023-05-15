@@ -52,7 +52,12 @@ export default function ConfirmModal({
   );
 
   function handleConfirm() {
-    setSubmitting(true);
-    onConfirm();
+    try {
+      setSubmitting(true);
+      onConfirm();
+    } catch (error) {
+      console.error(error);
+      setSubmitting(false);
+    }
   }
 }
