@@ -21,6 +21,7 @@ export default function Markdown({
   contentType,
   Content,
   children,
+  isStatusMsg,
   onSetContent,
   onSetImageLoaded
 }: {
@@ -78,7 +79,12 @@ export default function Markdown({
                 return <Link to={replacedLink}>{node?.data}</Link>;
               } else {
                 return (
-                  <a href={href} target="_blank" rel="noopener noreferrer">
+                  <a
+                    className={isStatusMsg ? 'status-message' : ''}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     {node?.data}
                   </a>
                 );
@@ -200,13 +206,21 @@ export default function Markdown({
             const { isInternalLink, replacedLink } = processInternalLink(href);
             if (isInternalLink || attribs?.className === 'mention') {
               return (
-                <Link {...commonProps} to={replacedLink}>
+                <Link
+                  {...commonProps}
+                  className={isStatusMsg ? 'status-message' : ''}
+                  to={replacedLink}
+                >
                   {children}
                 </Link>
               );
             } else {
               return (
-                <a {...commonProps} target="_blank">
+                <a
+                  {...commonProps}
+                  className={isStatusMsg ? 'status-message' : ''}
+                  target="_blank"
+                >
                   {children}
                 </a>
               );
