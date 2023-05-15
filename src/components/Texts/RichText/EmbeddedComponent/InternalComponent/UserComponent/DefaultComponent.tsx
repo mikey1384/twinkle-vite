@@ -111,9 +111,9 @@ export default function DefaultComponent({
       >
         <div
           className={css`
-            width: 18rem;
+            width: 18rem !important;
             @media (max-width: ${mobileMaxWidth}) {
-              width: 13rem;
+              width: 13rem !important;
             }
           `}
         >
