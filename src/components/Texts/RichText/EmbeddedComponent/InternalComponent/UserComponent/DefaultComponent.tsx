@@ -1,6 +1,7 @@
 import React from 'react';
 import UserDetails from '~/components/UserDetails';
 import ProfilePic from '~/components/ProfilePic';
+import { useNavigate } from 'react-router-dom';
 import { useChatContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -17,9 +18,11 @@ export default function DefaultComponent({
   };
   profileId: number;
 }) {
+  const navigate = useNavigate();
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   return (
     <div
+      onClick={() => navigate(src)}
       style={{
         padding: '1rem',
         border: `1px solid ${Color.borderGray()}`,
