@@ -116,7 +116,17 @@ export default function Markdown({
             }
             case 'li': {
               return (
-                <li>
+                <li
+                  className={css`
+                    ::marker {
+                      color: ${Color[
+                        isStatusMsg
+                          ? statusMsgListItemMarkerColor
+                          : listItemMarkerColor
+                      ]()} !important;
+                    }
+                  `}
+                >
                   {convertToJSX(domNode.children ? domNode.children : [])}
                 </li>
               );
