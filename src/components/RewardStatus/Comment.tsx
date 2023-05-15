@@ -245,9 +245,14 @@ function Comment({
   );
 
   async function handleRevokeReward() {
-    const success = await revokeReward(reward.id);
-    if (success) {
-      onRevokeReward({ contentType, contentId, rewardId: reward.id });
+    try {
+      const success = await revokeReward(reward.id);
+      if (success) {
+        onRevokeReward({ contentType, contentId, rewardId: reward.id });
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
   }
 
