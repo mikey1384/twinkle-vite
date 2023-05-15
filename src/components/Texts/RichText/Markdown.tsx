@@ -253,6 +253,16 @@ export default function Markdown({
               );
             }
             break;
+          case 'li': {
+            return (
+              <li
+                {...commonProps}
+                className={isStatusMsg ? 'status-message' : ''}
+              >
+                {children}
+              </li>
+            );
+          }
           case 'strong': {
             return <em {...commonProps}>{children}</em>;
           }

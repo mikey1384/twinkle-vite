@@ -143,6 +143,11 @@ export default function RichText({
           line-height: 1.6;
           .status-message {
             color: ${Color[statusMsgLinkColor]()} !important;
+            ::marker {
+              color: ${Color[
+                isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor
+              ]()};
+            }
           }
           a {
             color: ${Color[isStatusMsg ? statusMsgLinkColor : linkColor]()};
