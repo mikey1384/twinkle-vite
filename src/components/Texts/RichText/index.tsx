@@ -84,7 +84,7 @@ export default function RichText({
     if (!overflownRef.current) {
       const overflown =
         ContainerRef.current?.scrollHeight >
-        ContainerRef.current?.clientHeight + 20;
+        ContainerRef.current?.clientHeight + 30;
       if (!fullTextRef.current) {
         setFullTextShown(!overflown);
       }

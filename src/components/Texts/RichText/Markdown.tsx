@@ -115,6 +115,7 @@ export default function Markdown({
               return (
                 <div
                   style={{
+                    width: '100%',
                     marginInlineStart: '0px',
                     marginInlineEnd: '0px'
                   }}
@@ -321,17 +322,17 @@ export default function Markdown({
   }
 
   function preprocessText(text: string) {
-    const maxNbsp = 6;
+    const maxNbsp = 9;
     let nbspCount = 0;
     const targetText = text || '';
     const escapedText = targetText.replace(/>/g, '&gt;').replace(/</g, '&lt;');
 
-    return escapedText.replace(/\n{2}/gi, () => {
+    return escapedText.replace(/\n{1}/gi, () => {
       nbspCount++;
-      if (nbspCount > 1 && nbspCount <= maxNbsp) {
-        return '&nbsp;\n\n';
+      if (nbspCount <= maxNbsp) {
+        return '&nbsp;\n';
       } else {
-        return '\n\n';
+        return '\n';
       }
     });
   }
