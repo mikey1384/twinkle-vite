@@ -3,6 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import MainContentComponent from './MainContentComponent';
 import MissionComponent from './MissionComponent';
 import UserComponent from './UserComponent';
+import DefaultComponent from './DefaultComponent';
 
 export default function InternalComponent({ src }: { src: string }) {
   const InnerComponent = useMemo(() => {
@@ -22,11 +23,7 @@ export default function InternalComponent({ src }: { src: string }) {
     if (linkType === 'users') {
       return <UserComponent src={src} />;
     }
-    return (
-      <div>
-        <div>this is a special content type {linkType}</div>
-      </div>
-    );
+    return <DefaultComponent linkType={linkType} />;
   }, [src]);
 
   return (
