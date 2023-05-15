@@ -142,7 +142,9 @@ export default function RichText({
           word-break: break-word;
           line-height: 1.6;
           a {
-            color: ${Color[isStatusMsg ? statusMsgLinkColor : linkColor]()};
+            color: ${Color[
+              isStatusMsg ? statusMsgLinkColor : linkColor
+            ]()} !important;
           }
           p {
             margin: 0;
