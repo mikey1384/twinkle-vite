@@ -141,10 +141,11 @@ export default function RichText({
           overflow-wrap: break-word;
           word-break: break-word;
           line-height: 1.6;
+          .status-message {
+            color: ${Color[statusMsgLinkColor]()} !important;
+          }
           a {
-            color: ${Color[
-              isStatusMsg ? statusMsgLinkColor : linkColor
-            ]()} !important;
+            color: ${Color[isStatusMsg ? statusMsgLinkColor : linkColor]()};
           }
           p {
             margin: 0;

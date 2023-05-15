@@ -65,7 +65,8 @@ export default function DefaultComponent({
       style={{
         padding: '1rem',
         border: `1px solid ${Color.borderGray()}`,
-        borderRadius
+        borderRadius,
+        width: '100%'
       }}
       className={`${css`
         .label {
