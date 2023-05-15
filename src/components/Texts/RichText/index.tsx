@@ -234,6 +234,7 @@ export default function RichText({
       >
         {isOverflown && (
           <a
+            className="unselectable"
             style={{
               fontWeight: 'bold',
               cursor: 'pointer',
