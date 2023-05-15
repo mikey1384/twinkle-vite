@@ -33,53 +33,66 @@ export default function Bio({
       }}
     >
       {firstRow && (
-        <nav style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+        <nav
+          style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}
+        >
           <div
             style={{
               padding: '0 1.5rem',
               fontSize: '2rem',
               display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center'
+              lineHeight: 1.5,
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start'
             }}
           >
             •
           </div>
-          <RichText style={{ width: 'CALC(100% - 2rem)' }}>{firstRow}</RichText>
+          <RichText isProfileComponent style={{ width: 'CALC(100% - 2rem)' }}>
+            {firstRow}
+          </RichText>
         </nav>
       )}
       {secondRow && (
-        <nav style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+        <nav
+          style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}
+        >
           <div
             style={{
               padding: '0 1.5rem',
               fontSize: '2rem',
               display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center'
+              lineHeight: 1.5,
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start'
             }}
           >
             •
           </div>
-          <RichText style={{ width: 'CALC(100% - 2rem)' }}>
+          <RichText isProfileComponent style={{ width: 'CALC(100% - 2rem)' }}>
             {secondRow}
           </RichText>
         </nav>
       )}
       {thirdRow && (
-        <nav style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+        <nav
+          style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}
+        >
           <div
             style={{
               padding: '0 1.5rem',
               fontSize: '2rem',
               display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center'
+              lineHeight: 1.5,
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start'
             }}
           >
             •
           </div>
-          <RichText style={{ width: 'CALC(100% - 2rem)' }}>{thirdRow}</RichText>
+          <RichText isProfileComponent style={{ width: 'CALC(100% - 2rem)' }}>
+            {thirdRow}
+          </RichText>
         </nav>
       )}
     </section>
