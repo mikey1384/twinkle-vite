@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import UserDetails from '~/components/UserDetails';
 import ProfilePic from '~/components/ProfilePic';
 import { useNavigate } from 'react-router-dom';
 import { useChatContext } from '~/contexts';
-import { borderRadius, Color } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function DefaultComponent({
   src,
+  pageType,
+  subPageType,
   profile
 }: {
   src: string;
+  pageType?: string;
+  subPageType?: string;
   profile: {
     id: number;
     username: string;
@@ -20,6 +24,41 @@ export default function DefaultComponent({
 }) {
   const navigate = useNavigate();
   const chatStatus = useChatContext((v) => v.state.chatStatus);
+  const heading = useMemo(() => {
+    switch (pageType) {
+      case 'watched':
+        return 'Watched';
+      case 'likes':
+        return 'Likes';
+      case 'all':
+        if (subPageType === 'byuser') {
+          return `All Posts made by ${profile.username}`;
+        }
+        return 'Posts (All)';
+      case 'comments':
+        return 'Comments';
+      case 'subjects':
+        if (subPageType === 'byuser') {
+          return `All Subjects made by ${profile.username}`;
+        }
+        return 'Subjects';
+      case 'ai-stories':
+        return 'AI Stories';
+      case 'videos':
+        if (subPageType === 'byuser') {
+          return `All Videos made by ${profile.username}`;
+        }
+        return 'Videos';
+      case 'links':
+        if (subPageType === 'byuser') {
+          return `All Links made by ${profile.username}`;
+        }
+        return 'Links';
+      default:
+        return '';
+    }
+  }, [pageType, profile?.username, subPageType]);
+
   return (
     <div
       onClick={() => navigate(src)}
@@ -29,6 +68,10 @@ export default function DefaultComponent({
         borderRadius
       }}
       className={`${css`
+        .label {
+          font-size: 2rem;
+          color: ${Color.black()};
+        }
         background: #fff;
         padding: 1rem;
         transition: background 0.5s;
@@ -38,8 +81,26 @@ export default function DefaultComponent({
         &:hover {
           background: ${Color.highlightGray()};
         }
+        @media (max-width: ${mobileMaxWidth}) {
+          .label {
+            font-size: 1.7rem;
+          }
+        }
       `}`}
     >
+      {heading ? (
+        <div
+          className={`label ${css`
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            overflow-wrap: break-word;
+            word-break: break-word;
+          `}`}
+          style={{ marginBottom: '1.5rem' }}
+        >
+          {heading}
+        </div>
+      ) : null}
       <div
         style={{
           display: 'flex',
@@ -48,7 +109,14 @@ export default function DefaultComponent({
           width: '100%'
         }}
       >
-        <div style={{ width: '18rem' }}>
+        <div
+          className={css`
+            width: 18rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 13rem;
+            }
+          `}
+        >
           <ProfilePic
             userId={profile.id}
             profilePicUrl={profile.profilePicUrl || ''}

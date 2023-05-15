@@ -22,8 +22,6 @@ export default function VideoDetails({
       <div style={{ marginLeft: '1rem' }}>
         <div
           style={{
-            fontSize: '2rem',
-            fontWeight: 'bold',
             lineHeight: 1.5,
             overflowWrap: 'break-word',
             wordBreak: 'break-word'

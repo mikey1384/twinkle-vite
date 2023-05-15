@@ -112,6 +112,8 @@ function ContentListItem({
         border: 1px solid ${Color.borderGray()};
         background: ${expandable ? Color.whiteGray() : '#fff'};
         .label {
+          font-size: 2.5rem;
+          font-weight: bold;
           color: ${Color.black()};
           transition: color 1s;
         }
@@ -128,6 +130,9 @@ function ContentListItem({
           margin-top: -0.5rem;
           border-left: 0;
           border-right: 0;
+          .label {
+            font-size: 2rem;
+          }
         }
       `}
     >
