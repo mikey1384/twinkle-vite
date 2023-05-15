@@ -141,6 +141,9 @@ function TextMessage({
                 <Spoiler content={content} />
               ) : stringIsEmpty(content) ? null : (
                 <RichText
+                  contentId={messageId}
+                  contentType="chat"
+                  section="main"
                   theme={displayedThemeColor}
                   readMoreHeightFixed
                   style={{
