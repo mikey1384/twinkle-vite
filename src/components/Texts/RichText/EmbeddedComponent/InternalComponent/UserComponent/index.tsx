@@ -77,57 +77,116 @@ export default function UserComponent({ src }: { src: string }) {
 
   if (pageType === 'watched') {
     return (
-      <DefaultComponent src={src} profile={profile} profileId={profileId} />
+      <DefaultComponent
+        src={src}
+        pageType={pageType}
+        profile={profile}
+        profileId={profileId}
+      />
     );
   }
   if (pageType === 'likes') {
     return (
-      <DefaultComponent src={src} profile={profile} profileId={profileId} />
+      <DefaultComponent
+        src={src}
+        pageType={pageType}
+        profile={profile}
+        profileId={profileId}
+      />
     );
   }
   if (pageType === 'all' && subPageType === 'byuser') {
     return (
-      <DefaultComponent src={src} profile={profile} profileId={profileId} />
+      <DefaultComponent
+        src={src}
+        pageType={pageType}
+        subPageType={subPageType}
+        profile={profile}
+        profileId={profileId}
+      />
     );
   }
   if (pageType === 'all') {
     return (
-      <DefaultComponent src={src} profile={profile} profileId={profileId} />
+      <DefaultComponent
+        src={src}
+        pageType={pageType}
+        profile={profile}
+        profileId={profileId}
+      />
     );
   }
   if (pageType === 'comments') {
     return (
-      <DefaultComponent src={src} profile={profile} profileId={profileId} />
+      <DefaultComponent
+        src={src}
+        pageType={pageType}
+        profile={profile}
+        profileId={profileId}
+      />
     );
   }
   if (pageType === 'subjects' && subPageType === 'byuser') {
     return (
-      <DefaultComponent src={src} profile={profile} profileId={profileId} />
+      <DefaultComponent
+        src={src}
+        pageType={pageType}
+        subPageType={subPageType}
+        profile={profile}
+        profileId={profileId}
+      />
     );
   }
   if (pageType === 'subjects') {
     return (
-      <DefaultComponent src={src} profile={profile} profileId={profileId} />
+      <DefaultComponent
+        src={src}
+        pageType={pageType}
+        profile={profile}
+        profileId={profileId}
+      />
     );
   }
   if (pageType === 'ai-stories') {
     return (
-      <DefaultComponent src={src} profile={profile} profileId={profileId} />
+      <DefaultComponent
+        src={src}
+        pageType={pageType}
+        profile={profile}
+        profileId={profileId}
+      />
     );
   }
   if (pageType === 'videos' && subPageType === 'byuser') {
     return (
-      <DefaultComponent src={src} profile={profile} profileId={profileId} />
+      <DefaultComponent
+        src={src}
+        pageType={pageType}
+        subPageType={subPageType}
+        profile={profile}
+        profileId={profileId}
+      />
     );
   }
   if (pageType === 'videos') {
     return (
-      <DefaultComponent src={src} profile={profile} profileId={profileId} />
+      <DefaultComponent
+        src={src}
+        pageType={pageType}
+        profile={profile}
+        profileId={profileId}
+      />
     );
   }
   if (pageType === 'links' && subPageType === 'byuser') {
     return (
-      <DefaultComponent src={src} profile={profile} profileId={profileId} />
+      <DefaultComponent
+        src={src}
+        pageType={pageType}
+        subPageType={subPageType}
+        profile={profile}
+        profileId={profileId}
+      />
     );
   }
   return <DefaultComponent src={src} profile={profile} profileId={profileId} />;

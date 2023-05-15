@@ -15,15 +15,7 @@ export default function UrlDetails({
 }) {
   return (
     <div>
-      <span
-        style={{
-          fontWeight: 'bold',
-          fontSize: '2rem'
-        }}
-        className="label"
-      >
-        {title}
-      </span>
+      <span className="label">{title}</span>
       <Embedly
         small
         noLink
