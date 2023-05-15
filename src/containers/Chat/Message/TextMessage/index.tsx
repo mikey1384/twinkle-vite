@@ -152,7 +152,7 @@ function TextMessage({
                     color: isNotification ? Color.gray() : undefined
                   }}
                 >
-                  {content}
+                  {(content || '').trim()}
                 </RichText>
               )}
             </div>
