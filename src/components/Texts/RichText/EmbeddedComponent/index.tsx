@@ -28,9 +28,21 @@ export default function EmbeddedComponent({
   );
   const isYouTube = useMemo(() => isValidYoutubeUrl(src), [src]);
   return (
-    <div style={{ padding: '1rem', width: '100%' }}>
-      {isInternalLink && !isProfileComponent ? (
-        <InternalComponent {...commonProps} src={replacedLink} />
+    <div
+      style={{
+        padding:
+          replacedLink.split('/')?.[1] === 'users' && isProfileComponent
+            ? 'none'
+            : '1rem',
+        width: '100%'
+      }}
+    >
+      {isInternalLink ? (
+        <InternalComponent
+          {...commonProps}
+          isProfileComponent={isProfileComponent}
+          src={replacedLink}
+        />
       ) : isYouTube ? (
         <YouTubeVideo
           {...commonProps}

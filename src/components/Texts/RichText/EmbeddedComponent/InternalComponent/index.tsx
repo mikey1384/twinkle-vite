@@ -5,7 +5,13 @@ import MissionComponent from './MissionComponent';
 import UserComponent from './UserComponent';
 import DefaultComponent from './DefaultComponent';
 
-export default function InternalComponent({ src }: { src: string }) {
+export default function InternalComponent({
+  src,
+  isProfileComponent
+}: {
+  src: string;
+  isProfileComponent?: boolean;
+}) {
   const InnerComponent = useMemo(() => {
     const urlParts = src.split('/');
     const linkType = urlParts[1];
@@ -20,11 +26,11 @@ export default function InternalComponent({ src }: { src: string }) {
     if (linkType === 'missions' && contentId) {
       return <MissionComponent src={src} />;
     }
-    if (linkType === 'users') {
+    if (linkType === 'users' && !isProfileComponent) {
       return <UserComponent src={src} />;
     }
-    return <DefaultComponent linkType={linkType} />;
-  }, [src]);
+    return <DefaultComponent linkType={linkType} src={src} />;
+  }, [isProfileComponent, src]);
 
   return (
     <ErrorBoundary componentPath="Texts/EmbeddedComponent/InternalComponent">

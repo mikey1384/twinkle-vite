@@ -2,7 +2,13 @@ import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { capitalize } from '~/helpers/stringHelpers';
 
-export default function DefaultComponent({ linkType }: { linkType: string }) {
+export default function DefaultComponent({
+  linkType,
+  src
+}: {
+  linkType: string;
+  src: string;
+}) {
   const linkLabel = useMemo(
     () =>
       capitalize(
@@ -13,7 +19,7 @@ export default function DefaultComponent({ linkType }: { linkType: string }) {
 
   return (
     <div>
-      <Link to={`/${linkType}`} style={{ fontWeight: 'bold' }}>
+      <Link to={src} style={{ fontWeight: 'bold' }}>
         <u>
           Go to {linkLabel}
           {}
