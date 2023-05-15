@@ -109,8 +109,6 @@ export default function Markdown({
               return (
                 <div
                   style={{
-                    marginBlockStart: '1em',
-                    marginBlockEnd: '1em',
                     marginInlineStart: '0px',
                     marginInlineEnd: '0px'
                   }}
