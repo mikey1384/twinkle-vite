@@ -153,36 +153,56 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   }
 
   async function handleGameFinish() {
-    const promises = [
-      (async () => {
-        const { isDuplicate, newXp, newCoins } = await uploadGrammarGameResult({
-          attemptNumber: timesPlayedToday + 1,
-          scoreArray: scoreArrayRef.current
-        });
-        if (isDuplicate) {
-          return window.location.reload();
-        }
-        const newState: { twinkleXP?: number; twinkleCoins?: number } = {
-          twinkleXP: newXp
-        };
-        if (newCoins) {
-          newState.twinkleCoins = newCoins;
-        }
-        onSetUserState({
-          userId,
-          newState
-        });
-      })(),
-      (async () => {
-        await new Promise<void>((resolve) =>
-          setTimeout(() => {
-            setGameState('finished');
-            resolve();
-          }, 3000)
+    let retries = 0;
+    const maxRetries = 3;
+    const cooldown = 1000;
+
+    while (retries < maxRetries) {
+      try {
+        const promises = [
+          (async () => {
+            const { isDuplicate, newXp, newCoins } =
+              await uploadGrammarGameResult({
+                attemptNumber: timesPlayedToday + 1,
+                scoreArray: scoreArrayRef.current
+              });
+            if (isDuplicate) {
+              return window.location.reload();
+            }
+            const newState: { twinkleXP?: number; twinkleCoins?: number } = {
+              twinkleXP: newXp
+            };
+            if (newCoins) {
+              newState.twinkleCoins = newCoins;
+            }
+            onSetUserState({
+              userId,
+              newState
+            });
+          })(),
+          (async () => {
+            await new Promise<void>((resolve) =>
+              setTimeout(() => {
+                setGameState('finished');
+                resolve();
+              }, 3000)
+            );
+          })()
+        ];
+        await Promise.all(promises);
+        setGameState('finished');
+        break;
+      } catch (error) {
+        console.error(
+          `An error occurred: ${error}. Retry ${retries + 1} of ${maxRetries}`
         );
-      })()
-    ];
-    await Promise.all(promises);
-    setGameState('finished');
+        retries++;
+        if (retries < maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, cooldown));
+        } else {
+          console.error(`Failed after ${maxRetries} retries. Giving up.`);
+        }
+      }
+    }
   }
 }
