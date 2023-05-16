@@ -17,6 +17,8 @@ import { isMobile } from '~/helpers';
 import Spoiler from '../Spoiler';
 import LocalContext from '../../Context';
 
+const regex =
+  /\[.*?\]\((https?:\/\/.*?|www.*?)\)|!\[.*?\]\((https?:\/\/.*?|www.*?)\)/;
 const deviceIsMobile = isMobile(navigator);
 
 function TextMessage({
@@ -68,6 +70,10 @@ function TextMessage({
     requests: { hideChatAttachment },
     actions: { onHideAttachment }
   } = useContext(LocalContext);
+
+  const isContentContainsLink = useMemo(() => {
+    return regex.test(content);
+  }, [content]);
 
   const Prefix = useMemo(() => {
     let prefix = null;
@@ -170,16 +176,20 @@ function TextMessage({
             )}
           </>
         )}
-        {extractedUrl && messageId && !attachmentHidden && !isSpoiler && (
-          <LinkAttachment
-            style={{ marginTop: '2rem' }}
-            messageId={messageId}
-            defaultThumbUrl={thumbUrl}
-            extractedUrl={extractedUrl}
-            onHideAttachment={handleHideAttachment}
-            userCanEditThis={userCanEditThis}
-          />
-        )}
+        {!isContentContainsLink &&
+          extractedUrl &&
+          messageId &&
+          !attachmentHidden &&
+          !isSpoiler && (
+            <LinkAttachment
+              style={{ marginTop: '2rem' }}
+              messageId={messageId}
+              defaultThumbUrl={thumbUrl}
+              extractedUrl={extractedUrl}
+              onHideAttachment={handleHideAttachment}
+              userCanEditThis={userCanEditThis}
+            />
+          )}
       </div>
     </ErrorBoundary>
   );
