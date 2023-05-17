@@ -41,8 +41,11 @@ export default function AICardDetails({
           className={`card-quality ${css`
             font-size: 1.6rem;
             font-family: Open Sans, sans-serif;
+            text-align: center;
+            padding: 0 ${removeRightPadding ? 0 : '5rem'} 0 5rem;
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1rem;
+              padding: 0 ${removeRightPadding ? 0 : '2rem'} 0 2rem;
             }
           `}`}
         >
@@ -85,8 +88,10 @@ export default function AICardDetails({
               font-size: 1.3rem;
               font-family: helvetica, sans-serif;
               color: ${Color.darkerGray()};
+              padding: 0 ${removeRightPadding ? 0 : '5rem'} 0 5rem;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
+                padding: 0 ${removeRightPadding ? 0 : '2rem'} 0 2rem;
               }
             `}
           >
