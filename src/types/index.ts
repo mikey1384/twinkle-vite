@@ -15,6 +15,7 @@ export interface Card {
   level: number;
   owner: User;
   quality: 'common' | 'superior' | 'rare' | 'elite' | 'legendary';
+  style: string;
   word: string;
 }
 export interface Comment {
