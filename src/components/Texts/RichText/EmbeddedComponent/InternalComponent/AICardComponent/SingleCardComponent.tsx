@@ -30,7 +30,7 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
   }, [cardId]);
   const card = useMemo(() => cardObj[cardId] as CardType, [cardId, cardObj]);
 
-  return loading ? (
+  return loading || !card ? (
     <Loading />
   ) : cardNotFound ? (
     <InvalidContent />
