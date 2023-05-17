@@ -48,10 +48,11 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
           style={{
             display: 'flex',
             justifyContent: 'center',
-            padding: '1rem'
+            padding: '1rem',
+            width: '100%'
           }}
         >
-          <div style={{ display: 'flex' }}>
+          <div style={{ display: 'flex', width: '100%' }}>
             <AICard
               onClick={() => setCardModalShown(true)}
               card={card}
