@@ -4,6 +4,7 @@ import Loading from '~/components/Loading';
 import InvalidContent from '../../InvalidContent';
 import AICardDetails from '~/components/AICardDetails';
 import AICardModal from '~/components/Modals/AICardModal';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Card as CardType } from '~/types';
 
@@ -37,7 +38,7 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
   }, [cardNotFound, cardId]);
 
   return (
-    <>
+    <ErrorBoundary componentPath="RichText/EmbeddedComponent/InternalComponent/AICardComponent/SingleCardComponent">
       {loading || !card ? (
         <Loading />
       ) : cardNotFound ? (
@@ -63,6 +64,6 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
       {cardModalShown && (
         <AICardModal cardId={card.id} onHide={() => setCardModalShown(false)} />
       )}
-    </>
+    </ErrorBoundary>
   );
 }
