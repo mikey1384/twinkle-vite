@@ -60,7 +60,7 @@ export default function AICardDetails({
             padding: 3rem ${removeRightPadding ? 0 : '5rem'} 5rem 5rem;
             text-align: center;
             @media (max-width: ${mobileMaxWidth}) {
-              padding: 3rem 2rem 4rem 2rem;
+              padding: 3rem ${removeRightPadding ? 0 : '2rem'} 4rem 2rem;
             }
           `}
         >
