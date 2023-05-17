@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import AICard from '~/components/AICard';
 import Loading from '~/components/Loading';
 import InvalidContent from '../../InvalidContent';
+import AICardDetails from '~/components/AICardDetails';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Card as CardType } from '~/types';
 
@@ -35,8 +36,17 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
   ) : cardNotFound ? (
     <InvalidContent />
   ) : (
-    <div>
-      <AICard card={card} detailShown />
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '1rem'
+      }}
+    >
+      <div style={{ display: 'flex' }}>
+        <AICard card={card} detailShown />
+        <AICardDetails card={card} />
+      </div>
     </div>
   );
 }
