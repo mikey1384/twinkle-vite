@@ -45,7 +45,16 @@ export default function MultiCardComponent({
   }, [color, isBuyNow, owner, quality, word]);
 
   return (
-    <div>
+    <div
+      style={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column',
+        height: '18rem'
+      }}
+    >
       <AICardsPreview isAICardModalShown={false} cardIds={cardIds} />
     </div>
   );
