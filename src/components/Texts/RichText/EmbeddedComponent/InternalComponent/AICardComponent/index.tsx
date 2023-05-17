@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import SingleCardComponent from './SingleCardComponent';
+import MultiCardComponent from './MultiCardComponent';
 
 export default function AICardComponent({ src }: { src: string }) {
   const queryParams = useMemo(() => {
@@ -18,11 +19,5 @@ export default function AICardComponent({ src }: { src: string }) {
     return <SingleCardComponent cardId={Number(queryParams.cardId)} />;
   }
 
-  return (
-    <div>
-      <div>AI Card!!</div>
-      <div>{src}</div>
-      <div>{JSON.stringify(queryParams)}</div>
-    </div>
-  );
+  return <MultiCardComponent {...queryParams} />;
 }
