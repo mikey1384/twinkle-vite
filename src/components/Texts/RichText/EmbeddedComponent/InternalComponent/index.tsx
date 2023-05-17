@@ -4,6 +4,7 @@ import MainContentComponent from './MainContentComponent';
 import MissionComponent from './MissionComponent';
 import UserComponent from './UserComponent';
 import DefaultComponent from './DefaultComponent';
+import AICardComponent from './AICardComponent';
 
 export default function InternalComponent({
   src,
@@ -28,6 +29,9 @@ export default function InternalComponent({
     }
     if (linkType === 'users' && !isProfileComponent) {
       return <UserComponent src={src} />;
+    }
+    if (linkType === 'ai-cards') {
+      return <AICardComponent src={src} />;
     }
     return <DefaultComponent linkType={linkType} src={src} />;
   }, [isProfileComponent, src]);
