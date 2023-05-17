@@ -13,17 +13,20 @@ AICardsPreview.propTypes = {
   isAICardModalShown: PropTypes.bool.isRequired,
   isOnModal: PropTypes.bool,
   cardIds: PropTypes.array.isRequired,
+  moreAICardsModalTitle: PropTypes.string,
   onSetAICardModalCardId: PropTypes.func
 };
 export default function AICardsPreview({
   isAICardModalShown,
   isOnModal,
   cardIds,
+  moreAICardsModalTitle,
   onSetAICardModalCardId
 }: {
   isAICardModalShown: boolean;
   isOnModal?: boolean;
   cardIds: number[];
+  moreAICardsModalTitle?: string;
   onSetAICardModalCardId?: (cardId: number) => void;
 }) {
   const cardObj = useChatContext((v) => v.state.cardObj);
@@ -71,6 +74,7 @@ export default function AICardsPreview({
           <MoreAICardsModal
             modalOverModal={isOnModal}
             cards={cards}
+            moreAICardsModalTitle={moreAICardsModalTitle}
             onSetAICardModalCardId={onSetAICardModalCardId}
             onHide={() =>
               isAICardModalShown ? null : setMoreAICardsModalShown(false)

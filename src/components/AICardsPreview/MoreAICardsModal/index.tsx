@@ -15,16 +15,18 @@ export default function MoreAICardsModal({
   cards,
   onSetAICardModalCardId,
   onHide,
-  modalOverModal
+  modalOverModal,
+  moreAICardsModalTitle = 'Selected Cards'
 }: {
   cards: Card[];
   onSetAICardModalCardId?: (cardId: number) => void;
   onHide: () => void;
   modalOverModal?: boolean;
+  moreAICardsModalTitle?: string;
 }) {
   return (
     <Modal modalOverModal={modalOverModal} onHide={onHide}>
-      <header>Selected Cards</header>
+      <header>{moreAICardsModalTitle}</header>
       <main>
         <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
           {cards.map((card) => (
