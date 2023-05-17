@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
 import AICardModal from '~/components/Modals/AICardModal';
 import { useAppContext, useChatContext } from '~/contexts';
+import { Color } from '~/constants/css';
 
 export default function MultiCardComponent({
   color,
@@ -53,12 +54,15 @@ export default function MultiCardComponent({
       titleParts.push(`${owner}'s`);
     }
     if (color) {
-      titleParts.push(`${color} card${cardIds.length > 1 ? 's' : ''}`);
+      titleParts.push(
+        `${color} ${quality ? `${quality} ` : ''}card${
+          cardIds.length === 1 ? '' : 's'
+        }`
+      );
     } else {
-      titleParts.push(`card${cardIds.length > 1 ? 's' : ''}`);
-    }
-    if (quality) {
-      titleParts.push(`of ${quality} quality`);
+      titleParts.push(
+        `${quality ? `${quality} ` : ''}card${cardIds.length === 1 ? '' : 's'}`
+      );
     }
     if (word) {
       titleParts.push(`containing the word "${word}"`);
@@ -80,7 +84,16 @@ export default function MultiCardComponent({
         height: '18rem'
       }}
     >
-      {title}
+      <div
+        style={{
+          fontWeight: 'bold',
+          fontFamily: 'Roboto, sans-serif',
+          marginBottom: '1rem',
+          color: Color.black()
+        }}
+      >
+        {title}
+      </div>
       <AICardsPreview
         isAICardModalShown={!!selectedCardId}
         cardIds={cardIds}
