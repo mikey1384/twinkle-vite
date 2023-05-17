@@ -23,6 +23,7 @@ export default function MultiCardComponent({
   const navigate = useNavigate();
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const [loading, setLoading] = useState(false);
   const [cardIds, setCardIds] = useState<number[]>([]);
   const loadFilteredAICards = useAppContext(
     (v) => v.requestHelpers.loadFilteredAICards
@@ -32,6 +33,7 @@ export default function MultiCardComponent({
     init();
     async function init() {
       try {
+        setLoading(true);
         const { cards } = await loadFilteredAICards({
           filters: {
             color,
@@ -53,6 +55,8 @@ export default function MultiCardComponent({
         setCardIds(cardIds);
       } catch (error) {
         console.error(error);
+      } finally {
+        setLoading(false);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,7 +87,21 @@ export default function MultiCardComponent({
     return titleParts.filter(Boolean).join(' ');
   }, [color, isBuyNow, owner, quality, word, cardIds]);
 
-  return (
+  return loading ? (
+    <div
+      style={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column',
+        height: '20rem',
+        padding: '1rem'
+      }}
+    >
+      &nbsp;
+    </div>
+  ) : (
     <div
       style={{
         width: '100%',
