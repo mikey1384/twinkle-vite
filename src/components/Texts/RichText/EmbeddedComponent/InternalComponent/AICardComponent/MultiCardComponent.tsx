@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
 import AICardModal from '~/components/Modals/AICardModal';
+import Loading from '~/components/Loading';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
@@ -19,6 +20,7 @@ export default function MultiCardComponent({
 }) {
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const [loading, setLoading] = useState(false);
   const [cardIds, setCardIds] = useState<number[]>([]);
   const loadFilteredAICards = useAppContext(
     (v) => v.requestHelpers.loadFilteredAICards
@@ -26,24 +28,31 @@ export default function MultiCardComponent({
   useEffect(() => {
     init();
     async function init() {
-      const { cards } = await loadFilteredAICards({
-        filters: {
-          color,
-          isBuyNow,
-          quality,
-          owner,
-          word
-        }
-      });
-      const cardIds = [];
-      for (const card of cards) {
-        onUpdateAICard({
-          cardId: card.id,
-          newState: card
+      try {
+        setLoading(true);
+        const { cards } = await loadFilteredAICards({
+          filters: {
+            color,
+            isBuyNow,
+            quality,
+            owner,
+            word
+          }
         });
-        cardIds.push(card.id);
+        const cardIds = [];
+        for (const card of cards) {
+          onUpdateAICard({
+            cardId: card.id,
+            newState: card
+          });
+          cardIds.push(card.id);
+        }
+        setCardIds(cardIds);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
-      setCardIds(cardIds);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [color, isBuyNow, owner, quality, word]);
@@ -73,7 +82,9 @@ export default function MultiCardComponent({
     return titleParts.filter(Boolean).join(' ');
   }, [color, isBuyNow, owner, quality, word, cardIds]);
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <div
       style={{
         width: '100%',
@@ -95,12 +106,28 @@ export default function MultiCardComponent({
       >
         {title}
       </div>
-      <AICardsPreview
-        isAICardModalShown={!!selectedCardId}
-        cardIds={cardIds}
-        moreAICardsModalTitle={title}
-        onSetAICardModalCardId={setSelectedCardId}
-      />
+      {cardIds.length > 0 ? (
+        <AICardsPreview
+          isAICardModalShown={!!selectedCardId}
+          cardIds={cardIds}
+          moreAICardsModalTitle={title}
+          onSetAICardModalCardId={setSelectedCardId}
+        />
+      ) : (
+        <div
+          style={{
+            marginTop: '5rem',
+            height: '10rem',
+            fontWeight: 'bold',
+            color: Color.black(),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          No Cards Found
+        </div>
+      )}
       {selectedCardId && (
         <AICardModal
           cardId={selectedCardId}
