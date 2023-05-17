@@ -6,7 +6,7 @@ import { Card } from '~/types';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
-export default function CardDetails({
+export default function AICardDetails({
   style,
   card
 }: {
