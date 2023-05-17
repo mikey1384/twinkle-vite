@@ -61,6 +61,7 @@ export default function MultiCardComponent({
       <AICardsPreview
         isAICardModalShown={!!selectedCardId}
         cardIds={cardIds}
+        moreAICardsModalTitle="All Cards"
         onSetAICardModalCardId={setSelectedCardId}
       />
       {selectedCardId && (
