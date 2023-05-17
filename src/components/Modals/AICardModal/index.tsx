@@ -19,7 +19,7 @@ import Icon from '~/components/Icon';
 import Offers from './Offers';
 import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
-import CardDetails from './CardDetails';
+import AICardDetails from '~/components/AICardDetails';
 
 export default function AICardModal({
   cardId,
@@ -271,7 +271,7 @@ export default function AICardModal({
                 gridRow: 'span 1'
               }}
             >
-              <CardDetails
+              <AICardDetails
                 style={{
                   gridColumn: 'span 1',
                   gridRow: 'span 1'
