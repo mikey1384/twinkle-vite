@@ -2,9 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import useAICard from '~/helpers/hooks/useAICard';
 import AICard from '~/components/AICard';
-import SanitizedHTML from 'react-sanitized-html';
 import OfferModal from './OfferModal';
 import UsernameText from '~/components/Texts/UsernameText';
 import FilterBar from '~/components/FilterBar';
@@ -14,13 +12,14 @@ import Loading from '~/components/Loading';
 import { socket } from '~/constants/io';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { qualityProps, returnCardBurnXP } from '~/constants/defaultValues';
+import { returnCardBurnXP } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import Offers from './Offers';
 import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
+import CardDetails from './CardDetails';
 
 export default function AICardModal({
   cardId,
@@ -100,8 +99,6 @@ export default function AICardModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardId, userId]);
-
-  const { promptText } = useAICard(card);
 
   useEffect(() => {
     loadOffers();
@@ -274,85 +271,13 @@ export default function AICardModal({
                 gridRow: 'span 1'
               }}
             >
-              <div
+              <CardDetails
                 style={{
                   gridColumn: 'span 1',
-                  gridRow: 'span 1',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  height: '100%',
-                  alignItems: 'center'
+                  gridRow: 'span 1'
                 }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    minHeight: '100%',
-                    padding: '0 1rem'
-                  }}
-                >
-                  <div
-                    className={`card-quality ${css`
-                      font-size: 1.6rem;
-                      font-family: Open Sans, sans-serif;
-                      @media (max-width: ${mobileMaxWidth}) {
-                        font-size: 1rem;
-                      }
-                    `}`}
-                  >
-                    <b
-                      style={{
-                        ...qualityProps[card.quality]
-                      }}
-                    >
-                      {card.quality}
-                    </b>{' '}
-                    card
-                  </div>
-                  <div
-                    className={css`
-                      padding: 3rem 5rem 5rem 5rem;
-                      text-align: center;
-                      @media (max-width: ${mobileMaxWidth}) {
-                        padding: 3rem 2rem 4rem 2rem;
-                      }
-                    `}
-                  >
-                    <span
-                      className={css`
-                        font-family: Roboto Mono, monospace;
-                        font-size: 1.5rem;
-                        @media (max-width: ${mobileMaxWidth}) {
-                          font-size: 1.1rem;
-                        }
-                      `}
-                    >
-                      <SanitizedHTML
-                        allowedAttributes={{ b: ['style'] }}
-                        html={`"${promptText}"`}
-                      />
-                    </span>
-                  </div>
-                  <div>
-                    <b
-                      className={css`
-                        font-size: 1.3rem;
-                        font-family: helvetica, sans-serif;
-                        color: ${Color.darkerGray()};
-                        @media (max-width: ${mobileMaxWidth}) {
-                          font-size: 1rem;
-                        }
-                      `}
-                    >
-                      {card.style}
-                    </b>
-                  </div>
-                </div>
-              </div>
+                card={card}
+              />
             </div>
             <div style={{ gridColumn: 'span 1', gridRow: 'span 1' }}>
               {!card.isBurned && card.imagePath ? (
