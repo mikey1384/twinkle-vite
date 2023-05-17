@@ -8,10 +8,12 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 
 export default function AICardDetails({
   style,
-  card
+  card,
+  removeRightPadding
 }: {
   style?: React.CSSProperties;
   card: Card;
+  removeRightPadding?: boolean;
 }) {
   const { promptText } = useAICard(card);
   return (
@@ -55,7 +57,7 @@ export default function AICardDetails({
         </div>
         <div
           className={css`
-            padding: 3rem 5rem 5rem 5rem;
+            padding: 3rem ${removeRightPadding ? 0 : '5rem'} 5rem 5rem;
             text-align: center;
             @media (max-width: ${mobileMaxWidth}) {
               padding: 3rem 2rem 4rem 2rem;
