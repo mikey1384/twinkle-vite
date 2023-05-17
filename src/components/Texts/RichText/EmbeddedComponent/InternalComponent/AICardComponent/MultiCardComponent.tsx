@@ -81,7 +81,8 @@ export default function MultiCardComponent({
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        height: '18rem'
+        height: '18rem',
+        padding: '1rem'
       }}
     >
       <div
