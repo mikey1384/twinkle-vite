@@ -1,4 +1,5 @@
 import React from 'react';
+import AICardsPreview from '~/components/AICardsPreview';
 
 export default function MultiCardComponent({
   color,
@@ -21,6 +22,7 @@ export default function MultiCardComponent({
       <div>quality {quality}</div>
       <div>owner {owner}</div>
       <div>word {word}</div>
+      <AICardsPreview isAICardModalShown={false} cardIds={[]} />
     </div>
   );
 }
