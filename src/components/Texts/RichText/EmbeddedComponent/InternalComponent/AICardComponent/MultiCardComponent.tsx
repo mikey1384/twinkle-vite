@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
+import AICardModal from '~/components/Modals/AICardModal';
 import { useAppContext, useChatContext } from '~/contexts';
 
 export default function MultiCardComponent({
@@ -15,6 +16,7 @@ export default function MultiCardComponent({
   owner?: string | null;
   word?: string | null;
 }) {
+  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [cardIds, setCardIds] = useState<number[]>([]);
   const loadFilteredAICards = useAppContext(
@@ -56,7 +58,17 @@ export default function MultiCardComponent({
         height: '18rem'
       }}
     >
-      <AICardsPreview isAICardModalShown={false} cardIds={cardIds} />
+      <AICardsPreview
+        isAICardModalShown={!!selectedCardId}
+        cardIds={cardIds}
+        onSetAICardModalCardId={setSelectedCardId}
+      />
+      {selectedCardId && (
+        <AICardModal
+          cardId={selectedCardId}
+          onHide={() => setSelectedCardId(null)}
+        />
+      )}
     </div>
   );
 }
