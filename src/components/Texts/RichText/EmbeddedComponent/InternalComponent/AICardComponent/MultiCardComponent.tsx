@@ -30,8 +30,7 @@ export default function MultiCardComponent({
           quality,
           owner,
           word
-        },
-        limit: 5
+        }
       });
       const cardIds = [];
       for (const card of cards) {
