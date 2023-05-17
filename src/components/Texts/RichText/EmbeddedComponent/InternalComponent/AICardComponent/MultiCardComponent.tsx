@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
 import AICardModal from '~/components/Modals/AICardModal';
-import Loading from '~/components/Loading';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
@@ -24,16 +23,15 @@ export default function MultiCardComponent({
   const navigate = useNavigate();
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
-  const [loading, setLoading] = useState(false);
   const [cardIds, setCardIds] = useState<number[]>([]);
   const loadFilteredAICards = useAppContext(
     (v) => v.requestHelpers.loadFilteredAICards
   );
+
   useEffect(() => {
     init();
     async function init() {
       try {
-        setLoading(true);
         const { cards } = await loadFilteredAICards({
           filters: {
             color,
@@ -55,8 +53,6 @@ export default function MultiCardComponent({
         setCardIds(cardIds);
       } catch (error) {
         console.error(error);
-      } finally {
-        setLoading(false);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,9 +83,7 @@ export default function MultiCardComponent({
     return titleParts.filter(Boolean).join(' ');
   }, [color, isBuyNow, owner, quality, word, cardIds]);
 
-  return loading ? (
-    <Loading />
-  ) : (
+  return (
     <div
       style={{
         width: '100%',
@@ -97,7 +91,7 @@ export default function MultiCardComponent({
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        height: '18rem',
+        height: '20rem',
         padding: '1rem'
       }}
     >
