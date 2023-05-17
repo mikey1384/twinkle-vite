@@ -45,7 +45,7 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
     >
       <div style={{ display: 'flex' }}>
         <AICard card={card} detailShown />
-        <AICardDetails card={card} />
+        <AICardDetails style={{ marginRight: '-5rem' }} card={card} />
       </div>
     </div>
   );
