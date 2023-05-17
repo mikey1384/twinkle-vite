@@ -14,8 +14,12 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
   const [cardModalShown, setCardModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cardNotFound, setCardNotFound] = useState(false);
+  const card = useMemo(() => cardObj[cardId] as CardType, [cardId, cardObj]);
+
   useEffect(() => {
-    init();
+    if (!cardNotFound && !cardObj[cardId]) {
+      init();
+    }
     async function init() {
       setLoading(true);
       const { card } = await loadAICard(cardId);
@@ -30,8 +34,7 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardId]);
-  const card = useMemo(() => cardObj[cardId] as CardType, [cardId, cardObj]);
+  }, [cardNotFound, cardId]);
 
   return (
     <>
