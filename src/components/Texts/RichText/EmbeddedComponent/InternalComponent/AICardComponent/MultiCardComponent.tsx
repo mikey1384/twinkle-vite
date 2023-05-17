@@ -33,13 +33,15 @@ export default function MultiCardComponent({
         },
         limit: 5
       });
+      const cardIds = [];
       for (const card of cards) {
         onUpdateAICard({
           cardId: card.id,
           newState: card
         });
+        cardIds.push(card.id);
       }
-      setCardIds(cards.map((card: { id: number }) => card.id));
+      setCardIds(cardIds);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [color, isBuyNow, owner, quality, word]);
