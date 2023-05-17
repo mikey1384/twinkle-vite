@@ -22,7 +22,7 @@ export default function AICardComponent({ src }: { src: string }) {
   if (
     Object.keys(queryParams).filter((key: string) => queryParams[key]).length
   ) {
-    return <MultiCardComponent {...queryParams} />;
+    return <MultiCardComponent {...queryParams} src={src} />;
   }
   return <DefaultComponent linkType="ai-cards" src={src} />;
 }

@@ -4,20 +4,24 @@ import AICardModal from '~/components/Modals/AICardModal';
 import Loading from '~/components/Loading';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
+import { useNavigate } from 'react-router-dom';
 
 export default function MultiCardComponent({
   color,
   isBuyNow,
   quality,
   owner,
-  word
+  word,
+  src
 }: {
   color?: string | null;
   isBuyNow?: string | null;
   quality?: string | null;
   owner?: string | null;
   word?: string | null;
+  src: string;
 }) {
+  const navigate = useNavigate();
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [loading, setLoading] = useState(false);
@@ -37,7 +41,8 @@ export default function MultiCardComponent({
             quality,
             owner,
             word
-          }
+          },
+          limit: 6
         });
         const cardIds = [];
         for (const card of cards) {
@@ -112,6 +117,7 @@ export default function MultiCardComponent({
           cardIds={cardIds}
           moreAICardsModalTitle={title}
           onSetAICardModalCardId={setSelectedCardId}
+          onLoadMoreClick={() => navigate(src)}
         />
       ) : (
         <div
