@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import SingleCardComponent from './SingleCardComponent';
 import MultiCardComponent from './MultiCardComponent';
+import DefaultComponent from '../DefaultComponent';
 
 export default function AICardComponent({ src }: { src: string }) {
-  const queryParams = useMemo(() => {
+  const queryParams = useMemo<Record<string, string | null>>(() => {
     const url = new URL(`https:/${src}`);
     const params = new URLSearchParams(url.search || '');
     const cardId = params.get('cardId');
@@ -18,6 +19,10 @@ export default function AICardComponent({ src }: { src: string }) {
   if (queryParams.cardId) {
     return <SingleCardComponent cardId={Number(queryParams.cardId)} />;
   }
-
-  return <MultiCardComponent {...queryParams} />;
+  if (
+    Object.keys(queryParams).filter((key: string) => queryParams[key]).length
+  ) {
+    return <MultiCardComponent {...queryParams} />;
+  }
+  return <DefaultComponent linkType="ai-cards" src={src} />;
 }
