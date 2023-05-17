@@ -84,22 +84,27 @@ export default function AICard({
     <div
       style={{
         display: 'flex',
-        justifyContent: 'center',
-        cursor: onClick ? 'pointer' : 'default'
+        justifyContent: 'center'
       }}
       className={`unselectable`}
       onClick={onClick}
     >
-      <Card
-        card={card}
-        bind={bind}
-        detailShown={detailShown}
-        innerRef={CardRef}
-        isAnimated={isAnimated}
-        cardStyle={cardStyle}
-        onMouseLeave={handleMouseLeave}
-        onMouseMove={handleMouseMove}
-      />
+      <div
+        style={{
+          cursor: onClick ? 'pointer' : 'default'
+        }}
+      >
+        <Card
+          card={card}
+          bind={bind}
+          detailShown={detailShown}
+          innerRef={CardRef}
+          isAnimated={isAnimated}
+          cardStyle={cardStyle}
+          onMouseLeave={handleMouseLeave}
+          onMouseMove={handleMouseMove}
+        />
+      </div>
     </div>
   );
 

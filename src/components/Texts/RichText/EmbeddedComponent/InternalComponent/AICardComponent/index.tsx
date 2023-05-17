@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import SingleCardComponent from './SingleCardComponent';
 
 export default function AICardComponent({ src }: { src: string }) {
   const queryParams = useMemo(() => {
@@ -12,6 +13,10 @@ export default function AICardComponent({ src }: { src: string }) {
     const word = params.get('search[word]');
     return { cardId, color, isBuyNow, quality, owner, word };
   }, [src]);
+
+  if (queryParams.cardId) {
+    return <SingleCardComponent cardId={Number(queryParams.cardId)} />;
+  }
 
   return (
     <div>
