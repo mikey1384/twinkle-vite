@@ -107,6 +107,7 @@ export default function OfferDetail({
           </div>
         )}
         <AICardsPreview
+          isOnModal
           isAICardModalShown={isAICardModalShown}
           cardIds={cardIds}
           onSetAICardModalCardId={onSetAICardModalCardId}
