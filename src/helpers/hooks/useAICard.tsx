@@ -17,12 +17,12 @@ const color5 = '#b98cce';
 
 export default function useAICard(card: any) {
   const memoizedCardQuality = useMemo(
-    () => cardProps[card.quality] || [],
-    [card.quality]
+    () => cardProps[card?.quality] || [],
+    [card?.quality]
   );
   const memoizedQualityProps = useMemo(
-    () => qualityProps[card.quality] || {},
-    [card.quality]
+    () => qualityProps[card?.quality] || {},
+    [card?.quality]
   );
   const { cardColor, promptText } = useMemo(() => {
     const cardObj: any = card?.level ? cardLevelHash[card.level] : {};
