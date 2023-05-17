@@ -57,7 +57,7 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
               card={card}
               detailShown
             />
-            <AICardDetails style={{ marginRight: '-5rem' }} card={card} />
+            <AICardDetails removeRightPadding card={card} />
           </div>
         </div>
       )}
