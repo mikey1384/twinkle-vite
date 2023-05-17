@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
 import AICardModal from '~/components/Modals/AICardModal';
 import { useAppContext, useChatContext } from '~/contexts';
@@ -47,6 +47,28 @@ export default function MultiCardComponent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [color, isBuyNow, owner, quality, word]);
 
+  const title = useMemo(() => {
+    const titleParts = [];
+    if (owner) {
+      titleParts.push(`${owner}'s`);
+    }
+    if (color) {
+      titleParts.push(`${color} card${cardIds.length > 1 ? 's' : ''}`);
+    } else {
+      titleParts.push(`card${cardIds.length > 1 ? 's' : ''}`);
+    }
+    if (quality) {
+      titleParts.push(`of ${quality} quality`);
+    }
+    if (word) {
+      titleParts.push(`containing the word "${word}"`);
+    }
+    if (isBuyNow) {
+      titleParts.push('you can buy now');
+    }
+    return titleParts.filter(Boolean).join(' ');
+  }, [color, isBuyNow, owner, quality, word, cardIds]);
+
   return (
     <div
       style={{
@@ -58,10 +80,11 @@ export default function MultiCardComponent({
         height: '18rem'
       }}
     >
+      {title}
       <AICardsPreview
         isAICardModalShown={!!selectedCardId}
         cardIds={cardIds}
-        moreAICardsModalTitle="All Cards"
+        moreAICardsModalTitle={title}
         onSetAICardModalCardId={setSelectedCardId}
       />
       {selectedCardId && (
