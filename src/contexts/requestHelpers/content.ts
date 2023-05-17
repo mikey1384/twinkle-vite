@@ -330,7 +330,7 @@ export default function contentRequestHelpers({
 
         const {
           data: { cards, loadMoreShown, numCards }
-        } = await request.get(`${urlString}${limit ? `&limit=${limit}` : ''}}`);
+        } = await request.get(`${urlString}${limit ? `&limit=${limit}` : ''}`);
 
         return Promise.resolve({ cards, loadMoreShown, numCards });
       } catch (error) {
