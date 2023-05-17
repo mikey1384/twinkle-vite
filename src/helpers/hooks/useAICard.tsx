@@ -16,6 +16,14 @@ const color4 = '#8ec5d6';
 const color5 = '#b98cce';
 
 export default function useAICard(card: any) {
+  const memoizedCardQuality = useMemo(
+    () => cardProps[card.quality] || [],
+    [card.quality]
+  );
+  const memoizedQualityProps = useMemo(
+    () => qualityProps[card.quality] || {},
+    [card.quality]
+  );
   const { cardColor, promptText } = useMemo(() => {
     const cardObj: any = card?.level ? cardLevelHash[card.level] : {};
     const cardColor = Color[card?.isBurned ? 'black' : cardObj.color]?.();
@@ -28,9 +36,10 @@ export default function useAICard(card: any) {
 
   function getPromptText(prompt: string, word: string, color: string) {
     if (word) {
-      const wordIndex = prompt.toLowerCase().indexOf(word.toLowerCase());
-      const isCapitalized =
-        prompt[wordIndex] !== prompt[wordIndex].toLowerCase();
+      const lowerCasePrompt = prompt.toLowerCase();
+      const lowerCaseWord = word.toLowerCase();
+      const wordIndex = lowerCasePrompt.indexOf(lowerCaseWord);
+      const isCapitalized = prompt[wordIndex] !== lowerCasePrompt[wordIndex];
       const wordToDisplay = isCapitalized
         ? `${word[0].toUpperCase()}${word.slice(1)}`
         : word;
@@ -55,14 +64,12 @@ export default function useAICard(card: any) {
             overflow: hidden;
             touch-action: none;
             border-radius: 5% / 3.5%;
-            box-shadow: ${cardProps[card.quality]?.includes('glowy') &&
+            box-shadow: ${memoizedCardQuality.includes('glowy') &&
             !card.isBurned
               ? `0px 0px
-                  7px ${qualityProps[card.quality].color},
-                0px 0px 7px ${qualityProps[card.quality].color}, 0 0 7px ${
-                  qualityProps[card.quality].color
-                },
-                0 0 7px ${qualityProps[card.quality].color},
+                  7px ${memoizedQualityProps.color},
+                0px 0px 7px ${memoizedQualityProps.color}, 0 0 7px ${memoizedQualityProps.color},
+                0 0 7px ${memoizedQualityProps.color},
                 0 0 7px 2px rgba(255, 255, 255, 0.3),
                 0 55px 35px -20px rgba(0, 0, 0, 0.5);`
               : `-5px -5px 5px -5px ${cardColor},
@@ -74,7 +81,7 @@ export default function useAICard(card: any) {
             background-color: ${cardColor};
             transform-origin: center;
             &:hover {
-              ${cardProps[card.quality]?.includes('glowy') && !card.isBurned
+              ${memoizedCardQuality.includes('glowy') && !card.isBurned
                 ? `box-shadow: -20px -20px
                   30px -25px ${cardColor},
                 20px 20px 30px -25px ${cardColor}, -7px -7px 10px -5px ${cardColor},
@@ -82,7 +89,7 @@ export default function useAICard(card: any) {
                 0 0 13px 4px rgba(255, 255, 255, 0.3),
                 0 55px 35px -20px rgba(0, 0, 0, 0.5);`
                 : ''} {
-                ${cardProps[card.quality]?.includes('grad') && !card.isBurned
+                ${memoizedCardQuality.includes('grad') && !card.isBurned
                   ? `background-image: linear-gradient(
               115deg,
               transparent 20%,
@@ -128,7 +135,7 @@ export default function useAICard(card: any) {
           );`}
               opacity: ${card.isBurned ? '1' : '0.5'};
               ${card.isBurned ? '' : 'filter: brightness(0.5) contrast(1);'}
-              ${cardProps[card.quality]?.includes('glossy') && !card.isBurned
+              ${memoizedCardQuality.includes('glossy') && !card.isBurned
                 ? `
                   transition: none;
                   animation: gloss 7s infinite;
@@ -136,7 +143,7 @@ export default function useAICard(card: any) {
                 : ''}
             }
 
-            ${cardProps[card.quality]?.includes('sparky') && !card.isBurned
+            ${memoizedCardQuality.includes('sparky') && !card.isBurned
               ? `&:after {
             background-image: url(${sparklesUrl}), url(${holoUrl}),
               linear-gradient(
@@ -169,7 +176,7 @@ export default function useAICard(card: any) {
 
             &:hover:before {
               animation: none;
-              ${cardProps[card.quality]?.includes('grad') && !card.isBurned
+              ${memoizedCardQuality.includes('grad') && !card.isBurned
                 ? `background-image: linear-gradient(
               110deg,
               transparent 25%,
@@ -253,7 +260,7 @@ export default function useAICard(card: any) {
             75%,
             87.5%,
             100% {
-              ${cardProps[card.quality]?.includes('grad') && !card.isBurned
+              ${memoizedCardQuality.includes('grad') && !card.isBurned
                 ? `background-image: linear-gradient(
               115deg,
               transparent 20%,
@@ -268,7 +275,7 @@ export default function useAICard(card: any) {
               background-position: 50% 50%;
             }
             12.5% {
-              ${cardProps[card.quality]?.includes('grad') && !card.isBurned
+              ${memoizedCardQuality.includes('grad') && !card.isBurned
                 ? `background-image: linear-gradient(
               115deg,
               transparent 10%,
