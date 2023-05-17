@@ -3,6 +3,7 @@ import AICard from '~/components/AICard';
 import Loading from '~/components/Loading';
 import InvalidContent from '../../InvalidContent';
 import AICardDetails from '~/components/AICardDetails';
+import AICardModal from '~/components/Modals/AICardModal';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Card as CardType } from '~/types';
 
@@ -10,6 +11,7 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const [cardModalShown, setCardModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cardNotFound, setCardNotFound] = useState(false);
   useEffect(() => {
@@ -31,22 +33,33 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
   }, [cardId]);
   const card = useMemo(() => cardObj[cardId] as CardType, [cardId, cardObj]);
 
-  return loading || !card ? (
-    <Loading />
-  ) : cardNotFound ? (
-    <InvalidContent />
-  ) : (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        padding: '1rem'
-      }}
-    >
-      <div style={{ display: 'flex' }}>
-        <AICard card={card} detailShown />
-        <AICardDetails style={{ marginRight: '-5rem' }} card={card} />
-      </div>
-    </div>
+  return (
+    <>
+      {loading || !card ? (
+        <Loading />
+      ) : cardNotFound ? (
+        <InvalidContent />
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div style={{ display: 'flex' }}>
+            <AICard
+              onClick={() => setCardModalShown(true)}
+              card={card}
+              detailShown
+            />
+            <AICardDetails style={{ marginRight: '-5rem' }} card={card} />
+          </div>
+        </div>
+      )}
+      {cardModalShown && (
+        <AICardModal cardId={card.id} onHide={() => setCardModalShown(false)} />
+      )}
+    </>
   );
 }
