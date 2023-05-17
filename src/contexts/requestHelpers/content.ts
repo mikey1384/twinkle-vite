@@ -303,11 +303,13 @@ export default function contentRequestHelpers({
       lastInteraction,
       lastPrice,
       lastId,
-      filters
+      filters,
+      limit
     }: {
       lastInteraction: number;
       lastPrice: number;
       lastId: number;
+      limit: number;
       filters: { [key: string]: string };
     }) {
       try {
@@ -328,7 +330,7 @@ export default function contentRequestHelpers({
 
         const {
           data: { cards, loadMoreShown, numCards }
-        } = await request.get(urlString);
+        } = await request.get(`${urlString}${limit ? `&limit=${limit}` : ''}}`);
 
         return Promise.resolve({ cards, loadMoreShown, numCards });
       } catch (error) {
