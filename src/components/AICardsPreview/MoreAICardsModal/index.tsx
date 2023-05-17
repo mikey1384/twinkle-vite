@@ -7,6 +7,7 @@ import { Card } from '~/types';
 
 MoreAICardsModal.propTypes = {
   cards: PropTypes.array.isRequired,
+  hideNumMore: PropTypes.bool,
   onSetAICardModalCardId: PropTypes.func,
   onHide: PropTypes.func.isRequired,
   modalOverModal: PropTypes.bool

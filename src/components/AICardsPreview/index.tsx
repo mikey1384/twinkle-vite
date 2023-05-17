@@ -21,12 +21,14 @@ export default function AICardsPreview({
   isOnModal,
   cardIds,
   moreAICardsModalTitle,
+  onLoadMoreClick,
   onSetAICardModalCardId
 }: {
   isAICardModalShown: boolean;
   isOnModal?: boolean;
   cardIds: number[];
   moreAICardsModalTitle?: string;
+  onLoadMoreClick?: () => void;
   onSetAICardModalCardId?: (cardId: number) => void;
 }) {
   const cardObj = useChatContext((v) => v.state.cardObj);
@@ -63,10 +65,13 @@ export default function AICardsPreview({
         {!!numMore && (
           <ShowMoreCardsButton
             onClick={
-              onSetAICardModalCardId
+              onLoadMoreClick
+                ? onLoadMoreClick
+                : onSetAICardModalCardId
                 ? () => setMoreAICardsModalShown(true)
                 : undefined
             }
+            hideNumMore={!!onLoadMoreClick}
             numMore={numMore}
           />
         )}

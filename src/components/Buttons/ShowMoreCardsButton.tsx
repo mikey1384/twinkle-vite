@@ -5,13 +5,16 @@ import { css } from '@emotion/css';
 
 ShowMoreCardsButton.propTypes = {
   onClick: PropTypes.func,
+  hideNumMore: PropTypes.bool,
   numMore: PropTypes.number
 };
 export default function ShowMoreCardsButton({
   onClick,
+  hideNumMore,
   numMore
 }: {
   onClick?: () => void;
+  hideNumMore?: boolean;
   numMore?: number;
 }) {
   return (
@@ -49,7 +52,7 @@ export default function ShowMoreCardsButton({
         `}
         onClick={onClick}
       >
-        {numMore ? `...${numMore} more` : '+ Add'}
+        {hideNumMore ? '...more' : numMore ? `...${numMore} more` : '+ Add'}
       </div>
     </div>
   );
