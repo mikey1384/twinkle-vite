@@ -18,7 +18,7 @@ export default function EmailSection({
 }) {
   return (
     <div>
-      {account.email || account.verifiedEmail ? (
+      {account?.email || account?.verifiedEmail ? (
         <EmailExists
           email={account.email}
           verifiedEmail={account.verifiedEmail}
