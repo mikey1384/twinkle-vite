@@ -27,6 +27,7 @@ export default function TopMenu({
   style?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
+  const timerIdRef: React.MutableRefObject<any> = useRef(null);
   const chatLoadedRef = useRef(false);
   const chatLoaded = useChatContext((v) => v.state.loaded);
   useEffect(() => {
@@ -48,6 +49,13 @@ export default function TopMenu({
   const [loadingWordle, setLoadingWordle] = useState(false);
   const [loadingChess, setLoadingChess] = useState(false);
   const { userId, username } = useKeyContext((v) => v.myState);
+  useEffect(() => {
+    return () => {
+      if (timerIdRef.current) {
+        clearTimeout(timerIdRef.current);
+      }
+    };
+  }, []);
 
   return userId ? (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
@@ -145,10 +153,11 @@ export default function TopMenu({
   function handleWordleButtonClick(): any {
     setLoadingWordle(true);
     if (!chatLoadedRef.current) {
-      return setTimeout(() => handleWordleButtonClick(), 500);
+      timerIdRef.current = setTimeout(() => handleWordleButtonClick(), 500);
+      return;
     }
     onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-    return setTimeout(() => {
+    timerIdRef.current = setTimeout(() => {
       navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
       setTimeout(() => {
         onSetWordleModalShown(true);
@@ -159,11 +168,12 @@ export default function TopMenu({
   function handleChessButtonClick(): any {
     setLoadingChess(true);
     if (!chatLoadedRef.current) {
-      return setTimeout(() => handleChessButtonClick(), 500);
+      timerIdRef.current = setTimeout(() => handleChessButtonClick(), 500);
+      return;
     }
     onUpdateSelectedChannelId(todayStats.unansweredChessMsgChannelId);
     onUpdateTodayStats({ newStats: { unansweredChessMsgChannelId: null } });
-    return setTimeout(() => {
+    timerIdRef.current = setTimeout(() => {
       navigate(
         `/chat/${
           Number(CHAT_ID_BASE_NUMBER) +
