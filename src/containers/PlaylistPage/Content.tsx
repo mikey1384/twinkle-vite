@@ -23,6 +23,7 @@ export default function Content() {
         border: ${videos?.length && loaded
           ? `1px solid ${Color.borderGray()}`
           : ''};
+        background: ${videos?.length && loaded ? '#fff' : 'none'};
         @media (max-width: ${mobileMaxWidth}) {
           border-top: none;
           border-left: none;

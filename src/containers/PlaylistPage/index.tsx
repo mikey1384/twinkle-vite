@@ -22,7 +22,6 @@ export default function PlaylistPage() {
     >
       <section
         className={css`
-          background: #fff;
           width: 65%;
           @media (max-width: ${mobileMaxWidth}) {
             width: 100%;
