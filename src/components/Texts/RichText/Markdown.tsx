@@ -242,7 +242,8 @@ export default function Markdown({
           node.parent?.name !== 'th' &&
           node.parent?.name !== 'table' &&
           node.parent?.name !== 'thead' &&
-          node.parent?.name !== 'tbody'
+          node.parent?.name !== 'tbody' &&
+          node.parent?.name !== 'li'
         ) {
           return node.data
             .split('\n')
