@@ -21,29 +21,31 @@ export default function Markdown({
   contentType,
   Content,
   children,
-  isStatusMsg,
   isProfileComponent,
-  listItemMarkerColor,
-  statusMsgLinkColor,
-  statusMsgListItemMarkerColor,
   linkColor,
+  markerColor,
   onSetContent,
   onSetImageLoaded
 }: {
   contentId?: number;
   contentType?: string;
   Content: string;
-  isStatusMsg: boolean;
   isProfileComponent?: boolean;
   children: string;
-  statusMsgLinkColor: string;
   linkColor: string;
-  listItemMarkerColor: string;
-  statusMsgListItemMarkerColor: string;
+  markerColor: string;
   onSetContent: (arg0: React.ReactNode) => void;
   onSetImageLoaded: (arg0: boolean) => void;
 }) {
-  function useProcessor(text: string) {
+  function useProcessor({
+    text,
+    linkColor,
+    markerColor
+  }: {
+    text: string;
+    linkColor: string;
+    markerColor: string;
+  }) {
     useEffect(() => {
       processMarkdown();
 
@@ -56,8 +58,8 @@ export default function Markdown({
             .use(remarkRehype)
             .use(rehypeStringify)
             .process(preprocessedText);
-          const result = convertStringToJSX(
-            removeNbsp(
+          const result = convertStringToJSX({
+            string: removeNbsp(
               handleMentions(
                 applyTextSize(
                   applyTextEffects({
@@ -65,21 +67,32 @@ export default function Markdown({
                   })
                 )
               )
-            )
-          );
+            ),
+            linkColor,
+            markerColor
+          });
           onSetContent(result);
         } catch (error) {
           console.error('Error processing markdown:', error);
         }
       }
-    }, [text]);
+    }, [linkColor, markerColor, text]);
 
     return <>{Content}</>;
   }
-  return useProcessor(children);
 
-  function convertStringToJSX(text: string): React.ReactNode {
-    const result = parse(text, {
+  return useProcessor({ text: children, linkColor, markerColor });
+
+  function convertStringToJSX({
+    string,
+    linkColor,
+    markerColor
+  }: {
+    string: string;
+    linkColor: string;
+    markerColor: string;
+  }): React.ReactNode {
+    const result = parse(string, {
       replace: (domNode) => {
         if (domNode.type === 'tag') {
           if (domNode?.attribs?.class) {
@@ -101,14 +114,17 @@ export default function Markdown({
                 href = 'http://' + href;
               }
               if (isInternalLink || domNode.attribs?.class === 'mention') {
-                return <Link to={replacedLink}>{node?.data}</Link>;
+                return (
+                  <Link style={{ color: linkColor }} to={replacedLink}>
+                    {node?.data}
+                  </Link>
+                );
               } else {
                 return (
                   <a
                     style={{
                       ...parseStyle(domNode.attribs?.style || ''),
-                      color:
-                        Color[isStatusMsg ? statusMsgLinkColor : linkColor]()
+                      color: linkColor
                     }}
                     href={href}
                     target="_blank"
@@ -134,7 +150,15 @@ export default function Markdown({
               );
             }
             case 'em': {
-              return <strong>{convertToJSX(domNode.children || [])}</strong>;
+              return (
+                <strong>
+                  {convertToJSX({
+                    nodes: domNode.children || [],
+                    linkColor,
+                    markerColor
+                  })}
+                </strong>
+              );
             }
             case 'img': {
               return (
@@ -153,15 +177,15 @@ export default function Markdown({
                 <li
                   className={css`
                     ::marker {
-                      color: ${Color[
-                        isStatusMsg
-                          ? statusMsgListItemMarkerColor
-                          : listItemMarkerColor
-                      ]()} !important;
+                      color: ${markerColor} !important;
                     }
                   `}
                 >
-                  {convertToJSX(domNode.children ? domNode.children : [])}
+                  {convertToJSX({
+                    nodes: domNode.children ? domNode.children : [],
+                    linkColor,
+                    markerColor
+                  })}
                 </li>
               );
             }
@@ -174,12 +198,24 @@ export default function Markdown({
                     marginInlineEnd: '0px'
                   }}
                 >
-                  {convertToJSX(domNode.children || [])}
+                  {convertToJSX({
+                    nodes: domNode.children || [],
+                    linkColor,
+                    markerColor
+                  })}
                 </div>
               );
             }
             case 'strong': {
-              return <em>{convertToJSX(domNode.children || [])}</em>;
+              return (
+                <em>
+                  {convertToJSX({
+                    nodes: domNode.children || [],
+                    linkColor,
+                    markerColor
+                  })}
+                </em>
+              );
             }
             case 'table': {
               return (
@@ -218,7 +254,11 @@ export default function Markdown({
                       }
                     `}
                   >
-                    {convertToJSX(domNode.children || [])}
+                    {convertToJSX({
+                      nodes: domNode.children || [],
+                      linkColor,
+                      markerColor
+                    })}
                   </table>
                 </div>
               );
@@ -232,15 +272,21 @@ export default function Markdown({
     return result;
   }
 
-  function convertToJSX(
+  function convertToJSX({
+    nodes,
+    linkColor,
+    markerColor
+  }: {
     nodes: {
       children?: any[];
       data?: any;
       name?: string;
       type: string;
       attribs?: { [key: string]: any };
-    }[]
-  ): React.ReactNode {
+    }[];
+    linkColor?: string;
+    markerColor?: string;
+  }): React.ReactNode {
     return nodes.map((node, index) => {
       if (node.type === 'text') {
         return node.data.trim() !== '' || /^ +$/.test(node.data)
@@ -249,7 +295,7 @@ export default function Markdown({
       } else if (node.type === 'tag') {
         const TagName = node.name;
         const children: any = node.children
-          ? convertToJSX(node.children)
+          ? convertToJSX({ nodes: node.children, linkColor, markerColor })
           : null;
         const attribs = { ...node.attribs };
         if (attribs.style) {
@@ -282,7 +328,7 @@ export default function Markdown({
                   {...commonProps}
                   style={{
                     ...attribs.style,
-                    color: Color[isStatusMsg ? statusMsgLinkColor : linkColor]()
+                    color: linkColor
                   }}
                   to={replacedLink}
                 >
@@ -297,7 +343,7 @@ export default function Markdown({
                   {...commonProps}
                   style={{
                     ...attribs.style,
-                    color: Color[isStatusMsg ? statusMsgLinkColor : linkColor]()
+                    color: linkColor
                   }}
                   target="_blank"
                 >
@@ -345,11 +391,7 @@ export default function Markdown({
                 {...commonProps}
                 className={css`
                   ::marker {
-                    color: ${Color[
-                      isStatusMsg
-                        ? statusMsgListItemMarkerColor
-                        : listItemMarkerColor
-                    ]()} !important;
+                    color: ${markerColor} !important;
                   }
                 `}
               >
