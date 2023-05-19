@@ -253,9 +253,14 @@ function ContentEditor({
         editedTitle: finalizeEmoji(editedTitle)
       };
       setIsEditing(true);
-      await onEditContent({ ...post, contentId, contentType });
-      handleDismiss();
-      setIsEditing(false);
+      try {
+        await onEditContent({ ...post, contentId, contentType });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        handleDismiss();
+        setIsEditing(false);
+      }
     },
     [
       banned?.posting,
