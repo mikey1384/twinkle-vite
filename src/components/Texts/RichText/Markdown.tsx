@@ -84,15 +84,16 @@ export default function Markdown({
             case 'a': {
               const node = domNode.children?.[0];
               let href = domNode.attribs?.href || '';
+              const { isInternalLink, replacedLink } =
+                processInternalLink(href);
               if (
+                !isInternalLink &&
                 href &&
                 !href.startsWith('http://') &&
                 !href.startsWith('https://')
               ) {
                 href = 'http://' + href;
               }
-              const { isInternalLink, replacedLink } =
-                processInternalLink(href);
               if (isInternalLink || domNode.attribs?.class === 'mention') {
                 return <Link to={replacedLink}>{node?.data}</Link>;
               } else {
@@ -250,14 +251,15 @@ export default function Markdown({
         switch (TagName) {
           case 'a': {
             let href = attribs?.href || '';
+            const { isInternalLink, replacedLink } = processInternalLink(href);
             if (
+              !isInternalLink &&
               href &&
               !href.startsWith('http://') &&
               !href.startsWith('https://')
             ) {
               href = 'http://' + href;
             }
-            const { isInternalLink, replacedLink } = processInternalLink(href);
             commonProps.href = href;
             if (isInternalLink || attribs?.className === 'mention') {
               return (
