@@ -124,7 +124,6 @@ export default function TopMenu({
             Wordle
           </TopButton>
           <TopButton
-            loading={loadingWordle}
             colorLeft={Color.armyGreen()}
             colorMiddle={Color.logoGreen()}
             colorRight={Color.armyGreen()}
