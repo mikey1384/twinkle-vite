@@ -49,17 +49,20 @@ export default function Markdown({
 
       async function processMarkdown() {
         try {
+          const preprocessedText = preprocessText(text);
           const markupString = await unified()
             .use(remarkParse)
             .use(remarkGfm)
             .use(remarkRehype)
             .use(rehypeStringify)
-            .process(preprocessText(text));
+            .process(preprocessedText);
           const result = convertStringToJSX(
-            applyTextSize(
-              applyTextEffects({
-                string: markupString.value as string
-              })
+            handleMentions(
+              applyTextSize(
+                applyTextEffects({
+                  string: markupString.value as string
+                })
+              )
             )
           );
           onSetContent(result);
@@ -231,18 +234,14 @@ export default function Markdown({
         const children: any = node.children
           ? convertToJSX(node.children)
           : null;
-
         const attribs = { ...node.attribs };
-
         if (attribs.style) {
           attribs.style = keyToCamelCase(parseStyle(attribs.style));
         }
-
         if (attribs.class) {
           attribs.className = attribs.class;
           delete attribs.class;
         }
-
         const commonProps: { [key: string]: any } = {
           key: node.type + index,
           ...attribs
@@ -391,6 +390,33 @@ export default function Markdown({
         }
       }
     });
+  }
+
+  function handleMentions(text: string) {
+    const mentionRegex = /((?!([a-zA-Z1-9])).|^|\n)@[a-zA-Z0-9_]{3,}/gi;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/html');
+    const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node.parentNode?.nodeName.toLowerCase() !== 'a') {
+        if (node.textContent) {
+          node.textContent = node.textContent?.replace(
+            mentionRegex,
+            (string) => {
+              const path = string.split('@')?.[1];
+              const firstChar = string.split('@')?.[0];
+              return `${firstChar}<a class="mention" href="/users/${path}">@${path}</a>`;
+            }
+          );
+        }
+      }
+    }
+    return doc.body.innerHTML
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/＠/gi, '@');
   }
 
   function keyToCamelCase(obj: { [key: string]: string } | null) {

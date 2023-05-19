@@ -616,8 +616,7 @@ export function applyTextSize(string: string): string {
 }
 
 export function applyTextEffects({
-  string,
-  hasMention = true
+  string
 }: {
   string: string;
   isFinalProcessing?: boolean;
@@ -647,10 +646,8 @@ export function applyTextEffects({
     /(((?![0-9.])r\|[^\s]+\|r(?![0-9]))|(((r\|[^\s]){1}((?!(r\||\|r))[^\n])+([^\s]\|r){1})(?![0-9.])))/gi;
   const yellowRegex =
     /(((?![0-9.])y\|[^\s]+\|y(?![0-9]))|(((y\|[^\s]){1}((?!(y\||\|y))[^\n])+([^\s]\|y){1})(?![0-9.])))/gi;
-  const fakeAtSymbolRegex = /＠/gi;
-  const mentionRegex = /((?!([a-zA-Z1-9])).|^|\n)@[a-zA-Z0-9_]{3,}/gi;
 
-  let result = string
+  const result = string
     .replace(/(<br>)/gi, '\n')
     .replace(
       blueRegex,
@@ -744,15 +741,7 @@ export function applyTextEffects({
       underlineRegex,
       (string) => `<u>${string.substring(2, string.length - 2)}</u>`
     );
-
-  if (hasMention) {
-    result = (result || '').replace(mentionRegex, (string) => {
-      const path = string.split('@')?.[1];
-      const firstChar = string.split('@')?.[0];
-      return `${firstChar}<a class="mention" href="/users/${path}">@${path}</a>`;
-    });
-  }
-  return result.replace(fakeAtSymbolRegex, '@');
+  return result;
 }
 
 export function processedURL(url: string): string {
