@@ -68,7 +68,6 @@ export default function RichText({
       ? useContentState({ contentType, contentId: contentId as number })
       : {};
   const { fullTextState = {} } = contentState;
-  const [Content, setContent] = useState<any>(<>{text}</>);
   const [isParsed, setIsParsed] = useState(false);
   const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(
     null
@@ -95,7 +94,7 @@ export default function RichText({
         overflownRef.current = overflown;
       }
     }
-  }, [Content, imageLoaded, text, isPreview, maxLines]);
+  }, [imageLoaded, text, isPreview, maxLines]);
 
   useEffect(() => {
     if (fullTextState[section] && !isPreview) {
@@ -220,10 +219,8 @@ export default function RichText({
             isProfileComponent={isProfileComponent}
             linkColor={appliedLinkColor}
             markerColor={markerColor}
-            Content={Content}
-            onSetContent={(content) => {
+            onSetContent={() => {
               setIsParsed(true);
-              setContent(content);
             }}
             onSetImageLoaded={setImageLoaded}
           >
