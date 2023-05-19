@@ -57,9 +57,7 @@ export default function Markdown({
                 })
               )
             )
-          ),
-          linkColor,
-          markerColor
+          )
         });
         setContent(result);
         onSetIsParsed(true);
@@ -72,15 +70,7 @@ export default function Markdown({
 
   return <>{Content}</>;
 
-  function convertStringToJSX({
-    string,
-    linkColor,
-    markerColor
-  }: {
-    string: string;
-    linkColor: string;
-    markerColor: string;
-  }): React.ReactNode {
+  function convertStringToJSX({ string }: { string: string }): React.ReactNode {
     const result = parse(string, {
       replace: (domNode) => {
         if (domNode.type === 'tag') {
@@ -139,15 +129,7 @@ export default function Markdown({
               );
             }
             case 'em': {
-              return (
-                <strong>
-                  {convertToJSX({
-                    nodes: domNode.children || [],
-                    linkColor,
-                    markerColor
-                  })}
-                </strong>
-              );
+              return <strong>{convertToJSX(domNode.children || [])}</strong>;
             }
             case 'img': {
               return (
@@ -170,11 +152,7 @@ export default function Markdown({
                     }
                   `}
                 >
-                  {convertToJSX({
-                    nodes: domNode.children ? domNode.children : [],
-                    linkColor,
-                    markerColor
-                  })}
+                  {convertToJSX(domNode.children ? domNode.children : [])}
                 </li>
               );
             }
@@ -184,27 +162,16 @@ export default function Markdown({
                   style={{
                     width: '100%',
                     marginInlineStart: '0px',
-                    marginInlineEnd: '0px'
+                    marginInlineEnd: '0px',
+                    display: 'block'
                   }}
                 >
-                  {convertToJSX({
-                    nodes: domNode.children || [],
-                    linkColor,
-                    markerColor
-                  })}
+                  {convertToJSX(domNode.children || [])}
                 </div>
               );
             }
             case 'strong': {
-              return (
-                <em>
-                  {convertToJSX({
-                    nodes: domNode.children || [],
-                    linkColor,
-                    markerColor
-                  })}
-                </em>
-              );
+              return <em>{convertToJSX(domNode.children || [])}</em>;
             }
             case 'table': {
               return (
@@ -243,11 +210,7 @@ export default function Markdown({
                       }
                     `}
                   >
-                    {convertToJSX({
-                      nodes: domNode.children || [],
-                      linkColor,
-                      markerColor
-                    })}
+                    {convertToJSX(domNode.children || [])}
                   </table>
                 </div>
               );
@@ -261,30 +224,39 @@ export default function Markdown({
     return result;
   }
 
-  function convertToJSX({
-    nodes,
-    linkColor,
-    markerColor
-  }: {
+  function convertToJSX(
     nodes: {
       children?: any[];
       data?: any;
       name?: string;
       type: string;
       attribs?: { [key: string]: any };
-    }[];
-    linkColor?: string;
-    markerColor?: string;
-  }): React.ReactNode {
-    return nodes.map((node, index) => {
+    }[]
+  ): React.ReactNode {
+    return nodes.map((node: any, index) => {
       if (node.type === 'text') {
+        if (
+          node.data.includes('\n') &&
+          node.parent?.name !== 'tr' &&
+          node.parent?.name !== 'th' &&
+          node.parent?.name !== 'table' &&
+          node.parent?.name !== 'thead' &&
+          node.parent?.name !== 'tbody'
+        ) {
+          return node.data
+            .split('\n')
+            .flatMap((segment: string, subIndex: number) => [
+              subIndex > 0 && <br key={`br-${index}-${subIndex}`} />,
+              segment
+            ]);
+        }
         return node.data.trim() !== '' || /^ +$/.test(node.data)
           ? node.data
           : null;
       } else if (node.type === 'tag') {
         const TagName = node.name;
         const children: any = node.children
-          ? convertToJSX({ nodes: node.children, linkColor, markerColor })
+          ? convertToJSX(node.children)
           : null;
         const attribs = { ...node.attribs };
         if (attribs.style) {
@@ -477,8 +449,7 @@ export default function Markdown({
         }
       }
     }
-
-    return doc.body.innerHTML.replace(/＠/g, '@');
+    return doc.body.innerHTML.replace('\n', '<br />').replace(/＠/g, '@');
   }
 
   function keyToCamelCase(obj: { [key: string]: string } | null) {
