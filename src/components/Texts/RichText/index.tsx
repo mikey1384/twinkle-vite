@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from './Markdown';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
@@ -128,6 +128,16 @@ export default function RichText({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const appliedLinkColor = useMemo(
+    () => Color[isStatusMsg ? statusMsgLinkColor : linkColor](),
+    [isStatusMsg, linkColor, statusMsgLinkColor]
+  );
+
+  const markerColor = useMemo(
+    () => (isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor),
+    [isStatusMsg, listItemMarkerColor, statusMsgListItemMarkerColor]
+  );
+
   return (
     <ErrorBoundary
       style={{ width: '100%' }}
@@ -145,9 +155,9 @@ export default function RichText({
           white-space: pre-wrap;
           overflow-wrap: break-word;
           word-break: break-word;
-          line-height: 1.6;
+          line-height: 1.7;
           a {
-            color: ${Color[isStatusMsg ? statusMsgLinkColor : linkColor]()};
+            color: ${appliedLinkColor};
           }
           p {
             margin: 0;
@@ -195,9 +205,7 @@ export default function RichText({
             }
             ::marker {
               font-family: 'Roboto', 'Noto Sans';
-              color: ${Color[
-                isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor
-              ]()};
+              color: ${Color[markerColor]()};
             }
           }
         `}`}
