@@ -47,6 +47,7 @@ export default function ShowMoreCardsButton({
           }`
             : ''}
           @media (max-width: ${mobileMaxWidth}) {
+            font-size: 1.1rem;
             min-width: 7rem;
           }
         `}
