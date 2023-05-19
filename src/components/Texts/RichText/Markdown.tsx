@@ -416,7 +416,7 @@ export default function Markdown({
     return doc.body.innerHTML
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
-      .replace(/＠/gi, '@');
+      .replace(/＠/g, '@');
   }
 
   function keyToCamelCase(obj: { [key: string]: string } | null) {
