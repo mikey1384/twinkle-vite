@@ -219,9 +219,7 @@ export default function RichText({
             isProfileComponent={isProfileComponent}
             linkColor={appliedLinkColor}
             markerColor={markerColor}
-            onSetContent={() => {
-              setIsParsed(true);
-            }}
+            onSetIsParsed={setIsParsed}
             onSetImageLoaded={setImageLoaded}
           >
             {text}
