@@ -80,9 +80,13 @@ export default function Markdown({
     const result = parse(text, {
       replace: (domNode) => {
         if (domNode.type === 'text') {
-          domNode.data = reversePreprocessing(domNode.data);
+          domNode.data = removeNbsp(domNode.data);
         }
         if (domNode.type === 'tag') {
+          if (domNode?.attribs?.class) {
+            domNode.attribs.className = domNode.attribs.class;
+            delete domNode.attribs.class;
+          }
           switch (domNode.name) {
             case 'a': {
               const node = domNode.children?.[0];
@@ -115,6 +119,20 @@ export default function Markdown({
                   </a>
                 );
               }
+            }
+            case 'code': {
+              const node =
+                domNode.children && domNode.children.length > 0
+                  ? domNode.children[0]
+                  : null;
+              const unescapedChildren = node
+                ? unescapeHtml(node.data || '')
+                : '';
+              return (
+                <code {...domNode.attribs}>
+                  {removeNbsp(unescapedChildren)}
+                </code>
+              );
             }
             case 'em': {
               return <strong>{convertToJSX(domNode.children || [])}</strong>;
@@ -227,7 +245,7 @@ export default function Markdown({
     return nodes.map((node, index) => {
       if (node.type === 'text') {
         return node.data.trim() !== '' || /^ +$/.test(node.data)
-          ? reversePreprocessing(node.data)
+          ? removeNbsp(node.data)
           : null;
       } else if (node.type === 'tag') {
         const TagName = node.name;
@@ -289,6 +307,12 @@ export default function Markdown({
                 </a>
               );
             }
+          }
+          case 'code': {
+            const unescapedChildren = unescapeHtml(children?.[0] || '');
+            return (
+              <code {...commonProps}>{removeNbsp(unescapedChildren)}</code>
+            );
           }
           case 'em': {
             return <strong {...commonProps}>{children}</strong>;
@@ -393,7 +417,7 @@ export default function Markdown({
   }
 
   function handleMentions(text: string) {
-    const mentionRegex = /((?!([a-zA-Z1-9])).|^|\n)@[a-zA-Z0-9_]{3,}/gi;
+    const mentionRegex = /@[a-zA-Z0-9_]{3,}/gi;
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, 'text/html');
     const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
@@ -401,22 +425,28 @@ export default function Markdown({
     while (walker.nextNode()) {
       const node = walker.currentNode;
       if (node.parentNode?.nodeName.toLowerCase() !== 'a') {
-        if (node.textContent) {
-          node.textContent = node.textContent?.replace(
-            mentionRegex,
-            (string) => {
-              const path = string.split('@')?.[1];
-              const firstChar = string.split('@')?.[0];
-              return `${firstChar}<a class="mention" href="/users/${path}">@${path}</a>`;
-            }
-          );
+        const parent = node.parentNode;
+        const nodeValue = node.nodeValue || '';
+
+        const newNodeValue = nodeValue.replace(mentionRegex, (string) => {
+          const path = string.slice(1);
+          const anchor = `<a class="mention" href="/users/${path}">@${path}</a>`;
+          return anchor;
+        });
+
+        if (nodeValue !== newNodeValue) {
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = newNodeValue;
+          const docFrag = document.createDocumentFragment();
+          while (tempDiv.firstChild) {
+            docFrag.appendChild(tempDiv.firstChild);
+          }
+          parent?.replaceChild(docFrag, node);
         }
       }
     }
-    return doc.body.innerHTML
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/＠/g, '@');
+
+    return doc.body.innerHTML.replace(/＠/g, '@');
   }
 
   function keyToCamelCase(obj: { [key: string]: string } | null) {
@@ -445,11 +475,10 @@ export default function Markdown({
       }
     });
   }
-
-  function reversePreprocessing(text?: string) {
-    return (text || '')
-      .replace(/&nbsp;/g, '')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>');
+  function removeNbsp(text?: string) {
+    return (text || '').replace(/&nbsp;/g, '');
+  }
+  function unescapeHtml(input: string) {
+    return (input || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
   }
 }
