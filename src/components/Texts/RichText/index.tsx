@@ -134,7 +134,8 @@ export default function RichText({
   );
 
   const markerColor = useMemo(
-    () => (isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor),
+    () =>
+      Color[isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor](),
     [isStatusMsg, listItemMarkerColor, statusMsgListItemMarkerColor]
   );
 
@@ -205,7 +206,7 @@ export default function RichText({
             }
             ::marker {
               font-family: 'Roboto', 'Noto Sans';
-              color: ${Color[markerColor]()};
+              color: ${markerColor};
             }
           }
         `}`}
@@ -216,12 +217,9 @@ export default function RichText({
           <Markdown
             contentId={contentId}
             contentType={contentType}
-            isStatusMsg={!!isStatusMsg}
             isProfileComponent={isProfileComponent}
-            statusMsgLinkColor={statusMsgLinkColor}
-            linkColor={linkColor}
-            listItemMarkerColor={listItemMarkerColor}
-            statusMsgListItemMarkerColor={statusMsgListItemMarkerColor}
+            linkColor={appliedLinkColor}
+            markerColor={markerColor}
             Content={Content}
             onSetContent={(content) => {
               setIsParsed(true);
