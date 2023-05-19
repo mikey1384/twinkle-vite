@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { unified } from 'unified';
 import { Link } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -19,7 +19,6 @@ import {
 export default function Markdown({
   contentId,
   contentType,
-  Content,
   children,
   isProfileComponent,
   linkColor,
@@ -29,59 +28,49 @@ export default function Markdown({
 }: {
   contentId?: number;
   contentType?: string;
-  Content: string;
   isProfileComponent?: boolean;
   children: string;
   linkColor: string;
   markerColor: string;
-  onSetContent: (arg0: React.ReactNode) => void;
+  onSetContent: () => void;
   onSetImageLoaded: (arg0: boolean) => void;
 }) {
-  function useProcessor({
-    text,
-    linkColor,
-    markerColor
-  }: {
-    text: string;
-    linkColor: string;
-    markerColor: string;
-  }) {
-    useEffect(() => {
-      processMarkdown();
+  const [Content, setContent] = useState<any>(<>{children}</>);
+  useEffect(() => {
+    processMarkdown();
 
-      async function processMarkdown() {
-        try {
-          const preprocessedText = preprocessText(text);
-          const markupString = await unified()
-            .use(remarkParse)
-            .use(remarkGfm)
-            .use(remarkRehype)
-            .use(rehypeStringify)
-            .process(preprocessedText);
-          const result = convertStringToJSX({
-            string: removeNbsp(
-              handleMentions(
-                applyTextSize(
-                  applyTextEffects({
-                    string: markupString.value as string
-                  })
-                )
+    async function processMarkdown() {
+      try {
+        const preprocessedText = preprocessText(children);
+        const markupString = await unified()
+          .use(remarkParse)
+          .use(remarkGfm)
+          .use(remarkRehype)
+          .use(rehypeStringify)
+          .process(preprocessedText);
+        const result = convertStringToJSX({
+          string: removeNbsp(
+            handleMentions(
+              applyTextSize(
+                applyTextEffects({
+                  string: markupString.value as string
+                })
               )
-            ),
-            linkColor,
-            markerColor
-          });
-          onSetContent(result);
-        } catch (error) {
-          console.error('Error processing markdown:', error);
-        }
+            )
+          ),
+          linkColor,
+          markerColor
+        });
+        setContent(result);
+        onSetContent();
+      } catch (error) {
+        console.error('Error processing markdown:', error);
       }
-    }, [linkColor, markerColor, text]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkColor, markerColor, children]);
 
-    return <>{Content}</>;
-  }
-
-  return useProcessor({ text: children, linkColor, markerColor });
+  return <>{Content}</>;
 
   function convertStringToJSX({
     string,
