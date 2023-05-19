@@ -23,7 +23,7 @@ export default function Markdown({
   isProfileComponent,
   linkColor,
   markerColor,
-  onSetContent,
+  onSetIsParsed,
   onSetImageLoaded
 }: {
   contentId?: number;
@@ -32,7 +32,7 @@ export default function Markdown({
   children: string;
   linkColor: string;
   markerColor: string;
-  onSetContent: () => void;
+  onSetIsParsed: (parsed: boolean) => void;
   onSetImageLoaded: (arg0: boolean) => void;
 }) {
   const [Content, setContent] = useState<any>(<>{children}</>);
@@ -62,7 +62,7 @@ export default function Markdown({
           markerColor
         });
         setContent(result);
-        onSetContent();
+        onSetIsParsed(true);
       } catch (error) {
         console.error('Error processing markdown:', error);
       }
