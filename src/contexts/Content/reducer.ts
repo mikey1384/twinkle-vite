@@ -1370,6 +1370,14 @@ export default function ContentReducer(
           uploadingFile: action.uploading
         }
       };
+    case 'SET_DISPLAYED_CARD_IDS':
+      return {
+        ...state,
+        [contentKey]: {
+          ...prevContentState,
+          cardIds: action.cardIds
+        }
+      };
     case 'SET_EMBEDDED_URL':
       return {
         ...state,

@@ -676,6 +676,25 @@ export default function ContentActions(dispatch: Dispatch) {
         uploading
       });
     },
+    onSetDisplayedCardIds({
+      contentType,
+      contentId,
+      targetKey,
+      cardIds
+    }: {
+      contentType: string;
+      contentId: number;
+      targetKey: string;
+      cardIds: number[];
+    }) {
+      return dispatch({
+        type: 'SET_DISPLAYED_CARD_IDS',
+        contentType,
+        contentId,
+        targetKey,
+        cardIds
+      });
+    },
     onSetEmbeddedUrl({
       contentId,
       contentType,

@@ -7,9 +7,13 @@ import DefaultComponent from './DefaultComponent';
 import AICardComponent from './AICardComponent';
 
 export default function InternalComponent({
+  rootId,
+  rootType,
   src,
   isProfileComponent
 }: {
+  rootId?: number;
+  rootType?: string;
   src: string;
   isProfileComponent?: boolean;
 }) {
@@ -35,10 +39,10 @@ export default function InternalComponent({
       linkType === 'ai-cards' ||
       (linkType === 'chat' && linkSubType === 'ai-cards')
     ) {
-      return <AICardComponent src={src} />;
+      return <AICardComponent rootId={rootId} rootType={rootType} src={src} />;
     }
     return <DefaultComponent linkType={linkType} src={src} />;
-  }, [isProfileComponent, src]);
+  }, [src, isProfileComponent, rootId, rootType]);
 
   return (
     <ErrorBoundary componentPath="Texts/EmbeddedComponent/InternalComponent">

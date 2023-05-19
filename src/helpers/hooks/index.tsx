@@ -32,12 +32,12 @@ export function useContentState({
   contentId,
   targetKey
 }: {
-  contentType: string;
-  contentId: number | string | null;
+  contentType?: string;
+  contentId?: number | string | null;
   targetKey?: string | null;
 }) {
   const contentKey =
-    contentType + contentId + (targetKey ? `/${targetKey}` : '');
+    (contentType || '') + (contentId || 0) + (targetKey ? `/${targetKey}` : '');
   allContentState[contentKey] = useContentContext((v) => v.state[contentKey]);
   const state = allContentState[contentKey];
   return state ? { ...defaultContentState, ...state } : defaultContentState;

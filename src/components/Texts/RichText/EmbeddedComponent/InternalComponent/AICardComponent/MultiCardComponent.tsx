@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
 import AICardModal from '~/components/Modals/AICardModal';
-import { useAppContext, useChatContext } from '~/contexts';
+import Loading from '~/components/Loading';
+import { useContentState } from '~/helpers/hooks';
+import { useAppContext, useContentContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,6 +12,8 @@ export default function MultiCardComponent({
   isBuyNow,
   quality,
   owner,
+  rootId,
+  rootType,
   word,
   src
 }: {
@@ -17,14 +21,30 @@ export default function MultiCardComponent({
   isBuyNow?: string | null;
   quality?: string | null;
   owner?: string | null;
+  rootId?: number;
+  rootType?: string;
   word?: string | null;
   src: string;
 }) {
+  const filters = {
+    color,
+    isBuyNow,
+    quality,
+    owner,
+    word
+  };
+  const { cardIds } = useContentState({
+    contentType: rootType,
+    contentId: rootId,
+    targetKey: JSON.stringify(filters)
+  });
   const navigate = useNavigate();
+  const onSetDisplayedCardIds = useContentContext(
+    (v) => v.actions.onSetDisplayedCardIds
+  );
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [loading, setLoading] = useState(false);
-  const [cardIds, setCardIds] = useState<number[]>([]);
   const loadFilteredAICards = useAppContext(
     (v) => v.requestHelpers.loadFilteredAICards
   );
@@ -33,26 +53,27 @@ export default function MultiCardComponent({
     init();
     async function init() {
       try {
-        setLoading(true);
+        if (!cardIds) {
+          setLoading(true);
+        }
         const { cards } = await loadFilteredAICards({
-          filters: {
-            color,
-            isBuyNow,
-            quality,
-            owner,
-            word
-          },
+          filters,
           limit: 6
         });
-        const cardIds = [];
+        const newCardIds = [];
         for (const card of cards) {
           onUpdateAICard({
             cardId: card.id,
             newState: card
           });
-          cardIds.push(card.id);
+          newCardIds.push(card.id);
         }
-        setCardIds(cardIds);
+        onSetDisplayedCardIds({
+          contentId: rootId,
+          contentType: rootType,
+          targetKey: JSON.stringify(filters),
+          cardIds: newCardIds
+        });
       } catch (error) {
         console.error(error);
       } finally {
@@ -70,12 +91,12 @@ export default function MultiCardComponent({
     if (color) {
       titleParts.push(
         `${color} ${quality ? `${quality} ` : ''}card${
-          cardIds.length === 1 ? '' : 's'
+          cardIds?.length === 1 ? '' : 's'
         }`
       );
     } else {
       titleParts.push(
-        `${quality ? `${quality} ` : ''}card${cardIds.length === 1 ? '' : 's'}`
+        `${quality ? `${quality} ` : ''}card${cardIds?.length === 1 ? '' : 's'}`
       );
     }
     if (word) {
@@ -99,7 +120,7 @@ export default function MultiCardComponent({
         padding: '1rem'
       }}
     >
-      &nbsp;
+      <Loading />
     </div>
   ) : (
     <div
@@ -123,7 +144,7 @@ export default function MultiCardComponent({
       >
         {title}
       </div>
-      {cardIds.length > 0 ? (
+      {cardIds?.length > 0 ? (
         <AICardsPreview
           isAICardModalShown={!!selectedCardId}
           cardIds={cardIds}
@@ -134,7 +155,7 @@ export default function MultiCardComponent({
       ) : (
         <div
           style={{
-            marginTop: '5rem',
+            marginTop: '1rem',
             height: '10rem',
             fontWeight: 'bold',
             color: Color.black(),

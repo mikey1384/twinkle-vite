@@ -3,7 +3,15 @@ import SingleCardComponent from './SingleCardComponent';
 import MultiCardComponent from './MultiCardComponent';
 import DefaultComponent from '../DefaultComponent';
 
-export default function AICardComponent({ src }: { src: string }) {
+export default function AICardComponent({
+  rootId,
+  rootType,
+  src
+}: {
+  src: string;
+  rootId?: number;
+  rootType?: string;
+}) {
   const queryParams = useMemo<Record<string, string | null>>(() => {
     const url = new URL(`https:/${src}`);
     const params = new URLSearchParams(url.search || '');
@@ -22,7 +30,14 @@ export default function AICardComponent({ src }: { src: string }) {
   if (
     Object.keys(queryParams).filter((key: string) => queryParams[key]).length
   ) {
-    return <MultiCardComponent {...queryParams} src={src} />;
+    return (
+      <MultiCardComponent
+        {...queryParams}
+        rootId={rootId}
+        rootType={rootType}
+        src={src}
+      />
+    );
   }
   return <DefaultComponent linkType="ai-cards" src={src} />;
 }
