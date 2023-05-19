@@ -33,7 +33,7 @@ export function useContentState({
   targetKey
 }: {
   contentType: string;
-  contentId: number | null;
+  contentId: number | string | null;
   targetKey?: string | null;
 }) {
   const contentKey =

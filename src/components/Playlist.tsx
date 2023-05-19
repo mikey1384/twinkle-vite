@@ -21,7 +21,7 @@ const uploadedByLabel = localize('uploadedBy');
 Playlist.propTypes = {
   onLinkClick: PropTypes.func,
   onLoad: PropTypes.func,
-  playlistId: PropTypes.number.isRequired
+  playlistId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 export default function Playlist({
@@ -31,7 +31,7 @@ export default function Playlist({
 }: {
   onLinkClick?: () => void;
   onLoad?: (params: any) => void;
-  playlistId: number;
+  playlistId: string | number;
 }) {
   const loadPlaylistVideos = useAppContext(
     (v) => v.requestHelpers.loadPlaylistVideos
