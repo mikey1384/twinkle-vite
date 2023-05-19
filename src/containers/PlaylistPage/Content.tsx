@@ -29,9 +29,9 @@ export default function Content() {
       }}
       className={css`
         @media (max-width: ${mobileMaxWidth}) {
-          border-top: none;
-          border-left: none;
-          border-right: none;
+          border-top: none !important;
+          border-left: none !important;
+          border-right: none !important;
         }
       `}
     >
