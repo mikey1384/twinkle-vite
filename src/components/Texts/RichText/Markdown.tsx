@@ -49,15 +49,16 @@ export default function Markdown({
           .use(rehypeStringify)
           .process(preprocessedText);
         const result = convertStringToJSX({
-          string: removeNbsp(
-            handleMentions(
-              applyTextSize(
-                applyTextEffects({
-                  string: markupString.value as string
-                })
+          string:
+            removeNbsp(
+              handleMentions(
+                applyTextSize(
+                  applyTextEffects({
+                    string: markupString.value as string
+                  })
+                )
               )
-            )
-          )
+            ) || ''
         });
         setContent(result);
         onSetIsParsed(true);
