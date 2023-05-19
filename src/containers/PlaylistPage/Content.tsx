@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Playlist from '~/components/Playlist';
 import { useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
@@ -11,19 +11,23 @@ export default function Content() {
     contentType: 'playlist',
     contentId: Number(contentId)
   });
-  const [background, setBackground] = useState('none');
   const [title, setTitle] = useState('');
+  const border = useMemo(
+    () => (videos?.length && loaded ? `1px solid ${Color.borderGray()}` : ''),
+    [videos, loaded]
+  );
+  const background = useMemo(
+    () => (videos?.length && loaded ? '#fff' : 'none'),
+    [videos, loaded]
+  );
   return (
     <div
       style={{
+        border,
         background,
         padding: '1rem'
       }}
       className={css`
-        border: ${videos?.length && loaded
-          ? `1px solid ${Color.borderGray()}`
-          : ''};
-        background: ${videos?.length && loaded ? '#fff' : 'none'};
         @media (max-width: ${mobileMaxWidth}) {
           border-top: none;
           border-left: none;
@@ -34,10 +38,9 @@ export default function Content() {
       {title && <p style={{ fontSize: '3rem', fontWeight: 'bold' }}>{title}</p>}
       <div style={{ marginTop: '1rem' }}>
         <Playlist
-          playlistId={Number(contentId)}
-          onLoad={({ exists, title }) => {
+          playlistId={contentId}
+          onLoad={({ title }) => {
             setTitle(title);
-            setBackground(exists ? '#fff' : 'none');
           }}
         />
       </div>
