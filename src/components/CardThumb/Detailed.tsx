@@ -92,8 +92,18 @@ export default function CardThumb({
         )}
       </div>
       {card.word ? (
-        <div style={{ display: 'inline', marginTop: '0.5rem' }}>
-          {' '}
+        <div
+          style={{
+            width: '8rem',
+            display: 'inline-block',
+            marginTop: '0.5rem',
+            textAlign: 'center',
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            lineHeight: 1.2
+          }}
+        >
           <b style={{ color: cardColor, fontSize: '1.3rem' }}>{card.word}</b>
         </div>
       ) : null}

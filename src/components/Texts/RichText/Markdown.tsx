@@ -269,7 +269,9 @@ export default function Markdown({
                   }}
                   to={replacedLink}
                 >
-                  {children?.length ? children : 'Link'}
+                  {children?.length || Object.keys(children)?.length
+                    ? children
+                    : 'Link'}
                 </Link>
               );
             } else {
