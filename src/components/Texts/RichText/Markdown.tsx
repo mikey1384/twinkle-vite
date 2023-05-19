@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { unified } from 'unified';
 import { Link } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -16,7 +16,7 @@ import {
   processInternalLink
 } from '~/helpers/stringHelpers';
 
-export default function Markdown({
+function Markdown({
   contentId,
   contentType,
   children,
@@ -489,3 +489,5 @@ export default function Markdown({
     return (text || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
   }
 }
+
+export default memo(Markdown);
