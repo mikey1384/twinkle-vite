@@ -57,11 +57,13 @@ export default function Markdown({
             .use(rehypeStringify)
             .process(preprocessedText);
           const result = convertStringToJSX(
-            handleMentions(
-              applyTextSize(
-                applyTextEffects({
-                  string: markupString.value as string
-                })
+            removeNbsp(
+              handleMentions(
+                applyTextSize(
+                  applyTextEffects({
+                    string: markupString.value as string
+                  })
+                )
               )
             )
           );
@@ -79,9 +81,6 @@ export default function Markdown({
   function convertStringToJSX(text: string): React.ReactNode {
     const result = parse(text, {
       replace: (domNode) => {
-        if (domNode.type === 'text') {
-          domNode.data = removeNbsp(domNode.data);
-        }
         if (domNode.type === 'tag') {
           if (domNode?.attribs?.class) {
             domNode.attribs.className = domNode.attribs.class;
@@ -245,7 +244,7 @@ export default function Markdown({
     return nodes.map((node, index) => {
       if (node.type === 'text') {
         return node.data.trim() !== '' || /^ +$/.test(node.data)
-          ? removeNbsp(node.data)
+          ? node.data
           : null;
       } else if (node.type === 'tag') {
         const TagName = node.name;
@@ -264,7 +263,6 @@ export default function Markdown({
           key: node.type + index,
           ...attribs
         };
-
         switch (TagName) {
           case 'a': {
             let href = attribs?.href || '';
@@ -424,7 +422,10 @@ export default function Markdown({
 
     while (walker.nextNode()) {
       const node = walker.currentNode;
-      if (node.parentNode?.nodeName.toLowerCase() !== 'a') {
+      if (
+        node.parentNode?.nodeName.toLowerCase() !== 'a' &&
+        node.parentNode?.nodeName.toLowerCase() !== 'code'
+      ) {
         const parent = node.parentNode;
         const nodeValue = node.nodeValue || '';
 
@@ -466,7 +467,7 @@ export default function Markdown({
     const targetText = text || '';
     const escapedText = targetText.replace(/>/g, '&gt;').replace(/</g, '&lt;');
 
-    return escapedText.replace(/\n{1}/gi, () => {
+    return escapedText.replace(/(?<!\|)\n(?!.*\|)/gi, () => {
       nbspCount++;
       if (nbspCount <= maxNbsp) {
         return '&nbsp;\n';
@@ -478,7 +479,7 @@ export default function Markdown({
   function removeNbsp(text?: string) {
     return (text || '').replace(/&nbsp;/g, '');
   }
-  function unescapeHtml(input: string) {
-    return (input || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  function unescapeHtml(text: string) {
+    return (text || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
   }
 }
