@@ -479,9 +479,11 @@ export default function Markdown({
     });
   }
   function removeNbsp(text?: string) {
+    if (typeof text !== 'string') return text;
     return (text || '').replace(/&nbsp;/g, '');
   }
   function unescapeHtml(text: string) {
+    if (typeof text !== 'string') return text;
     return (text || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
   }
 }
