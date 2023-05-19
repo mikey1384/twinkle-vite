@@ -17,8 +17,8 @@ export default function EmbeddedComponent({
 }: {
   contentType?: string;
   contentId?: number;
-  src: string;
-  alt: string;
+  src?: string;
+  alt?: string;
   isProfileComponent?: boolean;
   onLoad: () => void;
 }) {
@@ -43,7 +43,7 @@ export default function EmbeddedComponent({
           isProfileComponent={isProfileComponent}
           src={replacedLink}
         />
-      ) : isYouTube ? (
+      ) : isYouTube && src ? (
         <YouTubeVideo
           {...commonProps}
           contentType={contentType}

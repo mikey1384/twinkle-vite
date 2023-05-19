@@ -83,7 +83,14 @@ export default function Markdown({
           switch (domNode.name) {
             case 'a': {
               const node = domNode.children?.[0];
-              const href = domNode.attribs?.href || '';
+              let href = domNode.attribs?.href || '';
+              if (
+                href &&
+                !href.startsWith('http://') &&
+                !href.startsWith('https://')
+              ) {
+                href = 'http://' + href;
+              }
               const { isInternalLink, replacedLink } =
                 processInternalLink(href);
               if (isInternalLink || domNode.attribs?.class === 'mention') {
@@ -100,7 +107,7 @@ export default function Markdown({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {node?.data}
+                    {node?.data || 'Link'}
                   </a>
                 );
               }
@@ -204,7 +211,15 @@ export default function Markdown({
     return result;
   }
 
-  function convertToJSX(nodes: any[]): React.ReactNode {
+  function convertToJSX(
+    nodes: {
+      children?: any[];
+      data?: any;
+      name?: string;
+      type: string;
+      attribs?: { [key: string]: any };
+    }[]
+  ): React.ReactNode {
     return nodes.map((node, index) => {
       if (node.type === 'text') {
         return node.data.trim() !== '' || /^ +$/.test(node.data)
@@ -212,7 +227,9 @@ export default function Markdown({
           : null;
       } else if (node.type === 'tag') {
         const TagName = node.name;
-        const children = node.children ? convertToJSX(node.children) : null;
+        const children: any = node.children
+          ? convertToJSX(node.children)
+          : null;
 
         const attribs = { ...node.attribs };
 
@@ -225,12 +242,23 @@ export default function Markdown({
           delete attribs.class;
         }
 
-        const commonProps = { key: node.type + index, ...attribs };
+        const commonProps: { [key: string]: any } = {
+          key: node.type + index,
+          ...attribs
+        };
 
         switch (TagName) {
           case 'a': {
-            const href = attribs?.href || '';
+            let href = attribs?.href || '';
+            if (
+              href &&
+              !href.startsWith('http://') &&
+              !href.startsWith('https://')
+            ) {
+              href = 'http://' + href;
+            }
             const { isInternalLink, replacedLink } = processInternalLink(href);
+            commonProps.href = href;
             if (isInternalLink || attribs?.className === 'mention') {
               return (
                 <Link
@@ -241,7 +269,7 @@ export default function Markdown({
                   }}
                   to={replacedLink}
                 >
-                  {children}
+                  {children?.length ? children : 'Link'}
                 </Link>
               );
             } else {
@@ -254,7 +282,7 @@ export default function Markdown({
                   }}
                   target="_blank"
                 >
-                  {children}
+                  {children?.length ? children : 'Link'}
                 </a>
               );
             }
