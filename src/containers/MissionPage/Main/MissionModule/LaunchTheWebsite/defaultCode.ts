@@ -47,7 +47,7 @@ const defaultCode = ({
           marginTop: '2rem'
         }}
         onClick={() => {
-          let name = prompt("What's your name?");
+          const name = prompt("What's your name?");
           if (name) {
             alert('Nice to meet you, ' + name + '!');
           } else {

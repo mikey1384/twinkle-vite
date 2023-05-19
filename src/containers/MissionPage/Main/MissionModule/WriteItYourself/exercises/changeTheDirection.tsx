@@ -55,7 +55,7 @@ export const initialCode = `function HomePage() {
           color: 'white'
         }}
         onClick={() => {
-          let name = prompt("What's your name?");
+          const name = prompt("What's your name?");
           if (name) {
             alert('Nice to meet you, ' + name + '!');
           } else {
