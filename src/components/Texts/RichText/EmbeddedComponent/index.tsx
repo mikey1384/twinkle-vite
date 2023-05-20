@@ -12,7 +12,6 @@ export default function EmbeddedComponent({
   src,
   alt,
   isProfileComponent,
-  onLoad,
   ...commonProps
 }: {
   contentType?: string;
@@ -20,7 +19,6 @@ export default function EmbeddedComponent({
   src?: string;
   alt?: string;
   isProfileComponent?: boolean;
-  onLoad: () => void;
 }) {
   const { isInternalLink, replacedLink } = useMemo(
     () => processInternalLink(src),
@@ -51,10 +49,9 @@ export default function EmbeddedComponent({
           contentType={contentType}
           contentId={contentId}
           src={src}
-          onReady={onLoad}
         />
       ) : (
-        <img {...commonProps} src={src} alt={alt} onLoad={onLoad} />
+        <img {...commonProps} src={src} alt={alt} />
       )}
     </div>
   );

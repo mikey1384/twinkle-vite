@@ -23,8 +23,7 @@ function Markdown({
   isProfileComponent,
   linkColor,
   markerColor,
-  onSetIsParsed,
-  onSetImageLoaded
+  onSetIsParsed
 }: {
   contentId?: number;
   contentType?: string;
@@ -33,7 +32,6 @@ function Markdown({
   linkColor: string;
   markerColor: string;
   onSetIsParsed: (parsed: boolean) => void;
-  onSetImageLoaded: (arg0: boolean) => void;
 }) {
   const [Content, setContent] = useState<any>(<>{children}</>);
   useEffect(() => {
@@ -140,7 +138,6 @@ function Markdown({
                   isProfileComponent={isProfileComponent}
                   src={domNode.attribs?.src || ''}
                   alt={domNode.attribs?.alt || ''}
-                  onLoad={() => onSetImageLoaded(true)}
                 />
               );
             }
@@ -331,7 +328,6 @@ function Markdown({
                 isProfileComponent={isProfileComponent}
                 contentId={contentId}
                 contentType={contentType}
-                onLoad={() => onSetImageLoaded(true)}
               />
             );
           }
