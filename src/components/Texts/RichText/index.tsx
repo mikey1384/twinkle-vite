@@ -79,8 +79,9 @@ export default function RichText({
     !!fullTextShown
   );
   const overflownRef = useRef(isOverflown);
+  
   const containerRefCallback = useCallback((node: HTMLDivElement | null) => {
-    if (node) {
+    if (node && !fullTextState[section]) {
       const overflown = node.scrollHeight > node.clientHeight + 30;
       if (!fullTextRef.current) {
         setFullTextShown(!overflown);
@@ -90,14 +91,7 @@ export default function RichText({
         overflownRef.current = overflown;
       }
     }
-  }, [isPreview]);
-
-  useEffect(() => {
-    if (fullTextState[section] && !isPreview) {
-      fullTextRef.current = true;
-      setFullTextShown(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPreview]);
 
   useEffect(() => {
