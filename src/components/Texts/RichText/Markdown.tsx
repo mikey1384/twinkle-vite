@@ -466,7 +466,11 @@ function Markdown({
   }
 
   function preprocessText(text: string) {
-    const lines = text.split('\n');
+    const processedText = text
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/=/g, '\\=');
+    const lines = processedText.split('\n');
     const tablePattern = new RegExp('\\|.*\\|.*\\|');
     const containsTable = lines.some((line) => tablePattern.test(line));
     if (containsTable) {
