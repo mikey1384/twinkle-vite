@@ -466,20 +466,42 @@ function Markdown({
   }
 
   function preprocessText(text: string) {
+    const lines = text.split('\n');
+    const tablePattern = new RegExp('\\|.*\\|.*\\|');
+    const containsTable = lines.some((line) => tablePattern.test(line));
+    if (containsTable) {
+      return text;
+    }
     const maxNbsp = 9;
     let nbspCount = 0;
-    const targetText = text || '';
-    const escapedText = targetText.replace(/>/g, '&gt;').replace(/</g, '&lt;');
+    let inList = false;
+    let lastLineWasList = false;
 
-    return escapedText.replace(/(?<!\|)\n(?!.*\|)/gi, () => {
-      nbspCount++;
-      if (nbspCount <= maxNbsp) {
-        return '&nbsp;\n';
+    const processedLines = lines.map((line) => {
+      const trimmedLine = line.trim();
+      const isList = trimmedLine.match(/^\d\./);
+
+      if (isList) {
+        inList = true;
+        lastLineWasList = true;
+      } else if (trimmedLine === '' && inList) {
+        inList = false;
+        lastLineWasList = true;
+      } else if (trimmedLine !== '') {
+        lastLineWasList = false;
+      }
+
+      if (trimmedLine === '' && !lastLineWasList && nbspCount < maxNbsp) {
+        nbspCount++;
+        return line + '&nbsp;';
       } else {
-        return '\n';
+        return line;
       }
     });
+
+    return processedLines.join('\n');
   }
+
   function removeNbsp(text?: string) {
     if (typeof text !== 'string') return text;
     return (text || '').replace(/&nbsp;/g, '');
