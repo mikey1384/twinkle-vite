@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from './Markdown';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
@@ -62,7 +62,6 @@ export default function RichText({
   const onSetFullTextState = useContentContext(
     (v) => v.actions.onSetFullTextState
   );
-  const ContainerRef: React.RefObject<any> = useRef(null);
   const contentState =
     contentType && section
       ? useContentState({ contentType, contentId: contentId as number })
@@ -73,7 +72,6 @@ export default function RichText({
     null
   );
   const fullTextRef = useRef(fullTextState[section]);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [fullTextShown, setFullTextShown] = useState<boolean>(
     isPreview ? false : fullTextState[section]
   );
@@ -81,11 +79,9 @@ export default function RichText({
     !!fullTextShown
   );
   const overflownRef = useRef(isOverflown);
-  useEffect(() => {
-    if (!overflownRef.current) {
-      const overflown =
-        ContainerRef.current?.scrollHeight >
-        ContainerRef.current?.clientHeight + 30;
+  const containerRefCallback = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      const overflown = node.scrollHeight > node.clientHeight + 30;
       if (!fullTextRef.current) {
         setFullTextShown(!overflown);
       }
@@ -94,7 +90,7 @@ export default function RichText({
         overflownRef.current = overflown;
       }
     }
-  }, [imageLoaded, text, isPreview, maxLines]);
+  }, [isPreview]);
 
   useEffect(() => {
     if (fullTextState[section] && !isPreview) {
@@ -144,7 +140,7 @@ export default function RichText({
       componentPath="components/Texts/RichText"
     >
       <div
-        ref={ContainerRef}
+        ref={containerRefCallback}
         style={{
           opacity: isParsed ? 1 : 0,
           width: '100%',
@@ -220,7 +216,6 @@ export default function RichText({
             linkColor={appliedLinkColor}
             markerColor={markerColor}
             onSetIsParsed={setIsParsed}
-            onSetImageLoaded={setImageLoaded}
           >
             {text}
           </Markdown>

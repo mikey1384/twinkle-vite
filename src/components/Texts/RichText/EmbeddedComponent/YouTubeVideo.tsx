@@ -13,13 +13,11 @@ export default function YouTubeVideo({
   contentType,
   contentId,
   src,
-  onReady,
   ...commonProps
 }: {
   contentType?: string;
   contentId?: number;
   src: string;
-  onReady: () => void;
 }) {
   const timeAtRef = useRef(0);
   const PlayerRef: React.RefObject<any> = useRef(null);
@@ -70,7 +68,6 @@ export default function YouTubeVideo({
           {...commonProps}
           ref={PlayerRef}
           url={videoUrl}
-          onReady={onReady}
           width="100%"
           height="100%"
           onProgress={handleVideoProgress}
