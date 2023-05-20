@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import Markdown from './Markdown';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
@@ -79,20 +85,23 @@ export default function RichText({
     !!fullTextShown
   );
   const overflownRef = useRef(isOverflown);
-  
-  const containerRefCallback = useCallback((node: HTMLDivElement | null) => {
-    if (node && !fullTextState[section]) {
-      const overflown = node.scrollHeight > node.clientHeight + 30;
-      if (!fullTextRef.current) {
-        setFullTextShown(!overflown);
+
+  const containerRefCallback = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (node && !fullTextState[section]) {
+        const overflown = node.scrollHeight > node.clientHeight + 30;
+        if (!fullTextRef.current) {
+          setFullTextShown(!overflown);
+        }
+        setIsOverflown(overflown);
+        if (!isPreview) {
+          overflownRef.current = overflown;
+        }
       }
-      setIsOverflown(overflown);
-      if (!isPreview) {
-        overflownRef.current = overflown;
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPreview]);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isPreview]
+  );
 
   useEffect(() => {
     if (fullTextShown && typeof savedScrollPosition === 'number') {
