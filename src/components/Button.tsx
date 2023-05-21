@@ -90,7 +90,7 @@ function Button({
   ]);
 
   const buttonCSS = useMemo(() => {
-    const colorKey = (onHover ? memoizedHoverColor : color) || 'black';
+    const colorKey = (onHover ? hoverColor : color) || 'black';
     const backgroundOpacity = opacity || (filled ? 1 : skeuomorphic ? 0.5 : 0);
     const backgroundHoverOpacity = transparent ? 0 : 0.9;
     const backgroundDisabledOpacity = filled || skeuomorphic ? 0.2 : 0;
