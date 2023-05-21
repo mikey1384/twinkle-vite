@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import CardThumb from '~/components/CardThumb';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import moment from 'moment';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -23,29 +24,26 @@ export default function TransferMessage({
   onSetAICardModalCardId: (cardId: number) => void;
 }) {
   const [usermenuShown, setUsermenuShown] = useState(false);
-  const isPurchase = useMemo(() => !!transferDetails?.askId, [transferDetails]);
-  const isSale = useMemo(() => !!transferDetails?.offerId, [transferDetails]);
-  const isTransaction = useMemo(
-    () => isPurchase || isSale,
-    [isPurchase, isSale]
-  );
-  const card = useMemo(() => {
-    return transferDetails.card;
+
+  const transferData = useMemo(() => {
+    const isPurchase = !!transferDetails?.askId;
+    const isSale = !!transferDetails?.offerId;
+    const isTransaction = isPurchase || isSale;
+    const card = transferDetails.card;
+    const displayedTimeStamp = moment
+      .unix(transferDetails.timeStamp)
+      .format('lll');
+    const price = isTransaction
+      ? isPurchase
+        ? transferDetails?.ask?.price
+        : transferDetails?.offer?.price
+      : 0;
+    return { isPurchase, isSale, card, displayedTimeStamp, price };
   }, [transferDetails]);
-  const price = useMemo(() => {
-    if (!isTransaction) {
-      return 0;
-    }
-    return isPurchase
-      ? transferDetails?.ask?.price
-      : transferDetails?.offer?.price;
-  }, [
-    isPurchase,
-    isTransaction,
-    transferDetails?.ask?.price,
-    transferDetails?.offer?.price
-  ]);
+
   const actionDescription = useMemo(() => {
+    const { isPurchase, isSale, card, displayedTimeStamp, price } =
+      transferData;
     const buyer =
       transferDetails.to === myId
         ? { id: myId, username: myUsername }
@@ -54,101 +52,83 @@ export default function TransferMessage({
       transferDetails.from === myId
         ? { id: myId, username: myUsername }
         : partner;
-    if (isPurchase) {
+    const action = isPurchase ? 'bought' : 'sold';
+    const path = `Chat/Message/TransferMessage/${isPurchase ? 'buy' : 'sell'}`;
+
+    if (isPurchase || isSale) {
       return (
-        <ErrorBoundary componentPath="Chat/Message/TransferMessage">
-          <div>
-            <UsernameText
-              displayedName={buyer.id === myId ? 'You' : buyer.username}
-              color={Color.black()}
-              user={{
-                id: buyer.id,
-                username: buyer.username
-              }}
-            />{' '}
-            bought{' '}
-            <b
+        <ErrorBoundary componentPath={path}>
+          <div
+            style={{
+              display: 'flex',
+              width: '100%',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <div>
+              {isPurchase ? (
+                <>
+                  <UsernameText
+                    displayedName={buyer.id === myId ? 'You' : buyer.username}
+                    color={Color.black()}
+                    onMenuShownChange={setUsermenuShown}
+                    user={buyer}
+                  />{' '}
+                  {action}{' '}
+                  <b style={{ color: Color.black() }}>Card #{card.id}</b> from{' '}
+                  <UsernameText
+                    displayedName={seller.id === myId ? 'you' : seller.username}
+                    color={Color.black()}
+                    onMenuShownChange={setUsermenuShown}
+                    user={seller}
+                  />{' '}
+                </>
+              ) : (
+                <>
+                  <UsernameText
+                    displayedName={seller.id === myId ? 'You' : seller.username}
+                    color={Color.black()}
+                    onMenuShownChange={setUsermenuShown}
+                    user={seller}
+                  />{' '}
+                  {action}{' '}
+                  <b style={{ color: Color.black() }}>Card #{card.id}</b> to{' '}
+                  <UsernameText
+                    displayedName={buyer.id === myId ? 'you' : buyer.username}
+                    color={Color.black()}
+                    onMenuShownChange={setUsermenuShown}
+                    user={buyer}
+                  />{' '}
+                </>
+              )}
+              for{' '}
+              <b style={{ color: Color.black() }}>{addCommasToNumber(price)}</b>{' '}
+              Twinkle {price === 1 ? 'Coin' : 'Coins'}
+            </div>
+            <div
               style={{
-                color: Color.black()
+                marginTop: '1.7rem',
+                fontFamily: 'Roboto, sans-serif',
+                fontSize: '1.3rem',
+                color: Color.darkerGray()
               }}
             >
-              Card #{card.id}
-            </b>{' '}
-            from{' '}
-            <UsernameText
-              displayedName={seller.id === myId ? 'you' : seller.username}
-              color={Color.black()}
-              user={{
-                id: seller.id,
-                username: seller.username
-              }}
-            />{' '}
-            for{' '}
-            <b
-              style={{
-                color: Color.black()
-              }}
-            >
-              {addCommasToNumber(price)}
-            </b>{' '}
-            Twinkle {price === 1 ? 'Coin' : 'Coins'}
+              {displayedTimeStamp}
+            </div>
           </div>
         </ErrorBoundary>
       );
     }
-    if (isSale) {
-      return (
-        <div>
-          <UsernameText
-            displayedName={seller.id === myId ? 'You' : seller.username}
-            onMenuShownChange={setUsermenuShown}
-            color={Color.black()}
-            user={{
-              id: seller.id,
-              username: seller.username
-            }}
-          />{' '}
-          sold{' '}
-          <b
-            style={{
-              color: Color.black()
-            }}
-          >
-            Card #{card.id}
-          </b>{' '}
-          to{' '}
-          <UsernameText
-            displayedName={buyer.id === myId ? 'you' : buyer.username}
-            onMenuShownChange={setUsermenuShown}
-            color={Color.black()}
-            user={{
-              id: buyer.id,
-              username: buyer.username
-            }}
-          />{' '}
-          for{' '}
-          <b
-            style={{
-              color: Color.black()
-            }}
-          >
-            {addCommasToNumber(price)}
-          </b>{' '}
-          Twinkle {price === 1 ? 'Coin' : 'Coins'}
-        </div>
-      );
-    }
     return '';
   }, [
-    card.id,
-    isPurchase,
-    isSale,
+    transferData,
+    transferDetails.to,
+    transferDetails.from,
     myId,
     myUsername,
-    partner,
-    price,
-    transferDetails.from,
-    transferDetails.to
+    partner
   ]);
 
   return (
@@ -170,44 +150,45 @@ export default function TransferMessage({
         }
       `}
       onClick={() => {
-        if (!usermenuShown) onSetAICardModalCardId(card.id);
+        if (!usermenuShown) onSetAICardModalCardId(transferDetails.card.id);
       }}
     >
       <div
         className={css`
+          display: flex;
+          width: 100%;
+          height: 100%;
           padding: 0 3rem 0 2rem;
           @media (max-width: ${mobileMaxWidth}) {
             padding: 0 1rem 0 0.5rem;
           }
         `}
-        style={{
-          display: 'flex',
-          width: '100%',
-          height: '100%'
-        }}
       >
         <div
-          style={{
-            width: '5rem',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
+          className={css`
+            display: flex;
+            justifycontent: center;
+            alignitems: center;
+            width: 5rem;
+          `}
         >
-          <CardThumb card={card} />
+          <CardThumb card={transferData.card} />
         </div>
         <div
-          style={{
-            width: 'CALC(100% - 5rem)',
-            marginLeft: '3rem',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
+          className={css`
+            width: CALC(100% - 5rem);
+            marginleft: 3rem;
+            display: flex;
+            flexdirection: column;
+            justifycontent: center;
+            alignitems: center;
+          `}
         >
           <div
             className={css`
+              width: 100%;
+              display: flex;
+              justify-content: center;
               padding-right: 1rem;
               font-size: 1.7rem;
               line-height: 1.5;
@@ -220,14 +201,14 @@ export default function TransferMessage({
           </div>
         </div>
         <div
-          style={{
-            width: '5rem',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
+          className={css`
+            display: flex;
+            justifycontent: center;
+            alignitems: center;
+            width: 5rem;
+          `}
         >
-          <CardThumb card={card} />
+          <CardThumb card={transferData.card} />
         </div>
       </div>
     </div>
