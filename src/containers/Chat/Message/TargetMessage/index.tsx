@@ -4,7 +4,13 @@ import { css } from '@emotion/css';
 import TextMessage from './TextMessage';
 import WordleResult from './WordleResult';
 
-export default function TargetMessage({ message }: { message: any }) {
+export default function TargetMessage({
+  message,
+  displayedThemeColor
+}: {
+  message: any;
+  displayedThemeColor: string;
+}) {
   return (
     <div
       className={css`
@@ -22,7 +28,10 @@ export default function TargetMessage({ message }: { message: any }) {
           wordleResult={message.wordleResult}
         />
       ) : (
-        <TextMessage message={message} />
+        <TextMessage
+          displayedThemeColor={displayedThemeColor}
+          message={message}
+        />
       )}
     </div>
   );

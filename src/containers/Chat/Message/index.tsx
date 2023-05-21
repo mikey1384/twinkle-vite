@@ -838,7 +838,12 @@ function Message({
                       />
                     )}
                     {targetSubject && <TargetSubject subject={targetSubject} />}
-                    {targetMessage && <TargetMessage message={targetMessage} />}
+                    {targetMessage && (
+                      <TargetMessage
+                        displayedThemeColor={displayedThemeColor}
+                        message={targetMessage}
+                      />
+                    )}
                     {filePath && fileName && (
                       <FileAttachment
                         fileName={fileName}

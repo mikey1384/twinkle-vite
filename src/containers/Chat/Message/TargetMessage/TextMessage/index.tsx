@@ -16,7 +16,13 @@ import {
 } from '~/helpers/stringHelpers';
 import LocalContext from '../../../Context';
 
-export default function TextMessage({ message }: { message: any }) {
+export default function TextMessage({
+  message,
+  displayedThemeColor
+}: {
+  message: any;
+  displayedThemeColor: string;
+}) {
   const {
     actions: { onSetEmbeddedUrl }
   } = useContext(LocalContext);
@@ -108,6 +114,7 @@ export default function TextMessage({ message }: { message: any }) {
           <Spoiler content={message.content} />
         ) : (
           <RichText
+            theme={displayedThemeColor}
             readMoreHeightFixed
             style={{ marginTop: '0.5rem' }}
             className={css`
