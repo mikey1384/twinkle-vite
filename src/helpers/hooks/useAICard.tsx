@@ -37,10 +37,9 @@ export default function useAICard(card: any) {
   function getPromptText(prompt: string, word: string, color: string) {
     if (word) {
       const regex = new RegExp(word, 'gi');
-      const promptToDisplay = prompt.replace(
-        regex,
-        `<b style="color:${Color[color]()}">${word}</b>`
-      );
+      const promptToDisplay = prompt.replace(regex, (matched) => {
+        return `<b style="color:${Color[color]()}">${matched}</b>`;
+      });
 
       return promptToDisplay;
     }
