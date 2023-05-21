@@ -36,19 +36,12 @@ export default function useAICard(card: any) {
 
   function getPromptText(prompt: string, word: string, color: string) {
     if (word) {
-      const lowerCasePrompt = prompt.toLowerCase();
-      const lowerCaseWord = word.toLowerCase();
-      const wordIndex = lowerCasePrompt.indexOf(lowerCaseWord);
-      const isCapitalized = prompt[wordIndex] !== lowerCasePrompt[wordIndex];
-      const wordToDisplay = isCapitalized
-        ? `${word[0].toUpperCase()}${word.slice(1)}`
-        : word;
-      const promptToDisplay = `${prompt.slice(
-        0,
-        wordIndex
-      )}<b style="color:${Color[color]()}">${wordToDisplay}</b>${prompt.slice(
-        wordIndex + word.length
-      )}`;
+      const regex = new RegExp(word, 'gi');
+      const promptToDisplay = prompt.replace(
+        regex,
+        `<b style="color:${Color[color]()}">${word}</b>`
+      );
+
       return promptToDisplay;
     }
     return prompt || '';
