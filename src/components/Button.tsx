@@ -65,12 +65,35 @@ function Button({
   mobileBorderRadius?: string;
 }) {
   const isDisabled = useMemo(() => disabled || loading, [disabled, loading]);
-  const ButtonStyle = useMemo(() => {
-    const colorKey = (onHover ? hoverColor : color) || 'black';
+  const textOpacity = useMemo(
+    () => (isDisabled ? 0.2 : transparent ? 0.7 : 1),
+    [isDisabled, transparent]
+  );
+
+  const memoizedHoverColor = useMemo(() => {
+    if (isDisabled) {
+      if (!filled) {
+        return Color[hoverColor || color](textOpacity);
+      }
+    } else if (skeuomorphic || transparent) {
+      return Color[hoverColor || color]();
+    }
+    return '#fff';
+  }, [
+    color,
+    filled,
+    hoverColor,
+    isDisabled,
+    skeuomorphic,
+    textOpacity,
+    transparent
+  ]);
+
+  const buttonCSS = useMemo(() => {
+    const colorKey = (onHover ? memoizedHoverColor : color) || 'black';
     const backgroundOpacity = opacity || (filled ? 1 : skeuomorphic ? 0.5 : 0);
     const backgroundHoverOpacity = transparent ? 0 : 0.9;
     const backgroundDisabledOpacity = filled || skeuomorphic ? 0.2 : 0;
-    const textOpacity = isDisabled ? 0.2 : transparent ? 0.7 : 1;
 
     return `${css`
       display: flex;
@@ -118,7 +141,7 @@ function Button({
           : Color[hoverColor || color](
               isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
             )};
-        color: ${renderHoverColor()};
+        ${isDisabled ? '' : `color: ${memoizedHoverColor};`}
         border-color: ${Color[hoverColor || color](
           isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
         )};
@@ -156,35 +179,33 @@ function Button({
         ${stretch ? 'border-radius: 0;' : ''};
       }
     `} ${className} unselectable`;
-    function renderHoverColor() {
-      if (isDisabled) {
-        if (!filled) {
-          return Color[hoverColor || color](textOpacity);
-        }
-      } else if (skeuomorphic || transparent) {
-        return Color[hoverColor || color]();
-      }
-      return '#fff';
-    }
   }, [
     onHover,
-    hoverColor,
+    memoizedHoverColor,
     color,
     opacity,
     filled,
     skeuomorphic,
     transparent,
     isDisabled,
+    textOpacity,
+    hoverColor,
     mobilePadding,
     mobileBorderRadius,
     stretch,
     className
   ]);
+
+  const buttonStyle = useMemo(
+    () => ({ ...style, ...(stretch ? { width: '100%' } : {}) }),
+    [style, stretch]
+  );
+
   return (
     <ErrorBoundary componentPath="Button">
       <button
-        style={{ ...style, ...(stretch ? { width: '100%' } : {}) }}
-        className={ButtonStyle}
+        style={buttonStyle}
+        className={buttonCSS}
         onClick={onClick}
         disabled={isDisabled}
         onMouseEnter={onMouseEnter}
