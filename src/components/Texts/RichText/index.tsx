@@ -77,9 +77,10 @@ export default function RichText({
   const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(
     null
   );
-  const fullTextRef = useRef(fullTextState[section]);
+  const fullTextShownRef = useRef(fullTextState[section]?.fullTextShown);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [fullTextShown, setFullTextShown] = useState<boolean>(
-    isPreview ? false : fullTextState[section]
+    isPreview ? false : fullTextState[section]?.fullTextShown
   );
   const [isOverflown, setIsOverflown] = useState<boolean | null>(
     !!fullTextShown
@@ -88,20 +89,39 @@ export default function RichText({
 
   const containerRefCallback = useCallback(
     (node: HTMLDivElement | null) => {
-      if (node && !fullTextState[section]) {
-        const overflown = node.scrollHeight > node.clientHeight + 30;
-        if (!fullTextRef.current) {
-          setFullTextShown(!overflown);
-        }
-        setIsOverflown(overflown);
-        if (!isPreview) {
-          overflownRef.current = overflown;
-        }
+      if (node) {
+        containerRef.current = node;
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isPreview]
   );
+
+  const prevFullTextLength = useMemo(
+    () => fullTextState?.[section]?.textLength,
+    [fullTextState, section]
+  );
+
+  useEffect(() => {
+    if (text.length < prevFullTextLength) {
+      setFullTextShown(false);
+      fullTextShownRef.current = false;
+      setIsOverflown(false);
+    }
+  }, [text, prevFullTextLength]);
+
+  useEffect(() => {
+    if (containerRef.current && !fullTextShown) {
+      const overflown =
+        containerRef.current.scrollHeight >
+        containerRef.current.clientHeight + 30;
+      setFullTextShown(!overflown);
+      setIsOverflown(overflown);
+      if (!isPreview) {
+        overflownRef.current = overflown;
+      }
+    }
+  }, [isPreview, fullTextShown]);
 
   useEffect(() => {
     if (fullTextShown && typeof savedScrollPosition === 'number') {
@@ -119,7 +139,8 @@ export default function RichText({
           contentId,
           contentType,
           section,
-          fullTextShown: fullTextRef.current
+          fullTextShown: fullTextShownRef.current,
+          textLength: text.length
         });
       }
     };
@@ -247,7 +268,7 @@ export default function RichText({
                 appElement?.scrollTop || BodyRef.scrollTop || 0
               );
               setFullTextShown((shown) => !shown);
-              fullTextRef.current = !fullTextRef.current;
+              fullTextShownRef.current = !fullTextShownRef.current;
             }}
           >
             {fullTextShown ? 'Show Less' : 'Show More'}
