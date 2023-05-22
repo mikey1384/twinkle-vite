@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from './Markdown';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
@@ -78,7 +72,7 @@ export default function RichText({
     null
   );
   const fullTextShownRef = useRef(fullTextState[section]?.fullTextShown);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const ContainerRef = useRef<HTMLDivElement | null>(null);
   const [fullTextShown, setFullTextShown] = useState<boolean>(
     isPreview ? false : fullTextState[section]?.fullTextShown
   );
@@ -86,17 +80,6 @@ export default function RichText({
     !!fullTextShown
   );
   const overflownRef = useRef(isOverflown);
-
-  const containerRefCallback = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (node) {
-        containerRef.current = node;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isPreview]
-  );
-
   const prevFullTextLength = useMemo(
     () => fullTextState?.[section]?.textLength,
     [fullTextState, section]
@@ -111,10 +94,10 @@ export default function RichText({
   }, [text, prevFullTextLength]);
 
   useEffect(() => {
-    if (containerRef.current && !fullTextShown) {
+    if (ContainerRef.current && !fullTextShown) {
       const overflown =
-        containerRef.current.scrollHeight >
-        containerRef.current.clientHeight + 30;
+        ContainerRef.current.scrollHeight >
+        ContainerRef.current.clientHeight + 30;
       setFullTextShown(!overflown);
       setIsOverflown(overflown);
       if (!isPreview) {
@@ -164,7 +147,7 @@ export default function RichText({
       componentPath="components/Texts/RichText"
     >
       <div
-        ref={containerRefCallback}
+        ref={ContainerRef}
         style={{
           opacity: isParsed ? 1 : 0,
           width: '100%',
