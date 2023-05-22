@@ -386,7 +386,14 @@ export default function TargetContent({
                         onClick={() => navigate(`/subjects/${subject.id}`)}
                       />
                     ) : (
-                      <RichText theme={theme}>{comment.content}</RichText>
+                      <RichText
+                        theme={theme}
+                        contentId={contentId}
+                        contentType={contentType}
+                        section="target"
+                      >
+                        {comment.content}
+                      </RichText>
                     )}
                   </div>
                 </div>

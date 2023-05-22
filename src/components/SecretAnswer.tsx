@@ -124,6 +124,9 @@ function SecretAnswer({
             {!stringIsEmpty(answer) && (
               <RichText
                 theme={theme}
+                contentId={subjectId}
+                contentType="subject"
+                section="secret"
                 style={{ marginTop: fileType === 'image' ? '1.3rem' : 0 }}
               >
                 {answer}
