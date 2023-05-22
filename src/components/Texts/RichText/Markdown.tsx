@@ -465,7 +465,9 @@ function Markdown({
     const processedText = text
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/=/g, '\\=');
+      .replace(/(^|\s)=($|\s|=)/g, function (match) {
+        return match.replace(/=/g, '\\=');
+      });
     const lines = processedText.split('\n');
     const tablePattern = new RegExp('\\|.*\\|.*\\|');
     const containsTable = lines.some((line) => tablePattern.test(line));
