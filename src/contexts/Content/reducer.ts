@@ -1401,7 +1401,10 @@ export default function ContentReducer(
           ...prevContentState,
           fullTextState: {
             ...(prevContentState.fullTextState || {}),
-            [action.section]: action.fullTextShown
+            [action.section]: {
+              fullTextShown: action.fullTextShown,
+              textLength: action.textLength
+            }
           }
         }
       };

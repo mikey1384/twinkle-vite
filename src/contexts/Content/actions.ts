@@ -731,19 +731,22 @@ export default function ContentActions(dispatch: Dispatch) {
       contentId,
       contentType,
       section,
-      fullTextShown
+      fullTextShown,
+      textLength
     }: {
       contentId: number;
       contentType: string;
       section: string;
       fullTextShown: boolean;
+      textLength: number;
     }) {
       return dispatch({
         type: 'SET_FULL_TEXT_STATE',
         contentId,
         contentType,
         section,
-        fullTextShown
+        fullTextShown,
+        textLength
       });
     },
     onSetIsEditing({
