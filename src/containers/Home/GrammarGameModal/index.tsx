@@ -181,12 +181,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             });
           })(),
           (async () => {
-            await new Promise<void>((resolve) =>
-              setTimeout(() => {
-                setGameState('finished');
-                resolve();
-              }, 3000)
-            );
+            await new Promise<void>((resolve) => setTimeout(resolve, 3000));
           })()
         ];
         await Promise.all(promises);
