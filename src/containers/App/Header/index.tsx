@@ -981,7 +981,7 @@ export default function Header({
     }) {
       if (
         state[target.contentType + target.contentId] ||
-        uploaderId === userId
+        (uploaderId === userId && recommenderId !== userId)
       ) {
         onRecommendContent({
           recommendations,
