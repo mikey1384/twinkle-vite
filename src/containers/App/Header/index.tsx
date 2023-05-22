@@ -979,7 +979,10 @@ export default function Header({
       target: any;
       newlyRecommended: boolean;
     }) {
-      if (state[target.contentType + target.contentId]) {
+      if (
+        state[target.contentType + target.contentId] ||
+        uploaderId === userId
+      ) {
         onRecommendContent({
           recommendations,
           contentId: target.contentId,
