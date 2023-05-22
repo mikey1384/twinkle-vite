@@ -51,6 +51,7 @@ export default function RichText({
   readMoreColor?: string;
   theme?: string;
 }) {
+  text = text || '';
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
     statusMsgLink: { color: statusMsgLinkColor },
@@ -86,7 +87,7 @@ export default function RichText({
   );
 
   useEffect(() => {
-    if ((text || '').length < prevFullTextLength) {
+    if (text.length < prevFullTextLength) {
       setFullTextShown(false);
       fullTextShownRef.current = false;
       setIsOverflown(false);
@@ -123,7 +124,7 @@ export default function RichText({
           contentType,
           section,
           fullTextShown: fullTextShownRef.current,
-          textLength: (text || '').length
+          textLength: text.length
         });
       }
     };
