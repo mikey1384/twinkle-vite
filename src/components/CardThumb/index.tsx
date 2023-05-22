@@ -41,8 +41,12 @@ export default function CardThumb({
       burnXP < 1000
         ? burnXP
         : burnXP < 1000000
-        ? `${(burnXP / 1000).toFixed(1)}K`
-        : `${(burnXP / 1000000).toFixed(1)}M`;
+        ? `${burnXP % 1000 === 0 ? burnXP / 1000 : (burnXP / 1000).toFixed(1)}K`
+        : `${
+            burnXP % 1000000 === 0
+              ? burnXP / 1000000
+              : (burnXP / 1000000).toFixed(1)
+          }M`;
     const cardColor =
       Color[card?.isBurned ? 'black' : cardDetailObj?.color]?.();
     const borderColor = qualityProps[card?.quality]?.color;
