@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import YouTubeVideo from './YouTubeVideo';
 import InternalComponent from './InternalComponent';
 import {
@@ -25,6 +25,15 @@ export default function EmbeddedComponent({
     [src]
   );
   const isYouTube = useMemo(() => isValidYoutubeUrl(src), [src]);
+  const [errorLoadingImage, setErrorLoadingImage] = useState(false);
+
+  const href = useMemo(() => {
+    if (!src || src?.startsWith('http://') || src?.startsWith('https://')) {
+      return src;
+    }
+    return `http://${src}`;
+  }, [src]);
+
   return (
     <div
       style={{
@@ -50,8 +59,19 @@ export default function EmbeddedComponent({
           contentId={contentId}
           src={src}
         />
+      ) : !errorLoadingImage && src ? (
+        <img
+          {...commonProps}
+          src={src}
+          alt={alt}
+          onError={() => setErrorLoadingImage(true)}
+        />
+      ) : href ? (
+        <a href={href} target="_blank" rel="noopener noreferrer">
+          {alt || 'Link'}
+        </a>
       ) : (
-        <img {...commonProps} src={src} alt={alt} />
+        '![]()'
       )}
     </div>
   );
