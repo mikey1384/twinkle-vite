@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import Markdown from './Markdown';
 import { Color } from '~/constants/css';
 import { useContentState, useTheme } from '~/helpers/hooks';
@@ -59,7 +65,14 @@ export default function RichText({
     listItemMarker: { color: listItemMarkerColor },
     statusMsgListItemMarker: { color: statusMsgListItemMarkerColor }
   } = useTheme(theme || profileTheme);
-
+  const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
+    null
+  );
+  const setContainerRef = useCallback((node: HTMLDivElement) => {
+    if (node !== null) {
+      setContainerNode(node);
+    }
+  }, []);
   const onSetFullTextState = useContentContext(
     (v) => v.actions.onSetFullTextState
   );
@@ -73,7 +86,6 @@ export default function RichText({
     null
   );
   const fullTextShownRef = useRef(fullTextState[section]?.fullTextShown);
-  const ContainerRef = useRef<HTMLDivElement | null>(null);
   const [fullTextShown, setFullTextShown] = useState<boolean>(
     isPreview ? false : fullTextState[section]?.fullTextShown
   );
@@ -95,17 +107,16 @@ export default function RichText({
   }, [text, prevFullTextLength]);
 
   useEffect(() => {
-    if (ContainerRef.current && !fullTextShown) {
+    if (containerNode && !fullTextShown) {
       const overflown =
-        ContainerRef.current.scrollHeight >
-        ContainerRef.current.clientHeight + 30;
+        containerNode.scrollHeight > containerNode.clientHeight + 30;
       setFullTextShown(!overflown);
       setIsOverflown(overflown);
       if (!isPreview) {
         overflownRef.current = overflown;
       }
     }
-  }, [isPreview, fullTextShown]);
+  }, [isPreview, fullTextShown, containerNode]);
 
   useEffect(() => {
     if (fullTextShown && typeof savedScrollPosition === 'number') {
@@ -148,7 +159,7 @@ export default function RichText({
       componentPath="components/Texts/RichText"
     >
       <div
-        ref={ContainerRef}
+        ref={setContainerRef}
         style={{
           opacity: isParsed ? 1 : 0,
           width: '100%',
