@@ -903,23 +903,28 @@ function MessagesContainer({
         setLeaveConfirmModalShown(false);
         setLeaving(false);
       } catch (error) {
-        console.error(error);
         setLeaving(false);
+        throw error;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leaving, profilePicUrl, selectedChannelId, userId, username]);
 
   const handleLeaveConfirm = useCallback(() => {
-    if (currentChannel.creatorId === userId) {
-      setLeaveConfirmModalShown(false);
-      if (currentChannel.members.length === 1) {
-        handleLeaveChannel();
+    try {
+      if (currentChannel.creatorId === userId) {
+        setLeaveConfirmModalShown(false);
+        if (currentChannel.members.length === 1) {
+          handleLeaveChannel();
+        } else {
+          setSelectNewOwnerModalShown(true);
+        }
       } else {
-        setSelectNewOwnerModalShown(true);
+        handleLeaveChannel();
       }
-    } else {
-      handleLeaveChannel();
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
   }, [
     currentChannel?.creatorId,

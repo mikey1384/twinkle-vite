@@ -51,10 +51,10 @@ export default function ConfirmModal({
     </Modal>
   );
 
-  function handleConfirm() {
+  async function handleConfirm() {
     try {
       setSubmitting(true);
-      onConfirm();
+      await onConfirm();
     } catch (error) {
       console.error(error);
       setSubmitting(false);
