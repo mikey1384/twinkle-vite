@@ -52,6 +52,7 @@ export default function Description({
 }) {
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const [urlHasError, setUrlHasError] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { canDelete, canEdit } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
@@ -349,6 +350,7 @@ export default function Description({
               <Button
                 color={doneColor}
                 disabled={doneButtonDisabled}
+                loading={submitting}
                 onClick={onEditFinish}
               >
                 Done
@@ -356,7 +358,9 @@ export default function Description({
             </div>
           </div>
         ) : (
-          <RichText maxLines={20}>{description || ''}</RichText>
+          <RichText contentType="url" contentId={linkId} maxLines={20}>
+            {description || ''}
+          </RichText>
         )}
       </div>
     </div>
@@ -391,22 +395,29 @@ export default function Description({
   }
 
   async function onEditFinish() {
-    await onEditDone({
-      editedUrl,
-      editedTitle: finalizeEmoji(editedTitle),
-      editedDescription: finalizeEmoji(editedDescription),
-      contentId: linkId,
-      contentType: 'url'
-    });
-    onSetEditForm({
-      contentId: linkId,
-      contentType: 'url',
-      form: undefined
-    });
-    onSetIsEditing({
-      contentId: linkId,
-      contentType: 'url',
-      isEditing: false
-    });
+    try {
+      setSubmitting(true);
+      await onEditDone({
+        editedUrl,
+        editedTitle: finalizeEmoji(editedTitle),
+        editedDescription: finalizeEmoji(editedDescription),
+        contentId: linkId,
+        contentType: 'url'
+      });
+      onSetEditForm({
+        contentId: linkId,
+        contentType: 'url',
+        form: undefined
+      });
+      onSetIsEditing({
+        contentId: linkId,
+        contentType: 'url',
+        isEditing: false
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSubmitting(false);
+    }
   }
 }
