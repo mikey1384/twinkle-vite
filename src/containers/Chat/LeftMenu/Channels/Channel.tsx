@@ -1,8 +1,8 @@
-import React, { useContext, memo, useCallback, useMemo } from 'react';
+import React, { useContext, memo, useCallback, useMemo, useRef } from 'react';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useKeyContext, useChatContext } from '~/contexts';
+import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
 import LocalContext from '../../Context';
@@ -25,6 +25,7 @@ function Channel({
     pathId,
     subchannelObj = {}
   },
+  channel,
   chatType,
   selectedChannelId
 }: {
@@ -51,9 +52,11 @@ function Channel({
   chatType?: string;
   selectedChannelId?: number;
 }) {
+  const ChannelRef = useRef(channel);
   const {
     state: { lastSubchannelPaths }
   } = useContext(LocalContext);
+  const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
   const {
@@ -265,10 +268,19 @@ function Channel({
     return result;
   }, [numUnreads, subchannelObj]);
 
-  const ChannelName = useMemo(
-    () => otherMember || effectiveChannelName || `(${deletedLabel})`,
-    [effectiveChannelName, otherMember]
-  );
+  const ChannelName = useMemo(() => {
+    const result = otherMember || effectiveChannelName;
+    if (!result) {
+      reportError({
+        componentPath: 'Chat/LeftMenu/Channel',
+        message: `Channel name was rendered as "Deleted." Channel data is as follows: ${JSON.stringify(
+          ChannelRef.current
+        )}`
+      });
+    }
+    return result || `(${deletedLabel})`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveChannelName, otherMember]);
 
   const lastSubchannelPath = useMemo(
     () => lastSubchannelPaths[channelId],
