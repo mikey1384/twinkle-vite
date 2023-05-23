@@ -162,7 +162,8 @@ function Channels({ currentPathId }: { currentPathId?: string | number }) {
         {channelIds
           ?.map((channelId: number) => channelsObj[channelId])
           .filter(
-            (channel: { isHidden: boolean }) => !!channel && !channel?.isHidden
+            (channel: { id: number; isHidden: boolean }) =>
+              !!channel?.id && !channel?.isHidden
           )
           .map((channel: { id: number }) => (
             <Channel
