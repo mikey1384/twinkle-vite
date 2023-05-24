@@ -21,3 +21,10 @@ export function checkMultiMissionPassStatus({
     passed: numTasks > 0 && numTasks === numPassedTasks
   };
 }
+export function getStoredItem(key: string, defaultValue = ''): string {
+  if (typeof localStorage === 'undefined') {
+    return defaultValue;
+  }
+  const item = localStorage.getItem(key);
+  return item !== null ? item : defaultValue;
+}

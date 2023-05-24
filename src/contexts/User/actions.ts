@@ -1,4 +1,5 @@
 import { Dispatch } from '~/types';
+import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 
 export default function UserActions(dispatch: Dispatch) {
   return {
@@ -43,6 +44,7 @@ export default function UserActions(dispatch: Dispatch) {
       });
     },
     onLogout() {
+      localStorage.setItem('profile-theme', DEFAULT_PROFILE_THEME);
       localStorage.removeItem('token');
       return dispatch({
         type: 'LOGOUT'

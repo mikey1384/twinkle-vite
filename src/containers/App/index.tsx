@@ -32,6 +32,7 @@ import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/io';
@@ -270,6 +271,10 @@ function App() {
       await recordUserTraffic(location.pathname);
       if (authRef.current?.headers?.authorization) {
         const data = await loadMyData(location.pathname);
+        localStorage.setItem(
+          'profile-theme',
+          data?.profileTheme || DEFAULT_PROFILE_THEME
+        );
         onSetUserState({
           userId: data.userId,
           newState: { ...data, loaded: true }

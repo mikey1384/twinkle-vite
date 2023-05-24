@@ -5,13 +5,13 @@ import { clientVersion } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import URL from '~/constants/URL';
 import request from 'axios';
+import { getStoredItem } from '~/helpers/userDataHelpers';
 import { Color, borderRadius } from '~/constants/css';
 import { install } from 'source-map-support';
 
 install();
 
-const token = () =>
-  typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+const token = () => getStoredItem('token', '');
 
 interface State {
   hasError: boolean;

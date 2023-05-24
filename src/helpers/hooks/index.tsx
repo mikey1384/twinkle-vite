@@ -23,6 +23,7 @@ import {
   SELECTED_LANGUAGE
 } from '~/constants/defaultValues';
 import { Color, Theme } from '~/constants/css';
+import { getStoredItem } from '~/helpers/userDataHelpers';
 
 const allContentState: Record<string, any> = {};
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -122,52 +123,54 @@ export function useMyState() {
   const loaded = useAppContext((v) => v.user.state.loaded);
   const signinModalShown = useAppContext((v) => v.user.state.signinModalShown);
   const myState = useAppContext((v) => v.user.state.userObj[userId] || {});
-  const result = useMemo(
-    () =>
-      myState.loaded
-        ? {
-            ...myState,
-            missions: {
-              ...(myState?.state?.missions || {}),
-              ...missions
-            },
-            lastChatPath,
-            loaded,
-            numWordsCollected,
-            userId,
-            searchFilter,
-            collectType,
-            hideWatched,
-            isCreator:
-              myState.userType === 'webmaster' || myState.userType === 'admin',
-            loggedIn: true,
-            profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME,
-            signinModalShown,
-            wordleStrictMode,
-            xpThisMonth
-          }
-        : {
-            loaded,
-            lastChatPath: '',
-            rewardBoostLvl: 0,
-            profileTheme: DEFAULT_PROFILE_THEME,
-            signinModalShown
+  const result = useMemo(() => {
+    const storedProfileTheme = getStoredItem(
+      'profile-theme',
+      DEFAULT_PROFILE_THEME
+    );
+    return myState.loaded
+      ? {
+          ...myState,
+          missions: {
+            ...(myState?.state?.missions || {}),
+            ...missions
           },
-    [
-      collectType,
-      hideWatched,
-      lastChatPath,
-      loaded,
-      missions,
-      myState,
-      numWordsCollected,
-      searchFilter,
-      signinModalShown,
-      userId,
-      wordleStrictMode,
-      xpThisMonth
-    ]
-  );
+          lastChatPath,
+          loaded,
+          numWordsCollected,
+          userId,
+          searchFilter,
+          collectType,
+          hideWatched,
+          isCreator:
+            myState.userType === 'webmaster' || myState.userType === 'admin',
+          loggedIn: true,
+          profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME,
+          signinModalShown,
+          wordleStrictMode,
+          xpThisMonth
+        }
+      : {
+          loaded,
+          lastChatPath: '',
+          rewardBoostLvl: 0,
+          profileTheme: storedProfileTheme,
+          signinModalShown
+        };
+  }, [
+    collectType,
+    hideWatched,
+    lastChatPath,
+    loaded,
+    missions,
+    myState,
+    numWordsCollected,
+    searchFilter,
+    signinModalShown,
+    userId,
+    wordleStrictMode,
+    xpThisMonth
+  ]);
   return result;
 }
 
