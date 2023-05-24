@@ -78,6 +78,7 @@ export default function TransactionDetails({
             partner={partner}
             onClick={onClick}
             onSetAICardModalCardId={onSetAICardModalCardId}
+            timeStamp={transaction.timeStamp}
             fromId={transaction.from}
             toId={transaction.to}
           />
@@ -95,6 +96,7 @@ export default function TransactionDetails({
             fromId={transaction.from}
             onClick={onClick}
             onSetAICardModalCardId={onSetAICardModalCardId}
+            timeStamp={transaction.timeStamp}
             toId={transaction.to}
           />
         )}
@@ -111,6 +113,7 @@ export default function TransactionDetails({
             coins={offerCoins}
             onClick={onClick}
             onSetAICardModalCardId={onSetAICardModalCardId}
+            timeStamp={transaction.timeStamp}
             toId={transaction.to}
           />
         )}

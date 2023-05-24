@@ -108,12 +108,15 @@ export default function TransferMessage({
               Twinkle {price === 1 ? 'Coin' : 'Coins'}
             </div>
             <div
-              style={{
-                marginTop: '1.7rem',
-                fontFamily: 'Roboto, sans-serif',
-                fontSize: '1.3rem',
-                color: Color.darkerGray()
-              }}
+              className={css`
+                font-size: 1.3rem;
+                margin-top: 1.7rem;
+                font-family: Roboto, sans-serif;
+                color: ${Color.darkerGray()};
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.2rem;
+                }
+              `}
             >
               {displayedTimeStamp}
             </div>
@@ -158,17 +161,17 @@ export default function TransferMessage({
           display: flex;
           width: 100%;
           height: 100%;
-          padding: 0 3rem 0 2rem;
+          padding: 0 2rem 0 2rem;
           @media (max-width: ${mobileMaxWidth}) {
-            padding: 0 1rem 0 0.5rem;
+            padding: 0 0.5rem 0 0.5rem;
           }
         `}
       >
         <div
           className={css`
             display: flex;
-            justifycontent: center;
-            alignitems: center;
+            justify-content: flex-start;
+            align-items: center;
             width: 5rem;
           `}
         >
@@ -177,19 +180,18 @@ export default function TransferMessage({
         <div
           className={css`
             width: CALC(100% - 5rem);
-            marginleft: 3rem;
+            margin-left: 3rem;
             display: flex;
-            flexdirection: column;
-            justifycontent: center;
-            alignitems: center;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
           `}
         >
           <div
             className={css`
-              width: 100%;
+              flex-grow: 1;
               display: flex;
               justify-content: center;
-              padding-right: 1rem;
               font-size: 1.7rem;
               line-height: 1.5;
               @media (max-width: ${mobileMaxWidth}) {
@@ -203,8 +205,8 @@ export default function TransferMessage({
         <div
           className={css`
             display: flex;
-            justifycontent: center;
-            alignitems: center;
+            justify-content: flex-end;
+            align-items: center;
             width: 5rem;
           `}
         >
