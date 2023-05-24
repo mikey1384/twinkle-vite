@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
@@ -12,6 +12,7 @@ export default function OwnerMenu({
   cardId: number;
   style?: React.CSSProperties;
 }) {
+  const [delisting, setDelisting] = useState(false);
   const delistAICard = useAppContext((v) => v.requestHelpers.delistAICard);
   const onDelistAICard = useChatContext((v) => v.actions.onDelistAICard);
 
@@ -32,6 +33,7 @@ export default function OwnerMenu({
             padding: 0.7rem !important;
           }
         `}
+        loading={delisting}
         onClick={handleCancelListing}
         color="rose"
         filled
@@ -61,9 +63,16 @@ export default function OwnerMenu({
   );
 
   async function handleCancelListing() {
-    const success = await delistAICard(cardId);
-    if (success) {
-      onDelistAICard(cardId);
+    try {
+      setDelisting(true);
+      const success = await delistAICard(cardId);
+      if (success) {
+        onDelistAICard(cardId);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setDelisting(false);
     }
   }
 }
