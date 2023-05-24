@@ -22,6 +22,7 @@ export default function Trade({
   onClick,
   offerCardIds,
   offerCoins,
+  timeStamp,
   wantCardIds,
   wantCoins,
   fromId
@@ -41,6 +42,7 @@ export default function Trade({
   offerCardIds: number[];
   offerCoins: number;
   onClick?: () => void;
+  timeStamp: number;
   fromId: number;
   toId: number;
 }) {
@@ -86,7 +88,7 @@ export default function Trade({
         width: '100%'
       }}
     >
-      <Heading isCurrent={isCurrent} color="logoBlue">
+      <Heading isCurrent={isCurrent} color="logoBlue" timeStamp={timeStamp}>
         <div>
           <UsernameText
             displayedName={from.id === myId ? 'You' : from.username}

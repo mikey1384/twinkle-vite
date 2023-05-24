@@ -16,6 +16,7 @@ export default function Send({
   onClick,
   onSetAICardModalCardId,
   partner,
+  timeStamp,
   toId
 }: {
   cardIds: number[];
@@ -29,6 +30,7 @@ export default function Send({
   onClick?: () => void;
   onSetAICardModalCardId: (cardId: number) => void;
   partner: { id: number; username: string };
+  timeStamp: number;
   toId: number;
 }) {
   const from = useMemo(() => {
@@ -47,7 +49,7 @@ export default function Send({
         width: '100%'
       }}
     >
-      <Heading isCurrent={isCurrent} color="green">
+      <Heading isCurrent={isCurrent} color="green" timeStamp={timeStamp}>
         <div>
           <UsernameText
             displayedName={from.id === myId ? 'You' : from.username}

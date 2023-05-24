@@ -16,7 +16,8 @@ export default function Show({
   toId,
   onClick,
   onSetAICardModalCardId,
-  partner
+  partner,
+  timeStamp
 }: {
   cardIds: number[];
   coins: number;
@@ -30,6 +31,7 @@ export default function Show({
   onSetAICardModalCardId: (cardId: number) => void;
   partner: { id: number; username: string };
   toId: number;
+  timeStamp: number;
 }) {
   const from = useMemo(() => {
     return fromId === myId ? { id: myId, username: myUsername } : partner;
@@ -47,7 +49,7 @@ export default function Show({
         width: '100%'
       }}
     >
-      <Heading isCurrent={isCurrent} color="pink">
+      <Heading isCurrent={isCurrent} color="pink" timeStamp={timeStamp}>
         {isCurrent ? (
           <div>
             <UsernameText
