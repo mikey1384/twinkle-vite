@@ -421,7 +421,7 @@ function MainNavs({
           </Nav>
         )}
       </div>
-      {userId && (
+      {userId && typeof twinkleCoins === 'number' && (
         <div
           className={`mobile ${css`
             @media (max-width: ${mobileMaxWidth}) {

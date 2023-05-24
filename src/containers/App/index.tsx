@@ -271,6 +271,10 @@ function App() {
       await recordUserTraffic(location.pathname);
       if (authRef.current?.headers?.authorization) {
         const data = await loadMyData(location.pathname);
+        localStorage.setItem('realName', data?.realName || '');
+        localStorage.setItem('userId', data?.id || '');
+        localStorage.setItem('username', data?.username || '');
+        localStorage.setItem('profilePicUrl', data?.profilePicUrl || '');
         localStorage.setItem(
           'profile-theme',
           data?.profileTheme || DEFAULT_PROFILE_THEME
