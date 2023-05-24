@@ -1340,6 +1340,7 @@ export default function Header({
 
   useEffect(() => {
     if (userId && profilePicUrl !== prevProfilePicUrl.current) {
+      localStorage.setItem('profilePicUrl', profilePicUrl);
       socket.emit('change_profile_pic', profilePicUrl);
     }
     prevProfilePicUrl.current = profilePicUrl;

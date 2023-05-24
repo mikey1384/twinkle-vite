@@ -276,7 +276,7 @@ function App() {
         localStorage.setItem('username', data?.username || '');
         localStorage.setItem('profilePicUrl', data?.profilePicUrl || '');
         localStorage.setItem(
-          'profile-theme',
+          'profileTheme',
           data?.profileTheme || DEFAULT_PROFILE_THEME
         );
         onSetUserState({

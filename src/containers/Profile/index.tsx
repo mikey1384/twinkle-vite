@@ -152,5 +152,6 @@ export default function Profile() {
   async function handleSetTheme() {
     await setTheme({ color: selectedTheme });
     onSetUserState({ userId, newState: { profileTheme: selectedTheme } });
+    localStorage.setItem('profileTheme', selectedTheme);
   }
 }

@@ -125,7 +125,7 @@ export function useMyState() {
   const myState = useAppContext((v) => v.user.state.userObj[userId] || {});
   const result = useMemo(() => {
     const storedProfileTheme = getStoredItem(
-      'profile-theme',
+      'profileTheme',
       DEFAULT_PROFILE_THEME
     );
     const storedProfilePicUrl = getStoredItem('profilePicUrl', '');

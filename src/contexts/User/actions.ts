@@ -48,7 +48,7 @@ export default function UserActions(dispatch: Dispatch) {
       localStorage.setItem('userId', '');
       localStorage.setItem('username', '');
       localStorage.setItem('profilePicUrl', '');
-      localStorage.setItem('profile-theme', DEFAULT_PROFILE_THEME);
+      localStorage.setItem('profileTheme', DEFAULT_PROFILE_THEME);
       localStorage.removeItem('token');
       return dispatch({
         type: 'LOGOUT'

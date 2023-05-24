@@ -149,6 +149,7 @@ export default function ChangeUsername({
     } else {
       socket.emit('change_username', newUsername);
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
+      localStorage.setItem('username', newUsername);
       setNewUsername('');
     }
     setChanging(false);
