@@ -128,6 +128,10 @@ export function useMyState() {
       'profile-theme',
       DEFAULT_PROFILE_THEME
     );
+    const storedProfilePicUrl = getStoredItem('profilePicUrl', '');
+    const storedUserId = getStoredItem('userId', '');
+    const storedUsername = getStoredItem('username', '');
+    const storedRealName = getStoredItem('realName', '');
     return myState.loaded
       ? {
           ...myState,
@@ -155,6 +159,10 @@ export function useMyState() {
           lastChatPath: '',
           rewardBoostLvl: 0,
           profileTheme: storedProfileTheme,
+          profilePicUrl: storedProfilePicUrl,
+          userId: storedUserId ? Number(storedUserId) : null,
+          username: storedUsername,
+          realName: storedRealName,
           signinModalShown
         };
   }, [

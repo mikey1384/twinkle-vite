@@ -21,8 +21,9 @@ function AccountMenu({
   onSetBalanceModalShown: () => void;
 }) {
   const navigate = useNavigate();
-  const { loggedIn, username, userId, managementLevel, twinkleCoins } =
-    useKeyContext((v) => v.myState);
+  const { username, userId, managementLevel, twinkleCoins } = useKeyContext(
+    (v) => v.myState
+  );
   const {
     login: { color: loginColor }
   } = useKeyContext((v) => v.theme);
@@ -70,7 +71,7 @@ function AccountMenu({
 
   return (
     <div className="desktop" style={{ display: 'flex', alignItems: 'center' }}>
-      {loggedIn && (
+      {userId && typeof twinkleCoins === 'number' && (
         <div
           style={{ marginRight: '1rem', cursor: 'pointer' }}
           onClick={onSetBalanceModalShown}
@@ -79,7 +80,7 @@ function AccountMenu({
           {addCommasToNumber(twinkleCoins)}
         </div>
       )}
-      {loggedIn ? (
+      {userId ? (
         <DropdownButton
           className={className}
           transparent

@@ -44,6 +44,10 @@ export default function UserActions(dispatch: Dispatch) {
       });
     },
     onLogout() {
+      localStorage.setItem('realName', '');
+      localStorage.setItem('userId', '');
+      localStorage.setItem('username', '');
+      localStorage.setItem('profilePicUrl', '');
       localStorage.setItem('profile-theme', DEFAULT_PROFILE_THEME);
       localStorage.removeItem('token');
       return dispatch({
