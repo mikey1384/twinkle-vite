@@ -6,9 +6,9 @@ import managementRequestHelpers from './management';
 import missionRequestHelpers from './mission';
 import userRequestHelpers from './user';
 import zeroRequestHelpers from './zero';
+import { getStoredItem } from '~/helpers/userDataHelpers';
 
-const token = () =>
-  typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+const token = () => getStoredItem('token', '');
 
 const auth = () => ({
   headers: {
