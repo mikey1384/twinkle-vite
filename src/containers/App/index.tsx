@@ -258,15 +258,12 @@ function App() {
       onLogout();
       onResetChat();
       onSetSessionLoaded();
+    } else if (
+      auth()?.headers?.authorization !== authRef.current?.headers?.authorization
+    ) {
+      init();
     } else {
-      if (
-        authRef.current?.headers?.authorization !==
-        auth()?.headers?.authorization
-      ) {
-        init();
-      } else {
-        onSetSessionLoaded();
-      }
+      onSetSessionLoaded();
     }
     authRef.current = auth();
     async function init() {
