@@ -26,5 +26,5 @@ export function getStoredItem(key: string, defaultValue = ''): string {
     return defaultValue;
   }
   const item = localStorage.getItem(key);
-  return item !== null ? item : defaultValue;
+  return item || defaultValue;
 }
