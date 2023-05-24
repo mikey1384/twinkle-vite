@@ -8,7 +8,7 @@ import userRequestHelpers from './user';
 import zeroRequestHelpers from './zero';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 
-const token = () => getStoredItem('token', '');
+const token = () => getStoredItem('token');
 
 const auth = () => ({
   headers: {

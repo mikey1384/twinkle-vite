@@ -128,10 +128,10 @@ export function useMyState() {
       'profileTheme',
       DEFAULT_PROFILE_THEME
     );
-    const storedProfilePicUrl = getStoredItem('profilePicUrl', '');
-    const storedUserId = getStoredItem('userId', '');
-    const storedUsername = getStoredItem('username', '');
-    const storedRealName = getStoredItem('realName', '');
+    const storedProfilePicUrl = getStoredItem('profilePicUrl');
+    const storedUserId = getStoredItem('userId');
+    const storedUsername = getStoredItem('username');
+    const storedRealName = getStoredItem('realName');
     return myState.loaded
       ? {
           ...myState,

@@ -11,7 +11,7 @@ import { install } from 'source-map-support';
 
 install();
 
-const token = () => getStoredItem('token', '');
+const token = () => getStoredItem('token');
 
 interface State {
   hasError: boolean;
