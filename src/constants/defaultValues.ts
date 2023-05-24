@@ -1,7 +1,7 @@
 import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 
-export const clientVersion = '1.7.87';
+export const clientVersion = '1.7.88';
 export const defaultChatSubject = 'Welcome!';
 export const defaultContentState = {
   isEditing: false,
@@ -205,7 +205,7 @@ export const priceTable = {
   card: 100,
   chatSubject: 20,
   chatTheme: 30,
-  grammarbles: 250,
+  grammarbles: 1000,
   username: 10,
   recommendation: 2,
   reward: 2

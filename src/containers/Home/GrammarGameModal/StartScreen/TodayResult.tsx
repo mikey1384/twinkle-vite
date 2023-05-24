@@ -171,7 +171,8 @@ export default function TodayResult({
         <span style={{ color: Color.gold() }}>XP</span>
         {earnedCoins ? (
           <p style={{ color: Color.brownOrange() }}>
-            ...and {priceTable.grammarbles} coins for finishing 5 games!
+            ...and {addCommasToNumber(priceTable.grammarbles)} coins for
+            finishing 5 games!
           </p>
         ) : null}
       </div>
