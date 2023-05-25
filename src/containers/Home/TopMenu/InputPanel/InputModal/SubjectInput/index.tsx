@@ -399,7 +399,7 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
 
   function handleDrop(filePath: string) {
     handleSetDescription(
-      `${stringIsEmpty(description) ? '' : `${description}`}\n![](${filePath})`
+      `${stringIsEmpty(description) ? '' : `${description}\n`}![](${filePath})`
     );
   }
 
