@@ -269,6 +269,7 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
           {descriptionFieldShown && (
             <div style={{ position: 'relative' }}>
               <Textarea
+                onDrop={handleDrop}
                 style={{
                   marginTop: '1rem',
                   ...(descriptionExceedsCharLimit?.style || null)
@@ -395,6 +396,10 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
       )}
     </ErrorBoundary>
   );
+
+  function handleDrop(file: File) {
+    console.log(file, 'got here');
+  }
 
   function handleFileUpload({
     attachment,
