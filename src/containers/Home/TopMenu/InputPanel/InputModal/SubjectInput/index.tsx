@@ -397,8 +397,10 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
     </ErrorBoundary>
   );
 
-  function handleDrop(file: File) {
-    console.log(file, 'got here');
+  function handleDrop(filePath: string) {
+    handleSetDescription(
+      `${stringIsEmpty(description) ? '' : `${description}`}\n![](${filePath})`
+    );
   }
 
   function handleFileUpload({
