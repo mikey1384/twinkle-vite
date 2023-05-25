@@ -7,11 +7,14 @@ export default function Textarea({
   className,
   innerRef,
   maxRows = 20,
+  onDrop,
   ...props
 }: {
   className?: string;
   innerRef?: any;
+  isDroppable?: boolean;
   maxRows?: number;
+  onDrop?: (file: File) => void;
   [key: string]: any;
 }) {
   return (
@@ -19,6 +22,8 @@ export default function Textarea({
       {...props}
       maxRows={maxRows}
       ref={innerRef}
+      onDrop={onDrop ? handleDrop : undefined}
+      onDragOver={(e) => e.preventDefault()}
       className={`${className} ${css`
         font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
         width: 100%;
@@ -44,4 +49,9 @@ export default function Textarea({
       `}`}
     />
   );
+
+  async function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    onDrop?.(e.dataTransfer.files[0]);
+  }
 }
