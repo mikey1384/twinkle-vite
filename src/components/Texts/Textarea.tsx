@@ -9,7 +9,6 @@ import TextareaAutosize from 'react-textarea-autosize';
 
 export default function Textarea({
   className,
-  context = 'feed',
   innerRef,
   maxRows = 20,
   onDrop,
@@ -97,10 +96,11 @@ export default function Textarea({
     await uploadFile({
       filePath,
       file,
+      context: 'embed',
       onUploadProgress: handleUploadProgress
     });
     onDrop?.(
-      `${cloudFrontURL}/attachments/${context}/${filePath}/${encodeURIComponent(
+      `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(
         file.name
       )}`
     );
