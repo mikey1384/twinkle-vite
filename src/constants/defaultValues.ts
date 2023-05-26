@@ -442,7 +442,7 @@ export const returnMaxRewards = ({
 export const maxSizes = [300, 400, 500, 650, 800, 1000, 1500, 2000];
 
 export const returnMaxUploadSize = (fileUploadLvl: number): number => {
-  return fileUploadLvl ? maxSizes[fileUploadLvl] * mb : 0;
+  return maxSizes[fileUploadLvl] * mb;
 };
 
 export function returnWordLevel({
