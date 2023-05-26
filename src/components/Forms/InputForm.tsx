@@ -295,6 +295,7 @@ function InputForm({
             value={text}
             placeholder={disableReason || placeholder}
             onChange={handleOnChange}
+            onDrop={handleDrop}
             onKeyUp={handleKeyUp}
           />
           {commentExceedsCharLimit && (
@@ -434,6 +435,10 @@ function InputForm({
       )}
     </div>
   );
+
+  function handleDrop(filePath: string) {
+    setText(`${stringIsEmpty(text) ? '' : `${text}\n`}![](${filePath})`);
+  }
 
   function handleKeyUp(event: any) {
     if (event.key === ' ') {
