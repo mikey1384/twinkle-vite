@@ -80,7 +80,7 @@ function Markdown({
           switch (domNode.name) {
             case 'a': {
               const node = domNode.children?.[0];
-              let href = domNode.attribs?.href || '';
+              let href = unescapeEqualSign(domNode.attribs?.href || '');
               const { isInternalLink, replacedLink } =
                 processInternalLink(href);
               if (
@@ -108,7 +108,7 @@ function Markdown({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {node?.data || 'Link'}
+                    {unescapeEqualSign(node?.data || 'Link')}
                   </a>
                 );
               }
@@ -122,7 +122,7 @@ function Markdown({
                         return '\n';
                       }
                       const unescapedChildren = node
-                        ? unescapeHtml(node.data || '')
+                        ? unescapeEqualSign(unescapeHtml(node.data || ''))
                         : '';
                       return removeNbsp(unescapedChildren);
                     })}
@@ -273,7 +273,7 @@ function Markdown({
         };
         switch (TagName) {
           case 'a': {
-            let href = attribs?.href || '';
+            let href = unescapeEqualSign(attribs?.href || '');
             const { isInternalLink, replacedLink } = processInternalLink(href);
             if (
               !isInternalLink &&
@@ -294,8 +294,8 @@ function Markdown({
                   }}
                   to={replacedLink}
                 >
-                  {children?.length || Object.keys(children)?.length
-                    ? children
+                  {children?.length
+                    ? children.map((child: any) => unescapeEqualSign(child))
                     : 'Link'}
                 </Link>
               );
@@ -309,7 +309,9 @@ function Markdown({
                   }}
                   target="_blank"
                 >
-                  {children?.length ? children : 'Link'}
+                  {children?.length
+                    ? children.map((child: any) => unescapeEqualSign(child))
+                    : 'Link'}
                 </a>
               );
             }
@@ -319,7 +321,9 @@ function Markdown({
               <code {...commonProps}>
                 {children &&
                   children.map((child: any) => {
-                    const unescapedChild = unescapeHtml(child || '');
+                    const unescapedChild = unescapeEqualSign(
+                      unescapeHtml(child || '')
+                    );
                     return removeNbsp(unescapedChild);
                   })}
               </code>
@@ -472,9 +476,7 @@ function Markdown({
     const processedText = text
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/(^|\s)=($|\s|=)/g, function (match) {
-        return match.replace(/=/g, '\\=');
-      });
+      .replace(/=/g, '\\=');
     const lines = processedText.split('\n');
     const tablePattern = new RegExp('\\|.*\\|.*\\|');
     const containsTable = lines.some((line) => tablePattern.test(line));
@@ -518,6 +520,10 @@ function Markdown({
   function unescapeHtml(text: string) {
     if (typeof text !== 'string') return text;
     return (text || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  }
+  function unescapeEqualSign(text: string) {
+    if (typeof text !== 'string') return text;
+    return (text || '').replace(/\\=/g, '=').replace(/%5C=/g, '=');
   }
 }
 
