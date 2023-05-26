@@ -23,7 +23,6 @@ export default function Textarea({
   ...props
 }: {
   className?: string;
-  context?: string;
   innerRef?: any;
   maxRows?: number;
   onDrop?: (filePath: string) => void;
