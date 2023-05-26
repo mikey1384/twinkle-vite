@@ -25,7 +25,6 @@ export default function Textarea({
   className?: string;
   context?: string;
   innerRef?: any;
-  isDroppable?: boolean;
   maxRows?: number;
   onDrop?: (filePath: string) => void;
   style?: React.CSSProperties;
