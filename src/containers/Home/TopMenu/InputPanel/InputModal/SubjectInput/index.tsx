@@ -204,6 +204,7 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
                 placeholder={postSubjectPlaceholder}
                 value={title}
                 onChange={handleInputChange}
+                onDrop={(e: React.DragEvent) => e.preventDefault()}
                 onKeyUp={(event: any) => {
                   handleSetTitle(addEmoji(event.target.value));
                 }}
