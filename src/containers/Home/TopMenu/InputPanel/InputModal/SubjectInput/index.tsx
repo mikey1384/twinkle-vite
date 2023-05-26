@@ -190,97 +190,98 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
     >
       {!uploadingFile && (
         <>
-          <p>{postSubjectLabel}</p>
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div style={{ width: '100%' }}>
-              <Input
-                placeholder={postSubjectPlaceholder}
-                value={title}
-                onChange={handleInputChange}
-                onDrop={(e: React.DragEvent) => e.preventDefault()}
-                onKeyUp={(event: any) => {
-                  handleSetTitle(addEmoji(event.target.value));
-                }}
-                style={titleExceedsCharLimit?.style}
-              />
-            </div>
-            <div style={{ marginLeft: '1rem', fontSize: '1rem' }}>
-              {attachment ? (
-                <Attachment
-                  attachment={attachment}
-                  onDragStart={() => {
-                    const file = attachment?.file;
-                    let newFile;
-                    if (fileType === 'image') {
-                      newFile = new File([file], file.name, {
-                        type: 'image/png'
-                      });
-                    } else {
-                      newFile = file;
-                    }
-                    setDraggedFile(newFile);
-                  }}
-                  onDragEnd={() => setDraggedFile(undefined)}
-                  onThumbnailLoad={(thumbnail) =>
-                    onSetSubjectAttachment({
-                      thumbnail
-                    })
-                  }
-                  onClose={() => onSetSubjectAttachment(null)}
-                />
-              ) : (
-                <Button
-                  skeuomorphic
-                  color={buttonColor}
-                  hoverColor={buttonHoverColor}
-                  onClick={() => setAttachContentModalShown(true)}
-                >
-                  <Icon size="lg" icon="plus" />
-                </Button>
-              )}
-            </div>
-          </div>
-          <div style={{ marginTop: '1rem' }}>
-            <span
-              style={{
-                fontSize: '1.2rem',
-                color:
-                  title.length > charLimit.subject.title
-                    ? 'red'
-                    : Color.darkerGray()
-              }}
-            >
-              {titleExceedsCharLimit?.message}
-            </span>
-          </div>
-          {attachment?.contentType === 'file' && (
+          <div>
+            <p>{postSubjectLabel}</p>
             <div
               style={{
-                padding: '1rem',
                 display: 'flex',
-                justifyContent: 'center'
+                width: '100%',
+                alignItems: 'center',
+                justifyContent: 'space-between'
               }}
             >
-              <SwitchButton
-                checked={!!isMadeByUser}
-                label={
-                  <>
-                    I made this <b>{fileType}</b> myself
-                  </>
-                }
-                labelStyle={{ fontSize: '1.5rem' }}
-                onChange={() => handleSetIsMadeByUser(!isMadeByUser)}
-                style={{ marginRight: '1rem' }}
-              />
+              <div style={{ width: '100%' }}>
+                <Input
+                  placeholder={postSubjectPlaceholder}
+                  value={title}
+                  onChange={handleInputChange}
+                  onDrop={(e: React.DragEvent) => e.preventDefault()}
+                  onKeyUp={(event: any) => {
+                    handleSetTitle(addEmoji(event.target.value));
+                  }}
+                  style={titleExceedsCharLimit?.style}
+                />
+              </div>
+              <div style={{ marginLeft: '1rem', fontSize: '1rem' }}>
+                {attachment ? (
+                  <Attachment
+                    attachment={attachment}
+                    onDragStart={() => {
+                      const file = attachment?.file;
+                      let newFile;
+                      if (fileType === 'image') {
+                        newFile = new File([file], file.name, {
+                          type: 'image/png'
+                        });
+                      } else {
+                        newFile = file;
+                      }
+                      setDraggedFile(newFile);
+                    }}
+                    onDragEnd={() => setDraggedFile(undefined)}
+                    onThumbnailLoad={(thumbnail) =>
+                      onSetSubjectAttachment({
+                        thumbnail
+                      })
+                    }
+                    onClose={() => onSetSubjectAttachment(null)}
+                  />
+                ) : (
+                  <Button
+                    skeuomorphic
+                    color={buttonColor}
+                    hoverColor={buttonHoverColor}
+                    onClick={() => setAttachContentModalShown(true)}
+                  >
+                    <Icon size="lg" icon="plus" />
+                  </Button>
+                )}
+              </div>
             </div>
-          )}
+            <div style={{ marginTop: '1rem' }}>
+              <span
+                style={{
+                  fontSize: '1.2rem',
+                  color:
+                    title.length > charLimit.subject.title
+                      ? 'red'
+                      : Color.darkerGray()
+                }}
+              >
+                {titleExceedsCharLimit?.message}
+              </span>
+            </div>
+            {attachment?.contentType === 'file' && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}
+              >
+                <SwitchButton
+                  checked={!!isMadeByUser}
+                  label={
+                    <>
+                      I made this <b>{fileType}</b> myself
+                    </>
+                  }
+                  labelStyle={{ fontSize: '1.5rem' }}
+                  onChange={() => handleSetIsMadeByUser(!isMadeByUser)}
+                  style={{ marginRight: '1rem' }}
+                />
+              </div>
+            )}
+          </div>
           {descriptionFieldShown && (
             <div style={{ position: 'relative' }}>
               <Textarea
