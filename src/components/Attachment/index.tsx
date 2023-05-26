@@ -16,17 +16,20 @@ export default function Attachment({
   attachment,
   attachment: { contentType = 'file', fileType },
   onClose,
+  onDragStart,
   onThumbnailLoad,
   style
 }: {
   attachment: AttachmentType;
   onClose: () => void;
+  onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
   onThumbnailLoad?: (thumbnail: string) => void;
   style?: React.CSSProperties;
 }) {
   return (
     <ErrorBoundary
       componentPath="Attachment/index"
+      onDragStart={onDragStart ?? undefined}
       style={{
         display: 'flex',
         flexDirection: 'column',

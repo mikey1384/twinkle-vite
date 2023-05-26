@@ -50,6 +50,7 @@ const secretMessageLabel = localize('secretMessage');
 
 function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
   const inputModalType = useHomeContext((v) => v.state.inputModalType);
+  const [draggedFile, setDraggedFile] = useState();
   const { onFileUpload } = useContext(LocalContext);
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const { canEditRewardLevel, banned } = useKeyContext((v) => v.myState);
@@ -213,6 +214,18 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
               {attachment ? (
                 <Attachment
                   attachment={attachment}
+                  onDragStart={() => {
+                    const file = attachment?.file;
+                    let newFile;
+                    if (fileType === 'image') {
+                      newFile = new File([file], file.name, {
+                        type: 'image/png'
+                      });
+                    } else {
+                      newFile = file;
+                    }
+                    setDraggedFile(newFile);
+                  }}
                   onThumbnailLoad={(thumbnail) =>
                     onSetSubjectAttachment({
                       thumbnail
@@ -269,6 +282,7 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
           {descriptionFieldShown && (
             <div style={{ position: 'relative' }}>
               <Textarea
+                draggedFile={draggedFile}
                 onDrop={handleDrop}
                 style={{
                   marginTop: '1rem',
@@ -401,6 +415,10 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
     handleSetDescription(
       `${stringIsEmpty(description) ? '' : `${description}\n`}![](${filePath})`
     );
+    if (draggedFile) {
+      setDraggedFile(undefined);
+      onSetSubjectAttachment(null);
+    }
   }
 
   function handleFileUpload({
