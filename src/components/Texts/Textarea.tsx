@@ -18,6 +18,7 @@ export default function Textarea({
   innerRef,
   maxRows = 20,
   onDrop,
+  style,
   theme,
   ...props
 }: {
@@ -27,6 +28,7 @@ export default function Textarea({
   isDroppable?: boolean;
   maxRows?: number;
   onDrop?: (filePath: string) => void;
+  style?: React.CSSProperties;
   theme?: string;
   [key: string]: any;
 }) {
@@ -68,7 +70,17 @@ export default function Textarea({
   }, [maxSize, uploadErrorType]);
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        ...style
+      }}
+    >
       <TextareaAutosize
         {...props}
         maxRows={maxRows}
