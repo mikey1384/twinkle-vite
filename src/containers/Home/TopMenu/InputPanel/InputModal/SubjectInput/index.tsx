@@ -27,6 +27,7 @@ import Icon from '~/components/Icon';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import SecretMessageInput from '~/components/Forms/SecretMessageInput';
 import { Color } from '~/constants/css';
+import { css } from '@emotion/css';
 import { PanelStyle } from '../Styles';
 import {
   charLimit,
@@ -185,13 +186,22 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
 
   return (
     <ErrorBoundary
-      componentPath="Home/Stories/InputPanel/SubjectInput/index"
       className={PanelStyle}
+      componentPath="Home/Stories/InputPanel/SubjectInput/index"
     >
       {!uploadingFile && (
         <>
           <div>
-            <p>{postSubjectLabel}</p>
+            <p
+              className={css`
+                color: ${Color.darkerGray()};
+                margin-bottom: 1rem;
+                font-size: 2rem;
+                font-weight: bold;
+              `}
+            >
+              {postSubjectLabel}
+            </p>
             <div
               style={{
                 display: 'flex',
