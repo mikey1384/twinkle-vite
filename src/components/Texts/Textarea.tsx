@@ -149,7 +149,6 @@ export default function Textarea({
   }
 
   async function handlePaste(e: React.ClipboardEvent) {
-    e.preventDefault();
     const items = e.clipboardData.items;
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
