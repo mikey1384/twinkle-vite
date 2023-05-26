@@ -103,6 +103,7 @@ function InputForm({
     [fileUploadLvl]
   );
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [draggedFile, setDraggedFile] = useState();
   const [submitting, setSubmitting] = useState(false);
   const [secretViewMessageSubmitting, setSecretViewMessageSubmitting] =
     useState(false);
@@ -284,6 +285,7 @@ function InputForm({
         >
           <Textarea
             disabled={!!disableReason}
+            draggedFile={draggedFile}
             autoFocus={autoFocus}
             innerRef={innerRef}
             style={{
@@ -349,6 +351,19 @@ function InputForm({
         <Attachment
           style={{ marginLeft: '1rem', fontSize: '1rem' }}
           attachment={attachment}
+          onDragStart={() => {
+            const file = attachment?.file;
+            let newFile;
+            const { fileType } = getFileInfoFromFileName(file?.name);
+            if (fileType === 'image') {
+              newFile = new File([file], file.name, {
+                type: 'image/png'
+              });
+            } else {
+              newFile = file;
+            }
+            setDraggedFile(newFile);
+          }}
           onThumbnailLoad={(thumb) =>
             onSetCommentAttachment({
               attachment: { thumbnail: thumb },
@@ -438,6 +453,14 @@ function InputForm({
 
   function handleDrop(filePath: string) {
     setText(`${stringIsEmpty(text) ? '' : `${text}\n`}![](${filePath})`);
+    if (draggedFile) {
+      setDraggedFile(undefined);
+      onSetCommentAttachment({
+        attachment: null,
+        contentType,
+        contentId
+      });
+    }
   }
 
   function handleKeyUp(event: any) {
