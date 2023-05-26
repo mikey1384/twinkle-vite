@@ -142,7 +142,7 @@ export default function Textarea({
   async function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (!file) return;
+    if (!file || !maxSize) return;
     if (file.size / mb > maxSize) {
       return setUploadErrorType('size');
     }
