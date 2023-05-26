@@ -2,9 +2,14 @@ import React, { useMemo, useState } from 'react';
 import ProgressBar from '~/components/ProgressBar';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
-import { cloudFrontURL } from '~/constants/defaultValues';
+import {
+  cloudFrontURL,
+  mb,
+  returnMaxUploadSize
+} from '~/constants/defaultValues';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import TextareaAutosize from 'react-textarea-autosize';
 import AlertModal from '~/components/Modals/AlertModal';
 
@@ -25,14 +30,42 @@ export default function Textarea({
   theme?: string;
   [key: string]: any;
 }) {
+  const { fileUploadLvl } = useKeyContext((v) => v.myState);
+  const maxSize = useMemo(
+    () => returnMaxUploadSize(fileUploadLvl),
+    [fileUploadLvl]
+  );
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
-  const [isWrongFileType, setIsWrongFileType] = useState(false);
+  const [uploadErrorType, setUploadErrorType] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const progress = useMemo(
     () => Math.ceil(100 * uploadProgress),
     [uploadProgress]
   );
+  const errorModalContent = useMemo(() => {
+    switch (uploadErrorType) {
+      case 'size':
+        return {
+          title: 'File too large',
+          content: `The file size exceeds the maximum allowed upload size of ${addCommasToNumber(
+            maxSize / mb
+          )}MB.`
+        };
+      case 'type':
+        return {
+          title: 'Unsupported file type',
+          content:
+            'Only image files can be uploaded. Please try again with a different file.'
+        };
+      default:
+        return {
+          title: 'Upload error',
+          content:
+            'An error occurred while trying to upload your file. Please try again.'
+        };
+    }
+  }, [maxSize, uploadErrorType]);
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
@@ -87,11 +120,10 @@ export default function Textarea({
           />
         </div>
       )}
-      {isWrongFileType && (
+      {uploadErrorType && (
         <AlertModal
-          title="Cannot Embed File"
-          content="Only image files can be embedded"
-          onHide={() => setIsWrongFileType(false)}
+          {...errorModalContent}
+          onHide={() => setUploadErrorType('')}
         />
       )}
     </div>
@@ -100,9 +132,12 @@ export default function Textarea({
   async function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
+    if (!file) return;
+    if (file.size / mb > maxSize) {
+      return setUploadErrorType('size');
+    }
     if (!file.type.startsWith('image/')) {
-      setIsWrongFileType(true);
-      return;
+      return setUploadErrorType('type');
     }
     setUploading(true);
     const filePath = uuidv1();
