@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
 
 export const PanelStyle = css`
   background: #fff;
@@ -8,12 +7,6 @@ export const PanelStyle = css`
   small {
     font-size: 1.3rem;
     line-height: 2.5rem;
-  }
-  > p {
-    color: ${Color.darkerGray()};
-    margin-bottom: 1rem;
-    font-size: 2rem;
-    font-weight: bold;
   }
   .button-container {
     display: flex;

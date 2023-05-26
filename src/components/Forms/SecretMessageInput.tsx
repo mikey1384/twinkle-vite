@@ -5,7 +5,8 @@ import {
   addEmoji,
   exceedsCharLimit,
   addCommasToNumber,
-  getFileInfoFromFileName
+  getFileInfoFromFileName,
+  stringIsEmpty
 } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 import { returnImageFileFromUrl } from '~/helpers';
@@ -50,6 +51,7 @@ export default function SecretMessageInput({
 }) {
   const [onHover, setOnHover] = useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
+  const [draggedFile, setDraggedFile] = useState();
   const FileInputRef: React.RefObject<any> = useRef(null);
   const { authLevel, fileUploadLvl, twinkleXP, userId } = useKeyContext(
     (v) => v.myState
@@ -96,6 +98,7 @@ export default function SecretMessageInput({
         <div style={{ flexGrow: 1 }}>
           <Textarea
             autoFocus={autoFocus}
+            draggedFile={draggedFile}
             style={{
               marginTop: '0.5rem',
               ...(secretAnswerExceedsCharLimit || null)
@@ -106,6 +109,7 @@ export default function SecretMessageInput({
             onChange={(event: any) =>
               onSetSecretAnswer(addEmoji(event.target.value))
             }
+            onDrop={handleDrop}
             onKeyUp={(event: any) => {
               if (event.key === ' ') {
                 onSetSecretAnswer(addEmoji(event.target.value));
@@ -123,6 +127,19 @@ export default function SecretMessageInput({
             <Attachment
               style={{ marginLeft: '1rem', fontSize: '1rem' }}
               attachment={secretAttachment}
+              onDragStart={() => {
+                const file = secretAttachment?.file;
+                let newFile;
+                const { fileType } = getFileInfoFromFileName(file?.name);
+                if (fileType === 'image') {
+                  newFile = new File([file], file.name, {
+                    type: 'image/png'
+                  });
+                } else {
+                  newFile = file;
+                }
+                setDraggedFile(newFile);
+              }}
               onThumbnailLoad={onThumbnailLoad}
               onClose={() => onSetSecretAttachment(null)}
             />
@@ -181,6 +198,18 @@ export default function SecretMessageInput({
       )}
     </div>
   );
+
+  function handleDrop(filePath: string) {
+    onSetSecretAnswer(
+      `${
+        stringIsEmpty(secretAnswer) ? '' : `${secretAnswer}\n`
+      }![](${filePath})`
+    );
+    if (draggedFile) {
+      setDraggedFile(undefined);
+      onSetSecretAttachment(null);
+    }
+  }
 
   function handleUpload(event: any) {
     const fileObj = event.target.files[0];

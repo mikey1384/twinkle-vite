@@ -197,7 +197,16 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
       componentPath="Home/Stories/InputPanel/ContentInput"
       className={PanelStyle}
     >
-      <p>{postContentLabel}</p>
+      <p
+        className={css`
+          color: ${Color.darkerGray()};
+          margin-bottom: 1rem;
+          font-size: 2rem;
+          font-weight: bold;
+        `}
+      >
+        {postContentLabel}
+      </p>
       {urlError && (
         <Banner color={warningColor} style={{ marginBottom: '1rem' }}>
           {urlError}
