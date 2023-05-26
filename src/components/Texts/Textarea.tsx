@@ -15,6 +15,7 @@ import AlertModal from '~/components/Modals/AlertModal';
 
 export default function Textarea({
   className,
+  draggedFile,
   innerRef,
   maxRows = 20,
   onDrop,
@@ -23,6 +24,7 @@ export default function Textarea({
   ...props
 }: {
   className?: string;
+  draggedFile?: File;
   innerRef?: any;
   maxRows?: number;
   onDrop?: (filePath: string) => void;
@@ -142,7 +144,7 @@ export default function Textarea({
 
   async function handleDrop(e: React.DragEvent) {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
+    const file = draggedFile || e.dataTransfer.files[0];
     handleFileUpload(file);
   }
 

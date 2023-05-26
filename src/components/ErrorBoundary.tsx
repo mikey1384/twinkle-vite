@@ -21,6 +21,7 @@ export default class ErrorBoundary extends Component<
     children?: React.ReactNode;
     className?: string;
     innerRef?: React.RefObject<any> | ((instance: any) => void);
+    onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
     userId?: number;
     username?: string;
     componentPath: string;
