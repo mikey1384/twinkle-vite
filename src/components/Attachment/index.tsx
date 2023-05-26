@@ -9,6 +9,8 @@ import { Attachment as AttachmentType } from '~/types';
 Attachment.propTypes = {
   attachment: PropTypes.object.isRequired,
   onClose: PropTypes.func.isRequired,
+  onDragEnd: PropTypes.func,
+  onDragStart: PropTypes.func,
   onThumbnailLoad: PropTypes.func,
   style: PropTypes.object
 };
@@ -17,12 +19,14 @@ export default function Attachment({
   attachment: { contentType = 'file', fileType },
   onClose,
   onDragStart,
+  onDragEnd,
   onThumbnailLoad,
   style
 }: {
   attachment: AttachmentType;
   onClose: () => void;
   onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: (event: React.DragEvent<HTMLDivElement>) => void;
   onThumbnailLoad?: (thumbnail: string) => void;
   style?: React.CSSProperties;
 }) {
@@ -30,6 +34,7 @@ export default function Attachment({
     <ErrorBoundary
       componentPath="Attachment/index"
       onDragStart={onDragStart ?? undefined}
+      onDragEnd={onDragEnd ?? undefined}
       style={{
         display: 'flex',
         flexDirection: 'column',

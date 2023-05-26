@@ -364,6 +364,7 @@ function InputForm({
             }
             setDraggedFile(newFile);
           }}
+          onDragEnd={() => setDraggedFile(undefined)}
           onThumbnailLoad={(thumb) =>
             onSetCommentAttachment({
               attachment: { thumbnail: thumb },
