@@ -287,6 +287,7 @@ function InputForm({
             autoFocus={autoFocus}
             innerRef={innerRef}
             style={{
+              marginBottom: '0.5rem',
               fontSize: '1.7rem',
               ...(commentExceedsCharLimit?.style || {})
             }}
