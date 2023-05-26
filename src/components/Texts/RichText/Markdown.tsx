@@ -114,16 +114,18 @@ function Markdown({
               }
             }
             case 'code': {
-              const node =
-                domNode.children && domNode.children.length > 0
-                  ? domNode.children[0]
-                  : null;
-              const unescapedChildren = node
-                ? unescapeHtml(node.data || '')
-                : '';
               return (
                 <code {...domNode.attribs}>
-                  {removeNbsp(unescapedChildren)}
+                  {domNode.children &&
+                    domNode.children.map((node) => {
+                      if (node.name === 'br') {
+                        return '\n';
+                      }
+                      const unescapedChildren = node
+                        ? unescapeHtml(node.data || '')
+                        : '';
+                      return removeNbsp(unescapedChildren);
+                    })}
                 </code>
               );
             }
@@ -313,9 +315,14 @@ function Markdown({
             }
           }
           case 'code': {
-            const unescapedChildren = unescapeHtml(children?.[0] || '');
             return (
-              <code {...commonProps}>{removeNbsp(unescapedChildren)}</code>
+              <code {...commonProps}>
+                {children &&
+                  children.map((child: any) => {
+                    const unescapedChild = unescapeHtml(child || '');
+                    return removeNbsp(unescapedChild);
+                  })}
+              </code>
             );
           }
           case 'em': {
