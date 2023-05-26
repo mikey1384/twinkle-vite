@@ -32,7 +32,7 @@ export default function Textarea({
   theme?: string;
   [key: string]: any;
 }) {
-  const { fileUploadLvl } = useKeyContext((v) => v.myState);
+  const { fileUploadLvl, userId } = useKeyContext((v) => v.myState);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
@@ -166,7 +166,7 @@ export default function Textarea({
   }
 
   async function handleFileUpload(file: File) {
-    if (!file || !maxSize) return;
+    if (!file || !maxSize || !userId) return;
     if (file.size / mb > maxSize) {
       return setUploadErrorType('size');
     }
