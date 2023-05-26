@@ -6,6 +6,7 @@ import { useAppContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import TextareaAutosize from 'react-textarea-autosize';
+import AlertModal from '~/components/Modals/AlertModal';
 
 export default function Textarea({
   className,
@@ -25,6 +26,7 @@ export default function Textarea({
   [key: string]: any;
 }) {
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
+  const [isWrongFileType, setIsWrongFileType] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const progress = useMemo(
@@ -85,27 +87,43 @@ export default function Textarea({
           />
         </div>
       )}
+      {isWrongFileType && (
+        <AlertModal
+          title="Cannot Embed File"
+          content="Only image files can be embedded"
+          onHide={() => setIsWrongFileType(false)}
+        />
+      )}
     </div>
   );
 
   async function handleDrop(e: React.DragEvent) {
     e.preventDefault();
-    setUploading(true);
     const file = e.dataTransfer.files[0];
+    if (!file.type.startsWith('image/')) {
+      setIsWrongFileType(true);
+      return;
+    }
+    setUploading(true);
     const filePath = uuidv1();
-    await uploadFile({
-      filePath,
-      file,
-      context: 'embed',
-      onUploadProgress: handleUploadProgress
-    });
-    onDrop?.(
-      `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(
-        file.name
-      )}`
-    );
-    setUploading(false);
-    setUploadProgress(0);
+    try {
+      await uploadFile({
+        filePath,
+        file,
+        context: 'embed',
+        onUploadProgress: handleUploadProgress
+      });
+      onDrop?.(
+        `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(
+          file.name
+        )}`
+      );
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
   }
 
   function handleUploadProgress({
