@@ -84,6 +84,7 @@ export default function Textarea({
         maxRows={maxRows}
         ref={innerRef}
         onDrop={onDrop ? handleDrop : undefined}
+        onPaste={onDrop ? handlePaste : undefined}
         onDragOver={(e) => e.preventDefault()}
         className={`${className} ${css`
           opacity: ${uploading ? 0.2 : 1};
@@ -142,6 +143,27 @@ export default function Textarea({
   async function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
+    handleFileUpload(file);
+  }
+
+  async function handlePaste(e: React.ClipboardEvent) {
+    e.preventDefault();
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === 'file') {
+        const blob = item.getAsFile();
+        if (blob) {
+          const file = new File([blob], blob.name || 'image.png', {
+            type: blob.type
+          });
+          handleFileUpload(file);
+        }
+      }
+    }
+  }
+
+  async function handleFileUpload(file: File) {
     if (!file || !maxSize) return;
     if (file.size / mb > maxSize) {
       return setUploadErrorType('size');
