@@ -226,6 +226,7 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
                     }
                     setDraggedFile(newFile);
                   }}
+                  onDragEnd={() => setDraggedFile(undefined)}
                   onThumbnailLoad={(thumbnail) =>
                     onSetSubjectAttachment({
                       thumbnail
