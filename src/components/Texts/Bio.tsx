@@ -23,7 +23,7 @@ export default function Bio({
           font-family: 'Arial';
           padding: 0 1.5rem;
           display: flex;
-          line-height: 1.3;
+          line-height: 1.4;
           justify-content: flex-start;
           align-items: flex-start;
         }
@@ -37,7 +37,7 @@ export default function Bio({
         overflowWrap: 'break-word',
         wordBreak: 'break-word',
         paddingLeft: '2rem',
-        lineHeight: 1.6,
+        lineHeight: 1.5,
         listStyleType: 'disc',
         width: '100%',
         fontSize: small ? '1.5rem' : '1.7rem',
