@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import YouTubeVideo from './YouTubeVideo';
 import InternalComponent from './InternalComponent';
+import ImageComponent from './ImageComponent';
 import {
   isValidYoutubeUrl,
   processInternalLink
@@ -37,6 +38,10 @@ export default function EmbeddedComponent({
   return (
     <div
       style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column',
         padding:
           replacedLink.split('/')?.[1] === 'users' && isProfileComponent
             ? 'none'
@@ -60,11 +65,11 @@ export default function EmbeddedComponent({
           src={src}
         />
       ) : !errorLoadingImage && src ? (
-        <img
+        <ImageComponent
           {...commonProps}
           src={src}
           alt={alt}
-          onError={() => setErrorLoadingImage(true)}
+          onSetErrorLoadingImage={setErrorLoadingImage}
         />
       ) : href ? (
         <a href={href} target="_blank" rel="noopener noreferrer">
