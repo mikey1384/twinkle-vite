@@ -57,7 +57,7 @@ export default function ImageComponent({
           `}`}
           onClick={() => setIsRevealed(true)}
         >
-          {loaded ? 'Click to reveal image' : ''}
+          {loaded ? 'Tap to reveal image' : ''}
         </div>
       )}
     </div>
