@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 
 export default function ImageComponent({
   src,
@@ -29,24 +30,27 @@ export default function ImageComponent({
       />
       {alt === 'secret' && !isRevealed && (
         <div
-          className="unselectable"
-          style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backdropFilter: 'blur(50px)',
-            background: 'rgba(255, 255, 255, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            textAlign: 'center',
-            fontWeight: 'bold',
-            fontSize: '1.7rem',
-            color: Color.black(),
-            cursor: 'pointer'
-          }}
+          className={`unselectable ${css`
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            backdrop-filter: blur(50px);
+            background: rgba(255, 255, 255, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-weight: bold;
+            font-wize: 1.7rem;
+            color: ${Color.black()};
+            cursor: pointer;
+            @media (max-width: ${mobileMaxWidth}) {
+              color: #fff;
+              background: ${Color.darkerGray(0.9)};
+            }
+          `}`}
           onClick={() => setIsRevealed(true)}
         >
           {loaded ? 'Click to reveal image' : ''}
