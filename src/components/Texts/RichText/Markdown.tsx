@@ -434,6 +434,7 @@ function Markdown({
 
     while (walker.nextNode()) {
       const node = walker.currentNode;
+
       if (
         node.parentNode?.nodeName.toLowerCase() !== 'a' &&
         node.parentNode?.nodeName.toLowerCase() !== 'code'
@@ -441,11 +442,14 @@ function Markdown({
         const parent = node.parentNode;
         const nodeValue = node.nodeValue || '';
 
-        const newNodeValue = nodeValue.replace(mentionRegex, (string) => {
-          const path = string.slice(1);
-          const anchor = `<a class="mention" href="/users/${path}">@${path}</a>`;
-          return anchor;
-        });
+        const newNodeValue = nodeValue
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(mentionRegex, (string) => {
+            const path = string.slice(1);
+            const anchor = `<a class="mention" href="/users/${path}">@${path}</a>`;
+            return anchor;
+          });
 
         if (nodeValue !== newNodeValue) {
           const tempDiv = document.createElement('div');
@@ -509,7 +513,6 @@ function Markdown({
         return line;
       }
     });
-
     return processedLines.join('\n');
   }
 
