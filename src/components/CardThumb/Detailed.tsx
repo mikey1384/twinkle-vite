@@ -53,8 +53,8 @@ export default function CardThumb({
           height: 12rem;
           border-radius: 3px;
           @media (max-width: ${mobileMaxWidth}) {
-            width: 7rem;
-            height: 11rem;
+            width: 6rem;
+            height: 9.5rem;
             border-radius: 2px;
           }
         `}
@@ -93,16 +93,19 @@ export default function CardThumb({
       </div>
       {card.word ? (
         <div
-          style={{
-            width: '8rem',
-            display: 'inline-block',
-            marginTop: '0.5rem',
-            textAlign: 'center',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            lineHeight: 1.2
-          }}
+          className={css`
+            width: 8rem;
+            display: inline-block;
+            margin-top: 0.5rem;
+            text-align: center;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            line-height: 1.2;
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 6rem;
+            }
+          `}
         >
           <b style={{ color: cardColor, fontSize: '1.3rem' }}>{card.word}</b>
         </div>

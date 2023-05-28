@@ -36,8 +36,9 @@ export default function InternalComponent({
       return <UserComponent src={src} />;
     }
     if (
-      linkType === 'ai-cards' ||
-      (linkType === 'chat' && linkSubType === 'ai-cards')
+      (linkType === 'ai-cards' ||
+        (linkType === 'chat' && linkSubType === 'ai-cards')) &&
+      rootType !== 'user'
     ) {
       return <AICardComponent rootId={rootId} rootType={rootType} src={src} />;
     }
