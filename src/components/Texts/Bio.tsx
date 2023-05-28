@@ -54,7 +54,11 @@ export default function Bio({
           }}
         >
           <div className="dot">•</div>
-          <RichText isProfileComponent style={{ width: 'CALC(100% - 2rem)' }}>
+          <RichText
+            contentType="user"
+            isProfileComponent
+            style={{ width: 'CALC(100% - 2rem)' }}
+          >
             {firstRow}
           </RichText>
         </nav>
@@ -69,7 +73,11 @@ export default function Bio({
           }}
         >
           <div className="dot">•</div>
-          <RichText isProfileComponent style={{ width: 'CALC(100% - 2rem)' }}>
+          <RichText
+            contentType="user"
+            isProfileComponent
+            style={{ width: 'CALC(100% - 2rem)' }}
+          >
             {secondRow}
           </RichText>
         </nav>
@@ -84,7 +92,11 @@ export default function Bio({
           }}
         >
           <div className="dot">•</div>
-          <RichText isProfileComponent style={{ width: 'CALC(100% - 2rem)' }}>
+          <RichText
+            contentType="user"
+            isProfileComponent
+            style={{ width: 'CALC(100% - 2rem)' }}
+          >
             {thirdRow}
           </RichText>
         </nav>
