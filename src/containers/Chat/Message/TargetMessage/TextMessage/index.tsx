@@ -114,6 +114,8 @@ export default function TextMessage({
           <Spoiler content={message.content} />
         ) : (
           <RichText
+            contentId={message.id}
+            contentType="chat"
             theme={displayedThemeColor}
             readMoreHeightFixed
             style={{ marginTop: '0.5rem' }}
