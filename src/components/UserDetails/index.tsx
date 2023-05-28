@@ -79,7 +79,6 @@ export default function UserDetails({
         : profile.statusMsg,
     [editedStatusMsg, profile.id, profile.statusMsg, userId]
   );
-
   return (
     <ErrorBoundary
       componentPath="UserDetails/index"
