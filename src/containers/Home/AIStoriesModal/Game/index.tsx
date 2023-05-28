@@ -4,6 +4,7 @@ import ContentContainer from './ContentContainer';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import GradientButton from '~/components/Buttons/GradientButton';
 import { useAppContext } from '~/contexts';
+import { socket } from '~/constants/io';
 
 const levelHash: { [key: string]: string } = {
   1: 'Level 1 (AR 1)',
@@ -256,6 +257,9 @@ export default function Game({
     onSetGenerateButtonPressed(true);
     onSetLoadingStory(true);
     try {
+      socket.emit('generate_ai_story', (result: string) => {
+        console.log(result);
+      });
       const { attemptId: newAttemptId, storyObj } = await loadAIStory({
         difficulty,
         topic,
