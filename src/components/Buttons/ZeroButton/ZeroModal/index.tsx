@@ -118,6 +118,7 @@ export default function ZeroModal({
             ) : null}
             <p
               style={{
+                marginTop: response ? '3rem' : 0,
                 whiteSpace: 'pre-wrap',
                 overflowWrap: 'break-word',
                 wordBreak: 'break-word',
