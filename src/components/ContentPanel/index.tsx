@@ -307,6 +307,7 @@ export default function ContentPanel({
                 )}
                 {contentState.loaded && targetObj?.subject?.id && (
                   <ContentListItem
+                    hideSideBordersOnMobile
                     style={{
                       zIndex: 1,
                       position: 'relative'
@@ -325,6 +326,7 @@ export default function ContentPanel({
                 {contentType === 'comment' &&
                   contentState.rootType === 'video' && (
                     <ContentListItem
+                      hideSideBordersOnMobile
                       style={{
                         position: 'relative'
                       }}
@@ -337,6 +339,7 @@ export default function ContentPanel({
                 {contentType === 'comment' &&
                   contentState.rootType === 'aiStory' && (
                     <ContentListItem
+                      hideSideBordersOnMobile
                       style={{
                         position: 'relative'
                       }}
