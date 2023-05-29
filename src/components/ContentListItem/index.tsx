@@ -22,7 +22,8 @@ ContentListItem.propTypes = {
   selectable: PropTypes.bool,
   selected: PropTypes.bool,
   style: PropTypes.object,
-  innerStyle: PropTypes.object
+  innerStyle: PropTypes.object,
+  hideSideBordersOnMobile: PropTypes.bool
 };
 function ContentListItem({
   onClick = () => null,
@@ -34,7 +35,8 @@ function ContentListItem({
   selectable,
   selected,
   style,
-  innerStyle
+  innerStyle,
+  hideSideBordersOnMobile
 }: {
   onClick?: () => void;
   contentObj: {
@@ -48,6 +50,7 @@ function ContentListItem({
   selectable?: boolean;
   selected?: boolean;
   style?: React.CSSProperties;
+  hideSideBordersOnMobile?: boolean;
   innerStyle?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
@@ -133,8 +136,9 @@ function ContentListItem({
         }
         @media (max-width: ${mobileMaxWidth}) {
           margin-top: -0.5rem;
-          border-left: 0;
-          border-right: 0;
+          ${hideSideBordersOnMobile
+            ? 'border-left: none; border-right: none;'
+            : ''}
           small {
             font-size: 1rem;
           }
