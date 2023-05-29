@@ -51,7 +51,6 @@ export default function EmbeddedComponent({
     >
       {isInternalLink ? (
         <InternalComponent
-          {...commonProps}
           rootId={contentId}
           rootType={contentType}
           isProfileComponent={isProfileComponent}
