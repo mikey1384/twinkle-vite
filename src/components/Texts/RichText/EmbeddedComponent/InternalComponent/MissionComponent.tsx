@@ -4,6 +4,9 @@ import MissionItem from '~/components/MissionItem';
 import Loading from '~/components/Loading';
 import InvalidContent from '../InvalidContent';
 import LoginToViewContent from '~/components/LoginToViewContent';
+import { isMobile } from '~/helpers';
+
+const displayIsMobile = isMobile(navigator);
 
 export default function MissionComponent({ src }: { src: string }) {
   const { userId } = useKeyContext((v) => v.myState);
@@ -88,7 +91,7 @@ export default function MissionComponent({ src }: { src: string }) {
   return (
     <MissionItem
       showStatus={false}
-      style={{ marginTop: '1rem' }}
+      style={{ marginTop: '1rem', minWidth: displayIsMobile ? '100%' : '80%' }}
       mission={mission}
       missionLink={src}
     />

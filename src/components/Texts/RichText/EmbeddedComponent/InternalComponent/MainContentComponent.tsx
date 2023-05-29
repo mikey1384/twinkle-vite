@@ -70,6 +70,7 @@ export default function MainContentComponent({
     case 'video':
       return (
         <XPVideoPlayer
+          style={{ minWidth: displayIsMobile ? '100%' : '80%' }}
           isLink={displayIsMobile}
           videoId={Number(contentId)}
           videoCode={content}
@@ -78,7 +79,12 @@ export default function MainContentComponent({
       );
     case 'link':
     case 'subject':
-      return <ContentListItem contentObj={contentState} />;
+      return (
+        <ContentListItem
+          style={{ minWidth: displayIsMobile ? '100%' : '80%' }}
+          contentObj={contentState}
+        />
+      );
     default:
       return <InvalidContent />;
   }
