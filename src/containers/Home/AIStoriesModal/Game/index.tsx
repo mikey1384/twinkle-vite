@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Button from '~/components/Button';
 import ContentContainer from './ContentContainer';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -103,6 +103,25 @@ export default function Game({
     (v) => v.requestHelpers.loadAIStoryQuestions
   );
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
+
+  useEffect(() => {
+    socket.on('ai_story_updated', handleAIStoryUpdated);
+
+    function handleAIStoryUpdated({
+      storyId: streamedStoryId,
+      story
+    }: {
+      storyId: number;
+      story: string;
+    }) {
+      if (streamedStoryId === storyId) {
+        onSetStory(story);
+      }
+    }
+    return function cleanUp() {
+      socket.removeListener('ai_story_updated', handleAIStoryUpdated);
+    };
+  });
 
   return (
     <div
@@ -280,7 +299,8 @@ export default function Game({
       socket.emit('generate_ai_story', {
         difficulty,
         topic,
-        type: storyType
+        type: storyType,
+        storyId: storyObj.id
       });
       await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
