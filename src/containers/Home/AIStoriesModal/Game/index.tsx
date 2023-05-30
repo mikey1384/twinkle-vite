@@ -18,6 +18,7 @@ export default function Game({
   attemptId,
   difficulty,
   displayedSection,
+  explanation,
   generateButtonPressed,
   loadStoryComplete,
   loadingStory,
@@ -30,12 +31,12 @@ export default function Game({
   onSetDifficulty,
   onSetDropdownShown,
   onSetDisplayedSection,
+  onSetExplanation,
   onSetGenerateButtonPressed,
   onSetLoadingStory,
   onSetLoadStoryComplete,
   onSetSolveObj,
   onSetStoryLoadError,
-  onSetStoryObj,
   onSetUserChoiceObj,
   onSetQuestions,
   onSetQuestionsLoaded,
@@ -44,9 +45,12 @@ export default function Game({
   questions,
   questionsLoaded,
   questionsLoadError,
+  onSetStory,
+  onSetStoryId,
   solveObj,
   storyLoadError,
-  storyObj,
+  story,
+  storyId,
   storyType,
   topic,
   topicKey,
@@ -56,6 +60,7 @@ export default function Game({
   attemptId: number;
   difficulty: number;
   displayedSection: string;
+  explanation: string;
   generateButtonPressed: boolean;
   loadStoryComplete: boolean;
   loadingStory: boolean;
@@ -67,6 +72,7 @@ export default function Game({
   onSetDifficulty: (v: number) => void;
   onSetDisplayedSection: (v: string) => void;
   onSetDropdownShown: (v: boolean) => void;
+  onSetExplanation: (v: string) => void;
   onSetGenerateButtonPressed: (v: boolean) => void;
   onSetLoadingStory: (v: boolean) => void;
   onSetLoadStoryComplete: (v: boolean) => void;
@@ -76,15 +82,17 @@ export default function Game({
   onSetQuestionsLoadError: (v: boolean) => void;
   onSetResetNumber: (v: any) => void;
   onSetSolveObj: (v: any) => void;
+  onSetStory: (v: string) => void;
+  onSetStoryId: (v: number) => void;
   onSetStoryLoadError: (v: boolean) => void;
-  onSetStoryObj: (v: any) => void;
   onSetUserChoiceObj: (v: any) => void;
   questions: any[];
   questionsLoaded: boolean;
   questionsLoadError: boolean;
   solveObj: any;
+  story: string;
+  storyId: number;
   storyLoadError: boolean;
-  storyObj: any;
   storyType: string;
   topic: string;
   topicKey: string;
@@ -132,9 +140,9 @@ export default function Game({
           attemptId={attemptId}
           difficulty={Number(difficulty)}
           displayedSection={displayedSection}
+          explanation={explanation}
           loading={loadingStory}
           loadComplete={loadStoryComplete}
-          storyObj={storyObj}
           questions={questions}
           questionsLoadError={questionsLoadError}
           onLoadQuestions={handleLoadQuestions}
@@ -145,6 +153,7 @@ export default function Game({
           onSetSolveObj={onSetSolveObj}
           questionsLoaded={questionsLoaded}
           solveObj={solveObj}
+          story={story}
           userChoiceObj={userChoiceObj}
         />
       ) : (
@@ -241,8 +250,8 @@ export default function Game({
     try {
       const questions = await loadAIStoryQuestions({
         difficulty,
-        story: storyObj.story,
-        storyId: storyObj.id
+        story,
+        storyId
       });
       onSetQuestions(questions);
       onSetQuestionsLoaded(true);
@@ -264,7 +273,9 @@ export default function Game({
         type: storyType
       });
       onSetAttemptId(newAttemptId);
-      onSetStoryObj(storyObj);
+      onSetStoryId(storyObj.id);
+      onSetStory(storyObj.story);
+      onSetExplanation(storyObj.explanation);
       onSetLoadStoryComplete(true);
       socket.emit('generate_ai_story', {
         difficulty,

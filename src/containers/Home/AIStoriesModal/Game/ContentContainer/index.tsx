@@ -36,10 +36,10 @@ export default function ContentContainer({
   attemptId,
   difficulty,
   displayedSection,
+  explanation,
   loading,
   loadComplete,
   questions,
-  storyObj,
   onLoadQuestions,
   onReset,
   onSetDisplayedSection,
@@ -48,16 +48,17 @@ export default function ContentContainer({
   onScrollToTop,
   questionsLoadError,
   questionsLoaded,
+  story,
   solveObj,
   userChoiceObj
 }: {
   attemptId: number;
   difficulty: number;
   displayedSection: string;
+  explanation: string;
   loading: boolean;
   loadComplete: boolean;
   questions: any[];
-  storyObj: any;
   onLoadQuestions: () => void;
   onReset: () => void;
   onSetDisplayedSection: (section: string) => void;
@@ -67,6 +68,7 @@ export default function ContentContainer({
   questionsLoadError: boolean;
   questionsLoaded: boolean;
   solveObj: any;
+  story: string;
   userChoiceObj: any;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
@@ -115,8 +117,8 @@ export default function ContentContainer({
           {displayedSection === 'story' && (
             <Story
               isGraded={solveObj.isGraded}
-              story={storyObj.story}
-              explanation={storyObj.explanation}
+              story={story}
+              explanation={explanation}
               questionsLoaded={questionsLoaded}
               onLoadQuestions={onLoadQuestions}
               onFinishRead={handleFinishRead}
