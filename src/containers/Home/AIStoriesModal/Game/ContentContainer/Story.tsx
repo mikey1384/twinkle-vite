@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import RichText from '~/components/Texts/RichText';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
@@ -7,26 +7,15 @@ export default function Story({
   story,
   isGraded,
   explanation,
-  onLoadQuestions,
   onFinishRead,
-  questionsButtonEnabled,
-  questionsLoaded
+  questionsButtonEnabled
 }: {
   story: string;
   isGraded: boolean;
   explanation: string;
-  onLoadQuestions: () => void;
   onFinishRead: () => void;
   questionsButtonEnabled: boolean;
-  questionsLoaded: boolean;
 }) {
-  useEffect(() => {
-    if (!questionsLoaded) {
-      onLoadQuestions();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionsLoaded]);
-
   return (
     <div
       className="unselectable"

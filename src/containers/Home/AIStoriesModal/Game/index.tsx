@@ -39,18 +39,17 @@ export default function Game({
   onSetQuestions,
   onSetQuestionsButtonEnabled,
   onSetQuestionsLoaded,
-  onSetQuestionsLoadError,
   onSetTopicLoadError,
   questions,
   questionsButtonEnabled,
   questionsLoaded,
   questionsLoadError,
+  onLoadQuestions,
   onSetStory,
   onSetStoryId,
   solveObj,
   storyLoadError,
   story,
-  storyId,
   storyType,
   topic,
   topicKey,
@@ -66,6 +65,7 @@ export default function Game({
   loadingTopic: boolean;
   MainRef: React.RefObject<any>;
   onHide: () => void;
+  onLoadQuestions: () => void;
   onLoadTopic: (v: any) => void;
   onSetAttemptId: (v: number) => void;
   onSetDifficulty: (v: number) => void;
@@ -99,9 +99,6 @@ export default function Game({
   topicLoadError: boolean;
   userChoiceObj: any;
 }) {
-  const loadAIStoryQuestions = useAppContext(
-    (v) => v.requestHelpers.loadAIStoryQuestions
-  );
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
 
   return (
@@ -146,7 +143,7 @@ export default function Game({
           questions={questions}
           questionsButtonEnabled={questionsButtonEnabled}
           questionsLoadError={questionsLoadError}
-          onLoadQuestions={handleLoadQuestions}
+          onLoadQuestions={onLoadQuestions}
           onSetDisplayedSection={onSetDisplayedSection}
           onSetUserChoiceObj={onSetUserChoiceObj}
           onScrollToTop={() => (MainRef.current.scrollTop = 0)}
@@ -245,23 +242,6 @@ export default function Game({
     </div>
   );
 
-  async function handleLoadQuestions() {
-    onSetQuestionsLoadError(false);
-    if (questionsLoaded) return;
-    try {
-      const questions = await loadAIStoryQuestions({
-        difficulty,
-        story,
-        storyId
-      });
-      onSetQuestions(questions);
-      onSetQuestionsLoaded(true);
-    } catch (error) {
-      console.error(error);
-      onSetQuestionsLoadError(true);
-    }
-  }
-
   async function handleGenerateStory() {
     onSetStoryLoadError(false);
     onSetGenerateButtonPressed(true);
@@ -292,6 +272,8 @@ export default function Game({
 
   function handleReset() {
     onSetResetNumber((prevNumber: number) => prevNumber + 1);
+    onSetStory('');
+    onSetExplanation('');
     onSetLoadStoryComplete(false);
     onSetQuestionsLoaded(false);
     onSetQuestionsButtonEnabled(false);
