@@ -31,6 +31,9 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const loadAIStoryTopic = useAppContext(
     (v) => v.requestHelpers.loadAIStoryTopic
   );
+  const loadAIStoryQuestions = useAppContext(
+    (v) => v.requestHelpers.loadAIStoryQuestions
+  );
   const [topic, setTopic] = useState('');
   const [topicKey, setTopicKey] = useState('');
   const [explanation, setExplanation] = useState('');
@@ -73,11 +76,12 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       }
     }
 
-    function handleAIStoryFinished(storyId: number) {
+    async function handleAIStoryFinished(storyId: number) {
       socket.emit('generate_ai_story_explanations', {
         storyId: Number(storyId),
         story
       });
+      await handleLoadQuestions();
     }
 
     function handleAIStoryExplanationUpdated({
@@ -164,6 +168,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             generateButtonPressed={generateButtonPressed}
             loadStoryComplete={loadStoryComplete}
             onHide={onHide}
+            onLoadQuestions={handleLoadQuestions}
             onLoadTopic={handleLoadTopic}
             onSetAttemptId={setAttemptId}
             onSetDropdownShown={setDropdownShown}
@@ -272,6 +277,23 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       }
     }
     throw new Error('Failed to load topic after maximum retries');
+  }
+
+  async function handleLoadQuestions() {
+    setQuestionsLoadError(false);
+    if (questionsLoaded) return;
+    try {
+      const questions = await loadAIStoryQuestions({
+        difficulty,
+        story,
+        storyId
+      });
+      setQuestions(questions);
+      setQuestionsLoaded(true);
+    } catch (error) {
+      console.error(error);
+      setQuestionsLoadError(true);
+    }
   }
 
   function sleep(ms: number) {

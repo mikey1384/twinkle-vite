@@ -122,8 +122,6 @@ export default function ContentContainer({
               story={story}
               explanation={explanation}
               questionsButtonEnabled={questionsButtonEnabled}
-              questionsLoaded={questionsLoaded}
-              onLoadQuestions={onLoadQuestions}
               onFinishRead={handleFinishRead}
             />
           )}
