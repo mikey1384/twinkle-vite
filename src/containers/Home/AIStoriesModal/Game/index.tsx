@@ -257,11 +257,6 @@ export default function Game({
     onSetGenerateButtonPressed(true);
     onSetLoadingStory(true);
     try {
-      socket.emit('generate_ai_story', {
-        difficulty,
-        topic,
-        type: storyType
-      });
       const { attemptId: newAttemptId, storyObj } = await loadAIStory({
         difficulty,
         topic,
@@ -271,6 +266,11 @@ export default function Game({
       onSetAttemptId(newAttemptId);
       onSetStoryObj(storyObj);
       onSetLoadStoryComplete(true);
+      socket.emit('generate_ai_story', {
+        difficulty,
+        topic,
+        type: storyType
+      });
       await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
       console.error(error);
