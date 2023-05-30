@@ -54,6 +54,11 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   useEffect(() => {
     socket.on('ai_story_updated', handleAIStoryUpdated);
     socket.on('ai_story_finished', handleAIStoryFinished);
+    socket.on('ai_story_explanation_updated', handleAIStoryExplanationUpdated);
+    socket.on(
+      'ai_story_explanation_finished',
+      handleAIStoryExplanationFinished
+    );
 
     function handleAIStoryUpdated({
       storyId: streamedStoryId,
@@ -68,12 +73,39 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     }
 
     function handleAIStoryFinished(storyId: number) {
-      console.log('story finished', storyId);
+      socket.emit('generate_ai_story_explanations', {
+        storyId: Number(storyId),
+        story
+      });
+    }
+
+    function handleAIStoryExplanationUpdated({
+      storyId: streamedStoryId,
+      explanation
+    }: {
+      storyId: number;
+      explanation: string;
+    }) {
+      if (streamedStoryId === storyId) {
+        setExplanation(explanation);
+      }
+    }
+
+    function handleAIStoryExplanationFinished() {
+      console.log('explanation finished');
     }
 
     return function cleanUp() {
       socket.removeListener('ai_story_updated', handleAIStoryUpdated);
       socket.removeListener('ai_story_finished', handleAIStoryFinished);
+      socket.removeListener(
+        'ai_story_explanation_updated',
+        handleAIStoryExplanationUpdated
+      );
+      socket.removeListener(
+        'ai_story_explanation_finished',
+        handleAIStoryExplanationFinished
+      );
     };
   });
 
