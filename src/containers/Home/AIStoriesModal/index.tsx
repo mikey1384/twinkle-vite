@@ -4,6 +4,7 @@ import { useAppContext } from '~/contexts';
 import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import Rankings from './Rankings';
+import { socket } from '~/constants/io';
 
 export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const MainRef: React.RefObject<any> = useRef(null);
@@ -22,7 +23,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [dropdownShown, setDropdownShown] = useState(false);
   const [generateButtonPressed, setGenerateButtonPressed] = useState(false);
   const [storyLoadError, setStoryLoadError] = useState(false);
-  const [loadingStory, setLoadingStory] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [questionsLoaded, setQuestionsLoaded] = useState(false);
   const [questionsLoadError, setQuestionsLoadError] = useState(false);
@@ -50,6 +50,25 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty, resetNumber]);
+
+  useEffect(() => {
+    socket.on('ai_story_updated', handleAIStoryUpdated);
+
+    function handleAIStoryUpdated({
+      storyId: streamedStoryId,
+      story
+    }: {
+      storyId: number;
+      story: string;
+    }) {
+      if (streamedStoryId === storyId) {
+        setStory(story);
+      }
+    }
+    return function cleanUp() {
+      socket.removeListener('ai_story_updated', handleAIStoryUpdated);
+    };
+  });
 
   return (
     <Modal
@@ -101,7 +120,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             explanation={explanation}
             difficulty={difficulty}
             displayedSection={displayedSection}
-            loadingStory={loadingStory}
             loadingTopic={loadingTopic}
             generateButtonPressed={generateButtonPressed}
             loadStoryComplete={loadStoryComplete}
@@ -114,7 +132,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             onSetDisplayedSection={setDisplayedSection}
             onSetExplanation={setExplanation}
             onSetGenerateButtonPressed={setGenerateButtonPressed}
-            onSetLoadingStory={setLoadingStory}
             onSetLoadStoryComplete={onSetLoadStoryComplete}
             onSetQuestions={setQuestions}
             onSetQuestionsLoaded={setQuestionsLoaded}
