@@ -257,17 +257,11 @@ export default function Game({
     onSetGenerateButtonPressed(true);
     onSetLoadingStory(true);
     try {
-      socket.emit(
-        'generate_ai_story',
-        {
-          difficulty,
-          topic,
-          type: storyType
-        },
-        (result: string) => {
-          console.log(result);
-        }
-      );
+      socket.emit('generate_ai_story', {
+        difficulty,
+        topic,
+        type: storyType
+      });
       const { attemptId: newAttemptId, storyObj } = await loadAIStory({
         difficulty,
         topic,
