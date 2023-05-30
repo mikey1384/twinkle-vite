@@ -46,6 +46,7 @@ export default function ContentContainer({
   onSetSolveObj,
   onSetUserChoiceObj,
   onScrollToTop,
+  questionsButtonEnabled,
   questionsLoadError,
   questionsLoaded,
   story,
@@ -65,6 +66,7 @@ export default function ContentContainer({
   onSetSolveObj: (solveObj: any) => void;
   onSetUserChoiceObj: (userChoiceObj: any) => void;
   onScrollToTop: () => void;
+  questionsButtonEnabled: boolean;
   questionsLoadError: boolean;
   questionsLoaded: boolean;
   solveObj: any;
@@ -119,6 +121,7 @@ export default function ContentContainer({
               isGraded={solveObj.isGraded}
               story={story}
               explanation={explanation}
+              questionsButtonEnabled={questionsButtonEnabled}
               questionsLoaded={questionsLoaded}
               onLoadQuestions={onLoadQuestions}
               onFinishRead={handleFinishRead}

@@ -23,6 +23,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [dropdownShown, setDropdownShown] = useState(false);
   const [generateButtonPressed, setGenerateButtonPressed] = useState(false);
   const [storyLoadError, setStoryLoadError] = useState(false);
+  const [questionsButtonEnabled, setQuestionsButtonEnabled] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [questionsLoaded, setQuestionsLoaded] = useState(false);
   const [questionsLoadError, setQuestionsLoadError] = useState(false);
@@ -92,7 +93,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     }
 
     function handleAIStoryExplanationFinished() {
-      console.log('explanation finished');
+      setQuestionsButtonEnabled(true);
     }
 
     return function cleanUp() {
@@ -173,6 +174,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             onSetGenerateButtonPressed={setGenerateButtonPressed}
             onSetLoadStoryComplete={onSetLoadStoryComplete}
             onSetQuestions={setQuestions}
+            onSetQuestionsButtonEnabled={setQuestionsButtonEnabled}
             onSetQuestionsLoaded={setQuestionsLoaded}
             onSetQuestionsLoadError={setQuestionsLoadError}
             onSetSolveObj={setSolveObj}
@@ -183,6 +185,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             onSetTopicLoadError={setTopicLoadError}
             questions={questions}
             questionsLoadError={questionsLoadError}
+            questionsButtonEnabled={questionsButtonEnabled}
             questionsLoaded={questionsLoaded}
             story={story}
             storyId={storyId}

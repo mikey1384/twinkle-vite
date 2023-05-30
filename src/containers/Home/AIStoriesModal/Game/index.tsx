@@ -37,10 +37,12 @@ export default function Game({
   onSetStoryLoadError,
   onSetUserChoiceObj,
   onSetQuestions,
+  onSetQuestionsButtonEnabled,
   onSetQuestionsLoaded,
   onSetQuestionsLoadError,
   onSetTopicLoadError,
   questions,
+  questionsButtonEnabled,
   questionsLoaded,
   questionsLoadError,
   onSetStory,
@@ -74,6 +76,7 @@ export default function Game({
   onSetLoadStoryComplete: (v: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
   onSetQuestions: (v: any) => void;
+  onSetQuestionsButtonEnabled: (v: boolean) => void;
   onSetQuestionsLoaded: (v: boolean) => void;
   onSetQuestionsLoadError: (v: boolean) => void;
   onSetResetNumber: (v: any) => void;
@@ -83,6 +86,7 @@ export default function Game({
   onSetStoryLoadError: (v: boolean) => void;
   onSetUserChoiceObj: (v: any) => void;
   questions: any[];
+  questionsButtonEnabled: boolean;
   questionsLoaded: boolean;
   questionsLoadError: boolean;
   solveObj: any;
@@ -140,6 +144,7 @@ export default function Game({
           loading={story?.length < 10}
           loadComplete={loadStoryComplete}
           questions={questions}
+          questionsButtonEnabled={questionsButtonEnabled}
           questionsLoadError={questionsLoadError}
           onLoadQuestions={handleLoadQuestions}
           onSetDisplayedSection={onSetDisplayedSection}
@@ -289,6 +294,7 @@ export default function Game({
     onSetResetNumber((prevNumber: number) => prevNumber + 1);
     onSetLoadStoryComplete(false);
     onSetQuestionsLoaded(false);
+    onSetQuestionsButtonEnabled(false);
     onSetQuestions([]);
     onSetDisplayedSection('story');
     onSetUserChoiceObj({});
