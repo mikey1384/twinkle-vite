@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Button from '~/components/Button';
 import ContentContainer from './ContentContainer';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -21,7 +21,6 @@ export default function Game({
   explanation,
   generateButtonPressed,
   loadStoryComplete,
-  loadingStory,
   loadingTopic,
   MainRef,
   onLoadTopic,
@@ -33,7 +32,6 @@ export default function Game({
   onSetDisplayedSection,
   onSetExplanation,
   onSetGenerateButtonPressed,
-  onSetLoadingStory,
   onSetLoadStoryComplete,
   onSetSolveObj,
   onSetStoryLoadError,
@@ -63,7 +61,6 @@ export default function Game({
   explanation: string;
   generateButtonPressed: boolean;
   loadStoryComplete: boolean;
-  loadingStory: boolean;
   loadingTopic: boolean;
   MainRef: React.RefObject<any>;
   onHide: () => void;
@@ -74,7 +71,6 @@ export default function Game({
   onSetDropdownShown: (v: boolean) => void;
   onSetExplanation: (v: string) => void;
   onSetGenerateButtonPressed: (v: boolean) => void;
-  onSetLoadingStory: (v: boolean) => void;
   onSetLoadStoryComplete: (v: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
   onSetQuestions: (v: any) => void;
@@ -103,25 +99,6 @@ export default function Game({
     (v) => v.requestHelpers.loadAIStoryQuestions
   );
   const loadAIStory = useAppContext((v) => v.requestHelpers.loadAIStory);
-
-  useEffect(() => {
-    socket.on('ai_story_updated', handleAIStoryUpdated);
-
-    function handleAIStoryUpdated({
-      storyId: streamedStoryId,
-      story
-    }: {
-      storyId: number;
-      story: string;
-    }) {
-      if (streamedStoryId === storyId) {
-        onSetStory(story);
-      }
-    }
-    return function cleanUp() {
-      socket.removeListener('ai_story_updated', handleAIStoryUpdated);
-    };
-  });
 
   return (
     <div
@@ -160,7 +137,7 @@ export default function Game({
           difficulty={Number(difficulty)}
           displayedSection={displayedSection}
           explanation={explanation}
-          loading={loadingStory}
+          loading={story?.length < 10}
           loadComplete={loadStoryComplete}
           questions={questions}
           questionsLoadError={questionsLoadError}
@@ -283,7 +260,6 @@ export default function Game({
   async function handleGenerateStory() {
     onSetStoryLoadError(false);
     onSetGenerateButtonPressed(true);
-    onSetLoadingStory(true);
     try {
       const { attemptId: newAttemptId, storyObj } = await loadAIStory({
         difficulty,
@@ -306,8 +282,6 @@ export default function Game({
     } catch (error) {
       console.error(error);
       onSetStoryLoadError(true);
-    } finally {
-      onSetLoadingStory(false);
     }
   }
 
