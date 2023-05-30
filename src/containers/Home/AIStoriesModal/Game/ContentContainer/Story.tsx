@@ -31,6 +31,12 @@ export default function Story({
       style={{ width: '100%', fontFamily: '"Arial", sans-serif' }}
     >
       <RichText maxLines={100}>{story}</RichText>
+      {explanation && (
+        <div style={{ marginTop: '7rem', marginBottom: '1rem' }}>
+          ===============================
+        </div>
+      )}
+      <RichText maxLines={100}>{explanation}</RichText>
       {story && (
         <div
           style={{
@@ -51,12 +57,6 @@ export default function Story({
           )}
         </div>
       )}
-      {explanation && (
-        <div style={{ marginTop: '7rem', marginBottom: '1rem' }}>
-          ===============================
-        </div>
-      )}
-      <RichText maxLines={100}>{explanation}</RichText>
     </div>
   );
 }
