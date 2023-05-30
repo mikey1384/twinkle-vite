@@ -5,6 +5,7 @@ import { css } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
 import { useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
+import { mobileMaxWidth } from '~/constants/css';
 import YoutubeIcon from '~/assets/YoutubeIcon.svg';
 
 const displayIsMobile = isMobile(navigator);
@@ -59,8 +60,12 @@ export default function YouTubeVideo({
   return (
     <div
       className={css`
+        min-width: 80%;
         position: relative;
         padding-top: 56.25%;
+        @media (max-width: ${mobileMaxWidth}) {
+          min-width: 100%;
+        }
       `}
     >
       {isStarted ? (
