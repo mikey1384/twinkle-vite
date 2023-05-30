@@ -9,6 +9,7 @@ export default function Story({
   explanation,
   onLoadQuestions,
   onFinishRead,
+  questionsButtonEnabled,
   questionsLoaded
 }: {
   story: string;
@@ -16,6 +17,7 @@ export default function Story({
   explanation: string;
   onLoadQuestions: () => void;
   onFinishRead: () => void;
+  questionsButtonEnabled: boolean;
   questionsLoaded: boolean;
 }) {
   useEffect(() => {
@@ -51,8 +53,11 @@ export default function Story({
               Review Questions
             </Button>
           ) : (
-            <GradientButton onClick={onFinishRead}>
-              Solve Questions
+            <GradientButton
+              loading={!questionsButtonEnabled}
+              onClick={onFinishRead}
+            >
+              {questionsButtonEnabled ? 'Solve Questions' : 'Generating...'}
             </GradientButton>
           )}
         </div>
