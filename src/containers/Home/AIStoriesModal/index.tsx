@@ -53,6 +53,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
 
   useEffect(() => {
     socket.on('ai_story_updated', handleAIStoryUpdated);
+    socket.on('ai_story_finished', handleAIStoryFinished);
 
     function handleAIStoryUpdated({
       storyId: streamedStoryId,
@@ -65,8 +66,14 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         setStory(story);
       }
     }
+
+    function handleAIStoryFinished(storyId: number) {
+      console.log('story finished', storyId);
+    }
+
     return function cleanUp() {
       socket.removeListener('ai_story_updated', handleAIStoryUpdated);
+      socket.removeListener('ai_story_finished', handleAIStoryFinished);
     };
   });
 
