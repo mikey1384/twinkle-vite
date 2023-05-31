@@ -64,6 +64,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       handleAIStoryExplanationFinished
     );
     socket.on('ai_story_story_error', handleAIStoryError);
+    socket.on('ai_story_explanation_error', handleAIStoryExplanationError);
 
     function handleAIStoryUpdated({
       storyId: streamedStoryId,
@@ -105,6 +106,10 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       setStoryLoadError(true);
     }
 
+    function handleAIStoryExplanationError() {
+      setQuestionsButtonEnabled(true);
+    }
+
     return function cleanUp() {
       socket.removeListener('ai_story_updated', handleAIStoryUpdated);
       socket.removeListener('ai_story_finished', handleAIStoryFinished);
@@ -117,6 +122,10 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         handleAIStoryExplanationFinished
       );
       socket.removeListener('ai_story_story_error', handleAIStoryError);
+      socket.removeListener(
+        'ai_story_explanation_error',
+        handleAIStoryExplanationError
+      );
     };
   });
 
