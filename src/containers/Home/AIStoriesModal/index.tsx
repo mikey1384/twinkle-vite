@@ -79,11 +79,11 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     }
 
     async function handleAIStoryFinished(storyId: number) {
+      handleLoadQuestions();
       socket.emit('generate_ai_story_explanations', {
         storyId: Number(storyId),
         story
       });
-      await handleLoadQuestions();
     }
 
     function handleAIStoryExplanationUpdated({
