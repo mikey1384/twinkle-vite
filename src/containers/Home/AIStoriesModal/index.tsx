@@ -63,6 +63,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       'ai_story_explanation_finished',
       handleAIStoryExplanationFinished
     );
+    socket.on('ai_story_story_error', handleAIStoryError);
 
     function handleAIStoryUpdated({
       storyId: streamedStoryId,
@@ -100,6 +101,10 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       setQuestionsButtonEnabled(true);
     }
 
+    function handleAIStoryError() {
+      setStoryLoadError(true);
+    }
+
     return function cleanUp() {
       socket.removeListener('ai_story_updated', handleAIStoryUpdated);
       socket.removeListener('ai_story_finished', handleAIStoryFinished);
@@ -111,6 +116,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         'ai_story_explanation_finished',
         handleAIStoryExplanationFinished
       );
+      socket.removeListener('ai_story_story_error', handleAIStoryError);
     };
   });
 
@@ -125,7 +131,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       large
       onHide={onHide}
     >
-      {(!generateButtonPressed || solveObj.isGraded) && (
+      {(!generateButtonPressed || solveObj.isGraded || storyLoadError) && (
         <header style={{ padding: 0 }}>
           <FilterBar
             style={{

@@ -127,7 +127,7 @@ export default function Game({
           </p>
           <GradientButton
             style={{ marginTop: '5rem' }}
-            onClick={handleGenerateStory}
+            onClick={() => handleGenerateStory(true)}
           >
             Retry
           </GradientButton>
@@ -217,7 +217,7 @@ export default function Game({
           ) : (
             <GradientButton
               style={{ marginTop: '2rem' }}
-              onClick={handleGenerateStory}
+              onClick={() => handleGenerateStory()}
               loading={loadingTopic}
             >
               Generate a Story
@@ -242,7 +242,10 @@ export default function Game({
     </div>
   );
 
-  async function handleGenerateStory() {
+  async function handleGenerateStory(isOnError?: boolean) {
+    if (isOnError) {
+      handleReset();
+    }
     onSetStoryLoadError(false);
     onSetGenerateButtonPressed(true);
     try {
@@ -272,6 +275,7 @@ export default function Game({
 
   function handleReset() {
     onSetResetNumber((prevNumber: number) => prevNumber + 1);
+    onSetStoryId(0);
     onSetStory('');
     onSetExplanation('');
     onSetLoadStoryComplete(false);
