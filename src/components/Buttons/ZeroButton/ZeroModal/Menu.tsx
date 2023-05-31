@@ -182,10 +182,15 @@ export default function Menu({
   );
 
   async function handleButtonClick(type: string) {
-    onSetLoadingType(type);
-    const response = await getZerosReview({ type, content, command });
-    onSetLoadingType('');
-    onSetResponse(response);
-    onSetLoadingProgress(0);
+    try {
+      onSetLoadingType(type);
+      const response = await getZerosReview({ type, content, command });
+      onSetResponse(response);
+    } catch (error) {
+      console.error('Error occurred:', error);
+    } finally {
+      onSetLoadingType('');
+      onSetLoadingProgress(0);
+    }
   }
 }
