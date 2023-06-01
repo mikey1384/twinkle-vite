@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -9,6 +9,7 @@ import { socket } from '~/constants/io';
 import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { ResponseObj } from './types';
 
 ZeroModal.propTypes = {
   contentId: PropTypes.number,
@@ -31,33 +32,69 @@ export default function ZeroModal({
   content?: string;
 }) {
   const [loadingType, setLoadingType] = useState('');
-  const [response, setResponse] = useState('');
+  const [selectedStyle, setSelectedStyle] = useState('zero');
+  const [responseObj, setResponseObj] = useState<ResponseObj>({
+    grammar: '',
+    rewrite: {
+      zero: '',
+      kpop: '',
+      shakespear: '',
+      poem: '',
+      rap: '',
+      youtuber: ''
+    },
+    easy: ''
+  });
   const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
 
   useEffect(() => {
+    setLoadingType('');
+  }, [selectedStyle]);
+
+  useEffect(() => {
     socket.on('zeros_review_updated', handleZeroReviewUpdated);
-    socket.on('zeros_review_finished', handleZeroReviewFinished);
 
     function handleZeroReviewUpdated({
       response,
-      identifier
+      identifier,
+      type,
+      style
     }: {
       response: string;
       identifier: number;
+      type: string;
+      style: string;
     }) {
-      if (loadingType && identifier === responseIdentifier.current)
-        setResponse(response);
-    }
-
-    function handleZeroReviewFinished(identifier: number) {
-      if (identifier === responseIdentifier.current) setLoadingType('');
+      if (identifier === responseIdentifier.current)
+        setResponseObj((responseObj: ResponseObj) => ({
+          ...responseObj,
+          [type]:
+            type === 'rewrite'
+              ? {
+                  ...(responseObj.rewrite || {}),
+                  [style]: response
+                }
+              : response
+        }));
     }
 
     return function cleanUp() {
       socket.removeListener('zeros_review_updated', handleZeroReviewUpdated);
-      socket.removeListener('zeros_review_finished', handleZeroReviewFinished);
     };
   });
+
+  const response = useMemo(() => {
+    if (loadingType === 'grammar') return responseObj.grammar;
+    if (loadingType === 'rewrite') return responseObj.rewrite[selectedStyle];
+    if (loadingType === 'easy') return responseObj.easy;
+    return '';
+  }, [
+    loadingType,
+    responseObj.easy,
+    responseObj.grammar,
+    responseObj.rewrite,
+    selectedStyle
+  ]);
 
   const { content: contentFetchedFromContext } = useContentState({
     contentId: contentId as number,
@@ -112,7 +149,10 @@ export default function ZeroModal({
               content={content || contentFetchedFromContext}
               loadingType={loadingType}
               onSetLoadingType={setLoadingType}
+              onSetSelectedStyle={setSelectedStyle}
+              selectedStyle={selectedStyle}
               identifier={responseIdentifier.current}
+              responseObj={responseObj}
             />
           </div>
           <div className="content">

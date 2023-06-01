@@ -5,6 +5,7 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
+import { ResponseObj } from './types';
 
 Menu.propTypes = {
   content: PropTypes.string.isRequired,
@@ -16,15 +17,20 @@ export default function Menu({
   identifier,
   style,
   loadingType,
-  onSetLoadingType
+  onSetLoadingType,
+  onSetSelectedStyle,
+  responseObj,
+  selectedStyle
 }: {
   content: string;
   identifier: number;
   style?: React.CSSProperties;
   loadingType: string;
   onSetLoadingType: (loadingType: string) => void;
+  onSetSelectedStyle: (style: string) => void;
+  responseObj: ResponseObj;
+  selectedStyle: string;
 }) {
-  const [selectedStyle, setSelectedStyle] = useState('zero');
   const [wordLevel, setWordLevel] = useState('intermediate');
   const styleLabelObj = useMemo(() => {
     if (selectedStyle === 'zero') {
@@ -60,7 +66,7 @@ export default function Menu({
       <Button
         skeuomorphic
         color="strongPink"
-        loading={loadingType === 'easy'}
+        disabled={loadingType === 'easy'}
         onClick={() => handleButtonClick('easy')}
       >
         <Icon icon="play" />
@@ -88,32 +94,32 @@ export default function Menu({
                 {
                   label: `Zero's own style`,
                   key: 'zero',
-                  onClick: () => setSelectedStyle('zero')
+                  onClick: () => onSetSelectedStyle('zero')
                 },
                 {
                   label: `Shakespearean style`,
                   key: 'shakespear',
-                  onClick: () => setSelectedStyle('shakespear')
+                  onClick: () => onSetSelectedStyle('shakespear')
                 },
                 {
                   label: 'YouTuber style',
                   key: 'youtuber',
-                  onClick: () => setSelectedStyle('youtuber')
+                  onClick: () => onSetSelectedStyle('youtuber')
                 },
                 {
                   label: 'Poem',
                   key: 'poem',
-                  onClick: () => setSelectedStyle('poem')
+                  onClick: () => onSetSelectedStyle('poem')
                 },
                 {
                   label: `KPOP style`,
                   key: 'kpop',
-                  onClick: () => setSelectedStyle('kpop')
+                  onClick: () => onSetSelectedStyle('kpop')
                 },
                 {
                   label: `Rap style`,
                   key: 'rap',
-                  onClick: () => setSelectedStyle('rap')
+                  onClick: () => onSetSelectedStyle('rap')
                 }
               ].filter((v) => v.key !== styleLabelObj.key)}
             />
@@ -151,7 +157,7 @@ export default function Menu({
           <Button
             skeuomorphic
             color="green"
-            loading={loadingType === 'rewrite'}
+            disabled={loadingType === 'rewrite'}
             style={{ marginLeft: '1rem' }}
             onClick={() => handleButtonClick('rewrite')}
           >
@@ -163,7 +169,7 @@ export default function Menu({
       <Button
         skeuomorphic
         color="logoBlue"
-        loading={loadingType === 'grammar'}
+        disabled={loadingType === 'grammar'}
         style={{ marginTop: '2rem' }}
         onClick={() => handleButtonClick('grammar')}
       >
@@ -175,8 +181,19 @@ export default function Menu({
     </div>
   );
 
-  function handleButtonClick(type: string) {
+  function handleButtonClick(type: 'rewrite' | 'easy' | 'grammar') {
     onSetLoadingType(type);
-    socket.emit('get_zeros_review', { type, content, command, identifier });
+    if (
+      (type !== 'rewrite' && !responseObj[type]) ||
+      (type === 'rewrite' && !responseObj[type][selectedStyle])
+    ) {
+      socket.emit('get_zeros_review', {
+        type,
+        content,
+        command,
+        identifier,
+        style: selectedStyle
+      });
+    }
   }
 }
