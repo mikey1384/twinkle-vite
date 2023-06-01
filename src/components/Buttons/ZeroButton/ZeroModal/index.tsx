@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ZeroMessage from './ZeroMessage';
 import Menu from './Menu';
 import RichText from '~/components/Texts/RichText';
+import { socket } from '~/constants/io';
 import { useContentState } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -30,7 +31,25 @@ export default function ZeroModal({
   content?: string;
 }) {
   const [loadingType, setLoadingType] = useState('');
-  const [response, setResponse] = useState(null);
+  const [response, setResponse] = useState('');
+
+  useEffect(() => {
+    socket.on('zeros_review_updated', handleZeroReviewUpdated);
+    socket.on('zeros_review_finished', handleZeroReviewFinished);
+
+    function handleZeroReviewUpdated(response: string) {
+      setResponse(response);
+    }
+
+    function handleZeroReviewFinished() {
+      setLoadingType('');
+    }
+
+    return function cleanUp() {
+      socket.removeListener('zeros_review_updated', handleZeroReviewUpdated);
+      socket.removeListener('zeros_review_finished', handleZeroReviewFinished);
+    };
+  });
 
   const { content: contentFetchedFromContext } = useContentState({
     contentId: contentId as number,
@@ -58,9 +77,6 @@ export default function ZeroModal({
               flex-grow: 1;
             }
             > .content {
-              > p {
-                opacity: ${loadingType ? 0.2 : 1};
-              }
               position: relative;
               display: flex;
               justify-content: center;
@@ -86,13 +102,17 @@ export default function ZeroModal({
             <Menu
               style={{ marginTop: '2rem' }}
               content={content || contentFetchedFromContext}
+              loadingType={loadingType}
+              onSetLoadingType={setLoadingType}
             />
           </div>
           <div className="content">
             {response ? (
               <RichText
                 key={response}
+                maxLines={100}
                 style={{
+                  opacity: 1,
                   marginBottom: '3rem',
                   fontWeight: 'bold',
                   fontFamily: 'Roboto mono, monospace',

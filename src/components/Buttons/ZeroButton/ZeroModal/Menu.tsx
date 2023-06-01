@@ -13,11 +13,13 @@ Menu.propTypes = {
 export default function Menu({
   content,
   style,
-  loadingType
+  loadingType,
+  onSetLoadingType
 }: {
   content: string;
   style?: React.CSSProperties;
   loadingType: string;
+  onSetLoadingType: (loadingType: string) => void;
 }) {
   const [selectedStyle, setSelectedStyle] = useState('zero');
   const [wordLevel, setWordLevel] = useState('intermediate');
@@ -171,6 +173,7 @@ export default function Menu({
   );
 
   function handleButtonClick(type: string) {
+    onSetLoadingType(type);
     socket.emit('get_zeros_review', { type, content, command });
   }
 }
