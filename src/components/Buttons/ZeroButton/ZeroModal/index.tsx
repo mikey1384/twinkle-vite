@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
@@ -32,17 +32,25 @@ export default function ZeroModal({
 }) {
   const [loadingType, setLoadingType] = useState('');
   const [response, setResponse] = useState('');
+  const responseIdentifier = useRef(Math.floor(Math.random() * 1000000000));
 
   useEffect(() => {
     socket.on('zeros_review_updated', handleZeroReviewUpdated);
     socket.on('zeros_review_finished', handleZeroReviewFinished);
 
-    function handleZeroReviewUpdated(response: string) {
-      setResponse(response);
+    function handleZeroReviewUpdated({
+      response,
+      identifier
+    }: {
+      response: string;
+      identifier: number;
+    }) {
+      if (loadingType && identifier === responseIdentifier.current)
+        setResponse(response);
     }
 
-    function handleZeroReviewFinished() {
-      setLoadingType('');
+    function handleZeroReviewFinished(identifier: number) {
+      if (identifier === responseIdentifier.current) setLoadingType('');
     }
 
     return function cleanUp() {
@@ -104,6 +112,7 @@ export default function ZeroModal({
               content={content || contentFetchedFromContext}
               loadingType={loadingType}
               onSetLoadingType={setLoadingType}
+              identifier={responseIdentifier.current}
             />
           </div>
           <div className="content">
@@ -116,6 +125,7 @@ export default function ZeroModal({
                   marginBottom: '3rem',
                   fontWeight: 'bold',
                   fontFamily: 'Roboto mono, monospace',
+                  textAlign: response?.length < 30 ? 'center' : 'left',
                   color: Color.darkerGray()
                 }}
               >
