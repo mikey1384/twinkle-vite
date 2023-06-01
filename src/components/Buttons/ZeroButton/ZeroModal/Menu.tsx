@@ -8,15 +8,18 @@ import { socket } from '~/constants/io';
 
 Menu.propTypes = {
   content: PropTypes.string.isRequired,
+  identifier: PropTypes.number.isRequired,
   style: PropTypes.object
 };
 export default function Menu({
   content,
+  identifier,
   style,
   loadingType,
   onSetLoadingType
 }: {
   content: string;
+  identifier: number;
   style?: React.CSSProperties;
   loadingType: string;
   onSetLoadingType: (loadingType: string) => void;
@@ -174,6 +177,6 @@ export default function Menu({
 
   function handleButtonClick(type: string) {
     onSetLoadingType(type);
-    socket.emit('get_zeros_review', { type, content, command });
+    socket.emit('get_zeros_review', { type, content, command, identifier });
   }
 }
