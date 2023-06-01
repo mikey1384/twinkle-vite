@@ -33,15 +33,40 @@ export default function ZeroModal({
 }) {
   const [loadingType, setLoadingType] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('zero');
+  const [wordLevel, setWordLevel] = useState('intermediate');
   const [responseObj, setResponseObj] = useState<ResponseObj>({
     grammar: '',
     rewrite: {
-      zero: '',
-      kpop: '',
-      shakespear: '',
-      poem: '',
-      rap: '',
-      youtuber: ''
+      zero: {
+        easy: '',
+        intermediate: '',
+        hard: ''
+      },
+      kpop: {
+        easy: '',
+        intermediate: '',
+        hard: ''
+      },
+      shakespear: {
+        easy: '',
+        intermediate: '',
+        hard: ''
+      },
+      poem: {
+        easy: '',
+        intermediate: '',
+        hard: ''
+      },
+      rap: {
+        easy: '',
+        intermediate: '',
+        hard: ''
+      },
+      youtuber: {
+        easy: '',
+        intermediate: '',
+        hard: ''
+      }
     },
     easy: ''
   });
@@ -49,7 +74,7 @@ export default function ZeroModal({
 
   useEffect(() => {
     setLoadingType('');
-  }, [selectedStyle]);
+  }, [selectedStyle, wordLevel]);
 
   useEffect(() => {
     socket.on('zeros_review_updated', handleZeroReviewUpdated);
@@ -58,11 +83,14 @@ export default function ZeroModal({
       response,
       identifier,
       type,
+      wordLevel,
       style
     }: {
       response: string;
       identifier: number;
       type: string;
+      difficulty: string;
+      wordLevel: string;
       style: string;
     }) {
       if (identifier === responseIdentifier.current)
@@ -72,7 +100,10 @@ export default function ZeroModal({
             type === 'rewrite'
               ? {
                   ...(responseObj.rewrite || {}),
-                  [style]: response
+                  [style]: {
+                    ...(responseObj.rewrite[style] || {}),
+                    [wordLevel]: response
+                  }
                 }
               : response
         }));
@@ -85,7 +116,9 @@ export default function ZeroModal({
 
   const response = useMemo(() => {
     if (loadingType === 'grammar') return responseObj.grammar;
-    if (loadingType === 'rewrite') return responseObj.rewrite[selectedStyle];
+    if (loadingType === 'rewrite') {
+      return responseObj.rewrite[selectedStyle][wordLevel];
+    }
     if (loadingType === 'easy') return responseObj.easy;
     return '';
   }, [
@@ -93,7 +126,8 @@ export default function ZeroModal({
     responseObj.easy,
     responseObj.grammar,
     responseObj.rewrite,
-    selectedStyle
+    selectedStyle,
+    wordLevel
   ]);
 
   const { content: contentFetchedFromContext } = useContentState({
@@ -153,6 +187,8 @@ export default function ZeroModal({
               selectedStyle={selectedStyle}
               identifier={responseIdentifier.current}
               responseObj={responseObj}
+              wordLevel={wordLevel}
+              onSetWordLevel={setWordLevel}
             />
           </div>
           <div className="content">

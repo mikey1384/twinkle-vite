@@ -1,5 +1,4 @@
-import React, { useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
@@ -7,11 +6,6 @@ import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { ResponseObj } from './types';
 
-Menu.propTypes = {
-  content: PropTypes.string.isRequired,
-  identifier: PropTypes.number.isRequired,
-  style: PropTypes.object
-};
 export default function Menu({
   content,
   identifier,
@@ -19,8 +13,10 @@ export default function Menu({
   loadingType,
   onSetLoadingType,
   onSetSelectedStyle,
+  onSetWordLevel,
   responseObj,
-  selectedStyle
+  selectedStyle,
+  wordLevel
 }: {
   content: string;
   identifier: number;
@@ -28,10 +24,11 @@ export default function Menu({
   loadingType: string;
   onSetLoadingType: (loadingType: string) => void;
   onSetSelectedStyle: (style: string) => void;
+  onSetWordLevel: (wordLevel: string) => void;
   responseObj: ResponseObj;
   selectedStyle: string;
+  wordLevel: string;
 }) {
-  const [wordLevel, setWordLevel] = useState('intermediate');
   const styleLabelObj = useMemo(() => {
     if (selectedStyle === 'zero') {
       return { label: `In your own style`, key: 'zero' };
@@ -136,15 +133,15 @@ export default function Menu({
               menuProps={[
                 {
                   label: 'Easy',
-                  onClick: () => setWordLevel('easy')
+                  onClick: () => onSetWordLevel('easy')
                 },
                 {
                   label: 'Intermediate',
-                  onClick: () => setWordLevel('intermediate')
+                  onClick: () => onSetWordLevel('intermediate')
                 },
                 {
                   label: 'Hard',
-                  onClick: () => setWordLevel('hard')
+                  onClick: () => onSetWordLevel('hard')
                 }
               ].filter(
                 (v) => v.label.toLowerCase() !== wordLevel.toLocaleLowerCase()
@@ -185,12 +182,13 @@ export default function Menu({
     onSetLoadingType(type);
     if (
       (type !== 'rewrite' && !responseObj[type]) ||
-      (type === 'rewrite' && !responseObj[type][selectedStyle])
+      (type === 'rewrite' && !responseObj[type][selectedStyle][wordLevel])
     ) {
       socket.emit('get_zeros_review', {
         type,
         content,
         command,
+        wordLevel,
         identifier,
         style: selectedStyle
       });
