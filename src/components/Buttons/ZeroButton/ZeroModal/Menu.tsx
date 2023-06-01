@@ -4,33 +4,21 @@ import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { useAppContext } from '~/contexts';
 import { socket } from '~/constants/io';
 
 Menu.propTypes = {
   content: PropTypes.string.isRequired,
-  style: PropTypes.object,
-  loadingType: PropTypes.string.isRequired,
-  onSetLoadingType: PropTypes.func.isRequired,
-  onSetLoadingProgress: PropTypes.func.isRequired,
-  onSetResponse: PropTypes.func.isRequired
+  style: PropTypes.object
 };
 export default function Menu({
   content,
   style,
-  loadingType,
-  onSetLoadingType,
-  onSetLoadingProgress,
-  onSetResponse
+  loadingType
 }: {
   content: string;
   style?: React.CSSProperties;
   loadingType: string;
-  onSetLoadingType: (loadingType: string) => void;
-  onSetLoadingProgress: (loadingProgress: number) => void;
-  onSetResponse: (response: any) => void;
 }) {
-  const getZerosReview = useAppContext((v) => v.requestHelpers.getZerosReview);
   const [selectedStyle, setSelectedStyle] = useState('zero');
   const [wordLevel, setWordLevel] = useState('intermediate');
   const styleLabelObj = useMemo(() => {
@@ -182,17 +170,7 @@ export default function Menu({
     </div>
   );
 
-  async function handleButtonClick(type: string) {
-    try {
-      onSetLoadingType(type);
-      socket.emit('get_zeros_review', { type, content, command });
-      const response = await getZerosReview({ type, content, command });
-      onSetResponse(response);
-    } catch (error) {
-      console.error('Error occurred:', error);
-    } finally {
-      onSetLoadingType('');
-      onSetLoadingProgress(0);
-    }
+  function handleButtonClick(type: string) {
+    socket.emit('get_zeros_review', { type, content, command });
   }
 }
