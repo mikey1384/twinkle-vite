@@ -5,6 +5,7 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
+import { socket } from '~/constants/io';
 
 Menu.propTypes = {
   content: PropTypes.string.isRequired,
@@ -184,6 +185,7 @@ export default function Menu({
   async function handleButtonClick(type: string) {
     try {
       onSetLoadingType(type);
+      socket.emit('get_zeros_review', { type, content, command });
       const response = await getZerosReview({ type, content, command });
       onSetResponse(response);
     } catch (error) {
