@@ -92,7 +92,8 @@ export default function Editor({
       async function handleEvalCode(ast: string) {
         try {
           const resultCode = await processAst(ast);
-          const res = new Function('React', `return ${resultCode}`);
+          const cleansedCode = resultCode.replace(/export\s+default\s+/g, '');
+          const res = new Function('React', `return ${cleansedCode}`);
           return Promise.resolve(res(React));
         } catch (error: any) {
           setError(error.toString());
