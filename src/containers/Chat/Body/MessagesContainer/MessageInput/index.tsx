@@ -369,50 +369,27 @@ export default function MessageInput({
         />
       ) : null}
       <div style={{ display: 'flex' }}>
-        <div
-          style={{
-            margin: '0.2rem 1rem 0.2rem 0',
-            display: 'flex',
-            alignItems: 'center'
+        <LeftButtons
+          buttonColor={buttonColor}
+          buttonHoverColor={buttonHoverColor}
+          hasWordleButton={hasWordleButton}
+          isChessBanned={banned?.chess}
+          isRestrictedChannel={isRestrictedChannel}
+          isTwoPeopleChannel={isTwoPeopleChannel}
+          isZeroChannel={isZeroChannel}
+          loading={loading}
+          onChessButtonClick={onChessButtonClick}
+          onTopicButtonClick={() => {
+            onSetIsRespondingToSubject({
+              channelId: selectedChannelId,
+              subchannelId,
+              isResponding: true
+            });
+            innerRef.current.focus();
           }}
-        >
-          <LeftButtons
-            buttonColor={buttonColor}
-            buttonHoverColor={buttonHoverColor}
-            hasWordleButton={hasWordleButton}
-            isChessBanned={banned?.chess}
-            isRestrictedChannel={isRestrictedChannel}
-            isTwoPeopleChannel={isTwoPeopleChannel}
-            isZeroChannel={isZeroChannel}
-            loading={loading}
-            onChessButtonClick={onChessButtonClick}
-            onWordleButtonClick={onWordleButtonClick}
-          />
-          {subjectObj?.id && (
-            <Button
-              disabled={loading}
-              style={{
-                marginLeft: isTwoPeopleChannel || hasWordleButton ? '0.5rem' : 0
-              }}
-              skeuomorphic
-              onClick={() => {
-                onSetIsRespondingToSubject({
-                  channelId: selectedChannelId,
-                  subchannelId,
-                  isResponding: true
-                });
-                innerRef.current.focus();
-              }}
-              color={buttonColor}
-              hoverColor={buttonHoverColor}
-            >
-              <Icon
-                size={isTwoPeopleChannel || hasWordleButton ? null : 'lg'}
-                icon="comment"
-              />
-            </Button>
-          )}
-        </div>
+          onWordleButtonClick={onWordleButtonClick}
+          topicId={subjectObj?.id}
+        />
         <Textarea
           disabled={isZeroChannel || isRestrictedChannel || isBanned}
           innerRef={innerRef}
