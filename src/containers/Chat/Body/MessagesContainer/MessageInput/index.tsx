@@ -351,27 +351,28 @@ export default function MessageInput({
         />
       ) : null}
       <div style={{ display: 'flex' }}>
-        <LeftButtons
-          buttonColor={buttonColor}
-          buttonHoverColor={buttonHoverColor}
-          hasWordleButton={hasWordleButton}
-          isChessBanned={banned?.chess}
-          isRestrictedChannel={isRestrictedChannel}
-          isTwoPeopleChannel={isTwoPeopleChannel}
-          isZeroChannel={isZeroChannel}
-          loading={loading}
-          onChessButtonClick={onChessButtonClick}
-          onTopicButtonClick={() => {
-            onSetIsRespondingToSubject({
-              channelId: selectedChannelId,
-              subchannelId,
-              isResponding: true
-            });
-            innerRef.current.focus();
-          }}
-          onWordleButtonClick={onWordleButtonClick}
-          topicId={subjectObj?.id}
-        />
+        {!isZeroChannel && (
+          <LeftButtons
+            buttonColor={buttonColor}
+            buttonHoverColor={buttonHoverColor}
+            hasWordleButton={hasWordleButton}
+            isChessBanned={banned?.chess}
+            isRestrictedChannel={isRestrictedChannel}
+            isTwoPeopleChannel={isTwoPeopleChannel}
+            loading={loading}
+            onChessButtonClick={onChessButtonClick}
+            onTopicButtonClick={() => {
+              onSetIsRespondingToSubject({
+                channelId: selectedChannelId,
+                subchannelId,
+                isResponding: true
+              });
+              innerRef.current.focus();
+            }}
+            onWordleButtonClick={onWordleButtonClick}
+            topicId={subjectObj?.id}
+          />
+        )}
         <Textarea
           disabled={isZeroChannel || isRestrictedChannel || isBanned}
           innerRef={innerRef}
