@@ -8,7 +8,6 @@ export default function LeftButtons({
   hasWordleButton,
   isChessBanned,
   isRestrictedChannel,
-  isZeroChannel,
   isTwoPeopleChannel,
   loading,
   onChessButtonClick,
@@ -20,7 +19,6 @@ export default function LeftButtons({
   buttonHoverColor: string;
   hasWordleButton: boolean;
   isChessBanned: boolean;
-  isZeroChannel: boolean;
   isRestrictedChannel: boolean;
   isTwoPeopleChannel: number | boolean;
   loading: boolean;
@@ -39,9 +37,7 @@ export default function LeftButtons({
     >
       {isTwoPeopleChannel ? (
         <Button
-          disabled={
-            loading || isChessBanned || isZeroChannel || isRestrictedChannel
-          }
+          disabled={loading || isChessBanned || isRestrictedChannel}
           skeuomorphic
           onClick={onChessButtonClick}
           color={buttonColor}
