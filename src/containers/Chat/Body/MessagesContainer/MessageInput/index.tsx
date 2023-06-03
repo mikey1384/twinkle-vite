@@ -9,11 +9,11 @@ import React, {
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import ChessTarget from './ChessTarget';
-import TargetMessagePreview from './TargetMessagePreview';
-import TargetSubjectPreview from './TargetSubjectPreview';
-import UploadModal from '../../Modals/UploadModal';
-import AddButtons from './AddButtons';
+import ChessTarget from '../ChessTarget';
+import TargetMessagePreview from '../TargetMessagePreview';
+import TargetSubjectPreview from '../TargetSubjectPreview';
+import UploadModal from '../../../Modals/UploadModal';
+import AddButtons from '../AddButtons';
 import AlertModal from '~/components/Modals/AlertModal';
 import Loading from '~/components/Loading';
 import { isMobile } from '~/helpers';
@@ -29,7 +29,7 @@ import {
   GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
-import LocalContext from '../../Context';
+import LocalContext from '../../../Context';
 import localize from '~/constants/localize';
 
 const enterMessageLabel = localize('enterMessage');
