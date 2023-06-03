@@ -31,6 +31,7 @@ import {
 import { useKeyContext } from '~/contexts';
 import LocalContext from '../../../Context';
 import localize from '~/constants/localize';
+import LeftButtons from './LeftButtons';
 
 const enterMessageLabel = localize('enterMessage');
 const deviceIsMobile = isMobile(navigator);
@@ -375,32 +376,18 @@ export default function MessageInput({
             alignItems: 'center'
           }}
         >
-          {isTwoPeopleChannel ? (
-            <Button
-              disabled={
-                loading || banned?.chess || isZeroChannel || isRestrictedChannel
-              }
-              skeuomorphic
-              onClick={onChessButtonClick}
-              color={buttonColor}
-              hoverColor={buttonHoverColor}
-            >
-              <Icon size="lg" icon={['fas', 'chess']} />
-              <span className="desktop" style={{ marginLeft: '0.7rem' }}>
-                Chess
-              </span>
-            </Button>
-          ) : hasWordleButton ? (
-            <Button
-              disabled={loading}
-              skeuomorphic
-              onClick={onWordleButtonClick}
-              color={buttonColor}
-              hoverColor={buttonHoverColor}
-            >
-              W<span className="desktop">ordle</span>
-            </Button>
-          ) : null}
+          <LeftButtons
+            buttonColor={buttonColor}
+            buttonHoverColor={buttonHoverColor}
+            hasWordleButton={hasWordleButton}
+            isChessBanned={banned?.chess}
+            isRestrictedChannel={isRestrictedChannel}
+            isTwoPeopleChannel={isTwoPeopleChannel}
+            isZeroChannel={isZeroChannel}
+            loading={loading}
+            onChessButtonClick={onChessButtonClick}
+            onWordleButtonClick={onWordleButtonClick}
+          />
           {subjectObj?.id && (
             <Button
               disabled={loading}
