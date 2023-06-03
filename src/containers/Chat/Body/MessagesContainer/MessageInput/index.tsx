@@ -7,15 +7,11 @@ import React, {
   useState
 } from 'react';
 import Textarea from '~/components/Texts/Textarea';
-import Button from '~/components/Button';
-import Icon from '~/components/Icon';
 import ChessTarget from '../ChessTarget';
 import TargetMessagePreview from '../TargetMessagePreview';
 import TargetSubjectPreview from '../TargetSubjectPreview';
 import UploadModal from '../../../Modals/UploadModal';
-import AddButtons from '../AddButtons';
 import AlertModal from '~/components/Modals/AlertModal';
-import Loading from '~/components/Loading';
 import { isMobile } from '~/helpers';
 import {
   stringIsEmpty,
@@ -32,6 +28,7 @@ import { useKeyContext } from '~/contexts';
 import LocalContext from '../../../Context';
 import localize from '~/constants/localize';
 import LeftButtons from './LeftButtons';
+import RightButtons from './RightButtons';
 
 const enterMessageLabel = localize('enterMessage');
 const deviceIsMobile = isMobile(navigator);
@@ -95,6 +92,7 @@ export default function MessageInput({
     [inputState, selectedChannelId, subchannelId]
   );
   const [inputText, setInputText] = useState(textForThisChannel);
+  const [coolingDown, setCoolingDown] = useState(false);
   const {
     banned,
     fileUploadLvl,
@@ -112,7 +110,6 @@ export default function MessageInput({
       onSetReplyTarget
     }
   } = useContext(LocalContext);
-  const FileInputRef: React.RefObject<any> = useRef(null);
   const prevChannelId = useRef(selectedChannelId);
   const prevSubchannelId = useRef(subchannelId);
   const maxSize = useMemo(
@@ -126,8 +123,6 @@ export default function MessageInput({
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [fileObj, setFileObj] = useState(null);
   const [uploadModalShown, setUploadModalShown] = useState(false);
-  const [coolingDown, setCoolingDown] = useState(false);
-  const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
 
   useEffect(() => {
     if (
@@ -286,19 +281,6 @@ export default function MessageInput({
     [maxSize]
   );
 
-  const handleUpload = useCallback(
-    (event: any) => {
-      const file = event.target.files[0];
-      if (file.size / mb > maxSize) {
-        return setAlertModalShown(true);
-      }
-      setFileObj(file);
-      setUploadModalShown(true);
-      event.target.value = null;
-    },
-    [maxSize]
-  );
-
   const handleChange = useCallback(
     (event: any) => {
       setTimeout(() => {
@@ -419,57 +401,27 @@ export default function MessageInput({
             ...(messageExceedsCharLimit?.style || {})
           }}
         />
-        {!textIsEmpty && (
-          <div
-            style={{
-              margin: `0.2rem 1rem 0.2rem 0`,
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <Button
-              filled
-              disabled={loading || !socketConnected || coolingDown}
-              color={buttonColor}
-              hoverColor={buttonHoverColor}
-              onClick={handleSendMsg}
-            >
-              <Icon size="lg" icon="paper-plane" />
-            </Button>
-          </div>
-        )}
-        <AddButtons
-          channelId={selectedChannelId}
-          disabled={
-            isRestrictedChannel ||
-            isZeroChannel ||
-            loading ||
-            !!banned?.chat ||
-            !socketConnected
-          }
+        <RightButtons
+          buttonColor={buttonColor}
+          buttonHoverColor={buttonHoverColor}
+          coolingDown={coolingDown}
           currentTransactionId={currentTransactionId}
-          myId={myId}
-          onUploadButtonClick={() => FileInputRef.current.click()}
-          onSelectVideoButtonClick={onSelectVideoButtonClick}
-          onSetTransactionModalShown={onSetTransactionModalShown}
+          inputText={inputText}
+          isChatBanned={!!banned?.chat}
+          isLoading={loading}
           isTwoPeopleChannel={!!isTwoPeopleChannel}
-        />
-        {!socketConnected && (
-          <Loading
-            style={{
-              height: 0,
-              width: 0,
-              position: 'absolute',
-              right: '7rem',
-              bottom: '3.2rem'
-            }}
-          />
-        )}
-        <input
-          ref={FileInputRef}
-          style={{ display: 'none' }}
-          type="file"
-          onChange={handleUpload}
+          isRestrictedChannel={isRestrictedChannel}
+          isZeroChannel={isZeroChannel}
+          maxSize={maxSize}
+          myId={myId}
+          onSelectVideoButtonClick={onSelectVideoButtonClick}
+          onSetAlertModalShown={setAlertModalShown}
+          onSetFileObj={setFileObj}
+          onSendMsg={handleSendMsg}
+          onSetTransactionModalShown={onSetTransactionModalShown}
+          onSetUploadModalShown={setUploadModalShown}
+          selectedChannelId={selectedChannelId}
+          socketConnected={socketConnected}
         />
       </div>
       {alertModalShown && (
