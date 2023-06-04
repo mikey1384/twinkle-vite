@@ -1846,16 +1846,16 @@ export default function ChatReducer(
         ? {
             ...prevChannelObj?.subchannelObj,
             [action.message.subchannelId]: {
-              ...prevChannelObj?.subchannelObj[subchannelId],
+              ...prevChannelObj?.subchannelObj?.[subchannelId],
               numUnreads:
                 Number(
                   prevChannelObj?.subchannelObj?.[subchannelId]?.numUnreads || 0
                 ) + 1,
               messageIds: [messageId].concat(
-                prevChannelObj?.subchannelObj[subchannelId]?.messageIds
+                prevChannelObj?.subchannelObj?.[subchannelId]?.messageIds
               ),
               messagesObj: {
-                ...prevChannelObj?.subchannelObj[subchannelId]?.messagesObj,
+                ...prevChannelObj?.subchannelObj?.[subchannelId]?.messagesObj,
                 [messageId]: { ...action.message, id: messageId }
               }
             }
