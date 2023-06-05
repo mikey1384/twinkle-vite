@@ -16,7 +16,6 @@ export default function DefaultButtons({
   isLoading,
   isRestrictedChannel,
   isTwoPeopleChannel,
-  isZeroChannel,
   maxSize,
   myId,
   onSendMsg,
@@ -37,7 +36,6 @@ export default function DefaultButtons({
   isLoading: boolean;
   isRestrictedChannel: boolean;
   isTwoPeopleChannel: boolean;
-  isZeroChannel: boolean;
   maxSize: number;
   myId: number;
   onSelectVideoButtonClick: () => void;
@@ -88,11 +86,7 @@ export default function DefaultButtons({
       <AddButtons
         channelId={selectedChannelId}
         disabled={
-          isRestrictedChannel ||
-          isZeroChannel ||
-          isLoading ||
-          isChatBanned ||
-          !socketConnected
+          isRestrictedChannel || isLoading || isChatBanned || !socketConnected
         }
         currentTransactionId={currentTransactionId}
         myId={myId}

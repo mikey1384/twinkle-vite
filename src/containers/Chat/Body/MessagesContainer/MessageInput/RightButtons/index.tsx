@@ -1,5 +1,6 @@
 import React from 'react';
 import DefaultButtons from './DefaultButtons';
+import ZeroButtons from './ZeroButtons';
 
 export default function RightButtons({
   buttonColor,
@@ -44,7 +45,9 @@ export default function RightButtons({
   selectedChannelId: number;
   socketConnected: boolean;
 }) {
-  return (
+  return isZeroChannel ? (
+    <ZeroButtons />
+  ) : (
     <DefaultButtons
       buttonColor={buttonColor}
       buttonHoverColor={buttonHoverColor}
@@ -55,7 +58,6 @@ export default function RightButtons({
       isLoading={isLoading}
       isRestrictedChannel={isRestrictedChannel}
       isTwoPeopleChannel={isTwoPeopleChannel}
-      isZeroChannel={isZeroChannel}
       maxSize={maxSize}
       myId={myId}
       onSelectVideoButtonClick={onSelectVideoButtonClick}
