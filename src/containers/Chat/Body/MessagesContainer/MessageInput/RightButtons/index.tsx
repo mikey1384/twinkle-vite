@@ -22,7 +22,8 @@ export default function RightButtons({
   onSetUploadModalShown,
   onSelectVideoButtonClick,
   selectedChannelId,
-  socketConnected
+  socketConnected,
+  zEnergy
 }: {
   buttonColor: string;
   buttonHoverColor: string;
@@ -44,11 +45,13 @@ export default function RightButtons({
   onSetUploadModalShown: (shown: boolean) => void;
   selectedChannelId: number;
   socketConnected: boolean;
+  zEnergy: number;
 }) {
   return isZeroChannel ? (
     <ZeroButtons
       buttonColor={buttonColor}
       buttonHoverColor={buttonHoverColor}
+      zEnergy={zEnergy}
     />
   ) : (
     <DefaultButtons
