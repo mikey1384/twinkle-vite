@@ -46,7 +46,10 @@ export default function RightButtons({
   socketConnected: boolean;
 }) {
   return isZeroChannel ? (
-    <ZeroButtons />
+    <ZeroButtons
+      buttonColor={buttonColor}
+      buttonHoverColor={buttonHoverColor}
+    />
   ) : (
     <DefaultButtons
       buttonColor={buttonColor}
