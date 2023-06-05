@@ -139,7 +139,7 @@ export default function TransactionInitiator({
     coinAmountObj.want,
     isSelectAICardModalShown,
     offerMenuShown,
-    partner.id,
+    partner?.id,
     selectedCardIdsObj.offer,
     selectedCardIdsObj.want,
     selectedOption
