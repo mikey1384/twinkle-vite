@@ -18,7 +18,8 @@ export default function ZeroButtons({
         mobilePadding="0.5rem"
         hoverColor={buttonHoverColor}
       >
-        <Icon size="lg" icon={['far', 'badge-dollar']} />
+        <Icon size="lg" icon="battery-empty" />
+        <span style={{ marginLeft: '0.7rem' }}>No Energy</span>
       </Button>
     </div>
   );
