@@ -96,6 +96,7 @@ export default function MessageInput({
   const {
     banned,
     fileUploadLvl,
+    zEnergy,
     userId: myId
   } = useKeyContext((v) => v.myState);
   const {
@@ -423,6 +424,7 @@ export default function MessageInput({
           onSetUploadModalShown={setUploadModalShown}
           selectedChannelId={selectedChannelId}
           socketConnected={socketConnected}
+          zEnergy={zEnergy}
         />
       </div>
       {alertModalShown && (
