@@ -1,10 +1,5 @@
-import React, { useCallback, useMemo, useRef } from 'react';
-import Button from '~/components/Button';
-import Icon from '~/components/Icon';
-import AddButtons from '../AddButtons';
-import Loading from '~/components/Loading';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { mb } from '~/constants/defaultValues';
+import React from 'react';
+import DefaultButtons from './DefaultButtons';
 
 export default function RightButtons({
   buttonColor,
@@ -49,75 +44,28 @@ export default function RightButtons({
   selectedChannelId: number;
   socketConnected: boolean;
 }) {
-  const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
-  const FileInputRef: React.RefObject<any> = useRef(null);
-  const handleUpload = useCallback(
-    (event: any) => {
-      const file = event.target.files[0];
-      if (file.size / mb > maxSize) {
-        return onSetAlertModalShown(true);
-      }
-      onSetFileObj(file);
-      onSetUploadModalShown(true);
-      event.target.value = null;
-    },
-    [maxSize, onSetAlertModalShown, onSetFileObj, onSetUploadModalShown]
-  );
-
   return (
-    <>
-      {!textIsEmpty && (
-        <div
-          style={{
-            margin: `0.2rem 1rem 0.2rem 0`,
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
-          <Button
-            filled
-            disabled={isLoading || !socketConnected || coolingDown}
-            color={buttonColor}
-            hoverColor={buttonHoverColor}
-            onClick={onSendMsg}
-          >
-            <Icon size="lg" icon="paper-plane" />
-          </Button>
-        </div>
-      )}
-      <AddButtons
-        channelId={selectedChannelId}
-        disabled={
-          isRestrictedChannel ||
-          isZeroChannel ||
-          isLoading ||
-          isChatBanned ||
-          !socketConnected
-        }
-        currentTransactionId={currentTransactionId}
-        myId={myId}
-        onUploadButtonClick={() => FileInputRef.current.click()}
-        onSelectVideoButtonClick={onSelectVideoButtonClick}
-        onSetTransactionModalShown={onSetTransactionModalShown}
-        isTwoPeopleChannel={isTwoPeopleChannel}
-      />
-      {!socketConnected && (
-        <Loading
-          style={{
-            height: 0,
-            width: 0,
-            position: 'absolute',
-            right: '7rem',
-            bottom: '3.2rem'
-          }}
-        />
-      )}
-      <input
-        ref={FileInputRef}
-        style={{ display: 'none' }}
-        type="file"
-        onChange={handleUpload}
-      />
-    </>
+    <DefaultButtons
+      buttonColor={buttonColor}
+      buttonHoverColor={buttonHoverColor}
+      coolingDown={coolingDown}
+      currentTransactionId={currentTransactionId}
+      inputText={inputText}
+      isChatBanned={isChatBanned}
+      isLoading={isLoading}
+      isRestrictedChannel={isRestrictedChannel}
+      isTwoPeopleChannel={isTwoPeopleChannel}
+      isZeroChannel={isZeroChannel}
+      maxSize={maxSize}
+      myId={myId}
+      onSelectVideoButtonClick={onSelectVideoButtonClick}
+      onSendMsg={onSendMsg}
+      onSetAlertModalShown={onSetAlertModalShown}
+      onSetFileObj={onSetFileObj}
+      onSetTransactionModalShown={onSetTransactionModalShown}
+      onSetUploadModalShown={onSetUploadModalShown}
+      selectedChannelId={selectedChannelId}
+      socketConnected={socketConnected}
+    />
   );
 }
