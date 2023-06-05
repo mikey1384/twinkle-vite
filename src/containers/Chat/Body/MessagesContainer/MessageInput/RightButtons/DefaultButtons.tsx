@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import AddButtons from '../AddButtons';
+import AddButtons from './AddButtons';
 import Loading from '~/components/Loading';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mb } from '~/constants/defaultValues';
