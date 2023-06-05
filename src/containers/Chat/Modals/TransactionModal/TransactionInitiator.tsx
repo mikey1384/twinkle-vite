@@ -74,7 +74,7 @@ export default function TransactionInitiator({
               want: prevState.want.filter((id: number) => id !== cardId)
             }))
           }
-          partnerId={partner.id}
+          partnerId={partner?.id}
         />
       );
     }
@@ -127,7 +127,7 @@ export default function TransactionInitiator({
               want: prevState.want.filter((id: number) => id !== cardId)
             }))
           }
-          partnerId={partner.id}
+          partnerId={partner?.id}
         />
       );
     }
