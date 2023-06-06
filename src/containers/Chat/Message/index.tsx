@@ -41,6 +41,7 @@ import { useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
+import { ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
 const replyLabel = localize('reply2');
@@ -304,7 +305,8 @@ function Message({
       const { messageId, timeStamp } = await saveChatMessage({
         message: post,
         targetMessageId: targetMessage?.id,
-        targetSubject
+        targetSubject,
+        isZeroChat: partner?.id === ZERO_TWINKLE_ID
       });
       onSaveMessage({
         messageId,
