@@ -381,12 +381,12 @@ export default function MessageInput({
           innerRef={innerRef}
           minRows={1}
           placeholder={
-            isBanned
-              ? 'You are banned from using the Chat feature'
+            !isZeroChannel && isBanned
+              ? 'You are banned from chatting with other users on this website...'
               : isRestrictedChannel
               ? `Only the administrator can post messages here...`
               : isZeroChannel && !zEnergy
-              ? `To talk with Zero, please recharge the battery...`
+              ? `To chat with Zero, please recharge the battery...`
               : `${enterMessageLabel}...`
           }
           onKeyDown={handleKeyDown}
