@@ -27,7 +27,8 @@ import {
   TURN_USERNAME,
   TURN_PASSWORD,
   VOCAB_CHAT_TYPE,
-  AI_CARD_CHAT_TYPE
+  AI_CARD_CHAT_TYPE,
+  ZERO_PROFILE_URL
 } from '~/constants/defaultValues';
 
 export default function Header({
@@ -88,7 +89,6 @@ export default function Header({
   const {
     header: { color: headerColor }
   } = useKeyContext((v) => v.theme);
-
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const chatType = useChatContext((v) => v.state.chatType);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
@@ -334,6 +334,7 @@ export default function Header({
     socket.on('new_post_uploaded', handleNewPost);
     socket.on('new_notification_received', handleNewNotification);
     socket.on('new_message_received', handleReceiveMessage);
+    socket.on('new_zeros_message_received', handleReceiveZerosMessage);
     socket.on('new_reward_posted', handleNewReward);
     socket.on('new_recommendation_posted', handleNewRecommendation);
     socket.on('new_ai_card_summoned', handleNewAICardSummon);
@@ -402,6 +403,10 @@ export default function Header({
       socket.removeListener('new_post_uploaded', handleNewPost);
       socket.removeListener('new_notification_received', handleNewNotification);
       socket.removeListener('new_message_received', handleReceiveMessage);
+      socket.removeListener(
+        'new_zeros_message_received',
+        handleReceiveZerosMessage
+      );
       socket.removeListener('new_reward_posted', handleNewReward);
       socket.removeListener('new_ai_card_summoned', handleNewAICardSummon);
       socket.removeListener(
@@ -1219,6 +1224,30 @@ export default function Header({
       }
       if (message.targetMessage?.userId === userId && message.rewardAmount) {
         handleUpdateMyXp();
+      }
+    }
+
+    function handleReceiveZerosMessage({
+      message,
+      channelId
+    }: {
+      message: any;
+      channelId: number;
+    }) {
+      const messageIsForCurrentChannel = channelId === selectedChannelId;
+      if (messageIsForCurrentChannel) {
+        if (usingChat) {
+          updateChatLastRead(channelId);
+        }
+        onReceiveMessage({
+          message: {
+            ...message,
+            profilePicUrl: ZERO_PROFILE_URL,
+            username: 'Zero'
+          },
+          pageVisible,
+          usingChat
+        });
       }
     }
 

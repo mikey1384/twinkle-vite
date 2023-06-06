@@ -52,6 +52,7 @@ export const AI_CARD_CHAT_TYPE = 'ai-cards';
 export const MODERATOR_AUTH_LEVEL = 1;
 export const MIKEY_ID = 5;
 export const ZERO_TWINKLE_ID = Number(import.meta.env.VITE_ZERO_TWINKLE_ID);
+export const ZERO_PROFILE_URL = import.meta.env.VITE_ZERO_PROFILE_URL;
 
 export interface CharLimit {
   [key: string]: any;
