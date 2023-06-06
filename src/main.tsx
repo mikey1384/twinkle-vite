@@ -32,7 +32,7 @@ import { faBadgeDollar as farBadgeDollar } from '@fortawesome/pro-regular-svg-ic
 import { faBadgeDollar as falBadgeDollar } from '@fortawesome/pro-light-svg-icons/faBadgeDollar';
 import { faBan } from '@fortawesome/pro-solid-svg-icons/faBan';
 import { faBars } from '@fortawesome/pro-solid-svg-icons/faBars';
-import { faBattery } from '@fortawesome/pro-solid-svg-icons/faBattery';
+import { faBatteryFull } from '@fortawesome/pro-solid-svg-icons/faBatteryFull';
 import { faBatteryEmpty } from '@fortawesome/pro-solid-svg-icons/faBatteryEmpty';
 import { faBolt } from '@fortawesome/pro-solid-svg-icons/faBolt';
 import { faBook } from '@fortawesome/pro-solid-svg-icons/faBook';
@@ -184,7 +184,7 @@ library.add(
   falBadgeDollar,
   faBan,
   faBars,
-  faBattery,
+  faBatteryFull,
   faBatteryEmpty,
   faBolt,
   faBook,
