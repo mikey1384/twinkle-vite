@@ -26,7 +26,7 @@ export default function ZeroButtons({
         mobilePadding="0.5rem"
         hoverColor={buttonHoverColor}
       >
-        <Icon size="lg" icon="battery-empty" />
+        <Icon size="lg" icon={zEnergy ? 'battery-full' : 'battery-empty'} />
         <span style={{ marginLeft: '0.7rem' }}>{displayedZEnergy}</span>
       </Button>
     </div>
