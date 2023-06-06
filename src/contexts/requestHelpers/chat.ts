@@ -1127,7 +1127,12 @@ export default function chatRequestHelpers({
           data: { messageId, timeStamp }
         } = await request.post(
           `${URL}/chat`,
-          { message, targetMessageId, targetSubject, isZeroChat },
+          {
+            message,
+            targetMessageId,
+            targetSubject,
+            isZeroChat
+          },
           auth()
         );
         return Promise.resolve({ messageId, timeStamp });

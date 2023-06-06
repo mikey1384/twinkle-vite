@@ -302,11 +302,12 @@ function Message({
       handleSaveMessage();
     }
     async function handleSaveMessage() {
+      const isZeroChat = partner?.id === ZERO_TWINKLE_ID;
       const { messageId, timeStamp } = await saveChatMessage({
         message: post,
         targetMessageId: targetMessage?.id,
         targetSubject,
-        isZeroChat: partner?.id === ZERO_TWINKLE_ID
+        isZeroChat
       });
       onSaveMessage({
         messageId,
