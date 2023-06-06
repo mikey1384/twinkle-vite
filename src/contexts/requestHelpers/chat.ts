@@ -1114,18 +1114,20 @@ export default function chatRequestHelpers({
     async saveChatMessage({
       message,
       targetMessageId,
-      targetSubject
+      targetSubject,
+      isZeroChat
     }: {
       message: string;
       targetMessageId: number;
       targetSubject: string;
+      isZeroChat: boolean;
     }) {
       try {
         const {
           data: { messageId, timeStamp }
         } = await request.post(
           `${URL}/chat`,
-          { message, targetMessageId, targetSubject },
+          { message, targetMessageId, targetSubject, isZeroChat },
           auth()
         );
         return Promise.resolve({ messageId, timeStamp });
