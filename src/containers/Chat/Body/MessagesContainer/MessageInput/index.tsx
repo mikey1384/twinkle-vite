@@ -375,7 +375,9 @@ export default function MessageInput({
           />
         )}
         <Textarea
-          disabled={isZeroChannel || isRestrictedChannel || isBanned}
+          disabled={
+            (isZeroChannel && !zEnergy) || isRestrictedChannel || isBanned
+          }
           innerRef={innerRef}
           minRows={1}
           placeholder={
@@ -383,8 +385,8 @@ export default function MessageInput({
               ? 'You are banned from using the Chat feature'
               : isRestrictedChannel
               ? `Only the administrator can post messages here...`
-              : isZeroChannel
-              ? `Zero cannot chat yet. Leave a message on his profile page`
+              : isZeroChannel && !zEnergy
+              ? `To talk with Zero, please recharge the battery...`
               : `${enterMessageLabel}...`
           }
           onKeyDown={handleKeyDown}
