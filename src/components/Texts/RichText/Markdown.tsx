@@ -430,12 +430,10 @@ function Markdown({
     const mentionRegex = /@[a-zA-Z0-9_]{3,}/gi;
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, 'text/html');
-    const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
 
-    while (walker.nextNode()) {
-      const node = walker.currentNode;
-
+    function traverse(node: Node) {
       if (
+        node.nodeType === Node.TEXT_NODE &&
         node.parentNode?.nodeName.toLowerCase() !== 'a' &&
         node.parentNode?.nodeName.toLowerCase() !== 'code'
       ) {
@@ -445,7 +443,7 @@ function Markdown({
         const newNodeValue = nodeValue
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;')
-          .replace(mentionRegex, (string) => {
+          .replace(mentionRegex, (string: string) => {
             const path = string.slice(1);
             const anchor = `<a class="mention" href="/users/${path}">@${path}</a>`;
             return anchor;
@@ -461,7 +459,14 @@ function Markdown({
           parent?.replaceChild(docFrag, node);
         }
       }
+
+      for (let i = 0; i < node.childNodes.length; i++) {
+        traverse(node.childNodes[i]);
+      }
     }
+
+    traverse(doc.body);
+
     return doc.body.innerHTML.replace('\n', '<br />').replace(/＠/g, '@');
   }
 
