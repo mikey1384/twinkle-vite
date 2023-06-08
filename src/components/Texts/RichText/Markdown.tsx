@@ -431,6 +431,9 @@ function Markdown({
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, 'text/html');
 
+    traverse(doc.body);
+    return doc.body.innerHTML.replace('\n', '<br />').replace(/＠/g, '@');
+
     function traverse(node: Node) {
       if (
         node.nodeType === Node.TEXT_NODE &&
@@ -460,14 +463,10 @@ function Markdown({
         }
       }
 
-      for (let i = 0; i < node.childNodes.length; i++) {
-        traverse(node.childNodes[i]);
+      for (const childNode of node.childNodes) {
+        traverse(childNode);
       }
     }
-
-    traverse(doc.body);
-
-    return doc.body.innerHTML.replace('\n', '<br />').replace(/＠/g, '@');
   }
 
   function keyToCamelCase(obj: { [key: string]: string } | null) {
