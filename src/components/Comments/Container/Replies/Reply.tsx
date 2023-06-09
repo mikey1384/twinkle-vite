@@ -31,6 +31,7 @@ import {
   determineXpButtonDisabled
 } from '~/helpers';
 import { useContentState, useTheme } from '~/helpers/hooks';
+import { ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import {
@@ -464,6 +465,7 @@ function Reply({
                     </div>
                   ) : !replyIsEmpty ? (
                     <RichText
+                      isZeroMessage={uploader?.id === Number(ZERO_TWINKLE_ID)}
                       theme={theme}
                       contentType="comment"
                       contentId={reply.id}
