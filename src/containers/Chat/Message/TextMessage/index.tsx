@@ -183,6 +183,7 @@ function TextMessage({
         {!isContentContainsLink &&
           extractedUrl &&
           messageId &&
+          !isZeroMessage &&
           !attachmentHidden &&
           !isSpoiler && (
             <LinkAttachment
