@@ -30,6 +30,7 @@ function TextMessage({
   isNotification,
   isReloadedSubject,
   isSubject,
+  isZeroMessage,
   forceRefreshForMobile,
   messageId,
   MessageStyle,
@@ -52,6 +53,7 @@ function TextMessage({
   isNotification: boolean;
   isReloadedSubject: boolean;
   isSubject: boolean;
+  isZeroMessage: boolean;
   forceRefreshForMobile: () => void;
   messageId: number;
   MessageStyle: any;
@@ -152,6 +154,7 @@ function TextMessage({
                   section="main"
                   theme={displayedThemeColor}
                   readMoreHeightFixed
+                  maxLines={isZeroMessage ? 1000 : undefined}
                   style={{
                     marginTop: isSubject ? '0.5rem' : 0,
                     marginBottom: isSubject ? '0.5rem' : 0,

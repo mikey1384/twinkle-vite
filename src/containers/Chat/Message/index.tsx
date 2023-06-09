@@ -151,6 +151,9 @@ function Message({
   onShowSubjectMsgsModal: (v: any) => void;
   zIndex?: number;
 }) {
+  const isZeroMessage = useMemo(() => {
+    return userId === Number(ZERO_TWINKLE_ID);
+  }, [userId]);
   const {
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
@@ -869,6 +872,7 @@ function Message({
                         content={content}
                         displayedThemeColor={displayedThemeColor}
                         extractedUrl={extractedUrl}
+                        isZeroMessage={isZeroMessage}
                         forceRefreshForMobile={forceRefreshForMobile}
                         messageId={messageId}
                         numMsgs={numMsgs}
