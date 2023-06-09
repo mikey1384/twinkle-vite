@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
+import { ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import RichText from '~/components/Texts/RichText';
 import SecretAnswer from '~/components/SecretAnswer';
@@ -96,6 +97,7 @@ export default function Content({
         }
         return (
           <RichText
+            isZeroMessage={uploader.id === Number(ZERO_TWINKLE_ID)}
             contentId={contentId}
             contentType={contentType}
             section="content"
@@ -157,15 +159,16 @@ export default function Content({
     contentType,
     secretHidden,
     isNotification,
+    uploader.id,
+    uploader.username,
     contentId,
     theme,
+    content,
     story,
     Description,
     navigate,
     targetObj?.subject?.id,
-    rootId,
-    uploader.username,
-    content
+    rootId
   ]);
 
   return (
