@@ -21,6 +21,7 @@ function Markdown({
   contentType,
   children,
   isProfileComponent,
+  isZeroMessage,
   linkColor,
   markerColor,
   onSetIsParsed
@@ -28,6 +29,7 @@ function Markdown({
   contentId?: number;
   contentType?: string;
   isProfileComponent?: boolean;
+  isZeroMessage?: boolean;
   children: string;
   linkColor: string;
   markerColor: string;
@@ -130,7 +132,11 @@ function Markdown({
               );
             }
             case 'em': {
-              return <strong>{convertToJSX(domNode.children || [])}</strong>;
+              return isZeroMessage ? (
+                <em>{convertToJSX(domNode.children || [])}</em>
+              ) : (
+                <strong>{convertToJSX(domNode.children || [])}</strong>
+              );
             }
             case 'img': {
               return (
@@ -171,7 +177,11 @@ function Markdown({
               );
             }
             case 'strong': {
-              return <em>{convertToJSX(domNode.children || [])}</em>;
+              return isZeroMessage ? (
+                <strong>{convertToJSX(domNode.children || [])}</strong>
+              ) : (
+                <em>{convertToJSX(domNode.children || [])}</em>
+              );
             }
             case 'table': {
               return (
@@ -244,12 +254,14 @@ function Markdown({
           node.parent?.name !== 'tbody' &&
           node.parent?.name !== 'li'
         ) {
-          return node.data
-            .split('\n')
-            .flatMap((segment: string, subIndex: number) => [
-              subIndex > 0 && <br key={`br-${index}-${subIndex}`} />,
-              segment
-            ]);
+          return isZeroMessage
+            ? node.data
+            : node.data
+                .split('\n')
+                .flatMap((segment: string, subIndex: number) => [
+                  subIndex > 0 && <br key={`br-${index}-${subIndex}`} />,
+                  segment
+                ]);
         }
         return node.data.trim() !== '' || /^ +$/.test(node.data)
           ? node.data
@@ -330,7 +342,11 @@ function Markdown({
             );
           }
           case 'em': {
-            return <strong {...commonProps}>{children}</strong>;
+            return isZeroMessage ? (
+              <em {...commonProps}>{children}</em>
+            ) : (
+              <strong {...commonProps}>{children}</strong>
+            );
           }
           case 'img': {
             return (
@@ -370,7 +386,11 @@ function Markdown({
             );
           }
           case 'strong': {
-            return <em {...commonProps}>{children}</em>;
+            return isZeroMessage ? (
+              <strong {...commonProps}>{children}</strong>
+            ) : (
+              <em {...commonProps}>{children}</em>
+            );
           }
           case 'table':
             return (
@@ -488,7 +508,7 @@ function Markdown({
     const lines = processedText.split('\n');
     const tablePattern = new RegExp('\\|.*\\|.*\\|');
     const containsTable = lines.some((line) => tablePattern.test(line));
-    if (containsTable) {
+    if (containsTable || isZeroMessage) {
       return text;
     }
     const maxNbsp = 9;
@@ -521,6 +541,7 @@ function Markdown({
   }
 
   function removeNbsp(text?: string) {
+    if (isZeroMessage) return text;
     if (typeof text !== 'string') return text;
     return (text || '').replace(/&nbsp;/g, '');
   }
