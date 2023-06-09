@@ -149,11 +149,11 @@ function TextMessage({
                 <Spoiler content={content} />
               ) : stringIsEmpty(content) ? null : (
                 <RichText
+                  readMoreHeightFixed
                   contentId={messageId}
                   contentType="chat"
                   section="main"
                   theme={displayedThemeColor}
-                  readMoreHeightFixed
                   maxLines={isZeroMessage ? 1000 : undefined}
                   style={{
                     marginTop: isSubject ? '0.5rem' : 0,
