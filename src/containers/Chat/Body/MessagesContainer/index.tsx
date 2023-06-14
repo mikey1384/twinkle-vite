@@ -72,7 +72,10 @@ function MessagesContainer({
   subchannelPath
 }: {
   channelName?: string;
-  partner?: any;
+  partner?: {
+    id: number;
+    username: string;
+  };
   currentChannel: any;
   currentPathId: string | number;
   displayedThemeColor: string;
@@ -457,6 +460,7 @@ function MessagesContainer({
   useEffect(() => {
     onSetChessModalShown(false);
     onSetWordleModalShown(false);
+    setTransactionModalShown(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId]);
 
@@ -1524,7 +1528,7 @@ function MessagesContainer({
           subjectObj={appliedSubjectObj}
         />
       </div>
-      {chessModalShown && (
+      {chessModalShown && partner && (
         <ChessModal
           currentChannel={currentChannel}
           channelId={selectedChannelId}
@@ -1536,8 +1540,8 @@ function MessagesContainer({
           onCancelRewindRequest={handleCancelRewindRequest}
           onDeclineRewind={handleDeclineRewind}
           onSpoilerClick={handleChessSpoilerClick}
-          opponentId={partner?.id}
-          opponentName={partner?.username}
+          opponentId={partner.id}
+          opponentName={partner.username}
           socketConnected={socketConnected}
         />
       )}
@@ -1617,7 +1621,7 @@ function MessagesContainer({
           andLeave
         />
       )}
-      {TransactionModalShown && (
+      {TransactionModalShown && partner && (
         <TransactionModal
           currentTransactionId={currentTransactionId}
           channelId={selectedChannelId}
