@@ -28,7 +28,7 @@ import {
   TURN_PASSWORD,
   VOCAB_CHAT_TYPE,
   AI_CARD_CHAT_TYPE,
-  ZERO_PROFILE_URL
+  ZERO_PFP_URL
 } from '~/constants/defaultValues';
 
 export default function Header({
@@ -1242,7 +1242,7 @@ export default function Header({
         onReceiveMessage({
           message: {
             ...message,
-            profilePicUrl: ZERO_PROFILE_URL,
+            profilePicUrl: ZERO_PFP_URL,
             username: 'Zero'
           },
           pageVisible,
