@@ -22,7 +22,10 @@ export default function TransactionModal({
   isAICardModalShown: boolean;
   onHide: () => any;
   onSetAICardModalCardId: (v: any) => any;
-  partner: any;
+  partner: {
+    username: string;
+    id: number;
+  };
 }) {
   const ModalRef = useRef(null);
   const [loading, setLoading] = useState(false);
