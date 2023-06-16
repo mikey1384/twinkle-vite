@@ -34,6 +34,7 @@ import {
   rewardReasons,
   AI_CARD_CHAT_TYPE,
   VOCAB_CHAT_TYPE,
+  CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID
 } from '~/constants/defaultValues';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
@@ -251,10 +252,15 @@ function MessagesContainer({
     return currentChannel?.replyTarget;
   }, [currentChannel?.replyTarget, subchannel?.replyTarget, subchannelId]);
 
+  const isCielChannel = useMemo(
+    () => partner?.id === CIEL_TWINKLE_ID,
+    [partner?.id]
+  );
   const isZeroChannel = useMemo(
     () => partner?.id === ZERO_TWINKLE_ID,
     [partner?.id]
   );
+
   const isRestrictedChannel = useMemo(
     () => subchannel?.isRestricted && !isCreator,
     [isCreator, subchannel?.isRestricted]
@@ -1494,7 +1500,7 @@ function MessagesContainer({
         <MessageInput
           currentTransactionId={currentTransactionId}
           selectedChannelId={selectedChannelId}
-          isZeroChannel={!!isZeroChannel}
+          isAIChannel={!!isZeroChannel || !!isCielChannel}
           isRestrictedChannel={!!isRestrictedChannel}
           isBanned={!!banned?.chat}
           innerRef={ChatInputRef}

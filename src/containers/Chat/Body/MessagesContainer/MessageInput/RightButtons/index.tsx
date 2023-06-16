@@ -12,7 +12,7 @@ export default function RightButtons({
   isLoading,
   isRestrictedChannel,
   isTwoPeopleChannel,
-  isZeroChannel,
+  isAIChannel,
   maxSize,
   myId,
   onSendMsg,
@@ -34,7 +34,7 @@ export default function RightButtons({
   isLoading: boolean;
   isRestrictedChannel: boolean;
   isTwoPeopleChannel: boolean;
-  isZeroChannel: boolean;
+  isAIChannel: boolean;
   maxSize: number;
   myId: number;
   onSelectVideoButtonClick: () => void;
@@ -47,7 +47,7 @@ export default function RightButtons({
   socketConnected: boolean;
   zEnergy: number;
 }) {
-  return isZeroChannel ? (
+  return isAIChannel ? (
     <ZeroButtons
       buttonColor={buttonColor}
       buttonHoverColor={buttonHoverColor}
