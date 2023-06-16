@@ -41,7 +41,7 @@ import { useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
-import { ZERO_TWINKLE_ID } from '~/constants/defaultValues';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
 const replyLabel = localize('reply2');
@@ -305,11 +305,13 @@ function Message({
       handleSaveMessage();
     }
     async function handleSaveMessage() {
+      const isCielChat = partner?.id === CIEL_TWINKLE_ID;
       const isZeroChat = partner?.id === ZERO_TWINKLE_ID;
       const { messageId, timeStamp } = await saveChatMessage({
         message: post,
         targetMessageId: targetMessage?.id,
         targetSubject,
+        isCielChat,
         isZeroChat
       });
       onSaveMessage({

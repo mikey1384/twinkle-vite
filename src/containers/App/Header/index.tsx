@@ -28,7 +28,9 @@ import {
   TURN_PASSWORD,
   VOCAB_CHAT_TYPE,
   AI_CARD_CHAT_TYPE,
-  ZERO_PFP_URL
+  ZERO_PFP_URL,
+  ZERO_TWINKLE_ID,
+  CIEL_PFP_URL
 } from '~/constants/defaultValues';
 
 export default function Header({
@@ -334,7 +336,7 @@ export default function Header({
     socket.on('new_post_uploaded', handleNewPost);
     socket.on('new_notification_received', handleNewNotification);
     socket.on('new_message_received', handleReceiveMessage);
-    socket.on('new_zeros_message_received', handleReceiveZerosMessage);
+    socket.on('new_ai_message_received', handleReceiveAIMessage);
     socket.on('new_reward_posted', handleNewReward);
     socket.on('new_recommendation_posted', handleNewRecommendation);
     socket.on('new_ai_card_summoned', handleNewAICardSummon);
@@ -403,10 +405,7 @@ export default function Header({
       socket.removeListener('new_post_uploaded', handleNewPost);
       socket.removeListener('new_notification_received', handleNewNotification);
       socket.removeListener('new_message_received', handleReceiveMessage);
-      socket.removeListener(
-        'new_zeros_message_received',
-        handleReceiveZerosMessage
-      );
+      socket.removeListener('new_ai_message_received', handleReceiveAIMessage);
       socket.removeListener('new_reward_posted', handleNewReward);
       socket.removeListener('new_ai_card_summoned', handleNewAICardSummon);
       socket.removeListener(
@@ -1227,7 +1226,7 @@ export default function Header({
       }
     }
 
-    function handleReceiveZerosMessage({
+    function handleReceiveAIMessage({
       message,
       channelId
     }: {
@@ -1242,8 +1241,8 @@ export default function Header({
         onReceiveMessage({
           message: {
             ...message,
-            profilePicUrl: ZERO_PFP_URL,
-            username: 'Zero'
+            profilePicUrl:
+              message.userId === ZERO_TWINKLE_ID ? ZERO_PFP_URL : CIEL_PFP_URL
           },
           pageVisible,
           usingChat
