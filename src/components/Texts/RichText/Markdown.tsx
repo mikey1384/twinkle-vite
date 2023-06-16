@@ -21,7 +21,7 @@ function Markdown({
   contentType,
   children,
   isProfileComponent,
-  isZeroMessage,
+  isAIMessage,
   linkColor,
   markerColor,
   onSetIsParsed
@@ -29,7 +29,7 @@ function Markdown({
   contentId?: number;
   contentType?: string;
   isProfileComponent?: boolean;
-  isZeroMessage?: boolean;
+  isAIMessage?: boolean;
   children: string;
   linkColor: string;
   markerColor: string;
@@ -132,7 +132,7 @@ function Markdown({
               );
             }
             case 'em': {
-              return isZeroMessage ? (
+              return isAIMessage ? (
                 <em>{convertToJSX(domNode.children || [])}</em>
               ) : (
                 <strong>{convertToJSX(domNode.children || [])}</strong>
@@ -177,7 +177,7 @@ function Markdown({
               );
             }
             case 'strong': {
-              return isZeroMessage ? (
+              return isAIMessage ? (
                 <strong>{convertToJSX(domNode.children || [])}</strong>
               ) : (
                 <em>{convertToJSX(domNode.children || [])}</em>
@@ -254,7 +254,7 @@ function Markdown({
           node.parent?.name !== 'tbody' &&
           node.parent?.name !== 'li'
         ) {
-          return isZeroMessage
+          return isAIMessage
             ? node.data
             : node.data
                 .split('\n')
@@ -342,7 +342,7 @@ function Markdown({
             );
           }
           case 'em': {
-            return isZeroMessage ? (
+            return isAIMessage ? (
               <em {...commonProps}>{children}</em>
             ) : (
               <strong {...commonProps}>{children}</strong>
@@ -386,7 +386,7 @@ function Markdown({
             );
           }
           case 'strong': {
-            return isZeroMessage ? (
+            return isAIMessage ? (
               <strong {...commonProps}>{children}</strong>
             ) : (
               <em {...commonProps}>{children}</em>
@@ -508,7 +508,7 @@ function Markdown({
     const lines = processedText.split('\n');
     const tablePattern = new RegExp('\\|.*\\|.*\\|');
     const containsTable = lines.some((line) => tablePattern.test(line));
-    if (containsTable || isZeroMessage) {
+    if (containsTable || isAIMessage) {
       return text;
     }
     const maxNbsp = 9;
@@ -541,7 +541,7 @@ function Markdown({
   }
 
   function removeNbsp(text?: string) {
-    if (isZeroMessage) return text;
+    if (isAIMessage) return text;
     if (typeof text !== 'string') return text;
     return (text || '').replace(/&nbsp;/g, '');
   }

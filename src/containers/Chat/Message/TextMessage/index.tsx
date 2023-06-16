@@ -30,7 +30,7 @@ function TextMessage({
   isNotification,
   isReloadedSubject,
   isSubject,
-  isZeroMessage,
+  isAIMessage,
   forceRefreshForMobile,
   messageId,
   MessageStyle,
@@ -53,7 +53,7 @@ function TextMessage({
   isNotification: boolean;
   isReloadedSubject: boolean;
   isSubject: boolean;
-  isZeroMessage: boolean;
+  isAIMessage: boolean;
   forceRefreshForMobile: () => void;
   messageId: number;
   MessageStyle: any;
@@ -149,13 +149,13 @@ function TextMessage({
                 <Spoiler content={content} />
               ) : stringIsEmpty(content) ? null : (
                 <RichText
-                  isZeroMessage={isZeroMessage}
+                  isAIMessage={isAIMessage}
                   readMoreHeightFixed
                   contentId={messageId}
                   contentType="chat"
                   section="main"
                   theme={displayedThemeColor}
-                  maxLines={isZeroMessage ? 1000 : undefined}
+                  maxLines={isAIMessage ? 1000 : undefined}
                   style={{
                     marginTop: isSubject ? '0.5rem' : 0,
                     marginBottom: isSubject ? '0.5rem' : 0,
@@ -183,7 +183,7 @@ function TextMessage({
         {!isContentContainsLink &&
           extractedUrl &&
           messageId &&
-          !isZeroMessage &&
+          !isAIMessage &&
           !attachmentHidden &&
           !isSpoiler && (
             <LinkAttachment

@@ -36,7 +36,7 @@ export default function RichText({
   isPreview,
   isStatusMsg,
   isProfileComponent,
-  isZeroMessage,
+  isAIMessage,
   maxLines = 10,
   section = '',
   readMoreColor,
@@ -52,7 +52,7 @@ export default function RichText({
   isPreview?: boolean;
   isStatusMsg?: boolean;
   isProfileComponent?: boolean;
-  isZeroMessage?: boolean;
+  isAIMessage?: boolean;
   section?: string;
   maxLines?: number;
   readMoreHeightFixed?: boolean;
@@ -234,7 +234,7 @@ export default function RichText({
             contentId={contentId}
             contentType={contentType}
             isProfileComponent={isProfileComponent}
-            isZeroMessage={isZeroMessage}
+            isAIMessage={isAIMessage}
             linkColor={appliedLinkColor}
             markerColor={markerColor}
             onSetIsParsed={setIsParsed}
