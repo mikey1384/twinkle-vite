@@ -1115,11 +1115,13 @@ export default function chatRequestHelpers({
       message,
       targetMessageId,
       targetSubject,
+      isCielChat,
       isZeroChat
     }: {
       message: string;
       targetMessageId: number;
       targetSubject: string;
+      isCielChat: boolean;
       isZeroChat: boolean;
     }) {
       try {
@@ -1131,6 +1133,7 @@ export default function chatRequestHelpers({
             message,
             targetMessageId,
             targetSubject,
+            isCielChat,
             isZeroChat
           },
           auth()
