@@ -39,7 +39,7 @@ export default function MessageInput({
   innerRef,
   inputState,
   isBanned,
-  isZeroChannel,
+  isAIChannel,
   isRestrictedChannel,
   isRespondingToSubject,
   isTwoPeopleChannel,
@@ -64,7 +64,7 @@ export default function MessageInput({
   innerRef: any;
   inputState: any;
   isBanned: boolean;
-  isZeroChannel: boolean;
+  isAIChannel: boolean;
   isRestrictedChannel: boolean;
   isRespondingToSubject: boolean;
   isTwoPeopleChannel: number | boolean;
@@ -352,7 +352,7 @@ export default function MessageInput({
         />
       ) : null}
       <div style={{ display: 'flex' }}>
-        {!isZeroChannel && (
+        {!isAIChannel && (
           <LeftButtons
             buttonColor={buttonColor}
             buttonHoverColor={buttonHoverColor}
@@ -376,16 +376,16 @@ export default function MessageInput({
         )}
         <Textarea
           disabled={
-            (isZeroChannel && !zEnergy) || isRestrictedChannel || isBanned
+            (isAIChannel && !zEnergy) || isRestrictedChannel || isBanned
           }
           innerRef={innerRef}
           minRows={1}
           placeholder={
-            !isZeroChannel && isBanned
+            !isAIChannel && isBanned
               ? 'You are banned from chatting with other users on this website...'
               : isRestrictedChannel
               ? `Only the administrator can post messages here...`
-              : isZeroChannel && !zEnergy
+              : isAIChannel && !zEnergy
               ? `To chat with Zero, please recharge the battery...`
               : `${enterMessageLabel}...`
           }
@@ -415,7 +415,7 @@ export default function MessageInput({
           isLoading={loading}
           isTwoPeopleChannel={!!isTwoPeopleChannel}
           isRestrictedChannel={isRestrictedChannel}
-          isZeroChannel={isZeroChannel}
+          isAIChannel={isAIChannel}
           maxSize={maxSize}
           myId={myId}
           onSelectVideoButtonClick={onSelectVideoButtonClick}
