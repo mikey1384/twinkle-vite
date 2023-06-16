@@ -49,7 +49,11 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
 import LocalContext from '../Context';
-import { SELECTED_LANGUAGE, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
+import {
+  SELECTED_LANGUAGE,
+  CIEL_TWINKLE_ID,
+  ZERO_TWINKLE_ID
+} from '~/constants/defaultValues';
 import { Content } from '~/types';
 import localize from '~/constants/localize';
 
@@ -745,8 +749,9 @@ function Comment({
                         </div>
                       ) : !commentIsEmpty ? (
                         <RichText
-                          isZeroMessage={
-                            uploader?.id === Number(ZERO_TWINKLE_ID)
+                          isAIMessage={
+                            uploader?.id === Number(ZERO_TWINKLE_ID) ||
+                            uploader?.id === Number(CIEL_TWINKLE_ID)
                           }
                           theme={theme}
                           contentId={commentId}

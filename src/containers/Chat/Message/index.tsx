@@ -151,8 +151,10 @@ function Message({
   onShowSubjectMsgsModal: (v: any) => void;
   zIndex?: number;
 }) {
-  const isZeroMessage = useMemo(() => {
-    return userId === Number(ZERO_TWINKLE_ID);
+  const isAIMessage = useMemo(() => {
+    return (
+      userId === Number(ZERO_TWINKLE_ID) || userId === Number(CIEL_TWINKLE_ID)
+    );
   }, [userId]);
   const {
     reward: { color: rewardColor }
@@ -874,7 +876,7 @@ function Message({
                         content={content}
                         displayedThemeColor={displayedThemeColor}
                         extractedUrl={extractedUrl}
-                        isZeroMessage={isZeroMessage}
+                        isAIMessage={isAIMessage}
                         forceRefreshForMobile={forceRefreshForMobile}
                         messageId={messageId}
                         numMsgs={numMsgs}

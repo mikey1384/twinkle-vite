@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
-import { ZERO_TWINKLE_ID } from '~/constants/defaultValues';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import RichText from '~/components/Texts/RichText';
 import SecretAnswer from '~/components/SecretAnswer';
@@ -97,7 +97,10 @@ export default function Content({
         }
         return (
           <RichText
-            isZeroMessage={uploader.id === Number(ZERO_TWINKLE_ID)}
+            isAIMessage={
+              uploader.id === Number(ZERO_TWINKLE_ID) ||
+              uploader.id === Number(CIEL_TWINKLE_ID)
+            }
             contentId={contentId}
             contentType={contentType}
             section="content"
