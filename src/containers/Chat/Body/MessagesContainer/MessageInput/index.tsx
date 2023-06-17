@@ -421,7 +421,8 @@ export default function MessageInput({
           isLoading={loading}
           isTwoPeopleChannel={!!isTwoPeopleChannel}
           isRestrictedChannel={isRestrictedChannel}
-          isAIChannel={isAIChannel}
+          isCielChannel={isCielChannel}
+          isZeroChannel={isZeroChannel}
           maxSize={maxSize}
           myId={myId}
           onSelectVideoButtonClick={onSelectVideoButtonClick}
