@@ -303,20 +303,24 @@ export function useScrollPosition({
   pathname: string;
   scrollPositions?: { [key: string]: number };
 }) {
+  const pathnameRef = useRef('');
   useEffect(() => {
-    const appElement = document.getElementById('App');
-    if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
-    (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
-    setTimeout(() => {
+    if (pathname !== pathnameRef.current) {
+      pathnameRef.current = pathname;
+      const appElement = document.getElementById('App');
       if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
       (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
-    }, 0);
-    // prevents bug on mobile devices where tapping stops working after user swipes left to go to previous page
-    if (isMobile) {
       setTimeout(() => {
         if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
         (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
-      }, 500);
+      }, 0);
+      // prevents bug on mobile devices where tapping stops working after user swipes left to go to previous page
+      if (isMobile) {
+        setTimeout(() => {
+          if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
+          (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
+        }, 500);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
@@ -337,7 +341,7 @@ export function useScrollPosition({
         appElementScrollTopPosition,
         (BodyRef || {}).scrollTop
       );
-      onRecordScrollPosition({ section: pathname, position });
+      onRecordScrollPosition({ section: pathnameRef.current, position });
     }
   });
 }
