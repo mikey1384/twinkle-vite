@@ -972,7 +972,7 @@ export default function ChatActions(dispatch: Dispatch) {
         selectedChatTab
       });
     },
-    onSendFirstDirectMessage({
+    onCreateNewDMChannel({
       channel,
       message,
       withoutMessage
