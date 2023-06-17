@@ -107,7 +107,7 @@ function MessagesContainer({
       onLeaveChannel,
       onLoadMoreMessages,
       onReceiveMessageOnDifferentChannel,
-      onSendFirstDirectMessage,
+      onCreateNewDMChannel,
       onSetMessageState,
       onSetChessTarget,
       onSetChessGameState,
@@ -730,7 +730,7 @@ function MessagesContainer({
             message
           });
           onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
-          onSendFirstDirectMessage({ channel, message });
+          onCreateNewDMChannel({ channel, message });
           navigate(`/chat/${pathId}`, { replace: true });
           onSetChessModalShown(false);
           return;
@@ -1137,7 +1137,7 @@ function MessagesContainer({
           });
           onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
           navigate(`/chat/${pathId}`, { replace: true });
-          onSendFirstDirectMessage({ channel, message, withoutMessage: true });
+          onCreateNewDMChannel({ channel, message, withoutMessage: true });
           onSetCreatingNewDMChannel(false);
           return Promise.resolve();
         } catch (error) {

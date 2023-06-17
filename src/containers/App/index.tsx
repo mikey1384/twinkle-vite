@@ -122,8 +122,8 @@ function App() {
     (v) => v.actions.onPostUploadComplete
   );
   const onResetChat = useChatContext((v) => v.actions.onResetChat);
-  const onSendFirstDirectMessage = useChatContext(
-    (v) => v.actions.onSendFirstDirectMessage
+  const onCreateNewDMChannel = useChatContext(
+    (v) => v.actions.onCreateNewDMChannel
   );
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
@@ -463,7 +463,7 @@ function App() {
           channelId: channel.id,
           pathId: channel.pathId
         });
-        onSendFirstDirectMessage({ channel, message });
+        onCreateNewDMChannel({ channel, message });
         socket.emit('join_chat_group', message.channelId);
         socket.emit('send_bi_chat_invitation', {
           userId: recipientId,
