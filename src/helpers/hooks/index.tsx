@@ -303,7 +303,9 @@ export function useScrollPosition({
   pathname: string;
   scrollPositions?: { [key: string]: number };
 }) {
+  const pathnameRef = useRef(pathname);
   useEffect(() => {
+    pathnameRef.current = pathname;
     const appElement = document.getElementById('App');
     if (appElement) appElement.scrollTop = scrollPositions[pathname] || 0;
     (BodyRef || {}).scrollTop = scrollPositions[pathname] || 0;
@@ -337,7 +339,7 @@ export function useScrollPosition({
         appElementScrollTopPosition,
         (BodyRef || {}).scrollTop
       );
-      onRecordScrollPosition({ section: pathname, position });
+      onRecordScrollPosition({ section: pathnameRef.current, position });
     }
   });
 }
