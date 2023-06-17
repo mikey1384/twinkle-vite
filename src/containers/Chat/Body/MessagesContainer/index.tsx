@@ -1137,6 +1137,7 @@ function MessagesContainer({
           });
           onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
           navigate(`/chat/${pathId}`, { replace: true });
+          onSendFirstDirectMessage({ channel, message, withoutMessage: true });
           onSetCreatingNewDMChannel(false);
           return Promise.resolve();
         } catch (error) {
