@@ -1040,12 +1040,17 @@ export default function chatRequestHelpers({
       targetId: number;
     }) {
       try {
-        const { data } = await request.post(
+        const {
+          data: { isNewChannel, pathId }
+        } = await request.post(
           `${URL}/chat/transaction`,
           { type, wanted, offered, targetId },
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve({
+          isNewChannel,
+          pathId
+        });
       } catch (error) {
         return handleError(error);
       }

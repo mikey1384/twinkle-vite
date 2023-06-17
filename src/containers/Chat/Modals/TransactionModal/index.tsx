@@ -8,6 +8,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import TransactionInitiator from './TransactionInitiator';
 import Loading from '~/components/Loading';
 import TransactionHandler from './TransactionHandler';
+import { useNavigate } from 'react-router-dom';
 
 export default function TransactionModal({
   currentTransactionId,
@@ -27,6 +28,7 @@ export default function TransactionModal({
     id: number;
   };
 }) {
+  const navigate = useNavigate();
   const ModalRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [isCounterPropose, setIsCounterPropose] = useState(false);
@@ -259,7 +261,7 @@ export default function TransactionModal({
     offeredCardIds: number[];
     wantedCardIds: number[];
   }) {
-    await postTradeRequest({
+    const { isNewChannel, pathId } = await postTradeRequest({
       type: selectedOption,
       wanted: {
         coins: coinsWanted,
@@ -271,6 +273,9 @@ export default function TransactionModal({
       },
       targetId: partner.id
     });
+    if (isNewChannel) {
+      navigate(`/chat/${pathId}`);
+    }
     onHide();
   }
 }
