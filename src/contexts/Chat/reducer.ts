@@ -504,20 +504,24 @@ export default function ChatReducer(
           action.channel.id,
           ...state.homeChannelIds.filter((channelId: number) => channelId !== 0)
         ],
-        channelsObj: {
-          ...state.channelsObj,
-          0: {},
-          [action.channel.id]: {
-            ...action.channel,
-            messageIds: [messageId],
-            messagesObj: {
-              [messageId]: action.message
-            },
-            numUnreads: 0,
-            loaded: true
-          }
-        },
-        selectedChannelId: action.channel.id
+        selectedChannelId: action.channel.id,
+        ...(action.withoutMessage
+          ? {}
+          : {
+              channelsObj: {
+                ...state.channelsObj,
+                0: {},
+                [action.channel.id]: {
+                  ...action.channel,
+                  messageIds: [messageId],
+                  messagesObj: {
+                    [messageId]: action.message
+                  },
+                  numUnreads: 0,
+                  loaded: true
+                }
+              }
+            })
       };
     }
     case 'DELETE_MESSAGE': {

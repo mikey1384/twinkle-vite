@@ -974,15 +974,18 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onSendFirstDirectMessage({
       channel,
-      message
+      message,
+      withoutMessage
     }: {
       channel: object;
       message: object;
+      withoutMessage?: boolean;
     }) {
       return dispatch({
         type: 'CREATE_NEW_DM_CHANNEL',
         channel,
-        message
+        message,
+        withoutMessage
       });
     },
     onSetCall({
