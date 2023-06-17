@@ -266,7 +266,7 @@ function MessagesContainer({
     [isCreator, subchannel?.isRestricted]
   );
   const isChatRestricted = useMemo(
-    () => !!isRestrictedChannel || !!isZeroChannel,
+    () => !!isRestrictedChannel || isZeroChannel,
     [isRestrictedChannel, isZeroChannel]
   );
   const loadMoreButtonShown = useMemo(() => {
@@ -1500,7 +1500,8 @@ function MessagesContainer({
         <MessageInput
           currentTransactionId={currentTransactionId}
           selectedChannelId={selectedChannelId}
-          isAIChannel={!!isZeroChannel || !!isCielChannel}
+          isZeroChannel={isZeroChannel}
+          isCielChannel={isCielChannel}
           isRestrictedChannel={!!isRestrictedChannel}
           isBanned={!!banned?.chat}
           innerRef={ChatInputRef}

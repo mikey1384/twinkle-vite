@@ -39,10 +39,11 @@ export default function MessageInput({
   innerRef,
   inputState,
   isBanned,
-  isAIChannel,
   isRestrictedChannel,
   isRespondingToSubject,
   isTwoPeopleChannel,
+  isCielChannel,
+  isZeroChannel,
   loading,
   onChessButtonClick,
   onWordleButtonClick,
@@ -64,7 +65,8 @@ export default function MessageInput({
   innerRef: any;
   inputState: any;
   isBanned: boolean;
-  isAIChannel: boolean;
+  isCielChannel: boolean;
+  isZeroChannel: boolean;
   isRestrictedChannel: boolean;
   isRespondingToSubject: boolean;
   isTwoPeopleChannel: number | boolean;
@@ -84,6 +86,10 @@ export default function MessageInput({
   subjectId: number;
   subjectObj: any;
 }) {
+  const isAIChannel = useMemo(
+    () => isZeroChannel || isCielChannel,
+    [isZeroChannel, isCielChannel]
+  );
   const textForThisChannel = useMemo(
     () =>
       inputState[
@@ -376,7 +382,7 @@ export default function MessageInput({
         )}
         <Textarea
           disabled={
-            (isAIChannel && !zEnergy) || isRestrictedChannel || isBanned
+            (isZeroChannel && !zEnergy) || isRestrictedChannel || isBanned
           }
           innerRef={innerRef}
           minRows={1}
@@ -385,7 +391,7 @@ export default function MessageInput({
               ? 'You are banned from chatting with other users on this website...'
               : isRestrictedChannel
               ? `Only the administrator can post messages here...`
-              : isAIChannel && !zEnergy
+              : isZeroChannel && !zEnergy
               ? `To chat with Zero, please recharge the battery...`
               : `${enterMessageLabel}...`
           }
