@@ -266,8 +266,8 @@ function MessagesContainer({
     [isCreator, subchannel?.isRestricted]
   );
   const isChatRestricted = useMemo(
-    () => !!isRestrictedChannel || isZeroChannel,
-    [isRestrictedChannel, isZeroChannel]
+    () => !!isRestrictedChannel,
+    [isRestrictedChannel]
   );
   const loadMoreButtonShown = useMemo(() => {
     if (subchannel) {
