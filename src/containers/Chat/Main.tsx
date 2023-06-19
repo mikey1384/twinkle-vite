@@ -33,7 +33,9 @@ import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
   AI_CARD_CHAT_TYPE,
-  VOCAB_CHAT_TYPE
+  VOCAB_CHAT_TYPE,
+  ZERO_TWINKLE_ID,
+  CIEL_TWINKLE_ID
 } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
@@ -950,6 +952,10 @@ export default function Main({
                 currentChannel={currentChannel}
                 currentOnlineUsers={currentOnlineUsers}
                 displayedThemeColor={displayedThemeColor}
+                isAIChat={
+                  partner?.id === ZERO_TWINKLE_ID ||
+                  partner?.id === CIEL_TWINKLE_ID
+                }
                 selectedChannelId={selectedChannelId}
               />
             </div>
