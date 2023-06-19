@@ -146,6 +146,7 @@ export default function Header({
   const onEnableChatSubject = useChatContext(
     (v) => v.actions.onEnableChatSubject
   );
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onSetReconnecting = useChatContext((v) => v.actions.onSetReconnecting);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
   const onChangeChannelOwner = useChatContext(
@@ -306,6 +307,7 @@ export default function Header({
     socket.on('ai_card_delisted', handleAICardDelisted);
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
+    socket.on('ai_message_done', handleAIMessageDone);
     socket.on('assets_sent', handleAssetsSent);
     socket.on('ban_status_updated', handleBanStatusUpdate);
     socket.on('signal_received', handleCallSignal);
@@ -360,6 +362,7 @@ export default function Header({
       socket.removeListener('ai_card_delisted', handleAICardDelisted);
       socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
       socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
+      socket.removeListener('ai_message_done', handleAIMessageDone);
       socket.removeListener('assets_sent', handleAssetsSent);
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('signal_received', handleCallSignal);
@@ -582,6 +585,13 @@ export default function Header({
         }
         onUpdateAICard({ cardId: card.id, newState: { ownerId: to } });
       }
+    }
+
+    function handleAIMessageDone(channelId: number) {
+      onSetChannelState({
+        channelId,
+        newState: { inputSubmitDisabled: false }
+      });
     }
 
     function handleBanStatusUpdate(banStatus: any) {
@@ -1233,6 +1243,12 @@ export default function Header({
       message: any;
       channelId: number;
     }) {
+      onSetChannelState({
+        channelId,
+        newState: {
+          inputSubmitDisabled: true
+        }
+      });
       const messageIsForCurrentChannel = channelId === selectedChannelId;
       if (messageIsForCurrentChannel) {
         if (usingChat) {
