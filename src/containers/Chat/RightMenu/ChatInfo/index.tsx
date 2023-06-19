@@ -21,7 +21,8 @@ export default function ChatInfo({
   currentChannel,
   currentOnlineUsers,
   displayedThemeColor,
-  channelName
+  channelName,
+  isAIChat
 }: {
   selectedChannelId: number;
   channelOnCall: any;
@@ -29,6 +30,7 @@ export default function ChatInfo({
   currentOnlineUsers: any[];
   displayedThemeColor: string;
   channelName: string;
+  isAIChat: boolean;
 }) {
   const {
     userId: myId,
@@ -198,7 +200,7 @@ export default function ChatInfo({
           }}
           className="unselectable"
         >
-          {voiceChatButtonShown && !banned?.chat && (
+          {voiceChatButtonShown && !banned?.chat && !isAIChat && (
             <CallButton
               callOngoing={callOngoing}
               disabled={callDisabled}

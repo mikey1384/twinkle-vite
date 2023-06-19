@@ -14,6 +14,7 @@ function RightMenu({
   currentChannel,
   currentOnlineUsers,
   displayedThemeColor,
+  isAIChat,
   selectedChannelId
 }: {
   channelName: string;
@@ -21,6 +22,7 @@ function RightMenu({
   currentChannel: any;
   currentOnlineUsers: any[];
   displayedThemeColor: string;
+  isAIChat: boolean;
   selectedChannelId: number;
 }) {
   const {
@@ -65,6 +67,7 @@ function RightMenu({
             currentChannel={currentChannel}
             currentOnlineUsers={currentOnlineUsers}
             displayedThemeColor={displayedThemeColor}
+            isAIChat={isAIChat}
             selectedChannelId={selectedChannelId}
           />
         )}
