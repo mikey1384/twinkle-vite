@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import InfoModal from './InfoModal';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 export default function ZeroButtons({
@@ -12,6 +13,7 @@ export default function ZeroButtons({
   buttonHoverColor: string;
   zEnergy: number;
 }) {
+  const [infoModalShown, setInfoModalShown] = useState(false);
   const displayedZEnergy = useMemo(
     () => (zEnergy ? addCommasToNumber(zEnergy) : 'No Energy'),
     [zEnergy]
@@ -21,7 +23,7 @@ export default function ZeroButtons({
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <Button
         skeuomorphic
-        onClick={() => console.log('button pressed')}
+        onClick={() => setInfoModalShown(true)}
         color={buttonColor}
         mobilePadding="0.5rem"
         hoverColor={buttonHoverColor}
@@ -29,6 +31,7 @@ export default function ZeroButtons({
         <Icon size="lg" icon={zEnergy ? 'battery-full' : 'battery-empty'} />
         <span style={{ marginLeft: '0.7rem' }}>{displayedZEnergy}</span>
       </Button>
+      {infoModalShown && <InfoModal onHide={() => setInfoModalShown(false)} />}
     </div>
   );
 }
