@@ -1505,6 +1505,7 @@ function MessagesContainer({
           isRestrictedChannel={!!isRestrictedChannel}
           isBanned={!!banned?.chat}
           innerRef={ChatInputRef}
+          inputSubmitDisabled={currentChannel.inputSubmitDisabled}
           loading={loadingAnimationShown}
           socketConnected={socketConnected}
           inputState={inputState}

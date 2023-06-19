@@ -38,6 +38,7 @@ export default function MessageInput({
   selectedChannelId = 0,
   innerRef,
   inputState,
+  inputSubmitDisabled,
   isBanned,
   isRestrictedChannel,
   isRespondingToSubject,
@@ -63,6 +64,7 @@ export default function MessageInput({
   currentTransactionId: number;
   selectedChannelId: number;
   innerRef: any;
+  inputSubmitDisabled: boolean;
   inputState: any;
   isBanned: boolean;
   isCielChannel: boolean;
@@ -191,7 +193,7 @@ export default function MessageInput({
   }, []);
 
   const handleSendMsg = useCallback(async () => {
-    if (!socketConnected || inputCoolingDown.current) {
+    if (!socketConnected || inputCoolingDown.current || inputSubmitDisabled) {
       if (inputCoolingDown.current) {
         clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
