@@ -1,24 +1,16 @@
-import React, { useCallback, useMemo, useRef } from 'react';
-import Button from '~/components/Button';
-import Icon from '~/components/Icon';
+import React, { useCallback, useRef } from 'react';
 import AddButtons from './AddButtons';
 import Loading from '~/components/Loading';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mb } from '~/constants/defaultValues';
 
 export default function DefaultButtons({
-  buttonColor,
-  buttonHoverColor,
-  coolingDown,
   currentTransactionId,
-  inputText,
   isChatBanned,
   isLoading,
   isRestrictedChannel,
   isTwoPeopleChannel,
   maxSize,
   myId,
-  onSendMsg,
   onSetAlertModalShown,
   onSetFileObj,
   onSetTransactionModalShown,
@@ -27,9 +19,6 @@ export default function DefaultButtons({
   selectedChannelId,
   socketConnected
 }: {
-  buttonColor: string;
-  buttonHoverColor: string;
-  coolingDown: boolean;
   currentTransactionId: number;
   inputText: string;
   isChatBanned: boolean;
@@ -39,7 +28,6 @@ export default function DefaultButtons({
   maxSize: number;
   myId: number;
   onSelectVideoButtonClick: () => void;
-  onSendMsg: () => void;
   onSetAlertModalShown: (shown: boolean) => void;
   onSetFileObj: (fileObj: any) => void;
   onSetTransactionModalShown: (shown: boolean) => void;
@@ -47,7 +35,6 @@ export default function DefaultButtons({
   selectedChannelId: number;
   socketConnected: boolean;
 }) {
-  const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
   const FileInputRef: React.RefObject<any> = useRef(null);
   const handleUpload = useCallback(
     (event: any) => {
@@ -64,25 +51,6 @@ export default function DefaultButtons({
 
   return (
     <>
-      {!textIsEmpty && (
-        <div
-          style={{
-            margin: `0.2rem 1rem 0.2rem 0`,
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
-          <Button
-            filled
-            disabled={isLoading || !socketConnected || coolingDown}
-            color={buttonColor}
-            hoverColor={buttonHoverColor}
-            onClick={onSendMsg}
-          >
-            <Icon size="lg" icon="paper-plane" />
-          </Button>
-        </div>
-      )}
       <AddButtons
         channelId={selectedChannelId}
         disabled={

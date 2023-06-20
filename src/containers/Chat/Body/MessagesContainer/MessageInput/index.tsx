@@ -8,6 +8,8 @@ import React, {
 } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import ChessTarget from '../ChessTarget';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import TargetMessagePreview from '../TargetMessagePreview';
 import TargetSubjectPreview from '../TargetSubjectPreview';
 import UploadModal from '../../../Modals/UploadModal';
@@ -316,6 +318,7 @@ export default function MessageInput({
     () => selectedChannelId === GENERAL_CHAT_ID && !subchannelId,
     [selectedChannelId, subchannelId]
   );
+  const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
 
   return (
     <div
@@ -413,10 +416,28 @@ export default function MessageInput({
             ...(messageExceedsCharLimit?.style || {})
           }}
         />
+        {!textIsEmpty && (
+          <div
+            style={{
+              margin: `0.2rem 1rem 0.2rem 0`,
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <Button
+              filled
+              disabled={loading || !socketConnected || coolingDown}
+              color={buttonColor}
+              hoverColor={buttonHoverColor}
+              onClick={handleSendMsg}
+            >
+              <Icon size="lg" icon="paper-plane" />
+            </Button>
+          </div>
+        )}
         <RightButtons
           buttonColor={buttonColor}
           buttonHoverColor={buttonHoverColor}
-          coolingDown={coolingDown}
           currentTransactionId={currentTransactionId}
           inputText={inputText}
           isChatBanned={!!banned?.chat}
@@ -430,7 +451,6 @@ export default function MessageInput({
           onSelectVideoButtonClick={onSelectVideoButtonClick}
           onSetAlertModalShown={setAlertModalShown}
           onSetFileObj={setFileObj}
-          onSendMsg={handleSendMsg}
           onSetTransactionModalShown={onSetTransactionModalShown}
           onSetUploadModalShown={setUploadModalShown}
           selectedChannelId={selectedChannelId}
