@@ -5,7 +5,6 @@ import ZeroButtons from './ZeroButtons';
 export default function RightButtons({
   buttonColor,
   buttonHoverColor,
-  coolingDown,
   currentTransactionId,
   inputText,
   isChatBanned,
@@ -16,7 +15,6 @@ export default function RightButtons({
   isZeroChannel,
   maxSize,
   myId,
-  onSendMsg,
   onSetAlertModalShown,
   onSetFileObj,
   onSetTransactionModalShown,
@@ -28,7 +26,6 @@ export default function RightButtons({
 }: {
   buttonColor: string;
   buttonHoverColor: string;
-  coolingDown: boolean;
   currentTransactionId: number;
   inputText: string;
   isChatBanned: boolean;
@@ -40,7 +37,6 @@ export default function RightButtons({
   maxSize: number;
   myId: number;
   onSelectVideoButtonClick: () => void;
-  onSendMsg: () => void;
   onSetAlertModalShown: (shown: boolean) => void;
   onSetFileObj: (fileObj: any) => void;
   onSetTransactionModalShown: (shown: boolean) => void;
@@ -57,9 +53,6 @@ export default function RightButtons({
     />
   ) : (
     <DefaultButtons
-      buttonColor={buttonColor}
-      buttonHoverColor={buttonHoverColor}
-      coolingDown={coolingDown}
       currentTransactionId={currentTransactionId}
       inputText={inputText}
       isChatBanned={isChatBanned}
@@ -69,7 +62,6 @@ export default function RightButtons({
       maxSize={maxSize}
       myId={myId}
       onSelectVideoButtonClick={onSelectVideoButtonClick}
-      onSendMsg={onSendMsg}
       onSetAlertModalShown={onSetAlertModalShown}
       onSetFileObj={onSetFileObj}
       onSetTransactionModalShown={onSetTransactionModalShown}
