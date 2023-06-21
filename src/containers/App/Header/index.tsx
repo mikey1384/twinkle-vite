@@ -1441,7 +1441,7 @@ export default function Header({
       let currentPageTitle = 'Twinkle';
       if (section !== 'home') {
         const displayedSection =
-          section === 'ai-cards' ? 'Explore AI Cards' : section;
+          section === 'ai-cards' ? 'Explore AI Cards' : section === 'ai-stories' ? 'AI Stories' : section;
         currentPageTitle = `${capitalize(
           displayedSection
         )} | ${currentPageTitle}`;
