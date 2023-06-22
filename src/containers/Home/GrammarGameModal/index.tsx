@@ -142,14 +142,19 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   );
 
   async function handleGameStart() {
-    setGameLoading(true);
-    const { questions, maxAttemptNumberReached } = await loadGrammarGame();
-    if (maxAttemptNumberReached) {
-      return window.location.reload();
+    try {
+      setGameLoading(true);
+      const { questions, maxAttemptNumberReached } = await loadGrammarGame();
+      if (maxAttemptNumberReached) {
+        return window.location.reload();
+      }
+      setQuestions(questions);
+      setGameState('started');
+    } catch (error) {
+      console.error('An error occurred:', error);
+    } finally {
+      setGameLoading(false);
     }
-    setQuestions(questions);
-    setGameState('started');
-    setGameLoading(false);
   }
 
   async function handleGameFinish() {

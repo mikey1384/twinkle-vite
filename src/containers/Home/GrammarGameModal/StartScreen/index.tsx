@@ -50,16 +50,41 @@ export default function StartScreen({
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
   );
   const [loaded, setLoaded] = useState(false);
+
   useEffect(() => {
     init();
     async function init() {
-      const { attemptResults, attemptNumber, earnedCoins, nextDayTimeStamp } =
-        await checkNumGrammarGamesPlayedToday();
-      setEarnedCoins(earnedCoins);
-      setResults(attemptResults);
-      setNextDayTimeStamp(nextDayTimeStamp);
-      onSetTimesPlayedToday(attemptNumber);
-      setLoaded(true);
+      let attempts = 0;
+      let success = false;
+
+      while (attempts < 3 && !success) {
+        try {
+          const {
+            attemptResults,
+            attemptNumber,
+            earnedCoins,
+            nextDayTimeStamp
+          } = await checkNumGrammarGamesPlayedToday();
+          setEarnedCoins(earnedCoins);
+          setResults(attemptResults);
+          setNextDayTimeStamp(nextDayTimeStamp);
+          onSetTimesPlayedToday(attemptNumber);
+          success = true;
+        } catch (error) {
+          attempts += 1;
+          console.error(`Attempt ${attempts} failed. Retrying in 1 second...`);
+
+          // Wait for 1 second before the next attempt
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // If it's the last attempt, re-throw the error
+          if (attempts === 3) throw error;
+        } finally {
+          if (attempts === 3 || success) {
+            setLoaded(true);
+          }
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onSetTimesPlayedToday]);
