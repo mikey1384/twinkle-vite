@@ -592,15 +592,16 @@ function Message({
           messageId,
           isSubject: messageIsSubject
         });
+        Promise.resolve();
+      } catch (error) {
+        console.error(error);
+        return Promise.reject(error);
+      } finally {
         onSetIsEditing({
           contentId: messageId,
           contentType: 'chat',
           isEditing: false
         });
-        Promise.resolve();
-      } catch (error) {
-        console.error(error);
-        return Promise.reject(error);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
