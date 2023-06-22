@@ -88,8 +88,8 @@ function Markdown({
               if (
                 !isInternalLink &&
                 href &&
-                !href.startsWith('http://') &&
-                !href.startsWith('https://')
+                !href.toLowerCase().startsWith('http://') &&
+                !href.toLowerCase().startsWith('https://')
               ) {
                 href = 'http://' + href;
               }
@@ -290,8 +290,8 @@ function Markdown({
             if (
               !isInternalLink &&
               href &&
-              !href.startsWith('http://') &&
-              !href.startsWith('https://')
+              !href.toLowerCase().startsWith('http://') &&
+              !href.toLowerCase().startsWith('https://')
             ) {
               href = 'http://' + href;
             }
