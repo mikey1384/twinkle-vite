@@ -172,15 +172,18 @@ export default function MessageInput({
     }
   }, [selectedChannelId, subchannelId, innerRef]);
 
-  const messageExceedsCharLimit = useMemo(
-    () =>
-      exceedsCharLimit({
-        inputType: 'message',
-        contentType: 'chat',
-        text: inputText
-      }),
-    [inputText]
-  );
+  const messageExceedsCharLimit = useMemo(() => {
+    const result = exceedsCharLimit({
+      inputType: 'message',
+      contentType: 'chat',
+      text: inputText
+    });
+    return result;
+  }, [inputText]);
+
+  const isExceedingCharLimit = useMemo(() => {
+    return !!messageExceedsCharLimit;
+  }, [messageExceedsCharLimit]);
 
   useEffect(() => {
     return function saveTextBeforeUnmount() {
@@ -195,6 +198,7 @@ export default function MessageInput({
   }, []);
 
   const handleSendMsg = useCallback(async () => {
+    if (isExceedingCharLimit) return;
     if (!socketConnected || inputCoolingDown.current || inputSubmitDisabled) {
       if (inputCoolingDown.current) {
         clearTimeout(timerRef.current);
@@ -264,6 +268,7 @@ export default function MessageInput({
     (event: any) => {
       const shiftKeyPressed = event.shiftKey;
       const enterKeyPressed = event.keyCode === 13;
+      if (isExceedingCharLimit) return;
       if (
         enterKeyPressed &&
         !deviceIsMobile &&
@@ -278,7 +283,14 @@ export default function MessageInput({
         onHeightChange(innerRef.current?.clientHeight + 20);
       }
     },
-    [handleSendMsg, innerRef, loading, messageExceedsCharLimit, onHeightChange]
+    [
+      isExceedingCharLimit,
+      handleSendMsg,
+      innerRef,
+      loading,
+      messageExceedsCharLimit,
+      onHeightChange
+    ]
   );
 
   const handleImagePaste = useCallback(
@@ -409,11 +421,11 @@ export default function MessageInput({
             }
           }}
           onPaste={handlePaste}
+          hasError={isExceedingCharLimit}
           style={{
             width: 'auto',
             flexGrow: 1,
-            marginRight: '1rem',
-            ...(messageExceedsCharLimit?.style || {})
+            marginRight: '1rem'
           }}
         />
         {!textIsEmpty && (
@@ -426,7 +438,12 @@ export default function MessageInput({
           >
             <Button
               filled
-              disabled={loading || !socketConnected || coolingDown}
+              disabled={
+                loading ||
+                !socketConnected ||
+                coolingDown ||
+                isExceedingCharLimit
+              }
               color={buttonColor}
               hoverColor={buttonHoverColor}
               onClick={handleSendMsg}
