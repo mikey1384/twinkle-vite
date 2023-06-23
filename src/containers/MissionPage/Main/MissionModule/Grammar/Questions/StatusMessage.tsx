@@ -152,8 +152,7 @@ export default function StatusMessage({
             <RichText
               style={{
                 marginLeft: '1.5rem',
-                fontSize: '1.7rem',
-                display: 'inline'
+                fontSize: '1.7rem'
               }}
             >
               {status === 'pass' ? passMessage : failMessage}
