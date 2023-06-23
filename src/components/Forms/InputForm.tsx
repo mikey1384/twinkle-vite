@@ -290,9 +290,9 @@ function InputForm({
             innerRef={innerRef}
             style={{
               marginBottom: '0.5rem',
-              fontSize: '1.7rem',
-              ...(commentExceedsCharLimit?.style || {})
+              fontSize: '1.7rem'
             }}
+            hasError={!!commentExceedsCharLimit}
             minRows={rows}
             value={text}
             placeholder={disableReason || placeholder}

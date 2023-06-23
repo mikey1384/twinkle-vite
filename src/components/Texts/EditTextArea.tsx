@@ -100,9 +100,9 @@ export default function EditTextArea({
         autoFocus={autoFocus}
         style={{
           marginTop,
-          position: 'relative',
-          ...(commentExceedsCharLimit?.style || {})
+          position: 'relative'
         }}
+        hasError={!!commentExceedsCharLimit}
         maxRows={maxRows}
         minRows={rows}
         value={editText}

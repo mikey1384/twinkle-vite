@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import Caption from './Caption';
 import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
-import { stringIsEmpty, finalizeEmoji } from '~/helpers/stringHelpers';
+import {
+  exceedsCharLimit,
+  stringIsEmpty,
+  finalizeEmoji
+} from '~/helpers/stringHelpers';
 
 export default function ImageModal({
   caption = '',
@@ -33,6 +37,15 @@ export default function ImageModal({
   const [submitting, setSubmitting] = useState(false);
   const [editedCaption, setEditedCaption] = useState(caption || '');
   const [isEditing, setIsEditing] = useState(false);
+  const captionExceedChatLimit = useMemo(
+    () =>
+      exceedsCharLimit({
+        contentType: 'comment',
+        text: editedCaption
+      }),
+    [editedCaption]
+  );
+
   return (
     <Modal
       closeWhenClickedOutside={!isEditing}
@@ -86,6 +99,7 @@ export default function ImageModal({
           editedCaption !== caption &&
           !(stringIsEmpty(caption) && stringIsEmpty(editedCaption)) && (
             <Button
+              disabled={!!captionExceedChatLimit}
               style={{ marginLeft: '1rem' }}
               color="green"
               loading={submitting}

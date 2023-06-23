@@ -1,5 +1,5 @@
 import 'react-image-crop/dist/ReactCrop.css';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
@@ -10,7 +10,7 @@ import CaptionEditor from '~/components/Texts/CaptionEditor';
 import { v1 as uuidv1 } from 'uuid';
 import { returnImageFileFromUrl } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { finalizeEmoji } from '~/helpers/stringHelpers';
+import { exceedsCharLimit, finalizeEmoji } from '~/helpers/stringHelpers';
 
 export default function ImageEditModal({
   aspectFixed = true,
@@ -68,6 +68,14 @@ export default function ImageEditModal({
       { orientation: true, canvas: true }
     );
   }, [imageUri]);
+  const captionExceedChatLimit = useMemo(
+    () =>
+      exceedsCharLimit({
+        contentType: 'comment',
+        text: captionText
+      }),
+    [captionText]
+  );
 
   return (
     <Modal modalOverModal={modalOverModal} onHide={onHide}>
@@ -147,6 +155,7 @@ export default function ImageEditModal({
             Cancel
           </Button>
           <Button
+            disabled={!!captionExceedChatLimit}
             color={doneColor}
             onClick={handleFileUpload}
             loading={uploading}
