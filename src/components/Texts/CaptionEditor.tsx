@@ -26,9 +26,9 @@ export default function CaptionEditor({
         placeholder="Enter Caption"
         style={{
           width: '100%',
-          position: 'relative',
-          ...(commentExceedsCharLimit?.style || {})
+          position: 'relative'
         }}
+        hasError={!!commentExceedsCharLimit}
         minRows={3}
         value={text}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
