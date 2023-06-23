@@ -16,6 +16,7 @@ import AlertModal from '~/components/Modals/AlertModal';
 export default function Textarea({
   className,
   draggedFile,
+  hasError,
   innerRef,
   maxRows = 20,
   onDrop,
@@ -25,6 +26,7 @@ export default function Textarea({
 }: {
   className?: string;
   draggedFile?: File;
+  hasError?: boolean;
   innerRef?: any;
   maxRows?: number;
   onDrop?: (filePath: string) => void;
@@ -88,6 +90,10 @@ export default function Textarea({
         onDrop={onDrop ? handleDrop : undefined}
         onPaste={onDrop ? handlePaste : undefined}
         onDragOver={(e) => e.preventDefault()}
+        style={{
+          color: hasError ? Color.red() : undefined,
+          border: hasError ? `1px solid ${Color.red()}` : undefined
+        }}
         className={`${className} ${css`
           opacity: ${uploading ? 0.2 : 1};
           font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
