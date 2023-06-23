@@ -452,7 +452,14 @@ function Markdown({
     const doc = parser.parseFromString(text, 'text/html');
 
     traverse(doc.body);
-    return doc.body.innerHTML.replace('\n', '<br />').replace(/＠/g, '@');
+    let result = doc.body.innerHTML;
+    if (result.includes('\n')) {
+      result = result.replace('\n', '<br />');
+    }
+    if (result.includes('＠')) {
+      result = result.replace(/＠/g, '@');
+    }
+    return result;
 
     function traverse(node: Node) {
       if (
@@ -463,14 +470,23 @@ function Markdown({
         const parent = node.parentNode;
         const nodeValue = node.nodeValue || '';
 
-        const newNodeValue = nodeValue
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(mentionRegex, (string: string) => {
-            const path = string.slice(1);
-            const anchor = `<a class="mention" href="/users/${path}">@${path}</a>`;
-            return anchor;
-          });
+        let newNodeValue = nodeValue;
+        if (nodeValue.includes('<')) {
+          newNodeValue = newNodeValue.replace(/</g, '&lt;');
+        }
+        if (nodeValue.includes('>')) {
+          newNodeValue = newNodeValue.replace(/>/g, '&gt;');
+        }
+        if (mentionRegex.test(nodeValue)) {
+          newNodeValue = newNodeValue.replace(
+            mentionRegex,
+            (string: string) => {
+              const path = string.slice(1);
+              const anchor = `<a class="mention" href="/users/${path}">@${path}</a>`;
+              return anchor;
+            }
+          );
+        }
 
         if (nodeValue !== newNodeValue) {
           const tempDiv = document.createElement('div');
@@ -501,10 +517,16 @@ function Markdown({
   }
 
   function preprocessText(text: string) {
-    const processedText = text
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/=/g, '\\=');
+    let processedText = text;
+    if (processedText.includes('<')) {
+      processedText = processedText.replace(/</g, '&lt;');
+    }
+    if (processedText.includes('>')) {
+      processedText = processedText.replace(/>/g, '&gt;');
+    }
+    if (processedText.includes('=')) {
+      processedText = processedText.replace(/=/g, '\\=');
+    }
     const lines = processedText.split('\n');
     const tablePattern = new RegExp('\\|.*\\|.*\\|');
     const containsTable = lines.some((line) => tablePattern.test(line));
@@ -543,14 +565,17 @@ function Markdown({
   function removeNbsp(text?: string) {
     if (isAIMessage) return text;
     if (typeof text !== 'string') return text;
+    if (!text.includes('&nbsp;')) return text;
     return (text || '').replace(/&nbsp;/g, '');
   }
   function unescapeHtml(text: string) {
     if (typeof text !== 'string') return text;
+    if (!(text.includes('&lt;') || text.includes('&gt;'))) return text;
     return (text || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
   }
   function unescapeEqualSign(text: string) {
     if (typeof text !== 'string') return text;
+    if (!(text.includes('\\=') || text.includes('%5C='))) return text;
     return (text || '').replace(/\\=/g, '=').replace(/%5C=/g, '=');
   }
 }
