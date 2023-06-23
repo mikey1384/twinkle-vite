@@ -57,12 +57,12 @@ export default function StatusInput({
             ? ''
             : `box-shadow: ${`0 0 1rem ${Color.logoBlue()}`}; border: 1px solid ${Color.logoBlue()}`};
         `}
+        hasError={!!statusExceedsCharLimit}
         innerRef={innerRef}
         minRows={1}
         value={editedStatusMsg}
         onChange={onTextChange}
         placeholder={statusMsgPlaceholder}
-        style={statusExceedsCharLimit?.style}
       />
       <p
         style={{

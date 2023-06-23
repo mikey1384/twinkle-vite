@@ -141,9 +141,9 @@ export default function TextEditSection({
             onChange={onSecretAnswerChange}
             placeholder="Enter Secret Message... (Optional)"
             value={editedSecretAnswer}
+            hasError={!!secretAnswerExceedsCharLimit}
             style={{
-              marginTop: '0.7rem',
-              ...((secretAnswerExceedsCharLimit?.style || {}) as object)
+              marginTop: '0.7rem'
             }}
           />
           {secretAnswerExceedsCharLimit && (

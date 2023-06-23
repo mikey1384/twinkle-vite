@@ -269,7 +269,7 @@ export default function XPRewardInterface({
             handleSetComment(addEmoji(event.target.value));
           }}
           placeholder={rewardReasonLabel}
-          style={rewardCommentExceedsCharLimit?.style}
+          hasError={!!rewardCommentExceedsCharLimit}
         />
       )}
       {selectedAmount > 0 && (

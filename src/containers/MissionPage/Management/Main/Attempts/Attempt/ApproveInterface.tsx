@@ -111,7 +111,8 @@ export default function ApproveInterface({
               handleSetFeedback(addEmoji(event.target.value));
             }}
             placeholder={`Explain why you are approving/rejecting this mission attempt...`}
-            style={{ marginTop: '1rem', ...feedbackExceedsCharLimit?.style }}
+            hasError={!!feedbackExceedsCharLimit}
+            style={{ marginTop: '1rem' }}
           />
           <div
             style={{
@@ -121,6 +122,7 @@ export default function ApproveInterface({
             }}
           >
             <Button
+              disabled={!!feedbackExceedsCharLimit}
               style={{ marginTop: '1.5rem', fontSize: '2rem' }}
               color={status === 'pass' ? 'green' : 'rose'}
               filled

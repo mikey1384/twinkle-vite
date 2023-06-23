@@ -99,9 +99,9 @@ export default function SecretMessageInput({
           <Textarea
             autoFocus={autoFocus}
             draggedFile={draggedFile}
+            hasError={!!secretAnswerExceedsCharLimit}
             style={{
-              marginTop: '0.5rem',
-              ...(secretAnswerExceedsCharLimit || null)
+              marginTop: '0.5rem'
             }}
             value={secretAnswer}
             minRows={4}

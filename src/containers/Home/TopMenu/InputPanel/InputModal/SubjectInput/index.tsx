@@ -298,9 +298,9 @@ function SubjectInput({ onModalHide }: { onModalHide: () => void }) {
                 draggedFile={draggedFile}
                 onDrop={handleDrop}
                 style={{
-                  marginTop: '1rem',
-                  ...(descriptionExceedsCharLimit?.style || null)
+                  marginTop: '1rem'
                 }}
+                hasError={!!descriptionExceedsCharLimit}
                 value={description}
                 minRows={4}
                 placeholder={enterDescriptionOptionalLabel}

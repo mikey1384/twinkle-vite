@@ -140,10 +140,9 @@ export default function SubjectInputForm({
             <div style={{ position: 'relative' }}>
               <Textarea
                 style={{
-                  marginTop: '1rem',
-                  color: description.length > descriptionMaxChar && 'red',
-                  borderColor: description.length > descriptionMaxChar && 'red'
+                  marginTop: '1rem'
                 }}
+                hasError={description.length > descriptionMaxChar}
                 minRows={rows}
                 placeholder={descriptionPlaceholder}
                 value={description}

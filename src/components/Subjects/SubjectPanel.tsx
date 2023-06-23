@@ -32,7 +32,7 @@ import {
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { SELECTED_LANGUAGE, charLimit } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const commentLabel = localize('comment');
@@ -75,6 +75,8 @@ export default function SubjectPanel({
   secretAttachment: any;
   subjectId: number;
 }) {
+  const titleMaxChar = charLimit.subject.title;
+  const descriptionMaxChar = charLimit.subject.description;
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
@@ -183,9 +185,17 @@ export default function SubjectPanel({
   useEffect(() => {
     const titleIsEmpty = stringIsEmpty(editedTitle);
     const titleChanged = editedTitle !== title;
+    const titleExceedsCharLimit = editedTitle.length > titleMaxChar;
+    const descriptionExceedsCharLimit =
+      editedDescription.length > descriptionMaxChar;
+    const secretAnswerExceedsCharLimit =
+      editedSecretAnswer.length > descriptionMaxChar;
     const descriptionChanged = editedDescription !== description;
     const secretAnswerChanged = editedSecretAnswer !== secretAnswer;
     const editDoneButtonDisabled =
+      titleExceedsCharLimit ||
+      descriptionExceedsCharLimit ||
+      secretAnswerExceedsCharLimit ||
       titleIsEmpty ||
       (!titleChanged && !descriptionChanged && !secretAnswerChanged);
     setEditDoneButtonDisabled(editDoneButtonDisabled);
@@ -195,7 +205,9 @@ export default function SubjectPanel({
     editedSecretAnswer,
     title,
     description,
-    secretAnswer
+    secretAnswer,
+    titleMaxChar,
+    descriptionMaxChar
   ]);
   const CommentsRef: React.RefObject<any> = useRef(null);
   const RewardInterfaceRef: React.RefObject<any> = useRef(null);
@@ -308,6 +320,7 @@ export default function SubjectPanel({
               onKeyUp={(event: any) =>
                 setEditedTitle(addEmoji(event.target.value))
               }
+              hasError={editedTitle.length > titleMaxChar}
             />
           </form>
         )}
@@ -321,6 +334,7 @@ export default function SubjectPanel({
               onChange={(event: any) => {
                 setEditedDescription(event.target.value);
               }}
+              hasError={editedDescription.length > descriptionMaxChar}
             />
             <div style={{ marginTop: '1rem' }}>
               <span style={{ fontSize: '1.7rem', fontWeight: 'bold' }}>
@@ -331,6 +345,7 @@ export default function SubjectPanel({
                 placeholder="Enter Secret Message (Optional)"
                 minRows={5}
                 value={editedSecretAnswer}
+                hasError={editedSecretAnswer.length > descriptionMaxChar}
                 onChange={(event: any) => {
                   setEditedSecretAnswer(event.target.value);
                 }}

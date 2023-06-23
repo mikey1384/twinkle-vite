@@ -160,7 +160,7 @@ export default function AddPlaylistModal({
                       setDescription(addEmoji(event.target.value));
                     }
                   }}
-                  style={descriptionExceedsCharLimit?.style}
+                  hasError={!!descriptionExceedsCharLimit}
                 />
                 {descriptionExceedsCharLimit && (
                   <small style={{ color: 'red', fontSize: '1.3rem' }}>

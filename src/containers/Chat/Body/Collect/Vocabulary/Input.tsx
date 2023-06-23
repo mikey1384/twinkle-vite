@@ -77,15 +77,13 @@ export default function Input({
           onKeyDown={handleKeyDown}
           value={text}
           onChange={handleChange}
-          style={{
-            ...(messageExceedsCharLimit?.style || {})
-          }}
+          hasError={!!messageExceedsCharLimit}
         />
         {registerButtonShown && (
           <div style={{ height: '100%', margin: '0.5rem 0 0.2rem 1rem' }}>
             <Button
               filled
-              disabled={loading || isSubmitting}
+              disabled={loading || isSubmitting || !!messageExceedsCharLimit}
               color="green"
               onClick={handleSubmit}
             >
@@ -133,6 +131,7 @@ export default function Input({
   }
 
   function handleSubmit() {
+    if (messageExceedsCharLimit) return;
     innerRef.current.focus();
     if (stringIsEmpty(text)) return;
     onSubmit(text);

@@ -102,9 +102,9 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
         )}
         <Textarea
           style={{
-            marginTop: '1rem',
-            ...(descriptionExceedsCharLimit?.style || {})
+            marginTop: '1rem'
           }}
+          hasError={!!descriptionExceedsCharLimit}
           value={form.description}
           minRows={4}
           placeholder="Enter Description (Optional, you don't need to write this)"
