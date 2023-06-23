@@ -329,9 +329,9 @@ export default function Description({
                   handleDescriptionChange(addEmoji(event.target.value));
                 }
               }}
+              hasError={!!descriptionExceedsCharLimit}
               style={{
-                marginTop: '1rem',
-                ...(descriptionExceedsCharLimit?.style || {})
+                marginTop: '1rem'
               }}
             />
             {descriptionExceedsCharLimit && (

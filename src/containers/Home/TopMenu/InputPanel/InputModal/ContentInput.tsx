@@ -308,9 +308,9 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
                       handleSetDescription(addEmoji(event.target.value));
                     }
                   }}
+                  hasError={!!descriptionExceedsCharLimit}
                   style={{
-                    marginTop: '1rem',
-                    ...(descriptionExceedsCharLimit?.style || {})
+                    marginTop: '1rem'
                   }}
                 />
                 {descriptionExceedsCharLimit && (

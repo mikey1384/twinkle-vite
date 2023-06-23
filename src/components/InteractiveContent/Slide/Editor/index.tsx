@@ -372,7 +372,8 @@ export default function Editor({
             }}
             placeholder={edit.description}
             value={editedDescription}
-            style={{ marginTop: '1rem', ...descriptionExceedsCharLimit?.style }}
+            hasError={!!descriptionExceedsCharLimit}
+            style={{ marginTop: '1rem' }}
           />
           <AttachmentField
             type={editedAttachment?.type || 'none'}

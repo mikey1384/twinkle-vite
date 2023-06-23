@@ -75,9 +75,9 @@ export default function FileInfo({
           <Textarea
             autoFocus
             placeholder="Add a caption..."
+            hasError={!!captionExceedsCharLimit}
             style={{
-              marginTop: '1rem',
-              ...(captionExceedsCharLimit?.style || {})
+              marginTop: '1rem'
             }}
             value={caption}
             onChange={(event: any) => onCaptionChange(event.target.value)}
