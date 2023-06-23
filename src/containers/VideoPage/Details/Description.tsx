@@ -58,10 +58,10 @@ export default function Description({
             value={editedDescription}
             onChange={onChange}
             onKeyUp={onKeyUp}
+            hasError={!!descriptionExceedsCharLimit(editedDescription)}
             style={{
               width: '100%',
-              marginTop: '1rem',
-              ...(descriptionExceedsCharLimit(editedDescription)?.style || {})
+              marginTop: '1rem'
             }}
           />
           {descriptionExceedsCharLimit(editedDescription) && (
