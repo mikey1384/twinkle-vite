@@ -263,6 +263,9 @@ export default function Main({
     (v) => v.actions.onSearchChatSubject
   );
   const onTrimMessages = useChatContext((v) => v.actions.onTrimMessages);
+  const onTrimSubchannelMessages = useChatContext(
+    (v) => v.actions.onTrimSubchannelMessages
+  );
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
   );
@@ -703,13 +706,19 @@ export default function Main({
   useEffect(() => {
     socket.emit('change_away_status', pageVisible);
     return function cleanUp() {
-      onClearNumUnreads();
       if (selectedChannelId) {
-        onTrimMessages(selectedChannelId);
+        if (selectedSubchannelId) {
+          onTrimSubchannelMessages({
+            channelId: selectedChannelId,
+            subchannelId: selectedSubchannelId
+          });
+        } else {
+          onTrimMessages(selectedChannelId);
+        }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId]);
+  }, [selectedSubchannelId, selectedChannelId]);
 
   const currentOnlineUsers = useMemo(() => {
     const result: any = {};

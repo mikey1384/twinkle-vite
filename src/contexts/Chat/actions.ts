@@ -1302,6 +1302,19 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId
       });
     },
+    onTrimSubchannelMessages({
+      channelId,
+      subchannelId
+    }: {
+      channelId: number;
+      subchannelId: number;
+    }) {
+      return dispatch({
+        type: 'TRIM_SUBCHANNEL_MESSAGES',
+        channelId,
+        subchannelId
+      });
+    },
     onUpdateAICard({
       cardId,
       newState,
