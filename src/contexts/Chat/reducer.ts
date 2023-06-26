@@ -2524,6 +2524,43 @@ export default function ChatReducer(
           }
         }
       };
+    case 'TRIM_SUBCHANNEL_MESSAGES': {
+      const prevChannelObj = state.channelsObj[action.channelId] || {};
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              messageIds:
+                prevChannelObj?.subchannelObj?.[action.subchannelId]?.messageIds
+                  ?.length > 20
+                  ? prevChannelObj?.subchannelObj?.[
+                      action.subchannelId
+                    ]?.messageIds?.filter(
+                      (_: number, index: number) => index <= 20
+                    )
+                  : prevChannelObj?.subchannelObj?.[action.subchannelId]
+                      ?.messageIds,
+              loadMoreButtonShown:
+                prevChannelObj?.subchannelObj?.[action.subchannelId]?.messageIds
+                  ?.length > 20
+                  ? true
+                  : prevChannelObj?.subchannelObj?.[action.subchannelId]
+                      ?.messagesLoadMoreButton
+            }
+          }
+        : prevChannelObj?.subchannelObj;
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            subchannelObj
+          }
+        }
+      };
+    }
     case 'UPDATE_CURRENT_TRANSACTION_ID':
       return {
         ...state,
