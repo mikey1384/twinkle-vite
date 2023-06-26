@@ -2546,7 +2546,7 @@ export default function ChatReducer(
                   ?.length > 20
                   ? true
                   : prevChannelObj?.subchannelObj?.[action.subchannelId]
-                      ?.messagesLoadMoreButton
+                      ?.loadMoreButtonShown
             }
           }
         : prevChannelObj?.subchannelObj;
