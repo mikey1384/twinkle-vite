@@ -49,7 +49,7 @@ export default function Description({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ width: '100%', fontSize: '1.6rem' }}>
       {onEdit ? (
         <>
           <Textarea
@@ -99,7 +99,6 @@ export default function Description({
             whiteSpace: 'pre-wrap',
             overflowWrap: 'break-word',
             wordBreak: 'break-word',
-            fontSize: '1.6rem',
             padding: '1rem 0',
             lineHeight: '2.3rem'
           }}
