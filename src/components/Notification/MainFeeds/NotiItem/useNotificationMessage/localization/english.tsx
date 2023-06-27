@@ -203,6 +203,8 @@ export default function renderEnglishMessage({
                     ? isTask
                       ? 'task'
                       : 'mission'
+                    : rewardRootType === 'aiStory'
+                    ? 'AI Story'
                     : rewardRootType
                 }`,
                 missionType: rewardRootMissionType
