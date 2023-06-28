@@ -74,6 +74,7 @@ export default function Header({
   const loadRankings = useAppContext((v) => v.requestHelpers.loadRankings);
   const loadCoins = useAppContext((v) => v.requestHelpers.loadCoins);
   const loadXP = useAppContext((v) => v.requestHelpers.loadXP);
+  const onLogout = useAppContext((v) => v.user.actions.onLogout);
   const updateChatLastRead = useAppContext(
     (v) => v.requestHelpers.updateChatLastRead
   );
@@ -716,10 +717,16 @@ export default function Header({
           }
         );
         socket.emit('enter_my_notification_channel', userId);
-        handleLoadChat(selectedChannelId);
+        handleLoadChat({ selectedChannelId });
       }
 
-      async function handleLoadChat(selectedChannelId: number) {
+      async function handleLoadChat({
+        selectedChannelId,
+        retryCount = 0
+      }: {
+        selectedChannelId: number;
+        retryCount?: number;
+      }) {
         try {
           onSetReconnecting(true);
           const pathId = Number(currentPathId);
@@ -754,8 +761,18 @@ export default function Header({
             return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
           }
         } catch (error) {
-          console.error(error);
-          setTimeout(() => handleLoadChat(selectedChannelId), 3000);
+          if (retryCount < 3) {
+            setTimeout(
+              () =>
+                handleLoadChat({
+                  selectedChannelId,
+                  retryCount: retryCount + 1
+                }),
+              1000
+            );
+          } else {
+            onLogout();
+          }
         }
       }
 
@@ -1441,7 +1458,11 @@ export default function Header({
       let currentPageTitle = 'Twinkle';
       if (section !== 'home') {
         const displayedSection =
-          section === 'ai-cards' ? 'Explore AI Cards' : section === 'ai-stories' ? 'AI Stories' : section;
+          section === 'ai-cards'
+            ? 'Explore AI Cards'
+            : section === 'ai-stories'
+            ? 'AI Stories'
+            : section;
         currentPageTitle = `${capitalize(
           displayedSection
         )} | ${currentPageTitle}`;
