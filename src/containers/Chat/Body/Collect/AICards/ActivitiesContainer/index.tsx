@@ -6,7 +6,9 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
 export default function ActivitiesContainer() {
-  const { userId: myId } = useKeyContext((v) => v.myState);
+  const { userId: myId, username: myUsername } = useKeyContext(
+    (v) => v.myState
+  );
   const loadAICardFeeds = useAppContext(
     (v) => v.requestHelpers.loadAICardFeeds
   );
@@ -118,6 +120,7 @@ export default function ActivitiesContainer() {
               onReceiveNewActivity={handleReceiveNewActivity}
               onSetScrollToBottom={handleSetScrollToBottom}
               myId={myId}
+              myUsername={myUsername}
             />
           );
         })}

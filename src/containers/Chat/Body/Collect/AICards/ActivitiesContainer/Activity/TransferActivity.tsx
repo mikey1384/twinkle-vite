@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
+import moment from 'moment';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -9,6 +10,7 @@ export default function TransferActivity({
   card,
   feed,
   myId,
+  myUsername,
   onReceiveNewActivity,
   onSetUsermenuShown,
   onSetScrollToBottom,
@@ -17,24 +19,35 @@ export default function TransferActivity({
   card: any;
   feed: any;
   myId: number;
+  myUsername: string;
   onReceiveNewActivity: () => void;
   onSetUsermenuShown: (arg0: boolean) => void;
   onSetScrollToBottom: () => void;
   isLastActivity: boolean;
 }) {
-  const isPurchase = useMemo(() => !!feed?.transfer?.askId, [feed]);
-  const isSale = useMemo(() => !!feed?.transfer?.offerId, [feed]);
-  const isTransaction = useMemo(
-    () => isPurchase || isSale,
-    [isPurchase, isSale]
-  );
+  const transferData = useMemo(() => {
+    const transferDetails = feed?.transfer || {};
+    const isPurchase = !!transferDetails.askId;
+    const isSale = !!transferDetails.offerId;
+    const isTransaction = isPurchase || isSale;
+    const card = transferDetails.card;
+    const displayedTimeStamp = moment
+      .unix(transferDetails.timeStamp)
+      .format('lll');
+    const price = isTransaction
+      ? isPurchase
+        ? transferDetails.ask?.price
+        : transferDetails.offer?.price
+      : 0;
+    return { isPurchase, isSale, card, displayedTimeStamp, price };
+  }, [feed?.transfer]);
 
   useEffect(() => {
     if (isLastActivity) {
-      if (isPurchase && myId === feed?.transfer?.to?.id) {
+      if (transferData.isPurchase && myId === feed?.transfer?.to?.id) {
         onSetScrollToBottom();
       }
-      if (isSale && myId === feed?.transfer?.from?.id) {
+      if (transferData.isSale && myId === feed?.transfer?.from?.id) {
         onSetScrollToBottom();
       }
     }
@@ -43,132 +56,105 @@ export default function TransferActivity({
 
   useEffect(() => {
     if (isLastActivity) {
-      if (isPurchase && myId !== feed?.transfer?.to?.id) {
+      if (transferData.isPurchase && myId !== feed?.transfer?.to?.id) {
         onReceiveNewActivity();
       }
-      if (isSale && myId !== feed?.transfer?.from?.id) {
+      if (transferData.isSale && myId !== feed?.transfer?.from?.id) {
         onReceiveNewActivity();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const transfer = useMemo(() => {
-    return feed.transfer;
-  }, [feed]);
-
-  const price = useMemo(() => {
-    if (!isTransaction) {
-      return 0;
-    }
-    return isPurchase ? transfer?.ask?.price : transfer?.offer?.price;
-  }, [isPurchase, isTransaction, transfer?.ask?.price, transfer?.offer?.price]);
 
   const actionDescription = useMemo(() => {
-    if (isPurchase) {
+    const transferDetails = feed?.transfer || {};
+    const { displayedTimeStamp, isPurchase, isSale, price } = transferData;
+    const buyer =
+      transferDetails.to.id === myId
+        ? { id: myId, username: myUsername }
+        : { id: transferDetails.to.id, username: transferDetails.to.username };
+    const seller =
+      transferDetails.from.id === myId
+        ? { id: myId, username: myUsername }
+        : {
+            id: transferDetails.from.id,
+            username: transferDetails.from.username
+          };
+
+    if (isPurchase || isSale) {
       return (
-        <div>
-          <UsernameText
-            displayedName={
-              transfer.to.id === myId ? 'You' : transfer.to.username
-            }
-            onMenuShownChange={onSetUsermenuShown}
-            color={Color.black()}
-            user={{
-              id: transfer.to.id,
-              username: transfer.to.username
-            }}
-          />{' '}
-          bought{' '}
-          <b
-            style={{
-              color: Color.black()
-            }}
+        <div
+          style={{
+            display: 'flex',
+            width: '100%',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <div>
+            {isPurchase ? (
+              <>
+                <UsernameText
+                  displayedName={buyer.id === myId ? 'You' : buyer.username}
+                  onMenuShownChange={onSetUsermenuShown}
+                  color={Color.black()}
+                  user={buyer}
+                />{' '}
+                bought <b style={{ color: Color.black() }}>Card #{card.id}</b>{' '}
+                from{' '}
+                <UsernameText
+                  displayedName={seller.id === myId ? 'you' : seller.username}
+                  onMenuShownChange={onSetUsermenuShown}
+                  color={Color.black()}
+                  user={seller}
+                />{' '}
+              </>
+            ) : (
+              <>
+                <UsernameText
+                  displayedName={seller.id === myId ? 'You' : seller.username}
+                  onMenuShownChange={onSetUsermenuShown}
+                  color={Color.black()}
+                  user={seller}
+                />{' '}
+                sold <b style={{ color: Color.black() }}>Card #{card.id}</b> to{' '}
+                <UsernameText
+                  displayedName={buyer.id === myId ? 'you' : buyer.username}
+                  onMenuShownChange={onSetUsermenuShown}
+                  color={Color.black()}
+                  user={buyer}
+                />{' '}
+              </>
+            )}
+            for{' '}
+            <b style={{ color: Color.black() }}>{addCommasToNumber(price)}</b>{' '}
+            Twinkle {price === 1 ? 'Coin' : 'Coins'}
+          </div>
+          <div
+            className={css`
+              font-size: 1.3rem;
+              margin-top: 1.7rem;
+              font-family: Roboto, sans-serif;
+              color: ${Color.darkerGray()};
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.2rem;
+              }
+            `}
           >
-            Card #{card.id}
-          </b>{' '}
-          from{' '}
-          <UsernameText
-            displayedName={
-              transfer.from.id === myId ? 'you' : transfer.from.username
-            }
-            onMenuShownChange={onSetUsermenuShown}
-            color={Color.black()}
-            user={{
-              id: transfer.from.id,
-              username: transfer.from.username
-            }}
-          />{' '}
-          for{' '}
-          <b
-            style={{
-              color: Color.black()
-            }}
-          >
-            {addCommasToNumber(price)}
-          </b>{' '}
-          Twinkle {price === 1 ? 'Coin' : 'Coins'}
-        </div>
-      );
-    }
-    if (isSale) {
-      return (
-        <div>
-          <UsernameText
-            displayedName={
-              transfer.from.id === myId ? 'You' : transfer.from.username
-            }
-            onMenuShownChange={onSetUsermenuShown}
-            color={Color.black()}
-            user={{
-              id: transfer.from.id,
-              username: transfer.from.username
-            }}
-          />{' '}
-          sold{' '}
-          <b
-            style={{
-              color: Color.black()
-            }}
-          >
-            Card #{card.id}
-          </b>{' '}
-          to{' '}
-          <UsernameText
-            displayedName={
-              transfer.to.id === myId ? 'you' : transfer.to.username
-            }
-            onMenuShownChange={onSetUsermenuShown}
-            color={Color.black()}
-            user={{
-              id: transfer.to.id,
-              username: transfer.to.username
-            }}
-          />{' '}
-          for{' '}
-          <b
-            style={{
-              color: Color.black()
-            }}
-          >
-            {addCommasToNumber(price)}
-          </b>{' '}
-          Twinkle {price === 1 ? 'Coin' : 'Coins'}
+            {displayedTimeStamp}
+          </div>
         </div>
       );
     }
     return '';
   }, [
     card.id,
-    isPurchase,
-    isSale,
+    feed?.transfer,
     myId,
+    myUsername,
     onSetUsermenuShown,
-    price,
-    transfer.from.id,
-    transfer.from.username,
-    transfer.to.id,
-    transfer.to.username
+    transferData
   ]);
 
   return (

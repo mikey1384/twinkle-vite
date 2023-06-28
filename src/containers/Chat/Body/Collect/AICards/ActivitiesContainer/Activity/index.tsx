@@ -12,6 +12,7 @@ export default function Activity({
   cardObj,
   feed,
   myId,
+  myUsername,
   onReceiveNewActivity,
   onSetScrollToBottom
 }: {
@@ -19,6 +20,7 @@ export default function Activity({
   cardObj: any;
   feed: any;
   myId: number;
+  myUsername: string;
   onReceiveNewActivity: () => void;
   onSetScrollToBottom: () => void;
 }) {
@@ -91,6 +93,7 @@ export default function Activity({
             feed={feed}
             card={card}
             myId={myId}
+            myUsername={myUsername}
             onSetUsermenuShown={setUsermenuShown}
             isLastActivity={isLastActivity}
             onReceiveNewActivity={onReceiveNewActivity}
