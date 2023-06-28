@@ -1,9 +1,8 @@
-import React, { Children, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Children, useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ProgressBar from './ProgressBar';
 import ReactionText from './ReactionText';
 import { useSpring, animated } from 'react-spring';
-import { scrollElementToCenter } from '~/helpers';
 
 export default function SlideContainer({
   children,
@@ -22,27 +21,17 @@ export default function SlideContainer({
 }) {
   const [streakEffectOff, setStreakEffectOff] = useState(false);
   const questionsStyle = useSpring({ opacity: isCompleted ? 0 : 1 });
-  const SlideRefs: React.RefObject<any> = useRef({});
   const childrenArray = useMemo(() => Children.toArray(children), [children]);
   const DisplayedSlide = useMemo(() => {
     const SlideComponent: any = childrenArray.filter(
       (_, index) => index === selectedIndex
     )[0];
-    return {
-      ...SlideComponent,
-      props: {
-        ...SlideComponent?.props,
-        onCountdownStart,
-        innerRef: (ref: any) => (SlideRefs.current[selectedIndex] = ref),
-        index: selectedIndex,
-        isCompleted
-      }
-    };
+    return React.cloneElement(SlideComponent, {
+      onCountdownStart,
+      index: selectedIndex,
+      isCompleted
+    });
   }, [childrenArray, isCompleted, onCountdownStart, selectedIndex]);
-
-  useEffect(() => {
-    scrollElementToCenter(SlideRefs.current[selectedIndex]);
-  }, [selectedIndex]);
 
   useEffect(() => {
     if (isCompleted) {
@@ -51,7 +40,7 @@ export default function SlideContainer({
   }, [isCompleted]);
 
   return (
-    <ErrorBoundary componentPath="Earn/GrammarGameModal/SlideContainer">
+    <ErrorBoundary componentPath="Earn/GrammarGameModal/Game/Main/SlideContainer">
       <div style={{ width: '100%', position: 'relative' }}>
         <animated.div
           style={{

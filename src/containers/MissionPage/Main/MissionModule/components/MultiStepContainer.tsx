@@ -45,17 +45,13 @@ export default function MultiStepContainer({
   const childrenArray = useMemo(() => Children.toArray(children), [children]);
   const DisplayedSlide = useMemo(() => {
     const SlideComponent: any = childrenArray.filter(
-      (child, index) => index === selectedIndex
+      (_, index) => index === selectedIndex
     )[0];
-    return {
-      ...SlideComponent,
-      props: {
-        ...SlideComponent?.props,
-        innerRef: (ref: React.RefObject<any>) =>
-          (SlideRefs.current[selectedIndex] = ref),
-        index: selectedIndex
-      }
-    };
+    return React.cloneElement(SlideComponent, {
+      innerRef: (ref: React.RefObject<any>) =>
+        (SlideRefs.current[selectedIndex] = ref),
+      index: selectedIndex
+    });
   }, [childrenArray, selectedIndex]);
 
   const NextButton = useMemo(() => {
