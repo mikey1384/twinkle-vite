@@ -26,13 +26,13 @@ export default function HelloWorld({
   const allPassed = useMemo(() => {
     let passed = true;
     for (const key of exerciseKeys) {
-      if (missions[task.missionType]?.[key] !== 'pass') {
+      if (missions?.[task?.missionType]?.[key] !== 'pass') {
         passed = false;
         break;
       }
     }
     return passed;
-  }, [missions, task.missionType]);
+  }, [missions, task?.missionType]);
 
   return (
     <ErrorBoundary
