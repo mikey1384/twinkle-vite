@@ -157,6 +157,7 @@ export function useMyState() {
       : {
           loaded,
           lastChatPath: '',
+          missions: {},
           rewardBoostLvl: 0,
           profileTheme: storedProfileTheme,
           profilePicUrl: storedProfilePicUrl,
