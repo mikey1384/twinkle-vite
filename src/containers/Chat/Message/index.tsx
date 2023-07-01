@@ -212,7 +212,8 @@ function Message({
   const PanelRef = useRef(null);
   const DropdownButtonRef = useRef(null);
   const [placeholderHeight, setPlaceholderHeight] = useState(0);
-  const [visible, setVisible] = useState(true);
+  const [contentShown, setContentShown] = useState(isLastMsg);
+  const [visible, setVisible] = useState(false);
   useLazyLoad({
     PanelRef,
     inView,
@@ -409,10 +410,11 @@ function Message({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
 
-  const contentShown = useMemo(
-    () => inView || isLastMsg || started || visible || !placeholderHeight,
-    [inView, isLastMsg, placeholderHeight, started, visible]
-  );
+  useEffect(() => {
+    setContentShown(
+      inView || isLastMsg || started || visible || !placeholderHeight
+    );
+  }, [inView, isLastMsg, placeholderHeight, started, visible]);
 
   const dropdownMenuItems = useMemo(() => {
     const result: any[] = [];
