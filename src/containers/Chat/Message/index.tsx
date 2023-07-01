@@ -211,16 +211,6 @@ function Message({
   });
   const PanelRef = useRef(null);
   const DropdownButtonRef = useRef(null);
-  const [placeholderHeight, setPlaceholderHeight] = useState(0);
-  const [contentShown, setContentShown] = useState(isLastMsg);
-  const [visible, setVisible] = useState(false);
-  useLazyLoad({
-    PanelRef,
-    inView,
-    onSetPlaceholderHeight: setPlaceholderHeight,
-    onSetVisible: setVisible,
-    delay: 1000
-  });
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
   useEffect(() => {
     if (isLastMsg && userIsUploader) {
@@ -410,11 +400,39 @@ function Message({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
 
+  const [placeholderHeight, setPlaceholderHeight] = useState(0);
+  const [contentShown, setContentShown] = useState(!isAIMessage || isLastMsg);
+  const [visible, setVisible] = useState(false);
+  useLazyLoad({
+    PanelRef,
+    inView,
+    onSetPlaceholderHeight: setPlaceholderHeight,
+    onSetVisible: setVisible,
+    delay: 1000
+  });
+  const placeholderHeightRef = useRef(placeholderHeight);
+  useEffect(() => {
+    placeholderHeightRef.current = placeholderHeight;
+  }, [placeholderHeight]);
+
+  const startedRef = useRef(started);
+  useEffect(() => {
+    startedRef.current = started;
+  }, [started]);
+
+  const visibleRef = useRef(visible);
+  useEffect(() => {
+    visibleRef.current = visible;
+  }, [visible]);
+
   useEffect(() => {
     setContentShown(
-      inView || isLastMsg || started || visible || !placeholderHeight
+      inView ||
+        startedRef.current ||
+        visibleRef.current ||
+        !placeholderHeightRef.current
     );
-  }, [inView, isLastMsg, placeholderHeight, started, visible]);
+  }, [inView]);
 
   const dropdownMenuItems = useMemo(() => {
     const result: any[] = [];
