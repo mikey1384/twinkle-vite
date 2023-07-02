@@ -13,14 +13,17 @@ const top30Label = localize('top30');
 
 Rankings.propTypes = {
   onSetRankingsTab: PropTypes.func.isRequired,
+  onSetUsermenuShown: PropTypes.func.isRequired,
   rankingsTab: PropTypes.string.isRequired
 };
 
 export default function Rankings({
   rankingsTab,
+  onSetUsermenuShown,
   onSetRankingsTab
 }: {
   rankingsTab: string;
+  onSetUsermenuShown: (shown: boolean) => void;
   onSetRankingsTab: (tab: string) => void;
 }) {
   const loadAIStoryRankings = useAppContext(
@@ -100,6 +103,7 @@ export default function Rankings({
               key={user.id}
               user={user}
               myId={myId}
+              onUsermenuShownChange={onSetUsermenuShown}
               target="xpEarned"
             />
           ))}

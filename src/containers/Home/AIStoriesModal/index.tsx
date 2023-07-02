@@ -42,6 +42,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [storyType, setStoryType] = useState('');
   const [loadingTopic, setLoadingTopic] = useState(false);
   const [topicLoadError, setTopicLoadError] = useState(false);
+  const [usermenuShown, setUsermenuShown] = useState(false);
   const requestRef: React.MutableRefObject<any> = useRef(null);
 
   useEffect(() => {
@@ -138,7 +139,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         height: '80vh'
       }}
       large
-      onHide={onHide}
+      onHide={handleHide}
     >
       {(!generateButtonPressed || solveObj.isGraded || storyLoadError) && (
         <header style={{ padding: 0 }}>
@@ -182,7 +183,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             loadingTopic={loadingTopic}
             generateButtonPressed={generateButtonPressed}
             loadStoryComplete={loadStoryComplete}
-            onHide={onHide}
+            onHide={handleHide}
             onLoadQuestions={handleLoadQuestions}
             onLoadTopic={handleLoadTopic}
             onSetAttemptId={setAttemptId}
@@ -230,6 +231,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
           >
             <Rankings
               onSetRankingsTab={setRankingsTab}
+              onSetUsermenuShown={setUsermenuShown}
               rankingsTab={rankingsTab}
             />
           </div>
@@ -292,6 +294,10 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       }
     }
     throw new Error('Failed to load topic after maximum retries');
+  }
+
+  async function handleHide() {
+    if (!usermenuShown) onHide();
   }
 
   async function handleLoadQuestions() {
