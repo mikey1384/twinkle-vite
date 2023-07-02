@@ -61,7 +61,7 @@ export default function Body({
           position: relative;
           background: #fff;
           @media (max-width: ${mobileMaxWidth}) {
-            width: ${isUsingCollectSection ? '82vw' : '90vw'};
+            width: ${isUsingCollectSection ? '100vw' : '90vw'};
           }
         `}
       >
