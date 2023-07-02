@@ -67,6 +67,7 @@ export default function MissionItem({
       onClick={handleLinkClick}
       style={style}
       className={`${css`
+        color: ${Color.black()};
         background: #fff;
         padding: 1rem;
         border: 1px solid ${Color.borderGray()};
