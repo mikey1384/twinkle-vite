@@ -20,10 +20,7 @@ export default function DefaultComponent({
   return (
     <div>
       <Link to={src} style={{ fontWeight: 'bold' }}>
-        <u>
-          Go to {linkLabel}
-          {}
-        </u>
+        <u>Go to {linkLabel}</u>
       </Link>
     </div>
   );
