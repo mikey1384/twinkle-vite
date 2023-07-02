@@ -23,6 +23,9 @@ export default function InternalComponent({
     const linkSubType = urlParts[2];
     const contentId = linkSubType?.split('?')?.[0];
     const mainContentTypes = ['videos', 'links', 'subjects'];
+    if (isProfileComponent) {
+      return <DefaultComponent linkType={linkType} src={src} />;
+    }
     if (mainContentTypes.includes(linkType) && contentId) {
       const contentType = linkType.slice(0, -1);
       return (
@@ -32,7 +35,7 @@ export default function InternalComponent({
     if (linkType === 'missions' && contentId) {
       return <MissionComponent src={src} />;
     }
-    if (linkType === 'users' && !isProfileComponent) {
+    if (linkType === 'users') {
       return <UserComponent src={src} />;
     }
     if (
