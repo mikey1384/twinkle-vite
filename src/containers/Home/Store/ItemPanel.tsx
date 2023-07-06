@@ -42,6 +42,9 @@ export default function ItemPanel({
 }) {
   const [highlighted, setHighlighted] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);
+  const displayedRequiredKarmaPoints = useMemo(() => {
+    return addCommasToNumber(requiredKarmaPoints || 0);
+  }, [requiredKarmaPoints]);
   const unlockProgress = useMemo(() => {
     return Math.floor(
       Math.min(((karmaPoints || 0) * 100) / (requiredKarmaPoints || 0), 100)
@@ -55,25 +58,24 @@ export default function ItemPanel({
   }, [currentLvl, isLeveled, maxLvl, notUnlocked]);
   const requirementLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
-      return `${addCommasToNumber(requiredKarmaPoints || 0)}KP 필요`;
+      return `${displayedRequiredKarmaPoints}KP 필요`;
     }
-    return `Requires ${addCommasToNumber(requiredKarmaPoints || 0)} KP`;
-  }, [requiredKarmaPoints]);
+    return `Requires ${displayedRequiredKarmaPoints} KP`;
+  }, [displayedRequiredKarmaPoints]);
   const requirementDescriptionLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return (
         <>
           본 아이템을 {notUpgraded ? '업그레이드' : '잠금 해제'}하시려면
-          카마포인트 <b>{addCommasToNumber(requiredKarmaPoints || 0)}점</b>이
-          필요합니다. 회원님의 카마포인트는 현재{' '}
+          카마포인트 <b>{displayedRequiredKarmaPoints}점</b>이 필요합니다.
+          회원님의 카마포인트는 현재{' '}
           <b>{addCommasToNumber(karmaPoints || 0)}점</b>입니다
         </>
       );
     }
     return (
       <>
-        You need{' '}
-        <b>{addCommasToNumber(requiredKarmaPoints || 0)} karma points</b> to{' '}
+        You need <b>{displayedRequiredKarmaPoints} karma points</b> to{' '}
         {notUpgraded ? 'upgrade' : 'unlock'} this item. You have{' '}
         <b>
           {addCommasToNumber(karmaPoints || 0)} karma point
@@ -81,7 +83,7 @@ export default function ItemPanel({
         </b>
       </>
     );
-  }, [karmaPoints, notUpgraded, requiredKarmaPoints]);
+  }, [karmaPoints, notUpgraded, displayedRequiredKarmaPoints]);
 
   return (
     <div
