@@ -3,7 +3,7 @@ import ItemPanel from './ItemPanel';
 import Icon from '~/components/Icon';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { karmaPointTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const profilePicturesLabel = localize('profilePictures');
@@ -62,10 +62,10 @@ export default function ProfilePictureItem({
       currentLvl={numPics}
       maxLvl={item.maxLvl}
       karmaPoints={karmaPoints}
-      requiredKarmaPoints={karmaPointTable.profilePicture[numPics]}
       locked={!numPics}
       onUnlock={handleUpgrade}
       unlocking={unlocking}
+      itemKey="profilePicture"
       itemName={item.name[numPics]}
       itemDescription={descriptionLabel}
       style={style}

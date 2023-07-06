@@ -144,7 +144,8 @@ export const karmaPointTable: any = {
     7: 5_000,
     8: 5_500,
     9: 8_000
-  }
+  },
+  moreToCome: 30_000
 };
 
 export const videoRewardHash: { [key: string]: any } = {

@@ -9,11 +9,7 @@ import AICardItem from './AICardItem';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
-import {
-  priceTable,
-  karmaPointTable,
-  SELECTED_LANGUAGE
-} from '~/constants/defaultValues';
+import { priceTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import RewardBoostItem from './RewardBoostItem';
 import localize from '~/constants/localize';
 
@@ -106,6 +102,7 @@ export default function Store() {
       </div>
       <KarmaStatus />
       <ItemPanel
+        itemKey="changePassword"
         itemName={changePasswordLabel}
         style={{ marginTop: userId ? '4rem' : 0 }}
         itemDescription={changePasswordDescriptionLabel}
@@ -114,8 +111,8 @@ export default function Store() {
       </ItemPanel>
       <ItemPanel
         karmaPoints={karmaPoints}
-        requiredKarmaPoints={karmaPointTable.username}
         locked={!canChangeUsername}
+        itemKey="username"
         itemName={changeUsernameLabel}
         itemDescription={changeUsernameDescriptionLabel}
         onUnlock={handleUnlockUsernameChange}
@@ -135,8 +132,8 @@ export default function Store() {
       />
       <ItemPanel
         karmaPoints={karmaPoints}
-        requiredKarmaPoints={30_000}
         locked
+        itemKey="moreToCome"
         itemName={`${moreToComeLabel}...`}
         style={{ marginTop: '3rem' }}
       />

@@ -5,11 +5,7 @@ import MaxLevelItemInfo from './MaxLevelItemInfo';
 import { css } from '@emotion/css';
 import { Color, Theme, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import {
-  karmaPointTable,
-  videoRewardHash,
-  SELECTED_LANGUAGE
-} from '~/constants/defaultValues';
+import { videoRewardHash, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const boostRewardsFromWatchingXPVideosLabel = localize(
@@ -193,10 +189,10 @@ export default function RewardBoostItem({
       currentLvl={rewardBoostLvl}
       maxLvl={item.maxLvl}
       karmaPoints={karmaPoints}
-      requiredKarmaPoints={karmaPointTable.rewardBoost[rewardBoostLvl]}
       locked={!rewardBoostLvl}
       unlocking={unlocking}
       onUnlock={handleUpgrade}
+      itemKey="rewardBoost"
       itemName={item.name[rewardBoostLvl]}
       itemDescription={item.description[rewardBoostLvl]}
       style={style}

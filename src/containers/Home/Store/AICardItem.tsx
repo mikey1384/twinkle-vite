@@ -4,7 +4,6 @@ import ItemPanel from './ItemPanel';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
-import { karmaPointTable } from '~/constants/defaultValues';
 
 AICardItem.propTypes = {
   canGenerateAICard: PropTypes.bool,
@@ -33,8 +32,8 @@ export default function AICardItem({
   return (
     <ItemPanel
       karmaPoints={karmaPoints}
-      requiredKarmaPoints={karmaPointTable.aiCard}
       locked={!canGenerateAICard}
+      itemKey="aiCard"
       itemName="AI Card Summoner License"
       itemDescription="Become one of the special users who can summon AI Cards"
       onUnlock={handleUnlock}
