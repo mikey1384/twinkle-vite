@@ -7,11 +7,7 @@ import {
   translateMBToGB,
   translateMBToGBWithoutSpace
 } from '~/helpers/stringHelpers';
-import {
-  karmaPointTable,
-  maxSizes,
-  SELECTED_LANGUAGE
-} from '~/constants/defaultValues';
+import { maxSizes, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const expandMaximumUploadSizeLabel = localize('expandMaximumUploadSize');
@@ -66,7 +62,7 @@ const youCanNowUploadLabel =
 export default function FileSizeItem({
   style
 }: {
-  style?: React.CSSProperties
+  style?: React.CSSProperties;
 }) {
   const {
     fileUploadLvl = 0,
@@ -83,9 +79,9 @@ export default function FileSizeItem({
       currentLvl={fileUploadLvl}
       maxLvl={item.maxLvl}
       karmaPoints={karmaPoints}
-      requiredKarmaPoints={karmaPointTable.file[fileUploadLvl]}
       locked={!fileUploadLvl}
       onUnlock={handleUpgrade}
+      itemKey="file"
       itemName={item.name[fileUploadLvl]}
       itemDescription={item.description[fileUploadLvl]}
       style={style}

@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { karmaPointTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
@@ -14,6 +14,7 @@ const freeLabel = localize('free');
 export default function ItemPanel({
   children,
   currentLvl,
+  itemKey,
   itemName,
   itemDescription,
   isLeveled,
@@ -22,19 +23,18 @@ export default function ItemPanel({
   style,
   karmaPoints,
   onUnlock,
-  requiredKarmaPoints,
   unlocking,
   upgradeIcon
 }: {
   children?: React.ReactNode;
   currentLvl?: number;
+  itemKey: string;
   itemName: string;
   itemDescription?: React.ReactNode;
   isLeveled?: boolean;
   maxLvl?: number;
   karmaPoints?: number;
   locked?: boolean;
-  requiredKarmaPoints?: number;
   onUnlock?: () => void;
   style?: React.CSSProperties;
   unlocking?: boolean;
@@ -42,6 +42,12 @@ export default function ItemPanel({
 }) {
   const [highlighted, setHighlighted] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);
+  const requiredKarmaPoints = useMemo(() => {
+    if (!isLeveled) {
+      return karmaPointTable[itemKey];
+    }
+    return karmaPointTable[itemKey][currentLvl || 0];
+  }, [currentLvl, isLeveled, itemKey]);
   const displayedRequiredKarmaPoints = useMemo(() => {
     return addCommasToNumber(requiredKarmaPoints || 0);
   }, [requiredKarmaPoints]);
