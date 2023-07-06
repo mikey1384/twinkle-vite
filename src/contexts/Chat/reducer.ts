@@ -955,8 +955,10 @@ export default function ChatReducer(
           : {})
       };
       if (alreadyUsingChat) {
-        newChannelsObj[state.selectedChannelId] =
-          state.channelsObj[state.selectedChannelId];
+        newChannelsObj[state.selectedChannelId] = {
+          ...state.channelsObj[state.selectedChannelId],
+          loaded: true
+        };
       }
       for (const channelId in newChannelsObj) {
         if (
