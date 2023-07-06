@@ -1020,7 +1020,7 @@ export default function ChatReducer(
         myListedCardIds: state.myListedCardIds,
         myListedCardsLoadMoreButton: state.myListedCardsLoadMoreButton,
         numCardSummonedToday: action.data.numCardSummonedToday,
-        numUnreads: state.numUnreads,
+        numUnreads: alreadyUsingChat ? 0 : state.numUnreads,
         outgoingOffers: state.outgoingOffers,
         outgoingOffersLoadMoreButton: state.outgoingOffersLoadMoreButton,
         reconnecting: false,
