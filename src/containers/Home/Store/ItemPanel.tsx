@@ -48,7 +48,7 @@ export default function ItemPanel({
     }
     return karmaPointTable[itemKey][currentLvl || 0];
   }, [currentLvl, isLeveled, itemKey]);
-  const previousRequiredKarmaPoints = useMemo(() => {
+  const previouslyRequiredKarmaPoints = useMemo(() => {
     if (!isLeveled || !currentLvl) {
       return 0;
     }
@@ -60,12 +60,15 @@ export default function ItemPanel({
   const unlockProgress = useMemo(() => {
     return Math.floor(
       Math.min(
-        (((karmaPoints || 0) - previousRequiredKarmaPoints) * 100) /
-          ((requiredKarmaPoints || 0) - previousRequiredKarmaPoints),
+        Math.max(
+          ((karmaPoints || 0) - previouslyRequiredKarmaPoints) * 100,
+          0
+        ) /
+          ((requiredKarmaPoints || 0) - previouslyRequiredKarmaPoints),
         100
       )
     );
-  }, [karmaPoints, previousRequiredKarmaPoints, requiredKarmaPoints]);
+  }, [karmaPoints, previouslyRequiredKarmaPoints, requiredKarmaPoints]);
   const locked = useMemo(() => {
     return notUnlocked || (isLeveled && (currentLvl || 0) < (maxLvl || 0));
   }, [currentLvl, notUnlocked, isLeveled, maxLvl]);
