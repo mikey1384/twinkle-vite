@@ -100,29 +100,33 @@ export default function Results({
       {!searching && results.length === 0 && filter === prevFilter.current && (
         <div
           style={{
+            marginTop: '5rem',
             fontSize: '2.5rem',
             fontWeight: 'bold',
             color: Color.darkerGray(),
             justifyContent: 'center',
-            height: '40vh',
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
+            flexDirection: 'column'
           }}
         >
           <div style={{ textAlign: 'center' }}>
-            <p>{`No ${filter} found for "${searchText}"`}</p>
+            <p>{`No ${filter} found`}</p>
             <div
-              style={{ marginTop: '1rem', fontSize: '2rem', lineHeight: 1.7 }}
+              style={{ marginTop: '5rem', fontSize: '2rem', lineHeight: 1.7 }}
             >
               Search {`"${searchText}"`} for:
-              {availableFilters.map((availableFilter, index) => (
-                <p style={{ textTransform: 'capitalize' }} key={index}>
-                  <Link style={{ cursor: 'pointer' }} to={availableFilter}>
-                    {availableFilter}
-                  </Link>
-                </p>
-              ))}
+              <div style={{ marginTop: '2rem' }}>
+                {availableFilters.map((availableFilter, index) => (
+                  <p style={{ textTransform: 'capitalize' }} key={index}>
+                    <Link
+                      style={{ cursor: 'pointer' }}
+                      to={`../${availableFilter}`}
+                    >
+                      {availableFilter}
+                    </Link>
+                  </p>
+                ))}
+              </div>
             </div>
           </div>
         </div>
