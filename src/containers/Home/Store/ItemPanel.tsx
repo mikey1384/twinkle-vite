@@ -48,14 +48,24 @@ export default function ItemPanel({
     }
     return karmaPointTable[itemKey][currentLvl || 0];
   }, [currentLvl, isLeveled, itemKey]);
+  const previousRequiredKarmaPoints = useMemo(() => {
+    if (!isLeveled || !currentLvl) {
+      return 0;
+    }
+    return karmaPointTable[itemKey][currentLvl - 1];
+  }, [currentLvl, isLeveled, itemKey]);
   const displayedRequiredKarmaPoints = useMemo(() => {
     return addCommasToNumber(requiredKarmaPoints || 0);
   }, [requiredKarmaPoints]);
   const unlockProgress = useMemo(() => {
     return Math.floor(
-      Math.min(((karmaPoints || 0) * 100) / (requiredKarmaPoints || 0), 100)
+      Math.min(
+        (((karmaPoints || 0) - previousRequiredKarmaPoints) * 100) /
+          ((requiredKarmaPoints || 0) - previousRequiredKarmaPoints),
+        100
+      )
     );
-  }, [karmaPoints, requiredKarmaPoints]);
+  }, [karmaPoints, previousRequiredKarmaPoints, requiredKarmaPoints]);
   const locked = useMemo(() => {
     return notUnlocked || (isLeveled && (currentLvl || 0) < (maxLvl || 0));
   }, [currentLvl, notUnlocked, isLeveled, maxLvl]);
