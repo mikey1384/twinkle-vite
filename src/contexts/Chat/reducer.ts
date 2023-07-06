@@ -756,6 +756,7 @@ export default function ChatReducer(
             messageIds: action.data.messageIds,
             messagesObj: action.data.messagesObj,
             numUnreads: 0,
+            isReloadRequired: false,
             loaded: true,
             ...(action.data.currentSubchannelId
               ? { subchannelObj: newSubchannelObj }
@@ -957,6 +958,7 @@ export default function ChatReducer(
       if (alreadyUsingChat) {
         newChannelsObj[state.selectedChannelId] = {
           ...state.channelsObj[state.selectedChannelId],
+          isReloadRequired: true,
           loaded: true
         };
       }

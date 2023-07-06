@@ -152,6 +152,7 @@ function MessagesContainer({
     useKeyContext((v) => v.myState);
   const {
     currentTransactionId,
+    isReloadRequired = false,
     isRespondingToSubject = false,
     messageIds = [],
     messagesObj = {},
@@ -475,6 +476,19 @@ function MessagesContainer({
       ChatInputRef.current.blur();
     }
   }, [wordleModalShown]);
+
+  useEffect(() => {
+    if (isReloadRequired) {
+      reload();
+    }
+    async function reload() {
+      const data = await loadChatChannel({
+        channelId: selectedChannelId
+      });
+      onEnterChannelWithId(data);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReloadRequired, selectedChannelId]);
 
   useEffect(() => {
     socket.on('chess_timer_cleared', handleChessTimerCleared);
