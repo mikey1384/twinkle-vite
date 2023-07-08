@@ -7,7 +7,7 @@ import { Color } from '~/constants/css';
 import { karmaMultiplier, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
-export default function KarmaExplanation({
+export default function KarmaExplanationModal({
   authLevel,
   displayedKarmaPoints,
   numApprovedRecommendations,
