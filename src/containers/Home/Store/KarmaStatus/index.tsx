@@ -115,6 +115,7 @@ export default function KarmaStatus() {
                 numPostsRewarded={numPostsRewarded}
                 numRecommended={numRecommended}
                 numTwinklesRewarded={numTwinklesRewarded}
+                onHide={() => setKarmaExplanationShown(false)}
                 userType={userType}
               />
             </div>
