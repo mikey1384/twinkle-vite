@@ -73,7 +73,7 @@ export default function KarmaStatus() {
       {loadingKarma ? (
         <Loading style={{ height: '10rem' }} />
       ) : (
-        <>
+        <div>
           <p
             className={css`
               font-weight: bold;
@@ -98,7 +98,7 @@ export default function KarmaStatus() {
               userType={userType}
             />
           </div>
-        </>
+        </div>
       )}
     </div>
   );
