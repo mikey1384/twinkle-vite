@@ -90,16 +90,17 @@ export default function KarmaStatus() {
             `}
           >
             {youHaveKarmaPointsText}
-            <a
-              style={{
-                display: 'block',
-                cursor: 'pointer',
-                fontSize: '1.5rem'
-              }}
-              onClick={() => setKarmaExplanationShown(true)}
-            >
-              tap here to learn why
-            </a>
+            <div>
+              <a
+                style={{
+                  cursor: 'pointer',
+                  fontSize: '1.5rem'
+                }}
+                onClick={() => setKarmaExplanationShown(true)}
+              >
+                tap here to learn why
+              </a>
+            </div>
           </p>
           {karmaExplanationShown && (
             <div
