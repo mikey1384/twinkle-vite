@@ -53,7 +53,7 @@ export default function KarmaStatus() {
     if (karmaPoints) {
       return addCommasToNumber(karmaPoints);
     }
-    return 0;
+    return '0';
   }, [karmaPoints]);
 
   const youHaveKarmaPointsText = useMemo(() => {
@@ -110,7 +110,7 @@ export default function KarmaStatus() {
             >
               <KarmaExplanation
                 authLevel={authLevel}
-                karmaPoints={karmaPoints}
+                displayedKarmaPoints={displayedKarmaPoints}
                 numApprovedRecommendations={numApprovedRecommendations}
                 numPostsRewarded={numPostsRewarded}
                 numRecommended={numRecommended}
