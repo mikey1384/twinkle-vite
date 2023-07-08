@@ -12,7 +12,7 @@ export default function KarmaStatus() {
     (v) => v.requestHelpers.loadKarmaPoints
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { authLevel, userType, userId, karmaPoints } = useKeyContext(
+  const { authLevel, userId, karmaPoints, userType } = useKeyContext(
     (v) => v.myState
   );
   const [loadingKarma, setLoadingKarma] = useState(false);
@@ -88,16 +88,6 @@ export default function KarmaStatus() {
               margin-top: 2rem;
             `}
           >
-            {userType && (
-              <p
-                className={css`
-                  font-size: 2rem;
-                  font-weight: bold;
-                `}
-              >
-                {userType}
-              </p>
-            )}
             <KarmaExplanation
               authLevel={authLevel}
               karmaPoints={karmaPoints}
@@ -105,6 +95,7 @@ export default function KarmaStatus() {
               numPostsRewarded={numPostsRewarded}
               numRecommended={numRecommended}
               numTwinklesRewarded={numTwinklesRewarded}
+              userType={userType}
             />
           </div>
         </>
