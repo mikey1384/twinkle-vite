@@ -49,11 +49,18 @@ export default function KarmaStatus() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  const displayedKarmaPoints = useMemo(() => {
+    if (karmaPoints) {
+      return addCommasToNumber(karmaPoints);
+    }
+    return 0;
+  }, [karmaPoints]);
+
   const youHaveKarmaPointsText = useMemo(() => {
     return SELECTED_LANGUAGE === 'kr'
-      ? `회원님의 카마포인트는 ${addCommasToNumber(karmaPoints)}점입니다`
-      : `You have ${addCommasToNumber(karmaPoints)} Karma Points`;
-  }, [karmaPoints]);
+      ? `회원님의 카마포인트는 ${displayedKarmaPoints}점입니다`
+      : `You have ${displayedKarmaPoints} Karma Points`;
+  }, [displayedKarmaPoints]);
 
   if (!userId) return null;
 
@@ -85,7 +92,7 @@ export default function KarmaStatus() {
             {youHaveKarmaPointsText}
             <a
               style={{
-                marginLeft: '1rem',
+                display: 'block',
                 cursor: 'pointer',
                 fontSize: '1.5rem'
               }}
