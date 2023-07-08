@@ -5,7 +5,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
-import KarmaExplanation from './KarmaExplanation';
+import KarmaExplanationModal from './KarmaExplanationModal';
 
 export default function KarmaStatus() {
   const loadKarmaPoints = useAppContext(
@@ -108,7 +108,7 @@ export default function KarmaStatus() {
                 margin-top: 2rem;
               `}
             >
-              <KarmaExplanation
+              <KarmaExplanationModal
                 authLevel={authLevel}
                 displayedKarmaPoints={displayedKarmaPoints}
                 numApprovedRecommendations={numApprovedRecommendations}
