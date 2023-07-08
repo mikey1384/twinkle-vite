@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import Modal from '~/components/Modal';
+import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
@@ -12,6 +14,7 @@ export default function KarmaExplanation({
   numPostsRewarded,
   numRecommended,
   numTwinklesRewarded,
+  onHide,
   userType
 }: {
   authLevel: number;
@@ -20,6 +23,7 @@ export default function KarmaExplanation({
   numPostsRewarded: number;
   numRecommended: number;
   numTwinklesRewarded: number;
+  onHide: () => void;
   userType: string;
 }) {
   const karmaPointsLabel = localize('karmaPoints');
@@ -35,6 +39,85 @@ export default function KarmaExplanation({
   const displayedNumRecommended = useMemo(() => {
     return addCommasToNumber(numRecommended);
   }, [numRecommended]);
+
+  const instructionText = useMemo(() => {
+    const karmaCalculationLabel =
+      SELECTED_LANGUAGE === 'kr' ? (
+        <>
+          회원님의 카마포인트 = 회원님이 보상한{' '}
+          <b
+            className={css`
+              color: ${Color.pink()};
+            `}
+          >
+            트윈클 개수
+          </b>{' '}
+          + ({karmaMultiplier.recommendation.student} × 선생님 유저들이 승인한
+          회원님의{' '}
+          <b
+            className={css`
+              color: ${Color.brownOrange()};
+            `}
+          >
+            추천 개수
+          </b>
+          )
+        </>
+      ) : (
+        <>
+          Your Karma Points = Total number of Twinkles you{' '}
+          <b
+            className={css`
+              color: ${Color.pink()};
+            `}
+          >
+            rewarded
+          </b>{' '}
+          + ({karmaMultiplier.recommendation.student} × total number of your{' '}
+          <b
+            className={css`
+              color: ${Color.brownOrange()};
+            `}
+          >
+            recommendations
+          </b>{' '}
+          that were approved by teachers)
+        </>
+      );
+    if (authLevel < 2) {
+      return <span>{karmaCalculationLabel}</span>;
+    }
+    if (SELECTED_LANGUAGE === 'kr') {
+      return (
+        <span>
+          회원님의 카마포인트 = (회원님이 보상한 <b>게시물</b>의 총 개수 ×{' '}
+          {karmaMultiplier.post}) + (회원님이 추천한 <b>게시물</b>의 총 개수 ×{' '}
+          {karmaMultiplier.recommendation.teacher})
+        </span>
+      );
+    }
+    return (
+      <span>
+        Your Karma Points = (Total number of posts you{' '}
+        <b
+          className={css`
+            color: ${Color.pink()};
+          `}
+        >
+          rewarded
+        </b>{' '}
+        × {karmaMultiplier.post}) + (Total number of posts you{' '}
+        <b
+          className={css`
+            color: ${Color.brownOrange()};
+          `}
+        >
+          recommended
+        </b>{' '}
+        × {karmaMultiplier.recommendation.teacher})
+      </span>
+    );
+  }, [authLevel]);
 
   const calculationText = useMemo(() => {
     const rewardedTwinklesLabel =
@@ -202,103 +285,35 @@ export default function KarmaExplanation({
     displayedNumTwinklesRewarded
   ]);
 
-  const instructionText = useMemo(() => {
-    const karmaCalculationLabel =
-      SELECTED_LANGUAGE === 'kr' ? (
-        <>
-          회원님의 카마포인트 = 회원님이 보상한{' '}
-          <b
-            className={css`
-              color: ${Color.pink()};
-            `}
-          >
-            트윈클 개수
-          </b>{' '}
-          + ({karmaMultiplier.recommendation.student} × 선생님 유저들이 승인한
-          회원님의{' '}
-          <b
-            className={css`
-              color: ${Color.brownOrange()};
-            `}
-          >
-            추천 개수
-          </b>
-          )
-        </>
-      ) : (
-        <>
-          Your Karma Points = Total number of Twinkles you{' '}
-          <b
-            className={css`
-              color: ${Color.pink()};
-            `}
-          >
-            rewarded
-          </b>{' '}
-          + ({karmaMultiplier.recommendation.student} × total number of your{' '}
-          <b
-            className={css`
-              color: ${Color.brownOrange()};
-            `}
-          >
-            recommendations
-          </b>{' '}
-          that were approved by teachers)
-        </>
-      );
-    if (authLevel < 2) {
-      return <span>{karmaCalculationLabel}</span>;
-    }
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <span>
-          회원님의 카마포인트 = (회원님이 보상한 <b>게시물</b>의 총 개수 ×{' '}
-          {karmaMultiplier.post}) + (회원님이 추천한 <b>게시물</b>의 총 개수 ×{' '}
-          {karmaMultiplier.recommendation.teacher})
-        </span>
-      );
-    }
-    return (
-      <span>
-        Your Karma Points = (Total number of posts you{' '}
-        <b
-          className={css`
-            color: ${Color.pink()};
-          `}
-        >
-          rewarded
-        </b>{' '}
-        × {karmaMultiplier.post}) + (Total number of posts you{' '}
-        <b
-          className={css`
-            color: ${Color.brownOrange()};
-          `}
-        >
-          recommended
-        </b>{' '}
-        × {karmaMultiplier.recommendation.teacher})
-      </span>
-    );
-  }, [authLevel]);
-
   return (
-    <p
-      className={css`
-        font-size: 1.7rem;
-      `}
-    >
-      {userType && (
+    <Modal onHide={onHide}>
+      <header>Your Karma Points</header>
+      <main>
         <p
           className={css`
-            font-size: 2rem;
-            font-weight: bold;
+            font-size: 1.7rem;
           `}
         >
-          {userType}
+          {userType && (
+            <p
+              className={css`
+                font-size: 2rem;
+                font-weight: bold;
+                margin-bottom: 1rem;
+              `}
+            >
+              {userType}
+            </p>
+          )}
+          {instructionText}
+          {calculationText}
         </p>
-      )}
-      {instructionText}
-      {calculationText}
-    </p>
+      </main>
+      <footer>
+        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
+          Close
+        </Button>
+      </footer>
+    </Modal>
   );
 }
