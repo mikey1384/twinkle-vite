@@ -15,6 +15,7 @@ export default function KarmaStatus() {
   const { authLevel, userId, karmaPoints, userType } = useKeyContext(
     (v) => v.myState
   );
+  const [karmaExplanationShown, setKarmaExplanationShown] = useState(false);
   const [loadingKarma, setLoadingKarma] = useState(false);
   const [numTwinklesRewarded, setNumTwinklesRewarded] = useState(0);
   const [numPostsRewarded, setNumPostsRewarded] = useState(0);
@@ -82,22 +83,34 @@ export default function KarmaStatus() {
             `}
           >
             {youHaveKarmaPointsText}
+            <a
+              style={{
+                marginLeft: '1rem',
+                cursor: 'pointer',
+                fontSize: '1.5rem'
+              }}
+              onClick={() => setKarmaExplanationShown(true)}
+            >
+              tap here to learn why
+            </a>
           </p>
-          <div
-            className={css`
-              margin-top: 2rem;
-            `}
-          >
-            <KarmaExplanation
-              authLevel={authLevel}
-              karmaPoints={karmaPoints}
-              numApprovedRecommendations={numApprovedRecommendations}
-              numPostsRewarded={numPostsRewarded}
-              numRecommended={numRecommended}
-              numTwinklesRewarded={numTwinklesRewarded}
-              userType={userType}
-            />
-          </div>
+          {karmaExplanationShown && (
+            <div
+              className={css`
+                margin-top: 2rem;
+              `}
+            >
+              <KarmaExplanation
+                authLevel={authLevel}
+                karmaPoints={karmaPoints}
+                numApprovedRecommendations={numApprovedRecommendations}
+                numPostsRewarded={numPostsRewarded}
+                numRecommended={numRecommended}
+                numTwinklesRewarded={numTwinklesRewarded}
+                userType={userType}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
