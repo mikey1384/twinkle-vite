@@ -11,7 +11,8 @@ export default function KarmaExplanation({
   numApprovedRecommendations,
   numPostsRewarded,
   numRecommended,
-  numTwinklesRewarded
+  numTwinklesRewarded,
+  userType
 }: {
   authLevel: number;
   karmaPoints: number;
@@ -19,6 +20,7 @@ export default function KarmaExplanation({
   numPostsRewarded: number;
   numRecommended: number;
   numTwinklesRewarded: number;
+  userType: string;
 }) {
   const karmaPointsLabel = localize('karmaPoints');
   const calculationText = useMemo(() => {
@@ -164,6 +166,16 @@ export default function KarmaExplanation({
         font-size: 1.7rem;
       `}
     >
+      {userType && (
+        <p
+          className={css`
+            font-size: 2rem;
+            font-weight: bold;
+          `}
+        >
+          {userType}
+        </p>
+      )}
       {instructionText}
       {calculationText}
     </p>
