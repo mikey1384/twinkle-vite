@@ -38,6 +38,7 @@ export default function LoginForm({
   const onLogin = useAppContext((v) => v.user.actions.onLogin);
   const login = useAppContext((v) => v.requestHelpers.login);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const [loggingIn, setLoggingIn] = useState(false);
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -128,6 +129,7 @@ export default function LoginForm({
         <Button
           color="blue"
           style={{ fontSize: '2rem' }}
+          loading={loggingIn}
           disabled={stringIsEmpty(username) || stringIsEmpty(password)}
           onClick={onSubmit}
         >
@@ -139,11 +141,14 @@ export default function LoginForm({
 
   async function onSubmit() {
     try {
+      setLoggingIn(true);
       const data = await login({ username, password });
       onLogin(data);
       onSetUserState({ userId: data.id, newState: { ...data, loaded: true } });
     } catch (error: any) {
       setErrorMessage(error);
+    } finally {
+      setLoggingIn(false);
     }
   }
 }

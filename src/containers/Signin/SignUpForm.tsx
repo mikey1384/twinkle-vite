@@ -334,8 +334,9 @@ export default function SignUpForm({
       onSetUserState({ userId: data.id, newState: data });
     } catch (error: any) {
       setErrorMessage(error?.data);
+    } finally {
+      setSigningUp(false);
     }
-    setSigningUp(false);
   }
 }
 
