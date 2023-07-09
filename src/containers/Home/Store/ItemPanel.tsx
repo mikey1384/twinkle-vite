@@ -125,10 +125,20 @@ export default function ItemPanel({
         ...style
       }}
     >
-      <div style={{ fontWeight: 'bold', fontSize: '2rem' }}>{itemName}</div>
+      <div
+        style={{ fontWeight: 'bold', fontSize: '2rem', color: Color.black() }}
+      >
+        {itemName}
+      </div>
       {locked && (
         <>
-          <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+          <p
+            style={{
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              color: Color.darkGray()
+            }}
+          >
             {requirementLabel}
           </p>
           {itemDescription && (
@@ -139,7 +149,15 @@ export default function ItemPanel({
         </>
       )}
       {!requiredKarmaPoints && !karmaPoints && (
-        <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{freeLabel}</p>
+        <p
+          style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            color: Color.darkGray()
+          }}
+        >
+          {freeLabel}
+        </p>
       )}
       {!requiredKarmaPoints && !userId && itemDescription && (
         <div style={{ fontSize: '1.5rem', marginTop: '1rem' }}>

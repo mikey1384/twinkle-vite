@@ -84,7 +84,6 @@ export default function Store() {
             font-size: 2rem;
             font-weight: bold;
             line-height: 1.5;
-            color: ${Color.darkerGray()};
             > .logo {
               line-height: 1;
             }

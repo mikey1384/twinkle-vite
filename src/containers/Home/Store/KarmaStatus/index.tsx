@@ -86,7 +86,6 @@ export default function KarmaStatus() {
             className={css`
               font-weight: bold;
               font-size: 2.2rem;
-              color: ${Color.darkerGray()};
             `}
           >
             {youHaveKarmaPointsText}
