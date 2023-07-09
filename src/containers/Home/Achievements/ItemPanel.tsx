@@ -24,7 +24,11 @@ export default function ItemPanel({
       `}
       style={style}
     >
-      <div style={{ fontWeight: 'bold', fontSize: '2rem' }}>{itemName}</div>
+      <div
+        style={{ fontWeight: 'bold', fontSize: '2rem', color: Color.black() }}
+      >
+        {itemName}
+      </div>
       {children}
     </div>
   );

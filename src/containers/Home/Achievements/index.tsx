@@ -26,7 +26,6 @@ export default function Achievements() {
             font-size: 2rem;
             font-weight: bold;
             line-height: 1.5;
-            color: ${Color.darkerGray()};
           `}
           style={{ fontWeight: 'bold', fontSize: '2.5rem' }}
         >
