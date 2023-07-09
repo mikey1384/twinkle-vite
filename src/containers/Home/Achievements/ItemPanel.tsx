@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 
 export default function ItemPanel({
   children,
@@ -14,17 +14,15 @@ export default function ItemPanel({
   return (
     <div
       className={css`
+        border: 1px solid ${Color.borderGray()};
         border-radius: ${borderRadius};
+        padding: 1rem;
+        background: #fff;
         @media (max-width: ${mobileMaxWidth}) {
           border-radius: 0;
         }
       `}
-      style={{
-        background: '#fff',
-        transition: 'border 0.2s, box-shadow 0.2s',
-        padding: '1rem',
-        ...style
-      }}
+      style={style}
     >
       <div style={{ fontWeight: 'bold', fontSize: '2rem' }}>{itemName}</div>
       {children}
