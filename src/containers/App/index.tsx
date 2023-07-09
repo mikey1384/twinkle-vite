@@ -766,6 +766,10 @@ function App() {
             <Route path="/verify/*" element={<Verify />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/users" element={<Home section="people" />} />
+            <Route
+              path="/achievements"
+              element={<Home section="achievement" />}
+            />
             <Route path="/store" element={<Home section="store" />} />
             <Route path="/earn" element={<Home section="earn" />} />
             <Route
