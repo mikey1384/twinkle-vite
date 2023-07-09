@@ -3,12 +3,12 @@ import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 
 export default function ItemPanel({
-  children,
   itemName,
+  description,
   style
 }: {
-  children?: React.ReactNode;
   itemName: string;
+  description?: string;
   style?: React.CSSProperties;
 }) {
   return (
@@ -29,7 +29,9 @@ export default function ItemPanel({
       >
         {itemName}
       </div>
-      {children}
+      <div style={{ color: Color.darkerGray(), fontSize: '1.3rem' }}>
+        {description}
+      </div>
     </div>
   );
 }

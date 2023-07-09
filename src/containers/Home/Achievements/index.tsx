@@ -32,35 +32,34 @@ export default function Achievements() {
           Achievements
         </p>
       </div>
-      <ItemPanel itemName="Mission Mastermind">
-        <div>
-          {`Awarded to those who've shown exceptional determination and skill by
+      <ItemPanel
+        itemName="Mission Mastermind"
+        description="Awarded to those who've shown exceptional determination and skill by
           completing all missions. Your dedication and persistence have truly
-          made you a mastermind`}
-        </div>
-      </ItemPanel>
-      <ItemPanel style={{ marginTop: '1rem' }} itemName="The Summoner">
-        <div>
-          {`Conferred upon those who've unlocked the mysteries of the Card
+          made you a mastermind"
+      />
+      <ItemPanel
+        style={{ marginTop: '1rem' }}
+        itemName="The Summoner"
+        description="Conferred upon those who've unlocked the mysteries of the Card
           Summoner. Your journey has given you access to the magical realms of
-          the arcane. Welcome, oh Conjuror of the Arcana.`}
-        </div>
-      </ItemPanel>
-      <ItemPanel style={{ marginTop: '1rem' }} itemName="Wisdom Weaver">
-        <div>
-          {`This accolade is reserved for individuals who've embraced the mantle
+          the arcane. Welcome, oh Conjuror of the Arcana."
+      />
+      <ItemPanel
+        style={{ marginTop: '1rem' }}
+        itemName="Wisdom Weaver"
+        description="This accolade is reserved for individuals who've embraced the mantle
           of teaching. Your knowledge and passion inspire those around you. Wear
-          this badge as a proud Wisdom Weaver.`}
-        </div>
-      </ItemPanel>
-      <ItemPanel style={{ marginTop: '1rem' }} itemName="Pedagogical Pioneer">
-        <div>
-          This highest honor is bestowed only upon those who have risen to the
+          this badge as a proud Wisdom Weaver."
+      />
+      <ItemPanel
+        style={{ marginTop: '1rem' }}
+        itemName="Pedagogical Pioneer"
+        description=" This highest honor is bestowed only upon those who have risen to the
           rank of Head Teacher. You are a leader, an innovator, and a beacon of
           knowledge. Stand tall, Pedagogical Pioneer, for you light the path of
-          learning for all.
-        </div>
-      </ItemPanel>
+          learning for all."
+      />
     </div>
   );
 }
