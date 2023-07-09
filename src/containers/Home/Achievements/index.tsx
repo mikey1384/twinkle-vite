@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import ItemPanel from './ItemPanel';
 
 export default function Achievements() {
   return (
@@ -32,6 +33,9 @@ export default function Achievements() {
           Achievements
         </p>
       </div>
+      <ItemPanel itemName="first item">
+        <div>first item</div>
+      </ItemPanel>
     </div>
   );
 }
