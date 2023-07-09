@@ -32,6 +32,16 @@ export default function ItemPanel({
       <div style={{ color: Color.darkerGray(), fontSize: '1.3rem' }}>
         {description}
       </div>
+      <div
+        style={{
+          marginTop: '1.5rem',
+          fontWeight: 'bold',
+          fontSize: '1.7rem',
+          color: Color.black()
+        }}
+      >
+        Requirements
+      </div>
     </div>
   );
 }
