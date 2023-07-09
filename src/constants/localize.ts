@@ -10,6 +10,10 @@ const languageObj: {
     en: 'Abort',
     kr: '게임취소'
   },
+  achievements: {
+    en: 'Achievements',
+    kr: '업적'
+  },
   acceptDraw: {
     en: 'Accept Draw',
     kr: '무승부 수락'

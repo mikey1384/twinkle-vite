@@ -18,6 +18,7 @@ HomeMenuItems.propTypes = {
 const peopleLabel = localize('people');
 const postsLabel = localize('posts');
 const storeLabel = localize('store');
+const achievementsLabel = localize('achievements');
 const deviceIsMobile = isMobile(navigator);
 
 export default function HomeMenuItems({ style = {} }) {
@@ -191,6 +192,20 @@ export default function HomeMenuItems({ style = {} }) {
                 <Icon icon="bolt" size="1x" />
               </div>
               <div className="label">XP & KP</div>
+            </div>
+          </a>
+        </nav>
+        <nav
+          className={location.pathname === '/achievements' ? 'active' : ''}
+          onClick={() => navigate('/achievements')}
+        >
+          <a href="/achievements" onClick={(e) => e.preventDefault()}>
+            <div className="homemenu__item">
+              <div className="selection" />
+              <div className="icon">
+                <Icon icon="award" size="1x" />
+              </div>
+              <div className="label">{achievementsLabel}</div>
             </div>
           </a>
         </nav>
