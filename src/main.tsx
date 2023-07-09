@@ -19,6 +19,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { BrowserRouter } from 'react-router-dom';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faAlignJustify } from '@fortawesome/pro-solid-svg-icons/faAlignJustify';
+import { faAward } from '@fortawesome/pro-solid-svg-icons/faAward';
 import { faBullhorn } from '@fortawesome/pro-solid-svg-icons/faBullhorn';
 import { faAndroid } from '@fortawesome/free-brands-svg-icons/faAndroid';
 import { faApple } from '@fortawesome/free-brands-svg-icons/faApple';
@@ -178,6 +179,7 @@ library.add(
   faArrowRight,
   faArrowDown,
   faArrowUp,
+  faAward,
   faBullhorn,
   faBadgeDollar,
   farBadgeDollar,
