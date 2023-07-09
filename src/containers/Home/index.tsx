@@ -12,6 +12,7 @@ import Stories from './Stories';
 import LocalContext from './Context';
 import AIStoriesModal from './AIStoriesModal';
 import GrammarGameModal from './GrammarGameModal';
+import Achievements from './Achievements';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
 import { container, Left, Center, Right } from './Styles';
 
@@ -62,6 +63,7 @@ function Home({
             <div style={{ maxWidth: '700px', width: '100%' }}>
               {section === 'people' && <People />}
               {section === 'earn' && <Earn />}
+              {section === 'achievement' && <Achievements />}
               {section === 'store' && <Store />}
               {section === 'story' && <Stories />}
             </div>

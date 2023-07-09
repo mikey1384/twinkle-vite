@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import SectionPanel from '~/components/SectionPanel';
 import Comments from '~/components/Comments';
 import Intro from './Intro';
-import Achievements from './Achievements';
+import Activities from './Activities';
 import Pictures from './Pictures';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useContentState } from '~/helpers/hooks';
@@ -101,7 +101,7 @@ export default function Home({
           selectedTheme={selectedTheme}
         />
       )}
-      <Achievements selectedTheme={selectedTheme} profile={profile} />
+      <Activities selectedTheme={selectedTheme} profile={profile} />
       {(userId !== profile.id || comments.length > 0 || loadingComments) && (
         <SectionPanel
           customColorTheme={selectedTheme}

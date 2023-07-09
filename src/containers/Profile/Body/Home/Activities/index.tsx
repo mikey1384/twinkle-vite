@@ -5,12 +5,12 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import NotableActivities from './NotableActivities';
 import MissionProgress from './MissionProgress';
 
-Achievements.propTypes = {
+Activities.propTypes = {
   profile: PropTypes.object.isRequired,
   selectedTheme: PropTypes.string
 };
 
-export default function Achievements({
+export default function Activities({
   profile,
   profile: { id, username, selectedMissionListTab, missions, missionsLoaded },
   selectedTheme
