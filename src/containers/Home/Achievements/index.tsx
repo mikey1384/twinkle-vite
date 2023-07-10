@@ -37,6 +37,7 @@ export default function Achievements() {
         description="Awarded to those who've shown exceptional determination and skill by
           completing all missions. Your dedication and persistence have truly
           made you a mastermind"
+        requirements={['Complete all missions']}
       />
       <ItemPanel
         style={{ marginTop: '1rem' }}
@@ -44,6 +45,7 @@ export default function Achievements() {
         description="Conferred upon those who've unlocked the mysteries of the Card
           Summoner. Your journey has given you access to the magical realms of
           the arcane. Welcome, oh Conjuror of the Arcana."
+        requirements={['Unlock the Card Summoner']}
       />
       <ItemPanel
         style={{ marginTop: '1rem' }}
@@ -51,14 +53,16 @@ export default function Achievements() {
         description="This accolade is reserved for individuals who've embraced the mantle
           of teaching. Your knowledge and passion inspire those around you. Wear
           this badge as a proud Wisdom Weaver."
+        requirements={['Embrace the mantle of teaching']}
       />
       <ItemPanel
         style={{ marginTop: '1rem' }}
         itemName="Pedagogical Pioneer"
-        description=" This highest honor is bestowed only upon those who have risen to the
+        description="This highest honor is bestowed only upon those who have risen to the
           rank of Head Teacher. You are a leader, an innovator, and a beacon of
           knowledge. Stand tall, Pedagogical Pioneer, for you light the path of
           learning for all."
+        requirements={['Rise to the rank of Head Teacher']}
       />
     </div>
   );
