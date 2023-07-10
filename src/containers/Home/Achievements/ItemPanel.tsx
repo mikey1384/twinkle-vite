@@ -5,10 +5,12 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 export default function ItemPanel({
   itemName,
   description,
+  requirements,
   style
 }: {
   itemName: string;
   description?: string;
+  requirements?: string[];
   style?: React.CSSProperties;
 }) {
   return (
@@ -42,6 +44,18 @@ export default function ItemPanel({
       >
         Requirements
       </div>
+      {requirements && (
+        <ul>
+          {requirements.map((requirement, index) => (
+            <li
+              key={index}
+              style={{ color: Color.darkerGray(), fontSize: '1.3rem' }}
+            >
+              {requirement}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
