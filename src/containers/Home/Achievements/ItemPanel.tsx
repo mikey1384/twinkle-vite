@@ -42,7 +42,7 @@ export default function ItemPanel({
           color: Color.black()
         }}
       >
-        Requirements
+        Requirement{requirements?.length === 1 ? '' : 's'}
       </div>
       {requirements && (
         <ul>
