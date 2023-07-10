@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 
 export default function ItemPanel({
   itemName,
@@ -16,6 +16,9 @@ export default function ItemPanel({
   return (
     <div
       className={css`
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
         border: 1px solid ${Color.borderGray()};
         border-radius: ${borderRadius};
         padding: 1rem;
@@ -26,30 +29,47 @@ export default function ItemPanel({
       `}
       style={style}
     >
-      <div
-        style={{ fontWeight: 'bold', fontSize: '2rem', color: Color.black() }}
+      <h2
+        className={css`
+          font-weight: bold;
+          font-size: 2rem;
+          color: ${Color.black()};
+        `}
       >
         {itemName}
-      </div>
-      <div style={{ color: Color.darkerGray(), fontSize: '1.3rem' }}>
+      </h2>
+      <p
+        className={css`
+          color: ${Color.darkerGray()};
+          font-size: 1.3rem;
+        `}
+      >
         {description}
-      </div>
-      <div
-        style={{
-          marginTop: '1.5rem',
-          fontWeight: 'bold',
-          fontSize: '1.7rem',
-          color: Color.black()
-        }}
+      </p>
+      <h3
+        className={css`
+          margin-top: 1.5rem;
+          font-weight: bold;
+          font-size: 1.7rem;
+          color: ${Color.black()};
+        `}
       >
         Requirement{requirements?.length === 1 ? '' : 's'}
-      </div>
+      </h3>
       {requirements && (
-        <ul>
+        <ul
+          className={css`
+            list-style: none;
+            padding-left: 0;
+          `}
+        >
           {requirements.map((requirement, index) => (
             <li
               key={index}
-              style={{ color: Color.darkerGray(), fontSize: '1.3rem' }}
+              className={css`
+                color: ${Color.darkerGray()};
+                font-size: 1.3rem;
+              `}
             >
               {requirement}
             </li>
