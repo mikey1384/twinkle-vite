@@ -20,7 +20,11 @@ export default function ItemPanel({
       className={css`
         display: grid;
         grid-template-columns: auto 1fr;
-        gap: 1rem;
+        grid-template-areas:
+          'badge title'
+          'badge description'
+          'badge requirements';
+        gap: 2rem;
         align-items: start;
         border: 1px solid ${Color.borderGray()};
         border-radius: ${borderRadius};
@@ -28,7 +32,13 @@ export default function ItemPanel({
         background: #fff;
         @media (max-width: ${mobileMaxWidth}) {
           grid-template-columns: 1fr;
+          grid-template-areas:
+            'title'
+            'badge'
+            'description'
+            'requirements';
           border-radius: 0;
+          text-align: center;
         }
       `}
       style={style}
@@ -38,29 +48,37 @@ export default function ItemPanel({
           src={badgeSrc}
           alt="Badge"
           className={css`
+            grid-area: badge;
             width: 80px;
             height: 80px;
+            justify-self: center;
           `}
         />
       )}
-      <div>
-        <h2
-          className={css`
-            font-weight: bold;
-            font-size: 2rem;
-            color: ${Color.black()};
-          `}
-        >
-          {itemName}
-        </h2>
-        <p
-          className={css`
-            color: ${Color.darkerGray()};
-            font-size: 1.3rem;
-          `}
-        >
-          {description}
-        </p>
+      <h2
+        className={css`
+          grid-area: title;
+          font-weight: bold;
+          font-size: 2rem;
+          color: ${Color.black()};
+        `}
+      >
+        {itemName}
+      </h2>
+      <p
+        className={css`
+          grid-area: description;
+          color: ${Color.darkerGray()};
+          font-size: 1.3rem;
+        `}
+      >
+        {description}
+      </p>
+      <div
+        className={css`
+          grid-area: requirements;
+        `}
+      >
         <h3
           className={css`
             margin-top: 1.5rem;
