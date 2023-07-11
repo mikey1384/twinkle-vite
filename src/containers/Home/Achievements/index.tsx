@@ -4,6 +4,7 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import MissionBadge from './mission.png';
 import SummonerBadge from './summoner.png';
 import MentorBadge from './mentor.png';
+import SageBadge from './sage.png';
 import ItemPanel from './ItemPanel';
 
 export default function Achievements() {
@@ -61,10 +62,11 @@ export default function Achievements() {
         style={{ marginTop: '1rem' }}
         itemName="The Sage of Twinkle"
         description="This highest honor is bestowed only upon those who have risen to the
-          rank of Head Teacher. You are a leader, an innovator, and a beacon of
-          knowledge. Stand tall, Pedagogical Pioneer, for you light the path of
-          learning for all."
+    rank of Head Teacher or above at Twinkle Academy. As a Sage of Twinkle, you are a leader, an innovator, and a beacon of
+    knowledge. Stand tall, for you light the path of
+    learning for all."
         requirements={['Rise to the rank of Head Teacher']}
+        badgeSrc={SageBadge}
       />
     </div>
   );
