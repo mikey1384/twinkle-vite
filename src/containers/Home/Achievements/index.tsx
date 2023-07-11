@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { Link } from 'react-router-dom';
 import MissionBadge from './mission.png';
 import SummonerBadge from './summoner.png';
 import MentorBadge from './mentor.png';
@@ -42,7 +43,14 @@ export default function Achievements() {
         description="Awarded to those who've shown exceptional determination and skill by
           completing all missions. Your dedication and persistence have truly
           made you a mastermind"
-        requirements={['Complete all missions']}
+        requirements={[
+          <>
+            Complete all{' '}
+            <Link style={{ fontWeight: 'bold' }} to="/missions">
+              missions
+            </Link>
+          </>
+        ]}
         badgeSrc={MissionBadge}
       />
       <ItemPanel

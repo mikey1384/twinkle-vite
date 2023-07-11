@@ -11,7 +11,7 @@ export default function ItemPanel({
 }: {
   itemName: string;
   description?: string;
-  requirements?: string[];
+  requirements?: React.ReactNode[];
   badgeSrc?: string;
   style?: React.CSSProperties;
 }) {
