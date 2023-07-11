@@ -52,6 +52,12 @@ export default function Achievements() {
           </>
         ]}
         badgeSrc={MissionBadge}
+        milestones={[
+          { name: 'Complete Mission 1', completed: true },
+          { name: 'Complete Mission 2', completed: true },
+          { name: 'Complete Mission 3', completed: false },
+          { name: 'Complete Mission 4', completed: false }
+        ]}
       />
       <ItemPanel
         style={{ marginTop: '1rem' }}

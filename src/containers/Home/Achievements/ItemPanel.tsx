@@ -1,18 +1,21 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import Icon from '~/components/Icon';
 
 export default function ItemPanel({
   itemName,
   description,
   requirements,
   badgeSrc,
+  milestones,
   style
 }: {
   itemName: string;
   description?: string;
   requirements?: React.ReactNode[];
   badgeSrc?: string;
+  milestones?: { name: string; completed: boolean }[];
   style?: React.CSSProperties;
 }) {
   return (
@@ -110,6 +113,56 @@ export default function ItemPanel({
               </li>
             ))}
           </ul>
+        )}
+        {milestones && (
+          <div
+            className={css`
+              margin-top: 1.5rem;
+            `}
+          >
+            <h3
+              className={css`
+                font-weight: bold;
+                font-size: 1.7rem;
+                color: ${Color.black()};
+              `}
+            >
+              Progress
+            </h3>
+            <ul
+              className={css`
+                list-style: none;
+                padding-left: 0;
+              `}
+            >
+              {milestones.map((milestone, index) => (
+                <li
+                  key={index}
+                  className={css`
+                    display: flex;
+                    align-items: center;
+                    color: ${Color.darkerGray()};
+                    font-size: 1.3rem;
+                  `}
+                >
+                  <span
+                    className={css`
+                      display: inline-block;
+                      font-size: 1.6rem;
+                      width: 2rem;
+                    `}
+                  >
+                    {milestone.completed ? (
+                      <Icon color={Color.green()} icon="check" />
+                    ) : (
+                      ' '
+                    )}
+                  </span>
+                  {milestone.name}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </div>
