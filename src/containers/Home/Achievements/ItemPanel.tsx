@@ -6,76 +6,92 @@ export default function ItemPanel({
   itemName,
   description,
   requirements,
+  badgeSrc,
   style
 }: {
   itemName: string;
   description?: string;
   requirements?: string[];
+  badgeSrc?: string;
   style?: React.CSSProperties;
 }) {
   return (
     <div
       className={css`
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: auto 1fr;
         gap: 1rem;
+        align-items: start;
         border: 1px solid ${Color.borderGray()};
         border-radius: ${borderRadius};
         padding: 1rem;
         background: #fff;
         @media (max-width: ${mobileMaxWidth}) {
+          grid-template-columns: 1fr;
           border-radius: 0;
         }
       `}
       style={style}
     >
-      <h2
-        className={css`
-          font-weight: bold;
-          font-size: 2rem;
-          color: ${Color.black()};
-        `}
-      >
-        {itemName}
-      </h2>
-      <p
-        className={css`
-          color: ${Color.darkerGray()};
-          font-size: 1.3rem;
-        `}
-      >
-        {description}
-      </p>
-      <h3
-        className={css`
-          margin-top: 1.5rem;
-          font-weight: bold;
-          font-size: 1.7rem;
-          color: ${Color.black()};
-        `}
-      >
-        Requirement{requirements?.length === 1 ? '' : 's'}
-      </h3>
-      {requirements && (
-        <ul
+      {badgeSrc && (
+        <img
+          src={badgeSrc}
+          alt="Badge"
           className={css`
-            list-style: none;
-            padding-left: 0;
+            width: 80px;
+            height: 80px;
+          `}
+        />
+      )}
+      <div>
+        <h2
+          className={css`
+            font-weight: bold;
+            font-size: 2rem;
+            color: ${Color.black()};
           `}
         >
-          {requirements.map((requirement, index) => (
-            <li
-              key={index}
-              className={css`
-                color: ${Color.darkerGray()};
-                font-size: 1.3rem;
-              `}
-            >
-              {requirement}
-            </li>
-          ))}
-        </ul>
-      )}
+          {itemName}
+        </h2>
+        <p
+          className={css`
+            color: ${Color.darkerGray()};
+            font-size: 1.3rem;
+          `}
+        >
+          {description}
+        </p>
+        <h3
+          className={css`
+            margin-top: 1.5rem;
+            font-weight: bold;
+            font-size: 1.7rem;
+            color: ${Color.black()};
+          `}
+        >
+          Requirement{requirements?.length === 1 ? '' : 's'}
+        </h3>
+        {requirements && (
+          <ul
+            className={css`
+              list-style: none;
+              padding-left: 0;
+            `}
+          >
+            {requirements.map((requirement, index) => (
+              <li
+                key={index}
+                className={css`
+                  color: ${Color.darkerGray()};
+                  font-size: 1.3rem;
+                `}
+              >
+                {requirement}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

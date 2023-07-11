@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import MissionBadge from './mission.png';
 import ItemPanel from './ItemPanel';
 
 export default function Achievements() {
@@ -38,6 +39,7 @@ export default function Achievements() {
           completing all missions. Your dedication and persistence have truly
           made you a mastermind"
         requirements={['Complete all missions']}
+        badgeSrc={MissionBadge}
       />
       <ItemPanel
         style={{ marginTop: '1rem' }}
