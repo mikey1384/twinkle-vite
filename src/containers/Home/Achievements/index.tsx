@@ -2,6 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import MissionBadge from './mission.png';
+import SummonerBadge from './summoner.png';
 import ItemPanel from './ItemPanel';
 
 export default function Achievements() {
@@ -43,11 +44,12 @@ export default function Achievements() {
       />
       <ItemPanel
         style={{ marginTop: '1rem' }}
-        itemName="The Summoner"
+        itemName="The Cybernetic Summoner"
         description="Conferred upon those who've unlocked the mysteries of the Card
           Summoner. Your journey has given you access to the magical realms of
           the arcane. Welcome, oh Conjuror of the Arcana."
         requirements={['Unlock the Card Summoner']}
+        badgeSrc={SummonerBadge}
       />
       <ItemPanel
         style={{ marginTop: '1rem' }}

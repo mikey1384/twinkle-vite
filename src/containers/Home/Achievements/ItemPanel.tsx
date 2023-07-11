@@ -49,8 +49,8 @@ export default function ItemPanel({
           alt="Badge"
           className={css`
             grid-area: badge;
-            width: 80px;
-            height: 80px;
+            width: 13rem;
+            height: 13rem;
             justify-self: center;
           `}
         />
