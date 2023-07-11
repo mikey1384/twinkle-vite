@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import MissionBadge from './mission.png';
 import SummonerBadge from './summoner.png';
+import MentorBadge from './mentor.png';
 import ItemPanel from './ItemPanel';
 
 export default function Achievements() {
@@ -51,15 +52,14 @@ export default function Achievements() {
       />
       <ItemPanel
         style={{ marginTop: '1rem' }}
-        itemName="Wisdom Weaver"
-        description="This accolade is reserved for individuals who've embraced the mantle
-          of teaching. Your knowledge and passion inspire those around you. Wear
-          this badge as a proud Wisdom Weaver."
-        requirements={['Embrace the mantle of teaching']}
+        itemName="Starlight Mentor"
+        description="This honor is bestowed upon the exceptional individuals at Twinkle Academy who have taken up the noble task of guiding young minds towards knowledge. As a Starlight Mentor, your passion and wisdom illuminate the path of learning, inspiring those around you. Wear this badge with pride, for you are a beacon in the vast expanse of education."
+        requirements={['Take a full-time teaching position at Twinkle Academy']}
+        badgeSrc={MentorBadge}
       />
       <ItemPanel
         style={{ marginTop: '1rem' }}
-        itemName="Pedagogical Pioneer"
+        itemName="The Sage of Twinkle"
         description="This highest honor is bestowed only upon those who have risen to the
           rank of Head Teacher. You are a leader, an innovator, and a beacon of
           knowledge. Stand tall, Pedagogical Pioneer, for you light the path of
