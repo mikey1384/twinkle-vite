@@ -38,6 +38,8 @@ export default function ItemPanel({
             'description'
             'requirements';
           border-radius: 0;
+          border-right: 0;
+          border-left: 0;
           text-align: center;
         }
       `}
