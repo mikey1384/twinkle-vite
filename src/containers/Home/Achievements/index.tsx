@@ -5,6 +5,7 @@ import MissionBadge from './mission.png';
 import SummonerBadge from './summoner.png';
 import MentorBadge from './mentor.png';
 import SageBadge from './sage.png';
+import FounderBadge from './founder.png';
 import ItemPanel from './ItemPanel';
 
 export default function Achievements() {
@@ -67,6 +68,13 @@ export default function Achievements() {
     learning for all."
         requirements={['Rise to the rank of Head Teacher']}
         badgeSrc={SageBadge}
+      />
+      <ItemPanel
+        style={{ marginTop: '1rem' }}
+        itemName="The Visionary"
+        description="This badge of distinction is reserved for the dauntless visionaries who have ignited a beacon of innovation in the world. As a Visionary Founder, you've not just built a business or an organization - you've breathed life into an idea, transforming a seed of inspiration into a thriving entity. Your journey is one of courage and tenacity, a testament to your pioneering spirit. This badge is your emblem, symbolizing your audacious leap into the unknown, your resilience in the face of adversity, and your unwavering commitment to your vision."
+        requirements={['Found a new business or organization']}
+        badgeSrc={FounderBadge}
       />
     </div>
   );
