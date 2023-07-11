@@ -22,11 +22,11 @@ export default function ItemPanel({
     <div
       className={css`
         display: grid;
-        grid-template-columns: auto 1fr;
+        grid-template-columns: auto 1fr 1fr;
         grid-template-areas:
-          'badge title'
-          'badge description'
-          'badge requirements';
+          'badge title title'
+          'badge description description'
+          'badge requirements milestones';
         gap: 2rem;
         align-items: start;
         border: 1px solid ${Color.borderGray()};
@@ -39,7 +39,8 @@ export default function ItemPanel({
             'title'
             'badge'
             'description'
-            'requirements';
+            'requirements'
+            'milestones';
           border-radius: 0;
           border-right: 0;
           border-left: 0;
@@ -114,57 +115,62 @@ export default function ItemPanel({
             ))}
           </ul>
         )}
-        {milestones && (
-          <div
+      </div>
+      {milestones && (
+        <div
+          className={css`
+            grid-area: milestones;
+            margin-top: 1.5rem;
+          `}
+        >
+          <h3
             className={css`
-              margin-top: 1.5rem;
+              font-weight: bold;
+              font-size: 1.7rem;
+              color: ${Color.black()};
             `}
           >
-            <h3
-              className={css`
-                font-weight: bold;
-                font-size: 1.7rem;
-                color: ${Color.black()};
-              `}
-            >
-              Progress
-            </h3>
-            <ul
-              className={css`
-                list-style: none;
-                padding-left: 0;
-              `}
-            >
-              {milestones.map((milestone, index) => (
-                <li
-                  key={index}
+            Progress
+          </h3>
+          <ul
+            className={css`
+              list-style: none;
+              padding-left: 0;
+            `}
+          >
+            {milestones.map((milestone, index) => (
+              <li
+                key={index}
+                className={css`
+                  justify-content: flex-start;
+                  display: flex;
+                  align-items: center;
+                  color: ${Color.darkerGray()};
+                  font-size: 1.3rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    justify-content: center;
+                  }
+                `}
+              >
+                <span
                   className={css`
-                    display: flex;
-                    align-items: center;
-                    color: ${Color.darkerGray()};
-                    font-size: 1.3rem;
+                    display: inline-block;
+                    font-size: 1.6rem;
+                    width: 2rem;
                   `}
                 >
-                  <span
-                    className={css`
-                      display: inline-block;
-                      font-size: 1.6rem;
-                      width: 2rem;
-                    `}
-                  >
-                    {milestone.completed ? (
-                      <Icon color={Color.green()} icon="check" />
-                    ) : (
-                      ' '
-                    )}
-                  </span>
-                  {milestone.name}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
+                  {milestone.completed ? (
+                    <Icon color={Color.green()} icon="check" />
+                  ) : (
+                    ' '
+                  )}
+                </span>
+                {milestone.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
