@@ -45,10 +45,8 @@ export default function Achievements() {
       <ItemPanel
         style={{ marginTop: '1rem' }}
         itemName="The Cybernetic Summoner"
-        description="Conferred upon those who've unlocked the mysteries of the Card
-          Summoner. Your journey has given you access to the magical realms of
-          the arcane. Welcome, oh Conjuror of the Arcana."
-        requirements={['Unlock the Card Summoner']}
+        description="Bestowed upon the select few who have unraveled the enigmas of the AI Card Conjuring. Your odyssey into the realms of AI wizardry has not only earned you this esteemed recognition but also transformed you into a revered Summoner of the Cybernetic Realm. Step forth, intrepid explorer of digital dimensions, your journey has just begun."
+        requirements={['Unlock the AI Card Summoner License']}
         badgeSrc={SummonerBadge}
       />
       <ItemPanel
