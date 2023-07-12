@@ -11,7 +11,7 @@ export default function Mission({
   return (
     <ItemPanel
       itemName="Mission Master"
-      description="This esteemed title is bestowed upon those who've showcased extraordinary dedication and skill by conquering all missions. Your unwavering commitment and tenacity have propelled you to master every challenge that came your way. This badge is a testament to your prowess and a symbol of your mastery in the realm of missions."
+      description="This achievement celebrates those who've demonstrated exceptional grit and adaptability, conquering a diverse array of challenges. You've navigated through various missions, each requiring unique skills and strategies. Your successful completion of these tasks is a testament to your resilience and determination, rightfully earning you the title of Mission Master."
       requirements={[
         <>
           Complete all{' '}
