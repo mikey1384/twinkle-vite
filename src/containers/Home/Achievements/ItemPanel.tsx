@@ -147,6 +147,7 @@ export default function ItemPanel({
                   align-items: center;
                   color: ${Color.darkerGray()};
                   font-size: 1.3rem;
+                  border-bottom: 1px solid ${Color.borderGray()};
                   @media (max-width: ${mobileMaxWidth}) {
                     justify-content: center;
                   }
