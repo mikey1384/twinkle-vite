@@ -10,10 +10,8 @@ export default function Mission({
 }) {
   return (
     <ItemPanel
-      itemName="Mission Mastermind"
-      description="Awarded to those who've shown exceptional determination and skill by
-          completing all missions. Your dedication and persistence have truly
-          made you a mastermind"
+      itemName="Mission Master"
+      description="This esteemed title is bestowed upon those who've showcased extraordinary dedication and skill by conquering all missions. Your unwavering commitment and tenacity have propelled you to master every challenge that came your way. This badge is a testament to your prowess and a symbol of your mastery in the realm of missions."
       requirements={[
         <>
           Complete all{' '}
