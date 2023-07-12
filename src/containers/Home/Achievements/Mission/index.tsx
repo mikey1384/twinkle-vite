@@ -1,21 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import MissionBadge from './mission.png';
 import ItemPanel from '../ItemPanel';
-import { useAppContext } from '~/contexts';
 
 export default function Mission() {
-  const loadAchievementMilestones = useAppContext(
-    (v) => v.requestHelpers.loadAchievementMilestones
-  );
-  useEffect(() => {
-    init();
-    async function init() {
-      await loadAchievementMilestones('mission');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <ItemPanel
       itemName="Mission Mastermind"
