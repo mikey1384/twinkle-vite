@@ -239,6 +239,17 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAchievementMilestones(type: string) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/achievements/milestones${type ? `?type=${type}` : ''}`,
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadCoinHistory(lastId: number) {
       try {
         const {
