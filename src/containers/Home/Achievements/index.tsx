@@ -6,22 +6,31 @@ import Summoner from './Summoner';
 import Mentor from './Mentor';
 import Sage from './Sage';
 import Founder from './Founder';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function Achievements() {
+  const { userId } = useKeyContext((v) => v.myState);
   const loadAchievements = useAppContext(
     (v) => v.requestHelpers.loadAchievements
   );
-  const [achievementsObj, setAchievementsObj] = useState({});
+  const [achievementsObj, setAchievementsObj] = useState({
+    mission: {
+      milestones: []
+    },
+    summoner: {},
+    mentor: {},
+    sage: {},
+    founder: {}
+  });
   useEffect(() => {
     init();
     async function init() {
       const data = await loadAchievements();
       setAchievementsObj(data);
-      console.log(achievementsObj);
+      console.log(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [userId]);
 
   return (
     <div style={{ paddingBottom: '15rem' }}>
@@ -51,7 +60,7 @@ export default function Achievements() {
           Achievements
         </p>
       </div>
-      <Mission />
+      <Mission milestones={achievementsObj.mission.milestones} />
       <Summoner style={{ marginTop: '1rem' }} />
       <Mentor style={{ marginTop: '1rem' }} />
       <Sage style={{ marginTop: '1rem' }} />

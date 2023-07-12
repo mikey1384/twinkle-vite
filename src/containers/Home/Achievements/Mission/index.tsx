@@ -3,7 +3,11 @@ import { Link } from 'react-router-dom';
 import MissionBadge from './mission.png';
 import ItemPanel from '../ItemPanel';
 
-export default function Mission() {
+export default function Mission({
+  milestones
+}: {
+  milestones: { name: string; completed: boolean }[];
+}) {
   return (
     <ItemPanel
       itemName="Mission Mastermind"
@@ -19,12 +23,7 @@ export default function Mission() {
         </>
       ]}
       badgeSrc={MissionBadge}
-      milestones={[
-        { name: 'Complete Mission 1', completed: true },
-        { name: 'Complete Mission 2', completed: true },
-        { name: 'Complete Mission 3', completed: false },
-        { name: 'Complete Mission 4', completed: false }
-      ]}
+      milestones={milestones}
     />
   );
 }
