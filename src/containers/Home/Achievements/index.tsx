@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Mission from './Mission';
@@ -12,10 +12,13 @@ export default function Achievements() {
   const loadAchievements = useAppContext(
     (v) => v.requestHelpers.loadAchievements
   );
+  const [achievementsObj, setAchievementsObj] = useState({});
   useEffect(() => {
     init();
     async function init() {
-      await loadAchievements();
+      const data = await loadAchievements();
+      setAchievementsObj(data);
+      console.log(achievementsObj);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
