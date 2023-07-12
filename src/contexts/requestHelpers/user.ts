@@ -239,12 +239,9 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async loadAchievementMilestones(type: string) {
+    async loadAchievements() {
       try {
-        const { data } = await request.get(
-          `${URL}/user/achievements/milestones${type ? `?type=${type}` : ''}`,
-          auth()
-        );
+        const { data } = await request.get(`${URL}/user/achievements`, auth());
         return Promise.resolve(data);
       } catch (error) {
         return handleError(error);

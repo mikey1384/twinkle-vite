@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Mission from './Mission';
@@ -6,8 +6,20 @@ import Summoner from './Summoner';
 import Mentor from './Mentor';
 import Sage from './Sage';
 import Founder from './Founder';
+import { useAppContext } from '~/contexts';
 
 export default function Achievements() {
+  const loadAchievements = useAppContext(
+    (v) => v.requestHelpers.loadAchievements
+  );
+  useEffect(() => {
+    init();
+    async function init() {
+      await loadAchievements();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div style={{ paddingBottom: '15rem' }}>
       <div
