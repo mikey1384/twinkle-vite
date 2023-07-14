@@ -81,15 +81,17 @@ export default function ItemPanel({
           />
         )}
       </h2>
-      <p
-        className={css`
-          grid-area: description;
-          color: ${Color.darkerGray()};
-          font-size: 1.3rem;
-        `}
-      >
-        {description}
-      </p>
+      {isCompleted && (
+        <p
+          className={css`
+            grid-area: description;
+            color: ${Color.darkerGray()};
+            font-size: 1.3rem;
+          `}
+        >
+          {description}
+        </p>
+      )}
       <div
         className={css`
           grid-area: requirements;
