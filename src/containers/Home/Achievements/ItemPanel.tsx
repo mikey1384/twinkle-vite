@@ -5,6 +5,7 @@ import Icon from '~/components/Icon';
 
 export default function ItemPanel({
   itemName,
+  isCompleted,
   description,
   requirements,
   badgeSrc,
@@ -12,6 +13,7 @@ export default function ItemPanel({
   style
 }: {
   itemName: string;
+  isCompleted?: boolean;
   description?: string;
   requirements?: React.ReactNode[];
   badgeSrc?: string;
@@ -65,11 +67,19 @@ export default function ItemPanel({
         className={css`
           grid-area: title;
           font-weight: bold;
-          font-size: 2rem;
           color: ${Color.black()};
+          font-size: 2rem;
         `}
       >
         {itemName}
+        {!isCompleted && (
+          <Icon
+            className={css`
+              margin-left: 1rem;
+            `}
+            icon="lock"
+          />
+        )}
       </h2>
       <p
         className={css`
