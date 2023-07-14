@@ -128,7 +128,7 @@ export default function ItemPanel({
           </ul>
         )}
       </div>
-      {!!milestones?.length && (
+      {!!milestones?.length && !isCompleted && (
         <div
           className={css`
             grid-area: milestones;
