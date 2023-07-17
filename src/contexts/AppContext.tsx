@@ -48,7 +48,16 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     profilesLoaded: false,
     searchedProfiles: [],
     signinModalShown: false,
-    userObj: {}
+    userObj: {},
+    achievementsObj: {
+      mission: {
+        milestones: []
+      },
+      summoner: {},
+      mentor: {},
+      sage: {},
+      founder: {}
+    }
   });
   return (
     <ManagementContextProvider>

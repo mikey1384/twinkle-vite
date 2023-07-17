@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Mission from './Mission';
@@ -13,21 +13,15 @@ export default function Achievements() {
   const loadAchievements = useAppContext(
     (v) => v.requestHelpers.loadAchievements
   );
-  const [achievementsObj, setAchievementsObj] = useState({
-    mission: {
-      milestones: []
-    },
-    summoner: {},
-    mentor: {},
-    sage: {},
-    founder: {}
-  });
+  const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
+  const onSetAchievementsObj = useAppContext(
+    (v) => v.user.actions.onSetAchievementsObj
+  );
   useEffect(() => {
     init();
     async function init() {
       const data = await loadAchievements();
-      setAchievementsObj(data);
-      console.log(data);
+      onSetAchievementsObj(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
