@@ -63,12 +63,7 @@ export default function Achievements() {
       </div>
       {achievementKeys.map((key, index) => {
         if (key === 'mission') {
-          return (
-            <Mission
-              key="mission"
-              milestones={achievementsObj.mission?.milestones}
-            />
-          );
+          return <Mission key="mission" data={achievementsObj.mission} />;
         }
         if (key === 'summoner') {
           return (
