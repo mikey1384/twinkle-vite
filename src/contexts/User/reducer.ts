@@ -107,6 +107,11 @@ export default function UserReducer(
         myState: action.data,
         signinModalShown: false
       };
+    case 'SET_ACHIEVEMENTS_OBJ':
+      return {
+        ...state,
+        achievementsObj: action.achievementsObj
+      };
     case 'SET_COLLECT_TYPE':
       return {
         ...state,

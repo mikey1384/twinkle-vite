@@ -59,6 +59,12 @@ export default function UserActions(dispatch: Dispatch) {
         type: 'OPEN_SIGNIN_MODAL'
       });
     },
+    onSetAchievementsObj(achievementsObj: object) {
+      return dispatch({
+        type: 'SET_ACHIEVEMENTS_OBJ',
+        achievementsObj
+      });
+    },
     onSearchUsers(users: any[]) {
       return dispatch({
         type: 'SEARCH_USERS',
