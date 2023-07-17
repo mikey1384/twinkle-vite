@@ -69,6 +69,7 @@ export default function Achievements() {
           return (
             <Summoner
               key="summoner"
+              data={achievementsObj.summoner}
               style={{ marginTop: index > 0 ? '1rem' : 0 }}
             />
           );
@@ -77,19 +78,25 @@ export default function Achievements() {
           return (
             <Mentor
               key="mentor"
+              data={achievementsObj.mentor}
               style={{ marginTop: index > 0 ? '1rem' : 0 }}
             />
           );
         }
         if (key === 'sage') {
           return (
-            <Sage key="sage" style={{ marginTop: index > 0 ? '1rem' : 0 }} />
+            <Sage
+              key="sage"
+              data={achievementsObj.sage}
+              style={{ marginTop: index > 0 ? '1rem' : 0 }}
+            />
           );
         }
         if (key === 'founder') {
           return (
             <Founder
               key="founder"
+              data={achievementsObj.founder}
               style={{ marginTop: index > 0 ? '1rem' : 0 }}
             />
           );
