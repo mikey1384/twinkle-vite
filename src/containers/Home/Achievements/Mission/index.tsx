@@ -4,9 +4,10 @@ import MissionBadge from './mission.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Mission({
-  data: { title, description, milestones }
+  data: { title, description, isUnlocked, milestones }
 }: {
   data: {
+    isUnlocked: boolean;
     title: string;
     description: string;
     milestones: { name: string; completed: boolean }[];
@@ -15,6 +16,7 @@ export default function Mission({
   return (
     <ItemPanel
       itemName={title}
+      isUnlocked={isUnlocked}
       description={description}
       requirements={[
         <>

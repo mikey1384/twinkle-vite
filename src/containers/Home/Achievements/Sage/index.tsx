@@ -3,10 +3,11 @@ import SageBadge from './sage.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Sage({
-  data: { title, description },
+  data: { isUnlocked, title, description },
   style
 }: {
   data: {
+    isUnlocked: boolean;
     title: string;
     description: string;
   };
@@ -15,6 +16,7 @@ export default function Sage({
   return (
     <ItemPanel
       style={style}
+      isUnlocked={isUnlocked}
       itemName={title}
       description={description}
       requirements={['Rise to the rank of Head Teacher']}

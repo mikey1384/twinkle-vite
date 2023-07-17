@@ -5,7 +5,7 @@ import Icon from '~/components/Icon';
 
 export default function ItemPanel({
   itemName,
-  isCompleted,
+  isUnlocked,
   description,
   requirements,
   badgeSrc,
@@ -13,7 +13,7 @@ export default function ItemPanel({
   style
 }: {
   itemName: string;
-  isCompleted?: boolean;
+  isUnlocked?: boolean;
   description?: string;
   requirements?: React.ReactNode[];
   badgeSrc?: string;
@@ -72,7 +72,7 @@ export default function ItemPanel({
         `}
       >
         {itemName}
-        {!isCompleted && (
+        {!isUnlocked && (
           <Icon
             className={css`
               margin-left: 1rem;
@@ -81,7 +81,7 @@ export default function ItemPanel({
           />
         )}
       </h2>
-      {isCompleted && (
+      {isUnlocked && (
         <p
           className={css`
             grid-area: description;
@@ -128,7 +128,7 @@ export default function ItemPanel({
           </ul>
         )}
       </div>
-      {!!milestones?.length && !isCompleted && (
+      {!!milestones?.length && !isUnlocked && (
         <div
           className={css`
             grid-area: milestones;
