@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Mission from './Mission';
@@ -13,10 +13,17 @@ export default function Achievements() {
   const loadAchievements = useAppContext(
     (v) => v.requestHelpers.loadAchievements
   );
-  const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const onSetAchievementsObj = useAppContext(
     (v) => v.user.actions.onSetAchievementsObj
   );
+  const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
+  const achievementKeys = useMemo(() => {
+    const result = [];
+    for (const key in achievementsObj) {
+      result.push(key);
+    }
+    return result;
+  }, [achievementsObj]);
   useEffect(() => {
     init();
     async function init() {
@@ -54,11 +61,46 @@ export default function Achievements() {
           Achievements
         </p>
       </div>
-      <Mission milestones={achievementsObj.mission.milestones} />
-      <Summoner style={{ marginTop: '1rem' }} />
-      <Mentor style={{ marginTop: '1rem' }} />
-      <Sage style={{ marginTop: '1rem' }} />
-      <Founder style={{ marginTop: '1rem' }} />
+      {achievementKeys.map((key, index) => {
+        if (key === 'mission') {
+          return (
+            <Mission
+              key="mission"
+              milestones={achievementsObj.mission?.milestones}
+            />
+          );
+        }
+        if (key === 'summoner') {
+          return (
+            <Summoner
+              key="summoner"
+              style={{ marginTop: index > 0 ? '1rem' : 0 }}
+            />
+          );
+        }
+        if (key === 'mentor') {
+          return (
+            <Mentor
+              key="mentor"
+              style={{ marginTop: index > 0 ? '1rem' : 0 }}
+            />
+          );
+        }
+        if (key === 'sage') {
+          return (
+            <Sage key="sage" style={{ marginTop: index > 0 ? '1rem' : 0 }} />
+          );
+        }
+        if (key === 'founder') {
+          return (
+            <Founder
+              key="founder"
+              style={{ marginTop: index > 0 ? '1rem' : 0 }}
+            />
+          );
+        }
+        return null;
+      })}
     </div>
   );
 }

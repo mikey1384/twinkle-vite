@@ -49,15 +49,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     searchedProfiles: [],
     signinModalShown: false,
     userObj: {},
-    achievementsObj: {
-      mission: {
-        milestones: []
-      },
-      summoner: {},
-      mentor: {},
-      sage: {},
-      founder: {}
-    }
+    achievementsObj: {}
   });
   return (
     <ManagementContextProvider>
