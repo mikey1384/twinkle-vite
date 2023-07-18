@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 export default function ItemPanel({
   ap,
@@ -23,6 +24,7 @@ export default function ItemPanel({
   style?: React.CSSProperties;
 }) {
   const milestonesExist = milestones && milestones.length > 0;
+  const displayedAP = useMemo(() => addCommasToNumber(ap), [ap]);
   return (
     <div
       className={css`
@@ -76,7 +78,7 @@ export default function ItemPanel({
           font-size: 2rem;
         `}
       >
-        {itemName} ({ap} AP)
+        {itemName} ({displayedAP} AP)
         {!isUnlocked && (
           <Icon
             className={css`
