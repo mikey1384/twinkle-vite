@@ -23,7 +23,7 @@ export default function ItemPanel({
   milestones?: { name: string; completed: boolean }[];
   style?: React.CSSProperties;
 }) {
-  const milestonesExist = milestones && milestones.length > 0;
+  const milestonesShown = milestones && milestones.length > 0 && !isUnlocked;
   const displayedAP = useMemo(
     () => (typeof ap === 'number' ? addCommasToNumber(ap) : null),
     [ap]
@@ -36,7 +36,7 @@ export default function ItemPanel({
         grid-template-areas:
           'badge title title'
           'badge description description'
-          'badge requirements ${milestonesExist
+          'badge requirements ${milestonesShown
             ? 'milestones'
             : 'requirements'}';
         gap: 2rem;
@@ -52,7 +52,7 @@ export default function ItemPanel({
             'badge'
             ${isUnlocked ? "'description'" : ''}
             'requirements'
-            ${milestonesExist ? "'milestones'" : ''};
+            ${milestonesShown ? "'milestones'" : ''};
           border-radius: 0;
           border-right: 0;
           border-left: 0;
@@ -142,11 +142,22 @@ export default function ItemPanel({
               font-size: 1.3rem;
             `}
           >
+            {isUnlocked && (
+              <div
+                className={css`
+                  display: inline-block;
+                  font-size: 1.6rem;
+                  width: 2rem;
+                `}
+              >
+                <Icon color={Color.green()} icon="check" />
+              </div>
+            )}
             {requirement}
           </p>
         )}
       </div>
-      {milestonesExist && (
+      {milestonesShown && (
         <div
           className={css`
             grid-area: milestones;
@@ -183,7 +194,7 @@ export default function ItemPanel({
                   }
                 `}
               >
-                <span
+                <div
                   className={css`
                     display: inline-block;
                     font-size: 1.6rem;
@@ -195,7 +206,7 @@ export default function ItemPanel({
                   ) : (
                     ' '
                   )}
-                </span>
+                </div>
                 {milestone.name}
               </li>
             ))}
