@@ -20,6 +20,7 @@ export default function ItemPanel({
   milestones?: { name: string; completed: boolean }[];
   style?: React.CSSProperties;
 }) {
+  const milestonesExist = milestones && milestones.length > 0;
   return (
     <div
       className={css`
@@ -28,7 +29,9 @@ export default function ItemPanel({
         grid-template-areas:
           'badge title title'
           'badge description description'
-          'badge requirements milestones';
+          'badge requirements ${milestonesExist
+            ? 'milestones'
+            : 'requirements'}';
         gap: 2rem;
         align-items: start;
         border: 1px solid ${Color.borderGray()};
@@ -40,9 +43,9 @@ export default function ItemPanel({
           grid-template-areas:
             'title'
             'badge'
-            'description'
+            ${isUnlocked ? "'description'" : ''}
             'requirements'
-            'milestones';
+            ${milestonesExist ? "'milestones'" : ''};
           border-radius: 0;
           border-right: 0;
           border-left: 0;
@@ -82,15 +85,20 @@ export default function ItemPanel({
         )}
       </h2>
       {isUnlocked && (
-        <p
+        <div
           className={css`
             grid-area: description;
-            color: ${Color.darkerGray()};
-            font-size: 1.3rem;
           `}
         >
-          {description}
-        </p>
+          <p
+            className={css`
+              color: ${Color.darkerGray()};
+              font-size: 1.3rem;
+            `}
+          >
+            {description}
+          </p>
+        </div>
       )}
       <div
         className={css`
@@ -128,7 +136,7 @@ export default function ItemPanel({
           </ul>
         )}
       </div>
-      {!!milestones?.length && !isUnlocked && (
+      {milestonesExist && (
         <div
           className={css`
             grid-area: milestones;
