@@ -9,7 +9,7 @@ export default function ItemPanel({
   itemName,
   isUnlocked,
   description,
-  requirements,
+  requirement,
   badgeSrc,
   milestones,
   style
@@ -18,7 +18,7 @@ export default function ItemPanel({
   itemName: string;
   isUnlocked?: boolean;
   description?: string;
-  requirements?: React.ReactNode[];
+  requirement?: React.ReactNode;
   badgeSrc?: string;
   milestones?: { name: string; completed: boolean }[];
   style?: React.CSSProperties;
@@ -132,27 +132,18 @@ export default function ItemPanel({
             color: ${Color.black()};
           `}
         >
-          Requirement{requirements?.length === 1 ? '' : 's'}
+          Requirement
         </h3>
-        {requirements && (
-          <ul
+        {requirement && (
+          <p
             className={css`
-              list-style: none;
-              padding-left: 0;
+              margin-top: 0.3rem;
+              color: ${Color.darkerGray()};
+              font-size: 1.3rem;
             `}
           >
-            {requirements.map((requirement, index) => (
-              <li
-                key={index}
-                className={css`
-                  color: ${Color.darkerGray()};
-                  font-size: 1.3rem;
-                `}
-              >
-                {requirement}
-              </li>
-            ))}
-          </ul>
+            {requirement}
+          </p>
         )}
       </div>
       {milestonesExist && (

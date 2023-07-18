@@ -21,7 +21,7 @@ export default function Sage({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
-      requirements={['Rise to the rank of Head Teacher']}
+      requirement="Rise to the rank of Head Teacher"
       badgeSrc={SageBadge}
     />
   );

@@ -21,7 +21,7 @@ export default function Founder({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
-      requirements={['Found a new business']}
+      requirement="Found a new business"
       badgeSrc={FounderBadge}
     />
   );

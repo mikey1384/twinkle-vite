@@ -21,7 +21,7 @@ export default function Summoner({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
-      requirements={['Unlock the AI Card Summoner License']}
+      requirement="Unlock the AI Card Summoner License"
       badgeSrc={SummonerBadge}
     />
   );
