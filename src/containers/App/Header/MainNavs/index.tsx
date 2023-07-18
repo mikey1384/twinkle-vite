@@ -143,6 +143,17 @@ function MainNavs({
     [pathname]
   );
 
+  const achievementsMatch = useMemo(
+    () =>
+      matchPath(
+        {
+          path: '/achievements'
+        },
+        pathname
+      ),
+    [pathname]
+  );
+
   const storeMatch = useMemo(
     () =>
       matchPath(
@@ -233,6 +244,8 @@ function MainNavs({
       onSetHomeNav('/earn');
     } else if (storeMatch) {
       onSetHomeNav('/store');
+    } else if (achievementsMatch) {
+      onSetHomeNav('/achievements');
     }
 
     if (chatMatch) {
