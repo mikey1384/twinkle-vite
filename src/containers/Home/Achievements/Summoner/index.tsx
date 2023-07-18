@@ -3,10 +3,11 @@ import SummonerBadge from './summoner.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Summoner({
-  data: { isUnlocked, title, description },
+  data: { ap, isUnlocked, title, description },
   style
 }: {
   data: {
+    ap: number;
     isUnlocked: boolean;
     title: string;
     description: string;
@@ -16,6 +17,7 @@ export default function Summoner({
   return (
     <ItemPanel
       style={style}
+      ap={ap}
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}

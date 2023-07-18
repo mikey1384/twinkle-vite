@@ -4,9 +4,10 @@ import MissionBadge from './mission.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Mission({
-  data: { title, description, isUnlocked, milestones }
+  data: { ap, title, description, isUnlocked, milestones }
 }: {
   data: {
+    ap: number;
     isUnlocked: boolean;
     title: string;
     description: string;
@@ -15,6 +16,7 @@ export default function Mission({
 }) {
   return (
     <ItemPanel
+      ap={ap}
       itemName={title}
       isUnlocked={isUnlocked}
       description={description}

@@ -4,6 +4,7 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 
 export default function ItemPanel({
+  ap,
   itemName,
   isUnlocked,
   description,
@@ -12,6 +13,7 @@ export default function ItemPanel({
   milestones,
   style
 }: {
+  ap: number;
   itemName: string;
   isUnlocked?: boolean;
   description?: string;
@@ -74,7 +76,7 @@ export default function ItemPanel({
           font-size: 2rem;
         `}
       >
-        {itemName}
+        {itemName} ({ap} AP)
         {!isUnlocked && (
           <Icon
             className={css`
