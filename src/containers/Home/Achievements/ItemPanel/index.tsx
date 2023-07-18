@@ -24,7 +24,10 @@ export default function ItemPanel({
   style?: React.CSSProperties;
 }) {
   const milestonesExist = milestones && milestones.length > 0;
-  const displayedAP = useMemo(() => addCommasToNumber(ap), [ap]);
+  const displayedAP = useMemo(
+    () => (typeof ap === 'number' ? addCommasToNumber(ap) : null),
+    [ap]
+  );
   return (
     <div
       className={css`
@@ -78,7 +81,19 @@ export default function ItemPanel({
           font-size: 2rem;
         `}
       >
-        {itemName} ({displayedAP} AP)
+        {itemName}
+        {displayedAP && (
+          <span
+            className={css`
+              margin-left: 0.5rem;
+              font-size: 1.6rem;
+              color: ${Color.darkGray()};
+              font-weight: normal;
+            `}
+          >
+            ({displayedAP} AP)
+          </span>
+        )}
         {!isUnlocked && (
           <Icon
             className={css`
