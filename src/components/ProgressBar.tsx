@@ -11,7 +11,9 @@ export default function ProgressBar({
   progress,
   style = {},
   theme,
-  text
+  text,
+  startLabel,
+  endLabel
 }: {
   className?: string;
   color?: string;
@@ -20,6 +22,8 @@ export default function ProgressBar({
   style?: React.CSSProperties;
   theme?: string;
   text?: string;
+  startLabel?: string;
+  endLabel?: string;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {
@@ -32,56 +36,69 @@ export default function ProgressBar({
   );
 
   return (
-    <div
-      className={`${css`
-        border: 1px solid ${Color.borderGray()};
-        border-radius: ${borderRadius};
-        height: 2.2rem;
-        line-height: 1rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        margin-top: 1rem;
-        font-size: 1.2rem;
-        section {
-          margin-left: 0;
-          transition: width 0.5s;
-          border: 1px solid ${barColor};
-          border-top-left-radius: ${innerBorderRadius};
-          border-bottom-left-radius: ${innerBorderRadius};
-          border-top-right-radius: ${progress >= 100 ? innerBorderRadius : 0};
-          border-bottom-right-radius: ${progress >= 100
-            ? innerBorderRadius
-            : 0};
-        }
-      `} ${className}`}
-      style={{
-        ...style,
-        borderLeft: noBorderRadius ? 'none' : undefined,
-        borderRight: noBorderRadius ? 'none' : undefined,
-        borderRadius: noBorderRadius ? 0 : undefined
-      }}
-    >
-      <section
+    <div>
+      <div
+        className={`${css`
+          border: 1px solid ${Color.borderGray()};
+          border-radius: ${borderRadius};
+          height: 2.2rem;
+          line-height: 1rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          margin-top: 1rem;
+          font-size: 1.2rem;
+          section {
+            transition: width 0.5s;
+            border: 1px solid ${barColor};
+            border-top-left-radius: ${innerBorderRadius};
+            border-bottom-left-radius: ${innerBorderRadius};
+            border-top-right-radius: ${progress >= 100 ? innerBorderRadius : 0};
+            border-bottom-right-radius: ${progress >= 100
+              ? innerBorderRadius
+              : 0};
+          }
+        `} ${className}`}
         style={{
-          background: barColor,
-          width: `${progress}%`,
-          height: '100%',
-          display: 'flex',
-          opacity: progress > 0 ? 1 : 0,
-          alignItems: 'center',
-          justifyContent: 'center',
+          ...style,
+          borderLeft: noBorderRadius ? 'none' : undefined,
+          borderRight: noBorderRadius ? 'none' : undefined,
           borderRadius: noBorderRadius ? 0 : undefined
         }}
       >
-        <span
+        <section
           style={{
-            color: '#fff'
+            background: barColor,
+            width: `${progress}%`,
+            height: '100%',
+            display: 'flex',
+            opacity: progress > 0 ? 1 : 0,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: noBorderRadius ? 0 : undefined
           }}
         >
-          {text || `${progress}%`}
-        </span>
-      </section>
+          <span
+            style={{
+              color: '#fff'
+            }}
+          >
+            {text || `${progress}%`}
+          </span>
+        </section>
+      </div>
+      {startLabel && endLabel && (
+        <div
+          className={css`
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+          `}
+        >
+          <span>{startLabel}</span>
+          <span>{endLabel}</span>
+        </div>
+      )}
     </div>
   );
 }
