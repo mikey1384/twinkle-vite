@@ -33,7 +33,12 @@ export default function UserLevelStatus({
       >
         Your User Level: {authLevel}
       </p>
-      <ProgressBar theme={profileTheme} progress={10} />
+      <ProgressBar
+        theme={profileTheme}
+        progress={10}
+        startLabel="100 AP"
+        endLabel="300 AP"
+      />
     </div>
   );
 }

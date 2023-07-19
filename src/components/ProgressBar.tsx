@@ -90,6 +90,7 @@ export default function ProgressBar({
       {startLabel && endLabel && (
         <div
           className={css`
+            margin-top: 0.2rem;
             width: 100%;
             display: flex;
             justify-content: space-between;
