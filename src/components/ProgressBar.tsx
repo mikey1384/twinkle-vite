@@ -22,8 +22,8 @@ export default function ProgressBar({
   style?: React.CSSProperties;
   theme?: string;
   text?: string;
-  startLabel?: string;
-  endLabel?: string;
+  startLabel?: string | null;
+  endLabel?: string | null;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {

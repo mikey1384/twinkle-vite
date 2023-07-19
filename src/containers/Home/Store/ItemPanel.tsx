@@ -54,7 +54,12 @@ export default function ItemPanel({
     }
     return karmaPointTable[itemKey][currentLvl - 1];
   }, [currentLvl, isLeveled, itemKey]);
+  const displayedPreviouslyRequiredKarmaPoints = useMemo(() => {
+    if (!previouslyRequiredKarmaPoints) return null;
+    return addCommasToNumber(previouslyRequiredKarmaPoints || 0);
+  }, [previouslyRequiredKarmaPoints]);
   const displayedRequiredKarmaPoints = useMemo(() => {
+    if (!requiredKarmaPoints) return null;
     return addCommasToNumber(requiredKarmaPoints || 0);
   }, [requiredKarmaPoints]);
   const unlockProgress = useMemo(() => {
@@ -229,6 +234,20 @@ export default function ItemPanel({
             <ProgressBar
               color={unlockProgress === 100 ? Color.green() : ''}
               progress={unlockProgress}
+              startLabel={
+                displayedPreviouslyRequiredKarmaPoints
+                  ? `level ${
+                      currentLvl || 1
+                    } (${displayedPreviouslyRequiredKarmaPoints} KP)`
+                  : null
+              }
+              endLabel={
+                displayedRequiredKarmaPoints
+                  ? `level ${
+                      (currentLvl || 1) + 1
+                    } (${displayedRequiredKarmaPoints} KP)`
+                  : null
+              }
             />
             <p
               style={{
