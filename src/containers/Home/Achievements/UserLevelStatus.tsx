@@ -1,4 +1,5 @@
 import React from 'react';
+import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
@@ -8,7 +9,7 @@ export default function UserLevelStatus({
 }: {
   style?: React.CSSProperties;
 }) {
-  const { authLevel } = useKeyContext((v) => v.myState);
+  const { authLevel, profileTheme } = useKeyContext((v) => v.myState);
   return (
     <div
       className={css`
@@ -32,6 +33,7 @@ export default function UserLevelStatus({
       >
         Your User Level: {authLevel}
       </p>
+      <ProgressBar theme={profileTheme} progress={10} />
     </div>
   );
 }
