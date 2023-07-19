@@ -6,6 +6,7 @@ import Summoner from './Summoner';
 import Mentor from './Mentor';
 import Sage from './Sage';
 import Founder from './Founder';
+import UserLevelStatus from './UserLevelStatus';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function Achievements() {
@@ -61,6 +62,13 @@ export default function Achievements() {
           Achievements
         </p>
       </div>
+      {userId && (
+        <UserLevelStatus
+          style={{
+            marginBottom: '4rem'
+          }}
+        />
+      )}
       {achievementKeys.map((key, index) => {
         if (key === 'mission') {
           return <Mission key="mission" data={achievementsObj.mission} />;
