@@ -9,7 +9,9 @@ export default function UserLevelStatus({
 }: {
   style?: React.CSSProperties;
 }) {
-  const { authLevel, profileTheme } = useKeyContext((v) => v.myState);
+  const { authLevel, achievementPoints, profileTheme } = useKeyContext(
+    (v) => v.myState
+  );
   return (
     <div
       className={css`
@@ -31,7 +33,7 @@ export default function UserLevelStatus({
           font-size: 2.2rem;
         `}
       >
-        Your User Level: {authLevel}
+        Your User Level: {authLevel} ({achievementPoints} AP)
       </p>
       <ProgressBar
         theme={profileTheme}

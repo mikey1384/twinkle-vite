@@ -18,6 +18,7 @@ import { LAST_ONLINE_FILTER_LABEL } from '~/constants/defaultValues';
 
 export const AppContext = createContext({});
 export const initialMyState = {
+  achievementPoints: 0,
   authLevel: 0,
   canDelete: false,
   canEdit: false,
