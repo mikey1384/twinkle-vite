@@ -17,6 +17,10 @@ export default function UserLevelStatus({
     () => addCommasToNumber(achievementPoints),
     [achievementPoints]
   );
+
+  const startAP = '100 AP';
+  const targetAP = '1000 AP';
+
   return (
     <div
       className={css`
@@ -43,8 +47,8 @@ export default function UserLevelStatus({
       <ProgressBar
         theme={profileTheme}
         progress={10}
-        startLabel="100 AP"
-        endLabel="300 AP"
+        startLabel={startAP}
+        endLabel={targetAP}
       />
     </div>
   );
