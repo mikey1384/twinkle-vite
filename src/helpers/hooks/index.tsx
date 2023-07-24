@@ -347,6 +347,70 @@ export function useScrollPosition({
   });
 }
 
+const levels = [
+  {
+    ap: 0,
+    labels: [],
+    level: 0,
+    canEdit: false,
+    canDelete: false,
+    canReward: false,
+    canEditDictionary: false,
+    canPinPlaylists: false,
+    canEditPlaylists: false,
+    canEditRewardLevel: false
+  },
+  {
+    ap: 0,
+    labels: [],
+    level: 1,
+    canEdit: false,
+    canDelete: false,
+    canReward: false,
+    canEditDictionary: false,
+    canPinPlaylists: false,
+    canEditPlaylists: false,
+    canEditRewardLevel: false
+  },
+  {
+    ap: 200,
+    labels: ['Moderator'],
+    level: 2,
+    canEdit: true,
+    canDelete: true,
+    canReward: false,
+    canEditDictionary: false,
+    canPinPlaylists: false,
+    canEditPlaylists: false,
+    canEditRewardLevel: false
+  },
+  {
+    ap: 1000,
+    labels: ['Teacher'],
+    level: 3,
+    canEdit: true,
+    canDelete: true,
+    canReward: true,
+    canEditDictionary: false,
+    canPinPlaylists: false,
+    canEditPlaylists: false,
+    canEditRewardLevel: false
+  }
+];
+
+export function useUserLevel(ap: number) {
+  const result = useMemo(() => {
+    for (let i = levels.length - 1; i >= 0; i--) {
+      if (ap >= levels[i].ap) {
+        return levels[i];
+      }
+    }
+    return levels[1];
+  }, [ap]);
+
+  return result;
+}
+
 export function useWordleLabels({
   isSolved,
   isStrict,
