@@ -402,10 +402,13 @@ export function useUserLevel(ap: number) {
   const result = useMemo(() => {
     for (let i = levels.length - 1; i >= 0; i--) {
       if (ap >= levels[i].ap) {
-        return levels[i];
+        return {
+          ...levels[i],
+          nextLevelAp: i === levels.length - 1 ? null : levels[i + 1].ap
+        };
       }
     }
-    return levels[1];
+    return { ...levels[1], nextLevelAp: levels[2].ap };
   }, [ap]);
 
   return result;
