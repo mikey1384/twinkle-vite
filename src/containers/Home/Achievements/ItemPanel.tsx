@@ -135,7 +135,7 @@ export default function ItemPanel({
           Requirement
         </h3>
         {requirement && (
-          <p
+          <div
             className={css`
               margin-top: 0.3rem;
               color: ${Color.darkerGray()};
@@ -154,7 +154,7 @@ export default function ItemPanel({
               </div>
             )}
             {requirement}
-          </p>
+          </div>
         )}
       </div>
       {milestonesShown && (
