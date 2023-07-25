@@ -9,6 +9,7 @@ const urlRegex2 =
   /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n"' ]+((?:\([^)]*\))|[^.,;:?!"'\n)\]<* ])+)/i;
 
 export function addCommasToNumber(number: number): string {
+  if (!number) return '0';
   const numArray = `${number}`.split('');
   let result = '';
   numArray.reverse();

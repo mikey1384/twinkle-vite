@@ -20,11 +20,23 @@ export default function UserLevelStatus({
     [achievementPoints]
   );
 
-  const startAP = `${addCommasToNumber(ap)} AP`;
+  const startAP = useMemo(() => `${addCommasToNumber(ap)} AP`, [ap]);
   const targetAP = useMemo(
     () => `${addCommasToNumber(nextLevelAp || 0)} AP`,
     [nextLevelAp]
   );
+
+  const progress = useMemo(() => {
+    if (!nextLevelAp) {
+      return 0;
+    }
+    return Math.min(
+      Math.floor(
+        (Math.max(achievementPoints - ap, 0) * 100) / (nextLevelAp - ap)
+      ),
+      100
+    );
+  }, [achievementPoints, ap, nextLevelAp]);
 
   return (
     <div
@@ -51,7 +63,7 @@ export default function UserLevelStatus({
       </p>
       <ProgressBar
         theme={profileTheme}
-        progress={10}
+        progress={progress}
         startLabel={startAP}
         endLabel={targetAP}
       />
