@@ -398,7 +398,21 @@ const levels = [
   }
 ];
 
-export function useUserLevel(ap: number) {
+interface UserLevel {
+  ap: number;
+  level: number;
+  labels: string[];
+  canEdit: boolean;
+  canDelete: boolean;
+  canReward: boolean;
+  canEditDictionary: boolean;
+  canPinPlaylists: boolean;
+  canEditPlaylists: boolean;
+  canEditRewardLevel: boolean;
+  nextLevelAp: number | null;
+}
+
+export function useUserLevel(ap: number): UserLevel {
   const result = useMemo(() => {
     for (let i = levels.length - 1; i >= 0; i--) {
       if (ap >= levels[i].ap) {

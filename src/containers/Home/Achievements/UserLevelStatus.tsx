@@ -14,15 +14,17 @@ export default function UserLevelStatus({
   const { authLevel, achievementPoints, profileTheme } = useKeyContext(
     (v) => v.myState
   );
-  const userLevelObj = useUserLevel(achievementPoints);
-  console.log(achievementPoints, userLevelObj);
+  const { ap, nextLevelAp } = useUserLevel(achievementPoints);
   const displayedAP = useMemo(
     () => addCommasToNumber(achievementPoints),
     [achievementPoints]
   );
 
-  const startAP = '100 AP';
-  const targetAP = '1000 AP';
+  const startAP = `${addCommasToNumber(ap)} AP`;
+  const targetAP = useMemo(
+    () => `${addCommasToNumber(nextLevelAp || 0)} AP`,
+    [nextLevelAp]
+  );
 
   return (
     <div
