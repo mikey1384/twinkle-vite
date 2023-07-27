@@ -18,7 +18,7 @@ export default function UserLevelStatus({
     [achievementPoints]
   );
 
-  const startAP = useMemo(() => `${addCommasToNumber(ap)} AP`, [ap]);
+  const startAP = useMemo(() => `${addCommasToNumber(ap || 0)} AP`, [ap]);
   const targetAP = useMemo(
     () => `${addCommasToNumber(nextLevelAp || 0)} AP`,
     [nextLevelAp]
