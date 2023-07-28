@@ -1,5 +1,5 @@
 import React from 'react';
-import FounderBadge from './founder.png';
+import GrammarBadge from './grammar.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Grammar({
@@ -21,8 +21,8 @@ export default function Grammar({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
-      requirement="Found a new business"
-      badgeSrc={FounderBadge}
+      requirement="Earn 100,000 Twinkle Coins playing Grammarbles"
+      badgeSrc={GrammarBadge}
     />
   );
 }
