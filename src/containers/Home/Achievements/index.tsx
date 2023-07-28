@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Mission from './Mission';
 import Summoner from './Summoner';
+import Grammar from './Grammar';
 import Mentor from './Mentor';
 import Sage from './Sage';
 import Founder from './Founder';
@@ -78,6 +79,15 @@ export default function Achievements() {
             <Summoner
               key="summoner"
               data={achievementsObj.summoner}
+              style={{ marginTop: index > 0 ? '1rem' : 0 }}
+            />
+          );
+        }
+        if (key === 'grammar') {
+          return (
+            <Grammar
+              key="grammar"
+              data={achievementsObj.grammar}
               style={{ marginTop: index > 0 ? '1rem' : 0 }}
             />
           );
