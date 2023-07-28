@@ -5,6 +5,7 @@ import Mission from './Mission';
 import Summoner from './Summoner';
 import Grammar from './Grammar';
 import Mentor from './Mentor';
+import Teenager from './Teenager';
 import Sage from './Sage';
 import Founder from './Founder';
 import UserLevelStatus from './UserLevelStatus';
@@ -88,6 +89,15 @@ export default function Achievements() {
             <Grammar
               key="grammar"
               data={achievementsObj.grammar}
+              style={{ marginTop: index > 0 ? '1rem' : 0 }}
+            />
+          );
+        }
+        if (key === 'teenager') {
+          return (
+            <Teenager
+              key="teenager"
+              data={achievementsObj.teenager}
               style={{ marginTop: index > 0 ? '1rem' : 0 }}
             />
           );
