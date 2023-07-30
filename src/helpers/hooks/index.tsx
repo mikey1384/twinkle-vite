@@ -424,7 +424,7 @@ interface UserLevel {
   nextLevelAp: number | null;
 }
 
-export function useUserLevel(ap: number): UserLevel {
+export function useUserLevel({ ap }: { ap: number }): UserLevel {
   const result = useMemo(() => {
     for (let i = levels.length - 1; i >= 0; i--) {
       if (ap >= levels[i].ap) {
