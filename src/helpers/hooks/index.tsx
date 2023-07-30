@@ -426,18 +426,55 @@ interface UserLevel {
 
 export function useUserLevel(userId: number): UserLevel {
   const userObj = useAppContext((v) => v.user.state.userObj);
-  const { achievementPoints = 0 } = userObj[userId] || {};
+  const {
+    achievementPoints = 0,
+    authLevel,
+    canEdit,
+    canDelete,
+    canReward,
+    canEditDictionary,
+    canPinPlaylists,
+    canEditRewardLevel
+  } = userObj[userId] || {};
+
   const result = useMemo(() => {
     for (let i = levels.length - 1; i >= 0; i--) {
       if (achievementPoints >= levels[i].ap) {
         return {
           ...levels[i],
+          level: levels[i].level || authLevel,
+          canEdit: levels[i].canEdit || canEdit,
+          canDelete: levels[i].canDelete || canDelete,
+          canReward: levels[i].canReward || canReward,
+          canEditDictionary: levels[i].canEditDictionary || canEditDictionary,
+          canPinPlaylists: levels[i].canPinPlaylists || canPinPlaylists,
+          canEditRewardLevel:
+            levels[i].canEditRewardLevel || canEditRewardLevel,
           nextLevelAp: i === levels.length - 1 ? null : levels[i + 1].ap
         };
       }
     }
-    return { ...levels[1], nextLevelAp: levels[2].ap };
-  }, [achievementPoints]);
+    return {
+      ...levels[1],
+      level: levels[1].level || authLevel,
+      canEdit: levels[1].canEdit || canEdit,
+      canDelete: levels[1].canDelete || canDelete,
+      canReward: levels[1].canReward || canReward,
+      canEditDictionary: levels[1].canEditDictionary || canEditDictionary,
+      canPinPlaylists: levels[1].canPinPlaylists || canPinPlaylists,
+      canEditRewardLevel: levels[1].canEditRewardLevel || canEditRewardLevel,
+      nextLevelAp: levels[2].ap
+    };
+  }, [
+    achievementPoints,
+    authLevel,
+    canDelete,
+    canEdit,
+    canEditDictionary,
+    canEditRewardLevel,
+    canPinPlaylists,
+    canReward
+  ]);
 
   return result;
 }
