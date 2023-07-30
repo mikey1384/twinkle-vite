@@ -424,10 +424,12 @@ interface UserLevel {
   nextLevelAp: number | null;
 }
 
-export function useUserLevel({ ap }: { ap: number }): UserLevel {
+export function useUserLevel(userId: number): UserLevel {
+  const userObj = useAppContext((v) => v.user.state.userObj);
+  const { achievementPoints = 0 } = userObj[userId] || {};
   const result = useMemo(() => {
     for (let i = levels.length - 1; i >= 0; i--) {
-      if (ap >= levels[i].ap) {
+      if (achievementPoints >= levels[i].ap) {
         return {
           ...levels[i],
           nextLevelAp: i === levels.length - 1 ? null : levels[i + 1].ap
@@ -435,7 +437,7 @@ export function useUserLevel({ ap }: { ap: number }): UserLevel {
       }
     }
     return { ...levels[1], nextLevelAp: levels[2].ap };
-  }, [ap]);
+  }, [achievementPoints]);
 
   return result;
 }
