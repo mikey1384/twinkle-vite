@@ -40,7 +40,12 @@ import {
   determineXpButtonDisabled,
   scrollElementToCenter
 } from '~/helpers';
-import { useContentState, useLazyLoad, useTheme } from '~/helpers/hooks';
+import {
+  useContentState,
+  useLazyLoad,
+  useTheme,
+  useUserLevel
+} from '~/helpers/hooks';
 import { borderRadius, Color } from '~/constants/css';
 import {
   getFileInfoFromFileName,
@@ -133,18 +138,9 @@ function Comment({
   const updateCommentPinStatus = useAppContext(
     (v) => v.requestHelpers.updateCommentPinStatus
   );
-
-  const {
-    authLevel,
-    banned,
-    canDelete,
-    canEdit,
-    canReward,
-    isCreator,
-    twinkleCoins,
-    userId,
-    profileTheme
-  } = useKeyContext((v) => v.myState);
+  const { banned, isCreator, twinkleCoins, userId, profileTheme } =
+    useKeyContext((v) => v.myState);
+  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
   const {
     link: { color: linkColor },
     reward: { color: rewardColor }
@@ -347,8 +343,8 @@ function Comment({
     [rootContent.uploader?.id, userId]
   );
   const userIsHigherAuth = useMemo(
-    () => authLevel > uploader?.authLevel,
-    [authLevel, uploader?.authLevel]
+    () => level > uploader?.authLevel,
+    [level, uploader?.authLevel]
   );
 
   const dropdownMenuItems = useMemo(() => {
@@ -435,12 +431,12 @@ function Comment({
     () =>
       determineUserCanRewardThis({
         canReward,
-        authLevel,
+        authLevel: level,
         uploader,
         userId,
         recommendations
       }),
-    [authLevel, canReward, recommendations, uploader, userId]
+    [level, canReward, recommendations, uploader, userId]
   );
 
   const isCommentForContentSubject = useMemo(
