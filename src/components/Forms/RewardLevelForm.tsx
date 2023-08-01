@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
+import { useUserLevel } from '~/helpers/hooks';
 import localize from '~/constants/localize';
 
 const clearLabel = localize('clear');
@@ -42,7 +43,8 @@ export default function RewardLevelForm({
   onSetRewardLevel: (rewardLevel: number) => void;
   style?: React.CSSProperties;
 }) {
-  const { authLevel } = useKeyContext((v) => v.myState);
+  const { userId } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(userId);
   const {
     rewardLevelForm: {
       color: rewardLevelFormColor,
@@ -57,13 +59,13 @@ export default function RewardLevelForm({
       if (isFromSubjectInput && isMadeByUser) {
         onSetRewardLevel(1);
       }
-      if (isFromContentInput && authLevel > 2) {
+      if (isFromContentInput && level > 3) {
         onSetRewardLevel(4);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    authLevel,
+    level,
     isFromContentInput,
     isFromSubjectInput,
     isMadeByUser,
