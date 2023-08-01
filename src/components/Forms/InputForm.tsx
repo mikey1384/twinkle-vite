@@ -16,7 +16,6 @@ import FullTextReveal from '~/components/Texts/FullTextReveal';
 import AlertModal from '~/components/Modals/AlertModal';
 import { Buffer } from 'buffer';
 import { Color } from '~/constants/css';
-import { useTheme } from '~/helpers/hooks';
 import {
   FILE_UPLOAD_XP_REQUIREMENT,
   mb,
@@ -32,6 +31,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useInputContext, useKeyContext } from '~/contexts';
+import { useTheme, useUserLevel } from '~/helpers/hooks';
 import localize from '~/constants/localize';
 import { Content } from '~/types';
 
@@ -87,8 +87,11 @@ function InputForm({
   theme?: string;
   targetCommentId?: number | null;
 }) {
-  const { userId, authLevel, profileTheme, twinkleXP, fileUploadLvl } =
-    useKeyContext((v) => v.myState);
+  const { userId, profileTheme, twinkleXP, fileUploadLvl } = useKeyContext(
+    (v) => v.myState
+  );
+  const { level } = useUserLevel(userId);
+
   const {
     skeuomorphicDisabled: {
       color: skeuomorphicDisabledColor,
@@ -149,8 +152,8 @@ function InputForm({
     [attachment, commentExceedsCharLimit, submitting, textIsEmpty]
   );
   const uploadDisabled = useMemo(
-    () => authLevel === 0 && twinkleXP < FILE_UPLOAD_XP_REQUIREMENT,
-    [authLevel, twinkleXP]
+    () => level === 0 && twinkleXP < FILE_UPLOAD_XP_REQUIREMENT,
+    [level, twinkleXP]
   );
 
   useEffect(() => {
@@ -318,11 +321,9 @@ function InputForm({
               color={dangerColor}
               filled
               loading={secretViewMessageSubmitting}
-              onClick={
-                authLevel > 1
-                  ? handleViewAnswer
-                  : () => setConfirmModalShown(true)
-              }
+              onClick={() => {
+                level > 1 ? handleViewAnswer() : setConfirmModalShown(true);
+              }}
             >
               {viewWithoutRespondingLabel}
             </Button>

@@ -442,27 +442,27 @@ export function useUserLevel(userId: number): UserLevel {
       if (achievementPoints >= levels[i].ap) {
         return {
           ...levels[i],
-          level: levels[i].level || authLevel,
-          canEdit: levels[i].canEdit || canEdit,
-          canDelete: levels[i].canDelete || canDelete,
-          canReward: levels[i].canReward || canReward,
-          canEditDictionary: levels[i].canEditDictionary || canEditDictionary,
-          canPinPlaylists: levels[i].canPinPlaylists || canPinPlaylists,
+          level: authLevel || levels[i].level,
+          canEdit: canEdit || levels[i].canEdit,
+          canDelete: canDelete || levels[i].canDelete,
+          canReward: canReward || levels[i].canReward,
+          canEditDictionary: canEditDictionary || levels[i].canEditDictionary,
+          canPinPlaylists: canPinPlaylists || levels[i].canPinPlaylists,
           canEditRewardLevel:
-            levels[i].canEditRewardLevel || canEditRewardLevel,
+            canEditRewardLevel || levels[i].canEditRewardLevel,
           nextLevelAp: i === levels.length - 1 ? null : levels[i + 1].ap
         };
       }
     }
     return {
       ...levels[1],
-      level: levels[1].level || authLevel,
-      canEdit: levels[1].canEdit || canEdit,
-      canDelete: levels[1].canDelete || canDelete,
-      canReward: levels[1].canReward || canReward,
-      canEditDictionary: levels[1].canEditDictionary || canEditDictionary,
-      canPinPlaylists: levels[1].canPinPlaylists || canPinPlaylists,
-      canEditRewardLevel: levels[1].canEditRewardLevel || canEditRewardLevel,
+      level: authLevel || levels[1].level,
+      canEdit: canEdit || levels[1].canEdit,
+      canDelete: canDelete || levels[1].canDelete,
+      canReward: canReward || levels[1].canReward,
+      canEditDictionary: canEditDictionary || levels[1].canEditDictionary,
+      canPinPlaylists: canPinPlaylists || levels[1].canPinPlaylists,
+      canEditRewardLevel: canEditRewardLevel || levels[1].canEditRewardLevel,
       nextLevelAp: levels[2].ap
     };
   }, [
