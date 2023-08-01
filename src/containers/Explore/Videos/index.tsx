@@ -6,7 +6,7 @@ import ContinueWatchingPanel from './ContinueWatchingPanel';
 import AddPlaylistModal from '~/components/Modals/AddPlaylistModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { scrollElementToCenter } from '~/helpers';
-import { useSearch } from '~/helpers/hooks';
+import { useSearch, useUserLevel } from '~/helpers/hooks';
 import {
   useAppContext,
   useExploreContext,
@@ -21,7 +21,8 @@ const allPlaylistsLabel = localize('allPlaylists');
 export default function Videos() {
   const loadPlaylists = useAppContext((v) => v.requestHelpers.loadPlaylists);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
-  const { authLevel, userId } = useKeyContext((v) => v.myState);
+  const { userId } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(userId);
   const addPlaylistModalShown = useExploreContext(
     (v) => v.state.videos.addPlaylistModalShown
   );
@@ -92,7 +93,7 @@ export default function Videos() {
           <ButtonGroup
             style={{
               marginLeft: 'auto',
-              opacity: !!userId && authLevel > 0 ? 1 : 0
+              opacity: !!userId && level > 1 ? 1 : 0
             }}
             buttons={[
               {
@@ -100,7 +101,7 @@ export default function Videos() {
                 onClick: onOpenAddPlaylistModal,
                 skeuomorphic: true,
                 color: 'darkerGray',
-                disabled: !userId || authLevel === 0
+                disabled: !userId || level <= 1
               }
             ]}
           />
