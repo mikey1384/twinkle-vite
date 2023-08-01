@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useContentState } from '~/helpers/hooks';
+import { useContentState, useUserLevel } from '~/helpers/hooks';
 import {
   useAppContext,
   useContentContext,
@@ -41,9 +41,8 @@ export default function LinkItem({
   const navigate = useNavigate();
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
-  const { authLevel, canDelete, canEdit, userId } = useKeyContext(
-    (v) => v.myState
-  );
+  const { userId } = useKeyContext((v) => v.myState);
+  const { level, canDelete, canEdit } = useUserLevel(userId);
   const {
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
@@ -78,9 +77,9 @@ export default function LinkItem({
 
   const editButtonShown = useMemo(() => {
     const userCanEditThis =
-      (canEdit || canDelete) && authLevel > uploader.authLevel;
+      (canEdit || canDelete) && level > uploader.authLevel;
     return userIsUploader || userCanEditThis;
-  }, [authLevel, canDelete, canEdit, uploader.authLevel, userIsUploader]);
+  }, [level, canDelete, canEdit, uploader.authLevel, userIsUploader]);
 
   const editMenuItems = useMemo(() => {
     const items = [];
