@@ -11,6 +11,7 @@ import {
   finalizeEmoji,
   stringIsEmpty
 } from '~/helpers/stringHelpers';
+import { useUserLevel } from '~/helpers/hooks';
 import Button from '~/components/Button';
 import {
   returnMaxRewards,
@@ -51,9 +52,8 @@ export default function XPRewardInterface({
 }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const rewardUser = useAppContext((v) => v.requestHelpers.rewardUser);
-  const { authLevel, twinkleCoins, userId, banned } = useKeyContext(
-    (v) => v.myState
-  );
+  const { twinkleCoins, userId, banned } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(userId);
   const {
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
@@ -110,8 +110,7 @@ export default function XPRewardInterface({
     selectedAmountRef.current = prevSelectedAmount;
   }, [prevSelectedAmount]);
   const [selectedAmount, setSelectedAmount] = useState(prevSelectedAmount);
-  const requiresPayment =
-    !authLevel || authLevel < 2 || uploaderAuthLevel >= authLevel;
+  const requiresPayment = !level || level < 3 || uploaderAuthLevel >= level;
 
   useEffect(() => {
     setSelectedAmount((selectedAmount: number) =>
