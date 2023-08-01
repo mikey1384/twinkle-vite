@@ -14,7 +14,7 @@ import AlertModal from '~/components/Modals/AlertModal';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { determineUserCanRewardThis } from '~/helpers';
-import { useContentState, useTheme } from '~/helpers/hooks';
+import { useContentState, useTheme, useUserLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
@@ -71,15 +71,11 @@ export default function Body({
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
 
-  const {
-    authLevel,
-    canDelete,
-    canEdit,
-    canReward,
-    profileTheme,
-    twinkleCoins,
-    userId
-  } = useKeyContext((v) => v.myState);
+  const { profileTheme, twinkleCoins, userId } = useKeyContext(
+    (v) => v.myState
+  );
+  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
+
   const {
     reward: { color: rewardColor }
   } = useTheme(theme || profileTheme);
@@ -288,13 +284,13 @@ export default function Body({
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
-        authLevel,
+        authLevel: level,
         canReward,
         recommendations,
         uploader,
         userId
       }),
-    [authLevel, canReward, recommendations, uploader, userId]
+    [level, canReward, recommendations, uploader, userId]
   );
 
   useEffect(() => {
@@ -322,7 +318,7 @@ export default function Body({
           onClickSecretAnswer={onSecretAnswerClick}
         />
         <BottomInterface
-          authLevel={authLevel}
+          authLevel={level}
           autoExpand={autoExpand}
           canDelete={!!canDelete}
           canEdit={!!canEdit}
