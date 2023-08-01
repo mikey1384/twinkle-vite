@@ -38,7 +38,12 @@ import { Global } from '@emotion/react';
 import { socket } from '~/constants/io';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
-import { useMyState, useTheme, useScrollPosition } from '~/helpers/hooks';
+import {
+  useMyState,
+  useTheme,
+  useScrollPosition,
+  useUserLevel
+} from '~/helpers/hooks';
 import {
   isMobile,
   getSectionFromPathname,
@@ -96,7 +101,6 @@ function App() {
     background: { color: backgroundColor }
   } = theme;
   const {
-    authLevel,
     profilePicUrl,
     signinModalShown,
     twinkleCoins,
@@ -104,6 +108,7 @@ function App() {
     userId,
     username
   } = myState;
+  const { level } = useUserLevel(userId);
 
   const prevUserId = useRef(userId);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
@@ -434,7 +439,7 @@ function App() {
         filePath,
         fileSize: fileToUpload.size,
         id: messageId,
-        uploaderAuthLevel: authLevel,
+        uploaderAuthLevel: level,
         channelId,
         userId,
         username,
@@ -494,7 +499,7 @@ function App() {
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      authLevel,
+      level,
       currentChannel,
       currentChannelName,
       profilePicUrl,
