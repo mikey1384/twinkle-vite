@@ -36,7 +36,7 @@ import { useInView } from 'react-intersection-observer';
 import { socket } from '~/constants/io';
 import { MessageStyle } from '../Styles';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
-import { useContentState, useLazyLoad } from '~/helpers/hooks';
+import { useContentState, useLazyLoad, useUserLevel } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -189,15 +189,12 @@ function Message({
     state: { filesBeingUploaded, socketConnected }
   } = useContext(LocalContext);
   const {
-    authLevel,
-    canDelete,
-    canEdit,
-    canReward,
     isCreator,
     userId: myId,
     username: myUsername,
     profilePicUrl: myProfilePicUrl
   } = useKeyContext((v) => v.myState);
+  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
   const {
     thumbUrl: recentThumbUrl,
     isEditing,
@@ -228,10 +225,9 @@ function Message({
     () =>
       !invitePath &&
       !isDrawOffer &&
-      (((canEdit || canDelete) && authLevel > uploaderAuthLevel) ||
-        userIsUploader),
+      (((canEdit || canDelete) && level > uploaderAuthLevel) || userIsUploader),
     [
-      authLevel,
+      level,
       canDelete,
       canEdit,
       invitePath,
@@ -241,8 +237,8 @@ function Message({
     ]
   );
   const userCanRewardThis = useMemo(
-    () => canReward && authLevel > uploaderAuthLevel && myId !== userId,
-    [authLevel, canReward, uploaderAuthLevel, userId, myId]
+    () => canReward && level > uploaderAuthLevel && myId !== userId,
+    [level, canReward, uploaderAuthLevel, userId, myId]
   );
   const [uploadStatus = {}] = useMemo(
     () =>
@@ -317,7 +313,7 @@ function Message({
       });
       const messageToSendOverSocket = {
         ...message,
-        uploaderAuthLevel: authLevel,
+        uploaderAuthLevel: level,
         isNewMessage: true,
         id: messageId
       };
