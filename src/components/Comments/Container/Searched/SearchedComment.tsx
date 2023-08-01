@@ -23,7 +23,7 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { commentContainer } from '../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useContentState, useTheme } from '~/helpers/hooks';
+import { useContentState, useTheme, useUserLevel } from '~/helpers/hooks';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled
@@ -141,17 +141,10 @@ export default function SearchedComment({
     (v) => v.requestHelpers.updateCommentPinStatus
   );
 
-  const {
-    authLevel,
-    banned,
-    canDelete,
-    canEdit,
-    canReward,
-    isCreator,
-    profileTheme,
-    twinkleCoins,
-    userId
-  } = useKeyContext((v) => v.myState);
+  const { banned, isCreator, profileTheme, twinkleCoins, userId } =
+    useKeyContext((v) => v.myState);
+  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
+
   const {
     link: { color: linkColor },
     reward: { color: rewardColor }
@@ -262,8 +255,8 @@ export default function SearchedComment({
     [parent.contentType, parent.uploader?.id, userId]
   );
   const userIsHigherAuth = useMemo(
-    () => authLevel > uploader.authLevel,
-    [authLevel, uploader.authLevel]
+    () => level > uploader.authLevel,
+    [level, uploader.authLevel]
   );
   const dropdownButtonShown = useMemo(() => {
     if (isNotification) {
@@ -347,12 +340,12 @@ export default function SearchedComment({
     () =>
       determineUserCanRewardThis({
         canReward,
-        authLevel,
+        authLevel: level,
         uploader,
         userId,
         recommendations
       }),
-    [authLevel, canReward, recommendations, uploader, userId]
+    [level, canReward, recommendations, uploader, userId]
   );
 
   const isCommentForContentSubject = useMemo(
