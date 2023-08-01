@@ -30,7 +30,7 @@ import {
   determineXpButtonDisabled
 } from '~/helpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useContentState } from '~/helpers/hooks';
+import { useContentState, useUserLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE, charLimit } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
@@ -89,14 +89,8 @@ export default function SubjectPanel({
   const onSetByUserStatus = useContentContext(
     (v) => v.actions.onSetByUserStatus
   );
-  const {
-    authLevel,
-    canDelete,
-    canEdit,
-    canReward,
-    twinkleCoins,
-    userId: myId
-  } = useKeyContext((v) => v.myState);
+  const { twinkleCoins, userId: myId } = useKeyContext((v) => v.myState);
+  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
   const {
     done: { color: doneColor },
     content: { color: contentColor },
@@ -147,10 +141,10 @@ export default function SubjectPanel({
     useState(false);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
   const editButtonShown = useMemo(() => {
-    const userHasHigherAuthLevel = authLevel > uploaderAuthLevel;
+    const userHasHigherAuthLevel = level > uploaderAuthLevel;
     const userCanEditThis = (canEdit || canDelete) && userHasHigherAuthLevel;
     return userIsUploader || userCanEditThis;
-  }, [authLevel, canDelete, canEdit, uploaderAuthLevel, userIsUploader]);
+  }, [level, canDelete, canEdit, uploaderAuthLevel, userIsUploader]);
   const secretHidden = useMemo(
     () =>
       (!!secretAnswer || !!secretAttachment) &&
@@ -160,13 +154,13 @@ export default function SubjectPanel({
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
-        authLevel,
+        authLevel: level,
         canReward,
         recommendations,
         uploader: { id: userId },
         userId: myId
       }),
-    [authLevel, canReward, myId, recommendations, userId]
+    [level, canReward, myId, recommendations, userId]
   );
   const rewardButtonShown = useMemo(() => {
     return !onEdit && userCanRewardThis;
