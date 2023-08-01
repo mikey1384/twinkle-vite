@@ -17,7 +17,7 @@ import {
 } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useInterval, useTheme } from '~/helpers/hooks';
+import { useInterval, useTheme, useUserLevel } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import LocalContext from '../../../Context';
 import localize from '~/constants/localize';
@@ -73,9 +73,10 @@ export default function ChannelHeader({
     },
     state: { allFavoriteChannelIds, subjectSearchResults }
   } = useContext(LocalContext);
-  const { authLevel, banned, profilePicUrl, userId, username } = useKeyContext(
+  const { banned, profilePicUrl, userId, username } = useKeyContext(
     (v) => v.myState
   );
+  const { level } = useUserLevel(userId);
   const {
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor },
@@ -208,7 +209,7 @@ export default function ChannelHeader({
     const result = [];
     if (
       ((selectedChannelId === GENERAL_CHAT_ID || canChangeSubject === 'mod') &&
-        authLevel > 0) ||
+        level > 1) ||
       canChangeSubject === 'all' ||
       (canChangeSubject === 'owner' && currentChannel.creatorId === userId)
     ) {
@@ -273,10 +274,10 @@ export default function ChannelHeader({
 
   const menuButtonShown = useMemo(() => {
     return (
-      (selectedChannelId !== GENERAL_CHAT_ID || authLevel > 0) &&
+      (selectedChannelId !== GENERAL_CHAT_ID || level > 1) &&
       menuProps.length > 0
     );
-  }, [authLevel, selectedChannelId, menuProps.length]);
+  }, [level, selectedChannelId, menuProps.length]);
 
   return (
     <ErrorBoundary
@@ -296,9 +297,9 @@ export default function ChannelHeader({
           display: flex;
           align-items: center;
           flex-direction: column;
-          width: CALC(100% - ${authLevel > 0 ? '22rem' : '12rem'});
+          width: CALC(100% - ${level > 1 ? '22rem' : '12rem'});
           @media (max-width: ${mobileMaxWidth}) {
-            width: CALC(100% - ${authLevel > 0 ? '13rem' : '3rem'});
+            width: CALC(100% - ${level > 1 ? '13rem' : '3rem'});
           }
         }
       `}
