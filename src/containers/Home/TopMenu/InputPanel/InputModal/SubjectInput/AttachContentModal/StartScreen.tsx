@@ -7,6 +7,7 @@ import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import { Color } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useInputContext, useKeyContext } from '~/contexts';
+import { useUserLevel } from '~/helpers/hooks';
 import {
   FILE_UPLOAD_XP_REQUIREMENT,
   mb,
@@ -30,9 +31,8 @@ export default function StartScreen({
   const onSetSubjectAttachment = useInputContext(
     (v) => v.actions.onSetSubjectAttachment
   );
-  const { authLevel, fileUploadLvl, twinkleXP } = useKeyContext(
-    (v) => v.myState
-  );
+  const { userId, fileUploadLvl, twinkleXP } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(userId);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const FileInputRef: React.MutableRefObject<any> = useRef(null);
   const maxSize = useMemo(
@@ -40,10 +40,10 @@ export default function StartScreen({
     [fileUploadLvl]
   );
   const disabled = useMemo(() => {
-    if (authLevel > 1) return false;
+    if (level > 3) return false;
     if (twinkleXP >= FILE_UPLOAD_XP_REQUIREMENT) return false;
     return true;
-  }, [authLevel, twinkleXP]);
+  }, [level, twinkleXP]);
   const fromYourLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return <>{deviceIsMobile ? '기기' : '컴퓨터'}에서 가져오기</>;

@@ -159,6 +159,13 @@ function Message({
   const {
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
+  const {
+    isCreator,
+    userId: myId,
+    username: myUsername,
+    profilePicUrl: myProfilePicUrl
+  } = useKeyContext((v) => v.myState);
+  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
   const spoilerClickedRef = useRef(false);
   const [highlighted, setHighlighted] = useState(false);
   const [reactionsMenuShown, setReactionsMenuShown] = useState(false);
@@ -188,13 +195,6 @@ function Message({
     },
     state: { filesBeingUploaded, socketConnected }
   } = useContext(LocalContext);
-  const {
-    isCreator,
-    userId: myId,
-    username: myUsername,
-    profilePicUrl: myProfilePicUrl
-  } = useKeyContext((v) => v.myState);
-  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
   const {
     thumbUrl: recentThumbUrl,
     isEditing,
