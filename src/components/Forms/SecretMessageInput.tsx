@@ -10,6 +10,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 import { returnImageFileFromUrl } from '~/helpers';
+import { useUserLevel } from '~/helpers/hooks';
 import {
   FILE_UPLOAD_XP_REQUIREMENT,
   mb,
@@ -53,9 +54,8 @@ export default function SecretMessageInput({
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [draggedFile, setDraggedFile] = useState();
   const FileInputRef: React.RefObject<any> = useRef(null);
-  const { authLevel, fileUploadLvl, twinkleXP, userId } = useKeyContext(
-    (v) => v.myState
-  );
+  const { fileUploadLvl, twinkleXP, userId } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(userId);
   const {
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor },
@@ -78,9 +78,8 @@ export default function SecretMessageInput({
     [fileUploadLvl]
   );
   const disabled = useMemo(
-    () =>
-      !userId || (authLevel === 0 && twinkleXP < FILE_UPLOAD_XP_REQUIREMENT),
-    [authLevel, twinkleXP, userId]
+    () => !userId || (level === 0 && twinkleXP < FILE_UPLOAD_XP_REQUIREMENT),
+    [level, twinkleXP, userId]
   );
 
   return (
