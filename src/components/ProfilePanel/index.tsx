@@ -16,7 +16,12 @@ import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useContentState, useLazyLoad, useTheme } from '~/helpers/hooks';
+import {
+  useContentState,
+  useLazyLoad,
+  useTheme,
+  useUserLevel
+} from '~/helpers/hooks';
 import { useInView } from 'react-intersection-observer';
 import {
   useAppContext,
@@ -169,9 +174,8 @@ function ProfilePanel({
   const uploadBio = useAppContext((v) => v.requestHelpers.uploadBio);
   const onResetProfile = useProfileContext((v) => v.actions.onResetProfile);
 
-  const { userId, username, banned, authLevel } = useKeyContext(
-    (v) => v.myState
-  );
+  const { userId, username, banned } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(userId);
   const {
     profilePanel: { color: profilePanelColor },
     coverText: { color: coverTextColor, shadow: coverTextShadowColor }
@@ -624,7 +628,7 @@ function ProfilePanel({
         });
       }
       onOpenNewChatTab({
-        user: { username, id: userId, profilePicUrl, authLevel },
+        user: { username, id: userId, profilePicUrl, authLevel: level },
         recipient: {
           username: profile.username,
           id: profile.id,
