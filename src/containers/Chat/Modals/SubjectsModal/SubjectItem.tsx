@@ -4,6 +4,7 @@ import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import moment from 'moment';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
+import { useUserLevel } from '~/helpers/hooks';
 
 const marginHeight = 1;
 const subjectTitleHeight = 24;
@@ -34,7 +35,8 @@ export default function SubjectItem({
   const [marginBottom, setMarginBottom] = useState(`${marginHeight}rem`);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(null);
-  const { authLevel, canDelete } = useKeyContext((v) => v.myState);
+  const { userId: myId } = useKeyContext((v) => v.myState);
+  const { level, canDelete } = useUserLevel(myId);
 
   useEffect(() => {
     const numLines = SubjectTitleRef.current.clientHeight / subjectTitleHeight;
@@ -48,10 +50,7 @@ export default function SubjectItem({
 
   const buttons = useMemo(() => {
     const result = [];
-    if (
-      (currentSubjectId !== id && authLevel > 3 && canDelete) ||
-      userIsOwner
-    ) {
+    if ((currentSubjectId !== id && level > 3 && canDelete) || userIsOwner) {
       result.push({
         color: 'rose',
         opacity: 0.5,
@@ -75,7 +74,7 @@ export default function SubjectItem({
       onSelectSubject();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLevel, canDelete, currentSubjectId, id]);
+  }, [level, canDelete, currentSubjectId, id]);
 
   return (
     <div
