@@ -23,7 +23,7 @@ import {
   determineUserCanRewardThis,
   determineXpButtonDisabled
 } from '~/helpers';
-import { useContentState } from '~/helpers/hooks';
+import { useContentState, useUserLevel } from '~/helpers/hooks';
 import { processedURL } from '~/helpers/stringHelpers';
 import {
   useAppContext,
@@ -46,8 +46,8 @@ export default function LinkPage() {
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const loadSubjects = useAppContext((v) => v.requestHelpers.loadSubjects);
 
-  const { authLevel, canDelete, canEdit, canReward, twinkleCoins, userId } =
-    useKeyContext((v) => v.myState);
+  const { twinkleCoins, userId } = useKeyContext((v) => v.myState);
+  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
   const {
     byUserIndicator: {
       color: byUserIndicatorColor,
@@ -235,19 +235,19 @@ export default function LinkPage() {
   );
 
   const userCanEditThis = useMemo(
-    () => (canEdit || canDelete) && authLevel > uploader?.authLevel,
-    [authLevel, canDelete, canEdit, uploader]
+    () => (canEdit || canDelete) && level > uploader?.authLevel,
+    [level, canDelete, canEdit, uploader]
   );
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
-        authLevel,
+        authLevel: level,
         canReward,
         recommendations,
         uploader,
         userId
       }),
-    [authLevel, canReward, recommendations, uploader, userId]
+    [level, canReward, recommendations, uploader, userId]
   );
 
   const xpButtonDisabled = useMemo(
