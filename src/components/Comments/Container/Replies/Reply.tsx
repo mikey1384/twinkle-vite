@@ -30,7 +30,7 @@ import {
   determineUserCanRewardThis,
   determineXpButtonDisabled
 } from '~/helpers';
-import { useContentState, useTheme } from '~/helpers/hooks';
+import { useContentState, useTheme, useUserLevel } from '~/helpers/hooks';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
@@ -115,17 +115,10 @@ function Reply({
 }) {
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadReplies = useAppContext((v) => v.requestHelpers.loadReplies);
-  const {
-    authLevel,
-    banned,
-    canDelete,
-    canEdit,
-    canReward,
-    isCreator,
-    profileTheme,
-    twinkleCoins,
-    userId
-  } = useKeyContext((v) => v.myState);
+  const { banned, isCreator, profileTheme, twinkleCoins, userId } =
+    useKeyContext((v) => v.myState);
+  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
+
   const {
     link: { color: linkColor },
     reward: { color: rewardColor }
@@ -177,7 +170,7 @@ function Reply({
     () => userId && rootContent?.uploader?.id === userId,
     [rootContent?.uploader?.id, userId]
   );
-  const userIsHigherAuth = authLevel > (uploader.authLevel || 0);
+  const userIsHigherAuth = level > (uploader.authLevel || 0);
 
   const isRecommendedByUser = useMemo(() => {
     return (
@@ -216,12 +209,12 @@ function Reply({
     () =>
       determineUserCanRewardThis({
         canReward,
-        authLevel,
+        authLevel: level,
         recommendations,
         uploader,
         userId
       }),
-    [authLevel, canReward, recommendations, uploader, userId]
+    [level, canReward, recommendations, uploader, userId]
   );
 
   const rewardLevel = useMemo(() => {
