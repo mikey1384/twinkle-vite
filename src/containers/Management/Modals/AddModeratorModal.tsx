@@ -6,8 +6,8 @@ import SearchInput from '~/components/Texts/SearchInput';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Table from '../Table';
 import Icon from '~/components/Icon';
-import { useSearch } from '~/helpers/hooks';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
+import { useSearch, useUserLevel } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
 import { capitalize } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
@@ -25,12 +25,13 @@ export default function AddModeratorModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const { userId } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(userId);
   const addModerators = useAppContext((v) => v.requestHelpers.addModerators);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const onEditModerators = useManagementContext(
     (v) => v.actions.onEditModerators
   );
-  const { authLevel } = useKeyContext((v) => v.myState);
   const [dropdownShown, setDropdownShown] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
@@ -201,7 +202,7 @@ export default function AddModeratorModal({
   async function handleUserSearch(text: string) {
     const users = await searchUsers(text);
     const result = users.filter(
-      (user: { authLevel: number }) => user.authLevel < authLevel
+      (user: { authLevel: number }) => user.authLevel < level
     );
     setSearchedUsers(result);
   }
