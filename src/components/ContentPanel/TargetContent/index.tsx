@@ -29,7 +29,7 @@ import {
   isMobile
 } from '~/helpers';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { useContentState, useTheme } from '~/helpers/hooks';
+import { useContentState, useTheme, useUserLevel } from '~/helpers/hooks';
 import {
   useAppContext,
   useContentContext,
@@ -77,15 +77,10 @@ export default function TargetContent({
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
-  const {
-    authLevel,
-    canReward,
-    profileTheme,
-    profilePicUrl,
-    userId,
-    twinkleCoins,
-    username
-  } = useKeyContext((v) => v.myState);
+  const { profileTheme, profilePicUrl, userId, twinkleCoins, username } =
+    useKeyContext((v) => v.myState);
+  const { level, canReward } = useUserLevel(userId);
+
   const {
     link: { color: linkColor },
     content: { color: contentColor },
@@ -138,14 +133,14 @@ export default function TargetContent({
     if (comment && !comment.notFound) {
       canRewardThis = determineUserCanRewardThis({
         canReward,
-        authLevel,
+        authLevel: level,
         recommendations: comment.recommendations,
         uploader: comment.uploader,
         userId
       });
     }
     return canRewardThis;
-  }, [authLevel, canReward, comment, userId]);
+  }, [level, canReward, comment, userId]);
   const subjectUploaderId = useMemo(
     () => subject?.uploader?.id || subject?.userId,
     [subject]
