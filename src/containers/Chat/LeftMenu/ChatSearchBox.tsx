@@ -1,7 +1,7 @@
 import React, { CSSProperties, memo, useCallback, useState } from 'react';
 import Loading from '~/components/Loading';
 import SearchInput from '~/components/Texts/SearchInput';
-import { useSearch } from '~/helpers/hooks';
+import { useSearch, useUserLevel } from '~/helpers/hooks';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
@@ -11,9 +11,8 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const searchChat = useAppContext((v) => v.requestHelpers.searchChat);
-  const { profilePicUrl, userId, username, authLevel } = useKeyContext(
-    (v) => v.myState
-  );
+  const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(userId);
   const {
     generalChat: { color: generalChatColor },
     chatGroup: { color: chatGroupColor }
@@ -57,7 +56,7 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
           });
         }
         onOpenNewChatTab({
-          user: { username, id: userId, profilePicUrl, authLevel },
+          user: { username, id: userId, profilePicUrl, authLevel: level },
           recipient: {
             username: item.label,
             id: item.id,
@@ -71,7 +70,7 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
       onClearChatSearchResults();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [authLevel, navigate, profilePicUrl, userId, username]
+    [level, navigate, profilePicUrl, userId, username]
   );
 
   return (
