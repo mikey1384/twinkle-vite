@@ -28,7 +28,7 @@ import {
   isValidYoutubeUrl,
   replaceFakeAtSymbol
 } from '~/helpers/stringHelpers';
-import { useContentState } from '~/helpers/hooks';
+import { useContentState, useUserLevel } from '~/helpers/hooks';
 import {
   useContentContext,
   useExploreContext,
@@ -111,17 +111,15 @@ export default function Details({
   videoViews: number;
 }) {
   const {
-    authLevel,
-    banned,
-    canDelete,
-    canEdit,
-    canEditPlaylists,
-    canReward,
-    twinkleCoins
-  } = useKeyContext((v) => v.myState);
-  const {
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
+  const {
+    banned,
+    twinkleCoins,
+    userId: myId
+  } = useKeyContext((v) => v.myState);
+  const { level, canDelete, canEdit, canEditPlaylists, canReward } =
+    useUserLevel(myId);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
@@ -170,7 +168,7 @@ export default function Details({
       shown:
         xpRewardInterfaceShown &&
         canReward &&
-        authLevel > uploader.authLevel &&
+        level > uploader.authLevel &&
         !userIsUploader
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -228,20 +226,20 @@ export default function Details({
 
   const editButtonShown = useMemo(() => {
     const userCanEditThis =
-      (canEdit || canDelete) && authLevel > uploader.authLevel;
+      (canEdit || canDelete) && level > uploader.authLevel;
     return userIsUploader || userCanEditThis;
-  }, [authLevel, canDelete, canEdit, uploader.authLevel, userIsUploader]);
+  }, [level, canDelete, canEdit, uploader.authLevel, userIsUploader]);
 
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
-        authLevel,
+        authLevel: level,
         canReward,
         recommendations,
         uploader,
         userId
       }),
-    [authLevel, canReward, recommendations, uploader, userId]
+    [level, canReward, recommendations, uploader, userId]
   );
 
   const rewardButtonShown = useMemo(() => {
