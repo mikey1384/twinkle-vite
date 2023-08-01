@@ -6,7 +6,7 @@ import Table from '../Table';
 import RedTimes from '../RedTimes';
 import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
-import { useSearch } from '~/helpers/hooks';
+import { useSearch, useUserLevel } from '~/helpers/hooks';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { isEqual } from 'lodash';
 import { css } from '@emotion/css';
@@ -15,7 +15,8 @@ import localize from '~/constants/localize';
 const searchUsersLabel = localize('searchUsers');
 
 export default function AddBanModal({ onHide }: { onHide: () => void }) {
-  const { authLevel } = useKeyContext((v) => v.myState);
+  const { userId } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(userId);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -187,7 +188,7 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
   async function handleUserSearch(text: string) {
     const users = await searchUsers(text);
     const result = users.filter(
-      (user: { authLevel: number }) => user.authLevel < authLevel
+      (user: { authLevel: number }) => user.authLevel < level
     );
     setSearchedUsers(result);
   }
