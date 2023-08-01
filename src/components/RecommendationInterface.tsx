@@ -8,6 +8,7 @@ import { isMobile } from '~/helpers';
 import { removeAllWhiteSpaces } from '~/helpers/stringHelpers';
 import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { useUserLevel } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import SwitchButton from './Buttons/SwitchButton';
 import localize from '~/constants/localize';
@@ -39,7 +40,8 @@ export default function RecommendationInterface({
   theme?: string;
   uploaderId?: number;
 }) {
-  const { userId, twinkleCoins, authLevel } = useKeyContext((v) => v.myState);
+  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(userId);
   const [recommending, setRecommending] = useState(false);
   const expectedContentLength = useMemo(() => {
     if (contentType !== 'comment') {
@@ -88,11 +90,11 @@ export default function RecommendationInterface({
   const switchButtonShown = useMemo(() => {
     return (
       !isRecommendedByUser &&
-      authLevel > 1 &&
+      level > 2 &&
       contentType !== 'pass' &&
       contentType !== 'aiStory'
     );
-  }, [isRecommendedByUser, authLevel, contentType]);
+  }, [isRecommendedByUser, level, contentType]);
 
   const priceText = useMemo(() => {
     return !isRecommendedByUser ? (
