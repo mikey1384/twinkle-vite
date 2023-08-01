@@ -10,6 +10,7 @@ import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { User } from '~/types';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useUserLevel } from '~/helpers/hooks';
 
 export default function UserListModal({
   description = '',
@@ -44,9 +45,8 @@ export default function UserListModal({
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
-  const { userId, username, profilePicUrl, authLevel } = useKeyContext(
-    (v) => v.myState
-  );
+  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(userId);
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
@@ -166,7 +166,7 @@ export default function UserListModal({
           });
         }
         onOpenNewChatTab({
-          user: { username, id: userId, profilePicUrl, authLevel },
+          user: { username, id: userId, profilePicUrl, authLevel: level },
           recipient: {
             username: user.username,
             id: user.id,
