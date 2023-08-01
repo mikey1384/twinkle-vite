@@ -11,7 +11,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useContentState } from '~/helpers/hooks';
+import { useContentState, useUserLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
@@ -41,7 +41,8 @@ function Comment({
   const revokeReward = useAppContext((v) => v.requestHelpers.revokeReward);
   const onRevokeReward = useContentContext((v) => v.actions.onRevokeReward);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
-  const { authLevel, canEdit, userId } = useKeyContext((v) => v.myState);
+  const { userId } = useKeyContext((v) => v.myState);
+  const { level, canEdit } = useUserLevel(userId);
   const { isEditing } = useContentState({
     contentType: 'reward',
     contentId: reward.id
@@ -53,10 +54,10 @@ function Comment({
   );
   const userCanRevokeReward = useMemo(
     () =>
-      authLevel > 1 &&
-      ((!!canEdit && authLevel > reward.rewarderAuthLevel) ||
+      level > 2 &&
+      ((!!canEdit && level > reward.rewarderAuthLevel) ||
         reward.rewarderId === userId),
-    [authLevel, canEdit, reward.rewarderAuthLevel, reward.rewarderId, userId]
+    [level, canEdit, reward.rewarderAuthLevel, reward.rewarderId, userId]
   );
   const editButtonShown = useMemo(() => {
     return userIsUploader || canEdit || userCanRevokeReward;
