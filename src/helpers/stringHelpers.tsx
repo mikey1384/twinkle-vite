@@ -105,6 +105,8 @@ export function addEmoji(string: string): string {
     ':fox:': '🦊',
     ':friedchicken:': '🍗',
     ':friend:': '👫',
+    ':frown:': '🙁',
+    ':frowning:': '🙁',
     ':frog:': '🐸',
     ':ghost:': '👻',
     ':gift:': '🎁',
