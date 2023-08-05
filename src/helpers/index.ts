@@ -4,6 +4,7 @@ import {
   CHAT_ID_BASE_NUMBER,
   returnMaxRewards,
   MODERATOR_AUTH_LEVEL,
+  TEACHER_AUTH_LEVEL,
   MIKEY_ID
 } from '~/constants/defaultValues';
 
@@ -33,13 +34,16 @@ export function determineUserCanRewardThis({
   if (!userId) return false;
   let studentsCanReward = false;
   let moderatorCanReward = canReward;
-  if (authLevel === MODERATOR_AUTH_LEVEL && uploader?.id === MIKEY_ID) {
+  if (
+    (authLevel || 0) + 1 === MODERATOR_AUTH_LEVEL &&
+    uploader?.id === MIKEY_ID
+  ) {
     moderatorCanReward = false;
   }
-  if (authLevel <= MODERATOR_AUTH_LEVEL) {
+  if ((authLevel || 0) + 1 < TEACHER_AUTH_LEVEL) {
     for (const recommendation of recommendations) {
       if (
-        recommendation.authLevel > MODERATOR_AUTH_LEVEL &&
+        recommendation.authLevel >= TEACHER_AUTH_LEVEL &&
         !recommendation.rewardDisabled
       ) {
         studentsCanReward = true;
