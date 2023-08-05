@@ -6,7 +6,11 @@ import Loading from '~/components/Loading';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import { removeAllWhiteSpaces } from '~/helpers/stringHelpers';
-import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
+import {
+  expectedResponseLength,
+  priceTable,
+  TEACHER_AUTH_LEVEL
+} from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useUserLevel } from '~/helpers/hooks';
 import { css } from '@emotion/css';
@@ -68,7 +72,9 @@ export default function RecommendationInterface({
   const isOnlyRecommendedByStudents = useMemo(() => {
     const result = recommendations.length > 0;
     for (const recommendation of recommendations) {
-      if (recommendation.authLevel > 1) {
+      const recommenderLevel =
+        recommendation.authLevel || recommendation.level - 1 || 0;
+      if (recommenderLevel >= TEACHER_AUTH_LEVEL) {
         return false;
       }
     }
