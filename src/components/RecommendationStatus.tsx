@@ -4,7 +4,10 @@ import UserListModal from '~/components/Modals/UserListModal';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { useTheme } from '~/helpers/hooks';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import {
+  SELECTED_LANGUAGE,
+  TEACHER_AUTH_LEVEL
+} from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const recommendedByLabel = localize('recommendedBy');
@@ -75,18 +78,26 @@ export default function RecommendationStatus({
   );
 
   const isRewardable = useMemo(() => {
+    const myRecommendationLevel =
+      (myRecommendation?.authLevel || 0) + 1 || myRecommendation?.level || 0;
+    const mostRecentRewardEnabledRecommenderOtherThanMeLevel =
+      (mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel || 0) + 1 ||
+      mostRecentRewardEnabledRecommenderOtherThanMe?.level ||
+      0;
     return (
       contentType !== 'pass' &&
       contentType !== 'aiStory' &&
-      ((myRecommendation?.authLevel > 1 && !myRecommendation?.rewardDisabled) ||
-        (mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel > 1 &&
+      ((myRecommendationLevel >= TEACHER_AUTH_LEVEL &&
+        !myRecommendation?.rewardDisabled) ||
+        (mostRecentRewardEnabledRecommenderOtherThanMeLevel >=
+          TEACHER_AUTH_LEVEL &&
           !mostRecentRewardEnabledRecommenderOtherThanMe?.rewardDisabled))
     );
   }, [
     contentType,
-    mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel,
-    mostRecentRewardEnabledRecommenderOtherThanMe?.rewardDisabled,
+    mostRecentRewardEnabledRecommenderOtherThanMe,
     myRecommendation?.authLevel,
+    myRecommendation?.level,
     myRecommendation?.rewardDisabled
   ]);
 
