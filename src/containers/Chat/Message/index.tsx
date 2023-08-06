@@ -165,7 +165,7 @@ function Message({
     username: myUsername,
     profilePicUrl: myProfilePicUrl
   } = useKeyContext((v) => v.myState);
-  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
+  const { level, canDelete, canEdit, canReward } = useUserLevel(myId);
   const spoilerClickedRef = useRef(false);
   const [highlighted, setHighlighted] = useState(false);
   const [reactionsMenuShown, setReactionsMenuShown] = useState(false);
@@ -221,21 +221,21 @@ function Message({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLastMsg, isNewMessage, userIsUploader]);
-  const userCanEditThis = useMemo(
-    () =>
+  const userCanEditThis = useMemo(() => {
+    return (
       !invitePath &&
       !isDrawOffer &&
-      (((canEdit || canDelete) && level > uploaderAuthLevel) || userIsUploader),
-    [
-      level,
-      canDelete,
-      canEdit,
-      invitePath,
-      isDrawOffer,
-      uploaderAuthLevel,
-      userIsUploader
-    ]
-  );
+      (((canEdit || canDelete) && level > uploaderAuthLevel) || userIsUploader)
+    );
+  }, [
+    level,
+    canDelete,
+    canEdit,
+    invitePath,
+    isDrawOffer,
+    uploaderAuthLevel,
+    userIsUploader
+  ]);
   const userCanRewardThis = useMemo(
     () => canReward && level > uploaderAuthLevel && myId !== userId,
     [level, canReward, uploaderAuthLevel, userId, myId]
