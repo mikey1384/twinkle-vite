@@ -376,7 +376,9 @@ export default function Body({
               )
             }
             rewardLevel={finalRewardLevel}
-            uploaderAuthLevel={uploader.authLevel}
+            uploaderAuthLevel={
+              uploader.authLevel ? uploader.authLevel + 1 : uploader.level || 0
+            }
             uploaderId={uploader.id}
             rewards={rewards}
           />
