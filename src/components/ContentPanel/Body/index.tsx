@@ -318,7 +318,7 @@ export default function Body({
           onClickSecretAnswer={onSecretAnswerClick}
         />
         <BottomInterface
-          authLevel={level}
+          userLevel={level}
           autoExpand={autoExpand}
           canDelete={!!canDelete}
           canEdit={!!canEdit}

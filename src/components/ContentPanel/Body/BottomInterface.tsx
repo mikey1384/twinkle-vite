@@ -28,7 +28,7 @@ const respondLabel = localize('respond');
 const deviceIsMobile = isMobile(navigator);
 
 BottomInterface.propTypes = {
-  authLevel: PropTypes.number,
+  userLevel: PropTypes.number,
   autoExpand: PropTypes.bool,
   canDelete: PropTypes.bool,
   canEdit: PropTypes.bool,
@@ -61,7 +61,7 @@ BottomInterface.propTypes = {
   xpRewardInterfaceShown: PropTypes.bool
 };
 export default function BottomInterface({
-  authLevel,
+  userLevel,
   autoExpand,
   canDelete,
   canEdit,
@@ -90,7 +90,7 @@ export default function BottomInterface({
   userId,
   xpRewardInterfaceShown
 }: {
-  authLevel: number;
+  userLevel: number;
   autoExpand: boolean;
   canDelete: boolean;
   canEdit: boolean;
@@ -169,14 +169,18 @@ export default function BottomInterface({
   const userCanDeleteThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
     if (userId === uploader.id) return true;
-    return canDelete && authLevel > uploader.authLevel;
+    const uploaderLevel = uploader?.authLevel
+      ? uploader?.authLevel + 1
+      : uploader?.level;
+    return canDelete && userLevel > uploaderLevel;
   }, [
-    authLevel,
-    canDelete,
     contentType,
-    uploader.authLevel,
+    userId,
     uploader.id,
-    userId
+    uploader?.authLevel,
+    uploader?.level,
+    canDelete,
+    userLevel
   ]);
 
   const userCanCloseThis = useMemo(() => {
@@ -185,15 +189,15 @@ export default function BottomInterface({
       contentObj?.isClosedBy &&
       ((contentObj?.isClosedBy.id === uploader.id &&
         contentObj?.isClosedBy.id !== userId) ||
-        contentObj?.isClosedBy?.authLevel > authLevel)
+        contentObj?.isClosedBy?.authLevel > userLevel)
     ) {
       return false;
     }
     if (userId === uploader.id) return true;
     if (!canDelete) return false;
-    return authLevel > uploader.authLevel;
+    return userLevel > uploader.authLevel;
   }, [
-    authLevel,
+    userLevel,
     canDelete,
     contentObj?.isClosedBy,
     contentType,
@@ -205,9 +209,9 @@ export default function BottomInterface({
   const userCanEditThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
     if (userId === uploader.id) return true;
-    return canEdit && authLevel > uploader?.authLevel;
+    return canEdit && userLevel > uploader?.authLevel;
   }, [
-    authLevel,
+    userLevel,
     canEdit,
     contentType,
     uploader?.authLevel,
