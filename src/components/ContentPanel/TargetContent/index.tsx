@@ -503,7 +503,11 @@ export default function TargetContent({
                   contentType={'comment'}
                   contentId={comment.id}
                   rewardLevel={finalRewardLevel}
-                  uploaderAuthLevel={comment.uploader.authLevel || 0}
+                  uploaderAuthLevel={
+                    comment.uploader.authLevel
+                      ? comment.uploader.authLevel + 1
+                      : comment.uploader.level || 0
+                  }
                   uploaderId={comment.uploader.id}
                   onReward={() =>
                     setRecommendationInterfaceShown(
