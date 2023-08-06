@@ -166,58 +166,47 @@ export default function BottomInterface({
     targetObj?.subject?.secretAttachment
   ]);
 
+  const uploaderLevel = useMemo(() => {
+    return uploader?.authLevel ? uploader?.authLevel + 1 : uploader?.level;
+  }, [uploader?.authLevel, uploader?.level]);
+
   const userCanDeleteThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
     if (userId === uploader.id) return true;
-    const uploaderLevel = uploader?.authLevel
-      ? uploader?.authLevel + 1
-      : uploader?.level;
     return canDelete && userLevel > uploaderLevel;
-  }, [
-    contentType,
-    userId,
-    uploader.id,
-    uploader?.authLevel,
-    uploader?.level,
-    canDelete,
-    userLevel
-  ]);
+  }, [contentType, userId, uploader.id, canDelete, userLevel, uploaderLevel]);
 
   const userCanCloseThis = useMemo(() => {
     if (contentType !== 'subject') return false;
+    const closerLevel = contentObj?.isClosedBy?.authLevel
+      ? contentObj?.isClosedBy?.authLevel + 1
+      : contentObj?.isClosedBy?.level || 0;
     if (
       contentObj?.isClosedBy &&
       ((contentObj?.isClosedBy.id === uploader.id &&
         contentObj?.isClosedBy.id !== userId) ||
-        contentObj?.isClosedBy?.authLevel > userLevel)
+        closerLevel > userLevel)
     ) {
       return false;
     }
     if (userId === uploader.id) return true;
     if (!canDelete) return false;
-    return userLevel > uploader.authLevel;
+    return userLevel > uploaderLevel;
   }, [
+    contentType,
+    contentObj?.isClosedBy,
+    uploader.id,
+    userId,
     userLevel,
     canDelete,
-    contentObj?.isClosedBy,
-    contentType,
-    uploader.authLevel,
-    uploader.id,
-    userId
+    uploaderLevel
   ]);
 
   const userCanEditThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
     if (userId === uploader.id) return true;
-    return canEdit && userLevel > uploader?.authLevel;
-  }, [
-    userLevel,
-    canEdit,
-    contentType,
-    uploader?.authLevel,
-    uploader.id,
-    userId
-  ]);
+    return canEdit && userLevel > uploaderLevel;
+  }, [contentType, userId, uploader.id, canEdit, userLevel, uploaderLevel]);
 
   const editMenuItems = useMemo(() => {
     const items = [];
