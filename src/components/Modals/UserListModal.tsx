@@ -10,7 +10,6 @@ import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { User } from '~/types';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { useUserLevel } from '~/helpers/hooks';
 
 export default function UserListModal({
   description = '',
@@ -39,14 +38,12 @@ export default function UserListModal({
     id: number;
     username: string;
     profilePicUrl: string;
-    authLevel?: number;
   }>;
 }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
-  const { level } = useUserLevel(userId);
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
@@ -152,7 +149,6 @@ export default function UserListModal({
     id: number;
     username: string;
     profilePicUrl: string;
-    authLevel?: number;
   }) {
     if (user.id !== userId) {
       const { channelId, pathId } = await loadDMChannel({ recipient: user });
@@ -166,12 +162,11 @@ export default function UserListModal({
           });
         }
         onOpenNewChatTab({
-          user: { username, id: userId, profilePicUrl, authLevel: level },
+          user: { username, id: userId, profilePicUrl },
           recipient: {
             username: user.username,
             id: user.id,
-            profilePicUrl: user.profilePicUrl,
-            authLevel: user.authLevel
+            profilePicUrl: user.profilePicUrl
           }
         });
         onUpdateSelectedChannelId(channelId);
