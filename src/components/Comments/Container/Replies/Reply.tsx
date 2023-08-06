@@ -170,7 +170,12 @@ function Reply({
     () => userId && rootContent?.uploader?.id === userId,
     [rootContent?.uploader?.id, userId]
   );
-  const userIsHigherAuth = level > (uploader.authLevel || 0);
+  const userIsHigherAuth = useMemo(() => {
+    const uploaderLevel = uploader?.authLevel
+      ? uploader?.authLevel + 1
+      : uploader?.level || 0;
+    return level > uploaderLevel;
+  }, [level, uploader?.authLevel, uploader?.level]);
 
   const isRecommendedByUser = useMemo(() => {
     return (
@@ -610,7 +615,11 @@ function Reply({
                     !isRecommendedByUser && twinkleCoins > 0
                   )
                 }
-                uploaderAuthLevel={uploader.authLevel || 0}
+                uploaderAuthLevel={
+                  uploader.authLevel
+                    ? uploader.authLevel + 1
+                    : uploader.level || 0
+                }
                 uploaderId={uploader.id}
               />
             )}
