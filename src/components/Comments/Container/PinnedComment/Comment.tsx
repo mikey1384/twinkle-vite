@@ -220,10 +220,12 @@ function Comment({
       parent.uploader?.id === userId,
     [parent.contentType, parent.uploader?.id, userId]
   );
-  const userIsHigherAuth = useMemo(
-    () => level > (uploader.authLevel || 0),
-    [level, uploader.authLevel]
-  );
+  const userIsHigherAuth = useMemo(() => {
+    const uploaderLevel = uploader?.authLevel
+      ? uploader?.authLevel + 1
+      : uploader.level || 0;
+    return level > uploaderLevel;
+  }, [level, uploader?.authLevel, uploader?.level]);
   const dropdownButtonShown = useMemo(() => {
     if (isNotification || isPreview) {
       return false;
@@ -616,7 +618,11 @@ function Comment({
                     !isRecommendedByUser && twinkleCoins > 0
                   )
                 }
-                uploaderAuthLevel={uploader.authLevel || 0}
+                uploaderAuthLevel={
+                  uploader.authLevel
+                    ? uploader.authLevel + 1
+                    : uploader.level || 0
+                }
                 uploaderId={uploader.id}
               />
             )}

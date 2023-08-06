@@ -40,8 +40,8 @@ export default function RecommendationStatus({
         a: { authLevel: number; level: number },
         b: { authLevel: number; level: number }
       ) => {
-        const bRecommenderLevel = (b.authLevel || 0) + 1 || b.level;
-        const aRecommenderLevel = (a.authLevel || 0) + 1 || a.level;
+        const bRecommenderLevel = b.authLevel ? b.authLevel + 1 : b.level;
+        const aRecommenderLevel = a.authLevel ? a.authLevel + 1 : a.level;
         return bRecommenderLevel - aRecommenderLevel;
       }
     );
@@ -78,12 +78,13 @@ export default function RecommendationStatus({
   );
 
   const isRewardable = useMemo(() => {
-    const myRecommendationLevel =
-      (myRecommendation?.authLevel || 0) + 1 || myRecommendation?.level || 0;
+    const myRecommendationLevel = myRecommendation?.authLevel
+      ? myRecommendation?.authLevel + 1
+      : myRecommendation?.level || 0;
     const mostRecentRewardEnabledRecommenderOtherThanMeLevel =
-      (mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel || 0) + 1 ||
-      mostRecentRewardEnabledRecommenderOtherThanMe?.level ||
-      0;
+      mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel
+        ? mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel + 1
+        : mostRecentRewardEnabledRecommenderOtherThanMe?.level || 0;
     return (
       contentType !== 'pass' &&
       contentType !== 'aiStory' &&

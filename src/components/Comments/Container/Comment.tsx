@@ -342,10 +342,12 @@ function Comment({
     () => userId && rootContent.uploader?.id === userId,
     [rootContent.uploader?.id, userId]
   );
-  const userIsHigherAuth = useMemo(
-    () => level > uploader?.authLevel,
-    [level, uploader?.authLevel]
-  );
+  const userIsHigherAuth = useMemo(() => {
+    const uploaderLevel = uploader?.authLevel
+      ? uploader?.authLevel + 1
+      : uploader?.level || 0;
+    return level > uploaderLevel;
+  }, [level, uploader?.authLevel, uploader?.level]);
 
   const dropdownMenuItems = useMemo(() => {
     const userCanEditThis = canEdit && userIsHigherAuth;
@@ -900,7 +902,11 @@ function Comment({
                         !isRecommendedByUser && twinkleCoins > 0
                       )
                     }
-                    uploaderAuthLevel={uploader?.authLevel}
+                    uploaderAuthLevel={
+                      uploader?.authLevel
+                        ? uploader.authLevel + 1
+                        : uploader?.level || 0
+                    }
                     uploaderId={uploader?.id}
                   />
                 )}
