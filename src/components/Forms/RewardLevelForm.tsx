@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { useUserLevel } from '~/helpers/hooks';
+import { TEACHER_AUTH_LEVEL } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const clearLabel = localize('clear');
@@ -59,7 +60,7 @@ export default function RewardLevelForm({
       if (isFromSubjectInput && isMadeByUser) {
         onSetRewardLevel(1);
       }
-      if (isFromContentInput && level > 3) {
+      if (isFromContentInput && level >= TEACHER_AUTH_LEVEL) {
         onSetRewardLevel(4);
       }
     }
