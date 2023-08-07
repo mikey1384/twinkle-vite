@@ -16,7 +16,8 @@ import Button from '~/components/Button';
 import {
   returnMaxRewards,
   priceTable,
-  SELECTED_LANGUAGE
+  SELECTED_LANGUAGE,
+  TEACHER_AUTH_LEVEL
 } from '~/constants/defaultValues';
 import {
   useAppContext,
@@ -110,7 +111,8 @@ export default function XPRewardInterface({
     selectedAmountRef.current = prevSelectedAmount;
   }, [prevSelectedAmount]);
   const [selectedAmount, setSelectedAmount] = useState(prevSelectedAmount);
-  const requiresPayment = !level || level < 3 || uploaderAuthLevel >= level;
+  const requiresPayment =
+    !level || level < TEACHER_AUTH_LEVEL || uploaderAuthLevel >= level;
 
   useEffect(() => {
     setSelectedAmount((selectedAmount: number) =>

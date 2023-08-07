@@ -4,11 +4,15 @@ import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
-import { karmaMultiplier, SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import {
+  karmaMultiplier,
+  SELECTED_LANGUAGE,
+  TEACHER_AUTH_LEVEL
+} from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 export default function KarmaExplanationModal({
-  authLevel,
+  userLevel,
   displayedKarmaPoints,
   numApprovedRecommendations,
   numPostsRewarded,
@@ -17,7 +21,7 @@ export default function KarmaExplanationModal({
   onHide,
   userType
 }: {
-  authLevel: number;
+  userLevel: number;
   displayedKarmaPoints: string;
   numApprovedRecommendations: number;
   numPostsRewarded: number;
@@ -84,7 +88,7 @@ export default function KarmaExplanationModal({
           that were approved by teachers)
         </>
       );
-    if (authLevel < 2) {
+    if (userLevel < TEACHER_AUTH_LEVEL) {
       return <span>{karmaCalculationLabel}</span>;
     }
     if (SELECTED_LANGUAGE === 'kr') {
@@ -117,7 +121,7 @@ export default function KarmaExplanationModal({
         × {karmaMultiplier.recommendation.teacher})
       </span>
     );
-  }, [authLevel]);
+  }, [userLevel]);
 
   const calculationText = useMemo(() => {
     const rewardedTwinklesLabel =
@@ -169,7 +173,7 @@ export default function KarmaExplanationModal({
           approved by teachers
         </>
       );
-    if (authLevel < 2) {
+    if (userLevel < TEACHER_AUTH_LEVEL) {
       return (
         <div
           className={css`
@@ -272,7 +276,7 @@ export default function KarmaExplanationModal({
       </div>
     );
   }, [
-    authLevel,
+    userLevel,
     displayedKarmaPoints,
     karmaPointsLabel,
     numApprovedRecommendations,
