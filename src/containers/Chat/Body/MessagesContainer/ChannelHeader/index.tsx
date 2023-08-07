@@ -13,7 +13,8 @@ import { socket } from '~/constants/io';
 import {
   charLimit,
   defaultChatSubject,
-  GENERAL_CHAT_ID
+  GENERAL_CHAT_ID,
+  MODERATOR_AUTH_LEVEL
 } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -209,7 +210,7 @@ export default function ChannelHeader({
     const result = [];
     if (
       ((selectedChannelId === GENERAL_CHAT_ID || canChangeSubject === 'mod') &&
-        level > 1) ||
+        level >= MODERATOR_AUTH_LEVEL) ||
       canChangeSubject === 'all' ||
       (canChangeSubject === 'owner' && currentChannel.creatorId === userId)
     ) {
@@ -274,7 +275,8 @@ export default function ChannelHeader({
 
   const menuButtonShown = useMemo(() => {
     return (
-      (selectedChannelId !== GENERAL_CHAT_ID || level > 1) &&
+      (selectedChannelId !== GENERAL_CHAT_ID ||
+        level >= MODERATOR_AUTH_LEVEL) &&
       menuProps.length > 0
     );
   }, [level, selectedChannelId, menuProps.length]);
@@ -297,9 +299,13 @@ export default function ChannelHeader({
           display: flex;
           align-items: center;
           flex-direction: column;
-          width: CALC(100% - ${level > 1 ? '22rem' : '12rem'});
+          width: CALC(
+            100% - ${level >= MODERATOR_AUTH_LEVEL ? '22rem' : '12rem'}
+          );
           @media (max-width: ${mobileMaxWidth}) {
-            width: CALC(100% - ${level > 1 ? '13rem' : '3rem'});
+            width: CALC(
+              100% - ${level >= MODERATOR_AUTH_LEVEL ? '13rem' : '3rem'}
+            );
           }
         }
       `}

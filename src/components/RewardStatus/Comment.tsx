@@ -57,7 +57,7 @@ function Comment({
   );
   const userCanRevokeReward = useMemo(
     () =>
-      level > TEACHER_AUTH_LEVEL &&
+      level >= TEACHER_AUTH_LEVEL &&
       ((!!canEdit && level > reward.rewarderAuthLevel) ||
         reward.rewarderId === userId),
     [level, canEdit, reward.rewarderAuthLevel, reward.rewarderId, userId]

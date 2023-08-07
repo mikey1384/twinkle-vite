@@ -19,7 +19,8 @@ import { Color } from '~/constants/css';
 import {
   FILE_UPLOAD_XP_REQUIREMENT,
   mb,
-  returnMaxUploadSize
+  returnMaxUploadSize,
+  MODERATOR_AUTH_LEVEL
 } from '~/constants/defaultValues';
 import {
   addCommasToNumber,
@@ -322,7 +323,9 @@ function InputForm({
               filled
               loading={secretViewMessageSubmitting}
               onClick={() => {
-                level > 1 ? handleViewAnswer() : setConfirmModalShown(true);
+                level >= MODERATOR_AUTH_LEVEL
+                  ? handleViewAnswer()
+                  : setConfirmModalShown(true);
               }}
             >
               {viewWithoutRespondingLabel}

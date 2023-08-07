@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import SearchInput from '~/components/Texts/SearchInput';
 import { useKeyContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { TEACHER_AUTH_LEVEL } from '~/constants/defaultValues';
 import CheckListGroup from '~/components/CheckListGroup';
 import localize from '~/constants/localize';
 
@@ -30,12 +31,16 @@ export default function SelectNewOwnerModal({
   } = useKeyContext((v) => v.theme);
   const [searchText, setSearchText] = useState('');
   const shownMembers = useMemo(() => {
-    return members.filter(
-      (member) =>
+    return members.filter((member) => {
+      const memberLevel = member.authLevel
+        ? member.authLevel + 1
+        : member.level || 0;
+      return (
         member.id !== userId &&
         (stringIsEmpty(searchText) || member.username.includes(searchText)) &&
-        (!isClass || member.authLevel > 2)
-    );
+        (!isClass || memberLevel >= TEACHER_AUTH_LEVEL)
+      );
+    });
   }, [isClass, members, searchText, userId]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
