@@ -154,7 +154,7 @@ export default function SubjectPanel({
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
-        authLevel: level,
+        userLevel: level,
         canReward,
         recommendations,
         uploader: { id: userId },

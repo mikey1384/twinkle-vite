@@ -214,7 +214,7 @@ function Reply({
     () =>
       determineUserCanRewardThis({
         canReward,
-        authLevel: level,
+        userLevel: level,
         recommendations,
         uploader,
         userId

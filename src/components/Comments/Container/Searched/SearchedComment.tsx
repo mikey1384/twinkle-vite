@@ -342,7 +342,7 @@ export default function SearchedComment({
     () =>
       determineUserCanRewardThis({
         canReward,
-        authLevel: level,
+        userLevel: level,
         uploader,
         userId,
         recommendations

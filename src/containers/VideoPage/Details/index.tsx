@@ -233,7 +233,7 @@ export default function Details({
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
-        authLevel: level,
+        userLevel: level,
         canReward,
         recommendations,
         uploader,

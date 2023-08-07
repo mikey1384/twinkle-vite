@@ -433,7 +433,7 @@ function Comment({
     () =>
       determineUserCanRewardThis({
         canReward,
-        authLevel: level,
+        userLevel: level,
         uploader,
         userId,
         recommendations
