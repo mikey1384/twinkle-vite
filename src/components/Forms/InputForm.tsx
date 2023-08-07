@@ -153,7 +153,8 @@ function InputForm({
     [attachment, commentExceedsCharLimit, submitting, textIsEmpty]
   );
   const uploadDisabled = useMemo(
-    () => level === 0 && twinkleXP < FILE_UPLOAD_XP_REQUIREMENT,
+    () =>
+      level < MODERATOR_AUTH_LEVEL && twinkleXP < FILE_UPLOAD_XP_REQUIREMENT,
     [level, twinkleXP]
   );
 
