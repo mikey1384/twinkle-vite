@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import Carousel from '~/components/Carousel';
 import Button from '~/components/Button';
@@ -53,7 +53,7 @@ export default function Content({
   rewardLevel?: number;
   title: string;
   watchTabActive?: boolean;
-  uploader: { id: number; authLevel: number };
+  uploader: { id: number; authLevel: number; level: number };
   videoId: number;
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -72,7 +72,12 @@ export default function Content({
     setCurrentSlide(0);
   }, [videoId]);
   const userIsUploader = uploader?.id === userId;
-  const userCanEditThis = !!canEdit && level >= uploader?.authLevel;
+  const userCanEditThis = useMemo(() => {
+    const uploaderLevel = uploader?.authLevel
+      ? uploader.authLevel + 1
+      : uploader?.level || 0;
+    return !!canEdit && level > uploaderLevel;
+  }, [canEdit, level, uploader.authLevel, uploader?.level]);
 
   return (
     <div
