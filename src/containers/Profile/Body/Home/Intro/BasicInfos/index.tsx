@@ -30,7 +30,6 @@ const websiteLabel = localize('Website');
 const youtubeLabel = localize('youtube');
 
 BasicInfos.propTypes = {
-  authLevel: PropTypes.number,
   className: PropTypes.string,
   email: PropTypes.string,
   verifiedEmail: PropTypes.string,
@@ -49,7 +48,6 @@ BasicInfos.propTypes = {
 };
 
 export default function BasicInfos({
-  authLevel,
   className,
   email,
   verifiedEmail,
@@ -66,7 +64,6 @@ export default function BasicInfos({
   youtubeUrl,
   style
 }: {
-  authLevel: number;
   className?: string;
   email: string;
   verifiedEmail: string;
@@ -88,7 +85,6 @@ export default function BasicInfos({
   const {
     userId: myId,
     username: myUsername,
-    authLevel: myAuthLevel,
     banned
   } = useKeyContext((v) => v.myState);
   const {
@@ -378,14 +374,12 @@ export default function BasicInfos({
         user: {
           username: myUsername,
           id: myId,
-          profilePicUrl,
-          authLevel: myAuthLevel
+          profilePicUrl
         },
         recipient: {
           username: username,
           id: userId,
-          profilePicUrl: profilePicUrl,
-          authLevel
+          profilePicUrl: profilePicUrl
         }
       });
     }
