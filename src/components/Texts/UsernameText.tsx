@@ -28,7 +28,6 @@ export default function UsernameText({
   style?: object;
   user?: {
     id: number;
-    authLevel?: number;
     profilePicUrl?: string;
     username?: string;
     twinkleXP?: number;
@@ -56,9 +55,7 @@ export default function UsernameText({
   const { rank, twinkleXP } = useAppContext(
     (v) => v.user.state.userObj[user.id] || {}
   );
-  const { userId, username, profilePicUrl, authLevel } = useKeyContext(
-    (v) => v.myState
-  );
+  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
@@ -258,12 +255,11 @@ export default function UsernameText({
           });
         }
         onOpenNewChatTab({
-          user: { username, id: userId, profilePicUrl, authLevel },
+          user: { username, id: userId, profilePicUrl },
           recipient: {
             username: user.username,
             id: user.id,
-            profilePicUrl: user.profilePicUrl,
-            authLevel: user.authLevel
+            profilePicUrl: user.profilePicUrl
           }
         });
         if (!usingChat) {
