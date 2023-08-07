@@ -97,7 +97,7 @@ export default function RecommendationInterface({
   const switchButtonShown = useMemo(() => {
     return (
       !isRecommendedByUser &&
-      level > 2 &&
+      level >= TEACHER_AUTH_LEVEL &&
       contentType !== 'pass' &&
       contentType !== 'aiStory'
     );
