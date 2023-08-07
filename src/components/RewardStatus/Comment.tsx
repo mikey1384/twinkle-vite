@@ -13,7 +13,10 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useContentState, useUserLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import {
+  SELECTED_LANGUAGE,
+  TEACHER_AUTH_LEVEL
+} from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const editLabel = localize('edit');
@@ -54,7 +57,7 @@ function Comment({
   );
   const userCanRevokeReward = useMemo(
     () =>
-      level > 2 &&
+      level > TEACHER_AUTH_LEVEL &&
       ((!!canEdit && level > reward.rewarderAuthLevel) ||
         reward.rewarderId === userId),
     [level, canEdit, reward.rewarderAuthLevel, reward.rewarderId, userId]
