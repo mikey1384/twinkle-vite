@@ -1070,12 +1070,10 @@ export default function ChatReducer(
                   id: number;
                   username: string;
                   profilePicUrl: string;
-                  authLevel: number;
                 }) => ({
                   id: user.id,
                   username: user.username,
-                  profilePicUrl: user.profilePicUrl,
-                  authLevel: user.authLevel
+                  profilePicUrl: user.profilePicUrl
                 })
               )
             )
