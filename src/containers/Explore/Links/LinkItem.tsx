@@ -34,7 +34,12 @@ export default function LinkItem({
     thumbUrl: string;
     title: string;
     timeStamp: number;
-    uploader: { authLevel: number; id: number; username: string };
+    uploader: {
+      authLevel: number;
+      level: number;
+      id: number;
+      username: string;
+    };
     likes: { id: number; username: string; profilePicUrl: string }[];
   };
 }) {
@@ -76,10 +81,19 @@ export default function LinkItem({
   const userIsUploader = userId === uploader.id;
 
   const editButtonShown = useMemo(() => {
-    const userCanEditThis =
-      (canEdit || canDelete) && level > uploader.authLevel;
+    const uploaderLevel = uploader.authLevel
+      ? uploader.authLevel + 1
+      : uploader.level || 0;
+    const userCanEditThis = (canEdit || canDelete) && level > uploaderLevel;
     return userIsUploader || userCanEditThis;
-  }, [level, canDelete, canEdit, uploader.authLevel, userIsUploader]);
+  }, [
+    level,
+    canDelete,
+    canEdit,
+    uploader?.authLevel,
+    uploader?.level,
+    userIsUploader
+  ]);
 
   const editMenuItems = useMemo(() => {
     const items = [];
