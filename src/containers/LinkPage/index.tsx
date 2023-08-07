@@ -231,13 +231,15 @@ export default function LinkPage() {
 
   const userIsUploader = useMemo(
     () => uploader?.id === userId,
-    [uploader, userId]
+    [uploader?.id, userId]
   );
 
-  const userCanEditThis = useMemo(
-    () => (canEdit || canDelete) && level > uploader?.authLevel,
-    [level, canDelete, canEdit, uploader]
-  );
+  const userCanEditThis = useMemo(() => {
+    const uploaderLevel = uploader?.authLevel
+      ? uploader.authLevel + 1
+      : uploader?.level || 0;
+    return (canEdit || canDelete) && level > uploaderLevel;
+  }, [level, canDelete, canEdit, uploader?.authLevel, uploader?.level]);
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
@@ -436,7 +438,7 @@ export default function LinkPage() {
             recommendations={recommendations}
             rewardLevel={byUser ? 5 : 0}
             content={description}
-            uploaderId={uploader.id}
+            uploaderId={uploader?.id}
           />
         )}
         {xpRewardInterfaceShown && (
@@ -453,7 +455,11 @@ export default function LinkPage() {
                   !isRecommendedByUser && twinkleCoins > 0
                 )
               }
-              uploaderAuthLevel={uploader.authLevel}
+              uploaderAuthLevel={
+                uploader?.authLevel
+                  ? uploader.authLevel + 1
+                  : uploader?.level || 0
+              }
               uploaderId={uploader.id}
             />
           </div>
