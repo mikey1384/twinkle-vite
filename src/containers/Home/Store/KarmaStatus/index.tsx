@@ -4,7 +4,10 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useUserLevel } from '~/helpers/hooks';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import {
+  SELECTED_LANGUAGE,
+  TEACHER_AUTH_LEVEL
+} from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import KarmaExplanationModal from './KarmaExplanationModal';
 
@@ -37,7 +40,7 @@ export default function KarmaStatus() {
         numRecommended
       } = await loadKarmaPoints();
       onSetUserState({ userId, newState: { karmaPoints: kp } });
-      if (level < 3) {
+      if (level < TEACHER_AUTH_LEVEL) {
         setNumTwinklesRewarded(numTwinklesRewarded);
         setNumApprovedRecommendations(numApprovedRecommendations);
       } else {
@@ -108,7 +111,7 @@ export default function KarmaStatus() {
               `}
             >
               <KarmaExplanationModal
-                authLevel={level}
+                userLevel={level}
                 displayedKarmaPoints={displayedKarmaPoints}
                 numApprovedRecommendations={numApprovedRecommendations}
                 numPostsRewarded={numPostsRewarded}
