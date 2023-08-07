@@ -538,7 +538,8 @@ export default function SubjectPanel({
                 uploader: {
                   id: userId,
                   username,
-                  authLevel: uploaderAuthLevel
+                  authLevel: uploaderAuthLevel,
+                  level: uploaderAuthLevel
                 }
               }}
               rootContent={{
@@ -556,7 +557,8 @@ export default function SubjectPanel({
                 uploader: {
                   id: userId,
                   username,
-                  authLevel: uploaderAuthLevel
+                  authLevel: uploaderAuthLevel,
+                  level: uploaderAuthLevel
                 }
               }}
               showSecretButtonAvailable={!!(subjectId && secretHidden)}
