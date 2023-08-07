@@ -202,7 +202,10 @@ export default function AddModeratorModal({
   async function handleUserSearch(text: string) {
     const users = await searchUsers(text);
     const result = users.filter(
-      (user: { authLevel: number }) => user.authLevel < level
+      (user: { authLevel: number; level: number }) => {
+        const userLevel = user.authLevel ? user.authLevel + 1 : user.level || 0;
+        return level > userLevel;
+      }
     );
     setSearchedUsers(result);
   }
