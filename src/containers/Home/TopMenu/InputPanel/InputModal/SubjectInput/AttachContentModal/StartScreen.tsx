@@ -12,7 +12,8 @@ import {
   FILE_UPLOAD_XP_REQUIREMENT,
   mb,
   returnMaxUploadSize,
-  SELECTED_LANGUAGE
+  SELECTED_LANGUAGE,
+  MODERATOR_AUTH_LEVEL
 } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
@@ -40,7 +41,7 @@ export default function StartScreen({
     [fileUploadLvl]
   );
   const disabled = useMemo(() => {
-    if (level > 3) return false;
+    if (level >= MODERATOR_AUTH_LEVEL) return false;
     if (twinkleXP >= FILE_UPLOAD_XP_REQUIREMENT) return false;
     return true;
   }, [level, twinkleXP]);
