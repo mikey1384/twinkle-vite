@@ -20,6 +20,7 @@ export const AppContext = createContext({});
 export const initialMyState = {
   achievementPoints: 0,
   authLevel: 0,
+  level: 1,
   canDelete: false,
   canEdit: false,
   canEditRewardLevel: false,
