@@ -39,8 +39,11 @@ export function determineUserCanRewardThis({
   }
   if (userLevel < TEACHER_AUTH_LEVEL) {
     for (const recommendation of recommendations) {
+      const recommenderLevel = recommendation.authLevel
+        ? recommendation.authLevel + 1
+        : recommendation.level || 0;
       if (
-        recommendation.authLevel >= TEACHER_AUTH_LEVEL &&
+        recommenderLevel >= TEACHER_AUTH_LEVEL &&
         !recommendation.rewardDisabled
       ) {
         studentsCanReward = true;
