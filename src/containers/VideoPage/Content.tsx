@@ -77,7 +77,7 @@ export default function Content({
       ? uploader.authLevel + 1
       : uploader?.level || 0;
     return !!canEdit && level > uploaderLevel;
-  }, [canEdit, level, uploader.authLevel, uploader?.level]);
+  }, [canEdit, level, uploader?.authLevel, uploader?.level]);
 
   return (
     <div
