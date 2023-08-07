@@ -20,13 +20,13 @@ export function checkScrollIsAtTheBottom({
 
 export function determineUserCanRewardThis({
   canReward,
-  authLevel,
+  userLevel,
   recommendations = [],
   uploader,
   userId
 }: {
   canReward: boolean;
-  authLevel: number;
+  userLevel: number;
   recommendations?: any[];
   uploader?: { id: number };
   userId: number;
@@ -34,13 +34,10 @@ export function determineUserCanRewardThis({
   if (!userId) return false;
   let studentsCanReward = false;
   let moderatorCanReward = canReward;
-  if (
-    (authLevel || 0) + 1 === MODERATOR_AUTH_LEVEL &&
-    uploader?.id === MIKEY_ID
-  ) {
+  if (userLevel === MODERATOR_AUTH_LEVEL && uploader?.id === MIKEY_ID) {
     moderatorCanReward = false;
   }
-  if ((authLevel || 0) + 1 < TEACHER_AUTH_LEVEL) {
+  if (userLevel < TEACHER_AUTH_LEVEL) {
     for (const recommendation of recommendations) {
       if (
         recommendation.authLevel >= TEACHER_AUTH_LEVEL &&

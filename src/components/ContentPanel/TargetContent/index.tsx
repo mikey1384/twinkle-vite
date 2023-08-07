@@ -133,7 +133,7 @@ export default function TargetContent({
     if (comment && !comment.notFound) {
       canRewardThis = determineUserCanRewardThis({
         canReward,
-        authLevel: level,
+        userLevel: level,
         recommendations: comment.recommendations,
         uploader: comment.uploader,
         userId

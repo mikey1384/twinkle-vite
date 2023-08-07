@@ -241,7 +241,7 @@ export default function LinkPage() {
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
-        authLevel: level,
+        userLevel: level,
         canReward,
         recommendations,
         uploader,
