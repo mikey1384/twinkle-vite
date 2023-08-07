@@ -6,13 +6,11 @@ import ProfilePic from '~/components/ProfilePic';
 import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { useUserLevel } from '~/helpers/hooks';
 import { CIEL_PFP_URL, CIEL_TWINKLE_ID } from '~/constants/defaultValues';
 
 export default function ConfirmModal({ onHide }: { onHide: () => void }) {
   const [usermenuShown, setUsermenuShown] = useState(false);
   const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
-  const { level } = useUserLevel(userId);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -84,7 +82,7 @@ export default function ConfirmModal({ onHide }: { onHide: () => void }) {
     });
     if (!pathId) {
       onOpenNewChatTab({
-        user: { username, id: userId, profilePicUrl, authLevel: level },
+        user: { username, id: userId, profilePicUrl },
         recipient: {
           username: 'Ciel',
           id: CIEL_TWINKLE_ID,
