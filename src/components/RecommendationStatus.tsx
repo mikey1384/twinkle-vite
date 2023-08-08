@@ -4,10 +4,7 @@ import UserListModal from '~/components/Modals/UserListModal';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { useTheme } from '~/helpers/hooks';
-import {
-  SELECTED_LANGUAGE,
-  TEACHER_AUTH_LEVEL
-} from '~/constants/defaultValues';
+import { SELECTED_LANGUAGE, TEACHER_LEVEL } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const recommendedByLabel = localize('recommendedBy');
@@ -88,10 +85,9 @@ export default function RecommendationStatus({
     return (
       contentType !== 'pass' &&
       contentType !== 'aiStory' &&
-      ((myRecommendationLevel >= TEACHER_AUTH_LEVEL &&
+      ((myRecommendationLevel >= TEACHER_LEVEL &&
         !myRecommendation?.rewardDisabled) ||
-        (mostRecentRewardEnabledRecommenderOtherThanMeLevel >=
-          TEACHER_AUTH_LEVEL &&
+        (mostRecentRewardEnabledRecommenderOtherThanMeLevel >= TEACHER_LEVEL &&
           !mostRecentRewardEnabledRecommenderOtherThanMe?.rewardDisabled))
     );
   }, [

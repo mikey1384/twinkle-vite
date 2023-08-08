@@ -9,7 +9,7 @@ import { removeAllWhiteSpaces } from '~/helpers/stringHelpers';
 import {
   expectedResponseLength,
   priceTable,
-  TEACHER_AUTH_LEVEL
+  TEACHER_LEVEL
 } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useUserLevel } from '~/helpers/hooks';
@@ -75,7 +75,7 @@ export default function RecommendationInterface({
       const recommenderLevel = recommendation.authLevel
         ? recommendation.authLevel + 1
         : recommendation.level || 0;
-      if (recommenderLevel >= TEACHER_AUTH_LEVEL) {
+      if (recommenderLevel >= TEACHER_LEVEL) {
         return false;
       }
     }
@@ -97,7 +97,7 @@ export default function RecommendationInterface({
   const switchButtonShown = useMemo(() => {
     return (
       !isRecommendedByUser &&
-      level >= TEACHER_AUTH_LEVEL &&
+      level >= TEACHER_LEVEL &&
       contentType !== 'pass' &&
       contentType !== 'aiStory'
     );
