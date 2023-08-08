@@ -170,12 +170,9 @@ function Reply({
     () => userId && rootContent?.uploader?.id === userId,
     [rootContent?.uploader?.id, userId]
   );
-  const userIsHigherAuth = useMemo(() => {
-    const uploaderLevel = uploader?.authLevel
-      ? uploader?.authLevel + 1
-      : uploader?.level || 0;
-    return level > uploaderLevel;
-  }, [level, uploader?.authLevel, uploader?.level]);
+  const userHasHigherLevel = useMemo(() => {
+    return level > uploader?.level;
+  }, [level, uploader?.level]);
 
   const isRecommendedByUser = useMemo(() => {
     return (
@@ -193,7 +190,7 @@ function Reply({
     if (isDeleteNotification) {
       return false;
     }
-    const userCanEditThis = (canEdit || canDelete) && userIsHigherAuth;
+    const userCanEditThis = (canEdit || canDelete) && userHasHigherLevel;
     return (
       userIsUploader ||
       userIsParentUploader ||
@@ -204,7 +201,7 @@ function Reply({
     canDelete,
     canEdit,
     isDeleteNotification,
-    userIsHigherAuth,
+    userHasHigherLevel,
     userIsParentUploader,
     userIsRootUploader,
     userIsUploader
@@ -615,11 +612,7 @@ function Reply({
                     !isRecommendedByUser && twinkleCoins > 0
                   )
                 }
-                uploaderLevel={
-                  uploader.authLevel
-                    ? uploader.authLevel + 1
-                    : uploader.level || 0
-                }
+                uploaderLevel={uploader.level}
                 uploaderId={uploader.id}
               />
             )}

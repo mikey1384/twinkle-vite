@@ -342,13 +342,13 @@ function Comment({
     () => userId && rootContent.uploader?.id === userId,
     [rootContent.uploader?.id, userId]
   );
-  const userIsHigherAuth = useMemo(() => {
+  const userHasHigherLevel = useMemo(() => {
     return level > uploader?.level;
   }, [level, uploader?.level]);
 
   const dropdownMenuItems = useMemo(() => {
-    const userCanEditThis = canEdit && userIsHigherAuth;
-    const userCanDeleteThis = canDelete && userIsHigherAuth;
+    const userCanEditThis = canEdit && userHasHigherLevel;
+    const userCanDeleteThis = canDelete && userHasHigherLevel;
     const items = [];
     if (
       (userIsUploader || userCanEditThis) &&
@@ -408,7 +408,7 @@ function Comment({
     isCommentForASubjectWithSecretMessage,
     isCreator,
     pinnedCommentId,
-    userIsHigherAuth,
+    userHasHigherLevel,
     userIsParentUploader,
     userIsRootUploader,
     userIsUploader

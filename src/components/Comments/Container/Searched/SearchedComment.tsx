@@ -254,7 +254,7 @@ export default function SearchedComment({
       parent.uploader?.id === userId,
     [parent.contentType, parent.uploader?.id, userId]
   );
-  const userIsHigherAuth = useMemo(() => {
+  const userHasHigherLevel = useMemo(() => {
     const uploaderLevel = uploader?.authLevel
       ? uploader?.authLevel + 1
       : uploader?.level || 0;
@@ -264,13 +264,13 @@ export default function SearchedComment({
     if (isNotification) {
       return false;
     }
-    const userCanEditThis = (canEdit || canDelete) && userIsHigherAuth;
+    const userCanEditThis = (canEdit || canDelete) && userHasHigherLevel;
     return userIsUploader || userCanEditThis || userIsParentUploader;
   }, [
     canDelete,
     canEdit,
     isNotification,
-    userIsHigherAuth,
+    userHasHigherLevel,
     userIsParentUploader,
     userIsUploader
   ]);
