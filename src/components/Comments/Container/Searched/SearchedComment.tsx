@@ -255,11 +255,8 @@ export default function SearchedComment({
     [parent.contentType, parent.uploader?.id, userId]
   );
   const userHasHigherLevel = useMemo(() => {
-    const uploaderLevel = uploader?.authLevel
-      ? uploader?.authLevel + 1
-      : uploader?.level || 0;
-    return level > uploaderLevel;
-  }, [level, uploader?.authLevel, uploader?.level]);
+    return level > uploader?.level;
+  }, [level, uploader?.level]);
   const dropdownButtonShown = useMemo(() => {
     if (isNotification) {
       return false;
@@ -645,11 +642,7 @@ export default function SearchedComment({
                     !isRecommendedByUser && twinkleCoins > 0
                   )
                 }
-                uploaderLevel={
-                  uploader.authLevel
-                    ? uploader.authLevel + 1
-                    : uploader.level || 0
-                }
+                uploaderLevel={uploader.level}
                 uploaderId={uploader.id}
               />
             )}
