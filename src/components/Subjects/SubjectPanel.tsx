@@ -473,7 +473,7 @@ export default function SubjectPanel({
                   )
                 }
                 rewardLevel={finalRewardLevel}
-                uploaderAuthLevel={uploaderAuthLevel}
+                uploaderLevel={uploaderAuthLevel}
                 uploaderId={userId}
                 rewards={rewards}
               />

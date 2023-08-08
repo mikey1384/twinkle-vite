@@ -550,7 +550,7 @@ export default function Details({
                 !isRecommendedByUser && twinkleCoins > 0
               )
             }
-            uploaderAuthLevel={
+            uploaderLevel={
               uploader.authLevel ? uploader.authLevel + 1 : uploader.level || 0
             }
             uploaderId={uploader.id}
