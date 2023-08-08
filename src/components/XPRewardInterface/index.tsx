@@ -39,7 +39,7 @@ export default function XPRewardInterface({
   onReward,
   rewards,
   uploaderId,
-  uploaderAuthLevel
+  uploaderLevel
 }: {
   contentId: number;
   contentType: string;
@@ -49,7 +49,7 @@ export default function XPRewardInterface({
   onReward: () => void;
   rewards: any[];
   uploaderId: number;
-  uploaderAuthLevel: number;
+  uploaderLevel: number;
 }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const rewardUser = useAppContext((v) => v.requestHelpers.rewardUser);
@@ -112,7 +112,7 @@ export default function XPRewardInterface({
   }, [prevSelectedAmount]);
   const [selectedAmount, setSelectedAmount] = useState(prevSelectedAmount);
   const requiresPayment =
-    !level || level < TEACHER_LEVEL || uploaderAuthLevel >= level;
+    !level || level < TEACHER_LEVEL || uploaderLevel >= level;
 
   useEffect(() => {
     setSelectedAmount((selectedAmount: number) =>

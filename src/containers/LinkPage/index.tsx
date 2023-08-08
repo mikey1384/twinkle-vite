@@ -455,7 +455,7 @@ export default function LinkPage() {
                   !isRecommendedByUser && twinkleCoins > 0
                 )
               }
-              uploaderAuthLevel={
+              uploaderLevel={
                 uploader?.authLevel
                   ? uploader.authLevel + 1
                   : uploader?.level || 0

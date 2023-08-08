@@ -503,7 +503,7 @@ export default function TargetContent({
                   contentType={'comment'}
                   contentId={comment.id}
                   rewardLevel={finalRewardLevel}
-                  uploaderAuthLevel={
+                  uploaderLevel={
                     comment.uploader.authLevel
                       ? comment.uploader.authLevel + 1
                       : comment.uploader.level || 0
