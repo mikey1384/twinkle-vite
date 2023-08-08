@@ -141,8 +141,8 @@ export default function SubjectPanel({
     useState(false);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
   const editButtonShown = useMemo(() => {
-    const userHasHigherAuthLevel = level > uploaderLevel;
-    const userCanEditThis = (canEdit || canDelete) && userHasHigherAuthLevel;
+    const userHasHigherLevel = level > uploaderLevel;
+    const userCanEditThis = (canEdit || canDelete) && userHasHigherLevel;
     return userIsUploader || userCanEditThis;
   }, [level, canDelete, canEdit, uploaderLevel, userIsUploader]);
   const secretHidden = useMemo(

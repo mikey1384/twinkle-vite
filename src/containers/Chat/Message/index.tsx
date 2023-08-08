@@ -94,7 +94,7 @@ function Message({
     subjectId,
     thumbUrl,
     timeStamp,
-    uploaderAuthLevel,
+    uploaderLevel,
     userId,
     transferDetails,
     transactionDetails,
@@ -225,7 +225,7 @@ function Message({
     return (
       !invitePath &&
       !isDrawOffer &&
-      (((canEdit || canDelete) && level > uploaderAuthLevel) || userIsUploader)
+      (((canEdit || canDelete) && level > uploaderLevel) || userIsUploader)
     );
   }, [
     level,
@@ -233,12 +233,12 @@ function Message({
     canEdit,
     invitePath,
     isDrawOffer,
-    uploaderAuthLevel,
+    uploaderLevel,
     userIsUploader
   ]);
   const userCanRewardThis = useMemo(
-    () => canReward && level > uploaderAuthLevel && myId !== userId,
-    [level, canReward, uploaderAuthLevel, userId, myId]
+    () => canReward && level > uploaderLevel && myId !== userId,
+    [level, canReward, uploaderLevel, userId, myId]
   );
   const [uploadStatus = {}] = useMemo(
     () =>
@@ -313,7 +313,7 @@ function Message({
       });
       const messageToSendOverSocket = {
         ...message,
-        uploaderAuthLevel: level,
+        uploaderLevel: level,
         isNewMessage: true,
         id: messageId
       };
