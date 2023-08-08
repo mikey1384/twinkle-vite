@@ -538,7 +538,6 @@ export default function SubjectPanel({
                 uploader: {
                   id: userId,
                   username,
-                  authLevel: uploaderLevel,
                   level: uploaderLevel
                 }
               }}
@@ -557,7 +556,6 @@ export default function SubjectPanel({
                 uploader: {
                   id: userId,
                   username,
-                  authLevel: uploaderLevel,
                   level: uploaderLevel
                 }
               }}
