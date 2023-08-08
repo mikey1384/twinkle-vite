@@ -32,13 +32,10 @@ export default function SelectNewOwnerModal({
   const [searchText, setSearchText] = useState('');
   const shownMembers = useMemo(() => {
     return members.filter((member) => {
-      const memberLevel = member.authLevel
-        ? member.authLevel + 1
-        : member.level || 0;
       return (
         member.id !== userId &&
         (stringIsEmpty(searchText) || member.username.includes(searchText)) &&
-        (!isClass || memberLevel >= TEACHER_LEVEL)
+        (!isClass || member.level >= TEACHER_LEVEL)
       );
     });
   }, [isClass, members, searchText, userId]);

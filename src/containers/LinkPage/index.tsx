@@ -235,11 +235,8 @@ export default function LinkPage() {
   );
 
   const userCanEditThis = useMemo(() => {
-    const uploaderLevel = uploader?.authLevel
-      ? uploader.authLevel + 1
-      : uploader?.level || 0;
-    return (canEdit || canDelete) && level > uploaderLevel;
-  }, [level, canDelete, canEdit, uploader?.authLevel, uploader?.level]);
+    return (canEdit || canDelete) && level > uploader?.level;
+  }, [level, canDelete, canEdit, uploader?.level]);
   const userCanRewardThis = useMemo(
     () =>
       determineUserCanRewardThis({
@@ -455,11 +452,7 @@ export default function LinkPage() {
                   !isRecommendedByUser && twinkleCoins > 0
                 )
               }
-              uploaderLevel={
-                uploader?.authLevel
-                  ? uploader.authLevel + 1
-                  : uploader?.level || 0
-              }
+              uploaderLevel={uploader?.level}
               uploaderId={uploader.id}
             />
           </div>

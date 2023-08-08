@@ -35,7 +35,6 @@ export default function LinkItem({
     title: string;
     timeStamp: number;
     uploader: {
-      authLevel: number;
       level: number;
       id: number;
       username: string;
@@ -81,19 +80,9 @@ export default function LinkItem({
   const userIsUploader = userId === uploader.id;
 
   const editButtonShown = useMemo(() => {
-    const uploaderLevel = uploader.authLevel
-      ? uploader.authLevel + 1
-      : uploader.level || 0;
-    const userCanEditThis = (canEdit || canDelete) && level > uploaderLevel;
+    const userCanEditThis = (canEdit || canDelete) && level > uploader.level;
     return userIsUploader || userCanEditThis;
-  }, [
-    level,
-    canDelete,
-    canEdit,
-    uploader?.authLevel,
-    uploader?.level,
-    userIsUploader
-  ]);
+  }, [level, canDelete, canEdit, uploader.level, userIsUploader]);
 
   const editMenuItems = useMemo(() => {
     const items = [];
