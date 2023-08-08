@@ -200,7 +200,7 @@ export default function ChatActions(dispatch: Dispatch) {
       username,
       profilePicUrl,
       subchannelId,
-      uploaderAuthLevel,
+      uploaderLevel,
       thumbUrl
     }: {
       id: number;
@@ -212,7 +212,7 @@ export default function ChatActions(dispatch: Dispatch) {
       username: string;
       profilePicUrl: string;
       subchannelId: number;
-      uploaderAuthLevel: number;
+      uploaderLevel: number;
       thumbUrl: string;
     }) {
       return dispatch({
@@ -226,7 +226,7 @@ export default function ChatActions(dispatch: Dispatch) {
           username,
           chessState,
           profilePicUrl,
-          uploaderAuthLevel,
+          uploaderLevel,
           fileSize,
           thumbUrl
         }
