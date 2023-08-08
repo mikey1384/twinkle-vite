@@ -3,8 +3,8 @@ import { Buffer } from 'buffer';
 import {
   CHAT_ID_BASE_NUMBER,
   returnMaxRewards,
-  MODERATOR_AUTH_LEVEL,
-  TEACHER_AUTH_LEVEL,
+  MOD_LEVEL,
+  TEACHER_LEVEL,
   MIKEY_ID
 } from '~/constants/defaultValues';
 
@@ -34,18 +34,19 @@ export function determineUserCanRewardThis({
   if (!userId) return false;
   let studentsCanReward = false;
   let moderatorCanReward = canReward;
-  if (userLevel === MODERATOR_AUTH_LEVEL && uploader?.id === MIKEY_ID) {
+  if (
+    userLevel >= MOD_LEVEL &&
+    userLevel < TEACHER_LEVEL &&
+    uploader?.id === MIKEY_ID
+  ) {
     moderatorCanReward = false;
   }
-  if (userLevel < TEACHER_AUTH_LEVEL) {
+  if (userLevel < TEACHER_LEVEL) {
     for (const recommendation of recommendations) {
       const recommenderLevel = recommendation.authLevel
         ? recommendation.authLevel + 1
         : recommendation.level || 0;
-      if (
-        recommenderLevel >= TEACHER_AUTH_LEVEL &&
-        !recommendation.rewardDisabled
-      ) {
+      if (recommenderLevel >= TEACHER_LEVEL && !recommendation.rewardDisabled) {
         studentsCanReward = true;
         moderatorCanReward = true;
         break;

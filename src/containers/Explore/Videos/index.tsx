@@ -7,7 +7,7 @@ import AddPlaylistModal from '~/components/Modals/AddPlaylistModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { scrollElementToCenter } from '~/helpers';
 import { useSearch, useUserLevel } from '~/helpers/hooks';
-import { MODERATOR_AUTH_LEVEL } from '~/constants/defaultValues';
+import { MOD_LEVEL } from '~/constants/defaultValues';
 import {
   useAppContext,
   useExploreContext,
@@ -94,7 +94,7 @@ export default function Videos() {
           <ButtonGroup
             style={{
               marginLeft: 'auto',
-              opacity: !!userId && level >= MODERATOR_AUTH_LEVEL ? 1 : 0
+              opacity: !!userId && level >= MOD_LEVEL ? 1 : 0
             }}
             buttons={[
               {
@@ -102,7 +102,7 @@ export default function Videos() {
                 onClick: onOpenAddPlaylistModal,
                 skeuomorphic: true,
                 color: 'darkerGray',
-                disabled: !userId || level < MODERATOR_AUTH_LEVEL
+                disabled: !userId || level < MOD_LEVEL
               }
             ]}
           />

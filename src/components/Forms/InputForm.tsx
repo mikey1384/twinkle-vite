@@ -20,7 +20,7 @@ import {
   FILE_UPLOAD_XP_REQUIREMENT,
   mb,
   returnMaxUploadSize,
-  MODERATOR_AUTH_LEVEL
+  MOD_LEVEL
 } from '~/constants/defaultValues';
 import {
   addCommasToNumber,
@@ -153,8 +153,7 @@ function InputForm({
     [attachment, commentExceedsCharLimit, submitting, textIsEmpty]
   );
   const uploadDisabled = useMemo(
-    () =>
-      level < MODERATOR_AUTH_LEVEL && twinkleXP < FILE_UPLOAD_XP_REQUIREMENT,
+    () => level < MOD_LEVEL && twinkleXP < FILE_UPLOAD_XP_REQUIREMENT,
     [level, twinkleXP]
   );
 
@@ -324,7 +323,7 @@ function InputForm({
               filled
               loading={secretViewMessageSubmitting}
               onClick={() => {
-                level >= MODERATOR_AUTH_LEVEL
+                level >= MOD_LEVEL
                   ? handleViewAnswer()
                   : setConfirmModalShown(true);
               }}

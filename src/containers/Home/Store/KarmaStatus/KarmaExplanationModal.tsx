@@ -7,7 +7,7 @@ import { Color } from '~/constants/css';
 import {
   karmaMultiplier,
   SELECTED_LANGUAGE,
-  TEACHER_AUTH_LEVEL
+  TEACHER_LEVEL
 } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
@@ -88,7 +88,7 @@ export default function KarmaExplanationModal({
           that were approved by teachers)
         </>
       );
-    if (userLevel < TEACHER_AUTH_LEVEL) {
+    if (userLevel < TEACHER_LEVEL) {
       return <span>{karmaCalculationLabel}</span>;
     }
     if (SELECTED_LANGUAGE === 'kr') {
@@ -173,7 +173,7 @@ export default function KarmaExplanationModal({
           approved by teachers
         </>
       );
-    if (userLevel < TEACHER_AUTH_LEVEL) {
+    if (userLevel < TEACHER_LEVEL) {
       return (
         <div
           className={css`
