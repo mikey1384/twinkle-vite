@@ -32,16 +32,9 @@ export default function RecommendationStatus({
   const [userListModalShown, setUserListModalShown] = useState(false);
   const recommendationsByUsertype = useMemo(() => {
     const result = [...recommendations];
-    result.sort(
-      (
-        a: { authLevel: number; level: number },
-        b: { authLevel: number; level: number }
-      ) => {
-        const bRecommenderLevel = b.authLevel ? b.authLevel + 1 : b.level;
-        const aRecommenderLevel = a.authLevel ? a.authLevel + 1 : a.level;
-        return bRecommenderLevel - aRecommenderLevel;
-      }
-    );
+    result.sort((a: { level: number }, b: { level: number }) => {
+      return b.level - a.level;
+    });
     return result;
   }, [recommendations]);
 
@@ -75,25 +68,18 @@ export default function RecommendationStatus({
   );
 
   const isRewardable = useMemo(() => {
-    const myRecommendationLevel = myRecommendation?.authLevel
-      ? myRecommendation?.authLevel + 1
-      : myRecommendation?.level || 0;
-    const mostRecentRewardEnabledRecommenderOtherThanMeLevel =
-      mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel
-        ? mostRecentRewardEnabledRecommenderOtherThanMe?.authLevel + 1
-        : mostRecentRewardEnabledRecommenderOtherThanMe?.level || 0;
     return (
       contentType !== 'pass' &&
       contentType !== 'aiStory' &&
-      ((myRecommendationLevel >= TEACHER_LEVEL &&
+      ((myRecommendation?.level >= TEACHER_LEVEL &&
         !myRecommendation?.rewardDisabled) ||
-        (mostRecentRewardEnabledRecommenderOtherThanMeLevel >= TEACHER_LEVEL &&
+        (mostRecentRewardEnabledRecommenderOtherThanMe?.level >=
+          TEACHER_LEVEL &&
           !mostRecentRewardEnabledRecommenderOtherThanMe?.rewardDisabled))
     );
   }, [
     contentType,
     mostRecentRewardEnabledRecommenderOtherThanMe,
-    myRecommendation?.authLevel,
     myRecommendation?.level,
     myRecommendation?.rewardDisabled
   ]);
