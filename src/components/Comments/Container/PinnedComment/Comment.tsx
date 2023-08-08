@@ -220,21 +220,21 @@ function Comment({
       parent.uploader?.id === userId,
     [parent.contentType, parent.uploader?.id, userId]
   );
-  const userIsHigherAuth = useMemo(() => {
+  const userHasHigherLevel = useMemo(() => {
     return level > uploader?.level;
   }, [level, uploader?.level]);
   const dropdownButtonShown = useMemo(() => {
     if (isNotification || isPreview) {
       return false;
     }
-    const userCanEditThis = (canEdit || canDelete) && userIsHigherAuth;
+    const userCanEditThis = (canEdit || canDelete) && userHasHigherLevel;
     return userIsUploader || userCanEditThis || userIsParentUploader;
   }, [
     canDelete,
     canEdit,
     isNotification,
     isPreview,
-    userIsHigherAuth,
+    userHasHigherLevel,
     userIsParentUploader,
     userIsUploader
   ]);
