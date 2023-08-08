@@ -43,10 +43,10 @@ export function determineUserCanRewardThis({
   }
   if (userLevel < TEACHER_LEVEL) {
     for (const recommendation of recommendations) {
-      const recommenderLevel = recommendation.authLevel
-        ? recommendation.authLevel + 1
-        : recommendation.level || 0;
-      if (recommenderLevel >= TEACHER_LEVEL && !recommendation.rewardDisabled) {
+      if (
+        recommendation.level >= TEACHER_LEVEL &&
+        !recommendation.rewardDisabled
+      ) {
         studentsCanReward = true;
         moderatorCanReward = true;
         break;

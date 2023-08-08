@@ -121,7 +121,6 @@ export interface Subject {
 }
 
 export interface User {
-  authLevel?: number;
   banned?: {
     posting?: boolean;
   };

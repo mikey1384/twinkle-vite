@@ -428,7 +428,6 @@ export function useUserLevel(userId: number): UserLevel {
   const userObj = useAppContext((v) => v.user.state.userObj);
   const {
     achievementPoints = 0,
-    authLevel,
     canEdit,
     canDelete,
     canReward,
@@ -442,7 +441,6 @@ export function useUserLevel(userId: number): UserLevel {
       if (achievementPoints >= levels[i].ap) {
         return {
           ...levels[i],
-          level: authLevel || levels[i].level,
           canEdit: canEdit || levels[i].canEdit,
           canDelete: canDelete || levels[i].canDelete,
           canReward: canReward || levels[i].canReward,
@@ -456,7 +454,6 @@ export function useUserLevel(userId: number): UserLevel {
     }
     return {
       ...levels[1],
-      level: authLevel || levels[1].level,
       canEdit: canEdit || levels[1].canEdit,
       canDelete: canDelete || levels[1].canDelete,
       canReward: canReward || levels[1].canReward,
@@ -467,7 +464,6 @@ export function useUserLevel(userId: number): UserLevel {
     };
   }, [
     achievementPoints,
-    authLevel,
     canDelete,
     canEdit,
     canEditDictionary,
