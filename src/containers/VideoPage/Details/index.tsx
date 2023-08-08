@@ -105,7 +105,7 @@ export default function Details({
   rewards: any[];
   timeStamp: number;
   title: string;
-  uploader: { id: number; username: string; authLevel: number; level: number };
+  uploader: { id: number; username: string; level: number };
   userId: number;
   videoId: number;
   videoViews: number;
@@ -162,16 +162,13 @@ export default function Details({
   }, [editState, isEditing, title, description, content]);
 
   useEffect(() => {
-    const uploaderLevel = uploader.authLevel
-      ? uploader.authLevel + 1
-      : uploader.level || 0;
     onSetXpRewardInterfaceShown({
       contentType: 'video',
       contentId: videoId,
       shown:
         xpRewardInterfaceShown &&
         canReward &&
-        level > uploaderLevel &&
+        level > uploader.level &&
         !userIsUploader
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -228,19 +225,9 @@ export default function Details({
   const userIsUploader = uploader.id === userId;
 
   const editButtonShown = useMemo(() => {
-    const uploaderLevel = uploader.authLevel
-      ? uploader.authLevel + 1
-      : uploader.level || 0;
-    const userCanEditThis = (canEdit || canDelete) && level > uploaderLevel;
+    const userCanEditThis = (canEdit || canDelete) && level > uploader.level;
     return userIsUploader || userCanEditThis;
-  }, [
-    uploader.authLevel,
-    uploader.level,
-    canEdit,
-    canDelete,
-    level,
-    userIsUploader
-  ]);
+  }, [uploader.level, canEdit, canDelete, level, userIsUploader]);
 
   const userCanRewardThis = useMemo(
     () =>
@@ -550,9 +537,7 @@ export default function Details({
                 !isRecommendedByUser && twinkleCoins > 0
               )
             }
-            uploaderLevel={
-              uploader.authLevel ? uploader.authLevel + 1 : uploader.level || 0
-            }
+            uploaderLevel={uploader.level}
             uploaderId={uploader.id}
           />
         )}

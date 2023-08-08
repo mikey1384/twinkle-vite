@@ -53,7 +53,7 @@ export default function Content({
   rewardLevel?: number;
   title: string;
   watchTabActive?: boolean;
-  uploader: { id: number; authLevel: number; level: number };
+  uploader: { id: number; level: number };
   videoId: number;
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -73,11 +73,8 @@ export default function Content({
   }, [videoId]);
   const userIsUploader = uploader?.id === userId;
   const userCanEditThis = useMemo(() => {
-    const uploaderLevel = uploader?.authLevel
-      ? uploader.authLevel + 1
-      : uploader?.level || 0;
-    return !!canEdit && level > uploaderLevel;
-  }, [canEdit, level, uploader?.authLevel, uploader?.level]);
+    return !!canEdit && level > uploader?.level;
+  }, [canEdit, level, uploader?.level]);
 
   return (
     <div

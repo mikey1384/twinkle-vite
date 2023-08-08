@@ -166,32 +166,25 @@ export default function BottomInterface({
     targetObj?.subject?.secretAttachment
   ]);
 
-  const uploaderLevel = useMemo(() => {
-    return uploader?.authLevel ? uploader?.authLevel + 1 : uploader?.level;
-  }, [uploader?.authLevel, uploader?.level]);
-
   const userCanDeleteThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
     if (userId === uploader.id) return true;
-    return canDelete && userLevel > uploaderLevel;
-  }, [contentType, userId, uploader.id, canDelete, userLevel, uploaderLevel]);
+    return canDelete && userLevel > uploader.level;
+  }, [contentType, userId, uploader.id, uploader.level, canDelete, userLevel]);
 
   const userCanCloseThis = useMemo(() => {
     if (contentType !== 'subject') return false;
-    const closerLevel = contentObj?.isClosedBy?.authLevel
-      ? contentObj?.isClosedBy?.authLevel + 1
-      : contentObj?.isClosedBy?.level || 0;
     if (
       contentObj?.isClosedBy &&
       ((contentObj?.isClosedBy.id === uploader.id &&
         contentObj?.isClosedBy.id !== userId) ||
-        closerLevel > userLevel)
+        contentObj?.isClosedBy.level > userLevel)
     ) {
       return false;
     }
     if (userId === uploader.id) return true;
     if (!canDelete) return false;
-    return userLevel > uploaderLevel;
+    return userLevel > uploader.level;
   }, [
     contentType,
     contentObj?.isClosedBy,
@@ -199,14 +192,14 @@ export default function BottomInterface({
     userId,
     userLevel,
     canDelete,
-    uploaderLevel
+    uploader.level
   ]);
 
   const userCanEditThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
     if (userId === uploader.id) return true;
-    return canEdit && userLevel > uploaderLevel;
-  }, [contentType, userId, uploader.id, canEdit, userLevel, uploaderLevel]);
+    return canEdit && userLevel > uploader.level;
+  }, [contentType, userId, uploader.id, canEdit, userLevel, uploader.level]);
 
   const editMenuItems = useMemo(() => {
     const items = [];
