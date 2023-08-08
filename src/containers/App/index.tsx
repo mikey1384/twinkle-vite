@@ -439,7 +439,7 @@ function App() {
         filePath,
         fileSize: fileToUpload.size,
         id: messageId,
-        uploaderAuthLevel: level,
+        uploaderLevel: level,
         channelId,
         userId,
         username,
