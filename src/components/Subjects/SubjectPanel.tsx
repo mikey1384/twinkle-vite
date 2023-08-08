@@ -48,7 +48,7 @@ export default function SubjectPanel({
   description,
   title,
   rewardLevel,
-  uploaderAuthLevel,
+  uploaderLevel,
   username,
   userId,
   timeStamp,
@@ -64,7 +64,7 @@ export default function SubjectPanel({
   description: string;
   title: string;
   rewardLevel: number;
-  uploaderAuthLevel: number;
+  uploaderLevel: number;
   username: string;
   userId: number;
   timeStamp: number;
@@ -141,10 +141,10 @@ export default function SubjectPanel({
     useState(false);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
   const editButtonShown = useMemo(() => {
-    const userHasHigherAuthLevel = level > uploaderAuthLevel;
+    const userHasHigherAuthLevel = level > uploaderLevel;
     const userCanEditThis = (canEdit || canDelete) && userHasHigherAuthLevel;
     return userIsUploader || userCanEditThis;
-  }, [level, canDelete, canEdit, uploaderAuthLevel, userIsUploader]);
+  }, [level, canDelete, canEdit, uploaderLevel, userIsUploader]);
   const secretHidden = useMemo(
     () =>
       (!!secretAnswer || !!secretAttachment) &&
@@ -473,7 +473,7 @@ export default function SubjectPanel({
                   )
                 }
                 rewardLevel={finalRewardLevel}
-                uploaderLevel={uploaderAuthLevel}
+                uploaderLevel={uploaderLevel}
                 uploaderId={userId}
                 rewards={rewards}
               />
@@ -538,8 +538,8 @@ export default function SubjectPanel({
                 uploader: {
                   id: userId,
                   username,
-                  authLevel: uploaderAuthLevel,
-                  level: uploaderAuthLevel
+                  authLevel: uploaderLevel,
+                  level: uploaderLevel
                 }
               }}
               rootContent={{
@@ -557,8 +557,8 @@ export default function SubjectPanel({
                 uploader: {
                   id: userId,
                   username,
-                  authLevel: uploaderAuthLevel,
-                  level: uploaderAuthLevel
+                  authLevel: uploaderLevel,
+                  level: uploaderLevel
                 }
               }}
               showSecretButtonAvailable={!!(subjectId && secretHidden)}
