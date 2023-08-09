@@ -36,7 +36,7 @@ export default function ProgressBar({
   );
 
   return (
-    <div>
+    <div style={{ width: '100%', ...style }}>
       <div
         className={`${css`
           border: 1px solid ${Color.borderGray()};
@@ -60,7 +60,6 @@ export default function ProgressBar({
           }
         `} ${className}`}
         style={{
-          ...style,
           borderLeft: noBorderRadius ? 'none' : undefined,
           borderRight: noBorderRadius ? 'none' : undefined,
           borderRadius: noBorderRadius ? 0 : undefined

@@ -293,7 +293,7 @@ export default function KarmaExplanationModal({
     <Modal onHide={onHide}>
       <header>Your Karma Points</header>
       <main>
-        <p
+        <div
           className={css`
             font-size: 1.7rem;
           `}
@@ -311,7 +311,7 @@ export default function KarmaExplanationModal({
           )}
           {instructionText}
           {calculationText}
-        </p>
+        </div>
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
