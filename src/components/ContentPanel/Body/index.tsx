@@ -357,6 +357,7 @@ export default function Body({
           <RecommendationInterface
             contentId={contentId}
             contentType={contentType}
+            rootType={rootType}
             onHide={() => setRecommendationInterfaceShown(false)}
             recommendations={recommendations}
             rewardLevel={finalRewardLevel}
