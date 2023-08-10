@@ -394,17 +394,19 @@ export default function contentRequestHelpers({
     async loadContent({
       contentId,
       contentType,
+      rootType,
       isPinnedComment
     }: {
       contentId: number;
       contentType: string;
+      rootType?: string;
       isPinnedComment?: boolean;
     }) {
       try {
         const { data } = await request.get(
           `${URL}/content?contentId=${contentId}&contentType=${contentType}${
-            isPinnedComment ? '&isPinnedComment=1' : ''
-          }`
+            rootType ? `&rootType=${rootType}` : ''
+          }${isPinnedComment ? '&isPinnedComment=1' : ''}`
         );
         return Promise.resolve(data);
       } catch (error) {

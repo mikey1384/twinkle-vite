@@ -25,6 +25,7 @@ ContentPanel.propTypes = {
   commentsLoadLimit: PropTypes.number,
   contentId: PropTypes.number.isRequired,
   contentType: PropTypes.string.isRequired,
+  rootType: PropTypes.string,
   numPreviewComments: PropTypes.number,
   style: PropTypes.object,
   theme: PropTypes.string,
@@ -37,6 +38,7 @@ export default function ContentPanel({
   commentsLoadLimit,
   contentId,
   contentType,
+  rootType,
   numPreviewComments = 0,
   style = {},
   theme,
@@ -48,6 +50,7 @@ export default function ContentPanel({
   commentsLoadLimit?: number;
   contentId: number;
   contentType: string;
+  rootType?: string;
   numPreviewComments?: number;
   style?: React.CSSProperties;
   theme?: string;
@@ -112,12 +115,16 @@ export default function ContentPanel({
     commentsShown,
     loaded,
     placeholderHeight: previousPlaceholderHeight,
-    rootType,
+    rootType: rootTypeFromState,
     started,
     targetObj,
     visible: previousVisible,
     rootId
   } = contentState;
+  const appliedRootType = useMemo(
+    () => rootTypeFromState || rootType,
+    [rootType, rootTypeFromState]
+  );
   const rootObj = useContentState({ contentType: rootType, contentId: rootId });
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   const [placeholderHeight, setPlaceholderHeight] = useState(
@@ -145,7 +152,7 @@ export default function ContentPanel({
     [placeholderHeight, previousPlaceholderHeight]
   );
   const { started: rootStarted } = useContentState({
-    contentType: rootType,
+    contentType: appliedRootType,
     contentId: rootId
   });
 
@@ -171,7 +178,11 @@ export default function ContentPanel({
     }
     async function onMount() {
       loading.current = true;
-      const data = await loadContent({ contentId, contentType });
+      const data = await loadContent({
+        contentId,
+        contentType,
+        rootType: appliedRootType
+      });
       onInitContent({
         ...data,
         feedId: contentState.feedId
@@ -269,9 +280,9 @@ export default function ContentPanel({
                             ? targetObj?.comment.notFound
                               ? localize('repliedOn')
                               : localize('repliedTo')
-                            : rootType === 'subject'
+                            : appliedRootType === 'subject'
                             ? localize('respondedTo')
-                            : rootType === 'user'
+                            : appliedRootType === 'user'
                             ? localize('leftMessageTo')
                             : localize('commentedOn')
                         }
