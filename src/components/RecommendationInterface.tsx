@@ -30,6 +30,7 @@ export default function RecommendationInterface({
   recommendations,
   rewardLevel,
   content = '',
+  rootType,
   style,
   theme,
   uploaderId
@@ -40,6 +41,7 @@ export default function RecommendationInterface({
   recommendations: any[];
   rewardLevel: number;
   content?: string;
+  rootType?: string;
   style?: React.CSSProperties;
   theme?: string;
   uploaderId?: number;
@@ -234,6 +236,9 @@ export default function RecommendationInterface({
         ? recommendations
         : [];
     try {
+      if (contentType === 'pass') {
+        return console.log(rootType);
+      }
       const { coins, recommendations } = await recommendContent({
         contentId,
         contentType,
