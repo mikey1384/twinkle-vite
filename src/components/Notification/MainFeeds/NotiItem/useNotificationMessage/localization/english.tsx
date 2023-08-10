@@ -67,6 +67,7 @@ export default function renderEnglishMessage({
     userId: number;
   };
 }) {
+  console.log(targetObj);
   const displayedContent =
     targetObj.contentType === 'pass'
       ? targetObj.missionTitle
