@@ -1035,12 +1035,14 @@ export default function contentRequestHelpers({
     async recommendContent({
       contentId,
       contentType,
+      rootType,
       currentRecommendations,
       rewardDisabled,
       uploaderId
     }: {
       contentId: number;
       contentType: string;
+      rootType?: string;
       currentRecommendations: number[];
       rewardDisabled: boolean;
       uploaderId: number;
@@ -1053,6 +1055,7 @@ export default function contentRequestHelpers({
           {
             contentId,
             contentType,
+            rootType,
             currentRecommendations,
             uploaderId,
             rewardDisabled

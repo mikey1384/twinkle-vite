@@ -236,12 +236,10 @@ export default function RecommendationInterface({
         ? recommendations
         : [];
     try {
-      if (contentType === 'pass') {
-        return console.log(rootType);
-      }
       const { coins, recommendations } = await recommendContent({
         contentId,
         contentType,
+        rootType,
         uploaderId,
         currentRecommendations,
         rewardDisabled
