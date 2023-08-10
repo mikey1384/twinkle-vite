@@ -4,7 +4,7 @@ import Embedly from '~/components/Embedly';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import XPVideoAdditionalInfo from './XPVideoAdditionalInfo';
 import ByUserIndicator from './ByUserIndicator';
-import PassNotification from './PassNotification';
+import PassContent from '../PassContent';
 import FileViewer from './FileViewer';
 import XPVideo from './XPVideo';
 import RewardLevelDisplay from './RewardLevelDisplay';
@@ -113,12 +113,9 @@ export default function MainContent({
   return (
     <ErrorBoundary componentPath="ContentPanel/Body/MainContent">
       <div ref={ContainerRef}>
-        <PassNotification
-          contentType={contentType}
-          rootObj={rootObj}
-          theme={theme}
-          uploader={uploader}
-        />
+        {contentType === 'pass' && (
+          <PassContent theme={theme} uploader={uploader} rootObj={rootObj} />
+        )}
         <XPVideo
           contentType={contentType}
           subjectIsAttachedToVideo={subjectIsAttachedToVideo}
