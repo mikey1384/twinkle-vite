@@ -225,6 +225,7 @@ export default function Stories() {
                   zIndex={feeds.length - index}
                   contentId={feed.contentId}
                   contentType={feed.contentType}
+                  rootType={feed.rootType}
                   commentsLoadLimit={5}
                   numPreviewComments={1}
                 />

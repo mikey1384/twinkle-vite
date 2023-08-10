@@ -247,7 +247,7 @@ export default function Feeds({
               <>
                 {feeds.length > 0 &&
                   feeds.map((feed, index) => {
-                    const { contentId, contentType } = feed;
+                    const { contentId, contentType, rootType } = feed;
                     return (
                       <ContentPanel
                         key={filterTable[section] + feed.feedId}
@@ -259,6 +259,7 @@ export default function Feeds({
                         zIndex={feeds.length - index}
                         contentId={contentId}
                         contentType={contentType}
+                        rootType={rootType}
                         theme={selectedTheme}
                         commentsLoadLimit={5}
                         numPreviewComments={1}
