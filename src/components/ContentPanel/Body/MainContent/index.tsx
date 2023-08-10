@@ -114,7 +114,12 @@ export default function MainContent({
     <ErrorBoundary componentPath="ContentPanel/Body/MainContent">
       <div ref={ContainerRef}>
         {contentType === 'pass' && (
-          <PassContent theme={theme} uploader={uploader} rootObj={rootObj} />
+          <PassContent
+            theme={theme}
+            uploader={uploader}
+            rootObj={rootObj}
+            rootType={rootType}
+          />
         )}
         <XPVideo
           contentType={contentType}
