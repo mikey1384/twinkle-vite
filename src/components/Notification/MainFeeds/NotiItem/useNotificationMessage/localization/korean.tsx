@@ -4,7 +4,7 @@ import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
 import ContentLink from '~/components/ContentLink';
 
-export default function renderEnglishMessage({
+export default function renderKoreanMessage({
   actionObj,
   actionColor,
   infoColor,
