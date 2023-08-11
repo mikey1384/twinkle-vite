@@ -3,17 +3,16 @@ import { stringIsEmpty, truncateText } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import ContentLink from '~/components/ContentLink';
 
-export default function renderEnglishMessage({
+export default function RenderMessage({
   actionObj,
   actionColor,
   infoColor,
   isNotification,
-  isReply,
-  isSubjectResponse,
   isTask,
   linkColor,
   mentionColor,
   missionColor,
+  myId,
   recommendationColor,
   rewardRootId,
   rewardType,
@@ -35,12 +34,11 @@ export default function renderEnglishMessage({
   actionColor: string;
   infoColor: string;
   isNotification: boolean;
-  isReply: boolean;
-  isSubjectResponse: boolean;
   isTask: boolean;
   linkColor: string;
   mentionColor: string;
   missionColor: string;
+  myId: number;
   recommendationColor: string;
   rewardRootId: number;
   rewardType: string;
@@ -69,6 +67,8 @@ export default function renderEnglishMessage({
     userId: number;
   };
 }) {
+  const isReply = targetComment?.userId === myId;
+  const isSubjectResponse = targetSubject?.userId === myId;
   let displayedContent = '';
   if (targetObj.contentType === 'pass') {
     if (targetObj.passType === 'mission') {

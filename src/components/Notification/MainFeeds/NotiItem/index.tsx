@@ -4,7 +4,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { Color } from '~/constants/css';
 import { notiFeedListItem } from '../../Styles';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import useNotificationMessage from './useNotificationMessage';
+import NotiMessage from './NotiMessage';
 import UsernameText from '~/components/Texts/UsernameText';
 
 export default function NotiItem({
@@ -58,29 +58,6 @@ export default function NotiItem({
     rootMissionType?: string;
   };
 }) {
-  const NotificationMessage = useNotificationMessage({
-    actionColor,
-    actionObj,
-    infoColor,
-    isNotification,
-    isTask,
-    linkColor,
-    mentionColor,
-    missionColor,
-    recommendationColor,
-    rewardColor,
-    rewardRootId,
-    rewardType,
-    rewardRootMissionType,
-    rewardRootType,
-    rootMissionType,
-    targetObj,
-    targetComment,
-    targetSubject,
-    user,
-    myId: userId
-  });
-
   const userLabel = useMemo(() => {
     if (actionObj.contentType !== 'pass' && actionObj.contentType !== 'fail') {
       return (
@@ -98,7 +75,27 @@ export default function NotiItem({
       <nav style={{ background: '#fff' }} className={notiFeedListItem} key={id}>
         <div>
           {userLabel}
-          {NotificationMessage}
+          <NotiMessage
+            actionColor={actionColor || ''}
+            actionObj={actionObj}
+            infoColor={infoColor || ''}
+            isNotification={isNotification || false}
+            isTask={isTask || false}
+            linkColor={linkColor}
+            mentionColor={mentionColor || ''}
+            missionColor={missionColor || ''}
+            recommendationColor={recommendationColor || ''}
+            rewardColor={rewardColor || ''}
+            rewardRootId={rewardRootId || 0}
+            rewardType={rewardType || ''}
+            rewardRootMissionType={rewardRootMissionType || ''}
+            rewardRootType={rewardRootType || ''}
+            rootMissionType={rootMissionType || ''}
+            targetObj={targetObj}
+            targetComment={targetComment}
+            targetSubject={targetSubject}
+            myId={userId || 0}
+          />
         </div>
         <small style={{ color: Color.gray() }}>{timeSince(timeStamp)}</small>
       </nav>
