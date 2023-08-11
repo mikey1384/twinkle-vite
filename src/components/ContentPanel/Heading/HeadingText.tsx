@@ -118,23 +118,42 @@ export default function HeadingText({
         </>
       );
     case 'pass': {
-      return (
-        <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> completed
-          a{' '}
-          <ContentLink
-            content={{
-              id: rootObj.id,
-              title: `${rootObj.isTask ? 'task' : 'mission'}: ${rootObj.title}`,
-              missionType: rootObj.missionType,
-              rootMissionType: rootObj.rootMission?.missionType
-            }}
-            contentType="mission"
-            style={{ color: Color.orange() }}
-            theme={theme}
-          />{' '}
-        </>
-      );
+      if (contentObj.rootType === 'mission') {
+        return (
+          <>
+            <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
+            completed a{' '}
+            <ContentLink
+              content={{
+                id: rootObj.id,
+                title: `${rootObj.isTask ? 'task' : 'mission'}: ${
+                  rootObj.title
+                }`,
+                missionType: rootObj.missionType,
+                rootMissionType: rootObj.rootMission?.missionType
+              }}
+              contentType="mission"
+              style={{ color: Color.orange() }}
+              theme={theme}
+            />{' '}
+          </>
+        );
+      } else {
+        return (
+          <>
+            <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
+            completed an{' '}
+            <ContentLink
+              content={{
+                title: 'achievement'
+              }}
+              contentType="achievement"
+              style={{ color: Color.orange() }}
+              theme={theme}
+            />{' '}
+          </>
+        );
+      }
     }
     case 'aiStory':
       return (
