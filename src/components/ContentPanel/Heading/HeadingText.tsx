@@ -117,7 +117,7 @@ export default function HeadingText({
           )}
         </>
       );
-    case 'pass':
+    case 'pass': {
       return (
         <>
           <UsernameText user={uploader} color={Color[linkColor]()} /> completed
@@ -135,6 +135,7 @@ export default function HeadingText({
           />{' '}
         </>
       );
+    }
     case 'aiStory':
       return (
         <>
