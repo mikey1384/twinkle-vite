@@ -141,8 +141,8 @@ export default function HeadingText({
       } else {
         return (
           <>
-            <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
-            completed an{' '}
+            <UsernameText user={uploader} color={Color[linkColor]()} /> unlocked
+            an{' '}
             <ContentLink
               content={{
                 title: 'achievement'
