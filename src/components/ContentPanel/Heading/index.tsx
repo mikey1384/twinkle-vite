@@ -1,11 +1,11 @@
 import React, { memo } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
+import HeadingText from './HeadingText';
 import { useNavigate } from 'react-router-dom';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
-import useHeadingText from './useHeadingText';
 import { Content } from '~/types';
 
 Heading.propTypes = {
@@ -35,13 +35,6 @@ function Heading({
     contentId: rootId
   });
   const navigate = useNavigate();
-  const HeadingText = useHeadingText({
-    action,
-    contentObj,
-    rootObj,
-    theme
-  });
-
   return (
     <header className="heading">
       <div>
@@ -66,7 +59,14 @@ function Heading({
             width: '100%'
           }}
         >
-          <span className="title">{HeadingText}</span>
+          <span className="title">
+            <HeadingText
+              action={action}
+              contentObj={contentObj}
+              rootObj={rootObj}
+              theme={theme}
+            />
+          </span>
           <small
             className={`timestamp ${css`
               cursor: pointer;
