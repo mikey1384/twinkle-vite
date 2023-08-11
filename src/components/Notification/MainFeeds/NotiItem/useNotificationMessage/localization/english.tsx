@@ -139,7 +139,7 @@ export default function renderEnglishMessage({
           />
         </>
       );
-    case 'recommendation':
+    case 'recommendation': {
       return (
         <>
           <span
@@ -162,6 +162,7 @@ export default function renderEnglishMessage({
           />
         </>
       );
+    }
     case 'reward': {
       if (rewardType === 'Twinkle') {
         return (
