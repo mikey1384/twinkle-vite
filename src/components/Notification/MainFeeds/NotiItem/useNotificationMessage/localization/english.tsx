@@ -147,7 +147,7 @@ export default function renderEnglishMessage({
             targetObj.missionType
           }`;
         } else {
-          contentPath = 'achievements';
+          contentPath = '';
         }
       } else {
         contentPath = targetObj.id;
@@ -162,6 +162,7 @@ export default function renderEnglishMessage({
           <span>your</span>{' '}
           <ContentLink
             contentType={targetObj.contentType}
+            rootType={targetObj.passType}
             content={{
               id: contentPath,
               title: contentPreview

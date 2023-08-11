@@ -18,11 +18,13 @@ export default function ContentLink({
     username
   },
   contentType,
+  rootType = 'mission',
   theme
 }: {
   style?: any;
   content: any;
   contentType: string;
+  rootType?: string;
   theme?: string;
 }) {
   const truncatedTopic = useMemo(() => {
@@ -33,19 +35,28 @@ export default function ContentLink({
     userLink: { color: userLinkColor },
     link: { color: linkColor }
   } = useTheme(theme || profileTheme);
-  const destination = useMemo(() => {
+  const rootPath = useMemo(() => {
     let result = '';
     if (contentType === 'aiStory') {
       result = 'ai-stories';
     } else if (contentType === 'url') {
       result = 'links';
     } else if (contentType === 'pass') {
-      result = 'missions';
+      result = `${rootType}s`;
     } else {
       result = contentType + 's';
     }
     return result;
-  }, [contentType]);
+  }, [contentType, rootType]);
+  const subPath = useMemo(() => {
+    const path =
+      contentType === 'user'
+        ? username
+        : contentType === 'mission'
+        ? rootMissionType || missionType
+        : id;
+    return path ? `/${path}` : '';
+  }, [contentType, id, missionType, rootMissionType, username]);
 
   const label = title || content || username || truncatedTopic;
 
@@ -56,13 +67,7 @@ export default function ContentLink({
         color: byUser ? Color[userLinkColor]() : Color[linkColor](),
         ...style
       }}
-      to={`/${destination}/${
-        contentType === 'user'
-          ? username
-          : contentType === 'mission'
-          ? rootMissionType || missionType
-          : id
-      }`}
+      to={`/${rootPath}${subPath}`}
     >
       {removeLineBreaks(label)}
     </Link>
