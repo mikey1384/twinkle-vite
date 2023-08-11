@@ -140,6 +140,18 @@ export default function renderEnglishMessage({
         </>
       );
     case 'recommendation': {
+      let contentPath;
+      if (targetObj.contentType === 'pass') {
+        if (targetObj.passType === 'mission') {
+          contentPath = `${rootMissionType ? `${rootMissionType}/` : ''}${
+            targetObj.missionType
+          }`;
+        } else {
+          contentPath = 'achievements';
+        }
+      } else {
+        contentPath = targetObj.id;
+      }
       return (
         <>
           <span
@@ -151,12 +163,7 @@ export default function renderEnglishMessage({
           <ContentLink
             contentType={targetObj.contentType}
             content={{
-              id:
-                targetObj.contentType === 'pass'
-                  ? `${rootMissionType ? `${rootMissionType}/` : ''}${
-                      targetObj.missionType
-                    }`
-                  : targetObj.id,
+              id: contentPath,
               title: contentPreview
             }}
           />
