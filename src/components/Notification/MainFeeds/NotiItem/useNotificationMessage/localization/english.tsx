@@ -57,8 +57,10 @@ export default function renderEnglishMessage({
     content: string;
     contentType: string;
     id: number;
+    achievementTitle: string;
     missionTitle: string;
     missionType: string;
+    passType: string;
     userId: number;
   };
   targetSubject: {
@@ -67,12 +69,17 @@ export default function renderEnglishMessage({
     userId: number;
   };
 }) {
-  console.log(targetObj);
-  const displayedContent =
-    targetObj.contentType === 'pass'
-      ? targetObj.missionTitle
-      : targetObj.content;
-
+  let displayedContent = '';
+  if (targetObj.contentType === 'pass') {
+    if (targetObj.passType === 'mission') {
+      displayedContent = targetObj.missionTitle;
+    }
+    if (targetObj.passType === 'achievement') {
+      displayedContent = targetObj.achievementTitle;
+    }
+  } else {
+    displayedContent = targetObj.content;
+  }
   const contentPreview = `${
     targetObj.contentType === 'aiStory'
       ? 'AI Story'
