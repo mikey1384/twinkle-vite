@@ -3,40 +3,36 @@ import { Color } from '~/constants/css';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
 import { cardLevelHash } from '~/constants/defaultValues';
+import { useKeyContext } from '~/contexts';
+import { useTheme } from '~/helpers/hooks';
 
-export default function renderEnglishMessage({
-  id,
+export default function HeadingText({
   action,
-  byUser,
-  contentColor,
-  commentId,
   contentObj,
-  contentType,
-  linkColor,
-  replyId,
   rootObj,
-  rootType,
-  targetObj,
-  theme,
-  uploader,
-  userLinkColor
+  theme
 }: {
-  id: string;
   action: string;
-  byUser: any;
-  contentColor: string;
-  commentId: number;
   contentObj: any;
-  contentType: string;
-  linkColor: string;
-  replyId: number;
   rootObj: any;
-  rootType: string;
-  targetObj: any;
-  theme: string;
-  uploader: any;
-  userLinkColor: string;
+  theme?: string;
 }) {
+  const {
+    id,
+    byUser,
+    commentId,
+    targetObj = {},
+    replyId,
+    rootType,
+    contentType,
+    uploader
+  } = contentObj;
+  const { profileTheme } = useKeyContext((v) => v.myState);
+  const {
+    link: { color: linkColor },
+    userLink: { color: userLinkColor },
+    content: { color: contentColor }
+  } = useTheme(theme || profileTheme);
   let contentLabel =
     rootType === 'aiStory'
       ? 'AI Story'
