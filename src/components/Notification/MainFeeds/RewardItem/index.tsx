@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
-import renderEnglishText from './localization/english';
-import renderKoreanText from './localization/korean';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { notiFeedListItem } from '../../Styles';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import RewardText from './RewardText';
 
 export default function RewardItem({
   actionColor,
@@ -37,51 +35,28 @@ export default function RewardItem({
   rewardColor: string;
   missionColor: string;
 }) {
-  const NotiText = useMemo(() => {
-    const params = {
-      actionColor,
-      contentId,
-      contentType,
-      infoColor,
-      isTask,
-      linkColor,
-      missionColor,
-      rewardColor,
-      rewardAmount,
-      rewardType,
-      rewarderId,
-      rewarderUsername,
-      rootId,
-      rootMissionType,
-      rootType,
-      targetObj
-    };
-    return SELECTED_LANGUAGE === 'kr'
-      ? renderKoreanText(params)
-      : renderEnglishText(params);
-  }, [
-    actionColor,
-    contentId,
-    contentType,
-    infoColor,
-    isTask,
-    linkColor,
-    missionColor,
-    rewardAmount,
-    rewardColor,
-    rewardType,
-    rewarderId,
-    rewarderUsername,
-    rootId,
-    rootMissionType,
-    rootType,
-    targetObj
-  ]);
-
+  const timeStampLabel = useMemo(() => timeSince(timeStamp), [timeStamp]);
   return (
     <nav style={{ background: '#fff' }} className={notiFeedListItem} key={id}>
-      {NotiText}
-      <small>{timeSince(timeStamp)}</small>
+      <RewardText
+        actionColor={actionColor}
+        contentId={contentId}
+        contentType={contentType}
+        infoColor={infoColor}
+        isTask={isTask}
+        linkColor={linkColor}
+        missionColor={missionColor}
+        rewardColor={rewardColor}
+        rewardType={rewardType}
+        rewardAmount={rewardAmount}
+        rewarderId={rewarderId}
+        rewarderUsername={rewarderUsername}
+        rootId={rootId}
+        rootType={rootType}
+        rootMissionType={rootMissionType}
+        targetObj={targetObj}
+      />
+      <small>{timeStampLabel}</small>
     </nav>
   );
 }
