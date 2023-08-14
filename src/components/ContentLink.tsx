@@ -49,6 +49,7 @@ export default function ContentLink({
     return result;
   }, [contentType, rootType]);
   const subPath = useMemo(() => {
+    if (contentType === 'achievement') return '';
     const path =
       contentType === 'user'
         ? username
