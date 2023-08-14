@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
 import { Color } from '~/constants/css';
@@ -19,6 +19,7 @@ export default function RewardText({
   rewarderUsername,
   rootId,
   rootType,
+  rootTargetType,
   rootMissionType,
   targetObj
 }: {
@@ -36,11 +37,31 @@ export default function RewardText({
   rewarderUsername: string;
   rootId: number;
   rootType: string;
+  rootTargetType: string;
   rootMissionType: string;
   targetObj: any;
 }) {
   const missionLinkColor = Color[missionColor]();
   const contentLinkColor = Color[actionColor]();
+  const recommendationTargetLabel = useMemo(() => {
+    let target = '';
+    if (rootType === 'pass') {
+      if (rootTargetType === 'achievement') {
+        target = 'achievement';
+      } else {
+        if (isTask) {
+          target = 'task';
+        } else {
+          target = 'mission';
+        }
+      }
+    } else if (rootType === 'aiStory') {
+      target = 'AI Story';
+    } else {
+      target = rootType;
+    }
+    return `this ${target}`;
+  }, [isTask, rootTargetType, rootType]);
 
   if (rewardType === 'Twinkle') {
     return (
@@ -104,18 +125,11 @@ export default function RewardText({
         }}
         content={{
           id: rootId,
-          title: `this ${
-            rootType === 'pass'
-              ? isTask
-                ? 'task'
-                : 'mission'
-              : rootType === 'aiStory'
-              ? 'AI Story'
-              : rootType
-          }`,
+          title: recommendationTargetLabel,
           missionType: rootMissionType
         }}
-        contentType={rootType === 'pass' ? 'mission' : rootType}
+        contentType={rootType === 'pass' ? rootTargetType : rootType}
+        rootType={rootTargetType}
       />{' '}
       <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
         You earn {rewardAmount} Twinkle Coin

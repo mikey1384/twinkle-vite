@@ -16,6 +16,7 @@ export default function RewardItem({
     contentType,
     rootId,
     rootType,
+    rootTargetType,
     rootMissionType,
     rewardAmount,
     rewardType,
@@ -53,6 +54,7 @@ export default function RewardItem({
         rewarderUsername={rewarderUsername}
         rootId={rootId}
         rootType={rootType}
+        rootTargetType={rootTargetType}
         rootMissionType={rootMissionType}
         targetObj={targetObj}
       />
