@@ -18,6 +18,7 @@ export default function RenderMessage({
   rewardType,
   rewardColor,
   rewardRootMissionType,
+  rewardRootTargetType,
   rewardRootType,
   rootMissionType,
   targetComment,
@@ -46,6 +47,7 @@ export default function RenderMessage({
   rewardRootMissionType: string;
   rewardRootType: string;
   rootMissionType: string;
+  rewardRootTargetType: string;
   targetComment: {
     content: string;
     id: number;
@@ -203,6 +205,23 @@ export default function RenderMessage({
           </>
         );
       } else {
+        let rewardRootLabel = '';
+        if (rewardRootType === 'pass') {
+          if (rewardRootTargetType === 'achievement') {
+            rewardRootLabel = 'achievement';
+          } else {
+            if (isTask) {
+              rewardRootLabel = 'task';
+            } else {
+              rewardRootLabel = 'mission';
+            }
+          }
+        } else if (rewardRootType === 'aiStory') {
+          rewardRootLabel = 'AI Story';
+        } else {
+          rewardRootLabel = rewardRootType;
+        }
+
         return (
           <>
             <b style={{ color: Color[rewardColor]() }}>also recommended</b>{' '}
@@ -215,20 +234,15 @@ export default function RenderMessage({
               }}
               content={{
                 id: rewardRootId,
-                title: `this ${
-                  rewardRootType === 'pass'
-                    ? isTask
-                      ? 'task'
-                      : 'mission'
-                    : rewardRootType === 'aiStory'
-                    ? 'AI Story'
-                    : rewardRootType
-                }`,
+                title: `this ${rewardRootLabel}`,
                 missionType: rewardRootMissionType
               }}
               contentType={
-                rewardRootType === 'pass' ? 'mission' : rewardRootType
+                rewardRootType === 'pass'
+                  ? rewardRootTargetType
+                  : rewardRootType
               }
+              rootType={rewardRootTargetType}
             />{' '}
             <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
               You earn {actionObj.amount} Twinkle Coin

@@ -27,6 +27,7 @@ export default function NotiItem({
     rewardType,
     rewardRootId,
     rewardRootType,
+    rewardRootTargetType,
     rewardRootMissionType,
     isNotification,
     isTask,
@@ -52,6 +53,7 @@ export default function NotiItem({
     rewardType?: string;
     rewardRootId?: number;
     rewardRootType?: string;
+    rewardRootTargetType?: string;
     rewardRootMissionType?: string;
     isNotification?: boolean;
     isTask?: boolean;
@@ -90,6 +92,7 @@ export default function NotiItem({
             rewardType={rewardType || ''}
             rewardRootMissionType={rewardRootMissionType || ''}
             rewardRootType={rewardRootType || ''}
+            rewardRootTargetType={rewardRootTargetType || ''}
             rootMissionType={rootMissionType || ''}
             targetObj={targetObj}
             targetComment={targetComment}
