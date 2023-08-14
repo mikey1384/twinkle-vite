@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import HeadingText from './HeadingText';
@@ -35,6 +35,37 @@ function Heading({
     contentId: rootId
   });
   const navigate = useNavigate();
+  const timeStampLink = useMemo(() => {
+    let subPath;
+    if (contentType === 'pass') {
+      if (rootType === 'achievement') {
+        subPath = '';
+      } else {
+        if (rootObj.isTask && rootObj.rootMission) {
+          subPath = `/${rootObj.rootMission.missionType}`;
+        } else {
+          subPath = `/${rootObj.missionType}`;
+        }
+      }
+    } else {
+      subPath = `/${id}`;
+    }
+    return `/${
+      contentType === 'pass'
+        ? rootType
+        : contentType === 'url'
+        ? 'link'
+        : contentType
+    }s${subPath}`;
+  }, [
+    contentType,
+    id,
+    rootObj.isTask,
+    rootObj.missionType,
+    rootObj.rootMission,
+    rootType
+  ]);
+
   return (
     <header className="heading">
       <div>
@@ -74,17 +105,7 @@ function Heading({
                 text-decoration: underline;
               }
             `}`}
-            onClick={() =>
-              navigate(
-                `/${
-                  contentType === 'pass'
-                    ? 'mission'
-                    : contentType === 'url'
-                    ? 'link'
-                    : contentType
-                }s/${contentType === 'pass' ? rootObj.id : id}`
-              )
-            }
+            onClick={() => navigate(timeStampLink)}
           >
             {timeStamp ? `(${timeSince(timeStamp)})` : ''}
           </small>
