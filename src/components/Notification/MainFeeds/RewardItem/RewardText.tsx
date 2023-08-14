@@ -4,7 +4,7 @@ import ContentLink from '~/components/ContentLink';
 import { Color } from '~/constants/css';
 import { truncateText } from '~/helpers/stringHelpers';
 
-export default function renderEnglishText({
+export default function RewardText({
   actionColor,
   contentId,
   contentType,
@@ -48,8 +48,7 @@ export default function renderEnglishText({
         <UsernameText
           user={{ id: rewarderId, username: rewarderUsername }}
           color={Color[linkColor]()}
-        />
-        <span>님이</span> 회원님께{' '}
+        />{' '}
         <span
           style={{
             color:
@@ -63,9 +62,10 @@ export default function renderEnglishText({
             fontWeight: 'bold'
           }}
         >
-          트윈클 {rewardAmount}개를 선물했습니다
-        </span>
-        :{' '}
+          rewarded you {rewardAmount === 1 ? 'a' : rewardAmount} {rewardType}
+          {rewardAmount > 1 ? 's' : ''}
+        </span>{' '}
+        for your{' '}
         <ContentLink
           style={{ color: contentLinkColor }}
           content={{
@@ -96,8 +96,8 @@ export default function renderEnglishText({
       <UsernameText
         user={{ id: rewarderId, username: rewarderUsername }}
         color={Color[linkColor]()}
-      />
-      <span>님이</span>{' '}
+      />{' '}
+      <b style={{ color: Color[rewardColor]() }}>also recommended</b>{' '}
       <ContentLink
         style={{
           color: rootType === 'pass' ? missionLinkColor : contentLinkColor
@@ -105,16 +105,21 @@ export default function renderEnglishText({
         content={{
           id: rootId,
           title: `this ${
-            rootType === 'pass' ? (isTask ? 'task' : 'mission') : rootType
+            rootType === 'pass'
+              ? isTask
+                ? 'task'
+                : 'mission'
+              : rootType === 'aiStory'
+              ? 'AI Story'
+              : rootType
           }`,
           missionType: rootMissionType
         }}
         contentType={rootType === 'pass' ? 'mission' : rootType}
       />{' '}
-      에 대한 회원님의 추천을{' '}
-      <b style={{ color: Color[rewardColor]() }}>승인했습니다</b>:{' '}
       <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
-        트윈클 코인 {rewardAmount}개가 지급되었습니다
+        You earn {rewardAmount} Twinkle Coin
+        {rewardAmount > 1 ? 's' : ''}!
       </p>
     </div>
   );
