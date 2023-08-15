@@ -42,6 +42,7 @@ export default function MainContent({
   const ContainerRef = useRef(null);
   const navigate = useNavigate();
 
+  const contentState = useContentState({ contentId, contentType });
   const {
     byUser,
     content,
@@ -64,7 +65,7 @@ export default function MainContent({
     targetObj,
     tags,
     title
-  } = useContentState({ contentId, contentType });
+  } = contentState;
   const prevIsEditingRef = useRef(isEditing);
   const onAddTags = useContentContext((v) => v.actions.onAddTags);
   const onAddTagToContents = useContentContext(
