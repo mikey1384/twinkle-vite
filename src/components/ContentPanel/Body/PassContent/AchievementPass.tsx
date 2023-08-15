@@ -1,7 +1,13 @@
 import React from 'react';
 import { User } from '~/types';
 
-export default function AchievementPass({ uploader }: { uploader: User }) {
+export default function AchievementPass({
+  uploader,
+  achievement
+}: {
+  uploader: User;
+  achievement: any;
+}) {
   return (
     <div
       style={{
@@ -15,6 +21,7 @@ export default function AchievementPass({ uploader }: { uploader: User }) {
       }}
     >
       {uploader.username}
+      {achievement.id}
     </div>
   );
 }
