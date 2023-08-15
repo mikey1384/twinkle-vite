@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import MissionPass from './MissionPass';
+import AchievementPass from './AchievementPass';
 import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import { Content, User } from '~/types';
@@ -28,14 +29,15 @@ export default function PassContent({
     xpNumber: { color: xpNumberColor }
   } = useTheme(theme || profileTheme);
 
-  return rootType === 'mission' ? (
-    <MissionPass
-      linkColor={linkColor}
-      mission={rootObj}
-      uploader={uploader}
-      xpNumberColor={xpNumberColor}
-    />
-  ) : (
-    <div>{rootType}</div>
-  );
+  if (rootType === 'mission') {
+    return (
+      <MissionPass
+        linkColor={linkColor}
+        mission={rootObj}
+        uploader={uploader}
+        xpNumberColor={xpNumberColor}
+      />
+    );
+  }
+  return <AchievementPass uploader={uploader} />;
 }
