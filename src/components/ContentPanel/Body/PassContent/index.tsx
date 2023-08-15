@@ -39,5 +39,5 @@ export default function PassContent({
       />
     );
   }
-  return <AchievementPass uploader={uploader} />;
+  return <AchievementPass uploader={uploader} achievement={rootObj} />;
 }
