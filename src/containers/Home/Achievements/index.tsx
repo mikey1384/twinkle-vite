@@ -72,64 +72,25 @@ export default function Achievements() {
         />
       )}
       {achievementKeys.map((key, index) => {
-        if (key === 'mission') {
-          return <Mission key="mission" data={achievementsObj.mission} />;
-        }
-        if (key === 'summoner') {
-          return (
-            <Summoner
-              key="summoner"
-              data={achievementsObj.summoner}
+        const Component = {
+          mission: Mission,
+          summoner: Summoner,
+          grammar: Grammar,
+          teenager: Teenager,
+          mentor: Mentor,
+          sage: Sage,
+          founder: Founder
+        }[key];
+
+        return (
+          Component && (
+            <Component
+              key={key}
+              data={achievementsObj[key]}
               style={{ marginTop: index > 0 ? '1rem' : 0 }}
             />
-          );
-        }
-        if (key === 'grammar') {
-          return (
-            <Grammar
-              key="grammar"
-              data={achievementsObj.grammar}
-              style={{ marginTop: index > 0 ? '1rem' : 0 }}
-            />
-          );
-        }
-        if (key === 'teenager') {
-          return (
-            <Teenager
-              key="teenager"
-              data={achievementsObj.teenager}
-              style={{ marginTop: index > 0 ? '1rem' : 0 }}
-            />
-          );
-        }
-        if (key === 'mentor') {
-          return (
-            <Mentor
-              key="mentor"
-              data={achievementsObj.mentor}
-              style={{ marginTop: index > 0 ? '1rem' : 0 }}
-            />
-          );
-        }
-        if (key === 'sage') {
-          return (
-            <Sage
-              key="sage"
-              data={achievementsObj.sage}
-              style={{ marginTop: index > 0 ? '1rem' : 0 }}
-            />
-          );
-        }
-        if (key === 'founder') {
-          return (
-            <Founder
-              key="founder"
-              data={achievementsObj.founder}
-              style={{ marginTop: index > 0 ? '1rem' : 0 }}
-            />
-          );
-        }
-        return null;
+          )
+        );
       })}
     </div>
   );
