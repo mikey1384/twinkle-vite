@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import Mission from './Mission';
-import Summoner from './Summoner';
-import Grammar from './Grammar';
-import Mentor from './Mentor';
-import Teenager from './Teenager';
-import Sage from './Sage';
-import Founder from './Founder';
+import Mission from '~/components/AchievementItems/Mission';
+import Summoner from '~/components/AchievementItems/Summoner';
+import Grammar from '~/components/AchievementItems/Grammar';
+import Mentor from '~/components/AchievementItems/Mentor';
+import Teenager from '~/components/AchievementItems/Teenager';
+import Sage from '~/components/AchievementItems/Sage';
+import Founder from '~/components/AchievementItems/Founder';
 import UserLevelStatus from './UserLevelStatus';
 import { useAppContext, useKeyContext } from '~/contexts';
 

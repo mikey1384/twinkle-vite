@@ -1,8 +1,8 @@
 import React from 'react';
-import SummonerBadge from '~/assets/summoner.png';
-import ItemPanel from './ItemPanel';
+import SageBadge from '~/assets/sage.png';
+import ItemPanel from '../../../components/AchievementItems/ItemPanel';
 
-export default function Summoner({
+export default function Sage({
   data: { ap, isUnlocked, title, description },
   style
 }: {
@@ -21,8 +21,8 @@ export default function Summoner({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
-      requirement="Unlock the AI Card Summoner License"
-      badgeSrc={SummonerBadge}
+      requirement="Rise to the rank of Head Teacher at Twinkle Academy"
+      badgeSrc={SageBadge}
     />
   );
 }
