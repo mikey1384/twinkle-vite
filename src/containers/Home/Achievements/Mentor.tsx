@@ -1,9 +1,9 @@
 import React from 'react';
-import FounderBadge from '~/assets/founder.png';
-import ItemPanel from '../ItemPanel';
+import MentorBadge from '~/assets/mentor.png';
+import ItemPanel from './ItemPanel';
 
-export default function Founder({
-  data: { isUnlocked, ap, title, description },
+export default function Mentor({
+  data: { ap, isUnlocked, title, description },
   style
 }: {
   data: {
@@ -21,8 +21,8 @@ export default function Founder({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
-      requirement="Found a new business"
-      badgeSrc={FounderBadge}
+      requirement="Take a full-time teaching position at Twinkle Academy"
+      badgeSrc={MentorBadge}
     />
   );
 }

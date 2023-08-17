@@ -1,8 +1,8 @@
 import React from 'react';
-import MentorBadge from '~/assets/mentor.png';
-import ItemPanel from '../ItemPanel';
+import SummonerBadge from '~/assets/summoner.png';
+import ItemPanel from './ItemPanel';
 
-export default function Mentor({
+export default function Summoner({
   data: { ap, isUnlocked, title, description },
   style
 }: {
@@ -21,8 +21,8 @@ export default function Mentor({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
-      requirement="Take a full-time teaching position at Twinkle Academy"
-      badgeSrc={MentorBadge}
+      requirement="Unlock the AI Card Summoner License"
+      badgeSrc={SummonerBadge}
     />
   );
 }
