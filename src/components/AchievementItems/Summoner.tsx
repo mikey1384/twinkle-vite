@@ -1,6 +1,6 @@
 import React from 'react';
 import SummonerBadge from '~/assets/summoner.png';
-import ItemPanel from '../../../components/AchievementItems/ItemPanel';
+import ItemPanel from './ItemPanel';
 
 export default function Summoner({
   data: { ap, isUnlocked, title, description },

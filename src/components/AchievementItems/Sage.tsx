@@ -1,6 +1,6 @@
 import React from 'react';
 import SageBadge from '~/assets/sage.png';
-import ItemPanel from '../../../components/AchievementItems/ItemPanel';
+import ItemPanel from './ItemPanel';
 
 export default function Sage({
   data: { ap, isUnlocked, title, description },
