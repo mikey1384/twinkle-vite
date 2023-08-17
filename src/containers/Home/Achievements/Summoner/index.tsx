@@ -1,5 +1,5 @@
 import React from 'react';
-import SummonerBadge from './summoner.png';
+import SummonerBadge from '~/assets/summoner.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Summoner({

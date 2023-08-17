@@ -1,5 +1,5 @@
 import React from 'react';
-import FounderBadge from './founder.png';
+import FounderBadge from '~/assets/founder.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Founder({
