@@ -1,8 +1,8 @@
 import React from 'react';
-import TeenagerBadge from '~/assets/teenager.png';
-import ItemPanel from '../ItemPanel';
+import FounderBadge from '~/assets/founder.png';
+import ItemPanel from './ItemPanel';
 
-export default function Teenager({
+export default function Founder({
   data: { isUnlocked, ap, title, description },
   style
 }: {
@@ -21,8 +21,8 @@ export default function Teenager({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
-      requirement="Prove you're a teenager or older"
-      badgeSrc={TeenagerBadge}
+      requirement="Found a new business"
+      badgeSrc={FounderBadge}
     />
   );
 }

@@ -1,9 +1,9 @@
 import React from 'react';
-import SummonerBadge from '~/assets/summoner.png';
-import ItemPanel from '../ItemPanel';
+import TeenagerBadge from '~/assets/teenager.png';
+import ItemPanel from './ItemPanel';
 
-export default function Summoner({
-  data: { ap, isUnlocked, title, description },
+export default function Teenager({
+  data: { isUnlocked, ap, title, description },
   style
 }: {
   data: {
@@ -21,8 +21,8 @@ export default function Summoner({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
-      requirement="Unlock the AI Card Summoner License"
-      badgeSrc={SummonerBadge}
+      requirement="Prove you're a teenager or older"
+      badgeSrc={TeenagerBadge}
     />
   );
 }

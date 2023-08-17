@@ -1,6 +1,6 @@
 import React from 'react';
 import GrammarBadge from '~/assets/grammar.png';
-import ItemPanel from '../ItemPanel';
+import ItemPanel from './ItemPanel';
 
 export default function Grammar({
   data: { isUnlocked, ap, title, description },
