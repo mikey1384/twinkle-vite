@@ -1,9 +1,9 @@
 import React from 'react';
-import SageBadge from '~/assets/sage.png';
-import ItemPanel from './ItemPanel';
+import TeenagerBadge from '~/assets/teenager.png';
+import ItemPanel from '../../../components/AchievementItems/ItemPanel';
 
-export default function Sage({
-  data: { ap, isUnlocked, title, description },
+export default function Teenager({
+  data: { isUnlocked, ap, title, description },
   style
 }: {
   data: {
@@ -21,8 +21,8 @@ export default function Sage({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
-      requirement="Rise to the rank of Head Teacher at Twinkle Academy"
-      badgeSrc={SageBadge}
+      requirement="Prove you're a teenager or older"
+      badgeSrc={TeenagerBadge}
     />
   );
 }
