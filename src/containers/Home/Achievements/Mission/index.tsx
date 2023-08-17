@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import MissionBadge from './mission.png';
+import MissionBadge from '~/assets/mission.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Mission({

@@ -1,5 +1,5 @@
 import React from 'react';
-import GrammarBadge from './grammar.png';
+import GrammarBadge from '~/assets/grammar.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Grammar({

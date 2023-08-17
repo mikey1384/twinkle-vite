@@ -1,5 +1,5 @@
 import React from 'react';
-import MentorBadge from './mentor.png';
+import MentorBadge from '~/assets/mentor.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Mentor({

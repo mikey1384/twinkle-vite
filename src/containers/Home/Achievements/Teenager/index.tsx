@@ -1,5 +1,5 @@
 import React from 'react';
-import TeenagerBadge from './teenager.png';
+import TeenagerBadge from '~/assets/teenager.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Teenager({

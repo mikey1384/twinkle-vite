@@ -1,5 +1,5 @@
 import React from 'react';
-import SageBadge from './sage.png';
+import SageBadge from '~/assets/sage.png';
 import ItemPanel from '../ItemPanel';
 
 export default function Sage({
