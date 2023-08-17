@@ -1,3 +1,18 @@
+export interface Achievement {
+  ap: number;
+  isUnlocked: boolean;
+  title: string;
+  description: string;
+  milestones: { name: string; completed: boolean }[];
+  key?:
+    | 'mission'
+    | 'summoner'
+    | 'grammar'
+    | 'teenager'
+    | 'mentor'
+    | 'sage'
+    | 'founder';
+}
 export interface Attachment {
   contentType?: string;
   id: number;
