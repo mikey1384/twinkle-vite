@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import MissionBadge from '~/assets/mission.png';
-import ItemPanel from '../../../components/AchievementItems/ItemPanel';
+import ItemPanel from './ItemPanel';
 
 export default function Mission({
   data: { ap, title, description, isUnlocked, milestones }

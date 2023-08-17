@@ -1,6 +1,6 @@
 import React from 'react';
 import TeenagerBadge from '~/assets/teenager.png';
-import ItemPanel from '../../../components/AchievementItems/ItemPanel';
+import ItemPanel from './ItemPanel';
 
 export default function Teenager({
   data: { isUnlocked, ap, title, description },
