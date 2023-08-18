@@ -107,23 +107,21 @@ export default function ItemPanel({
           />
         )}
       </h2>
-      {isUnlocked && (
-        <div
+      <div
+        className={css`
+          grid-area: description;
+        `}
+      >
+        <p
           className={css`
-            grid-area: description;
+            color: ${Color.darkerGray()};
+            font-size: 1.5rem;
           `}
         >
-          <p
-            className={css`
-              color: ${Color.darkerGray()};
-              font-size: 1.5rem;
-            `}
-          >
-            {description}
-            {unlockMessage ? ` ${unlockMessage}` : ''}
-          </p>
-        </div>
-      )}
+          {description}
+          {isUnlocked && unlockMessage ? ` ${unlockMessage}` : ''}
+        </p>
+      </div>
       <div
         className={css`
           grid-area: requirements;
