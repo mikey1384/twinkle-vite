@@ -15,12 +15,14 @@ export default function MissionPass({
   linkColor,
   mission,
   uploader,
-  xpNumberColor
+  xpNumberColor,
+  style
 }: {
   linkColor: string;
   mission: Content;
   uploader: User;
   xpNumberColor: string;
+  style?: React.CSSProperties;
 }) {
   const rewardDetails = useMemo(() => {
     return mission.xpReward || mission.coinReward ? (
@@ -116,13 +118,13 @@ export default function MissionPass({
   return (
     <div
       style={{
-        marginTop: '2.5rem',
         padding: '1rem',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        marginBottom: '-4rem'
+        marginBottom: '-4rem',
+        ...style
       }}
     >
       {mission.rootMission?.title && (

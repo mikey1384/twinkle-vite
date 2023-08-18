@@ -36,8 +36,18 @@ export default function PassContent({
         mission={rootObj}
         uploader={uploader}
         xpNumberColor={xpNumberColor}
+        style={{
+          marginTop: '2.5rem'
+        }}
       />
     );
   }
-  return <AchievementPass achievement={rootObj} />;
+  return (
+    <AchievementPass
+      achievement={rootObj}
+      style={{
+        marginTop: '2.5rem'
+      }}
+    />
+  );
 }

@@ -4,7 +4,8 @@ import MissionBadge from '~/assets/mission.png';
 import ItemPanel from './ItemPanel';
 
 export default function Mission({
-  data: { ap, title, description, isUnlocked, milestones }
+  data: { ap, title, description, isUnlocked, milestones },
+  style
 }: {
   data: {
     ap: number;
@@ -13,6 +14,7 @@ export default function Mission({
     description: string;
     milestones: { name: string; completed: boolean }[];
   };
+  style?: React.CSSProperties;
 }) {
   return (
     <ItemPanel
@@ -28,6 +30,7 @@ export default function Mission({
           </Link>
         </>
       }
+      style={style}
       badgeSrc={MissionBadge}
       milestones={milestones}
     />
