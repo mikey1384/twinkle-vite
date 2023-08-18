@@ -160,7 +160,7 @@ export default function ItemPanel({
           </div>
         )}
       </div>
-      {milestonesShown && (
+      {milestonesShown && !isNotification && (
         <div
           className={css`
             grid-area: milestones;
