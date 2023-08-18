@@ -3,9 +3,11 @@ import FounderBadge from '~/assets/founder.png';
 import ItemPanel from './ItemPanel';
 
 export default function Founder({
+  isNotification,
   data: { isUnlocked, ap, title, description },
   style
 }: {
+  isNotification?: boolean;
   data: {
     ap: number;
     isUnlocked: boolean;
@@ -16,6 +18,7 @@ export default function Founder({
 }) {
   return (
     <ItemPanel
+      isNotification={isNotification}
       style={style}
       ap={ap}
       isUnlocked={isUnlocked}

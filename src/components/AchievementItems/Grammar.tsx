@@ -3,9 +3,11 @@ import GrammarBadge from '~/assets/grammar.png';
 import ItemPanel from './ItemPanel';
 
 export default function Grammar({
+  isNotification,
   data: { isUnlocked, ap, title, description },
   style
 }: {
+  isNotification?: boolean;
   data: {
     ap: number;
     isUnlocked: boolean;
@@ -16,6 +18,7 @@ export default function Grammar({
 }) {
   return (
     <ItemPanel
+      isNotification={isNotification}
       style={style}
       ap={ap}
       isUnlocked={isUnlocked}

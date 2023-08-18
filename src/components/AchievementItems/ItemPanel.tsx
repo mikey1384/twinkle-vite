@@ -7,6 +7,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 export default function ItemPanel({
   ap,
   itemName,
+  isNotification,
   isUnlocked,
   description,
   requirement,
@@ -16,6 +17,7 @@ export default function ItemPanel({
 }: {
   ap: number;
   itemName: string;
+  isNotification?: boolean;
   isUnlocked?: boolean;
   description?: string;
   requirement?: React.ReactNode;
@@ -94,7 +96,7 @@ export default function ItemPanel({
             ({displayedAP} AP)
           </span>
         )}
-        {!isUnlocked && (
+        {!isUnlocked && !isNotification && (
           <Icon
             className={css`
               margin-left: 1rem;

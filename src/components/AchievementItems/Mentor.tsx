@@ -3,9 +3,11 @@ import MentorBadge from '~/assets/mentor.png';
 import ItemPanel from './ItemPanel';
 
 export default function Mentor({
+  isNotification,
   data: { ap, isUnlocked, title, description },
   style
 }: {
+  isNotification?: boolean;
   data: {
     ap: number;
     isUnlocked: boolean;
@@ -16,6 +18,7 @@ export default function Mentor({
 }) {
   return (
     <ItemPanel
+      isNotification={isNotification}
       style={style}
       ap={ap}
       isUnlocked={isUnlocked}

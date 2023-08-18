@@ -3,9 +3,11 @@ import SageBadge from '~/assets/sage.png';
 import ItemPanel from './ItemPanel';
 
 export default function Sage({
+  isNotification,
   data: { ap, isUnlocked, title, description },
   style
 }: {
+  isNotification?: boolean;
   data: {
     ap: number;
     isUnlocked: boolean;
@@ -16,6 +18,7 @@ export default function Sage({
 }) {
   return (
     <ItemPanel
+      isNotification={isNotification}
       style={style}
       ap={ap}
       isUnlocked={isUnlocked}

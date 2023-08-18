@@ -17,6 +17,7 @@ export default function AchievementPass({
 }) {
   const achievementComponentMap: {
     [key: string]: React.ComponentType<{
+      isNotification?: boolean;
       data: any;
       style?: React.CSSProperties;
     }>;
@@ -52,6 +53,7 @@ export default function AchievementPass({
     >
       <Component
         key={achievement?.key}
+        isNotification
         data={achievement}
         style={{ width: '100%' }}
       />
