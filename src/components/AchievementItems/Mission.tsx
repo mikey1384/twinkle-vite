@@ -5,7 +5,7 @@ import ItemPanel from './ItemPanel';
 
 export default function Mission({
   isNotification,
-  data: { ap, title, description, isUnlocked, milestones },
+  data: { ap, title, description, unlockMessage, isUnlocked, milestones },
   style
 }: {
   isNotification?: boolean;
@@ -14,6 +14,7 @@ export default function Mission({
     isUnlocked: boolean;
     title: string;
     description: string;
+    unlockMessage: string;
     milestones: { name: string; completed: boolean }[];
   };
   style?: React.CSSProperties;
@@ -25,6 +26,7 @@ export default function Mission({
       isNotification={isNotification}
       isUnlocked={isUnlocked}
       description={description}
+      unlockMessage={unlockMessage}
       requirement={
         <>
           Complete all{' '}

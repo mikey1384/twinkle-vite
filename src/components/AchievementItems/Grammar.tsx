@@ -4,7 +4,7 @@ import ItemPanel from './ItemPanel';
 
 export default function Grammar({
   isNotification,
-  data: { isUnlocked, ap, title, description },
+  data: { isUnlocked, ap, title, description, unlockMessage },
   style
 }: {
   isNotification?: boolean;
@@ -13,6 +13,7 @@ export default function Grammar({
     isUnlocked: boolean;
     title: string;
     description: string;
+    unlockMessage: string;
   };
   style?: React.CSSProperties;
 }) {
@@ -24,6 +25,7 @@ export default function Grammar({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
+      unlockMessage={unlockMessage}
       requirement="Earn 100,000 Twinkle Coins playing Grammarbles"
       badgeSrc={GrammarBadge}
     />

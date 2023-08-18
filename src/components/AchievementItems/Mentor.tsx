@@ -4,7 +4,7 @@ import ItemPanel from './ItemPanel';
 
 export default function Mentor({
   isNotification,
-  data: { ap, isUnlocked, title, description },
+  data: { ap, isUnlocked, title, description, unlockMessage },
   style
 }: {
   isNotification?: boolean;
@@ -13,6 +13,7 @@ export default function Mentor({
     isUnlocked: boolean;
     title: string;
     description: string;
+    unlockMessage: string;
   };
   style?: React.CSSProperties;
 }) {
@@ -24,6 +25,7 @@ export default function Mentor({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
+      unlockMessage={unlockMessage}
       requirement="Take a full-time teaching position at Twinkle Academy"
       badgeSrc={MentorBadge}
     />

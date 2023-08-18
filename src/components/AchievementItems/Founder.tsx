@@ -4,7 +4,7 @@ import ItemPanel from './ItemPanel';
 
 export default function Founder({
   isNotification,
-  data: { isUnlocked, ap, title, description },
+  data: { isUnlocked, ap, title, description, unlockMessage },
   style
 }: {
   isNotification?: boolean;
@@ -13,6 +13,7 @@ export default function Founder({
     isUnlocked: boolean;
     title: string;
     description: string;
+    unlockMessage: string;
   };
   style?: React.CSSProperties;
 }) {
@@ -24,6 +25,7 @@ export default function Founder({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
+      unlockMessage={unlockMessage}
       requirement="Found a new business"
       badgeSrc={FounderBadge}
     />
