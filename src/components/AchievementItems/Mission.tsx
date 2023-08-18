@@ -4,9 +4,11 @@ import MissionBadge from '~/assets/mission.png';
 import ItemPanel from './ItemPanel';
 
 export default function Mission({
+  isNotification,
   data: { ap, title, description, isUnlocked, milestones },
   style
 }: {
+  isNotification?: boolean;
   data: {
     ap: number;
     isUnlocked: boolean;
@@ -20,6 +22,7 @@ export default function Mission({
     <ItemPanel
       ap={ap}
       itemName={title}
+      isNotification={isNotification}
       isUnlocked={isUnlocked}
       description={description}
       requirement={

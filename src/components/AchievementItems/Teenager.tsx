@@ -3,9 +3,11 @@ import TeenagerBadge from '~/assets/teenager.png';
 import ItemPanel from './ItemPanel';
 
 export default function Teenager({
+  isNotification,
   data: { isUnlocked, ap, title, description },
   style
 }: {
+  isNotification?: boolean;
   data: {
     ap: number;
     isUnlocked: boolean;
@@ -16,6 +18,7 @@ export default function Teenager({
 }) {
   return (
     <ItemPanel
+      isNotification={isNotification}
       style={style}
       ap={ap}
       isUnlocked={isUnlocked}
