@@ -9,12 +9,17 @@ import Founder from '~/components/AchievementItems/Founder';
 import { Content } from '~/types';
 
 export default function AchievementPass({
-  achievement
+  achievement,
+  style
 }: {
   achievement: Content;
+  style: React.CSSProperties;
 }) {
   const achievementComponentMap: {
-    [key: string]: React.ComponentType<{ data: any }>;
+    [key: string]: React.ComponentType<{
+      data: any;
+      style?: React.CSSProperties;
+    }>;
   } = {
     mission: Mission,
     summoner: Summoner,
@@ -35,16 +40,21 @@ export default function AchievementPass({
   return (
     <div
       style={{
-        marginTop: '2.5rem',
         padding: '1rem',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        marginBottom: '-4rem'
+        marginBottom: '-4rem',
+        width: '100%',
+        ...style
       }}
     >
-      <Component key={achievement?.key} data={achievement} />
+      <Component
+        key={achievement?.key}
+        data={achievement}
+        style={{ width: '100%' }}
+      />
     </div>
   );
 }
