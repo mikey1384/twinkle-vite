@@ -4,7 +4,7 @@ import ItemPanel from './ItemPanel';
 
 export default function Summoner({
   isNotification,
-  data: { ap, isUnlocked, title, description },
+  data: { ap, isUnlocked, title, description, unlockMessage },
   style
 }: {
   isNotification?: boolean;
@@ -13,6 +13,7 @@ export default function Summoner({
     isUnlocked: boolean;
     title: string;
     description: string;
+    unlockMessage: string;
   };
   style?: React.CSSProperties;
 }) {
@@ -24,6 +25,7 @@ export default function Summoner({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
+      unlockMessage={unlockMessage}
       requirement="Unlock the AI Card Summoner License"
       badgeSrc={SummonerBadge}
     />

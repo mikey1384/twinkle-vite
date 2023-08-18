@@ -10,6 +10,7 @@ export default function ItemPanel({
   isNotification,
   isUnlocked,
   description,
+  unlockMessage,
   requirement,
   badgeSrc,
   milestones,
@@ -20,6 +21,7 @@ export default function ItemPanel({
   isNotification?: boolean;
   isUnlocked?: boolean;
   description?: string;
+  unlockMessage?: string;
   requirement?: React.ReactNode;
   badgeSrc?: string;
   milestones?: { name: string; completed: boolean }[];
@@ -118,6 +120,7 @@ export default function ItemPanel({
             `}
           >
             {description}
+            {unlockMessage ? ` ${unlockMessage}` : ''}
           </p>
         </div>
       )}

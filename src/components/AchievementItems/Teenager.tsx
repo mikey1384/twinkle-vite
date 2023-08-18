@@ -4,7 +4,7 @@ import ItemPanel from './ItemPanel';
 
 export default function Teenager({
   isNotification,
-  data: { isUnlocked, ap, title, description },
+  data: { isUnlocked, ap, title, description, unlockMessage },
   style
 }: {
   isNotification?: boolean;
@@ -13,6 +13,7 @@ export default function Teenager({
     isUnlocked: boolean;
     title: string;
     description: string;
+    unlockMessage: string;
   };
   style?: React.CSSProperties;
 }) {
@@ -24,6 +25,7 @@ export default function Teenager({
       isUnlocked={isUnlocked}
       itemName={title}
       description={description}
+      unlockMessage={unlockMessage}
       requirement="Prove you're a teenager or older"
       badgeSrc={TeenagerBadge}
     />
