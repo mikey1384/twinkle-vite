@@ -70,6 +70,7 @@ export interface Content {
   contentType: string;
   deleterId?: number;
   description?: string;
+  key?: string;
   id?: number;
   isClosedBy?: number | User;
   isTask?: boolean;

@@ -6,16 +6,16 @@ import Mentor from '~/components/AchievementItems/Mentor';
 import Teenager from '~/components/AchievementItems/Teenager';
 import Sage from '~/components/AchievementItems/Sage';
 import Founder from '~/components/AchievementItems/Founder';
-import { Achievement, User } from '~/types';
+import { Content } from '~/types';
 
 export default function AchievementPass({
-  uploader,
   achievement
 }: {
-  uploader: User;
-  achievement: Achievement;
+  achievement: Content;
 }) {
-  const achievementComponentMap = {
+  const achievementComponentMap: {
+    [key: string]: React.ComponentType<{ data: any }>;
+  } = {
     mission: Mission,
     summoner: Summoner,
     grammar: Grammar,
@@ -44,7 +44,6 @@ export default function AchievementPass({
         marginBottom: '-4rem'
       }}
     >
-      {uploader.username}
       <Component key={achievement?.key} data={achievement} />
     </div>
   );
