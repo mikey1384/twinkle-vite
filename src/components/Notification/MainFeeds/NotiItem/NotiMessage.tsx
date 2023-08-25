@@ -363,12 +363,17 @@ export default function RenderMessage({
           />
         </>
       );
-    case 'pass':
+    case 'pass': {
+      const message =
+        targetObj.contentType === 'mission'
+          ? 'Mission accomplished!'
+          : 'Achievement unlocked!';
       return (
         <>
-          <b style={{ color: Color.brownOrange() }}>Mission accomplished!</b>{' '}
+          <b style={{ color: Color.brownOrange() }}>{message}</b>{' '}
           <ContentLink
-            contentType="mission"
+            contentType={targetObj.contentType}
+            rootType={targetObj.contentType}
             content={{
               id: targetObj.id,
               missionType: rootMissionType || targetObj.missionType,
@@ -381,6 +386,7 @@ export default function RenderMessage({
           />
         </>
       );
+    }
     case 'fail':
       return (
         <>
