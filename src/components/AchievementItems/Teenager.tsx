@@ -26,7 +26,10 @@ export default function Teenager({
       itemName={title}
       description={description}
       unlockMessage={unlockMessage}
-      requirements={['Survive childhood and enter teenage years and beyond']}
+      requirements={[
+        'Complete additional profile details',
+        'Survive childhood and enter teenage years and beyond'
+      ]}
       badgeSrc={TeenagerBadge}
     />
   );

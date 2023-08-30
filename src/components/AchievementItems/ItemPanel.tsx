@@ -157,6 +157,18 @@ export default function ItemPanel({
                 <Icon color={Color.green()} icon="check" />
               </div>
             )}
+            {requirements.length > 1 ? (
+              <span
+                className={css`
+                  font-weight: bold;
+                  margin-right: 0.5rem;
+                `}
+              >
+                {`${index + 1}.`}
+              </span>
+            ) : (
+              ''
+            )}
             {requirement}
           </div>
         ))}
