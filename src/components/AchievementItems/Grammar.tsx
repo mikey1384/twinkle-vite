@@ -26,7 +26,7 @@ export default function Grammar({
       itemName={title}
       description={description}
       unlockMessage={unlockMessage}
-      requirement="Earn 100,000 Twinkle Coins playing Grammarbles"
+      requirements={['Earn 100,000 Twinkle Coins playing Grammarbles']}
       badgeSrc={GrammarBadge}
     />
   );

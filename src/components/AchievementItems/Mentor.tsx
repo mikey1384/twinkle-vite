@@ -26,7 +26,7 @@ export default function Mentor({
       itemName={title}
       description={description}
       unlockMessage={unlockMessage}
-      requirement="Take a full-time teaching position at Twinkle Academy"
+      requirements={['Take a full-time teaching position at Twinkle Academy']}
       badgeSrc={MentorBadge}
     />
   );
