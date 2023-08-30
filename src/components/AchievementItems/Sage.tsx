@@ -26,7 +26,7 @@ export default function Sage({
       itemName={title}
       description={description}
       unlockMessage={unlockMessage}
-      requirement="Rise to the rank of Head Teacher at Twinkle Academy"
+      requirements={['Rise to the rank of Head Teacher at Twinkle Academy']}
       badgeSrc={SageBadge}
     />
   );

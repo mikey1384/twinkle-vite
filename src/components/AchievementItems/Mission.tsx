@@ -27,14 +27,14 @@ export default function Mission({
       isUnlocked={isUnlocked}
       description={description}
       unlockMessage={unlockMessage}
-      requirement={
+      requirements={[
         <>
           Complete all{' '}
           <Link style={{ fontWeight: 'bold' }} to="/missions">
             missions
           </Link>
         </>
-      }
+      ]}
       style={style}
       badgeSrc={MissionBadge}
       milestones={milestones}
