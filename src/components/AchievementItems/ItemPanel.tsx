@@ -157,7 +157,7 @@ export default function ItemPanel({
                 <Icon color={Color.green()} icon="check" />
               </div>
             )}
-            {requirements.length > 1 ? (
+            {!isUnlocked && requirements.length > 1 ? (
               <span
                 className={css`
                   font-weight: bold;
