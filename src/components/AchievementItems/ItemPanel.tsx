@@ -187,7 +187,7 @@ export default function ItemPanel({
               color: ${Color.black()};
             `}
           >
-            Progress
+            Check List
           </h3>
           <ul
             className={css`
@@ -219,6 +219,8 @@ export default function ItemPanel({
                 >
                   {milestone.completed ? (
                     <Icon color={Color.green()} icon="check" />
+                  ) : !isNotification ? (
+                    <Icon icon="times" />
                   ) : (
                     ' '
                   )}
