@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import TeenagerBadge from '~/assets/teenager.png';
-import ItemPanel from './ItemPanel';
+import ItemPanel from '../ItemPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import FormModal from './FormModal';
 
 export default function Teenager({
   isNotification,
@@ -46,7 +47,7 @@ export default function Teenager({
         ]}
         badgeSrc={TeenagerBadge}
       />
-      {formModalShown && <>Form Modal</>}
+      {formModalShown && <FormModal onHide={() => setFormModalShown(false)} />}
     </ErrorBoundary>
   );
 }
