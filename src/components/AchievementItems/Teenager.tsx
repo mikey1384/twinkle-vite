@@ -29,7 +29,16 @@ export default function Teenager({
       description={description}
       unlockMessage={unlockMessage}
       requirements={[
-        'Complete additional profile details',
+        <>
+          Submit{' '}
+          <a
+            style={{ fontWeight: 'bold', cursor: 'pointer' }}
+            onClick={() => console.log('clicked')}
+          >
+            additional profile details
+          </a>
+        </>,
+        'Get birthdate verified',
         'Survive childhood and enter teenage years and beyond'
       ]}
       badgeSrc={TeenagerBadge}
