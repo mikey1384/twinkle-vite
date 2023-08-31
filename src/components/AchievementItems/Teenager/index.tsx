@@ -40,9 +40,9 @@ export default function Teenager({
               onClick={() => setFormModalShown(true)}
             >
               additional profile details
-            </a>
+            </a>{' '}
+            and get your birthdate verified
           </>,
-          'Get birthdate verified',
           'Survive childhood and enter teenage years and beyond'
         ]}
         badgeSrc={TeenagerBadge}
