@@ -1,27 +1,33 @@
 import React from 'react';
 import { Color } from '~/constants/css';
+import { css } from '@emotion/css';
 
 export default function Submitted() {
   return (
     <div
-      style={{
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'column'
-      }}
+      className={css`
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      `}
     >
-      <p
-        style={{
-          fontSize: '1.5rem',
-          fontWeight: 'bold',
-          marginBottom: '1rem',
-          color: Color.black()
-        }}
+      <div
+        className={css`
+          font-size: 1.6rem;
+          font-weight: bold;
+          margin-bottom: 1rem;
+          text-align: center;
+          color: ${Color.darkerGray()};
+          p {
+            margin-bottom: 0.5rem;
+          }
+        `}
       >
-        Your birthdate has been submitted for approval
-      </p>
+        <p>Your birthdate has been submitted</p>
+        <p>Please wait for verification</p>
+      </div>
     </div>
   );
 }
