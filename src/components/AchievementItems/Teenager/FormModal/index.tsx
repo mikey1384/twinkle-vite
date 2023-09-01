@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
+import Form from './Form';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { borderRadius, Color } from '~/constants/css';
 
 export default function FormModal({ onHide }: { onHide: () => void }) {
   const {
@@ -16,41 +16,7 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
     <Modal onHide={onHide}>
       <header>Additional Profile Details</header>
       <main>
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexDirection: 'column'
-          }}
-        >
-          <label
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 'bold',
-              marginBottom: '1rem',
-              color: Color.black()
-            }}
-          >
-            Enter Your Birthdate
-          </label>
-          <div
-            style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
-          >
-            <input
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              style={{
-                padding: '0.5rem',
-                fontSize: '1.3rem',
-                border: `1px solid ${Color.borderGray()}`,
-                borderRadius
-              }}
-            />
-          </div>
-        </div>
+        <Form dob={dob} onSetDob={setDob} />
       </main>
       <footer>
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
