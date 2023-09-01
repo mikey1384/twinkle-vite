@@ -17,7 +17,8 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
           style={{
             fontSize: '1.5rem',
             fontWeight: 'bold',
-            marginBottom: '1rem'
+            marginBottom: '1rem',
+            color: Color.black()
           }}
         >
           Enter Your Birthdate
