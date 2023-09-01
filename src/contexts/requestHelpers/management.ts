@@ -82,6 +82,19 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async checkDobApprovalSubmission() {
+      try {
+        const {
+          data: { isSubmitted, content }
+        } = await request.get(`${URL}/management/approval/dob`);
+        return Promise.resolve({
+          isSubmitted,
+          content
+        });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async submitDobForApproval(dob: string) {
       try {
         const data = await request.post(
