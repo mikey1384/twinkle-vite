@@ -82,6 +82,14 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async submitDobForApproval() {
+      try {
+        await request.post(`${URL}/management/approval/dob`, {}, auth());
+        return Promise.resolve();
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateBanStatus({
       userId,
       banStatus
