@@ -86,7 +86,7 @@ export default function managementRequestHelpers({
       try {
         const {
           data: { isSubmitted, content }
-        } = await request.get(`${URL}/management/approval/dob`);
+        } = await request.get(`${URL}/management/approval/dob`, auth());
         return Promise.resolve({
           isSubmitted,
           content

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Form from './Form';
@@ -13,8 +13,21 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
   const submitDobForApproval = useAppContext(
     (v) => v.requestHelpers.submitDobForApproval
   );
+  const checkDobApprovalSubmission = useAppContext(
+    (v) => v.requestHelpers.checkDobApprovalSubmission
+  );
   const [dob, setDob] = useState('');
-  const [isSubmitted] = useState<boolean | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    init();
+    async function init() {
+      const { isSubmitted: dobSubmitted } = await checkDobApprovalSubmission();
+      setIsSubmitted(dobSubmitted);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Modal onHide={onHide}>
       <header>Additional Profile Details</header>
