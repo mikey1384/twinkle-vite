@@ -42,7 +42,7 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Close
         </Button>
-        <Button color={doneColor} onClick={handleSubmit}>
+        <Button disabled={!dob} color={doneColor} onClick={handleSubmit}>
           Submit
         </Button>
       </footer>
