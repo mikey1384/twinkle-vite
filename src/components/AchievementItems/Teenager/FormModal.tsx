@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 
 export default function FormModal({ onHide }: { onHide: () => void }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const submitDobForApproval = useAppContext(
+    (v) => v.requestHelpers.submitDobForApproval
+  );
   const [dob, setDob] = useState('');
   return (
     <Modal onHide={onHide}>
@@ -51,7 +54,7 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
   );
 
   async function handleSubmit() {
-    console.log(dob);
+    await submitDobForApproval(dob);
     onHide();
   }
 }
