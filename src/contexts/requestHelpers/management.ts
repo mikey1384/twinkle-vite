@@ -82,9 +82,9 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async submitDobForApproval() {
+    async submitDobForApproval(dob: string) {
       try {
-        await request.post(`${URL}/management/approval/dob`, {}, auth());
+        await request.post(`${URL}/management/approval/dob`, { dob }, auth());
         return Promise.resolve();
       } catch (error) {
         return handleError(error);
