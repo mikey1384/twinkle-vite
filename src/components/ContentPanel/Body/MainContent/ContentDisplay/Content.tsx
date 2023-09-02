@@ -91,15 +91,15 @@ export default function Content({
                 borderRadius
               }}
             >
-              {uploader.username} viewed the secret message
+              {uploader?.username} viewed the secret message
             </div>
           );
         }
         return (
           <RichText
             isAIMessage={
-              uploader.id === Number(ZERO_TWINKLE_ID) ||
-              uploader.id === Number(CIEL_TWINKLE_ID)
+              uploader?.id === Number(ZERO_TWINKLE_ID) ||
+              uploader?.id === Number(CIEL_TWINKLE_ID)
             }
             contentId={contentId}
             contentType={contentType}
@@ -162,8 +162,8 @@ export default function Content({
     contentType,
     secretHidden,
     isNotification,
-    uploader.id,
-    uploader.username,
+    uploader?.id,
+    uploader?.username,
     contentId,
     theme,
     content,
