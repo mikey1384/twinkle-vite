@@ -38,7 +38,13 @@ export default function ApproveDobModal({
         <div
           style={{ marginTop: '1.5rem', textAlign: 'center', lineHeight: 1.7 }}
         >
-          <p style={{ color: Color.black(), fontWeight: 'bold' }}>
+          <p
+            style={{
+              color: Color.black(),
+              fontWeight: 'bold',
+              fontSize: '1.6rem'
+            }}
+          >
             {target.content}
           </p>
           <p style={{ fontSize: '1.2rem', color: Color.darkerGray() }}>
