@@ -90,6 +90,11 @@ export default function ManagementReducer(
         ...state,
         loaded: true
       };
+    case 'LOAD_MORE_APPROVAL_ITEMS':
+      return {
+        ...state,
+        numApprovalItemsShown: state.numApprovalItemsShown + 10
+      };
     case 'LOAD_MODERATORS':
       return {
         ...state,

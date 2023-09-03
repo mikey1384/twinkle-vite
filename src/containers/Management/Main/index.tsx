@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Approvals from './Approvals';
 import Moderators from './Moderators';
 import AccountTypes from './AccountTypes';
 import BannedUsers from './BannedUsers';
@@ -49,6 +50,7 @@ export default function Main() {
       componentPath="Management/Main/index"
       style={{ paddingBottom: '10rem' }}
     >
+      <Approvals canManage={canManage} />
       <Moderators canManage={canManage} />
       <AccountTypes canManage={canManage} />
       <BannedUsers canManage={canManage} />
