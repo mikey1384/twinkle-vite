@@ -13,7 +13,7 @@ export default function ApproveDobModal({ onHide }: { onHide: () => void }) {
 
   return (
     <Modal onHide={onHide}>
-      <header>Add / Edit Moderators</header>
+      <header>Approve Date of Birth</header>
       <main>Something goes here</main>
       <footer>
         <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
