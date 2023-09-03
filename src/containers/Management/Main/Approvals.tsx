@@ -108,7 +108,10 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
         )}
       </SectionPanel>
       {approvalModalTarget && (
-        <ApproveDobModal onHide={() => setApprovalModalTarget(null)} />
+        <ApproveDobModal
+          target={approvalModalTarget}
+          onHide={() => setApprovalModalTarget(null)}
+        />
       )}
     </ErrorBoundary>
   );
