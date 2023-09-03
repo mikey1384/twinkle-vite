@@ -82,6 +82,17 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadApprovalItems() {
+      try {
+        const { data: approvalItems } = await request.get(
+          `${URL}/management/approval`,
+          auth()
+        );
+        return Promise.resolve(approvalItems);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async checkDobApprovalSubmission() {
       try {
         const {
