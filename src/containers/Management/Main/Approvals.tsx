@@ -9,7 +9,6 @@ import { useManagementContext, useKeyContext } from '~/contexts';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 
 export default function Approvals({ canManage }: { canManage: boolean }) {
-  const { userId } = useKeyContext((v) => v.myState);
   const {
     tableHeader: { color: tableHeaderColor }
   } = useKeyContext((v) => v.theme);
@@ -53,19 +52,14 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
           <tbody>
             {approvalItems
               .filter((_: any, index: number) => index < numApprovalItemsShown)
-              .map((moderator: any) => (
+              .map((item: any) => (
                 <tr
-                  key={moderator.id}
+                  key={item.id}
                   style={{ cursor: canManage ? 'pointer' : '' }}
                   onClick={() => console.log('clicked')}
                 >
                   <td style={{ fontWeight: 'bold', fontSize: '1.6rem' }}>
-                    {moderator.username}
-                  </td>
-                  <td>
-                    {userId === moderator.id || moderator.online
-                      ? nowLabel
-                      : timeSince(moderator.lastActive)}
+                    {item.username}
                   </td>
                   <td
                     style={{
@@ -73,11 +67,20 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                       alignItems: 'center'
                     }}
                   >
-                    {moderator.userType}
+                    {item.type}
                   </td>
+                  <td
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    {item.content}
+                  </td>
+                  <td>{timeSince(item.timeStamp)}</td>
                   {canManage && (
                     <td style={{ display: 'flex', justifyContent: 'center' }}>
-                      <a>{changeAccountTypeLabel}</a>
+                      <a>review</a>
                     </td>
                   )}
                 </tr>
