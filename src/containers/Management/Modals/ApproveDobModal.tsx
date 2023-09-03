@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
 
 export default function ApproveDobModal({
   target,
@@ -15,9 +14,7 @@ export default function ApproveDobModal({
   onHide: () => void;
 }) {
   const [submitting, setSubmitting] = useState(false);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const [isApproved, setIsApproved] = useState(false);
   // const approveDob = useAppContext((v) => v.requestHelpers.approveDob);
   // const onApproveDob = useManagementContext((v) => v.actions.onApproveDob);
 
@@ -51,13 +48,46 @@ export default function ApproveDobModal({
             ({getAge(target.content)} years old)
           </p>
         </div>
+        <div
+          style={{
+            marginTop: '3rem',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center'
+          }}
+        >
+          <Button
+            color="rose"
+            filled
+            disabled={submitting}
+            loading={submitting && !isApproved}
+            onClick={() =>
+              handleSubmit({
+                isApproved: false
+              })
+            }
+          >
+            Reject
+          </Button>
+          <Button
+            style={{ marginLeft: '1.5rem' }}
+            filled
+            color="green"
+            disabled={submitting}
+            loading={submitting && isApproved}
+            onClick={() =>
+              handleSubmit({
+                isApproved: true
+              })
+            }
+          >
+            Approve
+          </Button>
+        </div>
       </main>
       <footer>
         <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
           Close
-        </Button>
-        <Button loading={submitting} color={doneColor} onClick={handleSubmit}>
-          Confirm
         </Button>
       </footer>
     </Modal>
@@ -74,8 +104,9 @@ export default function ApproveDobModal({
     return age;
   }
 
-  async function handleSubmit() {
+  async function handleSubmit({ isApproved }: { isApproved: boolean }) {
     setSubmitting(true);
+    setIsApproved(isApproved);
     onHide();
   }
 }
