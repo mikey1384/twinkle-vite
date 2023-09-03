@@ -69,6 +69,11 @@ export default function ManagementActions(dispatch: Dispatch) {
         moderators
       });
     },
+    onLoadMoreApprovalItems() {
+      return dispatch({
+        type: 'LOAD_MORE_APPROVAL_ITEMS'
+      });
+    },
     onLoadMoreModerators() {
       return dispatch({
         type: 'LOAD_MORE_MODERATORS'
