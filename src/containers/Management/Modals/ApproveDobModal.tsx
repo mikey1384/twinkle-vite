@@ -10,6 +10,7 @@ export default function ApproveDobModal({
 }: {
   target: {
     username: string;
+    content: string;
   };
   onHide: () => void;
 }) {
@@ -34,17 +35,38 @@ export default function ApproveDobModal({
         >
           {target.username}
         </div>
+        <div
+          style={{ marginTop: '1.5rem', textAlign: 'center', lineHeight: 1.7 }}
+        >
+          <p style={{ color: Color.black(), fontWeight: 'bold' }}>
+            {target.content}
+          </p>
+          <p style={{ fontSize: '1.2rem', color: Color.darkerGray() }}>
+            ({getAge(target.content)} years old)
+          </p>
+        </div>
       </main>
       <footer>
         <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
-          Cancel
+          Close
         </Button>
         <Button loading={submitting} color={doneColor} onClick={handleSubmit}>
-          Done
+          Confirm
         </Button>
       </footer>
     </Modal>
   );
+
+  function getAge(dateString: string) {
+    const birthDate = new Date(dateString);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
 
   async function handleSubmit() {
     setSubmitting(true);
