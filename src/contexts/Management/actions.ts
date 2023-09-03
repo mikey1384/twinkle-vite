@@ -52,6 +52,17 @@ export default function ManagementActions(dispatch: Dispatch) {
         accountTypes
       });
     },
+    onLoadApprovalItems(approvalItems: object[]) {
+      return dispatch({
+        type: 'LOAD_APPROVAL_ITEMS',
+        approvalItems
+      });
+    },
+    onLoadMoreApprovalItems() {
+      return dispatch({
+        type: 'LOAD_MORE_APPROVAL_ITEMS'
+      });
+    },
     onLoadBannedUsers(bannedUsers: object[]) {
       return dispatch({
         type: 'LOAD_BANNED_USERS',
@@ -67,11 +78,6 @@ export default function ManagementActions(dispatch: Dispatch) {
       return dispatch({
         type: 'LOAD_MODERATORS',
         moderators
-      });
-    },
-    onLoadMoreApprovalItems() {
-      return dispatch({
-        type: 'LOAD_MORE_APPROVAL_ITEMS'
       });
     },
     onLoadMoreModerators() {

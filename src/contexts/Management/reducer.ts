@@ -79,6 +79,17 @@ export default function ManagementReducer(
         accountTypes: action.accountTypes,
         accountTypesLoaded: true
       };
+    case 'LOAD_APPROVAL_ITEMS':
+      return {
+        ...state,
+        approvalItems: action.approvalItems,
+        approvalItemsLoaded: true
+      };
+    case 'LOAD_MORE_APPROVAL_ITEMS':
+      return {
+        ...state,
+        numApprovalItemsShown: state.numApprovalItemsShown + 10
+      };
     case 'LOAD_BANNED_USERS':
       return {
         ...state,
@@ -89,11 +100,6 @@ export default function ManagementReducer(
       return {
         ...state,
         loaded: true
-      };
-    case 'LOAD_MORE_APPROVAL_ITEMS':
-      return {
-        ...state,
-        numApprovalItemsShown: state.numApprovalItemsShown + 10
       };
     case 'LOAD_MODERATORS':
       return {
