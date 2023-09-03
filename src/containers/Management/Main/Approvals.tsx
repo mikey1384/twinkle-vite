@@ -2,8 +2,6 @@ import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Table from '../Table';
-import AddModeratorModal from '../Modals/AddModeratorModal';
-import EditModeratorModal from '../Modals/EditModeratorModal';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useManagementContext, useKeyContext } from '~/contexts';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -12,13 +10,15 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
   const {
     tableHeader: { color: tableHeaderColor }
   } = useKeyContext((v) => v.theme);
-  const accountTypes = useManagementContext((v) => v.state.accountTypes);
   const approvalItems = useManagementContext((v) => v.state.approvalItems);
   const approvalItemsLoaded = useManagementContext(
     (v) => v.state.approvalItemsLoaded
   );
   const numApprovalItemsShown = useManagementContext(
     (v) => v.state.numApprovalItemsShown
+  );
+  const onLoadMoreApprovalItems = useManagementContext(
+    (v) => v.actions.onLoadMoreApprovalItems
   );
 
   return (
@@ -87,7 +87,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
               ))}
           </tbody>
         </Table>
-        {moderators.length > numModeratorsShown && !searchQuery && (
+        {approvalItems.length > numApprovalItemsShown && (
           <div
             style={{
               marginTop: '2rem',
@@ -100,24 +100,11 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
             <LoadMoreButton
               transparent
               style={{ fontSize: '2rem' }}
-              onClick={onLoadMoreModerators}
+              onClick={onLoadMoreApprovalItems}
             />
           </div>
         )}
       </SectionPanel>
-      {addModeratorModalShown && (
-        <AddModeratorModal
-          accountTypes={accountTypes}
-          onHide={() => setAddModeratorModalShown(false)}
-        />
-      )}
-      {moderatorModalTarget && (
-        <EditModeratorModal
-          accountTypes={accountTypes}
-          target={moderatorModalTarget}
-          onHide={() => setModeratorModalTarget(null)}
-        />
-      )}
     </ErrorBoundary>
   );
 }
