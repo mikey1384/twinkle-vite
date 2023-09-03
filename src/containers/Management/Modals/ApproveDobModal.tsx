@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
+import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
 export default function ApproveDobModal({
@@ -8,6 +9,7 @@ export default function ApproveDobModal({
   onHide
 }: {
   target: {
+    userId: number;
     username: string;
     content: string;
   };
@@ -15,7 +17,7 @@ export default function ApproveDobModal({
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
-  // const approveDob = useAppContext((v) => v.requestHelpers.approveDob);
+  const approveDob = useAppContext((v) => v.requestHelpers.approveDob);
   // const onApproveDob = useManagementContext((v) => v.actions.onApproveDob);
 
   return (
@@ -63,7 +65,8 @@ export default function ApproveDobModal({
             loading={submitting && !isApproved}
             onClick={() =>
               handleSubmit({
-                isApproved: false
+                isApproved: false,
+                userId: target.userId
               })
             }
           >
@@ -77,7 +80,8 @@ export default function ApproveDobModal({
             loading={submitting && isApproved}
             onClick={() =>
               handleSubmit({
-                isApproved: true
+                isApproved: true,
+                userId: target.userId
               })
             }
           >
@@ -104,9 +108,17 @@ export default function ApproveDobModal({
     return age;
   }
 
-  async function handleSubmit({ isApproved }: { isApproved: boolean }) {
+  async function handleSubmit({
+    isApproved,
+    userId
+  }: {
+    isApproved: boolean;
+    userId: number;
+  }) {
     setSubmitting(true);
     setIsApproved(isApproved);
+    const data = await approveDob({ isApproved, userId });
+    console.log(data);
     onHide();
   }
 }
