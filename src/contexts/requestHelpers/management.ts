@@ -7,6 +7,24 @@ export default function managementRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
+    async approveDob({
+      isApproved,
+      userId
+    }: {
+      isApproved: boolean;
+      userId: number;
+    }) {
+      try {
+        await request.put(
+          `${URL}/management/approval/dob`,
+          { isApproved, userId },
+          auth()
+        );
+        return Promise.resolve();
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async deletePermanently({
       contentId,
       contentType,
