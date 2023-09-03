@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Table from '../Table';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useManagementContext, useKeyContext } from '~/contexts';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import ApproveDobModal from '../Modals/ApproveDobModal';
 
 export default function Approvals({ canManage }: { canManage: boolean }) {
   const {
@@ -20,6 +21,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
   const onLoadMoreApprovalItems = useManagementContext(
     (v) => v.actions.onLoadMoreApprovalItems
   );
+  const [approvalModalTarget, setApprovalModalTarget] = useState(null);
 
   return (
     <ErrorBoundary componentPath="Management/Main/Moderators">
@@ -56,7 +58,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                 <tr
                   key={item.id}
                   style={{ cursor: canManage ? 'pointer' : '' }}
-                  onClick={() => console.log('clicked')}
+                  onClick={() => setApprovalModalTarget(item)}
                 >
                   <td style={{ fontWeight: 'bold', fontSize: '1.6rem' }}>
                     {item.username}
@@ -105,6 +107,9 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
           </div>
         )}
       </SectionPanel>
+      {approvalModalTarget && (
+        <ApproveDobModal onHide={() => setApprovalModalTarget(null)} />
+      )}
     </ErrorBoundary>
   );
 }
