@@ -20,9 +20,13 @@ export default function ApproveDobModal({
   onSetApprovalModalTarget: (target: any) => void;
   onHide: () => void;
 }) {
+  const [reverting, setReverting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const approveDob = useAppContext((v) => v.requestHelpers.approveDob);
+  const revertDobApproval = useAppContext(
+    (v) => v.requestHelpers.revertDobApproval
+  );
   const onApproveDob = useManagementContext((v) => v.actions.onApproveDob);
 
   return (
@@ -128,16 +132,15 @@ export default function ApproveDobModal({
                 className={css`
                   margin-top: 1rem;
                   font-size: 1.3rem;
+                  cursor: ${reverting ? 'not-allowed' : 'pointer'};
                   cursor: pointer;
-                  color: ${Color.darkerGray()};
+                  color: ${reverting ? Color.lightGray() : Color.darkerGray()};
                   display: flex;
                   justify-content: center;
                   align-items: center;
-                  &:hover {
-                    text-decoration: underline;
-                  }
+                  ${reverting ? '' : '&:hover { text-decoration: underline; }'}
                 `}
-                onClick={() => console.log('rev')}
+                onClick={handleRevert}
               >
                 <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
                 revert
@@ -163,6 +166,17 @@ export default function ApproveDobModal({
       age--;
     }
     return age;
+  }
+
+  async function handleRevert() {
+    setReverting(true);
+    const status = await revertDobApproval(target.userId);
+    onApproveDob({ userId: target.userId, status });
+    onSetApprovalModalTarget({
+      ...target,
+      status
+    });
+    setReverting(false);
   }
 
   async function handleSubmit({
