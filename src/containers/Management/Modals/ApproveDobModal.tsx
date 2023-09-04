@@ -132,18 +132,24 @@ export default function ApproveDobModal({
                 className={css`
                   margin-top: 1rem;
                   font-size: 1.3rem;
-                  cursor: ${reverting ? 'not-allowed' : 'pointer'};
-                  cursor: pointer;
                   color: ${reverting ? Color.lightGray() : Color.darkerGray()};
                   display: flex;
                   justify-content: center;
                   align-items: center;
-                  ${reverting ? '' : '&:hover { text-decoration: underline; }'}
                 `}
-                onClick={handleRevert}
               >
                 <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
-                revert
+                <span
+                  onClick={handleRevert}
+                  className={css`
+                    cursor: ${reverting ? 'default' : 'pointer'};
+                    ${reverting
+                      ? ''
+                      : '&:hover { text-decoration: underline; }'}
+                  `}
+                >
+                  revert
+                </span>
               </div>
             )}
           </div>
