@@ -4,6 +4,8 @@ import SectionPanel from '~/components/SectionPanel';
 import Table from '../Table';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useManagementContext, useKeyContext } from '~/contexts';
+import { Color } from '~/constants/css';
+import { css } from '@emotion/css';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ApproveDobModal from '../Modals/ApproveDobModal';
 
@@ -57,32 +59,50 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
               .map((item: any) => (
                 <tr
                   key={item.id}
-                  style={{ cursor: canManage ? 'pointer' : '' }}
                   onClick={() => setApprovalModalTarget(item)}
+                  className={css`
+                    cursor: ${canManage ? 'pointer' : ''};
+                    td {
+                      display: flex;
+                      align-items: center;
+                    }
+                  `}
                 >
-                  <td style={{ fontWeight: 'bold', fontSize: '1.6rem' }}>
+                  <td
+                    className={css`
+                      font-weight: bold;
+                      font-size: 1.6rem;
+                    `}
+                  >
                     {item.username}
                   </td>
-                  <td
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                  >
-                    {item.type}
-                  </td>
-                  <td
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                  >
-                    {item.content}
-                  </td>
+                  <td>{item.type}</td>
+                  <td>{item.content}</td>
                   <td>{timeSince(item.timeStamp)}</td>
                   {canManage && (
-                    <td style={{ display: 'flex', justifyContent: 'center' }}>
-                      <a>{item.status}</a>
+                    <td
+                      className={css`
+                        display: flex;
+                        justify-content: center;
+                      `}
+                    >
+                      <span
+                        className={css`
+                          font-weight: bold;
+                          color: ${Color[
+                            item.status === 'approved'
+                              ? 'green'
+                              : item.status === 'rejected'
+                              ? 'red'
+                              : 'logoBlue'
+                          ]()};
+                          &:hover {
+                            text-decoration: underline;
+                          }
+                        `}
+                      >
+                        {item.status}
+                      </span>
                     </td>
                   )}
                 </tr>
@@ -91,13 +111,13 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
         </Table>
         {approvalItems.length > numApprovalItemsShown && (
           <div
-            style={{
-              marginTop: '2rem',
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
+            className={css`
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              margin-top: 2rem;
+              width: 100%;
+            `}
           >
             <LoadMoreButton
               transparent
