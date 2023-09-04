@@ -12,6 +12,7 @@ export default function ApproveDobModal({
     userId: number;
     username: string;
     content: string;
+    status: string;
   };
   onHide: () => void;
 }) {
@@ -50,44 +51,57 @@ export default function ApproveDobModal({
             ({getAge(target.content)} years old)
           </p>
         </div>
-        <div
-          style={{
-            marginTop: '3rem',
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center'
-          }}
-        >
-          <Button
-            color="rose"
-            filled
-            disabled={submitting}
-            loading={submitting && !isApproved}
-            onClick={() =>
-              handleSubmit({
-                isApproved: false,
-                userId: target.userId
-              })
-            }
+        {target.status === 'pending' ? (
+          <div
+            style={{
+              marginTop: '3rem',
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
           >
-            Reject
-          </Button>
-          <Button
-            style={{ marginLeft: '1.5rem' }}
-            filled
-            color="green"
-            disabled={submitting}
-            loading={submitting && isApproved}
-            onClick={() =>
-              handleSubmit({
-                isApproved: true,
-                userId: target.userId
-              })
-            }
+            <Button
+              color="rose"
+              filled
+              disabled={submitting}
+              loading={submitting && !isApproved}
+              onClick={() =>
+                handleSubmit({
+                  isApproved: false,
+                  userId: target.userId
+                })
+              }
+            >
+              Reject
+            </Button>
+            <Button
+              style={{ marginLeft: '1.5rem' }}
+              filled
+              color="green"
+              disabled={submitting}
+              loading={submitting && isApproved}
+              onClick={() =>
+                handleSubmit({
+                  isApproved: true,
+                  userId: target.userId
+                })
+              }
+            >
+              Approve
+            </Button>
+          </div>
+        ) : (
+          <div
+            style={{
+              marginTop: '3rem',
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
           >
-            Approve
-          </Button>
-        </div>
+            {target.status}
+          </div>
+        )}
       </main>
       <footer>
         <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
