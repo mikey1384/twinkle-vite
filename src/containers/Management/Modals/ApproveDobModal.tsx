@@ -4,6 +4,7 @@ import Modal from '~/components/Modal';
 import Icon from '~/components/Icon';
 import { useAppContext, useManagementContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
+import { css } from '@emotion/css';
 
 export default function ApproveDobModal({
   target,
@@ -94,32 +95,54 @@ export default function ApproveDobModal({
             </Button>
           </div>
         ) : (
-          <div
-            style={{
-              marginTop: '2.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '1rem',
-              borderRadius,
-              boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)',
-              background:
-                Color[
-                  target.status === 'approved' ? 'limeGreen' : 'redOrange'
-                ](),
-              color: '#fff',
-              fontWeight: 'bold'
-            }}
-          >
-            {target.status === 'pending' ? (
-              ''
-            ) : (
-              <Icon
-                icon={target.status === 'approved' ? 'check' : 'times'}
-                style={{ marginRight: '0.7rem' }}
-              />
+          <div>
+            <div
+              style={{
+                marginTop: '2.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '1rem',
+                borderRadius,
+                boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)',
+                background:
+                  Color[
+                    target.status === 'approved' ? 'limeGreen' : 'redOrange'
+                  ](),
+                color: '#fff',
+                fontWeight: 'bold'
+              }}
+            >
+              {target.status === 'pending' ? (
+                ''
+              ) : (
+                <Icon
+                  icon={target.status === 'approved' ? 'check' : 'times'}
+                  style={{ marginRight: '0.7rem' }}
+                />
+              )}
+              {target.status.toUpperCase()}
+            </div>
+            {target.status !== 'pending' && (
+              <div
+                className={css`
+                  margin-top: 1rem;
+                  font-size: 1.3rem;
+                  cursor: pointer;
+                  color: ${Color.darkerGray()};
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  &:hover {
+                    text-decoration: underline;
+                  }
+                `}
+                onClick={() => console.log('rev')}
+              >
+                <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
+                revert
+              </div>
             )}
-            {target.status.toUpperCase()}
           </div>
         )}
       </main>
