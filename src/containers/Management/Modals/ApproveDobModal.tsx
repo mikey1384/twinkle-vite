@@ -94,12 +94,17 @@ export default function ApproveDobModal({
           <div
             style={{
               marginTop: '3rem',
-              width: '100%',
               display: 'flex',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              padding: '1rem',
+              borderRadius: '0.5rem',
+              boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+              background: target.status === 'approved' ? '#DFF9FB' : '#FADBD8',
+              color: target.status === 'approved' ? '#22A6B3' : '#D63031',
+              fontWeight: 'bold'
             }}
           >
-            {target.status}
+            {target.status.toUpperCase()}
           </div>
         )}
       </main>
