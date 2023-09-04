@@ -91,9 +91,9 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                           font-weight: bold;
                           color: ${Color[
                             item.status === 'approved'
-                              ? 'green'
+                              ? 'limeGreen'
                               : item.status === 'rejected'
-                              ? 'red'
+                              ? 'redOrange'
                               : 'logoBlue'
                           ]()};
                           &:hover {
@@ -130,6 +130,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
       {approvalModalTarget && (
         <ApproveDobModal
           target={approvalModalTarget}
+          onSetApprovalModalTarget={setApprovalModalTarget}
           onHide={() => setApprovalModalTarget(null)}
         />
       )}

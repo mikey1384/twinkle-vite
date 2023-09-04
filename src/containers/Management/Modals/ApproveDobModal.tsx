@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
+import Icon from '~/components/Icon';
 import { useAppContext, useManagementContext } from '~/contexts';
-import { Color } from '~/constants/css';
+import { borderRadius, Color } from '~/constants/css';
 
 export default function ApproveDobModal({
   target,
+  onSetApprovalModalTarget,
   onHide
 }: {
   target: {
@@ -14,6 +16,7 @@ export default function ApproveDobModal({
     content: string;
     status: string;
   };
+  onSetApprovalModalTarget: (target: any) => void;
   onHide: () => void;
 }) {
   const [submitting, setSubmitting] = useState(false);
@@ -95,15 +98,27 @@ export default function ApproveDobModal({
             style={{
               marginTop: '3rem',
               display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
               padding: '1rem',
-              borderRadius: '0.5rem',
-              boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-              background: target.status === 'approved' ? '#DFF9FB' : '#FADBD8',
-              color: target.status === 'approved' ? '#22A6B3' : '#D63031',
+              borderRadius,
+              boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)',
+              background:
+                Color[
+                  target.status === 'approved' ? 'limeGreen' : 'redOrange'
+                ](),
+              color: '#fff',
               fontWeight: 'bold'
             }}
           >
+            {target.status === 'pending' ? (
+              ''
+            ) : (
+              <Icon
+                icon={target.status === 'approved' ? 'check' : 'times'}
+                style={{ marginRight: '0.7rem' }}
+              />
+            )}
             {target.status.toUpperCase()}
           </div>
         )}
@@ -138,6 +153,9 @@ export default function ApproveDobModal({
     setIsApproved(isApproved);
     const status = await approveDob({ isApproved, userId });
     onApproveDob({ userId, status });
-    onHide();
+    onSetApprovalModalTarget({
+      ...target,
+      status
+    });
   }
 }
