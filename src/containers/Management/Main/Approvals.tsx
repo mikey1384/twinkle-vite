@@ -82,7 +82,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                   <td>{timeSince(item.timeStamp)}</td>
                   {canManage && (
                     <td style={{ display: 'flex', justifyContent: 'center' }}>
-                      <a>review</a>
+                      <a>{item.status}</a>
                     </td>
                   )}
                 </tr>
