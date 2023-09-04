@@ -8,9 +8,11 @@ export default function managementRequestHelpers({
 }: RequestHelpers) {
   return {
     async approveDob({
+      dob,
       isApproved,
       userId
     }: {
+      dob: string;
       isApproved: boolean;
       userId: number;
     }) {
@@ -19,7 +21,7 @@ export default function managementRequestHelpers({
           data: { status }
         } = await request.put(
           `${URL}/management/approval/dob`,
-          { isApproved, userId },
+          { isApproved, userId, dob },
           auth()
         );
         return Promise.resolve(status);

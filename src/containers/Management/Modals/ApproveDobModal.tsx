@@ -194,7 +194,11 @@ export default function ApproveDobModal({
   }) {
     setSubmitting(true);
     setIsApproved(isApproved);
-    const status = await approveDob({ isApproved, userId });
+    const status = await approveDob({
+      isApproved,
+      userId,
+      dob: target.content
+    });
     onApproveDob({ userId, status });
     onSetApprovalModalTarget({
       ...target,
