@@ -194,5 +194,6 @@ export default function ApproveDobModal({
       ...target,
       status
     });
+    setSubmitting(false);
   }
 }
