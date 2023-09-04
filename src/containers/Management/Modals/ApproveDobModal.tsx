@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useManagementContext } from '~/contexts';
 import { Color } from '~/constants/css';
 
 export default function ApproveDobModal({
@@ -18,7 +18,7 @@ export default function ApproveDobModal({
   const [submitting, setSubmitting] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const approveDob = useAppContext((v) => v.requestHelpers.approveDob);
-  // const onApproveDob = useManagementContext((v) => v.actions.onApproveDob);
+  const onApproveDob = useManagementContext((v) => v.actions.onApproveDob);
 
   return (
     <Modal onHide={onHide}>
@@ -117,8 +117,9 @@ export default function ApproveDobModal({
   }) {
     setSubmitting(true);
     setIsApproved(isApproved);
-    const data = await approveDob({ isApproved, userId });
-    console.log(data);
+    const status = await approveDob({ isApproved, userId });
+    console.log(status);
+    onApproveDob({ userId, status });
     onHide();
   }
 }

@@ -15,12 +15,14 @@ export default function managementRequestHelpers({
       userId: number;
     }) {
       try {
-        await request.put(
+        const {
+          data: { status }
+        } = await request.put(
           `${URL}/management/approval/dob`,
           { isApproved, userId },
           auth()
         );
-        return Promise.resolve();
+        return Promise.resolve(status);
       } catch (error) {
         return handleError(error);
       }
