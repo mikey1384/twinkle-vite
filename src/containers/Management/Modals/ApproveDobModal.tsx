@@ -96,7 +96,7 @@ export default function ApproveDobModal({
         ) : (
           <div
             style={{
-              marginTop: '3rem',
+              marginTop: '2.5rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
