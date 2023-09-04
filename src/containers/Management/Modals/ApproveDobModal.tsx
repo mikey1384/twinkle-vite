@@ -118,7 +118,6 @@ export default function ApproveDobModal({
     setSubmitting(true);
     setIsApproved(isApproved);
     const status = await approveDob({ isApproved, userId });
-    console.log(status);
     onApproveDob({ userId, status });
     onHide();
   }
