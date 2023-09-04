@@ -107,6 +107,7 @@ export function addEmoji(string: string): string {
     ':friend:': '👫',
     ':frown:': '🙁',
     ':frowning:': '🙁',
+    ':frowny:': '🙁',
     ':frog:': '🐸',
     ':ghost:': '👻',
     ':gift:': '🎁',
