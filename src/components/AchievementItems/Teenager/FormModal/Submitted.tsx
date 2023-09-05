@@ -24,7 +24,10 @@ export default function Submitted({
       case 'approved':
         return (
           <div>
-            <p>Your birthdate has been verified</p>
+            <p>
+              Your birthdate has been{' '}
+              <span style={{ color: Color.limeGreen() }}>verified</span>
+            </p>
           </div>
         );
       case 'rejected':
