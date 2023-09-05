@@ -22,7 +22,12 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
   useEffect(() => {
     init();
     async function init() {
-      const { isSubmitted: dobSubmitted } = await checkDobApprovalSubmission();
+      const {
+        isSubmitted: dobSubmitted,
+        content,
+        status
+      } = await checkDobApprovalSubmission();
+      console.log(content, status);
       setIsSubmitted(dobSubmitted);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

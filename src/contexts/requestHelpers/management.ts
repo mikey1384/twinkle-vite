@@ -118,11 +118,12 @@ export default function managementRequestHelpers({
     async checkDobApprovalSubmission() {
       try {
         const {
-          data: { isSubmitted, content }
+          data: { isSubmitted, content, status }
         } = await request.get(`${URL}/management/approval/dob`, auth());
         return Promise.resolve({
           isSubmitted,
-          content
+          content,
+          status
         });
       } catch (error) {
         return handleError(error);
