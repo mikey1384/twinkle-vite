@@ -73,6 +73,9 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
     } else {
       await submitDobForApproval(dob);
     }
-    onHide();
+    setIsSubmitted(true);
+    setTryingAgain(false);
+    setSubmitStatus('pending');
+    setDob('');
   }
 }
