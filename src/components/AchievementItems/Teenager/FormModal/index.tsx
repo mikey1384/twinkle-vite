@@ -10,6 +10,9 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const retryDobApproval = useAppContext(
+    (v) => v.requestHelpers.retryDobApproval
+  );
   const submitDobForApproval = useAppContext(
     (v) => v.requestHelpers.submitDobForApproval
   );
@@ -66,7 +69,7 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
 
   async function handleSubmit() {
     if (tryingAgain) {
-      return console.log('trying again');
+      return await retryDobApproval(dob);
     }
     await submitDobForApproval(dob);
     onHide();

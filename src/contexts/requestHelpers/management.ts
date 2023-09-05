@@ -129,6 +129,20 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async retryDobApproval(dob: string) {
+      try {
+        const {
+          data: { status }
+        } = await request.put(
+          `${URL}/management/approval/dob/retry`,
+          { dob },
+          auth()
+        );
+        return Promise.resolve(status);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async revertDobApproval(userId: number) {
       try {
         const {
