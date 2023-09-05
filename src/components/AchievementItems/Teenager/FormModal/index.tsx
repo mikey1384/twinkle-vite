@@ -69,9 +69,10 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
 
   async function handleSubmit() {
     if (tryingAgain) {
-      return await retryDobApproval(dob);
+      await retryDobApproval(dob);
+    } else {
+      await submitDobForApproval(dob);
     }
-    await submitDobForApproval(dob);
     onHide();
   }
 }
