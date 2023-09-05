@@ -2,7 +2,14 @@ import React from 'react';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
-export default function Submitted() {
+export default function Submitted({
+  status,
+  dob
+}: {
+  status: string | null;
+  dob: string | null;
+}) {
+  console.log(status, dob, 'here');
   return (
     <div
       className={css`
