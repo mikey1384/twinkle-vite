@@ -17,6 +17,8 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
     (v) => v.requestHelpers.checkDobApprovalSubmission
   );
   const [dob, setDob] = useState('');
+  const [submittedDob, setSubmittedDob] = useState<string | null>(null);
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -27,7 +29,8 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
         content,
         status
       } = await checkDobApprovalSubmission();
-      console.log(content, status);
+      setSubmittedDob(content);
+      setSubmitStatus(status);
       setIsSubmitted(dobSubmitted);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -40,7 +43,7 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
         {isSubmitted === null ? (
           <Loading />
         ) : isSubmitted ? (
-          <Submitted />
+          <Submitted status={submitStatus} dob={submittedDob} />
         ) : (
           <Form dob={dob} onSetDob={setDob} />
         )}
