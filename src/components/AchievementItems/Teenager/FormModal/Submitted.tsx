@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import Button from '~/components/Button';
 
 export default function Submitted({
   status,
-  dob
+  dob,
+  onTryAgain
 }: {
   status: string | null;
   dob: string | null;
+  onTryAgain: () => void;
 }) {
   const renderStatusView = useMemo(() => {
     switch (status) {
@@ -32,12 +35,23 @@ export default function Submitted({
               <span style={{ color: Color.redOrange() }}>rejected</span>
             </p>
             <p>{dob}</p>
+            <div
+              style={{
+                marginTop: '2rem',
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <Button filled color="logoBlue" onClick={onTryAgain}>
+                Try again
+              </Button>
+            </div>
           </div>
         );
       default:
         return null;
     }
-  }, [dob, status]);
+  }, [dob, onTryAgain, status]);
 
   return (
     <div
