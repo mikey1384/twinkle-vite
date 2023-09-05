@@ -27,9 +27,11 @@ export default function Submitted({
       case 'rejected':
         return (
           <div>
-            <p>Your birthdate could not be verified</p>
+            <p>
+              Your birthdate submission was{' '}
+              <span style={{ color: Color.redOrange() }}>rejected</span>
+            </p>
             <p>{dob}</p>
-            <p>{`You've been rejected`}</p>
           </div>
         );
       default:
