@@ -20,6 +20,7 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
   const [submittedDob, setSubmittedDob] = useState<string | null>(null);
   const [submitStatus, setSubmitStatus] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean | null>(null);
+  const [tryingAgain, setTryingAgain] = useState(false);
 
   useEffect(() => {
     init();
@@ -42,8 +43,12 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
       <main>
         {isSubmitted === null ? (
           <Loading />
-        ) : isSubmitted ? (
-          <Submitted status={submitStatus} dob={submittedDob} />
+        ) : isSubmitted && !tryingAgain ? (
+          <Submitted
+            status={submitStatus}
+            dob={submittedDob}
+            onTryAgain={() => setTryingAgain(true)}
+          />
         ) : (
           <Form dob={dob} onSetDob={setDob} />
         )}
@@ -60,6 +65,9 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
   );
 
   async function handleSubmit() {
+    if (tryingAgain) {
+      return console.log('trying again');
+    }
     await submitDobForApproval(dob);
     onHide();
   }
