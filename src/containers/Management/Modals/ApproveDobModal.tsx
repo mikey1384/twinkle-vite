@@ -4,6 +4,7 @@ import Modal from '~/components/Modal';
 import Icon from '~/components/Icon';
 import { useAppContext, useManagementContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
+import { getAge } from '~/helpers';
 import { css } from '@emotion/css';
 
 export default function ApproveDobModal({
@@ -162,17 +163,6 @@ export default function ApproveDobModal({
       </footer>
     </Modal>
   );
-
-  function getAge(dateString: string) {
-    const birthDate = new Date(dateString);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  }
 
   async function handleRevert() {
     setReverting(true);
