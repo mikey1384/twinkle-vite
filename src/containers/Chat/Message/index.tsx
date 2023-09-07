@@ -90,6 +90,8 @@ function Message({
     numMsgs,
     rewardAmount,
     rewardReason,
+    rootType,
+    rootId,
     subchannelId,
     subjectId,
     thumbUrl,
@@ -151,6 +153,9 @@ function Message({
   onShowSubjectMsgsModal: (v: any) => void;
   zIndex?: number;
 }) {
+  const isApprovalRequest = useMemo(() => {
+    return rootType === 'approval' && !!rootId;
+  }, [rootId, rootType]);
   const isAIMessage = useMemo(() => {
     return (
       userId === Number(ZERO_TWINKLE_ID) || userId === Number(CIEL_TWINKLE_ID)
@@ -794,7 +799,9 @@ function Message({
                 </span>
               </div>
               <div>
-                {invitePath ? (
+                {isApprovalRequest ? (
+                  <div>{rootId}</div>
+                ) : invitePath ? (
                   <Invitation
                     sender={{ id: userId, username: appliedUsername }}
                     channelId={channelId}
