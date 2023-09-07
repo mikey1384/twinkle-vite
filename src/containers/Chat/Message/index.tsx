@@ -32,6 +32,7 @@ import FileAttachment from './FileAttachment';
 import TargetChessPosition from './TargetChessPosition';
 import TransferMessage from './TransferMessage';
 import TransactionDetails from '../TransactionDetails';
+import ApprovalRequest from './ApprovalRequest';
 import { useInView } from 'react-intersection-observer';
 import { socket } from '~/constants/io';
 import { MessageStyle } from '../Styles';
@@ -800,7 +801,11 @@ function Message({
               </div>
               <div>
                 {isApprovalRequest ? (
-                  <div>{rootId}</div>
+                  <ApprovalRequest
+                    userId={userId}
+                    username={appliedUsername}
+                    requestId={rootId}
+                  />
                 ) : invitePath ? (
                   <Invitation
                     sender={{ id: userId, username: appliedUsername }}

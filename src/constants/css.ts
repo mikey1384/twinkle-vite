@@ -441,6 +441,7 @@ export function Theme(color = 'logoBlue'): {
 }
 
 export const borderRadius = '5px';
+export const wideBorderRadius = '15px';
 export const innerBorderRadius = '4px';
 export const mobileMaxWidth = '850px';
 export const desktopMinWidth = '851px';
