@@ -544,14 +544,22 @@ function Message({
     [dropdownMenuItems?.length]
   );
 
-  const menuButtonsShown = useMemo(
+  const isMenuButtonsAllowed = useMemo(
     () =>
       !!messageId &&
+      !isApprovalRequest &&
       !isNotification &&
       !isChessMsg &&
       !isEditing &&
       !fileToUpload,
-    [fileToUpload, isChessMsg, isEditing, isNotification, messageId]
+    [
+      fileToUpload,
+      isApprovalRequest,
+      isChessMsg,
+      isEditing,
+      isNotification,
+      messageId
+    ]
   );
 
   const isChessDiscussion = useMemo(() => {
@@ -739,7 +747,9 @@ function Message({
             display: ${highlighted ? 'block' : 'none'};
           }
           &:hover {
-            ${menuButtonsShown ? `background-color: ${Color.whiteGray()};` : ''}
+            ${isMenuButtonsAllowed
+              ? `background-color: ${Color.whiteGray()};`
+              : ''}
             .menu-button {
               display: block;
             }
@@ -926,7 +936,7 @@ function Message({
                     )}
                     {!isEditing && !isNotification && (
                       <div style={{ marginTop: '2rem', height: '2.5rem' }}>
-                        {menuButtonsShown && (
+                        {isMenuButtonsAllowed && (
                           <Reactions
                             reactions={message.reactions}
                             reactionsMenuShown={reactionsMenuShown}
@@ -940,7 +950,7 @@ function Message({
                   </>
                 )}
               </div>
-              {menuButtonsShown && (
+              {isMenuButtonsAllowed && (
                 <div
                   style={{
                     position: 'absolute',
