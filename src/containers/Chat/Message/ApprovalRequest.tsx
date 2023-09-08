@@ -29,7 +29,7 @@ export default function ApprovalRequest({
         flexDirection: 'column',
         marginTop: '3rem',
         marginBottom: '3rem',
-        backgroundColor: '#f9f9f9',
+        backgroundColor: Color.whiteGray(),
         ...liftedEffect
       }}
     >
