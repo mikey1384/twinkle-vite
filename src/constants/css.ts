@@ -442,6 +442,11 @@ export function Theme(color = 'logoBlue'): {
 
 export const borderRadius = '5px';
 export const wideBorderRadius = '15px';
+export const liftedBoxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+export const liftedEffect = {
+  boxShadow: liftedBoxShadow,
+  borderRadius: wideBorderRadius
+};
 export const innerBorderRadius = '4px';
 export const mobileMaxWidth = '850px';
 export const desktopMinWidth = '851px';

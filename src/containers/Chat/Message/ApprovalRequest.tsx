@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
 import { useAppContext, useManagementContext } from '~/contexts';
-import { Color, wideBorderRadius } from '~/constants/css';
+import { Color, liftedEffect } from '~/constants/css';
 import { getAge } from '~/helpers';
 
 export default function ApprovalRequest({
@@ -30,8 +30,7 @@ export default function ApprovalRequest({
         marginTop: '3rem',
         marginBottom: '3rem',
         backgroundColor: '#f9f9f9',
-        borderRadius: wideBorderRadius,
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' // Box shadow for a "lifted" look
+        ...liftedEffect
       }}
     >
       <div
