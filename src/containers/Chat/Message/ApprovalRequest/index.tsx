@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import ApprovalButtons from './ApprovalButtons';
+import { css } from '@emotion/css';
 import { useAppContext, useKeyContext, useManagementContext } from '~/contexts';
-import { borderRadius, Color, liftedEffect } from '~/constants/css';
+import {
+  borderRadius,
+  Color,
+  liftedBoxShadow,
+  wideBorderRadius
+} from '~/constants/css';
 import { getAge } from '~/helpers';
 
 export default function ApprovalRequest({
@@ -33,6 +39,14 @@ export default function ApprovalRequest({
         {userId === myId ? 'requested approval' : 'requests your approval'}
       </div>
       <div
+        className={css`
+          border-radius: ${wideBorderRadius};
+          box-shadow: ${liftedBoxShadow};
+          background: ${Color.whiteGray()};
+          &:hover {
+            background: ${Color.highlightGray()};
+          }
+        `}
         style={{
           width: '100%',
           padding: '2rem 0',
@@ -41,9 +55,7 @@ export default function ApprovalRequest({
           alignItems: 'center',
           flexDirection: 'column',
           marginTop: '1.5rem',
-          marginBottom: '3rem',
-          backgroundColor: Color.whiteGray(),
-          ...liftedEffect
+          marginBottom: '3rem'
         }}
       >
         <div
