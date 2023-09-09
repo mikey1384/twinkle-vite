@@ -4,6 +4,7 @@ import { Color, liftedBoxShadow, wideBorderRadius } from '~/constants/css';
 import { getAge } from '~/helpers';
 import { useAppContext, useManagementContext } from '~/contexts';
 import ApprovalButtons from './ApprovalButtons';
+import ApprovalResult from './ApprovalResult';
 
 export default function Details({
   username,
@@ -81,7 +82,7 @@ export default function Details({
               userId={userId}
             />
           ) : (
-            <div>approved</div>
+            <ApprovalResult status={status} userId={userId} />
           )}
         </>
       )}
