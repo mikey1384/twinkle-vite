@@ -12,7 +12,8 @@ export default function Details({
   content,
   userId,
   myId,
-  status
+  status,
+  onSetStatus
 }: {
   username: string;
   requestId: number;
@@ -20,6 +21,7 @@ export default function Details({
   userId: number;
   myId: number;
   status: string;
+  onSetStatus: (status: string) => void;
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
@@ -82,7 +84,11 @@ export default function Details({
               userId={userId}
             />
           ) : (
-            <ApprovalResult status={status} userId={userId} />
+            <ApprovalResult
+              status={status}
+              userId={userId}
+              onSetStatus={onSetStatus}
+            />
           )}
         </>
       )}
@@ -103,6 +109,7 @@ export default function Details({
       userId,
       dob: content
     });
+    onSetStatus(status);
     onApproveDob({ userId, status });
     setSubmitting(false);
   }
