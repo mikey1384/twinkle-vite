@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
-import { Color, liftedBoxShadow, wideBorderRadius } from '~/constants/css';
+import {
+  Color,
+  liftedBoxShadow,
+  liftedBoxShadowDarker,
+  wideBorderRadius
+} from '~/constants/css';
 import { getAge } from '~/helpers';
 import { useAppContext, useManagementContext } from '~/contexts';
 import ApprovalButtons from './ApprovalButtons';
@@ -36,6 +41,7 @@ export default function Details({
         background: ${Color.whiteGray()};
         &:hover {
           background: ${Color.highlightGray()};
+          box-shadow: ${liftedBoxShadowDarker};
         }
       `}
       style={{

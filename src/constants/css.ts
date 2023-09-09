@@ -443,6 +443,8 @@ export function Theme(color = 'logoBlue'): {
 export const borderRadius = '5px';
 export const wideBorderRadius = '15px';
 export const liftedBoxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+export const liftedBoxShadowDarker = '0 4px 8px rgba(0, 0, 0, 0.2)';
+export const liftedBoxShadowDarkest = '0 4px 8px rgba(0, 0, 0, 0.3)';
 export const liftedEffect = {
   boxShadow: liftedBoxShadow,
   borderRadius: wideBorderRadius
