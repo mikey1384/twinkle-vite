@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Details from './Details';
-import { useKeyContext } from '~/contexts';
+import Loading from '~/components/Loading';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 
 export default function ApprovalRequest({
@@ -12,8 +13,21 @@ export default function ApprovalRequest({
   userId: number;
   username: string;
 }) {
-  const content = '1984-01-03';
   const { userId: myId } = useKeyContext((v) => v.myState);
+  const loadApprovalItemById = useAppContext(
+    (v) => v.requestHelpers.loadApprovalItemById
+  );
+  const [content, setContent] = useState(null);
+
+  useEffect(() => {
+    init();
+    async function init() {
+      const requestItem = await loadApprovalItemById(requestId);
+      setContent(requestItem.content);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestId]);
+
   return (
     <div
       style={{
@@ -27,13 +41,17 @@ export default function ApprovalRequest({
       <div style={{ borderRadius, color: Color.darkGray() }}>
         {userId === myId ? 'requested approval' : 'requests your approval'}
       </div>
-      <Details
-        requestId={requestId}
-        content={content}
-        myId={myId}
-        userId={userId}
-        username={username}
-      />
+      {content ? (
+        <Details
+          requestId={requestId}
+          content={content}
+          myId={myId}
+          userId={userId}
+          username={username}
+        />
+      ) : (
+        <Loading />
+      )}
     </div>
   );
 }
