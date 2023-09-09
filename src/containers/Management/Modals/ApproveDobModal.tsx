@@ -124,31 +124,27 @@ export default function ApproveDobModal({
               />
               {target.status.toUpperCase()}
             </div>
-            {target.status !== 'pending' && (
-              <div
+            <div
+              className={css`
+                margin-top: 1rem;
+                font-size: 1.3rem;
+                color: ${reverting ? Color.lightGray() : Color.darkerGray()};
+                display: flex;
+                justify-content: center;
+                align-items: center;
+              `}
+            >
+              <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
+              <span
+                onClick={handleRevert}
                 className={css`
-                  margin-top: 1rem;
-                  font-size: 1.3rem;
-                  color: ${reverting ? Color.lightGray() : Color.darkerGray()};
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
+                  cursor: ${reverting ? 'default' : 'pointer'};
+                  ${reverting ? '' : '&:hover { text-decoration: underline; }'}
                 `}
               >
-                <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
-                <span
-                  onClick={handleRevert}
-                  className={css`
-                    cursor: ${reverting ? 'default' : 'pointer'};
-                    ${reverting
-                      ? ''
-                      : '&:hover { text-decoration: underline; }'}
-                  `}
-                >
-                  revert
-                </span>
-              </div>
-            )}
+                revert
+              </span>
+            </div>
           </div>
         )}
       </main>
