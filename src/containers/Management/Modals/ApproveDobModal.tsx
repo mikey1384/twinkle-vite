@@ -118,14 +118,10 @@ export default function ApproveDobModal({
                 fontWeight: 'bold'
               }}
             >
-              {target.status === 'pending' ? (
-                ''
-              ) : (
-                <Icon
-                  icon={target.status === 'approved' ? 'check' : 'times'}
-                  style={{ marginRight: '0.7rem' }}
-                />
-              )}
+              <Icon
+                icon={target.status === 'approved' ? 'check' : 'times'}
+                style={{ marginRight: '0.7rem' }}
+              />
               {target.status.toUpperCase()}
             </div>
             {target.status !== 'pending' && (
