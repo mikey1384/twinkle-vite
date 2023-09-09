@@ -51,6 +51,7 @@ export default function ApprovalRequest({
           userId={userId}
           username={username}
           status={status}
+          onSetStatus={setStatus}
         />
       ) : (
         <Loading />
