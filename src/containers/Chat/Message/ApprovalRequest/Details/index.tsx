@@ -10,13 +10,15 @@ export default function Details({
   requestId,
   content,
   userId,
-  myId
+  myId,
+  status
 }: {
   username: string;
   requestId: number;
   content: string;
   userId: number;
   myId: number;
+  status: string;
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
@@ -70,12 +72,18 @@ export default function Details({
         </p>
       </div>
       {userId !== myId && (
-        <ApprovalButtons
-          submitting={submitting}
-          isApproved={isApproved}
-          onSubmit={handleSubmit}
-          userId={userId}
-        />
+        <>
+          {status === 'pending' ? (
+            <ApprovalButtons
+              submitting={submitting}
+              isApproved={isApproved}
+              onSubmit={handleSubmit}
+              userId={userId}
+            />
+          ) : (
+            <div>approved</div>
+          )}
+        </>
       )}
     </div>
   );
