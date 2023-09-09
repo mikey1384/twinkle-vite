@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Button from '~/components/Button';
+import ApprovalButtons from './ApprovalButtons';
 import { useAppContext, useKeyContext, useManagementContext } from '~/contexts';
 import { borderRadius, Color, liftedEffect } from '~/constants/css';
 import { getAge } from '~/helpers';
@@ -71,46 +71,13 @@ export default function ApprovalRequest({
             ({getAge(content)} years old)
           </p>
         </div>
-        {userId !== myId && (
-          <div
-            style={{
-              marginTop: '3rem',
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <Button
-              color="rose"
-              filled
-              disabled={submitting}
-              loading={submitting && !isApproved}
-              onClick={() =>
-                handleSubmit({
-                  isApproved: false,
-                  userId
-                })
-              }
-            >
-              Reject
-            </Button>
-            <Button
-              style={{ marginLeft: '1.5rem' }}
-              filled
-              color="green"
-              disabled={submitting}
-              loading={submitting && isApproved}
-              onClick={() =>
-                handleSubmit({
-                  isApproved: true,
-                  userId
-                })
-              }
-            >
-              Approve
-            </Button>
-          </div>
-        )}
+        <ApprovalButtons
+          submitting={submitting}
+          isApproved={isApproved}
+          onSubmit={handleSubmit}
+          userId={userId}
+          myId={myId}
+        />
       </div>
     </div>
   );
