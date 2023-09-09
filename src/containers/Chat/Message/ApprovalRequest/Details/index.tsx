@@ -69,13 +69,14 @@ export default function Details({
           ({getAge(content)} years old)
         </p>
       </div>
-      <ApprovalButtons
-        submitting={submitting}
-        isApproved={isApproved}
-        onSubmit={handleSubmit}
-        userId={userId}
-        myId={myId}
-      />
+      {userId !== myId && (
+        <ApprovalButtons
+          submitting={submitting}
+          isApproved={isApproved}
+          onSubmit={handleSubmit}
+          userId={userId}
+        />
+      )}
     </div>
   );
 
