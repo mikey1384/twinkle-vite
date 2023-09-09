@@ -18,12 +18,14 @@ export default function ApprovalRequest({
     (v) => v.requestHelpers.loadApprovalItemById
   );
   const [content, setContent] = useState(null);
+  const [status, setStatus] = useState('');
 
   useEffect(() => {
     init();
     async function init() {
       const requestItem = await loadApprovalItemById(requestId);
       setContent(requestItem.content);
+      setStatus(requestItem.status);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestId]);
@@ -48,6 +50,7 @@ export default function ApprovalRequest({
           myId={myId}
           userId={userId}
           username={username}
+          status={status}
         />
       ) : (
         <Loading />
