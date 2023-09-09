@@ -104,6 +104,17 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadApprovalItemById(approvalId: number) {
+      try {
+        const { data: approvalItem } = await request.get(
+          `${URL}/management/approval/byId?approvalId=${approvalId}`,
+          auth()
+        );
+        return Promise.resolve(approvalItem);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadApprovalItems() {
       try {
         const { data: approvalItems } = await request.get(
