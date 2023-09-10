@@ -10,6 +10,7 @@ import { getAge } from '~/helpers';
 import { useAppContext, useManagementContext } from '~/contexts';
 import ApprovalButtons from './ApprovalButtons';
 import ApprovalResult from './ApprovalResult';
+import ApprovalResultForRequester from './ApprovalResultForRequester';
 
 export default function Details({
   username,
@@ -80,6 +81,12 @@ export default function Details({
           ({getAge(content)} years old)
         </p>
       </div>
+      {userId === myId && status !== 'pending' && (
+        <ApprovalResultForRequester
+          style={{ marginTop: '1.5rem' }}
+          status={status}
+        />
+      )}
       {userId !== myId && (
         <>
           {status === 'pending' ? (
