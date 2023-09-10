@@ -132,6 +132,7 @@ function Channel({
       username: senderName,
       isAbort,
       isDraw,
+      rootType,
       transferDetails,
       transactionDetails
     }: {
@@ -142,6 +143,7 @@ function Channel({
       username?: string;
       isAbort?: boolean;
       isDraw?: boolean;
+      rootType?: string;
       transferDetails?: {
         askId?: number;
         offerId?: number;
@@ -218,6 +220,9 @@ function Channel({
             <span>{`${seller}: sold Card #${transferDetails?.card?.id}`}</span>
           );
         }
+      }
+      if (rootType === 'approval') {
+        return <span>{`${messageSender}:`} requested approval</span>;
       }
       if (transactionDetails) {
         const from = transactionDetails.from === userId ? 'You' : otherMember;
