@@ -1,6 +1,5 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
 
 export default function StudentOrTeacher() {
   return (
@@ -17,7 +16,7 @@ export default function StudentOrTeacher() {
         className={css`
           font-size: 32px;
           margin-bottom: 20px;
-          color: ${Color.black()};
+          color: #333333;
           font-weight: 500;
         `}
       >
@@ -26,7 +25,7 @@ export default function StudentOrTeacher() {
       <div>
         <button
           className={css`
-            background-color: #6200ea;
+            background-color: #0088ee;
             color: #fff;
             border: none;
             padding: 12px 24px;
@@ -39,7 +38,7 @@ export default function StudentOrTeacher() {
             font-weight: 700;
 
             &:hover {
-              background-color: #3700b3;
+              background-color: #0066bb;
             }
           `}
           onClick={() => console.log('Student selected')}
@@ -48,7 +47,7 @@ export default function StudentOrTeacher() {
         </button>
         <button
           className={css`
-            background-color: #6200ea;
+            background-color: #ff7a59;
             color: #fff;
             border: none;
             padding: 12px 24px;
@@ -61,7 +60,7 @@ export default function StudentOrTeacher() {
             font-weight: 700;
 
             &:hover {
-              background-color: #3700b3;
+              background-color: #cc6044;
             }
           `}
           onClick={() => console.log('Teacher selected')}
