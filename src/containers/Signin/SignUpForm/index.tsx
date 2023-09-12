@@ -3,9 +3,8 @@ import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Banner from '~/components/Banner';
-import UsernamePassword from './UsernamePassword';
-import NameAndEmail from './NameAndEmail';
-import SecretPassPhrase from './SecretPassPhrase';
+import Student from './Student';
+import Teacher from './Teacher';
 import StudentOrTeacher from './StudentOrTeacher';
 import { css } from '@emotion/css';
 import { isValidUsername, stringIsEmpty } from '~/helpers/stringHelpers';
@@ -36,7 +35,7 @@ export default function SignUpForm({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [signingUp, setSigningUp] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [displayedPage] = useState('userType');
+  const [displayedPage, setDisplayedPage] = useState('userType');
   const submitDisabled = useMemo(
     () => !!signingUp || !!stringIsEmpty(username) || !!errorMessage,
     [errorMessage, signingUp, username]
@@ -78,32 +77,14 @@ export default function SignUpForm({
             }
           `}
         >
-          {displayedPage === 'userType' && <StudentOrTeacher />}
-          {displayedPage === 'usernameAndPassword' && (
-            <UsernamePassword
-              errorMessage={errorMessage}
-              username={username}
-              onSetUsername={onSetUsername}
-              onSetErrorMessage={setErrorMessage}
-              submitDisabled={submitDisabled}
-              onSubmit={onSubmit}
-            />
+          {displayedPage === 'userType' && (
+            <StudentOrTeacher onSelect={setDisplayedPage} />
           )}
-          {displayedPage === 'nameAndEmail' && (
-            <NameAndEmail
-              errorMessage={errorMessage}
-              onSetErrorMessage={setErrorMessage}
-              submitDisabled={submitDisabled}
-              onSubmit={onSubmit}
-            />
+          {displayedPage === 'student' && (
+            <Student onSetUsername={onSetUsername} />
           )}
-          {displayedPage === 'passphrase' && (
-            <SecretPassPhrase
-              errorMessage={errorMessage}
-              onSetErrorMessage={setErrorMessage}
-              onSubmit={onSubmit}
-              submitDisabled={submitDisabled}
-            />
+          {displayedPage === 'teacher' && (
+            <Teacher onSetUsername={onSetUsername} />
           )}
         </div>
       </main>

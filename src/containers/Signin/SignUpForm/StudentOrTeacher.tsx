@@ -1,7 +1,11 @@
 import React from 'react';
 import { css } from '@emotion/css';
 
-export default function StudentOrTeacher() {
+export default function StudentOrTeacher({
+  onSelect
+}: {
+  onSelect: (userType: 'student' | 'teacher') => void;
+}) {
   return (
     <div
       className={css`
@@ -41,7 +45,7 @@ export default function StudentOrTeacher() {
               background-color: #0066bb;
             }
           `}
-          onClick={() => console.log('Student selected')}
+          onClick={() => onSelect('student')}
         >
           Student
         </button>
@@ -63,7 +67,7 @@ export default function StudentOrTeacher() {
               background-color: #cc6044;
             }
           `}
-          onClick={() => console.log('Teacher selected')}
+          onClick={() => onSelect('teacher')}
         >
           Teacher
         </button>
