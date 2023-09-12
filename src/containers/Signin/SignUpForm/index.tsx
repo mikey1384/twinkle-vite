@@ -6,6 +6,7 @@ import Banner from '~/components/Banner';
 import UsernamePassword from './UsernamePassword';
 import NameAndEmail from './NameAndEmail';
 import SecretPassPhrase from './SecretPassPhrase';
+import StudentOrTeacher from './StudentOrTeacher';
 import { css } from '@emotion/css';
 import { isValidUsername, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
@@ -35,6 +36,7 @@ export default function SignUpForm({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [signingUp, setSigningUp] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [displayedPage] = useState('userType');
   const submitDisabled = useMemo(
     () => !!signingUp || !!stringIsEmpty(username) || !!errorMessage,
     [errorMessage, signingUp, username]
@@ -61,7 +63,7 @@ export default function SignUpForm({
         <div
           className={css`
             width: 100%;
-            padding: 1rem 1.5rem 1.5rem 1.5rem;
+            padding: 3rem 1.5rem 1.5rem 1.5rem;
             section {
               margin-top: 1rem;
             }
@@ -76,26 +78,33 @@ export default function SignUpForm({
             }
           `}
         >
-          <UsernamePassword
-            errorMessage={errorMessage}
-            username={username}
-            onSetUsername={onSetUsername}
-            onSetErrorMessage={setErrorMessage}
-            submitDisabled={submitDisabled}
-            onSubmit={onSubmit}
-          />
-          <NameAndEmail
-            errorMessage={errorMessage}
-            onSetErrorMessage={setErrorMessage}
-            submitDisabled={submitDisabled}
-            onSubmit={onSubmit}
-          />
-          <SecretPassPhrase
-            errorMessage={errorMessage}
-            onSetErrorMessage={setErrorMessage}
-            onSubmit={onSubmit}
-            submitDisabled={submitDisabled}
-          />
+          {displayedPage === 'userType' && <StudentOrTeacher />}
+          {displayedPage === 'usernameAndPassword' && (
+            <UsernamePassword
+              errorMessage={errorMessage}
+              username={username}
+              onSetUsername={onSetUsername}
+              onSetErrorMessage={setErrorMessage}
+              submitDisabled={submitDisabled}
+              onSubmit={onSubmit}
+            />
+          )}
+          {displayedPage === 'nameAndEmail' && (
+            <NameAndEmail
+              errorMessage={errorMessage}
+              onSetErrorMessage={setErrorMessage}
+              submitDisabled={submitDisabled}
+              onSubmit={onSubmit}
+            />
+          )}
+          {displayedPage === 'passphrase' && (
+            <SecretPassPhrase
+              errorMessage={errorMessage}
+              onSetErrorMessage={setErrorMessage}
+              onSubmit={onSubmit}
+              submitDisabled={submitDisabled}
+            />
+          )}
         </div>
       </main>
       <footer>
