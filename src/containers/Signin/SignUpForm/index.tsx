@@ -2,10 +2,10 @@ import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import Input from '~/components/Texts/Input';
 import Banner from '~/components/Banner';
 import UsernamePassword from './UsernamePassword';
 import NameAndEmail from './NameAndEmail';
+import SecretPassPhrase from './SecretPassPhrase';
 import { css } from '@emotion/css';
 import { isValidUsername, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
@@ -14,8 +14,6 @@ import localize from '~/constants/localize';
 const createMyAccountLabel = localize('createMyAccount');
 const iAlreadyHaveAnAccountLabel = localize('iAlreadyHaveAnAccount');
 const letsSetUpYourAccountLabel = localize('letsSetUpYourAccount');
-const passphraseLabel = localize('passphrase');
-const passphraseErrorMsgLabel = localize('passphraseErrorMsg');
 
 SignUpForm.propTypes = {
   username: PropTypes.string,
@@ -36,15 +34,10 @@ export default function SignUpForm({
   const signup = useAppContext((v) => v.requestHelpers.signup);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [signingUp, setSigningUp] = useState(false);
-  const [keyphrase, setKeyphrase] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const submitDisabled = useMemo(
-    () =>
-      !!signingUp ||
-      !!stringIsEmpty(username) ||
-      !!stringIsEmpty(keyphrase) ||
-      !!errorMessage,
-    [errorMessage, keyphrase, signingUp, username]
+    () => !!signingUp || !!stringIsEmpty(username) || !!errorMessage,
+    [errorMessage, signingUp, username]
   );
 
   const isOtherErrorMessage = useMemo(() => {
@@ -97,26 +90,12 @@ export default function SignUpForm({
             submitDisabled={submitDisabled}
             onSubmit={onSubmit}
           />
-          <section>
-            <label>{passphraseLabel}</label>
-            <Input
-              value={keyphrase}
-              hasError={errorMessage === 'keyphrase'}
-              placeholder={passphraseLabel}
-              onChange={(text) => {
-                setErrorMessage('');
-                setKeyphrase(text);
-              }}
-              onKeyPress={(event: any) => {
-                if (event.key === 'Enter' && !submitDisabled) {
-                  onSubmit();
-                }
-              }}
-            />
-            {errorMessage === 'keyphrase' && (
-              <p style={{ color: 'red' }}>{passphraseErrorMsgLabel}</p>
-            )}
-          </section>
+          <SecretPassPhrase
+            errorMessage={errorMessage}
+            onSetErrorMessage={setErrorMessage}
+            onSubmit={onSubmit}
+            submitDisabled={submitDisabled}
+          />
         </div>
       </main>
       <footer>
@@ -151,8 +130,7 @@ export default function SignUpForm({
     try {
       setSigningUp(true);
       const data = await signup({
-        username,
-        keyphrase
+        username
       });
       onSignup(data);
       onSetUserState({ userId: data.id, newState: data });
