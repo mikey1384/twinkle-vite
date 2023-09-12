@@ -6,16 +6,11 @@ const passphraseLabel = localize('passphrase');
 const passphraseErrorMsgLabel = localize('passphraseErrorMsg');
 
 export default function SecretPassPhrase({
-  errorMessage,
-  onSetErrorMessage,
-  onSubmit,
-  submitDisabled
+  onSubmit
 }: {
-  errorMessage: string;
-  onSetErrorMessage: (errorMessage: string) => void;
   onSubmit: () => void;
-  submitDisabled: boolean;
 }) {
+  const [errorMessage, setErrorMessage] = useState('');
   const [keyphrase, setKeyphrase] = useState('');
   return (
     <section>
@@ -25,11 +20,11 @@ export default function SecretPassPhrase({
         hasError={errorMessage === 'keyphrase'}
         placeholder={passphraseLabel}
         onChange={(text) => {
-          onSetErrorMessage('');
+          setErrorMessage('');
           setKeyphrase(text);
         }}
         onKeyPress={(event: any) => {
-          if (event.key === 'Enter' && !submitDisabled) {
+          if (event.key === 'Enter') {
             onSubmit();
           }
         }}
