@@ -25,16 +25,11 @@ function isValidRealname(realName: string) {
 */
 
 export default function UsernamePassword({
-  errorMessage,
-  onSetErrorMessage,
-  submitDisabled,
   onSubmit
 }: {
-  errorMessage: string;
-  onSetErrorMessage: (errorMessage: string) => void;
-  submitDisabled: boolean;
   onSubmit: () => void;
 }) {
+  const [errorMessage, setErrorMessage] = useState('');
   const [firstname, setFirstname] = useState('');
   const [lastname, setLastname] = useState('');
   const [email, setEmail] = useState('');
@@ -67,11 +62,11 @@ export default function UsernamePassword({
           value={firstname}
           placeholder={whatIsYourFirstNameLabel}
           onChange={(text) => {
-            onSetErrorMessage('');
+            setErrorMessage('');
             setFirstname(text.trim());
           }}
           onKeyPress={(event: any) => {
-            if (event.key === 'Enter' && !submitDisabled) {
+            if (event.key === 'Enter') {
               onSubmit();
             }
           }}
@@ -88,11 +83,11 @@ export default function UsernamePassword({
           value={lastname}
           placeholder={whatIsYourLastNameLabel}
           onChange={(text) => {
-            onSetErrorMessage('');
+            setErrorMessage('');
             setLastname(text.trim());
           }}
           onKeyPress={(event: any) => {
-            if (event.key === 'Enter' && !submitDisabled) {
+            if (event.key === 'Enter') {
               onSubmit();
             }
           }}
@@ -108,11 +103,11 @@ export default function UsernamePassword({
           hasError={errorMessage === 'email'}
           placeholder={emailIsNeededInCaseLabel}
           onChange={(text) => {
-            onSetErrorMessage('');
+            setErrorMessage('');
             setEmail(text);
           }}
           onKeyPress={(event: any) => {
-            if (event.key === 'Enter' && !submitDisabled) {
+            if (event.key === 'Enter') {
               onSubmit();
             }
           }}

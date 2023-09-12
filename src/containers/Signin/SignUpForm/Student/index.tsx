@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import UsernamePassword from './UsernamePassword';
+import NameAndEmail from './NameAndEmail';
 import Button from '~/components/Button';
 
 const pages = ['username', 'email', 'passphrase'];
@@ -20,6 +21,9 @@ export default function StudentForm({
           onSetUsername={onSetUsername}
           onSubmit={() => console.log('submitting')}
         />
+      )}
+      {displayedPage === 'email' && (
+        <NameAndEmail onSubmit={() => console.log('submitting')} />
       )}
       <div
         style={{
