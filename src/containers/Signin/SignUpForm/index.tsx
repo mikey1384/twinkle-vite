@@ -4,33 +4,17 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Banner from '~/components/Banner';
+import UsernamePassword from './UsernamePassword';
+import NameAndEmail from './NameAndEmail';
 import { css } from '@emotion/css';
-import {
-  isValidPassword,
-  isValidUsername,
-  stringIsEmpty
-} from '~/helpers/stringHelpers';
+import { isValidUsername, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const createMyAccountLabel = localize('createMyAccount');
-const emailIsNeededInCaseLabel = localize('emailIsNeededInCase');
-const emailYoursOrYourParentsLabel = localize('emailYoursOrYourParents');
 const iAlreadyHaveAnAccountLabel = localize('iAlreadyHaveAnAccount');
-const firstNameLabel = localize('firstName');
 const letsSetUpYourAccountLabel = localize('letsSetUpYourAccount');
-const passwordLabel = localize('password');
-const passwordsNeedToBeAtLeastLabel = localize('passwordsNeedToBeAtLeast');
-const usernameLabel = localize('username');
-const enterTheUsernameYouWishToUseLabel = localize(
-  'enterTheUsernameYouWishToUse'
-);
-const lastNameLabel = localize('lastName');
 const passphraseLabel = localize('passphrase');
-const setUpPasswordLabel = localize('setUpPassword');
-const whatIsYourFirstNameLabel = localize('whatIsYourFirstName');
-const whatIsYourLastNameLabel = localize('whatIsYourLastName');
 const passphraseErrorMsgLabel = localize('passphraseErrorMsg');
 
 SignUpForm.propTypes = {
@@ -52,65 +36,16 @@ export default function SignUpForm({
   const signup = useAppContext((v) => v.requestHelpers.signup);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [signingUp, setSigningUp] = useState(false);
-  const [password, setPassword] = useState('');
-  const [firstname, setFirstname] = useState('');
-  const [lastname, setLastname] = useState('');
-  const [email, setEmail] = useState('');
   const [keyphrase, setKeyphrase] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const submitDisabled = useMemo(
     () =>
-      signingUp ||
-      stringIsEmpty(username) ||
-      stringIsEmpty(password) ||
-      stringIsEmpty(firstname) ||
-      stringIsEmpty(lastname) ||
-      stringIsEmpty(keyphrase) ||
-      errorMessage,
-    [
-      errorMessage,
-      firstname,
-      keyphrase,
-      lastname,
-      password,
-      signingUp,
-      username
-    ]
+      !!signingUp ||
+      !!stringIsEmpty(username) ||
+      !!stringIsEmpty(keyphrase) ||
+      !!errorMessage,
+    [errorMessage, keyphrase, signingUp, username]
   );
-  const usernameAlreadyExistsLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return '이미 사용중인 아이디입니다.';
-    }
-    return 'This username is already taken.';
-  }, []);
-  const usernameErrorMsgLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `"${username}" - 유효하지 않은 아이디입니다.${
-        username.length < 3 ? ' 아이디는 3글자 이상이어야 합니다.' : ''
-      }`;
-    }
-    return `${username} is not a valid username.${
-      username.length < 3 ? ' Make sure it is at least 3 characters long.' : ''
-    }`;
-  }, [username]);
-  const notValidFirstNameLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${firstname}는 유효한 이름이 아닙니다. 영문자로 입력해 주세요`;
-    }
-    return `${firstname} is not a valid first name. Your first name should consist of english letters only`;
-  }, [firstname]);
-  const notValidLastNameLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${lastname}는 유효한 성이 아닙니다. 영문자로 입력해 주세요`;
-    }
-    return `${lastname} is not a valid last name. Your last name should consist of english letters only`;
-  }, [lastname]);
-  const notValidEmailLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${email}는 유효한 이메일 주소가 아닙니다`;
-    }
-    return `${email} is not a valid email address`;
-  }, [email]);
 
   const isOtherErrorMessage = useMemo(() => {
     const validTypes = [
@@ -148,94 +83,20 @@ export default function SignUpForm({
             }
           `}
         >
-          <section>
-            <label>{usernameLabel}</label>
-            <Input
-              value={username}
-              hasError={
-                errorMessage === 'username' || errorMessage === 'alreadyExists'
-              }
-              placeholder={enterTheUsernameYouWishToUseLabel}
-              onChange={(text) => {
-                setErrorMessage('');
-                onSetUsername(text.trim());
-              }}
-              onKeyPress={(event: any) => {
-                if (event.key === 'Enter' && !submitDisabled) {
-                  onSubmit();
-                }
-              }}
-            />
-            {errorMessage === 'alreadyExists' && (
-              <p style={{ color: 'red' }}>{usernameAlreadyExistsLabel}</p>
-            )}
-            {errorMessage === 'username' && (
-              <p style={{ color: 'red' }}>{usernameErrorMsgLabel}</p>
-            )}
-          </section>
-          <section>
-            <label>{passwordLabel}</label>
-            <Input
-              value={password}
-              hasError={errorMessage === 'password'}
-              placeholder={setUpPasswordLabel}
-              onChange={(text) => {
-                setErrorMessage('');
-                setPassword(text.trim());
-              }}
-              onKeyPress={(event: any) => {
-                if (event.key === 'Enter' && !submitDisabled) {
-                  onSubmit();
-                }
-              }}
-              type="password"
-            />
-            {errorMessage === 'password' && (
-              <p style={{ color: 'red' }}>{passwordsNeedToBeAtLeastLabel}</p>
-            )}
-          </section>
-          <section>
-            <label>{firstNameLabel}</label>
-            <Input
-              maxLength={30}
-              hasError={errorMessage === 'firstname'}
-              value={firstname}
-              placeholder={whatIsYourFirstNameLabel}
-              onChange={(text) => {
-                setErrorMessage('');
-                setFirstname(text.trim());
-              }}
-              onKeyPress={(event: any) => {
-                if (event.key === 'Enter' && !submitDisabled) {
-                  onSubmit();
-                }
-              }}
-            />
-            {errorMessage === 'firstname' && (
-              <p style={{ color: 'red' }}>{notValidFirstNameLabel}</p>
-            )}
-          </section>
-          <section>
-            <label>{lastNameLabel}</label>
-            <Input
-              maxLength={30}
-              hasError={errorMessage === 'lastname'}
-              value={lastname}
-              placeholder={whatIsYourLastNameLabel}
-              onChange={(text) => {
-                setErrorMessage('');
-                setLastname(text.trim());
-              }}
-              onKeyPress={(event: any) => {
-                if (event.key === 'Enter' && !submitDisabled) {
-                  onSubmit();
-                }
-              }}
-            />
-            {errorMessage === 'lastname' && (
-              <p style={{ color: 'red' }}>{notValidLastNameLabel}</p>
-            )}
-          </section>
+          <UsernamePassword
+            errorMessage={errorMessage}
+            username={username}
+            onSetUsername={onSetUsername}
+            onSetErrorMessage={setErrorMessage}
+            submitDisabled={submitDisabled}
+            onSubmit={onSubmit}
+          />
+          <NameAndEmail
+            errorMessage={errorMessage}
+            onSetErrorMessage={setErrorMessage}
+            submitDisabled={submitDisabled}
+            onSubmit={onSubmit}
+          />
           <section>
             <label>{passphraseLabel}</label>
             <Input
@@ -254,27 +115,6 @@ export default function SignUpForm({
             />
             {errorMessage === 'keyphrase' && (
               <p style={{ color: 'red' }}>{passphraseErrorMsgLabel}</p>
-            )}
-          </section>
-          <section style={{ marginTop: '2rem' }}>
-            <label>{emailYoursOrYourParentsLabel}</label>
-            <Input
-              value={email}
-              hasError={errorMessage === 'email'}
-              placeholder={emailIsNeededInCaseLabel}
-              onChange={(text) => {
-                setErrorMessage('');
-                setEmail(text);
-              }}
-              onKeyPress={(event: any) => {
-                if (event.key === 'Enter' && !submitDisabled) {
-                  onSubmit();
-                }
-              }}
-              type="email"
-            />
-            {errorMessage === 'email' && (
-              <p style={{ color: 'red' }}>{notValidEmailLabel}</p>
             )}
           </section>
         </div>
@@ -307,28 +147,12 @@ export default function SignUpForm({
     if (!isValidUsername(username)) {
       return setErrorMessage('username');
     }
-    if (!isValidPassword(password)) {
-      return setErrorMessage('password');
-    }
-    if (!isValidRealname(firstname)) {
-      return setErrorMessage('firstname');
-    }
-    if (!isValidRealname(lastname)) {
-      return setErrorMessage('lastname');
-    }
-    if (email && !isValidEmailAddress(email)) {
-      return setErrorMessage('email');
-    }
 
     try {
       setSigningUp(true);
       const data = await signup({
         username,
-        password,
-        firstname,
-        keyphrase,
-        lastname,
-        email
+        keyphrase
       });
       onSignup(data);
       onSetUserState({ userId: data.id, newState: data });
@@ -338,16 +162,4 @@ export default function SignUpForm({
       setSigningUp(false);
     }
   }
-}
-
-function isValidEmailAddress(email: string) {
-  const regex =
-    '^(([^<>()\\[\\]\\\\.,;:\\s@"]+(\\.[^<>()\\[\\]\\.,;:\\s@"]+)*)|(".+"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$';
-  const pattern = new RegExp(regex);
-  return pattern.test(email);
-}
-
-function isValidRealname(realName: string) {
-  const pattern = new RegExp(/^[a-zA-Z]+$/);
-  return pattern.test(realName);
 }
