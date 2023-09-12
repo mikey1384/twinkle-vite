@@ -12,12 +12,10 @@ const enterTheUsernameYouWishToUseLabel = localize(
 const setUpPasswordLabel = localize('setUpPassword');
 
 export default function UsernamePassword({
-  submitDisabled,
   username,
   onSetUsername,
   onSubmit
 }: {
-  submitDisabled?: boolean;
   username: string;
   onSetUsername: (username: string) => void;
   onSubmit: () => void;
@@ -56,7 +54,7 @@ export default function UsernamePassword({
             onSetUsername(text.trim());
           }}
           onKeyPress={(event: any) => {
-            if (event.key === 'Enter' && !submitDisabled) {
+            if (event.key === 'Enter') {
               onSubmit();
             }
           }}
@@ -79,7 +77,7 @@ export default function UsernamePassword({
             setPassword(text.trim());
           }}
           onKeyPress={(event: any) => {
-            if (event.key === 'Enter' && !submitDisabled) {
+            if (event.key === 'Enter') {
               onSubmit();
             }
           }}
