@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import localize from '~/constants/localize';
+import Button from '~/components/Button';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 const passwordLabel = localize('password');
@@ -12,21 +13,17 @@ const enterTheUsernameYouWishToUseLabel = localize(
 const setUpPasswordLabel = localize('setUpPassword');
 
 export default function UsernamePassword({
-  errorMessage,
-  username,
-  onSetUsername,
-  onSetErrorMessage,
   submitDisabled,
-  onSubmit
+  onSubmit,
+  onSetDisplayedPage
 }: {
-  errorMessage: string;
-  username: string;
-  onSetUsername: (username: string) => void;
-  onSetErrorMessage: (errorMessage: string) => void;
-  submitDisabled: boolean;
+  submitDisabled?: boolean;
   onSubmit: () => void;
+  onSetDisplayedPage: (page: string) => void;
 }) {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const usernameAlreadyExistsLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return '이미 사용중인 아이디입니다.';
@@ -55,8 +52,8 @@ export default function UsernamePassword({
           }
           placeholder={enterTheUsernameYouWishToUseLabel}
           onChange={(text) => {
-            onSetErrorMessage('');
-            onSetUsername(text.trim());
+            setErrorMessage('');
+            setUsername(text.trim());
           }}
           onKeyPress={(event: any) => {
             if (event.key === 'Enter' && !submitDisabled) {
@@ -78,7 +75,7 @@ export default function UsernamePassword({
           hasError={errorMessage === 'password'}
           placeholder={setUpPasswordLabel}
           onChange={(text) => {
-            onSetErrorMessage('');
+            setErrorMessage('');
             setPassword(text.trim());
           }}
           onKeyPress={(event: any) => {
@@ -92,6 +89,9 @@ export default function UsernamePassword({
           <p style={{ color: 'red' }}>{passwordsNeedToBeAtLeastLabel}</p>
         )}
       </section>
+      <Button color="logoBlue" onClick={onSetDisplayedPage}>
+        Next
+      </Button>
     </div>
   );
 }
