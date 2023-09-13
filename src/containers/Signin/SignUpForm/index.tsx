@@ -62,10 +62,7 @@ export default function SignUpForm({
         <div
           className={css`
             width: 100%;
-            padding: 3rem 1.5rem 1.5rem 1.5rem;
-            section {
-              margin-top: 1rem;
-            }
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
             section:first-of-type {
               margin-top: 0;
             }

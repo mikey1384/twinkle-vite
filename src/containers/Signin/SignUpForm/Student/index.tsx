@@ -1,12 +1,22 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Username from './Username';
 import Password from './Password';
 import NameAndEmail from './NameAndEmail';
 import SecretPassPhrase from './SecretPassPhrase';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import { mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 
 const pages = ['username', 'password', 'email', 'passphrase'];
+const titles: {
+  [key: string]: string;
+} = {
+  username: 'What is your username going to be?',
+  password: 'Set a password',
+  email: 'What is your email?',
+  passphrase: `Answer this question to prove you're a Twinkle student`
+};
 
 export default function StudentForm({
   username,
@@ -18,8 +28,24 @@ export default function StudentForm({
   onSetUsername: (username: string) => void;
 }) {
   const [displayedPage, setDisplayedPage] = useState('username');
+  const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
   return (
     <div>
+      <div
+        className={css`
+          text-align: center;
+          font-family: 'Roboto', sans-serif;
+          font-size: 2.5rem;
+          margin-bottom: 20px;
+          color: #333333;
+          font-weight: 500;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 2rem;
+          }
+        `}
+      >
+        {displayedTitle}
+      </div>
       {displayedPage === 'username' && (
         <Username
           username={username}
