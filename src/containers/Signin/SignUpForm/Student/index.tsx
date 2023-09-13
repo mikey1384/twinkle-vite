@@ -14,7 +14,7 @@ const titles: {
 } = {
   username: 'What is your username going to be?',
   password: 'Set a password',
-  email: 'What is your email?',
+  email: 'What is your name and your email?',
   passphrase: `Answer this question to prove you're a Twinkle student`
 };
 

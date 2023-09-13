@@ -1011,7 +1011,7 @@ const languageObj: {
     kr: '통과'
   },
   passphrase: {
-    en: "Who is the Big Bad Wolf's brother?",
+    en: "Who is Big Bad Wolf's brother?",
     kr: 'Big Bad Wolf의 형의 이름은 무엇인가요?'
   },
   passphraseErrorMsg: {
