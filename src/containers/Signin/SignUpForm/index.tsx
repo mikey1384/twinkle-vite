@@ -81,7 +81,11 @@ export default function SignUpForm({
             <StudentOrTeacher onSelect={setDisplayedPage} />
           )}
           {displayedPage === 'student' && (
-            <Student username={username} onSetUsername={onSetUsername} />
+            <Student
+              username={username}
+              onSetUsername={onSetUsername}
+              onBackToSelection={() => setDisplayedPage('userType')}
+            />
           )}
           {displayedPage === 'teacher' && (
             <Teacher onSetUsername={onSetUsername} />
