@@ -75,7 +75,7 @@ export default function UsernamePassword({
           <p style={{ color: 'red' }}>{notValidFirstNameLabel}</p>
         )}
       </section>
-      <section>
+      <section style={{ marginTop: '1rem' }}>
         <label>{lastNameLabel}</label>
         <Input
           maxLength={30}
