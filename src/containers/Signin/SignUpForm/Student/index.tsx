@@ -3,6 +3,7 @@ import UsernamePassword from './UsernamePassword';
 import NameAndEmail from './NameAndEmail';
 import SecretPassPhrase from './SecretPassPhrase';
 import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 
 const pages = ['username', 'email', 'passphrase'];
 
@@ -31,13 +32,19 @@ export default function StudentForm({
       )}
       <div
         style={{
-          marginTop: '2rem',
+          marginTop: '3rem',
+          width: '100%',
           display: 'flex',
-          justifyContent: 'flex-end'
+          justifyContent: 'space-between'
         }}
       >
+        <Button filled color="redOrange" onClick={() => console.log('back')}>
+          <Icon icon="chevron-left" />
+          <span style={{ marginLeft: '0.7rem' }}>Back</span>
+        </Button>
         <Button filled color="logoBlue" onClick={handleSetDisplayedPage}>
-          Next
+          <span style={{ marginRight: '0.7rem' }}>Next</span>
+          <Icon icon="chevron-right" />
         </Button>
       </div>
     </div>
