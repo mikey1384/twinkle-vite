@@ -3,13 +3,10 @@ import Input from '~/components/Texts/Input';
 import localize from '~/constants/localize';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
-const passwordLabel = localize('password');
-const passwordsNeedToBeAtLeastLabel = localize('passwordsNeedToBeAtLeast');
 const usernameLabel = localize('username');
 const enterTheUsernameYouWishToUseLabel = localize(
   'enterTheUsernameYouWishToUse'
 );
-const setUpPasswordLabel = localize('setUpPassword');
 
 export default function Username({
   username,
@@ -20,7 +17,6 @@ export default function Username({
   onSetUsername: (username: string) => void;
   onSubmit: () => void;
 }) {
-  const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const usernameAlreadyExistsLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
@@ -64,27 +60,6 @@ export default function Username({
         )}
         {errorMessage === 'username' && (
           <p style={{ color: 'red' }}>{usernameErrorMsgLabel}</p>
-        )}
-      </section>
-      <section>
-        <label>{passwordLabel}</label>
-        <Input
-          value={password}
-          hasError={errorMessage === 'password'}
-          placeholder={setUpPasswordLabel}
-          onChange={(text) => {
-            setErrorMessage('');
-            setPassword(text.trim());
-          }}
-          onKeyPress={(event: any) => {
-            if (event.key === 'Enter') {
-              onSubmit();
-            }
-          }}
-          type="password"
-        />
-        {errorMessage === 'password' && (
-          <p style={{ color: 'red' }}>{passwordsNeedToBeAtLeastLabel}</p>
         )}
       </section>
     </div>
