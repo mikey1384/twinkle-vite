@@ -6,13 +6,7 @@ const passwordLabel = localize('password');
 const passwordsNeedToBeAtLeastLabel = localize('passwordsNeedToBeAtLeast');
 const setUpPasswordLabel = localize('setUpPassword');
 
-export default function Password({
-  onSubmit
-}: {
-  username: string;
-  onSetUsername: (username: string) => void;
-  onSubmit: () => void;
-}) {
+export default function Password({ onSubmit }: { onSubmit: () => void }) {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
