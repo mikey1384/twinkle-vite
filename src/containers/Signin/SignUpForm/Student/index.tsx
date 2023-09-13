@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import UsernamePassword from './UsernamePassword';
+import Username from './Username';
 import NameAndEmail from './NameAndEmail';
 import SecretPassPhrase from './SecretPassPhrase';
 import Button from '~/components/Button';
@@ -20,7 +20,7 @@ export default function StudentForm({
   return (
     <div>
       {displayedPage === 'username' && (
-        <UsernamePassword
+        <Username
           username={username}
           onSetUsername={onSetUsername}
           onSubmit={() => console.log('submitting')}
