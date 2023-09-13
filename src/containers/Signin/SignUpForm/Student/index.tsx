@@ -5,7 +5,7 @@ import SecretPassPhrase from './SecretPassPhrase';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 
-const pages = ['username', 'email', 'passphrase'];
+const pages = ['username', 'password', 'email', 'passphrase'];
 
 export default function StudentForm({
   username,
