@@ -75,16 +75,18 @@ export default function StudentForm({
             <Icon icon="chevron-left" />
             <span style={{ marginLeft: '0.7rem' }}>Back</span>
           </Button>
-          <a
-            style={{
-              display: 'inline-block',
-              cursor: 'pointer',
-              fontSize: '1.2rem',
-              marginTop: '0.7rem',
-              fontWeight: 'bold'
-            }}
-            onClick={onBackToSelection}
-          >{`Actually, I'm not a student`}</a>
+          {displayedPage !== pages[0] && (
+            <a
+              style={{
+                display: 'inline-block',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                marginTop: '0.7rem',
+                fontWeight: 'bold'
+              }}
+              onClick={onBackToSelection}
+            >{`Actually, I'm not a student`}</a>
+          )}
         </div>
         <div>
           <Button filled color="logoBlue" onClick={handleNext}>
