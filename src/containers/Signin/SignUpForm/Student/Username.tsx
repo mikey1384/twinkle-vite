@@ -1,12 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Input from '~/components/Texts/Input';
-import localize from '~/constants/localize';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-
-const usernameLabel = localize('username');
-const enterTheUsernameYouWishToUseLabel = localize(
-  'enterTheUsernameYouWishToUse'
-);
 
 export default function Username({
   username,
@@ -37,30 +31,35 @@ export default function Username({
 
   return (
     <div>
-      <section>
-        <label>{usernameLabel}</label>
-        <Input
-          value={username}
-          hasError={
-            errorMessage === 'username' || errorMessage === 'alreadyExists'
-          }
-          placeholder={enterTheUsernameYouWishToUseLabel}
-          onChange={(text) => {
-            setErrorMessage('');
-            onSetUsername(text.trim());
-          }}
-          onKeyPress={(event: any) => {
-            if (event.key === 'Enter') {
-              onSubmit();
+      <section style={{ display: 'flex', justifyContent: 'center' }}>
+        <div>
+          <div>
+            <label>Enter your username</label>
+          </div>
+          <Input
+            value={username}
+            style={{ width: 'auto' }}
+            hasError={
+              errorMessage === 'username' || errorMessage === 'alreadyExists'
             }
-          }}
-        />
-        {errorMessage === 'alreadyExists' && (
-          <p style={{ color: 'red' }}>{usernameAlreadyExistsLabel}</p>
-        )}
-        {errorMessage === 'username' && (
-          <p style={{ color: 'red' }}>{usernameErrorMsgLabel}</p>
-        )}
+            placeholder="Username..."
+            onChange={(text) => {
+              setErrorMessage('');
+              onSetUsername(text.trim());
+            }}
+            onKeyPress={(event: any) => {
+              if (event.key === 'Enter') {
+                onSubmit();
+              }
+            }}
+          />
+          {errorMessage === 'alreadyExists' && (
+            <p style={{ color: 'red' }}>{usernameAlreadyExistsLabel}</p>
+          )}
+          {errorMessage === 'username' && (
+            <p style={{ color: 'red' }}>{usernameErrorMsgLabel}</p>
+          )}
+        </div>
       </section>
     </div>
   );
