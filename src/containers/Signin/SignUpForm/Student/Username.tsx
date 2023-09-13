@@ -11,7 +11,7 @@ const enterTheUsernameYouWishToUseLabel = localize(
 );
 const setUpPasswordLabel = localize('setUpPassword');
 
-export default function UsernamePassword({
+export default function Username({
   username,
   onSetUsername,
   onSubmit
