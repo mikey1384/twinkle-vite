@@ -9,9 +9,11 @@ const pages = ['username', 'email', 'passphrase'];
 
 export default function StudentForm({
   username,
+  onBackToSelection,
   onSetUsername
 }: {
   username: string;
+  onBackToSelection: () => void;
   onSetUsername: (username: string) => void;
 }) {
   const [displayedPage, setDisplayedPage] = useState('username');
@@ -38,11 +40,11 @@ export default function StudentForm({
           justifyContent: 'space-between'
         }}
       >
-        <Button filled color="redOrange" onClick={() => console.log('back')}>
+        <Button filled color="redOrange" onClick={handlePrevious}>
           <Icon icon="chevron-left" />
           <span style={{ marginLeft: '0.7rem' }}>Back</span>
         </Button>
-        <Button filled color="logoBlue" onClick={handleSetDisplayedPage}>
+        <Button filled color="logoBlue" onClick={handleNext}>
           <span style={{ marginRight: '0.7rem' }}>Next</span>
           <Icon icon="chevron-right" />
         </Button>
@@ -50,7 +52,16 @@ export default function StudentForm({
     </div>
   );
 
-  function handleSetDisplayedPage() {
+  function handlePrevious() {
+    const index = pages.indexOf(displayedPage);
+    console.log(index);
+    if (index > 0) {
+      return setDisplayedPage(pages[index - 1]);
+    }
+    onBackToSelection();
+  }
+
+  function handleNext() {
     const index = pages.indexOf(displayedPage);
     if (index < pages.length - 1) {
       setDisplayedPage(pages[index + 1]);

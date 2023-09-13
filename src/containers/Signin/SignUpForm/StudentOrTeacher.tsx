@@ -1,5 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 
 export default function StudentOrTeacher({
   onSelect
@@ -18,10 +19,13 @@ export default function StudentOrTeacher({
     >
       <div
         className={css`
-          font-size: 32px;
+          font-size: 3rem;
           margin-bottom: 20px;
           color: #333333;
           font-weight: 500;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 2.5rem;
+          }
         `}
       >
         Are you a student or a teacher?
@@ -34,8 +38,8 @@ export default function StudentOrTeacher({
             border: none;
             padding: 12px 24px;
             margin: 10px;
-            font-size: 18px;
-            border-radius: 5px;
+            font-size: 2rem;
+            border-radius: ${borderRadius};
             cursor: pointer;
             transition: background-color 0.3s ease;
             font-family: 'Roboto', sans-serif;
@@ -43,6 +47,9 @@ export default function StudentOrTeacher({
 
             &:hover {
               background-color: #0066bb;
+            }
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.5rem;
             }
           `}
           onClick={() => onSelect('student')}
@@ -56,8 +63,8 @@ export default function StudentOrTeacher({
             border: none;
             padding: 12px 24px;
             margin: 10px;
-            font-size: 18px;
-            border-radius: 5px;
+            font-size: 2rem;
+            border-radius: ${borderRadius};
             cursor: pointer;
             transition: background-color 0.3s ease;
             font-family: 'Roboto', sans-serif;
@@ -65,6 +72,10 @@ export default function StudentOrTeacher({
 
             &:hover {
               background-color: #cc6044;
+            }
+
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.5rem;
             }
           `}
           onClick={() => onSelect('teacher')}
