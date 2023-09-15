@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import { isValidUsername, stringIsEmpty } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useAppContext } from '~/contexts';
+import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
 
 const usernameAlreadyTakenLabel = localize('usernameAlreadyTaken');
@@ -105,7 +106,11 @@ export default function Username({
             }}
           />
           {loading && (
-            <Icon style={{ marginLeft: '1rem' }} icon="spinner" pulse />
+            <Icon
+              style={{ marginLeft: '1rem', color: Color.logoBlue() }}
+              icon="spinner"
+              pulse
+            />
           )}
           {errorMessage === 'alreadyExists' && (
             <p style={{ color: 'red' }}>{usernameAlreadyExistsLabel}</p>
