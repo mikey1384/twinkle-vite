@@ -4,15 +4,19 @@ import { isValidPassword, stringIsEmpty } from '~/helpers/stringHelpers';
 
 export default function Password() {
   const [password, setPassword] = useState('');
+  const [reenteredPassword, setReenteredPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showReenterField, setShowReenterField] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!stringIsEmpty(password)) {
         if (!isValidPassword(password)) {
           setErrorMessage('Passwords need to be at least 5 characters long');
+          setShowReenterField(false);
         } else {
           setErrorMessage('');
+          setShowReenterField(true);
         }
       }
     }, 500);
@@ -46,6 +50,21 @@ export default function Password() {
           )}
           {errorMessage && (
             <p style={{ marginTop: '1rem', color: 'red' }}>{errorMessage}</p>
+          )}
+
+          {showReenterField && (
+            <div style={{ marginTop: '1rem' }}>
+              <div>
+                <label>Re-enter Password</label>
+              </div>
+              <Input
+                value={reenteredPassword}
+                style={{ width: 'auto', marginTop: '0.5rem' }}
+                placeholder="Reenter password..."
+                onChange={(text) => setReenteredPassword(text.trim())}
+                type="password"
+              />
+            </div>
           )}
         </div>
       </section>
