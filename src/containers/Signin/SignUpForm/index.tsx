@@ -41,8 +41,9 @@ export default function SignUpForm({
   const submitDisabled = useMemo(
     () =>
       !!signingUp ||
-      (displayedPage === 'student' && isStudentFormComplete) ||
-      (displayedPage === 'teacher' && isTeacherFormComplete) ||
+      displayedPage === 'userType' ||
+      (displayedPage === 'student' && !isStudentFormComplete) ||
+      (displayedPage === 'teacher' && !isTeacherFormComplete) ||
       !!errorMessage,
     [
       displayedPage,
