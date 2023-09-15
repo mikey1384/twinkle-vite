@@ -15,7 +15,7 @@ export default function Password({ onSubmit }: { onSubmit: () => void }) {
           <Input
             autoFocus
             value={password}
-            style={{ width: 'auto' }}
+            style={{ width: 'auto', marginTop: '0.5rem' }}
             hasError={errorMessage === 'password'}
             placeholder="Password..."
             onChange={(text) => {
