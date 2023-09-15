@@ -14,14 +14,12 @@ export default function Username({
   username,
   isUsernameAvailable,
   onSetUsername,
-  onSetIsUsernameAvailable,
-  onSubmit
+  onSetIsUsernameAvailable
 }: {
   isUsernameAvailable: boolean;
   username: string;
   onSetUsername: (username: string) => void;
   onSetIsUsernameAvailable: (value: boolean) => void;
-  onSubmit: () => void;
 }) {
   const checkIfUsernameExists = useAppContext(
     (v) => v.requestHelpers.checkIfUsernameExists
@@ -81,11 +79,6 @@ export default function Username({
             onChange={(text) => {
               setErrorMessage('');
               onSetUsername(text.trim());
-            }}
-            onKeyPress={(event: any) => {
-              if (event.key === 'Enter') {
-                onSubmit();
-              }
             }}
           />
           {isUsernameAvailable && (
