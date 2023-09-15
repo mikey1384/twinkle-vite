@@ -56,7 +56,7 @@ export default function StudentForm({
         <Username
           username={username}
           isUsernameAvailable={isUsernameAvailable}
-          onSetIsUsernameAvailable={(value) => setIsUsernameAvailable(value)}
+          onSetIsUsernameAvailable={setIsUsernameAvailable}
           onSetUsername={(username) => {
             onSetUsername(username);
             setIsUsernameValid(true);
