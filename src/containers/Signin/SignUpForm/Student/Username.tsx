@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import { isValidUsername, stringIsEmpty } from '~/helpers/stringHelpers';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
@@ -31,23 +30,6 @@ export default function Username({
   const [loading, setLoading] = useState(false);
   const timerRef: React.MutableRefObject<any> = useRef(null);
 
-  const usernameAlreadyExistsLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return '이미 사용중인 아이디입니다.';
-    }
-    return 'This username is already taken.';
-  }, []);
-  const usernameErrorMsgLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `"${username}" - 유효하지 않은 아이디입니다.${
-        username.length < 3 ? ' 아이디는 3글자 이상이어야 합니다.' : ''
-      }`;
-    }
-    return `${username} is not a valid username.${
-      username.length < 3 ? ' Make sure it is at least 3 characters long.' : ''
-    }`;
-  }, [username]);
-
   useEffect(() => {
     setLoading(false);
     onSetIsUsernameAvailable(false);
@@ -69,7 +51,6 @@ export default function Username({
         setLoading(false);
       } else {
         const exists = await checkIfUsernameExists(username);
-        console.log(exists, '1');
         if (exists) {
           setErrorMessage(usernameAlreadyTakenLabel);
         } else {
@@ -131,11 +112,8 @@ export default function Username({
               pulse
             />
           )}
-          {errorMessage === 'alreadyExists' && (
-            <p style={{ color: 'red' }}>{usernameAlreadyExistsLabel}</p>
-          )}
-          {errorMessage === 'username' && (
-            <p style={{ color: 'red' }}>{usernameErrorMsgLabel}</p>
+          {errorMessage && (
+            <p style={{ color: 'red', marginTop: '0.5rem' }}>{errorMessage}</p>
           )}
         </div>
       </section>
