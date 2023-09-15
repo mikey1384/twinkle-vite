@@ -25,6 +25,19 @@ export default function Password() {
     return () => clearTimeout(timer);
   }, [password]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setErrorMessage('');
+      if (showReenterField && !stringIsEmpty(reenteredPassword)) {
+        if (password !== reenteredPassword) {
+          setErrorMessage('Passwords do not match');
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [showReenterField, password, reenteredPassword]);
+
   return (
     <div>
       <section style={{ display: 'flex', justifyContent: 'center' }}>
@@ -44,15 +57,6 @@ export default function Password() {
             }}
             type="password"
           />
-          {!errorMessage && (
-            <p style={{ marginTop: '1rem', fontSize: '1.3rem' }}>
-              You MUST remember your password. Write it down somewhere!
-            </p>
-          )}
-          {errorMessage && (
-            <p style={{ marginTop: '1rem', color: 'red' }}>{errorMessage}</p>
-          )}
-
           {showReenterField && (
             <div style={{ marginTop: '1rem' }}>
               <div>
@@ -61,11 +65,20 @@ export default function Password() {
               <Input
                 value={reenteredPassword}
                 style={{ width: 'auto', marginTop: '0.5rem' }}
+                hasError={!!errorMessage}
                 placeholder="Reenter password..."
                 onChange={(text) => setReenteredPassword(text.trim())}
                 type="password"
               />
             </div>
+          )}
+          {!errorMessage && (
+            <p style={{ marginTop: '1rem', fontSize: '1.3rem' }}>
+              You MUST remember your password. Write it down somewhere!
+            </p>
+          )}
+          {errorMessage && (
+            <p style={{ marginTop: '1rem', color: 'red' }}>{errorMessage}</p>
           )}
         </div>
       </section>
