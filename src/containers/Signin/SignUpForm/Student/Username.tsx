@@ -13,6 +13,7 @@ const makeSure3CharLongLabel = localize('makeSure3CharLong');
 
 export default function Username({
   username,
+  isUsernameAvailable,
   onSetUsername,
   onSetIsUsernameAvailable,
   onSubmit
@@ -106,6 +107,23 @@ export default function Username({
               }
             }}
           />
+          {isUsernameAvailable && (
+            <div style={{ display: 'inline-block' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Icon
+                  style={{ marginLeft: '1rem', color: Color.green() }}
+                  icon="check-circle"
+                />
+                <span style={{ marginLeft: '0.7rem' }}>available!</span>
+              </div>
+            </div>
+          )}
           {loading && (
             <Icon
               style={{ marginLeft: '1rem', color: Color.logoBlue() }}
