@@ -28,6 +28,7 @@ export default function StudentForm({
   onSetUsername: (username: string) => void;
 }) {
   const [displayedPage, setDisplayedPage] = useState('username');
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
   const [isUsernameValid, setIsUsernameValid] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const [isPassPhraseValid, setIsPassPhraseValid] = useState(false);
@@ -54,6 +55,8 @@ export default function StudentForm({
       {displayedPage === 'username' && (
         <Username
           username={username}
+          isUsernameAvailable={isUsernameAvailable}
+          onSetIsUsernameAvailable={(value) => setIsUsernameAvailable(value)}
           onSetUsername={(username) => {
             onSetUsername(username);
             setIsUsernameValid(true);
