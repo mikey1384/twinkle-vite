@@ -21,11 +21,13 @@ const titles: {
 export default function StudentForm({
   username,
   onBackToSelection,
-  onSetUsername
+  onSetUsername,
+  onSetIsFormComplete
 }: {
   username: string;
   onBackToSelection: () => void;
   onSetUsername: (username: string) => void;
+  onSetIsFormComplete: (value: boolean) => void;
 }) {
   const [displayedPage, setDisplayedPage] = useState('username');
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
@@ -85,6 +87,7 @@ export default function StudentForm({
           onSubmit={() => {
             console.log('submitting');
             setIsPassPhraseValid(true);
+            onSetIsFormComplete(true);
           }}
         />
       )}

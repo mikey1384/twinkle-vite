@@ -7,7 +7,7 @@ import Student from './Student';
 import Teacher from './Teacher';
 import StudentOrTeacher from './StudentOrTeacher';
 import { css } from '@emotion/css';
-import { isValidUsername, stringIsEmpty } from '~/helpers/stringHelpers';
+import { isValidUsername } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
 import localize from '~/constants/localize';
 
@@ -36,9 +36,21 @@ export default function SignUpForm({
   const [signingUp, setSigningUp] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [displayedPage, setDisplayedPage] = useState('userType');
+  const [isStudentFormComplete, setIsStudentFormComplete] = useState(false);
+  const [isTeacherFormComplete, setIsTeacherFormComplete] = useState(false);
   const submitDisabled = useMemo(
-    () => !!signingUp || !!stringIsEmpty(username) || !!errorMessage,
-    [errorMessage, signingUp, username]
+    () =>
+      !!signingUp ||
+      (displayedPage === 'student' && isStudentFormComplete) ||
+      (displayedPage === 'teacher' && isTeacherFormComplete) ||
+      !!errorMessage,
+    [
+      displayedPage,
+      errorMessage,
+      isStudentFormComplete,
+      isTeacherFormComplete,
+      signingUp
+    ]
   );
 
   const isOtherErrorMessage = useMemo(() => {
@@ -82,10 +94,14 @@ export default function SignUpForm({
               username={username}
               onSetUsername={onSetUsername}
               onBackToSelection={() => setDisplayedPage('userType')}
+              onSetIsFormComplete={setIsStudentFormComplete}
             />
           )}
           {displayedPage === 'teacher' && (
-            <Teacher onSetUsername={onSetUsername} />
+            <Teacher
+              onSetUsername={onSetUsername}
+              onSetIsTeacherFormComplete={setIsTeacherFormComplete}
+            />
           )}
         </div>
       </main>
