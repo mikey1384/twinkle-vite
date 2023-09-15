@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Input from '~/components/Texts/Input';
+import Icon from '~/components/Icon';
 import { isValidUsername, stringIsEmpty } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useAppContext } from '~/contexts';
@@ -10,7 +11,6 @@ const isNotValidUsernameLabel = localize('isNotValidUsername');
 const makeSure3CharLongLabel = localize('makeSure3CharLong');
 
 export default function Username({
-  isUsernameAvailable,
   username,
   onSetUsername,
   onSetIsUsernameAvailable,
@@ -104,6 +104,9 @@ export default function Username({
               }
             }}
           />
+          {loading && (
+            <Icon style={{ marginLeft: '1rem' }} icon="spinner" pulse />
+          )}
           {errorMessage === 'alreadyExists' && (
             <p style={{ color: 'red' }}>{usernameAlreadyExistsLabel}</p>
           )}
