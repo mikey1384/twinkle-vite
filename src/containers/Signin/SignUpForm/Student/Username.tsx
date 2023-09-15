@@ -68,6 +68,7 @@ export default function Username({
         setLoading(false);
       } else {
         const exists = await checkIfUsernameExists(username);
+        console.log(exists, '1');
         if (exists) {
           setErrorMessage(usernameAlreadyTakenLabel);
         } else {
