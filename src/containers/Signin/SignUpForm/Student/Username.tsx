@@ -39,6 +39,7 @@ export default function Username({
           <Input
             value={username}
             style={{ width: 'auto' }}
+            autoFocus
             hasError={
               errorMessage === 'username' || errorMessage === 'alreadyExists'
             }
