@@ -63,7 +63,13 @@ export default function Username({
 
   return (
     <div>
-      <section style={{ display: 'flex', justifyContent: 'center' }}>
+      <section
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          textAlign: 'center'
+        }}
+      >
         <div>
           <div>
             <label>Enter your username</label>
