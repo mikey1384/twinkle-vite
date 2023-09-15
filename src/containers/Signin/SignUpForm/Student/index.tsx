@@ -31,7 +31,6 @@ export default function StudentForm({
 }) {
   const [displayedPage, setDisplayedPage] = useState('username');
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
-  const [isUsernameValid, setIsUsernameValid] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const [isPassPhraseValid, setIsPassPhraseValid] = useState(false);
 
@@ -61,7 +60,6 @@ export default function StudentForm({
           onSetIsUsernameAvailable={setIsUsernameAvailable}
           onSetUsername={(username) => {
             onSetUsername(username);
-            setIsUsernameValid(true);
           }}
           onSubmit={() => console.log('submitting')}
         />
@@ -120,7 +118,7 @@ export default function StudentForm({
         <div>
           <Button
             disabled={
-              (!isUsernameValid && displayedPage === 'username') ||
+              (!isUsernameAvailable && displayedPage === 'username') ||
               (!isPasswordValid && displayedPage === 'password') ||
               (!isPassPhraseValid && displayedPage === 'passphrase')
             }
@@ -138,7 +136,6 @@ export default function StudentForm({
 
   function handlePrevious() {
     const index = pages.indexOf(displayedPage);
-    console.log(index);
     if (index > 0) {
       return setDisplayedPage(pages[index - 1]);
     }
