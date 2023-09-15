@@ -28,6 +28,10 @@ export default function StudentForm({
   onSetUsername: (username: string) => void;
 }) {
   const [displayedPage, setDisplayedPage] = useState('username');
+  const [isUsernameValid, setIsUsernameValid] = useState(false);
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [isPassPhraseValid, setIsPassPhraseValid] = useState(false);
+
   const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
 
   return (
@@ -50,18 +54,36 @@ export default function StudentForm({
       {displayedPage === 'username' && (
         <Username
           username={username}
-          onSetUsername={onSetUsername}
+          onSetUsername={(username) => {
+            onSetUsername(username);
+            setIsUsernameValid(true);
+          }}
           onSubmit={() => console.log('submitting')}
         />
       )}
       {displayedPage === 'password' && (
-        <Password onSubmit={() => console.log('submitting')} />
+        <Password
+          onSubmit={() => {
+            console.log('submitting');
+            setIsPasswordValid(true);
+          }}
+        />
       )}
       {displayedPage === 'email' && (
-        <NameAndEmail onSubmit={() => console.log('submitting')} />
+        <NameAndEmail
+          onSubmit={() => {
+            console.log('submitting');
+            setIsPasswordValid(true);
+          }}
+        />
       )}
       {displayedPage === 'passphrase' && (
-        <SecretPassPhrase onSubmit={() => console.log('submitting')} />
+        <SecretPassPhrase
+          onSubmit={() => {
+            console.log('submitting');
+            setIsPassPhraseValid(true);
+          }}
+        />
       )}
       <div
         style={{
@@ -72,7 +94,16 @@ export default function StudentForm({
         }}
       >
         <div>
-          <Button filled color="redOrange" onClick={handlePrevious}>
+          <Button
+            disabled={
+              (!isUsernameValid && displayedPage === 'username') ||
+              (!isPasswordValid && displayedPage === 'password') ||
+              (!isPassPhraseValid && displayedPage === 'passphrase')
+            }
+            filled
+            color="redOrange"
+            onClick={handlePrevious}
+          >
             <Icon icon="chevron-left" />
             <span style={{ marginLeft: '0.7rem' }}>Back</span>
           </Button>
