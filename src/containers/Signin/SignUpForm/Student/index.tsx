@@ -29,6 +29,7 @@ export default function StudentForm({
 }) {
   const [displayedPage, setDisplayedPage] = useState('username');
   const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
+
   return (
     <div>
       <div
