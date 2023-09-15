@@ -94,16 +94,7 @@ export default function StudentForm({
         }}
       >
         <div>
-          <Button
-            disabled={
-              (!isUsernameValid && displayedPage === 'username') ||
-              (!isPasswordValid && displayedPage === 'password') ||
-              (!isPassPhraseValid && displayedPage === 'passphrase')
-            }
-            filled
-            color="redOrange"
-            onClick={handlePrevious}
-          >
+          <Button filled color="redOrange" onClick={handlePrevious}>
             <Icon icon="chevron-left" />
             <span style={{ marginLeft: '0.7rem' }}>Back</span>
           </Button>
@@ -121,7 +112,16 @@ export default function StudentForm({
           )}
         </div>
         <div>
-          <Button filled color="logoBlue" onClick={handleNext}>
+          <Button
+            disabled={
+              (!isUsernameValid && displayedPage === 'username') ||
+              (!isPasswordValid && displayedPage === 'password') ||
+              (!isPassPhraseValid && displayedPage === 'passphrase')
+            }
+            filled
+            color="logoBlue"
+            onClick={handleNext}
+          >
             <span style={{ marginRight: '0.7rem' }}>Next</span>
             <Icon icon="chevron-right" />
           </Button>
