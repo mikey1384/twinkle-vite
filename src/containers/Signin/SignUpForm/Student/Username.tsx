@@ -78,9 +78,7 @@ export default function Username({
             value={username}
             style={{ width: 'auto' }}
             autoFocus
-            hasError={
-              errorMessage === 'username' || errorMessage === 'alreadyExists'
-            }
+            hasError={!!errorMessage}
             placeholder="Username..."
             onChange={(text) => {
               setErrorMessage('');
