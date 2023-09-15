@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Input from '~/components/Texts/Input';
 
-export default function Password({ onSubmit }: { onSubmit: () => void }) {
+export default function Password() {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -21,11 +21,6 @@ export default function Password({ onSubmit }: { onSubmit: () => void }) {
             onChange={(text) => {
               setErrorMessage('');
               setPassword(text.trim());
-            }}
-            onKeyPress={(event: any) => {
-              if (event.key === 'Enter') {
-                onSubmit();
-              }
             }}
             type="password"
           />

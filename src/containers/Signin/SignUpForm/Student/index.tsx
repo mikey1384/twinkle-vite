@@ -61,14 +61,7 @@ export default function StudentForm({
           onSetUsername={onSetUsername}
         />
       )}
-      {displayedPage === 'password' && (
-        <Password
-          onSubmit={() => {
-            console.log('submitting');
-            setIsPasswordValid(true);
-          }}
-        />
-      )}
+      {displayedPage === 'password' && <Password />}
       {displayedPage === 'email' && (
         <NameAndEmail
           onSubmit={() => {
