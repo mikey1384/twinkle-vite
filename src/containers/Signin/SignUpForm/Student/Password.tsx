@@ -1,9 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
+import { isValidPassword, stringIsEmpty } from '~/helpers/stringHelpers';
 
 export default function Password() {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!stringIsEmpty(password)) {
+        if (!isValidPassword(password)) {
+          setErrorMessage('Passwords need to be at least 5 characters long');
+        } else {
+          setErrorMessage('');
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [password]);
 
   return (
     <div>
@@ -16,7 +31,7 @@ export default function Password() {
             autoFocus
             value={password}
             style={{ width: 'auto', marginTop: '0.5rem' }}
-            hasError={errorMessage === 'password'}
+            hasError={!!errorMessage}
             placeholder="Password..."
             onChange={(text) => {
               setErrorMessage('');
@@ -24,13 +39,13 @@ export default function Password() {
             }}
             type="password"
           />
-          <p style={{ marginTop: '1rem', fontSize: '1.3rem' }}>
-            You MUST remember your password. Write it down somewhere!
-          </p>
-          {errorMessage === 'password' && (
-            <p style={{ color: 'red' }}>
-              Passwords need to be at least 5 characters long
+          {!errorMessage && (
+            <p style={{ marginTop: '1rem', fontSize: '1.3rem' }}>
+              You MUST remember your password. Write it down somewhere!
             </p>
+          )}
+          {errorMessage && (
+            <p style={{ marginTop: '1rem', color: 'red' }}>{errorMessage}</p>
           )}
         </div>
       </section>
