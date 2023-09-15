@@ -58,10 +58,7 @@ export default function StudentForm({
           username={username}
           isUsernameAvailable={isUsernameAvailable}
           onSetIsUsernameAvailable={setIsUsernameAvailable}
-          onSetUsername={(username) => {
-            onSetUsername(username);
-          }}
-          onSubmit={() => console.log('submitting')}
+          onSetUsername={onSetUsername}
         />
       )}
       {displayedPage === 'password' && (
