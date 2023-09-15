@@ -118,7 +118,7 @@ export default function ChangePasswordModal({
     <Modal closeWhenClickedOutside={false} small onHide={onHide}>
       <header>Change Your Password</header>
       <main>
-        <form
+        <div
           className={css`
             label {
               font-weight: bold;
@@ -223,7 +223,7 @@ export default function ChangePasswordModal({
               ) : null}
             </div>
           )}
-        </form>
+        </div>
       </main>
       <footer>
         <Button onClick={onHide} transparent>
