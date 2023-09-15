@@ -54,13 +54,12 @@ export default function ItemPanel({
           grid-template-areas:
             'title'
             'badge'
-            ${isUnlocked ? "'description'" : ''}
+            'description'
             'requirements'
             ${milestonesShown ? "'milestones'" : ''};
           border-radius: 0;
           border-right: 0;
           border-left: 0;
-          text-align: center;
         }
       `}
       style={style}
