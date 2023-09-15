@@ -10,6 +10,7 @@ export default function Password() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
+      setShowReenterField(false);
       if (!stringIsEmpty(password)) {
         if (!isValidPassword(password)) {
           setErrorMessage('Passwords need to be at least 5 characters long');
