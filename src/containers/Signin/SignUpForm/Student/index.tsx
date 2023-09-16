@@ -37,7 +37,7 @@ export default function StudentForm({
   const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
 
   useEffect(() => {
-    if (displayedPage === 'username') {
+    if (displayedPage === 'password') {
       setIsPasswordMatch(false);
     }
   }, [displayedPage]);
@@ -76,7 +76,6 @@ export default function StudentForm({
       {displayedPage === 'email' && (
         <NameAndEmail
           onSubmit={() => {
-            console.log('submitting');
             setIsPasswordMatch(true);
           }}
         />
@@ -84,7 +83,6 @@ export default function StudentForm({
       {displayedPage === 'passphrase' && (
         <SecretPassPhrase
           onSubmit={() => {
-            console.log('submitting');
             setIsPassPhraseValid(true);
             onSetIsFormComplete(true);
           }}
