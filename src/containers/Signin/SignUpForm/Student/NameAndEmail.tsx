@@ -10,29 +10,22 @@ const lastNameLabel = localize('lastName');
 const whatIsYourFirstNameLabel = localize('whatIsYourFirstName');
 const whatIsYourLastNameLabel = localize('whatIsYourLastName');
 
-/*
-function isValidEmailAddress(email: string) {
-  const regex =
-    '^(([^<>()\\[\\]\\\\.,;:\\s@"]+(\\.[^<>()\\[\\]\\.,;:\\s@"]+)*)|(".+"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$';
-  const pattern = new RegExp(regex);
-  return pattern.test(email);
-}
-
-function isValidRealname(realName: string) {
-  const pattern = new RegExp(/^[a-zA-Z]+$/);
-  return pattern.test(realName);
-}
-*/
-
 export default function UsernamePassword({
-  onSubmit
+  firstname,
+  lastname,
+  email,
+  onSetFirstname,
+  onSetLastname,
+  onSetEmail
 }: {
-  onSubmit: () => void;
+  firstname: string;
+  lastname: string;
+  email: string;
+  onSetFirstname: (value: string) => void;
+  onSetLastname: (value: string) => void;
+  onSetEmail: (value: string) => void;
 }) {
   const [errorMessage, setErrorMessage] = useState('');
-  const [firstname, setFirstname] = useState('');
-  const [lastname, setLastname] = useState('');
-  const [email, setEmail] = useState('');
   const notValidFirstNameLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
       return `${firstname}는 유효한 이름이 아닙니다. 영문자로 입력해 주세요`;
@@ -63,12 +56,7 @@ export default function UsernamePassword({
           placeholder={whatIsYourFirstNameLabel}
           onChange={(text) => {
             setErrorMessage('');
-            setFirstname(text.trim());
-          }}
-          onKeyPress={(event: any) => {
-            if (event.key === 'Enter') {
-              onSubmit();
-            }
+            onSetFirstname(text.trim());
           }}
         />
         {errorMessage === 'firstname' && (
@@ -84,12 +72,7 @@ export default function UsernamePassword({
           placeholder={whatIsYourLastNameLabel}
           onChange={(text) => {
             setErrorMessage('');
-            setLastname(text.trim());
-          }}
-          onKeyPress={(event: any) => {
-            if (event.key === 'Enter') {
-              onSubmit();
-            }
+            onSetLastname(text.trim());
           }}
         />
         {errorMessage === 'lastname' && (
@@ -104,12 +87,7 @@ export default function UsernamePassword({
           placeholder={emailIsNeededInCaseLabel}
           onChange={(text) => {
             setErrorMessage('');
-            setEmail(text);
-          }}
-          onKeyPress={(event: any) => {
-            if (event.key === 'Enter') {
-              onSubmit();
-            }
+            onSetEmail(text);
           }}
           type="email"
         />
