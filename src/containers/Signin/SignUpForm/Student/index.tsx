@@ -5,6 +5,7 @@ import NameAndEmail from './NameAndEmail';
 import SecretPassPhrase from './SecretPassPhrase';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -39,6 +40,13 @@ export default function StudentForm({
   const [hasNameOrEmailError, setHasNameOrEmailError] = useState(false);
 
   const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
+
+  const fullnameIsCompleteOrEmpty = useMemo(() => {
+    return (
+      (firstname && lastname) ||
+      (stringIsEmpty(firstname) && stringIsEmpty(lastname))
+    );
+  }, [firstname, lastname]);
 
   useEffect(() => {
     if (displayedPage === 'password') {
@@ -127,7 +135,8 @@ export default function StudentForm({
             disabled={
               (!isUsernameAvailable && displayedPage === 'username') ||
               (!isPasswordMatch && displayedPage === 'password') ||
-              (hasNameOrEmailError && displayedPage === 'email') ||
+              ((hasNameOrEmailError || !fullnameIsCompleteOrEmpty) &&
+                displayedPage === 'email') ||
               (!isPassPhraseValid && displayedPage === 'passphrase')
             }
             filled
