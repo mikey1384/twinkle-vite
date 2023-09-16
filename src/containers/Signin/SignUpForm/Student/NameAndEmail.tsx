@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import localize from '~/constants/localize';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 
 const emailIsNeededInCaseLabel = localize('emailIsNeededInCase');
 const emailYoursOrYourParentsLabel = localize('emailYoursOrYourParents');
@@ -65,13 +66,21 @@ export default function UsernamePassword({
         if (!isValidEmailAddress(email)) {
           setEmailErrorMsg('Invalid email address');
           onSetHasNameOrEmailError(true);
-        } else {
-          onSetHasNameOrEmailError(false);
         }
       }
     }, 500);
     return () => clearTimeout(timer);
   }, [email, onSetHasNameOrEmailError]);
+
+  useEffect(() => {
+    if (
+      (stringIsEmpty(firstname) || isValidRealname(firstname)) &&
+      (stringIsEmpty(lastname) || isValidRealname(lastname)) &&
+      (stringIsEmpty(email) || isValidEmailAddress(email))
+    ) {
+      onSetHasNameOrEmailError(false);
+    }
+  }, [firstname, lastname, email, onSetHasNameOrEmailError]);
 
   function isValidEmailAddress(email: string) {
     const regex =
