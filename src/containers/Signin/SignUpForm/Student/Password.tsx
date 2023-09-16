@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import { isValidPassword, stringIsEmpty } from '~/helpers/stringHelpers';
+import { Color } from '~/constants/css';
 
-export default function Password() {
+export default function Password({
+  isPasswordMatch,
+  onSetIsPasswordMatch
+}: {
+  isPasswordMatch: boolean;
+  onSetIsPasswordMatch: (value: boolean) => void;
+}) {
   const [password, setPassword] = useState('');
   const [reenteredPassword, setReenteredPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -29,14 +36,17 @@ export default function Password() {
     const timer = setTimeout(() => {
       setErrorMessage('');
       if (showReenterField && !stringIsEmpty(reenteredPassword)) {
-        if (password !== reenteredPassword) {
+        if (password === reenteredPassword) {
+          onSetIsPasswordMatch(true);
+        } else {
+          onSetIsPasswordMatch(false);
           setErrorMessage('Passwords do not match');
         }
       }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [showReenterField, password, reenteredPassword]);
+  }, [showReenterField, password, reenteredPassword, onSetIsPasswordMatch]);
 
   return (
     <div>
@@ -72,7 +82,18 @@ export default function Password() {
               />
             </div>
           )}
-          {!errorMessage && (
+          {isPasswordMatch && (
+            <p
+              style={{
+                marginTop: '1rem',
+                color: Color.green(),
+                fontWeight: 'bold'
+              }}
+            >
+              Passwords match! You can move on to the next step.
+            </p>
+          )}
+          {!errorMessage && !isPasswordMatch && (
             <p style={{ marginTop: '1rem', fontSize: '1.3rem' }}>
               You MUST remember your password. Write it down somewhere!
             </p>

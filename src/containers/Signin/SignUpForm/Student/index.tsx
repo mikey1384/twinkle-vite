@@ -31,7 +31,7 @@ export default function StudentForm({
 }) {
   const [displayedPage, setDisplayedPage] = useState('username');
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
-  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [isPasswordMatch, setIsPasswordMatch] = useState(false);
   const [isPassPhraseValid, setIsPassPhraseValid] = useState(false);
 
   const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
@@ -61,12 +61,17 @@ export default function StudentForm({
           onSetUsername={onSetUsername}
         />
       )}
-      {displayedPage === 'password' && <Password />}
+      {displayedPage === 'password' && (
+        <Password
+          isPasswordMatch={isPasswordMatch}
+          onSetIsPasswordMatch={setIsPasswordMatch}
+        />
+      )}
       {displayedPage === 'email' && (
         <NameAndEmail
           onSubmit={() => {
             console.log('submitting');
-            setIsPasswordValid(true);
+            setIsPasswordMatch(true);
           }}
         />
       )}
@@ -109,7 +114,7 @@ export default function StudentForm({
           <Button
             disabled={
               (!isUsernameAvailable && displayedPage === 'username') ||
-              (!isPasswordValid && displayedPage === 'password') ||
+              (!isPasswordMatch && displayedPage === 'password') ||
               (!isPassPhraseValid && displayedPage === 'passphrase')
             }
             filled
