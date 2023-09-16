@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Username from './Username';
 import Password from './Password';
 import NameAndEmail from './NameAndEmail';
@@ -35,6 +35,12 @@ export default function StudentForm({
   const [isPassPhraseValid, setIsPassPhraseValid] = useState(false);
 
   const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
+
+  useEffect(() => {
+    if (displayedPage === 'username') {
+      setIsPasswordMatch(false);
+    }
+  }, [displayedPage]);
 
   return (
     <div>
