@@ -36,6 +36,7 @@ export default function StudentForm({
   const [firstname, setFirstname] = useState('');
   const [lastname, setLastname] = useState('');
   const [email, setEmail] = useState('');
+  const [hasNameOrEmailError, setHasNameOrEmailError] = useState(false);
 
   const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
 
@@ -84,6 +85,7 @@ export default function StudentForm({
           onSetFirstname={setFirstname}
           onSetLastname={setLastname}
           onSetEmail={setEmail}
+          onSetHasNameOrEmailError={setHasNameOrEmailError}
         />
       )}
       {displayedPage === 'passphrase' && (
@@ -125,6 +127,7 @@ export default function StudentForm({
             disabled={
               (!isUsernameAvailable && displayedPage === 'username') ||
               (!isPasswordMatch && displayedPage === 'password') ||
+              (hasNameOrEmailError && displayedPage === 'email') ||
               (!isPassPhraseValid && displayedPage === 'passphrase')
             }
             filled

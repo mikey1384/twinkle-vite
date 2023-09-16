@@ -15,7 +15,8 @@ export default function UsernamePassword({
   email,
   onSetFirstname,
   onSetLastname,
-  onSetEmail
+  onSetEmail,
+  onSetHasNameOrEmailError
 }: {
   firstname: string;
   lastname: string;
@@ -23,6 +24,7 @@ export default function UsernamePassword({
   onSetFirstname: (value: string) => void;
   onSetLastname: (value: string) => void;
   onSetEmail: (value: string) => void;
+  onSetHasNameOrEmailError: (value: boolean) => void;
 }) {
   const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
   const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
@@ -30,21 +32,27 @@ export default function UsernamePassword({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (firstname && !isValidRealname(firstname)) {
-        setFirstnameErrorMsg('Invalid first name');
+      if (firstname) {
+        if (!isValidRealname(firstname)) {
+          setFirstnameErrorMsg('Invalid first name');
+          onSetHasNameOrEmailError(true);
+        }
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [firstname]);
+  }, [firstname, onSetHasNameOrEmailError]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (lastname && !isValidRealname(lastname)) {
-        setLastnameErrorMsg('Invalid last name');
+      if (lastname) {
+        if (!isValidRealname(lastname)) {
+          setLastnameErrorMsg('Invalid last name');
+          onSetHasNameOrEmailError(true);
+        }
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [lastname]);
+  }, [lastname, onSetHasNameOrEmailError]);
 
   function isValidRealname(realName: string) {
     const pattern = new RegExp(/^[a-zA-Z]+$/);
@@ -53,12 +61,17 @@ export default function UsernamePassword({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (email && !isValidEmailAddress(email)) {
-        setEmailErrorMsg('Invalid email address');
+      if (email) {
+        if (!isValidEmailAddress(email)) {
+          setEmailErrorMsg('Invalid email address');
+          onSetHasNameOrEmailError(true);
+        } else {
+          onSetHasNameOrEmailError(false);
+        }
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [email]);
+  }, [email, onSetHasNameOrEmailError]);
 
   function isValidEmailAddress(email: string) {
     const regex =
