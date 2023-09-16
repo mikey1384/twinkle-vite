@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Username from './Username';
 import Password from './Password';
 import NameAndEmail from './NameAndEmail';
@@ -32,7 +32,8 @@ export default function StudentForm({
 }) {
   const [displayedPage, setDisplayedPage] = useState('username');
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
-  const [isPasswordMatch, setIsPasswordMatch] = useState(false);
+  const [password, setPassword] = useState('');
+  const [reenteredPassword, setReenteredPassword] = useState('');
   const [isPassPhraseValid, setIsPassPhraseValid] = useState(false);
   const [firstname, setFirstname] = useState('');
   const [lastname, setLastname] = useState('');
@@ -47,12 +48,6 @@ export default function StudentForm({
       (stringIsEmpty(firstname) && stringIsEmpty(lastname))
     );
   }, [firstname, lastname]);
-
-  useEffect(() => {
-    if (displayedPage === 'password') {
-      setIsPasswordMatch(false);
-    }
-  }, [displayedPage]);
 
   return (
     <div>
@@ -81,8 +76,10 @@ export default function StudentForm({
       )}
       {displayedPage === 'password' && (
         <Password
-          isPasswordMatch={isPasswordMatch}
-          onSetIsPasswordMatch={setIsPasswordMatch}
+          password={password}
+          reenteredPassword={reenteredPassword}
+          onSetPassword={setPassword}
+          onSetReenteredPassword={setReenteredPassword}
         />
       )}
       {displayedPage === 'email' && (
@@ -134,7 +131,8 @@ export default function StudentForm({
           <Button
             disabled={
               (!isUsernameAvailable && displayedPage === 'username') ||
-              (!isPasswordMatch && displayedPage === 'password') ||
+              ((stringIsEmpty(password) || password !== reenteredPassword) &&
+                displayedPage === 'password') ||
               ((hasNameOrEmailError || !fullnameIsCompleteOrEmpty) &&
                 displayedPage === 'email') ||
               (!isPassPhraseValid && displayedPage === 'passphrase')
