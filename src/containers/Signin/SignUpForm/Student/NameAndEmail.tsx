@@ -1,7 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import localize from '~/constants/localize';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 const emailIsNeededInCaseLabel = localize('emailIsNeededInCase');
 const emailYoursOrYourParentsLabel = localize('emailYoursOrYourParents');
@@ -25,25 +24,48 @@ export default function UsernamePassword({
   onSetLastname: (value: string) => void;
   onSetEmail: (value: string) => void;
 }) {
-  const [errorMessage, setErrorMessage] = useState('');
-  const notValidFirstNameLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${firstname}는 유효한 이름이 아닙니다. 영문자로 입력해 주세요`;
-    }
-    return `${firstname} is not a valid first name. Your first name should consist of english letters only`;
+  const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
+  const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
+  const [emailErrorMsg, setEmailErrorMsg] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (firstname && !isValidRealname(firstname)) {
+        setFirstnameErrorMsg('Invalid first name');
+      }
+    }, 500);
+    return () => clearTimeout(timer);
   }, [firstname]);
-  const notValidLastNameLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${lastname}는 유효한 성이 아닙니다. 영문자로 입력해 주세요`;
-    }
-    return `${lastname} is not a valid last name. Your last name should consist of english letters only`;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (lastname && !isValidRealname(lastname)) {
+        setLastnameErrorMsg('Invalid last name');
+      }
+    }, 500);
+    return () => clearTimeout(timer);
   }, [lastname]);
-  const notValidEmailLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${email}는 유효한 이메일 주소가 아닙니다`;
-    }
-    return `${email} is not a valid email address`;
+
+  function isValidRealname(realName: string) {
+    const pattern = new RegExp(/^[a-zA-Z]+$/);
+    return pattern.test(realName);
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (email && !isValidEmailAddress(email)) {
+        setEmailErrorMsg('Invalid email address');
+      }
+    }, 500);
+    return () => clearTimeout(timer);
   }, [email]);
+
+  function isValidEmailAddress(email: string) {
+    const regex =
+      '^(([^<>()\\[\\]\\\\.,;:\\s@"]+(\\.[^<>()\\[\\]\\.,;:\\s@"]+)*)|(".+"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$';
+    const pattern = new RegExp(regex);
+    return pattern.test(email);
+  }
 
   return (
     <div>
@@ -51,49 +73,45 @@ export default function UsernamePassword({
         <label>{firstNameLabel}</label>
         <Input
           maxLength={30}
-          hasError={errorMessage === 'firstname'}
+          hasError={!!firstnameErrorMsg}
           value={firstname}
           placeholder={whatIsYourFirstNameLabel}
           onChange={(text) => {
-            setErrorMessage('');
+            setFirstnameErrorMsg('');
             onSetFirstname(text.trim());
           }}
         />
-        {errorMessage === 'firstname' && (
-          <p style={{ color: 'red' }}>{notValidFirstNameLabel}</p>
+        {firstnameErrorMsg && (
+          <p style={{ color: 'red' }}>{firstnameErrorMsg}</p>
         )}
       </section>
       <section style={{ marginTop: '1rem' }}>
         <label>{lastNameLabel}</label>
         <Input
           maxLength={30}
-          hasError={errorMessage === 'lastname'}
+          hasError={!!lastnameErrorMsg}
           value={lastname}
           placeholder={whatIsYourLastNameLabel}
           onChange={(text) => {
-            setErrorMessage('');
+            setLastnameErrorMsg('');
             onSetLastname(text.trim());
           }}
         />
-        {errorMessage === 'lastname' && (
-          <p style={{ color: 'red' }}>{notValidLastNameLabel}</p>
-        )}
+        <p style={{ color: 'red' }}>{lastnameErrorMsg}</p>
       </section>
       <section style={{ marginTop: '2rem' }}>
         <label>{emailYoursOrYourParentsLabel}</label>
         <Input
           value={email}
-          hasError={errorMessage === 'email'}
+          hasError={!!emailErrorMsg}
           placeholder={emailIsNeededInCaseLabel}
           onChange={(text) => {
-            setErrorMessage('');
+            setEmailErrorMsg('');
             onSetEmail(text);
           }}
           type="email"
         />
-        {errorMessage === 'email' && (
-          <p style={{ color: 'red' }}>{notValidEmailLabel}</p>
-        )}
+        <p style={{ color: 'red' }}>{emailErrorMsg}</p>
       </section>
     </div>
   );
