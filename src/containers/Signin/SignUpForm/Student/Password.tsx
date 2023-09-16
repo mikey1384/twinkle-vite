@@ -4,15 +4,18 @@ import { isValidPassword, stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 
 export default function Password({
-  isPasswordMatch,
-  onSetIsPasswordMatch
+  password,
+  reenteredPassword,
+  onSetPassword,
+  onSetReenteredPassword
 }: {
-  isPasswordMatch: boolean;
-  onSetIsPasswordMatch: (value: boolean) => void;
+  password: string;
+  reenteredPassword: string;
+  onSetPassword: (password: string) => void;
+  onSetReenteredPassword: (password: string) => void;
 }) {
-  const [password, setPassword] = useState('');
-  const [reenteredPassword, setReenteredPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isPasswordMatch, setIsPasswordMatch] = useState(false);
   const [showReenterField, setShowReenterField] = useState(false);
 
   useEffect(() => {
@@ -37,16 +40,16 @@ export default function Password({
       setErrorMessage('');
       if (showReenterField && !stringIsEmpty(reenteredPassword)) {
         if (password === reenteredPassword) {
-          onSetIsPasswordMatch(true);
+          setErrorMessage('');
+          setIsPasswordMatch(true);
         } else {
-          onSetIsPasswordMatch(false);
           setErrorMessage('Passwords do not match');
         }
       }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [showReenterField, password, reenteredPassword, onSetIsPasswordMatch]);
+  }, [showReenterField, password, reenteredPassword]);
 
   return (
     <div>
@@ -63,7 +66,7 @@ export default function Password({
             placeholder="Password..."
             onChange={(text) => {
               setErrorMessage('');
-              setPassword(text.trim());
+              onSetPassword(text.trim());
             }}
             type="password"
           />
@@ -77,7 +80,7 @@ export default function Password({
                 style={{ width: 'auto', marginTop: '0.5rem' }}
                 hasError={!!errorMessage}
                 placeholder="Reenter password..."
-                onChange={(text) => setReenteredPassword(text.trim())}
+                onChange={(text) => onSetReenteredPassword(text.trim())}
                 type="password"
               />
             </div>
