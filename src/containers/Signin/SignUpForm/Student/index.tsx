@@ -153,16 +153,4 @@ export default function StudentForm({
       setDisplayedPage(pages[index + 1]);
     }
   }
-
-  function isValidEmailAddress(email: string) {
-    const regex =
-      '^(([^<>()\\[\\]\\\\.,;:\\s@"]+(\\.[^<>()\\[\\]\\.,;:\\s@"]+)*)|(".+"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$';
-    const pattern = new RegExp(regex);
-    return pattern.test(email);
-  }
-
-  function isValidRealname(realName: string) {
-    const pattern = new RegExp(/^[a-zA-Z]+$/);
-    return pattern.test(realName);
-  }
 }
