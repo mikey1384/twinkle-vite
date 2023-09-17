@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Username from './Username';
 import Password from './Password';
 import NameAndEmail from './NameAndEmail';
@@ -25,13 +25,11 @@ const titles: {
 export default function StudentForm({
   username,
   onBackToSelection,
-  onSetUsername,
-  onSetIsFormComplete
+  onSetUsername
 }: {
   username: string;
   onBackToSelection: () => void;
   onSetUsername: (username: string) => void;
-  onSetIsFormComplete: (value: boolean) => void;
 }) {
   const onSignup = useAppContext((v) => v.user.actions.onSignup);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -60,28 +58,6 @@ export default function StudentForm({
       (stringIsEmpty(firstname) && stringIsEmpty(lastname))
     );
   }, [firstname, lastname]);
-
-  useEffect(() => {
-    const isFormComplete =
-      isUsernameAvailable &&
-      password &&
-      password === reenteredPassword &&
-      fullnameIsCompleteOrEmpty &&
-      !hasNameOrEmailError &&
-      isPassphraseValid &&
-      email;
-
-    onSetIsFormComplete(!!isFormComplete);
-  }, [
-    isUsernameAvailable,
-    password,
-    reenteredPassword,
-    fullnameIsCompleteOrEmpty,
-    hasNameOrEmailError,
-    isPassphraseValid,
-    email,
-    onSetIsFormComplete
-  ]);
 
   return (
     <div>
