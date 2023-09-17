@@ -60,8 +60,8 @@ export default function ChatReducer(
         ? {
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
-              ...prevChannelObj?.subchannelObj[action.subchannelId],
-              messageIds: prevChannelObj?.subchannelObj[
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              messageIds: prevChannelObj?.subchannelObj?.[
                 action.subchannelId
               ]?.messageIds.map((messageId: number) =>
                 messageId === action.tempMessageId
@@ -69,7 +69,7 @@ export default function ChatReducer(
                   : messageId
               ),
               messagesObj: {
-                ...prevChannelObj?.subchannelObj[action.subchannelId]
+                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
                   ?.messagesObj,
                 [action.messageId]: {
                   ...prevChannelObj?.subchannelObj?.[action.subchannelId]
@@ -231,7 +231,7 @@ export default function ChatReducer(
       const prevChannelObj = state.channelsObj[action.channelId];
       const message =
         (action.subchannelId
-          ? prevChannelObj?.subchannelObj[action.subchannelId]?.messagesObj?.[
+          ? prevChannelObj?.subchannelObj?.[action.subchannelId]?.messagesObj?.[
               action.messageId
             ]
           : prevChannelObj?.messagesObj?.[action.messageId]) || {};
@@ -247,9 +247,9 @@ export default function ChatReducer(
         ? {
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
-              ...prevChannelObj?.subchannelObj[action.subchannelId],
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
               messagesObj: {
-                ...prevChannelObj?.subchannelObj[action.subchannelId]
+                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
                   ?.messagesObj,
                 [action.messageId]: {
                   ...message,
@@ -530,7 +530,7 @@ export default function ChatReducer(
         ? {
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
-              ...prevChannelObj?.subchannelObj[action.subchannelId],
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
               messageIds: prevChannelObj?.subchannelObj?.[
                 action.subchannelId
               ]?.messageIds?.filter(
@@ -1668,8 +1668,8 @@ export default function ChatReducer(
         ? {
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
-              ...prevChannelObj?.subchannelObj[action.subchannelId],
-              messageIds: prevChannelObj?.subchannelObj[
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
+              messageIds: prevChannelObj?.subchannelObj?.[
                 action.subchannelId
               ]?.messageIds.map((messageId: number) =>
                 messageId === action.tempMessageId
@@ -1677,7 +1677,7 @@ export default function ChatReducer(
                   : messageId
               ),
               messagesObj: {
-                ...prevChannelObj?.subchannelObj[action.subchannelId]
+                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
                   ?.messagesObj,
                 [action.messageId]:
                   prevChannelObj?.subchannelObj?.[action.subchannelId]
@@ -2452,13 +2452,13 @@ export default function ChatReducer(
         ? {
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
-              ...prevChannelObj?.subchannelObj[action.subchannelId],
+              ...prevChannelObj?.subchannelObj?.[action.subchannelId],
               isRespondingToSubject: false,
               messageIds: [action.messageId].concat(
-                prevChannelObj?.subchannelObj[action.subchannelId].messageIds
+                prevChannelObj?.subchannelObj?.[action.subchannelId].messageIds
               ),
               messagesObj: {
-                ...prevChannelObj?.subchannelObj[action.subchannelId]
+                ...prevChannelObj?.subchannelObj?.[action.subchannelId]
                   .messagesObj,
                 [action.messageId]: {
                   ...action.message,
@@ -2469,10 +2469,11 @@ export default function ChatReducer(
                   ...(action.isRespondingToSubject
                     ? {
                         targetSubject: {
-                          ...prevChannelObj?.subchannelObj[action.subchannelId]
-                            ?.subjectObj,
+                          ...prevChannelObj?.subchannelObj?.[
+                            action.subchannelId
+                          ]?.subjectObj,
                           content:
-                            prevChannelObj?.subchannelObj[action.subchannelId]
+                            prevChannelObj?.subchannelObj?.[action.subchannelId]
                               ?.subjectObj?.content || defaultChatSubject
                         }
                       }
