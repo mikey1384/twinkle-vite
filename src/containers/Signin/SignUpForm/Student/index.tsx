@@ -35,14 +35,6 @@ export default function StudentForm({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const signup = useAppContext((v) => v.requestHelpers.signup);
   const [displayedPage, setDisplayedPage] = useState('username');
-  const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
-  const [password, setPassword] = useState('');
-  const [reenteredPassword, setReenteredPassword] = useState('');
-  const [isPassphraseValid, setIsPassphraseValid] = useState(false);
-  const [firstname, setFirstname] = useState('');
-  const [lastname, setLastname] = useState('');
-  const [email, setEmail] = useState('');
-  const [hasNameOrEmailError, setHasNameOrEmailError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [signingUp, setSigningUp] = useState(false);
   const isOnFinalPage = useMemo(

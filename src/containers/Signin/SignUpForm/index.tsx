@@ -27,6 +27,14 @@ export default function SignUpForm({
   onShowLoginForm: () => void;
 }) {
   const [displayedPage, setDisplayedPage] = useState('userType');
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
+  const [password, setPassword] = useState('');
+  const [reenteredPassword, setReenteredPassword] = useState('');
+  const [isPassphraseValid, setIsPassphraseValid] = useState(false);
+  const [firstname, setFirstname] = useState('');
+  const [lastname, setLastname] = useState('');
+  const [email, setEmail] = useState('');
+  const [hasNameOrEmailError, setHasNameOrEmailError] = useState(false);
 
   return (
     <ErrorBoundary componentPath="Signin/SignupForm">
