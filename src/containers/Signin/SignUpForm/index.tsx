@@ -1,13 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import Banner from '~/components/Banner';
 import Student from './Student';
 import Teacher from './Teacher';
 import StudentOrTeacher from './StudentOrTeacher';
 import { css } from '@emotion/css';
-import { useAppContext } from '~/contexts';
 import localize from '~/constants/localize';
 
 const iAlreadyHaveAnAccountLabel = localize('iAlreadyHaveAnAccount');
@@ -28,44 +26,11 @@ export default function SignUpForm({
   onSetUsername: (username: string) => void;
   onShowLoginForm: () => void;
 }) {
-  const [signingUp, setSigningUp] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const [displayedPage, setDisplayedPage] = useState('userType');
-  const [isStudentFormComplete, setIsStudentFormComplete] = useState(false);
-  const [isTeacherFormComplete, setIsTeacherFormComplete] = useState(false);
-  const submitDisabled = useMemo(
-    () =>
-      !!signingUp ||
-      displayedPage === 'userType' ||
-      (displayedPage === 'student' && !isStudentFormComplete) ||
-      (displayedPage === 'teacher' && !isTeacherFormComplete) ||
-      !!errorMessage,
-    [
-      displayedPage,
-      errorMessage,
-      isStudentFormComplete,
-      isTeacherFormComplete,
-      signingUp
-    ]
-  );
-
-  const isOtherErrorMessage = useMemo(() => {
-    const validTypes = [
-      'alreadyExists',
-      'username',
-      'firstname',
-      'password',
-      'lastname',
-      'email',
-      'keyphrase'
-    ];
-    return errorMessage && !validTypes.includes(errorMessage);
-  }, [errorMessage]);
 
   return (
     <ErrorBoundary componentPath="Signin/SignupForm">
       <header>{letsSetUpYourAccountLabel}</header>
-      {isOtherErrorMessage && <Banner>{errorMessage}</Banner>}
       <main>
         <div
           className={css`
@@ -90,14 +55,10 @@ export default function SignUpForm({
               username={username}
               onSetUsername={onSetUsername}
               onBackToSelection={() => setDisplayedPage('userType')}
-              onSetIsFormComplete={setIsStudentFormComplete}
             />
           )}
           {displayedPage === 'teacher' && (
-            <Teacher
-              onSetUsername={onSetUsername}
-              onSetIsTeacherFormComplete={setIsTeacherFormComplete}
-            />
+            <Teacher onSetUsername={onSetUsername} />
           )}
         </div>
       </main>

@@ -1,13 +1,11 @@
 import React from 'react';
 
 export default function TeacherForm({
-  onSetUsername,
-  onSetIsTeacherFormComplete
+  onSetUsername
 }: {
   onSetUsername: (username: string) => void;
-  onSetIsTeacherFormComplete: (value: boolean) => void;
 }) {
-  console.log(onSetUsername, onSetIsTeacherFormComplete);
+  console.log(onSetUsername);
   return (
     <div>
       <div>Teacher Form</div>
