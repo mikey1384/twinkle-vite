@@ -5,6 +5,7 @@ import NameAndEmail from './NameAndEmail';
 import SecretPassPhrase from './SecretPassPhrase';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import { useAppContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -32,6 +33,9 @@ export default function StudentForm({
   onSetUsername: (username: string) => void;
   onSetIsFormComplete: (value: boolean) => void;
 }) {
+  const onSignup = useAppContext((v) => v.user.actions.onSignup);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const signup = useAppContext((v) => v.requestHelpers.signup);
   const [displayedPage, setDisplayedPage] = useState('username');
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
   const [password, setPassword] = useState('');
@@ -41,6 +45,8 @@ export default function StudentForm({
   const [lastname, setLastname] = useState('');
   const [email, setEmail] = useState('');
   const [hasNameOrEmailError, setHasNameOrEmailError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [signingUp, setSigningUp] = useState(false);
   const isOnFinalPage = useMemo(
     () => displayedPage === pages[pages.length - 1],
     [displayedPage]
@@ -124,6 +130,7 @@ export default function StudentForm({
       {displayedPage === 'passphrase' && (
         <SecretPassPhrase onSetIsPassphraseValid={setIsPassphraseValid} />
       )}
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
       <div
         style={{
           marginTop: '3rem',
@@ -152,6 +159,7 @@ export default function StudentForm({
         </div>
         <div>
           <Button
+            filled
             disabled={
               (!isUsernameAvailable && displayedPage === 'username') ||
               ((stringIsEmpty(password) || password !== reenteredPassword) &&
@@ -160,7 +168,7 @@ export default function StudentForm({
                 displayedPage === 'email') ||
               (!isPassphraseValid && displayedPage === 'passphrase')
             }
-            filled
+            loading={signingUp}
             color="logoBlue"
             onClick={handleNext}
           >
@@ -193,10 +201,6 @@ export default function StudentForm({
   }
 
   async function onSubmit() {
-    if (!isValidUsername(username)) {
-      return setErrorMessage('username');
-    }
-
     try {
       setSigningUp(true);
       const data = await signup({

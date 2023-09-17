@@ -7,7 +7,6 @@ import Student from './Student';
 import Teacher from './Teacher';
 import StudentOrTeacher from './StudentOrTeacher';
 import { css } from '@emotion/css';
-import { isValidUsername } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
 import localize from '~/constants/localize';
 
@@ -29,9 +28,6 @@ export default function SignUpForm({
   onSetUsername: (username: string) => void;
   onShowLoginForm: () => void;
 }) {
-  const onSignup = useAppContext((v) => v.user.actions.onSignup);
-  const signup = useAppContext((v) => v.requestHelpers.signup);
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [signingUp, setSigningUp] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [displayedPage, setDisplayedPage] = useState('userType');
