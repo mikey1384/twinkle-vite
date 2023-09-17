@@ -11,7 +11,6 @@ import { isValidUsername } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
 import localize from '~/constants/localize';
 
-const createMyAccountLabel = localize('createMyAccount');
 const iAlreadyHaveAnAccountLabel = localize('iAlreadyHaveAnAccount');
 const letsSetUpYourAccountLabel = localize('letsSetUpYourAccount');
 
@@ -118,34 +117,7 @@ export default function SignUpForm({
         >
           {iAlreadyHaveAnAccountLabel}
         </Button>
-        <Button
-          color="blue"
-          disabled={!!submitDisabled}
-          onClick={onSubmit}
-          style={{ fontSize: '2.5rem' }}
-        >
-          {createMyAccountLabel}
-        </Button>
       </footer>
     </ErrorBoundary>
   );
-
-  async function onSubmit() {
-    if (!isValidUsername(username)) {
-      return setErrorMessage('username');
-    }
-
-    try {
-      setSigningUp(true);
-      const data = await signup({
-        username
-      });
-      onSignup(data);
-      onSetUserState({ userId: data.id, newState: data });
-    } catch (error: any) {
-      setErrorMessage(error?.data);
-    } finally {
-      setSigningUp(false);
-    }
-  }
 }
