@@ -931,7 +931,7 @@ export default function userRequestHelpers({
       try {
         const {
           data: { isMatch }
-        } = await request.post(`${URL}/user/passphrase/verify`, { passphrase });
+        } = await request.post(`${URL}/user/signup/passphrase`, { passphrase });
         return Promise.resolve(isMatch);
       } catch (error) {
         return handleError(error);

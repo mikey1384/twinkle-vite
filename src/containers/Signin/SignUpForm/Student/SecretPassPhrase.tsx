@@ -18,6 +18,7 @@ export default function SecretPassPhrase({
 
   useEffect(() => {
     const timer = setTimeout(async () => {
+      onSetIsPassphraseValid(false);
       if (passphrase) {
         const isMatch = await verifyPassphrase(passphrase);
         if (!isMatch) {
