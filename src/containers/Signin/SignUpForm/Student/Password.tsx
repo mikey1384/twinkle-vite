@@ -76,8 +76,12 @@ export default function Password({
                 <label>Re-enter Password</label>
               </div>
               <Input
+                autoFocus
                 value={reenteredPassword}
-                style={{ width: 'auto', marginTop: '0.5rem' }}
+                style={{
+                  width: 'auto',
+                  marginTop: '0.5rem'
+                }}
                 hasError={!!errorMessage}
                 placeholder="Reenter password..."
                 onChange={(text) => onSetReenteredPassword(text.trim())}

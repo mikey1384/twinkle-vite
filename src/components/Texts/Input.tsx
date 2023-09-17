@@ -11,6 +11,7 @@ export default function Input({
   onChange,
   type = 'text',
   className,
+  isHighlighted,
   style,
   ...props
 }: {
@@ -20,6 +21,7 @@ export default function Input({
   onChange: (value: any) => void;
   type?: string;
   className?: string;
+  isHighlighted?: boolean;
   style?: React.CSSProperties;
   [key: string]: any;
 }) {
@@ -57,7 +59,11 @@ export default function Input({
           ::placeholder {
             color: ${Color.gray()};
           }
-          ${hasError ? 'color: red; border: 1px solid red;' : ''};
+          ${isHighlighted
+            ? `border: 2px solid ${Color.limeGreen(0.8)};`
+            : hasError
+            ? 'color: red; border: 1px solid red;'
+            : ''};
         `}`}
         ref={inputRef}
         onChange={(event) => onChange(renderText(event.target.value))}

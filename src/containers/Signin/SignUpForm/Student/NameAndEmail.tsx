@@ -30,6 +30,18 @@ export default function UsernamePassword({
   const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
   const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
   const [emailErrorMsg, setEmailErrorMsg] = useState('');
+  const [isLastnameHighlighted, setIsLastnameHighlighted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (firstname && stringIsEmpty(lastname)) {
+        setIsLastnameHighlighted(true);
+      } else {
+        setIsLastnameHighlighted(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [firstname, lastname]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -111,6 +123,7 @@ export default function UsernamePassword({
         <label>{lastNameLabel}</label>
         <Input
           maxLength={30}
+          isHighlighted={isLastnameHighlighted}
           hasError={!!lastnameErrorMsg}
           value={lastname}
           placeholder={whatIsYourLastNameLabel}
