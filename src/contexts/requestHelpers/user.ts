@@ -926,6 +926,16 @@ export default function userRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+    async verifyPassphrase(passphrase: string) {
+      try {
+        const {
+          data: { isMatch }
+        } = await request.post(`${URL}/user/passphrase/verify`, { passphrase });
+        return Promise.resolve(isMatch);
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }
