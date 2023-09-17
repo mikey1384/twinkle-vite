@@ -145,7 +145,7 @@ export default function StudentForm({
               (!isPassphraseValid && displayedPage === 'passphrase')
             }
             loading={signingUp}
-            color="logoBlue"
+            color={isOnFinalPage ? 'green' : 'logoBlue'}
             onClick={handleNext}
           >
             <span style={{ marginRight: '0.7rem' }}>
