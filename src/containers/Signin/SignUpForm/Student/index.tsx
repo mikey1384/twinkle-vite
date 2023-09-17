@@ -8,7 +8,9 @@ import Icon from '~/components/Icon';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import localize from '~/constants/localize';
 
+const createMyAccountLabel = localize('createMyAccount');
 const pages = ['username', 'password', 'email', 'passphrase'];
 const titles: {
   [key: string]: string;
@@ -39,6 +41,10 @@ export default function StudentForm({
   const [lastname, setLastname] = useState('');
   const [email, setEmail] = useState('');
   const [hasNameOrEmailError, setHasNameOrEmailError] = useState(false);
+  const isOnFinalPage = useMemo(
+    () => displayedPage === pages[pages.length - 1],
+    [displayedPage]
+  );
 
   const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
 
@@ -158,7 +164,9 @@ export default function StudentForm({
             color="logoBlue"
             onClick={handleNext}
           >
-            <span style={{ marginRight: '0.7rem' }}>Next</span>
+            <span style={{ marginRight: '0.7rem' }}>
+              {isOnFinalPage ? createMyAccountLabel : 'Next'}
+            </span>
             <Icon icon="chevron-right" />
           </Button>
         </div>
@@ -175,9 +183,31 @@ export default function StudentForm({
   }
 
   function handleNext() {
+    if (isOnFinalPage) {
+      return onSubmit();
+    }
     const index = pages.indexOf(displayedPage);
     if (index < pages.length - 1) {
       setDisplayedPage(pages[index + 1]);
+    }
+  }
+
+  async function onSubmit() {
+    if (!isValidUsername(username)) {
+      return setErrorMessage('username');
+    }
+
+    try {
+      setSigningUp(true);
+      const data = await signup({
+        username
+      });
+      onSignup(data);
+      onSetUserState({ userId: data.id, newState: data });
+    } catch (error: any) {
+      setErrorMessage(error?.data);
+    } finally {
+      setSigningUp(false);
     }
   }
 }
