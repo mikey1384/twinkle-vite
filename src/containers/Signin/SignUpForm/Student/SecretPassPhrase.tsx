@@ -1,37 +1,52 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import localize from '~/constants/localize';
+import { useAppContext } from '~/contexts';
 
 const passphraseLabel = localize('passphrase');
-const passphraseErrorMsgLabel = localize('passphraseErrorMsg');
 
 export default function SecretPassPhrase({
-  onSubmit
+  onSetIsPassphraseValid
 }: {
-  onSubmit: () => void;
+  onSetIsPassphraseValid: (value: boolean) => void;
 }) {
+  const verifyPassphrase = useAppContext(
+    (v) => v.requestHelpers.verifyPassphrase
+  );
   const [errorMessage, setErrorMessage] = useState('');
-  const [keyphrase, setKeyphrase] = useState('');
+  const [passphrase, setPassphrase] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (passphrase) {
+        const isMatch = await verifyPassphrase(passphrase);
+        if (!isMatch) {
+          setErrorMessage('Incorrect passphrase');
+          onSetIsPassphraseValid(false);
+        } else {
+          setErrorMessage('');
+          onSetIsPassphraseValid(true);
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [passphrase]);
+
   return (
     <section>
       <label>{passphraseLabel}</label>
       <Input
-        value={keyphrase}
-        hasError={errorMessage === 'keyphrase'}
+        value={passphrase}
+        hasError={!!errorMessage}
         placeholder={passphraseLabel}
         onChange={(text) => {
           setErrorMessage('');
-          setKeyphrase(text);
-        }}
-        onKeyPress={(event: any) => {
-          if (event.key === 'Enter') {
-            onSubmit();
-          }
+          setPassphrase(text);
         }}
       />
-      {errorMessage === 'keyphrase' && (
-        <p style={{ color: 'red' }}>{passphraseErrorMsgLabel}</p>
-      )}
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
     </section>
   );
 }

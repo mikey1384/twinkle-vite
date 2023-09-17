@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Username from './Username';
 import Password from './Password';
 import NameAndEmail from './NameAndEmail';
@@ -34,7 +34,7 @@ export default function StudentForm({
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
   const [password, setPassword] = useState('');
   const [reenteredPassword, setReenteredPassword] = useState('');
-  const [isPassPhraseValid, setIsPassPhraseValid] = useState(false);
+  const [isPassphraseValid, setIsPassphraseValid] = useState(false);
   const [firstname, setFirstname] = useState('');
   const [lastname, setLastname] = useState('');
   const [email, setEmail] = useState('');
@@ -48,6 +48,28 @@ export default function StudentForm({
       (stringIsEmpty(firstname) && stringIsEmpty(lastname))
     );
   }, [firstname, lastname]);
+
+  useEffect(() => {
+    const isFormComplete =
+      isUsernameAvailable &&
+      password &&
+      password === reenteredPassword &&
+      fullnameIsCompleteOrEmpty &&
+      !hasNameOrEmailError &&
+      isPassphraseValid &&
+      email;
+
+    onSetIsFormComplete(!!isFormComplete);
+  }, [
+    isUsernameAvailable,
+    password,
+    reenteredPassword,
+    fullnameIsCompleteOrEmpty,
+    hasNameOrEmailError,
+    isPassphraseValid,
+    email,
+    onSetIsFormComplete
+  ]);
 
   return (
     <div>
@@ -94,12 +116,7 @@ export default function StudentForm({
         />
       )}
       {displayedPage === 'passphrase' && (
-        <SecretPassPhrase
-          onSubmit={() => {
-            setIsPassPhraseValid(true);
-            onSetIsFormComplete(true);
-          }}
-        />
+        <SecretPassPhrase onSetIsPassphraseValid={setIsPassphraseValid} />
       )}
       <div
         style={{
@@ -135,7 +152,7 @@ export default function StudentForm({
                 displayedPage === 'password') ||
               ((hasNameOrEmailError || !fullnameIsCompleteOrEmpty) &&
                 displayedPage === 'email') ||
-              (!isPassPhraseValid && displayedPage === 'passphrase')
+              (!isPassphraseValid && displayedPage === 'passphrase')
             }
             filled
             color="logoBlue"
