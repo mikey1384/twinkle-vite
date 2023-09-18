@@ -22,7 +22,7 @@ const titles: {
   passphrase: `Answer this question to prove you're a Twinkle student`
 };
 
-export default function StudentForm({
+export default function MainForm({
   firstname,
   lastname,
   username,
@@ -41,7 +41,8 @@ export default function StudentForm({
   onSetIsPassphraseValid,
   onSetPassword,
   onSetReenteredPassword,
-  onSetUsername
+  onSetUsername,
+  userType
 }: {
   firstname: string;
   lastname: string;
@@ -62,6 +63,7 @@ export default function StudentForm({
   onSetPassword: (password: string) => void;
   onSetReenteredPassword: (password: string) => void;
   onSetUsername: (username: string) => void;
+  userType: string;
 }) {
   const onSignup = useAppContext((v) => v.user.actions.onSignup);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
@@ -159,7 +161,7 @@ export default function StudentForm({
                 fontWeight: 'bold'
               }}
               onClick={onBackToSelection}
-            >{`Actually, I'm not a student`}</a>
+            >{`Actually, I'm not a ${userType}`}</a>
           )}
         </div>
         <div>

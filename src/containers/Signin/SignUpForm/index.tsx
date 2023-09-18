@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import Student from './Student';
-import Teacher from './Teacher';
+import MainForm from './MainForm';
 import StudentOrTeacher from './StudentOrTeacher';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
@@ -51,7 +50,7 @@ export default function SignUpForm({
   onSetUsername: (username: string) => void;
   onShowLoginForm: () => void;
 }) {
-  const [displayedPage, setDisplayedPage] = useState('userType');
+  const [userType, setUsertype] = useState('');
 
   return (
     <ErrorBoundary componentPath="Signin/SignupForm">
@@ -72,11 +71,8 @@ export default function SignUpForm({
             }
           `}
         >
-          {displayedPage === 'userType' && (
-            <StudentOrTeacher onSelect={setDisplayedPage} />
-          )}
-          {displayedPage === 'student' && (
-            <Student
+          {userType ? (
+            <MainForm
               firstname={firstname}
               lastname={lastname}
               username={username}
@@ -95,11 +91,11 @@ export default function SignUpForm({
               onSetIsUsernameAvailable={onSetIsUsernameAvailable}
               onSetIsPassphraseValid={onSetIsPassphraseValid}
               onSetUsername={onSetUsername}
-              onBackToSelection={() => setDisplayedPage('userType')}
+              onBackToSelection={() => setUsertype('')}
+              userType={userType}
             />
-          )}
-          {displayedPage === 'teacher' && (
-            <Teacher onSetUsername={onSetUsername} />
+          ) : (
+            <StudentOrTeacher onSelect={setUsertype} />
           )}
         </div>
       </main>
