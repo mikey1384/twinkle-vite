@@ -19,6 +19,7 @@ export default function Password({
   const [showReenterField, setShowReenterField] = useState(false);
 
   useEffect(() => {
+    setIsPasswordMatch(false);
     const timer = setTimeout(() => {
       setShowReenterField(false);
       if (!stringIsEmpty(password)) {
@@ -36,8 +37,9 @@ export default function Password({
   }, [password]);
 
   useEffect(() => {
+    setIsPasswordMatch(false);
+    setErrorMessage('');
     const timer = setTimeout(() => {
-      setErrorMessage('');
       if (showReenterField && !stringIsEmpty(reenteredPassword)) {
         if (password === reenteredPassword) {
           setErrorMessage('');
