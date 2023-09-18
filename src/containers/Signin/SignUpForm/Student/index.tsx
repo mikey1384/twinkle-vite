@@ -23,12 +23,44 @@ const titles: {
 };
 
 export default function StudentForm({
+  firstname,
+  lastname,
   username,
+  password,
+  email,
+  reenteredPassword,
+  isUsernameAvailable,
+  isPassphraseValid,
+  hasNameOrEmailError,
   onBackToSelection,
+  onSetFirstname,
+  onSetLastname,
+  onSetHasNameOrEmailError,
+  onSetEmail,
+  onSetIsUsernameAvailable,
+  onSetIsPassphraseValid,
+  onSetPassword,
+  onSetReenteredPassword,
   onSetUsername
 }: {
+  firstname: string;
+  lastname: string;
   username: string;
+  password: string;
+  email: string;
+  reenteredPassword: string;
+  isUsernameAvailable: boolean;
+  isPassphraseValid: boolean;
+  hasNameOrEmailError: boolean;
   onBackToSelection: () => void;
+  onSetEmail: (email: string) => void;
+  onSetFirstname: (firstname: string) => void;
+  onSetLastname: (lastname: string) => void;
+  onSetHasNameOrEmailError: (hasError: boolean) => void;
+  onSetIsUsernameAvailable: (isAvailable: boolean) => void;
+  onSetIsPassphraseValid: (isValid: boolean) => void;
+  onSetPassword: (password: string) => void;
+  onSetReenteredPassword: (password: string) => void;
   onSetUsername: (username: string) => void;
 }) {
   const onSignup = useAppContext((v) => v.user.actions.onSignup);
@@ -72,7 +104,7 @@ export default function StudentForm({
         <Username
           username={username}
           isUsernameAvailable={isUsernameAvailable}
-          onSetIsUsernameAvailable={setIsUsernameAvailable}
+          onSetIsUsernameAvailable={onSetIsUsernameAvailable}
           onSetUsername={onSetUsername}
         />
       )}
@@ -80,8 +112,8 @@ export default function StudentForm({
         <Password
           password={password}
           reenteredPassword={reenteredPassword}
-          onSetPassword={setPassword}
-          onSetReenteredPassword={setReenteredPassword}
+          onSetPassword={onSetPassword}
+          onSetReenteredPassword={onSetReenteredPassword}
         />
       )}
       {displayedPage === 'email' && (
@@ -89,14 +121,14 @@ export default function StudentForm({
           firstname={firstname}
           lastname={lastname}
           email={email}
-          onSetFirstname={setFirstname}
-          onSetLastname={setLastname}
-          onSetEmail={setEmail}
-          onSetHasNameOrEmailError={setHasNameOrEmailError}
+          onSetFirstname={onSetFirstname}
+          onSetLastname={onSetLastname}
+          onSetEmail={onSetEmail}
+          onSetHasNameOrEmailError={onSetHasNameOrEmailError}
         />
       )}
       {displayedPage === 'passphrase' && (
-        <SecretPassPhrase onSetIsPassphraseValid={setIsPassphraseValid} />
+        <SecretPassPhrase onSetIsPassphraseValid={onSetIsPassphraseValid} />
       )}
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
       <div

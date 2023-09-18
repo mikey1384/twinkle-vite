@@ -60,7 +60,23 @@ export default function SignUpForm({
           )}
           {displayedPage === 'student' && (
             <Student
+              firstname={firstname}
+              lastname={lastname}
               username={username}
+              password={password}
+              email={email}
+              reenteredPassword={reenteredPassword}
+              isUsernameAvailable={isUsernameAvailable}
+              isPassphraseValid={isPassphraseValid}
+              hasNameOrEmailError={hasNameOrEmailError}
+              onSetFirstname={setFirstname}
+              onSetLastname={setLastname}
+              onSetEmail={setEmail}
+              onSetPassword={setPassword}
+              onSetReenteredPassword={setReenteredPassword}
+              onSetHasNameOrEmailError={setHasNameOrEmailError}
+              onSetIsUsernameAvailable={setIsUsernameAvailable}
+              onSetIsPassphraseValid={setIsPassphraseValid}
               onSetUsername={onSetUsername}
               onBackToSelection={() => setDisplayedPage('userType')}
             />
