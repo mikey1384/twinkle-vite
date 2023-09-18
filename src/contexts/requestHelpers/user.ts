@@ -614,9 +614,30 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async signup(params: object) {
+    async signup({
+      username,
+      firstname,
+      lastname,
+      email,
+      password,
+      passphrase
+    }: {
+      username: string;
+      firstname: string;
+      lastname: string;
+      email: string;
+      password: string;
+      passphrase: string;
+    }) {
       try {
-        const { data } = await request.post(`${URL}/user/signup`, params);
+        const { data } = await request.post(`${URL}/user/signup`, {
+          username,
+          firstname,
+          lastname,
+          email,
+          password,
+          passphrase
+        });
         if (data.token) {
           localStorage.setItem('token', data.token);
         }
