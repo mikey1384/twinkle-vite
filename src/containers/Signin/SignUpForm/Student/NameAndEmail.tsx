@@ -68,7 +68,7 @@ export default function UsernamePassword({
   }, [lastname, onSetHasNameOrEmailError]);
 
   function isValidRealname(realName: string) {
-    const pattern = new RegExp(/^[a-zA-Z]+((\s|-|')[a-zA-Z]+)*$/);
+    const pattern = new RegExp(/^[a-zA-Z]+((\s|-|')[a-zA-Z]+)?$/);
     return pattern.test(realName);
   }
 
