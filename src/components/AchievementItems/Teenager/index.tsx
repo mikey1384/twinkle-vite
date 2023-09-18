@@ -3,6 +3,7 @@ import TeenagerBadge from '~/assets/teenager.png';
 import ItemPanel from '../ItemPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FormModal from './FormModal';
+import { useKeyContext } from '~/contexts';
 
 export default function Teenager({
   isNotification,
@@ -20,6 +21,7 @@ export default function Teenager({
   };
   style?: React.CSSProperties;
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const [formModalShown, setFormModalShown] = useState(false);
   return (
     <ErrorBoundary componentPath="AchievementItems/Teenager">
@@ -35,12 +37,16 @@ export default function Teenager({
         requirements={[
           <>
             Submit{' '}
-            <a
-              style={{ fontWeight: 'bold', cursor: 'pointer' }}
-              onClick={() => setFormModalShown(true)}
-            >
-              additional profile details
-            </a>{' '}
+            {userId ? (
+              <a
+                style={{ fontWeight: 'bold', cursor: 'pointer' }}
+                onClick={() => setFormModalShown(true)}
+              >
+                additional profile details
+              </a>
+            ) : (
+              <span>additional profile details</span>
+            )}{' '}
             and get your birthdate verified
           </>,
           'Survive childhood and enter teenage years and beyond'
