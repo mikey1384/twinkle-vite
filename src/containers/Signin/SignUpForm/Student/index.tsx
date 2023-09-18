@@ -68,6 +68,7 @@ export default function StudentForm({
   const signup = useAppContext((v) => v.requestHelpers.signup);
   const [displayedPage, setDisplayedPage] = useState('username');
   const [errorMessage, setErrorMessage] = useState('');
+  const [passphrase, setPassphrase] = useState('');
   const [signingUp, setSigningUp] = useState(false);
   const isOnFinalPage = useMemo(
     () => displayedPage === pages[pages.length - 1],
@@ -128,7 +129,11 @@ export default function StudentForm({
         />
       )}
       {displayedPage === 'passphrase' && (
-        <SecretPassPhrase onSetIsPassphraseValid={onSetIsPassphraseValid} />
+        <SecretPassPhrase
+          onSetPassphrase={setPassphrase}
+          onSetIsPassphraseValid={onSetIsPassphraseValid}
+          passphrase={passphrase}
+        />
       )}
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
       <div
@@ -204,7 +209,12 @@ export default function StudentForm({
     try {
       setSigningUp(true);
       const data = await signup({
-        username
+        firstname,
+        lastname,
+        username,
+        email,
+        password,
+        passphrase
       });
       onSignup(data);
       onSetUserState({ userId: data.id, newState: data });

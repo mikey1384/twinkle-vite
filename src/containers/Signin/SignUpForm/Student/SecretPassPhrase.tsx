@@ -6,15 +6,18 @@ import { useAppContext } from '~/contexts';
 const passphraseLabel = localize('passphrase');
 
 export default function SecretPassPhrase({
-  onSetIsPassphraseValid
+  onSetIsPassphraseValid,
+  onSetPassphrase,
+  passphrase
 }: {
   onSetIsPassphraseValid: (value: boolean) => void;
+  onSetPassphrase: (passphrase: string) => void;
+  passphrase: string;
 }) {
   const verifyPassphrase = useAppContext(
     (v) => v.requestHelpers.verifyPassphrase
   );
   const [errorMessage, setErrorMessage] = useState('');
-  const [passphrase, setPassphrase] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -44,7 +47,7 @@ export default function SecretPassPhrase({
         placeholder={passphraseLabel}
         onChange={(text) => {
           setErrorMessage('');
-          setPassphrase(text);
+          onSetPassphrase(text);
         }}
       />
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
