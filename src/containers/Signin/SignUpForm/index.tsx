@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Student from './Student';
@@ -11,30 +10,48 @@ import localize from '~/constants/localize';
 const iAlreadyHaveAnAccountLabel = localize('iAlreadyHaveAnAccount');
 const letsSetUpYourAccountLabel = localize('letsSetUpYourAccount');
 
-SignUpForm.propTypes = {
-  username: PropTypes.string,
-  onSetUsername: PropTypes.func.isRequired,
-  onShowLoginForm: PropTypes.func.isRequired
-};
-
 export default function SignUpForm({
+  firstname,
+  lastname,
   username,
+  password,
+  email,
+  isPassphraseValid,
+  isUsernameAvailable,
+  hasNameOrEmailError,
+  reenteredPassword,
+  onSetFirstname,
+  onSetLastname,
+  onSetEmail,
+  onSetIsPassphraseValid,
+  onSetIsUsernameAvailable,
+  onSetHasNameOrEmailError,
+  onSetPassword,
+  onSetReenteredPassword,
   onSetUsername,
   onShowLoginForm
 }: {
+  firstname: string;
+  lastname: string;
   username: string;
+  password: string;
+  email: string;
+  isPassphraseValid: boolean;
+  isUsernameAvailable: boolean;
+  hasNameOrEmailError: boolean;
+  reenteredPassword: string;
+  onSetFirstname: (firstname: string) => void;
+  onSetLastname: (lastname: string) => void;
+  onSetEmail: (email: string) => void;
+  onSetIsPassphraseValid: (isValid: boolean) => void;
+  onSetIsUsernameAvailable: (isAvailable: boolean) => void;
+  onSetHasNameOrEmailError: (hasError: boolean) => void;
+  onSetPassword: (password: string) => void;
+  onSetReenteredPassword: (password: string) => void;
   onSetUsername: (username: string) => void;
   onShowLoginForm: () => void;
 }) {
   const [displayedPage, setDisplayedPage] = useState('userType');
-  const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
-  const [password, setPassword] = useState('');
-  const [reenteredPassword, setReenteredPassword] = useState('');
-  const [isPassphraseValid, setIsPassphraseValid] = useState(false);
-  const [firstname, setFirstname] = useState('');
-  const [lastname, setLastname] = useState('');
-  const [email, setEmail] = useState('');
-  const [hasNameOrEmailError, setHasNameOrEmailError] = useState(false);
 
   return (
     <ErrorBoundary componentPath="Signin/SignupForm">
@@ -69,14 +86,14 @@ export default function SignUpForm({
               isUsernameAvailable={isUsernameAvailable}
               isPassphraseValid={isPassphraseValid}
               hasNameOrEmailError={hasNameOrEmailError}
-              onSetFirstname={setFirstname}
-              onSetLastname={setLastname}
-              onSetEmail={setEmail}
-              onSetPassword={setPassword}
-              onSetReenteredPassword={setReenteredPassword}
-              onSetHasNameOrEmailError={setHasNameOrEmailError}
-              onSetIsUsernameAvailable={setIsUsernameAvailable}
-              onSetIsPassphraseValid={setIsPassphraseValid}
+              onSetFirstname={onSetFirstname}
+              onSetLastname={onSetLastname}
+              onSetEmail={onSetEmail}
+              onSetPassword={onSetPassword}
+              onSetReenteredPassword={onSetReenteredPassword}
+              onSetHasNameOrEmailError={onSetHasNameOrEmailError}
+              onSetIsUsernameAvailable={onSetIsUsernameAvailable}
+              onSetIsPassphraseValid={onSetIsPassphraseValid}
               onSetUsername={onSetUsername}
               onBackToSelection={() => setDisplayedPage('userType')}
             />

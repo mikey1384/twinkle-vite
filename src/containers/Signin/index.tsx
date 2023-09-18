@@ -13,6 +13,16 @@ Signin.propTypes = {
 export default function Signin({ onHide }: { onHide: () => void }) {
   const [username, setUsername] = useState('');
   const [currentPage, setCurrentPage] = useState('main');
+
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
+  const [password, setPassword] = useState('');
+  const [reenteredPassword, setReenteredPassword] = useState('');
+  const [isPassphraseValid, setIsPassphraseValid] = useState(false);
+  const [firstname, setFirstname] = useState('');
+  const [lastname, setLastname] = useState('');
+  const [email, setEmail] = useState('');
+  const [hasNameOrEmailError, setHasNameOrEmailError] = useState(false);
+
   return (
     <ErrorBoundary componentPath="Signin/index">
       <Modal
@@ -38,7 +48,23 @@ export default function Signin({ onHide }: { onHide: () => void }) {
         )}
         {currentPage === 'signUp' && (
           <SignUpForm
+            firstname={firstname}
+            lastname={lastname}
             username={username}
+            password={password}
+            email={email}
+            isPassphraseValid={isPassphraseValid}
+            isUsernameAvailable={isUsernameAvailable}
+            hasNameOrEmailError={hasNameOrEmailError}
+            reenteredPassword={reenteredPassword}
+            onSetFirstname={setFirstname}
+            onSetLastname={setLastname}
+            onSetEmail={setEmail}
+            onSetHasNameOrEmailError={setHasNameOrEmailError}
+            onSetIsPassphraseValid={setIsPassphraseValid}
+            onSetIsUsernameAvailable={setIsUsernameAvailable}
+            onSetPassword={setPassword}
+            onSetReenteredPassword={setReenteredPassword}
             onSetUsername={setUsername}
             onShowLoginForm={() => setCurrentPage('login')}
           />
