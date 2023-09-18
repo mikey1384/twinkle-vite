@@ -209,7 +209,7 @@ export default function StudentForm({
     try {
       setSigningUp(true);
       const data = await signup({
-        firstname,
+        firstname: firstname.trim(),
         lastname,
         username,
         email,

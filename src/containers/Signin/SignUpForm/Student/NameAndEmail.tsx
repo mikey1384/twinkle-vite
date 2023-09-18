@@ -68,7 +68,7 @@ export default function UsernamePassword({
   }, [lastname, onSetHasNameOrEmailError]);
 
   function isValidRealname(realName: string) {
-    const pattern = new RegExp(/^[a-zA-Z]+$/);
+    const pattern = new RegExp(/^[a-zA-Z]+((\s|-|')[a-zA-Z]+)*$/);
     return pattern.test(realName);
   }
 
@@ -112,7 +112,7 @@ export default function UsernamePassword({
           placeholder={whatIsYourFirstNameLabel}
           onChange={(text) => {
             setFirstnameErrorMsg('');
-            onSetFirstname(text.trim());
+            onSetFirstname(text);
           }}
         />
         {firstnameErrorMsg && (
