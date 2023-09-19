@@ -105,9 +105,7 @@ export default function UsernamePassword({
               '0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)'
           }}
         >
-          <p style={{ marginBottom: '1rem', fontSize: '1.25em' }}>
-            Hi, my name is
-          </p>
+          <p style={{ marginBottom: '1rem', fontSize: '1.7rem' }}>My name is</p>
           <Input
             maxLength={30}
             value={firstname}
@@ -116,7 +114,10 @@ export default function UsernamePassword({
               setFirstnameErrorMsg('');
               onSetFirstname(text);
             }}
-            style={{ marginRight: '0.5rem' }}
+            style={{
+              marginRight: '0.5rem',
+              width: 'auto'
+            }}
           />
           <Input
             maxLength={30}
@@ -126,8 +127,12 @@ export default function UsernamePassword({
               setLastnameErrorMsg('');
               onSetLastname(text.trim());
             }}
+            style={{
+              marginLeft: '0.5rem',
+              width: 'auto'
+            }}
           />
-          <p style={{ margin: '1rem 0', fontSize: '1.25em' }}>
+          <p style={{ margin: '1rem 0', fontSize: '1.7rem', width: 'auto' }}>
             {`and I'm a teacher at`}
           </p>
           <Input
@@ -136,7 +141,7 @@ export default function UsernamePassword({
             style={{ width: '100%', marginBottom: '1rem' }}
             onChange={(text) => console.log(text)}
           />
-          <p style={{ margin: '1rem 0', fontSize: '1.25em' }}>
+          <p style={{ margin: '1rem 0', fontSize: '1.7rem' }}>
             I would like to request a teacher account.
           </p>
         </section>
