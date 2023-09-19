@@ -173,28 +173,28 @@ export default function UsernamePassword({
             />
             <p style={{ color: 'red' }}>{lastnameErrorMsg}</p>
           </section>
-          <section style={{ marginTop: '2rem' }}>
-            <label>
-              {userType === 'student' ? emailYoursOrYourParentsLabel : 'Email'}
-            </label>
-            <Input
-              value={email}
-              hasError={!!emailErrorMsg}
-              placeholder={
-                userType === 'student'
-                  ? emailIsNeededInCaseLabel
-                  : 'Your Twinkle email address'
-              }
-              onChange={(text) => {
-                setEmailErrorMsg('');
-                onSetEmail(text);
-              }}
-              type="email"
-            />
-            <p style={{ color: 'red' }}>{emailErrorMsg}</p>
-          </section>
         </div>
       )}
+      <section style={{ marginTop: '2rem' }}>
+        <label>
+          {userType === 'student' ? emailYoursOrYourParentsLabel : 'Email'}
+        </label>
+        <Input
+          value={email}
+          hasError={!!emailErrorMsg}
+          placeholder={
+            userType === 'student'
+              ? emailIsNeededInCaseLabel
+              : 'Your Twinkle email address'
+          }
+          onChange={(text) => {
+            setEmailErrorMsg('');
+            onSetEmail(text);
+          }}
+          type="email"
+        />
+        <p style={{ color: 'red' }}>{emailErrorMsg}</p>
+      </section>
     </div>
   );
 }
