@@ -95,57 +95,106 @@ export default function UsernamePassword({
 
   return (
     <div>
-      <section>
-        <label>{firstNameLabel}</label>
-        <Input
-          maxLength={30}
-          hasError={!!firstnameErrorMsg}
-          value={firstname}
-          placeholder={whatIsYourFirstNameLabel}
-          onChange={(text) => {
-            setFirstnameErrorMsg('');
-            onSetFirstname(text);
+      {userType === 'teacher' ? (
+        <section
+          style={{
+            padding: '1rem',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
+            boxShadow:
+              '0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)'
           }}
-        />
-        {firstnameErrorMsg && (
-          <p style={{ color: 'red' }}>{firstnameErrorMsg}</p>
-        )}
-      </section>
-      <section style={{ marginTop: '1rem' }}>
-        <label>{lastNameLabel}</label>
-        <Input
-          maxLength={30}
-          isHighlighted={isLastnameHighlighted}
-          hasError={!!lastnameErrorMsg}
-          value={lastname}
-          placeholder={whatIsYourLastNameLabel}
-          onChange={(text) => {
-            setLastnameErrorMsg('');
-            onSetLastname(text.trim());
-          }}
-        />
-        <p style={{ color: 'red' }}>{lastnameErrorMsg}</p>
-      </section>
-      <section style={{ marginTop: '2rem' }}>
-        <label>
-          {userType === 'student' ? emailYoursOrYourParentsLabel : 'Email'}
-        </label>
-        <Input
-          value={email}
-          hasError={!!emailErrorMsg}
-          placeholder={
-            userType === 'student'
-              ? emailIsNeededInCaseLabel
-              : 'Your Twinkle email address'
-          }
-          onChange={(text) => {
-            setEmailErrorMsg('');
-            onSetEmail(text);
-          }}
-          type="email"
-        />
-        <p style={{ color: 'red' }}>{emailErrorMsg}</p>
-      </section>
+        >
+          <p style={{ marginBottom: '1rem', fontSize: '1.25em' }}>
+            Hi, my name is
+          </p>
+          <Input
+            maxLength={30}
+            value={firstname}
+            placeholder="First name"
+            onChange={(text) => {
+              setFirstnameErrorMsg('');
+              onSetFirstname(text);
+            }}
+            style={{ marginRight: '0.5rem' }}
+          />
+          <Input
+            maxLength={30}
+            value={lastname}
+            placeholder="Last name"
+            onChange={(text) => {
+              setLastnameErrorMsg('');
+              onSetLastname(text.trim());
+            }}
+          />
+          <p style={{ margin: '1rem 0', fontSize: '1.25em' }}>
+            {`and I'm a teacher at`}
+          </p>
+          <Input
+            maxLength={50}
+            placeholder="School/Institution name"
+            style={{ width: '100%', marginBottom: '1rem' }}
+            onChange={(text) => console.log(text)}
+          />
+          <p style={{ margin: '1rem 0', fontSize: '1.25em' }}>
+            I would like to request a teacher account.
+          </p>
+        </section>
+      ) : (
+        <div>
+          <section>
+            <label>{firstNameLabel}</label>
+            <Input
+              maxLength={30}
+              hasError={!!firstnameErrorMsg}
+              value={firstname}
+              placeholder={whatIsYourFirstNameLabel}
+              onChange={(text) => {
+                setFirstnameErrorMsg('');
+                onSetFirstname(text);
+              }}
+            />
+            {firstnameErrorMsg && (
+              <p style={{ color: 'red' }}>{firstnameErrorMsg}</p>
+            )}
+          </section>
+          <section style={{ marginTop: '1rem' }}>
+            <label>{lastNameLabel}</label>
+            <Input
+              maxLength={30}
+              isHighlighted={isLastnameHighlighted}
+              hasError={!!lastnameErrorMsg}
+              value={lastname}
+              placeholder={whatIsYourLastNameLabel}
+              onChange={(text) => {
+                setLastnameErrorMsg('');
+                onSetLastname(text.trim());
+              }}
+            />
+            <p style={{ color: 'red' }}>{lastnameErrorMsg}</p>
+          </section>
+          <section style={{ marginTop: '2rem' }}>
+            <label>
+              {userType === 'student' ? emailYoursOrYourParentsLabel : 'Email'}
+            </label>
+            <Input
+              value={email}
+              hasError={!!emailErrorMsg}
+              placeholder={
+                userType === 'student'
+                  ? emailIsNeededInCaseLabel
+                  : 'Your Twinkle email address'
+              }
+              onChange={(text) => {
+                setEmailErrorMsg('');
+                onSetEmail(text);
+              }}
+              type="email"
+            />
+            <p style={{ color: 'red' }}>{emailErrorMsg}</p>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
