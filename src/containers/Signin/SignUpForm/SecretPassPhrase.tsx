@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import localize from '~/constants/localize';
+import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -19,19 +20,28 @@ export default function SecretPassPhrase({
   const verifyPassphrase = useAppContext(
     (v) => v.requestHelpers.verifyPassphrase
   );
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(async () => {
       onSetIsPassphraseValid(false);
       if (passphrase) {
-        const isMatch = await verifyPassphrase(passphrase);
-        if (!isMatch) {
+        setLoading(true);
+        try {
+          const isMatch = await verifyPassphrase(passphrase);
+          if (!isMatch) {
+            setErrorMessage('Incorrect passphrase');
+            onSetIsPassphraseValid(false);
+          } else {
+            setErrorMessage('');
+            onSetIsPassphraseValid(true);
+          }
+        } catch (error) {
           setErrorMessage('Incorrect passphrase');
           onSetIsPassphraseValid(false);
-        } else {
-          setErrorMessage('');
-          onSetIsPassphraseValid(true);
+        } finally {
+          setLoading(false);
         }
       }
     }, 500);
@@ -65,21 +75,48 @@ export default function SecretPassPhrase({
       >
         {passphraseLabel}
       </p>
-      <Input
-        value={passphrase}
-        hasError={!!errorMessage}
-        placeholder={passphraseLabel}
+      <div
         className={css`
-          min-width: 50%;
-          @media (max-width: ${mobileMaxWidth}) {
-            width: 100%;
-          }
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
         `}
-        onChange={(text) => {
-          setErrorMessage('');
-          onSetPassphrase(text);
-        }}
-      />
+      >
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            min-width: 50%;
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 100%;
+            }
+          `}
+        >
+          <div style={{ width: '24px', marginRight: '1rem' }} />
+          <Input
+            value={passphrase}
+            hasError={!!errorMessage}
+            placeholder={passphraseLabel}
+            style={{ width: '100%' }}
+            onChange={(text) => {
+              setErrorMessage('');
+              onSetPassphrase(text);
+            }}
+          />
+          <div style={{ width: '24px', marginLeft: '1rem' }}>
+            {loading && (
+              <Icon
+                style={{
+                  color: Color.gray()
+                }}
+                icon="spinner"
+                pulse
+              />
+            )}
+          </div>
+        </div>
+      </div>
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
     </div>
   );
