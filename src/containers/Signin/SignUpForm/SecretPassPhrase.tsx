@@ -93,7 +93,7 @@ export default function SecretPassPhrase({
             }
           `}
         >
-          <div style={{ width: '24px', marginRight: '1rem' }} />
+          <div style={{ width: '2.5rem', marginRight: '1rem' }} />
           <Input
             value={passphrase}
             hasError={!!errorMessage}
@@ -104,7 +104,7 @@ export default function SecretPassPhrase({
               onSetPassphrase(text);
             }}
           />
-          <div style={{ width: '24px', marginLeft: '1rem' }}>
+          <div style={{ width: '2.5rem', marginLeft: '1rem' }}>
             {loading && (
               <Icon
                 style={{
