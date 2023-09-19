@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import localize from '~/constants/localize';
 import { useAppContext } from '~/contexts';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 
 const passphraseLabel = localize('passphrase');
 
@@ -39,18 +41,46 @@ export default function SecretPassPhrase({
   }, [passphrase]);
 
   return (
-    <section>
-      <label>{passphraseLabel}</label>
+    <div
+      style={{
+        textAlign: 'center'
+      }}
+    >
+      <p
+        style={{
+          fontWeight: 'bold',
+          fontSize: '1.7rem',
+          marginBottom: '2.7rem',
+          color: Color.darkerGray()
+        }}
+      >
+        Prove you are a Twinkler by answering the question below
+      </p>
+      <p
+        style={{
+          fontWeight: 'bold',
+          fontSize: '2rem',
+          marginBottom: '1rem'
+        }}
+      >
+        {passphraseLabel}
+      </p>
       <Input
         value={passphrase}
         hasError={!!errorMessage}
         placeholder={passphraseLabel}
+        className={css`
+          min-width: 50%;
+          @media (max-width: ${mobileMaxWidth}) {
+            width: 100%;
+          }
+        `}
         onChange={(text) => {
           setErrorMessage('');
           onSetPassphrase(text);
         }}
       />
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-    </section>
+    </div>
   );
 }
