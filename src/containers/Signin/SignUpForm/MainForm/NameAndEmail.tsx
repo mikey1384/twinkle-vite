@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import localize from '~/constants/localize';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { Color } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 
 const emailIsNeededInCaseLabel = localize('emailIsNeededInCase');
 const emailYoursOrYourParentsLabel = localize('emailYoursOrYourParents');
@@ -100,12 +100,12 @@ export default function UsernamePassword({
         <section
           style={{
             padding: '1rem',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '8px',
+            background: 'linear-gradient(45deg, #f8f9fa 0%, #e9eaec 100%)',
+            borderRadius,
             boxShadow:
               '0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)',
             fontFamily: '"Helvetica Neue", sans-serif',
-            lineHeight: '1.6'
+            lineHeight: 1.6
           }}
         >
           <p
