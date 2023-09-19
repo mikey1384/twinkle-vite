@@ -17,7 +17,8 @@ export default function UsernamePassword({
   onSetFirstname,
   onSetLastname,
   onSetEmail,
-  onSetHasNameOrEmailError,
+  onSetHasEmailError,
+  onSetHasNameError,
   userType
 }: {
   firstname: string;
@@ -26,7 +27,8 @@ export default function UsernamePassword({
   onSetFirstname: (value: string) => void;
   onSetLastname: (value: string) => void;
   onSetEmail: (value: string) => void;
-  onSetHasNameOrEmailError: (value: boolean) => void;
+  onSetHasEmailError: (value: boolean) => void;
+  onSetHasNameError: (value: boolean) => void;
   userType: string;
 }) {
   const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
@@ -47,27 +49,19 @@ export default function UsernamePassword({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (firstname) {
-        if (!isValidRealname(firstname)) {
-          setFirstnameErrorMsg('Invalid first name');
-          onSetHasNameOrEmailError(true);
-        }
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [firstname, onSetHasNameOrEmailError]);
+      if (firstname || lastname) {
+        const hasFirstNameError = !!(firstname && !isValidRealname(firstname));
+        const hasLastNameError = !!(lastname && !isValidRealname(lastname));
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (lastname) {
-        if (!isValidRealname(lastname)) {
-          setLastnameErrorMsg('Invalid last name');
-          onSetHasNameOrEmailError(true);
-        }
+        onSetHasNameError(hasFirstNameError || hasLastNameError);
+
+        setFirstnameErrorMsg(hasFirstNameError ? 'Invalid first name' : '');
+        setLastnameErrorMsg(hasLastNameError ? 'Invalid last name' : '');
       }
     }, 500);
+
     return () => clearTimeout(timer);
-  }, [lastname, onSetHasNameOrEmailError]);
+  }, [firstname, lastname, onSetHasNameError]);
 
   function isValidRealname(realName: string) {
     const pattern = new RegExp(/^[a-zA-Z]+((\s|-|')[a-zA-Z]+)?$/);
@@ -79,22 +73,18 @@ export default function UsernamePassword({
       if (email) {
         if (!isValidEmailAddress(email)) {
           setEmailErrorMsg('Invalid email address');
-          onSetHasNameOrEmailError(true);
+          onSetHasEmailError(true);
         }
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [email, onSetHasNameOrEmailError]);
+  }, [email, onSetHasEmailError]);
 
   useEffect(() => {
-    if (
-      (stringIsEmpty(firstname) || isValidRealname(firstname)) &&
-      (stringIsEmpty(lastname) || isValidRealname(lastname)) &&
-      (stringIsEmpty(email) || isValidEmailAddress(email))
-    ) {
-      onSetHasNameOrEmailError(false);
+    if (stringIsEmpty(email) || isValidEmailAddress(email)) {
+      onSetHasEmailError(false);
     }
-  }, [firstname, lastname, email, onSetHasNameOrEmailError]);
+  }, [firstname, lastname, email, onSetHasEmailError]);
 
   function isValidEmailAddress(email: string) {
     const regex =
