@@ -80,8 +80,16 @@ export default function MainForm({
     () => displayedPage === pages[pages.length - 1],
     [displayedPage]
   );
-
   const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
+
+  const isEmailAndNamePageIncomplete = useMemo(() => {
+    return (
+      hasEmailError ||
+      hasNameError ||
+      stringIsEmpty(firstname) ||
+      stringIsEmpty(lastname)
+    );
+  }, [firstname, hasEmailError, hasNameError, lastname]);
 
   return (
     <div>
@@ -167,15 +175,12 @@ export default function MainForm({
           <Button
             filled
             disabled={
-              (!isUsernameAvailable && displayedPage === 'username') ||
-              ((stringIsEmpty(password) || password !== reenteredPassword) &&
-                displayedPage === 'password') ||
-              ((hasEmailError ||
-                hasNameError ||
-                stringIsEmpty(firstname) ||
-                stringIsEmpty(lastname)) &&
-                displayedPage === 'name_and_email') ||
-              (!isPassphraseValid && displayedPage === 'passphrase')
+              (displayedPage === 'username' && !isUsernameAvailable) ||
+              (displayedPage === 'password' &&
+                (stringIsEmpty(password) || password !== reenteredPassword)) ||
+              (displayedPage === 'name_and_email' &&
+                isEmailAndNamePageIncomplete) ||
+              (displayedPage === 'passphrase' && !isPassphraseValid)
             }
             loading={signingUp}
             color={isOnFinalPage ? 'green' : 'logoBlue'}
