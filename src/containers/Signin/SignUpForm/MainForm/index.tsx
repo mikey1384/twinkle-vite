@@ -128,6 +128,7 @@ export default function MainForm({
           onSetLastname={onSetLastname}
           onSetEmail={onSetEmail}
           onSetHasNameOrEmailError={onSetHasNameOrEmailError}
+          userType={userType}
         />
       )}
       {displayedPage === 'passphrase' && (
