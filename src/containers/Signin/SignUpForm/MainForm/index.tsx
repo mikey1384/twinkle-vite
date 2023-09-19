@@ -80,7 +80,12 @@ export default function MainForm({
     () => displayedPage === pages[pages.length - 1],
     [displayedPage]
   );
-  const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
+  const displayedTitle = useMemo(() => {
+    if (displayedPage === 'name_and_email' && userType === 'teacher') {
+      return 'The following message will be sent to the admins for approval';
+    }
+    return titles[displayedPage];
+  }, [displayedPage, userType]);
 
   const isEmailAndNamePageIncomplete = useMemo(() => {
     return (
@@ -97,7 +102,10 @@ export default function MainForm({
         className={css`
           text-align: center;
           font-family: 'Roboto', sans-serif;
-          font-size: 2.5rem;
+          font-size: ${displayedPage === 'name_and_email' &&
+          userType === 'teacher'
+            ? '2.2rem'
+            : '2.5rem'};
           margin-bottom: 20px;
           color: #333333;
           font-weight: 500;
