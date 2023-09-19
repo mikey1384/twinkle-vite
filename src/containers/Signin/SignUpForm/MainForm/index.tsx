@@ -12,13 +12,13 @@ import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 
 const createMyAccountLabel = localize('createMyAccount');
-const pages = ['username', 'password', 'email', 'passphrase'];
+const pages = ['username', 'password', 'name_and_email', 'passphrase'];
 const titles: {
   [key: string]: string;
 } = {
   username: 'What is your username going to be?',
   password: 'Set a password',
-  email: 'What is your name and your email?',
+  name_and_email: 'What is your name and your email?',
   passphrase: `Answer this question to prove you're a Twinkle student`
 };
 
@@ -119,7 +119,7 @@ export default function MainForm({
           onSetReenteredPassword={onSetReenteredPassword}
         />
       )}
-      {displayedPage === 'email' && (
+      {displayedPage === 'name_and_email' && (
         <NameAndEmail
           firstname={firstname}
           lastname={lastname}
@@ -172,7 +172,7 @@ export default function MainForm({
               ((stringIsEmpty(password) || password !== reenteredPassword) &&
                 displayedPage === 'password') ||
               ((hasNameOrEmailError || !fullnameIsCompleteOrEmpty) &&
-                displayedPage === 'email') ||
+                displayedPage === 'name_and_email') ||
               (!isPassphraseValid && displayedPage === 'passphrase')
             }
             loading={signingUp}
