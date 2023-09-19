@@ -17,7 +17,8 @@ export default function UsernamePassword({
   onSetFirstname,
   onSetLastname,
   onSetEmail,
-  onSetHasNameOrEmailError
+  onSetHasNameOrEmailError,
+  userType
 }: {
   firstname: string;
   lastname: string;
@@ -26,6 +27,7 @@ export default function UsernamePassword({
   onSetLastname: (value: string) => void;
   onSetEmail: (value: string) => void;
   onSetHasNameOrEmailError: (value: boolean) => void;
+  userType: string;
 }) {
   const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
   const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
@@ -135,11 +137,17 @@ export default function UsernamePassword({
         <p style={{ color: 'red' }}>{lastnameErrorMsg}</p>
       </section>
       <section style={{ marginTop: '2rem' }}>
-        <label>{emailYoursOrYourParentsLabel}</label>
+        <label>
+          {userType === 'student' ? emailYoursOrYourParentsLabel : 'Email'}
+        </label>
         <Input
           value={email}
           hasError={!!emailErrorMsg}
-          placeholder={emailIsNeededInCaseLabel}
+          placeholder={
+            userType === 'student'
+              ? emailIsNeededInCaseLabel
+              : 'Your Twinkle email address'
+          }
           onChange={(text) => {
             setEmailErrorMsg('');
             onSetEmail(text);
