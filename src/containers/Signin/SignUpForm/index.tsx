@@ -17,14 +17,16 @@ export default function SignUpForm({
   email,
   isPassphraseValid,
   isUsernameAvailable,
-  hasNameOrEmailError,
+  hasNameError,
+  hasEmailError,
   reenteredPassword,
   onSetFirstname,
   onSetLastname,
   onSetEmail,
   onSetIsPassphraseValid,
   onSetIsUsernameAvailable,
-  onSetHasNameOrEmailError,
+  onSetHasNameError,
+  onSetHasEmailError,
   onSetPassword,
   onSetReenteredPassword,
   onSetUsername,
@@ -37,14 +39,16 @@ export default function SignUpForm({
   email: string;
   isPassphraseValid: boolean;
   isUsernameAvailable: boolean;
-  hasNameOrEmailError: boolean;
+  hasNameError: boolean;
+  hasEmailError: boolean;
   reenteredPassword: string;
   onSetFirstname: (firstname: string) => void;
   onSetLastname: (lastname: string) => void;
   onSetEmail: (email: string) => void;
   onSetIsPassphraseValid: (isValid: boolean) => void;
   onSetIsUsernameAvailable: (isAvailable: boolean) => void;
-  onSetHasNameOrEmailError: (hasError: boolean) => void;
+  onSetHasNameError: (hasError: boolean) => void;
+  onSetHasEmailError: (hasError: boolean) => void;
   onSetPassword: (password: string) => void;
   onSetReenteredPassword: (password: string) => void;
   onSetUsername: (username: string) => void;
@@ -81,13 +85,15 @@ export default function SignUpForm({
               reenteredPassword={reenteredPassword}
               isUsernameAvailable={isUsernameAvailable}
               isPassphraseValid={isPassphraseValid}
-              hasNameOrEmailError={hasNameOrEmailError}
+              hasEmailError={hasEmailError}
+              hasNameError={hasNameError}
               onSetFirstname={onSetFirstname}
               onSetLastname={onSetLastname}
               onSetEmail={onSetEmail}
               onSetPassword={onSetPassword}
               onSetReenteredPassword={onSetReenteredPassword}
-              onSetHasNameOrEmailError={onSetHasNameOrEmailError}
+              onSetHasNameError={onSetHasNameError}
+              onSetHasEmailError={onSetHasEmailError}
               onSetIsUsernameAvailable={onSetIsUsernameAvailable}
               onSetIsPassphraseValid={onSetIsPassphraseValid}
               onSetUsername={onSetUsername}

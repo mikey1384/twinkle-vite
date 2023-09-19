@@ -21,7 +21,8 @@ export default function Signin({ onHide }: { onHide: () => void }) {
   const [firstname, setFirstname] = useState('');
   const [lastname, setLastname] = useState('');
   const [email, setEmail] = useState('');
-  const [hasNameOrEmailError, setHasNameOrEmailError] = useState(false);
+  const [hasNameError, setHasNameError] = useState(false);
+  const [hasEmailError, setHasEmailError] = useState(false);
 
   return (
     <ErrorBoundary componentPath="Signin/index">
@@ -55,12 +56,14 @@ export default function Signin({ onHide }: { onHide: () => void }) {
             email={email}
             isPassphraseValid={isPassphraseValid}
             isUsernameAvailable={isUsernameAvailable}
-            hasNameOrEmailError={hasNameOrEmailError}
+            hasEmailError={hasEmailError}
+            hasNameError={hasNameError}
             reenteredPassword={reenteredPassword}
             onSetFirstname={setFirstname}
             onSetLastname={setLastname}
             onSetEmail={setEmail}
-            onSetHasNameOrEmailError={setHasNameOrEmailError}
+            onSetHasEmailError={setHasEmailError}
+            onSetHasNameError={setHasNameError}
             onSetIsPassphraseValid={setIsPassphraseValid}
             onSetIsUsernameAvailable={setIsUsernameAvailable}
             onSetPassword={setPassword}

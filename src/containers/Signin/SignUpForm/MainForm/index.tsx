@@ -31,11 +31,13 @@ export default function MainForm({
   reenteredPassword,
   isUsernameAvailable,
   isPassphraseValid,
-  hasNameOrEmailError,
+  hasEmailError,
+  hasNameError,
   onBackToSelection,
   onSetFirstname,
   onSetLastname,
-  onSetHasNameOrEmailError,
+  onSetHasEmailError,
+  onSetHasNameError,
   onSetEmail,
   onSetIsUsernameAvailable,
   onSetIsPassphraseValid,
@@ -52,12 +54,14 @@ export default function MainForm({
   reenteredPassword: string;
   isUsernameAvailable: boolean;
   isPassphraseValid: boolean;
-  hasNameOrEmailError: boolean;
+  hasEmailError: boolean;
+  hasNameError: boolean;
   onBackToSelection: () => void;
   onSetEmail: (email: string) => void;
   onSetFirstname: (firstname: string) => void;
   onSetLastname: (lastname: string) => void;
-  onSetHasNameOrEmailError: (hasError: boolean) => void;
+  onSetHasEmailError: (hasError: boolean) => void;
+  onSetHasNameError: (hasError: boolean) => void;
   onSetIsUsernameAvailable: (isAvailable: boolean) => void;
   onSetIsPassphraseValid: (isValid: boolean) => void;
   onSetPassword: (password: string) => void;
@@ -78,13 +82,6 @@ export default function MainForm({
   );
 
   const displayedTitle = useMemo(() => titles[displayedPage], [displayedPage]);
-
-  const fullnameIsCompleteOrEmpty = useMemo(() => {
-    return (
-      (firstname && lastname) ||
-      (stringIsEmpty(firstname) && stringIsEmpty(lastname))
-    );
-  }, [firstname, lastname]);
 
   return (
     <div>
@@ -127,7 +124,8 @@ export default function MainForm({
           onSetFirstname={onSetFirstname}
           onSetLastname={onSetLastname}
           onSetEmail={onSetEmail}
-          onSetHasNameOrEmailError={onSetHasNameOrEmailError}
+          onSetHasEmailError={onSetHasEmailError}
+          onSetHasNameError={onSetHasNameError}
           userType={userType}
         />
       )}
@@ -172,7 +170,10 @@ export default function MainForm({
               (!isUsernameAvailable && displayedPage === 'username') ||
               ((stringIsEmpty(password) || password !== reenteredPassword) &&
                 displayedPage === 'password') ||
-              ((hasNameOrEmailError || !fullnameIsCompleteOrEmpty) &&
+              ((hasEmailError ||
+                hasNameError ||
+                stringIsEmpty(firstname) ||
+                stringIsEmpty(lastname)) &&
                 displayedPage === 'name_and_email') ||
               (!isPassphraseValid && displayedPage === 'passphrase')
             }
