@@ -124,6 +124,7 @@ export default function UsernamePassword({
               </label>
               <Input
                 maxLength={30}
+                hasError={!!firstnameErrorMsg}
                 value={firstname}
                 placeholder="First name"
                 onChange={(text) => {
@@ -131,6 +132,9 @@ export default function UsernamePassword({
                   onSetFirstname(text);
                 }}
               />
+              {firstnameErrorMsg && (
+                <p style={{ color: 'red' }}>{firstnameErrorMsg}</p>
+              )}
             </div>
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', color: Color.darkerGray() }}>
@@ -138,6 +142,7 @@ export default function UsernamePassword({
               </label>
               <Input
                 maxLength={30}
+                hasError={!!lastnameErrorMsg}
                 value={lastname}
                 placeholder="Last name"
                 onChange={(text) => {
@@ -145,6 +150,9 @@ export default function UsernamePassword({
                   onSetLastname(text.trim());
                 }}
               />
+              {lastnameErrorMsg && (
+                <p style={{ color: 'red' }}>{lastnameErrorMsg}</p>
+              )}
             </div>
           </div>
           <p
@@ -213,7 +221,9 @@ export default function UsernamePassword({
                 onSetLastname(text.trim());
               }}
             />
-            <p style={{ color: 'red' }}>{lastnameErrorMsg}</p>
+            {lastnameErrorMsg && (
+              <p style={{ color: 'red' }}>{lastnameErrorMsg}</p>
+            )}
           </section>
         </div>
       )}
