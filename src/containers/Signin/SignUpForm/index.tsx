@@ -3,6 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import MainForm from './MainForm';
 import StudentOrTeacher from './StudentOrTeacher';
+import SecretPassPhrase from './SecretPassPhrase';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 
@@ -55,6 +56,7 @@ export default function SignUpForm({
   onShowLoginForm: () => void;
 }) {
   const [userType, setUsertype] = useState('');
+  const [passphrase, setPassphrase] = useState('');
 
   return (
     <ErrorBoundary componentPath="Signin/SignupForm">
@@ -81,10 +83,10 @@ export default function SignUpForm({
               lastname={lastname}
               username={username}
               password={password}
+              passphrase={passphrase}
               email={email}
               reenteredPassword={reenteredPassword}
               isUsernameAvailable={isUsernameAvailable}
-              isPassphraseValid={isPassphraseValid}
               hasEmailError={hasEmailError}
               hasNameError={hasNameError}
               onSetFirstname={onSetFirstname}
@@ -95,13 +97,18 @@ export default function SignUpForm({
               onSetHasNameError={onSetHasNameError}
               onSetHasEmailError={onSetHasEmailError}
               onSetIsUsernameAvailable={onSetIsUsernameAvailable}
-              onSetIsPassphraseValid={onSetIsPassphraseValid}
               onSetUsername={onSetUsername}
               onBackToSelection={() => setUsertype('')}
               userType={userType}
             />
-          ) : (
+          ) : isPassphraseValid ? (
             <StudentOrTeacher onSelect={setUsertype} />
+          ) : (
+            <SecretPassPhrase
+              onSetPassphrase={setPassphrase}
+              onSetIsPassphraseValid={onSetIsPassphraseValid}
+              passphrase={passphrase}
+            />
           )}
         </div>
       </main>
