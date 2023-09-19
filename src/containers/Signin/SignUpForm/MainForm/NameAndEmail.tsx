@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import localize from '~/constants/localize';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { Color } from '~/constants/css';
 
 const emailIsNeededInCaseLabel = localize('emailIsNeededInCase');
 const emailYoursOrYourParentsLabel = localize('emailYoursOrYourParents');
@@ -107,53 +108,77 @@ export default function UsernamePassword({
             lineHeight: '1.6'
           }}
         >
-          <p style={{ marginBottom: '0.5rem', fontSize: '1.7rem' }}>
+          <p
+            style={{
+              marginBottom: '0.7rem',
+              fontSize: '1.8rem',
+              fontWeight: 'bold'
+            }}
+          >
             Hi, my name is
           </p>
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-            <Input
-              maxLength={30}
-              value={firstname}
-              placeholder="First name"
-              onChange={(text) => {
-                setFirstnameErrorMsg('');
-                onSetFirstname(text);
-              }}
-              style={{
-                flex: 1
-              }}
-            />
-            <Input
-              maxLength={30}
-              value={lastname}
-              placeholder="Last name"
-              onChange={(text) => {
-                setLastnameErrorMsg('');
-                onSetLastname(text.trim());
-              }}
-              style={{
-                flex: 1
-              }}
-            />
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', color: Color.darkerGray() }}>
+                First name
+              </label>
+              <Input
+                maxLength={30}
+                value={firstname}
+                placeholder="First name"
+                onChange={(text) => {
+                  setFirstnameErrorMsg('');
+                  onSetFirstname(text);
+                }}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', color: Color.darkerGray() }}>
+                Last name
+              </label>
+              <Input
+                maxLength={30}
+                value={lastname}
+                placeholder="Last name"
+                onChange={(text) => {
+                  setLastnameErrorMsg('');
+                  onSetLastname(text.trim());
+                }}
+              />
+            </div>
           </div>
-          <p style={{ marginBottom: '0.5rem', fontSize: '1.7rem' }}>
+          <p
+            style={{
+              marginBottom: '0.7rem',
+              fontSize: '1.8rem',
+              fontWeight: 'bold'
+            }}
+          >
             {`and I'm a teacher at`}
           </p>
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-            <Input
-              maxLength={50}
-              placeholder="Class name"
-              style={{ flex: 1 }}
-              onChange={(text) => console.log(text)}
-            />
-            <Input
-              maxLength={50}
-              placeholder="Branch name"
-              style={{ flex: 1 }}
-              onChange={(text) => console.log(text)}
-            />
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', color: Color.darkerGray() }}>
+                Class name
+              </label>
+              <Input
+                maxLength={50}
+                placeholder="Class name"
+                onChange={(text) => console.log(text)}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', color: Color.darkerGray() }}>
+                Branch name
+              </label>
+              <Input
+                maxLength={50}
+                placeholder="Branch name"
+                onChange={(text) => console.log(text)}
+              />
+            </div>
           </div>
-          <p style={{ fontSize: '1.7rem' }}>
+          <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
             I would like to request a teacher account.
           </p>
         </section>
