@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import Username from './Username';
 import Password from './Password';
 import NameAndEmail from './NameAndEmail';
-import SecretPassPhrase from './SecretPassPhrase';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
@@ -12,14 +11,13 @@ import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 
 const createMyAccountLabel = localize('createMyAccount');
-const pages = ['username', 'password', 'name_and_email', 'passphrase'];
+const pages = ['username', 'password', 'name_and_email'];
 const titles: {
   [key: string]: string;
 } = {
   username: 'What is your username going to be?',
   password: 'Set a password',
-  name_and_email: 'What is your name and your email?',
-  passphrase: `Answer this question to prove you're a Twinkle student`
+  name_and_email: 'What is your name and your email?'
 };
 
 export default function MainForm({
@@ -27,10 +25,10 @@ export default function MainForm({
   lastname,
   username,
   password,
+  passphrase,
   email,
   reenteredPassword,
   isUsernameAvailable,
-  isPassphraseValid,
   hasEmailError,
   hasNameError,
   onBackToSelection,
@@ -40,7 +38,6 @@ export default function MainForm({
   onSetHasNameError,
   onSetEmail,
   onSetIsUsernameAvailable,
-  onSetIsPassphraseValid,
   onSetPassword,
   onSetReenteredPassword,
   onSetUsername,
@@ -50,10 +47,10 @@ export default function MainForm({
   lastname: string;
   username: string;
   password: string;
+  passphrase: string;
   email: string;
   reenteredPassword: string;
   isUsernameAvailable: boolean;
-  isPassphraseValid: boolean;
   hasEmailError: boolean;
   hasNameError: boolean;
   onBackToSelection: () => void;
@@ -63,7 +60,6 @@ export default function MainForm({
   onSetHasEmailError: (hasError: boolean) => void;
   onSetHasNameError: (hasError: boolean) => void;
   onSetIsUsernameAvailable: (isAvailable: boolean) => void;
-  onSetIsPassphraseValid: (isValid: boolean) => void;
   onSetPassword: (password: string) => void;
   onSetReenteredPassword: (password: string) => void;
   onSetUsername: (username: string) => void;
@@ -74,7 +70,6 @@ export default function MainForm({
   const signup = useAppContext((v) => v.requestHelpers.signup);
   const [displayedPage, setDisplayedPage] = useState('username');
   const [errorMessage, setErrorMessage] = useState('');
-  const [passphrase, setPassphrase] = useState('');
   const [signingUp, setSigningUp] = useState(false);
   const isOnFinalPage = useMemo(
     () => displayedPage === pages[pages.length - 1],
@@ -145,13 +140,6 @@ export default function MainForm({
           userType={userType}
         />
       )}
-      {displayedPage === 'passphrase' && (
-        <SecretPassPhrase
-          onSetPassphrase={setPassphrase}
-          onSetIsPassphraseValid={onSetIsPassphraseValid}
-          passphrase={passphrase}
-        />
-      )}
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
       <div
         style={{
@@ -187,8 +175,7 @@ export default function MainForm({
               (displayedPage === 'password' &&
                 (stringIsEmpty(password) || password !== reenteredPassword)) ||
               (displayedPage === 'name_and_email' &&
-                isEmailAndNamePageIncomplete) ||
-              (displayedPage === 'passphrase' && !isPassphraseValid)
+                isEmailAndNamePageIncomplete)
             }
             loading={signingUp}
             color={isOnFinalPage ? 'green' : 'logoBlue'}
