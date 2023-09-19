@@ -102,46 +102,58 @@ export default function UsernamePassword({
             backgroundColor: '#f8f9fa',
             borderRadius: '8px',
             boxShadow:
-              '0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)'
+              '0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)',
+            fontFamily: '"Helvetica Neue", sans-serif',
+            lineHeight: '1.6'
           }}
         >
-          <p style={{ marginBottom: '1rem', fontSize: '1.7rem' }}>My name is</p>
-          <Input
-            maxLength={30}
-            value={firstname}
-            placeholder="First name"
-            onChange={(text) => {
-              setFirstnameErrorMsg('');
-              onSetFirstname(text);
-            }}
-            style={{
-              marginRight: '0.5rem',
-              width: 'auto'
-            }}
-          />
-          <Input
-            maxLength={30}
-            value={lastname}
-            placeholder="Last name"
-            onChange={(text) => {
-              setLastnameErrorMsg('');
-              onSetLastname(text.trim());
-            }}
-            style={{
-              marginLeft: '0.5rem',
-              width: 'auto'
-            }}
-          />
-          <p style={{ margin: '1rem 0', fontSize: '1.7rem', width: 'auto' }}>
+          <p style={{ marginBottom: '0.5rem', fontSize: '1.7rem' }}>
+            Hi, my name is
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+            <Input
+              maxLength={30}
+              value={firstname}
+              placeholder="First name"
+              onChange={(text) => {
+                setFirstnameErrorMsg('');
+                onSetFirstname(text);
+              }}
+              style={{
+                flex: 1
+              }}
+            />
+            <Input
+              maxLength={30}
+              value={lastname}
+              placeholder="Last name"
+              onChange={(text) => {
+                setLastnameErrorMsg('');
+                onSetLastname(text.trim());
+              }}
+              style={{
+                flex: 1
+              }}
+            />
+          </div>
+          <p style={{ marginBottom: '0.5rem', fontSize: '1.7rem' }}>
             {`and I'm a teacher at`}
           </p>
-          <Input
-            maxLength={50}
-            placeholder="School/Institution name"
-            style={{ width: '100%', marginBottom: '1rem' }}
-            onChange={(text) => console.log(text)}
-          />
-          <p style={{ margin: '1rem 0', fontSize: '1.7rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+            <Input
+              maxLength={50}
+              placeholder="Class name"
+              style={{ flex: 1 }}
+              onChange={(text) => console.log(text)}
+            />
+            <Input
+              maxLength={50}
+              placeholder="Branch name"
+              style={{ flex: 1 }}
+              onChange={(text) => console.log(text)}
+            />
+          </div>
+          <p style={{ fontSize: '1.7rem' }}>
             I would like to request a teacher account.
           </p>
         </section>
