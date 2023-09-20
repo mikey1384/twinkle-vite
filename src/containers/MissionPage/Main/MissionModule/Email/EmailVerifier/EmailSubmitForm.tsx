@@ -52,6 +52,7 @@ export default function EmailSubmitForm({
             width: 100%;
           }
         `}
+        disabled={sendingEmail}
         type="email"
         maxLength={100}
         placeholder="somebody@something.com"
@@ -61,7 +62,8 @@ export default function EmailSubmitForm({
       <div style={{ marginTop: '1.5rem' }}>
         {errorMsg && <p style={{ color: Color.red() }}>{errorMsg}</p>}
         <Button
-          disabled={!emailIsValid || sendingEmail}
+          disabled={!emailIsValid}
+          loading={sendingEmail}
           style={{ fontSize: '1.7rem' }}
           filled
           color={submitButtonColor}

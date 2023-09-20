@@ -264,14 +264,18 @@ export default function UsernamePassword({
           type="email"
         />
         {sendVerificationButtonShown && (
-          <Button
-            style={{ marginTop: '1rem' }}
-            filled
-            color="green"
-            onClick={() => console.log('sending', onSetVerifiedEmail)}
+          <div
+            style={{ display: 'flex', width: '100%', justifyContent: 'center' }}
           >
-            Send verification email
-          </Button>
+            <Button
+              style={{ marginTop: '1.5rem' }}
+              filled
+              color="logoBlue"
+              onClick={() => console.log('sending', onSetVerifiedEmail)}
+            >
+              Send verification email
+            </Button>
+          </div>
         )}
         <p style={{ color: 'red' }}>{emailErrorMsg}</p>
       </section>
