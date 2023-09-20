@@ -12,9 +12,13 @@ const whatIsYourFirstNameLabel = localize('whatIsYourFirstName');
 const whatIsYourLastNameLabel = localize('whatIsYourLastName');
 
 export default function UsernamePassword({
+  classLabel,
+  branchName,
   firstname,
   lastname,
   email,
+  onSetBranchName,
+  onSetClassLabel,
   onSetFirstname,
   onSetLastname,
   onSetEmail,
@@ -22,9 +26,13 @@ export default function UsernamePassword({
   onSetHasNameError,
   userType
 }: {
+  classLabel: string;
+  branchName: string;
   firstname: string;
   lastname: string;
   email: string;
+  onSetBranchName: (value: string) => void;
+  onSetClassLabel: (value: string) => void;
   onSetFirstname: (value: string) => void;
   onSetLastname: (value: string) => void;
   onSetEmail: (value: string) => void;
@@ -172,7 +180,8 @@ export default function UsernamePassword({
               <Input
                 maxLength={50}
                 placeholder="Class name"
-                onChange={(text) => console.log(text)}
+                onChange={onSetClassLabel}
+                value={classLabel}
               />
             </div>
             <div style={{ flex: 1 }}>
@@ -182,7 +191,8 @@ export default function UsernamePassword({
               <Input
                 maxLength={50}
                 placeholder="Branch name"
-                onChange={(text) => console.log(text)}
+                onChange={onSetBranchName}
+                value={branchName}
               />
             </div>
           </div>

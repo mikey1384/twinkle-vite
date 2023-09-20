@@ -13,7 +13,6 @@ Signin.propTypes = {
 export default function Signin({ onHide }: { onHide: () => void }) {
   const [username, setUsername] = useState('');
   const [currentPage, setCurrentPage] = useState('main');
-
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
   const [password, setPassword] = useState('');
   const [reenteredPassword, setReenteredPassword] = useState('');
@@ -21,6 +20,8 @@ export default function Signin({ onHide }: { onHide: () => void }) {
   const [firstname, setFirstname] = useState('');
   const [lastname, setLastname] = useState('');
   const [email, setEmail] = useState('');
+  const [classLabel, setClassLabel] = useState('');
+  const [branchName, setBranchName] = useState('');
   const [hasNameError, setHasNameError] = useState(false);
   const [hasEmailError, setHasEmailError] = useState(false);
 
@@ -49,6 +50,8 @@ export default function Signin({ onHide }: { onHide: () => void }) {
         )}
         {currentPage === 'signUp' && (
           <SignUpForm
+            branchName={branchName}
+            classLabel={classLabel}
             firstname={firstname}
             lastname={lastname}
             username={username}
@@ -59,6 +62,8 @@ export default function Signin({ onHide }: { onHide: () => void }) {
             hasEmailError={hasEmailError}
             hasNameError={hasNameError}
             reenteredPassword={reenteredPassword}
+            onSetBranchName={setBranchName}
+            onSetClassLabel={setClassLabel}
             onSetFirstname={setFirstname}
             onSetLastname={setLastname}
             onSetEmail={setEmail}
