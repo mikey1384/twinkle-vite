@@ -1,22 +1,18 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Input from '~/components/Texts/Input';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 
-VerificationCodeInput.propTypes = {
-  email: PropTypes.string.isRequired,
-  onRetry: PropTypes.func.isRequired
-};
-
 export default function VerificationCodeInput({
   onRetry,
-  email
+  email,
+  onSetVerifiedEmail
 }: {
   email: string;
   onRetry: () => void;
+  onSetVerifiedEmail: (value: string) => void;
 }) {
   const {
     link: { color: linkColor }
@@ -27,8 +23,6 @@ export default function VerificationCodeInput({
   const verifyEmailViaOTP = useAppContext(
     (v) => v.requestHelpers.verifyEmailViaOTP
   );
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { userId } = useKeyContext((v) => v.myState);
 
   return (
     <ErrorBoundary
@@ -94,10 +88,7 @@ export default function VerificationCodeInput({
       const success = await verifyEmailViaOTP({ otp: text, email });
       if (success) {
         setVerifying(false);
-        onSetUserState({
-          userId,
-          newState: { verifiedEmail: email, emailMissionAttempted: true }
-        });
+        onSetVerifiedEmail(email);
       } else {
         setErrorMsg(`That is not the number we sent you. Please try again`);
         setVerifying(false);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import EmailSection from './EmailSection';
+import Verifier from './Verifier';
 import localize from '~/constants/localize';
 import { stringIsEmpty, isValidEmailAddress } from '~/helpers/stringHelpers';
 import { Color, borderRadius } from '~/constants/css';
@@ -220,14 +221,11 @@ export default function UsernamePassword({
         </div>
       )}
       {emailSent ? (
-        <div>
-          email has been sent{' '}
-          <Input
-            placeholder="Enter the code"
-            onChange={(email: string) => onSetVerifiedEmail(email)}
-            value={''}
-          />
-        </div>
+        <Verifier
+          email={email}
+          onSetEmailSent={setEmailSent}
+          onSetVerifiedEmail={onSetVerifiedEmail}
+        />
       ) : (
         <EmailSection
           email={email}
