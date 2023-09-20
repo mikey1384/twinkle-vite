@@ -225,7 +225,7 @@ export default function UsernamePassword({
           <Input
             placeholder="Enter the code"
             onChange={(email: string) => onSetVerifiedEmail(email)}
-            value={email}
+            value={''}
           />
         </div>
       ) : (

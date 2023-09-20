@@ -73,7 +73,7 @@ export default function EmailSection({
             filled
             color="logoBlue"
             loading={sendingEmail}
-            onClick={handleConfirmEmail}
+            onClick={() => handleConfirmEmail(email)}
           >
             Send verification email
           </Button>
