@@ -29,6 +29,7 @@ export default function MainForm({
   password,
   passphrase,
   email,
+  verifiedEmail,
   reenteredPassword,
   isUsernameAvailable,
   hasEmailError,
@@ -41,6 +42,7 @@ export default function MainForm({
   onSetHasEmailError,
   onSetHasNameError,
   onSetEmail,
+  onSetVerifiedEmail,
   onSetIsUsernameAvailable,
   onSetPassword,
   onSetReenteredPassword,
@@ -55,6 +57,7 @@ export default function MainForm({
   password: string;
   passphrase: string;
   email: string;
+  verifiedEmail: string;
   reenteredPassword: string;
   isUsernameAvailable: boolean;
   hasEmailError: boolean;
@@ -63,6 +66,7 @@ export default function MainForm({
   onSetBranchName: (branchName: string) => void;
   onSetClassLabel: (classLabel: string) => void;
   onSetEmail: (email: string) => void;
+  onSetVerifiedEmail: (email: string) => void;
   onSetFirstname: (firstname: string) => void;
   onSetLastname: (lastname: string) => void;
   onSetHasEmailError: (hasError: boolean) => void;
@@ -161,6 +165,7 @@ export default function MainForm({
           onSetBranchName={onSetBranchName}
           onSetClassLabel={onSetClassLabel}
           onSetEmail={onSetEmail}
+          onSetVerifiedEmail={onSetVerifiedEmail}
           onSetHasEmailError={onSetHasEmailError}
           onSetHasNameError={onSetHasNameError}
           userType={userType}
