@@ -7,10 +7,12 @@ import VerificationCodeInput from './VerificationCodeInput';
 
 export default function Verifier({
   email,
-  onSetEmailSent
+  onSetEmailSent,
+  onSetVerifiedEmail
 }: {
   email: string;
   onSetEmailSent: (value: boolean) => void;
+  onSetVerifiedEmail: (value: string) => void;
 }) {
   const {
     link: { color: linkColor }
@@ -52,6 +54,7 @@ export default function Verifier({
       <VerificationCodeInput
         email={email}
         onRetry={() => onSetEmailSent(false)}
+        onSetVerifiedEmail={onSetVerifiedEmail}
       />
     </ErrorBoundary>
   );
