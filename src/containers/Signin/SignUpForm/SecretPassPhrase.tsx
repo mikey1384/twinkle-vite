@@ -6,6 +6,7 @@ import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
+const WRONG_ANSWER = 'Wrong answer';
 const passphraseLabel = localize('passphrase');
 
 export default function SecretPassPhrase({
@@ -31,14 +32,14 @@ export default function SecretPassPhrase({
         try {
           const isMatch = await verifyPassphrase(passphrase);
           if (!isMatch) {
-            setErrorMessage('Incorrect passphrase');
+            setErrorMessage(WRONG_ANSWER);
             onSetIsPassphraseValid(false);
           } else {
             setErrorMessage('');
             onSetIsPassphraseValid(true);
           }
         } catch (error) {
-          setErrorMessage('Incorrect passphrase');
+          setErrorMessage(WRONG_ANSWER);
           onSetIsPassphraseValid(false);
         } finally {
           setLoading(false);
