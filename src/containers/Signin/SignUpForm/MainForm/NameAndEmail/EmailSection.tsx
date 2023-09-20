@@ -85,6 +85,7 @@ export default function EmailSection({
 
   async function handleConfirmEmail(email: string) {
     if (sendingEmailRef.current) return;
+    setEmailErrorMsg('');
     try {
       sendingEmailRef.current = true;
       setSendingEmail(true);
