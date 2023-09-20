@@ -91,13 +91,27 @@ export default function MainForm({
   }, [displayedPage, userType]);
 
   const isEmailAndNamePageIncomplete = useMemo(() => {
+    const isTeacherRequirementMet =
+      !stringIsEmpty(branchName) &&
+      !stringIsEmpty(classLabel) &&
+      !stringIsEmpty(email);
     return (
       hasEmailError ||
       hasNameError ||
       stringIsEmpty(firstname) ||
-      stringIsEmpty(lastname)
+      stringIsEmpty(lastname) ||
+      (userType === 'teacher' && !isTeacherRequirementMet)
     );
-  }, [firstname, hasEmailError, hasNameError, lastname]);
+  }, [
+    branchName,
+    classLabel,
+    email,
+    firstname,
+    hasEmailError,
+    hasNameError,
+    lastname,
+    userType
+  ]);
 
   return (
     <div>
