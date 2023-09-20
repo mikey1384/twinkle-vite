@@ -22,6 +22,7 @@ export default function UsernamePassword({
   onSetFirstname,
   onSetLastname,
   onSetEmail,
+  onSetVerifiedEmail,
   onSetHasEmailError,
   onSetHasNameError,
   userType
@@ -36,6 +37,7 @@ export default function UsernamePassword({
   onSetFirstname: (value: string) => void;
   onSetLastname: (value: string) => void;
   onSetEmail: (value: string) => void;
+  onSetVerifiedEmail: (value: string) => void;
   onSetHasEmailError: (value: boolean) => void;
   onSetHasNameError: (value: boolean) => void;
   userType: string;

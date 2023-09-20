@@ -18,6 +18,7 @@ export default function SignUpForm({
   username,
   password,
   email,
+  verifiedEmail,
   isPassphraseValid,
   isUsernameAvailable,
   hasNameError,
@@ -26,6 +27,7 @@ export default function SignUpForm({
   onSetFirstname,
   onSetLastname,
   onSetEmail,
+  onSetVerifiedEmail,
   onSetBranchName,
   onSetClassLabel,
   onSetIsPassphraseValid,
@@ -44,6 +46,7 @@ export default function SignUpForm({
   username: string;
   password: string;
   email: string;
+  verifiedEmail: string;
   isPassphraseValid: boolean;
   isUsernameAvailable: boolean;
   hasNameError: boolean;
@@ -54,6 +57,7 @@ export default function SignUpForm({
   onSetFirstname: (firstname: string) => void;
   onSetLastname: (lastname: string) => void;
   onSetEmail: (email: string) => void;
+  onSetVerifiedEmail: (email: string) => void;
   onSetIsPassphraseValid: (isValid: boolean) => void;
   onSetIsUsernameAvailable: (isAvailable: boolean) => void;
   onSetHasNameError: (hasError: boolean) => void;
@@ -95,6 +99,7 @@ export default function SignUpForm({
               password={password}
               passphrase={passphrase}
               email={email}
+              verifiedEmail={verifiedEmail}
               reenteredPassword={reenteredPassword}
               isUsernameAvailable={isUsernameAvailable}
               hasEmailError={hasEmailError}
@@ -104,6 +109,7 @@ export default function SignUpForm({
               onSetFirstname={onSetFirstname}
               onSetLastname={onSetLastname}
               onSetEmail={onSetEmail}
+              onSetVerifiedEmail={onSetVerifiedEmail}
               onSetPassword={onSetPassword}
               onSetReenteredPassword={onSetReenteredPassword}
               onSetHasNameError={onSetHasNameError}
