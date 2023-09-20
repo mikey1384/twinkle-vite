@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import localize from '~/constants/localize';
 import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color, borderRadius } from '~/constants/css';
+import { useAppContext } from '~/contexts';
 
 const emailIsNeededInCaseLabel = localize('emailIsNeededInCase');
 const emailYoursOrYourParentsLabel = localize('emailYoursOrYourParents');
@@ -43,6 +44,11 @@ export default function UsernamePassword({
   onSetHasNameError: (value: boolean) => void;
   userType: string;
 }) {
+  const sendVerificationOTPEmail = useAppContext(
+    (v) => v.requestHelpers.sendVerificationOTPEmail
+  );
+  const sendingEmailRef = useRef(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
   const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
   const [emailErrorMsg, setEmailErrorMsg] = useState('');
@@ -271,7 +277,8 @@ export default function UsernamePassword({
               style={{ marginTop: '1.5rem' }}
               filled
               color="logoBlue"
-              onClick={() => console.log('sending', onSetVerifiedEmail)}
+              loading={sendingEmail}
+              onClick={handleConfirmEmail}
             >
               Send verification email
             </Button>
@@ -281,4 +288,30 @@ export default function UsernamePassword({
       </section>
     </div>
   );
+
+  async function handleConfirmEmail(email: string) {
+    if (sendingEmailRef.current) return;
+    try {
+      sendingEmailRef.current = true;
+      setSendingEmail(true);
+      const success = await sendVerificationOTPEmail(email);
+      sendingEmailRef.current = false;
+      setSendingEmail(false);
+      if (success) {
+        onSetEmailSent(true);
+      } else {
+        sendingEmailRef.current = false;
+        setSendingEmail(false);
+        setEmailErrorMsg(
+          'An error occurred while sending a verification email'
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      setEmailErrorMsg('An error occurred while sending a verification email');
+    } finally {
+      sendingEmailRef.current = false;
+      setSendingEmail(false);
+    }
+  }
 }
