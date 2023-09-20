@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import localize from '~/constants/localize';
+import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color, borderRadius } from '~/constants/css';
 
@@ -46,6 +47,8 @@ export default function UsernamePassword({
   const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
   const [emailErrorMsg, setEmailErrorMsg] = useState('');
   const [isLastnameHighlighted, setIsLastnameHighlighted] = useState(false);
+  const [sendVerificationButtonShown, setSendVerificationButtonShown] =
+    useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -80,11 +83,14 @@ export default function UsernamePassword({
   }
 
   useEffect(() => {
+    setSendVerificationButtonShown(false);
     const timer = setTimeout(() => {
       if (email) {
         if (!isValidEmailAddress(email)) {
           setEmailErrorMsg('Invalid email address');
           onSetHasEmailError(true);
+        } else {
+          setSendVerificationButtonShown(true);
         }
       }
     }, 500);
@@ -257,6 +263,16 @@ export default function UsernamePassword({
           }}
           type="email"
         />
+        {sendVerificationButtonShown && (
+          <Button
+            style={{ marginTop: '1rem' }}
+            filled
+            color="green"
+            onClick={() => console.log('sending', onSetVerifiedEmail)}
+          >
+            Send verification email
+          </Button>
+        )}
         <p style={{ color: 'red' }}>{emailErrorMsg}</p>
       </section>
     </div>
