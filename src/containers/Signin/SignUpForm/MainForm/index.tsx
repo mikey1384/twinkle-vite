@@ -94,11 +94,16 @@ export default function MainForm({
     return titles[displayedPage];
   }, [displayedPage, userType]);
 
+  const isEmailVerified = useMemo(() => {
+    return email === verifiedEmail;
+  }, [email, verifiedEmail]);
+
   const isEmailAndNamePageIncomplete = useMemo(() => {
     const isTeacherRequirementMet =
       !stringIsEmpty(branchName) &&
       !stringIsEmpty(classLabel) &&
-      !stringIsEmpty(email);
+      !stringIsEmpty(email) &&
+      isEmailVerified;
     return (
       hasEmailError ||
       hasNameError ||
@@ -113,6 +118,7 @@ export default function MainForm({
     firstname,
     hasEmailError,
     hasNameError,
+    isEmailVerified,
     lastname,
     userType
   ]);
