@@ -32,7 +32,7 @@ export default function VerificationCodeInput({
 
   return (
     <ErrorBoundary
-      componentPath="MissionModule/Email/EmailVerifier/VerificationCodeInput"
+      componentPath="Signin/SignUpForm/MainForm/NameAndEmail/Verifier/VerificationCodeInput"
       style={{
         marginTop: '1rem',
         display: 'flex',
