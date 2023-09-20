@@ -44,8 +44,8 @@ export default function UsernamePassword({
   onSetHasNameError: (value: boolean) => void;
   userType: string;
 }) {
-  const sendVerificationOTPEmail = useAppContext(
-    (v) => v.requestHelpers.sendVerificationOTPEmail
+  const sendVerificationOTPEmailForSignup = useAppContext(
+    (v) => v.requestHelpers.sendVerificationOTPEmailForSignup
   );
   const sendingEmailRef = useRef(false);
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -294,7 +294,7 @@ export default function UsernamePassword({
     try {
       sendingEmailRef.current = true;
       setSendingEmail(true);
-      const success = await sendVerificationOTPEmail(email);
+      const success = await sendVerificationOTPEmailForSignup(email);
       sendingEmailRef.current = false;
       setSendingEmail(false);
       if (success) {
