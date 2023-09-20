@@ -29,7 +29,6 @@ export default function EmailSection({
   const [sendingEmail, setSendingEmail] = useState(false);
   const [sendVerificationButtonShown, setSendVerificationButtonShown] =
     useState(false);
-  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     setSendVerificationButtonShown(false);
@@ -93,7 +92,7 @@ export default function EmailSection({
       sendingEmailRef.current = false;
       setSendingEmail(false);
       if (success) {
-        setEmailSent(true);
+        onSetEmailSent(true);
       } else {
         sendingEmailRef.current = false;
         setSendingEmail(false);

@@ -44,6 +44,7 @@ export default function UsernamePassword({
   const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
   const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
   const [isLastnameHighlighted, setIsLastnameHighlighted] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -218,12 +219,24 @@ export default function UsernamePassword({
           </section>
         </div>
       )}
-      <EmailSection
-        email={email}
-        onSetEmail={onSetEmail}
-        onSetHasEmailError={onSetHasEmailError}
-        userType={userType}
-      />
+      {emailSent ? (
+        <div>
+          email has been sent{' '}
+          <Input
+            placeholder="Enter the code"
+            onChange={(email: string) => onSetVerifiedEmail(email)}
+            value={email}
+          />
+        </div>
+      ) : (
+        <EmailSection
+          email={email}
+          onSetEmail={onSetEmail}
+          onSetEmailSent={setEmailSent}
+          onSetHasEmailError={onSetHasEmailError}
+          userType={userType}
+        />
+      )}
     </div>
   );
 }
