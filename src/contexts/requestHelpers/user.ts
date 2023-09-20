@@ -594,6 +594,18 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async sendVerificationOTPEmailForSignup(email: string) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(`${URL}/user/signup/email/otp`, {
+          email
+        });
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async setDefaultSearchFilter(filter: string) {
       try {
         const { data } = await request.post(
