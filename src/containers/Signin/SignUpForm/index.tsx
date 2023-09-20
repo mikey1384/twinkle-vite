@@ -11,6 +11,8 @@ const iAlreadyHaveAnAccountLabel = localize('iAlreadyHaveAnAccount');
 const letsSetUpYourAccountLabel = localize('letsSetUpYourAccount');
 
 export default function SignUpForm({
+  branchName,
+  classLabel,
   firstname,
   lastname,
   username,
@@ -24,6 +26,8 @@ export default function SignUpForm({
   onSetFirstname,
   onSetLastname,
   onSetEmail,
+  onSetBranchName,
+  onSetClassLabel,
   onSetIsPassphraseValid,
   onSetIsUsernameAvailable,
   onSetHasNameError,
@@ -33,6 +37,8 @@ export default function SignUpForm({
   onSetUsername,
   onShowLoginForm
 }: {
+  branchName: string;
+  classLabel: string;
   firstname: string;
   lastname: string;
   username: string;
@@ -43,6 +49,8 @@ export default function SignUpForm({
   hasNameError: boolean;
   hasEmailError: boolean;
   reenteredPassword: string;
+  onSetBranchName: (branchName: string) => void;
+  onSetClassLabel: (classLabel: string) => void;
   onSetFirstname: (firstname: string) => void;
   onSetLastname: (lastname: string) => void;
   onSetEmail: (email: string) => void;
@@ -79,6 +87,8 @@ export default function SignUpForm({
         >
           {userType ? (
             <MainForm
+              branchName={branchName}
+              classLabel={classLabel}
               firstname={firstname}
               lastname={lastname}
               username={username}
@@ -89,6 +99,8 @@ export default function SignUpForm({
               isUsernameAvailable={isUsernameAvailable}
               hasEmailError={hasEmailError}
               hasNameError={hasNameError}
+              onSetBranchName={onSetBranchName}
+              onSetClassLabel={onSetClassLabel}
               onSetFirstname={onSetFirstname}
               onSetLastname={onSetLastname}
               onSetEmail={onSetEmail}

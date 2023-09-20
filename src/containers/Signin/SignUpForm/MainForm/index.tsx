@@ -21,6 +21,8 @@ const titles: {
 };
 
 export default function MainForm({
+  branchName,
+  classLabel,
   firstname,
   lastname,
   username,
@@ -32,6 +34,8 @@ export default function MainForm({
   hasEmailError,
   hasNameError,
   onBackToSelection,
+  onSetBranchName,
+  onSetClassLabel,
   onSetFirstname,
   onSetLastname,
   onSetHasEmailError,
@@ -43,6 +47,8 @@ export default function MainForm({
   onSetUsername,
   userType
 }: {
+  branchName: string;
+  classLabel: string;
   firstname: string;
   lastname: string;
   username: string;
@@ -54,6 +60,8 @@ export default function MainForm({
   hasEmailError: boolean;
   hasNameError: boolean;
   onBackToSelection: () => void;
+  onSetBranchName: (branchName: string) => void;
+  onSetClassLabel: (classLabel: string) => void;
   onSetEmail: (email: string) => void;
   onSetFirstname: (firstname: string) => void;
   onSetLastname: (lastname: string) => void;
@@ -129,11 +137,15 @@ export default function MainForm({
       )}
       {displayedPage === 'name_and_email' && (
         <NameAndEmail
+          branchName={branchName}
+          classLabel={classLabel}
           firstname={firstname}
           lastname={lastname}
           email={email}
           onSetFirstname={onSetFirstname}
           onSetLastname={onSetLastname}
+          onSetBranchName={onSetBranchName}
+          onSetClassLabel={onSetClassLabel}
           onSetEmail={onSetEmail}
           onSetHasEmailError={onSetHasEmailError}
           onSetHasNameError={onSetHasNameError}
