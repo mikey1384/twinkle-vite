@@ -259,7 +259,7 @@ export default function UsernamePassword({
           }
           onChange={(text) => {
             setEmailErrorMsg('');
-            onSetEmail(text);
+            onSetEmail(text.trim());
           }}
           type="email"
         />
