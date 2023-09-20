@@ -5,7 +5,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { isValidEmail } from '~/helpers/stringHelpers';
+import { isValidEmailAddress } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
 
 EmailSubmitForm.propTypes = {
@@ -32,7 +32,7 @@ export default function EmailSubmitForm({
   const [sendingEmail, setSendingEmail] = useState(false);
   const sendingEmailRef = useRef(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const emailIsValid = useMemo(() => isValidEmail(email), [email]);
+  const emailIsValid = useMemo(() => isValidEmailAddress(email), [email]);
 
   return (
     <div

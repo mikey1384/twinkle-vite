@@ -1,13 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Input from '~/components/Texts/Input';
+import EmailSection from './EmailSection';
 import localize from '~/constants/localize';
-import Button from '~/components/Button';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { stringIsEmpty, isValidEmailAddress } from '~/helpers/stringHelpers';
 import { Color, borderRadius } from '~/constants/css';
-import { useAppContext } from '~/contexts';
 
-const emailIsNeededInCaseLabel = localize('emailIsNeededInCase');
-const emailYoursOrYourParentsLabel = localize('emailYoursOrYourParents');
 const firstNameLabel = localize('firstName');
 const lastNameLabel = localize('lastName');
 const whatIsYourFirstNameLabel = localize('whatIsYourFirstName');
@@ -44,17 +41,9 @@ export default function UsernamePassword({
   onSetHasNameError: (value: boolean) => void;
   userType: string;
 }) {
-  const sendVerificationOTPEmailForSignup = useAppContext(
-    (v) => v.requestHelpers.sendVerificationOTPEmailForSignup
-  );
-  const sendingEmailRef = useRef(false);
-  const [sendingEmail, setSendingEmail] = useState(false);
   const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
   const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
-  const [emailErrorMsg, setEmailErrorMsg] = useState('');
   const [isLastnameHighlighted, setIsLastnameHighlighted] = useState(false);
-  const [sendVerificationButtonShown, setSendVerificationButtonShown] =
-    useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -83,37 +72,15 @@ export default function UsernamePassword({
     return () => clearTimeout(timer);
   }, [firstname, lastname, onSetHasNameError]);
 
-  function isValidRealname(realName: string) {
-    const pattern = new RegExp(/^[a-zA-Z]+((\s|-|')[a-zA-Z]+)?$/);
-    return pattern.test(realName);
-  }
-
-  useEffect(() => {
-    setSendVerificationButtonShown(false);
-    const timer = setTimeout(() => {
-      if (email) {
-        if (!isValidEmailAddress(email)) {
-          setEmailErrorMsg('Invalid email address');
-          onSetHasEmailError(true);
-        } else {
-          setSendVerificationButtonShown(true);
-        }
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [email, onSetHasEmailError]);
-
   useEffect(() => {
     if (stringIsEmpty(email) || isValidEmailAddress(email)) {
       onSetHasEmailError(false);
     }
   }, [firstname, lastname, email, onSetHasEmailError]);
 
-  function isValidEmailAddress(email: string) {
-    const regex =
-      '^(([^<>()\\[\\]\\\\.,;:\\s@"]+(\\.[^<>()\\[\\]\\.,;:\\s@"]+)*)|(".+"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$';
-    const pattern = new RegExp(regex);
-    return pattern.test(email);
+  function isValidRealname(realName: string) {
+    const pattern = new RegExp(/^[a-zA-Z]+((\s|-|')[a-zA-Z]+)?$/);
+    return pattern.test(realName);
   }
 
   return (
@@ -251,67 +218,12 @@ export default function UsernamePassword({
           </section>
         </div>
       )}
-      <section style={{ marginTop: '2rem' }}>
-        <label>
-          {userType === 'student' ? emailYoursOrYourParentsLabel : 'Email'}
-        </label>
-        <Input
-          value={email}
-          hasError={!!emailErrorMsg}
-          placeholder={
-            userType === 'student'
-              ? emailIsNeededInCaseLabel
-              : 'Your Twinkle email address'
-          }
-          onChange={(text) => {
-            setEmailErrorMsg('');
-            onSetEmail(text.trim());
-          }}
-          type="email"
-        />
-        {sendVerificationButtonShown && (
-          <div
-            style={{ display: 'flex', width: '100%', justifyContent: 'center' }}
-          >
-            <Button
-              style={{ marginTop: '1.5rem' }}
-              filled
-              color="logoBlue"
-              loading={sendingEmail}
-              onClick={handleConfirmEmail}
-            >
-              Send verification email
-            </Button>
-          </div>
-        )}
-        <p style={{ color: 'red' }}>{emailErrorMsg}</p>
-      </section>
+      <EmailSection
+        email={email}
+        onSetEmail={onSetEmail}
+        onSetHasEmailError={onSetHasEmailError}
+        userType={userType}
+      />
     </div>
   );
-
-  async function handleConfirmEmail(email: string) {
-    if (sendingEmailRef.current) return;
-    try {
-      sendingEmailRef.current = true;
-      setSendingEmail(true);
-      const success = await sendVerificationOTPEmailForSignup(email);
-      sendingEmailRef.current = false;
-      setSendingEmail(false);
-      if (success) {
-        onSetEmailSent(true);
-      } else {
-        sendingEmailRef.current = false;
-        setSendingEmail(false);
-        setEmailErrorMsg(
-          'An error occurred while sending a verification email'
-        );
-      }
-    } catch (error) {
-      console.error(error);
-      setEmailErrorMsg('An error occurred while sending a verification email');
-    } finally {
-      sendingEmailRef.current = false;
-      setSendingEmail(false);
-    }
-  }
 }

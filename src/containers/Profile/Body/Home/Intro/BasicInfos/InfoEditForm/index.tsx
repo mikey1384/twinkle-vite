@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import {
-  isValidEmail,
+  isValidEmailAddress,
   isValidUrl,
   isValidYoutubeChannelUrl,
   stringIsEmpty
@@ -150,7 +150,7 @@ export default function InfoEditForm({
     setChecking(true);
     timerRef.current = setTimeout(() => {
       onSetEmailError(
-        !stringIsEmpty(text) && !isValidEmail(text)
+        !stringIsEmpty(text) && !isValidEmailAddress(text)
           ? 'That is not a valid email'
           : ''
       );
