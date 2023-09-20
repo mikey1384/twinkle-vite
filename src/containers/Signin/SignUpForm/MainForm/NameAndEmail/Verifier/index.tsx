@@ -17,7 +17,7 @@ export default function Verifier({
   } = useKeyContext((v) => v.theme);
 
   return (
-    <ErrorBoundary componentPath="MissionModule/Email/EmailVerifier">
+    <ErrorBoundary componentPath="Signin/SignUpForm/MainForm/NameAndEmail/Verifier">
       <div
         className={css`
           width: 100%;
