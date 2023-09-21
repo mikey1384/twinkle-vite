@@ -3,8 +3,10 @@ import Input from '~/components/Texts/Input';
 import EmailSection from './EmailSection';
 import Verifier from './Verifier';
 import localize from '~/constants/localize';
+import { useKeyContext } from '~/contexts';
 import { stringIsEmpty, isValidEmailAddress } from '~/helpers/stringHelpers';
 import { Color, borderRadius } from '~/constants/css';
+import { css } from '@emotion/css';
 
 const firstNameLabel = localize('firstName');
 const lastNameLabel = localize('lastName');
@@ -44,6 +46,9 @@ export default function UsernamePassword({
   onSetHasNameError: (value: boolean) => void;
   userType: string;
 }) {
+  const {
+    link: { color: linkColor }
+  } = useKeyContext((v) => v.theme);
   const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
   const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
   const [isLastnameHighlighted, setIsLastnameHighlighted] = useState(false);
@@ -248,6 +253,24 @@ export default function UsernamePassword({
           >
             {`You're all set to create your account!`}
           </p>
+          <p
+            onClick={() => {
+              onSetEmail('');
+              onSetVerifiedEmail('');
+              setEmailSent(false);
+            }}
+            style={{
+              marginTop: '0.5rem',
+              cursor: 'pointer',
+              color: Color[linkColor]()
+            }}
+            className={css`
+              font-size: 1.3rem;
+              &:hover {
+                text-decoration: underline;
+              }
+            `}
+          >{`Use another email address`}</p>
         </div>
       ) : emailSent ? (
         <Verifier
