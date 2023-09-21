@@ -24,14 +24,14 @@ export default function Verifier({
         className={css`
           width: 100%;
           text-align: center;
-          font-size: 2rem;
+          font-size: 1.7rem;
           font-weight: bold;
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 1.5rem;
           }
         `}
       >
-        <div style={{ marginBottom: '2rem' }}>
+        <div style={{ marginTop: '3.5rem' }}>
           <p>
             An email with a 6-digit number was sent to{' '}
             <span
