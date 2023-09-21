@@ -166,6 +166,7 @@ export default function MainForm({
           firstname={firstname}
           lastname={lastname}
           email={email}
+          verifiedEmail={verifiedEmail}
           onSetFirstname={onSetFirstname}
           onSetLastname={onSetLastname}
           onSetBranchName={onSetBranchName}
