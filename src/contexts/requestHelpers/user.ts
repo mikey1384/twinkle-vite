@@ -939,6 +939,25 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async verifyEmailViaOTPForSignup({
+      otp,
+      email
+    }: {
+      otp: string;
+      email: string;
+    }) {
+      try {
+        const {
+          data: { success }
+        } = await request.get(
+          `${URL}/user/signup/email/otp?otp=${otp}&email=${email}`,
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async verifyEmail({
       token,
       forPasswordReset
