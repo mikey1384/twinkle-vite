@@ -20,8 +20,8 @@ export default function VerificationInput({
   const [verificationCode, setVerificationCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const verifyEmailViaOTP = useAppContext(
-    (v) => v.requestHelpers.verifyEmailViaOTP
+  const verifyEmailViaOTPForSignup = useAppContext(
+    (v) => v.requestHelpers.verifyEmailViaOTPForSignup
   );
 
   return (
@@ -85,12 +85,17 @@ export default function VerificationInput({
     setVerificationCode(text);
     if (text.length === 6) {
       setVerifying(true);
-      const success = await verifyEmailViaOTP({ otp: text, email });
-      if (success) {
-        setVerifying(false);
-        onSetVerifiedEmail(email);
-      } else {
-        setErrorMsg(`That is not the number we sent you. Please try again`);
+      try {
+        const success = await verifyEmailViaOTPForSignup({ otp: text, email });
+        if (success) {
+          setVerifying(false);
+          onSetVerifiedEmail(email);
+        } else {
+          setErrorMsg(`That is not the number we sent you. Please try again`);
+          setVerifying(false);
+        }
+      } catch (error: any) {
+        setErrorMsg(error?.data?.error);
         setVerifying(false);
       }
     }
