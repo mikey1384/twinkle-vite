@@ -257,6 +257,7 @@ export default function MainForm({
         branchName: (branchName || '').trim(),
         className: (classLabel || '').trim(),
         email,
+        verifiedEmail,
         password,
         passphrase,
         userType
