@@ -18,6 +18,7 @@ export default function ApprovalRequest({
   const loadApprovalItemById = useAppContext(
     (v) => v.requestHelpers.loadApprovalItemById
   );
+  const [type, setType] = useState('');
   const [content, setContent] = useState(null);
   const [status, setStatus] = useState('');
 
@@ -25,6 +26,7 @@ export default function ApprovalRequest({
     init();
     async function init() {
       const requestItem = await loadApprovalItemById(requestId);
+      setType(requestItem.type);
       setContent(requestItem.content);
       setStatus(requestItem.status);
     }
@@ -41,7 +43,7 @@ export default function ApprovalRequest({
       type: string;
       status: string;
     }) {
-      if (type === 'dob') {
+      if (type === 'dob' || type === 'teacher') {
         setStatus(status);
       }
     }
@@ -69,12 +71,12 @@ export default function ApprovalRequest({
       </div>
       {content ? (
         <Details
-          requestId={requestId}
           content={content}
           myId={myId}
           userId={userId}
           username={username}
           status={status}
+          type={type}
           onSetStatus={setStatus}
         />
       ) : (

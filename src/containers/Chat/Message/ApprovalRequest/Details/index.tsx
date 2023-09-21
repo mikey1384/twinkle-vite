@@ -14,19 +14,19 @@ import ApprovalResultForRequester from './ApprovalResultForRequester';
 
 export default function Details({
   username,
-  requestId,
   content,
   userId,
   myId,
   status,
+  type,
   onSetStatus
 }: {
   username: string;
-  requestId: number;
   content: string;
   userId: number;
   myId: number;
   status: string;
+  type: string;
   onSetStatus: (status: string) => void;
 }) {
   const [submitting, setSubmitting] = useState(false);
@@ -63,7 +63,7 @@ export default function Details({
           color: Color.logoBlue()
         }}
       >
-        {username} {requestId}
+        {username} {type}
       </div>
       <div
         style={{ marginTop: '1.5rem', textAlign: 'center', lineHeight: 1.7 }}
