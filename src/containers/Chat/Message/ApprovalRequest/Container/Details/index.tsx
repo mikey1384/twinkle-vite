@@ -1,5 +1,6 @@
 import React from 'react';
 import Dob from './Dob';
+import Teacher from './Teacher';
 
 export default function Details({
   content,
@@ -18,7 +19,7 @@ export default function Details({
       }}
     >
       {type === 'dob' && <Dob content={content} />}
-      {type === 'teacher' && <div>Teacher</div>}
+      {type === 'teacher' && <Teacher content={content} />}
     </div>
   );
 }
