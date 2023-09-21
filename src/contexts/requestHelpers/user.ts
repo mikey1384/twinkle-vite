@@ -635,7 +635,8 @@ export default function userRequestHelpers({
       email,
       password,
       passphrase,
-      userType
+      userType,
+      verifiedEmail
     }: {
       brachName: string;
       className: string;
@@ -646,6 +647,7 @@ export default function userRequestHelpers({
       password: string;
       passphrase: string;
       userType: string;
+      verifiedEmail: string;
     }) {
       try {
         const { data } = await request.post(`${URL}/user/signup`, {
@@ -657,7 +659,8 @@ export default function userRequestHelpers({
           email,
           password,
           passphrase,
-          userType
+          userType,
+          verifiedEmail
         });
         if (data.token) {
           localStorage.setItem('token', data.token);
