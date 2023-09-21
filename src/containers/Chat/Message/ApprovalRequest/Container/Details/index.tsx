@@ -10,10 +10,8 @@ export default function Details({
   type: string;
 }) {
   return (
-    <div style={{ width: '100%' }}>
-      <div
-        style={{ marginTop: '1.5rem', textAlign: 'center', lineHeight: 1.7 }}
-      >
+    <div style={{ width: '100%', marginTop: '1.5rem', lineHeight: 1.7 }}>
+      <div style={{ textAlign: 'center' }}>
         <p
           style={{
             color: Color.black(),
