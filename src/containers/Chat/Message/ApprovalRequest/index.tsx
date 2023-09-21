@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Details from './Details';
+import Container from './Container';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
@@ -70,7 +70,7 @@ export default function ApprovalRequest({
         {userId === myId ? 'requested approval' : 'requests your approval'}
       </div>
       {content ? (
-        <Details
+        <Container
           content={content}
           myId={myId}
           userId={userId}
