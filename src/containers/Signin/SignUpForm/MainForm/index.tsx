@@ -254,9 +254,12 @@ export default function MainForm({
         firstname: firstname.trim(),
         lastname,
         username,
+        branchName: (branchName || '').trim(),
+        className: (classLabel || '').trim(),
         email,
         password,
-        passphrase
+        passphrase,
+        userType
       });
       onSignup(data);
       onSetUserState({ userId: data.id, newState: data });
