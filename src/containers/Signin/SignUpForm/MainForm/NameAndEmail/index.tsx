@@ -239,7 +239,7 @@ export default function UsernamePassword({
         >
           <p
             style={{
-              fontSize: '1.7rem',
+              fontSize: '2rem',
               fontWeight: 'bold',
               color: Color.green()
             }}
@@ -248,29 +248,32 @@ export default function UsernamePassword({
           </p>
           <p
             style={{
-              color: Color.green()
+              color: Color.green(),
+              fontSize: '1.7rem'
             }}
           >
             {`You're all set to create your account!`}
           </p>
-          <p
-            onClick={() => {
-              onSetEmail('');
-              onSetVerifiedEmail('');
-              setEmailSent(false);
-            }}
-            style={{
-              marginTop: '0.5rem',
-              cursor: 'pointer',
-              color: Color[linkColor]()
-            }}
-            className={css`
-              font-size: 1.3rem;
-              &:hover {
-                text-decoration: underline;
-              }
-            `}
-          >{`Use another email address`}</p>
+          <div style={{ marginTop: '1.3rem' }}>
+            <span
+              onClick={() => {
+                onSetEmail('');
+                onSetVerifiedEmail('');
+                setEmailSent(false);
+              }}
+              style={{
+                width: 'fit-content',
+                cursor: 'pointer',
+                color: Color[linkColor]()
+              }}
+              className={css`
+                font-size: 1.3rem;
+                &:hover {
+                  text-decoration: underline;
+                }
+              `}
+            >{`Use another email address`}</span>
+          </div>
         </div>
       ) : emailSent ? (
         <Verifier
