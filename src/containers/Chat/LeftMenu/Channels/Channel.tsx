@@ -276,6 +276,7 @@ function Channel({
   const ChannelName = useMemo(() => {
     const result = otherMember || effectiveChannelName;
     if (!result) {
+      if (process.env.NODE_ENV === 'development') return `(${deletedLabel})`;
       reportError({
         componentPath: 'Chat/LeftMenu/Channel',
         message: `Channel name was rendered as "Deleted." Channel data is as follows: ${JSON.stringify(
