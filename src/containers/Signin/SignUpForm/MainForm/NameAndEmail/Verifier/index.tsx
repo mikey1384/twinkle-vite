@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import VerificationCodeInput from './VerificationCodeInput';
+import VerificationInput from './VerificationInput';
 
 export default function Verifier({
   email,
@@ -51,7 +51,7 @@ export default function Verifier({
           </p>
         </div>
       </div>
-      <VerificationCodeInput
+      <VerificationInput
         email={email}
         onRetry={() => onSetEmailSent(false)}
         onSetVerifiedEmail={onSetVerifiedEmail}
