@@ -6,13 +6,13 @@ import {
   liftedBoxShadowDarker,
   wideBorderRadius
 } from '~/constants/css';
-import { getAge } from '~/helpers';
 import { useAppContext, useManagementContext } from '~/contexts';
 import ApprovalButtons from './ApprovalButtons';
 import ApprovalResult from './ApprovalResult';
 import ApprovalResultForRequester from './ApprovalResultForRequester';
+import Details from './Details';
 
-export default function Details({
+export default function Container({
   username,
   content,
   userId,
@@ -63,24 +63,9 @@ export default function Details({
           color: Color.logoBlue()
         }}
       >
-        {username} {type}
+        {username}
       </div>
-      <div
-        style={{ marginTop: '1.5rem', textAlign: 'center', lineHeight: 1.7 }}
-      >
-        <p
-          style={{
-            color: Color.black(),
-            fontWeight: 'bold',
-            fontSize: '1.6rem'
-          }}
-        >
-          {content}
-        </p>
-        <p style={{ fontSize: '1.2rem', color: Color.darkerGray() }}>
-          ({getAge(content)} years old)
-        </p>
-      </div>
+      <Details content={content} type={type} />
       {userId === myId && status !== 'pending' && (
         <ApprovalResultForRequester
           style={{ marginTop: '1.5rem' }}
