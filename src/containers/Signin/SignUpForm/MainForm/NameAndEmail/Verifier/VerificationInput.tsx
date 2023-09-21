@@ -5,7 +5,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 
-export default function VerificationCodeInput({
+export default function VerificationInput({
   onRetry,
   email,
   onSetVerifiedEmail
@@ -26,7 +26,7 @@ export default function VerificationCodeInput({
 
   return (
     <ErrorBoundary
-      componentPath="Signin/SignUpForm/MainForm/NameAndEmail/Verifier/VerificationCodeInput"
+      componentPath="Signin/SignUpForm/MainForm/NameAndEmail/Verifier/VerificationInput"
       style={{
         marginTop: '1rem',
         display: 'flex',
