@@ -17,6 +17,7 @@ export default function UsernamePassword({
   firstname,
   lastname,
   email,
+  verifiedEmail,
   onSetBranchName,
   onSetClassLabel,
   onSetFirstname,
@@ -32,6 +33,7 @@ export default function UsernamePassword({
   firstname: string;
   lastname: string;
   email: string;
+  verifiedEmail: string;
   onSetBranchName: (value: string) => void;
   onSetClassLabel: (value: string) => void;
   onSetFirstname: (value: string) => void;
@@ -220,7 +222,34 @@ export default function UsernamePassword({
           </section>
         </div>
       )}
-      {emailSent ? (
+      {verifiedEmail ? (
+        <div
+          style={{
+            textAlign: 'center',
+            fontFamily: '"Helvetica Neue", sans-serif',
+            lineHeight: '1.6',
+            marginTop: '3rem',
+            marginBottom: '3rem'
+          }}
+        >
+          <p
+            style={{
+              fontSize: '1.7rem',
+              fontWeight: 'bold',
+              color: Color.green()
+            }}
+          >
+            Email verified
+          </p>
+          <p
+            style={{
+              color: Color.green()
+            }}
+          >
+            {`You're all set to create your account!`}
+          </p>
+        </div>
+      ) : emailSent ? (
         <Verifier
           email={email}
           onSetEmailSent={setEmailSent}
