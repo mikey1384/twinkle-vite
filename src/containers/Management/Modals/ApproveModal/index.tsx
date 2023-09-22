@@ -3,6 +3,7 @@ import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import Icon from '~/components/Icon';
 import Dob from './Dob';
+import Mentor from './Mentor';
 import { useAppContext, useManagementContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -17,6 +18,7 @@ export default function ApproveModal({
     username: string;
     content: string;
     status: string;
+    type: string;
   };
   onSetApprovalModalTarget: (target: any) => void;
   onHide: () => void;
@@ -40,7 +42,10 @@ export default function ApproveModal({
             textAlign: 'center'
           }}
         >
-          <Dob username={target.username} content={target.content} />
+          {target.type === 'dob' && (
+            <Dob username={target.username} content={target.content} />
+          )}
+          {target.type === 'mentor' && <Mentor content={target.content} />}
         </div>
         {target.status === 'pending' ? (
           <div
