@@ -94,7 +94,7 @@ export default function UsernamePassword({
 
   return (
     <div>
-      {userType === 'teacher' ? (
+      {userType === 'mentor' ? (
         <section
           style={{
             padding: '1rem',

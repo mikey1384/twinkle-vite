@@ -19,7 +19,7 @@ export default function Details({
       }}
     >
       {type === 'dob' && <Dob content={content} />}
-      {type === 'teacher' && <Teacher content={content} />}
+      {type === 'mentor' && <Teacher content={content} />}
     </div>
   );
 }
