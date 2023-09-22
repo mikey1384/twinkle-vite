@@ -16,7 +16,9 @@ export default function ApprovalResult({
   type: string;
 }) {
   const revertApproval = useAppContext((v) => v.requestHelpers.revertApproval);
-  const onApproveDob = useManagementContext((v) => v.actions.onApproveDob);
+  const onApproveRequest = useManagementContext(
+    (v) => v.actions.onApproveRequest
+  );
   const [reverting, setReverting] = useState(false);
 
   return (
@@ -70,7 +72,7 @@ export default function ApprovalResult({
     setReverting(true);
     const status = await revertApproval({ userId, type });
     onSetStatus(status);
-    onApproveDob({ userId, status });
+    onApproveRequest({ userId, status, requestType: type });
     setReverting(false);
   }
 }

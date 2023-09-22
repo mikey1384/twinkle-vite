@@ -28,7 +28,9 @@ export default function ApproveModal({
   const [isApproved, setIsApproved] = useState(false);
   const approveRequest = useAppContext((v) => v.requestHelpers.approveRequest);
   const revertApproval = useAppContext((v) => v.requestHelpers.revertApproval);
-  const onApproveDob = useManagementContext((v) => v.actions.onApproveDob);
+  const onApproveRequest = useManagementContext(
+    (v) => v.actions.onApproveRequest
+  );
 
   return (
     <Modal onHide={onHide}>
@@ -149,7 +151,11 @@ export default function ApproveModal({
       userId: target.userId,
       type: target.type
     });
-    onApproveDob({ userId: target.userId, status });
+    onApproveRequest({
+      userId: target.userId,
+      status,
+      requestType: target.type
+    });
     onSetApprovalModalTarget({
       ...target,
       status
@@ -176,7 +182,7 @@ export default function ApproveModal({
       userId,
       data
     });
-    onApproveDob({ userId, status });
+    onApproveRequest({ userId, status, requestType: target.type });
     onSetApprovalModalTarget({
       ...target,
       status
