@@ -72,6 +72,7 @@ export default function Container({
         <ApprovalResultForRequester
           style={{ marginTop: '1.5rem' }}
           status={status}
+          type={type}
         />
       )}
       {userId !== myId && (
