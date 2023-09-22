@@ -1,10 +1,17 @@
 import React from 'react';
 
 export default function Teacher({ content }: { content: string }) {
+  const parsedContent = JSON.parse(content);
+
+  const {
+    realName = '',
+    branchName = 'Unknown',
+    className = 'Unknown'
+  } = parsedContent;
+
   return (
     <div>
-      <div>{content}</div>
-      {`Hi, my name is XXX and I'm a teacher at XXX, XXX. I would like to request a teacher account.`}
+      {`Hi, my name is ${realName} and I'm a teacher at ${branchName}, ${className}. I would like to request a teacher account.`}
     </div>
   );
 }
