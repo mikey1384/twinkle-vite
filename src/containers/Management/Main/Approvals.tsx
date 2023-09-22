@@ -7,7 +7,7 @@ import { useManagementContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import ApproveDobModal from '../Modals/ApproveDobModal';
+import ApproveModal from '../Modals/ApproveModal';
 
 export default function Approvals({ canManage }: { canManage: boolean }) {
   const {
@@ -128,7 +128,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
         )}
       </SectionPanel>
       {approvalModalTarget && (
-        <ApproveDobModal
+        <ApproveModal
           target={approvalModalTarget}
           onSetApprovalModalTarget={setApprovalModalTarget}
           onHide={() => setApprovalModalTarget(null)}

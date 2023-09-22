@@ -7,7 +7,7 @@ import { borderRadius, Color } from '~/constants/css';
 import { getAge } from '~/helpers';
 import { css } from '@emotion/css';
 
-export default function ApproveDobModal({
+export default function ApproveModal({
   target,
   onSetApprovalModalTarget,
   onHide
