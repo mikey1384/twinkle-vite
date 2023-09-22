@@ -31,7 +31,7 @@ export default function Password({
           setShowReenterField(true);
         }
       }
-    }, 500);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [password]);
@@ -78,7 +78,6 @@ export default function Password({
                 <label>Re-enter Password</label>
               </div>
               <Input
-                autoFocus
                 value={reenteredPassword}
                 style={{
                   width: 'auto',
