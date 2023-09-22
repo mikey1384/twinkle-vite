@@ -7,21 +7,26 @@ export default function managementRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
-    async approveDob({
-      dob,
+    async approveRequests({
+      type,
+      data,
       isApproved,
       userId
     }: {
-      dob: string;
+      type: string;
+      data: {
+        dob: string;
+      };
       isApproved: boolean;
       userId: number;
     }) {
       try {
+        const params = { isApproved, userId, data: data.dob, type };
         const {
           data: { status }
         } = await request.put(
-          `${URL}/management/approval/dob`,
-          { isApproved, userId, dob },
+          `${URL}/management/approval/${type}`,
+          params,
           auth()
         );
         return Promise.resolve(status);
