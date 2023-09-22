@@ -56,57 +56,65 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
           <tbody>
             {approvalItems
               .filter((_: any, index: number) => index < numApprovalItemsShown)
-              .map((item: any) => (
-                <tr
-                  key={item.id}
-                  onClick={() => setApprovalModalTarget(item)}
-                  className={css`
-                    cursor: ${canManage ? 'pointer' : ''};
-                    td {
-                      display: flex;
-                      align-items: center;
-                    }
-                  `}
-                >
-                  <td
+              .map((item: any) => {
+                let displayedItemContent = item.content;
+                if (item.type === 'mentor') {
+                  const itemData = JSON.parse(item.content);
+                  displayedItemContent = `${itemData.className}, ${itemData.branchName}`;
+                }
+
+                return (
+                  <tr
+                    key={item.id}
+                    onClick={() => setApprovalModalTarget(item)}
                     className={css`
-                      font-weight: bold;
-                      font-size: 1.6rem;
+                      cursor: ${canManage ? 'pointer' : ''};
+                      td {
+                        display: flex;
+                        align-items: center;
+                      }
                     `}
                   >
-                    {item.username}
-                  </td>
-                  <td>{item.type}</td>
-                  <td>{item.content}</td>
-                  <td>{timeSince(item.timeStamp)}</td>
-                  {canManage && (
                     <td
                       className={css`
-                        display: flex;
-                        justify-content: center;
+                        font-weight: bold;
+                        font-size: 1.6rem;
                       `}
                     >
-                      <span
+                      {item.username}
+                    </td>
+                    <td>{item.type}</td>
+                    <td>{displayedItemContent}</td>
+                    <td>{timeSince(item.timeStamp)}</td>
+                    {canManage && (
+                      <td
                         className={css`
-                          font-weight: bold;
-                          color: ${Color[
-                            item.status === 'approved'
-                              ? 'limeGreen'
-                              : item.status === 'rejected'
-                              ? 'redOrange'
-                              : 'logoBlue'
-                          ]()};
-                          &:hover {
-                            text-decoration: underline;
-                          }
+                          display: flex;
+                          justify-content: center;
                         `}
                       >
-                        {item.status}
-                      </span>
-                    </td>
-                  )}
-                </tr>
-              ))}
+                        <span
+                          className={css`
+                            font-weight: bold;
+                            color: ${Color[
+                              item.status === 'approved'
+                                ? 'limeGreen'
+                                : item.status === 'rejected'
+                                ? 'redOrange'
+                                : 'logoBlue'
+                            ]()};
+                            &:hover {
+                              text-decoration: underline;
+                            }
+                          `}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
           </tbody>
         </Table>
         {approvalItems.length > numApprovalItemsShown && (
