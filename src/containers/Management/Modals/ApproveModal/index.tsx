@@ -147,7 +147,7 @@ export default function ApproveModal({
     setReverting(true);
     const status = await revertApproval({
       userId: target.userId,
-      type: 'dob'
+      type: target.type
     });
     onApproveDob({ userId: target.userId, status });
     onSetApprovalModalTarget({
@@ -166,11 +166,15 @@ export default function ApproveModal({
   }) {
     setSubmitting(true);
     setIsApproved(isApproved);
+    const data: {
+      dob?: string;
+    } = {};
+    if (target.type === 'dob') data.dob = target.content;
     const status = await approveRequest({
       isApproved,
-      type: 'dob',
+      type: target.type,
       userId,
-      data: { dob: target.content }
+      data
     });
     onApproveDob({ userId, status });
     onSetApprovalModalTarget({
