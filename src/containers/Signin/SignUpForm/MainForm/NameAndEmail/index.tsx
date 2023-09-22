@@ -61,7 +61,7 @@ export default function UsernamePassword({
       } else {
         setIsLastnameHighlighted(false);
       }
-    }, 500);
+    }, 1000);
     return () => clearTimeout(timer);
   }, [firstname, lastname]);
 

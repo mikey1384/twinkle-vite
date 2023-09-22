@@ -41,7 +41,7 @@ export default function EmailSection({
           setSendVerificationButtonShown(true);
         }
       }
-    }, 500);
+    }, 1000);
     return () => clearTimeout(timer);
   }, [email, onSetHasEmailError]);
 
