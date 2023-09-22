@@ -43,7 +43,7 @@ export default function ApprovalRequest({
       type: string;
       status: string;
     }) {
-      if (type === 'dob' || type === 'teacher') {
+      if (type === 'dob' || type === 'mentor') {
         setStatus(status);
       }
     }

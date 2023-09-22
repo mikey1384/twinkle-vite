@@ -22,16 +22,13 @@ export default function managementRequestHelpers({
     }) {
       try {
         const params = { isApproved, userId, data, type };
-        const args: [string, typeof params] = [
-          `${URL}/management/approval/${type}`,
-          params
-        ];
-        if (type === 'dob') {
-          args.push(auth());
-        }
         const {
           data: { status }
-        } = await request.put(...args);
+        } = await request.put(
+          `${URL}/management/approval/${type}`,
+          params,
+          auth()
+        );
         return Promise.resolve(status);
       } catch (error) {
         return handleError(error);

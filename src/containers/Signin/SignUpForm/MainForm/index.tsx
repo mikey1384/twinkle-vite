@@ -88,7 +88,7 @@ export default function MainForm({
     [displayedPage]
   );
   const displayedTitle = useMemo(() => {
-    if (displayedPage === 'name_and_email' && userType === 'teacher') {
+    if (displayedPage === 'name_and_email' && userType === 'mentor') {
       return 'The following message will be sent to the admins for approval';
     }
     return titles[displayedPage];
@@ -109,7 +109,7 @@ export default function MainForm({
       hasNameError ||
       stringIsEmpty(firstname) ||
       stringIsEmpty(lastname) ||
-      (userType === 'teacher' && !isTeacherRequirementMet)
+      (userType === 'mentor' && !isTeacherRequirementMet)
     );
   }, [
     branchName,
@@ -130,7 +130,7 @@ export default function MainForm({
           text-align: center;
           font-family: 'Roboto', sans-serif;
           font-size: ${displayedPage === 'name_and_email' &&
-          userType === 'teacher'
+          userType === 'mentor'
             ? '2.2rem'
             : '2.5rem'};
           margin-bottom: 20px;

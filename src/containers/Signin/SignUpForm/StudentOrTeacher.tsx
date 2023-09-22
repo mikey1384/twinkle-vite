@@ -5,7 +5,7 @@ import { borderRadius, mobileMaxWidth } from '~/constants/css';
 export default function StudentOrTeacher({
   onSelect
 }: {
-  onSelect: (userType: 'student' | 'teacher') => void;
+  onSelect: (userType: 'student' | 'mentor') => void;
 }) {
   return (
     <div
@@ -78,7 +78,7 @@ export default function StudentOrTeacher({
               font-size: 1.5rem;
             }
           `}
-          onClick={() => onSelect('teacher')}
+          onClick={() => onSelect('mentor')}
         >
           Teacher
         </button>
