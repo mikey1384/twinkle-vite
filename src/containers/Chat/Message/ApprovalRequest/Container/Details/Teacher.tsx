@@ -5,8 +5,8 @@ export default function Teacher({ content }: { content: string }) {
 
   const {
     realName = '',
-    branchName = 'Unknown',
-    className = 'Unknown'
+    branchName = '---',
+    className = '---'
   } = parsedContent;
 
   return (
