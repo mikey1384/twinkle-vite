@@ -4,27 +4,50 @@ import { css } from '@emotion/css';
 
 export default function ApprovalResultForRequester({
   status,
+  type,
   style
 }: {
   status: string | null;
+  type: string;
   style?: React.CSSProperties;
 }) {
   const renderStatusView = useMemo(() => {
     switch (status) {
-      case 'approved':
+      case 'approved': {
+        if (type === 'dob') {
+          return (
+            <div>
+              <p>
+                Your birthdate has been{' '}
+                <span style={{ color: Color.limeGreen() }}>verified</span>
+              </p>
+            </div>
+          );
+        }
         return (
           <div>
             <p>
-              Your birthdate has been{' '}
-              <span style={{ color: Color.limeGreen() }}>verified</span>
+              Your request has been{' '}
+              <span style={{ color: Color.limeGreen() }}>approved</span>
             </p>
           </div>
         );
+      }
       case 'rejected':
+        if (type === 'dob') {
+          return (
+            <div>
+              <p>
+                Your birthdate submission was{' '}
+                <span style={{ color: Color.redOrange() }}>rejected</span>
+              </p>
+            </div>
+          );
+        }
         return (
           <div>
             <p>
-              Your birthdate submission was{' '}
+              Your request was{' '}
               <span style={{ color: Color.redOrange() }}>rejected</span>
             </p>
           </div>
@@ -32,7 +55,7 @@ export default function ApprovalResultForRequester({
       default:
         return null;
     }
-  }, [status]);
+  }, [status, type]);
 
   return (
     <div
