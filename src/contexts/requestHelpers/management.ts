@@ -21,14 +21,17 @@ export default function managementRequestHelpers({
       userId: number;
     }) {
       try {
-        const params = { isApproved, userId, data: data.dob, type };
+        const params = { isApproved, userId, data, type };
+        const args: [string, typeof params] = [
+          `${URL}/management/approval/${type}`,
+          params
+        ];
+        if (type === 'dob') {
+          args.push(auth());
+        }
         const {
           data: { status }
-        } = await request.put(
-          `${URL}/management/approval/${type}`,
-          params,
-          auth()
-        );
+        } = await request.put(...args);
         return Promise.resolve(status);
       } catch (error) {
         return handleError(error);
