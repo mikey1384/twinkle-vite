@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Teacher({ content }: { content: string }) {
+export default function Mentor({ content }: { content: string }) {
   const parsedContent = JSON.parse(content);
 
   const {
