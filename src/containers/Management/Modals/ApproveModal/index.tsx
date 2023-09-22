@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import Icon from '~/components/Icon';
+import Dob from './Dob';
 import { useAppContext, useManagementContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
-import { getAge } from '~/helpers';
 import { css } from '@emotion/css';
 
 export default function ApproveModal({
@@ -30,33 +30,17 @@ export default function ApproveModal({
 
   return (
     <Modal onHide={onHide}>
-      <header>Approve Date of Birth</header>
+      <header>Approve Request</header>
       <main>
         <div
           style={{
+            width: '100%',
             marginTop: '1rem',
-            fontWeight: 'bold',
-            fontSize: '2rem',
-            color: Color.logoBlue()
+            lineHeight: 1.7,
+            textAlign: 'center'
           }}
         >
-          {target.username}
-        </div>
-        <div
-          style={{ marginTop: '1.5rem', textAlign: 'center', lineHeight: 1.7 }}
-        >
-          <p
-            style={{
-              color: Color.black(),
-              fontWeight: 'bold',
-              fontSize: '1.6rem'
-            }}
-          >
-            {target.content}
-          </p>
-          <p style={{ fontSize: '1.2rem', color: Color.darkerGray() }}>
-            ({getAge(target.content)} years old)
-          </p>
+          <Dob username={target.username} content={target.content} />
         </div>
         {target.status === 'pending' ? (
           <div
