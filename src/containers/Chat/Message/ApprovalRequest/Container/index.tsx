@@ -104,11 +104,15 @@ export default function Container({
   }) {
     setSubmitting(true);
     setIsApproved(isApproved);
+    const data: {
+      dob?: string;
+    } = {};
+    if (type === 'dob') data.dob = content;
     const status = await approveRequests({
       isApproved,
-      type: 'dob',
+      type,
       userId,
-      data: { dob: content }
+      data
     });
     onSetStatus(status);
     onApproveDob({ userId, status });
