@@ -168,7 +168,7 @@ export default function Chess({
     return (
       !!countdownNumber ||
       ((lastChessMessageId === messageId || isFromModal) &&
-        !(isCheckmate || isStalemate || isDiscussion || moveViewed) &&
+        !(isCheckmate || isDraw || isStalemate || isDiscussion || moveViewed) &&
         loaded &&
         userMadeLastMove)
     );
@@ -176,6 +176,7 @@ export default function Chess({
     countdownNumber,
     isCheckmate,
     isDiscussion,
+    isDraw,
     isFromModal,
     isStalemate,
     lastChessMessageId,
