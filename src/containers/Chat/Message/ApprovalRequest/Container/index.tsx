@@ -32,7 +32,9 @@ export default function Container({
   const [submitting, setSubmitting] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const approveRequest = useAppContext((v) => v.requestHelpers.approveRequest);
-  const onApproveDob = useManagementContext((v) => v.actions.onApproveDob);
+  const onApproveRequest = useManagementContext(
+    (v) => v.actions.onApproveRequest
+  );
 
   return (
     <div
@@ -115,7 +117,7 @@ export default function Container({
       data
     });
     onSetStatus(status);
-    onApproveDob({ userId, status });
+    onApproveRequest({ userId, status, requestType: type });
     setSubmitting(false);
   }
 }

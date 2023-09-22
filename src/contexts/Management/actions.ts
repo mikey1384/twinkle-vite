@@ -8,11 +8,20 @@ export default function ManagementActions(dispatch: Dispatch) {
         accountType
       });
     },
-    onApproveDob({ status, userId }: { status: string; userId: number }) {
+    onApproveRequest({
+      status,
+      userId,
+      requestType
+    }: {
+      status: string;
+      userId: number;
+      requestType: string;
+    }) {
       return dispatch({
-        type: 'APPROVE_DOB',
+        type: 'APPROVE_REQUEST',
         status,
-        userId
+        userId,
+        requestType
       });
     },
     onDeleteAccountType(accountTypeLabel: string) {

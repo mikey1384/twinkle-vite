@@ -13,7 +13,7 @@ export default function ManagementReducer(
         ...state,
         accountTypes: state.accountTypes.concat(action.accountType)
       };
-    case 'APPROVE_DOB':
+    case 'APPROVE_REQUEST':
       return {
         ...state,
         approvalItems: state.approvalItems.map(
@@ -23,7 +23,7 @@ export default function ManagementReducer(
             type: string;
             submittedBy: number;
           }) =>
-            approvalItem.type === 'dob' &&
+            approvalItem.type === action.requestType &&
             approvalItem.submittedBy === action.userId
               ? {
                   ...approvalItem,
