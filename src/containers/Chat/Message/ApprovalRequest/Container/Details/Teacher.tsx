@@ -11,7 +11,7 @@ export default function Teacher({ content }: { content: string }) {
 
   return (
     <div>
-      {`Hi, my name is ${realName} and I'm a teacher at ${branchName}, ${className}. I would like to request a teacher account.`}
+      {`Hi, my name is ${realName} and I'm a teacher at ${className}, ${branchName}. I would like to request a teacher account.`}
     </div>
   );
 }
