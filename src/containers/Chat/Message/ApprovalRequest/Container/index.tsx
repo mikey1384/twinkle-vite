@@ -31,9 +31,7 @@ export default function Container({
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
-  const approveRequests = useAppContext(
-    (v) => v.requestHelpers.approveRequests
-  );
+  const approveRequest = useAppContext((v) => v.requestHelpers.approveRequest);
   const onApproveDob = useManagementContext((v) => v.actions.onApproveDob);
 
   return (
@@ -89,6 +87,7 @@ export default function Container({
               status={status}
               userId={userId}
               onSetStatus={onSetStatus}
+              type={type}
             />
           )}
         </>
@@ -109,7 +108,7 @@ export default function Container({
       dob?: string;
     } = {};
     if (type === 'dob') data.dob = content;
-    const status = await approveRequests({
+    const status = await approveRequest({
       isApproved,
       type,
       userId,

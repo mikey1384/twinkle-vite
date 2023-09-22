@@ -7,15 +7,15 @@ import Icon from '~/components/Icon';
 export default function ApprovalResult({
   status,
   userId,
-  onSetStatus
+  onSetStatus,
+  type
 }: {
   status: string;
   userId: number;
   onSetStatus: (status: string) => void;
+  type: string;
 }) {
-  const revertDobApproval = useAppContext(
-    (v) => v.requestHelpers.revertDobApproval
-  );
+  const revertApproval = useAppContext((v) => v.requestHelpers.revertApproval);
   const onApproveDob = useManagementContext((v) => v.actions.onApproveDob);
   const [reverting, setReverting] = useState(false);
 
@@ -68,7 +68,7 @@ export default function ApprovalResult({
 
   async function handleRevert() {
     setReverting(true);
-    const status = await revertDobApproval(userId);
+    const status = await revertApproval({ userId, type });
     onSetStatus(status);
     onApproveDob({ userId, status });
     setReverting(false);

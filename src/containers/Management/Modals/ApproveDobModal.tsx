@@ -24,10 +24,8 @@ export default function ApproveDobModal({
   const [reverting, setReverting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
-  const approveDob = useAppContext((v) => v.requestHelpers.approveDob);
-  const revertDobApproval = useAppContext(
-    (v) => v.requestHelpers.revertDobApproval
-  );
+  const approveRequest = useAppContext((v) => v.requestHelpers.approveRequest);
+  const revertApproval = useAppContext((v) => v.requestHelpers.revertApproval);
   const onApproveDob = useManagementContext((v) => v.actions.onApproveDob);
 
   return (
@@ -158,7 +156,10 @@ export default function ApproveDobModal({
 
   async function handleRevert() {
     setReverting(true);
-    const status = await revertDobApproval(target.userId);
+    const status = await revertApproval({
+      userId: target.userId,
+      type: 'dob'
+    });
     onApproveDob({ userId: target.userId, status });
     onSetApprovalModalTarget({
       ...target,
@@ -176,10 +177,11 @@ export default function ApproveDobModal({
   }) {
     setSubmitting(true);
     setIsApproved(isApproved);
-    const status = await approveDob({
+    const status = await approveRequest({
       isApproved,
+      type: 'dob',
       userId,
-      dob: target.content
+      data: { dob: target.content }
     });
     onApproveDob({ userId, status });
     onSetApprovalModalTarget({

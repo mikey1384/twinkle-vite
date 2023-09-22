@@ -7,7 +7,7 @@ export default function managementRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
-    async approveRequests({
+    async approveRequest({
       type,
       data,
       isApproved,
@@ -159,12 +159,12 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async revertDobApproval(userId: number) {
+    async revertApproval({ userId, type }: { userId: number; type: string }) {
       try {
         const {
           data: { status }
         } = await request.put(
-          `${URL}/management/approval/dob/revert`,
+          `${URL}/management/approval/${type}/revert`,
           { userId },
           auth()
         );
