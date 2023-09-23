@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import ColorSelector from '~/components/ColorSelector';
@@ -54,6 +54,13 @@ export default function Cover({
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState(null);
   const FileInputRef: React.RefObject<any> = useRef(null);
+
+  const displayedUserTitle = useMemo(() => {
+    if (userType) {
+      return userType.includes('teacher') ? 'teacher' : userType;
+    }
+    return '';
+  }, [userType]);
 
   useEffect(() => {
     onSelectTheme(profileTheme || 'logoBlue');
@@ -117,7 +124,7 @@ export default function Cover({
           `}
         >
           {username}
-          {userType ? (
+          {displayedUserTitle ? (
             <>
               {' '}
               <span
@@ -128,7 +135,7 @@ export default function Cover({
                   }
                 `}
               >
-                {`[${userType.includes('teacher') ? 'teacher' : userType}]`}
+                {`[${displayedUserTitle}]`}
               </span>
             </>
           ) : (

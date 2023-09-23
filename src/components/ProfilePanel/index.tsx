@@ -240,6 +240,12 @@ function ProfilePanel({
     () => !profileLoaded || heightNotSet || visible || inView,
     [heightNotSet, inView, profileLoaded, visible]
   );
+  const displayedUserTitle = useMemo(() => {
+    if (userType) {
+      return userType.includes('teacher') ? 'teacher' : userType;
+    }
+    return '';
+  }, [userType]);
 
   return (
     <div style={style} ref={ComponentRef} key={profileId}>
@@ -279,7 +285,7 @@ function ProfilePanel({
               `}
               style={{ padding: userType ? '0.5rem' : undefined }}
             >
-              {userType && (
+              {displayedUserTitle && (
                 <div
                   style={{
                     fontSize: '2.2rem',
@@ -289,7 +295,7 @@ function ProfilePanel({
                       : 'none'
                   }}
                 >
-                  {userType.includes('teacher') ? 'teacher' : userType}
+                  {displayedUserTitle}
                 </div>
               )}
             </div>
