@@ -250,7 +250,7 @@ function ProfilePanel({
     if (userType) {
       return userType.includes('teacher') ? 'teacher' : userType;
     }
-    return level > 1 ? `level ${level} user` : '';
+    return level > 1 ? `level ${level}` : '';
   }, [level, userType]);
 
   return (
