@@ -10,7 +10,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
-import { useTheme } from '~/helpers/hooks';
+import { useTheme, useUserLevel } from '~/helpers/hooks';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import localize from '~/constants/localize';
@@ -48,6 +48,7 @@ export default function Cover({
     username,
     userType
   } = profile;
+  const { level } = useUserLevel(profile.id);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [colorSelectorShown, setColorSelectorShown] = useState(false);
   const [imageModalShown, setImageModalShown] = useState(false);
@@ -58,8 +59,8 @@ export default function Cover({
     if (userType) {
       return userType.includes('teacher') ? 'teacher' : userType;
     }
-    return '';
-  }, [userType]);
+    return `Lv ${level}`;
+  }, [level, userType]);
 
   useEffect(() => {
     onSelectTheme(profileTheme || 'logoBlue');
