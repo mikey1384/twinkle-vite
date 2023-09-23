@@ -16,7 +16,12 @@ import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useContentState, useLazyLoad, useTheme } from '~/helpers/hooks';
+import {
+  useContentState,
+  useLazyLoad,
+  useUserLevel,
+  useTheme
+} from '~/helpers/hooks';
 import { useInView } from 'react-intersection-observer';
 import {
   useAppContext,
@@ -120,6 +125,7 @@ function ProfilePanel({
     (v) => v.actions.onSetPlaceholderHeight
   );
   const onSetVisible = useContentContext((v) => v.actions.onSetVisible);
+  const { level } = useUserLevel(profile.id);
 
   const [ComponentRef, inView] = useInView({
     rootMargin: '50px 0px 0px 0px',
@@ -244,8 +250,8 @@ function ProfilePanel({
     if (userType) {
       return userType.includes('teacher') ? 'teacher' : userType;
     }
-    return '';
-  }, [userType]);
+    return level > 1 ? `level ${level} user` : '';
+  }, [level, userType]);
 
   return (
     <div style={style} ref={ComponentRef} key={profileId}>
@@ -283,7 +289,7 @@ function ProfilePanel({
                   border-right: none;
                 }
               `}
-              style={{ padding: userType ? '0.5rem' : undefined }}
+              style={{ padding: displayedUserTitle ? '0.5rem' : undefined }}
             >
               {displayedUserTitle && (
                 <div
