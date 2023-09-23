@@ -54,7 +54,6 @@ export default function Cover({
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState(null);
   const FileInputRef: React.RefObject<any> = useRef(null);
-
   const displayedUserTitle = useMemo(() => {
     if (userType) {
       return userType.includes('teacher') ? 'teacher' : userType;
