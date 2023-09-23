@@ -378,7 +378,7 @@ const levels = [
     level: 2,
     canEdit: false,
     canDelete: true,
-    canReward: false,
+    canReward: true,
     canEditDictionary: false,
     canPinPlaylists: false,
     canEditPlaylists: false,
@@ -386,11 +386,11 @@ const levels = [
   },
   {
     ap: 300,
-    labels: ['Moderator'],
+    labels: ['Moderator', 'Mod II'],
     level: 3,
     canEdit: false,
     canDelete: true,
-    canReward: false,
+    canReward: true,
     canEditDictionary: false,
     canPinPlaylists: false,
     canEditPlaylists: false,
@@ -398,15 +398,15 @@ const levels = [
   },
   {
     ap: 1000,
-    labels: ['Teacher'],
+    labels: ['Teacher', 'Moderator', 'Mod III'],
     level: 4,
-    canEdit: true,
+    canEdit: false,
     canDelete: true,
     canReward: true,
-    canEditDictionary: false,
+    canEditDictionary: true,
     canPinPlaylists: false,
     canEditPlaylists: false,
-    canEditRewardLevel: false
+    canEditRewardLevel: true
   }
 ];
 
