@@ -315,13 +315,21 @@ function App() {
   }, [auth, location.pathname, pageVisible, signinModalShown]);
 
   useEffect(() => {
-    let totalAP = 0;
-    for (const [, value] of Object.entries(achievementsObj)) {
-      if (value?.isUnlocked) {
-        totalAP += value?.ap || 0;
+    if (userId) {
+      let totalAP = 0;
+      for (const [, value] of Object.entries(achievementsObj)) {
+        if (value?.isUnlocked) {
+          totalAP += value?.ap || 0;
+        }
+      }
+      if (totalAP !== achievementPoints) {
+        onSetUserState({
+          userId,
+          newState: { achievementPoints: totalAP }
+        });
       }
     }
-    console.log(totalAP, achievementPoints);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [achievementPoints, achievementsObj]);
 
   useEffect(() => {
