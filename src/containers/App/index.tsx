@@ -69,6 +69,13 @@ function App() {
   const onCloseSigninModal = useAppContext(
     (v) => v.user.actions.onCloseSigninModal
   );
+  const achievementsObj: Record<
+    string,
+    {
+      isUnlocked?: boolean;
+      ap?: number;
+    }
+  > = useAppContext((v) => v.user.state.achievementsObj);
   const onSetAchievementsObj = useAppContext(
     (v) => v.user.actions.onSetAchievementsObj
   );
@@ -107,6 +114,7 @@ function App() {
     background: { color: backgroundColor }
   } = theme;
   const {
+    achievementPoints,
     profilePicUrl,
     signinModalShown,
     twinkleCoins,
@@ -305,6 +313,16 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth, location.pathname, pageVisible, signinModalShown]);
+
+  useEffect(() => {
+    let totalAP = 0;
+    for (const [, value] of Object.entries(achievementsObj)) {
+      if (value?.isUnlocked) {
+        totalAP += value?.ap || 0;
+      }
+    }
+    console.log(totalAP, achievementPoints);
+  }, [achievementPoints, achievementsObj]);
 
   useEffect(() => {
     if (typeof document.hidden !== 'undefined') {
