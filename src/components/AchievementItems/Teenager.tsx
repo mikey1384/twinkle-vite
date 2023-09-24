@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import TeenagerBadge from '~/assets/teenager.png';
-import ItemPanel from '../ItemPanel';
+import ItemPanel from './ItemPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FormModal from './FormModal';
 import { useKeyContext } from '~/contexts';
