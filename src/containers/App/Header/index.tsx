@@ -53,6 +53,9 @@ export default function Header({
     [pathname]
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onUpdateAchievementsObj = useAppContext(
+    (v) => v.user.actions.onUpdateAchievementsObj
+  );
   const onSetLastChatPath = useAppContext(
     (v) => v.user.actions.onSetLastChatPath
   );
@@ -974,7 +977,12 @@ export default function Header({
       target: any;
     }) {
       if (type === 'achievement') {
-        console.log(achievementType);
+        onUpdateAchievementsObj({
+          achievementType,
+          newState: {
+            isUnlocked: true
+          }
+        });
       }
       if (likes) {
         onLikeContent({

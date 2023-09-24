@@ -16,8 +16,7 @@ ContentFileViewer.propTypes = {
   isThumb: PropTypes.bool,
   filePath: PropTypes.string.isRequired,
   fileName: PropTypes.string.isRequired,
-  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-    .isRequired,
+  fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   modalOverModal: PropTypes.bool,
   onMediaPause: PropTypes.func,
   onMediaPlay: PropTypes.func,
