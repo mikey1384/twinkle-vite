@@ -112,6 +112,17 @@ export default function UserReducer(
         ...state,
         achievementsObj: action.achievementsObj
       };
+    case 'UPDATE_ACHIEVEMENTS_OBJ':
+      return {
+        ...state,
+        achievementsObj: {
+          ...state.achievementsObj,
+          [action.achievementType]: {
+            ...state.achievementsObj[action.achievementType],
+            ...action.newState
+          }
+        }
+      };
     case 'SET_COLLECT_TYPE':
       return {
         ...state,

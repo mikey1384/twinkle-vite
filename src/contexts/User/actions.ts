@@ -65,6 +65,19 @@ export default function UserActions(dispatch: Dispatch) {
         achievementsObj
       });
     },
+    onUpdateAchievementsObj({
+      achievementType,
+      newState
+    }: {
+      achievementType: string;
+      newState: object;
+    }) {
+      return dispatch({
+        type: 'UPDATE_ACHIEVEMENTS_OBJ',
+        achievementType,
+        newState
+      });
+    },
     onSearchUsers(users: any[]) {
       return dispatch({
         type: 'SEARCH_USERS',
