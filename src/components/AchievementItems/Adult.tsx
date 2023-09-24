@@ -49,7 +49,7 @@ export default function Adult({
             )}{' '}
             and get your birthdate verified
           </>,
-          'Close the chapter on teenage whirlwinds. Enter adulthood'
+          'Close the chapter on teenage years. Enter adulthood'
         ]}
         badgeSrc={TeenagerBadge}
       />
