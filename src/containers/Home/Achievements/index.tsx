@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Adult from '~/components/AchievementItems/Adult';
@@ -14,12 +14,6 @@ import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function Achievements() {
   const { userId } = useKeyContext((v) => v.myState);
-  const loadAchievements = useAppContext(
-    (v) => v.requestHelpers.loadAchievements
-  );
-  const onSetAchievementsObj = useAppContext(
-    (v) => v.user.actions.onSetAchievementsObj
-  );
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const achievementKeys = useMemo(() => {
     const result = [];
@@ -28,14 +22,6 @@ export default function Achievements() {
     }
     return result;
   }, [achievementsObj]);
-  useEffect(() => {
-    init();
-    async function init() {
-      const data = await loadAchievements();
-      onSetAchievementsObj(data);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
 
   return (
     <div style={{ paddingBottom: '15rem' }}>

@@ -69,6 +69,9 @@ function App() {
   const onCloseSigninModal = useAppContext(
     (v) => v.user.actions.onCloseSigninModal
   );
+  const onSetAchievementsObj = useAppContext(
+    (v) => v.user.actions.onSetAchievementsObj
+  );
   const onInitMyState = useAppContext((v) => v.user.actions.onInitMyState);
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
@@ -79,6 +82,9 @@ function App() {
   );
   const auth = useAppContext((v) => v.requestHelpers.auth);
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
+  const loadAchievements = useAppContext(
+    (v) => v.requestHelpers.loadAchievements
+  );
   const fetchTodayStats = useAppContext(
     (v) => v.requestHelpers.fetchTodayStats
   );
@@ -289,8 +295,13 @@ function App() {
           newState: { ...data, loaded: true }
         });
         if (data?.userId) onInitMyState(data);
+        initAchievements();
       }
       onSetSessionLoaded();
+    }
+    async function initAchievements() {
+      const data = await loadAchievements();
+      onSetAchievementsObj(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth, location.pathname, pageVisible, signinModalShown]);
