@@ -963,12 +963,19 @@ export default function Header({
     }
 
     function handleNewNotification({
+      type,
+      achievementType,
       likes,
       target
     }: {
+      type: string;
+      achievementType: string;
       likes: any[];
       target: any;
     }) {
+      if (type === 'achievement') {
+        console.log(achievementType);
+      }
       if (likes) {
         onLikeContent({
           likes,
