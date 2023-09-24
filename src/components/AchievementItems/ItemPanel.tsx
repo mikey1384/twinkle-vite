@@ -97,14 +97,23 @@ export default function ItemPanel({
             ({displayedAP} AP)
           </span>
         )}
-        {!isUnlocked && !isNotification && (
-          <Icon
-            className={css`
-              margin-left: 1rem;
-            `}
-            icon="lock"
-          />
-        )}
+        {!isNotification &&
+          (isUnlocked ? (
+            <Icon
+              color={Color.green()}
+              className={css`
+                margin-left: 1rem;
+              `}
+              icon="check"
+            />
+          ) : (
+            <Icon
+              className={css`
+                margin-left: 1rem;
+              `}
+              icon="lock"
+            />
+          ))}
       </h2>
       <div
         className={css`
