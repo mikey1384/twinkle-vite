@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import Adult from '~/components/AchievementItems/Adult';
 import Mission from '~/components/AchievementItems/Mission';
 import Summoner from '~/components/AchievementItems/Summoner';
 import Grammar from '~/components/AchievementItems/Grammar';
@@ -73,6 +74,7 @@ export default function Achievements() {
       )}
       {achievementKeys.map((key, index) => {
         const Component = {
+          adult: Adult,
           mission: Mission,
           summoner: Summoner,
           grammar: Grammar,
