@@ -4,6 +4,7 @@ import Summoner from '~/components/AchievementItems/Summoner';
 import Grammar from '~/components/AchievementItems/Grammar';
 import Mentor from '~/components/AchievementItems/Mentor';
 import Teenager from '~/components/AchievementItems/Teenager';
+import Adult from '~/components/AchievementItems/Adult';
 import Sage from '~/components/AchievementItems/Sage';
 import Founder from '~/components/AchievementItems/Founder';
 import { Content } from '~/types';
@@ -26,6 +27,7 @@ export default function AchievementPass({
     summoner: Summoner,
     grammar: Grammar,
     teenager: Teenager,
+    adult: Adult,
     mentor: Mentor,
     sage: Sage,
     founder: Founder
