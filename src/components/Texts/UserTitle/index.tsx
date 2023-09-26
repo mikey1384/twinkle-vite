@@ -4,48 +4,58 @@ import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function UserTitle({
-  userId,
-  userType,
-  level,
+  user = {
+    id: 0,
+    userType: '',
+    title: '',
+    authLevel: 0,
+    level: 0
+  },
   className,
-  title,
   style
 }: {
+  user: {
+    id: number;
+    authLevel?: number;
+    level?: number;
+    userType?: string;
+    title?: string;
+  };
   style?: React.CSSProperties;
-  userId: number;
-  userType: string;
   className?: string;
-  title?: string;
-  level: number;
 }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
   const [titleSelectionModalShown, setTitleSelectionModalShown] =
     useState(false);
+  const appliedUserLevel = useMemo(() => {
+    if (user.authLevel) return user.authLevel + 1;
+    return user.level || 0;
+  }, [user.authLevel, user.level]);
   const userTitle = useMemo(() => {
-    if (title) return title;
-    if (userType) {
-      return userType.includes('teacher') ? 'teacher' : userType;
+    if (user.title) return user.title;
+    if (user.userType) {
+      return user.userType.includes('teacher') ? 'teacher' : user.userType;
     }
     return '';
-  }, [title, userType]);
+  }, [user.title, user.userType]);
 
   const appliedUserTitle = useMemo(() => {
     if (userTitle) {
-      return `${userTitle} (lv ${level})`;
+      return `${userTitle} (lv ${appliedUserLevel})`;
     }
-    return level > 1 ? `level ${level}` : '';
-  }, [userTitle, level]);
+    return appliedUserLevel > 1 ? `level ${appliedUserLevel}` : '';
+  }, [userTitle, appliedUserLevel]);
 
   return userTitle ? (
     <div className={className} style={style}>
       <span
         onClick={
-          userId === myId ? () => setTitleSelectionModalShown(true) : undefined
+          user.id === myId ? () => setTitleSelectionModalShown(true) : undefined
         }
         className={css`
-          cursor: ${userId === myId ? 'pointer' : 'default'};
+          cursor: ${user.id === myId ? 'pointer' : 'default'};
           &:hover {
-            text-decoration: ${userId === myId ? 'underline' : 'none'};
+            text-decoration: ${user.id === myId ? 'underline' : 'none'};
           }
         `}
       >

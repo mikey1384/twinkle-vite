@@ -41,14 +41,8 @@ export default function Cover({
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const { userId } = useKeyContext((v) => v.myState);
-  const {
-    profilePicUrl,
-    profileTheme,
-    realName,
-    twinkleXP,
-    username,
-    userType
-  } = profile;
+  const { profilePicUrl, profileTheme, realName, twinkleXP, username } =
+    profile;
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [colorSelectorShown, setColorSelectorShown] = useState(false);
   const [imageModalShown, setImageModalShown] = useState(false);
@@ -119,10 +113,7 @@ export default function Cover({
         >
           {username}
           <UserTitle
-            userId={profile.id}
-            userType={userType}
-            level={profile.authLevel ? profile.authLevel + 1 : profile.level}
-            title={profile.title}
+            user={profile}
             className={`unselectable ${css`
               margin-left: 1.3rem;
               display: inline;
