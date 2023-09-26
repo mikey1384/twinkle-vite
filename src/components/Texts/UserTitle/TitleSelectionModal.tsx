@@ -85,7 +85,12 @@ export default function TitleSelectionModal({
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           {cancelLabel}
         </Button>
-        <Button loading={submitting} color={doneColor} onClick={handleConfirm}>
+        <Button
+          disabled={selectedTitle === currentTitle}
+          loading={submitting}
+          color={doneColor}
+          onClick={handleConfirm}
+        >
           {confirmLabel}
         </Button>
       </footer>
