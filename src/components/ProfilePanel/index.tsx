@@ -296,6 +296,7 @@ function ProfilePanel({
               {displayedUserTitle && (
                 <div
                   style={{
+                    display: 'inline',
                     fontSize: '2.2rem',
                     color: Color[coverTextColor](),
                     textShadow: coverTextShadowColor

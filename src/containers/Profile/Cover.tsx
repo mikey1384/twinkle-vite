@@ -129,7 +129,8 @@ export default function Cover({
           {displayedUserTitle ? (
             <>
               {' '}
-              <span
+              <div
+                style={{ display: 'inline' }}
                 className={css`
                   font-size: 2.5rem;
                   @media (max-width: ${mobileMaxWidth}) {
@@ -138,7 +139,7 @@ export default function Cover({
                 `}
               >
                 {`${displayedUserTitle}`}
-              </span>
+              </div>
             </>
           ) : (
             ''
