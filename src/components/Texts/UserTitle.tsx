@@ -22,7 +22,7 @@ export default function UserTitle({
 
   return displayedUserTitle ? (
     <div className={className} style={style}>
-      {displayedUserTitle}
+      <span>{displayedUserTitle}</span>
     </div>
   ) : null;
 }
