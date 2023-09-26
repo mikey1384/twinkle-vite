@@ -46,7 +46,7 @@ export default function UserTitle({
     return appliedUserLevel > 1 ? `level ${appliedUserLevel}` : '';
   }, [userTitle, appliedUserLevel]);
 
-  return userTitle ? (
+  return appliedUserTitle ? (
     <div className={className} style={style}>
       <span
         onClick={
@@ -64,6 +64,7 @@ export default function UserTitle({
       {titleSelectionModalShown && (
         <TitleSelectionModal
           currentTitle={userTitle}
+          userLevel={appliedUserLevel}
           onHide={() => setTitleSelectionModalShown(false)}
         />
       )}

@@ -13,10 +13,12 @@ const confirmLabel = localize('confirm');
 export default function TitleSelectionModal({
   currentTitle,
   modalOverModal,
+  userLevel,
   onHide
 }: {
   currentTitle: string;
   modalOverModal?: boolean;
+  userLevel: number;
   onHide: () => void;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
@@ -38,11 +40,15 @@ export default function TitleSelectionModal({
     const rearrangedTitles = loadedTitles.filter(
       (title) => title !== selectedTitle
     );
-    return rearrangedTitles.map((title) => ({
-      label: <b>{capitalize(title)}</b>,
-      onClick: () => setSelectedTitle(title)
-    }));
-  }, [loadedTitles, selectedTitle]);
+    if (selectedTitle) rearrangedTitles.unshift(`level ${userLevel}`);
+    return rearrangedTitles.map((title) => {
+      return {
+        label: <b>{capitalize(title)}</b>,
+        onClick: () =>
+          setSelectedTitle(title === `level ${userLevel}` ? '' : title)
+      };
+    });
+  }, [loadedTitles, selectedTitle, userLevel]);
 
   useEffect(() => {
     init();
@@ -78,7 +84,7 @@ export default function TitleSelectionModal({
                 isMenuShownWhenMounted
                 skeuomorphic
                 icon="caret-down"
-                text={selectedTitle}
+                text={selectedTitle || `level ${userLevel}`}
                 onDropdownShown={setDropdownShown}
                 menuProps={menuProps}
               />
