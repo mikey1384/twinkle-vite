@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import ColorSelector from '~/components/ColorSelector';
@@ -7,6 +7,7 @@ import AlertModal from '~/components/Modals/AlertModal';
 import ImageModal from '~/components/Modals/ImageModal';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import UserTitle from '~/components/Texts/UserTitle';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
@@ -55,14 +56,6 @@ export default function Cover({
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [imageUri, setImageUri] = useState(null);
   const FileInputRef: React.RefObject<any> = useRef(null);
-  const displayedUserTitle = useMemo(() => {
-    if (userType) {
-      return userType.includes('teacher')
-        ? `teacher (lv${level})`
-        : `${userType} (lv${level})`;
-    }
-    return level > 1 ? `level ${level}` : '';
-  }, [level, userType]);
 
   useEffect(() => {
     onSelectTheme(profileTheme || 'logoBlue');
@@ -126,24 +119,18 @@ export default function Cover({
           `}
         >
           {username}
-          {displayedUserTitle ? (
-            <>
-              {' '}
-              <div
-                style={{ display: 'inline' }}
-                className={css`
-                  font-size: 2.5rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.5rem;
-                  }
-                `}
-              >
-                {`${displayedUserTitle}`}
-              </div>
-            </>
-          ) : (
-            ''
-          )}
+          <UserTitle
+            userType={userType}
+            level={level}
+            className={css`
+              margin-left: 1.3rem;
+              display: inline;
+              font-size: 2.5rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.5rem;
+              }
+            `}
+          />
           <p>({realName})</p>
         </div>
         {profile.id === userId && (

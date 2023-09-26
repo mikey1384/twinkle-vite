@@ -11,6 +11,7 @@ import Comments from '~/components/Comments';
 import Link from '~/components/Link';
 import UserDetails from '~/components/UserDetails';
 import Loading from '~/components/Loading';
+import UserTitle from '~/components/Texts/UserTitle';
 import { useNavigate } from 'react-router-dom';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -293,20 +294,18 @@ function ProfilePanel({
               `}
               style={{ padding: displayedUserTitle ? '0.5rem' : undefined }}
             >
-              {displayedUserTitle && (
-                <div
-                  style={{
-                    display: 'inline',
-                    fontSize: '2.2rem',
-                    color: Color[coverTextColor](),
-                    textShadow: coverTextShadowColor
-                      ? `1px 1px ${Color[coverTextShadowColor]()}`
-                      : 'none'
-                  }}
-                >
-                  {displayedUserTitle}
-                </div>
-              )}
+              <UserTitle
+                userType={userType}
+                level={level}
+                style={{
+                  display: 'inline',
+                  fontSize: '2.2rem',
+                  color: Color[coverTextColor](),
+                  textShadow: coverTextShadowColor
+                    ? `1px 1px ${Color[coverTextShadowColor]()}`
+                    : 'none'
+                }}
+              />
             </div>
             <div
               className={css`
