@@ -19,10 +19,12 @@ export default function TitleSelectionModal({
   modalOverModal?: boolean;
   onHide: () => void;
 }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const loadUserTitles = useAppContext((v) => v.requestHelpers.loadUserTitles);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const updateUserTitle = useAppContext(
     (v) => v.requestHelpers.updateUserTitle
   );
@@ -104,6 +106,7 @@ export default function TitleSelectionModal({
     setSubmitting(true);
     try {
       await updateUserTitle(selectedTitle);
+      onSetUserState({ userId, newState: { title: selectedTitle } });
     } catch (error) {
       console.error(error);
     } finally {
