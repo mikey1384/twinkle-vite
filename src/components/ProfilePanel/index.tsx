@@ -295,6 +295,7 @@ function ProfilePanel({
               style={{ padding: displayedUserTitle ? '0.5rem' : undefined }}
             >
               <UserTitle
+                userId={profile.id}
                 userType={userType}
                 level={level}
                 style={{
