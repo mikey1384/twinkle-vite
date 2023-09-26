@@ -310,6 +310,16 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async updateUserTitle(title: string) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(`${URL}/user/title`, { title }, auth());
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadKarmaPoints() {
       try {
         const {
