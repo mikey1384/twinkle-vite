@@ -268,13 +268,13 @@ function ProfilePanel({
         {contentShown && (
           <div
             ref={PanelRef}
-            className={css`
+            className={`unselectable ${css`
               background: #fff;
               width: 100%;
               line-height: 2.3rem;
               font-size: 1.5rem;
               position: relative;
-            `}
+            `}`}
           >
             <div
               className={css`
