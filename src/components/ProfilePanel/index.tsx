@@ -297,7 +297,9 @@ function ProfilePanel({
               <UserTitle
                 userId={profile.id}
                 userType={userType}
-                level={level}
+                level={
+                  profile.authLevel ? profile.authLevel + 1 : profile.level
+                }
                 title={profile.title}
                 style={{
                   display: 'inline',

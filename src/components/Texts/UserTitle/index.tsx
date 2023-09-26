@@ -21,15 +21,22 @@ export default function UserTitle({
   const { userId: myId } = useKeyContext((v) => v.myState);
   const [titleSelectionModalShown, setTitleSelectionModalShown] =
     useState(false);
-  const displayedUserTitle = useMemo(() => {
+  const userTitle = useMemo(() => {
     if (title) return title;
     if (userType) {
       return userType.includes('teacher') ? 'teacher' : userType;
     }
-    return level > 1 ? `level ${level}` : '';
-  }, [level, title, userType]);
+    return '';
+  }, [title, userType]);
 
-  return displayedUserTitle ? (
+  const appliedUserTitle = useMemo(() => {
+    if (userTitle) {
+      return `${userTitle} (lv ${level})`;
+    }
+    return level > 1 ? `level ${level}` : '';
+  }, [userTitle, level]);
+
+  return userTitle ? (
     <div className={className} style={style}>
       <span
         onClick={
@@ -42,11 +49,11 @@ export default function UserTitle({
           }
         `}
       >
-        {displayedUserTitle}
+        {appliedUserTitle}
       </span>
       {titleSelectionModalShown && (
         <TitleSelectionModal
-          currentTitle={displayedUserTitle}
+          currentTitle={userTitle}
           onHide={() => setTitleSelectionModalShown(false)}
         />
       )}
