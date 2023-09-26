@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import TitleSelectionModal from './TitleSelectionModal';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
@@ -16,6 +17,8 @@ export default function UserTitle({
   level: number;
 }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
+  const [titleSelectionModalShown, setTitleSelectionModalShown] =
+    useState(false);
   const displayedUserTitle = useMemo(() => {
     if (userType) {
       return userType.includes('teacher')
@@ -28,6 +31,9 @@ export default function UserTitle({
   return displayedUserTitle ? (
     <div className={className} style={style}>
       <span
+        onClick={
+          userId === myId ? () => setTitleSelectionModalShown(true) : undefined
+        }
         className={css`
           cursor: ${userId === myId ? 'pointer' : 'default'};
           &:hover {
@@ -37,6 +43,11 @@ export default function UserTitle({
       >
         {displayedUserTitle}
       </span>
+      {titleSelectionModalShown && (
+        <TitleSelectionModal
+          onHide={() => setTitleSelectionModalShown(false)}
+        />
+      )}
     </div>
   ) : null;
 }
