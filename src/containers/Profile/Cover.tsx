@@ -122,14 +122,14 @@ export default function Cover({
           <UserTitle
             userType={userType}
             level={level}
-            className={css`
+            className={`unselectable ${css`
               margin-left: 1.3rem;
               display: inline;
               font-size: 2.5rem;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1.5rem;
               }
-            `}
+            `}`}
           />
           <p>({realName})</p>
         </div>

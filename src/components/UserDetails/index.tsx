@@ -88,34 +88,37 @@ export default function UserDetails({
         ...style
       }}
     >
-      <Link
-        to={noLink ? '' : `/users/${profile.username}`}
-        onClick={handleReloadProfile}
-        style={{
-          fontSize: small ? '3rem' : '3.5rem',
-          fontWeight: 'bold',
-          color: Color.darkerGray(),
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          lineHeight: 'normal',
-          textDecoration: 'none'
-        }}
-        className={
-          noLink
-            ? ''
-            : css`
-                transition: color 0.2s;
-                &:hover {
-                  color: ${Color[
-                    profile.profileTheme || 'logoBlue'
-                  ]()}!important;
-                }
-              `
-        }
-      >
-        {profile.username}
-      </Link>
+      <div>
+        <Link
+          to={noLink ? '' : `/users/${profile.username}`}
+          onClick={handleReloadProfile}
+          style={{
+            width: 'auto',
+            fontSize: small ? '3rem' : '3.5rem',
+            fontWeight: 'bold',
+            color: Color.darkerGray(),
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            lineHeight: 'normal',
+            textDecoration: 'none'
+          }}
+          className={
+            noLink
+              ? ''
+              : css`
+                  transition: color 0.2s;
+                  &:hover {
+                    color: ${Color[
+                      profile.profileTheme || 'logoBlue'
+                    ]()}!important;
+                  }
+                `
+          }
+        >
+          {profile.username}
+        </Link>
+      </div>
       <p
         style={{ fontSize: small ? '1.3rem' : '1.5rem', color: Color.gray() }}
       >{`(${profile.realName})`}</p>
