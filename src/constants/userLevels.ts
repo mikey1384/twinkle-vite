@@ -1,7 +1,6 @@
 export const levels = [
   {
     ap: 0,
-    labels: [],
     level: 0,
     canEdit: false,
     canDelete: false,
@@ -13,7 +12,6 @@ export const levels = [
   },
   {
     ap: 0,
-    labels: [],
     level: 1,
     canEdit: false,
     canDelete: false,
@@ -25,7 +23,6 @@ export const levels = [
   },
   {
     ap: 150,
-    labels: ['Moderator'],
     level: 2,
     canEdit: false,
     canDelete: true,
@@ -37,7 +34,6 @@ export const levels = [
   },
   {
     ap: 300,
-    labels: ['Moderator', 'Mod II'],
     level: 3,
     canEdit: false,
     canDelete: true,
@@ -49,7 +45,6 @@ export const levels = [
   },
   {
     ap: 1000,
-    labels: ['Teacher', 'Moderator', 'Mod III'],
     level: 4,
     canEdit: false,
     canDelete: true,
