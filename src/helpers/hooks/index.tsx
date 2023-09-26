@@ -23,6 +23,8 @@ import {
   SELECTED_LANGUAGE
 } from '~/constants/defaultValues';
 import { Color, Theme } from '~/constants/css';
+import { levels } from '~/constants/userLevels';
+import { UserLevel } from '~/types';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 
 const allContentState: Record<string, any> = {};
@@ -345,83 +347,6 @@ export function useScrollPosition({
       onRecordScrollPosition({ section: pathnameRef.current, position });
     }
   });
-}
-
-const levels = [
-  {
-    ap: 0,
-    labels: [],
-    level: 0,
-    canEdit: false,
-    canDelete: false,
-    canReward: false,
-    canEditDictionary: false,
-    canPinPlaylists: false,
-    canEditPlaylists: false,
-    canEditRewardLevel: false
-  },
-  {
-    ap: 0,
-    labels: [],
-    level: 1,
-    canEdit: false,
-    canDelete: false,
-    canReward: false,
-    canEditDictionary: false,
-    canPinPlaylists: false,
-    canEditPlaylists: false,
-    canEditRewardLevel: false
-  },
-  {
-    ap: 150,
-    labels: ['Moderator'],
-    level: 2,
-    canEdit: false,
-    canDelete: true,
-    canReward: true,
-    canEditDictionary: false,
-    canPinPlaylists: false,
-    canEditPlaylists: false,
-    canEditRewardLevel: false
-  },
-  {
-    ap: 300,
-    labels: ['Moderator', 'Mod II'],
-    level: 3,
-    canEdit: false,
-    canDelete: true,
-    canReward: true,
-    canEditDictionary: false,
-    canPinPlaylists: false,
-    canEditPlaylists: false,
-    canEditRewardLevel: false
-  },
-  {
-    ap: 1000,
-    labels: ['Teacher', 'Moderator', 'Mod III'],
-    level: 4,
-    canEdit: false,
-    canDelete: true,
-    canReward: true,
-    canEditDictionary: true,
-    canPinPlaylists: false,
-    canEditPlaylists: false,
-    canEditRewardLevel: true
-  }
-];
-
-interface UserLevel {
-  ap: number;
-  level: number;
-  labels: string[];
-  canEdit: boolean;
-  canDelete: boolean;
-  canReward: boolean;
-  canEditDictionary: boolean;
-  canPinPlaylists: boolean;
-  canEditPlaylists: boolean;
-  canEditRewardLevel: boolean;
-  nextLevelAp: number | null;
 }
 
 export function useUserLevel(userId: number): UserLevel {

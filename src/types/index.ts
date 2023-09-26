@@ -13,6 +13,7 @@ export interface Achievement {
     | 'sage'
     | 'founder';
 }
+
 export interface Attachment {
   contentType?: string;
   id: number;
@@ -21,6 +22,7 @@ export interface Attachment {
   imageUrl?: string;
   title: string;
 }
+
 export interface Card {
   askPrice: number;
   id: number;
@@ -169,4 +171,18 @@ export interface User {
   username: string;
   value?: number;
   [key: string]: any;
+}
+
+export interface UserLevel {
+  ap: number;
+  level: number;
+  labels: string[];
+  canEdit: boolean;
+  canDelete: boolean;
+  canReward: boolean;
+  canEditDictionary: boolean;
+  canPinPlaylists: boolean;
+  canEditPlaylists: boolean;
+  canEditRewardLevel: boolean;
+  nextLevelAp: number | null;
 }
