@@ -21,9 +21,7 @@ export default function UserTitle({
     useState(false);
   const displayedUserTitle = useMemo(() => {
     if (userType) {
-      return userType.includes('teacher')
-        ? `teacher (lv${level})`
-        : `${userType} (lv${level})`;
+      return userType.includes('teacher') ? 'teacher' : userType;
     }
     return level > 1 ? `level ${level}` : '';
   }, [level, userType]);
@@ -45,6 +43,7 @@ export default function UserTitle({
       </span>
       {titleSelectionModalShown && (
         <TitleSelectionModal
+          currentTitle={displayedUserTitle}
           onHide={() => setTitleSelectionModalShown(false)}
         />
       )}
