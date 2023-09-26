@@ -340,7 +340,8 @@ export function addEmoji(string: string): string {
 }
 
 export function capitalize(string = '') {
-  return string.charAt(0).toUpperCase() + string.slice(1);
+  if (!string) return '';
+  return string?.charAt(0)?.toUpperCase?.() + string?.slice(1);
 }
 
 export function containsTwinkleVideoUrl(string: string): boolean {

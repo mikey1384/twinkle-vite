@@ -300,6 +300,16 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadUserTitles() {
+      try {
+        const {
+          data: { titles }
+        } = await request.get(`${URL}/user/title`, auth());
+        return Promise.resolve(titles);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadKarmaPoints() {
       try {
         const {
