@@ -176,7 +176,6 @@ export interface User {
 export interface UserLevel {
   ap: number;
   level: number;
-  labels: string[];
   canEdit: boolean;
   canDelete: boolean;
   canReward: boolean;
