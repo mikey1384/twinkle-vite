@@ -57,9 +57,11 @@ export default function Cover({
   const FileInputRef: React.RefObject<any> = useRef(null);
   const displayedUserTitle = useMemo(() => {
     if (userType) {
-      return userType.includes('teacher') ? 'teacher' : userType;
+      return userType.includes('teacher')
+        ? `teacher (lv${level})`
+        : `${userType} (lv${level})`;
     }
-    return `Lv ${level}`;
+    return level > 1 ? `level ${level}` : '';
   }, [level, userType]);
 
   useEffect(() => {
@@ -135,7 +137,7 @@ export default function Cover({
                   }
                 `}
               >
-                {`[${displayedUserTitle}]`}
+                {`${displayedUserTitle}`}
               </span>
             </>
           ) : (
