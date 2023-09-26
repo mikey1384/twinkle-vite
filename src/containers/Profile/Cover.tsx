@@ -120,6 +120,7 @@ export default function Cover({
         >
           {username}
           <UserTitle
+            userId={profile.id}
             userType={userType}
             level={level}
             className={`unselectable ${css`
