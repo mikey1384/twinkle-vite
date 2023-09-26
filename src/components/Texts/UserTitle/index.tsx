@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import TitleSelectionModal from './TitleSelectionModal';
 import { useKeyContext } from '~/contexts';
+import { useUserLevel } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 
 export default function UserTitle({
@@ -8,8 +9,7 @@ export default function UserTitle({
     id: 0,
     userType: '',
     title: '',
-    authLevel: 0,
-    level: 0
+    authLevel: 0
   },
   className,
   style
@@ -17,7 +17,6 @@ export default function UserTitle({
   user: {
     id: number;
     authLevel?: number;
-    level?: number;
     userType?: string;
     title?: string;
   };
@@ -25,12 +24,12 @@ export default function UserTitle({
   className?: string;
 }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
+  const { level } = useUserLevel(user.id);
   const [titleSelectionModalShown, setTitleSelectionModalShown] =
     useState(false);
   const appliedUserLevel = useMemo(() => {
-    if (user.authLevel) return user.authLevel + 1;
-    return user.level || 0;
-  }, [user.authLevel, user.level]);
+    return level > 1 ? level : user.authLevel ? user.authLevel + 1 : 0;
+  }, [level, user.authLevel]);
   const userTitle = useMemo(() => {
     if (user.title) return user.title;
     if (user.userType) {
