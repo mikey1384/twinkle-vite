@@ -53,5 +53,27 @@ export const levels = [
     canPinPlaylists: false,
     canEditPlaylists: false,
     canEditRewardLevel: true
+  },
+  {
+    ap: 1500,
+    level: 5,
+    canEdit: true,
+    canDelete: true,
+    canReward: true,
+    canEditDictionary: true,
+    canPinPlaylists: false,
+    canEditPlaylists: false,
+    canEditRewardLevel: true
+  },
+  {
+    ap: 3000,
+    level: 6,
+    canEdit: true,
+    canDelete: true,
+    canReward: true,
+    canEditDictionary: true,
+    canPinPlaylists: true,
+    canEditPlaylists: true,
+    canEditRewardLevel: true
   }
 ];
