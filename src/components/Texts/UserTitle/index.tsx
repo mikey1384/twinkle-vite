@@ -8,23 +8,26 @@ export default function UserTitle({
   userType,
   level,
   className,
+  title,
   style
 }: {
   style?: React.CSSProperties;
   userId: number;
   userType: string;
   className?: string;
+  title?: string;
   level: number;
 }) {
   const { userId: myId } = useKeyContext((v) => v.myState);
   const [titleSelectionModalShown, setTitleSelectionModalShown] =
     useState(false);
   const displayedUserTitle = useMemo(() => {
+    if (title) return title;
     if (userType) {
       return userType.includes('teacher') ? 'teacher' : userType;
     }
     return level > 1 ? `level ${level}` : '';
-  }, [level, userType]);
+  }, [level, title, userType]);
 
   return displayedUserTitle ? (
     <div className={className} style={style}>

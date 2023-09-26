@@ -123,6 +123,7 @@ export default function Cover({
             userId={profile.id}
             userType={userType}
             level={level}
+            title={profile.title}
             className={`unselectable ${css`
               margin-left: 1.3rem;
               display: inline;
