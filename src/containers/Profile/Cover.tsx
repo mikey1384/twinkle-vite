@@ -11,7 +11,7 @@ import UserTitle from '~/components/Texts/UserTitle';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
-import { useTheme, useUserLevel } from '~/helpers/hooks';
+import { useTheme } from '~/helpers/hooks';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import localize from '~/constants/localize';
@@ -49,7 +49,6 @@ export default function Cover({
     username,
     userType
   } = profile;
-  const { level } = useUserLevel(profile.id);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [colorSelectorShown, setColorSelectorShown] = useState(false);
   const [imageModalShown, setImageModalShown] = useState(false);
@@ -122,7 +121,7 @@ export default function Cover({
           <UserTitle
             userId={profile.id}
             userType={userType}
-            level={level}
+            level={profile.authLevel ? profile.authLevel + 1 : profile.level}
             title={profile.title}
             className={`unselectable ${css`
               margin-left: 1.3rem;
