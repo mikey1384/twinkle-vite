@@ -298,6 +298,7 @@ function ProfilePanel({
                 userId={profile.id}
                 userType={userType}
                 level={level}
+                title={profile.title}
                 style={{
                   display: 'inline',
                   fontSize: '2.2rem',
