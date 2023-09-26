@@ -23,6 +23,9 @@ export default function TitleSelectionModal({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const loadUserTitles = useAppContext((v) => v.requestHelpers.loadUserTitles);
+  const updateUserTitle = useAppContext(
+    (v) => v.requestHelpers.updateUserTitle
+  );
   const [loading, setLoading] = useState(true);
   const [loadedTitles, setLoadedTitles] = useState<string[]>([]);
   const [dropdownShown, setDropdownShown] = useState(false);
@@ -99,8 +102,14 @@ export default function TitleSelectionModal({
 
   async function handleConfirm() {
     setSubmitting(true);
-    console.log('confirming');
-    setSubmitting(false);
+    try {
+      await updateUserTitle(selectedTitle);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSubmitting(false);
+      onHide();
+    }
   }
 
   function handleHide() {
