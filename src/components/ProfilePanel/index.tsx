@@ -248,7 +248,9 @@ function ProfilePanel({
   );
   const displayedUserTitle = useMemo(() => {
     if (userType) {
-      return userType.includes('teacher') ? 'teacher' : userType;
+      return userType.includes('teacher')
+        ? `teacher (lv${level})`
+        : `${userType} (lv${level})`;
     }
     return level > 1 ? `level ${level}` : '';
   }, [level, userType]);
