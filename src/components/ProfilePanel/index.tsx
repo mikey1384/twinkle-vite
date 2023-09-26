@@ -295,12 +295,7 @@ function ProfilePanel({
               style={{ padding: displayedUserTitle ? '0.5rem' : undefined }}
             >
               <UserTitle
-                userId={profile.id}
-                userType={userType}
-                level={
-                  profile.authLevel ? profile.authLevel + 1 : profile.level
-                }
-                title={profile.title}
+                user={profile}
                 style={{
                   display: 'inline',
                   fontSize: '2.2rem',
