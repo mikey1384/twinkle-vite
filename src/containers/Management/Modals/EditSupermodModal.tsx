@@ -4,15 +4,12 @@ import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { capitalize } from '~/helpers/stringHelpers';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 
 export default function EditSupermodModal({
-  accountTypes,
   onHide,
   target
 }: {
-  accountTypes: any;
   onHide: () => void;
   target: any;
 }) {
@@ -30,15 +27,16 @@ export default function EditSupermodModal({
     target.userType
   );
   const editMenuItems = useMemo(() => {
-    const dropdownMenu = accountTypes
-      .filter(
-        (accountType: { label: string }) =>
-          accountType.label !== selectedAccountType
-      )
-      .map((accountType: { label: string }) => ({
-        label: capitalize(accountType.label),
-        onClick: () => setSelectedAccountType(accountType.label)
-      }));
+    const dropdownMenu: { label: any; onClick: () => void }[] = [
+      {
+        label: 'SAGE',
+        onClick: () => console.log('SAGE clicked')
+      },
+      {
+        label: 'FOUNDER',
+        onClick: () => console.log('FOUNDER clicked')
+      }
+    ];
     if (selectedAccountType) {
       dropdownMenu.push({
         label: (
@@ -51,7 +49,7 @@ export default function EditSupermodModal({
       });
     }
     return dropdownMenu;
-  }, [accountTypes, selectedAccountType]);
+  }, [selectedAccountType]);
 
   return (
     <Modal closeWhenClickedOutside={!dropdownShown} onHide={onHide}>

@@ -20,7 +20,6 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
   const {
     tableHeader: { color: tableHeaderColor }
   } = useKeyContext((v) => v.theme);
-  const accountTypes = useManagementContext((v) => v.state.accountTypes);
   const supermods = useManagementContext((v) => v.state.supermods);
   const moderatorsLoaded = useManagementContext(
     (v) => v.state.moderatorsLoaded
@@ -138,14 +137,10 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
         )}
       </SectionPanel>
       {addSupermodModalShown && (
-        <AddSupermodModal
-          accountTypes={accountTypes}
-          onHide={() => setAddSupermodModalShown(false)}
-        />
+        <AddSupermodModal onHide={() => setAddSupermodModalShown(false)} />
       )}
       {moderatorModalTarget && (
         <EditSupermodModal
-          accountTypes={accountTypes}
           target={moderatorModalTarget}
           onHide={() => setModeratorModalTarget(null)}
         />
