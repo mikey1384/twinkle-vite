@@ -11,7 +11,6 @@ import Icon from '~/components/Icon';
 import { useManagementContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
-const accountTypesLabel = localize('accountTypes');
 const addAccountTypeLabel = localize('addAccountType');
 const authLevelLabel = localize('authLevel');
 const deleteLabel = localize('delete');
@@ -42,7 +41,7 @@ export default function AccountTypes({ canManage }: { canManage: boolean }) {
   return (
     <ErrorBoundary componentPath="Management/Main/AccountTypes">
       <SectionPanel
-        title={accountTypesLabel}
+        title="Acc Types (Legacy)"
         isEmpty={accountTypes.length === 0}
         emptyMessage={noAccountTypesLabel}
         loaded={accountTypesLoaded}
