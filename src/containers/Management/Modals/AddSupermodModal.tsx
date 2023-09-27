@@ -42,6 +42,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
         realName: string;
         userType: string;
       }) => {
+        console.log(user);
         const dropdownMenu: { label: any; onClick: () => void }[] = [
           {
             label: 'Sage',
