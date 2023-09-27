@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Approvals from './Approvals';
-import Moderators from './Moderators';
-import AccountTypes from './AccountTypes';
+import Moderators from './Legacy/Moderators';
+import AccountTypes from './Legacy/AccountTypes';
 import BannedUsers from './BannedUsers';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 
