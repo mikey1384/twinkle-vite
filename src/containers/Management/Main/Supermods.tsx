@@ -21,7 +21,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
     tableHeader: { color: tableHeaderColor }
   } = useKeyContext((v) => v.theme);
   const accountTypes = useManagementContext((v) => v.state.accountTypes);
-  const moderators = useManagementContext((v) => v.state.moderators);
+  const supermods = useManagementContext((v) => v.state.supermods);
   const moderatorsLoaded = useManagementContext(
     (v) => v.state.moderatorsLoaded
   );
@@ -35,19 +35,19 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
   const [addModeratorModalShown, setAddModeratorModalShown] = useState(false);
   const [moderatorModalTarget, setModeratorModalTarget] = useState(null);
   const filteredModerators = useMemo(() => {
-    return moderators.filter((moderator: { username: string }) =>
+    return supermods.filter((supermod: { username: string }) =>
       searchQuery
-        ? moderator.username.toLowerCase().includes(searchQuery.toLowerCase())
-        : moderator
+        ? supermod.username.toLowerCase().includes(searchQuery.toLowerCase())
+        : supermod
     );
-  }, [moderators, searchQuery]);
+  }, [supermods, searchQuery]);
 
   return (
     <ErrorBoundary componentPath="Management/Main/Supermods">
       <SectionPanel
         title="Supermods"
-        isEmpty={moderators.length === 0}
-        emptyMessage="No supermods found."
+        isEmpty={supermods.length === 0}
+        emptyMessage="No supermods found"
         searchPlaceholder="Search Supermods"
         onSearch={setSearchQuery}
         searchQuery={searchQuery}
@@ -119,7 +119,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
               ))}
           </tbody>
         </Table>
-        {moderators.length > numModeratorsShown && !searchQuery && (
+        {supermods.length > numModeratorsShown && !searchQuery && (
           <div
             style={{
               marginTop: '2rem',
