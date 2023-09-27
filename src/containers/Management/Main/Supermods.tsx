@@ -2,9 +2,9 @@ import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
-import Table from '../../Table';
-import AddModeratorModal from '../../Modals/AddModeratorModal';
-import EditModeratorModal from '../../Modals/EditModeratorModal';
+import Table from '../Table';
+import AddModeratorModal from '../Modals/AddModeratorModal';
+import EditModeratorModal from '../Modals/EditModeratorModal';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useManagementContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
@@ -16,13 +16,12 @@ import localize from '~/constants/localize';
 const accountTypeLabel = localize('accountType');
 const changeAccountTypeLabel = localize('changeAccountType');
 const nowLabel = localize('now');
-const noModeratorsLabel = localize('noModerators');
 const onlineLabel = localize('online');
 const searchModeratorsLabel = localize('searchModerators');
 const userLabel = localize('user');
 const deviceIsMobile = isMobile(navigator);
 
-export default function Moderators({ canManage }: { canManage: boolean }) {
+export default function Supermods({ canManage }: { canManage: boolean }) {
   const { userId } = useKeyContext((v) => v.myState);
   const {
     tableHeader: { color: tableHeaderColor }
@@ -57,11 +56,11 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
   }, []);
 
   return (
-    <ErrorBoundary componentPath="Management/Main/Legacy/Moderators">
+    <ErrorBoundary componentPath="Management/Main/Supermods">
       <SectionPanel
-        title="Mods (Legacy)"
+        title="Supermods"
         isEmpty={moderators.length === 0}
-        emptyMessage={noModeratorsLabel}
+        emptyMessage="No supermods found."
         searchPlaceholder={searchModeratorsLabel}
         onSearch={setSearchQuery}
         searchQuery={searchQuery}
