@@ -3,8 +3,8 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
 import Table from '../Table';
-import AddModeratorModal from '../Modals/AddModeratorModal';
-import EditModeratorModal from '../Modals/EditModeratorModal';
+import AddSupermodModal from '../Modals/AddSupermodModal';
+import EditSupermodModal from '../Modals/EditSupermodModal';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useManagementContext, useKeyContext } from '~/contexts';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -28,11 +28,11 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
   const numModeratorsShown = useManagementContext(
     (v) => v.state.numModeratorsShown
   );
-  const onLoadMoreModerators = useManagementContext(
-    (v) => v.actions.onLoadMoreModerators
+  const onLoadMoreSupermods = useManagementContext(
+    (v) => v.actions.onLoadMoreSupermods
   );
   const [searchQuery, setSearchQuery] = useState('');
-  const [addModeratorModalShown, setAddModeratorModalShown] = useState(false);
+  const [addSupermodModalShown, setAddSupermodModalShown] = useState(false);
   const [moderatorModalTarget, setModeratorModalTarget] = useState(null);
   const filteredModerators = useMemo(() => {
     return supermods.filter((supermod: { username: string }) =>
@@ -58,7 +58,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
             <Button
               color="darkerGray"
               skeuomorphic
-              onClick={() => setAddModeratorModalShown(true)}
+              onClick={() => setAddSupermodModalShown(true)}
             >
               <Icon icon="plus" />
               <span style={{ marginLeft: '0.7rem' }}>Add</span>
@@ -132,19 +132,19 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
             <LoadMoreButton
               transparent
               style={{ fontSize: '2rem' }}
-              onClick={onLoadMoreModerators}
+              onClick={onLoadMoreSupermods}
             />
           </div>
         )}
       </SectionPanel>
-      {addModeratorModalShown && (
-        <AddModeratorModal
+      {addSupermodModalShown && (
+        <AddSupermodModal
           accountTypes={accountTypes}
-          onHide={() => setAddModeratorModalShown(false)}
+          onHide={() => setAddSupermodModalShown(false)}
         />
       )}
       {moderatorModalTarget && (
-        <EditModeratorModal
+        <EditSupermodModal
           accountTypes={accountTypes}
           target={moderatorModalTarget}
           onHide={() => setModeratorModalTarget(null)}
