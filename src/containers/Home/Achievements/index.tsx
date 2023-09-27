@@ -8,7 +8,7 @@ import Grammar from '~/components/AchievementItems/Grammar';
 import Mentor from '~/components/AchievementItems/Mentor';
 import Teenager from '~/components/AchievementItems/Teenager';
 import Sage from '~/components/AchievementItems/Sage';
-import Founder from '~/components/AchievementItems/Founder';
+import TwinkleFounder from '~/components/AchievementItems/TwinkleFounder';
 import UserLevelStatus from './UserLevelStatus';
 import { useAppContext, useKeyContext } from '~/contexts';
 
@@ -67,7 +67,7 @@ export default function Achievements() {
           teenager: Teenager,
           mentor: Mentor,
           sage: Sage,
-          founder: Founder
+          twinkle_founder: TwinkleFounder
         }[key];
 
         return (
