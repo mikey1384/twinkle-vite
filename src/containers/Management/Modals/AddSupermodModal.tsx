@@ -9,18 +9,11 @@ import Icon from '~/components/Icon';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { useSearch, useUserLevel } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
-import { capitalize } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
 
 const searchUsersLabel = localize('searchUsers');
 
-export default function AddSupermodModal({
-  accountTypes,
-  onHide
-}: {
-  accountTypes: any[];
-  onHide: () => void;
-}) {
+export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
   const [loading, setLoading] = useState(false);
   const {
     done: { color: doneColor }
@@ -49,16 +42,16 @@ export default function AddSupermodModal({
         realName: string;
         userType: string;
       }) => {
-        const dropdownMenu: { label: any; onClick: () => void }[] = accountTypes
-          .filter((accountType) => accountType.label !== user.userType)
-          .map((accountType) => ({
-            label: capitalize(accountType.label),
-            onClick: () =>
-              handleAccountTypeClick({
-                type: accountType.label,
-                userId: user.id
-              })
-          }));
+        const dropdownMenu: { label: any; onClick: () => void }[] = [
+          {
+            label: 'SAGE',
+            onClick: () => console.log('SAGE clicked')
+          },
+          {
+            label: 'FOUNDER',
+            onClick: () => console.log('FOUNDER clicked')
+          }
+        ];
         if (user.userType) {
           dropdownMenu.push({
             label: (
@@ -105,7 +98,7 @@ export default function AddSupermodModal({
         );
       }
     );
-  }, [accountTypes, selectedUsers]);
+  }, [selectedUsers]);
 
   return (
     <Modal closeWhenClickedOutside={!dropdownShown} onHide={onHide}>
