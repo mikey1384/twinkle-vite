@@ -7,19 +7,13 @@ import AddModeratorModal from '../Modals/AddModeratorModal';
 import EditModeratorModal from '../Modals/EditModeratorModal';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useManagementContext, useKeyContext } from '~/contexts';
-import { isMobile } from '~/helpers';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
 
-const accountTypeLabel = localize('accountType');
-const changeAccountTypeLabel = localize('changeAccountType');
 const nowLabel = localize('now');
 const onlineLabel = localize('online');
-const searchModeratorsLabel = localize('searchModerators');
 const userLabel = localize('user');
-const deviceIsMobile = isMobile(navigator);
 
 export default function Supermods({ canManage }: { canManage: boolean }) {
   const { userId } = useKeyContext((v) => v.myState);
@@ -37,7 +31,6 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
   const onLoadMoreModerators = useManagementContext(
     (v) => v.actions.onLoadMoreModerators
   );
-
   const [searchQuery, setSearchQuery] = useState('');
   const [addModeratorModalShown, setAddModeratorModalShown] = useState(false);
   const [moderatorModalTarget, setModeratorModalTarget] = useState(null);
@@ -48,12 +41,6 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
         : moderator
     );
   }, [moderators, searchQuery]);
-  const addLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return <>{deviceIsMobile ? '' : '관리자 '}등록</>;
-    }
-    return <>Add{deviceIsMobile ? '' : ' Moderators'}</>;
-  }, []);
 
   return (
     <ErrorBoundary componentPath="Management/Main/Supermods">
@@ -61,7 +48,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
         title="Supermods"
         isEmpty={moderators.length === 0}
         emptyMessage="No supermods found."
-        searchPlaceholder={searchModeratorsLabel}
+        searchPlaceholder="Search Supermods"
         onSearch={setSearchQuery}
         searchQuery={searchQuery}
         loaded={moderatorsLoaded}
@@ -74,7 +61,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
               onClick={() => setAddModeratorModalShown(true)}
             >
               <Icon icon="plus" />
-              <span style={{ marginLeft: '0.7rem' }}>{addLabel}</span>
+              <span style={{ marginLeft: '0.7rem' }}>Add</span>
             </Button>
           ) : null
         }
@@ -92,7 +79,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
             <tr>
               <th>{userLabel}</th>
               <th>{onlineLabel}</th>
-              <th>{accountTypeLabel}</th>
+              <th>Title</th>
               {canManage && <th></th>}
             </tr>
           </thead>
@@ -125,7 +112,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
                   </td>
                   {canManage && (
                     <td style={{ display: 'flex', justifyContent: 'center' }}>
-                      <a>{changeAccountTypeLabel}</a>
+                      <a>Manage Achievements</a>
                     </td>
                   )}
                 </tr>
