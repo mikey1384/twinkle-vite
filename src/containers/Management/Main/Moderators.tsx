@@ -15,7 +15,6 @@ import localize from '~/constants/localize';
 
 const accountTypeLabel = localize('accountType');
 const changeAccountTypeLabel = localize('changeAccountType');
-const moderatorsLabel = localize('moderators');
 const nowLabel = localize('now');
 const noModeratorsLabel = localize('noModerators');
 const onlineLabel = localize('online');
@@ -60,7 +59,7 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
   return (
     <ErrorBoundary componentPath="Management/Main/Moderators">
       <SectionPanel
-        title={moderatorsLabel}
+        title="Mods (Legacy)"
         isEmpty={moderators.length === 0}
         emptyMessage={noModeratorsLabel}
         searchPlaceholder={searchModeratorsLabel}
