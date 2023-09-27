@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Approvals from './Approvals';
+import Supermods from './Supermods';
 import Moderators from './Legacy/Moderators';
 import AccountTypes from './Legacy/AccountTypes';
 import BannedUsers from './BannedUsers';
@@ -62,6 +63,7 @@ export default function Main() {
       style={{ paddingBottom: '10rem' }}
     >
       <Approvals canManage={canManage} />
+      <Supermods canManage={canManage} />
       <Moderators canManage={canManage} />
       <AccountTypes canManage={canManage} />
       <BannedUsers canManage={canManage} />
