@@ -168,6 +168,7 @@ export interface User {
   state?: any;
   twinkleCoins?: number;
   twinkleXP?: number;
+  unlockedAchievementIds?: number[];
   username: string;
   value?: number;
   [key: string]: any;

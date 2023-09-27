@@ -7,6 +7,11 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import Table from '../Table';
 import Icon from '~/components/Icon';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
+import {
+  MENTOR_ACHIEVEMENT_ID,
+  SAGE_ACHIEVEMENT_ID,
+  TWINKLE_FOUNDER_ACHIEVEMENT_ID
+} from '~/constants/defaultValues';
 import { useSearch } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
@@ -40,8 +45,8 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
         username: string;
         realName: string;
         userType: string;
+        unlockedAchievementIds?: number[];
       }) => {
-        console.log(user);
         const dropdownMenu: { label: any; onClick: () => void }[] = [
           {
             label: 'Sage',
@@ -52,6 +57,12 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
             onClick: () => console.log('FOUNDER clicked')
           }
         ];
+        console.log(user.unlockedAchievementIds, 'here');
+        console.log(
+          MENTOR_ACHIEVEMENT_ID,
+          SAGE_ACHIEVEMENT_ID,
+          TWINKLE_FOUNDER_ACHIEVEMENT_ID
+        );
         if (user.userType) {
           dropdownMenu.push({
             label: (
