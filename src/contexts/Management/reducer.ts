@@ -131,6 +131,17 @@ export default function ManagementReducer(
         ...state,
         numModeratorsShown: state.numModeratorsShown + 10
       };
+    case 'LOAD_SUPERMODS':
+      return {
+        ...state,
+        supermods: action.supermods,
+        supermodsLoaded: true
+      };
+    case 'LOAD_MORE_SUPERMODS':
+      return {
+        ...state,
+        numSupermodsShown: state.numSupermodsShown + 10
+      };
     case 'UPDATE_BAN_STATUS':
       return {
         ...state,

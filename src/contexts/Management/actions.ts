@@ -101,6 +101,17 @@ export default function ManagementActions(dispatch: Dispatch) {
         type: 'LOAD_MORE_MODERATORS'
       });
     },
+    onLoadSupermods(supermods: object[]) {
+      return dispatch({
+        type: 'LOAD_SUPERMODS',
+        supermods
+      });
+    },
+    onLoadMoreSupermods() {
+      return dispatch({
+        type: 'LOAD_MORE_SUPERMODS'
+      });
+    },
     onUpdateBanStatus(user: object) {
       return dispatch({
         type: 'UPDATE_BAN_STATUS',
