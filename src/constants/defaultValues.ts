@@ -472,3 +472,11 @@ export function returnWordLevel({
   if (frequency <= epicWordFrequency) return 5;
   return 3;
 }
+
+export const TEENAGER_ACHIEVEMENT_ID = 7;
+export const ADULT_ACHIEVEMENT_ID = 8;
+export const MISSION_MASTER_ACHIEVEMENT_ID = 1;
+export const MENTOR_ACHIEVEMENT_ID = 3;
+export const SAGE_ACHIEVEMENT_ID = 4;
+export const TWINKLE_FOUNDER_ACHIEVEMENT_ID = 5;
+export const SUMMONER_ACHIEVEMENT_ID = 2;
