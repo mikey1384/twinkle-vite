@@ -30,6 +30,9 @@ export default function Main() {
   const onLoadModerators = useManagementContext(
     (v) => v.actions.onLoadModerators
   );
+  const onLoadSupermods = useManagementContext(
+    (v) => v.actions.onLoadSupermods
+  );
   const onLoadApprovalItems = useManagementContext(
     (v) => v.actions.onLoadApprovalItems
   );
@@ -50,7 +53,7 @@ export default function Main() {
     }
     async function initSupermods() {
       const supermods = await loadSupermods();
-      console.log(supermods);
+      onLoadSupermods(supermods);
     }
     async function initAccountTypes() {
       const data = await loadAccountTypes();
