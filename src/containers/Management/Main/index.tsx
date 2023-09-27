@@ -17,6 +17,7 @@ export default function Main() {
     (v) => v.requestHelpers.loadBannedUsers
   );
   const loadModerators = useAppContext((v) => v.requestHelpers.loadModerators);
+  const loadSupermods = useAppContext((v) => v.requestHelpers.loadSupermods);
   const loadApprovalItems = useAppContext(
     (v) => v.requestHelpers.loadApprovalItems
   );
@@ -36,6 +37,7 @@ export default function Main() {
   useEffect(() => {
     initApprovalItems();
     initModerators();
+    initSupermods();
     initAccountTypes();
     initBannedUsers();
     async function initApprovalItems() {
@@ -45,6 +47,10 @@ export default function Main() {
     async function initModerators() {
       const moderators = await loadModerators();
       onLoadModerators(moderators);
+    }
+    async function initSupermods() {
+      const supermods = await loadSupermods();
+      console.log(supermods);
     }
     async function initAccountTypes() {
       const data = await loadAccountTypes();

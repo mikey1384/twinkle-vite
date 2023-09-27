@@ -109,6 +109,16 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadSupermods() {
+      try {
+        const {
+          data: { supermods }
+        } = await request.get(`${URL}/user/supermod`);
+        return Promise.resolve(supermods);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadApprovalItemById(approvalId: number) {
       try {
         const { data: approvalItem } = await request.get(
