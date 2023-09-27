@@ -109,7 +109,7 @@ export default function AddSupermodModal({
 
   return (
     <Modal closeWhenClickedOutside={!dropdownShown} onHide={onHide}>
-      <header>Add / Edit Moderators</header>
+      <header>Add / Edit Supermods</header>
       <main>
         <SearchInput
           autoFocus
