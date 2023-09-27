@@ -44,11 +44,11 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
       }) => {
         const dropdownMenu: { label: any; onClick: () => void }[] = [
           {
-            label: 'SAGE',
+            label: 'Sage',
             onClick: () => console.log('SAGE clicked')
           },
           {
-            label: 'FOUNDER',
+            label: 'Founder',
             onClick: () => console.log('FOUNDER clicked')
           }
         ];

@@ -29,11 +29,11 @@ export default function EditSupermodModal({
   const editMenuItems = useMemo(() => {
     const dropdownMenu: { label: any; onClick: () => void }[] = [
       {
-        label: 'SAGE',
+        label: 'Sage',
         onClick: () => console.log('SAGE clicked')
       },
       {
-        label: 'FOUNDER',
+        label: 'Founder',
         onClick: () => console.log('FOUNDER clicked')
       }
     ];
