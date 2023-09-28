@@ -24,8 +24,8 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
   const moderatorsLoaded = useManagementContext(
     (v) => v.state.moderatorsLoaded
   );
-  const numModeratorsShown = useManagementContext(
-    (v) => v.state.numModeratorsShown
+  const numSupermodsShown = useManagementContext(
+    (v) => v.state.numSupermodsShown
   );
   const onLoadMoreSupermods = useManagementContext(
     (v) => v.actions.onLoadMoreSupermods
@@ -84,7 +84,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
           </thead>
           <tbody>
             {filteredModerators
-              .filter((_: any, index: number) => index < numModeratorsShown)
+              .filter((_: any, index: number) => index < numSupermodsShown)
               .map((moderator: any) => (
                 <tr
                   key={moderator.id}
@@ -118,7 +118,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
               ))}
           </tbody>
         </Table>
-        {supermods.length > numModeratorsShown && !searchQuery && (
+        {supermods.length > numSupermodsShown && !searchQuery && (
           <div
             style={{
               marginTop: '2rem',
