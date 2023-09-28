@@ -473,6 +473,10 @@ export function returnWordLevel({
   return 3;
 }
 
+export const MENTOR_LABEL = 'Mentor';
+export const SAGE_LABEL = 'Sage';
+export const FOUNDER_LABEL = 'Founder';
+
 export const TEENAGER_ACHIEVEMENT_ID = 7;
 export const ADULT_ACHIEVEMENT_ID = 8;
 export const MISSION_MASTER_ACHIEVEMENT_ID = 1;

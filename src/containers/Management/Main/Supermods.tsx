@@ -7,6 +7,14 @@ import AddSupermodModal from '../Modals/AddSupermodModal';
 import EditSupermodModal from '../Modals/EditSupermodModal';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useManagementContext, useKeyContext } from '~/contexts';
+import {
+  MENTOR_ACHIEVEMENT_ID,
+  SAGE_ACHIEVEMENT_ID,
+  TWINKLE_FOUNDER_ACHIEVEMENT_ID,
+  MENTOR_LABEL,
+  SAGE_LABEL,
+  FOUNDER_LABEL
+} from '~/constants/defaultValues';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
@@ -33,7 +41,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [addSupermodModalShown, setAddSupermodModalShown] = useState(false);
   const [moderatorModalTarget, setModeratorModalTarget] = useState(null);
-  const filteredModerators = useMemo(() => {
+  const filteredSupermods = useMemo(() => {
     return supermods.filter((supermod: { username: string }) =>
       searchQuery
         ? supermod.username.toLowerCase().includes(searchQuery.toLowerCase())
@@ -83,39 +91,56 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
             </tr>
           </thead>
           <tbody>
-            {filteredModerators
+            {filteredSupermods
               .filter((_: any, index: number) => index < numSupermodsShown)
-              .map((moderator: any) => (
-                <tr
-                  key={moderator.id}
-                  style={{ cursor: canManage ? 'pointer' : '' }}
-                  onClick={() =>
-                    canManage ? setModeratorModalTarget(moderator) : {}
-                  }
-                >
-                  <td style={{ fontWeight: 'bold', fontSize: '1.6rem' }}>
-                    {moderator.username}
-                  </td>
-                  <td>
-                    {userId === moderator.id || moderator.online
-                      ? nowLabel
-                      : timeSince(moderator.lastActive)}
-                  </td>
-                  <td
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
+              .map((supermod: any) => {
+                const isMentor = supermod.unlockedAchievementIds?.includes(
+                  MENTOR_ACHIEVEMENT_ID
+                );
+                const isSage =
+                  supermod.unlockedAchievementIds?.includes(
+                    SAGE_ACHIEVEMENT_ID
+                  );
+                const isTwinkleFounder =
+                  supermod.unlockedAchievementIds?.includes(
+                    TWINKLE_FOUNDER_ACHIEVEMENT_ID
+                  );
+                let userPosition = '';
+                if (isMentor) userPosition = MENTOR_LABEL;
+                if (isSage) userPosition = SAGE_LABEL;
+                if (isTwinkleFounder) userPosition = FOUNDER_LABEL;
+                return (
+                  <tr
+                    key={supermod.id}
+                    style={{ cursor: canManage ? 'pointer' : '' }}
+                    onClick={() =>
+                      canManage ? setModeratorModalTarget(supermod) : {}
+                    }
                   >
-                    {moderator.userType}
-                  </td>
-                  {canManage && (
-                    <td style={{ display: 'flex', justifyContent: 'center' }}>
-                      <a>Manage Achievements</a>
+                    <td style={{ fontWeight: 'bold', fontSize: '1.6rem' }}>
+                      {supermod.username}
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td>
+                      {userId === supermod.id || supermod.online
+                        ? nowLabel
+                        : timeSince(supermod.lastActive)}
+                    </td>
+                    <td
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      {userPosition}
+                    </td>
+                    {canManage && (
+                      <td style={{ display: 'flex', justifyContent: 'center' }}>
+                        <a>Manage Achievements</a>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
           </tbody>
         </Table>
         {supermods.length > numSupermodsShown && !searchQuery && (
