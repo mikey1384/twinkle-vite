@@ -29,6 +29,10 @@ export default function EditSupermodModal({
   const editMenuItems = useMemo(() => {
     const dropdownMenu: { label: any; onClick: () => void }[] = [
       {
+        label: 'Mentor',
+        onClick: () => console.log('MENTOR clicked')
+      },
+      {
         label: 'Sage',
         onClick: () => console.log('SAGE clicked')
       },
