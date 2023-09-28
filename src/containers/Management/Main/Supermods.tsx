@@ -135,7 +135,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
                     </td>
                     {canManage && (
                       <td style={{ display: 'flex', justifyContent: 'center' }}>
-                        <a>Manage Achievements</a>
+                        <a>Manage Role</a>
                       </td>
                     )}
                   </tr>
