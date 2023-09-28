@@ -49,6 +49,10 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
       }) => {
         const dropdownMenu: { label: any; onClick: () => void }[] = [
           {
+            label: 'Mentor',
+            onClick: () => console.log('MENTOR clicked')
+          },
+          {
             label: 'Sage',
             onClick: () => console.log('SAGE clicked')
           },
@@ -57,13 +61,20 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
             onClick: () => console.log('FOUNDER clicked')
           }
         ];
-        console.log(user.unlockedAchievementIds, 'here');
-        console.log(
-          MENTOR_ACHIEVEMENT_ID,
-          SAGE_ACHIEVEMENT_ID,
+        const isMentor = user.unlockedAchievementIds?.includes(
+          MENTOR_ACHIEVEMENT_ID
+        );
+        const isSage =
+          user.unlockedAchievementIds?.includes(SAGE_ACHIEVEMENT_ID);
+        const isTwinkleFounder = user.unlockedAchievementIds?.includes(
           TWINKLE_FOUNDER_ACHIEVEMENT_ID
         );
-        if (user.userType) {
+        let userPosition = '';
+        if (isMentor) userPosition = 'Mentor';
+        if (isSage) userPosition = 'Sage';
+        if (isTwinkleFounder) userPosition = 'Founder';
+
+        if (userPosition) {
           dropdownMenu.push({
             label: (
               <>
@@ -99,7 +110,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
                 style={{ position: 'absolute' }}
                 icon="chevron-down"
                 skeuomorphic
-                text={user.userType || 'Not Selected'}
+                text={userPosition || 'Not Selected'}
                 color="darkerGray"
                 onDropdownShown={setDropdownShown}
                 menuProps={dropdownMenu}
