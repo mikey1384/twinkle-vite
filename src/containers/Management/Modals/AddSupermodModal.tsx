@@ -140,7 +140,11 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
               {item.username} <small>{`(${item.realName})`}</small>
             </span>
           )}
-          searchResults={searchedUsers}
+          searchResults={searchedUsers.filter(
+            (user: { unlockedAchievementIds: number[] }) => {
+              return !user.unlockedAchievementIds.length;
+            }
+          )}
           value={searchText}
         />
         {selectedUsers.length > 0 && (
