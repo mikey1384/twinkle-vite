@@ -6,14 +6,13 @@ import Icon from '~/components/Icon';
 import {
   MENTOR_ACHIEVEMENT_ID,
   SAGE_ACHIEVEMENT_ID,
-  TWINKLE_FOUNDER_ACHIEVEMENT_ID
+  TWINKLE_FOUNDER_ACHIEVEMENT_ID,
+  MENTOR_LABEL,
+  SAGE_LABEL,
+  FOUNDER_LABEL
 } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
-
-const MENTOR_LABEL = 'Mentor';
-const SAGE_LABEL = 'Sage';
-const FOUNDER_LABEL = 'Founder';
 
 export default function EditSupermodModal({
   onHide,
