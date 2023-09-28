@@ -79,9 +79,7 @@ export default function EditSupermodModal({
 
   return (
     <Modal closeWhenClickedOutside={!dropdownShown} onHide={onHide}>
-      <header
-        style={{ display: 'block' }}
-      >{`Change Moderator Account Type:`}</header>
+      <header style={{ display: 'block' }}>{`Manage Supermod Role`}</header>
       <main>
         <div
           style={{
