@@ -3,6 +3,11 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
+import {
+  MENTOR_ACHIEVEMENT_ID,
+  SAGE_ACHIEVEMENT_ID,
+  TWINKLE_FOUNDER_ACHIEVEMENT_ID
+} from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 
@@ -23,9 +28,22 @@ export default function EditSupermodModal({
     (v) => v.actions.onChangeModeratorAccountType
   );
   const [dropdownShown, setDropdownShown] = useState(false);
-  const [selectedAccountType, setSelectedAccountType] = useState(
-    target.userType
-  );
+  const [selectedAccountType, setSelectedAccountType] = useState('');
+  const userPosition = useMemo(() => {
+    const isMentor = target.unlockedAchievementIds?.includes(
+      MENTOR_ACHIEVEMENT_ID
+    );
+    const isSage = target.unlockedAchievementIds?.includes(SAGE_ACHIEVEMENT_ID);
+    const isTwinkleFounder = target.unlockedAchievementIds?.includes(
+      TWINKLE_FOUNDER_ACHIEVEMENT_ID
+    );
+    let result = '';
+    if (isMentor) result = 'Mentor';
+    if (isSage) result = 'Sage';
+    if (isTwinkleFounder) result = 'Founder';
+    return result;
+  }, [target]);
+
   const editMenuItems = useMemo(() => {
     const dropdownMenu: { label: any; onClick: () => void }[] = [
       {
@@ -49,7 +67,7 @@ export default function EditSupermodModal({
             <span style={{ marginLeft: '1rem' }}>Remove</span>
           </>
         ),
-        onClick: () => setSelectedAccountType(null)
+        onClick: () => setSelectedAccountType('')
       });
     }
     return dropdownMenu;
@@ -75,7 +93,7 @@ export default function EditSupermodModal({
           style={{ marginTop: '1rem' }}
           icon="chevron-down"
           skeuomorphic
-          text={selectedAccountType || 'Not Selected'}
+          text={selectedAccountType || userPosition || 'Not Selected'}
           color="darkerGray"
           menuProps={editMenuItems}
           onDropdownShown={setDropdownShown}
