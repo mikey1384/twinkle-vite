@@ -11,6 +11,10 @@ import {
 import { Color } from '~/constants/css';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 
+const MENTOR_LABEL = 'Mentor';
+const SAGE_LABEL = 'Sage';
+const FOUNDER_LABEL = 'Founder';
+
 export default function EditSupermodModal({
   onHide,
   target
@@ -28,7 +32,6 @@ export default function EditSupermodModal({
     (v) => v.actions.onChangeModeratorAccountType
   );
   const [dropdownShown, setDropdownShown] = useState(false);
-  const [selectedAccountType, setSelectedAccountType] = useState('');
   const userPosition = useMemo(() => {
     const isMentor = target.unlockedAchievementIds?.includes(
       MENTOR_ACHIEVEMENT_ID
@@ -38,28 +41,30 @@ export default function EditSupermodModal({
       TWINKLE_FOUNDER_ACHIEVEMENT_ID
     );
     let result = '';
-    if (isMentor) result = 'Mentor';
-    if (isSage) result = 'Sage';
-    if (isTwinkleFounder) result = 'Founder';
+    if (isMentor) result = MENTOR_LABEL;
+    if (isSage) result = SAGE_LABEL;
+    if (isTwinkleFounder) result = FOUNDER_LABEL;
     return result;
   }, [target]);
+  const [selectedPosition, setSelectedPosition] = useState(userPosition);
 
   const editMenuItems = useMemo(() => {
     const dropdownMenu: { label: any; onClick: () => void }[] = [
       {
-        label: 'Mentor',
-        onClick: () => console.log('MENTOR clicked')
+        label: MENTOR_LABEL,
+        onClick: () => setSelectedPosition(MENTOR_LABEL)
       },
       {
-        label: 'Sage',
-        onClick: () => console.log('SAGE clicked')
+        label: SAGE_LABEL,
+        onClick: () => setSelectedPosition(SAGE_LABEL)
       },
       {
-        label: 'Founder',
-        onClick: () => console.log('FOUNDER clicked')
+        label: FOUNDER_LABEL,
+        onClick: () => setSelectedPosition(FOUNDER_LABEL)
       }
-    ];
-    if (selectedAccountType) {
+    ].filter((item) => item.label !== selectedPosition);
+
+    if (selectedPosition) {
       dropdownMenu.push({
         label: (
           <>
@@ -67,11 +72,11 @@ export default function EditSupermodModal({
             <span style={{ marginLeft: '1rem' }}>Remove</span>
           </>
         ),
-        onClick: () => setSelectedAccountType('')
+        onClick: () => setSelectedPosition('')
       });
     }
     return dropdownMenu;
-  }, [selectedAccountType]);
+  }, [selectedPosition]);
 
   return (
     <Modal closeWhenClickedOutside={!dropdownShown} onHide={onHide}>
@@ -93,7 +98,7 @@ export default function EditSupermodModal({
           style={{ marginTop: '1rem' }}
           icon="chevron-down"
           skeuomorphic
-          text={selectedAccountType || userPosition || 'Not Selected'}
+          text={selectedPosition || 'Not Selected'}
           color="darkerGray"
           menuProps={editMenuItems}
           onDropdownShown={setDropdownShown}
@@ -105,7 +110,7 @@ export default function EditSupermodModal({
         </Button>
         <Button
           color={doneColor}
-          disabled={target.userType === selectedAccountType}
+          disabled={userPosition === selectedPosition}
           onClick={handleSubmit}
         >
           Done
@@ -115,8 +120,8 @@ export default function EditSupermodModal({
   );
 
   async function handleSubmit() {
-    await changeAccountType({ userId: target.id, selectedAccountType });
-    onChangeModeratorAccountType({ userId: target.id, selectedAccountType });
+    await changeAccountType({ userId: target.id, selectedPosition });
+    onChangeModeratorAccountType({ userId: target.id, selectedPosition });
     onHide();
   }
 }
