@@ -6,7 +6,7 @@ import Mentor from '~/components/AchievementItems/Mentor';
 import Teenager from '~/components/AchievementItems/Teenager';
 import Adult from '~/components/AchievementItems/Adult';
 import Sage from '~/components/AchievementItems/Sage';
-import Founder from '~/components/AchievementItems/Founder';
+import TwinkleFounder from '~/components/AchievementItems/TwinkleFounder';
 import { Content } from '~/types';
 
 export default function AchievementPass({
@@ -30,7 +30,7 @@ export default function AchievementPass({
     adult: Adult,
     mentor: Mentor,
     sage: Sage,
-    founder: Founder
+    twinkle_founder: TwinkleFounder
   };
   const Component = achievement?.key
     ? achievementComponentMap[achievement.key]
