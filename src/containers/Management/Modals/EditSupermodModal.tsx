@@ -12,7 +12,13 @@ import {
   FOUNDER_LABEL
 } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
-import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
+
+const roles: Record<string, string> = {
+  [MENTOR_LABEL]: 'mentor',
+  [SAGE_LABEL]: 'sage',
+  [FOUNDER_LABEL]: 'twinkle_founder'
+};
 
 export default function EditSupermodModal({
   onHide,
@@ -24,11 +30,8 @@ export default function EditSupermodModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
-  const changeAccountType = useAppContext(
+  const changeSupermodRole = useAppContext(
     (v) => v.requestHelpers.changeAccountType
-  );
-  const onChangeModeratorAccountType = useManagementContext(
-    (v) => v.actions.onChangeModeratorAccountType
   );
   const [dropdownShown, setDropdownShown] = useState(false);
   const userPosition = useMemo(() => {
@@ -117,8 +120,10 @@ export default function EditSupermodModal({
   );
 
   async function handleSubmit() {
-    await changeAccountType({ userId: target.id, selectedPosition });
-    onChangeModeratorAccountType({ userId: target.id, selectedPosition });
+    await changeSupermodRole({
+      userId: target.id,
+      role: roles[selectedPosition]
+    });
     onHide();
   }
 }
