@@ -174,8 +174,8 @@ export default function managementRequestHelpers({
         const {
           data: { status }
         } = await request.put(
-          `${URL}/management/approval/${type}/revert`,
-          { userId },
+          `${URL}/management/approval/revert`,
+          { userId, approvalType: type },
           auth()
         );
         return Promise.resolve(status);
