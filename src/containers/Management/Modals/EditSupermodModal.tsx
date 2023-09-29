@@ -31,7 +31,7 @@ export default function EditSupermodModal({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const changeSupermodRole = useAppContext(
-    (v) => v.requestHelpers.changeAccountType
+    (v) => v.requestHelpers.changeSupermodRole
   );
   const [dropdownShown, setDropdownShown] = useState(false);
   const userPosition = useMemo(() => {
