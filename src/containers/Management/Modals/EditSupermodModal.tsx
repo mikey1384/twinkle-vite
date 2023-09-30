@@ -123,13 +123,13 @@ export default function EditSupermodModal({
   );
 
   async function handleSubmit() {
-    const unlockedAchievementIds = await changeSupermodRole({
+    const { unlockedAchievementIds, level } = await changeSupermodRole({
       userId: target.id,
       role: roles[selectedPosition]
     });
     onSetSupermodState({
       userId: target.id,
-      newState: { unlockedAchievementIds }
+      newState: { unlockedAchievementIds, level }
     });
     onHide();
   }

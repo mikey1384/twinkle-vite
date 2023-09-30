@@ -61,9 +61,9 @@ export default function userRequestHelpers({
     }) {
       try {
         const {
-          data: { unlockedAchievementIds }
+          data: { unlockedAchievementIds, level }
         } = await request.put(`${URL}/user/supermod`, { userId, role }, auth());
-        return Promise.resolve(unlockedAchievementIds);
+        return Promise.resolve({ unlockedAchievementIds, level });
       } catch (error) {
         return handleError(error);
       }
