@@ -60,12 +60,10 @@ export default function userRequestHelpers({
       role: string;
     }) {
       try {
-        const { data } = await request.put(
-          `${URL}/user/supermod`,
-          { userId, role },
-          auth()
-        );
-        return Promise.resolve(data);
+        const {
+          data: { unlockedAchievementIds }
+        } = await request.put(`${URL}/user/supermod`, { userId, role }, auth());
+        return Promise.resolve(unlockedAchievementIds);
       } catch (error) {
         return handleError(error);
       }

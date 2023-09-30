@@ -12,7 +12,7 @@ import {
   FOUNDER_LABEL
 } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 
 const roles: Record<string, string> = {
   [MENTOR_LABEL]: 'mentor',
@@ -32,6 +32,9 @@ export default function EditSupermodModal({
   } = useKeyContext((v) => v.theme);
   const changeSupermodRole = useAppContext(
     (v) => v.requestHelpers.changeSupermodRole
+  );
+  const onSetSupermodState = useManagementContext(
+    (v) => v.actions.onSetSupermodState
   );
   const [dropdownShown, setDropdownShown] = useState(false);
   const userPosition = useMemo(() => {
@@ -120,9 +123,13 @@ export default function EditSupermodModal({
   );
 
   async function handleSubmit() {
-    await changeSupermodRole({
+    const unlockedAchievementIds = await changeSupermodRole({
       userId: target.id,
       role: roles[selectedPosition]
+    });
+    onSetSupermodState({
+      userId: target.id,
+      newState: { unlockedAchievementIds }
     });
     onHide();
   }

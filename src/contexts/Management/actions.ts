@@ -117,6 +117,19 @@ export default function ManagementActions(dispatch: Dispatch) {
         type: 'UPDATE_BAN_STATUS',
         user
       });
+    },
+    onSetSupermodState({
+      userId,
+      newState
+    }: {
+      userId: number;
+      newState: object;
+    }) {
+      return dispatch({
+        type: 'SET_SUPERMOD_STATE',
+        userId,
+        newState
+      });
     }
   };
 }
