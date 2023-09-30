@@ -142,6 +142,18 @@ export default function ManagementReducer(
         ...state,
         numSupermodsShown: state.numSupermodsShown + 10
       };
+    case 'SET_SUPERMOD_STATE':
+      return {
+        ...state,
+        supermods: state.supermods.map((supermod: User) =>
+          supermod.id === action.userId
+            ? {
+                ...supermod,
+                ...action.newState
+              }
+            : supermod
+        )
+      };
     case 'UPDATE_BAN_STATUS':
       return {
         ...state,
