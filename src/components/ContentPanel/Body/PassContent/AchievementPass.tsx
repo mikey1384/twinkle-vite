@@ -32,11 +32,11 @@ export default function AchievementPass({
     sage: Sage,
     twinkle_founder: TwinkleFounder
   };
-  const Component = achievement?.key
-    ? achievementComponentMap[achievement.key]
+  const Component = achievement?.type
+    ? achievementComponentMap[achievement.type]
     : undefined;
 
-  if (!Component || !achievement?.key) {
+  if (!Component || !achievement?.type) {
     return null;
   }
 
@@ -54,7 +54,7 @@ export default function AchievementPass({
       }}
     >
       <Component
-        key={achievement?.key}
+        key={achievement?.type}
         isNotification
         data={achievement}
         style={{ width: '100%' }}
