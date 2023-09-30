@@ -105,10 +105,10 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
                   supermod.unlockedAchievementIds?.includes(
                     TWINKLE_FOUNDER_ACHIEVEMENT_ID
                   );
-                let userPosition = '';
-                if (isMentor) userPosition = MENTOR_LABEL;
-                if (isSage) userPosition = SAGE_LABEL;
-                if (isTwinkleFounder) userPosition = FOUNDER_LABEL;
+                let role = '';
+                if (isMentor) role = MENTOR_LABEL;
+                if (isSage) role = SAGE_LABEL;
+                if (isTwinkleFounder) role = FOUNDER_LABEL;
                 return (
                   <tr
                     key={supermod.id}
@@ -131,7 +131,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
                         alignItems: 'center'
                       }}
                     >
-                      {userPosition} (lv {supermod.level})
+                      {role} (lv {supermod.level})
                     </td>
                     {canManage && (
                       <td style={{ display: 'flex', justifyContent: 'center' }}>
