@@ -345,6 +345,7 @@ export default function Header({
     socket.on('new_ai_message_received', handleReceiveAIMessage);
     socket.on('new_reward_posted', handleNewReward);
     socket.on('new_recommendation_posted', handleNewRecommendation);
+    socket.on('new_title_received', handleNewTitle);
     socket.on('new_ai_card_summoned', handleNewAICardSummon);
     socket.on('new_vocab_activity_received', handleReceiveVocabActivity);
     socket.on('new_wordle_attempt_received', handleNewWordleAttempt);
@@ -414,6 +415,7 @@ export default function Header({
       socket.removeListener('new_message_received', handleReceiveMessage);
       socket.removeListener('new_ai_message_received', handleReceiveAIMessage);
       socket.removeListener('new_reward_posted', handleNewReward);
+      socket.removeListener('new_title_received', handleNewTitle);
       socket.removeListener('new_ai_card_summoned', handleNewAICardSummon);
       socket.removeListener(
         'new_vocab_activity_received',
@@ -1086,6 +1088,10 @@ export default function Header({
           userId
         });
       }
+    }
+
+    function handleNewTitle(title: string) {
+      onSetUserState({ userId, newState: { title } });
     }
 
     function handleNewCallMember({
