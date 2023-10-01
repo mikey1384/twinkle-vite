@@ -52,26 +52,6 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async changeSupermodRole({
-      userId,
-      role
-    }: {
-      userId: number;
-      role: string;
-    }) {
-      try {
-        const {
-          data: { unlockedAchievementIds, level, achievementPoints }
-        } = await request.put(`${URL}/user/supermod`, { userId, role }, auth());
-        return Promise.resolve({
-          unlockedAchievementIds,
-          level,
-          achievementPoints
-        });
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async checkIfUsernameExists(username: string) {
       try {
         const {

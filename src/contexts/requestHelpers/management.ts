@@ -119,6 +119,27 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async changeSupermodRole({
+      userId,
+      role
+    }: {
+      userId: number;
+      role: string;
+    }) {
+      try {
+        const {
+          data: { unlockedAchievementIds, level, achievementPoints, title }
+        } = await request.put(`${URL}/user/supermod`, { userId, role }, auth());
+        return Promise.resolve({
+          unlockedAchievementIds,
+          level,
+          achievementPoints,
+          title
+        });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadApprovalItemById(approvalId: number) {
       try {
         const { data: approvalItem } = await request.get(
