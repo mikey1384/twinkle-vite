@@ -30,6 +30,7 @@ export default function EditSupermodModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const changeSupermodRole = useAppContext(
     (v) => v.requestHelpers.changeSupermodRole
   );
@@ -123,9 +124,14 @@ export default function EditSupermodModal({
   );
 
   async function handleSubmit() {
-    const { unlockedAchievementIds, level } = await changeSupermodRole({
+    const { unlockedAchievementIds, level, achievementPoints } =
+      await changeSupermodRole({
+        userId: target.id,
+        role: roles[selectedPosition]
+      });
+    onSetUserState({
       userId: target.id,
-      role: roles[selectedPosition]
+      newState: { achievementPoints }
     });
     onSetSupermodState({
       userId: target.id,
