@@ -127,7 +127,7 @@ export default function EditSupermodModal({
     const { unlockedAchievementIds, level, achievementPoints, title } =
       await changeSupermodRole({
         userId: target.id,
-        role: roles[selectedPosition]
+        role: selectedPosition ? roles[selectedPosition] : null
       });
     onSetUserState({
       userId: target.id,
