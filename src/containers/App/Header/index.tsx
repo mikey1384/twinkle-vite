@@ -968,11 +968,13 @@ export default function Header({
     function handleNewNotification({
       type,
       achievementType,
+      isAchievementUnlocked,
       likes,
       target
     }: {
       type: string;
       achievementType: string;
+      isAchievementUnlocked: boolean;
       likes: any[];
       target: any;
     }) {
@@ -980,7 +982,7 @@ export default function Header({
         onUpdateAchievementsObj({
           achievementType,
           newState: {
-            isUnlocked: true
+            isUnlocked: isAchievementUnlocked
           }
         });
       }
