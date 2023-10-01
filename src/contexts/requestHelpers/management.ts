@@ -124,7 +124,7 @@ export default function managementRequestHelpers({
       role
     }: {
       userId: number;
-      role: string;
+      role?: string;
     }) {
       try {
         const {
