@@ -29,6 +29,9 @@ export default function EditSupermodModal({
   const changeSupermodRole = useAppContext(
     (v) => v.requestHelpers.changeSupermodRole
   );
+  const onRemoveSupermod = useManagementContext(
+    (v) => v.actions.onRemoveSupermod
+  );
   const onSetSupermodState = useManagementContext(
     (v) => v.actions.onSetSupermodState
   );
@@ -128,10 +131,14 @@ export default function EditSupermodModal({
       userId: target.id,
       newState: { achievementPoints, title }
     });
-    onSetSupermodState({
-      userId: target.id,
-      newState: { unlockedAchievementIds, level }
-    });
+    if (selectedRole) {
+      onSetSupermodState({
+        userId: target.id,
+        newState: { unlockedAchievementIds, level }
+      });
+    } else {
+      onRemoveSupermod(target.id);
+    }
     onHide();
   }
 }

@@ -124,6 +124,12 @@ export default function ManagementActions(dispatch: Dispatch) {
         user
       });
     },
+    onRemoveSupermod(userId: number) {
+      return dispatch({
+        type: 'REMOVE_SUPERMOD',
+        userId
+      });
+    },
     onSetSupermodState({
       userId,
       newState
