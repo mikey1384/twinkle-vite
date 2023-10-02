@@ -38,7 +38,7 @@ export default function EditSupermodModal({
     (v) => v.actions.onSetSupermodState
   );
   const [dropdownShown, setDropdownShown] = useState(false);
-  const userPosition = useMemo(() => {
+  const role = useMemo(() => {
     const isMentor = target.unlockedAchievementIds?.includes(
       MENTOR_ACHIEVEMENT_ID
     );
@@ -52,25 +52,25 @@ export default function EditSupermodModal({
     if (isTwinkleFounder) result = FOUNDER_LABEL;
     return result;
   }, [target]);
-  const [selectedPosition, setSelectedPosition] = useState(userPosition);
+  const [selectedRole, setSelectedRole] = useState(role);
 
   const editMenuItems = useMemo(() => {
     const dropdownMenu: { label: any; onClick: () => void }[] = [
       {
         label: MENTOR_LABEL,
-        onClick: () => setSelectedPosition(MENTOR_LABEL)
+        onClick: () => setSelectedRole(MENTOR_LABEL)
       },
       {
         label: SAGE_LABEL,
-        onClick: () => setSelectedPosition(SAGE_LABEL)
+        onClick: () => setSelectedRole(SAGE_LABEL)
       },
       {
         label: FOUNDER_LABEL,
-        onClick: () => setSelectedPosition(FOUNDER_LABEL)
+        onClick: () => setSelectedRole(FOUNDER_LABEL)
       }
-    ].filter((item) => item.label !== selectedPosition);
+    ].filter((item) => item.label !== selectedRole);
 
-    if (selectedPosition) {
+    if (selectedRole) {
       dropdownMenu.push({
         label: (
           <>
@@ -78,11 +78,11 @@ export default function EditSupermodModal({
             <span style={{ marginLeft: '1rem' }}>Remove</span>
           </>
         ),
-        onClick: () => setSelectedPosition('')
+        onClick: () => setSelectedRole('')
       });
     }
     return dropdownMenu;
-  }, [selectedPosition]);
+  }, [selectedRole]);
 
   return (
     <Modal closeWhenClickedOutside={!dropdownShown} onHide={onHide}>
@@ -102,7 +102,7 @@ export default function EditSupermodModal({
           style={{ marginTop: '1rem' }}
           icon="chevron-down"
           skeuomorphic
-          text={selectedPosition || 'Not Selected'}
+          text={selectedRole || 'Not Selected'}
           color="darkerGray"
           menuProps={editMenuItems}
           onDropdownShown={setDropdownShown}
@@ -114,7 +114,7 @@ export default function EditSupermodModal({
         </Button>
         <Button
           color={doneColor}
-          disabled={userPosition === selectedPosition}
+          disabled={role === selectedRole}
           onClick={handleSubmit}
         >
           Done
@@ -127,7 +127,7 @@ export default function EditSupermodModal({
     const { unlockedAchievementIds, level, achievementPoints, title } =
       await changeSupermodRole({
         userId: target.id,
-        role: selectedPosition ? roles[selectedPosition] : null
+        role: selectedRole ? roles[selectedRole] : null
       });
     onSetUserState({
       userId: target.id,
