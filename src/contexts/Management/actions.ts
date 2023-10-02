@@ -36,6 +36,12 @@ export default function ManagementActions(dispatch: Dispatch) {
         newModerators
       });
     },
+    onEditSupermods(supermods: object[]) {
+      return dispatch({
+        type: 'EDIT_SUPERMODS',
+        supermods
+      });
+    },
     onChangeModeratorAccountType({
       userId,
       selectedAccountType

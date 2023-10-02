@@ -30,8 +30,8 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
   const { level } = useKeyContext((v) => v.myState);
   const addSupermods = useAppContext((v) => v.requestHelpers.addSupermods);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
-  const onEditModerators = useManagementContext(
-    (v) => v.actions.onEditModerators
+  const onEditSupermods = useManagementContext(
+    (v) => v.actions.onEditSupermods
   );
   const [dropdownShown, setDropdownShown] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -249,8 +249,8 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
       userId: user.id,
       role: user.role ? roles[user.role] : null
     }));
-    await addSupermods(supermods);
-    onEditModerators(supermods);
+    const newSupermods = await addSupermods(supermods);
+    onEditSupermods(newSupermods);
     onHide();
   }
 

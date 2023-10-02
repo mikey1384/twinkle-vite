@@ -142,6 +142,18 @@ export default function ManagementReducer(
         ...state,
         numSupermodsShown: state.numSupermodsShown + 10
       };
+    case 'EDIT_SUPERMODS':
+      return {
+        ...state,
+        supermods: action.supermods.concat(
+          state.supermods.filter(
+            (supermod: User) =>
+              !action.supermods
+                .map((supermod: User) => supermod.id)
+                .includes(supermod.id)
+          )
+        )
+      };
     case 'SET_SUPERMOD_STATE':
       return {
         ...state,

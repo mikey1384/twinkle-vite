@@ -36,12 +36,10 @@ export default function userRequestHelpers({
     },
     async addSupermods(supermods: { userId: number; role: string }[]) {
       try {
-        const { data } = await request.post(
-          `${URL}/user/supermod`,
-          { supermods },
-          auth()
-        );
-        return Promise.resolve(data);
+        const {
+          data: { supermods: newSupermods }
+        } = await request.post(`${URL}/user/supermod`, { supermods }, auth());
+        return Promise.resolve(newSupermods);
       } catch (error) {
         return handleError(error);
       }
