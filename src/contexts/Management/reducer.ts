@@ -154,6 +154,13 @@ export default function ManagementReducer(
           )
         )
       };
+    case 'REMOVE_SUPERMOD':
+      return {
+        ...state,
+        supermods: state.supermods.filter(
+          (supermod: User) => supermod.id !== action.userId
+        )
+      };
     case 'SET_SUPERMOD_STATE':
       return {
         ...state,
