@@ -9,16 +9,11 @@ import {
   TWINKLE_FOUNDER_ACHIEVEMENT_ID,
   MENTOR_LABEL,
   SAGE_LABEL,
-  FOUNDER_LABEL
+  FOUNDER_LABEL,
+  roles
 } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
-
-const roles: Record<string, string> = {
-  [MENTOR_LABEL]: 'mentor',
-  [SAGE_LABEL]: 'sage',
-  [FOUNDER_LABEL]: 'twinkle_founder'
-};
 
 export default function EditSupermodModal({
   onHide,

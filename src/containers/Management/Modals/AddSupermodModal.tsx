@@ -13,7 +13,8 @@ import {
   TWINKLE_FOUNDER_ACHIEVEMENT_ID,
   MENTOR_LABEL,
   SAGE_LABEL,
-  FOUNDER_LABEL
+  FOUNDER_LABEL,
+  roles
 } from '~/constants/defaultValues';
 import { useSearch } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
@@ -47,21 +48,33 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
         id: number;
         username: string;
         realName: string;
-        userType: string;
+        role: string;
         unlockedAchievementIds?: number[];
       }) => {
         const dropdownMenu: { label: any; onClick: () => void }[] = [
           {
             label: 'Mentor',
-            onClick: () => console.log('MENTOR clicked')
+            onClick: () =>
+              handleRoleClick({
+                role: MENTOR_LABEL,
+                userId: user.id
+              })
           },
           {
             label: 'Sage',
-            onClick: () => console.log('SAGE clicked')
+            onClick: () =>
+              handleRoleClick({
+                role: SAGE_LABEL,
+                userId: user.id
+              })
           },
           {
             label: 'Founder',
-            onClick: () => console.log('FOUNDER clicked')
+            onClick: () =>
+              handleRoleClick({
+                role: FOUNDER_LABEL,
+                userId: user.id
+              })
           }
         ];
         const isMentor = user.unlockedAchievementIds?.includes(
@@ -113,7 +126,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
                 style={{ position: 'absolute' }}
                 icon="chevron-down"
                 skeuomorphic
-                text={role || 'Not Selected'}
+                text={user.role || 'Not Selected'}
                 color="darkerGray"
                 onDropdownShown={setDropdownShown}
                 menuProps={dropdownMenu}
@@ -145,7 +158,14 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
           )}
           searchResults={searchedUsers.filter(
             (user: { unlockedAchievementIds: number[] }) => {
-              return !user.unlockedAchievementIds.length;
+              const supermodAchievementIds = [
+                MENTOR_ACHIEVEMENT_ID,
+                SAGE_ACHIEVEMENT_ID,
+                TWINKLE_FOUNDER_ACHIEVEMENT_ID
+              ];
+              return !user.unlockedAchievementIds.some((id: number) =>
+                supermodAchievementIds.includes(id)
+              );
             }
           )}
           value={searchText}
@@ -227,7 +247,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
     setLoading(true);
     const supermods = selectedUsers.map((user) => ({
       userId: user.id,
-      role: user.role
+      role: user.role ? roles[user.role] : null
     }));
     await addSupermods(supermods);
     onEditModerators(supermods);

@@ -484,3 +484,8 @@ export const MENTOR_ACHIEVEMENT_ID = 3;
 export const SAGE_ACHIEVEMENT_ID = 4;
 export const TWINKLE_FOUNDER_ACHIEVEMENT_ID = 5;
 export const SUMMONER_ACHIEVEMENT_ID = 2;
+export const roles: Record<string, string> = {
+  [MENTOR_LABEL]: 'mentor',
+  [SAGE_LABEL]: 'sage',
+  [FOUNDER_LABEL]: 'twinkle_founder'
+};
