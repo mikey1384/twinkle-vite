@@ -69,12 +69,12 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
         const isTwinkleFounder = user.unlockedAchievementIds?.includes(
           TWINKLE_FOUNDER_ACHIEVEMENT_ID
         );
-        let userPosition = '';
-        if (isMentor) userPosition = 'Mentor';
-        if (isSage) userPosition = 'Sage';
-        if (isTwinkleFounder) userPosition = 'Founder';
+        let role = '';
+        if (isMentor) role = 'Mentor';
+        if (isSage) role = 'Sage';
+        if (isTwinkleFounder) role = 'Founder';
 
-        if (userPosition) {
+        if (role) {
           dropdownMenu.push({
             label: (
               <>
@@ -110,7 +110,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
                 style={{ position: 'absolute' }}
                 icon="chevron-down"
                 skeuomorphic
-                text={userPosition || 'Not Selected'}
+                text={role || 'Not Selected'}
                 color="darkerGray"
                 onDropdownShown={setDropdownShown}
                 menuProps={dropdownMenu}
