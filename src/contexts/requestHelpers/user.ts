@@ -34,11 +34,11 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async addSupermods(newSupermods: number[]) {
+    async addSupermods(supermods: { userId: number; role: string }[]) {
       try {
         const { data } = await request.post(
           `${URL}/user/supermod`,
-          { newSupermods },
+          { supermods },
           auth()
         );
         return Promise.resolve(data);
