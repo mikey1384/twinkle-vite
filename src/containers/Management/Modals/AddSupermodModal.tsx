@@ -24,7 +24,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const { level } = useKeyContext((v) => v.myState);
-  const addModerators = useAppContext((v) => v.requestHelpers.addModerators);
+  const addSupermods = useAppContext((v) => v.requestHelpers.addSupermods);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const onEditModerators = useManagementContext(
     (v) => v.actions.onEditModerators
@@ -212,9 +212,9 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
 
   async function handleSubmit() {
     setLoading(true);
-    const newModerators = selectedUsers.filter((user) => !!user.userType);
-    await addModerators(newModerators);
-    onEditModerators(newModerators);
+    const newSupermods = selectedUsers.filter((user) => !!user.userType);
+    await addSupermods(newSupermods);
+    onEditModerators(newSupermods);
     onHide();
   }
 

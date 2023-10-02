@@ -34,6 +34,18 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async addSupermods(newSupermods: number[]) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/supermod`,
+          { newSupermods },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async changeAccountType({
       userId,
       selectedAccountType
