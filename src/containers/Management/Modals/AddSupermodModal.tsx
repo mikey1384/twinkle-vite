@@ -215,7 +215,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
       if (isSage) role = SAGE_LABEL;
       if (isTwinkleFounder) role = FOUNDER_LABEL;
       return users.concat({
-        userId: user.id,
+        ...user,
         role
       });
     });
@@ -225,8 +225,12 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
 
   async function handleSubmit() {
     setLoading(true);
-    await addSupermods(selectedUsers);
-    onEditModerators(selectedUsers);
+    const supermods = selectedUsers.map((user) => ({
+      userId: user.id,
+      role: user.role
+    }));
+    await addSupermods(supermods);
+    onEditModerators(supermods);
     onHide();
   }
 
