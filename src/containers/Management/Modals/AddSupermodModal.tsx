@@ -10,7 +10,10 @@ import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import {
   MENTOR_ACHIEVEMENT_ID,
   SAGE_ACHIEVEMENT_ID,
-  TWINKLE_FOUNDER_ACHIEVEMENT_ID
+  TWINKLE_FOUNDER_ACHIEVEMENT_ID,
+  MENTOR_LABEL,
+  SAGE_LABEL,
+  FOUNDER_LABEL
 } from '~/constants/defaultValues';
 import { useSearch } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
@@ -83,8 +86,8 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
               </>
             ),
             onClick: () =>
-              handleAccountTypeClick({
-                type: '',
+              handleRoleClick({
+                role: '',
                 userId: user.id
               })
           });
@@ -185,19 +188,13 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
     </Modal>
   );
 
-  function handleAccountTypeClick({
-    type,
-    userId
-  }: {
-    type: string;
-    userId: number;
-  }) {
+  function handleRoleClick({ role, userId }: { role: string; userId: number }) {
     setSelectedUsers((users) =>
       users.map((user) =>
         user.id === userId
           ? {
               ...user,
-              userType: type
+              role
             }
           : user
       )
@@ -205,16 +202,31 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
   }
 
   function handleSelectUser(user: any) {
-    setSelectedUsers((users) => users.concat(user));
+    setSelectedUsers((users) => {
+      const isMentor = user.unlockedAchievementIds?.includes(
+        MENTOR_ACHIEVEMENT_ID
+      );
+      const isSage = user.unlockedAchievementIds?.includes(SAGE_ACHIEVEMENT_ID);
+      const isTwinkleFounder = user.unlockedAchievementIds?.includes(
+        TWINKLE_FOUNDER_ACHIEVEMENT_ID
+      );
+      let role = '';
+      if (isMentor) role = MENTOR_LABEL;
+      if (isSage) role = SAGE_LABEL;
+      if (isTwinkleFounder) role = FOUNDER_LABEL;
+      return users.concat({
+        userId: user.id,
+        role
+      });
+    });
     setSearchedUsers([]);
     setSearchText('');
   }
 
   async function handleSubmit() {
     setLoading(true);
-    const newSupermods = selectedUsers.filter((user) => !!user.userType);
-    await addSupermods(newSupermods);
-    onEditModerators(newSupermods);
+    await addSupermods(selectedUsers);
+    onEditModerators(selectedUsers);
     onHide();
   }
 
