@@ -11,8 +11,9 @@ export default function Table({
 }: {
   color?: string;
   headerFontSize?: string;
-  columns: string;
+  columns?: string;
   children: React.ReactNode;
+  scrollable?: boolean;
   style?: React.CSSProperties;
 }) {
   return (
