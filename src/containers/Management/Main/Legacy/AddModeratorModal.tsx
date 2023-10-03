@@ -4,7 +4,7 @@ import Modal from '~/components/Modal';
 import Loading from '~/components/Loading';
 import SearchInput from '~/components/Texts/SearchInput';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import Table from '../Table';
+import Table from '../../Table';
 import Icon from '~/components/Icon';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { useSearch, useUserLevel } from '~/helpers/hooks';
