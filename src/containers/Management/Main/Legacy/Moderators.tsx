@@ -180,7 +180,10 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
         />
       )}
       {convertModalTarget && (
-        <ConvertModal onHide={() => setConvertModalTarget(null)} />
+        <ConvertModal
+          target={convertModalTarget}
+          onHide={() => setConvertModalTarget(null)}
+        />
       )}
     </ErrorBoundary>
   );
