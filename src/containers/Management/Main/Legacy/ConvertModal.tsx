@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import Table from '../../Table';
+import Check from '../../Check';
 import { Color } from '~/constants/css';
 import { User } from '~/types';
 import { useKeyContext } from '~/contexts';
@@ -55,29 +56,25 @@ export default function ConvertModal({
                   ({target.realName})
                 </small>
               </td>
-              <td style={{ display: 'flex', alignItems: 'center' }}>
-                {target.userType}
+              <td>{target.userType}</td>
+              <td style={{ textAlign: 'center' }}>{target.level}</td>
+              <td style={{ textAlign: 'center' }}>
+                <Check checked={!!target.canEdit} />
               </td>
-              <td style={{ display: 'flex', alignItems: 'center' }}>
-                {target.level}
+              <td style={{ textAlign: 'center' }}>
+                <Check checked={!!target.canDelete} />
               </td>
-              <td style={{ display: 'flex', alignItems: 'center' }}>
-                {target.canEdit}
+              <td style={{ textAlign: 'center' }}>
+                <Check checked={!!target.canReward} />
               </td>
-              <td style={{ display: 'flex', alignItems: 'center' }}>
-                {target.canDelete}
+              <td style={{ textAlign: 'center' }}>
+                <Check checked={!!target.canPinPlaylists} />
               </td>
-              <td style={{ display: 'flex', alignItems: 'center' }}>
-                {target.canReward}
+              <td style={{ textAlign: 'center' }}>
+                <Check checked={!!target.canEditPlaylists} />
               </td>
-              <td style={{ display: 'flex', alignItems: 'center' }}>
-                {target.canPinPlaylists}
-              </td>
-              <td style={{ display: 'flex', alignItems: 'center' }}>
-                {target.canEditPlaylists}
-              </td>
-              <td style={{ display: 'flex', alignItems: 'center' }}>
-                {target.canEditRewardLevel}
+              <td style={{ textAlign: 'center' }}>
+                <Check checked={!!target.canEditRewardLevel} />
               </td>
             </tr>
           </tbody>
