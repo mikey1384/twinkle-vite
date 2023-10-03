@@ -5,7 +5,6 @@ export const levels = [
     canEdit: false,
     canDelete: false,
     canReward: false,
-    canEditDictionary: false,
     canPinPlaylists: false,
     canEditPlaylists: false,
     canEditRewardLevel: false
@@ -16,7 +15,6 @@ export const levels = [
     canEdit: false,
     canDelete: false,
     canReward: false,
-    canEditDictionary: false,
     canPinPlaylists: false,
     canEditPlaylists: false,
     canEditRewardLevel: false
@@ -27,7 +25,6 @@ export const levels = [
     canEdit: false,
     canDelete: true,
     canReward: true,
-    canEditDictionary: false,
     canPinPlaylists: false,
     canEditPlaylists: false,
     canEditRewardLevel: false
@@ -38,7 +35,6 @@ export const levels = [
     canEdit: false,
     canDelete: true,
     canReward: true,
-    canEditDictionary: false,
     canPinPlaylists: false,
     canEditPlaylists: false,
     canEditRewardLevel: false
@@ -49,7 +45,6 @@ export const levels = [
     canEdit: false,
     canDelete: true,
     canReward: true,
-    canEditDictionary: true,
     canPinPlaylists: false,
     canEditPlaylists: false,
     canEditRewardLevel: true
@@ -60,7 +55,6 @@ export const levels = [
     canEdit: true,
     canDelete: true,
     canReward: true,
-    canEditDictionary: true,
     canPinPlaylists: false,
     canEditPlaylists: false,
     canEditRewardLevel: true
@@ -71,7 +65,6 @@ export const levels = [
     canEdit: true,
     canDelete: true,
     canReward: true,
-    canEditDictionary: true,
     canPinPlaylists: true,
     canEditPlaylists: true,
     canEditRewardLevel: true

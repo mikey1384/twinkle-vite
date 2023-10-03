@@ -356,7 +356,6 @@ export function useUserLevel(userId: number): UserLevel {
     canEdit,
     canDelete,
     canReward,
-    canEditDictionary,
     canPinPlaylists,
     canEditRewardLevel
   } = userObj[userId] || {};
@@ -369,7 +368,6 @@ export function useUserLevel(userId: number): UserLevel {
           canEdit: canEdit || levels[i].canEdit,
           canDelete: canDelete || levels[i].canDelete,
           canReward: canReward || levels[i].canReward,
-          canEditDictionary: canEditDictionary || levels[i].canEditDictionary,
           canPinPlaylists: canPinPlaylists || levels[i].canPinPlaylists,
           canEditRewardLevel:
             canEditRewardLevel || levels[i].canEditRewardLevel,
@@ -382,7 +380,6 @@ export function useUserLevel(userId: number): UserLevel {
       canEdit: canEdit || levels[1].canEdit,
       canDelete: canDelete || levels[1].canDelete,
       canReward: canReward || levels[1].canReward,
-      canEditDictionary: canEditDictionary || levels[1].canEditDictionary,
       canPinPlaylists: canPinPlaylists || levels[1].canPinPlaylists,
       canEditRewardLevel: canEditRewardLevel || levels[1].canEditRewardLevel,
       nextLevelAp: levels[2].ap
@@ -391,7 +388,6 @@ export function useUserLevel(userId: number): UserLevel {
     achievementPoints,
     canDelete,
     canEdit,
-    canEditDictionary,
     canEditRewardLevel,
     canPinPlaylists,
     canReward

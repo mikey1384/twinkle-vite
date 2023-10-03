@@ -23,7 +23,7 @@ export default function ConvertModal({
       <header>Convert</header>
       <main>
         <Table
-          columns="minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr)"
+          columns="minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr)"
           style={{ marginTop: '1.5rem' }}
         >
           <thead>
@@ -34,7 +34,6 @@ export default function ConvertModal({
               <th>Edit</th>
               <th>Delete</th>
               <th>Reward</th>
-              <th>Edit Dictionary</th>
               <th>Feature Contents</th>
               <th>Edit Playlists</th>
               <th>Edit Reward Level</th>
@@ -70,9 +69,6 @@ export default function ConvertModal({
               </td>
               <td style={{ display: 'flex', alignItems: 'center' }}>
                 {target.canReward}
-              </td>
-              <td style={{ display: 'flex', alignItems: 'center' }}>
-                {target.canEditDictionary}
               </td>
               <td style={{ display: 'flex', alignItems: 'center' }}>
                 {target.canPinPlaylists}
