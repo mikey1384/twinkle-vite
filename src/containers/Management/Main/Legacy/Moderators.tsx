@@ -3,8 +3,9 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
 import Table from '../../Table';
-import AddModeratorModal from '../../Modals/AddModeratorModal';
-import EditModeratorModal from '../../Modals/EditModeratorModal';
+import AddModeratorModal from './AddModeratorModal';
+import EditModeratorModal from './EditModeratorModal';
+import ConvertModal from './ConvertModal';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useManagementContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
@@ -42,6 +43,7 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [addModeratorModalShown, setAddModeratorModalShown] = useState(false);
   const [moderatorModalTarget, setModeratorModalTarget] = useState(null);
+  const [convertModalTarget, setConvertModalTarget] = useState(null);
   const filteredModerators = useMemo(() => {
     return moderators.filter((moderator: { username: string }) =>
       searchQuery
@@ -170,6 +172,9 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
           target={moderatorModalTarget}
           onHide={() => setModeratorModalTarget(null)}
         />
+      )}
+      {convertModalTarget && (
+        <ConvertModal onHide={() => setConvertModalTarget(null)} />
       )}
     </ErrorBoundary>
   );
