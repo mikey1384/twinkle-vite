@@ -135,7 +135,13 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
                   )}
                   {canManage && (
                     <td style={{ display: 'flex', justifyContent: 'center' }}>
-                      <a>Convert</a>
+                      <a
+                        onClick={() =>
+                          canManage ? setConvertModalTarget(moderator) : {}
+                        }
+                      >
+                        Convert
+                      </a>
                     </td>
                   )}
                 </tr>
