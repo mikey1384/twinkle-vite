@@ -180,7 +180,6 @@ export interface UserLevel {
   canEdit: boolean;
   canDelete: boolean;
   canReward: boolean;
-  canEditDictionary: boolean;
   canPinPlaylists: boolean;
   canEditPlaylists: boolean;
   canEditRewardLevel: boolean;
