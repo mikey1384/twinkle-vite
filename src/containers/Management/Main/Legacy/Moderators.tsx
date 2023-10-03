@@ -104,48 +104,50 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
           <tbody>
             {filteredModerators
               .filter((_: any, index: number) => index < numModeratorsShown)
-              .map((moderator: any) => (
-                <tr key={moderator.id}>
-                  <td style={{ fontWeight: 'bold', fontSize: '1.6rem' }}>
-                    {moderator.username}
-                  </td>
-                  <td>
-                    {userId === moderator.id || moderator.online
-                      ? nowLabel
-                      : timeSince(moderator.lastActive)}
-                  </td>
-                  <td
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                  >
-                    {moderator.userType}
-                  </td>
-                  {canManage && (
-                    <td style={{ display: 'flex', justifyContent: 'center' }}>
-                      <a
-                        onClick={() =>
-                          canManage ? setModeratorModalTarget(moderator) : {}
-                        }
-                      >
-                        {changeAccountTypeLabel}
-                      </a>
+              .map((moderator: any) => {
+                return (
+                  <tr key={moderator.id}>
+                    <td style={{ fontWeight: 'bold', fontSize: '1.6rem' }}>
+                      {moderator.username}
                     </td>
-                  )}
-                  {canManage && (
-                    <td style={{ display: 'flex', justifyContent: 'center' }}>
-                      <a
-                        onClick={() =>
-                          canManage ? setConvertModalTarget(moderator) : {}
-                        }
-                      >
-                        Convert
-                      </a>
+                    <td>
+                      {userId === moderator.id || moderator.online
+                        ? nowLabel
+                        : timeSince(moderator.lastActive)}
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      {moderator.userType}
+                    </td>
+                    {canManage && (
+                      <td style={{ display: 'flex', justifyContent: 'center' }}>
+                        <a
+                          onClick={() =>
+                            canManage ? setModeratorModalTarget(moderator) : {}
+                          }
+                        >
+                          {changeAccountTypeLabel}
+                        </a>
+                      </td>
+                    )}
+                    {canManage && (
+                      <td style={{ display: 'flex', justifyContent: 'center' }}>
+                        <a
+                          onClick={() =>
+                            canManage ? setConvertModalTarget(moderator) : {}
+                          }
+                        >
+                          Convert
+                        </a>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
           </tbody>
         </Table>
         {moderators.length > numModeratorsShown && !searchQuery && (

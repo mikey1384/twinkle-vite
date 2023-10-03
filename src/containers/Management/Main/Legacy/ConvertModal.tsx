@@ -38,6 +38,30 @@ export default function ConvertModal({
         <td style={{ display: 'flex', alignItems: 'center' }}>
           {target.userType}
         </td>
+        <td style={{ display: 'flex', alignItems: 'center' }}>
+          {target.level}
+        </td>
+        <td style={{ display: 'flex', alignItems: 'center' }}>
+          {target.canEdit}
+        </td>
+        <td style={{ display: 'flex', alignItems: 'center' }}>
+          {target.canDelete}
+        </td>
+        <td style={{ display: 'flex', alignItems: 'center' }}>
+          {target.canReward}
+        </td>
+        <td style={{ display: 'flex', alignItems: 'center' }}>
+          {target.canEditDictionary}
+        </td>
+        <td style={{ display: 'flex', alignItems: 'center' }}>
+          {target.canPinPlaylists}
+        </td>
+        <td style={{ display: 'flex', alignItems: 'center' }}>
+          {target.canEditPlaylists}
+        </td>
+        <td style={{ display: 'flex', alignItems: 'center' }}>
+          {target.canEditRewardLevel}
+        </td>
       </tr>
     );
   }, [target]);
@@ -46,11 +70,22 @@ export default function ConvertModal({
     <Modal onHide={onHide}>
       <header>Convert</header>
       <main>
-        <Table columns="2fr 1fr" style={{ marginTop: '1.5rem' }}>
+        <Table
+          columns="1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr"
+          style={{ marginTop: '1.5rem' }}
+        >
           <thead>
             <tr>
               <th>User</th>
               <th>Account Type</th>
+              <th>level</th>
+              <th>Can Edit</th>
+              <th>Can Delete</th>
+              <th>Can Reward</th>
+              <th>Can Edit Dictionary</th>
+              <th>Can Pin Playlists</th>
+              <th>Can Edit Playlists</th>
+              <th>Can Edit Reward Level</th>
             </tr>
           </thead>
           <tbody>{TableContent}</tbody>
