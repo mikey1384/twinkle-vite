@@ -87,6 +87,7 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
             minmax(10rem, 1fr)
             minmax(15rem, 1fr)
             ${canManage ? 'minmax(17rem, 2fr)' : ''}
+            ${canManage ? 'minmax(10rem, 1fr)' : ''}
           `}
         >
           <thead>
@@ -94,6 +95,7 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
               <th>{userLabel}</th>
               <th>{onlineLabel}</th>
               <th>{accountTypeLabel}</th>
+              {canManage && <th></th>}
               {canManage && <th></th>}
             </tr>
           </thead>
@@ -127,6 +129,11 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
                   {canManage && (
                     <td style={{ display: 'flex', justifyContent: 'center' }}>
                       <a>{changeAccountTypeLabel}</a>
+                    </td>
+                  )}
+                  {canManage && (
+                    <td style={{ display: 'flex', justifyContent: 'center' }}>
+                      <a>Convert</a>
                     </td>
                   )}
                 </tr>
