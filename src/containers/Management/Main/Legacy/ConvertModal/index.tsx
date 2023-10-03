@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
-import Table from '../../Table';
-import Check from '../../Check';
+import Table from '../../../Table';
+import Check from '../../../Check';
 import { Color } from '~/constants/css';
 import { User } from '~/types';
 import { useKeyContext } from '~/contexts';
