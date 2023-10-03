@@ -28,7 +28,7 @@ export default function ConvertModal({
           Cancel
         </Button>
         <Button loading={loading} color={doneColor} onClick={handleSubmit}>
-          Done
+          Convert
         </Button>
       </footer>
     </Modal>
