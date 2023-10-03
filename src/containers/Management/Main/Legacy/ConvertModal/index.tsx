@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import ConvertFrom from './ConvertFrom';
-import ConvertTo from './ConvertTo';
 import { User } from '~/types';
 import { useKeyContext } from '~/contexts';
 
@@ -23,7 +22,6 @@ export default function ConvertModal({
       <header>Convert</header>
       <main>
         <ConvertFrom target={target} />
-        <ConvertTo target={target} />
       </main>
       <footer>
         <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
