@@ -103,13 +103,7 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
             {filteredModerators
               .filter((_: any, index: number) => index < numModeratorsShown)
               .map((moderator: any) => (
-                <tr
-                  key={moderator.id}
-                  style={{ cursor: canManage ? 'pointer' : '' }}
-                  onClick={() =>
-                    canManage ? setModeratorModalTarget(moderator) : {}
-                  }
-                >
+                <tr key={moderator.id}>
                   <td style={{ fontWeight: 'bold', fontSize: '1.6rem' }}>
                     {moderator.username}
                   </td>
@@ -128,7 +122,13 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
                   </td>
                   {canManage && (
                     <td style={{ display: 'flex', justifyContent: 'center' }}>
-                      <a>{changeAccountTypeLabel}</a>
+                      <a
+                        onClick={() =>
+                          canManage ? setModeratorModalTarget(moderator) : {}
+                        }
+                      >
+                        {changeAccountTypeLabel}
+                      </a>
                     </td>
                   )}
                   {canManage && (
