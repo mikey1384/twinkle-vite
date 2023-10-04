@@ -257,6 +257,16 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAchievementsByUserId(userId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/achievements/byId?userId=${userId}`
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadCoinHistory(lastId: number) {
       try {
         const {
