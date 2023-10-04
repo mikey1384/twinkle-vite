@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import FromPanel from './FromPanel';
+import ToPanel from './ToPanel';
 import { css } from '@emotion/css';
 import { User } from '~/types';
 import { useKeyContext } from '~/contexts';
@@ -30,26 +31,7 @@ export default function ConvertModal({
       </header>
       <main>
         <FromPanel target={target} />
-        <div
-          className={css`
-            margin: 2rem 0rem 1rem 0;
-            font-weight: bold;
-            font-family: Roboto, sans-serif;
-          `}
-        >
-          To
-        </div>
-        <div
-          className={css`
-            width: 100%;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            padding: 1rem;
-            margin-bottom: 1rem;
-          `}
-        >
-          <div>something will go here later</div>
-        </div>
+        <ToPanel target={target} />
       </main>
       <footer
         className={css`
