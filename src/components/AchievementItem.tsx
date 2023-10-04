@@ -9,7 +9,7 @@ import Sage from '~/components/AchievementItems/Sage';
 import TwinkleFounder from '~/components/AchievementItems/TwinkleFounder';
 import { Content } from '~/types';
 
-export default function AchievementPass({
+export default function AchievementItem({
   achievement,
   style
 }: {
