@@ -1,33 +1,17 @@
 import React from 'react';
 import FounderBadge from '~/assets/founder.png';
-import ItemPanel from './ItemPanel';
+import ItemThumbPanel from './ItemThumbPanel';
 
 export default function TwinkleFounder({
-  isNotification,
-  data: { isUnlocked, ap, title, description, unlockMessage },
+  data: { title },
   style
 }: {
-  isNotification?: boolean;
   data: {
-    ap: number;
-    isUnlocked: boolean;
     title: string;
-    description: string;
-    unlockMessage: string;
   };
   style?: React.CSSProperties;
 }) {
   return (
-    <ItemPanel
-      isNotification={isNotification}
-      style={style}
-      ap={ap}
-      isUnlocked={isUnlocked}
-      itemName={title}
-      description={description}
-      unlockMessage={unlockMessage}
-      requirements={['Found Twinkle English Academy']}
-      badgeSrc={FounderBadge}
-    />
+    <ItemThumbPanel itemName={title} badgeSrc={FounderBadge} style={style} />
   );
 }
