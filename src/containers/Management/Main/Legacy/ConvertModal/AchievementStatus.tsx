@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
+import AchievementItem from '~/components/AchievementItem';
 import { useAppContext } from '~/contexts';
 import { User } from '~/types';
 
@@ -24,7 +25,7 @@ export default function AchievementStatus({ target }: { target: User }) {
     <Loading />
   ) : (
     <div>
-      <div>{achievements.map((achievement: any) => achievement.id)}</div>
+      <AchievementItem achievement={achievements[0]} />
     </div>
   );
 }
