@@ -24,8 +24,6 @@ export default function AchievementStatus({ target }: { target: User }) {
   return loading ? (
     <Loading />
   ) : (
-    <div>
-      <AchievementItem isSmall achievement={achievements[0]} />
-    </div>
+    <AchievementItem isSmall achievement={achievements[0]} />
   );
 }
