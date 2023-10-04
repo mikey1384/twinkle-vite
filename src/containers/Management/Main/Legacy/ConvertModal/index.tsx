@@ -23,7 +23,7 @@ export default function ConvertModal({
       <header>Convert</header>
       <main>
         <ConvertFrom target={target} />
-        <AchievementStatus />
+        <AchievementStatus target={target} />
       </main>
       <footer>
         <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
