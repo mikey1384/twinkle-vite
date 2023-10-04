@@ -4,12 +4,9 @@ import Check from '../../../Check';
 import { Color } from '~/constants/css';
 import { User } from '~/types';
 
-export default function ConvertFrom({ target }: { target: User }) {
+export default function CurrentPerks({ target }: { target: User }) {
   return (
-    <Table
-      columns="minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr)"
-      style={{ marginTop: '1.5rem' }}
-    >
+    <Table columns="minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr)">
       <thead>
         <tr>
           <th>User</th>

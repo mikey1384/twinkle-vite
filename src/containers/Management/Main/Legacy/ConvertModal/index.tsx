@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
-import ConvertFrom from './ConvertFrom';
+import CurrentPerks from './CurrentPerks';
 import AchievementStatus from './AchievementStatus';
+import { css } from '@emotion/css';
 import { User } from '~/types';
 import { useKeyContext } from '~/contexts';
 
@@ -20,12 +21,64 @@ export default function ConvertModal({
 
   return (
     <Modal onHide={onHide}>
-      <header>Convert</header>
+      <header
+        className={css`
+          font-size: 2rem;
+          font-weight: 600;
+        `}
+      >
+        Convert
+      </header>
       <main>
-        <ConvertFrom target={target} />
-        <AchievementStatus target={target} />
+        <div
+          className={css`
+            font-weight: bold;
+            font-family: Roboto, sans-serif;
+            margin: 1rem 0;
+          `}
+        >
+          From
+        </div>
+        <div
+          className={css`
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            padding: 1rem;
+            margin-bottom: 1rem;
+          `}
+        >
+          <CurrentPerks target={target} />
+          <AchievementStatus target={target} />
+        </div>
+        <div
+          className={css`
+            margin: 2rem 0rem 1rem 0;
+            font-weight: bold;
+            font-family: Roboto, sans-serif;
+          `}
+        >
+          To
+        </div>
+        <div
+          className={css`
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            padding: 1rem;
+            margin-bottom: 1rem;
+          `}
+        >
+          <div>something will go here later</div>
+        </div>
       </main>
-      <footer>
+      <footer
+        className={css`
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 1rem;
+        `}
+      >
         <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
           Cancel
         </Button>
