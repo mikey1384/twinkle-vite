@@ -1,5 +1,6 @@
 import React from 'react';
 import Big from './Big';
+import Small from './Small';
 import { Content } from '~/types';
 
 export default function AchievementItem({
@@ -12,7 +13,7 @@ export default function AchievementItem({
   style?: React.CSSProperties;
 }) {
   return isSmall ? (
-    <div>small</div>
+    <Small achievement={achievement} style={style} />
   ) : (
     <Big achievement={achievement} style={style} />
   );

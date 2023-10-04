@@ -1,13 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import TeenagerBadge from '~/assets/adult.png';
-import ItemPanel from './ItemPanel';
+import ItemThumbPanel from './ItemThumbPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import FormModal from '../FormModal';
-import { useKeyContext } from '~/contexts';
 
 export default function Adult({
-  isNotification,
-  data: { isUnlocked, ap, title, description, milestones, unlockMessage },
+  data: { title },
   style
 }: {
   isNotification?: boolean;
@@ -21,39 +18,9 @@ export default function Adult({
   };
   style?: React.CSSProperties;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
-  const [formModalShown, setFormModalShown] = useState(false);
   return (
-    <ErrorBoundary componentPath="AchievementItems/Teenager">
-      <ItemPanel
-        isNotification={isNotification}
-        style={style}
-        ap={ap}
-        isUnlocked={isUnlocked}
-        itemName={title}
-        milestones={milestones}
-        description={description}
-        unlockMessage={unlockMessage}
-        requirements={[
-          <>
-            Submit{' '}
-            {userId ? (
-              <a
-                style={{ fontWeight: 'bold', cursor: 'pointer' }}
-                onClick={() => setFormModalShown(true)}
-              >
-                additional profile details
-              </a>
-            ) : (
-              <span>additional profile details</span>
-            )}{' '}
-            and get your birthdate verified
-          </>,
-          'Close the chapter on teenage years. Enter adulthood'
-        ]}
-        badgeSrc={TeenagerBadge}
-      />
-      {formModalShown && <FormModal onHide={() => setFormModalShown(false)} />}
+    <ErrorBoundary componentPath="AchievementItems/Small/Adult">
+      <ItemThumbPanel itemName={title} badgeSrc={TeenagerBadge} style={style} />
     </ErrorBoundary>
   );
 }

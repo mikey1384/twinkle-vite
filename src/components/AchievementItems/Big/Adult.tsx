@@ -24,7 +24,7 @@ export default function Adult({
   const { userId } = useKeyContext((v) => v.myState);
   const [formModalShown, setFormModalShown] = useState(false);
   return (
-    <ErrorBoundary componentPath="AchievementItems/Teenager">
+    <ErrorBoundary componentPath="AchievementItems/Big/Adult">
       <ItemPanel
         isNotification={isNotification}
         style={style}
