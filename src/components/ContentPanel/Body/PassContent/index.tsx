@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import MissionPass from './MissionPass';
-import AchievementPass from './AchievementPass';
+import AchievementItem from '~/components/AchievementItem';
 import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import { Content, User } from '~/types';
@@ -43,7 +43,7 @@ export default function PassContent({
     );
   }
   return (
-    <AchievementPass
+    <AchievementItem
       achievement={rootObj}
       style={{
         marginTop: '2.5rem'
