@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
-import CurrentPerks from './CurrentPerks';
-import AchievementStatus from './AchievementStatus';
+import FromPanel from './FromPanel';
 import { css } from '@emotion/css';
 import { User } from '~/types';
 import { useKeyContext } from '~/contexts';
@@ -30,27 +29,7 @@ export default function ConvertModal({
         Convert
       </header>
       <main>
-        <div
-          className={css`
-            font-weight: bold;
-            font-family: Roboto, sans-serif;
-            margin: 1rem 0;
-          `}
-        >
-          From
-        </div>
-        <div
-          className={css`
-            width: 100%;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            padding: 1rem;
-            margin-bottom: 1rem;
-          `}
-        >
-          <CurrentPerks target={target} />
-          <AchievementStatus target={target} />
-        </div>
+        <FromPanel target={target} />
         <div
           className={css`
             margin: 2rem 0rem 1rem 0;
