@@ -46,7 +46,8 @@ export default function PassContent({
     <AchievementItem
       achievement={rootObj}
       style={{
-        marginTop: '2.5rem'
+        marginTop: '2.5rem',
+        marginBottom: '-4rem'
       }}
     />
   );

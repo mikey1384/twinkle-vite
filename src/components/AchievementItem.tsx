@@ -14,7 +14,7 @@ export default function AchievementItem({
   style
 }: {
   achievement: Content;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   const achievementComponentMap: {
     [key: string]: React.ComponentType<{
@@ -48,7 +48,6 @@ export default function AchievementItem({
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        marginBottom: '-4rem',
         width: '100%',
         ...style
       }}
