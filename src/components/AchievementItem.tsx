@@ -1,12 +1,12 @@
 import React from 'react';
-import Mission from '~/components/AchievementItems/Mission';
-import Summoner from '~/components/AchievementItems/Summoner';
-import Grammar from '~/components/AchievementItems/Grammar';
-import Mentor from '~/components/AchievementItems/Mentor';
-import Teenager from '~/components/AchievementItems/Teenager';
-import Adult from '~/components/AchievementItems/Adult';
-import Sage from '~/components/AchievementItems/Sage';
-import TwinkleFounder from '~/components/AchievementItems/TwinkleFounder';
+import Mission from '~/components/AchievementItems/Big/Mission';
+import Summoner from '~/components/AchievementItems/Big/Summoner';
+import Grammar from '~/components/AchievementItems/Big/Grammar';
+import Mentor from '~/components/AchievementItems/Big/Mentor';
+import Teenager from '~/components/AchievementItems/Big/Teenager';
+import Adult from '~/components/AchievementItems/Big/Adult';
+import Sage from '~/components/AchievementItems/Big/Sage';
+import TwinkleFounder from '~/components/AchievementItems/Big/TwinkleFounder';
 import { Content } from '~/types';
 
 export default function AchievementItem({
