@@ -1,4 +1,5 @@
 import React from 'react';
+import NewStats from './NewStats';
 import { css } from '@emotion/css';
 import { User } from '~/types';
 
@@ -27,7 +28,7 @@ export default function ToPanel({ target }: { target: User }) {
           margin-bottom: 1rem;
         `}
       >
-        <div>{target.username}</div>
+        <NewStats target={target} />
       </div>
     </div>
   );
