@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import TeenagerBadge from '~/assets/teenager.png';
+import TeenagerBadge from '~/assets/adult.png';
 import ItemPanel from './ItemPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import FormModal from './FormModal';
+import FormModal from '../FormModal';
 import { useKeyContext } from '~/contexts';
 
-export default function Teenager({
+export default function Adult({
   isNotification,
   data: { isUnlocked, ap, title, description, milestones, unlockMessage },
   style
@@ -49,7 +49,7 @@ export default function Teenager({
             )}{' '}
             and get your birthdate verified
           </>,
-          'Survive childhood and enter teenage years and beyond'
+          'Close the chapter on teenage years. Enter adulthood'
         ]}
         badgeSrc={TeenagerBadge}
       />

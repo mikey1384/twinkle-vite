@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import Adult from '~/components/AchievementItems/Adult';
-import Mission from '~/components/AchievementItems/Mission';
-import Summoner from '~/components/AchievementItems/Summoner';
-import Grammar from '~/components/AchievementItems/Grammar';
-import Mentor from '~/components/AchievementItems/Mentor';
-import Teenager from '~/components/AchievementItems/Teenager';
-import Sage from '~/components/AchievementItems/Sage';
-import TwinkleFounder from '~/components/AchievementItems/TwinkleFounder';
+import Adult from '~/components/AchievementItems/Big/Adult';
+import Mission from '~/components/AchievementItems/Big/Mission';
+import Summoner from '~/components/AchievementItems/Big/Summoner';
+import Grammar from '~/components/AchievementItems/Big/Grammar';
+import Mentor from '~/components/AchievementItems/Big/Mentor';
+import Teenager from '~/components/AchievementItems/Big/Teenager';
+import Sage from '~/components/AchievementItems/Big/Sage';
+import TwinkleFounder from '~/components/AchievementItems/Big/TwinkleFounder';
 import UserLevelStatus from './UserLevelStatus';
 import { useAppContext, useKeyContext } from '~/contexts';
 
