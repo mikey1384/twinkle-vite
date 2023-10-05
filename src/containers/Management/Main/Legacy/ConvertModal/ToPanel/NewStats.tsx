@@ -116,7 +116,13 @@ export default function NewStats({
       realName: target.realName,
       title: newStatsPerUserTypes[target.userType]?.title
     };
-  }, [achievements, target?.realName, target?.userType, target?.username]);
+  }, [
+    achievementAP,
+    achievements,
+    target.realName,
+    target.userType,
+    target.username
+  ]);
 
   return (
     <Table columns="minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr)">
