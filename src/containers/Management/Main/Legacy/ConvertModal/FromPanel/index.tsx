@@ -2,9 +2,17 @@ import React from 'react';
 import CurrentPerks from './CurrentPerks';
 import AchievementStatus from './AchievementStatus';
 import { css } from '@emotion/css';
-import { User } from '~/types';
+import { Content, User } from '~/types';
 
-export default function FromPanel({ target }: { target: User }) {
+export default function FromPanel({
+  achievements,
+  loading,
+  target
+}: {
+  achievements: Content[];
+  loading: boolean;
+  target: User;
+}) {
   return (
     <div
       className={css`
@@ -30,7 +38,7 @@ export default function FromPanel({ target }: { target: User }) {
         `}
       >
         <CurrentPerks target={target} />
-        <AchievementStatus target={target} />
+        <AchievementStatus achievements={achievements} loading={loading} />
       </div>
     </div>
   );

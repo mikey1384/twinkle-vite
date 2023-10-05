@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import FromPanel from './FromPanel';
 import ToPanel from './ToPanel';
 import { css } from '@emotion/css';
 import { User } from '~/types';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function ConvertModal({
   target,
@@ -14,10 +14,27 @@ export default function ConvertModal({
   target: User;
   onHide: () => void;
 }) {
-  const [loading, setLoading] = useState(false);
+  const loadAchievementsByUserId = useAppContext(
+    (v) => v.requestHelpers.loadAchievementsByUserId
+  );
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingUserAchievements, setLoadingUserAchievements] = useState(false);
+  const [achievements, setAchievements] = useState([]);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+
+  useEffect(() => {
+    async function init() {
+      setLoadingUserAchievements(true);
+      const data = await loadAchievementsByUserId(target.id);
+      setAchievements(data);
+      setLoadingUserAchievements(false);
+    }
+
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Modal onHide={onHide}>
@@ -30,7 +47,11 @@ export default function ConvertModal({
         Convert
       </header>
       <main>
-        <FromPanel target={target} />
+        <FromPanel
+          loading={loadingUserAchievements}
+          achievements={achievements}
+          target={target}
+        />
         <ToPanel target={target} />
       </main>
       <footer
@@ -43,7 +64,7 @@ export default function ConvertModal({
         <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
           Cancel
         </Button>
-        <Button loading={loading} color={doneColor} onClick={handleSubmit}>
+        <Button loading={submitting} color={doneColor} onClick={handleSubmit}>
           Convert
         </Button>
       </footer>
@@ -51,7 +72,7 @@ export default function ConvertModal({
   );
 
   async function handleSubmit() {
-    setLoading(true);
+    setSubmitting(true);
     onHide();
   }
 }

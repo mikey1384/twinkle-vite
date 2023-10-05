@@ -1,28 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Loading from '~/components/Loading';
 import AchievementItem from '~/components/AchievementItem';
-import { useAppContext } from '~/contexts';
-import { Content, User } from '~/types';
+import { Content } from '~/types';
 
-export default function AchievementStatus({ target }: { target: User }) {
-  const loadAchievementsByUserId = useAppContext(
-    (v) => v.requestHelpers.loadAchievementsByUserId
-  );
-  const [achievements, setAchievements] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    async function init() {
-      setLoading(true);
-      const data = await loadAchievementsByUserId(target.id);
-      setAchievements(data);
-      setLoading(false);
-    }
-
-    init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+export default function AchievementStatus({
+  achievements,
+  loading
+}: {
+  achievements: Content[];
+  loading: boolean;
+}) {
   return loading ? (
     <Loading />
   ) : (
