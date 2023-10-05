@@ -41,21 +41,12 @@ const newStatsPerUserTypes: {
   }
 };
 
-const achievementAP: Record<string, number> = {
-  grammar: 70,
-  mission: 70,
-  summoner: 70,
-  teenager: 100,
-  adult: 100,
-  mentor: 800,
-  sage: 500,
-  twinkle_founder: 1500
-};
-
 export default function NewStats({
+  achievementAP,
   achievements,
   target
 }: {
+  achievementAP: Record<string, number>;
   achievements: Content[];
   target: User;
 }) {

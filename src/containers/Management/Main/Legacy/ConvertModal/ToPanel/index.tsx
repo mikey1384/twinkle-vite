@@ -4,9 +4,11 @@ import { css } from '@emotion/css';
 import { Content, User } from '~/types';
 
 export default function ToPanel({
+  achievementAP,
   achievements,
   target
 }: {
+  achievementAP: Record<string, number>;
   achievements: Content[];
   target: User;
 }) {
@@ -34,7 +36,11 @@ export default function ToPanel({
           margin-bottom: 1rem;
         `}
       >
-        <NewStats achievements={achievements} target={target} />
+        <NewStats
+          achievementAP={achievementAP}
+          achievements={achievements}
+          target={target}
+        />
       </div>
     </div>
   );
