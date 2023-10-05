@@ -46,7 +46,7 @@ export const levels = [
     canDelete: true,
     canReward: true,
     canPinPlaylists: false,
-    canEditPlaylists: false,
+    canEditPlaylists: true,
     canEditRewardLevel: true
   },
   {
@@ -56,7 +56,7 @@ export const levels = [
     canDelete: true,
     canReward: true,
     canPinPlaylists: false,
-    canEditPlaylists: false,
+    canEditPlaylists: true,
     canEditRewardLevel: true
   },
   {
