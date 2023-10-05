@@ -3,7 +3,7 @@ import Table from '../../../../Table';
 import Check from '../../../../Check';
 import { Color } from '~/constants/css';
 import { levels } from '~/constants/userLevels';
-import { User } from '~/types';
+import { Content, User } from '~/types';
 
 const newStatsPerUserTypes: {
   [role: string]: {
@@ -52,17 +52,42 @@ const achievementAP: Record<string, number> = {
   twinkle_founder: 1500
 };
 
-export default function NewStats({ target }: { target: User }) {
-  const newStats = useMemo(() => {
-    let totalAP = 0;
+export default function NewStats({
+  achievements,
+  target
+}: {
+  achievements: Content[];
+  target: User;
+}) {
+  const newStats: {
+    username: string;
+    realName: string;
+    title: string | null;
+    level: number;
+    canEdit: boolean;
+    canDelete: boolean;
+    canReward: boolean;
+    canPinPlaylists: boolean;
+    canEditPlaylists: boolean;
+    canEditRewardLevel: boolean;
+  } = useMemo(() => {
+    const currentAchievementTypes = achievements.map(
+      (achievement) => achievement.type
+    );
 
     // Get the achievements for the given user type
-    const achievements =
+    const unlockableAchievementTypes =
       newStatsPerUserTypes[target.userType]?.achievements || [];
 
+    // Combine current and unlockable achievement types and remove duplicates
+    const uniqueAchievementTypes = Array.from(
+      new Set([...currentAchievementTypes, ...unlockableAchievementTypes])
+    );
+
     // Calculate total achievement points (AP)
-    for (const achievement of achievements) {
-      totalAP += achievementAP[achievement];
+    let totalAP = 0;
+    for (const uniqueAchievementType of uniqueAchievementTypes) {
+      totalAP += achievementAP[uniqueAchievementType] || 0;
     }
 
     // Determine the user's level based on total AP
@@ -75,7 +100,23 @@ export default function NewStats({ target }: { target: User }) {
     }
 
     // Get the perks for the determined level
-    const perks = levels[userLevel];
+    const perks: {
+      level: number;
+      canEdit: boolean;
+      canDelete: boolean;
+      canReward: boolean;
+      canPinPlaylists: boolean;
+      canEditPlaylists: boolean;
+      canEditRewardLevel: boolean;
+    } = levels.find((level) => level.level === userLevel) || {
+      level: 0,
+      canEdit: false,
+      canDelete: false,
+      canReward: false,
+      canPinPlaylists: false,
+      canEditPlaylists: false,
+      canEditRewardLevel: false
+    };
 
     // Create the new stats object
     return {
@@ -84,7 +125,7 @@ export default function NewStats({ target }: { target: User }) {
       realName: target.realName,
       title: newStatsPerUserTypes[target.userType]?.title
     };
-  }, [target]);
+  }, [achievements, target?.realName, target?.userType, target?.username]);
 
   return (
     <Table columns="minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(min-content, 1fr)">

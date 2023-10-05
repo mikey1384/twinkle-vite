@@ -52,7 +52,7 @@ export default function ConvertModal({
           achievements={achievements}
           target={target}
         />
-        <ToPanel target={target} />
+        <ToPanel achievements={achievements} target={target} />
       </main>
       <footer
         className={css`

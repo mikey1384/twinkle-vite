@@ -1,9 +1,15 @@
 import React from 'react';
 import NewStats from './NewStats';
 import { css } from '@emotion/css';
-import { User } from '~/types';
+import { Content, User } from '~/types';
 
-export default function ToPanel({ target }: { target: User }) {
+export default function ToPanel({
+  achievements,
+  target
+}: {
+  achievements: Content[];
+  target: User;
+}) {
   return (
     <div
       className={css`
@@ -28,7 +34,7 @@ export default function ToPanel({ target }: { target: User }) {
           margin-bottom: 1rem;
         `}
       >
-        <NewStats target={target} />
+        <NewStats achievements={achievements} target={target} />
       </div>
     </div>
   );
