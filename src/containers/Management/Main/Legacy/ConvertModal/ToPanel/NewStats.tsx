@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import Table from '../../../../Table';
 import Check from '../../../../Check';
 import { Color } from '~/constants/css';
+import { levels } from '~/constants/userLevels';
 import { User } from '~/types';
 
 const newStatsPerUserTypes: {
@@ -39,79 +40,6 @@ const newStatsPerUserTypes: {
     achievements: ['teenager', 'adult', 'mentor', 'sage', 'twinkle_founder']
   }
 };
-
-export const levels = [
-  {
-    ap: 0,
-    level: 0,
-    canEdit: false,
-    canDelete: false,
-    canReward: false,
-    canPinPlaylists: false,
-    canEditPlaylists: false,
-    canEditRewardLevel: false
-  },
-  {
-    ap: 0,
-    level: 1,
-    canEdit: false,
-    canDelete: false,
-    canReward: false,
-    canPinPlaylists: false,
-    canEditPlaylists: false,
-    canEditRewardLevel: false
-  },
-  {
-    ap: 150,
-    level: 2,
-    canEdit: false,
-    canDelete: true,
-    canReward: true,
-    canPinPlaylists: false,
-    canEditPlaylists: false,
-    canEditRewardLevel: false
-  },
-  {
-    ap: 300,
-    level: 3,
-    canEdit: false,
-    canDelete: true,
-    canReward: true,
-    canPinPlaylists: false,
-    canEditPlaylists: false,
-    canEditRewardLevel: false
-  },
-  {
-    ap: 1000,
-    level: 4,
-    canEdit: false,
-    canDelete: true,
-    canReward: true,
-    canPinPlaylists: false,
-    canEditPlaylists: false,
-    canEditRewardLevel: true
-  },
-  {
-    ap: 1500,
-    level: 5,
-    canEdit: true,
-    canDelete: true,
-    canReward: true,
-    canPinPlaylists: false,
-    canEditPlaylists: false,
-    canEditRewardLevel: true
-  },
-  {
-    ap: 3000,
-    level: 6,
-    canEdit: true,
-    canDelete: true,
-    canReward: true,
-    canPinPlaylists: true,
-    canEditPlaylists: true,
-    canEditRewardLevel: true
-  }
-];
 
 const achievementAP: Record<string, number> = {
   mentor: 800,
@@ -160,7 +88,7 @@ export default function NewStats({ target }: { target: User }) {
       <thead>
         <tr>
           <th>User</th>
-          <th>Account Type</th>
+          <th>Title</th>
           <th>Level</th>
           <th>Edit</th>
           <th>Delete</th>
