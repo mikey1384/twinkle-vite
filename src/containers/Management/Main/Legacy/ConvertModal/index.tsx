@@ -7,6 +7,17 @@ import { css } from '@emotion/css';
 import { User } from '~/types';
 import { useAppContext, useKeyContext } from '~/contexts';
 
+const achievementAP: Record<string, number> = {
+  grammar: 70,
+  mission: 70,
+  summoner: 70,
+  teenager: 100,
+  adult: 100,
+  mentor: 800,
+  sage: 500,
+  twinkle_founder: 1500
+};
+
 export default function ConvertModal({
   target,
   onHide
@@ -52,7 +63,11 @@ export default function ConvertModal({
           achievements={achievements}
           target={target}
         />
-        <ToPanel achievements={achievements} target={target} />
+        <ToPanel
+          achievements={achievements}
+          achievementAP={achievementAP}
+          target={target}
+        />
       </main>
       <footer
         className={css`
