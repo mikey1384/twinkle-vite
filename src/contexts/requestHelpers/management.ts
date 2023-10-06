@@ -140,6 +140,14 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAllAchievements() {
+      try {
+        const { data } = await request.get(`${URL}/management/achievements`);
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadApprovalItemById(approvalId: number) {
       try {
         const { data: approvalItem } = await request.get(
