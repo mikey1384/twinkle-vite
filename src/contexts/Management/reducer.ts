@@ -44,6 +44,13 @@ export default function ManagementReducer(
           )
         )
       };
+    case 'FILTER_MODERATORS':
+      return {
+        ...state,
+        moderators: state.moderators.filter(
+          (moderator: User) => moderator.id !== action.userId
+        )
+      };
     case 'CHANGE_MODERATOR_ACCOUNT_TYPE':
       return {
         ...state,

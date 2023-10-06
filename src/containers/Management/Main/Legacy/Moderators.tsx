@@ -10,6 +10,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { useManagementContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { User } from '~/types';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
@@ -36,6 +37,9 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
   const numModeratorsShown = useManagementContext(
     (v) => v.state.numModeratorsShown
   );
+  const onFilterModerators = useManagementContext(
+    (v) => v.actions.onFilterModerators
+  );
   const onLoadMoreModerators = useManagementContext(
     (v) => v.actions.onLoadMoreModerators
   );
@@ -43,7 +47,9 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [addModeratorModalShown, setAddModeratorModalShown] = useState(false);
   const [moderatorModalTarget, setModeratorModalTarget] = useState(null);
-  const [convertModalTarget, setConvertModalTarget] = useState(null);
+  const [convertModalTarget, setConvertModalTarget] = useState<User | null>(
+    null
+  );
   const filteredModerators = useMemo(() => {
     return moderators.filter((moderator: { username: string }) =>
       searchQuery
@@ -185,8 +191,14 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
         <ConvertModal
           target={convertModalTarget}
           onHide={() => setConvertModalTarget(null)}
+          onDone={handleConvertDone}
         />
       )}
     </ErrorBoundary>
   );
+
+  function handleConvertDone() {
+    onFilterModerators(convertModalTarget?.id || 0);
+    setConvertModalTarget(null);
+  }
 }

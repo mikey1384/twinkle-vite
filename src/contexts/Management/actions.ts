@@ -42,6 +42,12 @@ export default function ManagementActions(dispatch: Dispatch) {
         supermods
       });
     },
+    onFilterModerators(userId: number) {
+      return dispatch({
+        type: 'FILTER_MODERATORS',
+        userId
+      });
+    },
     onChangeModeratorAccountType({
       userId,
       selectedAccountType

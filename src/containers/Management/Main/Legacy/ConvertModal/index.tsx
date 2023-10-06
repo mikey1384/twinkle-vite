@@ -9,9 +9,11 @@ import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function ConvertModal({
   target,
+  onDone,
   onHide
 }: {
   target: User;
+  onDone: () => void;
   onHide: () => void;
 }) {
   const convertUser = useAppContext((v) => v.requestHelpers.convertUser);
@@ -86,6 +88,6 @@ export default function ConvertModal({
   async function handleSubmit() {
     setSubmitting(true);
     await convertUser(target.id);
-    onHide();
+    onDone();
   }
 }
