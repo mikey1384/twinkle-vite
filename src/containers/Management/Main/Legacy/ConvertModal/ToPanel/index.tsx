@@ -53,7 +53,7 @@ export default function ToPanel({
   loading: boolean;
   target: User;
 }) {
-  const uniqueAchievementTypes = useMemo(() => {
+  const newAchievementTypes = useMemo(() => {
     const currentAchievementTypes = unlockedAchievements.map(
       (achievement) => achievement.type
     );
@@ -71,8 +71,8 @@ export default function ToPanel({
   const newStats: StatsProp = useMemo(() => {
     // Calculate total achievement points (AP)
     let totalAP = 0;
-    for (const uniqueAchievementType of uniqueAchievementTypes) {
-      totalAP += achievementsObj[uniqueAchievementType]?.ap || 0;
+    for (const newAchievementType of newAchievementTypes) {
+      totalAP += achievementsObj[newAchievementType]?.ap || 0;
     }
 
     // Determine the user's level based on total AP
@@ -115,7 +115,7 @@ export default function ToPanel({
     target?.username,
     target?.realName,
     target?.userType,
-    uniqueAchievementTypes
+    newAchievementTypes
   ]);
 
   return (
@@ -145,7 +145,7 @@ export default function ToPanel({
         <NewStats newStats={newStats} target={target} />
         <NewAchievementStatus
           newAchievements={
-            uniqueAchievementTypes.map(
+            newAchievementTypes.map(
               (type) => achievementsObj[type]
             ) as Content[]
           }
