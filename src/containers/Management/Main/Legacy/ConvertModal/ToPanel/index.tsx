@@ -43,12 +43,12 @@ const newStatsPerUserTypes: {
 };
 
 export default function ToPanel({
-  achievementAP,
+  achievementsObj,
   unlockedAchievements,
   loading,
   target
 }: {
-  achievementAP: Record<string, number>;
+  achievementsObj: Record<string, Record<string, any>>;
   unlockedAchievements: Content[];
   loading: boolean;
   target: User;
@@ -70,7 +70,7 @@ export default function ToPanel({
     // Calculate total achievement points (AP)
     let totalAP = 0;
     for (const uniqueAchievementType of uniqueAchievementTypes) {
-      totalAP += achievementAP[uniqueAchievementType] || 0;
+      totalAP += achievementsObj[uniqueAchievementType]?.ap || 0;
     }
 
     // Determine the user's level based on total AP
@@ -104,16 +104,16 @@ export default function ToPanel({
     // Create the new stats object
     return {
       ...perks,
-      username: target.username,
-      realName: target.realName,
-      title: newStatsPerUserTypes[target.userType]?.title
+      username: target?.username,
+      realName: target?.realName,
+      title: newStatsPerUserTypes[target?.userType]?.title
     };
   }, [
-    achievementAP,
     unlockedAchievements,
-    target.realName,
-    target.userType,
-    target.username
+    target?.userType,
+    target?.username,
+    target?.realName,
+    achievementsObj
   ]);
 
   return (

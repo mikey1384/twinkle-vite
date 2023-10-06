@@ -7,17 +7,6 @@ import { css } from '@emotion/css';
 import { User } from '~/types';
 import { useAppContext, useKeyContext } from '~/contexts';
 
-const achievementAP: Record<string, number> = {
-  grammar: 70,
-  mission: 70,
-  summoner: 70,
-  teenager: 100,
-  adult: 100,
-  mentor: 800,
-  sage: 500,
-  twinkle_founder: 1500
-};
-
 export default function ConvertModal({
   target,
   onHide
@@ -28,7 +17,11 @@ export default function ConvertModal({
   const loadAchievementsByUserId = useAppContext(
     (v) => v.requestHelpers.loadAchievementsByUserId
   );
+  const loadAllAchievements = useAppContext(
+    (v) => v.requestHelpers.loadAllAchievements
+  );
   const [submitting, setSubmitting] = useState(false);
+  const [achievementsObj, setAchievementsObj] = useState({});
   const [loadingUserAchievements, setLoadingUserAchievements] = useState(false);
   const [unlockedAchievements, setUnlockedAchievements] = useState([]);
   const {
@@ -38,8 +31,10 @@ export default function ConvertModal({
   useEffect(() => {
     async function init() {
       setLoadingUserAchievements(true);
-      const data = await loadAchievementsByUserId(target.id);
-      setUnlockedAchievements(data);
+      const unlockedAchievements = await loadAchievementsByUserId(target.id);
+      const achievementsObj = await loadAllAchievements();
+      setUnlockedAchievements(unlockedAchievements);
+      setAchievementsObj(achievementsObj);
       setLoadingUserAchievements(false);
     }
 
@@ -66,7 +61,7 @@ export default function ConvertModal({
         <ToPanel
           loading={loadingUserAchievements}
           unlockedAchievements={unlockedAchievements}
-          achievementAP={achievementAP}
+          achievementsObj={achievementsObj}
           target={target}
         />
       </main>
