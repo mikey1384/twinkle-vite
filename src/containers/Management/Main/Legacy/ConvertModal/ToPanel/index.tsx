@@ -53,7 +53,7 @@ export default function ToPanel({
   loading: boolean;
   target: User;
 }) {
-  const newStats: StatsProp = useMemo(() => {
+  const uniqueAchievementTypes = useMemo(() => {
     const currentAchievementTypes = unlockedAchievements.map(
       (achievement) => achievement.type
     );
@@ -63,10 +63,12 @@ export default function ToPanel({
       newStatsPerUserTypes[target.userType]?.achievements || [];
 
     // Combine current and unlockable achievement types and remove duplicates
-    const uniqueAchievementTypes = Array.from(
+    return Array.from(
       new Set([...currentAchievementTypes, ...unlockableAchievementTypes])
     );
+  }, [unlockedAchievements, target?.userType]);
 
+  const newStats: StatsProp = useMemo(() => {
     // Calculate total achievement points (AP)
     let totalAP = 0;
     for (const uniqueAchievementType of uniqueAchievementTypes) {
@@ -109,11 +111,11 @@ export default function ToPanel({
       title: newStatsPerUserTypes[target?.userType]?.title
     };
   }, [
-    unlockedAchievements,
-    target?.userType,
+    achievementsObj,
     target?.username,
     target?.realName,
-    achievementsObj
+    target?.userType,
+    uniqueAchievementTypes
   ]);
 
   return (
@@ -142,7 +144,11 @@ export default function ToPanel({
       >
         <NewStats newStats={newStats} target={target} />
         <NewAchievementStatus
-          unlockedAchievements={unlockedAchievements}
+          newAchievements={
+            uniqueAchievementTypes.map(
+              (type) => achievementsObj[type]
+            ) as Content[]
+          }
           loading={loading}
         />
       </div>
