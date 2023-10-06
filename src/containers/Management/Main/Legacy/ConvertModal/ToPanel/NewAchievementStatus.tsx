@@ -14,11 +14,13 @@ export default function NewAchievementStatus({
     <Loading />
   ) : (
     <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-      {newAchievements.map((achievement: Content) => (
-        <div style={{ flex: '0 0 50%' }} key={achievement.id}>
-          <AchievementItem isSmall achievement={achievement} />
-        </div>
-      ))}
+      {newAchievements.map((achievement: Content) =>
+        achievement?.id ? (
+          <div style={{ flex: '0 0 50%' }} key={achievement.id}>
+            <AchievementItem isSmall achievement={achievement} />
+          </div>
+        ) : null
+      )}
     </div>
   );
 }
