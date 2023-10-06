@@ -249,7 +249,15 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async loadAchievements() {
+    async loadAllAchievements() {
+      try {
+        const { data } = await request.get(`${URL}/user/achievements/all`);
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMyAchievements() {
       try {
         const { data } = await request.get(`${URL}/user/achievements`, auth());
         return Promise.resolve(data);

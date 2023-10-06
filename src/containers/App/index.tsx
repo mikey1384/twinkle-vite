@@ -89,8 +89,8 @@ function App() {
   );
   const auth = useAppContext((v) => v.requestHelpers.auth);
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
-  const loadAchievements = useAppContext(
-    (v) => v.requestHelpers.loadAchievements
+  const loadMyAchievements = useAppContext(
+    (v) => v.requestHelpers.loadMyAchievements
   );
   const fetchTodayStats = useAppContext(
     (v) => v.requestHelpers.fetchTodayStats
@@ -308,7 +308,7 @@ function App() {
       onSetSessionLoaded();
     }
     async function initAchievements() {
-      const data = await loadAchievements();
+      const data = await loadMyAchievements();
       onSetAchievementsObj(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
