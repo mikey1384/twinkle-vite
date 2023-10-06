@@ -64,6 +64,7 @@ export default function ConvertModal({
           target={target}
         />
         <ToPanel
+          loading={loadingUserAchievements}
           achievements={achievements}
           achievementAP={achievementAP}
           target={target}
