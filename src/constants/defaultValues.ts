@@ -149,6 +149,42 @@ export const karmaPointTable: any = {
   moreToCome: 30_000
 };
 
+export const statsPerUserTypes: {
+  [key: string]: {
+    title: string | null;
+    achievements: string[];
+  };
+} = {
+  moderator: {
+    title: 'moderator',
+    achievements: ['teenager']
+  },
+  programmer: {
+    title: 'programmer',
+    achievements: ['teenager']
+  },
+  ['senior programmer']: {
+    title: null,
+    achievements: ['teenager', 'adult']
+  },
+  ["mikey's friend"]: {
+    title: null,
+    achievements: ['teenager', 'adult']
+  },
+  teacher: {
+    title: 'teacher',
+    achievements: ['teenager', 'adult', 'mentor']
+  },
+  headteacher: {
+    title: 'headteacher',
+    achievements: ['teenager', 'adult', 'mentor', 'sage']
+  },
+  headmaster: {
+    title: 'headmaster',
+    achievements: ['teenager', 'adult', 'mentor', 'sage', 'twinkle_founder']
+  }
+};
+
 export const videoRewardHash: { [key: string]: any } = {
   0: {
     xp: 20,

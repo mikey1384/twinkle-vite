@@ -14,6 +14,7 @@ export default function ConvertModal({
   target: User;
   onHide: () => void;
 }) {
+  const convertUser = useAppContext((v) => v.requestHelpers.convertUser);
   const loadAchievementsByUserId = useAppContext(
     (v) => v.requestHelpers.loadAchievementsByUserId
   );
@@ -84,6 +85,7 @@ export default function ConvertModal({
 
   async function handleSubmit() {
     setSubmitting(true);
+    await convertUser(target.id);
     onHide();
   }
 }
