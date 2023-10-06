@@ -73,7 +73,7 @@ export default function ToPanel({
       ...perks,
       username: target?.username,
       realName: target?.realName,
-      title: statsPerUserTypes[target?.userType]?.title
+      title: userLevel > 1 ? statsPerUserTypes[target?.userType]?.title : null
     };
   }, [
     achievementsObj,
