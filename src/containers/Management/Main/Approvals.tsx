@@ -66,7 +66,9 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
                 return (
                   <tr
                     key={item.id}
-                    onClick={() => setApprovalModalTarget(item)}
+                    onClick={() =>
+                      canManage ? setApprovalModalTarget(item) : null
+                    }
                     className={css`
                       cursor: ${canManage ? 'pointer' : ''};
                       td {
