@@ -5,11 +5,11 @@ import { css } from '@emotion/css';
 import { Content, User } from '~/types';
 
 export default function FromPanel({
-  achievements,
+  unlockedAchievements,
   loading,
   target
 }: {
-  achievements: Content[];
+  unlockedAchievements: Content[];
   loading: boolean;
   target: User;
 }) {
@@ -38,7 +38,10 @@ export default function FromPanel({
         `}
       >
         <CurrentPerks target={target} />
-        <AchievementStatus achievements={achievements} loading={loading} />
+        <AchievementStatus
+          unlockedAchievements={unlockedAchievements}
+          loading={loading}
+        />
       </div>
     </div>
   );

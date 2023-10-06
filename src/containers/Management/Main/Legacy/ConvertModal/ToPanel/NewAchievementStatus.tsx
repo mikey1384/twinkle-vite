@@ -4,17 +4,17 @@ import AchievementItem from '~/components/AchievementItem';
 import { Content } from '~/types';
 
 export default function NewAchievementStatus({
-  achievements,
+  unlockedAchievements,
   loading
 }: {
-  achievements: Content[];
+  unlockedAchievements: Content[];
   loading: boolean;
 }) {
   return loading ? (
     <Loading />
   ) : (
     <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-      {achievements.map((achievement: Content) => (
+      {unlockedAchievements.map((achievement: Content) => (
         <div style={{ flex: '0 0 50%' }} key={achievement.id}>
           <AchievementItem isSmall achievement={achievement} />
         </div>

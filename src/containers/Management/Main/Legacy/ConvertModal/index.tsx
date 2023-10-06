@@ -30,7 +30,7 @@ export default function ConvertModal({
   );
   const [submitting, setSubmitting] = useState(false);
   const [loadingUserAchievements, setLoadingUserAchievements] = useState(false);
-  const [achievements, setAchievements] = useState([]);
+  const [unlockedAchievements, setUnlockedAchievements] = useState([]);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -39,7 +39,7 @@ export default function ConvertModal({
     async function init() {
       setLoadingUserAchievements(true);
       const data = await loadAchievementsByUserId(target.id);
-      setAchievements(data);
+      setUnlockedAchievements(data);
       setLoadingUserAchievements(false);
     }
 
@@ -60,12 +60,12 @@ export default function ConvertModal({
       <main>
         <FromPanel
           loading={loadingUserAchievements}
-          achievements={achievements}
+          unlockedAchievements={unlockedAchievements}
           target={target}
         />
         <ToPanel
           loading={loadingUserAchievements}
-          achievements={achievements}
+          unlockedAchievements={unlockedAchievements}
           achievementAP={achievementAP}
           target={target}
         />

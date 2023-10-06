@@ -44,17 +44,17 @@ const newStatsPerUserTypes: {
 
 export default function ToPanel({
   achievementAP,
-  achievements,
+  unlockedAchievements,
   loading,
   target
 }: {
   achievementAP: Record<string, number>;
-  achievements: Content[];
+  unlockedAchievements: Content[];
   loading: boolean;
   target: User;
 }) {
   const newStats: StatsProp = useMemo(() => {
-    const currentAchievementTypes = achievements.map(
+    const currentAchievementTypes = unlockedAchievements.map(
       (achievement) => achievement.type
     );
 
@@ -110,7 +110,7 @@ export default function ToPanel({
     };
   }, [
     achievementAP,
-    achievements,
+    unlockedAchievements,
     target.realName,
     target.userType,
     target.username
@@ -141,7 +141,10 @@ export default function ToPanel({
         `}
       >
         <NewStats newStats={newStats} target={target} />
-        <NewAchievementStatus achievements={achievements} loading={loading} />
+        <NewAchievementStatus
+          unlockedAchievements={unlockedAchievements}
+          loading={loading}
+        />
       </div>
     </div>
   );
