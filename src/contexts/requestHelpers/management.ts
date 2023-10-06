@@ -34,6 +34,16 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async convertUser(userId: number) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(`${URL}/management/convert`, { userId }, auth());
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async deletePermanently({
       contentId,
       contentType,

@@ -4,43 +4,8 @@ import NewAchievementStatus from './NewAchievementStatus';
 import { css } from '@emotion/css';
 import { Content, User } from '~/types';
 import { levels } from '~/constants/userLevels';
+import { statsPerUserTypes } from '~/constants/defaultValues';
 import { StatsProp } from './types';
-
-const newStatsPerUserTypes: {
-  [role: string]: {
-    title: string | null;
-    achievements: string[];
-  };
-} = {
-  moderator: {
-    title: 'moderator',
-    achievements: ['teenager']
-  },
-  programmer: {
-    title: 'programmer',
-    achievements: ['teenager']
-  },
-  ['senior programmer']: {
-    title: null,
-    achievements: ['teenager', 'adult']
-  },
-  ["mikey's friend"]: {
-    title: null,
-    achievements: ['teenager', 'adult']
-  },
-  teacher: {
-    title: 'teacher',
-    achievements: ['teenager', 'adult', 'mentor']
-  },
-  headteacher: {
-    title: 'headteacher',
-    achievements: ['teenager', 'adult', 'mentor', 'sage']
-  },
-  headmaster: {
-    title: 'headmaster',
-    achievements: ['teenager', 'adult', 'mentor', 'sage', 'twinkle_founder']
-  }
-};
 
 export default function ToPanel({
   achievementsObj,
@@ -60,7 +25,7 @@ export default function ToPanel({
 
     // Get the achievements for the given user type
     const unlockableAchievementTypes =
-      newStatsPerUserTypes[target.userType]?.achievements || [];
+      statsPerUserTypes[target.userType]?.achievements || [];
 
     // Combine current and unlockable achievement types and remove duplicates
     return Array.from(
@@ -108,7 +73,7 @@ export default function ToPanel({
       ...perks,
       username: target?.username,
       realName: target?.realName,
-      title: newStatsPerUserTypes[target?.userType]?.title
+      title: statsPerUserTypes[target?.userType]?.title
     };
   }, [
     achievementsObj,
