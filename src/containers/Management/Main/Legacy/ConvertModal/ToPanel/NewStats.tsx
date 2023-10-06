@@ -43,7 +43,7 @@ export default function NewStats({
               ({newStats.realName})
             </small>
           </td>
-          <td>{newStats.title}</td>
+          <td>{newStats.title || <Check checked={false} />}</td>
           <td style={{ textAlign: 'center' }}>{newStats.level}</td>
           <td style={{ textAlign: 'center' }}>
             <Check checked={!!newStats.canEdit} />
