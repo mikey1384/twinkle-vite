@@ -515,6 +515,7 @@ export const FOUNDER_LABEL = 'Founder';
 
 export const TEENAGER_ACHIEVEMENT_ID = 7;
 export const ADULT_ACHIEVEMENT_ID = 8;
+export const GRAMMAR_TYCOON_ACHIEVEMENT_ID = 6;
 export const MISSION_MASTER_ACHIEVEMENT_ID = 1;
 export const MENTOR_ACHIEVEMENT_ID = 3;
 export const SAGE_ACHIEVEMENT_ID = 4;
