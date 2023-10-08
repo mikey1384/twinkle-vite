@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
 export const container = css`
-  height: 100%;
+  height: CALC(100% - 1rem);
   margin-top: 1rem;
   @media (max-width: ${mobileMaxWidth}) {
     margin-top: 0;
