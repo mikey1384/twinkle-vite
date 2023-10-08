@@ -67,12 +67,14 @@ export default function UserReducer(
     case 'LOGOUT':
       return {
         ...state,
+        achievementsObj: {},
         myState: initialMyState
       };
     case 'LOGOUT_AND_OPEN_SIGNIN_MODAL':
       return {
         ...state,
         signinModalShown: true,
+        achievementsObj: {},
         myState: initialMyState
       };
     case 'OPEN_SIGNIN_MODAL':
