@@ -196,10 +196,10 @@ export default function ItemPanel({
           <div style={{ width: '100%', marginTop: '1.5rem' }}>
             <h3
               className={css`
-                margin-top: 1.5rem;
+                margin-top: 1.7rem;
                 margin-bottom: -0.5rem;
                 font-weight: bold;
-                font-size: 1.7rem;
+                font-size: 1.5rem;
                 color: ${Color.black()};
               `}
             >
