@@ -10,6 +10,7 @@ import Teenager from '~/components/AchievementItems/Big/Teenager';
 import Sage from '~/components/AchievementItems/Big/Sage';
 import TwinkleFounder from '~/components/AchievementItems/Big/TwinkleFounder';
 import UserLevelStatus from './UserLevelStatus';
+import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function Achievements() {
@@ -24,7 +25,7 @@ export default function Achievements() {
   }, [achievementsObj]);
 
   return (
-    <div style={{ paddingBottom: '15rem' }}>
+    <div style={{ paddingBottom: userId ? '15rem' : 0 }}>
       <div
         className={css`
           margin-bottom: 2rem;
@@ -51,35 +52,54 @@ export default function Achievements() {
           Achievements
         </p>
       </div>
-      {userId && (
-        <UserLevelStatus
-          style={{
-            marginBottom: '4rem'
-          }}
-        />
-      )}
-      {achievementKeys.map((key, index) => {
-        const Component = {
-          adult: Adult,
-          mission: Mission,
-          summoner: Summoner,
-          grammar: Grammar,
-          teenager: Teenager,
-          mentor: Mentor,
-          sage: Sage,
-          twinkle_founder: TwinkleFounder
-        }[key];
 
-        return (
-          Component && (
-            <Component
-              key={key}
-              data={achievementsObj[key]}
-              style={{ marginTop: index > 0 ? '1rem' : 0 }}
+      {!userId ? (
+        <div
+          className={css`
+            text-align: center;
+            font-size: 2.3rem;
+            font-weight: bold;
+            color: ${Color.black()};
+            margin-top: 17vh;
+          `}
+        >
+          Please log in to view this page
+        </div>
+      ) : !achievementKeys.length ? (
+        <Loading />
+      ) : (
+        <>
+          {userId && (
+            <UserLevelStatus
+              style={{
+                marginBottom: '4rem'
+              }}
             />
-          )
-        );
-      })}
+          )}
+          {achievementKeys.map((key, index) => {
+            const Component = {
+              adult: Adult,
+              mission: Mission,
+              summoner: Summoner,
+              grammar: Grammar,
+              teenager: Teenager,
+              mentor: Mentor,
+              sage: Sage,
+              twinkle_founder: TwinkleFounder
+            }[key];
+
+            return (
+              Component && (
+                <Component
+                  key={key}
+                  data={achievementsObj[key]}
+                  style={{ marginTop: index > 0 ? '1rem' : 0 }}
+                />
+              )
+            );
+          })}
+        </>
+      )}
     </div>
   );
 }
