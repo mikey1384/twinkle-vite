@@ -28,7 +28,7 @@ export default function UserTitle({
   const [titleSelectionModalShown, setTitleSelectionModalShown] =
     useState(false);
   const appliedUserLevel = useMemo(() => {
-    return level > 1 ? level : user.authLevel ? user.authLevel + 1 : 0;
+    return level > 1 ? level : user.authLevel ? user.authLevel + 1 : 1;
   }, [level, user.authLevel]);
   const userTitle = useMemo(() => {
     if (user.title) return user.title;
@@ -39,11 +39,13 @@ export default function UserTitle({
   }, [user.title, user.userType]);
 
   const appliedUserTitle = useMemo(() => {
+    if ((user.authLevel || 0) + 1 > level || appliedUserLevel <= 1)
+      return userTitle;
     if (userTitle) {
       return `${userTitle} (lv ${appliedUserLevel})`;
     }
     return appliedUserLevel > 1 ? `level ${appliedUserLevel}` : '';
-  }, [userTitle, appliedUserLevel]);
+  }, [appliedUserLevel, level, user.authLevel, userTitle]);
 
   return appliedUserTitle ? (
     <div className={className} style={style}>
