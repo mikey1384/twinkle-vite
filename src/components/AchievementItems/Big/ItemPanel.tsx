@@ -203,7 +203,7 @@ export default function ItemPanel({
                 color: ${Color.black()};
               `}
             >
-              {progressObj.label}
+              {progressObj.label}: {addCommasToNumber(progressObj.currentValue)}
             </h3>
             <ProgressBar progress={progress} />
           </div>
