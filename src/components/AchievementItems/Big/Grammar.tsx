@@ -4,7 +4,7 @@ import ItemPanel from './ItemPanel';
 
 export default function Grammar({
   isNotification,
-  data: { isUnlocked, ap, title, description, unlockMessage },
+  data: { isUnlocked, ap, title, description, progressObj, unlockMessage },
   style
 }: {
   isNotification?: boolean;
@@ -14,6 +14,7 @@ export default function Grammar({
     title: string;
     description: string;
     unlockMessage: string;
+    progressObj: { label: string; currentValue: number; targetValue: number };
   };
   style?: React.CSSProperties;
 }) {
@@ -27,6 +28,7 @@ export default function Grammar({
       description={description}
       unlockMessage={unlockMessage}
       requirements={['Earn 100,000 Twinkle Coins playing Grammarbles']}
+      progressObj={progressObj}
       badgeSrc={GrammarBadge}
     />
   );

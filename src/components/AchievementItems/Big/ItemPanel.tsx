@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
+import Icon from '~/components/Icon';
+import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 export default function ItemPanel({
@@ -14,6 +15,7 @@ export default function ItemPanel({
   requirements = [],
   badgeSrc,
   milestones,
+  progressObj,
   style
 }: {
   ap: number;
@@ -25,6 +27,7 @@ export default function ItemPanel({
   requirements?: React.ReactNode[];
   badgeSrc?: string;
   milestones?: { name: string; completed: boolean }[];
+  progressObj?: { label: string; currentValue: number; targetValue: number };
   style?: React.CSSProperties;
 }) {
   const milestonesShown = milestones && milestones.length > 0 && !isUnlocked;
@@ -32,6 +35,15 @@ export default function ItemPanel({
     () => (typeof ap === 'number' ? addCommasToNumber(ap) : null),
     [ap]
   );
+  const progress = useMemo(() => {
+    if (progressObj) {
+      const { currentValue, targetValue } = progressObj;
+      return Math.ceil(100 * (currentValue / targetValue));
+    } else {
+      return 0;
+    }
+  }, [progressObj]);
+
   return (
     <div
       className={css`
@@ -180,6 +192,22 @@ export default function ItemPanel({
             {requirement}
           </div>
         ))}
+        {progressObj && (
+          <div style={{ width: '100%', marginTop: '1.5rem' }}>
+            <h3
+              className={css`
+                margin-top: 1.5rem;
+                margin-bottom: -0.5rem;
+                font-weight: bold;
+                font-size: 1.7rem;
+                color: ${Color.black()};
+              `}
+            >
+              {progressObj.label}
+            </h3>
+            <ProgressBar progress={progress} />
+          </div>
+        )}
       </div>
       {milestonesShown && !isNotification && (
         <div
