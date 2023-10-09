@@ -96,7 +96,7 @@ export default function MissionActions(dispatch: Dispatch) {
         attempt
       });
     },
-    onSetMyMissionAttempts(myAttempts: object[]) {
+    onSetMyMissionAttempts(myAttempts: object) {
       return dispatch({
         type: 'SET_MY_MISSION_ATTEMPTS',
         myAttempts
