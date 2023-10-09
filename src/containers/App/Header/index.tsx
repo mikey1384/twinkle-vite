@@ -312,6 +312,7 @@ export default function Header({
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
     socket.on('ai_card_offer_cancelled', handleAICardOfferCancel);
     socket.on('ai_message_done', handleAIMessageDone);
+    socket.on('approval_result_received', handleApprovalResultReceived);
     socket.on('assets_sent', handleAssetsSent);
     socket.on('ban_status_updated', handleBanStatusUpdate);
     socket.on('signal_received', handleCallSignal);
@@ -368,6 +369,10 @@ export default function Header({
       socket.removeListener('ai_card_offer_posted', handleAICardOfferPosted);
       socket.removeListener('ai_card_offer_cancelled', handleAICardOfferCancel);
       socket.removeListener('ai_message_done', handleAIMessageDone);
+      socket.removeListener(
+        'approval_result_received',
+        handleApprovalResultReceived
+      );
       socket.removeListener('assets_sent', handleAssetsSent);
       socket.removeListener('ban_status_updated', handleBanStatusUpdate);
       socket.removeListener('signal_received', handleCallSignal);
@@ -554,6 +559,15 @@ export default function Header({
         onUpdateAICard({
           cardId: card.id,
           newState: { myOffer: feed.offer }
+        });
+      }
+    }
+
+    function handleApprovalResultReceived({ type }: { type: string }) {
+      if (type === 'mentor') {
+        onSetUserState({
+          userId,
+          newState: { title: 'teacher' }
         });
       }
     }
