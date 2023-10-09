@@ -167,11 +167,12 @@ function Message({
   } = useKeyContext((v) => v.theme);
   const {
     isCreator,
+    level,
     userId: myId,
     username: myUsername,
     profilePicUrl: myProfilePicUrl
   } = useKeyContext((v) => v.myState);
-  const { level, canDelete, canEdit, canReward } = useUserLevel(myId);
+  const { canDelete, canEdit, canReward } = useUserLevel(myId);
   const spoilerClickedRef = useRef(false);
   const [highlighted, setHighlighted] = useState(false);
   const [reactionsMenuShown, setReactionsMenuShown] = useState(false);

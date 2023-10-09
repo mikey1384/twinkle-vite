@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { useUserLevel } from '~/helpers/hooks';
 import { SELECTED_LANGUAGE, TEACHER_LEVEL } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import KarmaExplanationModal from './KarmaExplanationModal';
@@ -13,8 +12,9 @@ export default function KarmaStatus() {
     (v) => v.requestHelpers.loadKarmaPoints
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { userId, karmaPoints, userType } = useKeyContext((v) => v.myState);
-  const { level } = useUserLevel(userId);
+  const { level, userId, karmaPoints, userType } = useKeyContext(
+    (v) => v.myState
+  );
   const [karmaExplanationShown, setKarmaExplanationShown] = useState(false);
   const [loadingKarma, setLoadingKarma] = useState(false);
   const [numTwinklesRewarded, setNumTwinklesRewarded] = useState(0);

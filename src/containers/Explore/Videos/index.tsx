@@ -6,7 +6,7 @@ import ContinueWatchingPanel from './ContinueWatchingPanel';
 import AddPlaylistModal from '~/components/Modals/AddPlaylistModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { scrollElementToCenter } from '~/helpers';
-import { useSearch, useUserLevel } from '~/helpers/hooks';
+import { useSearch } from '~/helpers/hooks';
 import { MOD_LEVEL } from '~/constants/defaultValues';
 import {
   useAppContext,
@@ -22,8 +22,7 @@ const allPlaylistsLabel = localize('allPlaylists');
 export default function Videos() {
   const loadPlaylists = useAppContext((v) => v.requestHelpers.loadPlaylists);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
-  const { userId } = useKeyContext((v) => v.myState);
-  const { level } = useUserLevel(userId);
+  const { level, userId } = useKeyContext((v) => v.myState);
   const addPlaylistModalShown = useExploreContext(
     (v) => v.state.videos.addPlaylistModalShown
   );

@@ -39,8 +39,9 @@ export default function UserTitle({
   }, [user.title, user.userType]);
 
   const appliedUserTitle = useMemo(() => {
-    if ((user.authLevel || 0) + 1 > level || appliedUserLevel <= 1)
+    if ((user.authLevel || 0) + 1 > level || appliedUserLevel <= 1) {
       return userTitle;
+    }
     if (userTitle) {
       return `${userTitle} (lv ${appliedUserLevel})`;
     }

@@ -71,10 +71,10 @@ export default function Body({
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
 
-  const { profileTheme, twinkleCoins, userId } = useKeyContext(
+  const { level, profileTheme, twinkleCoins, userId } = useKeyContext(
     (v) => v.myState
   );
-  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
+  const { canDelete, canEdit, canReward } = useUserLevel(userId);
 
   const {
     reward: { color: rewardColor }
