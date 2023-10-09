@@ -138,9 +138,9 @@ function Comment({
   const updateCommentPinStatus = useAppContext(
     (v) => v.requestHelpers.updateCommentPinStatus
   );
-  const { banned, isCreator, twinkleCoins, userId, profileTheme } =
+  const { banned, isCreator, level, twinkleCoins, userId, profileTheme } =
     useKeyContext((v) => v.myState);
-  const { level, canDelete, canEdit, canReward } = useUserLevel(userId);
+  const { canDelete, canEdit, canReward } = useUserLevel(userId);
   const {
     link: { color: linkColor },
     reward: { color: rewardColor }
