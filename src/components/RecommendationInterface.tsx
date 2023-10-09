@@ -12,7 +12,6 @@ import {
   TEACHER_LEVEL
 } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { useUserLevel } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import SwitchButton from './Buttons/SwitchButton';
 import localize from '~/constants/localize';
@@ -46,8 +45,7 @@ export default function RecommendationInterface({
   theme?: string;
   uploaderId?: number;
 }) {
-  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
-  const { level } = useUserLevel(userId);
+  const { level, userId, twinkleCoins } = useKeyContext((v) => v.myState);
   const [recommending, setRecommending] = useState(false);
   const expectedContentLength = useMemo(() => {
     if (contentType !== 'comment') {
