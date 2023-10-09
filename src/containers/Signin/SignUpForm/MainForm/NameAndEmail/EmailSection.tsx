@@ -38,12 +38,12 @@ export default function EmailSection({
           setEmailErrorMsg('Invalid email address');
           onSetHasEmailError(true);
         } else {
-          setSendVerificationButtonShown(true);
+          setSendVerificationButtonShown(userType === 'mentor');
         }
       }
     }, 1000);
     return () => clearTimeout(timer);
-  }, [email, onSetHasEmailError]);
+  }, [email, onSetHasEmailError, userType]);
 
   return (
     <section style={{ marginTop: '2rem' }}>
