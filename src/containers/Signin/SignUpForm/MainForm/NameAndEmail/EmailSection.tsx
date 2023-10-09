@@ -48,7 +48,9 @@ export default function EmailSection({
   return (
     <section style={{ marginTop: '2rem' }}>
       <label>
-        {userType === 'student' ? emailYoursOrYourParentsLabel : 'Email'}
+        {userType === 'student'
+          ? emailYoursOrYourParentsLabel
+          : 'Work Email Address'}
       </label>
       <Input
         value={email}
