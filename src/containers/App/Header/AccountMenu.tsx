@@ -5,7 +5,7 @@ import Icon from '~/components/Icon';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/io';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
 
 const logInLabel = localize('logIn');
@@ -20,9 +20,14 @@ function AccountMenu({
   className?: string;
   onSetBalanceModalShown: () => void;
 }) {
+  const location = useLocation();
   const navigate = useNavigate();
   const { username, userId, managementLevel, twinkleCoins } = useKeyContext(
     (v) => v.myState
+  );
+  const isOnProfilePage = useMemo(
+    () => location.pathname === `/users/${username}`,
+    [location, username]
   );
   const {
     login: { color: loginColor }
@@ -42,7 +47,7 @@ function AccountMenu({
             <span style={{ marginLeft: '1rem' }}>{profileLabel}</span>
           </>
         ),
-        onClick: () => navigate(`/users/${username}`)
+        onClick: () => (isOnProfilePage ? null : navigate(`/users/${username}`))
       }
     ];
     if (managementLevel > 0) {
@@ -67,7 +72,7 @@ function AccountMenu({
     });
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [managementLevel, username]);
+  }, [isOnProfilePage, managementLevel, username]);
 
   return (
     <div className="desktop" style={{ display: 'flex', alignItems: 'center' }}>
