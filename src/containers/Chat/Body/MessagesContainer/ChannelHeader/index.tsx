@@ -18,7 +18,7 @@ import {
 } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useInterval, useTheme, useUserLevel } from '~/helpers/hooks';
+import { useInterval, useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import LocalContext from '../../../Context';
 import localize from '~/constants/localize';
@@ -74,10 +74,9 @@ export default function ChannelHeader({
     },
     state: { allFavoriteChannelIds, subjectSearchResults }
   } = useContext(LocalContext);
-  const { banned, profilePicUrl, userId, username } = useKeyContext(
+  const { banned, level, profilePicUrl, userId, username } = useKeyContext(
     (v) => v.myState
   );
-  const { level } = useUserLevel(userId);
   const {
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor },

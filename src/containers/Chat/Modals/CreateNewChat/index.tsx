@@ -3,7 +3,6 @@ import Modal from '~/components/Modal';
 import RegularMenu from './RegularMenu';
 import TeacherMenu from './TeacherMenu';
 import { useKeyContext } from '~/contexts';
-import { useUserLevel } from '~/helpers/hooks';
 import { TEACHER_LEVEL } from '~/constants/defaultValues';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
@@ -18,8 +17,7 @@ export default function CreateNewChatModal({
   onHide: () => void;
   onDone: (v: any) => void;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
-  const { level } = useUserLevel(userId);
+  const { level } = useKeyContext((v) => v.myState);
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/CreateNewChat">

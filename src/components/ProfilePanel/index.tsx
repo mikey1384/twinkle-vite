@@ -17,12 +17,7 @@ import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import {
-  useContentState,
-  useLazyLoad,
-  useUserLevel,
-  useTheme
-} from '~/helpers/hooks';
+import { useContentState, useLazyLoad, useTheme } from '~/helpers/hooks';
 import { useInView } from 'react-intersection-observer';
 import {
   useAppContext,
@@ -81,11 +76,11 @@ function ProfilePanel({
 
   const {
     lastActive,
+    level,
     loaded: profileLoaded,
     numMessages,
     username: profileName,
     twinkleXP,
-    userType,
     profileFirstRow,
     profileSecondRow,
     profileThirdRow,
@@ -126,7 +121,6 @@ function ProfilePanel({
     (v) => v.actions.onSetPlaceholderHeight
   );
   const onSetVisible = useContentContext((v) => v.actions.onSetVisible);
-  const { level } = useUserLevel(profile.id);
 
   const [ComponentRef, inView] = useInView({
     rootMargin: '50px 0px 0px 0px',
@@ -247,14 +241,6 @@ function ProfilePanel({
     () => !profileLoaded || heightNotSet || visible || inView,
     [heightNotSet, inView, profileLoaded, visible]
   );
-  const displayedUserTitle = useMemo(() => {
-    if (userType) {
-      return userType.includes('teacher')
-        ? `teacher (lv${level})`
-        : `${userType} (lv${level})`;
-    }
-    return level > 1 ? `level ${level}` : '';
-  }, [level, userType]);
 
   return (
     <div style={style} ref={ComponentRef} key={profileId}>
@@ -292,7 +278,7 @@ function ProfilePanel({
                   border-right: none;
                 }
               `}
-              style={{ padding: displayedUserTitle ? '0.5rem' : undefined }}
+              style={{ padding: level > 1 ? '0.5rem' : '' }}
             >
               <UserTitle
                 user={profile}

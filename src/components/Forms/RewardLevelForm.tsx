@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import { useUserLevel } from '~/helpers/hooks';
 import { TEACHER_LEVEL } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
@@ -44,8 +43,7 @@ export default function RewardLevelForm({
   onSetRewardLevel: (rewardLevel: number) => void;
   style?: React.CSSProperties;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
-  const { level } = useUserLevel(userId);
+  const { level } = useKeyContext((v) => v.myState);
   const {
     rewardLevelForm: {
       color: rewardLevelFormColor,

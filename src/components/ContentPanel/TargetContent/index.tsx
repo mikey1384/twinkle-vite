@@ -77,9 +77,9 @@ export default function TargetContent({
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
-  const { profileTheme, profilePicUrl, userId, twinkleCoins, username } =
+  const { level, profileTheme, profilePicUrl, userId, twinkleCoins, username } =
     useKeyContext((v) => v.myState);
-  const { level, canReward } = useUserLevel(userId);
+  const { canReward } = useUserLevel(userId);
 
   const {
     link: { color: linkColor },

@@ -32,7 +32,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useInputContext, useKeyContext } from '~/contexts';
-import { useTheme, useUserLevel } from '~/helpers/hooks';
+import { useTheme } from '~/helpers/hooks';
 import localize from '~/constants/localize';
 import { Content } from '~/types';
 
@@ -88,10 +88,8 @@ function InputForm({
   theme?: string;
   targetCommentId?: number | null;
 }) {
-  const { userId, profileTheme, twinkleXP, fileUploadLvl } = useKeyContext(
-    (v) => v.myState
-  );
-  const { level } = useUserLevel(userId);
+  const { level, userId, profileTheme, twinkleXP, fileUploadLvl } =
+    useKeyContext((v) => v.myState);
 
   const {
     skeuomorphicDisabled: {

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import moment from 'moment';
+import { TEACHER_LEVEL } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { useUserLevel } from '~/helpers/hooks';
@@ -35,8 +36,8 @@ export default function SubjectItem({
   const [marginBottom, setMarginBottom] = useState(`${marginHeight}rem`);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(null);
-  const { userId: myId } = useKeyContext((v) => v.myState);
-  const { level, canDelete } = useUserLevel(myId);
+  const { userId: myId, level } = useKeyContext((v) => v.myState);
+  const { canDelete } = useUserLevel(myId);
 
   useEffect(() => {
     const numLines = SubjectTitleRef.current.clientHeight / subjectTitleHeight;
@@ -50,7 +51,10 @@ export default function SubjectItem({
 
   const buttons = useMemo(() => {
     const result = [];
-    if ((currentSubjectId !== id && level > 3 && canDelete) || userIsOwner) {
+    if (
+      (currentSubjectId !== id && level >= TEACHER_LEVEL && canDelete) ||
+      userIsOwner
+    ) {
       result.push({
         color: 'rose',
         opacity: 0.5,

@@ -7,7 +7,7 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import Table from '../../Table';
 import Icon from '~/components/Icon';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
-import { useSearch, useUserLevel } from '~/helpers/hooks';
+import { useSearch } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
 import { capitalize } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
@@ -25,8 +25,7 @@ export default function AddModeratorModal({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
-  const { userId } = useKeyContext((v) => v.myState);
-  const { level } = useUserLevel(userId);
+  const { level } = useKeyContext((v) => v.myState);
   const addModerators = useAppContext((v) => v.requestHelpers.addModerators);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
   const onEditModerators = useManagementContext(

@@ -115,10 +115,11 @@ export default function Details({
   } = useKeyContext((v) => v.theme);
   const {
     banned,
+    level,
     twinkleCoins,
     userId: myId
   } = useKeyContext((v) => v.myState);
-  const { level, canDelete, canEdit, canEditPlaylists, canReward } =
+  const { canDelete, canEdit, canEditPlaylists, canReward } =
     useUserLevel(myId);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const onSetXpRewardInterfaceShown = useContentContext(

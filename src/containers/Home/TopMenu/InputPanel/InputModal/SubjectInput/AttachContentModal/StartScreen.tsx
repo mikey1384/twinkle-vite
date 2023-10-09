@@ -7,7 +7,6 @@ import { isMobile, returnImageFileFromUrl } from '~/helpers';
 import { Color } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useInputContext, useKeyContext } from '~/contexts';
-import { useUserLevel } from '~/helpers/hooks';
 import {
   FILE_UPLOAD_XP_REQUIREMENT,
   mb,
@@ -32,8 +31,7 @@ export default function StartScreen({
   const onSetSubjectAttachment = useInputContext(
     (v) => v.actions.onSetSubjectAttachment
   );
-  const { userId, fileUploadLvl, twinkleXP } = useKeyContext((v) => v.myState);
-  const { level } = useUserLevel(userId);
+  const { level, fileUploadLvl, twinkleXP } = useKeyContext((v) => v.myState);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const FileInputRef: React.MutableRefObject<any> = useRef(null);
   const maxSize = useMemo(

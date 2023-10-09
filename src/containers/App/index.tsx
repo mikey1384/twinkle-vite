@@ -38,12 +38,7 @@ import { Global } from '@emotion/react';
 import { socket } from '~/constants/io';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
-import {
-  useMyState,
-  useTheme,
-  useScrollPosition,
-  useUserLevel
-} from '~/helpers/hooks';
+import { useMyState, useTheme, useScrollPosition } from '~/helpers/hooks';
 import {
   isMobile,
   getSectionFromPathname,
@@ -115,6 +110,7 @@ function App() {
   } = theme;
   const {
     achievementPoints,
+    level,
     profilePicUrl,
     signinModalShown,
     twinkleCoins,
@@ -122,7 +118,6 @@ function App() {
     userId,
     username
   } = myState;
-  const { level } = useUserLevel(userId);
 
   const prevUserId = useRef(userId);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
