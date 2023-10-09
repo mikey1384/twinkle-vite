@@ -176,7 +176,7 @@ export const statsPerUserTypes: {
     achievements: ['teenager', 'adult', 'mentor']
   },
   headteacher: {
-    title: 'headteacher',
+    title: 'teacher',
     achievements: ['teenager', 'adult', 'mentor', 'sage']
   },
   headmaster: {
