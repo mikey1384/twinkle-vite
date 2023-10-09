@@ -1810,7 +1810,7 @@ export default function ChatReducer(
       };
     }
     case 'RECEIVE_FIRST_MSG': {
-      const messageId = uuidv1();
+      const messageId = action.message.id ? action.message.id : uuidv1();
       return {
         ...state,
         numUnreads:

@@ -908,10 +908,10 @@ export default function Header({
       let isDuplicate = false;
       if (selectedChannelId === 0) {
         if (
-          members.filter((member) => member.userId !== userId)[0].userId ===
+          members.filter((member) => member.id !== userId)[0].id ===
           channelsObj[selectedChannelId].members.filter(
-            (member: { userId: number }) => member.userId !== userId
-          )[0].userId
+            (member: { id: number }) => member.id !== userId
+          )[0].id
         ) {
           isDuplicate = true;
         }
