@@ -2,16 +2,17 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import MissionBadge from '~/assets/mission.png';
 import ItemPanel from './ItemPanel';
+import { useKeyContext } from '~/contexts';
 
 export default function Mission({
   isNotification,
-  data: { ap, title, description, unlockMessage, isUnlocked, milestones },
+  data: { id, ap, title, description, unlockMessage, milestones },
   style
 }: {
   isNotification?: boolean;
   data: {
+    id: number;
     ap: number;
-    isUnlocked: boolean;
     title: string;
     description: string;
     unlockMessage: string;
@@ -19,12 +20,13 @@ export default function Mission({
   };
   style?: React.CSSProperties;
 }) {
+  const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
   return (
     <ItemPanel
       ap={ap}
+      isUnlocked={unlockedAchievementIds.includes(id)}
       itemName={title}
       isNotification={isNotification}
-      isUnlocked={isUnlocked}
       description={description}
       unlockMessage={unlockMessage}
       requirements={[
