@@ -65,19 +65,6 @@ export default function UserActions(dispatch: Dispatch) {
         achievementsObj
       });
     },
-    onUpdateAchievementsObj({
-      achievementType,
-      newState
-    }: {
-      achievementType: string;
-      newState: object;
-    }) {
-      return dispatch({
-        type: 'UPDATE_ACHIEVEMENTS_OBJ',
-        achievementType,
-        newState
-      });
-    },
     onSearchUsers(users: any[]) {
       return dispatch({
         type: 'SEARCH_USERS',
@@ -136,6 +123,22 @@ export default function UserActions(dispatch: Dispatch) {
       return dispatch({
         type: 'TOGGLE_WORDLE_STRICT_MODE',
         strictMode
+      });
+    },
+    onUpdateAchievementUnlockStatus({
+      userId,
+      achievementType,
+      isUnlocked
+    }: {
+      userId: number;
+      achievementType: string;
+      isUnlocked: boolean;
+    }) {
+      return dispatch({
+        type: 'UPDATE_ACHIEVEMENT_UNLOCK_STATUS',
+        userId,
+        achievementType,
+        isUnlocked
       });
     },
     onUpdateNumWordsCollected(numWordsCollected: number) {
