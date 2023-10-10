@@ -12,6 +12,7 @@ import Link from '~/components/Link';
 import UserDetails from '~/components/UserDetails';
 import Loading from '~/components/Loading';
 import UserTitle from '~/components/Texts/UserTitle';
+import AchievementBadges from './AchievementBadges';
 import { useNavigate } from 'react-router-dom';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
@@ -270,6 +271,7 @@ function ProfilePanel({
                 border-top-left-radius: ${borderRadius};
                 border-bottom: none;
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 @media (max-width: ${mobileMaxWidth}) {
@@ -291,6 +293,7 @@ function ProfilePanel({
                     : 'none'
                 }}
               />
+              <AchievementBadges />
             </div>
             <div
               className={css`
