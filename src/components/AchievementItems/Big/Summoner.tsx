@@ -1,28 +1,30 @@
 import React from 'react';
 import SummonerBadge from '~/assets/summoner.png';
 import ItemPanel from './ItemPanel';
+import { useKeyContext } from '~/contexts';
 
 export default function Summoner({
   isNotification,
-  data: { ap, isUnlocked, title, description, unlockMessage },
+  data: { id, ap, title, description, unlockMessage },
   style
 }: {
   isNotification?: boolean;
   data: {
+    id: number;
     ap: number;
-    isUnlocked: boolean;
     title: string;
     description: string;
     unlockMessage: string;
   };
   style?: React.CSSProperties;
 }) {
+  const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
   return (
     <ItemPanel
+      isUnlocked={unlockedAchievementIds.includes(id)}
       isNotification={isNotification}
       style={style}
       ap={ap}
-      isUnlocked={isUnlocked}
       itemName={title}
       description={description}
       unlockMessage={unlockMessage}

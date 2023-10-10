@@ -7,13 +7,13 @@ import { useKeyContext } from '~/contexts';
 
 export default function Teenager({
   isNotification,
-  data: { isUnlocked, ap, title, description, milestones, unlockMessage },
+  data: { id, ap, title, description, milestones, unlockMessage },
   style
 }: {
   isNotification?: boolean;
   data: {
+    id: number;
     ap: number;
-    isUnlocked: boolean;
     title: string;
     description: string;
     unlockMessage: string;
@@ -21,7 +21,7 @@ export default function Teenager({
   };
   style?: React.CSSProperties;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const { userId, unlockedAchievementIds } = useKeyContext((v) => v.myState);
   const [formModalShown, setFormModalShown] = useState(false);
   return (
     <ErrorBoundary componentPath="AchievementItems/Teenager">
@@ -29,7 +29,7 @@ export default function Teenager({
         isNotification={isNotification}
         style={style}
         ap={ap}
-        isUnlocked={isUnlocked}
+        isUnlocked={unlockedAchievementIds.includes(id)}
         itemName={title}
         milestones={milestones}
         description={description}

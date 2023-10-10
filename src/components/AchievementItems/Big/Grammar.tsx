@@ -1,16 +1,17 @@
 import React from 'react';
 import GrammarBadge from '~/assets/grammar.png';
 import ItemPanel from './ItemPanel';
+import { useKeyContext } from '~/contexts';
 
 export default function Grammar({
   isNotification,
-  data: { isUnlocked, ap, title, description, progressObj, unlockMessage },
+  data: { id, ap, title, description, progressObj, unlockMessage },
   style
 }: {
   isNotification?: boolean;
   data: {
+    id: number;
     ap: number;
-    isUnlocked: boolean;
     title: string;
     description: string;
     unlockMessage: string;
@@ -18,12 +19,13 @@ export default function Grammar({
   };
   style?: React.CSSProperties;
 }) {
+  const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
   return (
     <ItemPanel
       isNotification={isNotification}
       style={style}
       ap={ap}
-      isUnlocked={isUnlocked}
+      isUnlocked={unlockedAchievementIds.includes(id)}
       itemName={title}
       description={description}
       unlockMessage={unlockMessage}
