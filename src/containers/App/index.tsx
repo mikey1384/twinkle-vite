@@ -64,13 +64,6 @@ function App() {
   const onCloseSigninModal = useAppContext(
     (v) => v.user.actions.onCloseSigninModal
   );
-  const achievementsObj: Record<
-    string,
-    {
-      isUnlocked?: boolean;
-      ap?: number;
-    }
-  > = useAppContext((v) => v.user.state.achievementsObj);
   const onSetAchievementsObj = useAppContext(
     (v) => v.user.actions.onSetAchievementsObj
   );
@@ -84,8 +77,8 @@ function App() {
   );
   const auth = useAppContext((v) => v.requestHelpers.auth);
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
-  const loadMyAchievements = useAppContext(
-    (v) => v.requestHelpers.loadMyAchievements
+  const loadAllAchievements = useAppContext(
+    (v) => v.requestHelpers.loadAllAchievements
   );
   const fetchTodayStats = useAppContext(
     (v) => v.requestHelpers.fetchTodayStats
@@ -109,7 +102,6 @@ function App() {
     background: { color: backgroundColor }
   } = theme;
   const {
-    achievementPoints,
     level,
     profilePicUrl,
     signinModalShown,
@@ -303,29 +295,11 @@ function App() {
       onSetSessionLoaded();
     }
     async function initAchievements() {
-      const data = await loadMyAchievements();
+      const data = await loadAllAchievements();
       onSetAchievementsObj(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth, location.pathname, pageVisible, signinModalShown]);
-
-  useEffect(() => {
-    if (userId) {
-      let totalAP = 0;
-      for (const [, value] of Object.entries(achievementsObj)) {
-        if (value?.isUnlocked) {
-          totalAP += value?.ap || 0;
-        }
-      }
-      if (totalAP !== achievementPoints) {
-        onSetUserState({
-          userId,
-          newState: { achievementPoints: totalAP }
-        });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [achievementPoints, achievementsObj]);
 
   useEffect(() => {
     if (typeof document.hidden !== 'undefined') {
