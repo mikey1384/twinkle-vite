@@ -293,7 +293,9 @@ function ProfilePanel({
                     : 'none'
                 }}
               />
-              <AchievementBadges />
+              <AchievementBadges
+                unlockedAchievementIds={profile.unlockedAchievementIds}
+              />
             </div>
             <div
               className={css`

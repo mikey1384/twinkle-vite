@@ -1,4 +1,5 @@
 import { initialMyState } from '../AppContext';
+import { achievementTypeToId } from '~/constants/defaultValues';
 
 export default function UserReducer(
   state: { [key: string]: any },
@@ -114,14 +115,29 @@ export default function UserReducer(
         ...state,
         achievementsObj: action.achievementsObj
       };
-    case 'UPDATE_ACHIEVEMENTS_OBJ':
+    case 'UPDATE_ACHIEVEMENT_UNLOCK_STATUS':
+      console.log(
+        (state.userObj[action.userId] || {}).unlockedAchievementIds || [],
+        achievementTypeToId[action.achievementType]
+      );
       return {
         ...state,
-        achievementsObj: {
-          ...state.achievementsObj,
-          [action.achievementType]: {
-            ...state.achievementsObj[action.achievementType],
-            ...action.newState
+        userObj: {
+          ...state.userObj,
+          [action.userId]: {
+            ...(state.userObj[action.userId] || {}),
+            unlockedAchievementIds: action.isUnlocked
+              ? (
+                  (state.userObj[action.userId] || {}).unlockedAchievementIds ||
+                  []
+                ).concat(achievementTypeToId[action.achievementType])
+              : (
+                  (state.userObj[action.userId] || {}).unlockedAchievementIds ||
+                  []
+                ).filter(
+                  (id: number) =>
+                    id !== achievementTypeToId[action.achievementType]
+                )
           }
         }
       };
