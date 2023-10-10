@@ -158,6 +158,7 @@ export function useMyState() {
         }
       : {
           loaded,
+          unlockedAchievementIds: [],
           lastChatPath: '',
           missions: {},
           rewardBoostLvl: 0,

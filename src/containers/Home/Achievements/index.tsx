@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Adult from '~/components/AchievementItems/Big/Adult';
@@ -14,7 +14,21 @@ import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function Achievements() {
+  const [myAchievementsObj, setMyAchievementsObj] = useState<{
+    [key: string]: {
+      milestones?: { name: string; completed: boolean }[];
+      progressObj?: {
+        label: string;
+        currentValue: number;
+        targetValue: number;
+      };
+    };
+  }>({});
+  const [loadingMyAchievements, setLoadingMyAchievements] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);
+  const loadMyAchievements = useAppContext(
+    (v) => v.requestHelpers.loadMyAchievements
+  );
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const achievementKeys = useMemo(() => {
     const result = [];
@@ -23,6 +37,17 @@ export default function Achievements() {
     }
     return result;
   }, [achievementsObj]);
+
+  useEffect(() => {
+    if (userId) init();
+    async function init() {
+      setLoadingMyAchievements(true);
+      const data = await loadMyAchievements();
+      setMyAchievementsObj(data);
+      setLoadingMyAchievements(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   return (
     <div style={{ paddingBottom: userId ? '15rem' : 0 }}>
@@ -65,7 +90,7 @@ export default function Achievements() {
         >
           Please log in to view this page
         </div>
-      ) : !achievementKeys.length ? (
+      ) : !achievementKeys.length || loadingMyAchievements ? (
         <Loading />
       ) : (
         <>
@@ -92,7 +117,11 @@ export default function Achievements() {
               Component && (
                 <Component
                   key={key}
-                  data={achievementsObj[key]}
+                  data={{
+                    ...achievementsObj[key],
+                    milestones: myAchievementsObj[key]?.milestones,
+                    progressObj: myAchievementsObj[key]?.progressObj
+                  }}
                   style={{ marginTop: index > 0 ? '1rem' : 0 }}
                 />
               )
