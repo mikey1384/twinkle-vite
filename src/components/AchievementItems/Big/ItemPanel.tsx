@@ -139,7 +139,9 @@ export default function ItemPanel({
           `}
         >
           {description}
-          {isUnlocked && unlockMessage ? ` ${unlockMessage}` : ''}
+          {!isNotification && isUnlocked && unlockMessage
+            ? ` ${unlockMessage}`
+            : ''}
         </p>
       </div>
       <div
@@ -166,7 +168,7 @@ export default function ItemPanel({
               font-size: 1.3rem;
             `}
           >
-            {isUnlocked && (
+            {!isNotification && isUnlocked && (
               <div
                 className={css`
                   display: inline-block;
