@@ -34,7 +34,7 @@ export default function Selectable({
   const {
     itemSelected: { color: itemSelectedColor, opacity: itemSelectedOpacity }
   } = useKeyContext((v) => v.theme);
-  const [onTitleHover, setOnTitleHover] = useState(false);
+  const [titleHovered, setTitleHovered] = useState(false);
   const highlightColor = Color[itemSelectedColor](itemSelectedOpacity);
   const ThumbLabelRef: React.RefObject<any> = useRef(null);
 
@@ -96,7 +96,7 @@ export default function Selectable({
         >
           <div
             onMouseOver={handleMouseOver}
-            onMouseLeave={() => setOnTitleHover(false)}
+            onMouseLeave={() => setTitleHovered(false)}
           >
             <p
               ref={ThumbLabelRef}
@@ -111,7 +111,7 @@ export default function Selectable({
             >
               {item.title}
             </p>
-            <FullTextReveal show={onTitleHover} text={item.title} />
+            <FullTextReveal show={titleHovered} text={item.title} />
           </div>
           <p
             style={{
@@ -131,7 +131,7 @@ export default function Selectable({
 
   function handleMouseOver() {
     if (textIsOverflown(ThumbLabelRef.current) && !deviceIsMobile) {
-      setOnTitleHover(true);
+      setTitleHovered(true);
     }
   }
 }

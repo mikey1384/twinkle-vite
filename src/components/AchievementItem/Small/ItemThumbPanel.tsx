@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
@@ -15,6 +16,7 @@ export default function ItemThumbPanel({
   badgeSrc?: string;
   style?: React.CSSProperties;
 }) {
+  const [hovered, setHovered] = useState(false);
   return (
     <div
       className={
@@ -33,6 +35,8 @@ export default function ItemThumbPanel({
     >
       {badgeSrc && (
         <img
+          onMouseOver={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
           src={badgeSrc}
           alt="Badge"
           className={css`
@@ -41,6 +45,7 @@ export default function ItemThumbPanel({
           `}
         />
       )}
+      {isThumb && <FullTextReveal show={hovered} text={itemName} />}
       {!isThumb && (
         <span
           className={css`
