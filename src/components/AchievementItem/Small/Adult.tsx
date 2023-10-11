@@ -5,10 +5,12 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 
 export default function Adult({
   isThumb,
+  thumbSize,
   data: { title },
   style
 }: {
   isThumb?: boolean;
+  thumbSize?: string;
   data: {
     ap: number;
     isUnlocked: boolean;
@@ -23,6 +25,7 @@ export default function Adult({
     <ErrorBoundary componentPath="AchievementItems/Small/Adult">
       <ItemThumbPanel
         isThumb={isThumb}
+        thumbSize={thumbSize}
         itemName={title}
         badgeSrc={TeenagerBadge}
         style={style}

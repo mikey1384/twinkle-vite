@@ -4,10 +4,12 @@ import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Mentor({
   isThumb,
+  thumbSize,
   data: { title },
   style
 }: {
   isThumb?: boolean;
+  thumbSize?: string;
   data: {
     title: string;
   };
@@ -17,6 +19,7 @@ export default function Mentor({
     <ItemThumbPanel
       isThumb={isThumb}
       itemName={title}
+      thumbSize={thumbSize}
       badgeSrc={MentorBadge}
       style={style}
     />

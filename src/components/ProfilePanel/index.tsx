@@ -294,6 +294,8 @@ function ProfilePanel({
                 }}
               />
               <AchievementBadges
+                style={{ marginTop: '0.7rem' }}
+                thumbSize="2.5rem"
                 unlockedAchievementIds={profile.unlockedAchievementIds}
               />
             </div>

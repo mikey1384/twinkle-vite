@@ -4,22 +4,28 @@ import { Color } from '~/constants/css';
 
 export default function ItemThumbPanel({
   isThumb,
+  thumbSize = '4rem',
   itemName,
   badgeSrc,
   style
 }: {
   isThumb?: boolean;
+  thumbSize?: string;
   itemName: string;
   badgeSrc?: string;
   style?: React.CSSProperties;
 }) {
   return (
     <div
-      className={css`
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      `}
+      className={
+        isThumb
+          ? ''
+          : css`
+              display: flex;
+              align-items: center;
+              gap: 1rem;
+            `
+      }
       style={style}
     >
       {badgeSrc && (
@@ -27,8 +33,8 @@ export default function ItemThumbPanel({
           src={badgeSrc}
           alt="Badge"
           className={css`
-            width: 4rem;
-            height: 4rem;
+            width: ${thumbSize};
+            height: ${thumbSize};
           `}
         />
       )}
