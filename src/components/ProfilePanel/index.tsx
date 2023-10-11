@@ -11,7 +11,7 @@ import Comments from '~/components/Comments';
 import Link from '~/components/Link';
 import UserDetails from '~/components/UserDetails';
 import Loading from '~/components/Loading';
-import AchievementBadges from './AchievementBadges';
+import AchievementBadges from '~/components/AchievementBadges';
 import { useNavigate } from 'react-router-dom';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
