@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
-import FullTextReveal from '~/components/Texts/FullTextReveal';
+import React, { useState, useEffect, useRef } from 'react';
+import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import { css } from '@emotion/css';
+import { isMobile } from '~/helpers';
+import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
+
+const deviceIsMobile = isMobile(navigator);
 
 export default function ItemThumbPanel({
   isThumb,
@@ -16,7 +20,18 @@ export default function ItemThumbPanel({
   badgeSrc?: string;
   style?: React.CSSProperties;
 }) {
-  const [hovered, setHovered] = useState(false);
+  const timerRef: React.MutableRefObject<any> = useRef(null);
+  const ThumbLabelContainerRef: React.RefObject<any> = useRef(null);
+  const [titleContext, setTitleContext] = useState(null);
+  useEffect(() => {
+    if (titleContext && deviceIsMobile) {
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setTitleContext(null);
+      }, mobileFullTextRevealShowDuration);
+    }
+  }, [titleContext]);
+
   return (
     <div
       className={
@@ -35,8 +50,18 @@ export default function ItemThumbPanel({
     >
       {badgeSrc && (
         <img
-          onMouseOver={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
+          onMouseOver={() => {
+            const parentElementDimensions =
+              ThumbLabelContainerRef.current?.getBoundingClientRect?.() || {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0
+              };
+            setTitleContext(parentElementDimensions);
+          }}
+          onMouseLeave={() => setTitleContext(null)}
+          ref={ThumbLabelContainerRef}
           src={badgeSrc}
           alt="Badge"
           className={css`
@@ -45,7 +70,9 @@ export default function ItemThumbPanel({
           `}
         />
       )}
-      {isThumb && <FullTextReveal show={hovered} text={itemName} />}
+      {isThumb && titleContext && (
+        <FullTextReveal textContext={titleContext} text={itemName} />
+      )}
       {!isThumb && (
         <span
           className={css`
