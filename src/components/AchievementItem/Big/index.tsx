@@ -1,15 +1,15 @@
 import React from 'react';
-import SmallMission from '~/components/AchievementItems/Small/Mission';
-import SmallSummoner from '~/components/AchievementItems/Small/Summoner';
-import SmallGrammar from '~/components/AchievementItems/Small/Grammar';
-import SmallMentor from '~/components/AchievementItems/Small/Mentor';
-import SmallTeenager from '~/components/AchievementItems/Small/Teenager';
-import SmallAdult from '~/components/AchievementItems/Small/Adult';
-import SmallSage from '~/components/AchievementItems/Small/Sage';
-import SmallTwinkleFounder from '~/components/AchievementItems/Small/TwinkleFounder';
+import Mission from './Mission';
+import Summoner from './Summoner';
+import Grammar from './Grammar';
+import Mentor from './Mentor';
+import Teenager from './Teenager';
+import Adult from './Adult';
+import Sage from './Sage';
+import TwinkleFounder from './TwinkleFounder';
 import { Content } from '~/types';
 
-export default function Small({
+export default function Big({
   achievement,
   style
 }: {
@@ -18,20 +18,20 @@ export default function Small({
 }) {
   const achievementComponentMap: {
     [key: string]: React.ComponentType<{
+      isNotification?: boolean;
       data: any;
       style?: React.CSSProperties;
     }>;
   } = {
-    mission: SmallMission,
-    summoner: SmallSummoner,
-    grammar: SmallGrammar,
-    teenager: SmallTeenager,
-    adult: SmallAdult,
-    mentor: SmallMentor,
-    sage: SmallSage,
-    twinkle_founder: SmallTwinkleFounder
+    mission: Mission,
+    summoner: Summoner,
+    grammar: Grammar,
+    teenager: Teenager,
+    adult: Adult,
+    mentor: Mentor,
+    sage: Sage,
+    twinkle_founder: TwinkleFounder
   };
-
   const Component = achievement?.type
     ? achievementComponentMap[achievement.type]
     : undefined;
@@ -54,6 +54,7 @@ export default function Small({
     >
       <Component
         key={achievement?.type}
+        isNotification
         data={achievement}
         style={{ width: '100%' }}
       />
