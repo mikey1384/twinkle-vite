@@ -103,31 +103,58 @@ export default function Cover({
               ? `text-shadow: 2px 2px ${Color[coverTextShadowColor]()};`
               : ''}
             @media (max-width: ${mobileMaxWidth}) {
+              margin-left: 15rem;
               ${coverTextShadowColor
                 ? `text-shadow: 1px 1px ${Color[coverTextShadowColor]()};`
                 : ''}
-              > p {
-                font-size: 1.3rem;
-              }
             }
           `}
         >
-          <div>
+          <div
+            style={{
+              marginBottom: '1.5rem',
+              display: 'flex',
+              justifyContent: 'flex-start'
+            }}
+          >
             <AchievementBadges
+              thumbSize={deviceIsMobile ? '1.5rem' : '3rem'}
               unlockedAchievementIds={unlockedAchievementIds}
             />
           </div>
-          <div>{username}</div>
-          <UserTitle
-            user={profile}
-            className={`unselectable ${css`
-              display: inline;
+          <div
+            className={css`
+              font-size: 5rem;
+              line-height: 1;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.5rem;
+                font-size: 2.5rem;
               }
-            `}`}
-          />
-          <p>({realName})</p>
+            `}
+          >
+            {username}{' '}
+            <UserTitle
+              user={profile}
+              className={`unselectable ${css`
+                display: inline;
+                font-size: 2rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.5rem;
+                }
+              `}`}
+            />
+          </div>
+          <div
+            className={css`
+              margin-bottom: 0.5rem;
+              margin-top: 0.5rem;
+              font-size: 1.7rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.1rem;
+              }
+            `}
+          >
+            ({realName})
+          </div>
         </div>
         {profile.id === userId && (
           <div
