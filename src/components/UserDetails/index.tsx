@@ -4,6 +4,7 @@ import StatusInput from './StatusInput';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import UserTitle from '~/components/Texts/UserTitle';
 import request from 'axios';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StatusMsg from './StatusMsg';
@@ -118,6 +119,7 @@ export default function UserDetails({
         >
           {profile.username}
         </Link>
+        <UserTitle user={profile} />
       </div>
       <p
         style={{ fontSize: small ? '1.3rem' : '1.5rem', color: Color.gray() }}

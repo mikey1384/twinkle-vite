@@ -24,7 +24,6 @@ export default function AchievementBadges({
   return (
     <ErrorBoundary
       style={{
-        width: '100%',
         display: 'flex',
         justifyContent: 'center',
         ...style
