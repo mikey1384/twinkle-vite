@@ -76,7 +76,6 @@ function ProfilePanel({
 
   const {
     lastActive,
-    level,
     loaded: profileLoaded,
     numMessages,
     username: profileName,
@@ -264,7 +263,6 @@ function ProfilePanel({
             <div
               className={css`
                 background: ${Color[profilePanelColor]()};
-                min-height: 2.5rem;
                 border-top-right-radius: ${borderRadius};
                 border-top-left-radius: ${borderRadius};
                 border-bottom: none;
@@ -278,22 +276,12 @@ function ProfilePanel({
                   border-right: none;
                 }
               `}
-              style={{ padding: level > 1 ? '0.5rem' : '' }}
+              style={{ minHeight: '2.5rem', padding: '0.7rem' }}
             >
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <AchievementBadges
-                  style={{ marginTop: '0.7rem', marginLeft: '1.5rem' }}
-                  thumbSize="2.5rem"
-                  unlockedAchievementIds={profile.unlockedAchievementIds}
-                />
-              </div>
+              <AchievementBadges
+                thumbSize="2.5rem"
+                unlockedAchievementIds={profile.unlockedAchievementIds}
+              />
             </div>
             <div
               className={css`

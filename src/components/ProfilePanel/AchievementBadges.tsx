@@ -25,12 +25,21 @@ export default function AchievementBadges({
     <ErrorBoundary
       style={{
         display: 'flex',
+        height: '100%',
+        alignItems: 'center',
         justifyContent: 'center',
         ...style
       }}
       componentPath="ProfilePanel/AchievementBadges"
     >
-      <div style={{ width: 'auto', display: 'flex' }}>
+      <div
+        style={{
+          width: 'auto',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
         {achievements.map((achievement) =>
           achievement ? (
             <AchievementItem
