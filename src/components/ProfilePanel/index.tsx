@@ -11,7 +11,6 @@ import Comments from '~/components/Comments';
 import Link from '~/components/Link';
 import UserDetails from '~/components/UserDetails';
 import Loading from '~/components/Loading';
-import UserTitle from '~/components/Texts/UserTitle';
 import AchievementBadges from './AchievementBadges';
 import { useNavigate } from 'react-router-dom';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
@@ -173,8 +172,7 @@ function ProfilePanel({
 
   const { userId, username, banned } = useKeyContext((v) => v.myState);
   const {
-    profilePanel: { color: profilePanelColor },
-    coverText: { color: coverTextColor, shadow: coverTextShadowColor }
+    profilePanel: { color: profilePanelColor }
   } = useTheme(profileTheme || 'logoBlue');
 
   const [bioEditModalShown, setBioEditModalShown] = useState(false);
@@ -282,22 +280,20 @@ function ProfilePanel({
               `}
               style={{ padding: level > 1 ? '0.5rem' : '' }}
             >
-              <UserTitle
-                user={profile}
+              <div
                 style={{
-                  display: 'inline',
-                  fontSize: '2.2rem',
-                  color: Color[coverTextColor](),
-                  textShadow: coverTextShadowColor
-                    ? `1px 1px ${Color[coverTextShadowColor]()}`
-                    : 'none'
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
-              />
-              <AchievementBadges
-                style={{ marginTop: '0.7rem' }}
-                thumbSize="2.5rem"
-                unlockedAchievementIds={profile.unlockedAchievementIds}
-              />
+              >
+                <AchievementBadges
+                  style={{ marginTop: '0.7rem', marginLeft: '1.5rem' }}
+                  thumbSize="2.5rem"
+                  unlockedAchievementIds={profile.unlockedAchievementIds}
+                />
+              </div>
             </div>
             <div
               className={css`
