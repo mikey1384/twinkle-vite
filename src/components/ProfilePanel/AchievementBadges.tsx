@@ -5,8 +5,12 @@ import { useAppContext } from '~/contexts';
 import { achievementIdToType } from '~/constants/defaultValues';
 
 export default function AchievementBadges({
+  style,
+  thumbSize,
   unlockedAchievementIds = []
 }: {
+  style?: React.CSSProperties;
+  thumbSize?: string;
   unlockedAchievementIds: number[];
 }) {
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
@@ -19,19 +23,28 @@ export default function AchievementBadges({
 
   return (
     <ErrorBoundary
-      style={{ width: '100%' }}
+      style={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        ...style
+      }}
       componentPath="ProfilePanel/AchievementBadges"
     >
-      {achievements.map((achievement) =>
-        achievement ? (
-          <AchievementItem
-            key={achievement.type}
-            isSmall
-            isThumb
-            achievement={achievement}
-          />
-        ) : null
-      )}
+      <div style={{ width: 'auto', display: 'flex' }}>
+        {achievements.map((achievement) =>
+          achievement ? (
+            <AchievementItem
+              key={achievement.type}
+              style={{ marginRight: '0.5rem' }}
+              isSmall
+              isThumb
+              thumbSize={thumbSize}
+              achievement={achievement}
+            />
+          ) : null
+        )}
+      </div>
     </ErrorBoundary>
   );
 }

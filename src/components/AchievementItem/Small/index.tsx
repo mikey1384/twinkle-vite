@@ -12,16 +12,19 @@ import { Content } from '~/types';
 export default function Small({
   achievement,
   isThumb,
+  thumbSize,
   style
 }: {
   achievement: Content;
   isThumb?: boolean;
+  thumbSize?: string;
   style?: React.CSSProperties;
 }) {
   const achievementComponentMap: {
     [key: string]: React.ComponentType<{
       data: any;
       isThumb?: boolean;
+      thumbSize?: string;
       style?: React.CSSProperties;
     }>;
   } = {
@@ -46,17 +49,22 @@ export default function Small({
   return (
     <div
       style={{
-        padding: '1rem',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'column',
-        width: '100%',
+        ...(isThumb
+          ? {}
+          : {
+              padding: '1rem',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexDirection: 'column',
+              width: '100%'
+            }),
         ...style
       }}
     >
       <Component
         key={achievement?.type}
+        thumbSize={thumbSize}
         isThumb={isThumb}
         data={achievement}
         style={{ width: '100%' }}

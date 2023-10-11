@@ -8,16 +8,23 @@ export default function AchievementItem({
   isNotification,
   isThumb,
   achievement,
+  thumbSize,
   style
 }: {
   isSmall?: boolean;
   isNotification?: boolean;
   isThumb?: boolean;
   achievement: Content;
+  thumbSize?: string;
   style?: React.CSSProperties;
 }) {
   return isSmall ? (
-    <Small isThumb={isThumb} achievement={achievement} style={style} />
+    <Small
+      isThumb={isThumb}
+      achievement={achievement}
+      style={style}
+      thumbSize={thumbSize}
+    />
   ) : (
     <Big
       isThumb={isThumb}

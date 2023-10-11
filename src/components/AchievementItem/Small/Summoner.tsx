@@ -4,10 +4,12 @@ import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Summoner({
   isThumb,
+  thumbSize,
   data: { title },
   style
 }: {
   isThumb?: boolean;
+  thumbSize?: string;
   data: {
     title: string;
   };
@@ -15,6 +17,7 @@ export default function Summoner({
 }) {
   return (
     <ItemThumbPanel
+      thumbSize={thumbSize}
       isThumb={isThumb}
       itemName={title}
       badgeSrc={SummonerBadge}

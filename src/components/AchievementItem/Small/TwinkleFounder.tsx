@@ -4,10 +4,12 @@ import ItemThumbPanel from './ItemThumbPanel';
 
 export default function TwinkleFounder({
   isThumb,
+  thumbSize,
   data: { title },
   style
 }: {
   isThumb?: boolean;
+  thumbSize?: string;
   data: {
     title: string;
   };
@@ -16,6 +18,7 @@ export default function TwinkleFounder({
   return (
     <ItemThumbPanel
       isThumb={isThumb}
+      thumbSize={thumbSize}
       itemName={title}
       badgeSrc={FounderBadge}
       style={style}
