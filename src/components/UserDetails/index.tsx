@@ -101,7 +101,7 @@ export default function UserDetails({
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            lineHeight: 'normal',
+            lineHeight: 1.3,
             textDecoration: 'none'
           }}
           className={
@@ -119,11 +119,31 @@ export default function UserDetails({
         >
           {profile.username}
         </Link>
-        <UserTitle user={profile} />
       </div>
       <p
-        style={{ fontSize: small ? '1.3rem' : '1.5rem', color: Color.gray() }}
-      >{`(${profile.realName})`}</p>
+        style={{
+          fontSize: small ? '1.3rem' : '1.5rem'
+        }}
+      >
+        <UserTitle
+          user={profile}
+          className={`unselectable ${css`
+            font-size: ${small ? '1.3rem' : '1.5rem'};
+            font-weight: bold;
+            display: inline;
+            margin-right: 0.7rem;
+            color: ${Color.darkGray()};
+            font-size: 1.5rem;
+          `}`}
+        />
+        <span
+          className={css`
+            color: ${Color.darkerGray()};
+          `}
+        >
+          {profile.realName}
+        </span>
+      </p>
       {userId === profile.id && !unEditable && (
         <StatusInput
           innerRef={StatusInputRef}

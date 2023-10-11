@@ -45,7 +45,7 @@ export default function UserTitle({
     if (userTitle) {
       return `${userTitle} (lv ${appliedUserLevel})`;
     }
-    return appliedUserLevel > 1 ? `level ${appliedUserLevel}` : '';
+    return appliedUserLevel > 1 ? `lv ${appliedUserLevel} user` : '';
   }, [appliedUserLevel, level, user.authLevel, userTitle]);
 
   return appliedUserTitle ? (
