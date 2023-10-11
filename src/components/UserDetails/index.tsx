@@ -138,7 +138,7 @@ export default function UserDetails({
         />
         <span
           className={css`
-            color: ${Color.darkerGray()};
+            color: ${Color.gray()};
           `}
         >
           {profile.realName}
