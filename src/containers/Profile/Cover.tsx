@@ -118,7 +118,7 @@ export default function Cover({
             }}
           >
             <AchievementBadges
-              thumbSize={deviceIsMobile ? '1.5rem' : '3rem'}
+              thumbSize="3rem"
               unlockedAchievementIds={unlockedAchievementIds}
             />
           </div>
