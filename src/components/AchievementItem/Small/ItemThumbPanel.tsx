@@ -19,7 +19,10 @@ export default function ItemThumbPanel({
     <div
       className={
         isThumb
-          ? ''
+          ? css`
+              width: ${thumbSize};
+              height: ${thumbSize};
+            `
           : css`
               display: flex;
               align-items: center;
