@@ -3,15 +3,22 @@ import FounderBadge from '~/assets/founder.png';
 import ItemThumbPanel from './ItemThumbPanel';
 
 export default function TwinkleFounder({
+  isThumb,
   data: { title },
   style
 }: {
+  isThumb?: boolean;
   data: {
     title: string;
   };
   style?: React.CSSProperties;
 }) {
   return (
-    <ItemThumbPanel itemName={title} badgeSrc={FounderBadge} style={style} />
+    <ItemThumbPanel
+      isThumb={isThumb}
+      itemName={title}
+      badgeSrc={FounderBadge}
+      style={style}
+    />
   );
 }

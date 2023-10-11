@@ -6,9 +6,11 @@ import { useKeyContext } from '~/contexts';
 
 export default function Mission({
   isNotification,
+  isThumb,
   data: { id, ap, title, description, unlockMessage, milestones },
   style
 }: {
+  isThumb?: boolean;
   isNotification?: boolean;
   data: {
     id: number;
@@ -24,6 +26,7 @@ export default function Mission({
   return (
     <ItemPanel
       ap={ap}
+      isThumb={isThumb}
       isUnlocked={unlockedAchievementIds.includes(id)}
       itemName={title}
       isNotification={isNotification}

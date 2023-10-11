@@ -11,14 +11,17 @@ import { Content } from '~/types';
 
 export default function Small({
   achievement,
+  isThumb,
   style
 }: {
   achievement: Content;
+  isThumb?: boolean;
   style?: React.CSSProperties;
 }) {
   const achievementComponentMap: {
     [key: string]: React.ComponentType<{
       data: any;
+      isThumb?: boolean;
       style?: React.CSSProperties;
     }>;
   } = {
@@ -54,6 +57,7 @@ export default function Small({
     >
       <Component
         key={achievement?.type}
+        isThumb={isThumb}
         data={achievement}
         style={{ width: '100%' }}
       />

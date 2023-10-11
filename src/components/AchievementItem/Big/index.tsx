@@ -11,13 +11,18 @@ import { Content } from '~/types';
 
 export default function Big({
   achievement,
+  isNotification,
+  isThumb,
   style
 }: {
   achievement: Content;
+  isNotification?: boolean;
+  isThumb?: boolean;
   style?: React.CSSProperties;
 }) {
   const achievementComponentMap: {
     [key: string]: React.ComponentType<{
+      isThumb?: boolean;
       isNotification?: boolean;
       data: any;
       style?: React.CSSProperties;
@@ -54,7 +59,8 @@ export default function Big({
     >
       <Component
         key={achievement?.type}
-        isNotification
+        isThumb={isThumb}
+        isNotification={isNotification}
         data={achievement}
         style={{ width: '100%' }}
       />

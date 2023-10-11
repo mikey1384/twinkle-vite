@@ -27,6 +27,7 @@ export default function AchievementBadges({
           <AchievementItem
             key={achievement.type}
             isSmall
+            isThumb
             achievement={achievement}
           />
         ) : null
