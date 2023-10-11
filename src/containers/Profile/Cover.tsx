@@ -8,6 +8,7 @@ import ImageModal from '~/components/Modals/ImageModal';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import UserTitle from '~/components/Texts/UserTitle';
+import AchievementBadges from '~/components/AchievementBadges';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
@@ -41,8 +42,14 @@ export default function Cover({
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const { userId } = useKeyContext((v) => v.myState);
-  const { profilePicUrl, profileTheme, realName, twinkleXP, username } =
-    profile;
+  const {
+    profilePicUrl,
+    profileTheme,
+    realName,
+    twinkleXP,
+    unlockedAchievementIds,
+    username
+  } = profile;
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [colorSelectorShown, setColorSelectorShown] = useState(false);
   const [imageModalShown, setImageModalShown] = useState(false);
@@ -84,9 +91,10 @@ export default function Cover({
       >
         <div
           className={css`
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
             margin-left: 29rem;
-            font-size: 5rem;
-            padding-top: 15rem;
             font-weight: bold;
             overflow: hidden;
             white-space: nowrap;
@@ -94,14 +102,7 @@ export default function Cover({
             ${coverTextShadowColor
               ? `text-shadow: 2px 2px ${Color[coverTextShadowColor]()};`
               : ''}
-            > p {
-              font-size: 2rem;
-              line-height: 1rem;
-            }
             @media (max-width: ${mobileMaxWidth}) {
-              margin-left: 15rem;
-              padding-top: 6rem;
-              font-size: 2.5rem;
               ${coverTextShadowColor
                 ? `text-shadow: 1px 1px ${Color[coverTextShadowColor]()};`
                 : ''}
@@ -111,13 +112,16 @@ export default function Cover({
             }
           `}
         >
-          {username}
+          <div>
+            <AchievementBadges
+              unlockedAchievementIds={unlockedAchievementIds}
+            />
+          </div>
+          <div>{username}</div>
           <UserTitle
             user={profile}
             className={`unselectable ${css`
-              margin-left: 1.3rem;
               display: inline;
-              font-size: 2.5rem;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1.5rem;
               }
