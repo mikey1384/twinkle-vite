@@ -3,10 +3,12 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 export default function ItemThumbPanel({
+  isThumb,
   itemName,
   badgeSrc,
   style
 }: {
+  isThumb?: boolean;
   itemName: string;
   badgeSrc?: string;
   style?: React.CSSProperties;
@@ -30,15 +32,17 @@ export default function ItemThumbPanel({
           `}
         />
       )}
-      <span
-        className={css`
-          font-weight: bold;
-          color: ${Color.black()};
-          font-size: 1.5rem;
-        `}
-      >
-        {itemName}
-      </span>
+      {!isThumb && (
+        <span
+          className={css`
+            font-weight: bold;
+            color: ${Color.black()};
+            font-size: 1.5rem;
+          `}
+        >
+          {itemName}
+        </span>
+      )}
     </div>
   );
 }

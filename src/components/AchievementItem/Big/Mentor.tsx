@@ -4,10 +4,12 @@ import ItemPanel from './ItemPanel';
 import { useKeyContext } from '~/contexts';
 
 export default function Mentor({
+  isThumb,
   isNotification,
   data: { id, ap, title, description, unlockMessage },
   style
 }: {
+  isThumb?: boolean;
   isNotification?: boolean;
   data: {
     id: number;
@@ -22,6 +24,7 @@ export default function Mentor({
   return (
     <ItemPanel
       isUnlocked={unlockedAchievementIds.includes(id)}
+      isThumb={isThumb}
       isNotification={isNotification}
       style={style}
       ap={ap}

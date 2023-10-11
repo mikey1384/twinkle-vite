@@ -4,9 +4,11 @@ import ItemThumbPanel from './ItemThumbPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 export default function Teenager({
+  isThumb,
   data: { title },
   style
 }: {
+  isThumb?: boolean;
   data: {
     title: string;
   };
@@ -14,7 +16,12 @@ export default function Teenager({
 }) {
   return (
     <ErrorBoundary componentPath="AchievementItems/Teenager">
-      <ItemThumbPanel itemName={title} badgeSrc={TeenagerBadge} style={style} />
+      <ItemThumbPanel
+        isThumb={isThumb}
+        itemName={title}
+        badgeSrc={TeenagerBadge}
+        style={style}
+      />
     </ErrorBoundary>
   );
 }

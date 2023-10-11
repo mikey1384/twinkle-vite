@@ -6,10 +6,12 @@ import FormModal from '../FormModal';
 import { useKeyContext } from '~/contexts';
 
 export default function Teenager({
+  isThumb,
   isNotification,
   data: { id, ap, title, description, milestones, unlockMessage },
   style
 }: {
+  isThumb?: boolean;
   isNotification?: boolean;
   data: {
     id: number;
@@ -26,6 +28,7 @@ export default function Teenager({
   return (
     <ErrorBoundary componentPath="AchievementItems/Teenager">
       <ItemPanel
+        isThumb={isThumb}
         isNotification={isNotification}
         style={style}
         ap={ap}

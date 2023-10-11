@@ -4,10 +4,12 @@ import ItemPanel from './ItemPanel';
 import { useKeyContext } from '~/contexts';
 
 export default function TwinkleFounder({
+  isThumb,
   isNotification,
   data: { id, ap, title, description, unlockMessage },
   style
 }: {
+  isThumb?: boolean;
   isNotification?: boolean;
   data: {
     id: number;
@@ -21,6 +23,7 @@ export default function TwinkleFounder({
   const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
   return (
     <ItemPanel
+      isThumb={isThumb}
       isNotification={isNotification}
       style={style}
       ap={ap}

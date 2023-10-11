@@ -5,9 +5,11 @@ import { useKeyContext } from '~/contexts';
 
 export default function Summoner({
   isNotification,
+  isThumb,
   data: { id, ap, title, description, unlockMessage },
   style
 }: {
+  isThumb?: boolean;
   isNotification?: boolean;
   data: {
     id: number;
@@ -21,6 +23,7 @@ export default function Summoner({
   const { unlockedAchievementIds } = useKeyContext((v) => v.myState);
   return (
     <ItemPanel
+      isThumb={isThumb}
       isUnlocked={unlockedAchievementIds.includes(id)}
       isNotification={isNotification}
       style={style}

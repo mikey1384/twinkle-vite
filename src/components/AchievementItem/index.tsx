@@ -5,16 +5,25 @@ import { Content } from '~/types';
 
 export default function AchievementItem({
   isSmall,
+  isNotification,
+  isThumb,
   achievement,
   style
 }: {
   isSmall?: boolean;
+  isNotification?: boolean;
+  isThumb?: boolean;
   achievement: Content;
   style?: React.CSSProperties;
 }) {
   return isSmall ? (
-    <Small achievement={achievement} style={style} />
+    <Small isThumb={isThumb} achievement={achievement} style={style} />
   ) : (
-    <Big achievement={achievement} style={style} />
+    <Big
+      isThumb={isThumb}
+      isNotification={isNotification}
+      achievement={achievement}
+      style={style}
+    />
   );
 }
