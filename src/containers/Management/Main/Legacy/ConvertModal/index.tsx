@@ -20,11 +20,8 @@ export default function ConvertModal({
   const loadAchievementsByUserId = useAppContext(
     (v) => v.requestHelpers.loadAchievementsByUserId
   );
-  const loadAllAchievements = useAppContext(
-    (v) => v.requestHelpers.loadAllAchievements
-  );
+  const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const [submitting, setSubmitting] = useState(false);
-  const [achievementsObj, setAchievementsObj] = useState({});
   const [loadingUserAchievements, setLoadingUserAchievements] = useState(false);
   const [unlockedAchievements, setUnlockedAchievements] = useState([]);
   const {
@@ -35,9 +32,7 @@ export default function ConvertModal({
     async function init() {
       setLoadingUserAchievements(true);
       const unlockedAchievements = await loadAchievementsByUserId(target.id);
-      const achievementsObj = await loadAllAchievements();
       setUnlockedAchievements(unlockedAchievements);
-      setAchievementsObj(achievementsObj);
       setLoadingUserAchievements(false);
     }
 
