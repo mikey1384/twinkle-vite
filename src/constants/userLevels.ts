@@ -19,6 +19,7 @@ export const levels = [
     canEditPlaylists: false,
     canEditRewardLevel: false
   },
+  // moderator level
   {
     ap: 150,
     level: 2,
@@ -40,8 +41,19 @@ export const levels = [
     canEditRewardLevel: false
   },
   {
-    ap: 1000,
+    ap: 450,
     level: 4,
+    canEdit: false,
+    canDelete: true,
+    canReward: true,
+    canPinPlaylists: false,
+    canEditPlaylists: false,
+    canEditRewardLevel: false
+  },
+  // teacher level
+  {
+    ap: 1000,
+    level: 5,
     canEdit: false,
     canDelete: true,
     canReward: true,
@@ -50,8 +62,19 @@ export const levels = [
     canEditRewardLevel: true
   },
   {
+    ap: 1300,
+    level: 6,
+    canEdit: false,
+    canDelete: true,
+    canReward: true,
+    canPinPlaylists: false,
+    canEditPlaylists: true,
+    canEditRewardLevel: true
+  },
+  // headteacher level
+  {
     ap: 1500,
-    level: 5,
+    level: 7,
     canEdit: true,
     canDelete: true,
     canReward: true,
@@ -60,8 +83,29 @@ export const levels = [
     canEditRewardLevel: true
   },
   {
+    ap: 1800,
+    level: 8,
+    canEdit: true,
+    canDelete: true,
+    canReward: true,
+    canPinPlaylists: false,
+    canEditPlaylists: true,
+    canEditRewardLevel: true
+  },
+  // headmaster level
+  {
     ap: 3000,
-    level: 6,
+    level: 9,
+    canEdit: true,
+    canDelete: true,
+    canReward: true,
+    canPinPlaylists: true,
+    canEditPlaylists: true,
+    canEditRewardLevel: true
+  },
+  {
+    ap: 3300,
+    level: 10,
     canEdit: true,
     canDelete: true,
     canReward: true,
