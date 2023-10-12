@@ -2,6 +2,7 @@ import React from 'react';
 import Mission from './Mission';
 import Summoner from './Summoner';
 import Grammar from './Grammar';
+import Gold from './Gold';
 import Mentor from './Mentor';
 import Teenager from './Teenager';
 import Adult from './Adult';
@@ -33,6 +34,7 @@ export default function Big({
     grammar: Grammar,
     teenager: Teenager,
     adult: Adult,
+    gold: Gold,
     mentor: Mentor,
     sage: Sage,
     twinkle_founder: TwinkleFounder

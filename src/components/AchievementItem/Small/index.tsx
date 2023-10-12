@@ -2,6 +2,7 @@ import React from 'react';
 import SmallMission from './Mission';
 import SmallSummoner from './Summoner';
 import SmallGrammar from './Grammar';
+import SmallGold from './Gold';
 import SmallMentor from './Mentor';
 import SmallTeenager from './Teenager';
 import SmallAdult from './Adult';
@@ -31,6 +32,7 @@ export default function Small({
     mission: SmallMission,
     summoner: SmallSummoner,
     grammar: SmallGrammar,
+    gold: SmallGold,
     teenager: SmallTeenager,
     adult: SmallAdult,
     mentor: SmallMentor,
