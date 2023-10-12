@@ -513,14 +513,15 @@ export const MENTOR_LABEL = 'Mentor';
 export const SAGE_LABEL = 'Sage';
 export const FOUNDER_LABEL = 'Founder';
 
-export const TEENAGER_ACHIEVEMENT_ID = 7;
-export const ADULT_ACHIEVEMENT_ID = 8;
-export const GRAMMAR_TYCOON_ACHIEVEMENT_ID = 6;
 export const MISSION_MASTER_ACHIEVEMENT_ID = 1;
+export const SUMMONER_ACHIEVEMENT_ID = 2;
 export const MENTOR_ACHIEVEMENT_ID = 3;
 export const SAGE_ACHIEVEMENT_ID = 4;
 export const TWINKLE_FOUNDER_ACHIEVEMENT_ID = 5;
-export const SUMMONER_ACHIEVEMENT_ID = 2;
+export const GRAMMAR_TYCOON_ACHIEVEMENT_ID = 6;
+export const TEENAGER_ACHIEVEMENT_ID = 7;
+export const ADULT_ACHIEVEMENT_ID = 8;
+export const GOLD_ACHIEVEMENT_ID = 9;
 export const achievementIdToType: Record<string, string> = {
   [TEENAGER_ACHIEVEMENT_ID]: 'teenager',
   [ADULT_ACHIEVEMENT_ID]: 'adult',
@@ -529,7 +530,8 @@ export const achievementIdToType: Record<string, string> = {
   [MENTOR_ACHIEVEMENT_ID]: 'mentor',
   [SAGE_ACHIEVEMENT_ID]: 'sage',
   [TWINKLE_FOUNDER_ACHIEVEMENT_ID]: 'twinkle_founder',
-  [SUMMONER_ACHIEVEMENT_ID]: 'summoner'
+  [SUMMONER_ACHIEVEMENT_ID]: 'summoner',
+  [GOLD_ACHIEVEMENT_ID]: 'gold'
 };
 export const achievementTypeToId: Record<string, number> = {
   teenager: TEENAGER_ACHIEVEMENT_ID,
@@ -539,7 +541,8 @@ export const achievementTypeToId: Record<string, number> = {
   mentor: MENTOR_ACHIEVEMENT_ID,
   sage: SAGE_ACHIEVEMENT_ID,
   twinkle_founder: TWINKLE_FOUNDER_ACHIEVEMENT_ID,
-  summoner: SUMMONER_ACHIEVEMENT_ID
+  summoner: SUMMONER_ACHIEVEMENT_ID,
+  gold: GOLD_ACHIEVEMENT_ID
 };
 
 export const roles: Record<string, string> = {
