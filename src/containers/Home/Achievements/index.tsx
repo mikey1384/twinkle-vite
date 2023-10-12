@@ -1,14 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import Adult from '~/components/AchievementItem/Big/Adult';
-import Mission from '~/components/AchievementItem/Big/Mission';
-import Summoner from '~/components/AchievementItem/Big/Summoner';
-import Grammar from '~/components/AchievementItem/Big/Grammar';
-import Mentor from '~/components/AchievementItem/Big/Mentor';
-import Teenager from '~/components/AchievementItem/Big/Teenager';
-import Sage from '~/components/AchievementItem/Big/Sage';
-import TwinkleFounder from '~/components/AchievementItem/Big/TwinkleFounder';
+import AchievementItem from '~/components/AchievementItem';
 import UserLevelStatus from './UserLevelStatus';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -101,32 +94,16 @@ export default function Achievements() {
               }}
             />
           )}
-          {achievementKeys.map((key, index) => {
-            const Component = {
-              adult: Adult,
-              mission: Mission,
-              summoner: Summoner,
-              grammar: Grammar,
-              teenager: Teenager,
-              mentor: Mentor,
-              sage: Sage,
-              twinkle_founder: TwinkleFounder
-            }[key];
-
-            return (
-              Component && (
-                <Component
-                  key={key}
-                  data={{
-                    ...achievementsObj[key],
-                    milestones: myAchievementsObj[key]?.milestones,
-                    progressObj: myAchievementsObj[key]?.progressObj
-                  }}
-                  style={{ marginTop: index > 0 ? '1rem' : 0 }}
-                />
-              )
-            );
-          })}
+          {achievementKeys.map((key) => (
+            <AchievementItem
+              key={key}
+              achievement={{
+                ...achievementsObj[key],
+                milestones: myAchievementsObj[key]?.milestones,
+                progressObj: myAchievementsObj[key]?.progressObj
+              }}
+            />
+          ))}
         </>
       )}
     </div>
