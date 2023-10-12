@@ -116,10 +116,6 @@ export default function UserReducer(
         achievementsObj: action.achievementsObj
       };
     case 'UPDATE_ACHIEVEMENT_UNLOCK_STATUS':
-      console.log(
-        (state.userObj[action.userId] || {}).unlockedAchievementIds || [],
-        achievementTypeToId[action.achievementType]
-      );
       return {
         ...state,
         userObj: {
