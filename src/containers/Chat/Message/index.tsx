@@ -41,8 +41,12 @@ import { useKeyContext } from '~/contexts';
 import { useContentState, useLazyLoad, useUserLevel } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { isMobile } from '~/helpers';
-import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
+import { isMobile, isSupermod } from '~/helpers';
+import {
+  CIEL_TWINKLE_ID,
+  ZERO_TWINKLE_ID,
+  GENERAL_CHAT_ID
+} from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
 const replyLabel = localize('reply2');
@@ -231,15 +235,29 @@ function Message({
   const userCanDeleteThis = useMemo(() => {
     return (
       !isDrawOffer &&
-      (((canEdit || canDelete) && level > uploaderLevel) || userIsUploader)
+      (((canEdit || canDelete) &&
+        (channelId === GENERAL_CHAT_ID || isSupermod(level)) &&
+        level > uploaderLevel) ||
+        userIsUploader)
     );
-  }, [level, canDelete, canEdit, isDrawOffer, uploaderLevel, userIsUploader]);
+  }, [
+    isDrawOffer,
+    canEdit,
+    canDelete,
+    level,
+    uploaderLevel,
+    channelId,
+    userIsUploader
+  ]);
   const userCanEditThis = useMemo(() => {
     return (
       !rewardAmount &&
       !invitePath &&
       !isDrawOffer &&
-      ((canEdit && level > uploaderLevel) || userIsUploader)
+      ((canEdit &&
+        level > uploaderLevel &&
+        (channelId === GENERAL_CHAT_ID || isSupermod(level))) ||
+        userIsUploader)
     );
   }, [
     rewardAmount,
@@ -248,6 +266,7 @@ function Message({
     canEdit,
     level,
     uploaderLevel,
+    channelId,
     userIsUploader
   ]);
   const userCanRewardThis = useMemo(
