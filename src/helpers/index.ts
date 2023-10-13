@@ -36,17 +36,14 @@ export function determineUserCanRewardThis({
   let moderatorCanReward = canReward;
   if (
     userLevel >= MOD_LEVEL &&
-    userLevel < TEACHER_LEVEL &&
+    !isSupermod(userLevel) &&
     uploader?.id === MIKEY_ID
   ) {
     moderatorCanReward = false;
   }
-  if (userLevel < TEACHER_LEVEL) {
+  if (!isSupermod(userLevel)) {
     for (const recommendation of recommendations) {
-      if (
-        recommendation.level >= TEACHER_LEVEL &&
-        !recommendation.rewardDisabled
-      ) {
+      if (isSupermod(recommendation.level) && !recommendation.rewardDisabled) {
         studentsCanReward = true;
         moderatorCanReward = true;
         break;
@@ -125,6 +122,10 @@ export function isMobile(navigator: Navigator) {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
   );
+}
+
+export function isSupermod(level: number) {
+  return level >= TEACHER_LEVEL;
 }
 
 export function last(array: any[]) {
