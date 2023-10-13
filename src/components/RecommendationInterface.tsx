@@ -4,13 +4,9 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { isMobile } from '~/helpers';
+import { isMobile, isSupermod } from '~/helpers';
 import { removeAllWhiteSpaces } from '~/helpers/stringHelpers';
-import {
-  expectedResponseLength,
-  priceTable,
-  TEACHER_LEVEL
-} from '~/constants/defaultValues';
+import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import SwitchButton from './Buttons/SwitchButton';
@@ -72,7 +68,7 @@ export default function RecommendationInterface({
   const isOnlyRecommendedByStudents = useMemo(() => {
     const result = recommendations.length > 0;
     for (const recommendation of recommendations) {
-      if (recommendation.level >= TEACHER_LEVEL) {
+      if (isSupermod(recommendation.level)) {
         return false;
       }
     }
@@ -94,7 +90,7 @@ export default function RecommendationInterface({
   const switchButtonShown = useMemo(() => {
     return (
       !isRecommendedByUser &&
-      level >= TEACHER_LEVEL &&
+      isSupermod(level) &&
       contentType !== 'pass' &&
       contentType !== 'aiStory'
     );

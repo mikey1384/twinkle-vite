@@ -3,7 +3,7 @@ import Modal from '~/components/Modal';
 import RegularMenu from './RegularMenu';
 import TeacherMenu from './TeacherMenu';
 import { useKeyContext } from '~/contexts';
-import { TEACHER_LEVEL } from '~/constants/defaultValues';
+import { isSupermod } from '~/helpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
 export default function CreateNewChatModal({
@@ -22,7 +22,7 @@ export default function CreateNewChatModal({
   return (
     <ErrorBoundary componentPath="Chat/Modals/CreateNewChat">
       <Modal onHide={onHide}>
-        {level >= TEACHER_LEVEL ? (
+        {isSupermod(level) ? (
           <TeacherMenu
             channelId={channelId}
             creatingChat={creatingChat}

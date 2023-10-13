@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import SearchInput from '~/components/Texts/SearchInput';
 import { useKeyContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { TEACHER_LEVEL } from '~/constants/defaultValues';
+import { isSupermod } from '~/helpers';
 import CheckListGroup from '~/components/CheckListGroup';
 import localize from '~/constants/localize';
 
@@ -35,7 +35,7 @@ export default function SelectNewOwnerModal({
       return (
         member.id !== userId &&
         (stringIsEmpty(searchText) || member.username.includes(searchText)) &&
-        (!isClass || member.level >= TEACHER_LEVEL)
+        (!isClass || isSupermod(member.level))
       );
     });
   }, [isClass, members, searchText, userId]);

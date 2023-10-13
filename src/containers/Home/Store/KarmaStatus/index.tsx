@@ -3,7 +3,8 @@ import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { SELECTED_LANGUAGE, TEACHER_LEVEL } from '~/constants/defaultValues';
+import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { isSupermod } from '~/helpers';
 import Loading from '~/components/Loading';
 import KarmaExplanationModal from './KarmaExplanationModal';
 
@@ -37,7 +38,7 @@ export default function KarmaStatus() {
         numRecommended
       } = await loadKarmaPoints();
       onSetUserState({ userId, newState: { karmaPoints: kp } });
-      if (level < TEACHER_LEVEL) {
+      if (!isSupermod(level)) {
         setNumTwinklesRewarded(numTwinklesRewarded);
         setNumApprovedRecommendations(numApprovedRecommendations);
       } else {

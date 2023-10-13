@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import { TEACHER_LEVEL } from '~/constants/defaultValues';
+import { isSupermod } from '~/helpers';
 import localize from '~/constants/localize';
 
 const clearLabel = localize('clear');
@@ -58,7 +58,7 @@ export default function RewardLevelForm({
       if (isFromSubjectInput && isMadeByUser) {
         onSetRewardLevel(1);
       }
-      if (isFromContentInput && level >= TEACHER_LEVEL) {
+      if (isFromContentInput && isSupermod(level)) {
         onSetRewardLevel(4);
       }
     }
