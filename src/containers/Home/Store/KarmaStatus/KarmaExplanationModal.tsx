@@ -2,13 +2,10 @@ import React, { useMemo } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
+import { isSupermod } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
-import {
-  karmaMultiplier,
-  SELECTED_LANGUAGE,
-  TEACHER_LEVEL
-} from '~/constants/defaultValues';
+import { karmaMultiplier, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 export default function KarmaExplanationModal({
@@ -88,7 +85,7 @@ export default function KarmaExplanationModal({
           that were approved by teachers)
         </>
       );
-    if (userLevel < TEACHER_LEVEL) {
+    if (!isSupermod(userLevel)) {
       return <span>{karmaCalculationLabel}</span>;
     }
     if (SELECTED_LANGUAGE === 'kr') {
@@ -173,7 +170,7 @@ export default function KarmaExplanationModal({
           approved by teachers
         </>
       );
-    if (userLevel < TEACHER_LEVEL) {
+    if (!isSupermod(userLevel)) {
       return (
         <div
           className={css`

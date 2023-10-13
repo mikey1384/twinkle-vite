@@ -15,9 +15,9 @@ import Button from '~/components/Button';
 import {
   returnMaxRewards,
   priceTable,
-  SELECTED_LANGUAGE,
-  TEACHER_LEVEL
+  SELECTED_LANGUAGE
 } from '~/constants/defaultValues';
+import { isSupermod } from '~/helpers';
 import {
   useAppContext,
   useContentContext,
@@ -112,7 +112,7 @@ export default function XPRewardInterface({
   }, [prevSelectedAmount]);
   const [selectedAmount, setSelectedAmount] = useState(prevSelectedAmount);
   const requiresPayment = useMemo(() => {
-    return !level || level < TEACHER_LEVEL || uploaderLevel >= level;
+    return !level || !isSupermod(level) || uploaderLevel >= level;
   }, [level, uploaderLevel]);
 
   useEffect(() => {

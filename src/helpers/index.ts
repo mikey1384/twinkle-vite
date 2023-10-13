@@ -124,7 +124,7 @@ export function isMobile(navigator: Navigator) {
   );
 }
 
-export function isSupermod(level: number) {
+export function isSupermod(level = 0) {
   return level >= TEACHER_LEVEL;
 }
 

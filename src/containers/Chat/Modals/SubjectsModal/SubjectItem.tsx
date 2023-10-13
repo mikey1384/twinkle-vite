@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import moment from 'moment';
-import { TEACHER_LEVEL } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
+import { isSupermod } from '~/helpers';
 import { useUserLevel } from '~/helpers/hooks';
 
 const marginHeight = 1;
@@ -52,7 +52,7 @@ export default function SubjectItem({
   const buttons = useMemo(() => {
     const result = [];
     if (
-      (currentSubjectId !== id && level >= TEACHER_LEVEL && canDelete) ||
+      (currentSubjectId !== id && isSupermod(level) && canDelete) ||
       userIsOwner
     ) {
       result.push({
