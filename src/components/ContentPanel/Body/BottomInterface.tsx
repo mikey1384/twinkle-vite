@@ -169,8 +169,16 @@ export default function BottomInterface({
   const userCanDeleteThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
     if (userId === uploader.id) return true;
-    return canDelete && userLevel > uploader.level;
-  }, [contentType, userId, uploader.id, uploader.level, canDelete, userLevel]);
+    return (canDelete || canEdit) && userLevel > uploader.level;
+  }, [
+    contentType,
+    userId,
+    uploader.id,
+    uploader.level,
+    canDelete,
+    canEdit,
+    userLevel
+  ]);
 
   const userCanCloseThis = useMemo(() => {
     if (contentType !== 'subject') return false;
@@ -197,19 +205,29 @@ export default function BottomInterface({
 
   const userCanEditThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
-    if (userId === uploader.id) return true;
-    return canEdit && userLevel > uploader.level;
-  }, [contentType, userId, uploader.id, canEdit, userLevel, uploader.level]);
+    if (userId === uploader.id || (canEdit && userLevel > uploader.level)) {
+      return (
+        !isCommentForSecretSubject ||
+        (subjectUploaderId &&
+          subjectUploaderId === userId &&
+          userId === uploader.id)
+      );
+    }
+    return false;
+  }, [
+    contentType,
+    userId,
+    uploader.id,
+    uploader.level,
+    canEdit,
+    userLevel,
+    isCommentForSecretSubject,
+    subjectUploaderId
+  ]);
 
   const editMenuItems = useMemo(() => {
     const items = [];
-    if (
-      userCanEditThis &&
-      (!isCommentForSecretSubject ||
-        (subjectUploaderId &&
-          subjectUploaderId === userId &&
-          userId === uploader.id))
-    ) {
+    if (userCanEditThis) {
       items.push({
         label: (
           <>
