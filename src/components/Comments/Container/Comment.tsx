@@ -348,7 +348,7 @@ function Comment({
 
   const dropdownMenuItems = useMemo(() => {
     const userCanEditThis = canEdit && userHasHigherLevel;
-    const userCanDeleteThis = canDelete && userHasHigherLevel;
+    const userCanDeleteThis = (canDelete || canEdit) && userHasHigherLevel;
     const items = [];
     if (
       (userIsUploader || userCanEditThis) &&
