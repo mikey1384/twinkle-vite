@@ -228,18 +228,25 @@ function Message({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLastMsg, isNewMessage, userIsUploader]);
-  const userCanEditThis = useMemo(() => {
+  const userCanDeleteThis = useMemo(() => {
     return (
-      !invitePath &&
       !isDrawOffer &&
       (((canEdit || canDelete) && level > uploaderLevel) || userIsUploader)
     );
+  }, [level, canDelete, canEdit, isDrawOffer, uploaderLevel, userIsUploader]);
+  const userCanEditThis = useMemo(() => {
+    return (
+      !rewardAmount &&
+      !invitePath &&
+      !isDrawOffer &&
+      ((canEdit && level > uploaderLevel) || userIsUploader)
+    );
   }, [
-    level,
-    canDelete,
-    canEdit,
+    rewardAmount,
     invitePath,
     isDrawOffer,
+    canEdit,
+    level,
     uploaderLevel,
     userIsUploader
   ]);
@@ -464,7 +471,7 @@ function Message({
         }
       });
     }
-    if (userCanEditThis && !rewardAmount) {
+    if (userCanEditThis) {
       result.push({
         label: (
           <>
@@ -481,7 +488,7 @@ function Message({
         }
       });
     }
-    if ((userIsUploader || canDelete) && !isDrawOffer) {
+    if (userCanDeleteThis) {
       result.push({
         label: (
           <>
