@@ -1,5 +1,8 @@
 import { initialMyState } from '../AppContext';
-import { achievementTypeToId } from '~/constants/defaultValues';
+import {
+  achievementTypeToId,
+  achievementIdToType
+} from '~/constants/defaultValues';
 
 export default function UserReducer(
   state: { [key: string]: any },
@@ -115,28 +118,34 @@ export default function UserReducer(
         ...state,
         achievementsObj: action.achievementsObj
       };
-    case 'UPDATE_ACHIEVEMENT_UNLOCK_STATUS':
+    case 'UPDATE_ACHIEVEMENT_UNLOCK_STATUS': {
+      const newUnlockedAchievementIds = action.isUnlocked
+        ? (
+            (state.userObj[action.userId] || {}).unlockedAchievementIds || []
+          ).concat(achievementTypeToId[action.achievementType])
+        : (
+            (state.userObj[action.userId] || {}).unlockedAchievementIds || []
+          ).filter(
+            (id: number) => id !== achievementTypeToId[action.achievementType]
+          );
+      const newAchievementPoints = newUnlockedAchievementIds.reduce(
+        (acc: number, id: number) =>
+          acc +
+          ((state.achievementsObj?.[achievementIdToType[id]] || {}).ap || 0),
+        0
+      );
       return {
         ...state,
         userObj: {
           ...state.userObj,
           [action.userId]: {
             ...(state.userObj[action.userId] || {}),
-            unlockedAchievementIds: action.isUnlocked
-              ? (
-                  (state.userObj[action.userId] || {}).unlockedAchievementIds ||
-                  []
-                ).concat(achievementTypeToId[action.achievementType])
-              : (
-                  (state.userObj[action.userId] || {}).unlockedAchievementIds ||
-                  []
-                ).filter(
-                  (id: number) =>
-                    id !== achievementTypeToId[action.achievementType]
-                )
+            achievementPoints: newAchievementPoints,
+            unlockedAchievementIds: newUnlockedAchievementIds
           }
         }
       };
+    }
     case 'SET_COLLECT_TYPE':
       return {
         ...state,
