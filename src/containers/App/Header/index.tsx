@@ -1008,7 +1008,9 @@ export default function Header({
           contentType: target.contentType
         });
       }
-      onIncreaseNumNewNotis();
+      if (type !== 'achievement' || isAchievementUnlocked) {
+        onIncreaseNumNewNotis();
+      }
     }
 
     function handleNewPost({ comment, target }: { comment: any; target: any }) {
