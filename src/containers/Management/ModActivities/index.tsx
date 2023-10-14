@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import DeletedPost from './DeletedPost';
+import DeletedMessage from './DeletedMessage';
 import Loading from '~/components/Loading';
 import FilterBar from '~/components/FilterBar';
 import { mobileMaxWidth } from '~/constants/css';
@@ -96,25 +97,38 @@ export default function ModActivities() {
           </div>
         )}
         {deletedContents.map(
-          (post: { id: number; contentId: number; type: string }, index) =>
+          (
+            deletedContent: { id: number; contentId: number; type: string },
+            index
+          ) =>
             contentType === 'post' ? (
               <DeletedPost
-                key={post.id}
-                onDeletePermanently={() =>
+                key={deletedContent.id}
+                onDeletePermanently={(postId) =>
                   setDeletedPosts((deletedPosts) =>
                     deletedPosts.filter(
-                      (deletedPost: { id: number }) =>
-                        deletedPost.id !== post.id
+                      (deletedPost: { id: number }) => deletedPost.id !== postId
                     )
                   )
                 }
-                postId={post.id}
-                contentId={post.contentId}
-                contentType={post.type}
+                postId={deletedContent.id}
+                contentId={deletedContent.contentId}
+                contentType={deletedContent.type}
                 style={{ marginTop: index === 0 ? 0 : '1rem' }}
               />
             ) : (
-              <div key={post.id}>{post.content}</div>
+              <DeletedMessage
+                key={deletedContent.id}
+                messageId={deletedContent.id}
+                onDeletePermanently={(messageId) => {
+                  setDeletedMessages((deletedMessages) =>
+                    deletedMessages.filter(
+                      (deletedMessage: { id: number }) =>
+                        deletedMessage.id !== messageId
+                    )
+                  );
+                }}
+              />
             )
         )}
       </div>
