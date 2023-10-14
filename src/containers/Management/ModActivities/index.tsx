@@ -18,7 +18,7 @@ export default function ModActivities() {
     async function init() {
       setLoading(true);
       try {
-        const data = await loadDeletedPosts();
+        const data = await loadDeletedPosts(contentType);
         setDeletedPosts(data);
       } catch (error) {
         console.error(error);

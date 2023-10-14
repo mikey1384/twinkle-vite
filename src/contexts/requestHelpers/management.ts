@@ -101,9 +101,12 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async loadDeletedPosts() {
+    async loadDeletedPosts(contentType: string) {
       try {
-        const { data } = await request.get(`${URL}/management/deleted`, auth());
+        const { data } = await request.get(
+          `${URL}/management/deleted?contentType=${contentType}`,
+          auth()
+        );
         return Promise.resolve(data);
       } catch (error) {
         return handleError(error);
