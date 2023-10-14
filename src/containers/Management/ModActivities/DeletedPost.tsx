@@ -17,7 +17,7 @@ const deleteLabel = localize('delete');
 const deletePermanentlyLabel = localize('deletePermanently');
 const undoLabel = localize('undo');
 
-export default function DeletedContent({
+export default function DeletedPost({
   contentId,
   contentType,
   onDeletePermanently,

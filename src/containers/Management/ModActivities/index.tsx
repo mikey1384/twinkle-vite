@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '~/contexts';
-import DeletedContent from './DeletedContent';
+import DeletedPost from './DeletedPost';
 import Loading from '~/components/Loading';
 import FilterBar from '~/components/FilterBar';
 import { mobileMaxWidth } from '~/constants/css';
@@ -10,6 +10,7 @@ export default function ModActivities() {
   const [loading, setLoading] = useState(true);
   const [contentType, setContentType] = useState('post');
   const [deletedPosts, setDeletedPosts] = useState([]);
+  const [deletedMessages, setDeletedMessages] = useState([]);
   const loadDeletedPosts = useAppContext(
     (v) => v.requestHelpers.loadDeletedPosts
   );
@@ -19,7 +20,11 @@ export default function ModActivities() {
       setLoading(true);
       try {
         const data = await loadDeletedPosts(contentType);
-        setDeletedPosts(data);
+        if (contentType === 'post') {
+          setDeletedPosts(data);
+        } else {
+          setDeletedMessages(data);
+        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -28,6 +33,13 @@ export default function ModActivities() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentType]);
+
+  const deletedContents = useMemo(() => {
+    if (contentType === 'post') {
+      return deletedPosts;
+    }
+    return deletedMessages;
+  }, [contentType, deletedMessages, deletedPosts]);
 
   return (
     <div
@@ -68,7 +80,7 @@ export default function ModActivities() {
       </FilterBar>
       <div style={{ marginTop: '2rem' }}>
         {loading && <Loading />}
-        {!loading && deletedPosts.length === 0 && (
+        {!loading && deletedContents.length === 0 && (
           <div
             style={{
               width: '100%',
@@ -83,23 +95,27 @@ export default function ModActivities() {
             {`No deleted ${contentType}s`}
           </div>
         )}
-        {deletedPosts.map(
-          (post: { id: number; contentId: number; type: string }, index) => (
-            <DeletedContent
-              key={post.id}
-              onDeletePermanently={() =>
-                setDeletedPosts((deletedPosts) =>
-                  deletedPosts.filter(
-                    (deletedPost: { id: number }) => deletedPost.id !== post.id
+        {deletedContents.map(
+          (post: { id: number; contentId: number; type: string }, index) =>
+            contentType === 'post' ? (
+              <DeletedPost
+                key={post.id}
+                onDeletePermanently={() =>
+                  setDeletedPosts((deletedPosts) =>
+                    deletedPosts.filter(
+                      (deletedPost: { id: number }) =>
+                        deletedPost.id !== post.id
+                    )
                   )
-                )
-              }
-              postId={post.id}
-              contentId={post.contentId}
-              contentType={post.type}
-              style={{ marginTop: index === 0 ? 0 : '1rem' }}
-            />
-          )
+                }
+                postId={post.id}
+                contentId={post.contentId}
+                contentType={post.type}
+                style={{ marginTop: index === 0 ? 0 : '1rem' }}
+              />
+            ) : (
+              <div key={post.id}>{post.content}</div>
+            )
         )}
       </div>
       <div style={{ height: '10rem' }} />
