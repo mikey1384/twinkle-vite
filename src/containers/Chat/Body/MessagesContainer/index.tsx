@@ -758,8 +758,8 @@ function MessagesContainer({
   );
 
   const handleDelete = useCallback(async () => {
-    const { fileName, filePath, messageId } = deleteModal;
-    await deleteChatMessage({ fileName, filePath, messageId });
+    const { messageId } = deleteModal;
+    await deleteChatMessage({ messageId });
     onDeleteMessage({
       channelId: selectedChannelId,
       messageId,

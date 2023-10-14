@@ -82,7 +82,7 @@ export default function managementRequestHelpers({
         const {
           data: { success }
         } = await request.delete(
-          `${URL}/chat/permanently?messageId=${messageId}${
+          `${URL}/chat/message/permanently?messageId=${messageId}${
             filePath ? `&filePath=${filePath}` : ''
           }${fileName ? `&fileName=${fileName}` : ''}`,
           auth()

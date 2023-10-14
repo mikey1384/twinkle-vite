@@ -226,20 +226,22 @@ export default function chatRequestHelpers({
       }
     },
     async deleteChatMessage({
-      fileName = '',
-      filePath = '',
-      messageId
+      messageId,
+      isUndo
     }: {
-      fileName?: string;
-      filePath?: string;
       messageId: number;
+      isUndo: boolean;
     }) {
       try {
-        await request.delete(
-          `${URL}/chat/message?messageId=${messageId}&filePath=${filePath}&fileName=${fileName}`,
+        const {
+          data: { success, isRecovered }
+        } = await request.delete(
+          `${URL}/chat/message?messageId=${messageId}${
+            isUndo ? '&isUndo=1' : ''
+          }`,
           auth()
         );
-        return Promise.resolve();
+        return Promise.resolve({ success, isRecovered });
       } catch (error) {
         return handleError(error);
       }
