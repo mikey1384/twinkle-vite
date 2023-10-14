@@ -2,15 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import DeletedContent from './DeletedContent';
 import Loading from '~/components/Loading';
+import FilterBar from '~/components/FilterBar';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const deletedPostsLabel = localize('deletedPosts');
-const noNewlyDeletedPostsLabel = localize('noNewlyDeletedPosts');
 
 export default function ModActivities() {
-  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [contentType, setContentType] = useState('post');
   const [deletedPosts, setDeletedPosts] = useState([]);
   const loadDeletedPosts = useAppContext(
     (v) => v.requestHelpers.loadDeletedPosts
@@ -18,12 +16,18 @@ export default function ModActivities() {
   useEffect(() => {
     init();
     async function init() {
-      const data = await loadDeletedPosts();
-      setDeletedPosts(data);
-      setLoaded(true);
+      setLoading(true);
+      try {
+        const data = await loadDeletedPosts();
+        setDeletedPosts(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [contentType]);
 
   return (
     <div
@@ -34,21 +38,37 @@ export default function ModActivities() {
         }
       `}
     >
-      <h2
+      <FilterBar
+        bordered
         className={css`
-          margin-top: 1rem;
+          font-size: 1.5rem !important;
+          height: 4.5rem !important;
           @media (max-width: ${mobileMaxWidth}) {
-            padding: 0 1rem;
-            font-size: 2.3rem;
-            margin-top: 2rem;
+            font-size: 1.1rem !important;
+            height: 3rem !important;
           }
         `}
       >
-        {deletedPostsLabel}
-      </h2>
+        <nav
+          className={contentType === 'post' ? 'active' : ''}
+          onClick={() => {
+            setContentType('post');
+          }}
+        >
+          Posts
+        </nav>
+        <nav
+          className={contentType === 'message' ? 'active' : ''}
+          onClick={() => {
+            setContentType('message');
+          }}
+        >
+          Messages
+        </nav>
+      </FilterBar>
       <div style={{ marginTop: '2rem' }}>
-        {!loaded && <Loading />}
-        {loaded && deletedPosts.length === 0 && (
+        {loading && <Loading />}
+        {!loading && deletedPosts.length === 0 && (
           <div
             style={{
               width: '100%',
@@ -60,7 +80,7 @@ export default function ModActivities() {
               fontSize: '2rem'
             }}
           >
-            {noNewlyDeletedPostsLabel}
+            {`No deleted ${contentType}s`}
           </div>
         )}
         {deletedPosts.map(
