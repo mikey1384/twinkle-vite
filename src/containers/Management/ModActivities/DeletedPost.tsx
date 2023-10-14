@@ -32,8 +32,8 @@ export default function DeletedPost({
 }) {
   const { managementLevel } = useKeyContext((v) => v.myState);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
-  const deletePermanently = useAppContext(
-    (v) => v.requestHelpers.deletePermanently
+  const deletePostPermanently = useAppContext(
+    (v) => v.requestHelpers.deletePostPermanently
   );
   const loadDeletedContent = useAppContext(
     (v) => v.requestHelpers.loadDeletedContent
@@ -439,7 +439,7 @@ export default function DeletedPost({
   );
 
   async function handleDeletePermanently() {
-    const success = await deletePermanently({
+    const success = await deletePostPermanently({
       contentId,
       contentType,
       fileName,

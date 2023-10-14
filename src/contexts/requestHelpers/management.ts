@@ -44,7 +44,7 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async deletePermanently({
+    async deletePostPermanently({
       contentId,
       contentType,
       filePath,
@@ -60,6 +60,29 @@ export default function managementRequestHelpers({
           data: { success }
         } = await request.delete(
           `${URL}/content/permanently?contentId=${contentId}&contentType=${contentType}${
+            filePath ? `&filePath=${filePath}` : ''
+          }${fileName ? `&fileName=${fileName}` : ''}`,
+          auth()
+        );
+        return Promise.resolve(success);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async deleteMessagePermanently({
+      messageId,
+      filePath,
+      fileName
+    }: {
+      messageId: number;
+      filePath?: string;
+      fileName?: string;
+    }) {
+      try {
+        const {
+          data: { success }
+        } = await request.delete(
+          `${URL}/chat/permanently?messageId=${messageId}${
             filePath ? `&filePath=${filePath}` : ''
           }${fileName ? `&fileName=${fileName}` : ''}`,
           auth()
@@ -95,6 +118,16 @@ export default function managementRequestHelpers({
       try {
         const { data } = await request.get(
           `${URL}/management/deleted/content?contentId=${contentId}&contentType=${contentType}`
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadDeletedMessage(messageId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/deleted/message?messageId=${messageId}`
         );
         return Promise.resolve(data);
       } catch (error) {
