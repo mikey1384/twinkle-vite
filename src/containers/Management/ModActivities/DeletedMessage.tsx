@@ -24,7 +24,9 @@ export default function DeletedMessage({
   style?: React.CSSProperties;
 }) {
   const { managementLevel } = useKeyContext((v) => v.myState);
-  const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
+  const deleteChatMessage = useAppContext(
+    (v) => v.requestHelpers.deleteChatMessage
+  );
   const loadDeletedMessage = useAppContext(
     (v) => v.requestHelpers.loadDeletedMessage
   );
@@ -218,10 +220,9 @@ export default function DeletedMessage({
   }
 
   async function handleUndoDelete({ redo }: { redo: boolean }) {
-    const { success, isRecovered } = await deleteContent({
-      id: contentId,
-      contentType,
-      undo: !redo
+    const { success, isRecovered } = await deleteChatMessage({
+      messageId,
+      isUndo: !redo
     });
     if (success) {
       setMessageObj((prevMessageObj) => ({
