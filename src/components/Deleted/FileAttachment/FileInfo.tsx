@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
-import { css } from '@emotion/css';
 import {
   borderRadius,
   Color,
@@ -8,6 +7,7 @@ import {
   mobileMaxWidth
 } from '~/constants/css';
 import { renderFileSize } from '~/helpers/stringHelpers';
+import { css } from '@emotion/css';
 
 export default function FileInfo({
   fileName,

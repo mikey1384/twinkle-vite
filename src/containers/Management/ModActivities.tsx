@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '~/contexts';
-import DeletedPost from './DeletedPost';
-import DeletedMessage from './DeletedMessage';
+import DeletedPost from '~/components/Deleted/DeletedPost';
+import DeletedMessage from '~/components/Deleted/DeletedMessage';
 import Loading from '~/components/Loading';
 import FilterBar from '~/components/FilterBar';
 import { mobileMaxWidth } from '~/constants/css';
