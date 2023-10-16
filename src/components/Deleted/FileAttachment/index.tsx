@@ -2,10 +2,10 @@ import React, { useMemo, useState } from 'react';
 import FileInfo from './FileInfo';
 import ImagePreview from './ImagePreview';
 import MediaPlayer from './MediaPlayer';
-import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import { css } from '@emotion/css';
 
 export default function FileAttachment({
   messageId,

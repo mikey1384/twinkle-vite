@@ -4,10 +4,10 @@ import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Loading from '~/components/Loading';
-import { css } from '@emotion/css';
+import localize from '~/constants/localize';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
+import { css } from '@emotion/css';
 
 const deletedByLabel = localize('deletedBy');
 const deleteLabel = localize('delete');

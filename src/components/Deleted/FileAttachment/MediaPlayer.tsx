@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import ExtractedThumb from '~/components/ExtractedThumb';
 import ReactPlayer from 'react-player';
-import { v1 as uuidv1 } from 'uuid';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
+import { v1 as uuidv1 } from 'uuid';
 
 const deviceIsMobile = isMobile(navigator);
 

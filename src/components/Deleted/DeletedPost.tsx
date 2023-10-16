@@ -7,10 +7,10 @@ import ReactPlayer from 'react-player';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { css } from '@emotion/css';
 
 const deletedByLabel = localize('deletedBy');
 const deleteLabel = localize('delete');
