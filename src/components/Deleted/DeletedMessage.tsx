@@ -20,7 +20,7 @@ export default function DeletedMessage({
   style
 }: {
   messageId: number;
-  onDeletePermanently: (v: number) => void;
+  onDeletePermanently?: (v: number) => void;
   style?: React.CSSProperties;
 }) {
   const { managementLevel } = useKeyContext((v) => v.myState);
@@ -215,7 +215,7 @@ export default function DeletedMessage({
       filePath
     });
     if (success) {
-      onDeletePermanently(messageId);
+      onDeletePermanently?.(messageId);
     }
   }
 

@@ -1,4 +1,6 @@
 import React from 'react';
+import DeletedMessage from '~/components/Deleted/DeletedMessage';
+import DeletedPost from '~/components/Deleted/DeletedPost';
 
 export default function Details({
   contentId,
@@ -20,7 +22,11 @@ export default function Details({
       }}
     >
       <div>
-        {contentType} ID: {contentId}
+        {contentType === 'chat' ? (
+          <DeletedMessage messageId={contentId} />
+        ) : (
+          <DeletedPost contentId={contentId} contentType={contentType} />
+        )}
         <div style={{ color: 'red' }}>{!!isRevoked && '(Revoked)'}</div>
       </div>
     </div>
