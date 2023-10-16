@@ -205,6 +205,19 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadModificationItem(modificationId: number) {
+      try {
+        const { data: modificationItem } = await request.get(
+          `${URL}/management/modification${
+            modificationId ? `?modificationId=${modificationId}` : ''
+          }}`,
+          auth()
+        );
+        return Promise.resolve(modificationItem);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadApprovalItems() {
       try {
         const { data: approvalItems } = await request.get(

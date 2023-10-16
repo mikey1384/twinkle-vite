@@ -33,6 +33,7 @@ import TargetChessPosition from './TargetChessPosition';
 import TransferMessage from './TransferMessage';
 import TransactionDetails from '../TransactionDetails';
 import ApprovalRequest from './ApprovalRequest';
+import ModificationNotice from './ModificationNotice';
 import { useInView } from 'react-intersection-observer';
 import { socket } from '~/constants/io';
 import { MessageStyle } from '../Styles';
@@ -160,6 +161,9 @@ function Message({
 }) {
   const isApprovalRequest = useMemo(() => {
     return rootType === 'approval' && !!rootId;
+  }, [rootId, rootType]);
+  const isModificationNotice = useMemo(() => {
+    return rootType === 'modification' && !!rootId;
   }, [rootId, rootType]);
   const isAIMessage = useMemo(() => {
     return (
@@ -842,6 +846,11 @@ function Message({
                     userId={userId}
                     username={appliedUsername}
                     requestId={rootId}
+                  />
+                ) : isModificationNotice ? (
+                  <ModificationNotice
+                    modificationId={rootId}
+                    username={appliedUsername}
                   />
                 ) : invitePath ? (
                   <Invitation
