@@ -106,6 +106,7 @@ export default function DeletedMessage({
               style={{
                 display: 'flex',
                 width: '100%',
+                alignItems: 'flex-start',
                 flexDirection: 'column'
               }}
             >
@@ -143,7 +144,7 @@ export default function DeletedMessage({
           )}
         </div>
       )}
-      {deleter && managementLevel > 1 && (
+      {deleter && managementLevel > 1 && !!onDeletePermanently && (
         <div
           style={{
             marginTop: '1rem',

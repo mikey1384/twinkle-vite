@@ -21,7 +21,7 @@ export default function Details({
         textAlign: 'center'
       }}
     >
-      <div>
+      <div style={{ padding: '0 1rem' }}>
         {contentType === 'chat' ? (
           <DeletedMessage messageId={contentId} />
         ) : (

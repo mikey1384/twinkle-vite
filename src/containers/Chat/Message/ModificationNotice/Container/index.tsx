@@ -48,7 +48,8 @@ export default function Container({
         {action ? (
           <span style={{ color: Color.darkerGray() }}>
             {action}
-            {action === 'delete' ? 'd' : 'ed'}:
+            {action === 'delete' ? 'd' : 'ed'} a{' '}
+            {contentType === 'chat' ? 'chat message' : 'post'}:
           </span>
         ) : (
           ''
