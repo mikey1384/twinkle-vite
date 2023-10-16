@@ -13,15 +13,13 @@ export default function ModificationNotice({
   const loadModificationItem = useAppContext(
     (v) => v.requestHelpers.loadModificationItem
   );
-  const [type, setType] = useState('');
-  const [content, setContent] = useState<Record<string, any> | null>(null);
+  const [data, setData] = useState<Record<string, any> | null>(null);
 
   useEffect(() => {
     init();
     async function init() {
       const item = await loadModificationItem(modificationId);
-      setType(item.type);
-      setContent({
+      setData({
         action: item.action,
         contentId: item.contentId,
         contentType: item.contentType,
@@ -41,11 +39,7 @@ export default function ModificationNotice({
         alignItems: 'center'
       }}
     >
-      {content ? (
-        <Container content={content} type={type} username={username} />
-      ) : (
-        <Loading />
-      )}
+      {data ? <Container data={data} username={username} /> : <Loading />}
     </div>
   );
 }

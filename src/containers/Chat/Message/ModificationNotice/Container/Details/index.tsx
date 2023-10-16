@@ -1,11 +1,15 @@
 import React from 'react';
 
 export default function Details({
-  content,
-  type
+  action,
+  contentId,
+  contentType,
+  isRevoked
 }: {
-  content: Record<string, any> | null;
-  type: string;
+  action: string;
+  contentId: number;
+  contentType: string;
+  isRevoked: boolean;
 }) {
   return (
     <div
@@ -16,7 +20,11 @@ export default function Details({
         textAlign: 'center'
       }}
     >
-      details go here type: {type} {'//'} content: {JSON.stringify(content)}
+      <div>{action}</div>
+      <div>
+        {contentType} ID: {contentId}
+        <span style={{ color: 'red' }}>{isRevoked && ' (Revoked)'}</span>
+      </div>
     </div>
   );
 }

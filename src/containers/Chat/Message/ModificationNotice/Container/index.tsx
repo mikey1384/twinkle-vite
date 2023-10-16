@@ -10,13 +10,12 @@ import Details from './Details';
 
 export default function Container({
   username,
-  content,
-  type
+  data
 }: {
   username: string;
-  content: Record<string, any> | null;
-  type: string;
+  data: Record<string, any> | null;
 }) {
+  const { action, contentId, contentType, isRevoked } = data || {};
   return (
     <div
       className={css`
@@ -41,14 +40,26 @@ export default function Container({
     >
       <div
         style={{
-          fontWeight: 'bold',
           fontSize: '2rem',
-          color: Color.logoBlue()
+          fontWeight: 'bold'
         }}
       >
-        {username}
+        <span style={{ color: Color.logoBlue() }}>{username}</span>{' '}
+        {action ? (
+          <span style={{ color: Color.darkerGray() }}>
+            {action}
+            {action === 'delete' ? 'd' : 'ed'}:
+          </span>
+        ) : (
+          ''
+        )}
       </div>
-      <Details content={content} type={type} />
+      <Details
+        action={action}
+        contentId={contentId}
+        contentType={contentType}
+        isRevoked={isRevoked}
+      />
     </div>
   );
 }
