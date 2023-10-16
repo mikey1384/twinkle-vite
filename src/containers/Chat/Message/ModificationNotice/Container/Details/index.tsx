@@ -1,7 +1,6 @@
 import React from 'react';
 
 export default function Details({
-  action,
   contentId,
   contentType,
   isRevoked
@@ -20,10 +19,9 @@ export default function Details({
         textAlign: 'center'
       }}
     >
-      <div>{action}</div>
       <div>
         {contentType} ID: {contentId}
-        <span style={{ color: 'red' }}>{isRevoked && ' (Revoked)'}</span>
+        <div style={{ color: 'red' }}>{!!isRevoked && '(Revoked)'}</div>
       </div>
     </div>
   );
