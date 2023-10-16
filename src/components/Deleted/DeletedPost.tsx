@@ -26,8 +26,8 @@ export default function DeletedPost({
 }: {
   contentId: number;
   contentType: string;
-  postId: number;
-  onDeletePermanently: (v: number) => void;
+  postId?: number;
+  onDeletePermanently?: (v: number) => void;
   style?: React.CSSProperties;
 }) {
   const { managementLevel } = useKeyContext((v) => v.myState);
@@ -445,8 +445,8 @@ export default function DeletedPost({
       fileName,
       filePath
     });
-    if (success) {
-      onDeletePermanently(postId);
+    if (success && postId) {
+      onDeletePermanently?.(postId);
     }
   }
 
