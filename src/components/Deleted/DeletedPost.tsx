@@ -119,7 +119,14 @@ export default function DeletedPost({
               }}
             >
               {contentType === 'video' && (
-                <div style={{ width: '100%' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    width: '100%',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
+                  }}
+                >
                   <div>
                     <UsernameText
                       style={{ fontSize: '1.5rem' }}
@@ -181,7 +188,8 @@ export default function DeletedPost({
                   style={{
                     display: 'flex',
                     width: '100%',
-                    flexDirection: 'column'
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
                   }}
                 >
                   <div>
@@ -211,7 +219,14 @@ export default function DeletedPost({
                 </div>
               )}
               {contentType === 'subject' && (
-                <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    width: '100%',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
+                  }}
+                >
                   <div>
                     <UsernameText
                       style={{ fontSize: '1.5rem' }}
@@ -267,9 +282,10 @@ export default function DeletedPost({
               {contentType === 'url' && (
                 <div
                   style={{
-                    width: '100%',
                     display: 'flex',
-                    flexDirection: 'column'
+                    width: '100%',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
                   }}
                 >
                   <div>
@@ -359,7 +375,7 @@ export default function DeletedPost({
               {secretAnswer}
             </div>
           )}
-          {deleter && managementLevel > 1 && (
+          {deleter && managementLevel > 1 && !!onDeletePermanently && (
             <div
               style={{
                 marginTop: '1rem',
