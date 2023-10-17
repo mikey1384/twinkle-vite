@@ -20,7 +20,7 @@ export default function MonthItem({
 }) {
   const [top30ModalShown, setTop30ModalShown] = useState(false);
   const top3 = useMemo(() => {
-    return top30.slice(0, 3);
+    return top30?.slice(0, 3);
   }, [top30]);
 
   return (
