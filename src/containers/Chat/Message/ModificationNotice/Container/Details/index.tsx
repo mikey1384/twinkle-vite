@@ -1,6 +1,7 @@
 import React from 'react';
 import DeletedMessage from '~/components/Deleted/DeletedMessage';
 import DeletedPost from '~/components/Deleted/DeletedPost';
+import { Color } from '~/constants/css';
 
 export default function Details({
   contentId,
@@ -27,7 +28,15 @@ export default function Details({
         ) : (
           <DeletedPost contentId={contentId} contentType={contentType} />
         )}
-        <div style={{ color: 'red' }}>{!!isRevoked && '(Revoked)'}</div>
+        <div
+          style={{
+            color: Color.darkGray(),
+            marginTop: '1rem',
+            fontWeight: 'bold'
+          }}
+        >
+          {!!isRevoked && '(Revoked)'}
+        </div>
       </div>
     </div>
   );
