@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
 import Container from './Container';
 import { useAppContext } from '~/contexts';
+import { socket } from '~/constants/io';
 
 export default function ModificationNotice({
   modificationId,
@@ -28,6 +29,29 @@ export default function ModificationNotice({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modificationId]);
+
+  useEffect(() => {
+    socket.on('content_modification_revoked', handleContentModificationRevoked);
+
+    function handleContentModificationRevoked({
+      contentType,
+      contentId
+    }: {
+      contentType: string;
+      contentId: number;
+    }) {
+      if (contentType === data?.contentType && contentId === data?.contentId) {
+        setData((data) => ({ ...data, isRevoked: true }));
+      }
+    }
+
+    return function cleanUp() {
+      socket.removeListener(
+        'content_modification_revoked',
+        handleContentModificationRevoked
+      );
+    };
+  });
 
   return (
     <div

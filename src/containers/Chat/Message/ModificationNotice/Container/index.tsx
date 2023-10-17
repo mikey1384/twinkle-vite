@@ -7,6 +7,8 @@ import {
   wideBorderRadius
 } from '~/constants/css';
 import Details from './Details';
+import Link from '~/components/Link';
+import { useKeyContext } from '~/contexts';
 
 export default function Container({
   username,
@@ -15,6 +17,9 @@ export default function Container({
   username: string;
   data: Record<string, any> | null;
 }) {
+  const {
+    link: { color: linkColor }
+  } = useKeyContext((v) => v.theme);
   const { action, contentId, contentType, isRevoked } = data || {};
   return (
     <div
@@ -44,13 +49,25 @@ export default function Container({
           fontWeight: 'bold'
         }}
       >
-        <span style={{ color: Color.logoBlue() }}>{username}</span>{' '}
+        <span style={{ color: Color[linkColor]() }}>{username}</span>{' '}
         {action ? (
-          <span style={{ color: Color.darkerGray() }}>
+          <div style={{ color: Color.darkerGray(), display: 'inline' }}>
             {action}
             {action === 'delete' ? 'd' : 'ed'} a{' '}
-            {contentType === 'chat' ? 'chat message' : 'post'}:
-          </span>
+            {contentType === 'chat' ? (
+              'chat message'
+            ) : (
+              <Link
+                to={`/${
+                  contentType === 'url' ? 'link' : contentType
+                }s/${contentId}`}
+                style={{ color: Color[linkColor]() }}
+              >
+                post
+              </Link>
+            )}
+            :
+          </div>
         ) : (
           ''
         )}
