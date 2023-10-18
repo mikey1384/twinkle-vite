@@ -7,7 +7,8 @@ export const levels = [
     canReward: false,
     canPinPlaylists: false,
     canEditPlaylists: false,
-    canEditRewardLevel: false
+    canEditRewardLevel: false,
+    managementLevel: 0
   },
   {
     ap: 0,
@@ -17,7 +18,8 @@ export const levels = [
     canReward: false,
     canPinPlaylists: false,
     canEditPlaylists: false,
-    canEditRewardLevel: false
+    canEditRewardLevel: false,
+    managementLevel: 0
   },
   // moderator level
   {
@@ -28,7 +30,8 @@ export const levels = [
     canReward: true,
     canPinPlaylists: false,
     canEditPlaylists: false,
-    canEditRewardLevel: false
+    canEditRewardLevel: false,
+    managementLevel: 0
   },
   {
     ap: 300,
@@ -38,7 +41,8 @@ export const levels = [
     canReward: true,
     canPinPlaylists: false,
     canEditPlaylists: false,
-    canEditRewardLevel: false
+    canEditRewardLevel: false,
+    managementLevel: 0
   },
   {
     ap: 450,
@@ -48,7 +52,8 @@ export const levels = [
     canReward: true,
     canPinPlaylists: false,
     canEditPlaylists: false,
-    canEditRewardLevel: false
+    canEditRewardLevel: false,
+    managementLevel: 0
   },
   // teacher level
   {
@@ -59,7 +64,8 @@ export const levels = [
     canReward: true,
     canPinPlaylists: false,
     canEditPlaylists: true,
-    canEditRewardLevel: true
+    canEditRewardLevel: true,
+    managementLevel: 1
   },
   {
     ap: 1300,
@@ -69,7 +75,8 @@ export const levels = [
     canReward: true,
     canPinPlaylists: false,
     canEditPlaylists: true,
-    canEditRewardLevel: true
+    canEditRewardLevel: true,
+    managementLevel: 1
   },
   // headteacher level
   {
@@ -80,7 +87,8 @@ export const levels = [
     canReward: true,
     canPinPlaylists: false,
     canEditPlaylists: true,
-    canEditRewardLevel: true
+    canEditRewardLevel: true,
+    managementLevel: 1
   },
   {
     ap: 1800,
@@ -90,7 +98,8 @@ export const levels = [
     canReward: true,
     canPinPlaylists: false,
     canEditPlaylists: true,
-    canEditRewardLevel: true
+    canEditRewardLevel: true,
+    managementLevel: 1
   },
   // headmaster level
   {
@@ -101,7 +110,8 @@ export const levels = [
     canReward: true,
     canPinPlaylists: true,
     canEditPlaylists: true,
-    canEditRewardLevel: true
+    canEditRewardLevel: true,
+    managementLevel: 1
   },
   {
     ap: 3300,
@@ -111,6 +121,7 @@ export const levels = [
     canReward: true,
     canPinPlaylists: true,
     canEditPlaylists: true,
-    canEditRewardLevel: true
+    canEditRewardLevel: true,
+    managementLevel: 1
   }
 ];
