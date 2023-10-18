@@ -53,7 +53,7 @@ export default function Container({
         {action ? (
           <div style={{ color: Color.darkerGray(), display: 'inline' }}>
             {action}
-            {action === 'delete' ? 'd' : 'ed'} a{' '}
+            {action === 'delete' || action === 'close' ? 'd' : 'ed'} a{' '}
             {contentType === 'chat' ? (
               'chat message'
             ) : (
