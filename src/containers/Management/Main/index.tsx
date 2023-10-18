@@ -73,8 +73,8 @@ export default function Main() {
     >
       <Approvals canManage={canManage} />
       <Supermods canManage={canManage} />
-      <Moderators canManage={canManage} />
-      <AccountTypes canManage={canManage} />
+      {managementLevel > 1 && <Moderators canManage={canManage} />}
+      {managementLevel > 1 && <AccountTypes canManage={canManage} />}
       <BannedUsers canManage={canManage} />
     </ErrorBoundary>
   );
