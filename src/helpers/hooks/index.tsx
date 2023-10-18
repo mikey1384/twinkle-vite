@@ -358,7 +358,8 @@ export function useUserLevel(userId: number): UserLevel {
     canDelete,
     canReward,
     canPinPlaylists,
-    canEditRewardLevel
+    canEditRewardLevel,
+    managementLevel = 0
   } = userObj[userId] || {};
 
   const result = useMemo(() => {
@@ -372,6 +373,7 @@ export function useUserLevel(userId: number): UserLevel {
           canPinPlaylists: canPinPlaylists || levels[i].canPinPlaylists,
           canEditRewardLevel:
             canEditRewardLevel || levels[i].canEditRewardLevel,
+          managementLevel: Math.max(managementLevel, levels[i].managementLevel),
           nextLevelAp: i === levels.length - 1 ? null : levels[i + 1].ap
         };
       }
@@ -383,6 +385,7 @@ export function useUserLevel(userId: number): UserLevel {
       canReward: canReward || levels[1].canReward,
       canPinPlaylists: canPinPlaylists || levels[1].canPinPlaylists,
       canEditRewardLevel: canEditRewardLevel || levels[1].canEditRewardLevel,
+      managementLevel: Math.max(managementLevel, levels[1].managementLevel),
       nextLevelAp: levels[2].ap
     };
   }, [
@@ -391,7 +394,8 @@ export function useUserLevel(userId: number): UserLevel {
     canEdit,
     canEditRewardLevel,
     canPinPlaylists,
-    canReward
+    canReward,
+    managementLevel
   ]);
 
   return result;
