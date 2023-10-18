@@ -21,6 +21,7 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
+import { User } from '~/types';
 import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID,
@@ -274,6 +275,7 @@ export default function Header({
   const pageVisible = useViewContext((v) => v.state.pageVisible);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
   const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
+  const onOpenContent = useContentContext((v) => v.actions.onOpenContent);
   const onLikeContent = useContentContext((v) => v.actions.onLikeContent);
   const onRecommendContent = useContentContext(
     (v) => v.actions.onRecommendContent
@@ -333,6 +335,7 @@ export default function Header({
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('connect', handleConnect);
     socket.on('content_closed', handleContentClose);
+    socket.on('content_opened', handleContentOpen);
     socket.on('canceled_chess_rewind', handleChessRewindCanceled);
     socket.on('current_transaction_id_updated', handleTransactionIdUpdate);
     socket.on('declined_chess_rewind', handleChessRewindDeclined);
@@ -403,6 +406,7 @@ export default function Header({
       socket.removeListener('chess_rewind_requested', handleChessRewindRequest);
       socket.removeListener('connect', handleConnect);
       socket.removeListener('content_closed', handleContentClose);
+      socket.removeListener('content_opened', handleContentOpen);
       socket.removeListener('canceled_chess_rewind', handleChessRewindCanceled);
       socket.removeListener(
         'current_transaction_id_updated',
@@ -831,7 +835,7 @@ export default function Header({
     }: {
       contentId: number;
       contentType: string;
-      closedBy: number;
+      closedBy: User;
     }) {
       onCloseContent({ contentId, contentType, userId: closedBy });
     }
@@ -848,6 +852,16 @@ export default function Header({
       if (senderId !== userId) {
         onUpdateCurrentTransactionId({ channelId, transactionId });
       }
+    }
+
+    function handleContentOpen({
+      contentId,
+      contentType
+    }: {
+      contentId: number;
+      contentType: string;
+    }) {
+      onOpenContent({ contentId, contentType });
     }
 
     function handleOnlineStatusChange({
