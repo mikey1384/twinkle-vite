@@ -138,7 +138,7 @@ export default function Cover({
                 display: inline;
                 font-size: 2rem;
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.5rem;
+                  font-size: 1.2rem;
                 }
               `}`}
             />

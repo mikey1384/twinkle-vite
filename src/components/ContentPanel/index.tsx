@@ -125,7 +125,10 @@ export default function ContentPanel({
     () => rootTypeFromState || rootType,
     [rootType, rootTypeFromState]
   );
-  const rootObj = useContentState({ contentType: rootType, contentId: rootId });
+  const rootObj = useContentState({
+    contentType: appliedRootType,
+    contentId: rootId
+  });
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
