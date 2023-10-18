@@ -273,6 +273,7 @@ export default function Header({
   );
   const pageVisible = useViewContext((v) => v.state.pageVisible);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
+  const onCloseContent = useContentContext((v) => v.actions.onCloseContent);
   const onLikeContent = useContentContext((v) => v.actions.onLikeContent);
   const onRecommendContent = useContentContext(
     (v) => v.actions.onRecommendContent
@@ -331,6 +332,7 @@ export default function Header({
     socket.on('channel_owner_changed', handleChangeChannelOwner);
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('connect', handleConnect);
+    socket.on('content_closed', handleContentClose);
     socket.on('canceled_chess_rewind', handleChessRewindCanceled);
     socket.on('current_transaction_id_updated', handleTransactionIdUpdate);
     socket.on('declined_chess_rewind', handleChessRewindDeclined);
@@ -400,6 +402,7 @@ export default function Header({
       );
       socket.removeListener('chess_rewind_requested', handleChessRewindRequest);
       socket.removeListener('connect', handleConnect);
+      socket.removeListener('content_closed', handleContentClose);
       socket.removeListener('canceled_chess_rewind', handleChessRewindCanceled);
       socket.removeListener(
         'current_transaction_id_updated',
@@ -819,6 +822,18 @@ export default function Header({
         const numUnreads = await getNumberOfUnreadMessages();
         onGetNumberOfUnreadMessages(numUnreads);
       }
+    }
+
+    function handleContentClose({
+      contentId,
+      contentType,
+      closedBy
+    }: {
+      contentId: number;
+      contentType: string;
+      closedBy: number;
+    }) {
+      onCloseContent({ contentId, contentType, userId: closedBy });
     }
 
     function handleTransactionIdUpdate({
