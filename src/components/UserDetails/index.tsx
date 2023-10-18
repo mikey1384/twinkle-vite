@@ -118,7 +118,7 @@ export default function UserDetails({
       >
         {profile.username}
       </Link>
-      <p
+      <div
         style={{
           fontSize: small ? '1.3rem' : '1.5rem'
         }}
@@ -141,7 +141,7 @@ export default function UserDetails({
         >
           {profile.realName}
         </span>
-      </p>
+      </div>
       {userId === profile.id && !unEditable && (
         <StatusInput
           innerRef={StatusInputRef}
