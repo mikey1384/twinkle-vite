@@ -227,6 +227,14 @@ export default function ContentReducer(
           isClosedBy: action.userId
         }
       };
+    case 'OPEN_CONTENT':
+      return {
+        ...state,
+        [contentKey]: {
+          ...prevContentState,
+          isClosedBy: null
+        }
+      };
     case 'DELETE_COMMENT': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);

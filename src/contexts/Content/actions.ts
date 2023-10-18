@@ -102,6 +102,19 @@ export default function ContentActions(dispatch: Dispatch) {
         userId
       });
     },
+    onOpenContent({
+      contentId,
+      contentType
+    }: {
+      contentId: number;
+      contentType: string;
+    }) {
+      return dispatch({
+        type: 'OPEN_CONTENT',
+        contentId,
+        contentType
+      });
+    },
     onDeleteComment(commentId: number) {
       return dispatch({
         type: 'DELETE_COMMENT',
