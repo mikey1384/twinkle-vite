@@ -54,6 +54,7 @@ export const MOD_LEVEL = 3;
 export const SR_MOD_LEVEL = 4;
 export const TEACHER_LEVEL = 5;
 export const MIKEY_ID = 5;
+export const ADMIN_MANAGEMENT_LEVEL = 2;
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
 export const ZERO_TWINKLE_ID = Number(import.meta.env.VITE_ZERO_TWINKLE_ID);
