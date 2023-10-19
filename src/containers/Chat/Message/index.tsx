@@ -46,7 +46,8 @@ import { isMobile, isSupermod } from '~/helpers';
 import {
   CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID,
-  GENERAL_CHAT_ID
+  GENERAL_CHAT_ID,
+  SR_MOD_LEVEL
 } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
@@ -274,7 +275,11 @@ function Message({
     userIsUploader
   ]);
   const userCanRewardThis = useMemo(
-    () => canReward && level > uploaderLevel && myId !== userId,
+    () =>
+      canReward &&
+      level >= SR_MOD_LEVEL &&
+      level > uploaderLevel &&
+      myId !== userId,
     [level, canReward, uploaderLevel, userId, myId]
   );
   const [uploadStatus = {}] = useMemo(
