@@ -7,7 +7,6 @@ import AddPlaylistModal from '~/components/Modals/AddPlaylistModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { scrollElementToCenter } from '~/helpers';
 import { useSearch } from '~/helpers/hooks';
-import { MOD_LEVEL } from '~/constants/defaultValues';
 import {
   useAppContext,
   useExploreContext,
@@ -22,7 +21,7 @@ const allPlaylistsLabel = localize('allPlaylists');
 export default function Videos() {
   const loadPlaylists = useAppContext((v) => v.requestHelpers.loadPlaylists);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
-  const { level, userId } = useKeyContext((v) => v.myState);
+  const { canEditPlaylists, userId } = useKeyContext((v) => v.myState);
   const addPlaylistModalShown = useExploreContext(
     (v) => v.state.videos.addPlaylistModalShown
   );
@@ -93,7 +92,7 @@ export default function Videos() {
           <ButtonGroup
             style={{
               marginLeft: 'auto',
-              opacity: !!userId && level >= MOD_LEVEL ? 1 : 0
+              opacity: canEditPlaylists ? 1 : 0
             }}
             buttons={[
               {
@@ -101,7 +100,7 @@ export default function Videos() {
                 onClick: onOpenAddPlaylistModal,
                 skeuomorphic: true,
                 color: 'darkerGray',
-                disabled: !userId || level < MOD_LEVEL
+                disabled: !canEditPlaylists
               }
             ]}
           />
