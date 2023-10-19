@@ -27,7 +27,7 @@ export const levels = [
     level: 2,
     canEdit: false,
     canDelete: true,
-    canReward: true,
+    canReward: false,
     canPinPlaylists: false,
     canEditPlaylists: false,
     canEditRewardLevel: false,
