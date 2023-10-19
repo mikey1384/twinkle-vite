@@ -45,7 +45,7 @@ export const levels = [
     managementLevel: 0
   },
   {
-    ap: 450,
+    ap: 500,
     level: 4,
     canEdit: false,
     canDelete: true,
