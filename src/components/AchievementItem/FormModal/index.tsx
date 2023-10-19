@@ -4,12 +4,14 @@ import Button from '~/components/Button';
 import Form from './Form';
 import Loading from '~/components/Loading';
 import Submitted from './Submitted';
+import { ADMIN_MANAGEMENT_LEVEL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function FormModal({ onHide }: { onHide: () => void }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const { managementLevel } = useKeyContext((v) => v.myState);
   const retryDobApproval = useAppContext(
     (v) => v.requestHelpers.retryDobApproval
   );
@@ -44,7 +46,11 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
     <Modal onHide={onHide}>
       <header>Additional Profile Details</header>
       <main>
-        {isSubmitted === null ? (
+        {managementLevel >= ADMIN_MANAGEMENT_LEVEL ? (
+          <div
+            style={{ fontSize: '1.7rem' }}
+          >{`You run this website. You don't need verification`}</div>
+        ) : isSubmitted === null ? (
           <Loading />
         ) : isSubmitted && !tryingAgain ? (
           <Submitted
