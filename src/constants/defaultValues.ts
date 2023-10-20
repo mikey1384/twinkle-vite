@@ -6,6 +6,11 @@ import { Color } from '~/constants/css';
 // ===========================
 
 export const clientVersion = '1.8.6';
+export const MIKEY_ID = 5;
+export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
+export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
+export const ZERO_TWINKLE_ID = Number(import.meta.env.VITE_ZERO_TWINKLE_ID);
+export const ZERO_PFP_URL = import.meta.env.VITE_ZERO_PFP_URL;
 export const cloudFrontURL = `https://${
   import.meta.env.VITE_CLOUDFRONT_KEY
 }.cloudfront.net`;
@@ -16,6 +21,7 @@ export const TURN_USERNAME = import.meta.env.VITE_TURN_USERNAME;
 export const TURN_PASSWORD = import.meta.env.VITE_TURN_PASSWORD;
 export const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
 export const mb = 1000;
+export const mobileFullTextRevealShowDuration = 2000;
 
 // ===========================
 // Chat
@@ -34,55 +40,9 @@ export const defaultChatSubject = 'Welcome!';
 // Content
 // ===========================
 
-export const defaultContentState = {
-  isEditing: false,
-  placeholderHeight: 0,
-  rewards: [],
-  comments: [],
-  likes: [],
-  pictures: [],
-  questions: [],
-  status: {},
-  recommendations: [],
-  subjects: [],
-  tags: [],
-  commentsLoadMoreButton: false,
-  subjectsLoadMoreButton: false,
-  rootObj: {},
-  profileTheme: 'logoBlue',
-  videos: [],
-  loadMoreShown: false,
-  loaded: false
-};
-
-// ===========================
-// Users & Rewards
-// ===========================
-
-export const REWARD_VALUE = 200;
-export const DEFAULT_PROFILE_THEME = 'logoBlue';
-export const DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL = 1000;
-export const FILE_UPLOAD_XP_REQUIREMENT = 0;
-export const LAST_ONLINE_FILTER_LABEL = localize('lastOnline2');
-export const MAX_NUM_SUMMONS = 3;
-export const MAX_PROFILE_PIC_SIZE = 10000;
-export const RANKING_FILTER_LABEL = localize('ranking');
-
-export const JR_MOD_LEVEL = 2;
-export const MOD_LEVEL = 3;
-export const SR_MOD_LEVEL = 4;
-export const TEACHER_LEVEL = 5;
-export const MIKEY_ID = 5;
-export const ADMIN_MANAGEMENT_LEVEL = 2;
-export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
-export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
-export const ZERO_TWINKLE_ID = Number(import.meta.env.VITE_ZERO_TWINKLE_ID);
-export const ZERO_PFP_URL = import.meta.env.VITE_ZERO_PFP_URL;
-
-export interface CharLimit {
+export const charLimit: {
   [key: string]: any;
-}
-export const charLimit: CharLimit = {
+} = {
   chat: {
     aiCard: 250,
     subject: 200,
@@ -119,7 +79,39 @@ export const charLimit: CharLimit = {
     url: 300
   }
 };
+export const defaultContentState = {
+  isEditing: false,
+  placeholderHeight: 0,
+  rewards: [],
+  comments: [],
+  likes: [],
+  pictures: [],
+  questions: [],
+  status: {},
+  recommendations: [],
+  subjects: [],
+  tags: [],
+  commentsLoadMoreButton: false,
+  subjectsLoadMoreButton: false,
+  rootObj: {},
+  profileTheme: 'logoBlue',
+  videos: [],
+  loadMoreShown: false,
+  loaded: false
+};
 
+// ===========================
+// Users & Rewards & KP
+// ===========================
+
+export const DEFAULT_PROFILE_THEME = 'logoBlue';
+export const DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL = 1000;
+export const FILE_UPLOAD_XP_REQUIREMENT = 0;
+export const LAST_ONLINE_FILTER_LABEL = localize('lastOnline2');
+export const MAX_NUM_SUMMONS = 3;
+export const MAX_PROFILE_PIC_SIZE = 10000;
+export const RANKING_FILTER_LABEL = localize('ranking');
+export const REWARD_VALUE = 200;
 export const expectedResponseLength = (rewardLevel: number): number => {
   switch (rewardLevel) {
     case 5:
@@ -134,7 +126,13 @@ export const expectedResponseLength = (rewardLevel: number): number => {
       return 30;
   }
 };
-
+export const karmaMultiplier = {
+  post: 2,
+  recommendation: {
+    student: 10,
+    teacher: 5
+  }
+};
 export const karmaPointTable: any = {
   aiCard: 10_000,
   username: 50,
@@ -170,43 +168,6 @@ export const karmaPointTable: any = {
   },
   moreToCome: 30_000
 };
-
-export const statsPerUserTypes: {
-  [key: string]: {
-    title: string | null;
-    achievements: string[];
-  };
-} = {
-  moderator: {
-    title: 'moderator',
-    achievements: ['teenager']
-  },
-  programmer: {
-    title: 'programmer',
-    achievements: ['teenager']
-  },
-  ['senior programmer']: {
-    title: null,
-    achievements: ['teenager', 'adult']
-  },
-  ["mikey's friend"]: {
-    title: null,
-    achievements: ['teenager', 'adult']
-  },
-  teacher: {
-    title: 'teacher',
-    achievements: ['teenager', 'adult', 'mentor']
-  },
-  headteacher: {
-    title: 'teacher',
-    achievements: ['teenager', 'adult', 'mentor', 'sage']
-  },
-  headmaster: {
-    title: 'headmaster',
-    achievements: ['teenager', 'adult', 'mentor', 'sage', 'twinkle_founder']
-  }
-};
-
 export const videoRewardHash: { [key: string]: any } = {
   0: {
     xp: 20,
@@ -254,15 +215,50 @@ export const videoRewardHash: { [key: string]: any } = {
   }
 };
 
-export const karmaMultiplier = {
-  post: 2,
-  recommendation: {
-    student: 10,
-    teacher: 5
+// ===========================
+// Achievements & Roles
+// ===========================
+
+export const JR_MOD_LEVEL = 2;
+export const MOD_LEVEL = 3;
+export const SR_MOD_LEVEL = 4;
+export const TEACHER_LEVEL = 5;
+export const ADMIN_MANAGEMENT_LEVEL = 2;
+export const statsPerUserTypes: {
+  [key: string]: {
+    title: string | null;
+    achievements: string[];
+  };
+} = {
+  moderator: {
+    title: 'moderator',
+    achievements: ['teenager']
+  },
+  programmer: {
+    title: 'programmer',
+    achievements: ['teenager']
+  },
+  ['senior programmer']: {
+    title: null,
+    achievements: ['teenager', 'adult']
+  },
+  ["mikey's friend"]: {
+    title: null,
+    achievements: ['teenager', 'adult']
+  },
+  teacher: {
+    title: 'teacher',
+    achievements: ['teenager', 'adult', 'mentor']
+  },
+  headteacher: {
+    title: 'teacher',
+    achievements: ['teenager', 'adult', 'mentor', 'sage']
+  },
+  headmaster: {
+    title: 'headmaster',
+    achievements: ['teenager', 'adult', 'mentor', 'sage', 'twinkle_founder']
   }
 };
-
-export const mobileFullTextRevealShowDuration = 2000;
 
 export const priceTable = {
   card: 100,
