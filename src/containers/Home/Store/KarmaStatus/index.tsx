@@ -13,7 +13,7 @@ export default function KarmaStatus() {
     (v) => v.requestHelpers.loadKarmaPoints
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { level, userId, karmaPoints, userType } = useKeyContext(
+  const { level, userId, karmaPoints, userType, title } = useKeyContext(
     (v) => v.myState
   );
   const [karmaExplanationShown, setKarmaExplanationShown] = useState(false);
@@ -117,6 +117,7 @@ export default function KarmaStatus() {
                 numTwinklesRewarded={numTwinklesRewarded}
                 onHide={() => setKarmaExplanationShown(false)}
                 userType={userType}
+                userTitle={title}
               />
             </div>
           )}
