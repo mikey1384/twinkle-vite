@@ -16,7 +16,8 @@ export default function KarmaExplanationModal({
   numRecommended,
   numTwinklesRewarded,
   onHide,
-  userType
+  userType,
+  userTitle
 }: {
   userLevel: number;
   displayedKarmaPoints: string;
@@ -26,8 +27,12 @@ export default function KarmaExplanationModal({
   numTwinklesRewarded: number;
   onHide: () => void;
   userType: string;
+  userTitle: string;
 }) {
   const karmaPointsLabel = localize('karmaPoints');
+  const displayedTitle = useMemo(() => {
+    return userTitle || userType;
+  }, [userTitle, userType]);
   const displayedNumTwinklesRewarded = useMemo(() => {
     return addCommasToNumber(numTwinklesRewarded);
   }, [numTwinklesRewarded]);
@@ -295,7 +300,7 @@ export default function KarmaExplanationModal({
             font-size: 1.7rem;
           `}
         >
-          {userType && (
+          {displayedTitle && (
             <p
               className={css`
                 font-size: 2rem;
@@ -303,7 +308,7 @@ export default function KarmaExplanationModal({
                 margin-bottom: 1rem;
               `}
             >
-              {userType}
+              {displayedTitle}
             </p>
           )}
           {instructionText}

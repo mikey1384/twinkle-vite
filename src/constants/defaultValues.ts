@@ -1,8 +1,39 @@
 import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 
+// ===========================
+// General Configurations
+// ===========================
+
 export const clientVersion = '1.8.6';
+export const cloudFrontURL = `https://${
+  import.meta.env.VITE_CLOUDFRONT_KEY
+}.cloudfront.net`;
+export const S3URL = `https://${
+  import.meta.env.VITE_AWS_S3_BUCKET_NAME
+}.s3.amazonaws.com`;
+export const TURN_USERNAME = import.meta.env.VITE_TURN_USERNAME;
+export const TURN_PASSWORD = import.meta.env.VITE_TURN_PASSWORD;
+export const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
+export const mb = 1000;
+
+// ===========================
+// Chat
+// ===========================
+
+export const CHAT_ID_BASE_NUMBER = import.meta.env.VITE_CHAT_ID_BASE_NUMBER;
+export const GENERAL_CHAT_ID = 2;
+export const GENERAL_CHAT_PATH_ID =
+  Number(GENERAL_CHAT_ID) + Number(CHAT_ID_BASE_NUMBER);
+export const VOCAB_CHAT_TYPE = 'vocabulary';
+export const AI_CARD_CHAT_TYPE = 'ai-cards';
+export const GITHUB_APP_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 export const defaultChatSubject = 'Welcome!';
+
+// ===========================
+// Content
+// ===========================
+
 export const defaultContentState = {
   isEditing: false,
   placeholderHeight: 0,
@@ -24,31 +55,19 @@ export const defaultContentState = {
   loaded: false
 };
 
-export const cloudFrontURL = `https://${
-  import.meta.env.VITE_CLOUDFRONT_KEY
-}.cloudfront.net`;
-export const CHAT_ID_BASE_NUMBER = import.meta.env.VITE_CHAT_ID_BASE_NUMBER;
+// ===========================
+// Users & Rewards
+// ===========================
+
+export const REWARD_VALUE = 200;
 export const DEFAULT_PROFILE_THEME = 'logoBlue';
 export const DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL = 1000;
 export const FILE_UPLOAD_XP_REQUIREMENT = 0;
-export const GENERAL_CHAT_ID = 2;
-export const GENERAL_CHAT_PATH_ID =
-  Number(GENERAL_CHAT_ID) + Number(CHAT_ID_BASE_NUMBER);
-export const GITHUB_APP_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 export const LAST_ONLINE_FILTER_LABEL = localize('lastOnline2');
-export const RANKING_FILTER_LABEL = localize('ranking');
-export const MAX_PROFILE_PIC_SIZE = 10000;
 export const MAX_NUM_SUMMONS = 3;
-export const S3URL = `https://${
-  import.meta.env.VITE_AWS_S3_BUCKET_NAME
-}.s3.amazonaws.com`;
-export const TURN_USERNAME = import.meta.env.VITE_TURN_USERNAME;
-export const TURN_PASSWORD = import.meta.env.VITE_TURN_PASSWORD;
-export const REWARD_VALUE = 200;
-export const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
-export const mb = 1000;
-export const VOCAB_CHAT_TYPE = 'vocabulary';
-export const AI_CARD_CHAT_TYPE = 'ai-cards';
+export const MAX_PROFILE_PIC_SIZE = 10000;
+export const RANKING_FILTER_LABEL = localize('ranking');
+
 export const JR_MOD_LEVEL = 2;
 export const MOD_LEVEL = 3;
 export const SR_MOD_LEVEL = 4;
