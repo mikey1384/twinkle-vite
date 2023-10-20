@@ -22,6 +22,8 @@ export const TURN_PASSWORD = import.meta.env.VITE_TURN_PASSWORD;
 export const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
 export const mb = 1000;
 export const mobileFullTextRevealShowDuration = 2000;
+export const returnMissionThumb = (missionType: string): string =>
+  `${cloudFrontURL}/missions/${missionType}/thumb.gif`;
 
 // ===========================
 // Chat
@@ -35,6 +37,36 @@ export const VOCAB_CHAT_TYPE = 'vocabulary';
 export const AI_CARD_CHAT_TYPE = 'ai-cards';
 export const GITHUB_APP_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 export const defaultChatSubject = 'Welcome!';
+export const reactionsObj: Record<string, any> = {
+  thumb: {
+    label: 'thumb',
+    position: '84% 82.5%'
+  },
+  heart: {
+    label: 'heart',
+    position: '84% 72.5%'
+  },
+  laughing: {
+    label: 'laughing',
+    position: '82% 7.5%'
+  },
+  wave: {
+    label: 'wave',
+    position: '28% 95%'
+  },
+  surprised: {
+    label: 'surprised',
+    position: '84% 20%'
+  },
+  crying: {
+    label: 'crying',
+    position: '54% 32.5%'
+  },
+  angry: {
+    label: 'angry',
+    position: '84% 5%'
+  }
+};
 
 // ===========================
 // Content
@@ -101,17 +133,27 @@ export const defaultContentState = {
 };
 
 // ===========================
-// Users & Rewards & KP
+// Users & Rewards
 // ===========================
 
 export const DEFAULT_PROFILE_THEME = 'logoBlue';
 export const DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL = 1000;
 export const FILE_UPLOAD_XP_REQUIREMENT = 0;
 export const LAST_ONLINE_FILTER_LABEL = localize('lastOnline2');
-export const MAX_NUM_SUMMONS = 3;
 export const MAX_PROFILE_PIC_SIZE = 10000;
 export const RANKING_FILTER_LABEL = localize('ranking');
 export const REWARD_VALUE = 200;
+export const returnMaxRewards = ({
+  rewardLevel
+}: {
+  rewardLevel: number;
+}): number => {
+  let maxRewards = 5;
+  if (rewardLevel > 0) {
+    maxRewards = 10 * rewardLevel;
+  }
+  return maxRewards;
+};
 export const expectedResponseLength = (rewardLevel: number): number => {
   switch (rewardLevel) {
     case 5:
@@ -126,47 +168,34 @@ export const expectedResponseLength = (rewardLevel: number): number => {
       return 30;
   }
 };
-export const karmaMultiplier = {
-  post: 2,
-  recommendation: {
-    student: 10,
-    teacher: 5
+export const rewardReasons: {
+  [key: string]: any;
+} = {
+  1: {
+    color: 'pink',
+    icon: 'certificate',
+    message: 'for being thoughtful'
+  },
+  2: {
+    color: 'logoBlue',
+    icon: 'comments',
+    message: 'for posting something related to the subject'
+  },
+  3: {
+    color: 'orange',
+    icon: 'surprise',
+    message: 'for posting something awesome'
+  },
+  4: {
+    color: 'gold',
+    icon: 'bolt',
+    message: 'for putting in a lot of effort'
+  },
+  5: {
+    color: 'green',
+    icon: 'check-circle',
+    message: 'for participating in a group project or event'
   }
-};
-export const karmaPointTable: any = {
-  aiCard: 10_000,
-  username: 50,
-  file: {
-    0: 500,
-    1: 1_000,
-    2: 2_000,
-    3: 10_000,
-    4: 25_000,
-    5: 50_000,
-    6: 100_000
-  },
-  profilePicture: {
-    0: 1_000,
-    1: 1_500,
-    2: 2_000,
-    3: 3_000,
-    4: 4_000,
-    5: 5_000,
-    6: 6_000
-  },
-  rewardBoost: {
-    0: 100,
-    1: 200,
-    2: 500,
-    3: 800,
-    4: 1_500,
-    5: 2_200,
-    6: 3_000,
-    7: 5_000,
-    8: 5_500,
-    9: 8_000
-  },
-  moreToCome: 30_000
 };
 export const videoRewardHash: { [key: string]: any } = {
   0: {
@@ -223,7 +252,46 @@ export const JR_MOD_LEVEL = 2;
 export const MOD_LEVEL = 3;
 export const SR_MOD_LEVEL = 4;
 export const TEACHER_LEVEL = 5;
+export const MENTOR_LABEL = 'Mentor';
+export const SAGE_LABEL = 'Sage';
+export const FOUNDER_LABEL = 'Founder';
 export const ADMIN_MANAGEMENT_LEVEL = 2;
+export const MISSION_MASTER_ACHIEVEMENT_ID = 1;
+export const SUMMONER_ACHIEVEMENT_ID = 2;
+export const MENTOR_ACHIEVEMENT_ID = 3;
+export const SAGE_ACHIEVEMENT_ID = 4;
+export const TWINKLE_FOUNDER_ACHIEVEMENT_ID = 5;
+export const GRAMMAR_TYCOON_ACHIEVEMENT_ID = 6;
+export const TEENAGER_ACHIEVEMENT_ID = 7;
+export const ADULT_ACHIEVEMENT_ID = 8;
+export const GOLD_ACHIEVEMENT_ID = 9;
+export const achievementIdToType: Record<string, string> = {
+  [TEENAGER_ACHIEVEMENT_ID]: 'teenager',
+  [ADULT_ACHIEVEMENT_ID]: 'adult',
+  [GRAMMAR_TYCOON_ACHIEVEMENT_ID]: 'grammar',
+  [MISSION_MASTER_ACHIEVEMENT_ID]: 'mission',
+  [MENTOR_ACHIEVEMENT_ID]: 'mentor',
+  [SAGE_ACHIEVEMENT_ID]: 'sage',
+  [TWINKLE_FOUNDER_ACHIEVEMENT_ID]: 'twinkle_founder',
+  [SUMMONER_ACHIEVEMENT_ID]: 'summoner',
+  [GOLD_ACHIEVEMENT_ID]: 'gold'
+};
+export const achievementTypeToId: Record<string, number> = {
+  teenager: TEENAGER_ACHIEVEMENT_ID,
+  adult: ADULT_ACHIEVEMENT_ID,
+  grammar: GRAMMAR_TYCOON_ACHIEVEMENT_ID,
+  mission: MISSION_MASTER_ACHIEVEMENT_ID,
+  mentor: MENTOR_ACHIEVEMENT_ID,
+  sage: SAGE_ACHIEVEMENT_ID,
+  twinkle_founder: TWINKLE_FOUNDER_ACHIEVEMENT_ID,
+  summoner: SUMMONER_ACHIEVEMENT_ID,
+  gold: GOLD_ACHIEVEMENT_ID
+};
+export const roles: Record<string, string> = {
+  [MENTOR_LABEL]: 'mentor',
+  [SAGE_LABEL]: 'sage',
+  [FOUNDER_LABEL]: 'twinkle_founder'
+};
 export const statsPerUserTypes: {
   [key: string]: {
     title: string | null;
@@ -260,93 +328,9 @@ export const statsPerUserTypes: {
   }
 };
 
-export const priceTable = {
-  card: 100,
-  chatSubject: 20,
-  chatTheme: 30,
-  grammarbles: 1000,
-  username: 10,
-  recommendation: 2,
-  reward: 2
-};
-
-export const reactionsObj: Record<string, any> = {
-  thumb: {
-    label: 'thumb',
-    position: '84% 82.5%'
-  },
-  heart: {
-    label: 'heart',
-    position: '84% 72.5%'
-  },
-  laughing: {
-    label: 'laughing',
-    position: '82% 7.5%'
-  },
-  wave: {
-    label: 'wave',
-    position: '28% 95%'
-  },
-  surprised: {
-    label: 'surprised',
-    position: '84% 20%'
-  },
-  crying: {
-    label: 'crying',
-    position: '54% 32.5%'
-  },
-  angry: {
-    label: 'angry',
-    position: '84% 5%'
-  }
-};
-
-export const cardProps: {
-  [key: string]: string[];
-} = {
-  common: [],
-  superior: ['glowy'],
-  rare: ['glowy', 'glossy'],
-  elite: ['glowy', 'glossy', 'grad'],
-  legendary: ['glowy', 'glossy', 'sparky', 'grad']
-};
-
-export const qualityProps: {
-  [key: string]: {
-    color: string;
-    fontWeight: string;
-  };
-} = {
-  common: {
-    color: Color.vantaBlack(),
-    fontWeight: 'normal'
-  },
-  superior: {
-    color: Color.limeGreen(),
-    fontWeight: 'bold'
-  },
-  rare: {
-    color: Color.purple(),
-    fontWeight: 'bold'
-  },
-  elite: {
-    color: Color.redOrange(),
-    fontWeight: 'bold'
-  },
-  legendary: {
-    color: Color.darkGold(),
-    fontWeight: 'bold'
-  }
-};
-
-export const wordleGuessReaction: {
-  [key: number]: string;
-} = {
-  1: 'JACKPOT',
-  2: 'UNBELIEVABLE',
-  3: 'BRILLIANT',
-  4: 'IMPRESSIVE'
-};
+// ===========================
+// Coins & AI Cards & Store
+// ===========================
 
 export const cardLevelHash: {
   [key: number]: {
@@ -375,7 +359,147 @@ export const cardLevelHash: {
     label: 'gold'
   }
 };
+export const cardProps: {
+  [key: string]: string[];
+} = {
+  common: [],
+  superior: ['glowy'],
+  rare: ['glowy', 'glossy'],
+  elite: ['glowy', 'glossy', 'grad'],
+  legendary: ['glowy', 'glossy', 'sparky', 'grad']
+};
+export const karmaMultiplier = {
+  post: 2,
+  recommendation: {
+    student: 10,
+    teacher: 5
+  }
+};
+export const karmaPointTable: any = {
+  aiCard: 10_000,
+  username: 50,
+  file: {
+    0: 500,
+    1: 1_000,
+    2: 2_000,
+    3: 10_000,
+    4: 25_000,
+    5: 50_000,
+    6: 100_000
+  },
+  profilePicture: {
+    0: 1_000,
+    1: 1_500,
+    2: 2_000,
+    3: 3_000,
+    4: 4_000,
+    5: 5_000,
+    6: 6_000
+  },
+  rewardBoost: {
+    0: 100,
+    1: 200,
+    2: 500,
+    3: 800,
+    4: 1_500,
+    5: 2_200,
+    6: 3_000,
+    7: 5_000,
+    8: 5_500,
+    9: 8_000
+  },
+  moreToCome: 30_000
+};
+export const MAX_NUM_SUMMONS = 3;
+export const maxSizes = [300, 400, 500, 650, 800, 1000, 1500, 2000];
+export const returnMaxUploadSize = (fileUploadLvl: number): number => {
+  return maxSizes[fileUploadLvl] * mb;
+};
+export const priceTable = {
+  card: 100,
+  chatSubject: 20,
+  chatTheme: 30,
+  grammarbles: 1000,
+  username: 10,
+  recommendation: 2,
+  reward: 2
+};
+export const qualityProps: {
+  [key: string]: {
+    color: string;
+    fontWeight: string;
+  };
+} = {
+  common: {
+    color: Color.vantaBlack(),
+    fontWeight: 'normal'
+  },
+  superior: {
+    color: Color.limeGreen(),
+    fontWeight: 'bold'
+  },
+  rare: {
+    color: Color.purple(),
+    fontWeight: 'bold'
+  },
+  elite: {
+    color: Color.redOrange(),
+    fontWeight: 'bold'
+  },
+  legendary: {
+    color: Color.darkGold(),
+    fontWeight: 'bold'
+  }
+};
+export const returnCardBurnXP = ({
+  cardLevel,
+  cardQuality
+}: {
+  cardLevel: number;
+  cardQuality: 'common' | 'superior' | 'rare' | 'elite' | 'legendary';
+}): number => {
+  // base XP value
+  let xp = 50;
 
+  // color probabilities
+  const colorProbs: { [level: number]: number } = {
+    1: 0.5,
+    2: 0.2,
+    3: 0.15,
+    4: 0.1,
+    5: 0.05
+  };
+
+  // adjust XP based on color
+  xp *= 1 / colorProbs[cardLevel] ** 1.281774;
+
+  // quality probabilities
+  const qualityProbs: { [quality: string]: number } = {
+    common: 0.5,
+    superior: 0.3,
+    rare: 0.13,
+    elite: 0.05,
+    legendary: 0.02
+  };
+
+  // adjust XP based on quality
+  xp *= 1 / qualityProbs[cardQuality] ** 1.55;
+
+  return Math.round(xp);
+};
+
+// ===========================
+// Games
+// ===========================
+
+export const wordleGuessReaction: {
+  [key: number]: string;
+} = {
+  1: 'JACKPOT',
+  2: 'UNBELIEVABLE',
+  3: 'BRILLIANT',
+  4: 'IMPRESSIVE'
+};
 export const wordLevelHash: {
   [key: number]: {
     label: string;
@@ -415,95 +539,6 @@ export const wordLevelHash: {
     color: 'gold'
   }
 };
-
-export const rewardReasons: {
-  [key: string]: any;
-} = {
-  1: {
-    color: 'pink',
-    icon: 'certificate',
-    message: 'for being thoughtful'
-  },
-  2: {
-    color: 'logoBlue',
-    icon: 'comments',
-    message: 'for posting something related to the subject'
-  },
-  3: {
-    color: 'orange',
-    icon: 'surprise',
-    message: 'for posting something awesome'
-  },
-  4: {
-    color: 'gold',
-    icon: 'bolt',
-    message: 'for putting in a lot of effort'
-  },
-  5: {
-    color: 'green',
-    icon: 'check-circle',
-    message: 'for participating in a group project or event'
-  }
-};
-
-export const returnCardBurnXP = ({
-  cardLevel,
-  cardQuality
-}: {
-  cardLevel: number;
-  cardQuality: 'common' | 'superior' | 'rare' | 'elite' | 'legendary';
-}): number => {
-  // base XP value
-  let xp = 50;
-
-  // color probabilities
-  const colorProbs: { [level: number]: number } = {
-    1: 0.5,
-    2: 0.2,
-    3: 0.15,
-    4: 0.1,
-    5: 0.05
-  };
-
-  // adjust XP based on color
-  xp *= 1 / colorProbs[cardLevel] ** 1.281774;
-
-  // quality probabilities
-  const qualityProbs: { [quality: string]: number } = {
-    common: 0.5,
-    superior: 0.3,
-    rare: 0.13,
-    elite: 0.05,
-    legendary: 0.02
-  };
-
-  // adjust XP based on quality
-  xp *= 1 / qualityProbs[cardQuality] ** 1.55;
-
-  return Math.round(xp);
-};
-
-export const returnMissionThumb = (missionType: string): string =>
-  `${cloudFrontURL}/missions/${missionType}/thumb.gif`;
-
-export const returnMaxRewards = ({
-  rewardLevel
-}: {
-  rewardLevel: number;
-}): number => {
-  let maxRewards = 5;
-  if (rewardLevel > 0) {
-    maxRewards = 10 * rewardLevel;
-  }
-  return maxRewards;
-};
-
-export const maxSizes = [300, 400, 500, 650, 800, 1000, 1500, 2000];
-
-export const returnMaxUploadSize = (fileUploadLvl: number): number => {
-  return maxSizes[fileUploadLvl] * mb;
-};
-
 export function returnWordLevel({
   frequency,
   word
@@ -526,45 +561,3 @@ export function returnWordLevel({
   if (frequency <= epicWordFrequency) return 5;
   return 3;
 }
-
-export const MENTOR_LABEL = 'Mentor';
-export const SAGE_LABEL = 'Sage';
-export const FOUNDER_LABEL = 'Founder';
-
-export const MISSION_MASTER_ACHIEVEMENT_ID = 1;
-export const SUMMONER_ACHIEVEMENT_ID = 2;
-export const MENTOR_ACHIEVEMENT_ID = 3;
-export const SAGE_ACHIEVEMENT_ID = 4;
-export const TWINKLE_FOUNDER_ACHIEVEMENT_ID = 5;
-export const GRAMMAR_TYCOON_ACHIEVEMENT_ID = 6;
-export const TEENAGER_ACHIEVEMENT_ID = 7;
-export const ADULT_ACHIEVEMENT_ID = 8;
-export const GOLD_ACHIEVEMENT_ID = 9;
-export const achievementIdToType: Record<string, string> = {
-  [TEENAGER_ACHIEVEMENT_ID]: 'teenager',
-  [ADULT_ACHIEVEMENT_ID]: 'adult',
-  [GRAMMAR_TYCOON_ACHIEVEMENT_ID]: 'grammar',
-  [MISSION_MASTER_ACHIEVEMENT_ID]: 'mission',
-  [MENTOR_ACHIEVEMENT_ID]: 'mentor',
-  [SAGE_ACHIEVEMENT_ID]: 'sage',
-  [TWINKLE_FOUNDER_ACHIEVEMENT_ID]: 'twinkle_founder',
-  [SUMMONER_ACHIEVEMENT_ID]: 'summoner',
-  [GOLD_ACHIEVEMENT_ID]: 'gold'
-};
-export const achievementTypeToId: Record<string, number> = {
-  teenager: TEENAGER_ACHIEVEMENT_ID,
-  adult: ADULT_ACHIEVEMENT_ID,
-  grammar: GRAMMAR_TYCOON_ACHIEVEMENT_ID,
-  mission: MISSION_MASTER_ACHIEVEMENT_ID,
-  mentor: MENTOR_ACHIEVEMENT_ID,
-  sage: SAGE_ACHIEVEMENT_ID,
-  twinkle_founder: TWINKLE_FOUNDER_ACHIEVEMENT_ID,
-  summoner: SUMMONER_ACHIEVEMENT_ID,
-  gold: GOLD_ACHIEVEMENT_ID
-};
-
-export const roles: Record<string, string> = {
-  [MENTOR_LABEL]: 'mentor',
-  [SAGE_LABEL]: 'sage',
-  [FOUNDER_LABEL]: 'twinkle_founder'
-};
