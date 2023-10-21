@@ -521,7 +521,6 @@ export default function contentRequestHelpers({
       }
     },
     async loadAIStoryQuestions({
-      difficulty,
       story,
       storyId
     }: {
@@ -533,7 +532,7 @@ export default function contentRequestHelpers({
         const {
           data: { questions }
         } = await request.get(
-          `${URL}/content/game/story/questions?difficulty=${difficulty}&story=${story}&storyId=${storyId}`,
+          `${URL}/content/game/story/questions?story=${story}&storyId=${storyId}`,
           auth()
         );
         return Promise.resolve(questions);
