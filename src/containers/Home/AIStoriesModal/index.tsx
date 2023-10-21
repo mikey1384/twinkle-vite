@@ -305,7 +305,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     if (questionsLoaded) return;
     try {
       const questions = await loadAIStoryQuestions({
-        difficulty,
         story,
         storyId
       });
