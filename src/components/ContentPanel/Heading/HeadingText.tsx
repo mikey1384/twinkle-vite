@@ -49,7 +49,6 @@ export default function HeadingText({
     contentLabel = 'subject';
   }
   const contentLinkColor = Color[contentColor]();
-
   switch (contentType) {
     case 'video':
       return (
