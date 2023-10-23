@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import Icon from '~/components/Icon';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import {
@@ -35,7 +35,6 @@ function Nav({
   const {
     alert: { color: alertColor }
   } = useKeyContext((v) => v.theme);
-  const navigate = useNavigate();
   const { pathname, search } = useLocation();
   const onResetProfile = useProfileContext((v) => v.actions.onResetProfile);
   const profileState = useProfileContext((v) => v.state) || {};
@@ -92,14 +91,14 @@ function Nav({
         .chat {
           color: ${Color.lightGray()};
         }
-        nav {
+        a {
           text-decoration: none;
           font-weight: bold;
           color: ${Color.lightGray()};
           align-items: center;
           line-height: 1;
         }
-        > nav.active {
+        > a.active {
           color: ${highlightColor}!important;
           > svg {
             color: ${highlightColor}!important;
@@ -107,7 +106,7 @@ function Nav({
         }
         @media (min-width: ${desktopMinWidth}) {
           &:hover {
-            > nav {
+            > a {
               > svg {
                 color: ${highlightColor};
               }
@@ -119,12 +118,12 @@ function Nav({
           width: 100%;
           justify-content: center;
           font-size: 3rem;
-          nav {
+          a {
             .nav-label {
               display: none;
             }
           }
-          > nav.active {
+          > a.active {
             > svg {
               color: ${highlightColor};
             }
@@ -133,20 +132,20 @@ function Nav({
       `}`}
       style={style}
     >
-      <nav
+      <Link
         className={navClassName}
         style={{
           display: 'flex',
           alignItems: 'center',
           ...(alert ? { color: Color[alertColor]() } : {})
         }}
-        onClick={() => navigate(to)}
+        to={to}
       >
         <Icon icon={isHome ? 'home' : imgLabel} />
         <span className="nav-label" style={{ marginLeft: '0.7rem' }}>
           {children}
         </span>
-      </nav>
+      </Link>
     </div>
   );
 
