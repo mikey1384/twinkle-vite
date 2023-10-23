@@ -59,7 +59,11 @@ export default function ContentLink({
     return path ? `/${path}` : '';
   }, [contentType, id, missionType, rootMissionType, username]);
 
-  const label = title || content || username || truncatedTopic;
+  const label = useMemo(
+    () =>
+      contentType === 'user' ? username : title || content || truncatedTopic,
+    [content, contentType, title, truncatedTopic, username]
+  );
 
   return label ? (
     <Link
