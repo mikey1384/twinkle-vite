@@ -42,10 +42,14 @@ function People() {
     search: { color: searchColor }
   } = useKeyContext((v) => v.theme);
   const [loading, setLoading] = useState(false);
+  const searchTextRef = useRef(userSearchText);
+  const [searchText, setSearchText] = useState(userSearchText);
   const { handleSearch, searching } = useSearch({
     onSearch: handleSearchUsers,
-    onSetSearchText: (searchText) =>
-      onSetSearchText({ category: 'user', searchText }),
+    onSetSearchText: (text) => {
+      setSearchText(text);
+      searchTextRef.current = text;
+    },
     onClear: onClearUserSearch
   });
   const prevOrderUsersBy = useRef(orderUsersBy);
@@ -55,7 +59,7 @@ function People() {
       : LAST_ONLINE_FILTER_LABEL;
 
   useInfiniteScroll({
-    scrollable: profiles.length > 0 && stringIsEmpty(userSearchText),
+    scrollable: profiles.length > 0 && stringIsEmpty(searchText),
     feedsLength: profiles.length,
     onScrollToBottom: loadMoreProfiles
   });
@@ -74,9 +78,16 @@ function People() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderUsersBy, profilesLoaded]);
 
+  useEffect(() => {
+    return function cleanUp() {
+      onSetSearchText({ category: 'user', searchText: searchTextRef.current });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const loadMoreButtonShown = useMemo(
-    () => stringIsEmpty(userSearchText) && profilesLoaded && loadMoreButton,
-    [loadMoreButton, profilesLoaded, userSearchText]
+    () => stringIsEmpty(searchText) && profilesLoaded && loadMoreButton,
+    [loadMoreButton, profilesLoaded, searchText]
   );
 
   return (
@@ -92,7 +103,7 @@ function People() {
         borderColor={searchColor}
         placeholder={`${searchUsersLabel}...`}
         onChange={handleSearch}
-        value={userSearchText}
+        value={searchText}
       />
       <div
         style={{
@@ -111,11 +122,11 @@ function People() {
           orderByText={orderUsersBy}
           dropdownLabel={dropdownLabel}
         />
-        {(!profilesLoaded || (!stringIsEmpty(userSearchText) && searching)) && (
+        {(!profilesLoaded || (!stringIsEmpty(searchText) && searching)) && (
           <Loading text={`${searching ? 'Searching' : 'Loading'} Users...`} />
         )}
         {profilesLoaded &&
-          stringIsEmpty(userSearchText) &&
+          stringIsEmpty(searchText) &&
           profiles.map((profile: { id: number }, index: number) => (
             <ProfilePanel
               style={{ marginTop: index === 0 ? 0 : '1rem' }}
@@ -125,7 +136,7 @@ function People() {
             />
           ))}
         {profilesLoaded &&
-          !stringIsEmpty(userSearchText) &&
+          !stringIsEmpty(searchText) &&
           !searching &&
           searchedProfiles.map((profile: { id: number }, index: number) => (
             <ProfilePanel
@@ -137,7 +148,7 @@ function People() {
               profileId={profile.id}
             />
           ))}
-        {!stringIsEmpty(userSearchText) &&
+        {!stringIsEmpty(searchText) &&
           !searching &&
           searchedProfiles.length === 0 && (
             <div
