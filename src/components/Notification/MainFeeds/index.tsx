@@ -278,17 +278,22 @@ export default function MainFeeds({
   }
 
   async function handleNewNotiAlertClick() {
-    setLoadingNewFeeds(true);
-    const { currentChatSubject, loadMoreNotifications, notifications } =
-      await fetchNotifications();
-    onLoadNotifications({
-      currentChatSubject,
-      loadMoreNotifications,
-      notifications,
-      userId
-    });
-    selectNotiTab();
-    setLoadingNewFeeds(false);
+    try {
+      setLoadingNewFeeds(true);
+      const { currentChatSubject, loadMoreNotifications, notifications } =
+        await fetchNotifications();
+      onLoadNotifications({
+        currentChatSubject,
+        loadMoreNotifications,
+        notifications,
+        userId
+      });
+      selectNotiTab();
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoadingNewFeeds(false);
+    }
   }
 
   async function onLoadMore() {
