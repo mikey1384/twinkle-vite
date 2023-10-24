@@ -260,19 +260,22 @@ export default function MainFeeds({
   );
 
   async function handleCollectReward() {
-    if (typeof twinkleXP === 'number') {
-      setOriginalTwinkleXP(twinkleXP);
-      setOriginalTwinkleCoins(twinkleCoins);
-      setCollectingReward(true);
-      const coins = await collectRewardedCoins();
-      const { xp, rank } = await updateUserXP({
-        action: 'collect'
-      });
-      onSetUserState({
-        userId,
-        newState: { twinkleXP: xp, twinkleCoins: coins, rank }
-      });
-      onCollectRewards(userId);
+    try {
+      if (typeof twinkleXP === 'number') {
+        setOriginalTwinkleXP(twinkleXP);
+        setOriginalTwinkleCoins(twinkleCoins);
+        setCollectingReward(true);
+        const coins = await collectRewardedCoins();
+        const { xp, rank } = await updateUserXP({ action: 'collect' });
+        onSetUserState({
+          userId,
+          newState: { twinkleXP: xp, twinkleCoins: coins, rank }
+        });
+        onCollectRewards(userId);
+      }
+    } catch (error) {
+      console.error('Error collecting reward:', error);
+    } finally {
       setCollectingReward(false);
     }
   }
