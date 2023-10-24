@@ -37,11 +37,11 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
         <Table
           color={tableHeaderColor}
           columns={`
-            minmax(15rem, 1.5fr)
             minmax(10rem, 1fr)
-            minmax(15rem, 1fr)
-            minmax(8rem, 1fr)
-            ${canManage ? 'minmax(7rem, 1fr)' : ''}
+            minmax(10rem, 1fr)
+            minmax(10rem, 1fr)
+            minmax(15rem, 1.2fr)
+            ${canManage ? 'minmax(13rem, 1.2fr)' : ''}
           `}
         >
           <thead>
