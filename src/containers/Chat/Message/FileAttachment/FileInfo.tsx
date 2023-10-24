@@ -71,10 +71,10 @@ export default function FileInfo({
             }
           />
         </div>
-
         <div
           style={{
-            width: '100%',
+            width: 1,
+            flexGrow: 1,
             marginLeft: '1rem',
             display: 'flex',
             flexDirection: 'column',
@@ -92,17 +92,18 @@ export default function FileInfo({
               width: '100%'
             }}
           >
-            <div style={{ width: '100%' }}>
+            <div
+              style={{
+                width: '100%',
+                fontWeight: 'bold',
+                color: Color[linkColor](),
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: 'block',
+                whiteSpace: 'nowrap'
+              }}
+            >
               <a
-                style={{
-                  width: '100%',
-                  fontWeight: 'bold',
-                  color: Color[linkColor](),
-                  overflow: 'hidden',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical'
-                }}
                 className={css`
                   @media (max-width: ${mobileMaxWidth}) {
                     font-size: 1.5rem;
@@ -126,7 +127,7 @@ export default function FileInfo({
               {displayedFileSize}
             </div>
           </div>
-          <p
+          <div
             style={{
               fontWeight: 'bold',
               width: '100%',
@@ -153,7 +154,7 @@ export default function FileInfo({
             >
               Download
             </span>
-          </p>
+          </div>
         </div>
       </div>
     </div>
