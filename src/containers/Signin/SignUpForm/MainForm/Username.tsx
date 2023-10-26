@@ -1,14 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
-import { isValidUsername, stringIsEmpty } from '~/helpers/stringHelpers';
+import { validateUsername, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
 
 const usernameAlreadyTakenLabel = localize('usernameAlreadyTaken');
-const isNotValidUsernameLabel = localize('isNotValidUsername');
-const makeSure3CharLongLabel = localize('makeSure3CharLong');
 
 export default function Username({
   username,
@@ -40,12 +38,9 @@ export default function Username({
       }, 1000);
     }
     async function handleUsernameInput(username: string) {
-      if (!isValidUsername(username)) {
-        setErrorMessage(
-          `${username}${isNotValidUsernameLabel}.${
-            username.length < 3 ? ` ${makeSure3CharLongLabel}.` : ''
-          }`
-        );
+      const { isValid, reason } = validateUsername(username);
+      if (!isValid) {
+        setErrorMessage(reason);
         setLoading(false);
       } else {
         const exists = await checkIfUsernameExists(username);
