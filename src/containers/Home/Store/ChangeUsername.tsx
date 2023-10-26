@@ -8,12 +8,10 @@ import { socket } from '~/constants/io';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { priceTable } from '~/constants/defaultValues';
-import { isValidUsername, stringIsEmpty } from '~/helpers/stringHelpers';
+import { validateUsername, stringIsEmpty } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
 
 const changeLabel = localize('change');
-const isNotValidUsernameLabel = localize('isNotValidUsername');
-const makeSure3CharLongLabel = localize('makeSure3CharLong');
 const notEnoughTwinkleCoinsLabel = localize('notEnoughTwinkleCoins');
 const enterNewUsernameLabel = localize('enterNewUsername');
 const usernameAvailableLabel = localize('usernameAvailable');
@@ -57,12 +55,9 @@ export default function ChangeUsername({
     }
 
     async function handleUsernameInput(username: string) {
-      if (!isValidUsername(username)) {
-        setErrorMessage(
-          `${username}${isNotValidUsernameLabel}.${
-            username.length < 3 ? ` ${makeSure3CharLongLabel}.` : ''
-          }`
-        );
+      const { isValid, reason } = validateUsername(username);
+      if (!isValid) {
+        setErrorMessage(reason);
         setLoading(false);
       } else {
         const exists = await checkIfUsernameExists(username);

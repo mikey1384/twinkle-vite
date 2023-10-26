@@ -538,6 +538,29 @@ export function isValidUsername(username: string): boolean {
   );
 }
 
+export function validateUsername(username: string): {
+  isValid: boolean;
+  reason: string;
+} {
+  const pattern = new RegExp(/^(?!.*___.*)[a-zA-Z0-9_]+$/);
+  if (!username) {
+    return { isValid: false, reason: 'Username is empty.' };
+  }
+  if (username.length >= 20) {
+    return { isValid: false, reason: `That's too long.` };
+  }
+  if (username.length <= 2) {
+    return { isValid: false, reason: `That's too short.` };
+  }
+  if (!pattern.test(username)) {
+    return {
+      isValid: false,
+      reason: `Contains invalid characters or three consecutive underscores.`
+    };
+  }
+  return { isValid: true, reason: '' };
+}
+
 export function isValidYoutubeChannelUrl(url = '') {
   const trim = url.split('youtube.com/')[1];
   if (!url.includes('://') && !url.includes('www.')) {
