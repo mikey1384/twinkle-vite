@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import GoBack from '~/components/GoBack';
 import Task from './Task';
@@ -43,14 +43,31 @@ export default function TaskContainer({ mission }: { mission: any }) {
   const missionObj = useMissionContext((v) => v.state.missionObj);
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
   const prevUserId = useMissionContext((v) => v.state.prevUserId);
+  const [loading, setLoading] = useState(false);
 
   const task = missionObj[taskId] || {};
 
   useEffect(() => {
-    if (!taskId) {
-      getMissionId();
-    } else if (!task.loaded || (userId && prevUserId !== userId)) {
-      init();
+    execute();
+
+    async function execute() {
+      setLoading(true);
+      try {
+        if (!taskId) {
+          await getMissionId();
+        } else if (!task.loaded || (userId && prevUserId !== userId)) {
+          await init();
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function getMissionId() {
+      const data = await loadMissionTypeIdHash();
+      onLoadMissionTypeIdHash(data);
     }
 
     async function init() {
@@ -61,14 +78,11 @@ export default function TaskContainer({ mission }: { mission: any }) {
         });
         onLoadMission({ mission: page, prevUserId: userId });
         onSetMyMissionAttempts(myAttempts);
-      } else {
+      } else if (taskId) {
         onLoadMission({ mission: { id: taskId }, prevUserId: userId });
       }
     }
-    async function getMissionId() {
-      const data = await loadMissionTypeIdHash();
-      onLoadMissionTypeIdHash(data);
-    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, prevUserId, taskId, mission.loaded, task.loaded]);
 
@@ -137,51 +151,57 @@ export default function TaskContainer({ mission }: { mission: any }) {
 
   return (
     <div style={{ width: '100%' }}>
-      <GoBack isAtTop={!isManager} bordered to=".." text={mission.title} />
-      <Task
-        style={{ width: '100%', marginTop: '2rem' }}
-        task={task}
-        onSetMissionState={onSetMissionState}
-        nextTaskType={nextTask}
-      />
-      <GoBack
-        isAtTop={false}
-        style={{ marginTop: '2rem' }}
-        bordered
-        to=".."
-        text={mission.title}
-      />
-      <Tutorial
-        mission={task}
-        innerRef={TutorialRef}
-        className={css`
-          margin-top: 5rem;
-          margin-bottom: 1rem;
-          width: 100%;
-          @media (max-width: ${mobileMaxWidth}) {
-            margin-top: 2rem;
-          }
-        `}
-        onSetMissionState={onSetMissionState}
-      />
-      {task.tutorialStarted && (
-        <TutorialModal
-          missionTitle={task.title}
-          tutorialId={task.tutorialId}
-          tutorialSlideId={task.tutorialSlideId}
-          onCurrentSlideIdChange={(slideId) =>
-            onSetMissionState({
-              missionId: task.id,
-              newState: { tutorialSlideId: slideId }
-            })
-          }
-          onHide={() =>
-            onSetMissionState({
-              missionId: task.id,
-              newState: { tutorialStarted: false }
-            })
-          }
-        />
+      {loading ? (
+        <Loading />
+      ) : (
+        <>
+          <GoBack isAtTop={!isManager} bordered to=".." text={mission.title} />
+          <Task
+            style={{ width: '100%', marginTop: '2rem' }}
+            task={task}
+            onSetMissionState={onSetMissionState}
+            nextTaskType={nextTask}
+          />
+          <GoBack
+            isAtTop={false}
+            style={{ marginTop: '2rem' }}
+            bordered
+            to=".."
+            text={mission.title}
+          />
+          <Tutorial
+            mission={task}
+            innerRef={TutorialRef}
+            className={css`
+              margin-top: 5rem;
+              margin-bottom: 1rem;
+              width: 100%;
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-top: 2rem;
+              }
+            `}
+            onSetMissionState={onSetMissionState}
+          />
+          {task.tutorialStarted && (
+            <TutorialModal
+              missionTitle={task.title}
+              tutorialId={task.tutorialId}
+              tutorialSlideId={task.tutorialSlideId}
+              onCurrentSlideIdChange={(slideId) =>
+                onSetMissionState({
+                  missionId: task.id,
+                  newState: { tutorialSlideId: slideId }
+                })
+              }
+              onHide={() =>
+                onSetMissionState({
+                  missionId: task.id,
+                  newState: { tutorialStarted: false }
+                })
+              }
+            />
+          )}
+        </>
       )}
     </div>
   );

@@ -83,7 +83,7 @@ export default function MissionPage() {
         const { page, myAttempts } = await loadMission({ missionId });
         onLoadMission({ mission: page, prevUserId: userId });
         onSetMyMissionAttempts(myAttempts);
-      } else {
+      } else if (missionId) {
         onLoadMission({ mission: { id: missionId }, prevUserId: userId });
       }
     }

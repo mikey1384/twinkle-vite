@@ -7,6 +7,9 @@ export default function MissionReducer(
 ) {
   switch (action.type) {
     case 'LOAD_MISSION': {
+      if (!action.mission) {
+        return state;
+      }
       return {
         ...state,
         ...(action.prevUserId ? { prevUserId: action.prevUserId } : {}),

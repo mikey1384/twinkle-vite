@@ -24,9 +24,16 @@ export default function DidNotPassCopyAndPaste() {
     }
     async function handleLoadCopyAndPasteMission(missionId: number) {
       setLoading(true);
-      const { page } = await loadMission({ missionId });
-      onLoadMission({ mission: page });
-      setLoading(false);
+      try {
+        const { page } = await loadMission({ missionId });
+        if (page) {
+          onLoadMission({ mission: page });
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
   }, [
     copyAndPasteMission,
