@@ -14,9 +14,10 @@ import PleaseLogIn from './PleaseLogIn';
 import LocalContext from './Context';
 import AICardModal from '~/components/Modals/AICardModal';
 import queryString from 'query-string';
+import loading from './loading.jpeg';
 import { parseChannelPath } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { css } from '@emotion/css';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -910,7 +911,7 @@ export default function Main({
     >
       <ErrorBoundary componentPath="Chat/Main">
         {userId ? (
-          loaded ? (
+          !loaded ? (
             <div
               className={css`
                 width: 100%;
@@ -969,7 +970,67 @@ export default function Main({
               />
             </div>
           ) : (
-            <Loading text="Loading Twinkle Chat" />
+            <div
+              className={css`
+                @keyframes heartbeat {
+                  0% {
+                    opacity: 0.6;
+                  }
+                  50% {
+                    opacity: 0.1;
+                  }
+                  100% {
+                    opacity: 0.6;
+                  }
+                }
+              `}
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                position: 'relative'
+              }}
+            >
+              <div
+                className={css`
+                  width: 100%;
+                  height: 100%;
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  background: url(${loading}) center center;
+                  background-size: 33vw;
+                  animation: heartbeat 2.5s infinite;
+                  z-index: 1;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    background-size: 60vw;
+                  }
+                `}
+              />
+              <div
+                style={{
+                  width: '100%',
+                  height: 'CALC(100% - 5rem)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  zIndex: 2
+                }}
+              >
+                <Loading
+                  style={{
+                    marginTop: '-10rem',
+                    fontWeight: 'bold',
+                    color: Color.black(),
+                    textShadow: `2px 2px 4px ${Color.darkerGray(0.7)}` // Text shadow applied here
+                  }}
+                  text="Loading Twinkle Chat"
+                />
+              </div>
+            </div>
           )
         ) : (
           <PleaseLogIn />
