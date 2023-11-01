@@ -54,7 +54,7 @@ export default function Earn() {
           <ActivitySuggester />
         </section>
         <section>
-          <h2>{leaderboardsLabel}</h2>
+          <h2 style={{ fontSize: '2rem' }}>{leaderboardsLabel}</h2>
           <Leaderboards />
         </section>
         <div style={{ height: '15rem' }} />
