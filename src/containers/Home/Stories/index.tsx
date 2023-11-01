@@ -216,20 +216,24 @@ export default function Stories() {
                   )}
                 </Banner>
               )}
-              {feeds.map((feed: any, index: number) => (
-                <ContentPanel
-                  key={category + subFilter + feed.contentId + feed.contentType}
-                  style={{
-                    marginBottom: '1rem'
-                  }}
-                  zIndex={feeds.length - index}
-                  contentId={feed.contentId}
-                  contentType={feed.contentType}
-                  rootType={feed.rootType}
-                  commentsLoadLimit={5}
-                  numPreviewComments={1}
-                />
-              ))}
+              {feeds.map((feed: { [key: string]: any } = {}, index: number) =>
+                feed.contentId ? (
+                  <ContentPanel
+                    key={
+                      category + subFilter + feed.contentId + feed.contentType
+                    }
+                    style={{
+                      marginBottom: '1rem'
+                    }}
+                    zIndex={feeds.length - index}
+                    contentId={feed.contentId}
+                    contentType={feed.contentType}
+                    rootType={feed.rootType}
+                    commentsLoadLimit={5}
+                    numPreviewComments={1}
+                  />
+                ) : null
+              )}
               {loadMoreButton && (
                 <LoadMoreButton
                   style={{ marginBottom: '1rem' }}
