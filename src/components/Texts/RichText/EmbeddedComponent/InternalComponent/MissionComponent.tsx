@@ -68,7 +68,11 @@ export default function MissionComponent({ src }: { src: string }) {
       setLoading(true);
       try {
         const { page } = await loadMission({ missionId, isTask });
-        onLoadMission({ mission: page, prevUserId: userId });
+        if (page) {
+          onLoadMission({ mission: page, prevUserId: userId });
+        } else {
+          setHasError(true);
+        }
       } catch (error) {
         setHasError(true);
       } finally {

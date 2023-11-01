@@ -20,7 +20,9 @@ export default function UserView({
 }) {
   return (
     <div>
-      <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>
+      <h2
+        style={{ textAlign: 'center', marginBottom: '2rem', fontSize: '2rem' }}
+      >
         {tutorialPrompt || 'Need Help? Read the Tutorial'}
       </h2>
       <div
