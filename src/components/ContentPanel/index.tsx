@@ -313,7 +313,7 @@ export default function ContentPanel({
                     theme={theme || profileTheme}
                     targetObj={targetObj}
                     rootObj={rootObj}
-                    rootType={contentState.rootType}
+                    rootType={appliedRootType}
                     contentId={contentId}
                     contentType={contentType}
                     onShowTCReplyInput={onShowTCReplyInput}
@@ -337,34 +337,32 @@ export default function ContentPanel({
                     }}
                   />
                 )}
-                {contentType === 'comment' &&
-                  contentState.rootType === 'video' && (
-                    <ContentListItem
-                      hideSideBordersOnMobile
-                      style={{
-                        position: 'relative'
-                      }}
-                      innerStyle={{ paddingTop: '1rem' }}
-                      expandable
-                      onClick={() => navigate(`/videos/${rootObj.id}`)}
-                      contentObj={rootObj}
-                    />
-                  )}
-                {contentType === 'comment' &&
-                  contentState.rootType === 'aiStory' && (
-                    <ContentListItem
-                      hideSideBordersOnMobile
-                      style={{
-                        position: 'relative'
-                      }}
-                      innerStyle={{ paddingTop: '0.5rem' }}
-                      expandable
-                      onClick={() => navigate(`/ai-stories/${rootObj.id}`)}
-                      contentObj={rootObj}
-                    />
-                  )}
+                {contentType === 'comment' && appliedRootType === 'video' && (
+                  <ContentListItem
+                    hideSideBordersOnMobile
+                    style={{
+                      position: 'relative'
+                    }}
+                    innerStyle={{ paddingTop: '1rem' }}
+                    expandable
+                    onClick={() => navigate(`/videos/${rootObj.id}`)}
+                    contentObj={rootObj}
+                  />
+                )}
+                {contentType === 'comment' && appliedRootType === 'aiStory' && (
+                  <ContentListItem
+                    hideSideBordersOnMobile
+                    style={{
+                      position: 'relative'
+                    }}
+                    innerStyle={{ paddingTop: '0.5rem' }}
+                    expandable
+                    onClick={() => navigate(`/ai-stories/${rootObj.id}`)}
+                    contentObj={rootObj}
+                  />
+                )}
                 {(contentType === 'comment' || contentType === 'subject') &&
-                  rootType === 'url' &&
+                  appliedRootType === 'url' &&
                   !rootObj.notFound && (
                     <div
                       className={css`
@@ -387,31 +385,30 @@ export default function ContentPanel({
                       <Embedly small contentId={contentState.rootId} />
                     </div>
                   )}
-                {contentType === 'comment' &&
-                  contentState.rootType === 'user' && (
-                    <div
-                      className={css`
-                        cursor: pointer;
-                        background: ${Color.whiteGray()};
-                        border: 1px solid ${Color.borderGray()};
-                        border-radius: ${borderRadius};
-                        margin-top: -1rem;
-                        transition: background 0.5s;
-                        padding-bottom: 1rem;
-                        &:hover {
-                          background: #fff;
-                        }
-                        @media (max-width: ${mobileMaxWidth}) {
-                          border-left: 0;
-                          border-right: 0;
-                          margin-top: -0.5rem;
-                        }
-                      `}
-                      onClick={() => navigate(`/users/${rootObj.username}`)}
-                    >
-                      <Profile profile={rootObj} />
-                    </div>
-                  )}
+                {contentType === 'comment' && appliedRootType === 'user' && (
+                  <div
+                    className={css`
+                      cursor: pointer;
+                      background: ${Color.whiteGray()};
+                      border: 1px solid ${Color.borderGray()};
+                      border-radius: ${borderRadius};
+                      margin-top: -1rem;
+                      transition: background 0.5s;
+                      padding-bottom: 1rem;
+                      &:hover {
+                        background: #fff;
+                      }
+                      @media (max-width: ${mobileMaxWidth}) {
+                        border-left: 0;
+                        border-right: 0;
+                        margin-top: -0.5rem;
+                      }
+                    `}
+                    onClick={() => navigate(`/users/${rootObj.username}`)}
+                  >
+                    <Profile profile={rootObj} />
+                  </div>
+                )}
               </div>
             )}
           </div>
