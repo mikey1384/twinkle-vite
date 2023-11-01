@@ -911,7 +911,7 @@ export default function Main({
     >
       <ErrorBoundary componentPath="Chat/Main">
         {userId ? (
-          !loaded ? (
+          loaded ? (
             <div
               className={css`
                 width: 100%;
