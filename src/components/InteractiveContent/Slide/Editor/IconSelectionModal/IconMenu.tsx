@@ -77,6 +77,7 @@ const availableIcons: any[] = [
   'sliders-h',
   'sort',
   'sparkles',
+  'spell-check',
   'star',
   ['far', 'star'],
   'surprise',
