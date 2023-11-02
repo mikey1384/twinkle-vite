@@ -67,6 +67,7 @@ function App() {
   const onSetAchievementsObj = useAppContext(
     (v) => v.user.actions.onSetAchievementsObj
   );
+  const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const onInitMyState = useAppContext((v) => v.user.actions.onInitMyState);
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
@@ -261,6 +262,9 @@ function App() {
   }, [twinkleXP, twinkleCoins, userId]);
 
   useEffect(() => {
+    if (!achievementsObj || Object.keys(achievementsObj).length === 0) {
+      initAchievements();
+    }
     if (!auth()?.headers?.authorization && !signinModalShown) {
       onLogout();
       onResetChat();
@@ -290,7 +294,6 @@ function App() {
           newState: { ...data, loaded: true }
         });
         if (data?.userId) onInitMyState(data);
-        initAchievements();
       }
       onSetSessionLoaded();
     }
