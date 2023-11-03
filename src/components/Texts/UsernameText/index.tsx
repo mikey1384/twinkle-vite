@@ -29,6 +29,7 @@ export default function UsernameText({
     profilePicUrl?: string;
     username?: string;
     twinkleXP?: number;
+    xpThisMonth?: number;
     rank?: number;
   };
   wordBreakEnabled?: boolean;
@@ -71,6 +72,12 @@ export default function UsernameText({
     }
     return addCommasToNumber(user.twinkleXP || twinkleXP);
   }, [twinkleXP, user.twinkleXP]);
+  const userXPThisMonth = useMemo(() => {
+    if (!user.xpThisMonth) {
+      return null;
+    }
+    return addCommasToNumber(user.xpThisMonth);
+  }, [user.xpThisMonth]);
   const userRank = useMemo(() => {
     return user.rank || rank;
   }, [rank, user.rank]);
@@ -141,6 +148,7 @@ export default function UsernameText({
           username={user.username || ''}
           userRank={userRank}
           userXP={userXP}
+          xpThisMonth={userXPThisMonth}
           profilePicUrl={user.profilePicUrl || ''}
           bio={user.profileFirstRow || ''}
           onHide={handleHideMenuWithCoolDown}
