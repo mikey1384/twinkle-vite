@@ -1,17 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import DropdownList from '~/components/DropdownList';
 import { Color } from '~/constants/css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { isMobile, getSectionFromPathname } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
+import UserPopup from './UserPopup';
 
 const deviceIsMobile = isMobile(navigator);
-const chatLabel = localize('chat2');
 const deletedLabel = localize('deleted');
-const profileLabel = localize('Profile');
 
 export default function UsernameText({
   className,
@@ -126,76 +123,26 @@ export default function UsernameText({
         </div>
       </div>
       {dropdownContext && (
-        <DropdownList
-          dropdownContext={dropdownContext}
-          onHideMenu={handleHideMenuWithCoolDown}
+        <UserPopup
+          popupContext={dropdownContext}
           onMouseEnter={() => {
             clearTimeout(hideTimerRef.current);
             clearTimeout(hideTimerRef2.current);
           }}
-          style={{ minWidth: '10rem' }}
           onMouseLeave={() => {
             hideTimerRef2.current = setTimeout(() => {
               setDropdownContext(null);
             }, 500);
           }}
-        >
-          <li
-            style={{
-              color: Color.darkerGray()
-            }}
-            onClick={() => navigate(`/users/${user.username}`)}
-          >
-            <Icon icon="user" />
-            <span style={{ marginLeft: '1rem' }}>{profileLabel}</span>
-          </li>
-          {user.id !== userId && (
-            <li
-              style={{
-                color: Color.darkerGray()
-              }}
-              onClick={handleLinkClick}
-            >
-              <Icon icon="comment" />
-              <span style={{ marginLeft: '1rem' }}>{chatLabel}</span>
-            </li>
-          )}
-          {userXP && (
-            <li
-              style={{
-                padding: '5px',
-                background:
-                  !!userRank && userRank < 4
-                    ? Color.darkerGray()
-                    : Color.highlightGray(),
-                color: !!userRank && userRank < 4 ? '#fff' : Color.darkerGray(),
-                fontSize: '1rem',
-                textAlign: 'center',
-                fontWeight: 'bold'
-              }}
-            >
-              {userXP} XP
-              {!!userRank && userRank < 4 ? (
-                <span
-                  style={{
-                    fontWeight: 'bold',
-                    color:
-                      userRank === 1
-                        ? Color.gold()
-                        : userRank === 2
-                        ? '#fff'
-                        : Color.orange()
-                  }}
-                >
-                  {' '}
-                  (#{userRank})
-                </span>
-              ) : (
-                ''
-              )}
-            </li>
-          )}
-        </DropdownList>
+          myId={userId}
+          navigate={navigate}
+          userId={user.id}
+          username={user.username || ''}
+          userRank={userRank}
+          userXP={userXP}
+          onHide={handleHideMenuWithCoolDown}
+          onLinkClick={handleLinkClick}
+        />
       )}
     </div>
   );
