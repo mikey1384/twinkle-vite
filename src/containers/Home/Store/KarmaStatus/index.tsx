@@ -48,7 +48,7 @@ export default function KarmaStatus() {
       setLoadingKarma(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [level, userId]);
 
   const displayedKarmaPoints = useMemo(() => {
     if (karmaPoints) {
