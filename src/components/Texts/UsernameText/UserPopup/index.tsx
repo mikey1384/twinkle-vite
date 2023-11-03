@@ -22,7 +22,8 @@ export default function UserPopup({
   userId,
   username,
   userRank,
-  userXP
+  userXP,
+  xpThisMonth
 }: {
   bio?: string;
   myId: number;
@@ -42,6 +43,7 @@ export default function UserPopup({
   username: string;
   userRank?: number;
   userXP?: string | null;
+  xpThisMonth?: string | null;
 }) {
   return (
     <Popup
@@ -159,29 +161,49 @@ export default function UserPopup({
               fontWeight: 'bold',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'space-between',
               fontSize: '1rem',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              flexDirection: 'column'
             }}
           >
-            {userXP} XP
-            {!!userRank && userRank < 4 ? (
-              <span
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%'
+              }}
+            >
+              {userXP} XP
+              {!!userRank && userRank < 4 ? (
+                <span
+                  style={{
+                    fontWeight: 'bold',
+                    marginLeft: '0.5rem',
+                    color:
+                      userRank === 1
+                        ? Color.gold()
+                        : userRank === 2
+                        ? '#fff'
+                        : Color.orange()
+                  }}
+                >
+                  (#{userRank})
+                </span>
+              ) : (
+                ''
+              )}
+            </div>
+            {xpThisMonth && (
+              <div
                 style={{
-                  fontWeight: 'bold',
-                  marginLeft: '0.5rem',
-                  color:
-                    userRank === 1
-                      ? Color.gold()
-                      : userRank === 2
-                      ? '#fff'
-                      : Color.orange()
+                  fontSize: '0.9rem',
+                  fontWeight: 'normal'
                 }}
               >
-                (#{userRank})
-              </span>
-            ) : (
-              ''
+                (↑ {xpThisMonth} this month)
+              </div>
             )}
           </div>
         )}
