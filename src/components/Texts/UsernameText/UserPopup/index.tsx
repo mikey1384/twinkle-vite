@@ -101,19 +101,22 @@ export default function UserPopup({
             padding: '1rem',
             borderTop: '1px solid #eee',
             borderBottom: '1px solid #eee',
-            marginBottom: '1rem'
+            marginBottom: '1rem',
+            display: 'flex',
+            justifyContent: 'space-between'
           }}
         >
           <div
             style={{
               color: Color.darkerGray(),
               cursor: 'pointer',
-              marginBottom: '0.5rem',
               display: 'flex',
               alignItems: 'center',
               padding: '0.5rem',
               borderRadius,
-              transition: 'background 0.3s'
+              transition: 'background 0.3s',
+              flexGrow: 1,
+              justifyContent: 'center'
             }}
             onClick={() => navigate(`/users/${username}`)}
             onMouseEnter={(e) =>
@@ -137,7 +140,9 @@ export default function UserPopup({
                 alignItems: 'center',
                 padding: '0.5rem',
                 borderRadius,
-                transition: 'background 0.3s'
+                transition: 'background 0.3s',
+                flexGrow: 1,
+                justifyContent: 'center'
               }}
               onClick={onLinkClick}
               onMouseEnter={(e) =>
