@@ -2,7 +2,7 @@ import React from 'react';
 import Popup from './Popup';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 
@@ -53,7 +53,6 @@ export default function UserPopup({
       onMouseLeave={onMouseLeave}
       style={{
         minWidth: '10rem',
-        borderRadius: '8px',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}
     >
@@ -109,7 +108,7 @@ export default function UserPopup({
               display: 'flex',
               alignItems: 'center',
               padding: '0.5rem',
-              borderRadius: '4px',
+              borderRadius,
               transition: 'background 0.3s'
             }}
             onClick={() => navigate(`/users/${username}`)}
@@ -131,7 +130,7 @@ export default function UserPopup({
                 display: 'flex',
                 alignItems: 'center',
                 padding: '0.5rem',
-                borderRadius: '4px',
+                borderRadius,
                 transition: 'background 0.3s'
               }}
               onClick={onLinkClick}
@@ -156,7 +155,7 @@ export default function UserPopup({
                   ? Color.darkerGray()
                   : Color.highlightGray(),
               color: !!userRank && userRank < 4 ? '#fff' : Color.darkerGray(),
-              borderRadius: '4px',
+              borderRadius,
               textAlign: 'center',
               fontWeight: 'bold',
               display: 'flex',
