@@ -57,19 +57,31 @@ export default function UserPopup({
     >
       <div style={{ width: '30rem', padding: '1rem', background: '#fff' }}>
         <div
-          className={css`
-            width: 5rem;
-            margin-bottom: 1rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 3rem;
-            }
-          `}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            marginBottom: '1rem'
+          }}
         >
-          <ProfilePic
-            style={{ width: '100%' }}
-            profilePicUrl={profilePicUrl}
-            userId={userId}
-          />
+          <div
+            className={css`
+              width: 5rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 3rem;
+              }
+            `}
+          >
+            <ProfilePic
+              style={{ width: '100%' }}
+              profilePicUrl={profilePicUrl}
+              userId={userId}
+            />
+          </div>
+          <div
+            style={{ marginLeft: '1rem', fontSize: '1.2rem', color: '#333' }}
+          >
+            {username}
+          </div>
         </div>
         {bio && (
           <div style={{ marginBottom: '1rem', color: '#333' }}>{bio}</div>
