@@ -39,11 +39,11 @@ export default function UserPopup({
 }) {
   return (
     <Popup
-      dropdownContext={popupContext}
+      popupContext={popupContext}
       onHideMenu={onHide}
       onMouseEnter={onMouseEnter}
-      style={{ minWidth: '10rem' }}
       onMouseLeave={onMouseLeave}
+      style={{ minWidth: '10rem' }}
     >
       <li
         style={{

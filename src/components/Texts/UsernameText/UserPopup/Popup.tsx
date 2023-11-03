@@ -10,35 +10,27 @@ const deviceIsMobile = isMobile(navigator);
 const outsideClickMethod = deviceIsMobile ? useOutsideTap : useOutsideClick;
 
 export default function Popup({
-  xAdjustment = 0,
   children,
-  className,
-  dropdownContext,
-  innerRef,
+  popupContext,
   style = {},
   onHideMenu = () => null,
   onMouseEnter = () => null,
-  onMouseLeave = () => null,
-  zIndex = 100_000_000
+  onMouseLeave = () => null
 }: {
-  xAdjustment?: number;
   children: React.ReactNode;
-  className?: string;
-  dropdownContext: {
+  popupContext: {
     x: number;
     y: number;
     width: number;
     height: number;
   };
-  innerRef?: React.RefObject<any>;
   style?: React.CSSProperties;
   onHideMenu?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
-  zIndex?: number;
 }) {
   const MenuRef = useRef(null);
-  const { x, y, width, height } = dropdownContext;
+  const { x, y, width, height } = popupContext;
   outsideClickMethod(MenuRef, onHideMenu);
   const displaysToTheRight = useMemo(() => {
     return window.innerWidth / 2 - x > 0;
@@ -49,25 +41,22 @@ export default function Popup({
 
   return createPortal(
     <ErrorBoundary
-      componentPath="DropdownList"
+      componentPath="UsernameText/UserPopup/Popup"
       style={{
-        zIndex,
+        zIndex: 100_000_000,
         top: 0,
         position: 'fixed'
       }}
     >
       <div ref={MenuRef}>
-        <ul
-          ref={innerRef}
+        <div
           style={style}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
-          className={`${css`
+          className={css`
             position: absolute;
             left: ${`${
-              displaysToTheRight
-                ? `${x}px`
-                : `CALC(${x + xAdjustment}px + ${width}px)`
+              displaysToTheRight ? `${x}px` : `CALC(${x}px + ${width}px)`
             }`};
             top: ${isReversed
               ? `CALC(${y}px - 0.5rem)`
@@ -103,10 +92,10 @@ export default function Popup({
                 text-decoration: none;
               }
             }
-          `} ${className}`}
+          `}
         >
           {children}
-        </ul>
+        </div>
       </div>
     </ErrorBoundary>,
     document.getElementById('outer-layer') as HTMLElement
