@@ -78,7 +78,12 @@ export default function UserPopup({
             />
           </div>
           <div
-            style={{ marginLeft: '1rem', fontSize: '1.2rem', color: '#333' }}
+            style={{
+              marginLeft: '1rem',
+              fontSize: '1.2rem',
+              fontWeight: 'bold',
+              color: '#333'
+            }}
           >
             {username}
           </div>
@@ -101,9 +106,17 @@ export default function UserPopup({
               marginBottom: '0.5rem',
               display: 'flex',
               alignItems: 'center',
+              padding: '0.5rem',
+              borderRadius: '4px',
               transition: 'background 0.3s'
             }}
             onClick={() => navigate(`/users/${username}`)}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = Color.highlightGray())
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = 'transparent')
+            }
           >
             <Icon icon="user" />
             <span style={{ marginLeft: '1rem' }}>{profileLabel}</span>
@@ -115,9 +128,17 @@ export default function UserPopup({
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
+                padding: '0.5rem',
+                borderRadius: '4px',
                 transition: 'background 0.3s'
               }}
               onClick={onLinkClick}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = Color.highlightGray())
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = 'transparent')
+              }
             >
               <Icon icon="comment" />
               <span style={{ marginLeft: '1rem' }}>{chatLabel}</span>
