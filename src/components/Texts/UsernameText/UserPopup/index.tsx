@@ -81,7 +81,7 @@ export default function UserPopup({
           <div
             style={{
               marginLeft: '1rem',
-              fontSize: '1.2rem',
+              fontSize: '1.3rem',
               fontWeight: 'bold',
               color: '#333'
             }}
@@ -90,7 +90,11 @@ export default function UserPopup({
           </div>
         </div>
         {bio && (
-          <div style={{ marginBottom: '1rem', color: '#333' }}>{bio}</div>
+          <div
+            style={{ marginBottom: '1rem', color: '#333', fontSize: '1.1rem' }}
+          >
+            {bio}
+          </div>
         )}
         <div
           style={{
@@ -120,7 +124,9 @@ export default function UserPopup({
             }
           >
             <Icon icon="user" />
-            <span style={{ marginLeft: '1rem' }}>{profileLabel}</span>
+            <span style={{ marginLeft: '1rem', fontSize: '1.2rem' }}>
+              {profileLabel}
+            </span>
           </div>
           {userId !== myId && (
             <div
@@ -142,7 +148,9 @@ export default function UserPopup({
               }
             >
               <Icon icon="comment" />
-              <span style={{ marginLeft: '1rem' }}>{chatLabel}</span>
+              <span style={{ marginLeft: '1rem', fontSize: '1.2rem' }}>
+                {chatLabel}
+              </span>
             </div>
           )}
         </div>
@@ -161,7 +169,7 @@ export default function UserPopup({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontSize: '1rem',
+              fontSize: '1.1rem',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               flexDirection: 'column'
             }}
@@ -197,7 +205,7 @@ export default function UserPopup({
             {xpThisMonth && (
               <div
                 style={{
-                  fontSize: '0.9rem',
+                  fontSize: '1rem',
                   fontWeight: 'normal'
                 }}
               >
