@@ -164,6 +164,7 @@ export interface User {
   otpHash?: string;
   pictures?: any[];
   profilePicUrl?: string;
+  profileFirstRow?: string;
   rewardBoostLvl?: number;
   state?: any;
   twinkleCoins?: number;

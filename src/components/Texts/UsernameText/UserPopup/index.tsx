@@ -1,13 +1,16 @@
 import React from 'react';
 import Popup from './Popup';
 import Icon from '~/components/Icon';
-import { Color } from '~/constants/css';
+import ProfilePic from '~/components/ProfilePic';
+import { Color, mobileMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 
 const chatLabel = localize('chat2');
 const profileLabel = localize('Profile');
 
 export default function UserPopup({
+  bio,
   myId,
   navigate,
   onHide,
@@ -15,11 +18,13 @@ export default function UserPopup({
   onMouseEnter,
   onMouseLeave,
   popupContext,
+  profilePicUrl,
   userId,
   username,
   userRank,
   userXP
 }: {
+  bio?: string;
   myId: number;
   navigate: (path: string) => void;
   onHide: () => void;
@@ -32,6 +37,7 @@ export default function UserPopup({
     width: number;
     height: number;
   };
+  profilePicUrl: string;
   userId: number;
   username: string;
   userRank?: number;
@@ -43,13 +49,47 @@ export default function UserPopup({
       onHideMenu={onHide}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      style={{ minWidth: '10rem' }}
+      style={{
+        minWidth: '10rem',
+        borderRadius: '8px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+      }}
     >
-      <div style={{ width: '30rem' }}>
-        <div style={{ padding: '1rem' }}>
+      <div style={{ width: '30rem', padding: '1rem', background: '#fff' }}>
+        <div
+          className={css`
+            width: 5rem;
+            margin-bottom: 1rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 3rem;
+            }
+          `}
+        >
+          <ProfilePic
+            style={{ width: '100%' }}
+            profilePicUrl={profilePicUrl}
+            userId={userId}
+          />
+        </div>
+        {bio && (
+          <div style={{ marginBottom: '1rem', color: '#333' }}>{bio}</div>
+        )}
+        <div
+          style={{
+            padding: '1rem',
+            borderTop: '1px solid #eee',
+            borderBottom: '1px solid #eee',
+            marginBottom: '1rem'
+          }}
+        >
           <div
             style={{
-              color: Color.darkerGray()
+              color: Color.darkerGray(),
+              cursor: 'pointer',
+              marginBottom: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              transition: 'background 0.3s'
             }}
             onClick={() => navigate(`/users/${username}`)}
           >
@@ -59,7 +99,11 @@ export default function UserPopup({
           {userId !== myId && (
             <div
               style={{
-                color: Color.darkerGray()
+                color: Color.darkerGray(),
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                transition: 'background 0.3s'
               }}
               onClick={onLinkClick}
             >
@@ -67,42 +111,47 @@ export default function UserPopup({
               <span style={{ marginLeft: '1rem' }}>{chatLabel}</span>
             </div>
           )}
-          {userXP && (
-            <div
-              style={{
-                padding: '5px',
-                background:
-                  !!userRank && userRank < 4
-                    ? Color.darkerGray()
-                    : Color.highlightGray(),
-                color: !!userRank && userRank < 4 ? '#fff' : Color.darkerGray(),
-                fontSize: '1rem',
-                textAlign: 'center',
-                fontWeight: 'bold'
-              }}
-            >
-              {userXP} XP
-              {!!userRank && userRank < 4 ? (
-                <span
-                  style={{
-                    fontWeight: 'bold',
-                    color:
-                      userRank === 1
-                        ? Color.gold()
-                        : userRank === 2
-                        ? '#fff'
-                        : Color.orange()
-                  }}
-                >
-                  {' '}
-                  (#{userRank})
-                </span>
-              ) : (
-                ''
-              )}
-            </div>
-          )}
         </div>
+        {userXP && (
+          <div
+            style={{
+              padding: '0.5rem 1rem',
+              background:
+                !!userRank && userRank < 4
+                  ? Color.darkerGray()
+                  : Color.highlightGray(),
+              color: !!userRank && userRank < 4 ? '#fff' : Color.darkerGray(),
+              borderRadius: '4px',
+              textAlign: 'center',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1rem',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          >
+            {userXP} XP
+            {!!userRank && userRank < 4 ? (
+              <span
+                style={{
+                  fontWeight: 'bold',
+                  marginLeft: '0.5rem',
+                  color:
+                    userRank === 1
+                      ? Color.gold()
+                      : userRank === 2
+                      ? '#fff'
+                      : Color.orange()
+                }}
+              >
+                (#{userRank})
+              </span>
+            ) : (
+              ''
+            )}
+          </div>
+        )}
       </div>
     </Popup>
   );

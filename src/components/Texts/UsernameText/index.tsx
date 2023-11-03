@@ -25,6 +25,7 @@ export default function UsernameText({
   style?: object;
   user?: {
     id: number;
+    profileFirstRow?: string;
     profilePicUrl?: string;
     username?: string;
     twinkleXP?: number;
@@ -140,6 +141,8 @@ export default function UsernameText({
           username={user.username || ''}
           userRank={userRank}
           userXP={userXP}
+          profilePicUrl={user.profilePicUrl || ''}
+          bio={user.profileFirstRow || ''}
           onHide={handleHideMenuWithCoolDown}
           onLinkClick={handleLinkClick}
         />
