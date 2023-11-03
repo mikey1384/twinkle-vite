@@ -1,5 +1,5 @@
 import React from 'react';
-import DropdownList from '~/components/DropdownList';
+import Popup from './Popup';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
@@ -38,7 +38,7 @@ export default function UserPopup({
   userXP?: string | null;
 }) {
   return (
-    <DropdownList
+    <Popup
       dropdownContext={popupContext}
       onHideMenu={onHide}
       onMouseEnter={onMouseEnter}
@@ -100,6 +100,6 @@ export default function UserPopup({
           )}
         </li>
       )}
-    </DropdownList>
+    </Popup>
   );
 }
