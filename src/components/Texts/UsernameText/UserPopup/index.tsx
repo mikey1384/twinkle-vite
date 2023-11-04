@@ -2,6 +2,7 @@ import React from 'react';
 import Popup from './Popup';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
+import AchievementBadges from '~/components/AchievementBadges';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
@@ -21,6 +22,7 @@ export default function UserPopup({
   profileTheme,
   profilePicUrl,
   realName,
+  unlockedAchievementIds = [],
   userId,
   username,
   userRank,
@@ -42,6 +44,7 @@ export default function UserPopup({
   profileTheme?: string;
   profilePicUrl?: string;
   realName: string;
+  unlockedAchievementIds?: number[];
   userId: number;
   username: string;
   userRank?: number;
@@ -69,9 +72,15 @@ export default function UserPopup({
         <div
           style={{
             background: Color[profileTheme || 'logoBlue'](),
-            height: '2rem'
+            minHeight: '2rem',
+            padding: '0.5rem'
           }}
-        />
+        >
+          <AchievementBadges
+            thumbSize="2rem"
+            unlockedAchievementIds={unlockedAchievementIds}
+          />
+        </div>
         <div style={{ padding: '0.7rem 1rem 1rem 1rem' }}>
           <div
             style={{

@@ -146,6 +146,7 @@ export default function UsernameText({
           }}
           myId={userId}
           userId={user.id}
+          unlockedAchievementIds={user.unlockedAchievementIds}
           realName={user.realName}
           username={user.username}
           userRank={userRank}
