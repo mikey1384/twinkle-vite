@@ -20,6 +20,7 @@ export default function UserPopup({
   popupContext,
   profileTheme,
   profilePicUrl,
+  realName,
   userId,
   username,
   userRank,
@@ -40,6 +41,7 @@ export default function UserPopup({
   };
   profileTheme?: string;
   profilePicUrl?: string;
+  realName: string;
   userId: number;
   username: string;
   userRank?: number;
@@ -70,7 +72,7 @@ export default function UserPopup({
             height: '2rem'
           }}
         />
-        <div style={{ padding: '0.5rem 1rem 1rem 1rem' }}>
+        <div style={{ padding: '0.7rem 1rem 1rem 1rem' }}>
           <div
             style={{
               display: 'flex',
@@ -92,15 +94,17 @@ export default function UserPopup({
                 userId={userId}
               />
             </div>
-            <div
-              style={{
-                marginLeft: '1rem',
-                fontSize: '1.3rem',
-                fontWeight: 'bold',
-                color: '#333'
-              }}
-            >
-              {username}
+            <div style={{ marginLeft: '1rem' }}>
+              <div
+                style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 'bold',
+                  color: '#333'
+                }}
+              >
+                {username}
+              </div>
+              <div style={{ fontSize: '0.8rem' }}>({realName})</div>
             </div>
           </div>
           {bio && (
