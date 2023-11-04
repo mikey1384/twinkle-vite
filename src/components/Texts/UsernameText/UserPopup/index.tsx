@@ -2,6 +2,7 @@ import React from 'react';
 import Popup from './Popup';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
+import RichText from '~/components/Texts/RichText';
 import AchievementBadges from '~/components/AchievementBadges';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -117,7 +118,8 @@ export default function UserPopup({
             </div>
           </div>
           {bio && (
-            <div
+            <RichText
+              theme={profileTheme}
               style={{
                 marginBottom: '1rem',
                 color: '#333',
@@ -125,7 +127,7 @@ export default function UserPopup({
               }}
             >
               {bio}
-            </div>
+            </RichText>
           )}
           <div
             style={{
