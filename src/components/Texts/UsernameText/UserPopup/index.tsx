@@ -18,6 +18,7 @@ export default function UserPopup({
   onMouseEnter,
   onMouseLeave,
   popupContext,
+  profileTheme,
   profilePicUrl,
   userId,
   username,
@@ -38,7 +39,8 @@ export default function UserPopup({
     width: number;
     height: number;
   };
-  profilePicUrl: string;
+  profileTheme?: string;
+  profilePicUrl?: string;
   userId: number;
   username: string;
   userRank?: number;
@@ -56,82 +58,73 @@ export default function UserPopup({
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}
     >
-      <div style={{ width: '30rem', padding: '1rem', background: '#fff' }}>
+      <div
+        style={{
+          width: '30rem',
+          padding: '0',
+          background: '#fff'
+        }}
+      >
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: '1rem'
+            background: Color[profileTheme || 'logoBlue'](),
+            height: '2rem'
           }}
-        >
-          <div
-            className={css`
-              width: 5rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                width: 3rem;
-              }
-            `}
-          >
-            <ProfilePic
-              style={{ width: '100%' }}
-              profilePicUrl={profilePicUrl}
-              userId={userId}
-            />
-          </div>
+        />
+        <div style={{ padding: '0.5rem 1rem 1rem 1rem' }}>
           <div
             style={{
-              marginLeft: '1rem',
-              fontSize: '1.3rem',
-              fontWeight: 'bold',
-              color: '#333'
-            }}
-          >
-            {username}
-          </div>
-        </div>
-        {bio && (
-          <div
-            style={{ marginBottom: '1rem', color: '#333', fontSize: '1.1rem' }}
-          >
-            {bio}
-          </div>
-        )}
-        <div
-          style={{
-            padding: '1rem',
-            borderTop: '1px solid #eee',
-            borderBottom: '1px solid #eee',
-            marginBottom: '1rem',
-            display: 'flex',
-            justifyContent: 'space-between'
-          }}
-        >
-          <div
-            style={{
-              color: Color.darkerGray(),
-              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              padding: '0.5rem',
-              borderRadius,
-              transition: 'background 0.3s',
-              flexGrow: 1,
-              justifyContent: 'center'
+              marginBottom: '1rem'
             }}
-            onClick={() => navigate(`/users/${username}`)}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = Color.highlightGray())
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = 'transparent')
-            }
           >
-            <Icon icon="user" />
-            <span style={{ marginLeft: '1rem', fontSize: '1.2rem' }}>
-              {profileLabel}
-            </span>
+            <div
+              className={css`
+                width: 5rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  width: 3rem;
+                }
+              `}
+            >
+              <ProfilePic
+                style={{ width: '100%' }}
+                profilePicUrl={profilePicUrl || ''}
+                userId={userId}
+              />
+            </div>
+            <div
+              style={{
+                marginLeft: '1rem',
+                fontSize: '1.3rem',
+                fontWeight: 'bold',
+                color: '#333'
+              }}
+            >
+              {username}
+            </div>
           </div>
-          {userId !== myId && (
+          {bio && (
+            <div
+              style={{
+                marginBottom: '1rem',
+                color: '#333',
+                fontSize: '1.1rem'
+              }}
+            >
+              {bio}
+            </div>
+          )}
+          <div
+            style={{
+              padding: '1rem',
+              borderTop: '1px solid #eee',
+              borderBottom: '1px solid #eee',
+              marginBottom: '1rem',
+              display: 'flex',
+              justifyContent: 'space-between'
+            }}
+          >
             <div
               style={{
                 color: Color.darkerGray(),
@@ -144,7 +137,7 @@ export default function UserPopup({
                 flexGrow: 1,
                 justifyContent: 'center'
               }}
-              onClick={onLinkClick}
+              onClick={() => navigate(`/users/${username}`)}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.background = Color.highlightGray())
               }
@@ -152,73 +145,100 @@ export default function UserPopup({
                 (e.currentTarget.style.background = 'transparent')
               }
             >
-              <Icon icon="comment" />
+              <Icon icon="user" />
               <span style={{ marginLeft: '1rem', fontSize: '1.2rem' }}>
-                {chatLabel}
+                {profileLabel}
               </span>
             </div>
-          )}
-        </div>
-        {userXP && (
-          <div
-            style={{
-              padding: '0.5rem 1rem',
-              background:
-                !!userRank && userRank < 4
-                  ? Color.darkerGray()
-                  : Color.highlightGray(),
-              color: !!userRank && userRank < 4 ? '#fff' : Color.darkerGray(),
-              borderRadius,
-              textAlign: 'center',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '1.1rem',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              flexDirection: 'column'
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%'
-              }}
-            >
-              {userXP} XP
-              {!!userRank && userRank < 4 ? (
-                <span
-                  style={{
-                    fontWeight: 'bold',
-                    marginLeft: '0.5rem',
-                    color:
-                      userRank === 1
-                        ? Color.gold()
-                        : userRank === 2
-                        ? '#fff'
-                        : Color.orange()
-                  }}
-                >
-                  (#{userRank})
-                </span>
-              ) : (
-                ''
-              )}
-            </div>
-            {xpThisMonth && (
+            {userId !== myId && (
               <div
                 style={{
-                  fontSize: '1rem',
-                  fontWeight: 'normal'
+                  color: Color.darkerGray(),
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.5rem',
+                  borderRadius,
+                  transition: 'background 0.3s',
+                  flexGrow: 1,
+                  justifyContent: 'center'
                 }}
+                onClick={onLinkClick}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = Color.highlightGray())
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = 'transparent')
+                }
               >
-                (↑ {xpThisMonth} this month)
+                <Icon icon="comment" />
+                <span style={{ marginLeft: '1rem', fontSize: '1.2rem' }}>
+                  {chatLabel}
+                </span>
               </div>
             )}
           </div>
-        )}
+          {userXP && (
+            <div
+              style={{
+                padding: '0.5rem 1rem',
+                background:
+                  !!userRank && userRank < 4
+                    ? Color.darkerGray()
+                    : Color.highlightGray(),
+                color: !!userRank && userRank < 4 ? '#fff' : Color.darkerGray(),
+                borderRadius,
+                textAlign: 'center',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '1.1rem',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                flexDirection: 'column'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%'
+                }}
+              >
+                {userXP} XP
+                {!!userRank && userRank < 4 ? (
+                  <span
+                    style={{
+                      fontWeight: 'bold',
+                      marginLeft: '0.5rem',
+                      color:
+                        userRank === 1
+                          ? Color.gold()
+                          : userRank === 2
+                          ? '#fff'
+                          : Color.orange()
+                    }}
+                  >
+                    (#{userRank})
+                  </span>
+                ) : (
+                  ''
+                )}
+              </div>
+              {xpThisMonth && (
+                <div
+                  style={{
+                    fontSize: '1rem',
+                    fontWeight: 'normal'
+                  }}
+                >
+                  (↑ {xpThisMonth} this month)
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </Popup>
   );
