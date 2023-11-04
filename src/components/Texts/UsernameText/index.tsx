@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { isMobile, getSectionFromPathname } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { User } from '~/types';
 import localize from '~/constants/localize';
 import UserPopup from './UserPopup';
 
@@ -15,7 +16,16 @@ export default function UsernameText({
   color,
   onMenuShownChange,
   style = {},
-  user = { id: 0 },
+  user = {
+    id: 0,
+    username: '',
+    profilePicUrl: '',
+    profileTheme: '',
+    profileFirstRow: '',
+    rank: 0,
+    twinkleXP: 0,
+    xpThisMonth: 0
+  },
   wordBreakEnabled,
   displayedName
 }: {
@@ -23,15 +33,7 @@ export default function UsernameText({
   color?: string;
   onMenuShownChange?: (v: boolean) => void;
   style?: object;
-  user?: {
-    id: number;
-    profileFirstRow?: string;
-    profilePicUrl?: string;
-    username?: string;
-    twinkleXP?: number;
-    xpThisMonth?: number;
-    rank?: number;
-  };
+  user?: User;
   wordBreakEnabled?: boolean;
   displayedName?: string;
 }) {
@@ -145,12 +147,13 @@ export default function UsernameText({
           myId={userId}
           navigate={navigate}
           userId={user.id}
-          username={user.username || ''}
+          username={user.username}
           userRank={userRank}
           userXP={userXP}
           xpThisMonth={userXPThisMonth}
-          profilePicUrl={user.profilePicUrl || ''}
-          bio={user.profileFirstRow || ''}
+          profilePicUrl={user.profilePicUrl}
+          profileTheme={user.profileTheme}
+          bio={user.profileFirstRow}
           onHide={handleHideMenuWithCoolDown}
           onLinkClick={handleLinkClick}
         />
