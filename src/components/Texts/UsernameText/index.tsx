@@ -145,7 +145,6 @@ export default function UsernameText({
             }, 500);
           }}
           myId={userId}
-          navigate={navigate}
           userId={user.id}
           username={user.username}
           userRank={userRank}
