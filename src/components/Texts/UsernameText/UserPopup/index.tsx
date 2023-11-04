@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { Link } from 'react-router-dom';
 import localize from '~/constants/localize';
 
 const chatLabel = localize('chat2');
@@ -12,7 +13,6 @@ const profileLabel = localize('Profile');
 export default function UserPopup({
   bio,
   myId,
-  navigate,
   onHide,
   onLinkClick,
   onMouseEnter,
@@ -28,7 +28,6 @@ export default function UserPopup({
 }: {
   bio?: string;
   myId: number;
-  navigate: (path: string) => void;
   onHide: () => void;
   onLinkClick: () => void;
   onMouseEnter: () => void;
@@ -125,7 +124,7 @@ export default function UserPopup({
               justifyContent: 'space-between'
             }}
           >
-            <div
+            <Link
               style={{
                 color: Color.darkerGray(),
                 cursor: 'pointer',
@@ -137,7 +136,12 @@ export default function UserPopup({
                 flexGrow: 1,
                 justifyContent: 'center'
               }}
-              onClick={() => navigate(`/users/${username}`)}
+              className={css`
+                &:hover {
+                  text-decoration: none;
+                }
+              `}
+              to={`/users/${username}`}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.background = Color.highlightGray())
               }
@@ -149,7 +153,7 @@ export default function UserPopup({
               <span style={{ marginLeft: '1rem', fontSize: '1.2rem' }}>
                 {profileLabel}
               </span>
-            </div>
+            </Link>
             {userId !== myId && (
               <div
                 style={{
