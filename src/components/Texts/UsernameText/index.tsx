@@ -53,9 +53,8 @@ export default function UsernameText({
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { rank, twinkleXP } = useAppContext(
-    (v) => v.user.state.userObj[user.id] || {}
-  );
+  const { rank, twinkleXP, realName, unlockedAchievementIds, profileFirstRow } =
+    useAppContext((v) => v.user.state.userObj[user.id] || {});
   const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
@@ -83,6 +82,15 @@ export default function UsernameText({
   const userRank = useMemo(() => {
     return user.rank || rank;
   }, [rank, user.rank]);
+  const appliedRealName = useMemo(() => {
+    return user.realName || realName;
+  }, [realName, user.realName]);
+  const appliedUnlockedAchievementIds = useMemo(() => {
+    return user.unlockedAchievementIds || unlockedAchievementIds;
+  }, [unlockedAchievementIds, user.unlockedAchievementIds]);
+  const bio = useMemo(() => {
+    return user.profileFirstRow || profileFirstRow;
+  }, [user.profileFirstRow, profileFirstRow]);
 
   useEffect(() => {
     menuShownRef.current = !!dropdownContext;
@@ -146,15 +154,15 @@ export default function UsernameText({
           }}
           myId={userId}
           userId={user.id}
-          unlockedAchievementIds={user.unlockedAchievementIds}
-          realName={user.realName}
+          unlockedAchievementIds={appliedUnlockedAchievementIds}
+          realName={appliedRealName}
           username={user.username}
           userRank={userRank}
           userXP={userXP}
           xpThisMonth={userXPThisMonth}
           profilePicUrl={user.profilePicUrl}
           profileTheme={user.profileTheme}
-          bio={user.profileFirstRow}
+          bio={bio}
           onHide={handleHideMenuWithCoolDown}
           onLinkClick={handleLinkClick}
         />
