@@ -119,6 +119,7 @@ export default function UserPopup({
           </div>
           {bio && (
             <RichText
+              isProfileComponent
               theme={profileTheme}
               style={{
                 marginBottom: '1rem',
