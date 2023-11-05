@@ -56,6 +56,7 @@ export default function UserPopup({
     profileFirstRow,
     xpThisMonth
   } = useAppContext((v) => v.user.state.userObj[user.id] || {});
+
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const userRank = useMemo(() => {
     return user.rank || rank;

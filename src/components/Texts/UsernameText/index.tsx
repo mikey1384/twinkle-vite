@@ -161,7 +161,7 @@ export default function UsernameText({
       clearTimeout(hideTimerRef.current);
       clearTimeout(hideTimerRef2.current);
       clearTimeout(showTimerRef.current);
-      if ((!twinkleXP && !user.twinkleXP) || (!level && !user.level)) {
+      if ((!twinkleXP && !user.twinkleXP) || !level) {
         setLoading(true);
         showTimerRef.current = setTimeout(async () => {
           if (mouseEntered.current) {
