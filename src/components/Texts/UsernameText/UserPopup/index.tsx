@@ -46,6 +46,7 @@ export default function UserPopup({
     twinkleXP,
     profileTheme,
     realName,
+    title,
     unlockedAchievementIds,
     userType,
     profileFirstRow,
@@ -150,6 +151,7 @@ export default function UserPopup({
                 <UserTitle
                   user={{
                     ...user,
+                    title: user.title || title,
                     userType: user.userType || userType,
                     authLevel: user.authLevel || authLevel
                   }}
