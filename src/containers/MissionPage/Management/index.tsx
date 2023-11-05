@@ -22,8 +22,8 @@ export default function Management({
   missionId: number;
   onSetMissionState: (arg0: any) => void;
 }) {
-  const { isCreator } = useKeyContext((v) => v.myState);
-  if (!isCreator) {
+  const { isAdmin } = useKeyContext((v) => v.myState);
+  if (!isAdmin) {
     return (
       <InvalidPage
         title="For moderators only"

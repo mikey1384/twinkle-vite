@@ -148,7 +148,7 @@ function MessagesContainer({
     },
     inputState
   } = useContext(LocalContext);
-  const { banned, profilePicUrl, userId, profileTheme, isCreator, username } =
+  const { banned, profilePicUrl, userId, profileTheme, isAdmin, username } =
     useKeyContext((v) => v.myState);
   const {
     currentTransactionId,
@@ -263,8 +263,8 @@ function MessagesContainer({
   );
 
   const isRestrictedChannel = useMemo(
-    () => subchannel?.isRestricted && !isCreator,
-    [isCreator, subchannel?.isRestricted]
+    () => subchannel?.isRestricted && !isAdmin,
+    [isAdmin, subchannel?.isRestricted]
   );
   const isChatRestricted = useMemo(
     () => !!isRestrictedChannel,

@@ -11,9 +11,7 @@ import FilterBar from '~/components/FilterBar';
 
 export default function Mission() {
   const [loading, setLoading] = useState(false);
-  const { currentMissionId, userId, isCreator } = useKeyContext(
-    (v) => v.myState
-  );
+  const { currentMissionId, userId, isAdmin } = useKeyContext((v) => v.myState);
   const loadMissionList = useAppContext(
     (v) => v.requestHelpers.loadMissionList
   );
@@ -53,7 +51,7 @@ export default function Mission() {
         const { missions, myAttempts, loadMoreButton } =
           await loadMissionList();
         let displayedMissions = missions;
-        if (!isCreator) {
+        if (!isAdmin) {
           displayedMissions = missions.filter(
             (mission: { isHidden: boolean }) => !mission.isHidden
           );
@@ -79,7 +77,7 @@ export default function Mission() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, isCreator]);
+  }, [userId, isAdmin]);
 
   return (
     <ErrorBoundary componentPath="Mission/index">
@@ -94,13 +92,13 @@ export default function Mission() {
         <div style={{ width: '100%', display: 'flex' }}>
           <div
             className={css`
-              width: ${isCreator ? 'CALC(100% - 15rem)' : '100%'};
+              width: ${isAdmin ? 'CALC(100% - 15rem)' : '100%'};
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
               }
             `}
           >
-            {isCreator && (
+            {isAdmin && (
               <FilterBar
                 className="mobile"
                 style={{
@@ -136,7 +134,7 @@ export default function Mission() {
                     padding-bottom: 2rem;
                   }
                 `}
-                isCreator={isCreator}
+                isAdmin={isAdmin}
                 loading={loading}
                 userId={userId}
                 currentMissionId={currentMissionId}
@@ -156,7 +154,7 @@ export default function Mission() {
               />
             )}
           </div>
-          {isCreator && (
+          {isAdmin && (
             <RightMenu
               className="desktop"
               style={{ marginTop: '3rem', width: '12rem', marginRight: '3rem' }}

@@ -101,7 +101,7 @@ function Comment({
     (v) => v.requestHelpers.updateCommentPinStatus
   );
 
-  const { banned, isCreator, level, profileTheme, twinkleCoins, userId } =
+  const { banned, isAdmin, level, profileTheme, twinkleCoins, userId } =
     useKeyContext((v) => v.myState);
   const { canDelete, canEdit, canReward } = useUserLevel(userId);
 
@@ -263,7 +263,7 @@ function Comment({
       });
     }
     if (
-      (userIsParentUploader || isCreator) &&
+      (userIsParentUploader || isAdmin) &&
       !isNotification &&
       !banned?.posting
     ) {
@@ -296,7 +296,7 @@ function Comment({
     canEdit,
     comment.id,
     isCommentForASubjectWithSecretMessage,
-    isCreator,
+    isAdmin,
     isNotification,
     userIsParentUploader,
     userIsUploader
