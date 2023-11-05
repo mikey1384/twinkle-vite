@@ -224,8 +224,8 @@ export default function UsernameText({
         ((!twinkleXP && !user.twinkleXP) || !level) &&
         !menuShownRef.current
       ) {
-        setDropdownContext(elementContext);
         setLoading(true);
+        setDropdownContext(elementContext);
         const data = await loadProfile(user.id);
         onSetUserState({
           userId: user.id,
