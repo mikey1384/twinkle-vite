@@ -3,7 +3,6 @@ import { Color } from '~/constants/css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { isMobile, getSectionFromPathname } from '~/helpers';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { User } from '~/types';
 import localize from '~/constants/localize';
 import UserPopup from './UserPopup';
@@ -37,6 +36,9 @@ export default function UsernameText({
   wordBreakEnabled?: boolean;
   displayedName?: string;
 }) {
+  const { twinkleXP } = useAppContext(
+    (v) => v.user.state.userObj[user.id] || {}
+  );
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,16 +55,6 @@ export default function UsernameText({
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const loadProfile = useAppContext((v) => v.requestHelpers.loadProfile);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const {
-    rank,
-    twinkleXP,
-    profileTheme,
-    realName,
-    unlockedAchievementIds,
-    profileFirstRow,
-    xpThisMonth
-  } = useAppContext((v) => v.user.state.userObj[user.id] || {});
-  const chatStatus = useChatContext((v) => v.state.chatStatus);
 
   const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
   const onUpdateSelectedChannelId = useChatContext(
@@ -76,37 +68,6 @@ export default function UsernameText({
     height: number;
   } | null>(null);
   const menuShownRef = useRef(false);
-  const userXP = useMemo(() => {
-    if (!twinkleXP && !user.twinkleXP) {
-      return null;
-    }
-    return addCommasToNumber(twinkleXP || user.twinkleXP);
-  }, [twinkleXP, user.twinkleXP]);
-  const userXPThisMonth = useMemo(() => {
-    if (!user.xpThisMonth && !xpThisMonth) {
-      return null;
-    }
-    return addCommasToNumber(user.xpThisMonth || xpThisMonth);
-  }, [user.xpThisMonth, xpThisMonth]);
-  const userRank = useMemo(() => {
-    return user.rank || rank;
-  }, [rank, user.rank]);
-  const appliedProfileTheme = useMemo(() => {
-    return user.profileTheme || profileTheme;
-  }, [user.profileTheme, profileTheme]);
-  const appliedRealName = useMemo(() => {
-    return user.realName || realName;
-  }, [realName, user.realName]);
-  const appliedUnlockedAchievementIds = useMemo(() => {
-    return user.unlockedAchievementIds || unlockedAchievementIds;
-  }, [unlockedAchievementIds, user.unlockedAchievementIds]);
-  const bio = useMemo(() => {
-    return user.profileFirstRow || profileFirstRow;
-  }, [user.profileFirstRow, profileFirstRow]);
-  const isOnline = useMemo(
-    () => chatStatus[user.id]?.isOnline,
-    [chatStatus, user.id]
-  );
 
   useEffect(() => {
     menuShownRef.current = !!dropdownContext;
@@ -158,7 +119,6 @@ export default function UsernameText({
       </div>
       {dropdownContext && (
         <UserPopup
-          isOnline={isOnline}
           popupContext={dropdownContext}
           onMouseEnter={() => {
             clearTimeout(hideTimerRef.current);
@@ -170,16 +130,7 @@ export default function UsernameText({
             }, 500);
           }}
           myId={userId}
-          userId={user.id}
-          unlockedAchievementIds={appliedUnlockedAchievementIds}
-          realName={appliedRealName}
-          username={user.username}
-          userRank={userRank}
-          userXP={userXP}
-          xpThisMonth={userXPThisMonth}
-          profilePicUrl={user.profilePicUrl}
-          profileTheme={appliedProfileTheme}
-          bio={bio}
+          user={user}
           onHide={handleHideMenuWithCoolDown}
           onLinkClick={handleLinkClick}
         />
