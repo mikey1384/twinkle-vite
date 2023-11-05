@@ -154,7 +154,9 @@ export default function UserPopup({
                     color: '#333'
                   }}
                 >
-                  {user.username}{' '}
+                  {user.username}
+                </div>
+                <div style={{ fontSize: '0.8rem' }}>
                   <UserTitle
                     user={{
                       ...user,
@@ -167,13 +169,12 @@ export default function UserPopup({
                     className={`unselectable ${css`
                       font-weight: bold;
                       display: inline;
-                      margin-right: 0.7rem;
-                      color: ${Color.darkerGray()};
-                      font-size: 1.5rem;
+                      margin-right: 0.3rem;
+                      color: ${Color.darkGray()};
                     `}`}
                   />
+                  {appliedRealName}
                 </div>
-                <div style={{ fontSize: '0.8rem' }}>({appliedRealName})</div>
               </div>
             </div>
             {bio && (
