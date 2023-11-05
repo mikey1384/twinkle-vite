@@ -385,7 +385,7 @@ export default function ContentPanel({
                       <Embedly small contentId={contentState.rootId} />
                     </div>
                   )}
-                {contentType === 'comment' && appliedRootType === 'user' && (
+                {contentType === 'comment' && appliedRootType === 'user' ? (
                   <div
                     className={css`
                       cursor: pointer;
@@ -406,9 +406,9 @@ export default function ContentPanel({
                     `}
                     onClick={() => navigate(`/users/${rootObj.username}`)}
                   >
-                    <Profile profile={rootObj} />
+                    {rootObj.id ? <Profile profile={rootObj} /> : <Loading />}
                   </div>
-                )}
+                ) : null}
               </div>
             )}
           </div>
