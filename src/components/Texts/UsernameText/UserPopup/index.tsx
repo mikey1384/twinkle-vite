@@ -42,6 +42,7 @@ export default function UserPopup({
 }) {
   const {
     authLevel,
+    level,
     rank,
     twinkleXP,
     profileTheme,
@@ -151,6 +152,7 @@ export default function UserPopup({
                 <UserTitle
                   user={{
                     ...user,
+                    level: user.level || level,
                     title: user.title || title,
                     userType: user.userType || userType,
                     authLevel: user.authLevel || authLevel

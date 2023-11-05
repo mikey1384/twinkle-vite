@@ -3,23 +3,20 @@ import TitleSelectionModal from './TitleSelectionModal';
 import { useKeyContext } from '~/contexts';
 import { useUserLevel } from '~/helpers/hooks';
 import { css } from '@emotion/css';
+import { User } from '~/types';
 
 export default function UserTitle({
   user = {
     id: 0,
     userType: '',
     title: '',
-    authLevel: 0
+    authLevel: 0,
+    username: ''
   },
   className,
   style
 }: {
-  user: {
-    id: number;
-    authLevel?: number;
-    userType?: string;
-    title?: string;
-  };
+  user: User;
   style?: React.CSSProperties;
   className?: string;
 }) {
