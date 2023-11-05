@@ -59,12 +59,11 @@ export default function UsernameText({
     profileTheme,
     realName,
     unlockedAchievementIds,
-    profileFirstRow
+    profileFirstRow,
+    xpThisMonth
   } = useAppContext((v) => v.user.state.userObj[user.id] || {});
 
-  const { userId, username, profilePicUrl, xpThisMonth } = useKeyContext(
-    (v) => v.myState
-  );
+  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
