@@ -220,7 +220,10 @@ export default function UsernameText({
       height: UsernameTextRef.current?.getBoundingClientRect?.()?.height || 0
     };
     if (user.username) {
-      if (!twinkleXP && !user.twinkleXP && !menuShownRef.current) {
+      if (
+        ((!twinkleXP && !user.twinkleXP) || !level) &&
+        !menuShownRef.current
+      ) {
         const data = await loadProfile(user.id);
         onSetUserState({
           userId: user.id,
