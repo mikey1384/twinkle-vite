@@ -41,11 +41,13 @@ export default function UserPopup({
   user: User;
 }) {
   const {
+    authLevel,
     rank,
     twinkleXP,
     profileTheme,
     realName,
     unlockedAchievementIds,
+    userType,
     profileFirstRow,
     xpThisMonth
   } = useAppContext((v) => v.user.state.userObj[user.id] || {});
@@ -144,15 +146,19 @@ export default function UserPopup({
                   color: '#333'
                 }}
               >
-                {user.username}
+                {user.username}{' '}
                 <UserTitle
-                  user={user}
+                  user={{
+                    ...user,
+                    userType: user.userType || userType,
+                    authLevel: user.authLevel || authLevel
+                  }}
+                  style={{ fontSize: '1rem' }}
                   className={`unselectable ${css`
-                    font-size: 1.3rem;
                     font-weight: bold;
                     display: inline;
                     margin-right: 0.7rem;
-                    color: ${Color.darkGray()};
+                    color: ${Color.darkerGray()};
                     font-size: 1.5rem;
                   `}`}
                 />

@@ -36,7 +36,7 @@ export default function UsernameText({
   wordBreakEnabled?: boolean;
   displayedName?: string;
 }) {
-  const { twinkleXP } = useAppContext(
+  const { level, twinkleXP } = useAppContext(
     (v) => v.user.state.userObj[user.id] || {}
   );
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
@@ -159,7 +159,7 @@ export default function UsernameText({
       clearTimeout(hideTimerRef.current);
       clearTimeout(hideTimerRef2.current);
       clearTimeout(showTimerRef.current);
-      if (!twinkleXP && !user.twinkleXP) {
+      if ((!twinkleXP && !user.twinkleXP) || (!level && !user.level)) {
         showTimerRef.current = setTimeout(async () => {
           const data = await loadProfile(user.id);
           if (mouseEntered.current) {
