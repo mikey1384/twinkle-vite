@@ -21,7 +21,7 @@ export default function MissionPage() {
   const { missionType = '' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { loaded, userId, isCreator } = useKeyContext((v) => v.myState);
+  const { loaded, userId, isAdmin } = useKeyContext((v) => v.myState);
   const loadMission = useAppContext((v) => v.requestHelpers.loadMission);
   const loadMissionTypeIdHash = useAppContext(
     (v) => v.requestHelpers.loadMissionTypeIdHash
@@ -114,7 +114,7 @@ export default function MissionPage() {
         componentPath="MissionPage/index"
         style={{ width: '100%', paddingBottom: '10rem' }}
       >
-        {isCreator && (
+        {isAdmin && (
           <FilterBar
             className="mobile"
             style={{
@@ -140,7 +140,7 @@ export default function MissionPage() {
           className={css`
             padding-top: 1rem;
             @media (max-width: ${mobileMaxWidth}) {
-              padding-top: ${isCreator ? '0.5rem' : 0};
+              padding-top: ${isAdmin ? '0.5rem' : 0};
             }
           `}
           style={{
@@ -153,12 +153,12 @@ export default function MissionPage() {
             className={css`
               display: flex;
               width: 60%;
-              margin-left: ${isCreator
+              margin-left: ${isAdmin
                 ? isManagementPage
                   ? '1rem'
                   : '25rem'
                 : 0};
-              flex-grow: ${isCreator ? 1 : 0};
+              flex-grow: ${isAdmin ? 1 : 0};
               justify-content: center;
               flex-direction: column;
               @media (max-width: ${mobileMaxWidth}) {
@@ -190,7 +190,7 @@ export default function MissionPage() {
               />
             </Routes>
           </div>
-          {isCreator && (
+          {isAdmin && (
             <RightMenu
               className="desktop"
               missionType={missionType}

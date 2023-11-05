@@ -115,7 +115,7 @@ function Reply({
 }) {
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const loadReplies = useAppContext((v) => v.requestHelpers.loadReplies);
-  const { banned, isCreator, level, profileTheme, twinkleCoins, userId } =
+  const { banned, isAdmin, level, profileTheme, twinkleCoins, userId } =
     useKeyContext((v) => v.myState);
   const { canDelete, canEdit, canReward } = useUserLevel(userId);
 
@@ -291,7 +291,7 @@ function Reply({
       });
     }
     if (
-      (userIsParentUploader || userIsRootUploader || isCreator) &&
+      (userIsParentUploader || userIsRootUploader || isAdmin) &&
       !banned?.posting
     ) {
       items.push({

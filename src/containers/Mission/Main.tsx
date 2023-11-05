@@ -10,7 +10,7 @@ import { css } from '@emotion/css';
 Main.propTypes = {
   className: PropTypes.string,
   currentMissionId: PropTypes.number,
-  isCreator: PropTypes.bool,
+  isAdmin: PropTypes.bool,
   loading: PropTypes.bool,
   missions: PropTypes.array,
   missionObj: PropTypes.object,
@@ -20,7 +20,7 @@ Main.propTypes = {
 export default function Main({
   className,
   currentMissionId,
-  isCreator,
+  isAdmin,
   loading,
   missions,
   missionObj,
@@ -29,7 +29,7 @@ export default function Main({
 }: {
   className?: string;
   currentMissionId: number;
-  isCreator: boolean;
+  isAdmin: boolean;
   loading: boolean;
   missions: any[];
   missionObj: any;
@@ -37,10 +37,10 @@ export default function Main({
   userId: number;
 }) {
   const width = useMemo(
-    () => (isCreator ? '100%' : 'CALC(100% - 5rem)'),
-    [isCreator]
+    () => (isAdmin ? '100%' : 'CALC(100% - 5rem)'),
+    [isAdmin]
   );
-  const marginLeft = useMemo(() => (isCreator ? '3rem' : '5rem'), [isCreator]);
+  const marginLeft = useMemo(() => (isAdmin ? '3rem' : '5rem'), [isAdmin]);
   if (missions.length === 0 && loading) {
     return <Loading />;
   }

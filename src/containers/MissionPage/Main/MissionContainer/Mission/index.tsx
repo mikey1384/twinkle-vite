@@ -109,12 +109,12 @@ export default function Mission({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 
-  const { isCreator } = useKeyContext((v) => v.myState);
+  const { isAdmin } = useKeyContext((v) => v.myState);
   return (
     <ErrorBoundary
       componentPath="MissionPage/Main/MissionContainer/Mission/index"
       className={`${panel} ${
-        isCreator
+        isAdmin
           ? ''
           : css`
               @media (max-width: ${mobileMaxWidth}) {

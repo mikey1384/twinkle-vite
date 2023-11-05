@@ -28,7 +28,7 @@ export const initialMyState = {
   canPinPlaylists: false,
   collectType: '',
   hideWatched: false,
-  isCreator: false,
+  isAdmin: false,
   lastChatPath: '',
   numWordsCollected: 0,
   profileTheme: 'logoBlue',

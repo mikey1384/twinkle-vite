@@ -141,7 +141,7 @@ export default function SearchedComment({
     (v) => v.requestHelpers.updateCommentPinStatus
   );
 
-  const { banned, isCreator, level, profileTheme, twinkleCoins, userId } =
+  const { banned, isAdmin, level, profileTheme, twinkleCoins, userId } =
     useKeyContext((v) => v.myState);
   const { canDelete, canEdit, canReward } = useUserLevel(userId);
 
@@ -296,7 +296,7 @@ export default function SearchedComment({
       });
     }
     if (
-      (userIsParentUploader || isCreator) &&
+      (userIsParentUploader || isAdmin) &&
       !isNotification &&
       !banned?.posting
     ) {
@@ -329,7 +329,7 @@ export default function SearchedComment({
     canEdit,
     comment.id,
     isCommentForASubjectWithSecretMessage,
-    isCreator,
+    isAdmin,
     isNotification,
     userIsParentUploader,
     userIsUploader

@@ -21,7 +21,7 @@ export default function SubmittedQuestions({
   mission: any;
   onSetMissionState: (v: any) => void;
 }) {
-  const { isCreator } = useKeyContext((v) => v.myState);
+  const { isAdmin } = useKeyContext((v) => v.myState);
   const {
     managementTab: activeTab = 'pending',
     loadMoreGrammarQuestionsButton: loadMoreButton
@@ -32,7 +32,7 @@ export default function SubmittedQuestions({
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   useEffect(() => {
-    if (isCreator) {
+    if (isAdmin) {
       init();
     }
     async function init() {
@@ -53,7 +53,7 @@ export default function SubmittedQuestions({
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, isCreator]);
+  }, [activeTab, isAdmin]);
 
   return (
     <div style={style}>

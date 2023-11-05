@@ -16,6 +16,7 @@ import {
 export { default as useScrollToBottom } from './useScrollToBottom';
 export { default as useInfiniteScroll } from './useInfiniteScroll';
 import {
+  ADMIN_MANAGEMENT_LEVEL,
   defaultContentState,
   wordleGuessReaction,
   wordLevelHash,
@@ -148,8 +149,7 @@ export function useMyState() {
           searchFilter,
           collectType,
           hideWatched,
-          isCreator:
-            myState.userType === 'webmaster' || myState.userType === 'admin',
+          isAdmin: myState.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
           loggedIn: true,
           profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME,
           signinModalShown,

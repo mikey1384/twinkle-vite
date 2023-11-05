@@ -175,7 +175,7 @@ function Message({
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
   const {
-    isCreator,
+    isAdmin,
     level,
     userId: myId,
     username: myUsername,
@@ -531,7 +531,7 @@ function Message({
     }
     if (
       ((userCanRewardThis && channelId === 2) ||
-        (isCreator && !userIsUploader)) &&
+        (isAdmin && !userIsUploader)) &&
       !rewardAmount
     ) {
       result.push({
@@ -557,7 +557,7 @@ function Message({
     canDelete,
     channelId,
     isBanned,
-    isCreator,
+    isAdmin,
     isDrawOffer,
     message,
     messageId,

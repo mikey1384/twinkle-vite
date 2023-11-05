@@ -30,7 +30,7 @@ export default function Attempts({
   missionId: number;
   onSetMissionState: (arg0: any) => void;
 }) {
-  const { isCreator } = useKeyContext((v) => v.myState);
+  const { isAdmin } = useKeyContext((v) => v.myState);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMissionAttemptsForPage = useAppContext(
@@ -38,7 +38,7 @@ export default function Attempts({
   );
 
   useEffect(() => {
-    if (isCreator) {
+    if (isAdmin) {
       initAttempts();
     }
     async function initAttempts() {
@@ -62,7 +62,7 @@ export default function Attempts({
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, isCreator]);
+  }, [activeTab, isAdmin]);
 
   return (
     <ErrorBoundary componentPath="MissionPage/Management/Main/Attempts">

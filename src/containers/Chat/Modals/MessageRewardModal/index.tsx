@@ -16,7 +16,7 @@ export default function MessageRewardModal({
   userToReward: any;
   onSubmit: (v: { reasonId: number; amount: number }) => void;
 }) {
-  const { isCreator } = useKeyContext((v) => v.myState);
+  const { isAdmin } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -45,7 +45,7 @@ export default function MessageRewardModal({
           </div>
           <RewardLevelForm
             icon="certificate"
-            extendedRewardLevels={!!isCreator}
+            extendedRewardLevels={!!isAdmin}
             rewardLevel={rewardAmount}
             onSetRewardLevel={setRewardAmount}
             style={{ width: '100%', textAlign: 'center', fontSize: '3rem' }}
