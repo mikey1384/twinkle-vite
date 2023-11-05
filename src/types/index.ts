@@ -155,6 +155,7 @@ export interface User {
   fileUploadLvl?: number;
   id: number;
   isOnline?: boolean;
+  level?: number;
   joinDate?: number;
   karmaPoints?: number;
   lastChannelId?: number;
