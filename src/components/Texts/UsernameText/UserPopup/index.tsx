@@ -96,6 +96,7 @@ export default function UserPopup({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       style={{
+        width: '30rem',
         minWidth: '10rem',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}
@@ -105,7 +106,7 @@ export default function UserPopup({
       ) : (
         <div
           style={{
-            width: '30rem',
+            width: '100%',
             padding: '0',
             background: '#fff'
           }}
