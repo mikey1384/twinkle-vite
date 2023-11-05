@@ -239,6 +239,10 @@ function ProfilePanel({
     () => !profileLoaded || heightNotSet || visible || inView,
     [heightNotSet, inView, profileLoaded, visible]
   );
+  const isOnline = useMemo(
+    () => chatStatus[profileId]?.isOnline,
+    [chatStatus, profileId]
+  );
 
   return (
     <div style={style} ref={ComponentRef} key={profileId}>
@@ -332,7 +336,7 @@ function ProfilePanel({
                             }}
                             userId={profileId}
                             profilePicUrl={profilePicUrl}
-                            online={chatStatus[profile.id]?.isOnline}
+                            online={isOnline}
                             statusShown
                             large
                           />
