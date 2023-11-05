@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Popup from './Popup';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import RichText from '~/components/Texts/RichText';
 import AchievementBadges from '~/components/AchievementBadges';
+import UserTitle from '~/components/Texts/UserTitle';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { useAppContext, useChatContext } from '~/contexts';
+import { User } from '~/types';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
@@ -13,23 +17,13 @@ const chatLabel = localize('chat2');
 const profileLabel = localize('Profile');
 
 export default function UserPopup({
-  bio,
-  isOnline,
   myId,
   onHide,
   onLinkClick,
   onMouseEnter,
   onMouseLeave,
   popupContext,
-  profileTheme,
-  profilePicUrl,
-  realName,
-  unlockedAchievementIds = [],
-  userId,
-  username,
-  userRank,
-  userXP,
-  xpThisMonth
+  user
 }: {
   bio?: string;
   isOnline?: boolean;
@@ -44,16 +38,50 @@ export default function UserPopup({
     width: number;
     height: number;
   };
-  profileTheme?: string;
-  profilePicUrl?: string;
-  realName: string;
-  unlockedAchievementIds?: number[];
-  userId: number;
-  username: string;
-  userRank?: number;
-  userXP?: string | null;
-  xpThisMonth?: string | null;
+  user: User;
 }) {
+  const {
+    rank,
+    twinkleXP,
+    profileTheme,
+    realName,
+    unlockedAchievementIds,
+    profileFirstRow,
+    xpThisMonth
+  } = useAppContext((v) => v.user.state.userObj[user.id] || {});
+  const chatStatus = useChatContext((v) => v.state.chatStatus);
+  const userRank = useMemo(() => {
+    return user.rank || rank;
+  }, [rank, user.rank]);
+  const appliedProfileTheme = useMemo(() => {
+    return user.profileTheme || profileTheme;
+  }, [user.profileTheme, profileTheme]);
+  const appliedRealName = useMemo(() => {
+    return user.realName || realName;
+  }, [realName, user.realName]);
+  const appliedUnlockedAchievementIds = useMemo(() => {
+    return user.unlockedAchievementIds || unlockedAchievementIds;
+  }, [unlockedAchievementIds, user.unlockedAchievementIds]);
+  const bio = useMemo(() => {
+    return user.profileFirstRow || profileFirstRow;
+  }, [user.profileFirstRow, profileFirstRow]);
+  const userXP = useMemo(() => {
+    if (!twinkleXP && !user.twinkleXP) {
+      return null;
+    }
+    return addCommasToNumber(twinkleXP || user.twinkleXP);
+  }, [twinkleXP, user.twinkleXP]);
+  const userXPThisMonth = useMemo(() => {
+    if (!user.xpThisMonth && !xpThisMonth) {
+      return null;
+    }
+    return addCommasToNumber(user.xpThisMonth || xpThisMonth);
+  }, [user.xpThisMonth, xpThisMonth]);
+  const isOnline = useMemo(
+    () => chatStatus[user.id]?.isOnline,
+    [chatStatus, user.id]
+  );
+
   return (
     <Popup
       popupContext={popupContext}
@@ -74,14 +102,14 @@ export default function UserPopup({
       >
         <div
           style={{
-            background: Color[profileTheme || 'logoBlue'](),
+            background: Color[appliedProfileTheme || 'logoBlue'](),
             minHeight: '2rem',
             padding: '0.5rem'
           }}
         >
           <AchievementBadges
             thumbSize="2rem"
-            unlockedAchievementIds={unlockedAchievementIds}
+            unlockedAchievementIds={appliedUnlockedAchievementIds}
           />
         </div>
         <div style={{ padding: '0.7rem 1rem 1rem 1rem' }}>
@@ -102,8 +130,8 @@ export default function UserPopup({
             >
               <ProfilePic
                 style={{ width: '100%' }}
-                profilePicUrl={profilePicUrl || ''}
-                userId={userId}
+                profilePicUrl={user.profilePicUrl || ''}
+                userId={user.id}
                 online={isOnline}
                 statusShown
               />
@@ -116,9 +144,20 @@ export default function UserPopup({
                   color: '#333'
                 }}
               >
-                {username}
+                {user.username}
+                <UserTitle
+                  user={user}
+                  className={`unselectable ${css`
+                    font-size: 1.3rem;
+                    font-weight: bold;
+                    display: inline;
+                    margin-right: 0.7rem;
+                    color: ${Color.darkGray()};
+                    font-size: 1.5rem;
+                  `}`}
+                />
               </div>
-              <div style={{ fontSize: '0.8rem' }}>({realName})</div>
+              <div style={{ fontSize: '0.8rem' }}>({appliedRealName})</div>
             </div>
           </div>
           {bio && (
@@ -161,7 +200,7 @@ export default function UserPopup({
                   text-decoration: none;
                 }
               `}
-              to={`/users/${username}`}
+              to={`/users/${user.username}`}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.background = Color.highlightGray())
               }
@@ -174,7 +213,7 @@ export default function UserPopup({
                 {profileLabel}
               </span>
             </Link>
-            {userId !== myId && (
+            {user.id !== myId && (
               <div
                 style={{
                   color: Color.darkerGray(),
@@ -250,14 +289,14 @@ export default function UserPopup({
                   ''
                 )}
               </div>
-              {xpThisMonth && (
+              {userXPThisMonth && (
                 <div
                   style={{
                     fontSize: '1rem',
                     fontWeight: 'normal'
                   }}
                 >
-                  (↑ {xpThisMonth} this month)
+                  (↑ {userXPThisMonth} this month)
                 </div>
               )}
             </div>
