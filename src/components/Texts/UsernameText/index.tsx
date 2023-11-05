@@ -36,6 +36,7 @@ export default function UsernameText({
   wordBreakEnabled?: boolean;
   displayedName?: string;
 }) {
+  const [loading, setLoading] = useState(false);
   const { level, twinkleXP } = useAppContext(
     (v) => v.user.state.userObj[user.id] || {}
   );
@@ -119,6 +120,7 @@ export default function UsernameText({
       </div>
       {dropdownContext && (
         <UserPopup
+          isLoading={loading}
           popupContext={dropdownContext}
           onMouseEnter={() => {
             clearTimeout(hideTimerRef.current);
@@ -160,16 +162,18 @@ export default function UsernameText({
       clearTimeout(hideTimerRef2.current);
       clearTimeout(showTimerRef.current);
       if ((!twinkleXP && !user.twinkleXP) || (!level && !user.level)) {
+        setLoading(true);
         showTimerRef.current = setTimeout(async () => {
-          const data = await loadProfile(user.id);
           if (mouseEntered.current) {
-            onSetUserState({
-              userId: user.id,
-              newState: { ...data, loaded: true }
-            });
             setDropdownContext(parentElementDimensions);
           }
         }, 500);
+        const data = await loadProfile(user.id);
+        onSetUserState({
+          userId: user.id,
+          newState: { ...data, loaded: true }
+        });
+        setLoading(false);
       } else {
         showTimerRef.current = setTimeout(
           () => setDropdownContext(parentElementDimensions),
