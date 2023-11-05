@@ -62,6 +62,7 @@ export default function UsernameText({
     profileFirstRow,
     xpThisMonth
   } = useAppContext((v) => v.user.state.userObj[user.id] || {});
+  const chatStatus = useChatContext((v) => v.state.chatStatus);
 
   const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
   const onUpdateSelectedChannelId = useChatContext(
@@ -102,6 +103,10 @@ export default function UsernameText({
   const bio = useMemo(() => {
     return user.profileFirstRow || profileFirstRow;
   }, [user.profileFirstRow, profileFirstRow]);
+  const isOnline = useMemo(
+    () => chatStatus[user.id]?.isOnline,
+    [chatStatus, user.id]
+  );
 
   useEffect(() => {
     menuShownRef.current = !!dropdownContext;
@@ -153,6 +158,7 @@ export default function UsernameText({
       </div>
       {dropdownContext && (
         <UserPopup
+          isOnline={isOnline}
           popupContext={dropdownContext}
           onMouseEnter={() => {
             clearTimeout(hideTimerRef.current);

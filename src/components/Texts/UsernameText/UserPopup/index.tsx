@@ -14,6 +14,7 @@ const profileLabel = localize('Profile');
 
 export default function UserPopup({
   bio,
+  isOnline,
   myId,
   onHide,
   onLinkClick,
@@ -31,6 +32,7 @@ export default function UserPopup({
   xpThisMonth
 }: {
   bio?: string;
+  isOnline?: boolean;
   myId: number;
   onHide: () => void;
   onLinkClick: () => void;
@@ -102,6 +104,8 @@ export default function UserPopup({
                 style={{ width: '100%' }}
                 profilePicUrl={profilePicUrl || ''}
                 userId={userId}
+                online={isOnline}
+                statusShown
               />
             </div>
             <div style={{ marginLeft: '1rem' }}>
