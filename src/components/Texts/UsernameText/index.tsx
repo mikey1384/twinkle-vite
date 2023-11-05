@@ -225,11 +225,13 @@ export default function UsernameText({
         !menuShownRef.current
       ) {
         setDropdownContext(elementContext);
+        setLoading(true);
         const data = await loadProfile(user.id);
         onSetUserState({
           userId: user.id,
           newState: { ...data, loaded: true }
         });
+        setLoading(false);
       } else {
         setDropdownContext(menuShownRef.current ? null : elementContext);
       }
