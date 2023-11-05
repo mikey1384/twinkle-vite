@@ -22,6 +22,7 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
     (v) => v.requestHelpers.checkDobApprovalSubmission
   );
   const [dob, setDob] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedDob, setSubmittedDob] = useState<string | null>(null);
   const [submitStatus, setSubmitStatus] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean | null>(null);
@@ -66,7 +67,12 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
         <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Close
         </Button>
-        <Button disabled={!dob} color={doneColor} onClick={handleSubmit}>
+        <Button
+          loading={isSubmitting}
+          disabled={!dob}
+          color={doneColor}
+          onClick={handleSubmit}
+        >
           Submit
         </Button>
       </footer>
@@ -74,14 +80,21 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
   );
 
   async function handleSubmit() {
-    if (tryingAgain) {
-      await retryDobApproval(dob);
-    } else {
-      await submitDobForApproval(dob);
+    setIsSubmitting(true);
+    try {
+      if (tryingAgain) {
+        await retryDobApproval(dob);
+      } else {
+        await submitDobForApproval(dob);
+      }
+      setIsSubmitted(true);
+      setTryingAgain(false);
+      setSubmitStatus('pending');
+    } catch (error) {
+      console.error('Error submitting DOB: ', error);
+    } finally {
+      setDob('');
+      setIsSubmitting(false);
     }
-    setIsSubmitted(true);
-    setTryingAgain(false);
-    setSubmitStatus('pending');
-    setDob('');
   }
 }
