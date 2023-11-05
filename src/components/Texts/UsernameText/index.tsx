@@ -62,7 +62,9 @@ export default function UsernameText({
     profileFirstRow
   } = useAppContext((v) => v.user.state.userObj[user.id] || {});
 
-  const { userId, username, profilePicUrl } = useKeyContext((v) => v.myState);
+  const { userId, username, profilePicUrl, xpThisMonth } = useKeyContext(
+    (v) => v.myState
+  );
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
@@ -78,14 +80,14 @@ export default function UsernameText({
     if (!twinkleXP && !user.twinkleXP) {
       return null;
     }
-    return addCommasToNumber(user.twinkleXP || twinkleXP);
+    return addCommasToNumber(twinkleXP || user.twinkleXP);
   }, [twinkleXP, user.twinkleXP]);
   const userXPThisMonth = useMemo(() => {
-    if (!user.xpThisMonth) {
+    if (!user.xpThisMonth && !xpThisMonth) {
       return null;
     }
-    return addCommasToNumber(user.xpThisMonth);
-  }, [user.xpThisMonth]);
+    return addCommasToNumber(user.xpThisMonth || xpThisMonth);
+  }, [user.xpThisMonth, xpThisMonth]);
   const userRank = useMemo(() => {
     return user.rank || rank;
   }, [rank, user.rank]);
