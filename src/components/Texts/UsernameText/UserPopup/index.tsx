@@ -97,7 +97,8 @@ export default function UserPopup({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       style={{
-        minWidth: '30rem',
+        width: '33rem',
+        maxWidth: '50vw',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}
     >
