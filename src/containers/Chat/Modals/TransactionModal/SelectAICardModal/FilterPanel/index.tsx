@@ -2,6 +2,7 @@ import React from 'react';
 import ColorFilter from './ColorFilter';
 import QualityFilter from './QualityFilter';
 import WordFilter from './WordFilter';
+import CardIdFilter from './CardIdFilter';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
@@ -53,6 +54,7 @@ export default function FilterPanel({
           selectedWord={filters.word}
           onSelectWord={handleSelectWord}
         />
+        <CardIdFilter />
         <QualityFilter
           selectedQuality={filters.quality}
           onSelectQuality={handleSelectQuality}

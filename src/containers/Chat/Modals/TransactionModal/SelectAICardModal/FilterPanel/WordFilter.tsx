@@ -48,14 +48,13 @@ export default function WordFilter({
       </div>
       <div
         style={{
-          paddingLeft: '10%',
-          paddingRight: '10%',
           marginTop: '0.5rem',
           position: 'relative'
         }}
       >
         <SearchInput
           placeholder="Search word..."
+          style={{ width: '15rem' }}
           onChange={handleSearch}
           value={searchText}
           searchResults={searchedWords}
