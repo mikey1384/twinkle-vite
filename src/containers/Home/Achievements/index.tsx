@@ -4,9 +4,10 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import AchievementItem from '~/components/AchievementItem';
 import UserLevelStatus from './UserLevelStatus';
 import Loading from '~/components/Loading';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 
 export default function Achievements() {
+  const myAttempts = useMissionContext((v) => v.state.myAttempts);
   const [myAchievementsObj, setMyAchievementsObj] = useState<{
     [key: string]: {
       milestones?: { name: string; completed: boolean }[];
@@ -40,7 +41,7 @@ export default function Achievements() {
       setLoadingMyAchievements(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, myAttempts]);
 
   return (
     <div style={{ paddingBottom: userId ? '15rem' : 0 }}>
