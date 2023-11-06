@@ -129,6 +129,10 @@ export default function MyWant({
 
   function handleAmountChange(amount: any) {
     const newAmount = Number(amount.replace(/[^0-9]/g, ''));
-    onSetCoinAmount(Math.min(newAmount, 999_999_999));
+    if (!isNaN(newAmount)) {
+      onSetCoinAmount(Math.min(newAmount, 999_999_999));
+    } else {
+      onSetCoinAmount(0);
+    }
   }
 }

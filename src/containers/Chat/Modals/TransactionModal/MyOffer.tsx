@@ -153,7 +153,12 @@ export default function MyOffer({
 
   function handleAmountChange(amount: any) {
     const newAmount = Number(amount.replace(/[^0-9]/g, ''));
-    const amounts = [newAmount, twinkleCoins];
-    onSetCoinAmount(Math.min(...amounts));
+    const minAmount = Math.min(newAmount, twinkleCoins);
+
+    if (!isNaN(minAmount)) {
+      onSetCoinAmount(minAmount);
+    } else {
+      onSetCoinAmount(0);
+    }
   }
 }
