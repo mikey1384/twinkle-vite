@@ -131,6 +131,7 @@ export default function Editor({
     [interactiveId, slideId, state]
   );
   const inputStateRef = useRef(prevInputState || defaultInputState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputState, setInputState] = useState(
     prevInputState || defaultInputState
   );
@@ -529,6 +530,7 @@ export default function Editor({
           <Button
             color={doneColor}
             onClick={handleSubmit}
+            loading={isSubmitting}
             disabled={doneButtonDisabled}
           >
             Done
@@ -560,100 +562,112 @@ export default function Editor({
 
   async function handleSubmit(event: any) {
     event.preventDefault();
-    const deletingAttachment =
-      !!editedAttachment?.isChanging && !editedAttachment?.newAttachment;
-    const post = {
-      ...editForm,
-      editedAttachment: deletingAttachment ? null : editedAttachment,
-      editedPaths: paths,
-      editedHeading: finalizeEmoji(editedHeading),
-      editedDescription: finalizeEmoji(editedDescription)
-    };
-
-    if (editedAttachment?.newAttachment && editedAttachment?.type !== 'none') {
-      const promises = [];
-      onSetSlideState({
-        interactiveId,
-        slideId,
-        newState: { uploadingFile: true }
-      });
-      promises.push(
-        uploadFile({
-          context: 'interactive',
-          fileName: generateFileName(editedAttachment.newAttachment.file.name),
-          filePath: uuidv1(),
-          file: editedAttachment.newAttachment.file,
-          onUploadProgress: handleUploadProgress
-        })
-      );
-      if (editedAttachment?.newAttachment?.thumbnail) {
-        promises.push(
-          (async () => {
-            const file = returnImageFileFromUrl({
-              imageUrl: editedAttachment?.newAttachment?.thumbnail
-            });
-            const thumbUrl = await uploadThumb({
-              file,
-              path: uuidv1()
-            });
-            return Promise.resolve(thumbUrl);
-          })()
-        );
-      }
-      const [uploadedFilePath, thumbUrl] = await Promise.all(promises);
-      onSetSlideState({
-        interactiveId,
-        slideId,
-        newState: { uploadingFile: false }
-      });
-      const userChanged = checkUserChange(userId);
-      if (userChanged) {
-        return;
-      }
+    setIsSubmitting(true);
+    try {
+      const deletingAttachment =
+        !!editedAttachment?.isChanging && !editedAttachment?.newAttachment;
       const post = {
         ...editForm,
-        editedAttachment: {
-          type: editForm.editedAttachment.type,
-          fileUrl: uploadedFilePath,
-          thumbUrl
-        },
+        editedAttachment: deletingAttachment ? null : editedAttachment,
+        editedPaths: paths,
         editedHeading: finalizeEmoji(editedHeading),
         editedDescription: finalizeEmoji(editedDescription)
       };
-      const { slide: newState, numUpdates } = await editInteractiveSlide({
-        slideId,
-        post
-      });
-      onChangeNumUpdates({ interactiveId, numUpdates });
-      onSetSlideState({
-        interactiveId,
-        slideId,
-        newState: {
-          ...newState,
-          isEditing: false,
-          fileUploadProgress: null
+
+      if (
+        editedAttachment?.newAttachment &&
+        editedAttachment?.type !== 'none'
+      ) {
+        const promises = [];
+        onSetSlideState({
+          interactiveId,
+          slideId,
+          newState: { uploadingFile: true }
+        });
+        promises.push(
+          uploadFile({
+            context: 'interactive',
+            fileName: generateFileName(
+              editedAttachment.newAttachment.file.name
+            ),
+            filePath: uuidv1(),
+            file: editedAttachment.newAttachment.file,
+            onUploadProgress: handleUploadProgress
+          })
+        );
+        if (editedAttachment?.newAttachment?.thumbnail) {
+          promises.push(
+            (async () => {
+              const file = returnImageFileFromUrl({
+                imageUrl: editedAttachment?.newAttachment?.thumbnail
+              });
+              const thumbUrl = await uploadThumb({
+                file,
+                path: uuidv1()
+              });
+              return Promise.resolve(thumbUrl);
+            })()
+          );
         }
-      });
-      handleSetInputState(post);
-    } else {
-      const { slide: newState, numUpdates } = await editInteractiveSlide({
-        slideId,
-        post
-      });
-      onChangeNumUpdates({ interactiveId, numUpdates });
-      onSetSlideState({
-        interactiveId,
-        slideId,
-        newState: {
-          ...newState,
-          isEditing: false,
-          fileUploadProgress: null
+        const [uploadedFilePath, thumbUrl] = await Promise.all(promises);
+        onSetSlideState({
+          interactiveId,
+          slideId,
+          newState: { uploadingFile: false }
+        });
+        const userChanged = checkUserChange(userId);
+        if (userChanged) {
+          return;
         }
-      });
-      handleSetInputState(post);
-    }
-    if (editForm.editedIsFork) {
-      onHideDeletedMessages(slideId);
+        const post = {
+          ...editForm,
+          editedAttachment: {
+            type: editForm.editedAttachment.type,
+            fileUrl: uploadedFilePath,
+            thumbUrl
+          },
+          editedHeading: finalizeEmoji(editedHeading),
+          editedDescription: finalizeEmoji(editedDescription)
+        };
+        const { slide: newState, numUpdates } = await editInteractiveSlide({
+          slideId,
+          post
+        });
+        onChangeNumUpdates({ interactiveId, numUpdates });
+        onSetSlideState({
+          interactiveId,
+          slideId,
+          newState: {
+            ...newState,
+            isEditing: false,
+            fileUploadProgress: null
+          }
+        });
+        handleSetInputState(post);
+      } else {
+        const { slide: newState, numUpdates } = await editInteractiveSlide({
+          slideId,
+          post
+        });
+        onChangeNumUpdates({ interactiveId, numUpdates });
+        onSetSlideState({
+          interactiveId,
+          slideId,
+          newState: {
+            ...newState,
+            isEditing: false,
+            fileUploadProgress: null
+          }
+        });
+        handleSetInputState(post);
+      }
+      if (editForm.editedIsFork) {
+        onHideDeletedMessages(slideId);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
 
     function handleUploadProgress({
