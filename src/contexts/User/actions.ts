@@ -44,10 +44,13 @@ export default function UserActions(dispatch: Dispatch) {
       });
     },
     onLogout() {
-      localStorage.setItem('realName', '');
-      localStorage.setItem('userId', '');
-      localStorage.setItem('username', '');
-      localStorage.setItem('profilePicUrl', '');
+      localStorage.removeItem('level');
+      localStorage.removeItem('karmaPoints');
+      localStorage.removeItem('realName');
+      localStorage.removeItem('title');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+      localStorage.removeItem('profilePicUrl');
       localStorage.setItem('profileTheme', DEFAULT_PROFILE_THEME);
       localStorage.removeItem('token');
       return dispatch({
