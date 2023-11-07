@@ -1126,6 +1126,16 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async searchAICardIds(cardId: string) {
+      try {
+        const { data: ids } = await request.get(
+          `${URL}/ai-card/search/id?cardId=${cardId}`
+        );
+        return Promise.resolve(ids);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async setByUser({
       contentType,
       contentId
