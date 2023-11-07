@@ -686,7 +686,10 @@ function App() {
     >
       <KeyContext.Provider
         value={{
-          myState,
+          myState: {
+            ...myState,
+            profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
+          },
           theme,
           helpers: { checkUserChange }
         }}
