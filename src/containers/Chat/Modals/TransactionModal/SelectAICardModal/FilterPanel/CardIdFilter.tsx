@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
 import SelectedCardNumber from './SelectedCardNumber';
+import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 
@@ -16,7 +17,7 @@ export default function CardIdFilter({
   const searchAICardIds = useAppContext(
     (v) => v.requestHelpers.searchAICardIds
   );
-  const { handleSearch } = useSearch({
+  const { handleSearch, searching } = useSearch({
     onSearch: handleIdSearch,
     onClear: () => setSearchedIds([]),
     onSetSearchText: setSearchText
@@ -60,6 +61,7 @@ export default function CardIdFilter({
         }}
         onSelect={handleSelectId}
       />
+      {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
     </div>
   );
 
