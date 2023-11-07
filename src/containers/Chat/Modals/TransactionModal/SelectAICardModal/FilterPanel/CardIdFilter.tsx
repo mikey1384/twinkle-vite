@@ -5,6 +5,7 @@ import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 
 export default function CardIdFilter() {
+  const [searchedIds, setSearchedIds] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [selectedNumber, setSelectedNumber] = useState(0);
   const searchAICardIds = useAppContext(
@@ -12,7 +13,7 @@ export default function CardIdFilter() {
   );
   const { handleSearch } = useSearch({
     onSearch: handleIdSearch,
-    onClear: () => console.log('cleared'),
+    onClear: () => setSearchedIds([]),
     onSetSearchText: setSearchText
   });
 
@@ -45,9 +46,12 @@ export default function CardIdFilter() {
         placeholder="Card No."
         onChange={handleSearch}
         value={searchText}
+        searchResults={searchedIds}
+        renderItemLabel={(cardId) => cardId}
         style={{ width: '15rem', marginTop: '0.5rem' }}
         onClickOutSide={() => {
           setSearchText('');
+          setSearchedIds([]);
         }}
       />
     </div>
@@ -55,6 +59,6 @@ export default function CardIdFilter() {
 
   async function handleIdSearch(cardId: string) {
     const ids = await searchAICardIds(cardId);
-    console.log(ids);
+    setSearchedIds(ids);
   }
 }
