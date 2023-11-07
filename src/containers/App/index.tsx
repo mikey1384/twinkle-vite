@@ -282,13 +282,13 @@ function App() {
       if (authRef.current?.headers?.authorization) {
         const data = await loadMyData(location.pathname);
         if (data?.id) {
-          localStorage.setItem('userId', data?.id);
-          localStorage.setItem('level', data?.level || '');
-          localStorage.setItem('title', data?.title || '');
           localStorage.setItem('karmaPoints', data?.karmaPoints || '');
-          localStorage.setItem('realName', data?.realName || '');
-          localStorage.setItem('username', data?.username || '');
+          localStorage.setItem('level', data?.level || '');
           localStorage.setItem('profilePicUrl', data?.profilePicUrl || '');
+          localStorage.setItem('realName', data?.realName || '');
+          localStorage.setItem('title', data?.title || '');
+          localStorage.setItem('userId', data?.id);
+          localStorage.setItem('username', data?.username || '');
           localStorage.setItem(
             'profileTheme',
             data?.profileTheme || DEFAULT_PROFILE_THEME
