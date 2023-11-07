@@ -29,9 +29,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
     tableHeader: { color: tableHeaderColor }
   } = useKeyContext((v) => v.theme);
   const supermods = useManagementContext((v) => v.state.supermods);
-  const moderatorsLoaded = useManagementContext(
-    (v) => v.state.moderatorsLoaded
-  );
+  const supermodsLoaded = useManagementContext((v) => v.state.supermodsLoaded);
   const numSupermodsShown = useManagementContext(
     (v) => v.state.numSupermodsShown
   );
@@ -58,7 +56,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
         searchPlaceholder="Search Supermods"
         onSearch={setSearchQuery}
         searchQuery={searchQuery}
-        loaded={moderatorsLoaded}
+        loaded={supermodsLoaded}
         innerStyle={{ paddingLeft: 0, paddingRight: 0 }}
         button={
           canManage ? (
