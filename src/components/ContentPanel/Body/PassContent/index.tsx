@@ -21,7 +21,7 @@ export default function PassContent({
   uploader: User;
   rootObj: Content;
   rootType: string;
-  theme: string;
+  theme?: string;
 }) {
   const { profileTheme } = useKeyContext((v) => v.myState);
   const {

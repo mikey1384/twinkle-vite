@@ -137,6 +137,25 @@ export const defaultContentState = {
 // ===========================
 
 export const DEFAULT_PROFILE_THEME = 'logoBlue';
+export const localStorageKeys: {
+  [key: string]: string;
+} = {
+  canDelete: '',
+  canEdit: '',
+  canReward: '',
+  canPinPlaylists: '',
+  canEditPlaylists: '',
+  canEditRewardLevel: '',
+  karmaPoints: '',
+  level: '',
+  managementLevel: '',
+  profilePicUrl: '',
+  realName: '',
+  title: '',
+  userId: '',
+  username: '',
+  profileTheme: DEFAULT_PROFILE_THEME
+};
 export const DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL = 1000;
 export const FILE_UPLOAD_XP_REQUIREMENT = 0;
 export const LAST_ONLINE_FILTER_LABEL = localize('lastOnline2');

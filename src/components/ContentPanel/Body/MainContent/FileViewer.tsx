@@ -8,7 +8,7 @@ FileViewer.propTypes = {
   filePath: PropTypes.string,
   secretHidden: PropTypes.bool,
   userId: PropTypes.number,
-  theme: PropTypes.string.isRequired,
+  theme: PropTypes.string,
   contentId: PropTypes.number.isRequired,
   fileName: PropTypes.string,
   fileSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -37,7 +37,7 @@ export default function FileViewer({
   filePath?: string;
   secretHidden?: boolean;
   userId?: number;
-  theme: string;
+  theme?: string;
   contentId: number;
   fileName?: string;
   fileSize?: string | number;

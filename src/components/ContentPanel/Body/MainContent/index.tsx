@@ -21,7 +21,7 @@ MainContent.propTypes = {
   contentType: PropTypes.string.isRequired,
   onClickSecretAnswer: PropTypes.func.isRequired,
   secretHidden: PropTypes.bool.isRequired,
-  theme: PropTypes.string.isRequired,
+  theme: PropTypes.string,
   userId: PropTypes.number
 };
 export default function MainContent({
@@ -36,7 +36,7 @@ export default function MainContent({
   contentType: string;
   onClickSecretAnswer: () => void;
   secretHidden: boolean;
-  theme: string;
+  theme?: string;
   userId: number;
 }) {
   const ContainerRef = useRef(null);
