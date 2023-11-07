@@ -32,7 +32,10 @@ import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { localStorageKeys } from '~/constants/defaultValues';
+import {
+  localStorageKeys,
+  DEFAULT_PROFILE_THEME
+} from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/io';
@@ -98,7 +101,7 @@ function App() {
   );
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const myState = useMyState();
-  const theme = useTheme(myState.profileTheme);
+  const theme = useTheme(myState.profileTheme || DEFAULT_PROFILE_THEME);
   const {
     background: { color: backgroundColor }
   } = theme;
