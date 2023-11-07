@@ -82,7 +82,7 @@ export default function Filtered({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [color, quality, word]);
+  }, [color, quality, word, cardId]);
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
