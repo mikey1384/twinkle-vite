@@ -53,9 +53,16 @@ export default function CardIdFilter() {
           setSearchText('');
           setSearchedIds([]);
         }}
+        onSelect={handleSelectId}
       />
     </div>
   );
+
+  function handleSelectId(cardId: number) {
+    console.log(cardId);
+    setSearchedIds([]);
+    setSearchText('');
+  }
 
   async function handleIdSearch(cardId: string) {
     const ids = await searchAICardIds(cardId);
