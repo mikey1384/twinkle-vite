@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 
 export default function Filtered({
   aiCardModalType,
+  cardId,
   cardObj,
   color,
   quality,
@@ -24,6 +25,7 @@ export default function Filtered({
 }: {
   aiCardModalType: string;
   cardObj: any;
+  cardId: number;
   color: string;
   quality: string;
   loadFilteredAICards: (v: any) => any;
@@ -63,7 +65,8 @@ export default function Filtered({
             owner: aiCardModalType === 'want' ? partnerName : myUsername,
             ...(!color || color === 'any' ? {} : { color }),
             ...(!quality || quality === 'any' ? {} : { quality }),
-            ...(!word ? {} : { word })
+            ...(!word ? {} : { word }),
+            ...(!cardId ? {} : { cardId })
           }
         });
         setCardIds(cards.map((card: { id: number }) => card.id));

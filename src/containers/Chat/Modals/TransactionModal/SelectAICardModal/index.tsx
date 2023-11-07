@@ -148,6 +148,7 @@ export default function SelectAICardModal({
         ) : isFiltered ? (
           <Filtered
             aiCardModalType={aiCardModalType}
+            cardId={filters.cardId}
             cardObj={cardObj}
             color={filters.color}
             loadFilteredAICards={loadFilteredAICards}
