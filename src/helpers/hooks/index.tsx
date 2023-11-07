@@ -135,6 +135,9 @@ export function useMyState() {
     const storedUserId = getStoredItem('userId');
     const storedUsername = getStoredItem('username');
     const storedRealName = getStoredItem('realName');
+    const storedKarmaPoints = getStoredItem('karmaPoints');
+    const storedTitle = getStoredItem('title');
+    const storedLevel = getStoredItem('level');
     return myState.loaded
       ? {
           ...myState,
@@ -158,6 +161,8 @@ export function useMyState() {
         }
       : {
           loaded,
+          level: storedLevel ? Number(storedLevel) : null,
+          karmaPoints: storedKarmaPoints ? Number(storedKarmaPoints) : 0,
           unlockedAchievementIds: [],
           lastChatPath: '',
           missions: {},
@@ -167,6 +172,7 @@ export function useMyState() {
           userId: storedUserId ? Number(storedUserId) : null,
           username: storedUsername,
           realName: storedRealName,
+          title: storedTitle,
           signinModalShown
         };
   }, [

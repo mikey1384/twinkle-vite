@@ -281,14 +281,19 @@ function App() {
       await recordUserTraffic(location.pathname);
       if (authRef.current?.headers?.authorization) {
         const data = await loadMyData(location.pathname);
-        localStorage.setItem('realName', data?.realName || '');
-        localStorage.setItem('userId', data?.id || '');
-        localStorage.setItem('username', data?.username || '');
-        localStorage.setItem('profilePicUrl', data?.profilePicUrl || '');
-        localStorage.setItem(
-          'profileTheme',
-          data?.profileTheme || DEFAULT_PROFILE_THEME
-        );
+        if (data?.id) {
+          localStorage.setItem('userId', data?.id);
+          localStorage.setItem('level', data?.level || '');
+          localStorage.setItem('title', data?.title || '');
+          localStorage.setItem('karmaPoints', data?.karmaPoints || '');
+          localStorage.setItem('realName', data?.realName || '');
+          localStorage.setItem('username', data?.username || '');
+          localStorage.setItem('profilePicUrl', data?.profilePicUrl || '');
+          localStorage.setItem(
+            'profileTheme',
+            data?.profileTheme || DEFAULT_PROFILE_THEME
+          );
+        }
         onSetUserState({
           userId: data.userId,
           newState: { ...data, loaded: true }
