@@ -18,6 +18,7 @@ export { default as useInfiniteScroll } from './useInfiniteScroll';
 import {
   ADMIN_MANAGEMENT_LEVEL,
   defaultContentState,
+  DEFAULT_PROFILE_THEME,
   localStorageKeys,
   wordleGuessReaction,
   wordLevelHash,
@@ -158,7 +159,8 @@ export function useMyState() {
           rewardBoostLvl: 0,
           signinModalShown,
           isAdmin: storedItems.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
-          ...storedItems
+          ...storedItems,
+          profileTheme: storedItems.profileTheme || DEFAULT_PROFILE_THEME
         };
   }, [contextValues, loaded, missions, myState, signinModalShown, storedItems]);
 
