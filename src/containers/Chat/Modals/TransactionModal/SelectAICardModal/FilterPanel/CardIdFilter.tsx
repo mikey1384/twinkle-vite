@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
 import SelectedCardNumber from './SelectedCardNumber';
+import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 
 export default function CardIdFilter() {
   const [searchText, setSearchText] = useState('');
   const [selectedNumber, setSelectedNumber] = useState(0);
+  const searchAICardIds = useAppContext(
+    (v) => v.requestHelpers.searchAICardWords
+  );
   const { handleSearch } = useSearch({
     onSearch: handleIdSearch,
     onClear: () => console.log('cleared'),
@@ -49,7 +53,8 @@ export default function CardIdFilter() {
     </div>
   );
 
-  async function handleIdSearch(text: string) {
-    console.log(text);
+  async function handleIdSearch(cardId: string) {
+    const ids = await searchAICardIds(cardId);
+    console.log(ids);
   }
 }
