@@ -8,7 +8,7 @@ export default function CardIdFilter() {
   const [searchText, setSearchText] = useState('');
   const [selectedNumber, setSelectedNumber] = useState(0);
   const searchAICardIds = useAppContext(
-    (v) => v.requestHelpers.searchAICardWords
+    (v) => v.requestHelpers.searchAICardIds
   );
   const { handleSearch } = useSearch({
     onSearch: handleIdSearch,
