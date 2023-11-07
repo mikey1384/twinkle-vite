@@ -32,7 +32,7 @@ import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
+import { localStorageKeys } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/io';
@@ -282,17 +282,10 @@ function App() {
       if (authRef.current?.headers?.authorization) {
         const data = await loadMyData(location.pathname);
         if (data?.id) {
-          localStorage.setItem('karmaPoints', data?.karmaPoints || '');
-          localStorage.setItem('level', data?.level || '');
-          localStorage.setItem('profilePicUrl', data?.profilePicUrl || '');
-          localStorage.setItem('realName', data?.realName || '');
-          localStorage.setItem('title', data?.title || '');
-          localStorage.setItem('userId', data?.id);
-          localStorage.setItem('username', data?.username || '');
-          localStorage.setItem(
-            'profileTheme',
-            data?.profileTheme || DEFAULT_PROFILE_THEME
-          );
+          Object.keys(localStorageKeys).forEach((key) => {
+            const value = data[key] || localStorageKeys[key];
+            localStorage.setItem(key, value);
+          });
         }
         onSetUserState({
           userId: data.userId,

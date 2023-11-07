@@ -59,7 +59,7 @@ export default function Content({
   targetObj: {
     subject: Subject;
   };
-  theme: string;
+  theme?: string;
   title: string;
   uploader: User;
 }) {

@@ -1,5 +1,8 @@
 import { Dispatch } from '~/types';
-import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
+import {
+  DEFAULT_PROFILE_THEME,
+  localStorageKeys
+} from '~/constants/defaultValues';
 
 export default function UserActions(dispatch: Dispatch) {
   return {
@@ -44,15 +47,11 @@ export default function UserActions(dispatch: Dispatch) {
       });
     },
     onLogout() {
-      localStorage.removeItem('karmaPoints');
-      localStorage.removeItem('level');
-      localStorage.removeItem('profilePicUrl');
-      localStorage.setItem('profileTheme', DEFAULT_PROFILE_THEME);
-      localStorage.removeItem('realName');
-      localStorage.removeItem('title');
-      localStorage.removeItem('userId');
-      localStorage.removeItem('username');
+      Object.keys(localStorageKeys).forEach((key) =>
+        localStorage.removeItem(key)
+      );
       localStorage.removeItem('token');
+      localStorage.setItem('profileTheme', DEFAULT_PROFILE_THEME);
       return dispatch({
         type: 'LOGOUT'
       });

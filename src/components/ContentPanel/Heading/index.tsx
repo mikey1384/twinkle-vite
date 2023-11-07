@@ -10,7 +10,7 @@ import { Content } from '~/types';
 
 Heading.propTypes = {
   action: PropTypes.string.isRequired,
-  theme: PropTypes.string.isRequired,
+  theme: PropTypes.string,
   contentObj: PropTypes.object.isRequired
 };
 function Heading({

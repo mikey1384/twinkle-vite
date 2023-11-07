@@ -60,7 +60,7 @@ export default function ContentDisplay({
   secretAnswer: string;
   secretAttachment: any;
   title: string;
-  theme: string;
+  theme?: string;
   onSetIsEditing: (v: {
     contentId: number;
     contentType: string;

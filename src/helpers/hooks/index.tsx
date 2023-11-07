@@ -18,9 +18,9 @@ export { default as useInfiniteScroll } from './useInfiniteScroll';
 import {
   ADMIN_MANAGEMENT_LEVEL,
   defaultContentState,
+  localStorageKeys,
   wordleGuessReaction,
   wordLevelHash,
-  DEFAULT_PROFILE_THEME,
   SELECTED_LANGUAGE
 } from '~/constants/defaultValues';
 import { Color, Theme } from '~/constants/css';
@@ -110,91 +110,64 @@ export function useLazyLoad({
 }
 
 export function useMyState() {
-  const hideWatched = useAppContext((v) => v.user.state.myState.hideWatched);
-  const collectType = useAppContext((v) => v.user.state.myState.collectType);
-  const wordleStrictMode = useAppContext(
-    (v) => v.user.state.myState.wordleStrictMode
-  );
-  const lastChatPath = useAppContext((v) => v.user.state.myState.lastChatPath);
+  const contextValues = useAppContext((v) => v.user.state.myState);
   const missions = useAppContext((v) => v.user.state.missions);
-  const numWordsCollected = useAppContext(
-    (v) => v.user.state.myState.numWordsCollected
-  );
-  const searchFilter = useAppContext((v) => v.user.state.myState.searchFilter);
-  const xpThisMonth = useAppContext((v) => v.user.state.myState.xpThisMonth);
   const userId = useAppContext((v) => v.user.state.myState.userId);
   const loaded = useAppContext((v) => v.user.state.loaded);
   const signinModalShown = useAppContext((v) => v.user.state.signinModalShown);
   const myState = useAppContext((v) => v.user.state.userObj[userId] || {});
-  const result = useMemo(() => {
-    const storedProfileTheme = getStoredItem(
-      'profileTheme',
-      DEFAULT_PROFILE_THEME
+
+  const getStoredItems = (config: { [key: string]: any }) => {
+    return Object.keys(config).reduce(
+      (
+        acc: {
+          [key: string]: any;
+        },
+        key
+      ) => {
+        const storedValue = getStoredItem(key, config[key]);
+        acc[key] =
+          (key === 'userId' && storedValue) ||
+          key === 'level' ||
+          key === 'karmaPoints' ||
+          key === 'managementLevel'
+            ? Number(storedValue)
+            : storedValue;
+        return acc;
+      },
+      {}
     );
-    const storedProfilePicUrl = getStoredItem('profilePicUrl');
-    const storedUserId = getStoredItem('userId');
-    const storedUsername = getStoredItem('username');
-    const storedRealName = getStoredItem('realName');
-    const storedKarmaPoints = getStoredItem('karmaPoints');
-    const storedTitle = getStoredItem('title');
-    const storedLevel = getStoredItem('level');
+  };
+
+  const storedItems = getStoredItems(localStorageKeys);
+
+  const result = useMemo(() => {
     return myState.loaded
       ? {
           ...myState,
-          missions: {
-            ...(myState?.state?.missions || {}),
-            ...missions
-          },
-          lastChatPath,
-          loaded,
-          numWordsCollected,
-          userId,
-          searchFilter,
-          collectType,
-          hideWatched,
+          ...contextValues,
+          missions: { ...(myState?.state?.missions || {}), ...missions },
           isAdmin: myState.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
-          loggedIn: true,
-          profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME,
-          signinModalShown,
-          wordleStrictMode,
-          xpThisMonth
+          loggedIn: true
         }
       : {
           loaded,
-          level: storedLevel ? Number(storedLevel) : null,
-          karmaPoints: storedKarmaPoints ? Number(storedKarmaPoints) : 0,
           unlockedAchievementIds: [],
           lastChatPath: '',
           missions: {},
           rewardBoostLvl: 0,
-          profileTheme: storedProfileTheme,
-          profilePicUrl: storedProfilePicUrl,
-          userId: storedUserId ? Number(storedUserId) : null,
-          username: storedUsername,
-          realName: storedRealName,
-          title: storedTitle,
-          signinModalShown
+          signinModalShown,
+          isAdmin: storedItems.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
+          ...storedItems
         };
-  }, [
-    collectType,
-    hideWatched,
-    lastChatPath,
-    loaded,
-    missions,
-    myState,
-    numWordsCollected,
-    searchFilter,
-    signinModalShown,
-    userId,
-    wordleStrictMode,
-    xpThisMonth
-  ]);
+  }, [contextValues, loaded, missions, myState, signinModalShown, storedItems]);
+
   return result;
 }
 
-export function useTheme(color = 'logoBlue') {
+export function useTheme(color: string) {
   return useMemo(() => {
-    return Theme(color);
+    return Theme(color || 'logoBlue');
   }, [color]);
 }
 

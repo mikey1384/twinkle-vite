@@ -15,7 +15,7 @@ XPVideoAdditionalInfo.propTypes = {
   onLoadTags: PropTypes.func.isRequired,
   rewardLevel: PropTypes.number,
   tags: PropTypes.array.isRequired,
-  theme: PropTypes.string.isRequired
+  theme: PropTypes.string
 };
 export default function XPVideoAdditionalInfo({
   contentType,
@@ -40,7 +40,7 @@ export default function XPVideoAdditionalInfo({
   onLoadTags: any;
   rewardLevel?: number;
   tags: any;
-  theme: string;
+  theme?: string;
 }) {
   if (contentType !== 'video') return null;
   return (
