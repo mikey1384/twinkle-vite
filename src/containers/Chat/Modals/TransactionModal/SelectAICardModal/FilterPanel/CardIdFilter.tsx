@@ -48,20 +48,27 @@ export default function CardIdFilter({
           style={{ marginLeft: '0.7rem' }}
         />
       </div>
-      <SearchInput
-        placeholder="Card No."
-        onChange={handleSearch}
-        value={searchText}
-        searchResults={searchedIds}
-        renderItemLabel={(cardId) => cardId}
-        style={{ width: '15rem', marginTop: '0.5rem' }}
-        onClickOutSide={() => {
-          setSearchText('');
-          setSearchedIds([]);
+      <div
+        style={{
+          marginTop: '0.5rem',
+          position: 'relative'
         }}
-        onSelect={handleSelectId}
-      />
-      {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
+      >
+        <SearchInput
+          placeholder="Card No."
+          style={{ width: '15rem' }}
+          onChange={handleSearch}
+          value={searchText}
+          searchResults={searchedIds}
+          renderItemLabel={(cardId) => cardId}
+          onClickOutSide={() => {
+            setSearchText('');
+            setSearchedIds([]);
+          }}
+          onSelect={handleSelectId}
+        />
+        {searching && <Loading style={{ position: 'absolute', top: 0 }} />}
+      </div>
     </div>
   );
 
