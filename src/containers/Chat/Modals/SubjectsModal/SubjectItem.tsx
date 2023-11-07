@@ -5,7 +5,7 @@ import moment from 'moment';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { isSupermod } from '~/helpers';
-import { useUserLevel } from '~/helpers/hooks';
+import { useMyLevel } from '~/helpers/hooks';
 
 const marginHeight = 1;
 const subjectTitleHeight = 24;
@@ -36,8 +36,8 @@ export default function SubjectItem({
   const [marginBottom, setMarginBottom] = useState(`${marginHeight}rem`);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
   const SubjectTitleRef: React.RefObject<any> = useRef(null);
-  const { userId: myId, level } = useKeyContext((v) => v.myState);
-  const { canDelete } = useUserLevel(myId);
+  const { level } = useKeyContext((v) => v.myState);
+  const { canDelete } = useMyLevel();
 
   useEffect(() => {
     const numLines = SubjectTitleRef.current.clientHeight / subjectTitleHeight;

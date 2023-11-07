@@ -3,7 +3,7 @@ import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import { useUserLevel } from '~/helpers/hooks';
+import { useMyLevel } from '~/helpers/hooks';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 export default function UserLevelStatus({
@@ -11,10 +11,8 @@ export default function UserLevelStatus({
 }: {
   style?: React.CSSProperties;
 }) {
-  const { userId, achievementPoints, profileTheme } = useKeyContext(
-    (v) => v.myState
-  );
-  const { ap, level, nextLevelAp } = useUserLevel(userId);
+  const { achievementPoints, profileTheme } = useKeyContext((v) => v.myState);
+  const { ap, level, nextLevelAp } = useMyLevel();
   const displayedAP = useMemo(
     () => addCommasToNumber(achievementPoints),
     [achievementPoints]

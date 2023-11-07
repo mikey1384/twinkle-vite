@@ -12,7 +12,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isSupermod } from '~/helpers';
-import { useContentState, useUserLevel } from '~/helpers/hooks';
+import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
@@ -43,7 +43,7 @@ function Comment({
   const onRevokeReward = useContentContext((v) => v.actions.onRevokeReward);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const { level, userId } = useKeyContext((v) => v.myState);
-  const { canEdit } = useUserLevel(userId);
+  const { canEdit } = useMyLevel();
   const { isEditing } = useContentState({
     contentType: 'reward',
     contentId: reward.id

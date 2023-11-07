@@ -30,7 +30,7 @@ import {
   determineUserCanRewardThis,
   determineXpButtonDisabled
 } from '~/helpers';
-import { useContentState, useTheme, useUserLevel } from '~/helpers/hooks';
+import { useContentState, useTheme, useMyLevel } from '~/helpers/hooks';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
@@ -117,7 +117,7 @@ function Reply({
   const loadReplies = useAppContext((v) => v.requestHelpers.loadReplies);
   const { banned, isAdmin, level, profileTheme, twinkleCoins, userId } =
     useKeyContext((v) => v.myState);
-  const { canDelete, canEdit, canReward } = useUserLevel(userId);
+  const { canDelete, canEdit, canReward } = useMyLevel();
 
   const {
     link: { color: linkColor },
@@ -171,7 +171,7 @@ function Reply({
     [rootContent?.uploader?.id, userId]
   );
   const userHasHigherLevel = useMemo(() => {
-    return level > uploader?.level;
+    return level > (uploader?.level || 0);
   }, [level, uploader?.level]);
 
   const isRecommendedByUser = useMemo(() => {
@@ -612,7 +612,7 @@ function Reply({
                     !isRecommendedByUser && twinkleCoins > 0
                   )
                 }
-                uploaderLevel={uploader.level}
+                uploaderLevel={uploader.level || 0}
                 uploaderId={uploader.id}
               />
             )}

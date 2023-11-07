@@ -30,7 +30,7 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { commentContainer } from '../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useContentState, useTheme, useUserLevel } from '~/helpers/hooks';
+import { useContentState, useTheme, useMyLevel } from '~/helpers/hooks';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled
@@ -103,7 +103,7 @@ function Comment({
 
   const { banned, isAdmin, level, profileTheme, twinkleCoins, userId } =
     useKeyContext((v) => v.myState);
-  const { canDelete, canEdit, canReward } = useUserLevel(userId);
+  const { canDelete, canEdit, canReward } = useMyLevel();
 
   const {
     link: { color: linkColor },
@@ -221,7 +221,7 @@ function Comment({
     [parent.contentType, parent.uploader?.id, userId]
   );
   const userHasHigherLevel = useMemo(() => {
-    return level > uploader?.level;
+    return level > (uploader?.level || 0);
   }, [level, uploader?.level]);
   const dropdownButtonShown = useMemo(() => {
     if (isNotification || isPreview) {
@@ -615,7 +615,7 @@ function Comment({
                     !isRecommendedByUser && twinkleCoins > 0
                   )
                 }
-                uploaderLevel={uploader.level}
+                uploaderLevel={uploader.level || 0}
                 uploaderId={uploader.id}
               />
             )}

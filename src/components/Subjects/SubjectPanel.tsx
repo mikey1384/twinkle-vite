@@ -30,7 +30,7 @@ import {
   determineXpButtonDisabled
 } from '~/helpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useContentState, useUserLevel } from '~/helpers/hooks';
+import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE, charLimit } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
@@ -90,7 +90,7 @@ export default function SubjectPanel({
     (v) => v.actions.onSetByUserStatus
   );
   const { level, twinkleCoins, userId: myId } = useKeyContext((v) => v.myState);
-  const { canDelete, canEdit, canReward } = useUserLevel(userId);
+  const { canDelete, canEdit, canReward } = useMyLevel();
   const {
     done: { color: doneColor },
     content: { color: contentColor },

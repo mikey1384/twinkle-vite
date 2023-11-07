@@ -23,7 +23,7 @@ import {
   determineUserCanRewardThis,
   determineXpButtonDisabled
 } from '~/helpers';
-import { useContentState, useUserLevel } from '~/helpers/hooks';
+import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { processedURL } from '~/helpers/stringHelpers';
 import {
   useAppContext,
@@ -47,7 +47,7 @@ export default function LinkPage() {
   const loadSubjects = useAppContext((v) => v.requestHelpers.loadSubjects);
 
   const { level, twinkleCoins, userId } = useKeyContext((v) => v.myState);
-  const { canDelete, canEdit, canReward } = useUserLevel(userId);
+  const { canDelete, canEdit, canReward } = useMyLevel();
   const {
     byUserIndicator: {
       color: byUserIndicatorColor,

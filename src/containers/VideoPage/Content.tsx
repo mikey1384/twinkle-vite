@@ -9,7 +9,7 @@ import CheckListGroup from '~/components/CheckListGroup';
 import QuestionsBuilder from './QuestionsBuilder';
 import ResultModal from './Modals/ResultModal';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { useUserLevel } from '~/helpers/hooks';
+import { useMyLevel } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
@@ -67,7 +67,7 @@ export default function Content({
     (v) => v.actions.onSetVideoQuestions
   );
   const { level, userId } = useKeyContext((v) => v.myState);
-  const { canEdit } = useUserLevel(userId);
+  const { canEdit } = useMyLevel();
   useEffect(() => {
     setCurrentSlide(0);
   }, [videoId]);
