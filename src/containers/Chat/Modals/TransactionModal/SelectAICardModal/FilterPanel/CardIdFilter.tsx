@@ -41,10 +41,10 @@ export default function CardIdFilter({
         <div className="label">Card #:</div>
         <SelectedCardNumber
           selectedNumber={selectedNumber}
-          style={{ marginLeft: '0.7rem' }}
           onClear={() => {
             onSelectNumber(0);
           }}
+          style={{ marginLeft: '0.7rem' }}
         />
       </div>
       <SearchInput
@@ -64,7 +64,7 @@ export default function CardIdFilter({
   );
 
   function handleSelectId(cardId: number) {
-    console.log(cardId);
+    onSelectNumber(cardId);
     setSearchedIds([]);
     setSearchText('');
   }
