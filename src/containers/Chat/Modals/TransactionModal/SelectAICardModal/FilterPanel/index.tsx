@@ -54,7 +54,10 @@ export default function FilterPanel({
           selectedWord={filters.word}
           onSelectWord={handleSelectWord}
         />
-        <CardIdFilter />
+        <CardIdFilter
+          selectedNumber={filters.selectedNumber}
+          onSelectNumber={handleSelectNumber}
+        />
         <QualityFilter
           selectedQuality={filters.quality}
           onSelectQuality={handleSelectQuality}
@@ -75,6 +78,13 @@ export default function FilterPanel({
     onSetFilters((prevFilters: any) => ({
       ...prevFilters,
       quality
+    }));
+  }
+
+  function handleSelectNumber(selectedNumber: number) {
+    onSetFilters((prevFilters: any) => ({
+      ...prevFilters,
+      selectedNumber
     }));
   }
 

@@ -4,10 +4,15 @@ import SelectedCardNumber from './SelectedCardNumber';
 import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 
-export default function CardIdFilter() {
+export default function CardIdFilter({
+  selectedNumber = 0,
+  onSelectNumber
+}: {
+  selectedNumber?: number;
+  onSelectNumber: (v: number) => void;
+}) {
   const [searchedIds, setSearchedIds] = useState([]);
   const [searchText, setSearchText] = useState('');
-  const [selectedNumber, setSelectedNumber] = useState(0);
   const searchAICardIds = useAppContext(
     (v) => v.requestHelpers.searchAICardIds
   );
@@ -38,7 +43,7 @@ export default function CardIdFilter() {
           selectedNumber={selectedNumber}
           style={{ marginLeft: '0.7rem' }}
           onClear={() => {
-            setSelectedNumber(0);
+            onSelectNumber(0);
           }}
         />
       </div>
