@@ -29,7 +29,7 @@ import {
   isMobile
 } from '~/helpers';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { useContentState, useTheme, useUserLevel } from '~/helpers/hooks';
+import { useContentState, useTheme, useMyLevel } from '~/helpers/hooks';
 import {
   useAppContext,
   useContentContext,
@@ -79,7 +79,7 @@ export default function TargetContent({
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const { level, profileTheme, profilePicUrl, userId, twinkleCoins, username } =
     useKeyContext((v) => v.myState);
-  const { canReward } = useUserLevel(userId);
+  const { canReward } = useMyLevel();
 
   const {
     link: { color: linkColor },
@@ -503,7 +503,7 @@ export default function TargetContent({
                   contentType={'comment'}
                   contentId={comment.id}
                   rewardLevel={finalRewardLevel}
-                  uploaderLevel={comment.uploader.level}
+                  uploaderLevel={comment.uploader.level || 1}
                   uploaderId={comment.uploader.id}
                   onReward={() =>
                     setRecommendationInterfaceShown(

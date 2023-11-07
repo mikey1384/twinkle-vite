@@ -44,7 +44,7 @@ import {
   useContentState,
   useLazyLoad,
   useTheme,
-  useUserLevel
+  useMyLevel
 } from '~/helpers/hooks';
 import { borderRadius, Color } from '~/constants/css';
 import {
@@ -140,7 +140,7 @@ function Comment({
   );
   const { banned, isAdmin, level, twinkleCoins, userId, profileTheme } =
     useKeyContext((v) => v.myState);
-  const { canDelete, canEdit, canReward } = useUserLevel(userId);
+  const { canDelete, canEdit, canReward } = useMyLevel();
   const {
     link: { color: linkColor },
     reward: { color: rewardColor }

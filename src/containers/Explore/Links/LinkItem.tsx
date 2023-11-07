@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useContentState, useUserLevel } from '~/helpers/hooks';
+import { useContentState, useMyLevel } from '~/helpers/hooks';
 import {
   useAppContext,
   useContentContext,
@@ -46,7 +46,7 @@ export default function LinkItem({
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
   const { level, userId } = useKeyContext((v) => v.myState);
-  const { canDelete, canEdit } = useUserLevel(userId);
+  const { canDelete, canEdit } = useMyLevel();
   const {
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);

@@ -331,6 +331,56 @@ export function useScrollPosition({
   });
 }
 
+export function useMyLevel() {
+  const {
+    achievementPoints = 0,
+    canEdit,
+    canDelete,
+    canReward,
+    canPinPlaylists,
+    canEditRewardLevel,
+    managementLevel = 0
+  } = useMyState();
+
+  const result = useMemo(() => {
+    for (let i = levels.length - 1; i >= 0; i--) {
+      if (achievementPoints >= levels[i].ap) {
+        return {
+          ...levels[i],
+          canEdit: canEdit || levels[i].canEdit,
+          canDelete: canDelete || levels[i].canDelete,
+          canReward: canReward || levels[i].canReward,
+          canPinPlaylists: canPinPlaylists || levels[i].canPinPlaylists,
+          canEditRewardLevel:
+            canEditRewardLevel || levels[i].canEditRewardLevel,
+          managementLevel: Math.max(managementLevel, levels[i].managementLevel),
+          nextLevelAp: i === levels.length - 1 ? null : levels[i + 1].ap
+        };
+      }
+    }
+    return {
+      ...levels[1],
+      canEdit: canEdit || levels[1].canEdit,
+      canDelete: canDelete || levels[1].canDelete,
+      canReward: canReward || levels[1].canReward,
+      canPinPlaylists: canPinPlaylists || levels[1].canPinPlaylists,
+      canEditRewardLevel: canEditRewardLevel || levels[1].canEditRewardLevel,
+      managementLevel: Math.max(managementLevel, levels[1].managementLevel),
+      nextLevelAp: levels[2].ap
+    };
+  }, [
+    achievementPoints,
+    canDelete,
+    canEdit,
+    canEditRewardLevel,
+    canPinPlaylists,
+    canReward,
+    managementLevel
+  ]);
+
+  return result;
+}
+
 export function useUserLevel(userId: number): UserLevel {
   const userObj = useAppContext((v) => v.user.state.userObj);
   const {

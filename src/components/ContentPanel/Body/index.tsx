@@ -14,7 +14,7 @@ import AlertModal from '~/components/Modals/AlertModal';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { determineUserCanRewardThis } from '~/helpers';
-import { useContentState, useTheme, useUserLevel } from '~/helpers/hooks';
+import { useContentState, useTheme, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
@@ -74,7 +74,7 @@ export default function Body({
   const { level, profileTheme, twinkleCoins, userId } = useKeyContext(
     (v) => v.myState
   );
-  const { canDelete, canEdit, canReward } = useUserLevel(userId);
+  const { canDelete, canEdit, canReward } = useMyLevel();
 
   const {
     reward: { color: rewardColor }

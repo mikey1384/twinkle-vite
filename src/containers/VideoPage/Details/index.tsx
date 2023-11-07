@@ -28,7 +28,7 @@ import {
   isValidYoutubeUrl,
   replaceFakeAtSymbol
 } from '~/helpers/stringHelpers';
-import { useContentState, useUserLevel } from '~/helpers/hooks';
+import { useContentState, useMyLevel } from '~/helpers/hooks';
 import {
   useContentContext,
   useExploreContext,
@@ -113,14 +113,8 @@ export default function Details({
   const {
     reward: { color: rewardColor }
   } = useKeyContext((v) => v.theme);
-  const {
-    banned,
-    level,
-    twinkleCoins,
-    userId: myId
-  } = useKeyContext((v) => v.myState);
-  const { canDelete, canEdit, canEditPlaylists, canReward } =
-    useUserLevel(myId);
+  const { banned, level, twinkleCoins } = useKeyContext((v) => v.myState);
+  const { canDelete, canEdit, canEditPlaylists, canReward } = useMyLevel();
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown

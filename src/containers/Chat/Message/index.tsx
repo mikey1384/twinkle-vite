@@ -39,7 +39,7 @@ import { socket } from '~/constants/io';
 import { MessageStyle } from '../Styles';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
-import { useContentState, useLazyLoad, useUserLevel } from '~/helpers/hooks';
+import { useContentState, useLazyLoad, useMyLevel } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile, isSupermod } from '~/helpers';
@@ -181,7 +181,7 @@ function Message({
     username: myUsername,
     profilePicUrl: myProfilePicUrl
   } = useKeyContext((v) => v.myState);
-  const { canDelete, canEdit, canReward } = useUserLevel(myId);
+  const { canDelete, canEdit, canReward } = useMyLevel();
   const spoilerClickedRef = useRef(false);
   const [highlighted, setHighlighted] = useState(false);
   const [reactionsMenuShown, setReactionsMenuShown] = useState(false);

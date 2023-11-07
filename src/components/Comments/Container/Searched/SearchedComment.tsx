@@ -23,7 +23,7 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { commentContainer } from '../Styles';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useContentState, useTheme, useUserLevel } from '~/helpers/hooks';
+import { useContentState, useTheme, useMyLevel } from '~/helpers/hooks';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled
@@ -143,7 +143,7 @@ export default function SearchedComment({
 
   const { banned, isAdmin, level, profileTheme, twinkleCoins, userId } =
     useKeyContext((v) => v.myState);
-  const { canDelete, canEdit, canReward } = useUserLevel(userId);
+  const { canDelete, canEdit, canReward } = useMyLevel();
 
   const {
     link: { color: linkColor },
@@ -457,7 +457,7 @@ export default function SearchedComment({
                     to:{' '}
                     <UsernameText
                       user={{
-                        username: comment.targetUserName,
+                        username: comment.targetUserName || '',
                         id: comment.targetUserId
                       }}
                     />
