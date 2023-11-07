@@ -54,7 +54,7 @@ export default function FilterPanel({
           selectedWord={filters.word}
           onSelectWord={handleSelectWord}
         />
-        {false && <CardIdFilter />}
+        <CardIdFilter />
         <QualityFilter
           selectedQuality={filters.quality}
           onSelectQuality={handleSelectQuality}
