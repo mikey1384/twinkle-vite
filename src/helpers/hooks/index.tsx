@@ -10,6 +10,7 @@ import { addEvent, removeEvent } from '../listenerHelpers';
 import { stringIsEmpty, addCommasToNumber } from '../stringHelpers';
 import {
   useAppContext,
+  useKeyContext,
   useContentContext,
   useProfileContext
 } from '~/contexts';
@@ -340,7 +341,7 @@ export function useMyLevel() {
     canPinPlaylists,
     canEditRewardLevel,
     managementLevel = 0
-  } = useMyState();
+  } = useKeyContext((v) => v.myState);
 
   const result = useMemo(() => {
     for (let i = levels.length - 1; i >= 0; i--) {
