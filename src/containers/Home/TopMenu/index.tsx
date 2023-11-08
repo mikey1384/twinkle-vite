@@ -49,8 +49,11 @@ export default function TopMenu({
   const [loadingWordle, setLoadingWordle] = useState(false);
   const [loadingChess, setLoadingChess] = useState(false);
   const { userId, username } = useKeyContext((v) => v.myState);
+  const isMountedRef = useRef(true);
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (timerIdRef.current) {
         clearTimeout(timerIdRef.current);
       }
@@ -132,7 +135,7 @@ export default function TopMenu({
           >
             Post Pics/Videos
           </TopButton>
-          {todayStats.unansweredChessMsgChannelId && (
+          {todayStats.unansweredChessMsgChannelId ? (
             <TopButton
               loading={loadingChess}
               colorLeft={Color.purple()}
@@ -143,13 +146,14 @@ export default function TopMenu({
             >
               Chess
             </TopButton>
-          )}
+          ) : null}
         </div>
       </div>
     </ErrorBoundary>
   ) : null;
 
   function handleWordleButtonClick(): any {
+    if (!isMountedRef.current) return;
     setLoadingWordle(true);
     if (!chatLoadedRef.current) {
       timerIdRef.current = setTimeout(() => handleWordleButtonClick(), 500);
@@ -165,6 +169,7 @@ export default function TopMenu({
   }
 
   function handleChessButtonClick(): any {
+    if (!isMountedRef.current) return;
     setLoadingChess(true);
     if (!chatLoadedRef.current) {
       timerIdRef.current = setTimeout(() => handleChessButtonClick(), 500);
