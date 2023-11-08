@@ -5,7 +5,6 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile, isSupermod } from '~/helpers';
-import { removeAllWhiteSpaces } from '~/helpers/stringHelpers';
 import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -49,12 +48,12 @@ export default function RecommendationInterface({
     }
     return expectedResponseLength(rewardLevel);
   }, [contentType, rewardLevel]);
-  const meetsRequirement = useMemo(
-    () =>
-      removeAllWhiteSpaces(content).length > expectedContentLength &&
-      contentType !== 'pass',
-    [content, contentType, expectedContentLength]
-  );
+  const meetsRequirement = useMemo(() => {
+    const cleanedContent = (content || '').replace(/[\W_]+/g, '');
+    return (
+      cleanedContent.length > expectedContentLength && contentType !== 'pass'
+    );
+  }, [content, contentType, expectedContentLength]);
   const [rewardDisabled, setRewardDisabled] = useState(!meetsRequirement);
   const [hidden, setHidden] = useState(false);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
