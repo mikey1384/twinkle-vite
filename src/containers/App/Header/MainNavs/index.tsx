@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Nav from './Nav';
 import MobileSideMenuNav from './MobileSideMenuNav';
@@ -37,7 +37,7 @@ const exploreLabel = localize('explore');
 const missionsLabel = localize('missions');
 const chatLabel = localize('chat');
 
-function MainNavs({
+export default function MainNavs({
   loggedIn,
   numChatUnreads,
   numNewNotis,
@@ -458,5 +458,3 @@ function MainNavs({
     </div>
   );
 }
-
-export default memo(MainNavs);
