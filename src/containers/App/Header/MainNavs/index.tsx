@@ -434,7 +434,7 @@ export default function MainNavs({
           </Nav>
         )}
       </div>
-      {userId && typeof twinkleCoins === 'number' && (
+      {userId && (
         <div
           className={`mobile ${css`
             @media (max-width: ${mobileMaxWidth}) {
@@ -452,7 +452,11 @@ export default function MainNavs({
             style={{ marginRight: '0.5rem' }}
             icon={['far', 'badge-dollar']}
           />
-          {displayedTwinkleCoins}
+          {typeof twinkleCoins === 'number' ? (
+            displayedTwinkleCoins
+          ) : userId ? (
+            <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
+          ) : null}
         </div>
       )}
     </div>
