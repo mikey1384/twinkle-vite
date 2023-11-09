@@ -134,6 +134,8 @@ export function useMyState() {
           key === 'karmaPoints' ||
           key === 'managementLevel'
             ? Number(storedValue)
+            : key === 'userId'
+            ? null
             : storedValue;
         return acc;
       },
@@ -146,8 +148,8 @@ export function useMyState() {
   const result = useMemo(() => {
     return myState.loaded
       ? {
-          ...myState,
           ...contextValues,
+          ...myState,
           missions: { ...(myState?.state?.missions || {}), ...missions },
           isAdmin: myState.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
           loggedIn: true
