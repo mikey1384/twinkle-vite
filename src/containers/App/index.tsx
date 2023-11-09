@@ -290,7 +290,7 @@ function App() {
             localStorage.setItem(key, value);
           });
           onSetUserState({
-            userId: Number(data?.id),
+            userId: data?.id,
             newState: { ...data, loaded: true }
           });
           onInitMyState(data);
