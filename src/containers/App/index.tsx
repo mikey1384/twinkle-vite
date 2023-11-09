@@ -275,11 +275,12 @@ function App() {
     } else if (
       auth()?.headers?.authorization !== authRef.current?.headers?.authorization
     ) {
+      authRef.current = auth();
       init();
     } else {
+      authRef.current = auth();
       onSetSessionLoaded();
     }
-    authRef.current = auth();
     async function init() {
       await recordUserTraffic(location.pathname);
       if (authRef.current?.headers?.authorization) {
