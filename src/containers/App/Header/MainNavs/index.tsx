@@ -452,7 +452,7 @@ export default function MainNavs({
             style={{ marginRight: '0.5rem' }}
             icon={['far', 'badge-dollar']}
           />
-          {typeof twinkleCoins === 'number' ? (
+          {userId && typeof twinkleCoins === 'number' ? (
             displayedTwinkleCoins
           ) : userId ? (
             <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
