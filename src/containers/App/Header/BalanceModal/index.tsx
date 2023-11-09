@@ -24,14 +24,27 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
   const timeoutRef: React.MutableRefObject<any> = useRef(null);
 
   useEffect(() => {
+    const maxRetries = 3;
+    const retryDelay = 1000;
+
     init();
-    async function init() {
+    async function init(numAttempts = 0) {
       setLoading(true);
-      const { totalCoins, changes, loadMoreShown } = await loadCoinHistory();
-      onSetUserState({ userId, newState: { twinkleCoins: totalCoins } });
-      setChanges(changes);
-      setLoadMoreShown(loadMoreShown);
-      setLoading(false);
+      try {
+        const { totalCoins, changes, loadMoreShown } = await loadCoinHistory();
+        onSetUserState({ userId, newState: { twinkleCoins: totalCoins } });
+        setChanges(changes);
+        setLoadMoreShown(loadMoreShown);
+      } catch (error) {
+        console.error('Failed to load coin history:', error);
+        if (numAttempts < maxRetries) {
+          console.log(`Retrying... Attempt ${numAttempts + 1}`);
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          return init(numAttempts + 1);
+        }
+      } finally {
+        setLoading(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
