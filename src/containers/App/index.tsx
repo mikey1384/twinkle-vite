@@ -289,12 +289,12 @@ function App() {
             const value = data[key] || localStorageKeys[key];
             localStorage.setItem(key, value);
           });
+          onSetUserState({
+            userId: Number(data?.id),
+            newState: { ...data, loaded: true }
+          });
+          onInitMyState(data);
         }
-        onSetUserState({
-          userId: data.userId,
-          newState: { ...data, loaded: true }
-        });
-        if (data?.userId) onInitMyState(data);
       }
       onSetSessionLoaded();
     }
