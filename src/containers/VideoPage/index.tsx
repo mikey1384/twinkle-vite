@@ -45,6 +45,7 @@ export default function VideoPage() {
   const [videoUnavailable, setVideoUnavailable] = useState(false);
   const CommentInputAreaRef = useRef(null);
   const prevDeleted = useRef(false);
+  const isMounted = useRef(true);
 
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const editContent = useAppContext((v) => v.requestHelpers.editContent);
@@ -137,6 +138,13 @@ export default function VideoPage() {
   } = useContentState({ contentType: 'video', contentId: videoId });
 
   useEffect(() => {
+    isMounted.current = true;
+    return function cleanUp() {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (title) {
       onSetPageTitle(title);
     }
@@ -175,11 +183,13 @@ export default function VideoPage() {
         if (data.notFound) {
           return setVideoUnavailable(true);
         }
-        onInitContent({
-          ...data,
-          contentId: videoId,
-          contentType: 'video'
-        });
+        if (isMounted.current) {
+          onInitContent({
+            ...data,
+            contentId: videoId,
+            contentType: 'video'
+          });
+        }
       } catch (error: any) {
         console.error(error.response || error);
       }
