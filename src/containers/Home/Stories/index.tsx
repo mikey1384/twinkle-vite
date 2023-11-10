@@ -82,7 +82,7 @@ export default function Stories() {
   const categoryRef: React.MutableRefObject<any> = useRef(null);
   const ContainerRef = useRef(null);
   const hideWatchedRef = useRef(null);
-  const subFilterRef = useRef(null);
+  const subFilterRef = useRef<string | null>(null);
 
   useEffect(() => {
     subFilterRef.current = subFilter;
@@ -274,6 +274,7 @@ export default function Stories() {
     const retryDelay = 1000;
 
     if (filter !== subFilterRef.current) {
+      subFilterRef.current = filter || null;
       await attemptLoad();
     }
 
