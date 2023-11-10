@@ -122,24 +122,34 @@ export default function Stories() {
   }, [hideWatched]);
 
   useEffect(() => {
+    const maxRetries = 3;
+    const retryDelay = 1000;
+
     if (!loaded) {
       handleLoadFeeds();
     }
 
-    async function handleLoadFeeds() {
+    async function handleLoadFeeds(attempts = 0) {
       setLoadingFeeds(true);
       categoryRef.current = 'uploads';
       onChangeCategory('recommended');
       onChangeSubFilter('all');
       onResetNumNewPosts();
+
       try {
         const { data } = await loadFeeds({
           isRecommended: true
         });
         onLoadFeeds(data);
-        setLoadingFeeds(false);
       } catch (error) {
-        console.error(error);
+        console.error('Failed to load feeds:', error);
+        if (attempts < maxRetries) {
+          console.log(`Retrying... Attempt ${attempts + 1}`);
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          return handleLoadFeeds(attempts + 1);
+        }
+      } finally {
+        setLoadingFeeds(false);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
