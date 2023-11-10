@@ -86,6 +86,11 @@ export default function Stories() {
   const hideWatchedRef = useRef(null);
   const subFilterRef = useRef<string | null>(null);
 
+  const loadingPosts = useMemo(
+    () => loadingFeeds || loadingFilteredFeeds || loadingCategorizedFeeds,
+    [loadingCategorizedFeeds, loadingFeeds, loadingFilteredFeeds]
+  );
+
   useEffect(() => {
     subFilterRef.current = subFilter;
   }, [subFilter]);
@@ -183,10 +188,8 @@ export default function Stories() {
           setDisplayOrder={handleDisplayOrder}
         />
         <div style={{ width: '100%' }}>
-          {loadingFeeds || loadingFilteredFeeds || loadingCategorizedFeeds ? (
-            <Loading text="Loading Posts..." />
-          ) : null}
-          {loaded && feeds.length === 0 && !loadingFeeds && (
+          {loadingPosts ? <Loading text="Loading Posts..." /> : null}
+          {loaded && feeds.length === 0 && !loadingPosts && (
             <div
               style={{
                 width: '100%',
@@ -201,7 +204,7 @@ export default function Stories() {
               </h1>
             </div>
           )}
-          {loaded && !loadingFeeds && feeds.length > 0 && (
+          {loaded && !loadingPosts && feeds.length > 0 && (
             <>
               {feedsOutdated && (
                 <Banner
