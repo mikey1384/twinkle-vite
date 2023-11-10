@@ -1,6 +1,5 @@
 import 'regenerator-runtime/runtime'; // for async await
 import React, {
-  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -61,7 +60,7 @@ import {
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-function App() {
+export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const onCloseSigninModal = useAppContext(
@@ -822,5 +821,3 @@ function App() {
     </ErrorBoundary>
   );
 }
-
-export default memo(App);
