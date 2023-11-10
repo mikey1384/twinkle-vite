@@ -744,7 +744,7 @@ function MessagesContainer({
             message
           });
           onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
-          onCreateNewDMChannel({ channel, message });
+          onCreateNewDMChannel({ channel, withoutMessage: true });
           navigate(`/chat/${pathId}`, { replace: true });
           onSetChessModalShown(false);
           return;
