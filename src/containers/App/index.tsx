@@ -264,6 +264,9 @@ export default function App() {
   }, [twinkleXP, twinkleCoins, userId]);
 
   useEffect(() => {
+    const maxRetries = 3;
+    const retryDelay = 1000;
+
     if (!achievementsObj || Object.keys(achievementsObj).length === 0) {
       initAchievements();
     }
@@ -280,30 +283,44 @@ export default function App() {
       authRef.current = auth();
       onSetSessionLoaded();
     }
-    async function init() {
-      await recordUserTraffic(location.pathname);
-      if (authRef.current?.headers?.authorization) {
-        const data = await loadMyData(location.pathname);
-        if (data?.id) {
-          Object.keys(localStorageKeys).forEach((key) => {
-            const value = data[key] || localStorageKeys[key];
-            localStorage.setItem(key, value);
-          });
-          onSetUserState({
-            userId: data?.id,
-            newState: { ...data, loaded: true }
-          });
-          onInitMyState(data);
+
+    async function init(attempts = 0) {
+      try {
+        await recordUserTraffic(location.pathname);
+        if (authRef.current?.headers?.authorization) {
+          const data = await loadMyData(location.pathname);
+          if (data?.id) {
+            Object.keys(localStorageKeys).forEach((key) => {
+              const value = data[key] || localStorageKeys[key];
+              localStorage.setItem(key, value);
+            });
+            onSetUserState({
+              userId: data?.id,
+              newState: { ...data, loaded: true }
+            });
+            onInitMyState(data);
+          }
+        } else if (userId) {
+          authRef.current = auth();
+          throw new Error('UserId exists, triggering retry logic');
         }
+      } catch (error) {
+        console.error('Failed to load my data:', error);
+        if (attempts < maxRetries) {
+          console.log(`Retrying... Attempt ${attempts + 1}`);
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          return init(attempts + 1);
+        }
+      } finally {
+        onSetSessionLoaded();
       }
-      onSetSessionLoaded();
     }
     async function initAchievements() {
       const data = await loadAllAchievements();
       onSetAchievementsObj(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth, location.pathname, pageVisible, signinModalShown]);
+  }, [auth, location.pathname, pageVisible, signinModalShown, userId]);
 
   useEffect(() => {
     if (typeof document.hidden !== 'undefined') {
