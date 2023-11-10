@@ -29,7 +29,7 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 const API_URL = `${URL}/content`;
 
 Embedly.propTypes = {
-  contentId: PropTypes.number.isRequired,
+  contentId: PropTypes.number,
   contentType: PropTypes.string,
   defaultActualDescription: PropTypes.string,
   defaultActualTitle: PropTypes.string,
