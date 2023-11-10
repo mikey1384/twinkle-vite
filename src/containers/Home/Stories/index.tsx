@@ -270,17 +270,37 @@ export default function Stories() {
   );
 
   async function handleApplyFilter(filter: string) {
-    if (filter === subFilterRef.current) return;
-    setLoadingFeeds(true);
-    categoryRef.current = 'uploads';
-    onChangeCategory('uploads');
-    onChangeSubFilter(filter);
-    onResetNumNewPosts();
-    const { data, filter: newFilter } = await loadFeeds({ filter });
-    if (filter === newFilter && categoryRef.current === 'uploads') {
-      onLoadFeeds(data);
-      onSetDisplayOrder('desc');
-      setLoadingFeeds(false);
+    const maxRetries = 3;
+    const retryDelay = 1000;
+
+    if (filter !== subFilterRef.current) {
+      await attemptLoad();
+    }
+
+    async function attemptLoad(attempts = 0) {
+      try {
+        setLoadingFeeds(true);
+        categoryRef.current = 'uploads';
+        onChangeCategory('uploads');
+        onChangeSubFilter(filter);
+        onResetNumNewPosts();
+
+        const { data, filter: newFilter } = await loadFeeds({ filter });
+
+        if (filter === newFilter && categoryRef.current === 'uploads') {
+          onLoadFeeds(data);
+          onSetDisplayOrder('desc');
+        }
+      } catch (error) {
+        console.error('Error loading feeds:', error);
+        if (attempts < maxRetries) {
+          console.log(`Retrying... Attempt ${attempts + 1}`);
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          return attemptLoad(attempts + 1);
+        }
+      } finally {
+        setLoadingFeeds(false);
+      }
     }
   }
 
