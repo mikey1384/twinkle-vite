@@ -11,7 +11,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 
-const errorCheckMode = true;
+const errorCheckMode = false;
 
 export default function BalanceModal({ onHide }: { onHide: () => void }) {
   const myState = useKeyContext((v) => v.myState);
