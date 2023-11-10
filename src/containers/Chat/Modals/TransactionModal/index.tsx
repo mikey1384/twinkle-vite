@@ -55,25 +55,19 @@ export default function TransactionModal({
 
     async function loadWithRetry(channelId: number) {
       try {
-        // Try to load the pending transaction
         const { transaction } = await loadPendingTransaction(channelId);
         setPendingTransaction(transaction);
         setLoading(false);
         return;
       } catch (error) {
-        // If an error occurs, log it and retry if under max attempts
-        console.error('Attempt to load transaction failed:', error);
         if (++attempts < maxAttempts) {
-          console.log(`Retrying... Attempt ${attempts}`);
           await new Promise((resolve) => setTimeout(resolve, cooldown));
           return loadWithRetry(channelId);
         } else {
-          // If max attempts reached, handle the final error scenario
           console.error('Max attempts reached. Unable to load transaction.');
           setLoading(false);
         }
       } finally {
-        // This block runs regardless of success or failure
         if (attempts === maxAttempts) {
           setLoading(false);
         }

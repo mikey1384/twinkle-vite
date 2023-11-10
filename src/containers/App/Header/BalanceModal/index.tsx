@@ -48,9 +48,7 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
         setChanges(changes);
         setLoadMoreShown(loadMoreShown);
       } catch (error) {
-        console.error('Failed to load coin history:', error);
         if (numAttempts < maxRetries) {
-          console.log(`Retrying... Attempt ${numAttempts + 1}`);
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return init(numAttempts + 1);
         }

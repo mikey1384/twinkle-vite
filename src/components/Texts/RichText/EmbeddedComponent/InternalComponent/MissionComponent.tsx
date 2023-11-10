@@ -59,7 +59,6 @@ export default function MissionComponent({ src }: { src: string }) {
         const data = await loadMissionTypeIdHash();
         onLoadMissionTypeIdHash(data);
       } catch (error) {
-        console.log(error);
         setHasError(true);
       }
     }

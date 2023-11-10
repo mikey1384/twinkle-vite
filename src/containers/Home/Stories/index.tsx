@@ -77,6 +77,8 @@ export default function Stories() {
   const onSetDisplayOrder = useHomeContext((v) => v.actions.onSetDisplayOrder);
 
   const [loadingFeeds, setLoadingFeeds] = useState(false);
+  const [loadingFilteredFeeds, setLoadingFilteredFeeds] = useState(false);
+  const [loadingCategorizedFeeds, setLoadingCategorizedFeeds] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingNewFeeds, setLoadingNewFeeds] = useState(false);
   const categoryRef: React.MutableRefObject<any> = useRef(null);
@@ -124,6 +126,7 @@ export default function Stories() {
   useEffect(() => {
     const maxRetries = 3;
     const retryDelay = 1000;
+    let success = false;
 
     if (!loaded) {
       handleLoadFeeds();
@@ -137,19 +140,18 @@ export default function Stories() {
       onResetNumNewPosts();
 
       try {
-        const { data } = await loadFeeds({
-          isRecommended: true
-        });
+        const { data } = await loadFeeds({ isRecommended: true });
         onLoadFeeds(data);
+        success = true;
       } catch (error) {
-        console.error('Failed to load feeds:', error);
         if (attempts < maxRetries) {
-          console.log(`Retrying... Attempt ${attempts + 1}`);
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return handleLoadFeeds(attempts + 1);
         }
       } finally {
-        setLoadingFeeds(false);
+        if (success || attempts >= maxRetries) {
+          setLoadingFeeds(false); // Ensure loading state is set to false after all attempts
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -181,7 +183,9 @@ export default function Stories() {
           setDisplayOrder={handleDisplayOrder}
         />
         <div style={{ width: '100%' }}>
-          {loadingFeeds && <Loading text="Loading Posts..." />}
+          {loadingFeeds || loadingFilteredFeeds || loadingCategorizedFeeds ? (
+            <Loading text="Loading Posts..." />
+          ) : null}
           {loaded && feeds.length === 0 && !loadingFeeds && (
             <div
               style={{
@@ -272,6 +276,7 @@ export default function Stories() {
   async function handleApplyFilter(filter: string) {
     const maxRetries = 3;
     const retryDelay = 1000;
+    let success = false;
 
     if (filter !== subFilterRef.current) {
       subFilterRef.current = filter || null;
@@ -280,7 +285,7 @@ export default function Stories() {
 
     async function attemptLoad(attempts = 0) {
       try {
-        setLoadingFeeds(true);
+        setLoadingFilteredFeeds(true);
         categoryRef.current = 'uploads';
         onChangeCategory('uploads');
         onChangeSubFilter(filter);
@@ -294,16 +299,17 @@ export default function Stories() {
         ) {
           onLoadFeeds(data);
           onSetDisplayOrder('desc');
+          success = true;
         }
       } catch (error) {
-        console.error('Error loading feeds:', error);
         if (attempts < maxRetries) {
-          console.log(`Retrying... Attempt ${attempts + 1}`);
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return attemptLoad(attempts + 1);
         }
       } finally {
-        setLoadingFeeds(false);
+        if (success || attempts >= maxRetries) {
+          setLoadingFilteredFeeds(false);
+        }
       }
     }
   }
@@ -339,6 +345,7 @@ export default function Stories() {
   async function handleChangeCategory(newCategory: string) {
     const maxRetries = 3;
     const retryDelay = 1000;
+    let success = false;
 
     await attemptLoadFeeds();
 
@@ -346,7 +353,7 @@ export default function Stories() {
       try {
         categoryRef.current = newCategory;
         onResetNumNewPosts();
-        setLoadingFeeds(true);
+        setLoadingCategorizedFeeds(true);
         onChangeCategory(newCategory);
         onChangeSubFilter(categoryObj[newCategory].filter);
 
@@ -363,16 +370,17 @@ export default function Stories() {
         ) {
           onLoadFeeds(data);
           onSetDisplayOrder('desc');
+          success = true;
         }
       } catch (error) {
-        console.error('Error loading feeds:', error);
         if (attempts < maxRetries) {
-          console.log(`Retrying... Attempt ${attempts + 1}`);
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return attemptLoadFeeds(attempts + 1);
         }
       } finally {
-        setLoadingFeeds(false);
+        if (success || attempts >= maxRetries) {
+          setLoadingCategorizedFeeds(false);
+        }
       }
     }
   }

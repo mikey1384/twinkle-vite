@@ -305,9 +305,7 @@ export default function App() {
           throw new Error('UserId exists, triggering retry logic');
         }
       } catch (error) {
-        console.error('Failed to load my data:', error);
         if (attempts < maxRetries) {
-          console.log(`Retrying... Attempt ${attempts + 1}`);
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return init(attempts + 1);
         }
