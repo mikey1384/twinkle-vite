@@ -337,24 +337,43 @@ export default function Stories() {
   }
 
   async function handleChangeCategory(newCategory: string) {
-    categoryRef.current = newCategory;
-    onResetNumNewPosts();
-    setLoadingFeeds(true);
-    onChangeCategory(newCategory);
-    onChangeSubFilter(categoryObj[newCategory].filter);
-    const { filter: loadedFilter, data } = await loadFeeds({
-      order: 'desc',
-      filter: categoryObj[newCategory].filter,
-      orderBy: categoryObj[newCategory].orderBy,
-      isRecommended: categoryObj[newCategory].isRecommended
-    });
-    if (
-      loadedFilter === categoryObj[categoryRef.current].filter &&
-      categoryRef.current === newCategory
-    ) {
-      onLoadFeeds(data);
-      onSetDisplayOrder('desc');
-      setLoadingFeeds(false);
+    const maxRetries = 3;
+    const retryDelay = 1000;
+
+    await attemptLoadFeeds();
+
+    async function attemptLoadFeeds(attempts = 0) {
+      try {
+        categoryRef.current = newCategory;
+        onResetNumNewPosts();
+        setLoadingFeeds(true);
+        onChangeCategory(newCategory);
+        onChangeSubFilter(categoryObj[newCategory].filter);
+
+        const { filter: loadedFilter, data } = await loadFeeds({
+          order: 'desc',
+          filter: categoryObj[newCategory].filter,
+          orderBy: categoryObj[newCategory].orderBy,
+          isRecommended: categoryObj[newCategory].isRecommended
+        });
+
+        if (
+          loadedFilter === categoryObj[categoryRef.current].filter &&
+          categoryRef.current === newCategory
+        ) {
+          onLoadFeeds(data);
+          onSetDisplayOrder('desc');
+        }
+      } catch (error) {
+        console.error('Error loading feeds:', error);
+        if (attempts < maxRetries) {
+          console.log(`Retrying... Attempt ${attempts + 1}`);
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          return attemptLoadFeeds(attempts + 1);
+        }
+      } finally {
+        setLoadingFeeds(false);
+      }
     }
   }
 
