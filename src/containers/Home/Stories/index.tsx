@@ -288,7 +288,10 @@ export default function Stories() {
 
         const { data, filter: newFilter } = await loadFeeds({ filter });
 
-        if (filter === newFilter && categoryRef.current === 'uploads') {
+        if (
+          subFilterRef.current === newFilter &&
+          categoryRef.current === 'uploads'
+        ) {
           onLoadFeeds(data);
           onSetDisplayOrder('desc');
         }
