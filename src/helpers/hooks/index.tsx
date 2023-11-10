@@ -128,15 +128,17 @@ export function useMyState() {
         key
       ) => {
         const storedValue = getStoredItem(key, config[key]);
-        acc[key] =
-          (key === 'userId' && storedValue) ||
+        if (key === 'userId') {
+          acc[key] = storedValue ? Number(storedValue) : null;
+        } else if (
           key === 'level' ||
           key === 'karmaPoints' ||
           key === 'managementLevel'
-            ? Number(storedValue)
-            : key === 'userId'
-            ? null
-            : storedValue;
+        ) {
+          acc[key] = Number(storedValue);
+        } else {
+          acc[key] = storedValue;
+        }
         return acc;
       },
       {}
