@@ -155,7 +155,7 @@ export default function Stories() {
         }
       } finally {
         if (success || attempts >= maxRetries) {
-          setLoadingFeeds(false); // Ensure loading state is set to false after all attempts
+          setLoadingFeeds(false);
         }
       }
     }
