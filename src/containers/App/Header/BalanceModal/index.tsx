@@ -4,14 +4,19 @@ import Button from '~/components/Button';
 import ChangeListItem from './ChangeListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
+import { MIKEY_ID } from '~/constants/defaultValues';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 
+const errorCheckMode = true;
+
 export default function BalanceModal({ onHide }: { onHide: () => void }) {
-  const { twinkleCoins, userId } = useKeyContext((v) => v.myState);
+  const myState = useKeyContext((v) => v.myState);
+  const { twinkleCoins, userId } = myState;
+  const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const loadCoinHistory = useAppContext(
     (v) => v.requestHelpers.loadCoinHistory
@@ -22,6 +27,13 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const ListRef: React.RefObject<any> = useRef(null);
   const timeoutRef: React.MutableRefObject<any> = useRef(null);
+
+  if (errorCheckMode && userId === MIKEY_ID && !twinkleCoins) {
+    reportError({
+      componentPath: 'Header/BalanceModal',
+      message: `Twinkle Coins not loaded: ${JSON.stringify(myState)}`
+    });
+  }
 
   useEffect(() => {
     const maxRetries = 3;
@@ -47,7 +59,7 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     const CardItems = ListRef.current;
