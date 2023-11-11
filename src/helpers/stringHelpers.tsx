@@ -42,6 +42,7 @@ export function addEmoji(string: string): string {
     ':beer:': '🍺',
     ':beers:': '🍻',
     ':bird:': '🐦',
+    ':bigsmile:': '😃',
     ':book:': '📖',
     ':brofist:': '👊',
     ':bullseye:': '🎯',
