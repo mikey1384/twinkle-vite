@@ -658,10 +658,7 @@ function ProfilePanel({
   }
 
   async function handleUploadBio(params: object) {
-    const data = await uploadBio({
-      ...params,
-      profileId
-    });
+    const data = await uploadBio(params);
     onSetUserState({ userId: data.userId, newState: data.bio });
     setBioEditModalShown(false);
   }
