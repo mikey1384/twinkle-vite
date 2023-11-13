@@ -1,6 +1,7 @@
 import React from 'react';
 import { stringIsEmpty, truncateText } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
+import { Link } from 'react-router-dom';
 import ContentLink from '~/components/ContentLink';
 
 export default function RenderMessage({
@@ -130,15 +131,30 @@ export default function RenderMessage({
           <span style={{ color: Color[mentionColor](), fontWeight: 'bold' }}>
             mentioned you
           </span>{' '}
-          in a{' '}
-          <ContentLink
-            contentType={targetObj.contentType}
-            content={{
-              id: targetObj.id,
-              title: contentPreview
-            }}
-            style={{ color: contentLinkColor }}
-          />
+          in{' '}
+          {targetObj.contentType === 'user' ? (
+            <>
+              their{' '}
+              <Link
+                style={{ color: contentLinkColor, fontWeight: 'bold' }}
+                to={`/users/${targetObj.content}`}
+              >
+                profile
+              </Link>
+            </>
+          ) : (
+            <>
+              a{' '}
+              <ContentLink
+                contentType={targetObj.contentType}
+                content={{
+                  id: targetObj.id,
+                  title: contentPreview
+                }}
+                style={{ color: contentLinkColor }}
+              />
+            </>
+          )}
         </>
       );
     case 'recommendation': {
