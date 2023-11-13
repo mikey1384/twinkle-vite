@@ -11,7 +11,12 @@ import StatusMsg from './StatusMsg';
 import Bio from '~/components/Texts/Bio';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { addEmoji, finalizeEmoji, renderText } from '~/helpers/stringHelpers';
+import {
+  addEmoji,
+  finalizeEmoji,
+  renderText,
+  replaceFakeAtSymbol
+} from '~/helpers/stringHelpers';
 import URL from '~/constants/URL';
 import {
   useAppContext,
@@ -179,7 +184,9 @@ export default function UserDetails({
             <Button
               transparent
               onClick={() => {
-                onSetEditedStatusMsg(profile.statusMsg);
+                onSetEditedStatusMsg(
+                  replaceFakeAtSymbol(profile.statusMsg || '')
+                );
                 StatusInputRef.current.focus();
               }}
             >

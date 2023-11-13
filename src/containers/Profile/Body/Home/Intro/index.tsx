@@ -28,7 +28,8 @@ import {
   addEmoji,
   renderText,
   stringIsEmpty,
-  finalizeEmoji
+  finalizeEmoji,
+  replaceFakeAtSymbol
 } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
 
@@ -205,7 +206,9 @@ export default function Intro({
                     <Button
                       transparent
                       onClick={() => {
-                        onSetEditedStatusMsg(statusMsg);
+                        onSetEditedStatusMsg(
+                          replaceFakeAtSymbol(statusMsg || '')
+                        );
                         StatusInputRef.current.focus();
                       }}
                     >
