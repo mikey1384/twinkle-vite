@@ -18,6 +18,7 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useLazyLoad, useTheme } from '~/helpers/hooks';
+import { replaceFakeAtSymbol } from '~/helpers/stringHelpers';
 import { useInView } from 'react-intersection-observer';
 import {
   useAppContext,
@@ -506,9 +507,9 @@ function ProfilePanel({
                   />
                   {bioEditModalShown && (
                     <BioEditModal
-                      firstLine={profileFirstRow}
-                      secondLine={profileSecondRow}
-                      thirdLine={profileThirdRow}
+                      firstLine={replaceFakeAtSymbol(profileFirstRow || '')}
+                      secondLine={replaceFakeAtSymbol(profileSecondRow || '')}
+                      thirdLine={replaceFakeAtSymbol(profileThirdRow || '')}
                       onSubmit={handleUploadBio}
                       onHide={() => setBioEditModalShown(false)}
                     />
