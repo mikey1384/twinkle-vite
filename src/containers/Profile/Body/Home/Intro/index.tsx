@@ -411,10 +411,7 @@ export default function Intro({
     if (banned?.posting) {
       return;
     }
-    const data = await uploadBio({
-      ...params,
-      profileId: profile.id
-    });
+    const data = await uploadBio(params);
     onSetUserState({ userId: data.userId, newState: data.bio });
     setBioEditModalShown(false);
   }
