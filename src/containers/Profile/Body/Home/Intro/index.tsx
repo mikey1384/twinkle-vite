@@ -393,9 +393,9 @@ export default function Intro({
       </SectionPanel>
       {bioEditModalShown && (
         <BioEditModal
-          firstLine={profileFirstRow}
-          secondLine={profileSecondRow}
-          thirdLine={profileThirdRow}
+          firstLine={replaceFakeAtSymbol(profileFirstRow || '')}
+          secondLine={replaceFakeAtSymbol(profileSecondRow || '')}
+          thirdLine={replaceFakeAtSymbol(profileThirdRow || '')}
           onSubmit={handleUploadBio}
           onHide={() => setBioEditModalShown(false)}
         />
