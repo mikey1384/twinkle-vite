@@ -6,6 +6,7 @@ import ChangeUsername from './ChangeUsername';
 import FileSizeItem from './FileSizeItem';
 import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
+import Loading from '~/components/Loading';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
@@ -44,7 +45,7 @@ export default function Store() {
   const pageVisible = useViewContext((v) => v.state.pageVisible);
   const [loading, setLoading] = useState(false);
   const [unlockingUsernameChange, setUnlockingUsernameChange] = useState(false);
-  const { canChangeUsername, canGenerateAICard, karmaPoints, userId } =
+  const { canChangeUsername, canGenerateAICard, karmaPoints, userId, loaded } =
     useKeyContext((v) => v.myState);
   const {
     logoTwin: { color: twinColor },
@@ -130,24 +131,30 @@ export default function Store() {
       >
         <ChangeUsername style={{ marginTop: '1rem' }} />
       </ItemPanel>
-      <RewardBoostItem style={{ marginTop: '3rem' }} loading={loading} />
-      <FileSizeItem style={{ marginTop: '3rem' }} loading={loading} />
-      <ProfilePictureItem style={{ marginTop: '3rem' }} loading={loading} />
-      <AICardItem
-        style={{ marginTop: '3rem' }}
-        userId={userId}
-        canGenerateAICard={!!canGenerateAICard}
-        karmaPoints={karmaPoints}
-        loading={loading}
-      />
-      <ItemPanel
-        karmaPoints={karmaPoints}
-        locked
-        itemKey="moreToCome"
-        itemName={`${moreToComeLabel}...`}
-        style={{ marginTop: '3rem' }}
-        loading={loading}
-      />
+      {!loaded ? (
+        <Loading />
+      ) : (
+        <>
+          <RewardBoostItem style={{ marginTop: '3rem' }} loading={loading} />
+          <FileSizeItem style={{ marginTop: '3rem' }} loading={loading} />
+          <ProfilePictureItem style={{ marginTop: '3rem' }} loading={loading} />
+          <AICardItem
+            style={{ marginTop: '3rem' }}
+            userId={userId}
+            canGenerateAICard={!!canGenerateAICard}
+            karmaPoints={karmaPoints}
+            loading={loading}
+          />
+          <ItemPanel
+            karmaPoints={karmaPoints}
+            locked
+            itemKey="moreToCome"
+            itemName={`${moreToComeLabel}...`}
+            style={{ marginTop: '3rem' }}
+            loading={loading}
+          />
+        </>
+      )}
     </div>
   );
 
