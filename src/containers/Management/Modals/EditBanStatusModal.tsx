@@ -25,6 +25,7 @@ export default function EditBanStatusModal({
   const onUpdateBanStatus = useManagementContext(
     (v) => v.actions.onUpdateBanStatus
   );
+  const [submitting, setSubmitting] = useState(false);
   const [banStatus, setBanStatus] = useState(target.banned);
   const submitDisabled = useMemo(() => {
     const bannedFeatures: Record<string, boolean> = {};
@@ -100,6 +101,7 @@ export default function EditBanStatusModal({
             Cancel
           </Button>
           <Button
+            loading={submitting}
             color={doneColor}
             disabled={submitDisabled}
             onClick={handleSubmit}
@@ -119,8 +121,15 @@ export default function EditBanStatusModal({
   }
 
   async function handleSubmit() {
-    await updateBanStatus({ userId: target.id, banStatus });
-    onUpdateBanStatus({ ...target, banned: banStatus });
-    onHide();
+    setSubmitting(true);
+    try {
+      await updateBanStatus({ userId: target.id, banStatus });
+      onUpdateBanStatus({ ...target, banned: banStatus });
+      onHide();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSubmitting(false);
+    }
   }
 }
