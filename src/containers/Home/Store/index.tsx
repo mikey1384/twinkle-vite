@@ -6,6 +6,7 @@ import ChangeUsername from './ChangeUsername';
 import FileSizeItem from './FileSizeItem';
 import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
+import Loading from '~/components/Loading';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
@@ -42,6 +43,7 @@ export default function Store() {
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
+  const [loading, setLoading] = useState(false);
   const [unlockingUsernameChange, setUnlockingUsernameChange] = useState(false);
   const { canChangeUsername, canGenerateAICard, karmaPoints, userId } =
     useKeyContext((v) => v.myState);
@@ -56,8 +58,15 @@ export default function Store() {
     }
 
     async function init() {
-      const data = await loadMyData();
-      onSetUserState({ userId: data.userId, newState: data });
+      setLoading(true);
+      try {
+        const data = await loadMyData();
+        onSetUserState({ userId: data.userId, newState: data });
+      } catch {
+        console.error('error loading my data');
+      } finally {
+        setLoading(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageVisible, userId]);
@@ -100,42 +109,48 @@ export default function Store() {
         </p>
       </div>
       <KarmaStatus />
-      <ItemPanel
-        itemKey="changePassword"
-        itemName={changePasswordLabel}
-        style={{ marginTop: userId ? '4rem' : 0 }}
-        itemDescription={changePasswordDescriptionLabel}
-      >
-        <ChangePassword style={{ marginTop: '1rem' }} />
-      </ItemPanel>
-      <ItemPanel
-        karmaPoints={karmaPoints}
-        locked={!canChangeUsername}
-        itemKey="username"
-        itemName={changeUsernameLabel}
-        itemDescription={changeUsernameDescriptionLabel}
-        onUnlock={handleUnlockUsernameChange}
-        unlocking={unlockingUsernameChange}
-        style={{ marginTop: '3rem' }}
-      >
-        <ChangeUsername style={{ marginTop: '1rem' }} />
-      </ItemPanel>
-      <RewardBoostItem style={{ marginTop: '3rem' }} />
-      <FileSizeItem style={{ marginTop: '3rem' }} />
-      <ProfilePictureItem style={{ marginTop: '3rem' }} />
-      <AICardItem
-        style={{ marginTop: '3rem' }}
-        userId={userId}
-        canGenerateAICard={!!canGenerateAICard}
-        karmaPoints={karmaPoints}
-      />
-      <ItemPanel
-        karmaPoints={karmaPoints}
-        locked
-        itemKey="moreToCome"
-        itemName={`${moreToComeLabel}...`}
-        style={{ marginTop: '3rem' }}
-      />
+      {loading ? (
+        <Loading />
+      ) : (
+        <>
+          <ItemPanel
+            itemKey="changePassword"
+            itemName={changePasswordLabel}
+            style={{ marginTop: userId ? '4rem' : 0 }}
+            itemDescription={changePasswordDescriptionLabel}
+          >
+            <ChangePassword style={{ marginTop: '1rem' }} />
+          </ItemPanel>
+          <ItemPanel
+            karmaPoints={karmaPoints}
+            locked={!canChangeUsername}
+            itemKey="username"
+            itemName={changeUsernameLabel}
+            itemDescription={changeUsernameDescriptionLabel}
+            onUnlock={handleUnlockUsernameChange}
+            unlocking={unlockingUsernameChange}
+            style={{ marginTop: '3rem' }}
+          >
+            <ChangeUsername style={{ marginTop: '1rem' }} />
+          </ItemPanel>
+          <RewardBoostItem style={{ marginTop: '3rem' }} />
+          <FileSizeItem style={{ marginTop: '3rem' }} />
+          <ProfilePictureItem style={{ marginTop: '3rem' }} />
+          <AICardItem
+            style={{ marginTop: '3rem' }}
+            userId={userId}
+            canGenerateAICard={!!canGenerateAICard}
+            karmaPoints={karmaPoints}
+          />
+          <ItemPanel
+            karmaPoints={karmaPoints}
+            locked
+            itemKey="moreToCome"
+            itemName={`${moreToComeLabel}...`}
+            style={{ marginTop: '3rem' }}
+          />
+        </>
+      )}
     </div>
   );
 
