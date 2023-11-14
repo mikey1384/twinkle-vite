@@ -41,7 +41,7 @@ export default function Market() {
           Buy
         </nav>
         <nav
-          className={activeTab === 'sell' ? 'active' : ''}
+          className={`${activeTab === 'sell' ? 'active' : ''} alert`}
           onClick={() => setActiveTab('sell')}
         >
           Offers
