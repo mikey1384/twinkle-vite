@@ -48,19 +48,35 @@ export default function Game({
   const [loaded, setLoaded] = useState(false);
   const loading: React.MutableRefObject<any> = useRef(null);
   useEffect(() => {
+    const maxRetries = 3;
+    const retryDelay = 1000; // Delay in milliseconds
+    let success = false;
+
     init();
-    async function init() {
-      loading.current = true;
-      const chessMessage = await fetchCurrentChessState({
-        channelId,
-        recentChessMessage: currentChannel.recentChessMessage
-      });
-      onSetUserMadeLastMove(chessMessage?.userId === myId);
-      onSetMessage(chessMessage);
-      setUploaderId(chessMessage?.userId);
-      onSetInitialState(chessMessage?.chessState);
-      loading.current = false;
-      setLoaded(true);
+    async function init(attempts = 0) {
+      try {
+        loading.current = true;
+        const chessMessage = await fetchCurrentChessState({
+          channelId,
+          recentChessMessage: currentChannel.recentChessMessage
+        });
+        onSetUserMadeLastMove(chessMessage?.userId === myId);
+        onSetMessage(chessMessage);
+        setUploaderId(chessMessage?.userId);
+        onSetInitialState(chessMessage?.chessState);
+        success = true;
+      } catch (error) {
+        console.error('Error fetching chess state:', error);
+        if (attempts < maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          return init(attempts + 1);
+        }
+      } finally {
+        if (success || attempts === maxRetries) {
+          loading.current = false;
+          setLoaded(true);
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
