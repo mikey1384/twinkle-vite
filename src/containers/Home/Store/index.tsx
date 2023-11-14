@@ -118,23 +118,23 @@ export default function Store() {
       >
         <ChangePassword style={{ marginTop: '1rem' }} />
       </ItemPanel>
-      <ItemPanel
-        karmaPoints={karmaPoints}
-        locked={!canChangeUsername}
-        itemKey="username"
-        itemName={changeUsernameLabel}
-        itemDescription={changeUsernameDescriptionLabel}
-        onUnlock={handleUnlockUsernameChange}
-        unlocking={unlockingUsernameChange}
-        style={{ marginTop: '3rem' }}
-        loading={loading}
-      >
-        <ChangeUsername style={{ marginTop: '1rem' }} />
-      </ItemPanel>
       {!loaded ? (
         <Loading />
       ) : (
         <>
+          <ItemPanel
+            karmaPoints={karmaPoints}
+            locked={!canChangeUsername}
+            itemKey="username"
+            itemName={changeUsernameLabel}
+            itemDescription={changeUsernameDescriptionLabel}
+            onUnlock={handleUnlockUsernameChange}
+            unlocking={unlockingUsernameChange}
+            style={{ marginTop: '3rem' }}
+            loading={loading}
+          >
+            <ChangeUsername style={{ marginTop: '1rem' }} />
+          </ItemPanel>
           <RewardBoostItem style={{ marginTop: '3rem' }} loading={loading} />
           <FileSizeItem style={{ marginTop: '3rem' }} loading={loading} />
           <ProfilePictureItem style={{ marginTop: '3rem' }} loading={loading} />
