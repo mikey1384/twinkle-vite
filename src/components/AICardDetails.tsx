@@ -7,10 +7,12 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
 export default function AICardDetails({
+  className,
   style,
   card,
   removeRightPadding
 }: {
+  className?: string;
   style?: React.CSSProperties;
   card: Card;
   removeRightPadding?: boolean;
@@ -18,6 +20,7 @@ export default function AICardDetails({
   const { promptText } = useAICard(card);
   return (
     <div
+      className={className}
       style={{
         display: 'flex',
         flexDirection: 'column',
