@@ -19,6 +19,7 @@ export default function ItemPanel({
   itemDescription,
   isLeveled,
   locked: notUnlocked,
+  loading,
   maxLvl,
   style,
   karmaPoints,
@@ -35,6 +36,7 @@ export default function ItemPanel({
   maxLvl?: number;
   karmaPoints?: number;
   locked?: boolean;
+  loading?: boolean;
   onUnlock?: () => void;
   style?: React.CSSProperties;
   unlocking?: boolean;
@@ -199,7 +201,7 @@ export default function ItemPanel({
                 >
                   <Button
                     disabled={unlockProgress < 100}
-                    loading={unlocking}
+                    loading={unlocking || loading}
                     skeuomorphic
                     color="green"
                     onClick={async () => {

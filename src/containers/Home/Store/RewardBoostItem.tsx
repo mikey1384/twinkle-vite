@@ -164,8 +164,10 @@ const item = {
 };
 
 export default function RewardBoostItem({
+  loading,
   style
 }: {
+  loading?: boolean;
   style?: React.CSSProperties;
 }) {
   const [unlocking, setUnlocking] = useState(false);
@@ -195,6 +197,7 @@ export default function RewardBoostItem({
       itemKey="rewardBoost"
       itemName={item.name[rewardBoostLvl]}
       itemDescription={item.description[rewardBoostLvl]}
+      loading={loading}
       style={style}
       upgradeIcon={<Icon size="3x" icon="bolt" />}
     >

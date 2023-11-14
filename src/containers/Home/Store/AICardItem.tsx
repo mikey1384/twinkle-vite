@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
 
 AICardItem.propTypes = {
+  loading: PropTypes.bool,
   canGenerateAICard: PropTypes.bool,
   style: PropTypes.object,
   karmaPoints: PropTypes.number,
@@ -13,11 +14,13 @@ AICardItem.propTypes = {
 };
 
 export default function AICardItem({
+  loading,
   canGenerateAICard,
   karmaPoints,
   style,
   userId
 }: {
+  loading?: boolean;
   canGenerateAICard: boolean;
   karmaPoints: number;
   style?: React.CSSProperties;
@@ -33,6 +36,7 @@ export default function AICardItem({
     <ItemPanel
       karmaPoints={karmaPoints}
       locked={!canGenerateAICard}
+      loading={loading}
       itemKey="aiCard"
       itemName="AI Card Summoner License"
       itemDescription="Become one of the special users who can summon AI Cards"
