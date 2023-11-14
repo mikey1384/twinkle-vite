@@ -42,6 +42,7 @@ export default function DeletedPost({
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [contentObj, setContentObj] = useState({});
   const {
+    id,
     actualTitle,
     actualDescription,
     content,
@@ -57,6 +58,7 @@ export default function DeletedPost({
     thumbUrl,
     uploader = {}
   }: {
+    id?: number;
     actualTitle?: string;
     actualDescription?: string;
     content?: string;
@@ -107,6 +109,16 @@ export default function DeletedPost({
     >
       {loading ? (
         <Loading />
+      ) : !id ? (
+        <div
+          style={{
+            padding: '1rem',
+            fontWeight: 'bold',
+            color: Color.darkGray()
+          }}
+        >
+          Deleted
+        </div>
       ) : (
         <>
           <div style={{ padding: '1rem', height: 'auto' }}>

@@ -38,6 +38,7 @@ export default function DeletedMessage({
   const [confirmModalShown, setConfirmModalShown] = useState(false);
 
   const {
+    id,
     content,
     deleter,
     fileName = '',
@@ -47,6 +48,7 @@ export default function DeletedMessage({
     thumbUrl,
     uploader = {}
   }: {
+    id?: number;
     content?: string;
     deleter?: any;
     fileName?: string;
@@ -61,9 +63,15 @@ export default function DeletedMessage({
     init();
     async function init() {
       setLoading(true);
-      const data = await loadDeletedMessage(messageId);
-      setMessageObj(data);
-      setLoading(false);
+      try {
+        const data = await loadDeletedMessage(messageId);
+        setMessageObj(data);
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -92,7 +100,7 @@ export default function DeletedMessage({
     >
       {loading ? (
         <Loading />
-      ) : (
+      ) : id ? (
         <div style={{ padding: '1rem', height: 'auto' }}>
           <div
             style={{
@@ -142,6 +150,16 @@ export default function DeletedMessage({
               thumbUrl={thumbUrl || ''}
             />
           )}
+        </div>
+      ) : (
+        <div
+          style={{
+            padding: '1rem',
+            fontWeight: 'bold',
+            color: Color.darkGray()
+          }}
+        >
+          Deleted
         </div>
       )}
       {deleter && managementLevel > 1 && !!onDeletePermanently && (
