@@ -19,6 +19,7 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const [submitting, setSubmitting] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState<Record<string, any>>({
@@ -154,6 +155,7 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
             Cancel
           </Button>
           <Button
+            loading={submitting}
             color={doneColor}
             disabled={submitDisabled}
             onClick={handleSubmit}
@@ -173,9 +175,16 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
   }
 
   async function handleSubmit() {
-    await updateBanStatus({ userId: selectedUser.id, banStatus });
-    onUpdateBanStatus({ ...selectedUser, banned: banStatus });
-    onHide();
+    setSubmitting(true);
+    try {
+      await updateBanStatus({ userId: selectedUser.id, banStatus });
+      onUpdateBanStatus({ ...selectedUser, banned: banStatus });
+      onHide();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function handleSelectUser(user: Record<string, any>) {
