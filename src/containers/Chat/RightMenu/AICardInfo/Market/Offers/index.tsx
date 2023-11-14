@@ -26,7 +26,7 @@ export default function Offers({
         `}
       >
         <nav
-          className={selectedSubTab === 'incoming' ? 'active' : ''}
+          className={`${selectedSubTab === 'incoming' ? 'active' : ''} alert`}
           onClick={() => onSetSelectedSubTab('incoming')}
         >
           Incoming Offers
