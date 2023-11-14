@@ -11,11 +11,13 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import CardThumb from '~/components/CardThumb';
 
 export default function CardItem({
+  isNew = true,
   card,
   isOverflown,
   isLast,
   offerObj
 }: {
+  isNew?: boolean;
   card: any;
   isOverflown: boolean;
   isLast: boolean;
@@ -23,7 +25,8 @@ export default function CardItem({
 }) {
   const [userMenuShown, setUserMenuShown] = useState(false);
   const {
-    userLink: { color: userLinkColor }
+    userLink: { color: userLinkColor },
+    chatUnread: { color: chatUnreadColor }
   } = useKeyContext((v) => v.theme);
   const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
@@ -80,13 +83,15 @@ export default function CardItem({
             flexGrow: 1,
             marginLeft: '1rem',
             height: '100%',
-            width: '17vw'
+            width: '17vw',
+            display: 'flex',
+            alignItems: 'center'
           }}
         >
           <div
             style={{
               position: 'relative',
-              width: '100%',
+              width: isNew ? 'CALC(100% - 1.5rem)' : '100%',
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
@@ -190,6 +195,22 @@ export default function CardItem({
                 </b>
               ))}
           </div>
+          {isNew && (
+            <div
+              style={{
+                background: Color[chatUnreadColor]?.(),
+                display: 'flex',
+                color: '#fff',
+                fontWeight: 'bold',
+                minWidth: '1.3rem',
+                height: '1.3rem',
+                borderRadius: '50%',
+                lineHeight: 1,
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            />
+          )}
         </div>
       </div>
     </ErrorBoundary>
