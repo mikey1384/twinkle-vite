@@ -60,8 +60,10 @@ const youCanNowUploadLabel =
       )} in size`;
 
 export default function FileSizeItem({
+  loading,
   style
 }: {
+  loading?: boolean;
   style?: React.CSSProperties;
 }) {
   const {
@@ -80,6 +82,7 @@ export default function FileSizeItem({
       maxLvl={item.maxLvl}
       karmaPoints={karmaPoints}
       locked={!fileUploadLvl}
+      loading={loading}
       onUnlock={handleUpgrade}
       itemKey="file"
       itemName={item.name[fileUploadLvl]}

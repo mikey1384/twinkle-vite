@@ -25,8 +25,10 @@ const item = {
 };
 
 export default function ProfilePictureItem({
+  loading,
   style
 }: {
+  loading?: boolean;
   style?: React.CSSProperties;
 }) {
   const [unlocking, setUnlocking] = useState(false);
@@ -63,6 +65,7 @@ export default function ProfilePictureItem({
       maxLvl={item.maxLvl}
       karmaPoints={karmaPoints}
       locked={!numPics}
+      loading={loading}
       onUnlock={handleUpgrade}
       unlocking={unlocking}
       itemKey="profilePicture"
