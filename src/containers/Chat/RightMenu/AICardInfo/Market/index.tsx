@@ -1,13 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Color } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
 import Listings from './Listings';
 import Offers from './Offers';
 import { socket } from '~/constants/io';
-import { useKeyContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 
 export default function Market() {
-  const { userId } = useKeyContext((v) => v.myState);
+  const { userId, notifications } = useKeyContext((v) => v.myState);
+  const mostRecentOfferTimeStamp = useChatContext(
+    (v) => v.state.mostRecentOfferTimeStamp
+  );
+
+  const hasNewOffer = useMemo(() => {
+    return (
+      mostRecentOfferTimeStamp > notifications?.recentAICardOfferCheckTimeStamp
+    );
+  }, [
+    mostRecentOfferTimeStamp,
+    notifications?.recentAICardOfferCheckTimeStamp
+  ]);
 
   useEffect(() => {
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
@@ -41,7 +53,9 @@ export default function Market() {
           Buy
         </nav>
         <nav
-          className={`${activeTab === 'sell' ? 'active' : ''} alert`}
+          className={`${activeTab === 'sell' ? 'active' : ''} ${
+            hasNewOffer ? 'alert' : ''
+          }`}
           onClick={() => setActiveTab('sell')}
         >
           Offers

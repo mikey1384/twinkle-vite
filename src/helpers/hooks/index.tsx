@@ -115,6 +115,9 @@ export function useMyState() {
   const contextValues = useAppContext((v) => v.user.state.myState);
   const missions = useAppContext((v) => v.user.state.missions);
   const userId = useAppContext((v) => v.user.state.myState.userId);
+  const notifications = useAppContext(
+    (v) => v.user.state.myState.state?.notifications
+  );
   const loaded = useAppContext((v) => v.user.state.loaded);
   const signinModalShown = useAppContext((v) => v.user.state.signinModalShown);
   const myState = useAppContext((v) => v.user.state.userObj[userId] || {});
@@ -146,12 +149,12 @@ export function useMyState() {
   };
 
   const storedItems = getStoredItems(localStorageKeys);
-
   const result = useMemo(() => {
     return myState.loaded
       ? {
           ...contextValues,
           ...myState,
+          notifications,
           missions: { ...(myState?.state?.missions || {}), ...missions },
           isAdmin: myState.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
           loggedIn: true
@@ -167,7 +170,15 @@ export function useMyState() {
           ...storedItems,
           profileTheme: storedItems.profileTheme || DEFAULT_PROFILE_THEME
         };
-  }, [contextValues, loaded, missions, myState, signinModalShown, storedItems]);
+  }, [
+    contextValues,
+    loaded,
+    missions,
+    myState,
+    notifications,
+    signinModalShown,
+    storedItems
+  ]);
 
   return result;
 }

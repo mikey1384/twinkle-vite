@@ -201,6 +201,20 @@ export default function UserReducer(
           wordleStrictMode: action.strictMode
         }
       };
+    case 'UPDATE_AI_CARD_OFFER_CHECK_TIMESTAMP':
+      return {
+        ...state,
+        myState: {
+          ...state.myState,
+          state: {
+            ...state.myState.state,
+            notifications: {
+              ...state.myState.state?.notifications,
+              recentAICardOfferCheckTimeStamp: action.timeStamp
+            }
+          }
+        }
+      };
     case 'UPDATE_NUM_WORDS_COLLECTED':
       return {
         ...state,

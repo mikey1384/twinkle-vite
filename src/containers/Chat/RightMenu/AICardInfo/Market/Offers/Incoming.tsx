@@ -39,6 +39,9 @@ export default function Incoming() {
   const incomingOffersLoadMoreButton = useChatContext(
     (v) => v.state.incomingOffersLoadMoreButton
   );
+  const onUpdateAICardOfferCheckTimeStamp = useAppContext(
+    (v) => v.user.actions.onUpdateAICardOfferCheckTimeStamp
+  );
   const getIncomingCardOffers = useAppContext(
     (v) => v.requestHelpers.getIncomingCardOffers
   );
@@ -52,7 +55,9 @@ export default function Incoming() {
     init();
     async function init() {
       setLoaded(false);
-      const { offers, loadMoreShown } = await getIncomingCardOffers();
+      const { offers, loadMoreShown, recentAICardOfferCheckTimeStamp } =
+        await getIncomingCardOffers();
+      onUpdateAICardOfferCheckTimeStamp(recentAICardOfferCheckTimeStamp);
       onLoadIncomingOffers({ offers, loadMoreShown });
       setLoaded(true);
     }
@@ -66,12 +71,12 @@ export default function Incoming() {
 
     function handleAICardOfferPosted({ card }: { card: any }) {
       if (card.ownerId === userId) {
-        init();
+        refreshOffers();
       }
     }
     function handleAICardOfferCancel({ ownerId }: { ownerId: number }) {
       if (ownerId === userId) {
-        init();
+        refreshOffers();
       }
     }
     function handleAICardSold({
@@ -82,13 +87,15 @@ export default function Incoming() {
       sellerId: number;
     }) {
       if (card.ownerId === userId || sellerId === userId) {
-        init();
+        refreshOffers();
       }
     }
 
-    async function init() {
+    async function refreshOffers() {
       setLoaded(false);
-      const { offers, loadMoreShown } = await getIncomingCardOffers();
+      const { offers, loadMoreShown, recentAICardOfferCheckTimeStamp } =
+        await getIncomingCardOffers();
+      onUpdateAICardOfferCheckTimeStamp(recentAICardOfferCheckTimeStamp);
       onLoadIncomingOffers({ offers, loadMoreShown });
       setLoaded(true);
     }
