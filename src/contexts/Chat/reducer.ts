@@ -1021,6 +1021,7 @@ export default function ChatReducer(
         myCardsLoadMoreButton: state.myCardsLoadMoreButton,
         myListedCardIds: state.myListedCardIds,
         myListedCardsLoadMoreButton: state.myListedCardsLoadMoreButton,
+        mostRecentOfferTimeStamp: action.data.mostRecentOfferTimeStamp,
         numCardSummonedToday: action.data.numCardSummonedToday,
         numUnreads: alreadyUsingChat ? 0 : state.numUnreads,
         outgoingOffers: state.outgoingOffers,
@@ -1413,6 +1414,7 @@ export default function ChatReducer(
               }
             : {})
         },
+        mostRecentOfferTimeStamp: action.mostRecentOfferTimeStamp,
         numCardSummonedToday: action.numCardSummonedToday,
         selectedChannelId: null,
         selectedSubchannelId: null,

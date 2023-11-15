@@ -486,11 +486,13 @@ export default function ChatActions(dispatch: Dispatch) {
       cardFeeds,
       cardObj,
       loadMoreShown,
+      mostRecentOfferTimeStamp,
       numCardSummonedToday
     }: {
       cardFeeds: object[];
       cardObj: object;
       loadMoreShown: boolean;
+      mostRecentOfferTimeStamp: number;
       numCardSummonedToday: number;
     }) {
       return dispatch({
@@ -498,6 +500,7 @@ export default function ChatActions(dispatch: Dispatch) {
         cardFeeds,
         cardObj,
         loadMoreShown,
+        mostRecentOfferTimeStamp,
         numCardSummonedToday
       });
     },

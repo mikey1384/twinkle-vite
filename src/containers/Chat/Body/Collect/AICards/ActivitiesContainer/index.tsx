@@ -135,10 +135,18 @@ export default function ActivitiesContainer() {
         if (!loadingMore && !loadingMoreRef.current) {
           loadingMoreRef.current = true;
           setLoadingMore(true);
-          const { cardFeeds, cardObj, loadMoreShown } = await loadAICardFeeds(
-            aiCardFeeds[0].id
-          );
-          onLoadMoreAICards({ cardFeeds, cardObj, loadMoreShown });
+          const {
+            cardFeeds,
+            cardObj,
+            loadMoreShown,
+            mostRecentOfferTimeStamp
+          } = await loadAICardFeeds(aiCardFeeds[0].id);
+          onLoadMoreAICards({
+            cardFeeds,
+            cardObj,
+            loadMoreShown,
+            mostRecentOfferTimeStamp
+          });
           startTransition(() => {
             setScrollHeight(prevContentHeight);
             setLoadingMore(false);
