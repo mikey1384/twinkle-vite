@@ -11,7 +11,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import CardThumb from '~/components/CardThumb';
 
 export default function CardItem({
-  isNew = true,
+  isNew,
   card,
   isOverflown,
   isLast,

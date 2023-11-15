@@ -15,12 +15,15 @@ import {
 } from '~/contexts';
 
 export default function Incoming() {
-  const { userId } = useKeyContext((v) => v.myState);
+  const { userId, notifications } = useKeyContext((v) => v.myState);
   const CardItemsRef: React.RefObject<any> = useRef(null);
   const timeoutRef: React.MutableRefObject<any> = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
+  const [prevOfferCheckTimeStamp] = useState(
+    notifications?.recentAICardOfferCheckTimeStamp
+  );
   const socketConnected = useNotiContext((v) => v.state.socketConnected);
   const incomingOffers = useChatContext((v) => v.state.incomingOffers);
   const onLoadIncomingOffers = useChatContext(
@@ -158,18 +161,21 @@ export default function Incoming() {
             <b style={{ color: Color.darkerGray() }}>{`No incoming offers`}</b>
           </div>
         ) : (
-          displayedIncomingOffers.map((offer: any, index: number) => (
-            <CardItem
-              isOverflown={overflown}
-              isLast={index === displayedIncomingOffers.length - 1}
-              card={offer.card}
-              key={offer.id}
-              offerObj={{
-                user: offer.user,
-                price: offer.price
-              }}
-            />
-          ))
+          displayedIncomingOffers.map((offer: any, index: number) => {
+            return (
+              <CardItem
+                isOverflown={overflown}
+                isNew={offer.timeStamp > prevOfferCheckTimeStamp}
+                isLast={index === displayedIncomingOffers.length - 1}
+                card={offer.card}
+                key={offer.id}
+                offerObj={{
+                  user: offer.user,
+                  price: offer.price
+                }}
+              />
+            );
+          })
         )}
         {loaded && incomingOffersLoadMoreButton && (
           <LoadMoreButton
