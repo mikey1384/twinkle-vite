@@ -7,9 +7,11 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 
 export default function Offers({
+  hasNewOffer,
   onSetSelectedSubTab,
   selectedSubTab
 }: {
+  hasNewOffer: boolean;
   onSetSelectedSubTab: (subTab: string) => void;
   selectedSubTab: string;
 }) {
@@ -26,7 +28,9 @@ export default function Offers({
         `}
       >
         <nav
-          className={`${selectedSubTab === 'incoming' ? 'active' : ''} alert`}
+          className={`${selectedSubTab === 'incoming' ? 'active' : ''} ${
+            selectedSubTab !== 'incoming' && hasNewOffer ? 'alert' : ''
+          }`}
           onClick={() => onSetSelectedSubTab('incoming')}
         >
           Incoming Offers

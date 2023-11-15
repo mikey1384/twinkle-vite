@@ -68,6 +68,7 @@ export default function Market() {
           <Offers
             onSetSelectedSubTab={setSelectedSubTab}
             selectedSubTab={selectedSubTab}
+            hasNewOffer={hasNewOffer}
           />
         )}
       </div>
