@@ -397,14 +397,18 @@ export default function chatRequestHelpers({
     async getIncomingCardOffers(lastPrice: number) {
       try {
         const {
-          data: { offers, loadMoreShown }
+          data: { offers, loadMoreShown, recentAICardOfferCheckTimeStamp }
         } = await request.get(
           `${URL}/chat/aiCard/offer/incoming${
             typeof lastPrice === 'number' ? `?lastPrice=${lastPrice}` : ''
           }`,
           auth()
         );
-        return Promise.resolve({ offers, loadMoreShown });
+        return Promise.resolve({
+          offers,
+          loadMoreShown,
+          recentAICardOfferCheckTimeStamp
+        });
       } catch (error) {
         return handleError(error);
       }
