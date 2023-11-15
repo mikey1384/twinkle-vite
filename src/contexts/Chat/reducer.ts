@@ -2688,6 +2688,11 @@ export default function ChatReducer(
           }
         }
       };
+    case 'UPDATE_MOST_RECENT_AI_CARD_OFFER_TIMESTAMP':
+      return {
+        ...state,
+        mostRecentOfferTimeStamp: action.timeStamp
+      };
     case 'UPDATE_NUM_SUMMONED': {
       return {
         ...state,

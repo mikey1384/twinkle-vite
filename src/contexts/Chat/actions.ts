@@ -1452,6 +1452,12 @@ export default function ChatActions(dispatch: Dispatch) {
         path
       });
     },
+    onUpdateMostRecentAICardOfferTimeStamp(timeStamp: number) {
+      return dispatch({
+        type: 'UPDATE_MOST_RECENT_AI_CARD_OFFER_TIMESTAMP',
+        timeStamp
+      });
+    },
     onUpdateNumSummoned(numSummoned: number) {
       return dispatch({
         type: 'UPDATE_NUM_SUMMONED',

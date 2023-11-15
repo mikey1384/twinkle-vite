@@ -103,6 +103,9 @@ export default function Header({
   const onSetSelectedSubchannelId = useChatContext(
     (v) => v.actions.onSetSelectedSubchannelId
   );
+  const onUpdateMostRecentAICardOfferTimeStamp = useChatContext(
+    (v) => v.actions.onUpdateMostRecentAICardOfferTimeStamp
+  );
 
   const subchannelPath = useMemo(() => {
     if (!currentPathId) return null;
@@ -561,6 +564,9 @@ export default function Header({
         feed,
         card
       });
+      if (card.ownerId === userId) {
+        onUpdateMostRecentAICardOfferTimeStamp(feed.timeStamp);
+      }
       if (feed.offer?.user?.id === userId) {
         onMakeOutgoingOffer({ ...feed.offer, card });
         onUpdateAICard({
