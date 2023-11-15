@@ -622,13 +622,19 @@ export default function Main({
     if (chatType === AI_CARD_CHAT_TYPE) return;
     onUpdateChatType(AI_CARD_CHAT_TYPE);
     onSetLoadingAIImageChat(true);
-    const { cardFeeds, cardObj, loadMoreShown, numCardSummonedToday } =
-      await loadAICardFeeds();
+    const {
+      cardFeeds,
+      cardObj,
+      loadMoreShown,
+      mostRecentOfferTimeStamp,
+      numCardSummonedToday
+    } = await loadAICardFeeds();
     if (currentPathIdRef.current === AI_CARD_CHAT_TYPE) {
       onLoadAICardChat({
         cardFeeds,
         cardObj,
         loadMoreShown,
+        mostRecentOfferTimeStamp,
         numCardSummonedToday
       });
     }

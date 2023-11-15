@@ -47,6 +47,7 @@ export const initialChatState = {
   myListedCardIds: [],
   myListedCardsLoadMoreButton: false,
   myStream: null,
+  mostRecentOfferTimeStamp: 0,
   numCardSummonedToday: 0,
   numUnreads: 0,
   outgoingOffers: [],

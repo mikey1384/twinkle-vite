@@ -878,7 +878,13 @@ export default function chatRequestHelpers({
     async loadAICardFeeds(lastId: number) {
       try {
         const {
-          data: { cardFeeds, cardObj, loadMoreShown, numCardSummonedToday }
+          data: {
+            cardFeeds,
+            cardObj,
+            loadMoreShown,
+            mostRecentOfferTimeStamp,
+            numCardSummonedToday
+          }
         } = await request.get(
           `${URL}/chat/aiCard${lastId ? `?lastId=${lastId}` : ''}`,
           auth()
@@ -887,6 +893,7 @@ export default function chatRequestHelpers({
           cardFeeds,
           cardObj,
           loadMoreShown,
+          mostRecentOfferTimeStamp,
           numCardSummonedToday
         });
       } catch (error) {
