@@ -609,12 +609,40 @@ export default function Main({
     if (chatType === VOCAB_CHAT_TYPE) return;
     onUpdateChatType(VOCAB_CHAT_TYPE);
     onSetLoadingVocabulary(true);
-    const { vocabActivities, wordsObj, wordCollectors } =
-      await loadVocabulary();
-    if (currentPathIdRef.current === VOCAB_CHAT_TYPE) {
-      onLoadVocabulary({ vocabActivities, wordsObj, wordCollectors });
+
+    const maxRetries = 3;
+    const retryCooldown = 1000;
+    let success = false;
+
+    await retryLoadVocabulary();
+
+    async function retryLoadVocabulary(retryCount = 0) {
+      try {
+        const { vocabActivities, wordsObj, wordCollectors } =
+          await loadVocabulary();
+        if (currentPathIdRef.current === VOCAB_CHAT_TYPE) {
+          onLoadVocabulary({ vocabActivities, wordsObj, wordCollectors });
+        }
+        success = true;
+      } catch (error) {
+        if (retryCount < maxRetries) {
+          console.error(
+            `Attempt ${retryCount + 1} failed, retrying in ${
+              retryCooldown / 1000
+            } seconds...`,
+            error
+          );
+          await new Promise((resolve) => setTimeout(resolve, retryCooldown));
+          return retryLoadVocabulary(retryCount + 1);
+        } else {
+          console.error('All attempts failed:', error);
+        }
+      } finally {
+        if (success || retryCount >= maxRetries) {
+          onSetLoadingVocabulary(false);
+        }
+      }
     }
-    onSetLoadingVocabulary(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatType]);
 
