@@ -34,8 +34,8 @@ export default function ProfilePic({
 }) {
   const userObj = useAppContext((v) => v.user.state.userObj);
   const { userId: myId } = useKeyContext((v) => v.myState);
+  const [hasError, setHasError] = useState(false);
   const [changePictureShown, setChangePictureShown] = useState(false);
-  const [src, setSrc] = useState(`${cloudFrontURL}${profilePicUrl}`);
   const displayedProfilePicUrl = useMemo(() => {
     if (userObj?.[userId]?.profilePicUrl) {
       return userObj?.[userId]?.profilePicUrl;
@@ -43,13 +43,14 @@ export default function ProfilePic({
     return profilePicUrl;
   }, [profilePicUrl, userId, userObj]);
 
-  useEffect(() => {
-    setSrc(`${cloudFrontURL}${displayedProfilePicUrl}`);
-  }, [displayedProfilePicUrl, userId]);
   const statusTagShown = useMemo(
     () => (online || myId === userId) && statusShown,
     [myId, online, statusShown, userId]
   );
+
+  useEffect(() => {
+    setHasError(false);
+  }, [userId]);
 
   return (
     <div
@@ -79,8 +80,12 @@ export default function ProfilePic({
           height: '100%',
           borderRadius: '50%'
         }}
-        src={displayedProfilePicUrl ? src : '/img/default.png'}
-        onError={() => setSrc('/img/default.png')}
+        src={
+          displayedProfilePicUrl && !hasError
+            ? `${cloudFrontURL}${displayedProfilePicUrl}`
+            : '/img/default.png'
+        }
+        onError={() => setHasError(true)}
       />
       {!deviceIsMobile && (
         <ChangePicture
