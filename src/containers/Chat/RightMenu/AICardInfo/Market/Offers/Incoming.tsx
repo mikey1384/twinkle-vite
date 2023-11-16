@@ -56,15 +56,36 @@ export default function Incoming() {
   }, [displayedIncomingOffers]);
 
   useEffect(() => {
+    let isMounted = true;
+    let success = false;
     init();
-    async function init() {
-      setLoaded(false);
-      const { offers, loadMoreShown, recentAICardOfferCheckTimeStamp } =
-        await getIncomingCardOffers();
-      onUpdateAICardOfferCheckTimeStamp(recentAICardOfferCheckTimeStamp);
-      onLoadIncomingOffers({ offers, loadMoreShown });
-      setLoaded(true);
+    async function init(retryCount = 0) {
+      try {
+        setLoaded(false);
+        const { offers, loadMoreShown, recentAICardOfferCheckTimeStamp } =
+          await getIncomingCardOffers();
+        if (isMounted) {
+          onUpdateAICardOfferCheckTimeStamp(recentAICardOfferCheckTimeStamp);
+          onLoadIncomingOffers({ offers, loadMoreShown });
+          success = true;
+        }
+      } catch (error) {
+        console.error('Error fetching offers:', error);
+        if (retryCount < 3) {
+          setTimeout(() => {
+            if (isMounted) init(retryCount + 1);
+          }, 1000);
+        }
+      } finally {
+        if (isMounted && (retryCount >= 3 || success)) {
+          setLoaded(true);
+        }
+      }
     }
+
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socketConnected]);
 
