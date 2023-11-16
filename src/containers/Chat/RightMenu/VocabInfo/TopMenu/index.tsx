@@ -69,7 +69,7 @@ export default function TopMenu() {
             </FilterBar>
           )}
           <div style={{ marginTop: '1rem' }}>
-            {wordCollectors
+            {(wordCollectors || [])
               .filter(
                 (collector: { numWordsCollected: number }) =>
                   collector.numWordsCollected > 0
