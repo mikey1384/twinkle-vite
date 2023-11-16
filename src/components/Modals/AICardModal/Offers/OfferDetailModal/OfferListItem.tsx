@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import moment from 'moment';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
+import { useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -12,6 +13,7 @@ export default function OfferListItem({
   offer,
   onUserMenuShownChange,
   onAcceptClick,
+  cardId,
   ownerId,
   userLinkColor,
   userId
@@ -19,10 +21,15 @@ export default function OfferListItem({
   offer: any;
   onUserMenuShownChange: (v: boolean) => void;
   onAcceptClick: (offer: any) => void;
+  cardId: number;
   ownerId: number;
   userLinkColor: string;
   userId: number;
 }) {
+  const [accepting, setAccepting] = useState(false);
+  const deleteAICardOffer = useAppContext(
+    (v) => v.requestHelpers.deleteAICardOffer
+  );
   const displayedTimeStamp = useMemo(
     () => moment.unix(offer.timeStamp).format('lll'),
     [offer.timeStamp]
@@ -94,11 +101,12 @@ export default function OfferListItem({
           {ownerId === userId && (
             <div>
               <Button
-                onClick={() => onAcceptClick(offer)}
+                onClick={handleAcceptClick}
                 color="oceanBlue"
                 filled
                 mobilePadding="0.5rem"
                 mobileBorderRadius="3px"
+                loading={accepting}
               >
                 <span
                   className={css`
@@ -108,7 +116,7 @@ export default function OfferListItem({
                     }
                   `}
                 >
-                  Accept
+                  {offer.userId === userId ? 'Take Coins' : 'Accept'}
                 </span>
               </Button>
             </div>
@@ -117,4 +125,21 @@ export default function OfferListItem({
       </nav>
     </ErrorBoundary>
   );
+
+  async function handleAcceptClick() {
+    if (offer.userId === userId) {
+      try {
+        setAccepting(true);
+        await deleteAICardOffer({
+          offerId: offer.id,
+          cardId
+        });
+      } catch (error) {
+        console.error(error);
+        setAccepting(false);
+      }
+    } else {
+      onAcceptClick(offer);
+    }
+  }
 }

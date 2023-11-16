@@ -83,6 +83,7 @@ export default function OfferDetailModal({
             offers.map((offer) => (
               <OfferListItem
                 key={offer.id}
+                cardId={cardId}
                 ownerId={ownerId}
                 offer={offer}
                 onAcceptClick={(offer) => setOfferAcceptModalObj(offer)}
