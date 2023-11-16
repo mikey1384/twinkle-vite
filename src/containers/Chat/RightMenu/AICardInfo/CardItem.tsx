@@ -15,12 +15,14 @@ export default function CardItem({
   card,
   isOverflown,
   isLast,
+  onClick,
   offerObj
 }: {
   isNew?: boolean;
   card: any;
   isOverflown: boolean;
   isLast: boolean;
+  onClick?: () => void;
   offerObj?: any;
 }) {
   const [userMenuShown, setUserMenuShown] = useState(false);
@@ -72,9 +74,7 @@ export default function CardItem({
           borderBottom:
             isOverflown && isLast ? 'none' : `1px solid ${Color.borderGray()}`
         }}
-        onClick={() =>
-          userMenuShown ? null : navigate(`./?cardId=${card.id}`)
-        }
+        onClick={() => (userMenuShown ? null : handleClick())}
         key={card.id}
       >
         <CardThumb card={card} />
@@ -215,4 +215,9 @@ export default function CardItem({
       </div>
     </ErrorBoundary>
   );
+
+  function handleClick() {
+    navigate(`./?cardId=${card.id}`);
+    onClick?.();
+  }
 }

@@ -18,6 +18,7 @@ export default function Incoming() {
   const { userId, notifications } = useKeyContext((v) => v.myState);
   const CardItemsRef: React.RefObject<any> = useRef(null);
   const timeoutRef: React.MutableRefObject<any> = useRef(null);
+  const [selectedCardIds, setSelectedCardIds] = useState<number[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [overflown, setOverflown] = useState(false);
@@ -165,10 +166,20 @@ export default function Incoming() {
             return (
               <CardItem
                 isOverflown={overflown}
-                isNew={offer.timeStamp > prevOfferCheckTimeStamp}
+                isNew={
+                  !selectedCardIds.includes(offer.card.id) &&
+                  offer.timeStamp > prevOfferCheckTimeStamp
+                }
                 isLast={index === displayedIncomingOffers.length - 1}
                 card={offer.card}
                 key={offer.id}
+                onClick={() =>
+                  setSelectedCardIds((cardIds) =>
+                    cardIds.includes(offer.card.id)
+                      ? cardIds
+                      : [...cardIds, offer.card.id]
+                  )
+                }
                 offerObj={{
                   user: offer.user,
                   price: offer.price
