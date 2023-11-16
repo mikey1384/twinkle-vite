@@ -61,7 +61,9 @@ export default function ContentLink({
 
   const label = useMemo(
     () =>
-      contentType === 'user' ? username : title || content || truncatedTopic,
+      !title && contentType === 'user'
+        ? username
+        : title || content || truncatedTopic,
     [content, contentType, title, truncatedTopic, username]
   );
 
