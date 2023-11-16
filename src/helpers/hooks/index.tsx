@@ -115,6 +115,16 @@ export function useMyState() {
   const contextValues = useAppContext((v) => v.user.state.myState);
   const missions = useAppContext((v) => v.user.state.missions);
   const userId = useAppContext((v) => v.user.state.myState.userId);
+  const collectType = useAppContext((v) => v.user.state.myState.collectType);
+  const lastChatPath = useAppContext((v) => v.user.state.myState.lastChatPath);
+  const hideWatched = useAppContext((v) => v.user.state.myState.hideWatched);
+  const numWordsCollected = useAppContext(
+    (v) => v.user.state.myState.numWordsCollected
+  );
+  const searchFilter = useAppContext((v) => v.user.state.myState.searchFilter);
+  const wordleStrictMode = useAppContext(
+    (v) => v.user.state.myState.wordleStrictMode
+  );
   const notifications = useAppContext(
     (v) => v.user.state.myState.state?.notifications
   );
@@ -155,6 +165,12 @@ export function useMyState() {
           ...contextValues,
           ...myState,
           notifications,
+          collectType,
+          hideWatched,
+          lastChatPath,
+          numWordsCollected,
+          searchFilter,
+          wordleStrictMode,
           missions: { ...(myState?.state?.missions || {}), ...missions },
           isAdmin: myState.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
           loggedIn: true
@@ -171,13 +187,19 @@ export function useMyState() {
           profileTheme: storedItems.profileTheme || DEFAULT_PROFILE_THEME
         };
   }, [
+    collectType,
     contextValues,
+    hideWatched,
+    lastChatPath,
     loaded,
     missions,
     myState,
     notifications,
+    numWordsCollected,
+    searchFilter,
     signinModalShown,
-    storedItems
+    storedItems,
+    wordleStrictMode
   ]);
 
   return result;
