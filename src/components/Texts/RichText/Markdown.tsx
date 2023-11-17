@@ -527,6 +527,9 @@ function Markdown({
     if (processedText.includes('=')) {
       processedText = processedText.replace(/=/g, '\\=');
     }
+    if (processedText.includes('+')) {
+      processedText = processedText.replace(/\+/g, '&#43;');
+    }
     const lines = processedText.split('\n');
     const tablePattern = new RegExp('\\|.*\\|.*\\|');
     const containsTable = lines.some((line) => tablePattern.test(line));
