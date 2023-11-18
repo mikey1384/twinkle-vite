@@ -25,6 +25,7 @@ export default function Main({
   const [isCompleted, setIsCompleted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
+  const isMountedRef = useRef(true);
   const correctSoundRef = useRef<HTMLAudioElement>(null);
   const gotWrongRef = useRef(false);
   const loadingRef = useRef(false);
@@ -34,10 +35,13 @@ export default function Main({
   const gotWrongTimerRef = useRef<any>(null);
 
   useEffect(() => {
-    // Cleanup function to clear the interval when the component unmounts
     return () => {
+      isMountedRef.current = false;
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+      if (gotWrongTimerRef.current) {
+        clearTimeout(gotWrongTimerRef.current);
       }
     };
   }, []);
@@ -80,12 +84,14 @@ export default function Main({
           }
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        if (currentIndex < questionIds.length - 1) {
-          setCurrentIndex((prev) => prev + 1);
-          numWrong.current = 0;
-          loadingRef.current = false;
-        } else {
-          handleGameFinish();
+        if (isMountedRef.current) {
+          if (currentIndex < questionIds.length - 1) {
+            setCurrentIndex((prev) => prev + 1);
+            numWrong.current = 0;
+            loadingRef.current = false;
+          } else {
+            handleGameFinish();
+          }
         }
       }
     }
@@ -105,16 +111,18 @@ export default function Main({
       }
       gotWrongRef.current = true;
       gotWrongTimerRef.current = setTimeout(() => {
-        onSetQuestionObj((prev: any) => ({
-          ...prev,
-          [currentIndex]: {
-            ...prev[currentIndex],
-            wasWrong: true,
-            selectedChoiceIndex: null
-          }
-        }));
-        setGotWrong(false);
-        gotWrongRef.current = false;
+        if (isMountedRef.current) {
+          onSetQuestionObj((prev: any) => ({
+            ...prev,
+            [currentIndex]: {
+              ...prev[currentIndex],
+              wasWrong: true,
+              selectedChoiceIndex: null
+            }
+          }));
+          setGotWrong(false);
+          gotWrongRef.current = false;
+        }
       }, delay);
     }
     async function handleGameFinish() {
