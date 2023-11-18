@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import QuestionSlide from './QuestionSlide';
 import SlideContainer from './SlideContainer';
@@ -8,9 +8,6 @@ import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
 const delay = 1000;
-let elapsedTime = 0;
-let timer: any = null;
-let gotWrongTimer: any = null;
 
 export default function Main({
   isOnStreak,
@@ -28,10 +25,22 @@ export default function Main({
   const [isCompleted, setIsCompleted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gotWrong, setGotWrong] = useState(false);
-  const correctSoundRef: React.RefObject<any> = useRef(null);
+  const correctSoundRef = useRef<HTMLAudioElement>(null);
   const gotWrongRef = useRef(false);
   const loadingRef = useRef(false);
   const numWrong = useRef(0);
+  const elapsedTimeRef = useRef(0);
+  const timerRef = useRef<any>(null);
+  const gotWrongTimerRef = useRef<any>(null);
+
+  useEffect(() => {
+    // Cleanup function to clear the interval when the component unmounts
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
 
   const Slides = useMemo(() => {
     if (!questionIds || questionIds?.length === 0) return null;
@@ -50,9 +59,9 @@ export default function Main({
 
     async function handleSelectCorrectAnswer() {
       if (!loadingRef.current && !gotWrongRef.current) {
-        clearTimeout(timer);
+        clearInterval(timerRef.current);
         loadingRef.current = true;
-        const score = handleReturnCalculatedScore(elapsedTime);
+        const score = handleReturnCalculatedScore(elapsedTimeRef.current);
         onSetQuestionObj((prev: any) => ({
           ...prev,
           [currentIndex]: {
@@ -62,7 +71,13 @@ export default function Main({
           }
         }));
         if (!deviceIsMobile) {
-          correctSoundRef.current.play();
+          try {
+            if (correctSoundRef.current) {
+              correctSoundRef.current.play();
+            }
+          } catch (error) {
+            console.error('Error playing sound:', error);
+          }
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
         if (currentIndex < questionIds.length - 1) {
@@ -77,7 +92,7 @@ export default function Main({
 
     function handleSetGotWrong(index: number) {
       numWrong.current = numWrong.current + 1;
-      clearTimeout(gotWrongTimer);
+      clearTimeout(gotWrongTimerRef.current);
       if (!loadingRef.current) {
         setGotWrong(true);
         onSetQuestionObj((prev: any) => ({
@@ -89,7 +104,7 @@ export default function Main({
         }));
       }
       gotWrongRef.current = true;
-      gotWrongTimer = setTimeout(() => {
+      gotWrongTimerRef.current = setTimeout(() => {
         onSetQuestionObj((prev: any) => ({
           ...prev,
           [currentIndex]: {
@@ -150,7 +165,7 @@ export default function Main({
   }, [questionIds, questionObj]);
 
   return (
-    <ErrorBoundary componentPath="GrammarGameModal/Game/Carousel/index">
+    <ErrorBoundary componentPath="GrammarGameModal/Game/Main/index">
       <SlideContainer
         questions={displayedQuestions}
         selectedIndex={currentIndex}
@@ -168,12 +183,14 @@ export default function Main({
     if (numWrong < 1) return 0;
     return numWrong * 200;
   }
-}
 
-function handleCountdownStart() {
-  clearTimeout(timer);
-  elapsedTime = 0;
-  timer = setInterval(() => {
-    elapsedTime = elapsedTime + 1;
-  }, 1);
+  function handleCountdownStart() {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    elapsedTimeRef.current = 0;
+    timerRef.current = setInterval(() => {
+      elapsedTimeRef.current = elapsedTimeRef.current + 1;
+    }, 1);
+  }
 }
