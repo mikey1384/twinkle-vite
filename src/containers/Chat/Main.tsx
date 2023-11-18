@@ -243,8 +243,8 @@ export default function Main({
   const onSetLoadingVocabulary = useChatContext(
     (v) => v.actions.onSetLoadingVocabulary
   );
-  const onSetLoadingAIImageChat = useChatContext(
-    (v) => v.actions.onSetLoadingAIImageChat
+  const onSetLoadingAICardChat = useChatContext(
+    (v) => v.actions.onSetLoadingAICardChat
   );
   const onSetMessageState = useChatContext((v) => v.actions.onSetMessageState);
   const onSetChessGameState = useChatContext(
@@ -649,24 +649,52 @@ export default function Main({
   const handleEnterAICardChat = useCallback(async () => {
     if (chatType === AI_CARD_CHAT_TYPE) return;
     onUpdateChatType(AI_CARD_CHAT_TYPE);
-    onSetLoadingAIImageChat(true);
-    const {
-      cardFeeds,
-      cardObj,
-      loadMoreShown,
-      mostRecentOfferTimeStamp,
-      numCardSummonedToday
-    } = await loadAICardFeeds();
-    if (currentPathIdRef.current === AI_CARD_CHAT_TYPE) {
-      onLoadAICardChat({
-        cardFeeds,
-        cardObj,
-        loadMoreShown,
-        mostRecentOfferTimeStamp,
-        numCardSummonedToday
-      });
+    onSetLoadingAICardChat(true);
+
+    const maxRetries = 3;
+    const retryCooldown = 1000;
+    let success = false;
+
+    await retryLoadAICardChat();
+
+    async function retryLoadAICardChat(retryCount = 0) {
+      try {
+        const {
+          cardFeeds,
+          cardObj,
+          loadMoreShown,
+          mostRecentOfferTimeStamp,
+          numCardSummonedToday
+        } = await loadAICardFeeds();
+        if (currentPathIdRef.current === AI_CARD_CHAT_TYPE) {
+          onLoadAICardChat({
+            cardFeeds,
+            cardObj,
+            loadMoreShown,
+            mostRecentOfferTimeStamp,
+            numCardSummonedToday
+          });
+        }
+        success = true;
+      } catch (error) {
+        if (retryCount < maxRetries) {
+          console.error(
+            `Attempt ${retryCount + 1} failed, retrying in ${
+              retryCooldown / 1000
+            } seconds...`,
+            error
+          );
+          await new Promise((resolve) => setTimeout(resolve, retryCooldown));
+          return retryLoadAICardChat(retryCount + 1);
+        } else {
+          console.error('All attempts failed:', error);
+        }
+      } finally {
+        if (success || retryCount >= maxRetries) {
+          onSetLoadingAICardChat(false);
+        }
+      }
     }
-    onSetLoadingAIImageChat(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatType]);
 

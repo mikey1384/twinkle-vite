@@ -2211,10 +2211,10 @@ export default function ChatReducer(
         ...state,
         loadingVocabulary: action.loading
       };
-    case 'SET_LOADING_AI_IMAGE_CHAT':
+    case 'SET_LOADING_AI_CARD_CHAT':
       return {
         ...state,
-        loadingAIImageChat: action.loading
+        loadingAICardChat: action.loading
       };
     case 'SET_MESSAGE_STATE':
       return {

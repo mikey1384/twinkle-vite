@@ -1099,9 +1099,9 @@ export default function ChatActions(dispatch: Dispatch) {
         loading
       });
     },
-    onSetLoadingAIImageChat(loading: boolean) {
+    onSetLoadingAICardChat(loading: boolean) {
       return dispatch({
-        type: 'SET_LOADING_AI_IMAGE_CHAT',
+        type: 'SET_LOADING_AI_CARD_CHAT',
         loading
       });
     },
