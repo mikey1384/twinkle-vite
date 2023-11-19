@@ -126,9 +126,10 @@ export default function AccountMenu({
 
   function handleLogout() {
     socket.emit('leave_my_notification_channel', userId);
+    // important
     socket.disconnect();
+    socket.connect();
     onLogout();
     onResetChat();
-    socket.connect();
   }
 }
