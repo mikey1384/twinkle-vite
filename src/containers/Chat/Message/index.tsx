@@ -296,9 +296,7 @@ function Message({
     profilePicUrl,
     targetMessage,
     targetSubject,
-    isCallNotification,
-    tempMessageId,
-    ...post
+    isCallNotification
   } = message;
   let appliedUsername = username;
   let appliedProfilePicUrl = profilePicUrl;
@@ -333,11 +331,30 @@ function Message({
       !message.isSubject &&
       (!(message.isNotification && !message.chessState) || isCallNotification)
     ) {
-      handleSaveMessage();
+      handleSaveMessage(message);
     }
-    async function handleSaveMessage() {
+
+    async function handleSaveMessage(newMessage: {
+      tempMessageId: number;
+      userId: number;
+      content: string;
+      channelId: number;
+      timeStamp: number;
+      subchannelId?: number;
+      username?: string;
+      profilePicUrl?: string;
+      targetMessage?: any;
+    }) {
       const isCielChat = partner?.id === CIEL_TWINKLE_ID;
       const isZeroChat = partner?.id === ZERO_TWINKLE_ID;
+      const { tempMessageId } = newMessage;
+      const post = {
+        userId: newMessage.userId,
+        content: newMessage.content,
+        channelId: newMessage.channelId,
+        timeStamp: newMessage.timeStamp,
+        subchannelId: newMessage.subchannelId
+      };
       const { messageId, timeStamp } = await saveChatMessage({
         message: post,
         targetMessageId: targetMessage?.id,
