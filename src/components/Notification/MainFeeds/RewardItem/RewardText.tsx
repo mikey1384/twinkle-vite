@@ -90,24 +90,24 @@ export default function RewardText({
         <ContentLink
           style={{ color: contentLinkColor }}
           content={{
-            id: contentId,
-            title: `${contentType}${
-              !targetObj ||
-              targetObj.notFound ||
-              (contentType === 'comment' && targetObj?.filePath)
-                ? ''
-                : contentType === 'comment'
-                ? ` (${truncateText({
-                    text: targetObj.content,
-                    limit: 100
-                  })})`
-                : ` (${truncateText({
-                    text: targetObj.title,
-                    limit: 100
-                  })})`
-            }`
+            id: contentId
           }}
           contentType={contentType}
+          label={`${contentType}${
+            !targetObj ||
+            targetObj.notFound ||
+            (contentType === 'comment' && targetObj?.filePath)
+              ? ''
+              : contentType === 'comment'
+              ? ` (${truncateText({
+                  text: targetObj.content,
+                  limit: 100
+                })})`
+              : ` (${truncateText({
+                  text: targetObj.title,
+                  limit: 100
+                })})`
+          }`}
         />
       </div>
     );
@@ -125,11 +125,11 @@ export default function RewardText({
         }}
         content={{
           id: rootId,
-          title: recommendationTargetLabel,
           missionType: rootMissionType
         }}
         contentType={rootType === 'pass' ? rootTargetType : rootType}
         rootType={rootTargetType}
+        label={recommendationTargetLabel}
       />{' '}
       <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
         You earn {rewardAmount} Twinkle Coin

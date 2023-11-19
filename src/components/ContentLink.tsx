@@ -13,17 +13,19 @@ export default function ContentLink({
     content,
     missionType,
     rootMissionType,
-    topic,
     title,
+    topic,
     username
   },
   contentType,
+  label,
   rootType = 'mission',
   theme
 }: {
   style?: any;
   content: any;
   contentType: string;
+  label: string;
   rootType?: string;
   theme?: string;
 }) {
@@ -59,15 +61,15 @@ export default function ContentLink({
     return path ? `/${path}` : '';
   }, [contentType, id, missionType, rootMissionType, username]);
 
-  const label = useMemo(
+  const appliedLabel = useMemo(
     () =>
-      !title && contentType === 'user'
+      !label && contentType === 'user'
         ? username
-        : title || content || truncatedTopic,
-    [content, contentType, title, truncatedTopic, username]
+        : label || title || content || truncatedTopic,
+    [content, contentType, label, title, truncatedTopic, username]
   );
 
-  return label ? (
+  return appliedLabel ? (
     <Link
       style={{
         fontWeight: 'bold',
