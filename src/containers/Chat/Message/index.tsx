@@ -337,6 +337,8 @@ function Message({
     async function handleSaveMessage(newMessage: {
       tempMessageId: number;
       userId: number;
+      isChessMsg: boolean;
+      chessState: any;
       content: string;
       channelId: number;
       timeStamp: number;
@@ -352,6 +354,8 @@ function Message({
         userId: newMessage.userId,
         content: newMessage.content,
         channelId: newMessage.channelId,
+        chessState: newMessage.chessState,
+        isChessMsg: newMessage.isChessMsg,
         timeStamp: newMessage.timeStamp,
         subchannelId: newMessage.subchannelId
       };
