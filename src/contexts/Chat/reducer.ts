@@ -993,18 +993,28 @@ export default function ChatReducer(
           : state.cardObj,
         channelsObj: newChannelsObj,
         chatStatus: state.chatStatus,
-        chatType: state.chatType ? state.chatType : action.data.chatType,
+        chatType:
+          state.chatType && action.userId === state.prevUserId
+            ? state.chatType
+            : action.data.chatType,
         classChannelIds: action.data.classChannelIds,
         classLoadMoreButton,
         customChannelNames: action.data.customChannelNames,
         favoriteChannelIds: action.data.favoriteChannelIds,
         favoriteLoadMoreButton,
         homeChannelIds: action.data.homeChannelIds,
-        homeLoadMoreButton: alreadyUsingChat
-          ? state.homeLoadMoreButton
-          : homeLoadMoreButton,
-        incomingOffers: state.incomingOffers,
-        incomingOffersLoadMoreButton: state.incomingOffersLoadMoreButton,
+        homeLoadMoreButton:
+          alreadyUsingChat && action.userId === state.prevUserId
+            ? state.homeLoadMoreButton
+            : homeLoadMoreButton,
+        incomingOffers:
+          action.userId === state.prevUserId
+            ? state.incomingOffers
+            : action.data.incomingOffers || [],
+        incomingOffersLoadMoreButton:
+          action.userId === state.prevUserId
+            ? state.incomingOffersLoadMoreButton
+            : action.data.incomingOffersLoadMoreButton || false,
         lastSubchannelPaths:
           action.data.currentSubchannelId &&
           action.data.currentChannelId === state.selectedChannelId
@@ -1013,23 +1023,57 @@ export default function ChatReducer(
                 [action.data.currentChannelId]:
                   newSubchannelObj[action.data.currentSubchannelId].path
               }
-            : state.lastSubchannelPaths,
+            : action.userId === state.prevUserId
+            ? state.lastSubchannelPaths
+            : action.data.lastSubchannelPaths || {},
         loaded: true,
-        listedCardIds: state.listedCardIds,
-        listedCardsLoadMoreButton: state.listedCardsLoadMoreButton,
-        myCardIds: state.myCardIds,
-        myCardsLoadMoreButton: state.myCardsLoadMoreButton,
-        myListedCardIds: state.myListedCardIds,
-        myListedCardsLoadMoreButton: state.myListedCardsLoadMoreButton,
+        listedCardIds:
+          action.userId === state.prevUserId
+            ? state.listedCardIds
+            : action.data.listedCardIds || [],
+        listedCardsLoadMoreButton:
+          action.userId === state.prevUserId
+            ? state.listedCardsLoadMoreButton
+            : action.data.listedCardsLoadMoreButton || false,
+        myCardIds:
+          action.userId === state.prevUserId
+            ? state.myCardIds
+            : action.data.myCardIds || [],
+        myCardsLoadMoreButton:
+          action.userId === state.prevUserId
+            ? state.myCardsLoadMoreButton
+            : action.data.myCardsLoadMoreButton || false,
+        myListedCardIds:
+          action.userId === state.prevUserId
+            ? state.myListedCardIds
+            : action.data.myListedCardIds || [],
+        myListedCardsLoadMoreButton:
+          action.userId === state.prevUserId
+            ? state.myListedCardsLoadMoreButton
+            : action.data.myListedCardsLoadMoreButton || false,
         mostRecentOfferTimeStamp: action.data.mostRecentOfferTimeStamp,
         numCardSummonedToday: action.data.numCardSummonedToday,
-        numUnreads: alreadyUsingChat ? 0 : state.numUnreads,
-        outgoingOffers: state.outgoingOffers,
-        outgoingOffersLoadMoreButton: state.outgoingOffersLoadMoreButton,
+        numUnreads: alreadyUsingChat
+          ? 0
+          : action.userId === state.prevUserId
+          ? state.numUnreads
+          : action.data.numUnreads || 0,
+        outgoingOffers:
+          action.userId === state.prevUserId
+            ? state.outgoingOffers
+            : action.data.outgoingOffers || [],
+        outgoingOffersLoadMoreButton:
+          action.userId === state.prevUserId
+            ? state.outgoingOffersLoadMoreButton
+            : action.data.outgoingOffersLoadMoreButton || false,
         reconnecting: false,
-        recipientId: state.recipientId,
+        recipientId:
+          action.userId === state.prevUserId
+            ? state.recipientId
+            : action.data.recipientId || null,
         selectedChannelId:
-          state.selectedChannelId || state.selectedChannelId === 0
+          (state.selectedChannelId || state.selectedChannelId === 0) &&
+          action.userId === state.prevUserId
             ? state.selectedChannelId
             : action.data.currentChannelId,
         vocabActivities:
