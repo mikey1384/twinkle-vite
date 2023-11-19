@@ -136,6 +136,7 @@ export default function Header({
   const myStream = useChatContext((v) => v.state.myStream);
   const numUnreads = useChatContext((v) => v.state.numUnreads);
   const chatStatus = useChatContext((v) => v.state.chatStatus);
+  const prevUserId = useChatContext((v) => v.state.prevUserId);
   const onAddReactionToMessage = useChatContext(
     (v) => v.actions.onAddReactionToMessage
   );
@@ -302,10 +303,11 @@ export default function Header({
   const receivedCallSignals = useRef([]);
 
   useEffect(() => {
-    socket.disconnect();
-    socket.connect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+    if (userId !== prevUserId) {
+      socket.disconnect();
+      socket.connect();
+    }
+  }, [userId, prevUserId]);
 
   const currentPathIdRef = useRef(Number(currentPathId));
 

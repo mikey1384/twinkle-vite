@@ -344,13 +344,6 @@ export default function Main({
   }, [search]);
 
   useEffect(() => {
-    if (userId && prevUserId && userId !== prevUserId) {
-      socket.disconnect();
-      socket.connect();
-    }
-  }, [userId, prevUserId]);
-
-  useEffect(() => {
     return function cleanUp() {
       onSetWordleModalShown(false);
       onSetChessModalShown(false);
