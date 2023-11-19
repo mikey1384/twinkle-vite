@@ -136,9 +136,9 @@ export default function MissionPass({
         content={{
           id: mission.id,
           missionType: mission.missionType,
-          title: mission.title,
           rootMissionType: mission.rootMission?.missionType
         }}
+        label={mission.title}
         contentType="mission"
         style={{ fontWeight: 'bold', fontSize: '2.2rem', color: Color.black() }}
       />

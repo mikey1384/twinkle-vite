@@ -197,19 +197,19 @@ export default function TargetContent({
           <UsernameText user={comment.uploader} color={Color[linkColor]()} />{' '}
           <ContentLink
             content={{
-              id: comment.id,
-              title: `${
-                type === 'reply'
-                  ? 'replied'
-                  : type === 'comment'
-                  ? rootType === 'user'
-                    ? 'left a message'
-                    : 'commented'
-                  : 'responded'
-              }:`
+              id: comment.id
             }}
             contentType="comment"
             style={{ color: commentLinkColor }}
+            label={`${
+              type === 'reply'
+                ? 'replied'
+                : type === 'comment'
+                ? rootType === 'user'
+                  ? 'left a message'
+                  : 'commented'
+                : 'responded'
+            }:`}
           />
         </>
       );
@@ -221,19 +221,19 @@ export default function TargetContent({
           님이{' '}
           <ContentLink
             content={{
-              id: comment.id,
-              title: `${
-                type === 'reply'
-                  ? '답글을 남겼습니다'
-                  : type === 'comment'
-                  ? rootType === 'user'
-                    ? '메시지를 남겼습니다'
-                    : '댓글을 남겼습니다'
-                  : '댓글을 남겼습니다'
-              }`
+              id: comment.id
             }}
             contentType="comment"
             style={{ color: commentLinkColor }}
+            label={`${
+              type === 'reply'
+                ? '답글을 남겼습니다'
+                : type === 'comment'
+                ? rootType === 'user'
+                  ? '메시지를 남겼습니다'
+                  : '댓글을 남겼습니다'
+                : '댓글을 남겼습니다'
+            }`}
           />
           :
         </>

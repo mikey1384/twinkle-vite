@@ -122,6 +122,7 @@ export default function RenderMessage({
               id: targetObj.id,
               title: contentPreview
             }}
+            label=""
           />
         </>
       );
@@ -152,6 +153,7 @@ export default function RenderMessage({
                   title: contentPreview
                 }}
                 style={{ color: contentLinkColor }}
+                label=""
               />
             </>
           )}
@@ -185,6 +187,7 @@ export default function RenderMessage({
               id: contentPath,
               title: contentPreview
             }}
+            label=""
           />
         </>
       );
@@ -217,6 +220,7 @@ export default function RenderMessage({
                 id: targetObj.id,
                 title: contentPreview
               }}
+              label=""
             />
           </>
         );
@@ -259,6 +263,7 @@ export default function RenderMessage({
                   : rewardRootType
               }
               rootType={rewardRootTargetType}
+              label=""
             />{' '}
             <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
               You earn {actionObj.amount} Twinkle Coin
@@ -278,6 +283,7 @@ export default function RenderMessage({
               id: targetSubject.id,
               title: `subject`
             }}
+            label=""
           />
           {`'s secret message`}
         </>
@@ -294,6 +300,7 @@ export default function RenderMessage({
                 : 'commented on'
             }}
             style={{ color: contentLinkColor }}
+            label=""
           />{' '}
           your{' '}
           <ContentLink
@@ -310,29 +317,29 @@ export default function RenderMessage({
                 : isSubjectResponse
                 ? targetSubject.id
                 : targetObj.id,
-              username: targetObj.content,
-              title: `${
-                isReply
-                  ? 'comment'
-                  : isSubjectResponse
-                  ? 'subject'
-                  : targetObj.contentType === 'aiStory'
-                  ? 'AI Story'
-                  : targetObj.contentType === 'user'
-                  ? 'profile'
-                  : targetObj.contentType === 'url'
-                  ? 'link'
-                  : targetObj.contentType
-              }${
-                (!isReply && targetObj.contentType === 'user') ||
-                stringIsEmpty(contentString)
-                  ? ''
-                  : ` (${truncateText({
-                      text: contentString,
-                      limit: 100
-                    })})`
-              }`
+              username: targetObj.content
             }}
+            label={`${
+              isReply
+                ? 'comment'
+                : isSubjectResponse
+                ? 'subject'
+                : targetObj.contentType === 'aiStory'
+                ? 'AI Story'
+                : targetObj.contentType === 'user'
+                ? 'profile'
+                : targetObj.contentType === 'url'
+                ? 'link'
+                : targetObj.contentType
+            }${
+              (!isReply && targetObj.contentType === 'user') ||
+              stringIsEmpty(contentString)
+                ? ''
+                : ` (${truncateText({
+                    text: contentString,
+                    limit: 100
+                  })})`
+            }`}
           />
           {!stringIsEmpty(actionObj.content) && (
             <>
@@ -347,6 +354,7 @@ export default function RenderMessage({
                   })}"`
                 }}
                 style={{ color: contentLinkColor }}
+                label=""
               />
             </>
           )}
@@ -366,6 +374,7 @@ export default function RenderMessage({
               })})`
             }}
             style={{ color: contentLinkColor }}
+            label=""
           />{' '}
           <span>to your </span>
           <ContentLink
@@ -376,6 +385,7 @@ export default function RenderMessage({
                 targetObj.contentType === 'url' ? 'link' : targetObj.contentType
               } (${truncateText({ text: targetObj.content, limit: 100 })})`
             }}
+            label=""
           />
         </>
       );
@@ -399,6 +409,7 @@ export default function RenderMessage({
               })})`
             }}
             style={{ color: Color[linkColor]() }}
+            label=""
           />
         </>
       );
@@ -418,6 +429,7 @@ export default function RenderMessage({
               })})`
             }}
             style={{ color: Color[linkColor]() }}
+            label=""
           />
         </>
       );

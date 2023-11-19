@@ -59,6 +59,7 @@ export default function HeadingText({
             content={contentObj}
             contentType={contentType}
             theme={theme}
+            label=""
           />{' '}
         </>
       );
@@ -67,16 +68,18 @@ export default function HeadingText({
         <>
           <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
           <ContentLink
-            content={{ id, title: action }}
+            content={{ id }}
             contentType={contentType}
             style={{ color: contentLinkColor }}
             theme={theme}
+            label={action}
           />
           {renderTargetAction()} {contentLabel}:{' '}
           <ContentLink
             content={isSubjectComment ? targetObj?.subject : rootObj}
             contentType={isSubjectComment ? 'subject' : rootType}
             theme={theme}
+            label=""
           />{' '}
         </>
       );
@@ -89,6 +92,7 @@ export default function HeadingText({
             content={contentObj}
             contentType={contentType}
             theme={theme}
+            label=""
           />{' '}
         </>
       );
@@ -103,6 +107,7 @@ export default function HeadingText({
             style={{
               color: byUser ? Color[userLinkColor]() : contentLinkColor
             }}
+            label=""
           />
           {rootObj.id && (
             <>
@@ -111,6 +116,7 @@ export default function HeadingText({
                 content={rootObj}
                 contentType={rootType}
                 theme={theme}
+                label=""
               />{' '}
             </>
           )}
@@ -125,15 +131,13 @@ export default function HeadingText({
             <ContentLink
               content={{
                 id: rootObj.id,
-                title: `${rootObj.isTask ? 'task' : 'mission'}: ${
-                  rootObj.title
-                }`,
                 missionType: rootObj.missionType,
                 rootMissionType: rootObj.rootMission?.missionType
               }}
               contentType="mission"
               style={{ color: Color.orange() }}
               theme={theme}
+              label={`${rootObj.isTask ? 'task' : 'mission'}: ${rootObj.title}`}
             />{' '}
           </>
         );
@@ -149,6 +153,7 @@ export default function HeadingText({
               contentType="achievement"
               style={{ color: Color.orange() }}
               theme={theme}
+              label=""
             />{' '}
           </>
         );
@@ -170,6 +175,7 @@ export default function HeadingText({
             content={contentObj}
             contentType={contentType}
             theme={theme}
+            label=""
           />{' '}
         </>
       );
@@ -189,16 +195,14 @@ export default function HeadingText({
           {"'s "}
           <ContentLink
             content={{
-              id: replyId || commentId,
-              title: replyId
-                ? 'reply '
-                : rootType === 'user'
-                ? 'message '
-                : 'comment '
+              id: replyId || commentId
             }}
             contentType="comment"
             style={{ color: contentLinkColor }}
             theme={theme}
+            label={
+              replyId ? 'reply ' : rootType === 'user' ? 'message ' : 'comment '
+            }
           />
           {!replyId && rootType === 'user' ? 'to' : 'on'}
         </span>
