@@ -338,9 +338,17 @@ function Message({
       tempMessageId: number;
       userId: number;
       isChessMsg: boolean;
+      isDrawOffer: boolean;
+      isDraw: boolean;
+      isAbort: boolean;
+      isCallMsg: boolean;
+      isReloadedSubject: boolean;
+      isResign: boolean;
       chessState: any;
       content: string;
       channelId: number;
+      gameWinnerId: number;
+      targetMessageId: number;
       timeStamp: number;
       subchannelId?: number;
       username?: string;
@@ -355,7 +363,15 @@ function Message({
         content: newMessage.content,
         channelId: newMessage.channelId,
         chessState: newMessage.chessState,
+        isCallMsg: newMessage.isCallMsg,
         isChessMsg: newMessage.isChessMsg,
+        isDrawOffer: newMessage.isDrawOffer,
+        isDraw: newMessage.isDraw,
+        isAbort: newMessage.isAbort,
+        isResign: newMessage.isResign,
+        isReloadedSubject: newMessage.isReloadedSubject,
+        gameWinnerId: newMessage.gameWinnerId,
+        targetMessageId: newMessage.targetMessageId,
         timeStamp: newMessage.timeStamp,
         subchannelId: newMessage.subchannelId
       };
