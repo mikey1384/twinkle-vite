@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
@@ -13,7 +13,7 @@ const profileLabel = localize('Profile');
 const managementLabel = localize('management');
 const logOutLabel = localize('logOut');
 
-function AccountMenu({
+export default function AccountMenu({
   className,
   onSetBalanceModalShown
 }: {
@@ -127,10 +127,8 @@ function AccountMenu({
   function handleLogout() {
     socket.emit('leave_my_notification_channel', userId);
     socket.disconnect();
-    socket.connect();
     onLogout();
     onResetChat();
+    socket.connect();
   }
 }
-
-export default memo(AccountMenu);
