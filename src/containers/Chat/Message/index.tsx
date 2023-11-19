@@ -348,6 +348,8 @@ function Message({
       content: string;
       channelId: number;
       gameWinnerId: number;
+      rewardReason: string;
+      rewardAmount: number;
       targetMessageId: number;
       timeStamp: number;
       subchannelId?: number;
@@ -371,6 +373,8 @@ function Message({
         isResign: newMessage.isResign,
         isReloadedSubject: newMessage.isReloadedSubject,
         gameWinnerId: newMessage.gameWinnerId,
+        rewardReason: newMessage.rewardReason,
+        rewardAmount: newMessage.rewardAmount,
         targetMessageId: newMessage.targetMessageId,
         timeStamp: newMessage.timeStamp,
         subchannelId: newMessage.subchannelId
