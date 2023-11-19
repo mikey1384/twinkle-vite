@@ -366,10 +366,11 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId
       });
     },
-    onInitChat(data: object) {
+    onInitChat({ data, userId }: { data: object; userId: number }) {
       return dispatch({
         type: 'INIT_CHAT',
-        data
+        data,
+        userId
       });
     },
     onInviteUsersToChannel(data: object) {

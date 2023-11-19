@@ -773,7 +773,7 @@ export default function Header({
               : selectedChannelId,
             subchannelPath
           });
-          onInitChat(data);
+          onInitChat({ data, userId });
           socket.emit(
             'check_online_users',
             selectedChannelId,

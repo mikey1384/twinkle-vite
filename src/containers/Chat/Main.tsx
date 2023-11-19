@@ -289,6 +289,7 @@ export default function Main({
   const onUploadChatSubject = useChatContext(
     (v) => v.actions.onUploadChatSubject
   );
+  const prevUserId = useChatContext((v) => v.state.prevUserId);
 
   const onSetEmbeddedUrl = useContentContext((v) => v.actions.onSetEmbeddedUrl);
   const onSetActualDescription = useContentContext(
@@ -313,7 +314,6 @@ export default function Main({
   const [createNewChatModalShown, setCreateNewChatModalShown] = useState(false);
   const loadingRef = useRef(false);
   const prevPathId: React.MutableRefObject<any> = useRef('');
-  const prevUserId = useRef(null);
   const currentPathIdRef = useRef(currentPathId);
   const currentSelectedChannelIdRef = useRef(selectedChannelId);
   const currentChannel: {
@@ -597,13 +597,10 @@ export default function Main({
   ]);
 
   useEffect(() => {
-    if (!prevUserId.current) {
-      prevUserId.current = userId;
-    } else {
+    if (userId !== prevUserId) {
       navigate(`/chat`, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, prevUserId, navigate]);
 
   const handleEnterVocabulary = useCallback(async () => {
     if (chatType === VOCAB_CHAT_TYPE) return;
@@ -973,7 +970,7 @@ export default function Main({
     >
       <ErrorBoundary componentPath="Chat/Main">
         {userId ? (
-          loaded ? (
+          loaded && userId === prevUserId ? (
             <div
               className={css`
                 width: 100%;

@@ -65,7 +65,8 @@ export const initialChatState = {
   wordCollectors: {},
   wordRegisterStatus: null,
   wordleModalShown: false,
-  wordsObj: {}
+  wordsObj: {},
+  prevUserId: null
 };
 
 export function ChatContextProvider({ children }: { children: ReactNode }) {

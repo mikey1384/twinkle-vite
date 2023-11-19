@@ -1044,7 +1044,8 @@ export default function ChatReducer(
         wordsObj: {
           ...state.wordsObj,
           ...action.data.wordsObj
-        }
+        },
+        prevUserId: action.userId
       };
     }
 
