@@ -78,7 +78,11 @@ export default function ImageEditModal({
   );
 
   return (
-    <Modal modalOverModal={modalOverModal} onHide={onHide}>
+    <Modal
+      closeWhenClickedOutside={false}
+      modalOverModal={modalOverModal}
+      onHide={onHide}
+    >
       <ErrorBoundary componentPath="ImageEditModal">
         <header>Edit your picture</header>
         <main>
