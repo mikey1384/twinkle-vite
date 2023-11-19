@@ -879,7 +879,8 @@ export default function ChatReducer(
     case 'INIT_CHAT': {
       const alreadyUsingChat =
         (!!state.selectedChannelId || state.selectedChannelId === 0) &&
-        state.selectedChannelId !== action.data.currentChannelId;
+        state.selectedChannelId !== action.data.currentChannelId &&
+        action.userId === state.prevUserId;
       let messagesLoadMoreButton = false;
       let classLoadMoreButton = false;
       let homeLoadMoreButton = false;
@@ -1003,10 +1004,9 @@ export default function ChatReducer(
         favoriteChannelIds: action.data.favoriteChannelIds,
         favoriteLoadMoreButton,
         homeChannelIds: action.data.homeChannelIds,
-        homeLoadMoreButton:
-          alreadyUsingChat && action.userId === state.prevUserId
-            ? state.homeLoadMoreButton
-            : homeLoadMoreButton,
+        homeLoadMoreButton: alreadyUsingChat
+          ? state.homeLoadMoreButton
+          : homeLoadMoreButton,
         incomingOffers:
           action.userId === state.prevUserId
             ? state.incomingOffers
@@ -1053,11 +1053,7 @@ export default function ChatReducer(
             : action.data.myListedCardsLoadMoreButton || false,
         mostRecentOfferTimeStamp: action.data.mostRecentOfferTimeStamp,
         numCardSummonedToday: action.data.numCardSummonedToday,
-        numUnreads: alreadyUsingChat
-          ? 0
-          : action.userId === state.prevUserId
-          ? state.numUnreads
-          : action.data.numUnreads || 0,
+        numUnreads: alreadyUsingChat ? 0 : state.numUnreads,
         outgoingOffers:
           action.userId === state.prevUserId
             ? state.outgoingOffers
