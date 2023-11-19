@@ -62,7 +62,6 @@ export default function ContentLink({
   }, [contentType, id, missionType, rootMissionType, username]);
 
   const appliedLabel = useMemo(() => {
-    console.log(contentType, label, title);
     return !label && contentType === 'user'
       ? username
       : label || title || content || truncatedTopic;
