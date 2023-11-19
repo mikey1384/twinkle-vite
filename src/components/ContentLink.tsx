@@ -25,7 +25,7 @@ export default function ContentLink({
   style?: any;
   content: any;
   contentType: string;
-  label: string;
+  label?: string;
   rootType?: string;
   theme?: string;
 }) {
@@ -61,13 +61,12 @@ export default function ContentLink({
     return path ? `/${path}` : '';
   }, [contentType, id, missionType, rootMissionType, username]);
 
-  const appliedLabel = useMemo(
-    () =>
-      !label && contentType === 'user'
-        ? username
-        : label || title || content || truncatedTopic,
-    [content, contentType, label, title, truncatedTopic, username]
-  );
+  const appliedLabel = useMemo(() => {
+    console.log(contentType, label, title);
+    return !label && contentType === 'user'
+      ? username
+      : label || title || content || truncatedTopic;
+  }, [content, contentType, label, title, truncatedTopic, username]);
 
   return appliedLabel ? (
     <Link
@@ -78,7 +77,7 @@ export default function ContentLink({
       }}
       to={`/${rootPath}${subPath}`}
     >
-      {removeLineBreaks(label)}
+      {removeLineBreaks(appliedLabel)}
     </Link>
   ) : (
     <span style={{ fontWeight: 'bold', color: Color.darkerGray() }}>
