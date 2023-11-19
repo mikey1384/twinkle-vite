@@ -992,7 +992,7 @@ export default function ChatReducer(
             }
           : state.cardObj,
         channelsObj: newChannelsObj,
-        chatStatus: state.chatStatus,
+        chatStatus: action.userId === state.prevUserId ? state.chatStatus : {},
         chatType:
           state.chatType && action.userId === state.prevUserId
             ? state.chatType
