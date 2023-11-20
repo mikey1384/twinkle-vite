@@ -995,7 +995,9 @@ export default function ChatReducer(
         channelsObj: newChannelsObj,
         chatStatus: action.userId === state.prevUserId ? state.chatStatus : {},
         chatType:
-          state.chatType && action.userId === state.prevUserId
+          state.chatType &&
+          action.userId === state.prevUserId &&
+          (!action.data.chatType || state.chatType === action.data.chatType)
             ? state.chatType
             : action.data.chatType,
         classChannelIds: action.data.classChannelIds,
