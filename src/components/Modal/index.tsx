@@ -88,14 +88,14 @@ export default function Modal({
               border-radius: ${borderRadius};
               background: #fff;
               width: ${modalWidth[widthKey]};
-              min-height: 30vh;
               top: 3rem;
               margin-left: ${marginLeft[widthKey]};
               box-shadow: 3px 4px 5px ${Color.black()};
               display: flex;
-              justify-content: flex-start;
               flex-direction: column;
-              height: auto;
+              justify-content: space-between;
+              min-height: 30vh;
+              max-height: 100vh;
               > header {
                 display: flex;
                 align-items: center;
@@ -116,7 +116,12 @@ export default function Modal({
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                min-height: 20vh;
+                overflow-y: auto;
+                flex-grow: 1;
+                @media (max-width: ${mobileMaxWidth}) {
+                  overflow-y: visible;
+                  flex-grow: 0;
+                }
               }
               > footer {
                 padding: 1.5rem 1.5rem 1.5rem 1.5rem;
@@ -128,6 +133,7 @@ export default function Modal({
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100% !important;
                 margin: 0;
+                max-height: none;
               }
             `}
             onHide={onHide}
