@@ -382,7 +382,7 @@ export default function ContentPanel({
                         }
                       `}
                     >
-                      {contentState.loaded ? (
+                      {rootObj.loaded ? (
                         <Embedly small contentId={contentState.rootId} />
                       ) : (
                         <Loading />
