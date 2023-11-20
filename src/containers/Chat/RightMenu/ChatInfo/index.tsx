@@ -108,6 +108,7 @@ export default function ChatInfo({
         const partnerName = currentChannel?.members
           ?.map((member: { username: string }) => member.username)
           ?.filter((memberName: string) => memberName !== username)?.[0];
+
         return onSubmitMessage({
           messageId,
           message: {
@@ -172,6 +173,7 @@ export default function ChatInfo({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     calling,
+    currentChannel?.members,
     channelOnCall?.id,
     myId,
     onlineChannelMembers?.length,
