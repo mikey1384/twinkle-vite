@@ -1,11 +1,11 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import MemberListItem from './MemberListItem';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 
-function Members({
+export default function Members({
   channelId,
   creatorId,
   members,
@@ -73,14 +73,16 @@ function Members({
         )}
         {callIsOnGoing && (
           <div style={{ marginBottom: '2rem' }}>
-            {membersOnCall.map((member) => (
-              <MemberListItem
-                key={`oncall-member-${member.id}`}
-                creatorId={creatorId}
-                onlineMemberObj={onlineMemberObj}
-                member={member}
-              />
-            ))}
+            {membersOnCall.map((member) =>
+              member.id ? (
+                <MemberListItem
+                  key={`oncall-member-${member.id}`}
+                  creatorId={creatorId}
+                  onlineMemberObj={onlineMemberObj}
+                  member={member}
+                />
+              ) : null
+            )}
           </div>
         )}
         {callIsOnGoing && membersNotOnCall.length > 0 && (
@@ -95,14 +97,16 @@ function Members({
             others
           </div>
         )}
-        {membersNotOnCall.map((member) => (
-          <MemberListItem
-            key={`member-${member.id}`}
-            creatorId={creatorId}
-            onlineMemberObj={onlineMemberObj}
-            member={member}
-          />
-        ))}
+        {membersNotOnCall.map((member) =>
+          member.id ? (
+            <MemberListItem
+              key={`member-${member.id}`}
+              creatorId={creatorId}
+              onlineMemberObj={onlineMemberObj}
+              member={member}
+            />
+          ) : null
+        )}
         {loadMoreShown && (
           <LoadMoreButton
             theme={theme}
@@ -123,18 +127,21 @@ function Members({
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const { members } = await loadMoreChannelMembers({
-      channelId,
-      lastId: membersNotOnCall[membersNotOnCall.length - 1].id
-    });
-    onLoadMoreChannelMembers({
-      channelId,
-      members: members.filter(
-        (member: { id: number }) => member.id !== creatorId
-      )
-    });
-    setLoadingMore(false);
+    try {
+      const { members } = await loadMoreChannelMembers({
+        channelId,
+        lastId: membersNotOnCall[membersNotOnCall.length - 1].id
+      });
+      onLoadMoreChannelMembers({
+        channelId,
+        members: members.filter(
+          (member: { id: number }) => member.id !== creatorId
+        )
+      });
+    } catch (error) {
+      console.error('Error loading more channel members:', error);
+    } finally {
+      setLoadingMore(false);
+    }
   }
 }
-
-export default memo(Members);

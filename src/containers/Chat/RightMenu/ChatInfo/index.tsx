@@ -247,6 +247,7 @@ export default function ChatInfo({
         </div>
       </div>
       <Members
+        key={selectedChannelId}
         channelId={selectedChannelId}
         creatorId={currentChannel.creatorId}
         members={displayedChannelMembers}
