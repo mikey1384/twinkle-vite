@@ -382,7 +382,11 @@ export default function ContentPanel({
                         }
                       `}
                     >
-                      <Embedly small contentId={contentState.rootId} />
+                      {contentState.loaded ? (
+                        <Embedly small contentId={contentState.rootId} />
+                      ) : (
+                        <Loading />
+                      )}
                     </div>
                   )}
                 {contentType === 'comment' && appliedRootType === 'user' ? (
