@@ -53,7 +53,7 @@ function TagModal({
   );
 
   return (
-    <Modal onHide={onHide}>
+    <Modal wrapped onHide={onHide}>
       <header>{title}</header>
       <main>
         <TagForm
@@ -142,7 +142,9 @@ function TagModal({
     setPosting(true);
     await addVideoToPlaylists({
       videoId,
-      playlistIds: selectedPlaylists.map((playlist: {id: number}) => playlist.id)
+      playlistIds: selectedPlaylists.map(
+        (playlist: { id: number }) => playlist.id
+      )
     });
     setSearchText('');
     onSubmit(selectedPlaylists);

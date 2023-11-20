@@ -128,26 +128,22 @@ export default function TagInput({
           />
         </div>
         {loading && <Loading style={{ position: 'absolute', top: '1rem' }} />}
-        {renderDropdownList()}
+        {results.length > 0 ? (
+          <SearchDropdown
+            dropdownFooter={dropdownFooter}
+            searchResults={results}
+            onUpdate={() => setIndexToHighlight(0)}
+            indexToHighlight={indexToHighlight}
+            onItemClick={onAddItem}
+            renderItemLabel={renderDropdownLabel}
+          />
+        ) : null}
       </div>
       {dropdownFooter && (
         <div style={{ marginTop: '0.5rem' }}>{dropdownFooter}</div>
       )}
     </ErrorBoundary>
   );
-
-  function renderDropdownList() {
-    return results.length > 0 ? (
-      <SearchDropdown
-        dropdownFooter={dropdownFooter}
-        searchResults={results}
-        onUpdate={() => setIndexToHighlight(0)}
-        indexToHighlight={indexToHighlight}
-        onItemClick={onAddItem}
-        renderItemLabel={renderDropdownLabel}
-      />
-    ) : null;
-  }
 
   function onKeyDown(event: any) {
     searchResults = searchResults.filter((user) => !selectedItems[user.id]);
