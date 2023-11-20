@@ -973,18 +973,18 @@ export default function ChatReducer(
           newChannelsObj[channelId].loaded = false;
         }
       }
+      const aiCardsLoaded =
+        action.data.cardFeeds && !!action.data.cardFeeds.length;
+      const vocabActivitiesLoaded =
+        action.data.vocabActivities && !!action.data.vocabActivities.length;
 
       return {
         ...state,
         ...initialChatState,
-        aiCardFeeds:
-          action.data.cardFeeds && !!action.data.cardFeeds.length
-            ? action.data.cardFeeds
-            : state.aiCardFeeds,
-        aiCardLoadMoreButton:
-          state.chatType === AI_CARD_CHAT_TYPE
-            ? state.aiCardLoadMoreButton
-            : action.data.aiCardLoadMoreButton,
+        aiCardFeeds: aiCardsLoaded ? action.data.cardFeeds : state.aiCardFeeds,
+        aiCardLoadMoreButton: aiCardsLoaded
+          ? action.data.aiCardLoadMoreButton
+          : state.aiCardLoadMoreButton,
         allFavoriteChannelIds: action.data.allFavoriteChannelIds,
         cardObj: action.data.cardObj
           ? {
@@ -1072,14 +1072,12 @@ export default function ChatReducer(
           action.userId === state.prevUserId
             ? state.selectedChannelId
             : action.data.currentChannelId,
-        vocabActivities:
-          state.chatType === VOCAB_CHAT_TYPE
-            ? state.vocabActivities
-            : action.data.vocabActivities,
-        vocabActivitiesLoadMoreButton:
-          state.chatType === VOCAB_CHAT_TYPE
-            ? state.vocabActivitiesLoadMoreButton
-            : vocabActivitiesLoadMoreButton,
+        vocabActivities: vocabActivitiesLoaded
+          ? action.data.vocabActivities
+          : state.vocabActivities,
+        vocabActivitiesLoadMoreButton: vocabActivitiesLoaded
+          ? vocabActivitiesLoadMoreButton
+          : state.vocabActivitiesLoadMoreButton,
         wordCollectors: action.data.wordCollectors,
         wordsObj: {
           ...state.wordsObj,
