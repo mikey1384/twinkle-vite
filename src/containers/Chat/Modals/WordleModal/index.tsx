@@ -118,7 +118,8 @@ export default function WordleModal({
         <main
           style={{
             padding: 0,
-            marginTop: 0
+            marginTop: 0,
+            justifyContent: 'flex-start'
           }}
         >
           {activeTab === 'game' ? (
