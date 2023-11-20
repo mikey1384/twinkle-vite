@@ -118,7 +118,6 @@ function Embedly({
     prevUrl,
     thumbUrl: rawThumbUrl,
     title,
-    thumbLoaded,
     [translator.actualDescription]: actualDescription,
     [translator.actualTitle]: actualTitle,
     [translator.siteUrl]: siteUrl,
@@ -212,7 +211,7 @@ function Embedly({
       loadingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevUrl, url, thumbLoaded, siteUrl, thumbUrl]);
+  }, [prevUrl, url, siteUrl, thumbUrl]);
 
   const videoUrl = useMemo(
     () => `${url}${startingPosition > 0 ? `?t=${startingPosition}` : ''}`,
