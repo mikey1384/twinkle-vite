@@ -30,8 +30,8 @@ export default function Game({
   return (
     <div
       className={css`
-        width: CALC(360px + 2rem);
-        height: CALC(360px + 2.5rem);
+        width: CALC(50vh + 2rem);
+        height: CALC(50vh + 2.5rem);
         position: relative;
         @media (max-width: ${mobileMaxWidth}) {
           width: CALC(50vw + 2rem);

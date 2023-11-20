@@ -98,8 +98,8 @@ export default function Board({
           grid-template-areas:
             'num chess'
             '. letter';
-          grid-template-columns: 2rem 360px;
-          grid-template-rows: 360px 2.5rem;
+          grid-template-columns: 2rem 50vh;
+          grid-template-rows: 50vh 2.5rem;
           background: ${spoilerOff ? '#fff' : ''};
           @media (max-width: ${mobileMaxWidth}) {
             grid-template-columns: 2rem 50vw;
@@ -190,8 +190,8 @@ export default function Board({
           grid-template-areas:
             'num chess'
             '. letter';
-          grid-template-columns: 2rem 360px;
-          grid-template-rows: 360px 2.5rem;
+          grid-template-columns: 2rem 100%;
+          grid-template-rows: 100% 2.5rem;
           background: ${spoilerOff ? '#fff' : ''};
           @media (max-width: ${mobileMaxWidth}) {
             grid-template-columns: 2rem 50vw;
