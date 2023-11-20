@@ -143,8 +143,8 @@ export default function Game({
         style={{
           display: 'flex',
           justifyContent: 'flex-end',
-          width: '100%',
-          marginRight: '5rem'
+          width: 'CALC(100% - 3rem)',
+          marginRight: '3rem'
         }}
       >
         <SwitchButton
