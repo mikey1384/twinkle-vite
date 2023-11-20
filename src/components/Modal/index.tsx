@@ -17,7 +17,8 @@ export default function Modal({
   medium,
   large,
   modalStyle,
-  style
+  style,
+  wrapped
 }: {
   className?: string;
   closeColor?: string;
@@ -31,6 +32,7 @@ export default function Modal({
   large?: boolean;
   modalStyle?: object;
   style?: object;
+  wrapped?: boolean;
 }) {
   const modalWidth = {
     small: '26%',
@@ -114,9 +116,9 @@ export default function Modal({
                 padding: 1.5rem 2rem;
                 font-size: 1.5rem;
                 flex-direction: column;
-                justify-content: center;
+                justify-content: flex-start;
                 align-items: center;
-                overflow-y: auto;
+                ${wrapped ? '' : 'overflow-y: auto;'}
                 flex-grow: 1;
                 @media (max-width: ${mobileMaxWidth}) {
                   overflow-y: visible;
