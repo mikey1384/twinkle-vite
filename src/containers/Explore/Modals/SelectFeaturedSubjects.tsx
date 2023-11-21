@@ -77,7 +77,7 @@ export default function SelectFeaturedSubjectsModal({
   );
 
   return (
-    <Modal large onHide={onHide}>
+    <Modal wrapped large onHide={onHide}>
       <header>Select Featured Subjects</header>
       <main>
         <FilterBar style={{ marginBottom: '1.5rem' }}>

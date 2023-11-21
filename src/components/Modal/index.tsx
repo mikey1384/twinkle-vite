@@ -100,7 +100,7 @@ export default function Modal({
               flex-direction: column;
               justify-content: space-between;
               min-height: 30vh;
-              max-height: 100vh;
+              ${wrapped ? '' : 'max-height: 100vh;'}
               > header {
                 display: flex;
                 align-items: center;
