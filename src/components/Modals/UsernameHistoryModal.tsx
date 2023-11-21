@@ -47,10 +47,10 @@ export default function UsernameHistoryModal({
           {loading ? (
             <Loading />
           ) : (
-            usernames.map(({ username, timeStamp }) => {
+            usernames.map(({ id, username, timeStamp }) => {
               return (
                 <nav
-                  key={username}
+                  key={id}
                   style={{
                     background: '#fff',
                     display: 'flex',
