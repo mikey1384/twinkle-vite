@@ -62,7 +62,7 @@ export default function TitleSelectionModal({
   }, []);
 
   return (
-    <Modal modalOverModal={modalOverModal} onHide={handleHide}>
+    <Modal hasPriority modalOverModal={modalOverModal} onHide={handleHide}>
       <header>Select Your Title</header>
       <main>
         {loading ? (

@@ -13,10 +13,12 @@ export default function UserTitle({
     authLevel: 0,
     username: ''
   },
+  onTitleModalShown,
   className,
   style
 }: {
   user: User;
+  onTitleModalShown?: (shown: boolean) => void;
   style?: React.CSSProperties;
   className?: string;
 }) {
@@ -48,9 +50,7 @@ export default function UserTitle({
   return appliedUserTitle ? (
     <div className={className} style={style}>
       <span
-        onClick={
-          user.id === myId ? () => setTitleSelectionModalShown(true) : undefined
-        }
+        onClick={handleTitleSelectionModalShown}
         className={css`
           cursor: ${user.id === myId ? 'pointer' : 'default'};
           &:hover {
@@ -64,9 +64,19 @@ export default function UserTitle({
         <TitleSelectionModal
           currentTitle={userTitle}
           userLevel={appliedUserLevel}
-          onHide={() => setTitleSelectionModalShown(false)}
+          onHide={() => {
+            onTitleModalShown?.(false);
+            setTitleSelectionModalShown(false);
+          }}
         />
       )}
     </div>
   ) : null;
+
+  function handleTitleSelectionModalShown() {
+    if (user.id === myId) {
+      setTitleSelectionModalShown(true);
+      onTitleModalShown?.(true);
+    }
+  }
 }
