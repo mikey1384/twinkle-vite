@@ -206,7 +206,7 @@ export default function TargetContent({
                 ? 'replied'
                 : type === 'comment'
                 ? rootType === 'user'
-                  ? 'left a message'
+                  ? 'posted a profile message'
                   : 'commented'
                 : 'responded'
             }:`}

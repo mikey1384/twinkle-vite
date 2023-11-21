@@ -102,42 +102,41 @@ export default function Home({
         />
       )}
       <Activities selectedTheme={selectedTheme} profile={profile} />
-      {(userId !== profile.id || comments.length > 0 || loadingComments) && (
-        <SectionPanel
-          customColorTheme={selectedTheme}
-          loaded
-          title={messageBoardLabel}
-        >
-          <Comments
-            theme={selectedTheme}
-            comments={comments}
-            commentsLoadLimit={5}
-            commentsShown={true}
-            inputAreaInnerRef={CommentInputAreaRef}
-            inputTypeLabel={`message to ${username}`}
-            isLoading={loadingComments}
-            loadMoreButton={commentsLoadMoreButton}
-            noInput={id === userId}
-            numPreviews={1}
-            onCommentSubmit={onUploadComment}
-            onDelete={onDeleteComment}
-            onEditDone={onEditComment}
-            onLikeClick={onLikeComment}
-            onLoadMoreComments={onLoadMoreComments}
-            onLoadMoreReplies={onLoadMoreReplies}
-            onLoadRepliesOfReply={onLoadRepliesOfReply}
-            onPreviewClick={onLoadComments}
-            onReplySubmit={onUploadReply}
-            onRewardCommentEdit={onEditRewardComment}
-            parent={{
-              ...profile,
-              pinnedCommentId,
-              contentType: 'user'
-            }}
-            userId={userId}
-          />
-        </SectionPanel>
-      )}
+      <SectionPanel
+        customColorTheme={selectedTheme}
+        loaded
+        title={messageBoardLabel}
+      >
+        <Comments
+          theme={selectedTheme}
+          comments={comments}
+          commentsLoadLimit={5}
+          commentsShown={true}
+          inputAreaInnerRef={CommentInputAreaRef}
+          inputTypeLabel={`message${
+            profile.id === userId ? '' : ` to ${username}`
+          }`}
+          isLoading={loadingComments}
+          loadMoreButton={commentsLoadMoreButton}
+          numPreviews={1}
+          onCommentSubmit={onUploadComment}
+          onDelete={onDeleteComment}
+          onEditDone={onEditComment}
+          onLikeClick={onLikeComment}
+          onLoadMoreComments={onLoadMoreComments}
+          onLoadMoreReplies={onLoadMoreReplies}
+          onLoadRepliesOfReply={onLoadRepliesOfReply}
+          onPreviewClick={onLoadComments}
+          onReplySubmit={onUploadReply}
+          onRewardCommentEdit={onEditRewardComment}
+          parent={{
+            ...profile,
+            pinnedCommentId,
+            contentType: 'user'
+          }}
+          userId={userId}
+        />
+      </SectionPanel>
       <div
         className={css`
           display: block;

@@ -286,7 +286,7 @@ export default function ContentPanel({
                             : appliedRootType === 'subject'
                             ? localize('respondedTo')
                             : appliedRootType === 'user'
-                            ? localize('leftMessageTo')
+                            ? 'posted a profile message'
                             : localize('commentedOn')
                         }
                       />
