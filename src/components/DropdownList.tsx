@@ -19,7 +19,7 @@ export default function DropdownList({
   onHideMenu = () => null,
   onMouseEnter = () => null,
   onMouseLeave = () => null,
-  zIndex = 100_000_000
+  zIndex = 100_000_000_000
 }: {
   xAdjustment?: number;
   children: React.ReactNode;
