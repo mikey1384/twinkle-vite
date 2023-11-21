@@ -535,10 +535,11 @@ function ProfilePanel({
                   commentsLoadLimit={5}
                   commentsShown={commentsShown}
                   inputAreaInnerRef={CommentInputAreaRef}
-                  inputTypeLabel={`message to ${profileName}`}
+                  inputTypeLabel={`message${
+                    userId === profileId ? '' : ` to ${profileName}`
+                  }`}
                   isLoading={loadingComments}
                   loadMoreButton={commentsLoadMoreButton}
-                  noInput={profileId === userId}
                   numPreviews={1}
                   onCommentSubmit={onUploadComment}
                   onDelete={onDeleteComment}
