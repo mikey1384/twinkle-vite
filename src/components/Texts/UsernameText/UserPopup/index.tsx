@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Popup from './Popup';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
@@ -6,6 +6,7 @@ import RichText from '~/components/Texts/RichText';
 import AchievementBadges from '~/components/AchievementBadges';
 import UserTitle from '~/components/Texts/UserTitle';
 import Loading from '~/components/Loading';
+import UsernameHistoryModal from '~/components/Modals/UsernameHistoryModal';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext } from '~/contexts';
 import { User } from '~/types';
@@ -45,6 +46,7 @@ export default function UserPopup({
 }) {
   const {
     authLevel,
+    hasUsernameChanged,
     level,
     rank,
     twinkleXP,
@@ -56,6 +58,7 @@ export default function UserPopup({
     profileFirstRow,
     xpThisMonth
   } = useAppContext((v) => v.user.state.userObj[user.id] || {});
+  const [usernameHistoryShown, setUsernameHistoryShown] = useState(false);
 
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const userRank = useMemo(() => {
@@ -93,7 +96,7 @@ export default function UserPopup({
   return (
     <Popup
       popupContext={popupContext}
-      onHideMenu={onHide}
+      onHideMenu={handleHide}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       style={{
@@ -158,15 +161,16 @@ export default function UserPopup({
                 >
                   <span
                     className={`unselectable ${css`
-                      cursor: ${user.hasUsernameChanged
-                        ? 'pointer'
-                        : 'default'};
+                      cursor: ${hasUsernameChanged ? 'pointer' : 'default'};
                       &:hover {
-                        text-decoration: ${user.hasUsernameChanged
+                        text-decoration: ${hasUsernameChanged
                           ? 'underline'
                           : 'none'};
                       }
                     `}`}
+                    onClick={() =>
+                      hasUsernameChanged && setUsernameHistoryShown(true)
+                    }
                   >
                     {user.username}
                   </span>
@@ -337,6 +341,15 @@ export default function UserPopup({
           </div>
         </div>
       )}
+      {usernameHistoryShown ? (
+        <UsernameHistoryModal onHide={() => setUsernameHistoryShown(false)} />
+      ) : null}
     </Popup>
   );
+
+  function handleHide() {
+    if (!usernameHistoryShown) {
+      onHide();
+    }
+  }
 }

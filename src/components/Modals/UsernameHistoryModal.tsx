@@ -16,7 +16,7 @@ export default function UsernameHistoryModal({
   const [loadMoreButtonShown] = useState(false);
 
   return (
-    <Modal modalOverModal small onHide={onHide}>
+    <Modal hasPriority small onHide={onHide}>
       <header>Previous Usernames</header>
       <main style={{ paddingTop: 0 }}>
         <RoundList>
