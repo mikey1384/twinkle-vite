@@ -288,11 +288,23 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
-    async loadUsernameHistory(userId: number) {
+    async loadUsernameHistory({
+      userId,
+      lastId
+    }: {
+      userId: number;
+      lastId?: number;
+    }) {
       try {
+        let url = `${URL}/user/username?userId=${userId}`;
+        if (lastId) {
+          url += `&lastId=${lastId}`;
+        }
+
         const {
           data: { usernames, loadMoreShown }
-        } = await request.get(`${URL}/user/username?userId=${userId}`);
+        } = await request.get(url);
+
         return Promise.resolve({
           usernames,
           loadMoreShown
