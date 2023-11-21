@@ -322,7 +322,10 @@ export default function Cover({
         />
       )}
       {usernameHistoryShown && (
-        <UsernameHistoryModal onHide={() => setUsernameHistoryShown(false)} />
+        <UsernameHistoryModal
+          userId={profile.id}
+          onHide={() => setUsernameHistoryShown(false)}
+        />
       )}
     </ErrorBoundary>
   );

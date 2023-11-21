@@ -288,6 +288,19 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadUsernameHistory(userId: number) {
+      try {
+        const {
+          data: { usernames, loadMoreShown }
+        } = await request.get(`${URL}/user/username?userId=${userId}`);
+        return Promise.resolve({
+          usernames,
+          loadMoreShown
+        });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadUserPictures({
       lastPictureId,
       exclude
