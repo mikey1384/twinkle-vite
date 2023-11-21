@@ -342,7 +342,10 @@ export default function UserPopup({
         </div>
       )}
       {usernameHistoryShown ? (
-        <UsernameHistoryModal onHide={() => setUsernameHistoryShown(false)} />
+        <UsernameHistoryModal
+          userId={user.id}
+          onHide={() => setUsernameHistoryShown(false)}
+        />
       ) : null}
     </Popup>
   );
