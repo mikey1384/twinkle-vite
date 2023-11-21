@@ -336,7 +336,7 @@ export default function Feeds({
     if (filter === 'byuser') {
       return loadMoreFeedsByUser();
     }
-    loadMoreFeeds();
+    await loadMoreFeeds();
     async function loadMoreFeeds() {
       const lastFeedId =
         feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
@@ -358,8 +358,10 @@ export default function Feeds({
         onLoadMorePosts({ ...data, section, username });
       } catch (error) {
         console.error(error);
+      } finally {
+        setLoadingMore(false);
+        lastFeedIdRef.current = null;
       }
-      setLoadingMore(false);
     }
     async function loadMoreFeedsByUser() {
       try {
