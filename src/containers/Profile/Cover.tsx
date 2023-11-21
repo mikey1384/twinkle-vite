@@ -9,6 +9,7 @@ import ImageEditModal from '~/components/Modals/ImageEditModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import UserTitle from '~/components/Texts/UserTitle';
 import AchievementBadges from '~/components/AchievementBadges';
+import UsernameHistoryModal from '~/components/Modals/UsernameHistoryModal';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
@@ -51,6 +52,7 @@ export default function Cover({
     username
   } = profile;
   const [alertModalShown, setAlertModalShown] = useState(false);
+  const [usernameHistoryShown, setUsernameHistoryShown] = useState(false);
   const [colorSelectorShown, setColorSelectorShown] = useState(false);
   const [imageModalShown, setImageModalShown] = useState(false);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
@@ -140,6 +142,9 @@ export default function Cover({
                     : 'none'};
                 }
               `}`}
+              onClick={() =>
+                profile.hasUsernameChanged && setUsernameHistoryShown(true)
+              }
             >
               {username}
             </span>{' '}
@@ -315,6 +320,9 @@ export default function Cover({
           content="Please select a smaller image"
           onHide={() => setAlertModalShown(false)}
         />
+      )}
+      {usernameHistoryShown && (
+        <UsernameHistoryModal onHide={() => setUsernameHistoryShown(false)} />
       )}
     </ErrorBoundary>
   );

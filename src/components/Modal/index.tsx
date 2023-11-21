@@ -10,6 +10,7 @@ export default function Modal({
   closeColor,
   closeWhenClickedOutside = true,
   children,
+  hasPriority,
   innerRef,
   modalOverModal,
   onHide,
@@ -24,6 +25,7 @@ export default function Modal({
   closeColor?: string;
   closeWhenClickedOutside?: boolean;
   children?: any;
+  hasPriority?: boolean;
   innerRef?: RefObject<any> | ((instance: any) => void);
   modalOverModal?: boolean;
   onHide?: () => void;
@@ -58,7 +60,8 @@ export default function Modal({
       <div
         className={`${css`
           position: fixed;
-          z-index: ${9_999_999 + (modalOverModal ? 1_000_000_000 : 0)};
+          z-index: ${9_999_999 +
+          (hasPriority || modalOverModal ? 1_000_000_000 : 0)};
           top: 0;
           right: 0;
           left: 0;
