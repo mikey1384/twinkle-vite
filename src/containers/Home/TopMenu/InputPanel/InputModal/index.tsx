@@ -8,7 +8,7 @@ import Button from '~/components/Button';
 export default function InputModal({ onHide }: { onHide: () => void }) {
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel/InputModal">
-      <Modal closeWhenClickedOutside={false} onHide={onHide}>
+      <Modal wrapped closeWhenClickedOutside={false} onHide={onHide}>
         <header>Post Something</header>
         <main>
           <div style={{ width: '100%' }}>
