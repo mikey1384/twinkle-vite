@@ -18,8 +18,10 @@ export default function UsernameHistoryModal({
     (v) => v.requestHelpers.loadUsernameHistory
   );
   const [loading, setLoading] = useState(false);
-  const [usernames, setUsernames] = useState([]);
-  const [loadingMore] = useState(false);
+  const [usernames, setUsernames] = useState<
+    { id: number; username: string; timeStamp: number }[]
+  >([]);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreButtonShown, setLoadMoreButtonShown] = useState(false);
 
   useEffect(() => {
@@ -27,7 +29,9 @@ export default function UsernameHistoryModal({
     async function init() {
       setLoading(true);
       try {
-        const { usernames, loadMoreShown } = await loadUsernameHistory(userId);
+        const { usernames, loadMoreShown } = await loadUsernameHistory({
+          userId
+        });
         setUsernames(usernames);
         setLoadMoreButtonShown(loadMoreShown);
       } catch (error) {
@@ -73,7 +77,7 @@ export default function UsernameHistoryModal({
               style={{ marginTop: '1.5rem' }}
               filled
               loading={loadingMore}
-              onClick={() => console.log('loading more')}
+              onClick={handleLoadMoreUsernames}
             />
           )}
         </RoundList>
@@ -85,4 +89,23 @@ export default function UsernameHistoryModal({
       </footer>
     </Modal>
   );
+
+  async function handleLoadMoreUsernames() {
+    const lastId = usernames[usernames.length - 1]?.id;
+    if (loadingMore || !lastId) return;
+    setLoadingMore(true);
+    try {
+      const { usernames: newUsernames, loadMoreShown } =
+        await loadUsernameHistory({
+          userId,
+          lastId
+        });
+      setUsernames((prevUsernames) => [...prevUsernames, ...newUsernames]);
+      setLoadMoreButtonShown(loadMoreShown);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 }
