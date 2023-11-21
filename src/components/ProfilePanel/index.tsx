@@ -440,7 +440,7 @@ function ProfilePanel({
                           >
                             {editBioLabel}
                           </Button>
-                          {profileId === userId && comments.length > 0 && (
+                          {profileId === userId && (
                             <MessagesButton
                               commentsShown={commentsShown}
                               loading={loadingComments}
