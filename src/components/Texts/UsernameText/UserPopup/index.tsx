@@ -59,6 +59,7 @@ export default function UserPopup({
     xpThisMonth
   } = useAppContext((v) => v.user.state.userObj[user.id] || {});
   const [usernameHistoryShown, setUsernameHistoryShown] = useState(false);
+  const [titleModalShown, setTitleModalShown] = useState(false);
 
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const userRank = useMemo(() => {
@@ -191,6 +192,7 @@ export default function UserPopup({
                       margin-right: 0.3rem;
                       color: ${Color.darkGray()};
                     `}`}
+                    onTitleModalShown={setTitleModalShown}
                   />
                   {appliedRealName}
                 </div>
@@ -351,7 +353,7 @@ export default function UserPopup({
   );
 
   function handleHide() {
-    if (!usernameHistoryShown) {
+    if (!(usernameHistoryShown || titleModalShown)) {
       onHide();
     }
   }
