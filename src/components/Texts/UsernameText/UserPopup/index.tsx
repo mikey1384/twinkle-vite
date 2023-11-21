@@ -156,7 +156,20 @@ export default function UserPopup({
                     color: '#333'
                   }}
                 >
-                  {user.username}
+                  <span
+                    className={`unselectable ${css`
+                      cursor: ${user.hasUsernameChanged
+                        ? 'pointer'
+                        : 'default'};
+                      &:hover {
+                        text-decoration: ${user.hasUsernameChanged
+                          ? 'underline'
+                          : 'none'};
+                      }
+                    `}`}
+                  >
+                    {user.username}
+                  </span>
                 </div>
                 <div style={{ fontSize: '0.8rem' }}>
                   <UserTitle

@@ -131,7 +131,18 @@ export default function Cover({
               }
             `}
           >
-            {username}{' '}
+            <span
+              className={`unselectable ${css`
+                cursor: ${profile.hasUsernameChanged ? 'pointer' : 'default'};
+                &:hover {
+                  text-decoration: ${profile.hasUsernameChanged
+                    ? 'underline'
+                    : 'none'};
+                }
+              `}`}
+            >
+              {username}
+            </span>{' '}
             <UserTitle
               user={profile}
               className={`unselectable ${css`
