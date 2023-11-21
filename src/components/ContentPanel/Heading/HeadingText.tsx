@@ -74,13 +74,18 @@ export default function HeadingText({
             theme={theme}
             label={action}
           />
-          {renderTargetAction()} {contentLabel}:{' '}
-          <ContentLink
-            content={isSubjectComment ? targetObj?.subject : rootObj}
-            contentType={isSubjectComment ? 'subject' : rootType}
-            theme={theme}
-            label=""
-          />{' '}
+          {renderTargetAction()}{' '}
+          {rootType !== 'user' ? (
+            <>
+              {contentLabel}:{' '}
+              <ContentLink
+                content={isSubjectComment ? targetObj?.subject : rootObj}
+                contentType={isSubjectComment ? 'subject' : rootType}
+                theme={theme}
+                label=""
+              />{' '}
+            </>
+          ) : null}
         </>
       );
     case 'url':
@@ -201,10 +206,14 @@ export default function HeadingText({
             style={{ color: contentLinkColor }}
             theme={theme}
             label={
-              replyId ? 'reply ' : rootType === 'user' ? 'message ' : 'comment '
+              replyId
+                ? 'reply '
+                : rootType === 'user'
+                ? 'profile message '
+                : 'comment '
             }
           />
-          {!replyId && rootType === 'user' ? 'to' : 'on'}
+          {!replyId && rootType === 'user' ? '' : 'on'}
         </span>
       );
     }
