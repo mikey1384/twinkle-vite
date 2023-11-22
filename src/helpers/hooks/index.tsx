@@ -112,9 +112,22 @@ export function useLazyLoad({
 }
 
 export function useMyState() {
+  // Retrieve various user state values from the global app context
   const contextValues = useAppContext((v) => v.user.state.myState);
-  const missions = useAppContext((v) => v.user.state.missions);
+
+  // Current user's uid
   const userId = useAppContext((v) => v.user.state.myState.userId);
+
+  // Retrieve the current user's state from 'userObj'
+  const myStateFromUserObj = useAppContext(
+    (v) => v.user.state.userObj[userId] || {}
+  );
+
+  // Key values from the global app context
+  const missions = useAppContext((v) => v.user.state.missions);
+  const notifications = useAppContext(
+    (v) => v.user.state.myState.state?.notifications
+  );
   const collectType = useAppContext((v) => v.user.state.myState.collectType);
   const lastChatPath = useAppContext((v) => v.user.state.myState.lastChatPath);
   const hideWatched = useAppContext((v) => v.user.state.myState.hideWatched);
@@ -125,45 +138,39 @@ export function useMyState() {
   const wordleStrictMode = useAppContext(
     (v) => v.user.state.myState.wordleStrictMode
   );
-  const notifications = useAppContext(
-    (v) => v.user.state.myState.state?.notifications
-  );
+
+  // Other global user context values
   const loaded = useAppContext((v) => v.user.state.loaded);
   const signinModalShown = useAppContext((v) => v.user.state.signinModalShown);
-  const myState = useAppContext((v) => v.user.state.userObj[userId] || {});
 
+  // Function to retrieve stored items from local storage
   const getStoredItems = (config: { [key: string]: any }) => {
-    return Object.keys(config).reduce(
-      (
-        acc: {
-          [key: string]: any;
-        },
-        key
-      ) => {
-        const storedValue = getStoredItem(key, config[key]);
-        if (key === 'userId') {
-          acc[key] = storedValue ? Number(storedValue) : null;
-        } else if (
-          key === 'level' ||
-          key === 'karmaPoints' ||
-          key === 'managementLevel'
-        ) {
-          acc[key] = Number(storedValue);
-        } else {
-          acc[key] = storedValue;
-        }
-        return acc;
-      },
-      {}
-    );
+    return Object.keys(config).reduce((acc: { [key: string]: any }, key) => {
+      const storedValue = getStoredItem(key, config[key]);
+      // Process and normalize specific stored values
+      if (key === 'userId') {
+        acc[key] = storedValue ? Number(storedValue) : null;
+      } else if (
+        key === 'level' ||
+        key === 'karmaPoints' ||
+        key === 'managementLevel'
+      ) {
+        acc[key] = Number(storedValue);
+      } else {
+        acc[key] = storedValue;
+      }
+      return acc;
+    }, {});
   };
 
+  // Retrieve stored items from local storage using predefined keys
   const storedItems = getStoredItems(localStorageKeys);
+
   const result = useMemo(() => {
-    return myState.loaded
+    return myStateFromUserObj.loaded
       ? {
           ...contextValues,
-          ...myState,
+          ...myStateFromUserObj,
           notifications,
           collectType,
           hideWatched,
@@ -171,8 +178,11 @@ export function useMyState() {
           numWordsCollected,
           searchFilter,
           wordleStrictMode,
-          missions: { ...(myState?.state?.missions || {}), ...missions },
-          isAdmin: myState.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
+          missions: {
+            ...(myStateFromUserObj?.state?.missions || {}),
+            ...missions
+          },
+          isAdmin: myStateFromUserObj.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
           loggedIn: true
         }
       : {
@@ -193,7 +203,7 @@ export function useMyState() {
     lastChatPath,
     loaded,
     missions,
-    myState,
+    myStateFromUserObj,
     notifications,
     numWordsCollected,
     searchFilter,
