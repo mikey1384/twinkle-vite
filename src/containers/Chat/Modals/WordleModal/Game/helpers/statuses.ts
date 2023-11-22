@@ -40,8 +40,10 @@ export function getGuessStatuses({
   const splitGuess = unicodeSplit(guess);
 
   const statuses = Array.from(Array(guess.length));
-  const indexesOnHold = [];
   const correctLetters: Record<string, string | boolean> = {};
+  for (const char of splitSolution) {
+    correctLetters[char] = true;
+  }
 
   for (let i = 0; i < splitGuess.length; i++) {
     const letter = splitGuess[i];
@@ -49,23 +51,11 @@ export function getGuessStatuses({
       statuses[i] = 'absent';
       continue;
     }
-    if (letter !== splitSolution[i]) {
-      if (correctLetters[letter]) {
-        statuses[i] = 'absent';
-        continue;
-      }
+    if (correctLetters[letter] && letter !== splitSolution[i]) {
       statuses[i] = 'present';
-      indexesOnHold.push(i);
       continue;
     }
     statuses[i] = 'correct';
-    correctLetters[letter] = true;
-    for (const prevIndex of indexesOnHold) {
-      if (splitGuess[prevIndex] === letter) {
-        statuses[prevIndex] = 'absent';
-      }
-    }
-    continue;
   }
 
   return statuses;
