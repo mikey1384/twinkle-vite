@@ -158,6 +158,7 @@ export default function TransactionModal({
   return (
     <ErrorBoundary componentPath="Chat/Modals/TransactionModal">
       <Modal
+        wrapped
         innerRef={ModalRef}
         onHide={isAICardModalShown || dropdownShown ? undefined : onHide}
       >
