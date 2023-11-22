@@ -82,7 +82,7 @@ function Markdown({
           switch (domNode.name) {
             case 'a': {
               const node = domNode.children?.[0];
-              let href = unescapeEqualSign(domNode.attribs?.href || '');
+              let href = unescapeEqualSignAndDash(domNode.attribs?.href || '');
               const { isInternalLink, replacedLink } =
                 processInternalLink(href);
               if (
@@ -110,7 +110,7 @@ function Markdown({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {unescapeEqualSign(node?.data || 'Link')}
+                    {unescapeEqualSignAndDash(node?.data || 'Link')}
                   </a>
                 );
               }
@@ -124,7 +124,9 @@ function Markdown({
                         return '\n';
                       }
                       const unescapedChildren = node
-                        ? unescapeEqualSign(unescapeHtml(node.data || ''))
+                        ? unescapeEqualSignAndDash(
+                            unescapeHtml(node.data || '')
+                          )
                         : '';
                       return removeNbsp(unescapedChildren);
                     })}
@@ -285,7 +287,7 @@ function Markdown({
         };
         switch (TagName) {
           case 'a': {
-            let href = unescapeEqualSign(attribs?.href || '');
+            let href = unescapeEqualSignAndDash(attribs?.href || '');
             const { isInternalLink, replacedLink } = processInternalLink(href);
             if (
               !isInternalLink &&
@@ -307,7 +309,9 @@ function Markdown({
                   to={replacedLink}
                 >
                   {children?.length
-                    ? children.map((child: any) => unescapeEqualSign(child))
+                    ? children.map((child: any) =>
+                        unescapeEqualSignAndDash(child)
+                      )
                     : 'Link'}
                 </Link>
               );
@@ -322,7 +326,9 @@ function Markdown({
                   target="_blank"
                 >
                   {children?.length
-                    ? children.map((child: any) => unescapeEqualSign(child))
+                    ? children.map((child: any) =>
+                        unescapeEqualSignAndDash(child)
+                      )
                     : 'Link'}
                 </a>
               );
@@ -333,7 +339,7 @@ function Markdown({
               <code {...commonProps}>
                 {children &&
                   children.map((child: any) => {
-                    const unescapedChild = unescapeEqualSign(
+                    const unescapedChild = unescapeEqualSignAndDash(
                       unescapeHtml(child || '')
                     );
                     return removeNbsp(unescapedChild);
@@ -527,6 +533,9 @@ function Markdown({
     if (processedText.includes('=')) {
       processedText = processedText.replace(/=/g, '\\=');
     }
+    if (processedText.includes('-')) {
+      processedText = processedText.replace(/-/g, '\\-');
+    }
     if (processedText.includes('+')) {
       processedText = processedText.replace(/\+/g, '&#43;');
     }
@@ -576,10 +585,17 @@ function Markdown({
     if (!(text.includes('&lt;') || text.includes('&gt;'))) return text;
     return (text || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
   }
-  function unescapeEqualSign(text: string) {
+  function unescapeEqualSignAndDash(text: string) {
     if (typeof text !== 'string') return text;
-    if (!(text.includes('\\=') || text.includes('%5C='))) return text;
-    return (text || '').replace(/\\=/g, '=').replace(/%5C=/g, '=');
+    if (
+      !(text.includes('\\=') || text.includes('%5C=') || text.includes('\\-'))
+    )
+      return text;
+    return (text || '')
+      .replace(/\\=/g, '=')
+      .replace(/\\-/g, '-')
+      .replace(/%5C=/g, '=')
+      .replace(/%5C-/g, '-');
   }
 }
 
