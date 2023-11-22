@@ -111,28 +111,32 @@ export default function ChatReducer(
     case 'ADD_MY_AI_CARD': {
       return {
         ...state,
-        cardObj: {
-          ...state.cardObj,
-          [action.card.id]: {
-            ...action.card,
-            isListed: false,
-            askPrice: null
-          }
-        },
+        cardObj: state.cardObj?.[action.card.id]
+          ? {
+              ...state.cardObj,
+              [action.card.id]: {
+                ...action.card,
+                isListed: false,
+                askPrice: null
+              }
+            }
+          : state.cardObj,
         myCardIds: [action.card.id].concat(state.myCardIds)
       };
     }
     case 'REMOVE_MY_AI_CARD': {
       return {
         ...state,
-        cardObj: {
-          ...state.cardObj,
-          [action.cardId]: {
-            ...state.cardObj[action.cardId],
-            isListed: false,
-            askPrice: null
-          }
-        },
+        cardObj: state.cardObj?.[action.cardId]
+          ? {
+              ...state.cardObj,
+              [action.cardId]: {
+                ...state.cardObj[action.cardId],
+                isListed: false,
+                askPrice: null
+              }
+            }
+          : state.cardObj,
         myCardIds: state.myCardIds.filter(
           (cardId: number) => cardId !== action.cardId
         )
@@ -141,14 +145,16 @@ export default function ChatReducer(
     case 'REMOVE_LISTED_AI_CARD': {
       return {
         ...state,
-        cardObj: {
-          ...state.cardObj,
-          [action.cardId]: {
-            ...state.cardObj[action.cardId],
-            isListed: false,
-            askPrice: 0
-          }
-        },
+        cardObj: state.cardObj?.[action.cardId]
+          ? {
+              ...state.cardObj,
+              [action.cardId]: {
+                ...state.cardObj[action.cardId],
+                isListed: false,
+                askPrice: 0
+              }
+            }
+          : state.cardObj,
         listedCardIds: state.listedCardIds.filter(
           (cardId: number) => cardId !== action.cardId
         )
