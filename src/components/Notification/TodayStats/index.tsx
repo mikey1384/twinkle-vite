@@ -4,7 +4,6 @@ import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useNotiContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import MissionLink from './MissionLink';
 import Loading from '~/components/Loading';
 
 export default function TodayStats() {
@@ -64,15 +63,6 @@ export default function TodayStats() {
                 {addCommasToNumber(todayStats.coinsEarned)} Coin
                 {todayStats.coinsEarned === 1 ? '' : 's'}
               </p>
-              {todayStats.nextMission ? (
-                <MissionLink
-                  rootMissionType={todayStats.nextMission.rootMissionType}
-                  missionName={todayStats.nextMission.title}
-                  missionType={todayStats.nextMission.missionType}
-                  xpReward={todayStats.nextMission.xpReward}
-                  coinReward={todayStats.nextMission.coinReward}
-                />
-              ) : null}
             </div>
           </div>
         ) : (
