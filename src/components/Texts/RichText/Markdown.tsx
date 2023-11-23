@@ -588,9 +588,16 @@ function Markdown({
   function unescapeEqualSignAndDash(text: string) {
     if (typeof text !== 'string') return text;
     if (
-      !(text.includes('\\=') || text.includes('%5C=') || text.includes('\\-'))
-    )
+      !(
+        text.includes('\\=') ||
+        text.includes('%5C=') ||
+        text.includes('\\-') ||
+        text.includes('%5C-')
+      )
+    ) {
       return text;
+    }
+
     return (text || '')
       .replace(/\\=/g, '=')
       .replace(/\\-/g, '-')
