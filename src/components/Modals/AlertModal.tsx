@@ -21,7 +21,9 @@ export default function AlertModal({
   return (
     <Modal modalOverModal={modalOverModal} onHide={onHide}>
       <header>{title}</header>
-      <main>{content}</main>
+      <main style={{ justifyContent: 'center', minHeight: '15rem' }}>
+        {content}
+      </main>
       <footer>
         <Button color={doneColor} onClick={onHide}>
           OK
