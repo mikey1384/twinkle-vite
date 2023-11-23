@@ -32,7 +32,14 @@ export default function ConfirmModal({
   return (
     <Modal modalOverModal={modalOverModal} onHide={onHide}>
       <header>{title}</header>
-      <main style={{ fontSize: descriptionFontSize, paddingTop: 0 }}>
+      <main
+        style={{
+          fontSize: descriptionFontSize,
+          paddingTop: 0,
+          minHeight: '15rem',
+          justifyContent: 'center'
+        }}
+      >
         {description}
       </main>
       <footer>
