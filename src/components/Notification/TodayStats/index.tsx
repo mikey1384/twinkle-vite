@@ -68,6 +68,8 @@ export default function TodayStats() {
         ) : (
           <Loading />
         )}
+        <div>daily goals</div>
+        <div>achievement progress</div>
       </div>
     </ErrorBoundary>
   );
