@@ -4,7 +4,7 @@ import { Color } from '~/constants/css';
 import RewardText from '~/components/Texts/RewardText';
 import { css } from '@emotion/css';
 
-export default function MissionLink({
+export default function NextMission({
   missionName,
   missionType,
   xpReward,
