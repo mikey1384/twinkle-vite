@@ -597,21 +597,25 @@ export default function SubjectPanel({
   }
 
   async function handleCommentSubmit(params: any) {
-    onChangeSpoilerStatus({
-      shown: true,
-      subjectId,
-      prevSecretViewerId: userId
-    });
-    if (secretHidden) {
-      await handleExpand(true);
-      return Promise.resolve();
+    try {
+      onChangeSpoilerStatus({
+        shown: true,
+        subjectId,
+        prevSecretViewerId: userId
+      });
+      if (secretHidden) {
+        await handleExpand(true);
+      } else {
+        onUploadComment({
+          ...params,
+          subjectId,
+          contentId: rootId,
+          contentType: rootType
+        });
+      }
+    } catch (error) {
+      console.error(error);
     }
-    onUploadComment({
-      ...params,
-      subjectId,
-      contentId: rootId,
-      contentType: rootType
-    });
   }
 
   async function handleExpand(revealingSecret: boolean) {
@@ -632,9 +636,11 @@ export default function SubjectPanel({
         });
       }
       setLoadingComments(false);
-      CommentsRef.current.focus();
+      if (CommentsRef.current) {
+        CommentsRef.current.focus();
+      }
     } catch (error: any) {
-      console.error(error.response || error);
+      console.error(error?.response || error);
     }
   }
 
