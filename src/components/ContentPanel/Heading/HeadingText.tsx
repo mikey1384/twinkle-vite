@@ -213,7 +213,7 @@ export default function HeadingText({
                 : 'comment '
             }
           />
-          {!replyId && rootType === 'user' ? '' : 'on'}
+          {rootType === 'user' ? '' : 'on'}
         </span>
       );
     }
