@@ -21,7 +21,7 @@ export default function CreateNewChatModal({
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/CreateNewChat">
-      <Modal onHide={onHide}>
+      <Modal wrapped onHide={onHide}>
         {isSupermod(level) ? (
           <TeacherMenu
             channelId={channelId}
