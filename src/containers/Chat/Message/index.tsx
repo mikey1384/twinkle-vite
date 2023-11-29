@@ -353,6 +353,7 @@ function Message({
       targetMessageId: number;
       timeStamp: number;
       subchannelId?: number;
+      subjectId?: number;
       username?: string;
       profilePicUrl?: string;
       targetMessage?: any;
@@ -377,6 +378,7 @@ function Message({
         rewardAmount: newMessage.rewardAmount,
         targetMessageId: newMessage.targetMessageId,
         timeStamp: newMessage.timeStamp,
+        subjectId: newMessage.subjectId,
         subchannelId: newMessage.subchannelId
       };
       const { messageId, timeStamp } = await saveChatMessage({

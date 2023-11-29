@@ -38,7 +38,7 @@ export default function InviteUsersModal({
   const [inviting, setInviting] = useState(false);
 
   return (
-    <Modal onHide={onHide}>
+    <Modal wrapped onHide={onHide}>
       <header>Invite people to this channel</header>
       <main>
         <TagForm
