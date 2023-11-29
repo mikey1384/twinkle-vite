@@ -7,6 +7,7 @@ import FileSizeItem from './FileSizeItem';
 import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
 import Loading from '~/components/Loading';
+import { isSupermod } from '~/helpers';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
@@ -38,12 +39,21 @@ const welcomeMessageLabel =
 
 export default function Store() {
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
+  const loadKarmaPoints = useAppContext(
+    (v) => v.requestHelpers.loadKarmaPoints
+  );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const { level, title, userType } = useKeyContext((v) => v.myState);
   const unlockUsernameChange = useAppContext(
     (v) => v.requestHelpers.unlockUsernameChange
   );
-  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
   const [loading, setLoading] = useState(false);
+  const [numTwinklesRewarded, setNumTwinklesRewarded] = useState(0);
+  const [numPostsRewarded, setNumPostsRewarded] = useState(0);
+  const [numRecommended, setNumRecommended] = useState(0);
+  const [numApprovedRecommendations, setNumApprovedRecommendations] =
+    useState(0);
   const [unlockingUsernameChange, setUnlockingUsernameChange] = useState(false);
   const { canChangeUsername, canGenerateAICard, karmaPoints, userId, loaded } =
     useKeyContext((v) => v.myState);
@@ -61,7 +71,24 @@ export default function Store() {
       setLoading(true);
       try {
         const data = await loadMyData();
-        onSetUserState({ userId: data.userId, newState: data });
+        const {
+          karmaPoints: kp,
+          numTwinklesRewarded,
+          numApprovedRecommendations,
+          numPostsRewarded,
+          numRecommended
+        } = await loadKarmaPoints();
+        onSetUserState({
+          userId: data.userId,
+          newState: { ...data, karmaPoints: kp }
+        });
+        if (!isSupermod(level)) {
+          setNumTwinklesRewarded(numTwinklesRewarded);
+          setNumApprovedRecommendations(numApprovedRecommendations);
+        } else {
+          setNumPostsRewarded(numPostsRewarded);
+          setNumRecommended(numRecommended);
+        }
       } catch {
         console.error('error loading my data');
       } finally {
@@ -108,7 +135,18 @@ export default function Store() {
           {welcomeMessageLabel}
         </p>
       </div>
-      <KarmaStatus />
+      <KarmaStatus
+        karmaPoints={karmaPoints}
+        level={level}
+        loading={loading}
+        numApprovedRecommendations={numApprovedRecommendations}
+        numPostsRewarded={numPostsRewarded}
+        numRecommended={numRecommended}
+        numTwinklesRewarded={numTwinklesRewarded}
+        title={title}
+        userId={userId}
+        userType={userType}
+      />
       <ItemPanel
         itemKey="changePassword"
         itemName={changePasswordLabel}
