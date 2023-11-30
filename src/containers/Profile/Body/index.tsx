@@ -162,7 +162,7 @@ export default function Body({
             onClick={() =>
               location.pathname === `/users/${username}/all`
                 ? null
-                : navigate(`all`)
+                : navigate(`/users/${username}/all`)
             }
           >
             <a>{postsLabel}</a>
