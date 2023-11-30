@@ -166,7 +166,7 @@ export function useMyState() {
   // Retrieve stored items from local storage using predefined keys
   const storedItems = getStoredItems(localStorageKeys);
   const result = useMemo(() => {
-    return myStateFromUserObj.loaded
+    return userId
       ? {
           ...contextValues,
           ...myStateFromUserObj,
@@ -187,14 +187,12 @@ export function useMyState() {
       : {
           loaded,
           unlockedAchievementIds: [],
-          lastChatPath: '',
           missions: {},
           rewardBoostLvl: 0,
           signinModalShown,
           isAdmin: storedItems.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
           ...storedItems,
-          profileTheme: storedItems.profileTheme || DEFAULT_PROFILE_THEME,
-          ...myStateFromUserObj
+          profileTheme: storedItems.profileTheme || DEFAULT_PROFILE_THEME
         };
   }, [
     collectType,
@@ -209,6 +207,7 @@ export function useMyState() {
     searchFilter,
     signinModalShown,
     storedItems,
+    userId,
     wordleStrictMode
   ]);
 
