@@ -597,7 +597,7 @@ export default function Main({
   ]);
 
   useEffect(() => {
-    if (userId !== prevUserId) {
+    if (userId !== prevUserId && !isUsingCollectRef.current) {
       navigate(`/chat`, { replace: true });
     }
   }, [userId, prevUserId, navigate]);
