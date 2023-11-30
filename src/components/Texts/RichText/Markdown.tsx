@@ -188,11 +188,11 @@ function Markdown({
             case 'table': {
               return (
                 <div
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}
+                  className={css`
+                    width: 100%;
+                    display: flex;
+                    overflow-x: auto;
+                  `}
                 >
                   <table
                     style={{ borderCollapse: 'collapse' }}
