@@ -34,6 +34,7 @@ export interface Card {
   quality: 'common' | 'superior' | 'rare' | 'elite' | 'legendary';
   style: string;
   word: string;
+  engine?: string;
 }
 export interface Comment {
   id: number;

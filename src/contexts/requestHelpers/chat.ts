@@ -338,12 +338,18 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async getOpenAiImage(prompt: string) {
+    async getOpenAiImage({
+      prompt,
+      cardId
+    }: {
+      prompt: string;
+      cardId: number;
+    }) {
       try {
         const {
           data: { imageUrl, style }
         } = await request.get(
-          `${URL}/chat/openai/image?prompt=${prompt}`,
+          `${URL}/chat/openai/image?prompt=${prompt}&cardId=${cardId}`,
           auth()
         );
         return Promise.resolve({ imageUrl, style });
