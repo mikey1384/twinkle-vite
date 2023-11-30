@@ -168,6 +168,7 @@ export function useMyState() {
   const result = useMemo(() => {
     return userId
       ? {
+          unlockedAchievementIds: [],
           ...contextValues,
           ...myStateFromUserObj,
           notifications,
