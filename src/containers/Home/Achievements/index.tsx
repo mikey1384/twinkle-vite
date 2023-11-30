@@ -8,6 +8,7 @@ import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 
 export default function Achievements() {
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const [myAchievementsObj, setMyAchievementsObj] = useState<{
     [key: string]: {
       milestones?: { name: string; completed: boolean }[];
@@ -37,6 +38,13 @@ export default function Achievements() {
     async function init() {
       setLoadingMyAchievements(true);
       const data = await loadMyAchievements();
+      const unlockedAchievementIds = [];
+      for (const key in data) {
+        if (data[key].isUnlocked) {
+          unlockedAchievementIds.push(data[key].id);
+        }
+      }
+      onSetUserState({ userId, newState: { unlockedAchievementIds } });
       setMyAchievementsObj(data);
       setLoadingMyAchievements(false);
     }

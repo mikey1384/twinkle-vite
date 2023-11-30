@@ -296,7 +296,7 @@ export default function App() {
             });
             onSetUserState({
               userId: data?.id,
-              newState: { ...data, loaded: true }
+              newState: data
             });
             onInitMyState(data);
           }

@@ -165,7 +165,6 @@ export function useMyState() {
 
   // Retrieve stored items from local storage using predefined keys
   const storedItems = getStoredItems(localStorageKeys);
-
   const result = useMemo(() => {
     return myStateFromUserObj.loaded
       ? {
@@ -194,7 +193,8 @@ export function useMyState() {
           signinModalShown,
           isAdmin: storedItems.managementLevel >= ADMIN_MANAGEMENT_LEVEL,
           ...storedItems,
-          profileTheme: storedItems.profileTheme || DEFAULT_PROFILE_THEME
+          profileTheme: storedItems.profileTheme || DEFAULT_PROFILE_THEME,
+          ...myStateFromUserObj
         };
   }, [
     collectType,
