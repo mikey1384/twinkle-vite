@@ -752,6 +752,14 @@ export default function Header({
         selectedChannelId: number;
         retryCount?: number;
       }) {
+        socket.emit(
+          'bind_uid_to_socket',
+          { userId, username, profilePicUrl },
+          () => {
+            socket.emit('change_busy_status', !usingChat);
+          }
+        );
+        socket.emit('enter_my_notification_channel', userId);
         try {
           onSetReconnecting(true);
           const pathId = Number(currentPathId);
@@ -775,6 +783,7 @@ export default function Header({
             }: {
               onlineUsers: { userId: number; username: string }[];
             }) => {
+              console.log(onlineUsers);
               onSetOnlineUsers({
                 channelId: selectedChannelId,
                 onlineUsers
