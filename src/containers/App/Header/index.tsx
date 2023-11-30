@@ -783,7 +783,6 @@ export default function Header({
             }: {
               onlineUsers: { userId: number; username: string }[];
             }) => {
-              console.log(onlineUsers);
               onSetOnlineUsers({
                 channelId: selectedChannelId,
                 onlineUsers
