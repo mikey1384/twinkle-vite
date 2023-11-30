@@ -12,7 +12,7 @@ ContentDetails.propTypes = {
   story: PropTypes.string,
   title: PropTypes.string,
   uploader: PropTypes.object.isRequired,
-  contentId: PropTypes.number.isRequired,
+  contentId: PropTypes.number,
   topic: PropTypes.string
 };
 export default function ContentDetails({
