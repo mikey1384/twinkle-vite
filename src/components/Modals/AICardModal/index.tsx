@@ -528,7 +528,10 @@ export default function AICardModal({
   async function handleGenerateImage() {
     setGeneratingImage(true);
     try {
-      const { imageUrl, style } = await getOpenAiImage(card.prompt);
+      const { imageUrl, style } = await getOpenAiImage({
+        cardId: card.id,
+        prompt: card.prompt
+      });
       const imagePath = await saveAIImageToS3(imageUrl);
       const { card: newState } = await postAICard({
         imagePath,
