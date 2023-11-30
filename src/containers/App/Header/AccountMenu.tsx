@@ -86,7 +86,7 @@ export default function AccountMenu({
             {addCommasToNumber(twinkleCoins)}
           </div>
         ) : (
-          <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
+          <Icon style={{ marginRight: '1rem' }} icon="spinner" pulse />
         ))}
       {userId ? (
         <DropdownButton
