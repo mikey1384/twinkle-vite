@@ -21,7 +21,7 @@ export default function MissionPage() {
   const { missionType = '' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { loaded, userId, isAdmin } = useKeyContext((v) => v.myState);
+  const { userId, isAdmin } = useKeyContext((v) => v.myState);
   const loadMission = useAppContext((v) => v.requestHelpers.loadMission);
   const loadMissionTypeIdHash = useAppContext(
     (v) => v.requestHelpers.loadMissionTypeIdHash
@@ -91,7 +91,7 @@ export default function MissionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, prevUserId, missionId, mission.loaded]);
 
-  if (!loaded) {
+  if (!userId) {
     return <Loading />;
   }
 
