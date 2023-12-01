@@ -768,12 +768,19 @@ export default function Header({
             const { isAccessible } = await checkChatAccessible(pathId);
             currentChannelIsAccessible = isAccessible;
           }
+
+          console.log('Loading chat...');
+          const startTime = new Date().getTime();
           const data = await loadChat({
             channelId: !isNaN(pathId)
               ? parseChannelPath(pathId)
               : selectedChannelId,
             subchannelPath
           });
+          const endTime = new Date().getTime();
+          const chatLoadingTime = (endTime - startTime) / 1000;
+          console.log(`Chat loaded in ${chatLoadingTime} seconds`);
+
           onInitChat({ data, userId });
           socket.emit(
             'check_online_users',
