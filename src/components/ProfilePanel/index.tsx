@@ -561,7 +561,7 @@ function ProfilePanel({
                 />
               )}
             </div>
-            {!!twinkleXP && <RankBar profile={profile} />}
+            {!!twinkleXP && profileLoaded && <RankBar profile={profile} />}
             {alertModalShown && (
               <AlertModal
                 title={imageTooLarge10MBLabel}
