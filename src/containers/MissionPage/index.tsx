@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Loading from '~/components/Loading';
 import Main from './Main';
 import RightMenu from './RightMenu';
@@ -18,6 +18,7 @@ import {
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 
 export default function MissionPage() {
+  const [loading, setLoading] = useState(false);
   const { missionType = '' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -79,19 +80,29 @@ export default function MissionPage() {
     }
 
     async function init() {
-      if (userId) {
-        const { page, myAttempts } = await loadMission({ missionId });
-        onLoadMission({ mission: page, prevUserId: userId });
-        onSetMyMissionAttempts(myAttempts);
-      } else if (missionId) {
-        onLoadMission({ mission: { id: missionId }, prevUserId: userId });
+      setLoading(true);
+      try {
+        if (userId) {
+          const { page, myAttempts } = await loadMission({ missionId });
+          onLoadMission({ mission: page, prevUserId: userId });
+          onSetMyMissionAttempts(myAttempts);
+        } else if (missionId) {
+          onLoadMission({
+            mission: { id: missionId },
+            prevUserId: userId
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, prevUserId, missionId, mission.loaded]);
 
-  if (!userId) {
+  if (loading) {
     return <Loading />;
   }
 
