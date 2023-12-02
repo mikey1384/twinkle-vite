@@ -171,7 +171,11 @@ export default function Stories() {
 
   return (
     <ErrorBoundary componentPath="Home/Stories/index">
-      <div style={{ width: '100%' }} ref={ContainerRef}>
+      <div
+        key={`${category}-${subFilter}`}
+        style={{ width: '100%' }}
+        ref={ContainerRef}
+      >
         <TopMenu
           onInputModalButtonClick={(modalType) =>
             onSetInputModalShown({ shown: true, modalType })
@@ -236,9 +240,7 @@ export default function Stories() {
               {feeds.map((feed: { [key: string]: any } = {}, index: number) =>
                 feed.contentId ? (
                   <ContentPanel
-                    key={
-                      category + subFilter + feed.contentId + feed.contentType
-                    }
+                    key={`${category}-${subFilter}-${feed.contentId}-${feed.contentType}`}
                     style={{
                       marginBottom: '1rem'
                     }}
