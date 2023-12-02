@@ -391,29 +391,36 @@ export default function Stories() {
   }
 
   async function handleFetchNewFeeds() {
-    onResetNumNewPosts();
-    onChangeSubFilter('all');
-    if (
-      category !== 'uploads' ||
-      displayOrder === 'asc' ||
-      (category === 'uploads' && subFilter === 'subject')
-    ) {
-      categoryRef.current = 'uploads';
-      onChangeCategory('uploads');
-      const { data } = await loadFeeds();
-      if (categoryRef.current === 'uploads') {
-        onLoadFeeds(data);
+    try {
+      if (!loadingNewFeeds) {
+        setLoadingNewFeeds(true);
+        const data = await loadNewFeeds({
+          lastInteraction: feeds[0] ? feeds[0].lastInteraction : 0
+        });
+
+        if (data) {
+          onResetNumNewPosts();
+          onChangeSubFilter('all');
+          if (
+            category !== 'uploads' ||
+            displayOrder === 'asc' ||
+            (category === 'uploads' && subFilter === 'subject')
+          ) {
+            categoryRef.current = 'uploads';
+            onChangeCategory('uploads');
+
+            const { data } = await loadFeeds();
+            if (categoryRef.current === 'uploads') {
+              onLoadFeeds(data);
+            }
+            return;
+          }
+          onLoadNewFeeds(data);
+        }
       }
-      return;
-    }
-    if (!loadingNewFeeds) {
-      setLoadingNewFeeds(true);
-      const data = await loadNewFeeds({
-        lastInteraction: feeds[0] ? feeds[0].lastInteraction : 0
-      });
-      if (data) {
-        onLoadNewFeeds(data);
-      }
+    } catch (error) {
+      console.error('Error fetching new feeds:', error);
+    } finally {
       setLoadingNewFeeds(false);
     }
   }
