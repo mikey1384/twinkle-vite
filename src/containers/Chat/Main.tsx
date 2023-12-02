@@ -467,7 +467,6 @@ export default function Main({
       pathId: string | number;
       subchannelPath?: string;
     }) {
-      console.log('Loading channel...');
       let attempts = 0;
       const maxAttempts = 3;
 
