@@ -37,7 +37,17 @@ function Markdown({
 }) {
   const [Content, setContent] = useState<any>(<>{children}</>);
   useEffect(() => {
-    processMarkdown();
+    const hasExcessivelyLongWord = (text: string) => {
+      const words = text.split(/\s+/);
+      return words.some((word) => word.length > 800);
+    };
+
+    if (hasExcessivelyLongWord(children)) {
+      setContent(children);
+      onSetIsParsed(true);
+    } else {
+      processMarkdown();
+    }
 
     async function processMarkdown() {
       try {
