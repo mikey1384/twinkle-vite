@@ -39,7 +39,10 @@ function Markdown({
   useEffect(() => {
     const hasExcessivelyLongWord = (text: string) => {
       const words = text.split(/\s+/);
-      return words.some((word) => word.length > 800);
+      return words.some((word) => {
+        const isMarkdownImage = /^!\[.*\]\(.*\)$/.test(word);
+        return !isMarkdownImage && word.length > 800;
+      });
     };
 
     if (hasExcessivelyLongWord(children)) {
