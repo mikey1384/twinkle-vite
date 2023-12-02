@@ -534,7 +534,7 @@ function Markdown({
       processedText = processedText.replace(/=/g, '\\=');
     }
     if (processedText.includes('-')) {
-      processedText = processedText.replace(/-/g, '\\-');
+      processedText = processedText.replace(/-(?!\s\[[x ]\])/g, '\\-');
     }
     if (processedText.includes('+')) {
       processedText = processedText.replace(/\+/g, '&#43;');
