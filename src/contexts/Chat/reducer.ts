@@ -915,11 +915,11 @@ export default function ChatReducer(
         action.data.favoriteChannelIds.pop();
         favoriteLoadMoreButton = true;
       }
-      if (action.data.vocabActivities.length > 20) {
+      if (action.data.vocabActivities?.length > 20) {
         action.data.vocabActivities.pop();
         vocabActivitiesLoadMoreButton = true;
       }
-      action.data.vocabActivities.reverse();
+      action.data.vocabActivities?.reverse?.();
       const newChannelsObj = {
         ...state.channelsObj,
         ...action.data.channelsObj
@@ -982,7 +982,7 @@ export default function ChatReducer(
       const aiCardsLoaded =
         action.data.cardFeeds && !!action.data.cardFeeds.length;
       const vocabActivitiesLoaded =
-        action.data.vocabActivities && !!action.data.vocabActivities.length;
+        action.data.vocabActivities && !!action.data.vocabActivities?.length;
 
       return {
         ...state,

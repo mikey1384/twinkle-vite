@@ -171,7 +171,11 @@ export default function Stories() {
 
   return (
     <ErrorBoundary componentPath="Home/Stories/index">
-      <div style={{ width: '100%' }} ref={ContainerRef}>
+      <div
+        key={`${category}-${subFilter}`}
+        style={{ width: '100%' }}
+        ref={ContainerRef}
+      >
         <TopMenu
           onInputModalButtonClick={(modalType) =>
             onSetInputModalShown({ shown: true, modalType })
@@ -236,9 +240,7 @@ export default function Stories() {
               {feeds.map((feed: { [key: string]: any } = {}, index: number) =>
                 feed.contentId ? (
                   <ContentPanel
-                    key={
-                      category + subFilter + feed.contentId + feed.contentType
-                    }
+                    key={`${category}-${subFilter}-${feed.contentId}-${feed.contentType}`}
                     style={{
                       marginBottom: '1rem'
                     }}
@@ -389,29 +391,36 @@ export default function Stories() {
   }
 
   async function handleFetchNewFeeds() {
-    onResetNumNewPosts();
-    onChangeSubFilter('all');
-    if (
-      category !== 'uploads' ||
-      displayOrder === 'asc' ||
-      (category === 'uploads' && subFilter === 'subject')
-    ) {
-      categoryRef.current = 'uploads';
-      onChangeCategory('uploads');
-      const { data } = await loadFeeds();
-      if (categoryRef.current === 'uploads') {
-        onLoadFeeds(data);
+    try {
+      if (!loadingNewFeeds) {
+        setLoadingNewFeeds(true);
+        const data = await loadNewFeeds({
+          lastInteraction: feeds[0] ? feeds[0].lastInteraction : 0
+        });
+
+        if (data) {
+          onResetNumNewPosts();
+          onChangeSubFilter('all');
+          if (
+            category !== 'uploads' ||
+            displayOrder === 'asc' ||
+            (category === 'uploads' && subFilter === 'subject')
+          ) {
+            categoryRef.current = 'uploads';
+            onChangeCategory('uploads');
+
+            const { data } = await loadFeeds();
+            if (categoryRef.current === 'uploads') {
+              onLoadFeeds(data);
+            }
+            return;
+          }
+          onLoadNewFeeds(data);
+        }
       }
-      return;
-    }
-    if (!loadingNewFeeds) {
-      setLoadingNewFeeds(true);
-      const data = await loadNewFeeds({
-        lastInteraction: feeds[0] ? feeds[0].lastInteraction : 0
-      });
-      if (data) {
-        onLoadNewFeeds(data);
-      }
+    } catch (error) {
+      console.error('Error fetching new feeds:', error);
+    } finally {
       setLoadingNewFeeds(false);
     }
   }

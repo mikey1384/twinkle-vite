@@ -37,7 +37,20 @@ function Markdown({
 }) {
   const [Content, setContent] = useState<any>(<>{children}</>);
   useEffect(() => {
-    processMarkdown();
+    const hasExcessivelyLongWord = (text: string) => {
+      const words = text.split(/\s+/);
+      return words.some((word) => {
+        const isMarkdownImage = /^!\[.*\]\(.*\)$/.test(word);
+        return !isMarkdownImage && word.length > 800;
+      });
+    };
+
+    if (hasExcessivelyLongWord(children)) {
+      setContent(children);
+      onSetIsParsed(true);
+    } else {
+      processMarkdown();
+    }
 
     async function processMarkdown() {
       try {
@@ -188,11 +201,11 @@ function Markdown({
             case 'table': {
               return (
                 <div
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}
+                  className={css`
+                    width: 100%;
+                    display: flex;
+                    overflow-x: auto;
+                  `}
                 >
                   <table
                     style={{ borderCollapse: 'collapse' }}
@@ -534,7 +547,7 @@ function Markdown({
       processedText = processedText.replace(/=/g, '\\=');
     }
     if (processedText.includes('-')) {
-      processedText = processedText.replace(/-/g, '\\-');
+      processedText = processedText.replace(/-(?!\s\[[x ]\])/g, '\\-');
     }
     if (processedText.includes('+')) {
       processedText = processedText.replace(/\+/g, '&#43;');

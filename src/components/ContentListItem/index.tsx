@@ -28,7 +28,7 @@ ContentListItem.propTypes = {
 function ContentListItem({
   onClick = () => null,
   contentObj,
-  contentObj: { id: contentId, contentType, notFound },
+  contentObj: { id: contentId, contentType, rootType, notFound },
   expandable,
   modalOverModal,
   onContentIsDeleted,
@@ -42,6 +42,7 @@ function ContentListItem({
   contentObj: {
     id: number;
     contentType: string;
+    rootType?: string;
     notFound?: boolean;
   };
   expandable?: boolean;
@@ -228,7 +229,10 @@ function ContentListItem({
           </div>
           {contentType === 'subject' && (secretAnswer || secretAttachment) && (
             <SecretAnswer
-              style={{ marginTop: filePath && userId ? '0.5rem' : 0 }}
+              style={{
+                marginTop:
+                  (filePath && userId) || rootType === 'url' ? '0.5rem' : 0
+              }}
               answer={secretAnswer}
               subjectId={contentId}
               uploaderId={uploader.id}

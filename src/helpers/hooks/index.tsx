@@ -165,10 +165,10 @@ export function useMyState() {
 
   // Retrieve stored items from local storage using predefined keys
   const storedItems = getStoredItems(localStorageKeys);
-
   const result = useMemo(() => {
-    return myStateFromUserObj.loaded
+    return userId
       ? {
+          unlockedAchievementIds: [],
           ...contextValues,
           ...myStateFromUserObj,
           notifications,
@@ -188,7 +188,6 @@ export function useMyState() {
       : {
           loaded,
           unlockedAchievementIds: [],
-          lastChatPath: '',
           missions: {},
           rewardBoostLvl: 0,
           signinModalShown,
@@ -209,6 +208,7 @@ export function useMyState() {
     searchFilter,
     signinModalShown,
     storedItems,
+    userId,
     wordleStrictMode
   ]);
 

@@ -162,10 +162,14 @@ export default function AICards({
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       isPurchased = true;
       onSetAICardStatusMessage('Purchase complete! Summoning your card...');
-      const { imageUrl, style } = await getOpenAiImage(prompt);
+      const { engine, imageUrl, style } = await getOpenAiImage({
+        cardId,
+        prompt
+      });
       onSetAICardStatusMessage('Almost done...');
       const imagePath = await saveAIImageToS3(imageUrl);
       const { feed, card } = await postAICard({
+        engine,
         imagePath,
         cardId,
         style,

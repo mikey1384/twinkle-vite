@@ -7,12 +7,12 @@ import AIStoryDetails from './AIStoryDetails';
 import { User } from '~/types';
 
 ContentDetails.propTypes = {
-  contentType: PropTypes.string.isRequired,
+  contentType: PropTypes.string,
   description: PropTypes.string,
   story: PropTypes.string,
   title: PropTypes.string,
   uploader: PropTypes.object.isRequired,
-  contentId: PropTypes.number.isRequired,
+  contentId: PropTypes.number,
   topic: PropTypes.string
 };
 export default function ContentDetails({

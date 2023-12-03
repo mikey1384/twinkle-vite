@@ -97,7 +97,7 @@ export default function Home({
         <Pictures
           profileId={profile.id}
           numPics={numPics}
-          pictures={pictures}
+          pictures={pictures || []}
           selectedTheme={selectedTheme}
         />
       )}

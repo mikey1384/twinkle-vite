@@ -139,14 +139,18 @@ export default function Body({
           <nav
             className={watchedMatch ? 'active' : ''}
             style={{ cursor: 'pointer' }}
-            onClick={() => (watchedMatch ? null : navigate(`watched`))}
+            onClick={() =>
+              watchedMatch ? null : navigate(`/users/${username}/watched`)
+            }
           >
             <a>{watchedLabel}</a>
           </nav>
           <nav
             className={likesMatch ? 'active' : ''}
             style={{ cursor: 'pointer' }}
-            onClick={() => (likesMatch ? null : navigate(`likes/all`))}
+            onClick={() =>
+              likesMatch ? null : navigate(`/users/${username}/likes/all`)
+            }
           >
             <a>{likesLabel}</a>
           </nav>
@@ -158,7 +162,7 @@ export default function Body({
             onClick={() =>
               location.pathname === `/users/${username}/all`
                 ? null
-                : navigate(`all`)
+                : navigate(`/users/${username}/all`)
             }
           >
             <a>{postsLabel}</a>
