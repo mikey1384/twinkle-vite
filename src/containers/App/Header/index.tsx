@@ -736,14 +736,12 @@ export default function Header({
       console.log('connected to socket');
       onClearRecentChessMessage(selectedChannelId);
       onChangeSocketStatus(true);
-      const tasks = [
-        handleCheckVersion(),
-        handleCheckOutdated(),
-        userId ? handleGetNumberOfUnreadMessages() : null,
-        userId ? handleLoadChat({ selectedChannelId }) : null
-      ].filter(Boolean);
-
-      await Promise.all(tasks);
+      handleCheckVersion();
+      handleCheckOutdated();
+      if (userId) {
+        handleGetNumberOfUnreadMessages();
+        handleLoadChat({ selectedChannelId });
+      }
 
       async function handleLoadChat({
         selectedChannelId,
