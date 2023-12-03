@@ -338,15 +338,21 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async getOpenAiImage(prompt: string) {
+    async getOpenAiImage({
+      prompt,
+      cardId
+    }: {
+      prompt: string;
+      cardId: number;
+    }) {
       try {
         const {
-          data: { imageUrl, style }
+          data: { engine, imageUrl, style }
         } = await request.get(
-          `${URL}/chat/openai/image?prompt=${prompt}`,
+          `${URL}/chat/openai/image?prompt=${prompt}&cardId=${cardId}`,
           auth()
         );
-        return Promise.resolve({ imageUrl, style });
+        return Promise.resolve({ engine, imageUrl, style });
       } catch (error) {
         return handleError(error);
       }
@@ -507,6 +513,7 @@ export default function chatRequestHelpers({
     },
     async postAICard({
       cardId,
+      engine,
       imagePath,
       style,
       quality,
@@ -515,6 +522,7 @@ export default function chatRequestHelpers({
       prompt
     }: {
       cardId: number;
+      engine: string;
       imagePath: string;
       style: string;
       quality: string;
@@ -527,7 +535,7 @@ export default function chatRequestHelpers({
           data: { feed, card }
         } = await request.post(
           `${URL}/chat/aiCard`,
-          { cardId, imagePath, style, quality, level, word, prompt },
+          { cardId, engine, imagePath, style, quality, level, word, prompt },
           auth()
         );
         return Promise.resolve({ feed, card });

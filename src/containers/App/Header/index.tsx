@@ -736,20 +736,14 @@ export default function Header({
       console.log('connected to socket');
       onClearRecentChessMessage(selectedChannelId);
       onChangeSocketStatus(true);
-      handleCheckVersion();
-      handleCheckOutdated();
-      if (userId) {
-        handleGetNumberOfUnreadMessages();
-        socket.emit(
-          'bind_uid_to_socket',
-          { userId, username, profilePicUrl },
-          () => {
-            socket.emit('change_busy_status', !usingChat);
-          }
-        );
-        socket.emit('enter_my_notification_channel', userId);
-        handleLoadChat({ selectedChannelId });
-      }
+      const tasks = [
+        handleCheckVersion(),
+        handleCheckOutdated(),
+        userId ? handleGetNumberOfUnreadMessages() : null,
+        userId ? handleLoadChat({ selectedChannelId }) : null
+      ].filter(Boolean);
+
+      await Promise.all(tasks);
 
       async function handleLoadChat({
         selectedChannelId,
@@ -758,6 +752,14 @@ export default function Header({
         selectedChannelId: number;
         retryCount?: number;
       }) {
+        socket.emit(
+          'bind_uid_to_socket',
+          { userId, username, profilePicUrl },
+          () => {
+            socket.emit('change_busy_status', !usingChat);
+          }
+        );
+        socket.emit('enter_my_notification_channel', userId);
         try {
           onSetReconnecting(true);
           const pathId = Number(currentPathId);
@@ -766,12 +768,19 @@ export default function Header({
             const { isAccessible } = await checkChatAccessible(pathId);
             currentChannelIsAccessible = isAccessible;
           }
+
+          console.log('Loading chat...');
+          const startTime = new Date().getTime();
           const data = await loadChat({
             channelId: !isNaN(pathId)
               ? parseChannelPath(pathId)
               : selectedChannelId,
             subchannelPath
           });
+          const endTime = new Date().getTime();
+          const chatLoadingTime = (endTime - startTime) / 1000;
+          console.log(`Chat loaded in ${chatLoadingTime} seconds`);
+
           onInitChat({ data, userId });
           socket.emit(
             'check_online_users',

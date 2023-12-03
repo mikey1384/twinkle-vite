@@ -451,7 +451,8 @@ export default function Main({
         ((currentPathId &&
           Number(currentPathId) !== Number(prevPathId.current)) ||
           (subchannelPath && subchannelPath !== prevSubchannelPath.current)) &&
-        userId
+        userId &&
+        loaded
       ) {
         prevPathId.current = currentPathId;
         prevSubchannelPath.current = subchannelPath || '';
@@ -535,6 +536,7 @@ export default function Main({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isUsingCollect,
+    loaded,
     subchannelPath,
     lastChatPath,
     navigate,
@@ -597,7 +599,7 @@ export default function Main({
   ]);
 
   useEffect(() => {
-    if (userId !== prevUserId) {
+    if (userId !== prevUserId && !isUsingCollectRef.current) {
       navigate(`/chat`, { replace: true });
     }
   }, [userId, prevUserId, navigate]);

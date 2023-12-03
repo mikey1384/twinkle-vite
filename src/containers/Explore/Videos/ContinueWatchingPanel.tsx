@@ -12,7 +12,7 @@ const loadingLabel = localize('loading');
 const recommendedLabel = localize('recommendedVideos');
 
 export default function ContinueWatchingPanel() {
-  const { userId, loaded: profileLoaded } = useKeyContext((v) => v.myState);
+  const { userId } = useKeyContext((v) => v.myState);
   const loadContinueWatching = useAppContext(
     (v) => v.requestHelpers.loadContinueWatching
   );
@@ -43,7 +43,7 @@ export default function ContinueWatchingPanel() {
   useEffect(() => {
     if (
       !loadingRef.current &&
-      profileLoaded &&
+      userId &&
       (!(continueWatchingLoaded || loadedRef.current) || userId !== prevUserId)
     ) {
       init();
@@ -64,7 +64,7 @@ export default function ContinueWatchingPanel() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [continueWatchingLoaded, userId, prevUserId, profileLoaded]);
+  }, [continueWatchingLoaded, userId, prevUserId]);
 
   return (
     <ErrorBoundary componentPath="Explore/Videos/ContinueWatchingPanel">

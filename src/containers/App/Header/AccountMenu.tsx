@@ -76,15 +76,18 @@ export default function AccountMenu({
 
   return (
     <div className="desktop" style={{ display: 'flex', alignItems: 'center' }}>
-      {userId && typeof twinkleCoins === 'number' && (
-        <div
-          style={{ marginRight: '1rem', cursor: 'pointer' }}
-          onClick={onSetBalanceModalShown}
-        >
-          <Icon icon={['far', 'badge-dollar']} />{' '}
-          {addCommasToNumber(twinkleCoins)}
-        </div>
-      )}
+      {userId &&
+        (typeof twinkleCoins === 'number' ? (
+          <div
+            style={{ marginRight: '1rem', cursor: 'pointer' }}
+            onClick={onSetBalanceModalShown}
+          >
+            <Icon icon={['far', 'badge-dollar']} />{' '}
+            {addCommasToNumber(twinkleCoins)}
+          </div>
+        ) : (
+          <Icon style={{ marginRight: '1rem' }} icon="spinner" pulse />
+        ))}
       {userId ? (
         <DropdownButton
           className={className}

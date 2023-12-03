@@ -112,9 +112,17 @@ export default function UserListModal({
                     </div>
                   </div>
                   {userId && user.id !== userId && (
-                    <div>
+                    <div style={{ display: 'flex' }}>
                       <Button
                         color="logoBlue"
+                        filled
+                        style={{ fontSize: '1.5rem', marginRight: '1rem' }}
+                        onClick={() => navigate(`/users/${user.username}`)}
+                      >
+                        <Icon icon="user" />
+                      </Button>
+                      <Button
+                        color="green"
                         filled
                         style={{ fontSize: '1.5rem' }}
                         onClick={() => handleTalkClick(user)}
