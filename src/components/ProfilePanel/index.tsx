@@ -257,16 +257,16 @@ function ProfilePanel({
         {contentShown && (
           <div
             ref={PanelRef}
-            className={`unselectable ${css`
+            className={css`
               background: #fff;
               width: 100%;
               line-height: 2.3rem;
               font-size: 1.5rem;
               position: relative;
-            `}`}
+            `}
           >
             <div
-              className={css`
+              className={`unselectable ${css`
                 background: ${Color[profilePanelColor]()};
                 border-top-right-radius: ${borderRadius};
                 border-top-left-radius: ${borderRadius};
@@ -280,7 +280,7 @@ function ProfilePanel({
                   border-left: none;
                   border-right: none;
                 }
-              `}
+              `}`}
               style={{ minHeight: '2.5rem', padding: '0.7rem' }}
             >
               <AchievementBadges
@@ -321,6 +321,7 @@ function ProfilePanel({
                     }}
                   >
                     <div
+                      className="unselectable"
                       style={{ width: 'CALC(100% - 2rem)' }}
                       onMouseEnter={() => setMouseEnteredProfile(true)}
                       onMouseLeave={() => setMouseEnteredProfile(false)}
@@ -386,6 +387,7 @@ function ProfilePanel({
                     )}
                   </div>
                   <div
+                    className="unselectable"
                     style={{
                       marginLeft: '2rem',
                       display: 'flex',
