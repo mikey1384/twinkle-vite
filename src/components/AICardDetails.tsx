@@ -85,13 +85,17 @@ export default function AICardDetails({
             />
           </span>
         </div>
-        <div>
-          <b
+        <div
+          className={css`
+            padding: 0 ${removeRightPadding ? 0 : '5rem'} 0 5rem;
+          `}
+        >
+          <div
             className={css`
               font-size: 1.3rem;
+              font-weight: bold;
               font-family: helvetica, sans-serif;
               color: ${Color.darkerGray()};
-              padding: 0 ${removeRightPadding ? 0 : '5rem'} 0 5rem;
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 1rem;
                 padding: 0 ${removeRightPadding ? 0 : '2rem'} 0 2rem;
@@ -99,26 +103,26 @@ export default function AICardDetails({
             `}
           >
             {card.style}
-          </b>
-        </div>
-        {card.engine === 'DALL-E 3' ? (
-          <div
-            className={css`
-              text-align: center;
-              margin-top: 0.5rem;
-              font-size: 1.2rem;
-              font-family: 'Orbitron', sans-serif;
-              text-transform: capitalize;
-              font-weight: bold;
-              color: ${Color.darkerGray()};
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1rem;
-              }
-            `}
-          >
-            DALL-E 3
           </div>
-        ) : null}
+          {card.engine === 'DALL-E 3' ? (
+            <div
+              className={css`
+                text-align: center;
+                margin-top: 0.5rem;
+                font-size: 1.2rem;
+                font-family: 'Orbitron', sans-serif;
+                text-transform: capitalize;
+                font-weight: bold;
+                color: ${Color.darkerGray()};
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1rem;
+                }
+              `}
+            >
+              DALL-E 3
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
