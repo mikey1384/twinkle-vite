@@ -178,6 +178,7 @@ export default function App() {
   const onResetSubjectInput = useInputContext(
     (v) => v.actions.onResetSubjectInput
   );
+  const [loadingRankings, setLoadingRankings] = useState(false);
   const [mobileMenuShown, setMobileMenuShown] = useState(false);
   const currentChannel = useMemo(
     () => channelsObj[selectedChannelId] || {},
@@ -209,26 +210,33 @@ export default function App() {
   useEffect(() => {
     handleLoadRankings();
     async function handleLoadRankings() {
-      const {
-        all,
-        top30s,
-        allMonthly,
-        top30sMonthly,
-        myMonthlyRank,
-        myAllTimeRank,
-        myAllTimeXP,
-        myMonthlyXP
-      } = await loadRankings();
-      onGetRanks({
-        all,
-        top30s,
-        allMonthly,
-        top30sMonthly,
-        myMonthlyRank,
-        myAllTimeRank,
-        myAllTimeXP,
-        myMonthlyXP
-      });
+      setLoadingRankings(true);
+      try {
+        const {
+          all,
+          top30s,
+          allMonthly,
+          top30sMonthly,
+          myMonthlyRank,
+          myAllTimeRank,
+          myAllTimeXP,
+          myMonthlyXP
+        } = await loadRankings();
+        onGetRanks({
+          all,
+          top30s,
+          allMonthly,
+          top30sMonthly,
+          myMonthlyRank,
+          myAllTimeRank,
+          myAllTimeXP,
+          myMonthlyXP
+        });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingRankings(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [twinkleXP]);
@@ -703,6 +711,7 @@ export default function App() {
         value={{
           myState: {
             ...myState,
+            loadingRankings,
             profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
           },
           theme,

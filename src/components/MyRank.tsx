@@ -5,6 +5,7 @@ import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import Icon from '~/components/Icon';
 
 const unrankedLabel = localize('unranked');
 
@@ -24,6 +25,7 @@ export default function MyRank({
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
+  const { loadingRankings } = useKeyContext((v) => v.myState);
   const rankedColor = useMemo(
     () =>
       rank === 1
@@ -42,6 +44,7 @@ export default function MyRank({
   return (
     <div
       style={{
+        opacity: loadingRankings ? 0.5 : 1,
         marginTop: '1rem',
         marginBottom: myId ? '1rem' : 0,
         borderBottom:
@@ -91,22 +94,41 @@ export default function MyRank({
       `}
     >
       <div>
-        <span
+        <div
           style={{
-            fontWeight: 'bold',
-            color: rankedColor || Color[xpNumberColor]()
+            position: 'relative',
+            display: 'inline-block'
           }}
         >
-          {twinkleXP ? addCommasToNumber(twinkleXP) : 0}
-        </span>{' '}
-        <span
-          style={{
-            fontWeight: 'bold',
-            color: rankedColor || Color.gold()
-          }}
-        >
-          XP
-        </span>
+          <span
+            style={{
+              fontWeight: 'bold',
+              color: rankedColor || Color[xpNumberColor]()
+            }}
+          >
+            {twinkleXP ? addCommasToNumber(twinkleXP) : 0}
+          </span>{' '}
+          <span
+            style={{
+              fontWeight: 'bold',
+              color: rankedColor || Color.gold()
+            }}
+          >
+            XP
+          </span>
+          {loadingRankings ? (
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                right: '-3rem',
+                transform: 'translateY(-50%)'
+              }}
+            >
+              <Icon icon="spinner" pulse />
+            </div>
+          ) : null}
+        </div>
         <p
           className="rank"
           style={{
