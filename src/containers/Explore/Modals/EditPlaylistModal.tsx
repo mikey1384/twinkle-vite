@@ -127,7 +127,7 @@ export default function EditPlaylistModal({
   return (
     <ErrorBoundary componentPath="EditPlaylistModal">
       <DndProvider backend={Backend}>
-        <Modal large onHide={onHide}>
+        <Modal wrapped large onHide={onHide}>
           <header>
             {modalType === 'change'
               ? 'Change Playlist Videos'
