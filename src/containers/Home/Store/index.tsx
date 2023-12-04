@@ -55,7 +55,7 @@ export default function Store() {
   const [numApprovedRecommendations, setNumApprovedRecommendations] =
     useState(0);
   const [unlockingUsernameChange, setUnlockingUsernameChange] = useState(false);
-  const { canChangeUsername, canGenerateAICard, karmaPoints, userId, loaded } =
+  const { canChangeUsername, canGenerateAICard, karmaPoints, userId } =
     useKeyContext((v) => v.myState);
   const {
     logoTwin: { color: twinColor },
@@ -156,7 +156,7 @@ export default function Store() {
       >
         <ChangePassword style={{ marginTop: '1rem' }} />
       </ItemPanel>
-      {!loaded ? (
+      {loading ? (
         <Loading />
       ) : (
         <>
