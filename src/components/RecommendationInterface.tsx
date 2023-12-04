@@ -222,12 +222,16 @@ export default function RecommendationInterface({
     </ErrorBoundary>
   );
 
-  async function handleRecommend() {
+  async function handleRecommend(attempt = 1, maxAttempts = 3) {
+    const cooldown = 3000;
+    let isSuccess = false;
     setRecommending(true);
+
     const currentRecommendations =
       !isRecommendedByUser && isOnlyRecommendedByStudents
         ? recommendations
         : [];
+
     try {
       const { coins, recommendations } = await recommendContent({
         contentId,
@@ -242,12 +246,18 @@ export default function RecommendationInterface({
       if (recommendations) {
         onRecommendContent({ contentId, contentType, recommendations });
       }
-      onHide();
+      isSuccess = true;
     } catch (error) {
       console.error(error);
-      onHide();
+      if (attempt < maxAttempts) {
+        setTimeout(() => handleRecommend(attempt + 1, maxAttempts), cooldown);
+        return;
+      }
     } finally {
-      setRecommending(false);
+      if (isSuccess || attempt >= maxAttempts) {
+        setRecommending(false);
+        onHide();
+      }
     }
   }
 }
