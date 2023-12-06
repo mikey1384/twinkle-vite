@@ -883,6 +883,7 @@ export default function ChatReducer(
         }
       };
     case 'INIT_CHAT': {
+      if (!action.data?.channelsObj) return state;
       const alreadyUsingChat =
         (!!state.selectedChannelId || state.selectedChannelId === 0) &&
         state.selectedChannelId !== action.data.currentChannelId &&
@@ -944,7 +945,7 @@ export default function ChatReducer(
         }
       }
       newChannelsObj[action.data.currentChannelId] = {
-        ...action.data.channelsObj[action.data.currentChannelId],
+        ...(action.data.channelsObj[action.data.currentChannelId] || {}),
         allMemberIds:
           newCurrentChannel?.allMemberIds ||
           action.data.channelsObj[action.data.currentChannelId]?.allMemberIds ||
