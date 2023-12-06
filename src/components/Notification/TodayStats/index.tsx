@@ -29,6 +29,7 @@ export default function TodayStats() {
           text-align: center;
           border-radius: ${borderRadius};
           border: 1px solid ${Color.borderGray()};
+          z-index: 0; // Ensure the container is behind the ::after pseudo-element
           &::after {
             content: '';
             position: absolute;
@@ -40,6 +41,7 @@ export default function TodayStats() {
             background-size: auto 100%;
             background-position-x: 17%;
             opacity: 0.2;
+            z-index: -1; // Place the pseudo-element behind the content
           }
           @media (max-width: ${mobileMaxWidth}) {
             border-radius: 0;
