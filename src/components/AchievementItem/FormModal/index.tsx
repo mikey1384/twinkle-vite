@@ -46,7 +46,7 @@ export default function FormModal({ onHide }: { onHide: () => void }) {
   return (
     <Modal onHide={onHide}>
       <header>Additional Profile Details</header>
-      <main>
+      <main style={{ justifyContent: 'center', minHeight: '20vh' }}>
         {managementLevel >= ADMIN_MANAGEMENT_LEVEL ? (
           <div
             style={{ fontSize: '1.7rem' }}
