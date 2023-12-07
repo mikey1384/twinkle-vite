@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
+import ProgressBar from '~/components/ProgressBar';
+import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -10,11 +13,13 @@ export default function ItemThumbPanel({
   thumbSize = '4rem',
   itemName,
   badgeSrc,
+  progressObj,
   style
 }: {
   thumbSize?: string;
   itemName: string;
   badgeSrc?: string;
+  progressObj?: { label: string; currentValue: number; targetValue: number };
   style?: React.CSSProperties;
 }) {
   const timerRef: React.MutableRefObject<any> = useRef(null);
@@ -28,6 +33,14 @@ export default function ItemThumbPanel({
       }, mobileFullTextRevealShowDuration);
     }
   }, [titleContext]);
+  const progress = useMemo(() => {
+    if (progressObj) {
+      const { currentValue, targetValue } = progressObj;
+      return Math.ceil(100 * (currentValue / targetValue));
+    } else {
+      return 0;
+    }
+  }, [progressObj]);
 
   return (
     <div
@@ -38,6 +51,22 @@ export default function ItemThumbPanel({
       `}
       style={style}
     >
+      {progressObj && (
+        <div style={{ position: 'absolute' }}>
+          <h3
+            className={css`
+              margin-top: 1.7rem;
+              margin-bottom: -0.5rem;
+              font-weight: bold;
+              font-size: 1.5rem;
+              color: ${Color.black()};
+            `}
+          >
+            {progressObj.label}: {addCommasToNumber(progressObj.currentValue)}
+          </h3>
+          <ProgressBar progress={progress} />
+        </div>
+      )}
       {badgeSrc && (
         <img
           onMouseOver={() => {
