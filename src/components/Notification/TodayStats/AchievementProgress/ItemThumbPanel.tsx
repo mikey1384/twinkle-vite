@@ -57,7 +57,7 @@ export default function ItemThumbPanel({
         overflow: hidden;
       `}
     >
-      {badgeSrc && (
+      <div style={{ cursor: 'pointer', width: '100%' }}>
         <img
           onMouseOver={() => {
             const parentElementDimensions =
@@ -78,40 +78,40 @@ export default function ItemThumbPanel({
             height: 100%;
           `}
         />
-      )}
-      <svg
-        width={thumbSize}
-        height={thumbSize}
-        viewBox={`0 0 ${2 * thumbRadius} ${2 * thumbRadius}`}
-        style={{
-          position: 'absolute',
-          transform: 'rotate(-90deg)', // Start the progress from the top
-          transformOrigin: 'center'
-        }}
-      >
-        <circle
-          cx={thumbRadius}
-          cy={thumbRadius}
-          r={thumbRadius}
-          fill="transparent"
-          stroke="rgba(0, 0, 0, 0.7)"
-          strokeWidth={thumbRadius * 2}
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset} // Adjusted here
-        />
-      </svg>
-      <div
-        className={css`
-          position: absolute;
-          font-size: 1.3rem;
-          font-weight: bold;
-          bottom: 0px;
-          right: 3px;
-          z-index: 2; // Make sure this is above the SVG
-          color: white; // Color of the text
-        `}
-      >
-        {isUnlocked ? <Icon icon="check" size="lg" /> : <>{progress || 0}%</>}
+        <svg
+          width={thumbSize}
+          height={thumbSize}
+          viewBox={`0 0 ${2 * thumbRadius} ${2 * thumbRadius}`}
+          style={{
+            position: 'absolute',
+            transform: 'rotate(-90deg)', // Start the progress from the top
+            transformOrigin: 'center'
+          }}
+        >
+          <circle
+            cx={thumbRadius}
+            cy={thumbRadius}
+            r={thumbRadius}
+            fill="transparent"
+            stroke="rgba(0, 0, 0, 0.7)"
+            strokeWidth={thumbRadius * 2}
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset} // Adjusted here
+          />
+        </svg>
+        <div
+          className={css`
+            position: absolute;
+            font-size: 1.3rem;
+            font-weight: bold;
+            bottom: 0px;
+            right: 3px;
+            z-index: 2; // Make sure this is above the SVG
+            color: white; // Color of the text
+          `}
+        >
+          {isUnlocked ? <Icon icon="check" size="lg" /> : <>{progress || 0}%</>}
+        </div>
       </div>
       {titleContext && (
         <FullTextReveal textContext={titleContext} text={itemName} />
