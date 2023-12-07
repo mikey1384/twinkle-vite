@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
-
+import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
@@ -8,11 +8,13 @@ import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
 const deviceIsMobile = isMobile(navigator);
 
 export default function ItemThumbPanel({
+  isUnlocked,
   thumbSize = '4rem',
   itemName,
   badgeSrc,
   progressObj
 }: {
+  isUnlocked?: boolean;
   thumbSize?: string;
   itemName: string;
   badgeSrc?: string;
@@ -82,7 +84,7 @@ export default function ItemThumbPanel({
       <div
         className={css`
           bottom: 0;
-          right: 2px;
+          right: 3px;
           position: absolute;
           color: white;
           font-size: 1.2rem;
@@ -90,7 +92,7 @@ export default function ItemThumbPanel({
           z-index: 1;
         `}
       >
-        {progress || 0}%
+        {isUnlocked ? <Icon icon="check" size="lg" /> : <>{progress || 0}%</>}
       </div>
       {titleContext && (
         <FullTextReveal textContext={titleContext} text={itemName} />

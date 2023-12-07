@@ -55,6 +55,7 @@ export default function DailyGoals() {
           return (
             <AchievementItem
               key={key}
+              isUnlocked={isUnlocked}
               achievement={{
                 ...achievementsObj[key],
                 progressObj: myAchievementsObj[key]?.progressObj || {
