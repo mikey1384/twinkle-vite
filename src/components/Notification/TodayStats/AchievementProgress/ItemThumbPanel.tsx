@@ -12,7 +12,6 @@ export default function ItemThumbPanel({
   badgeSrc,
   style
 }: {
-  isThumb?: boolean;
   thumbSize?: string;
   itemName: string;
   badgeSrc?: string;
