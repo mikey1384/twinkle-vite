@@ -3,9 +3,11 @@ import GrammarBadge from '~/assets/grammar.png';
 import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Grammar({
+  isUnlocked,
   thumbSize,
   data: { title, progressObj }
 }: {
+  isUnlocked?: boolean;
   thumbSize?: string;
   data: {
     progressObj: { label: string; currentValue: number; targetValue: number };
@@ -14,6 +16,7 @@ export default function Grammar({
 }) {
   return (
     <ItemThumbPanel
+      isUnlocked={isUnlocked}
       thumbSize={thumbSize}
       itemName={title}
       progressObj={progressObj}

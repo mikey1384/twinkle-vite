@@ -5,16 +5,19 @@ import Gold from './Gold';
 import { Content } from '~/types';
 
 export default function AchievementItem({
+  isUnlocked,
   achievement,
   thumbSize,
   style
 }: {
+  isUnlocked?: boolean;
   achievement: Content;
   thumbSize?: string;
   style?: React.CSSProperties;
 }) {
   const achievementComponentMap: {
     [key: string]: React.ComponentType<{
+      isUnlocked?: boolean;
       data: any;
       thumbSize?: string;
       style?: React.CSSProperties;
@@ -38,6 +41,7 @@ export default function AchievementItem({
         key={achievement?.type}
         thumbSize={thumbSize}
         data={achievement}
+        isUnlocked={isUnlocked}
         style={{ width: '100%' }}
       />
     </div>
