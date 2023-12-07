@@ -4,10 +4,11 @@ import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Mission({
   thumbSize,
-  data: { title }
+  data: { title, progressObj }
 }: {
   thumbSize?: string;
   data: {
+    progressObj: { label: string; currentValue: number; targetValue: number };
     title: string;
   };
 }) {
@@ -16,6 +17,7 @@ export default function Mission({
       thumbSize={thumbSize}
       itemName={title}
       badgeSrc={MissionBadge}
+      progressObj={progressObj}
     />
   );
 }
