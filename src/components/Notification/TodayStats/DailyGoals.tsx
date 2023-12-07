@@ -12,7 +12,7 @@ export default function DailyGoals() {
     align-items: center;
     width: 40px;
     height: 40px;
-    margin: 5px;
+    margin: 0.5rem;
     border-radius: 50%;
     color: white;
     font-weight: bold;
@@ -65,7 +65,7 @@ export default function DailyGoals() {
     <div className={containerStyle}>
       <style>
         {`:root {
-          --color-not-achieved: #b3b3b3; // A solid grey for unachieved goals
+          --color-not-achieved: #b3b3b3;
         }`}
       </style>
       <div className={`${badgeStyle} W`}>W</div>
