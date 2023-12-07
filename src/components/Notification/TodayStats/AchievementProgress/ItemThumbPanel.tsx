@@ -3,12 +3,10 @@ import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
-import { Color } from '~/constants/css';
 
 const deviceIsMobile = isMobile(navigator);
 
 export default function ItemThumbPanel({
-  isThumb,
   thumbSize = '4rem',
   itemName,
   badgeSrc,
@@ -34,18 +32,10 @@ export default function ItemThumbPanel({
 
   return (
     <div
-      className={
-        isThumb
-          ? css`
-              width: ${thumbSize};
-              height: ${thumbSize};
-            `
-          : css`
-              display: flex;
-              align-items: center;
-              gap: 1rem;
-            `
-      }
+      className={css`
+        width: ${thumbSize};
+        height: ${thumbSize};
+      `}
       style={style}
     >
       {badgeSrc && (
@@ -70,19 +60,8 @@ export default function ItemThumbPanel({
           `}
         />
       )}
-      {isThumb && titleContext && (
+      {titleContext && (
         <FullTextReveal textContext={titleContext} text={itemName} />
-      )}
-      {!isThumb && (
-        <span
-          className={css`
-            font-weight: bold;
-            color: ${Color.black()};
-            font-size: 1.5rem;
-          `}
-        >
-          {itemName}
-        </span>
       )}
     </div>
   );

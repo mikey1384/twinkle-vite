@@ -5,7 +5,6 @@ import Gold from './Gold';
 import { Content } from '~/types';
 
 export default function AchievementItem({
-  isThumb,
   achievement,
   thumbSize,
   style
@@ -38,25 +37,10 @@ export default function AchievementItem({
   }
 
   return (
-    <div
-      style={{
-        ...(isThumb
-          ? {}
-          : {
-              padding: '1rem',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'column',
-              width: '100%'
-            }),
-        ...style
-      }}
-    >
+    <div style={style}>
       <Component
         key={achievement?.type}
         thumbSize={thumbSize}
-        isThumb={isThumb}
         data={achievement}
         style={{ width: '100%' }}
       />
