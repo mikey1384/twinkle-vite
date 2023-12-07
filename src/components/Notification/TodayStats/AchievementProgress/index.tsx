@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import AchievementItem from '~/components/AchievementItem';
+import AchievementItem from './AchievementItem';
 import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
 
 const shownAchievements = ['mission', 'gold', 'grammar'];
