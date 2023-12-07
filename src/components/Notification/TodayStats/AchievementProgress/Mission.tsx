@@ -3,7 +3,6 @@ import MissionBadge from '~/assets/mission.png';
 import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Mission({
-  isThumb,
   thumbSize,
   data: { title },
   style
@@ -17,7 +16,6 @@ export default function Mission({
 }) {
   return (
     <ItemThumbPanel
-      isThumb={isThumb}
       thumbSize={thumbSize}
       itemName={title}
       badgeSrc={MissionBadge}

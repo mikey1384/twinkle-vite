@@ -3,7 +3,6 @@ import GrammarBadge from '~/assets/grammar.png';
 import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Grammar({
-  isThumb,
   thumbSize,
   data: { title },
   style
@@ -17,7 +16,6 @@ export default function Grammar({
 }) {
   return (
     <ItemThumbPanel
-      isThumb={isThumb}
       thumbSize={thumbSize}
       itemName={title}
       badgeSrc={GrammarBadge}
