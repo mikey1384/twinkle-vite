@@ -6,6 +6,7 @@ import { useKeyContext, useNotiContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import TwinkleLogo from './twinkle-logo.png';
 import DailyGoals from './DailyGoals';
+import AchievementProgress from './AchievementProgress';
 import Loading from '~/components/Loading';
 
 export default function TodayStats() {
@@ -88,7 +89,7 @@ export default function TodayStats() {
           <Loading />
         )}
         <DailyGoals />
-        <div>achievement progress</div>
+        <AchievementProgress />
       </div>
     </ErrorBoundary>
   );
