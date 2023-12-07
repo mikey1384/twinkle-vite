@@ -37,7 +37,7 @@ export default function AchievementItem({
   }
 
   return (
-    <div style={style}>
+    <div style={{ display: 'flex', justifyContent: 'center', ...style }}>
       <Component
         key={achievement?.type}
         thumbSize={thumbSize}
