@@ -62,7 +62,7 @@ export default function DailyGoals() {
   `;
 
   return (
-    <div className={containerStyle}>
+    <div style={{ marginTop: '0.5rem' }} className={containerStyle}>
       <style>
         {`:root {
           --color-not-achieved: #b3b3b3;

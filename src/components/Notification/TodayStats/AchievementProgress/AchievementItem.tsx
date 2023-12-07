@@ -9,9 +9,6 @@ export default function AchievementItem({
   thumbSize,
   style
 }: {
-  isSmall?: boolean;
-  isNotification?: boolean;
-  isThumb?: boolean;
   achievement: Content;
   thumbSize?: string;
   style?: React.CSSProperties;
@@ -19,7 +16,6 @@ export default function AchievementItem({
   const achievementComponentMap: {
     [key: string]: React.ComponentType<{
       data: any;
-      isThumb?: boolean;
       thumbSize?: string;
       style?: React.CSSProperties;
     }>;

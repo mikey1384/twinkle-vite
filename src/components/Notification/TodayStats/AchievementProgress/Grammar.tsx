@@ -7,7 +7,6 @@ export default function Grammar({
   data: { title },
   style
 }: {
-  isThumb?: boolean;
   thumbSize?: string;
   data: {
     title: string;

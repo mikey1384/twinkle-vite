@@ -48,8 +48,6 @@ export default function DailyGoals() {
         {shownAchievements.map((key) => (
           <AchievementItem
             key={key}
-            isSmall
-            isThumb
             achievement={{
               ...achievementsObj[key],
               milestones: myAchievementsObj[key]?.milestones,
