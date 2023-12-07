@@ -15,6 +15,7 @@ export default function DailyGoals() {
   const { userId } = useKeyContext((v) => v.myState);
   const [myAchievementsObj, setMyAchievementsObj] = useState<{
     [key: string]: {
+      isUnlocked?: boolean;
       milestones?: { name: string; completed: boolean }[];
       progressObj?: {
         label: string;
@@ -45,16 +46,25 @@ export default function DailyGoals() {
   return loadingMyAchievements ? null : (
     <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
       <div style={{ display: 'flex', marginTop: '0.5rem' }}>
-        {shownAchievements.map((key) => (
-          <AchievementItem
-            key={key}
-            achievement={{
-              ...achievementsObj[key],
-              milestones: myAchievementsObj[key]?.milestones,
-              progressObj: myAchievementsObj[key]?.progressObj
-            }}
-          />
-        ))}
+        {shownAchievements.map((key) => {
+          const isUnlocked = myAchievementsObj[key]?.isUnlocked;
+          const numCompletedMilestones = myAchievementsObj[
+            key
+          ]?.milestones?.filter((milestone) => milestone.completed).length;
+          const numMilestones = myAchievementsObj[key]?.milestones?.length;
+          return (
+            <AchievementItem
+              key={key}
+              achievement={{
+                ...achievementsObj[key],
+                progressObj: myAchievementsObj[key]?.progressObj || {
+                  currentValue: isUnlocked ? 1 : numCompletedMilestones,
+                  targetValue: isUnlocked ? 1 : numMilestones
+                }
+              }}
+            />
+          );
+        })}
       </div>
     </div>
   );

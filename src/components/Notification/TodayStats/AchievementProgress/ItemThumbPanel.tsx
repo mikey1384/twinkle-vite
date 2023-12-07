@@ -16,7 +16,7 @@ export default function ItemThumbPanel({
   thumbSize?: string;
   itemName: string;
   badgeSrc?: string;
-  progressObj?: { label: string; currentValue: number; targetValue: number };
+  progressObj?: { currentValue: number; targetValue: number };
 }) {
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const ThumbLabelContainerRef: React.RefObject<any> = useRef(null);
@@ -52,7 +52,7 @@ export default function ItemThumbPanel({
           left: 0;
           width: 100%;
           height: ${100 - progress}%;
-          background: rgba(0, 0, 0, 0.3);
+          background: rgba(0, 0, 0, 0.5);
           pointer-events: none;
         }
       `}
