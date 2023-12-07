@@ -1,11 +1,9 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
-import ProgressBar from '~/components/ProgressBar';
-import { Color } from '~/constants/css';
+
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -13,14 +11,12 @@ export default function ItemThumbPanel({
   thumbSize = '4rem',
   itemName,
   badgeSrc,
-  progressObj,
-  style
+  progressObj
 }: {
   thumbSize?: string;
   itemName: string;
   badgeSrc?: string;
   progressObj?: { label: string; currentValue: number; targetValue: number };
-  style?: React.CSSProperties;
 }) {
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const ThumbLabelContainerRef: React.RefObject<any> = useRef(null);
@@ -44,29 +40,23 @@ export default function ItemThumbPanel({
 
   return (
     <div
+      style={{ margin: '0.5rem' }}
       className={css`
-        margin: 0.5rem;
+        position: relative;
         width: ${thumbSize};
         height: ${thumbSize};
+        &:after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: ${100 - progress}%;
+          background: rgba(0, 0, 0, 0.3);
+          pointer-events: none;
+        }
       `}
-      style={style}
     >
-      {progressObj && (
-        <div style={{ position: 'absolute' }}>
-          <h3
-            className={css`
-              margin-top: 1.7rem;
-              margin-bottom: -0.5rem;
-              font-weight: bold;
-              font-size: 1.5rem;
-              color: ${Color.black()};
-            `}
-          >
-            {progressObj.label}: {addCommasToNumber(progressObj.currentValue)}
-          </h3>
-          <ProgressBar progress={progress} />
-        </div>
-      )}
       {badgeSrc && (
         <img
           onMouseOver={() => {
@@ -84,11 +74,24 @@ export default function ItemThumbPanel({
           src={badgeSrc}
           alt="Badge"
           className={css`
-            width: ${thumbSize};
-            height: ${thumbSize};
+            width: 100%;
+            height: 100%;
           `}
         />
       )}
+      <div
+        className={css`
+          bottom: 0;
+          right: 2px;
+          position: absolute;
+          color: white;
+          font-size: 1.2rem;
+          font-weight: bold;
+          z-index: 1;
+        `}
+      >
+        {progress || 0}%
+      </div>
       {titleContext && (
         <FullTextReveal textContext={titleContext} text={itemName} />
       )}

@@ -4,21 +4,18 @@ import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Mission({
   thumbSize,
-  data: { title },
-  style
+  data: { title }
 }: {
   thumbSize?: string;
   data: {
     title: string;
   };
-  style?: React.CSSProperties;
 }) {
   return (
     <ItemThumbPanel
       thumbSize={thumbSize}
       itemName={title}
       badgeSrc={MissionBadge}
-      style={style}
     />
   );
 }

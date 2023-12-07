@@ -4,15 +4,13 @@ import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Grammar({
   thumbSize,
-  data: { title, progressObj },
-  style
+  data: { title, progressObj }
 }: {
   thumbSize?: string;
   data: {
     progressObj: { label: string; currentValue: number; targetValue: number };
     title: string;
   };
-  style?: React.CSSProperties;
 }) {
   return (
     <ItemThumbPanel
@@ -20,7 +18,6 @@ export default function Grammar({
       itemName={title}
       progressObj={progressObj}
       badgeSrc={GoldBadge}
-      style={style}
     />
   );
 }
