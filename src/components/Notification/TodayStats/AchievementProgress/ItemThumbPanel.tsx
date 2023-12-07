@@ -94,7 +94,7 @@ export default function ItemThumbPanel({
           cy={thumbRadius}
           r={thumbRadius}
           fill="transparent"
-          stroke="rgba(0, 0, 0, 0.5)"
+          stroke="rgba(0, 0, 0, 0.7)"
           strokeWidth={thumbRadius * 2}
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset} // Adjusted here
