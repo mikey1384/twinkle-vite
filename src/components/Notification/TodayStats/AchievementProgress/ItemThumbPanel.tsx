@@ -40,6 +40,10 @@ export default function ItemThumbPanel({
     }
   }, [progressObj]);
 
+  const thumbRadius = parseInt(thumbSize) / 2;
+  const circumference = 2 * Math.PI * thumbRadius;
+  const strokeDashoffset = -1 * (progress / 100) * circumference;
+
   return (
     <div
       style={{ margin: '0.5rem' }}
@@ -47,16 +51,10 @@ export default function ItemThumbPanel({
         position: relative;
         width: ${thumbSize};
         height: ${thumbSize};
-        &:after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: ${100 - progress}%;
-          background: rgba(0, 0, 0, 0.5);
-          pointer-events: none;
-        }
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
       `}
     >
       {badgeSrc && (
@@ -81,15 +79,36 @@ export default function ItemThumbPanel({
           `}
         />
       )}
+      <svg
+        width={thumbSize}
+        height={thumbSize}
+        viewBox={`0 0 ${2 * thumbRadius} ${2 * thumbRadius}`}
+        style={{
+          position: 'absolute',
+          transform: 'rotate(-90deg)', // Start the progress from the top
+          transformOrigin: 'center'
+        }}
+      >
+        <circle
+          cx={thumbRadius}
+          cy={thumbRadius}
+          r={thumbRadius}
+          fill="transparent"
+          stroke="rgba(0, 0, 0, 0.5)"
+          strokeWidth={thumbRadius * 2}
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset} // Adjusted here
+        />
+      </svg>
       <div
         className={css`
-          bottom: 0;
-          right: 3px;
           position: absolute;
-          color: white;
-          font-size: 1.2rem;
+          font-size: 1.3rem;
           font-weight: bold;
-          z-index: 1;
+          bottom: 0px;
+          right: 3px;
+          z-index: 2; // Make sure this is above the SVG
+          color: white; // Color of the text
         `}
       >
         {isUnlocked ? <Icon icon="check" size="lg" /> : <>{progress || 0}%</>}
