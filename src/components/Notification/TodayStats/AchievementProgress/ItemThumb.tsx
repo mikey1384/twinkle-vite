@@ -40,15 +40,28 @@ export default function ItemThumb({
     }
   }, [progressObj]);
 
-  const thumbRadius = parseInt(thumbSize) / 2;
-  const circumference = 2 * Math.PI * thumbRadius;
-  const strokeDashoffset = -1 * (progress / 100) * circumference;
+  const thumbRadius = useMemo(() => parseInt(thumbSize) / 2, [thumbSize]);
+  const circumference = useMemo(() => 2 * Math.PI * thumbRadius, [thumbRadius]);
+  const strokeDashoffset = useMemo(
+    () => -1 * (progress / 100) * circumference,
+    [progress, circumference]
+  );
 
   return (
     <div
+      onMouseOver={() => {
+        const parentElementDimensions =
+          ThumbLabelContainerRef.current?.getBoundingClientRect?.() || {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0
+          };
+        setTitleContext(parentElementDimensions);
+      }}
+      onMouseLeave={() => setTitleContext(null)}
       style={{ margin: '0.5rem' }}
       className={css`
-        position: relative;
         width: ${thumbSize};
         height: ${thumbSize};
         display: flex;
@@ -57,27 +70,14 @@ export default function ItemThumb({
         overflow: hidden;
       `}
     >
-      <div style={{ cursor: 'pointer', width: '100%' }}>
-        <img
-          onMouseOver={() => {
-            const parentElementDimensions =
-              ThumbLabelContainerRef.current?.getBoundingClientRect?.() || {
-                x: 0,
-                y: 0,
-                width: 0,
-                height: 0
-              };
-            setTitleContext(parentElementDimensions);
-          }}
-          onMouseLeave={() => setTitleContext(null)}
-          ref={ThumbLabelContainerRef}
-          src={badgeSrc}
-          alt="Badge"
-          className={css`
-            width: 100%;
-            height: 100%;
-          `}
-        />
+      <div
+        style={{
+          cursor: 'pointer',
+          width: '100%',
+          height: '100%',
+          position: 'relative'
+        }}
+      >
         <svg
           width={thumbSize}
           height={thumbSize}
@@ -112,6 +112,15 @@ export default function ItemThumb({
         >
           {isUnlocked ? <Icon icon="check" size="lg" /> : <>{progress || 0}%</>}
         </div>
+        <img
+          ref={ThumbLabelContainerRef}
+          src={badgeSrc}
+          alt="Badge"
+          className={css`
+            width: 100%;
+            height: 100%;
+          `}
+        />
       </div>
       {titleContext && (
         <FullTextReveal textContext={titleContext} text={itemName} />
