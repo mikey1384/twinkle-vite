@@ -34,7 +34,11 @@ export default function AchievementModal({
         }}
       >
         <AchievementItem achievement={achievement} />
-        {achievement.type === 'mission' && <NextMission />}
+        {achievement.type === 'mission' && (
+          <NextMission
+            style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}
+          />
+        )}
       </main>
       <footer>
         <Button color={doneColor} onClick={onHide}>

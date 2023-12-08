@@ -5,17 +5,27 @@ import RewardText from '~/components/Texts/RewardText';
 import { useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-export default function NextMission() {
+export default function NextMission({
+  style
+}: {
+  style?: React.CSSProperties;
+}) {
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  return (
+  const rootMissionType = todayStats.nextMission?.rootMissionType;
+  const missionName = todayStats.nextMission?.title;
+  const missionType = todayStats.nextMission?.missionType;
+  const xpReward = todayStats.nextMission?.xpReward;
+  const coinReward = todayStats.nextMission?.coinReward;
+
+  return todayStats.nextMission ? (
     <div
       style={{
-        marginTop: '1.3rem',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        ...style
       }}
     >
       <Link
@@ -66,5 +76,5 @@ export default function NextMission() {
         />
       </Link>
     </div>
-  );
+  ) : null;
 }
