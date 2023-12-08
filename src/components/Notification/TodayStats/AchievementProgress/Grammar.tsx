@@ -5,21 +5,17 @@ import ItemThumb from './ItemThumb';
 export default function Grammar({
   isUnlocked,
   thumbSize,
-  data: { title, progressObj }
+  data
 }: {
   isUnlocked?: boolean;
   thumbSize?: string;
-  data: {
-    progressObj: { label: string; currentValue: number; targetValue: number };
-    title: string;
-  };
+  data: any;
 }) {
   return (
     <ItemThumb
+      achievement={data}
       isUnlocked={isUnlocked}
       thumbSize={thumbSize}
-      itemName={title}
-      progressObj={progressObj}
       badgeSrc={GrammarBadge}
     />
   );

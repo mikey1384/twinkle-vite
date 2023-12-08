@@ -11,15 +11,18 @@ const deviceIsMobile = isMobile(navigator);
 export default function ItemThumb({
   isUnlocked,
   thumbSize = '4rem',
-  itemName,
   badgeSrc,
-  progressObj
+  achievement,
+  achievement: { title, progressObj }
 }: {
   isUnlocked?: boolean;
   thumbSize?: string;
-  itemName: string;
+  achievement: {
+    title: string;
+    milestones?: { name: string; completed: boolean }[];
+    progressObj?: { currentValue: number; targetValue: number };
+  };
   badgeSrc?: string;
-  progressObj?: { currentValue: number; targetValue: number };
 }) {
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const ThumbLabelContainerRef: React.RefObject<any> = useRef(null);
@@ -127,10 +130,11 @@ export default function ItemThumb({
         />
       </div>
       {titleContext && (
-        <FullTextReveal textContext={titleContext} text={itemName} />
+        <FullTextReveal textContext={titleContext} text={title} />
       )}
       {modalShown && (
         <AchievementModal
+          achievement={achievement}
           onShown={() => setTitleContext(null)}
           onHide={() => setModalShown(false)}
         />
