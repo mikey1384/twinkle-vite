@@ -5,22 +5,18 @@ import ItemThumb from './ItemThumb';
 export default function Mission({
   isUnlocked,
   thumbSize,
-  data: { title, progressObj }
+  data
 }: {
   isUnlocked?: boolean;
   thumbSize?: string;
-  data: {
-    progressObj: { label: string; currentValue: number; targetValue: number };
-    title: string;
-  };
+  data: any;
 }) {
   return (
     <ItemThumb
       isUnlocked={isUnlocked}
       thumbSize={thumbSize}
-      itemName={title}
       badgeSrc={MissionBadge}
-      progressObj={progressObj}
+      achievement={data}
     />
   );
 }

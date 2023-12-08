@@ -1,12 +1,15 @@
 import React, { useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
+import AchievementItem from '~/components/AchievementItem';
 import { useKeyContext } from '~/contexts';
 
 export default function AchievementModal({
+  achievement,
   onHide,
   onShown
 }: {
+  achievement: any;
   onHide: () => void;
   onShown: () => void;
 }) {
@@ -29,7 +32,7 @@ export default function AchievementModal({
           justifyContent: 'center'
         }}
       >
-        something
+        <AchievementItem achievement={achievement} />
       </main>
       <footer>
         <Button color={doneColor} onClick={onHide}>
