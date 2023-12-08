@@ -2,21 +2,11 @@ import React from 'react';
 import Link from '~/components/Link';
 import { Color } from '~/constants/css';
 import RewardText from '~/components/Texts/RewardText';
+import { useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-export default function NextMission({
-  missionName,
-  missionType,
-  xpReward,
-  coinReward,
-  rootMissionType
-}: {
-  missionName: string;
-  missionType: string;
-  xpReward: number;
-  coinReward: number;
-  rootMissionType: string;
-}) {
+export default function NextMission() {
+  const todayStats = useNotiContext((v) => v.state.todayStats);
   return (
     <div
       style={{
