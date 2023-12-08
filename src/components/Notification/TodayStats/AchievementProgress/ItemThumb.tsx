@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import Icon from '~/components/Icon';
+import AchievementModal from './AchievementModal';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
@@ -22,6 +23,7 @@ export default function ItemThumb({
 }) {
   const timerRef: React.MutableRefObject<any> = useRef(null);
   const ThumbLabelContainerRef: React.RefObject<any> = useRef(null);
+  const [modalShown, setModalShown] = useState(false);
   const [titleContext, setTitleContext] = useState(null);
   useEffect(() => {
     if (titleContext && deviceIsMobile) {
@@ -50,6 +52,7 @@ export default function ItemThumb({
   return (
     <div
       onMouseOver={() => {
+        if (modalShown) return;
         const parentElementDimensions =
           ThumbLabelContainerRef.current?.getBoundingClientRect?.() || {
             x: 0,
@@ -76,6 +79,10 @@ export default function ItemThumb({
           width: '100%',
           height: '100%',
           position: 'relative'
+        }}
+        onClick={() => {
+          setTitleContext(null);
+          setModalShown(true);
         }}
       >
         <svg
@@ -124,6 +131,12 @@ export default function ItemThumb({
       </div>
       {titleContext && (
         <FullTextReveal textContext={titleContext} text={itemName} />
+      )}
+      {modalShown && (
+        <AchievementModal
+          onShown={() => setTitleContext(null)}
+          onHide={() => setModalShown(false)}
+        />
       )}
     </div>
   );
