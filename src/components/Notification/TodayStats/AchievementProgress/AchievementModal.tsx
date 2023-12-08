@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import AchievementItem from '~/components/AchievementItem';
+import NextMission from './NextMission';
 import { useKeyContext } from '~/contexts';
 
 export default function AchievementModal({
@@ -33,6 +34,7 @@ export default function AchievementModal({
         }}
       >
         <AchievementItem achievement={achievement} />
+        {achievement.type === 'mission' && <NextMission />}
       </main>
       <footer>
         <Button color={doneColor} onClick={onHide}>
