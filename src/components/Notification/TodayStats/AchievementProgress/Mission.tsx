@@ -1,6 +1,6 @@
 import React from 'react';
 import MissionBadge from '~/assets/mission.png';
-import ItemThumbPanel from './ItemThumbPanel';
+import ItemThumb from './ItemThumb';
 
 export default function Mission({
   isUnlocked,
@@ -15,7 +15,7 @@ export default function Mission({
   };
 }) {
   return (
-    <ItemThumbPanel
+    <ItemThumb
       isUnlocked={isUnlocked}
       thumbSize={thumbSize}
       itemName={title}

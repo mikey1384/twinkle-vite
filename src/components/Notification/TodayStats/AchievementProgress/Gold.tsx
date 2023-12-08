@@ -1,6 +1,6 @@
 import React from 'react';
 import GoldBadge from '~/assets/gold.png';
-import ItemThumbPanel from './ItemThumbPanel';
+import ItemThumb from './ItemThumb';
 
 export default function Grammar({
   isUnlocked,
@@ -15,7 +15,7 @@ export default function Grammar({
   };
 }) {
   return (
-    <ItemThumbPanel
+    <ItemThumb
       isUnlocked={isUnlocked}
       thumbSize={thumbSize}
       itemName={title}
