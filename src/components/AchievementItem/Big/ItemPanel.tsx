@@ -201,7 +201,7 @@ export default function ItemPanel({
               {requirement}
             </div>
           ))}
-          {progressObj && (
+          {progressObj && !isUnlocked && (
             <div style={{ width: '100%', marginTop: '1.5rem' }}>
               <h3
                 className={css`

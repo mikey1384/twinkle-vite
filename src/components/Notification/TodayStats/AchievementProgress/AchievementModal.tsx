@@ -24,7 +24,7 @@ export default function AchievementModal({
 
   return (
     <Modal onHide={onHide}>
-      <header>Achievement</header>
+      <header>{achievement.title}</header>
       <main
         style={{
           paddingTop: 0,
