@@ -7,7 +7,7 @@ import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
 
-export default function ItemThumbPanel({
+export default function ItemThumb({
   isUnlocked,
   thumbSize = '4rem',
   itemName,
