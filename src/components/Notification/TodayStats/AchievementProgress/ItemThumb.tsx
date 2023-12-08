@@ -80,10 +80,7 @@ export default function ItemThumb({
           height: '100%',
           position: 'relative'
         }}
-        onClick={() => {
-          setTitleContext(null);
-          setModalShown(true);
-        }}
+        onClick={() => setModalShown(true)}
       >
         <svg
           width={thumbSize}
