@@ -84,7 +84,7 @@ export default function ItemThumb({
           viewBox={`0 0 ${2 * thumbRadius} ${2 * thumbRadius}`}
           style={{
             position: 'absolute',
-            transform: 'rotate(-90deg)', // Start the progress from the top
+            transform: 'rotate(-90deg)',
             transformOrigin: 'center'
           }}
         >
@@ -96,7 +96,7 @@ export default function ItemThumb({
             stroke="rgba(0, 0, 0, 0.7)"
             strokeWidth={thumbRadius * 2}
             strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset} // Adjusted here
+            strokeDashoffset={strokeDashoffset}
           />
         </svg>
         <div
@@ -106,8 +106,8 @@ export default function ItemThumb({
             font-weight: bold;
             bottom: 0px;
             right: 3px;
-            z-index: 2; // Make sure this is above the SVG
-            color: white; // Color of the text
+            z-index: 2;
+            color: white;
           `}
         >
           {isUnlocked ? <Icon icon="check" size="lg" /> : <>{progress || 0}%</>}
