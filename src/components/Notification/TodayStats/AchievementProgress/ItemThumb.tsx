@@ -103,7 +103,7 @@ export default function ItemThumb({
             stroke="rgba(0, 0, 0, 0.7)"
             strokeWidth={thumbRadius * 2}
             strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
+            strokeDashoffset={strokeDashoffset ? Number(strokeDashoffset) : 0}
           />
         </svg>
         <div
