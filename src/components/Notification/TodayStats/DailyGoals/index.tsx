@@ -1,20 +1,25 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import Badge from './Badge';
 import { css } from '@emotion/css';
 
-export default function DailyGoals() {
-  const achievedGoals = [];
-
-  const isAchieved = (goal: any) => achievedGoals.includes(goal);
-
-  const containerStyle = css`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  `;
-
+export default function DailyGoals({
+  achievedGoals
+}: {
+  achievedGoals: string[];
+}) {
+  const isAchieved = useCallback(
+    (goal: any) => achievedGoals.includes(goal),
+    [achievedGoals]
+  );
   return (
-    <div style={{ marginTop: '0.5rem' }} className={containerStyle}>
+    <div
+      style={{ marginTop: '0.5rem' }}
+      className={css`
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      `}
+    >
       <style>
         {`:root {
           --color-not-achieved: #b3b3b3;

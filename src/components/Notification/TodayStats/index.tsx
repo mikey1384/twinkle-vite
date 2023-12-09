@@ -19,6 +19,7 @@ export default function TodayStats() {
     xpNumber: { color: xpNumberColor }
   } = theme;
   const todayStats = useNotiContext((v) => v.state.todayStats);
+  const achievedDailyGoals: string[] = ['W'];
 
   return (
     <ErrorBoundary componentPath="Notification/TodayStats">
@@ -40,7 +41,7 @@ export default function TodayStats() {
             bottom: 0;
             background: url(${TwinkleLogo}) center center;
             background-size: auto 100%;
-            background-position-x: 17%;
+            background-position-x: 15%;
             opacity: 0.2;
             z-index: -1; // Place the pseudo-element behind the content
           }
@@ -55,41 +56,43 @@ export default function TodayStats() {
         `}
       >
         {todayStats?.loaded ? (
-          <div style={{ width: '100%' }}>
-            <b
-              className={css`
-                color: ${Color[todayProgressTextColor]()};
-                ${todayProgressTextShadowColor
-                  ? `text-shadow: 0.05rem 0.05rem ${Color[
-                      todayProgressTextShadowColor
-                    ]()};`
-                  : ''}
-              `}
-              style={{ fontSize: '1.7rem' }}
-            >{`Today's Progress`}</b>
-            <div style={{ marginTop: '0.3rem', width: '100%' }}>
-              <p
-                style={{
-                  fontWeight: 'bold',
-                  color: Color[xpNumberColor]()
-                }}
-              >
-                {todayStats.xpEarned > 0 ? '+' : ''}
-                {addCommasToNumber(todayStats.xpEarned)}{' '}
-                <b style={{ color: Color.gold() }}>XP</b>
-              </p>
-              <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
-                {todayStats.coinsEarned > 0 ? '+' : ''}
-                {addCommasToNumber(todayStats.coinsEarned)} Coin
-                {todayStats.coinsEarned === 1 ? '' : 's'}
-              </p>
+          <div>
+            <div style={{ width: '100%' }}>
+              <b
+                className={css`
+                  color: ${Color[todayProgressTextColor]()};
+                  ${todayProgressTextShadowColor
+                    ? `text-shadow: 0.05rem 0.05rem ${Color[
+                        todayProgressTextShadowColor
+                      ]()};`
+                    : ''}
+                `}
+                style={{ fontSize: '1.7rem' }}
+              >{`Today's Progress`}</b>
+              <div style={{ marginTop: '0.3rem', width: '100%' }}>
+                <p
+                  style={{
+                    fontWeight: 'bold',
+                    color: Color[xpNumberColor]()
+                  }}
+                >
+                  {todayStats.xpEarned > 0 ? '+' : ''}
+                  {addCommasToNumber(todayStats.xpEarned)}{' '}
+                  <b style={{ color: Color.gold() }}>XP</b>
+                </p>
+                <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
+                  {todayStats.coinsEarned > 0 ? '+' : ''}
+                  {addCommasToNumber(todayStats.coinsEarned)} Coin
+                  {todayStats.coinsEarned === 1 ? '' : 's'}
+                </p>
+              </div>
             </div>
+            <DailyGoals achievedGoals={achievedDailyGoals} />
+            <AchievementProgress />
           </div>
         ) : (
           <Loading />
         )}
-        <DailyGoals />
-        <AchievementProgress />
       </div>
     </ErrorBoundary>
   );
