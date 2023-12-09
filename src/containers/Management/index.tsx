@@ -20,15 +20,13 @@ export default function Management() {
   const onLoadManagement = useManagementContext(
     (v) => v.actions.onLoadManagement
   );
-  const { loaded: userLoaded, managementLevel } = useKeyContext(
-    (v) => v.myState
-  );
+  const { userId, managementLevel } = useKeyContext((v) => v.myState);
   useEffect(() => {
     onLoadManagement();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [managementLevel]);
 
-  return !loaded || !userLoaded ? (
+  return !loaded || !userId ? (
     <Loading />
   ) : managementLevel > 0 ? (
     <div>
