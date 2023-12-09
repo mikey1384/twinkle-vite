@@ -1,5 +1,25 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
+
+const gradientMap: {
+  [key: string]: {
+    achieved: string;
+    notAchieved?: string;
+  };
+} = {
+  W: {
+    achieved: `linear-gradient(135deg, #ff8c00 0%, #ffc040 100%)`,
+    notAchieved: `linear-gradient(135deg, rgba(255, 140, 0, 0.3) 0%, rgba(255, 192, 64, 0.3) 100%)`
+  },
+  G: {
+    achieved: `linear-gradient(135deg, #db0076 0%, #ff4088 100%)`,
+    notAchieved: `linear-gradient(135deg, rgba(219, 0, 118, 0.3) 0%, rgba(255, 64, 136, 0.3) 100%)`
+  },
+  A: {
+    achieved: `linear-gradient(135deg, #0047ab 0%, #408cff 100%)`,
+    notAchieved: `linear-gradient(135deg, rgba(0, 71, 171, 0.3) 0%, rgba(64, 140, 255, 0.3) 100%)`
+  }
+};
 
 export default function Badge({
   children,
@@ -8,30 +28,13 @@ export default function Badge({
   children: string;
   isAchieved: boolean;
 }) {
-  const gradientMap: {
-    [key: string]: {
-      achieved: string;
-      notAchieved?: string;
-    };
-  } = {
-    W: {
-      achieved: `linear-gradient(135deg, #ff8c00 0%, #ffc040 100%)`,
-      notAchieved: `linear-gradient(135deg, rgba(255, 140, 0, 0.3) 0%, rgba(255, 192, 64, 0.3) 100%)`
-    },
-    G: {
-      achieved: `linear-gradient(135deg, #db0076 0%, #ff4088 100%)`,
-      notAchieved: `linear-gradient(135deg, rgba(219, 0, 118, 0.3) 0%, rgba(255, 64, 136, 0.3) 100%)`
-    },
-    A: {
-      achieved: `linear-gradient(135deg, #0047ab 0%, #408cff 100%)`,
-      notAchieved: `linear-gradient(135deg, rgba(0, 71, 171, 0.3) 0%, rgba(64, 140, 255, 0.3) 100%)`
-    }
-  };
-
-  // Determine the background based on children and isAchieved
-  const background = isAchieved
-    ? gradientMap[children]?.achieved
-    : gradientMap[children]?.notAchieved || 'var(--color-not-achieved)';
+  const background = useMemo(
+    () =>
+      isAchieved
+        ? gradientMap[children]?.achieved
+        : gradientMap[children]?.notAchieved || 'var(--color-not-achieved)',
+    [children, isAchieved]
+  );
 
   return (
     <div
