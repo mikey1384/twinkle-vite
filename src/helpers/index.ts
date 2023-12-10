@@ -132,9 +132,9 @@ export function last(array: any[]) {
   return array[array.length - 1];
 }
 
-export function objectify(array: any[], id: any = 'id') {
+export function objectify(array = [], id: any = 'id') {
   const result: any = {};
-  for (const elem of array) {
+  for (const elem of array || []) {
     result[elem[id]] = elem;
   }
   return result;
