@@ -104,6 +104,18 @@ export default function notificationRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+    async unlockDailyReward() {
+      try {
+        const { data } = await request.post(
+          `${URL}/notification/today/dailyReward`,
+          {},
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }

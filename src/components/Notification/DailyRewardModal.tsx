@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
+import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 interface Word {
@@ -20,6 +21,9 @@ const words: Word[] = [
 ];
 
 export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
+  const unlockDailyReward = useAppContext(
+    (v) => v.requestHelpers.unlockDailyReward
+  );
   const [currentWord, setCurrentWord] = useState<Word | null>(null);
   const [chosenWord, setChosenWord] = useState<Word | null>(null);
   const [isRevealing, setIsRevealing] = useState(false);
@@ -70,6 +74,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   );
 
   function handleReveal() {
+    unlockDailyReward();
     setIsRevealing(true);
     const chosen = words[Math.floor(Math.random() * words.length)];
     setChosenWord(chosen);
