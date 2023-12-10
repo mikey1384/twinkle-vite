@@ -9,7 +9,11 @@ import DailyGoals from './DailyGoals';
 import AchievementProgress from './AchievementProgress';
 import Loading from '~/components/Loading';
 
-export default function TodayStats() {
+export default function TodayStats({
+  onCollectRewardButtonClick
+}: {
+  onCollectRewardButtonClick: () => void;
+}) {
   const theme = useKeyContext((v) => v.theme);
   const {
     todayProgressText: {
@@ -111,7 +115,10 @@ export default function TodayStats() {
                 </p>
               </div>
             </div>
-            <DailyGoals achievedGoals={todayStats.achievedDailyGoals} />
+            <DailyGoals
+              achievedGoals={todayStats.achievedDailyGoals}
+              onCollectRewardButtonClick={onCollectRewardButtonClick}
+            />
             <AchievementProgress />
           </div>
         ) : (

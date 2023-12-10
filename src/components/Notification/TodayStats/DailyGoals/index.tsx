@@ -5,9 +5,11 @@ import { css } from '@emotion/css';
 const badgeItems = ['W', 'G', 'A'];
 
 export default function DailyGoals({
-  achievedGoals
+  achievedGoals,
+  onCollectRewardButtonClick
 }: {
   achievedGoals: string[];
+  onCollectRewardButtonClick: () => void;
 }) {
   const isAchieved = useCallback(
     (goal: any) => achievedGoals.includes(goal),
@@ -50,6 +52,7 @@ export default function DailyGoals({
             {`Great job! You've completed your daily goals!`}
           </p>
           <button
+            onClick={onCollectRewardButtonClick}
             className={css`
               background-image: linear-gradient(
                 -45deg,
