@@ -58,15 +58,29 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
 
     let currentIndex = 0;
     let interval = 1000; // initial speed in ms
+    let isFirstIteration = true;
+    let fastIterations = 0; // Counter for complete cycles at 100ms speed
 
     const reveal = () => {
-      if (words[currentIndex] === chosen && interval < 100) {
+      if (words[currentIndex] === chosen && fastIterations >= 5) {
         setIsRevealing(false);
         setCurrentWord(chosen.word);
       } else {
         setCurrentWord(words[currentIndex].word);
         currentIndex = (currentIndex + 1) % words.length;
-        interval *= 0.9;
+
+        // Increment fastIterations at the end of each cycle when the interval is 100ms or less
+        if (currentIndex === 0 && interval <= 100) {
+          fastIterations++;
+        }
+
+        // Check if the first iteration is complete
+        if (currentIndex === 0 && isFirstIteration) {
+          isFirstIteration = false;
+        } else if (!isFirstIteration && interval > 100) {
+          interval *= 0.9; // Shorten the interval only after the first iteration
+        }
+
         setTimeout(reveal, interval);
       }
     };
