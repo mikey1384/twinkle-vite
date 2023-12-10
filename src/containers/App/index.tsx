@@ -247,6 +247,7 @@ export default function App() {
     }
     async function handleLoadTodayStats() {
       const {
+        achievedDailyGoals,
         xpEarned,
         coinsEarned,
         nextMission,
@@ -259,6 +260,7 @@ export default function App() {
       }
       onUpdateTodayStats({
         newStats: {
+          achievedDailyGoals,
           xpEarned,
           coinsEarned,
           nextMission,
