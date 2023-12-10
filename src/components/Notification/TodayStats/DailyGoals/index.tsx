@@ -22,11 +22,6 @@ export default function DailyGoals({
         align-items: center;
       `}
     >
-      <style>
-        {`:root {
-          --color-not-achieved: #b3b3b3;
-        }`}
-      </style>
       {badgeItems.map((item) => (
         <Badge key={item} isAchieved={isAchieved(item)}>
           {item}
