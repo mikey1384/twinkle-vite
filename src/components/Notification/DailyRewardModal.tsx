@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
+import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
 
@@ -19,29 +20,46 @@ const words: Word[] = [
 ];
 
 export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
-  const [currentWord, setCurrentWord] = useState('');
+  const [currentWord, setCurrentWord] = useState<Word | null>(null);
   const [chosenWord, setChosenWord] = useState<Word | null>(null);
   const [isRevealing, setIsRevealing] = useState(false);
-
-  const wordDisplayStyle = css`
-    color: ${chosenWord?.color || '#000'};
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-top: 30px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 60px; // Keeps the layout stable
-  `;
 
   return (
     <Modal onHide={onHide}>
       <header>Daily Reward</header>
       <main>
-        {!isRevealing && !chosenWord && (
-          <button onClick={handleReveal}>Reveal</button>
-        )}
-        <div className={wordDisplayStyle}>{currentWord}</div>
+        <div
+          style={{
+            minHeight: '30vh',
+            display: 'flex',
+            height: '100%',
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          {!isRevealing && !chosenWord && (
+            <GradientButton
+              onClick={handleReveal}
+              fontSize="1.5rem"
+              mobileFontSize="1.1rem"
+            >
+              {`LET'S GO!`}
+            </GradientButton>
+          )}
+          <div
+            className={css`
+              color: ${currentWord?.color || '#000'};
+              font-size: 2.5rem;
+              font-weight: bold;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            `}
+          >
+            {currentWord?.word}
+          </div>
+        </div>
       </main>
       <footer>
         <Button transparent onClick={onHide}>
@@ -64,9 +82,9 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
     const reveal = () => {
       if (words[currentIndex] === chosen && fastIterations >= 5) {
         setIsRevealing(false);
-        setCurrentWord(chosen.word);
+        setCurrentWord(chosen);
       } else {
-        setCurrentWord(words[currentIndex].word);
+        setCurrentWord(words[currentIndex]);
         currentIndex = (currentIndex + 1) % words.length;
 
         // Increment fastIterations at the end of each cycle when the interval is 100ms or less
