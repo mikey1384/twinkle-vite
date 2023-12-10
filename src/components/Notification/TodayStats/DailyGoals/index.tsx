@@ -2,6 +2,8 @@ import React, { useCallback } from 'react';
 import Badge from './Badge';
 import { css } from '@emotion/css';
 
+const badgeItems = ['W', 'G', 'A'];
+
 export default function DailyGoals({
   achievedGoals
 }: {
@@ -25,9 +27,11 @@ export default function DailyGoals({
           --color-not-achieved: #b3b3b3;
         }`}
       </style>
-      <Badge isAchieved={isAchieved('W')}>W</Badge>
-      <Badge isAchieved={isAchieved('G')}>G</Badge>
-      <Badge isAchieved={isAchieved('A')}>A</Badge>
+      {badgeItems.map((item) => (
+        <Badge key={item} isAchieved={isAchieved(item)}>
+          {item}
+        </Badge>
+      ))}
     </div>
   );
 }
