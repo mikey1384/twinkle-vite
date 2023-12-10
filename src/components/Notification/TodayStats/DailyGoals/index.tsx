@@ -35,14 +35,16 @@ export default function DailyGoals({
         <div
           className={css`
             text-align: center;
-            margin-top: 1rem;
+            margin-top: 1.2rem;
+            margin-bottom: 1rem;
           `}
         >
           <p
             className={css`
               font-size: 1.2rem;
+              font-weight: bold;
               color: #333;
-              margin-bottom: 0.5rem;
+              margin-bottom: 1rem;
             `}
           >
             {`Great job! You've completed your daily goals!`}
@@ -50,9 +52,11 @@ export default function DailyGoals({
           <button
             className={css`
               background-image: linear-gradient(
-                to right,
-                #6a11cb 0%,
-                #2575fc 100%
+                -45deg,
+                #6a11cb,
+                #2575fc,
+                #ec008c,
+                #fc6767
               );
               color: white;
               padding: 10px 20px;
@@ -60,23 +64,27 @@ export default function DailyGoals({
               border-radius: 20px;
               cursor: pointer;
               font-weight: bold;
-              font-size: 1rem;
-              transition: transform 0.3s;
-              animation: pulse 2s infinite;
+              font-size: 1.2rem;
+              background-size: 400% 400%;
+              animation: colorShift 6s ease infinite, pulse 2s infinite;
 
-              &:hover {
-                transform: scale(1.05);
+              @keyframes colorShift {
+                0%,
+                100% {
+                  background-position: 0% 50%;
+                }
+                50% {
+                  background-position: 100% 50%;
+                }
               }
 
               @keyframes pulse {
-                0% {
+                0%,
+                100% {
                   transform: scale(1);
                 }
                 50% {
-                  transform: scale(1.05);
-                }
-                100% {
-                  transform: scale(1);
+                  transform: scale(1.1);
                 }
               }
             `}
