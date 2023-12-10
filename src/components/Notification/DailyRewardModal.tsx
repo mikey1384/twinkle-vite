@@ -57,9 +57,9 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
     setChosenWord(chosen);
 
     let currentIndex = 0;
-    let interval = 1000; // initial speed in ms
+    let interval = 1000;
     let isFirstIteration = true;
-    let fastIterations = 0; // Counter for complete cycles at 100ms speed
+    let fastIterations = 0;
 
     const reveal = () => {
       if (words[currentIndex] === chosen && fastIterations >= 5) {
