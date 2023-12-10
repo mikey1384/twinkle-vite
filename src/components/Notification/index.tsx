@@ -4,6 +4,7 @@ import MainFeeds from './MainFeeds';
 import TodayStats from './TodayStats';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
+import DailyRewardModal from './DailyRewardModal';
 import Loading from '~/components/Loading';
 import { container } from './Styles';
 import {
@@ -57,6 +58,7 @@ function Notification({
 
   const loadingNotificationRef = useRef(false);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [dailyRewardModalShown, setDailyRewardModalShown] = useState(false);
   const userChangedTab = useRef(false);
   const totalRewardedTwinkles = useMemo(
     () => notiObj[userId]?.totalRewardedTwinkles || 0,
@@ -237,6 +239,9 @@ function Notification({
           </div>
         </section>
       </div>
+      {dailyRewardModalShown && (
+        <DailyRewardModal onHide={() => setDailyRewardModalShown(false)} />
+      )}
     </ErrorBoundary>
   );
 
