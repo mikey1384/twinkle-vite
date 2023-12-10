@@ -23,28 +23,6 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   const [chosenWord, setChosenWord] = useState<Word | null>(null);
   const [isRevealing, setIsRevealing] = useState(false);
 
-  const startReveal = () => {
-    setIsRevealing(true);
-    const chosen = words[Math.floor(Math.random() * words.length)];
-    setChosenWord(chosen);
-
-    const allWords = [...words, chosen, chosen]; // Duplicate the chosen word for higher probability
-    let currentIndex = 0;
-    let speed = 300; // initial speed in ms
-
-    const interval = setInterval(() => {
-      if (allWords[currentIndex] === chosen && speed < 100) {
-        clearInterval(interval);
-        setIsRevealing(false);
-        setCurrentWord(chosen.word);
-      } else {
-        setCurrentWord(allWords[currentIndex].word);
-        currentIndex = (currentIndex + 1) % allWords.length;
-        speed *= 0.9; // Increase the speed
-      }
-    }, speed);
-  };
-
   const wordDisplayStyle = css`
     color: ${chosenWord?.color || '#000'};
     font-size: 2.5rem;
@@ -61,7 +39,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
       <header>Daily Reward</header>
       <main>
         {!isRevealing && !chosenWord && (
-          <button onClick={startReveal}>Reveal</button>
+          <button onClick={handleReveal}>Reveal</button>
         )}
         <div className={wordDisplayStyle}>{currentWord}</div>
       </main>
@@ -72,4 +50,26 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
       </footer>
     </Modal>
   );
+
+  function handleReveal() {
+    setIsRevealing(true);
+    const chosen = words[Math.floor(Math.random() * words.length)];
+    setChosenWord(chosen);
+
+    let currentIndex = 0;
+    let interval = 1000; // initial speed in ms
+
+    const reveal = () => {
+      if (words[currentIndex] === chosen && interval < 100) {
+        setIsRevealing(false);
+        setCurrentWord(chosen.word);
+      } else {
+        setCurrentWord(words[currentIndex].word);
+        currentIndex = (currentIndex + 1) % words.length;
+        interval *= 0.9;
+        setTimeout(reveal, interval);
+      }
+    };
+    setTimeout(reveal, interval);
+  }
 }
