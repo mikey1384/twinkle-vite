@@ -60,6 +60,8 @@ export default function TodayStats() {
               <b
                 className={css`
                   color: ${Color[todayProgressTextColor]()};
+                  text-shadow: 0.05rem 0.05rem 0.1rem
+                    ${Color[todayProgressTextColor](0.5)};
                   ${todayProgressTextShadowColor
                     ? `text-shadow: 0.05rem 0.05rem ${Color[
                         todayProgressTextShadowColor
@@ -75,11 +77,34 @@ export default function TodayStats() {
                     color: Color[xpNumberColor]()
                   }}
                 >
-                  {todayStats.xpEarned > 0 ? '+' : ''}
-                  {addCommasToNumber(todayStats.xpEarned)}{' '}
-                  <b style={{ color: Color.gold() }}>XP</b>
+                  <span
+                    style={{
+                      textShadow: `0.05rem 0.05rem 0.1rem ${Color[
+                        xpNumberColor
+                      ](0.5)}`
+                    }}
+                  >
+                    {todayStats.xpEarned > 0 ? '+' : ''}
+                    {addCommasToNumber(todayStats.xpEarned)}
+                  </span>{' '}
+                  <b
+                    style={{
+                      color: Color.gold(),
+                      textShadow: `0.05rem 0.05rem 0.1rem ${Color.gold(0.5)}`
+                    }}
+                  >
+                    XP
+                  </b>
                 </p>
-                <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
+                <p
+                  style={{
+                    fontWeight: 'bold',
+                    color: Color.brownOrange(),
+                    textShadow: `0.05rem 0.05rem 0.1rem ${Color.brownOrange(
+                      0.5
+                    )}`
+                  }}
+                >
                   {todayStats.coinsEarned > 0 ? '+' : ''}
                   {addCommasToNumber(todayStats.coinsEarned)} Coin
                   {todayStats.coinsEarned === 1 ? '' : 's'}
