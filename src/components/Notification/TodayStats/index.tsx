@@ -19,7 +19,6 @@ export default function TodayStats() {
     xpNumber: { color: xpNumberColor }
   } = theme;
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  const achievedDailyGoals: string[] = ['W'];
 
   return (
     <ErrorBoundary componentPath="Notification/TodayStats">
@@ -87,7 +86,7 @@ export default function TodayStats() {
                 </p>
               </div>
             </div>
-            <DailyGoals achievedGoals={achievedDailyGoals} />
+            <DailyGoals achievedGoals={todayStats.achievedDailyGoals} />
             <AchievementProgress />
           </div>
         ) : (

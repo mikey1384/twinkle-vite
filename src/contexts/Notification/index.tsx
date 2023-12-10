@@ -24,6 +24,7 @@ export const initialNotiState = {
   top30sMonthly: [],
   socketConnected: false,
   todayStats: {
+    achievedDailyGoals: [],
     loaded: false,
     xpEarned: 0,
     coinsEarned: 0
