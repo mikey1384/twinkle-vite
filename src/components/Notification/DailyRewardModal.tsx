@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
+import { Color } from '~/constants/css';
 import { cardLevelHash } from '~/constants/defaultValues';
 import { Card } from '~/types';
 import { useAppContext, useChatContext } from '~/contexts';
@@ -73,17 +74,19 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
             }}
           >
             <div>Already checked? {alreadyChecked ? 'Yes' : 'No'}</div>
-            <GradientButton
-              onClick={handleReveal}
-              fontSize="1.5rem"
-              mobileFontSize="1.1rem"
-              loading={isRevealing}
-            >
-              Show me my reward!
-            </GradientButton>
+            {!isRevealing && (
+              <GradientButton
+                onClick={handleReveal}
+                fontSize="1.5rem"
+                mobileFontSize="1.1rem"
+              >
+                Show me my reward!
+              </GradientButton>
+            )}
             <div
               className={css`
-                color: ${cardLevelHash[currentCard?.level]?.color || '#000'};
+                color: ${Color[cardLevelHash[currentCard?.level]?.color]?.() ||
+                '#000'};
                 font-size: 2.5rem;
                 font-weight: bold;
                 display: flex;
