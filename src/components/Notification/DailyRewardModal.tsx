@@ -1,18 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
+import { cardLevelHash } from '~/constants/defaultValues';
 import { Card } from '~/types';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   const unlockDailyReward = useAppContext(
     (v) => v.requestHelpers.unlockDailyReward
   );
+  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const cardObj = useChatContext((v) => v.state.cardObj);
   const [loading, setLoading] = useState(false);
-  const [cards, setCards] = useState<Card[]>([]);
+  const [cardIds, setCardIds] = useState<number[]>([]);
+  const [chosenCardId, setChosenCardId] = useState(0);
+  const [currentCardId, setCurrentCardId] = useState(0);
   const [alreadyChecked, setAlreadyChecked] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
 
@@ -21,12 +26,21 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
     async function init() {
       setLoading(true);
       try {
-        const { cards, alreadyChecked } = await unlockDailyReward();
+        const { cards, chosenCardId, alreadyChecked } =
+          await unlockDailyReward();
         if (alreadyChecked) {
           setAlreadyChecked(true);
         } else {
-          setCards(cards);
+          // originally below goes here
         }
+        setCardIds(cards.map((card: Card) => card.id));
+        for (const card of cards) {
+          onUpdateAICard({
+            cardId: card.id,
+            newState: card
+          });
+        }
+        setChosenCardId(chosenCardId);
       } catch (error) {
         console.error(error);
       } finally {
@@ -35,6 +49,10 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const currentCard = useMemo(() => {
+    return cardObj[currentCardId];
+  }, [cardObj, currentCardId]);
 
   return (
     <Modal onHide={onHide}>
@@ -50,22 +68,22 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
               height: '100%',
               width: '100%',
               justifyContent: 'center',
-              alignItems: 'center'
+              alignItems: 'center',
+              flexDirection: 'column'
             }}
           >
-            Already checked? {alreadyChecked}
-            {!isRevealing && !chosenWord && (
-              <GradientButton
-                onClick={handleReveal}
-                fontSize="1.5rem"
-                mobileFontSize="1.1rem"
-              >
-                Show me my reward!
-              </GradientButton>
-            )}
+            <div>Already checked? {alreadyChecked ? 'Yes' : 'No'}</div>
+            <GradientButton
+              onClick={handleReveal}
+              fontSize="1.5rem"
+              mobileFontSize="1.1rem"
+              loading={isRevealing}
+            >
+              Show me my reward!
+            </GradientButton>
             <div
               className={css`
-                color: ${currentWord?.color || '#000'};
+                color: ${cardLevelHash[currentCard?.level]?.color || '#000'};
                 font-size: 2.5rem;
                 font-weight: bold;
                 display: flex;
@@ -73,7 +91,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                 align-items: center;
               `}
             >
-              {currentWord?.word}
+              {currentCard?.word}
             </div>
           </div>
         )}
@@ -88,21 +106,21 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
 
   function handleReveal() {
     setIsRevealing(true);
-    const chosen = words[Math.floor(Math.random() * words.length)];
-    setChosenWord(chosen);
-
     let currentIndex = 0;
     let interval = 1000;
     let isFirstIteration = true;
     let fastIterations = 0;
 
     const reveal = () => {
-      if (words[currentIndex] === chosen && fastIterations >= 5) {
+      if (
+        currentIndex === cardIds.indexOf(chosenCardId) &&
+        fastIterations >= 5
+      ) {
         setIsRevealing(false);
-        setCurrentWord(chosen);
+        setCurrentCardId(chosenCardId);
       } else {
-        setCurrentWord(words[currentIndex]);
-        currentIndex = (currentIndex + 1) % words.length;
+        setCurrentCardId(cardIds[currentIndex]);
+        currentIndex = (currentIndex + 1) % cardIds.length;
 
         // Increment fastIterations at the end of each cycle when the interval is 100ms or less
         if (currentIndex === 0 && interval <= 100) {
