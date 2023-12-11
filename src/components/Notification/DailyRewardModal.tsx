@@ -115,16 +115,14 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
         currentIndex = (currentIndex + 1) % cardIds.length;
         setCurrentCardId(cardIds[currentIndex]);
 
-        // Increment fastIterations at the end of each cycle when the interval is 100ms or less
         if (currentIndex === 0 && interval <= 100) {
           fastIterations++;
         }
 
-        // Check if the first iteration is complete
         if (currentIndex === 0 && isFirstIteration) {
           isFirstIteration = false;
         } else if (!isFirstIteration && interval > 100) {
-          interval *= 0.8; // Shorten the interval only after the first iteration
+          interval *= 0.8;
         }
 
         setTimeout(reveal, interval);
