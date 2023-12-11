@@ -3,31 +3,17 @@ import Modal from '~/components/Modal';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
+import { Card } from '~/types';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
-
-interface Word {
-  word: string;
-  ranking: number;
-  color: string;
-}
-
-// Example word list with rankings
-const words: Word[] = [
-  { word: 'Basic', ranking: 1, color: '#ffebcd' },
-  { word: 'Elementary', ranking: 2, color: '#c0f2d1' },
-  { word: 'Intermediate', ranking: 3, color: '#b3d9ff' },
-  { word: 'Advanced', ranking: 4, color: '#ff9999' },
-  { word: 'Epic', ranking: 5, color: '#c6b2fe' }
-];
 
 export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   const unlockDailyReward = useAppContext(
     (v) => v.requestHelpers.unlockDailyReward
   );
   const [loading, setLoading] = useState(false);
-  const [currentWord, setCurrentWord] = useState<Word | null>(null);
-  const [chosenWord, setChosenWord] = useState<Word | null>(null);
+  const [cards, setCards] = useState<Card[]>([]);
+  const [alreadyChecked, setAlreadyChecked] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
 
   useEffect(() => {
@@ -36,7 +22,11 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
       setLoading(true);
       try {
         const { cards, alreadyChecked } = await unlockDailyReward();
-        console.log(cards, alreadyChecked);
+        if (alreadyChecked) {
+          setAlreadyChecked(true);
+        } else {
+          setCards(cards);
+        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -63,6 +53,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
               alignItems: 'center'
             }}
           >
+            Already checked? {alreadyChecked}
             {!isRevealing && !chosenWord && (
               <GradientButton
                 onClick={handleReveal}
