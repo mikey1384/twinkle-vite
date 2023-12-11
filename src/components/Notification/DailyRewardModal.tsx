@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
+import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 
@@ -24,6 +25,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   const unlockDailyReward = useAppContext(
     (v) => v.requestHelpers.unlockDailyReward
   );
+  const [loading, setLoading] = useState(false);
   const [currentWord, setCurrentWord] = useState<Word | null>(null);
   const [chosenWord, setChosenWord] = useState<Word | null>(null);
   const [isRevealing, setIsRevealing] = useState(false);
@@ -31,8 +33,15 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   useEffect(() => {
     init();
     async function init() {
-      const { cards, alreadyChecked } = await unlockDailyReward();
-      console.log(cards, alreadyChecked);
+      setLoading(true);
+      try {
+        const { cards, alreadyChecked } = await unlockDailyReward();
+        console.log(cards, alreadyChecked);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -41,38 +50,42 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
     <Modal onHide={onHide}>
       <header>Daily Reward</header>
       <main>
-        <div
-          style={{
-            minHeight: '30vh',
-            display: 'flex',
-            height: '100%',
-            width: '100%',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          {!isRevealing && !chosenWord && (
-            <GradientButton
-              onClick={handleReveal}
-              fontSize="1.5rem"
-              mobileFontSize="1.1rem"
-            >
-              Show me my reward!
-            </GradientButton>
-          )}
+        {loading ? (
+          <Loading />
+        ) : (
           <div
-            className={css`
-              color: ${currentWord?.color || '#000'};
-              font-size: 2.5rem;
-              font-weight: bold;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-            `}
+            style={{
+              minHeight: '30vh',
+              display: 'flex',
+              height: '100%',
+              width: '100%',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
           >
-            {currentWord?.word}
+            {!isRevealing && !chosenWord && (
+              <GradientButton
+                onClick={handleReveal}
+                fontSize="1.5rem"
+                mobileFontSize="1.1rem"
+              >
+                Show me my reward!
+              </GradientButton>
+            )}
+            <div
+              className={css`
+                color: ${currentWord?.color || '#000'};
+                font-size: 2.5rem;
+                font-weight: bold;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+              `}
+            >
+              {currentWord?.word}
+            </div>
           </div>
-        </div>
+        )}
       </main>
       <footer>
         <Button transparent onClick={onHide}>
