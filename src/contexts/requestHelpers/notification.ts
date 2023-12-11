@@ -107,12 +107,20 @@ export default function notificationRequestHelpers({
     },
     async unlockDailyReward() {
       try {
-        const { data } = await request.post(
+        const {
+          data: { cards, chosenCardIndex, coinEarned, xpEarned, alreadyChecked }
+        } = await request.post(
           `${URL}/notification/today/dailyReward`,
           {},
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve({
+          cards,
+          chosenCardIndex,
+          coinEarned,
+          xpEarned,
+          alreadyChecked
+        });
       } catch (error) {
         return handleError(error);
       }

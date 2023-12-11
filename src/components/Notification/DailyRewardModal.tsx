@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
@@ -27,6 +27,15 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   const [currentWord, setCurrentWord] = useState<Word | null>(null);
   const [chosenWord, setChosenWord] = useState<Word | null>(null);
   const [isRevealing, setIsRevealing] = useState(false);
+
+  useEffect(() => {
+    init();
+    async function init() {
+      const { cards, alreadyChecked } = await unlockDailyReward();
+      console.log(cards, alreadyChecked);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Modal onHide={onHide}>
@@ -74,7 +83,6 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   );
 
   function handleReveal() {
-    unlockDailyReward();
     setIsRevealing(true);
     const chosen = words[Math.floor(Math.random() * words.length)];
     setChosenWord(chosen);
