@@ -3,11 +3,9 @@ import Modal from '~/components/Modal';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
-import { Color } from '~/constants/css';
-import { cardLevelHash } from '~/constants/defaultValues';
+import AICard from '~/components/AICard';
 import { Card } from '~/types';
 import { useAppContext, useChatContext } from '~/contexts';
-import { css } from '@emotion/css';
 
 export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   const unlockDailyReward = useAppContext(
@@ -83,19 +81,9 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                 Show me my reward!
               </GradientButton>
             )}
-            <div
-              className={css`
-                color: ${Color[cardLevelHash[currentCard?.level]?.color]?.() ||
-                '#000'};
-                font-size: 2.5rem;
-                font-weight: bold;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-              `}
-            >
-              {currentCard?.word}
-            </div>
+            {currentCard && (
+              <AICard key={currentCard.id} card={currentCard} detailShown />
+            )}
           </div>
         )}
       </main>
@@ -110,20 +98,22 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   function handleReveal() {
     setIsRevealing(true);
     let currentIndex = 0;
-    let interval = 1000;
+    let interval = 2000;
     let isFirstIteration = true;
     let fastIterations = 0;
+
+    setCurrentCardId(cardIds[currentIndex]);
 
     const reveal = () => {
       if (
         currentIndex === cardIds.indexOf(chosenCardId) &&
-        fastIterations >= 5
+        fastIterations >= 2
       ) {
         setIsRevealing(false);
         setCurrentCardId(chosenCardId);
       } else {
-        setCurrentCardId(cardIds[currentIndex]);
         currentIndex = (currentIndex + 1) % cardIds.length;
+        setCurrentCardId(cardIds[currentIndex]);
 
         // Increment fastIterations at the end of each cycle when the interval is 100ms or less
         if (currentIndex === 0 && interval <= 100) {
@@ -134,7 +124,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
         if (currentIndex === 0 && isFirstIteration) {
           isFirstIteration = false;
         } else if (!isFirstIteration && interval > 100) {
-          interval *= 0.9; // Shorten the interval only after the first iteration
+          interval *= 0.8; // Shorten the interval only after the first iteration
         }
 
         setTimeout(reveal, interval);
