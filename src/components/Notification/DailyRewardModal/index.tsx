@@ -54,7 +54,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   }, [cardObj, currentCardId]);
 
   return (
-    <Modal onHide={onHide}>
+    <Modal wrapped onHide={onHide}>
       <header>Daily Reward</header>
       <main>
         {loading ? (
