@@ -58,9 +58,29 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   }, [cardObj, currentCardId]);
 
   return (
-    <Modal wrapped onHide={onHide}>
+    <Modal
+      className={css`
+        @keyframes flashEffect {
+          0% {
+            background-color: transparent;
+          }
+          50% {
+            background-color: rgba(255, 0, 255, 0.7);
+          }
+          100% {
+            background-color: transparent;
+          }
+        }
+
+        .flashBackground {
+          animation: flashEffect 0.6s ease-out;
+        }
+      `}
+      wrapped
+      onHide={onHide}
+    >
       <header>Daily Reward</header>
-      <main>
+      <main className={animateReveal ? 'flashBackground' : ''}>
         {loading ? (
           <Loading />
         ) : (
