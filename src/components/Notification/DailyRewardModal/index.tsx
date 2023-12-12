@@ -18,7 +18,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   const [chosenCardId, setChosenCardId] = useState(0);
   const [currentCardId, setCurrentCardId] = useState(0);
   const [alreadyChecked, setAlreadyChecked] = useState(false);
-  const [isRevealing, setIsRevealing] = useState(false);
+  const [isRevealPressed, setIsRevealPressed] = useState(false);
 
   useEffect(() => {
     init();
@@ -72,7 +72,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
             }}
           >
             <div>Already checked? {alreadyChecked ? 'Yes' : 'No'}</div>
-            {!isRevealing && (
+            {!isRevealPressed && (
               <GradientButton
                 onClick={handleReveal}
                 fontSize="1.5rem"
@@ -96,7 +96,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   );
 
   function handleReveal() {
-    setIsRevealing(true);
+    setIsRevealPressed(true);
     let currentIndex = 0;
     let interval = 2000;
     let isFirstIteration = true;
@@ -109,7 +109,6 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
         currentIndex === cardIds.indexOf(chosenCardId) &&
         fastIterations >= 2
       ) {
-        setIsRevealing(false);
         setCurrentCardId(chosenCardId);
       } else {
         currentIndex = (currentIndex + 1) % cardIds.length;
