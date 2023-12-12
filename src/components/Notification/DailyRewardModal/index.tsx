@@ -25,12 +25,11 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
     async function init() {
       setLoading(true);
       try {
-        const { cards, chosenCardId, alreadyChecked } =
+        const { cards, chosenCardId, isAlreadyChecked } =
           await unlockDailyReward();
-        if (alreadyChecked) {
+        if (isAlreadyChecked) {
+          setCurrentCardId(chosenCardId);
           setAlreadyChecked(true);
-        } else {
-          // originally below goes here
         }
         setCardIds(cards.map((card: Card) => card.id));
         for (const card of cards) {
@@ -71,8 +70,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
               flexDirection: 'column'
             }}
           >
-            <div>Already checked? {alreadyChecked ? 'Yes' : 'No'}</div>
-            {!isRevealPressed && (
+            {!isRevealPressed && !alreadyChecked && (
               <GradientButton
                 onClick={handleReveal}
                 fontSize="1.5rem"
