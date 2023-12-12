@@ -4,6 +4,7 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
+import { css } from '@emotion/css';
 import { Card } from '~/types';
 import { useAppContext, useChatContext } from '~/contexts';
 
@@ -13,6 +14,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   );
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const [animateReveal, setAnimateReveal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cardIds, setCardIds] = useState<number[]>([]);
   const [chosenCardId, setChosenCardId] = useState(0);
@@ -45,6 +47,9 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
         setLoading(false);
       }
     }
+    return () => {
+      setAnimateReveal(false);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -69,6 +74,26 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
               alignItems: 'center',
               flexDirection: 'column'
             }}
+            className={css`
+              @keyframes popEffect {
+                0% {
+                  transform: scale(0.9);
+                  opacity: 0.7;
+                }
+                50% {
+                  transform: scale(1.2);
+                  opacity: 1;
+                }
+                100% {
+                  transform: scale(1);
+                  opacity: 1;
+                }
+              }
+
+              .chosenCardWrapper {
+                animation: popEffect 0.6s ease-out;
+              }
+            `}
           >
             {!isRevealPressed && !alreadyChecked && (
               <GradientButton
@@ -80,7 +105,17 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
               </GradientButton>
             )}
             {currentCard && (
-              <AICard key={currentCard.id} card={currentCard} detailShown />
+              <div
+                className={
+                  currentCardId === chosenCardId &&
+                  isRevealPressed &&
+                  animateReveal
+                    ? 'chosenCardWrapper'
+                    : ''
+                }
+              >
+                <AICard key={currentCard.id} card={currentCard} detailShown />
+              </div>
             )}
           </div>
         )}
@@ -108,6 +143,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
         fastIterations >= 2
       ) {
         setCurrentCardId(chosenCardId);
+        setAnimateReveal(true);
       } else {
         currentIndex = (currentIndex + 1) % cardIds.length;
         setCurrentCardId(cardIds[currentIndex]);
