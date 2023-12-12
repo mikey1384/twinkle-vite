@@ -93,7 +93,7 @@ export default function Rankings({
         }}
       >
         <RoundList style={{ marginTop: 0 }} width="35rem" mobileWidth="100%">
-          {users.map((user: { id: number }) => (
+          {(users || []).map((user: { id: number }) => (
             <RankingsListItem
               small
               key={user.id}
