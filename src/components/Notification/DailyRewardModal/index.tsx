@@ -4,6 +4,7 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
+import AICardModal from '~/components/Modals/AICardModal';
 import { cardLevelHash } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -17,6 +18,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [animateReveal, setAnimateReveal] = useState(false);
+  const [cardModalShown, setCardModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cardIds, setCardIds] = useState<number[]>([]);
   const [chosenCardId, setChosenCardId] = useState(0);
@@ -94,7 +96,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
         }
       `}
       wrapped
-      onHide={onHide}
+      onHide={handleHide}
     >
       <header>Daily Reward</header>
       <main className={animateReveal ? 'flashBackground' : ''}>
@@ -151,28 +153,50 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                     : ''
                 }
               >
-                <AICard key={currentCard.id} card={currentCard} detailShown />
+                <AICard
+                  key={currentCard.id}
+                  card={currentCard}
+                  onClick={
+                    animateReveal || alreadyChecked
+                      ? () => {
+                          setCardModalShown(true);
+                        }
+                      : undefined
+                  }
+                  detailShown
+                />
               </div>
             )}
             {(animateReveal || alreadyChecked) && (
-              <div className="rewardsSummary">
+              <div style={{ marginTop: '5rem' }}>
                 {isCardOwned && <p>{`You own this card`}</p>}
-                <p>{`Congratulations! You've earned:`}</p>
-                <ul>
-                  <li>{coinEarned} Coins</li>
-                </ul>
+                <p>Congratulations!</p>
+                {`You've earned: ${coinEarned} Coins`}
               </div>
             )}
           </div>
         )}
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button transparent onClick={handleHide}>
           Close
         </Button>
       </footer>
+      {cardModalShown && (
+        <AICardModal
+          cardId={chosenCardId}
+          onHide={() => setCardModalShown(false)}
+        />
+      )}
     </Modal>
   );
+
+  function handleHide() {
+    if (cardModalShown) {
+      return;
+    }
+    onHide();
+  }
 
   function handleReveal() {
     setIsRevealPressed(true);
