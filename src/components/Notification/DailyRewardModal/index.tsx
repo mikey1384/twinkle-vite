@@ -4,6 +4,8 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
+import { cardLevelHash } from '~/constants/defaultValues';
+import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { Card } from '~/types';
 import { useAppContext, useChatContext } from '~/contexts';
@@ -57,6 +59,10 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
     return cardObj[currentCardId];
   }, [cardObj, currentCardId]);
 
+  const chosenCard = useMemo(() => {
+    return cardObj[chosenCardId];
+  }, [cardObj, chosenCardId]);
+
   return (
     <Modal
       className={css`
@@ -65,7 +71,9 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
             background-color: transparent;
           }
           50% {
-            background-color: rgba(255, 0, 255, 0.7);
+            background-color: ${Color?.[
+              cardLevelHash?.[chosenCard?.level]?.color
+            ]?.(0.7) || 'transparent'};
           }
           100% {
             background-color: transparent;
