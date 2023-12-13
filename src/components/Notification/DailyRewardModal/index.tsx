@@ -20,6 +20,8 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   const [loading, setLoading] = useState(false);
   const [cardIds, setCardIds] = useState<number[]>([]);
   const [chosenCardId, setChosenCardId] = useState(0);
+  const [coinEarned, setCoinEarned] = useState(0);
+  const [isCardOwned, setIsCardOwned] = useState(false);
   const [currentCardId, setCurrentCardId] = useState(0);
   const [alreadyChecked, setAlreadyChecked] = useState(false);
   const [isRevealPressed, setIsRevealPressed] = useState(false);
@@ -29,8 +31,13 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
     async function init() {
       setLoading(true);
       try {
-        const { cards, chosenCardId, isAlreadyChecked } =
-          await unlockDailyReward();
+        const {
+          cards,
+          chosenCardId,
+          isAlreadyChecked,
+          coinEarned,
+          isCardOwned
+        } = await unlockDailyReward();
         if (isAlreadyChecked) {
           setCurrentCardId(chosenCardId);
           setAlreadyChecked(true);
@@ -42,6 +49,8 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
             newState: card
           });
         }
+        setCoinEarned(coinEarned);
+        setIsCardOwned(isCardOwned);
         setChosenCardId(chosenCardId);
       } catch (error) {
         console.error(error);
@@ -143,6 +152,15 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                 }
               >
                 <AICard key={currentCard.id} card={currentCard} detailShown />
+              </div>
+            )}
+            {(animateReveal || alreadyChecked) && (
+              <div className="rewardsSummary">
+                {isCardOwned && <p>{`You own this card`}</p>}
+                <p>{`Congratulations! You've earned:`}</p>
+                <ul>
+                  <li>{coinEarned} Coins</li>
+                </ul>
               </div>
             )}
           </div>
