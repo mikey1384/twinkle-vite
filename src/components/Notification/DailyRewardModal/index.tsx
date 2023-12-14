@@ -74,6 +74,32 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
     return cardObj[chosenCardId];
   }, [cardObj, chosenCardId]);
 
+  const chosenCardColorDescription = useMemo(() => {
+    const colors: {
+      [key: number]: string;
+    } = {
+      1: 'Blue',
+      2: 'Pink',
+      3: 'Orange',
+      4: 'Magenta',
+      5: 'Gold'
+    };
+    return chosenCard ? colors[chosenCard.level] : '';
+  }, [chosenCard]);
+
+  const chosenCardQualityDescription = useMemo(() => {
+    const qualities: {
+      [key: string]: string;
+    } = {
+      common: 'Common',
+      superior: 'Superior',
+      rare: 'Rare',
+      elite: 'Elite',
+      legendary: 'Legendary'
+    };
+    return chosenCard ? qualities[chosenCard.quality] : '';
+  }, [chosenCard]);
+
   return (
     <Modal
       className={css`
@@ -140,7 +166,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                 fontSize="1.5rem"
                 mobileFontSize="1.1rem"
               >
-                Show me my reward!
+                Spin the wheel!
               </GradientButton>
             )}
             {currentCard && (
@@ -170,8 +196,11 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
             {(animateReveal || alreadyChecked) && (
               <div style={{ marginTop: '5rem' }}>
                 {isCardOwned && <p>{`You own this card`}</p>}
-                <p>Congratulations!</p>
-                {`You've earned: ${coinEarned} Coins`}
+                <p>
+                  Congratulations! You rolled a {chosenCardQualityDescription}{' '}
+                  {chosenCardColorDescription} card!
+                </p>
+                <p>You earned: {coinEarned} Coins</p>
               </div>
             )}
           </div>
