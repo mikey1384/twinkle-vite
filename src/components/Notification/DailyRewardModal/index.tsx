@@ -5,7 +5,12 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
 import AICardModal from '~/components/Modals/AICardModal';
-import { cardLevelHash, qualityProps } from '~/constants/defaultValues';
+import {
+  cardLevelHash,
+  qualityProps,
+  returnCardBurnXP
+} from '~/constants/defaultValues';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { Card } from '~/types';
@@ -87,6 +92,22 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   const chosenCardColorDescription = useMemo(() => {
     return chosenCard ? colors[chosenCard.level] : '';
   }, [chosenCard]);
+
+  const burnValue = useMemo(() => {
+    if (!chosenCard) {
+      return 0;
+    }
+    return addCommasToNumber(
+      returnCardBurnXP({
+        cardLevel: chosenCard.level,
+        cardQuality: chosenCard.quality
+      })
+    );
+  }, [chosenCard]);
+
+  const displayedCoinEarned = useMemo(() => {
+    return addCommasToNumber(coinEarned);
+  }, [coinEarned]);
 
   return (
     <Modal
@@ -182,10 +203,10 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
               </div>
             )}
             {(animateReveal || alreadyChecked) && chosenCard && (
-              <div style={{ marginTop: '5rem' }}>
-                {isCardOwned && <p>{`You own this card`}</p>}
+              <div style={{ marginTop: '5rem', textAlign: 'center' }}>
+                <p>Congratulations!</p>
                 <p>
-                  Congratulations! You rolled a{' '}
+                  You rolled {chosenCard.quality === 'elite' ? 'an' : 'a'}{' '}
                   <span style={{ ...qualityProps[chosenCard.quality] }}>
                     {chosenCard.quality}
                   </span>{' '}
@@ -197,9 +218,10 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                   >
                     {chosenCardColorDescription}
                   </span>{' '}
-                  card!
+                  card! (burn value: {burnValue})
                 </p>
-                <p>You earned: {coinEarned} Coins</p>
+                <p>You {isCardOwned ? '' : `don't `}own this card</p>
+                <p>You earned: {displayedCoinEarned} Coins</p>
               </div>
             )}
           </div>
