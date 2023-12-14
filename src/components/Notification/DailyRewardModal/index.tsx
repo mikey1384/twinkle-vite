@@ -10,6 +10,7 @@ import {
   qualityProps,
   returnCardBurnXP
 } from '~/constants/defaultValues';
+import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -221,7 +222,24 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                   card! (burn value: {burnValue})
                 </p>
                 <p>You {isCardOwned ? '' : `don't `}own this card</p>
-                <p>You earned: {displayedCoinEarned} Coins</p>
+                <p>
+                  You earned{' '}
+                  <Icon
+                    icon={['far', 'badge-dollar']}
+                    style={{
+                      color: Color.brownOrange()
+                    }}
+                  />
+                  <span
+                    style={{
+                      color: Color.brownOrange(),
+                      fontWeight: 'bold',
+                      marginLeft: '0.2rem'
+                    }}
+                  >
+                    {displayedCoinEarned}
+                  </span>
+                </p>
               </div>
             )}
           </div>
