@@ -5,11 +5,21 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
 import AICardModal from '~/components/Modals/AICardModal';
-import { cardLevelHash } from '~/constants/defaultValues';
+import { cardLevelHash, qualityProps } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { Card } from '~/types';
 import { useAppContext, useChatContext } from '~/contexts';
+
+const colors: {
+  [key: number]: string;
+} = {
+  1: 'blue',
+  2: 'pink',
+  3: 'orange',
+  4: 'magenta',
+  5: 'gold'
+};
 
 export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   const unlockDailyReward = useAppContext(
@@ -75,29 +85,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   }, [cardObj, chosenCardId]);
 
   const chosenCardColorDescription = useMemo(() => {
-    const colors: {
-      [key: number]: string;
-    } = {
-      1: 'Blue',
-      2: 'Pink',
-      3: 'Orange',
-      4: 'Magenta',
-      5: 'Gold'
-    };
     return chosenCard ? colors[chosenCard.level] : '';
-  }, [chosenCard]);
-
-  const chosenCardQualityDescription = useMemo(() => {
-    const qualities: {
-      [key: string]: string;
-    } = {
-      common: 'Common',
-      superior: 'Superior',
-      rare: 'Rare',
-      elite: 'Elite',
-      legendary: 'Legendary'
-    };
-    return chosenCard ? qualities[chosenCard.quality] : '';
   }, [chosenCard]);
 
   return (
@@ -193,12 +181,23 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                 />
               </div>
             )}
-            {(animateReveal || alreadyChecked) && (
+            {(animateReveal || alreadyChecked) && chosenCard && (
               <div style={{ marginTop: '5rem' }}>
                 {isCardOwned && <p>{`You own this card`}</p>}
                 <p>
-                  Congratulations! You rolled a {chosenCardQualityDescription}{' '}
-                  {chosenCardColorDescription} card!
+                  Congratulations! You rolled a{' '}
+                  <span style={{ ...qualityProps[chosenCard.quality] }}>
+                    {chosenCard.quality}
+                  </span>{' '}
+                  <span
+                    style={{
+                      fontWeight: 'bold',
+                      color: Color[colors[chosenCard.level]]()
+                    }}
+                  >
+                    {chosenCardColorDescription}
+                  </span>{' '}
+                  card!
                 </p>
                 <p>You earned: {coinEarned} Coins</p>
               </div>
