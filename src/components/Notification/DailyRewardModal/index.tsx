@@ -33,6 +33,10 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
   );
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const [showFirstSentence, setShowFirstSentence] = useState(false);
+  const [showSecondSentence, setShowSecondSentence] = useState(false);
+  const [showThirdSentence, setShowThirdSentence] = useState(false);
+  const [showFourthSentence, setShowFourthSentence] = useState(false);
   const [animateReveal, setAnimateReveal] = useState(false);
   const [cardModalShown, setCardModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -59,6 +63,10 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
         if (isAlreadyChecked) {
           setCurrentCardId(chosenCardId);
           setAlreadyChecked(true);
+          setShowFirstSentence(true);
+          setShowSecondSentence(true);
+          setShowThirdSentence(true);
+          setShowFourthSentence(true);
         }
         setCardIds(cards.map((card: Card) => card.id));
         for (const card of cards) {
@@ -150,6 +158,19 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
               flexDirection: 'column'
             }}
             className={css`
+              .fadeIn {
+                animation: fadeInEffect 1s ease-in;
+              }
+
+              @keyframes fadeInEffect {
+                from {
+                  opacity: 0;
+                }
+                to {
+                  opacity: 1;
+                }
+              }
+
               @keyframes popEffect {
                 0% {
                   transform: scale(0.9);
@@ -205,41 +226,51 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
             )}
             {(animateReveal || alreadyChecked) && chosenCard && (
               <div style={{ marginTop: '5rem', textAlign: 'center' }}>
-                <p>Congratulations!</p>
-                <p>
-                  You rolled {chosenCard.quality === 'elite' ? 'an' : 'a'}{' '}
-                  <span style={{ ...qualityProps[chosenCard.quality] }}>
-                    {chosenCard.quality}
-                  </span>{' '}
-                  <span
-                    style={{
-                      fontWeight: 'bold',
-                      color: Color[colors[chosenCard.level]]()
-                    }}
-                  >
-                    {chosenCardColorDescription}
-                  </span>{' '}
-                  card! (burn value: {burnValue})
-                </p>
-                <p>You {isCardOwned ? '' : `don't `}own this card</p>
-                <p>
-                  You earned{' '}
-                  <Icon
-                    icon={['far', 'badge-dollar']}
-                    style={{
-                      color: Color.brownOrange()
-                    }}
-                  />
-                  <span
-                    style={{
-                      color: Color.brownOrange(),
-                      fontWeight: 'bold',
-                      marginLeft: '0.2rem'
-                    }}
-                  >
-                    {displayedCoinEarned}
-                  </span>
-                </p>
+                {showFirstSentence && (
+                  <p className="fadeIn">Congratulations!</p>
+                )}
+                {showSecondSentence && (
+                  <p className="fadeIn">
+                    You rolled {chosenCard.quality === 'elite' ? 'an' : 'a'}{' '}
+                    <span style={{ ...qualityProps[chosenCard.quality] }}>
+                      {chosenCard.quality}
+                    </span>{' '}
+                    <span
+                      style={{
+                        fontWeight: 'bold',
+                        color: Color[colors[chosenCard.level]]()
+                      }}
+                    >
+                      {chosenCardColorDescription}
+                    </span>{' '}
+                    card! (burn value: {burnValue})
+                  </p>
+                )}
+                {showThirdSentence && (
+                  <p className="fadeIn">
+                    You {isCardOwned ? '' : `don't `}own this card
+                  </p>
+                )}
+                {showFourthSentence && (
+                  <p className="fadeIn">
+                    You earned{' '}
+                    <Icon
+                      icon={['far', 'badge-dollar']}
+                      style={{
+                        color: Color.brownOrange()
+                      }}
+                    />
+                    <span
+                      style={{
+                        color: Color.brownOrange(),
+                        fontWeight: 'bold',
+                        marginLeft: '0.2rem'
+                      }}
+                    >
+                      {displayedCoinEarned}
+                    </span>
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -282,6 +313,10 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
       ) {
         setCurrentCardId(chosenCardId);
         setAnimateReveal(true);
+        setTimeout(() => setShowFirstSentence(true), 1500);
+        setTimeout(() => setShowSecondSentence(true), 3000);
+        setTimeout(() => setShowThirdSentence(true), 4500);
+        setTimeout(() => setShowFourthSentence(true), 6000);
       } else {
         currentIndex = (currentIndex + 1) % cardIds.length;
         setCurrentCardId(cardIds[currentIndex]);
