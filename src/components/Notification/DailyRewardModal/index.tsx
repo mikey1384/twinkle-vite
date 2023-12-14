@@ -154,7 +154,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                 fontSize="1.5rem"
                 mobileFontSize="1.1rem"
               >
-                Spin the wheel!
+                Roll the reward!
               </GradientButton>
             )}
             {currentCard && (
