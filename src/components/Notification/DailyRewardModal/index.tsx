@@ -271,10 +271,8 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                       </span>{' '}
                       card!
                     </div>
-                    <div>
-                      {addCommasToNumber(burnValue)} coins ({burnValue} burn
-                      value)
-                    </div>
+                    <div>{burnValue} burn value</div>
+                    <div>{burnValue} coins</div>
                   </div>
                 )}
 
@@ -283,24 +281,37 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                     className="fadeIn"
                     style={{ display: 'flex', justifyContent: 'space-between' }}
                   >
-                    <p>You {isCardOwned ? '' : `don't `}own the card.</p>
-                    <p>
+                    <div>You {isCardOwned ? '' : `don't `}own the card.</div>
+                    <div>
                       <Icon icon="times" /> {isCardOwned ? '1' : '1/10'}
-                    </p>
+                    </div>
+                    <div>{burnValue / 10} coins</div>
                   </div>
                 )}
 
                 {showFourthSentence && (
                   <div
                     className="fadeIn"
-                    style={{ marginTop: '1rem', textAlign: 'center' }}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between'
+                    }}
                   >
-                    {burnValue / 10 < 100
-                      ? 'Minimum reward amount is 100'
-                      : burnValue / 10 < 1000
-                      ? 'rounded to 100'
-                      : 'rounded to 1000'}{' '}
-                    {coinEarned}
+                    <div>
+                      {burnValue / 10 < 100
+                        ? 'Minimum reward amount is 100'
+                        : burnValue / 10 < 1000
+                        ? 'rounded to 100'
+                        : 'rounded to 1000'}
+                    </div>
+                    <div>
+                      {burnValue / 10 < 100
+                        ? 100
+                        : burnValue / 10 < 1000
+                        ? Math.round(burnValue / 10 / 100) * 100
+                        : Math.round(burnValue / 10 / 1000) * 1000}{' '}
+                      coins
+                    </div>
                   </div>
                 )}
 
