@@ -304,14 +304,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                         ? 'rounded to 100'
                         : 'rounded to 1000'}
                     </div>
-                    <div>
-                      {burnValue / 10 < 100
-                        ? 100
-                        : burnValue / 10 < 1000
-                        ? Math.round(burnValue / 10 / 100) * 100
-                        : Math.round(burnValue / 10 / 1000) * 1000}{' '}
-                      coins
-                    </div>
+                    <div>{coinEarned} coins</div>
                   </div>
                 )}
 
