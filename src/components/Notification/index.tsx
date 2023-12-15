@@ -166,6 +166,7 @@ function Notification({
         >
           {userId && (
             <TodayStats
+              dailyRewardModalShown={dailyRewardModalShown}
               onCollectRewardButtonClick={() => setDailyRewardModalShown(true)}
             />
           )}
