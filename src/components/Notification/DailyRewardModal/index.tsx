@@ -257,12 +257,13 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                   <div
                     className="fadeIn"
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginTop: '1rem'
+                      display: 'grid',
+                      gridTemplateColumns: '2fr 1fr 1fr',
+                      marginTop: '2rem',
+                      width: '100%'
                     }}
                   >
-                    <div>
+                    <div className="column">
                       You rolled {chosenCard.quality === 'elite' ? 'an' : 'a'}{' '}
                       <span style={{ fontWeight: 'bold', ...qualityProps }}>
                         {chosenCard.quality}
@@ -282,10 +283,12 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                       </span>{' '}
                       card!
                     </div>
-                    <div>{burnValue} burn value</div>
+                    <div className="column">{burnValue} burn value</div>
                     <div
+                      className="column"
                       style={{
-                        fontWeight: showThirdSentence ? 'normal' : 'bold'
+                        fontWeight: showThirdSentence ? 'normal' : 'bold',
+                        textAlign: 'right'
                       }}
                     >
                       {burnValue} coins
@@ -296,15 +299,24 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                 {showThirdSentence && (
                   <div
                     className="fadeIn"
-                    style={{ display: 'flex', justifyContent: 'space-between' }}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '2fr 1fr 1fr',
+                      marginTop: '1.5rem',
+                      width: '100%'
+                    }}
                   >
-                    <div>You {isCardOwned ? '' : `don't `}own the card.</div>
-                    <div>
+                    <div className="column">
+                      You {isCardOwned ? '' : `don't `}own the card
+                    </div>
+                    <div className="column">
                       <Icon icon="times" /> {isCardOwned ? '1' : '1/10'}
                     </div>
                     <div
+                      className="column"
                       style={{
-                        fontWeight: showFourthSentence ? 'normal' : 'bold'
+                        fontWeight: showFourthSentence ? 'normal' : 'bold',
+                        textAlign: 'right'
                       }}
                     >
                       {burnValue / 10} coins
@@ -316,14 +328,19 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                   <div
                     className="fadeIn"
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between'
+                      display: 'grid',
+                      gridTemplateColumns: '2fr 1fr 1fr',
+                      marginTop: '1.5rem',
+                      width: '100%'
                     }}
                   >
-                    <div>{fourthSentenceText}</div>
+                    <div className="column">{fourthSentenceText}</div>
+                    <div className="column" />
                     <div
+                      className="column"
                       style={{
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        textAlign: 'right'
                       }}
                     >
                       {coinEarned} coins
@@ -334,7 +351,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                 {showFifthSentence && (
                   <div
                     className="fadeIn"
-                    style={{ marginTop: '1rem', textAlign: 'center' }}
+                    style={{ marginTop: '2rem', textAlign: 'center' }}
                   >
                     You earned{' '}
                     <Icon
@@ -397,10 +414,10 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
         setCurrentCardId(chosenCardId);
         setAnimateReveal(true);
         setTimeout(() => setShowFirstSentence(true), 1500);
-        setTimeout(() => setShowSecondSentence(true), 3000);
-        setTimeout(() => setShowThirdSentence(true), 4500);
-        setTimeout(() => setShowFourthSentence(true), 6000);
-        setTimeout(() => setShowFifthSentence(true), 7500);
+        setTimeout(() => setShowSecondSentence(true), 3500);
+        setTimeout(() => setShowThirdSentence(true), 5500);
+        setTimeout(() => setShowFourthSentence(true), 7500);
+        setTimeout(() => setShowFifthSentence(true), 9500);
       } else {
         currentIndex = (currentIndex + 1) % cardIds.length;
         setCurrentCardId(cardIds[currentIndex]);
