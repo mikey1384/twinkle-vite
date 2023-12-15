@@ -5,9 +5,11 @@ import { css } from '@emotion/css';
 const badgeItems = ['W', 'G', 'A'];
 
 export default function DailyGoals({
+  dailyRewardModalShown,
   achievedGoals,
   onCollectRewardButtonClick
 }: {
+  dailyRewardModalShown: boolean;
   achievedGoals: string[];
   onCollectRewardButtonClick: () => void;
 }) {
@@ -53,6 +55,7 @@ export default function DailyGoals({
           </p>
           <button
             onClick={onCollectRewardButtonClick}
+            disabled={dailyRewardModalShown}
             className={css`
               background-image: linear-gradient(
                 -45deg,
@@ -69,7 +72,11 @@ export default function DailyGoals({
               font-weight: bold;
               font-size: 1.2rem;
               background-size: 400% 400%;
-              animation: colorShift 6s ease infinite, pulse 2s infinite;
+              animation: ${dailyRewardModalShown
+                ? 'none'
+                : 'colorShift 6s ease infinite, pulse 2s infinite'};
+              opacity: ${dailyRewardModalShown ? 0.5 : 1};
+              cursor: ${dailyRewardModalShown ? 'default' : 'pointer'};
 
               @keyframes colorShift {
                 0%,
@@ -89,6 +96,11 @@ export default function DailyGoals({
                 50% {
                   transform: scale(1.07);
                 }
+              }
+
+              &:disabled {
+                background-image: none;
+                background-color: #ccc;
               }
             `}
           >
