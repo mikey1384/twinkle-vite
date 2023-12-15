@@ -247,7 +247,11 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
               >
                 {showFirstSentence && (
                   <div
-                    style={{ width: '100%', textAlign: 'center' }}
+                    style={{
+                      fontWeight: 'bold',
+                      width: '100%',
+                      textAlign: 'center'
+                    }}
                     className="fadeIn"
                   >
                     Congratulations!
@@ -265,7 +269,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                   >
                     <div className="column">
                       You rolled {chosenCard.quality === 'elite' ? 'an' : 'a'}{' '}
-                      <span style={{ fontWeight: 'bold', ...qualityProps }}>
+                      <span style={qualityProps[chosenCard.quality]}>
                         {chosenCard.quality}
                       </span>{' '}
                       <span
