@@ -118,6 +118,17 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
     return addCommasToNumber(coinEarned);
   }, [coinEarned]);
 
+  const fourthSentenceText = useMemo(() => {
+    const defaultCoinEarned = burnValue / 10;
+    if (defaultCoinEarned < 100) {
+      return 'Minimum reward amount is 100';
+    }
+    if (defaultCoinEarned < 1000) {
+      return 'rounded to the nearest hundred';
+    }
+    return 'rounded to the nearest thousand';
+  }, [burnValue]);
+
   return (
     <Modal
       className={css`
@@ -297,13 +308,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                       justifyContent: 'space-between'
                     }}
                   >
-                    <div>
-                      {burnValue / 10 < 100
-                        ? 'Minimum reward amount is 100'
-                        : burnValue / 10 < 1000
-                        ? 'rounded to 100'
-                        : 'rounded to 1000'}
-                    </div>
+                    <div>{fourthSentenceText}</div>
                     <div>{coinEarned} coins</div>
                   </div>
                 )}
