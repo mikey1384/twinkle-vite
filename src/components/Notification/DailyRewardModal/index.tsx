@@ -124,9 +124,9 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
       return 'Minimum reward amount is 100';
     }
     if (defaultCoinEarned < 1000) {
-      return 'rounded to the nearest hundred';
+      return '...rounded to the nearest hundred';
     }
-    return 'rounded to the nearest thousand';
+    return '...rounded to the nearest thousand';
   }, [burnValue]);
 
   return (
@@ -283,7 +283,13 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                       card!
                     </div>
                     <div>{burnValue} burn value</div>
-                    <div>{burnValue} coins</div>
+                    <div
+                      style={{
+                        fontWeight: showThirdSentence ? 'normal' : 'bold'
+                      }}
+                    >
+                      {burnValue} coins
+                    </div>
                   </div>
                 )}
 
@@ -296,7 +302,13 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                     <div>
                       <Icon icon="times" /> {isCardOwned ? '1' : '1/10'}
                     </div>
-                    <div>{burnValue / 10} coins</div>
+                    <div
+                      style={{
+                        fontWeight: showFourthSentence ? 'normal' : 'bold'
+                      }}
+                    >
+                      {burnValue / 10} coins
+                    </div>
                   </div>
                 )}
 
@@ -309,7 +321,13 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
                     }}
                   >
                     <div>{fourthSentenceText}</div>
-                    <div>{coinEarned} coins</div>
+                    <div
+                      style={{
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      {coinEarned} coins
+                    </div>
                   </div>
                 )}
 
