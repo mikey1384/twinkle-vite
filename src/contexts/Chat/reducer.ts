@@ -1321,6 +1321,7 @@ export default function ChatReducer(
         listedCardsLoadMoreButton: action.loadMoreShown
       };
     case 'LOAD_MY_AI_CARDS':
+      if (!action.cards) return state;
       return {
         ...state,
         cardObj: {
