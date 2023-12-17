@@ -43,7 +43,6 @@ export default function ContinueWatchingPanel() {
   useEffect(() => {
     if (
       !loadingRef.current &&
-      userId &&
       (!(continueWatchingLoaded || loadedRef.current) || userId !== prevUserId)
     ) {
       init();
