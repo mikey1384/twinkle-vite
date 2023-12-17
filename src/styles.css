@@ -268,11 +268,17 @@ ul {
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 820px) {
   html,
   body {
     overflow: hidden;
     position: absolute;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 820px) {
+  .mobile {
+    display: none !important;
   }
 }
 
