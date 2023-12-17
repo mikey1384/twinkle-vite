@@ -14,7 +14,7 @@ import TargetMessagePreview from '../TargetMessagePreview';
 import TargetSubjectPreview from '../TargetSubjectPreview';
 import UploadModal from '../../../Modals/UploadModal';
 import AlertModal from '~/components/Modals/AlertModal';
-import { isMobile } from '~/helpers';
+import { isMobile, isTablet } from '~/helpers';
 import {
   stringIsEmpty,
   addEmoji,
@@ -33,7 +33,8 @@ import LeftButtons from './LeftButtons';
 import RightButtons from './RightButtons';
 
 const enterMessageLabel = localize('enterMessage');
-const deviceIsMobile = isMobile(navigator);
+const deviceIsTablet = isTablet();
+const deviceIsMobile = deviceIsTablet || isMobile(navigator);
 
 export default function MessageInput({
   currentTransactionId,
