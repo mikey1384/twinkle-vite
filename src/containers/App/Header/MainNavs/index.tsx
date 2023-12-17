@@ -6,7 +6,7 @@ import Icon from '~/components/Icon';
 import { matchPath } from 'react-router-dom';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { getSectionFromPathname } from '~/helpers';
+import { getSectionFromPathname, isTablet } from '~/helpers';
 import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import { truncateText } from '~/helpers/stringHelpers';
 import {
@@ -32,6 +32,7 @@ MainNavs.propTypes = {
   totalRewardAmount: PropTypes.number
 };
 
+const deviceIsTablet = isTablet();
 const homeLabel = localize('home');
 const exploreLabel = localize('explore');
 const missionsLabel = localize('missions');
@@ -384,7 +385,7 @@ export default function MainNavs({
         imgLabel="home"
         alert={pathname === '/' && !usersMatch && numNewPosts > 0}
       >
-        {homeLabel}
+        {deviceIsTablet ? '' : homeLabel}
         {pathname === '/' && !usersMatch && numNewPosts > 0
           ? ` (${numNewPosts})`
           : ''}
@@ -395,7 +396,7 @@ export default function MainNavs({
         style={{ marginLeft: '2rem' }}
         imgLabel="search"
       >
-        {exploreLabel}
+        {deviceIsTablet ? '' : exploreLabel}
       </Nav>
       {contentNav && (
         <Nav
@@ -404,7 +405,7 @@ export default function MainNavs({
           style={{ marginLeft: '2rem' }}
           imgLabel={contentIconType}
         >
-          {contentLabel}
+          {deviceIsTablet ? '' : contentLabel}
         </Nav>
       )}
       <Nav
@@ -413,7 +414,7 @@ export default function MainNavs({
         style={{ marginLeft: '2rem' }}
         imgLabel="tasks"
       >
-        {missionsLabel}
+        {deviceIsTablet ? '' : missionsLabel}
       </Nav>
       <div
         className={css`
@@ -430,7 +431,7 @@ export default function MainNavs({
             imgLabel="comments"
             alert={chatAlertShown}
           >
-            {chatLabel}
+            {deviceIsTablet ? '' : chatLabel}
           </Nav>
         )}
       </div>
