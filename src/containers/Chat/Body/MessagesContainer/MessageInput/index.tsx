@@ -337,7 +337,7 @@ export default function MessageInput({
     [isZeroChannel, unlockedAchievementIds, zEnergy]
   );
 
-  console.log(isZeroChannelAndNotAuthorized);
+  console.log(isZeroChannelAndNotAuthorized, unlockedAchievementIds);
 
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
 
