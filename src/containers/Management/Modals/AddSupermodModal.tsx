@@ -163,7 +163,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
                 SAGE_ACHIEVEMENT_ID,
                 TWINKLE_FOUNDER_ACHIEVEMENT_ID
               ];
-              return !user.unlockedAchievementIds.some((id: number) =>
+              return !(user.unlockedAchievementIds || []).some((id: number) =>
                 supermodAchievementIds.includes(id)
               );
             }
