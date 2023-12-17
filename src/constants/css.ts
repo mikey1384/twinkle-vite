@@ -451,5 +451,6 @@ export const liftedEffect = {
   borderRadius: wideBorderRadius
 };
 export const innerBorderRadius = '4px';
-export const mobileMaxWidth = '850px';
-export const desktopMinWidth = '851px';
+export const mobileMaxWidth = '767px';
+export const tabletMaxWidth = '820px';
+export const desktopMinWidth = '768px';
