@@ -124,6 +124,11 @@ export function isMobile(navigator: Navigator) {
   );
 }
 
+export function isTablet() {
+  const width = window.innerWidth;
+  return width >= 768 && width <= 1024;
+}
+
 export function isSupermod(level = 0) {
   return level >= TEACHER_LEVEL;
 }

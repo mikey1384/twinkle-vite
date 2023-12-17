@@ -7,7 +7,7 @@ import AICardModal from '~/components/Modals/AICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext } from '~/contexts';
 import { Card as CardType } from '~/types';
-import { mobileMaxWidth } from '~/constants/css';
+import { tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 
@@ -61,7 +61,7 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
             className={css`
               display: flex;
               width: 100%;
-              @media (max-width: ${mobileMaxWidth}) {
+              @media (max-width: ${tabletMaxWidth}) {
                 flex-direction: column;
               }
             `}
@@ -73,7 +73,7 @@ export default function SingleCardComponent({ cardId }: { cardId: number }) {
             />
             <AICardDetails
               className={css`
-                @media (max-width: ${mobileMaxWidth}) {
+                @media (max-width: ${tabletMaxWidth}) {
                   margin-top: 5rem;
                 }
               `}
