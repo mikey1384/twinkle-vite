@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useExploreContext, useKeyContext } from '~/contexts';
@@ -93,6 +93,9 @@ export default function Explore({ category }: { category: string }) {
           className={css`
             width: CALC(100vw - 51rem - 2rem);
             margin-left: 20rem;
+            @media (max-width: ${tabletMaxWidth}) {
+              width: CALC(100vw - 41rem - 2rem);
+            }
             @media (max-width: ${mobileMaxWidth}) {
               width: 100%;
               margin-top: 0;
@@ -146,6 +149,9 @@ export default function Explore({ category }: { category: string }) {
             top: 4.5rem;
             bottom: 0;
             position: absolute;
+            @media (max-width: ${tabletMaxWidth}) {
+              width: 20rem;
+            }
             @media (max-width: ${mobileMaxWidth}) {
               display: none;
             }

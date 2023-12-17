@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, tabletMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -94,7 +94,7 @@ export default function RankingsListItem({
             text-align: center;
             color: ${rankColor ||
             (user.rank <= 10 ? Color.logoBlue() : Color.darkGray())};
-            @media (max-width: ${mobileMaxWidth}) {
+            @media (max-width: ${tabletMaxWidth}) {
               font-size: ${mobileRankFontSize};
             }
           `}
@@ -128,7 +128,7 @@ export default function RankingsListItem({
               margin-top: 0.5rem;
               text-align: center;
               font-size: ${usernameFontSize};
-              @media (max-width: ${mobileMaxWidth}) {
+              @media (max-width: ${tabletMaxWidth}) {
                 max-width: 7rem;
                 font-size: ${mobileUsernameFontSize};
               }
@@ -140,7 +140,7 @@ export default function RankingsListItem({
         className={css`
           font-weight: bold;
           font-size: ${xpFontSize};
-          @media (max-width: ${mobileMaxWidth}) {
+          @media (max-width: ${tabletMaxWidth}) {
             font-size: ${mobileXpFontSize};
           }
         `}

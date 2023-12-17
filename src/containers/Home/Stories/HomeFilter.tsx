@@ -5,7 +5,6 @@ import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { isMobile } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
@@ -15,7 +14,6 @@ const postsLabel = localize('posts');
 const newToOldLabel = localize('newToOld');
 const oldToNewLabel = localize('oldToNew');
 const recommendedLabel = localize('recommended');
-const recommendedPostsLabel = localize('recommendedPosts');
 const xpVideosLabel = localize('xpVideos');
 const hideWatchedLabel = localize('hideWatched');
 const categoryObj: Record<string, any> = {
@@ -25,7 +23,7 @@ const categoryObj: Record<string, any> = {
     asc: oldToNewLabel
   },
   recommended: {
-    label: isMobile(navigator) ? recommendedLabel : recommendedPostsLabel
+    label: recommendedLabel
   },
   videos: {
     label: xpVideosLabel

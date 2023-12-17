@@ -1,7 +1,12 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import {
+  borderRadius,
+  Color,
+  mobileMaxWidth,
+  tabletMaxWidth
+} from '~/constants/css';
 import { isMobile } from '~/helpers';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -117,6 +122,19 @@ export default function HomeMenuItems({ style = {} }) {
             color: ${Color.black()};
             a {
               color: ${Color.black()};
+            }
+          }
+          @media (max-width: ${tabletMaxWidth}) {
+            font-size: 1.5rem;
+            > nav {
+              .homemenu__item {
+                > .icon {
+                  padding-left: 0;
+                }
+                > .label {
+                  padding-left: 0;
+                }
+              }
             }
           }
           @media (max-width: ${mobileMaxWidth}) {
