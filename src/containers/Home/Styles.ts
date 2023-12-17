@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 
 export const container = css`
   height: CALC(100% - 1rem);
@@ -30,6 +30,10 @@ export const Center = css`
   width: 45vw;
   height: 100%;
   margin-left: 23vw;
+  @media (max-width: ${tabletMaxWidth}) {
+    width: 51vw;
+    margin-left: 20vw;
+  }
   @media (max-width: ${mobileMaxWidth}) {
     width: 100%;
     margin-left: 0;
