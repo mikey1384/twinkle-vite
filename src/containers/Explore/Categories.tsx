@@ -5,8 +5,11 @@ import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { isTablet } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
+
+const deviceIsTablet = isTablet();
 
 export default function Categories({
   filter,
@@ -92,7 +95,10 @@ export default function Categories({
             SELECTED_LANGUAGE === 'kr' ? (
               <>{localize(displayedContentType.slice(0, -1))} 탐색</>
             ) : (
-              <>Explore {displayedContentType}</>
+              <>
+                {deviceIsTablet ? '' : `Explore `}
+                {displayedContentType}
+              </>
             );
           const alwaysExploreFirstLabel =
             SELECTED_LANGUAGE === 'kr'

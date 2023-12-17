@@ -268,7 +268,7 @@ ul {
   }
 }
 
-@media (min-width: 851px) {
+@media (min-width: 768px) {
   html,
   body {
     overflow: hidden;
@@ -276,7 +276,7 @@ ul {
   }
 }
 
-@media (max-width: 850px) {
+@media (max-width: 767px) {
   html,
   body {
     font-size: 8px;
