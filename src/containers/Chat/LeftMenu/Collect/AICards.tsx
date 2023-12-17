@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
+import { css } from '@emotion/css';
+import { tabletMaxWidth, mobileMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { qualityProps } from '~/constants/defaultValues';
@@ -57,7 +59,14 @@ export default function AICards() {
 
   return (
     <div style={{ height: '5rem', position: 'relative' }}>
-      <div style={{ fontSize: '1.7rem' }}>
+      <div
+        className={css`
+          font-size: 1.7rem;
+          @media (min-width: ${mobileMaxWidth}) and (max-width: ${tabletMaxWidth}) {
+            font-size: 1.3rem;
+          }
+        `}
+      >
         <Icon icon="cards-blank" />
         <span style={{ fontWeight: 'bold', marginLeft: '0.7rem' }}>
           AI Cards

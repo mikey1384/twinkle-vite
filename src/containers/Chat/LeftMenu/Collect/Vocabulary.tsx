@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
+import { css } from '@emotion/css';
+import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { returnWordLevel, wordLevelHash } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -32,7 +34,14 @@ export default function Vocabulary() {
 
   return (
     <div style={{ height: '5rem', position: 'relative' }}>
-      <div style={{ fontSize: '1.7rem' }}>
+      <div
+        className={css`
+          font-size: 1.7rem;
+          @media (min-width: ${mobileMaxWidth}) and (max-width: ${tabletMaxWidth}) {
+            font-size: 1.3rem;
+          }
+        `}
+      >
         <Icon icon="book" />
         <span style={{ fontWeight: 'bold', marginLeft: '0.7rem' }}>
           {vocabularyLabel}
