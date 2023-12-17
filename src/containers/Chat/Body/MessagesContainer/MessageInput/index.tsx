@@ -108,7 +108,8 @@ export default function MessageInput({
     banned,
     fileUploadLvl,
     zEnergy,
-    userId: myId
+    userId: myId,
+    unlockedAchievementIds
   } = useKeyContext((v) => v.myState);
   const {
     button: { color: buttonColor },
@@ -331,6 +332,10 @@ export default function MessageInput({
     () => selectedChannelId === GENERAL_CHAT_ID && !subchannelId,
     [selectedChannelId, subchannelId]
   );
+  const isZeroChannelAndNotAuthorized = useMemo(
+    () => isZeroChannel && !zEnergy && !unlockedAchievementIds.includes(8),
+    [isZeroChannel, unlockedAchievementIds, zEnergy]
+  );
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
 
   return (
@@ -400,7 +405,7 @@ export default function MessageInput({
         )}
         <Textarea
           disabled={
-            (isZeroChannel && !zEnergy) || isRestrictedChannel || isBanned
+            isZeroChannelAndNotAuthorized || isRestrictedChannel || isBanned
           }
           innerRef={innerRef}
           minRows={1}
