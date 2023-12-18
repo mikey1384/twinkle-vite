@@ -152,15 +152,18 @@ export default function TopMenu({
     </ErrorBoundary>
   ) : null;
 
-  function handleWordleButtonClick(): any {
+  function handleWordleButtonClick() {
     if (!isMountedRef.current) return;
     setLoadingWordle(true);
+
     if (!chatLoadedRef.current) {
       timerIdRef.current = setTimeout(() => handleWordleButtonClick(), 500);
       return;
     }
+
     onUpdateSelectedChannelId(GENERAL_CHAT_ID);
     timerIdRef.current = setTimeout(() => {
+      if (!isMountedRef.current) return;
       navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
       setTimeout(() => {
         onSetWordleModalShown(true);
@@ -178,6 +181,7 @@ export default function TopMenu({
     onUpdateSelectedChannelId(todayStats.unansweredChessMsgChannelId);
     onUpdateTodayStats({ newStats: { unansweredChessMsgChannelId: null } });
     timerIdRef.current = setTimeout(() => {
+      if (!isMountedRef.current) return;
       navigate(
         `/chat/${
           Number(CHAT_ID_BASE_NUMBER) +
