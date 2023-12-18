@@ -100,8 +100,8 @@ export default function Stories() {
   }, [category, subFilter]);
 
   useInfiniteScroll({
-    scrollable: feeds.length > 0,
-    feedsLength: feeds.length,
+    scrollable: feeds?.length > 0,
+    feedsLength: feeds?.length,
     onScrollToBottom: handleLoadMoreFeeds
   });
 
@@ -193,7 +193,7 @@ export default function Stories() {
         />
         <div style={{ width: '100%' }}>
           {loadingPosts ? <Loading text="Loading Posts..." /> : null}
-          {loaded && feeds.length === 0 && !loadingPosts && (
+          {loaded && feeds?.length === 0 && !loadingPosts && (
             <div
               style={{
                 width: '100%',
@@ -208,7 +208,7 @@ export default function Stories() {
               </h1>
             </div>
           )}
-          {loaded && !loadingPosts && feeds.length > 0 && (
+          {loaded && !loadingPosts && feeds?.length > 0 && (
             <>
               {feedsOutdated && (
                 <Banner
@@ -237,21 +237,22 @@ export default function Stories() {
                   )}
                 </Banner>
               )}
-              {feeds.map((feed: { [key: string]: any } = {}, index: number) =>
-                feed.contentId ? (
-                  <ContentPanel
-                    key={`${category}-${subFilter}-${feed.contentId}-${feed.contentType}`}
-                    style={{
-                      marginBottom: '1rem'
-                    }}
-                    zIndex={feeds.length - index}
-                    contentId={feed.contentId}
-                    contentType={feed.contentType}
-                    rootType={feed.rootType}
-                    commentsLoadLimit={5}
-                    numPreviewComments={1}
-                  />
-                ) : null
+              {(feeds || []).map(
+                (feed: { [key: string]: any } = {}, index: number) =>
+                  feed.contentId ? (
+                    <ContentPanel
+                      key={`${category}-${subFilter}-${feed.contentId}-${feed.contentType}`}
+                      style={{
+                        marginBottom: '1rem'
+                      }}
+                      zIndex={feeds?.length - index}
+                      contentId={feed.contentId}
+                      contentType={feed.contentType}
+                      rootType={feed.rootType}
+                      commentsLoadLimit={5}
+                      numPreviewComments={1}
+                    />
+                  ) : null
               )}
               {loadMoreButton && (
                 <LoadMoreButton
@@ -320,7 +321,8 @@ export default function Stories() {
   }
 
   async function handleLoadMoreFeeds() {
-    const lastFeedId = feeds.length > 0 ? feeds[feeds.length - 1].feedId : null;
+    const lastFeedId =
+      feeds?.length > 0 ? feeds[feeds?.length - 1].feedId : null;
     if (lastFeedRef.current === lastFeedId) return;
     lastFeedRef.current = lastFeedId;
     setLoadingMore(true);
@@ -333,11 +335,11 @@ export default function Stories() {
         isRecommended: categoryObj[category].isRecommended,
         lastFeedId,
         lastRewardLevel:
-          feeds.length > 0 ? feeds[feeds.length - 1].rewardLevel : null,
+          feeds?.length > 0 ? feeds[feeds?.length - 1].rewardLevel : null,
         lastTimeStamp:
-          feeds.length > 0 ? feeds[feeds.length - 1].lastInteraction : null,
+          feeds?.length > 0 ? feeds[feeds?.length - 1].lastInteraction : null,
         lastViewDuration:
-          feeds.length > 0 ? feeds[feeds.length - 1].totalViewDuration : null
+          feeds?.length > 0 ? feeds[feeds?.length - 1].totalViewDuration : null
       });
       onLoadMoreFeeds(data);
     } catch (error) {
