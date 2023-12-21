@@ -149,6 +149,14 @@ export default function HomeMenuItems({ style = {} }) {
                 justify-content: center;
                 padding: 0;
               }
+              .homemenu__item {
+                > .icon {
+                  padding-left: 1rem;
+                }
+                > .label {
+                  padding-left: 2rem;
+                }
+              }
             }
             > nav:hover {
               background: none;
