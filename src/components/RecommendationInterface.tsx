@@ -227,21 +227,30 @@ export default function RecommendationInterface({
     let isSuccess = false;
     setRecommending(true);
 
+    const timeout = (ms: number) =>
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), ms)
+      );
+
     const currentRecommendations =
       !isRecommendedByUser && isOnlyRecommendedByStudents
         ? recommendations
         : [];
 
     try {
-      const { coins, recommendations } = await recommendContent({
-        contentId,
-        contentType,
-        rootType,
-        uploaderId,
-        currentRecommendations,
-        rewardDisabled
-      });
+      const response = await Promise.race([
+        recommendContent({
+          contentId,
+          contentType,
+          rootType,
+          uploaderId,
+          currentRecommendations,
+          rewardDisabled
+        }),
+        timeout(10000)
+      ]);
       setHidden(true);
+      const { coins, recommendations } = response;
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
       if (recommendations) {
         onRecommendContent({ contentId, contentType, recommendations });
@@ -255,9 +264,9 @@ export default function RecommendationInterface({
       }
     } finally {
       if (isSuccess || attempt >= maxAttempts) {
-        setRecommending(false);
         onHide();
       }
+      setRecommending(false);
     }
   }
 }
