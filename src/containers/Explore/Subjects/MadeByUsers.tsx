@@ -42,7 +42,7 @@ export default function MadeByUsers({
     if (expanded) {
       return subjects;
     }
-    return subjects[0] ? [subjects[0]] : [];
+    return subjects?.[0] ? [subjects[0]] : [];
   }, [subjects, expanded]);
 
   return (
@@ -51,10 +51,10 @@ export default function MadeByUsers({
         style={style}
         title={madeByUsersLabel}
         loadMoreButtonShown={
-          (!expanded && subjects.length > 1) || loadMoreButton
+          (!expanded && subjects?.length > 1) || loadMoreButton
         }
         onLoadMore={handleLoadMore}
-        isEmpty={subjects.length === 0}
+        isEmpty={subjects?.length === 0}
         emptyMessage={noUserMadeContentLabel}
         loaded={loaded}
       >
@@ -77,7 +77,7 @@ export default function MadeByUsers({
       await loadByUserUploads({
         contentType: 'subject',
         limit: 10,
-        lastId: subjects[subjects.length - 1].id
+        lastId: subjects?.[subjects?.length - 1]?.id
       });
     onLoadMoreByUserSubjects({
       subjects: results,
