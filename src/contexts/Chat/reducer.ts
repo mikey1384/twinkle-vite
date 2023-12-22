@@ -1308,7 +1308,8 @@ export default function ChatReducer(
         listedCardsLoadMoreButton: action.loadMoreShown
       };
     }
-    case 'LOAD_MORE_LISTED_AI_CARDS':
+    case 'LOAD_MORE_LISTED_AI_CARDS': {
+      if (!action.cards) return state;
       return {
         ...state,
         cardObj: {
@@ -1320,6 +1321,7 @@ export default function ChatReducer(
         ),
         listedCardsLoadMoreButton: action.loadMoreShown
       };
+    }
     case 'LOAD_MY_AI_CARDS':
       if (!action.cards) return state;
       return {
