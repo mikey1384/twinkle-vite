@@ -110,13 +110,13 @@ export default function ActivitiesContainer() {
         }}
         ref={ContentRef}
       >
-        {aiCardFeeds.map((feed: any, index: number) => {
+        {(aiCardFeeds || []).map((feed: any, index: number) => {
           return (
             <Activity
               key={feed.id}
               feed={feed}
               cardObj={cardObj}
-              isLastActivity={index === aiCardFeeds.length - 1}
+              isLastActivity={aiCardFeeds && index === aiCardFeeds?.length - 1}
               onReceiveNewActivity={handleReceiveNewActivity}
               onSetScrollToBottom={handleSetScrollToBottom}
               myId={myId}
@@ -140,7 +140,7 @@ export default function ActivitiesContainer() {
             cardObj,
             loadMoreShown,
             mostRecentOfferTimeStamp
-          } = await loadAICardFeeds(aiCardFeeds[0].id);
+          } = await loadAICardFeeds(aiCardFeeds?.[0]?.id);
           onLoadMoreAICards({
             cardFeeds,
             cardObj,
