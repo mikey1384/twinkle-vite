@@ -10,9 +10,13 @@ import AchievementProgress from './AchievementProgress';
 import Loading from '~/components/Loading';
 
 export default function TodayStats({
+  isDailyRewardChecked,
+  loadingNotifications,
   dailyRewardModalShown,
   onCollectRewardButtonClick
 }: {
+  isDailyRewardChecked: boolean;
+  loadingNotifications: boolean;
   dailyRewardModalShown: boolean;
   onCollectRewardButtonClick: () => void;
 }) {
@@ -119,8 +123,10 @@ export default function TodayStats({
             </div>
             <DailyGoals
               dailyRewardModalShown={dailyRewardModalShown}
+              loadingNotifications={loadingNotifications}
               achievedGoals={todayStats.achievedDailyGoals}
               onCollectRewardButtonClick={onCollectRewardButtonClick}
+              isChecked={isDailyRewardChecked}
             />
             <AchievementProgress />
           </div>
