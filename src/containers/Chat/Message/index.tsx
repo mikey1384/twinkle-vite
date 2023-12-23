@@ -653,9 +653,10 @@ function Message({
       await setChessMoveViewTimeStamp({ channelId, message });
       onUpdateLastChessMoveViewerId({ channelId, viewerId: myId });
       onChessSpoilerClick(userId);
-      spoilerClickedRef.current = false;
     } catch (error) {
       console.error(error);
+    } finally {
+      spoilerClickedRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onChessSpoilerClick, channelId, message, userId]);
