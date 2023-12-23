@@ -1,14 +1,19 @@
 import React, { useCallback } from 'react';
 import Badge from './Badge';
 import { css } from '@emotion/css';
+import { Color } from '~/constants/css';
 
 const badgeItems = ['W', 'G', 'A'];
 
 export default function DailyGoals({
+  isChecked,
+  loadingNotifications,
   dailyRewardModalShown,
   achievedGoals,
   onCollectRewardButtonClick
 }: {
+  isChecked: boolean;
+  loadingNotifications: boolean;
   dailyRewardModalShown: boolean;
   achievedGoals: string[];
   onCollectRewardButtonClick: () => void;
@@ -35,7 +40,7 @@ export default function DailyGoals({
           </Badge>
         ))}
       </div>
-      {allGoalsAchieved && (
+      {allGoalsAchieved && !loadingNotifications && (
         <div
           className={css`
             text-align: center;
@@ -57,13 +62,10 @@ export default function DailyGoals({
             onClick={onCollectRewardButtonClick}
             disabled={dailyRewardModalShown}
             className={css`
-              background-image: linear-gradient(
-                -45deg,
-                #6a11cb,
-                #2575fc,
-                #ec008c,
-                #fc6767
-              );
+              background-image: ${isChecked
+                ? 'none'
+                : 'linear-gradient(-45deg, #6a11cb, #2575fc, #ec008c, #fc6767)'};
+              background-color: ${isChecked ? Color.green() : 'transparent'};
               color: white;
               padding: 10px 20px;
               border: none;
@@ -72,7 +74,7 @@ export default function DailyGoals({
               font-weight: bold;
               font-size: 1.2rem;
               background-size: 400% 400%;
-              animation: ${dailyRewardModalShown
+              animation: ${dailyRewardModalShown || isChecked
                 ? 'none'
                 : 'colorShift 6s ease infinite, pulse 2s infinite'};
               opacity: ${dailyRewardModalShown ? 0.5 : 1};
@@ -102,9 +104,15 @@ export default function DailyGoals({
                 background-image: none;
                 background-color: #ccc;
               }
+
+              ${isChecked
+                ? `&:hover {
+                text-decoration: underline;
+              }`
+                : ''}
             `}
           >
-            Collect Rewards
+            {isChecked ? 'Collected' : 'Collect Rewards'}
           </button>
         </div>
       )}

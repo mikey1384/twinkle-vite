@@ -27,7 +27,13 @@ const colors: {
   5: 'gold'
 };
 
-export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
+export default function DailyRewardModal({
+  onHide,
+  onSetIsDailyRewardChecked
+}: {
+  onHide: () => void;
+  onSetIsDailyRewardChecked: (isChecked: boolean) => void;
+}) {
   const unlockDailyReward = useAppContext(
     (v) => v.requestHelpers.unlockDailyReward
   );
@@ -69,6 +75,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
           setShowThirdSentence(true);
           setShowFourthSentence(true);
           setShowFifthSentence(true);
+          onSetIsDailyRewardChecked(true);
         }
         setCardIds(cards.map((card: Card) => card.id));
         for (const card of cards) {
@@ -417,6 +424,7 @@ export default function DailyRewardModal({ onHide }: { onHide: () => void }) {
       ) {
         setCurrentCardId(chosenCardId);
         setAnimateReveal(true);
+        onSetIsDailyRewardChecked(true);
         setTimeout(() => setShowFirstSentence(true), 1500);
         setTimeout(() => setShowSecondSentence(true), 3500);
         setTimeout(() => setShowThirdSentence(true), 5500);

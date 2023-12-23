@@ -87,6 +87,16 @@ function Notification({
     () => notiObj[userId]?.loadMore || false,
     [userId, notiObj]
   );
+  const todayStats = useNotiContext((v) => v.state.todayStats);
+  const [isDailyRewardChecked, setIsDailyRewardChecked] = useState(
+    !!todayStats?.dailyRewardIsChecked
+  );
+
+  useEffect(() => {
+    if (todayStats?.dailyRewardIsChecked) {
+      setIsDailyRewardChecked(true);
+    }
+  }, [todayStats?.dailyRewardIsChecked]);
 
   useEffect(() => {
     if (!userChangedTab.current && userId) {
@@ -166,6 +176,8 @@ function Notification({
         >
           {userId && (
             <TodayStats
+              loadingNotifications={loadingNotifications}
+              isDailyRewardChecked={isDailyRewardChecked}
               dailyRewardModalShown={dailyRewardModalShown}
               onCollectRewardButtonClick={() => setDailyRewardModalShown(true)}
             />
@@ -245,7 +257,10 @@ function Notification({
         </section>
       </div>
       {dailyRewardModalShown && (
-        <DailyRewardModal onHide={() => setDailyRewardModalShown(false)} />
+        <DailyRewardModal
+          onSetIsDailyRewardChecked={setIsDailyRewardChecked}
+          onHide={() => setDailyRewardModalShown(false)}
+        />
       )}
     </ErrorBoundary>
   );
