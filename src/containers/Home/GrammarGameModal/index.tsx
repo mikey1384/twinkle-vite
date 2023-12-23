@@ -59,7 +59,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   }, [questions]);
 
   return (
-    <Modal closeWhenClickedOutside={false} onHide={onHide}>
+    <Modal wrapped closeWhenClickedOutside={false} onHide={onHide}>
       {gameState !== 'started' && (
         <header style={{ height: '3rem', padding: 0 }}>
           <FilterBar
