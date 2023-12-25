@@ -300,6 +300,7 @@ export function addEmoji(string: string): string {
     ':ufo:': '🛸',
     ':umbrella:': '☂️',
     ':unamused:': '😒',
+    ':unequal:': '≠',
     ':unicorn:': '🦄',
     ':up:': '👆',
     ':upsidedown:': '🙃',
