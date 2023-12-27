@@ -66,7 +66,7 @@ export default function DailyGoals({
           ) : (
             <CollectRewardsButton
               isChecked={isChecked}
-              onCollectRewardButtonClick={onCollectRewardButtonClick}
+              onClick={onCollectRewardButtonClick}
               dailyRewardModalShown={dailyRewardModalShown}
             />
           )}
