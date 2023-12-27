@@ -14,13 +14,15 @@ export default function TodayStats({
   isDailyBonusButtonShown,
   loadingNotifications,
   dailyRewardModalShown,
-  onCollectRewardButtonClick
+  onCollectRewardButtonClick,
+  onDailyBonusButtonClick
 }: {
   isDailyRewardChecked: boolean;
   isDailyBonusButtonShown: boolean;
   loadingNotifications: boolean;
   dailyRewardModalShown: boolean;
   onCollectRewardButtonClick: () => void;
+  onDailyBonusButtonClick: () => void;
 }) {
   const theme = useKeyContext((v) => v.theme);
   const {
@@ -128,6 +130,7 @@ export default function TodayStats({
               loadingNotifications={loadingNotifications}
               achievedGoals={todayStats.achievedDailyGoals}
               onCollectRewardButtonClick={onCollectRewardButtonClick}
+              onDailyBonusButtonClick={onDailyBonusButtonClick}
               isChecked={isDailyRewardChecked}
               isDailyBonusButtonShown={isDailyBonusButtonShown}
             />
