@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import Badge from './Badge';
 import CollectRewardsButton from './CollectRewardsButton';
+import DailyBonusButton from './DailyBonusButton';
 import { css } from '@emotion/css';
 
 const badgeItems = ['W', 'G', 'A'];
@@ -61,7 +62,7 @@ export default function DailyGoals({
             {`Great job! You've completed your daily goals!`}
           </p>
           {isDailyBonusButtonShown ? (
-            <div>daily bonus button</div>
+            <DailyBonusButton onClick={() => console.log('clicked')} />
           ) : (
             <CollectRewardsButton
               isChecked={isChecked}
