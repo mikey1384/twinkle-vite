@@ -277,7 +277,7 @@ function Notification({
         />
       )}
       {dailyBonusModalShown && (
-        <DailyBonusModal onHide={() => setDailyRewardModalShown(false)} />
+        <DailyBonusModal onHide={() => setDailyBonusModalShown(false)} />
       )}
     </ErrorBoundary>
   );
