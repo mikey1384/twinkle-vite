@@ -4,16 +4,16 @@ import { css } from '@emotion/css';
 
 export default function CollectRewardsButton({
   isChecked,
-  onCollectRewardButtonClick,
+  onClick,
   dailyRewardModalShown
 }: {
   isChecked: boolean;
-  onCollectRewardButtonClick: () => void;
+  onClick: () => void;
   dailyRewardModalShown: boolean;
 }) {
   return (
     <button
-      onClick={onCollectRewardButtonClick}
+      onClick={onClick}
       disabled={dailyRewardModalShown}
       className={css`
         background-image: ${isChecked
