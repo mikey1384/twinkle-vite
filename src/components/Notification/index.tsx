@@ -91,12 +91,22 @@ function Notification({
   const [isDailyRewardChecked, setIsDailyRewardChecked] = useState(
     !!todayStats?.dailyRewardIsChecked
   );
+  const [isDailyBonusButtonShown, setIsDailyBonusButtonShown] = useState(
+    !!todayStats.hasBonus && !todayStats.bonusAchieved
+  );
 
   useEffect(() => {
     if (todayStats?.dailyRewardIsChecked) {
       setIsDailyRewardChecked(true);
     }
-  }, [todayStats?.dailyRewardIsChecked]);
+    if (todayStats?.hasBonus && !todayStats?.bonusAchieved) {
+      setIsDailyBonusButtonShown(true);
+    }
+  }, [
+    todayStats?.bonusAchieved,
+    todayStats?.dailyRewardIsChecked,
+    todayStats?.hasBonus
+  ]);
 
   useEffect(() => {
     if (!userChangedTab.current && userId) {
@@ -178,6 +188,7 @@ function Notification({
             <TodayStats
               loadingNotifications={loadingNotifications}
               isDailyRewardChecked={isDailyRewardChecked}
+              isDailyBonusButtonShown={isDailyBonusButtonShown}
               dailyRewardModalShown={dailyRewardModalShown}
               onCollectRewardButtonClick={() => setDailyRewardModalShown(true)}
             />
