@@ -99,13 +99,13 @@ function Notification({
     if (todayStats?.dailyRewardIsChecked) {
       setIsDailyRewardChecked(true);
     }
-    if (todayStats?.hasBonus && !todayStats?.bonusAchieved) {
+    if (todayStats?.dailyHasBonus && !todayStats?.dailyBonusAchieved) {
       setIsDailyBonusButtonShown(true);
     }
   }, [
-    todayStats?.bonusAchieved,
+    todayStats?.dailyBonusAchieved,
     todayStats?.dailyRewardIsChecked,
-    todayStats?.hasBonus
+    todayStats?.dailyHasBonus
   ]);
 
   useEffect(() => {
