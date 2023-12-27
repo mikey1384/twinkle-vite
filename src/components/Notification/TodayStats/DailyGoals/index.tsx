@@ -12,7 +12,8 @@ export default function DailyGoals({
   loadingNotifications,
   dailyRewardModalShown,
   achievedGoals,
-  onCollectRewardButtonClick
+  onCollectRewardButtonClick,
+  onDailyBonusButtonClick
 }: {
   isChecked: boolean;
   isDailyBonusButtonShown: boolean;
@@ -20,6 +21,7 @@ export default function DailyGoals({
   dailyRewardModalShown: boolean;
   achievedGoals: string[];
   onCollectRewardButtonClick: () => void;
+  onDailyBonusButtonClick: () => void;
 }) {
   const isAchieved = useCallback(
     (goal: any) => achievedGoals.includes(goal),
@@ -62,7 +64,7 @@ export default function DailyGoals({
             {`Great job! You've completed your daily goals!`}
           </p>
           {isDailyBonusButtonShown ? (
-            <DailyBonusButton onClick={() => console.log('clicked')} />
+            <DailyBonusButton onClick={onDailyBonusButtonClick} />
           ) : (
             <CollectRewardsButton
               isChecked={isChecked}
