@@ -125,6 +125,7 @@ export function isMobile(navigator: Navigator) {
 }
 
 export function isTablet() {
+  if (!window) return false;
   const width = window.innerWidth;
   return width >= 768 && width <= 1024;
 }
