@@ -114,7 +114,14 @@ export default function notificationRequestHelpers({
     async unlockDailyReward() {
       try {
         const {
-          data: { cards, chosenCardId, coinEarned, xpEarned, isAlreadyChecked }
+          data: {
+            cards,
+            chosenCardId,
+            coinEarned,
+            hasBonus,
+            xpEarned,
+            isAlreadyChecked
+          }
         } = await request.post(
           `${URL}/notification/today/dailyReward`,
           {},
@@ -124,6 +131,7 @@ export default function notificationRequestHelpers({
           cards,
           chosenCardId,
           coinEarned,
+          hasBonus,
           xpEarned,
           isAlreadyChecked
         });
