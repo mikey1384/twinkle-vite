@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Question from './Question';
+import Question from '~/components/Question';
 import Button from '~/components/Button';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Loading from '~/components/Loading';
