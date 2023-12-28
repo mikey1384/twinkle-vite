@@ -411,7 +411,7 @@ export default function DailyRewardModal({
   function handleReveal() {
     setIsRevealPressed(true);
     let currentIndex = 0;
-    let interval = 2000;
+    let interval = 1500;
     let isFirstIteration = true;
     let fastIterations = 0;
 
