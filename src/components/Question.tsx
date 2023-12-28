@@ -13,10 +13,10 @@ export default function Question({
   question: string;
   choices: string[];
   isGraded: boolean;
-  selectedChoiceIndex: number;
+  selectedChoiceIndex?: number;
   onSelectChoice: (index: number) => void;
   answerIndex: number;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   const listItems = useMemo(
     () =>
