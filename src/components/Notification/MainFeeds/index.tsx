@@ -171,14 +171,14 @@ export default function MainFeeds({
         )}
       {activeTab === 'reward' && !loadingNotifications && (
         <ErrorBoundary componentPath="Notification/MainFeeds/RewardNotification">
-          {totalRewardAmount > 0 ? (
+          {totalRewardAmount > 0 && typeof twinkleXP === 'number' ? (
             <GradientButton
               isFlat
               loading={collectingReward}
               style={{ marginBottom: '1rem', width: '100%' }}
               fontSize="2.2rem"
               mobileFontSize="1.7rem"
-              onClick={totalRewardAmount > 0 ? handleCollectReward : () => null}
+              onClick={handleCollectReward}
             >
               <div>
                 <p>{tapToCollectRewardsLabel}</p>
