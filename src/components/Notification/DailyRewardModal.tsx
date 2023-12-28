@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
@@ -29,9 +29,11 @@ const colors: {
 
 export default function DailyRewardModal({
   onHide,
+  onSetHasBonus,
   onSetIsDailyRewardChecked
 }: {
   onHide: () => void;
+  onSetHasBonus: (hasBonus: boolean) => void;
   onSetIsDailyRewardChecked: (isChecked: boolean) => void;
 }) {
   const unlockDailyReward = useAppContext(
@@ -54,6 +56,8 @@ export default function DailyRewardModal({
   const [currentCardId, setCurrentCardId] = useState(0);
   const [alreadyChecked, setAlreadyChecked] = useState(false);
   const [isRevealPressed, setIsRevealPressed] = useState(false);
+  const hasBonusRef = useRef(false);
+  const isRevealPressedRef = useRef(false);
 
   useEffect(() => {
     init();
@@ -63,6 +67,7 @@ export default function DailyRewardModal({
         const {
           cards,
           chosenCardId,
+          hasBonus,
           isAlreadyChecked,
           coinEarned,
           isCardOwned
@@ -87,6 +92,7 @@ export default function DailyRewardModal({
         setCoinEarned(coinEarned);
         setIsCardOwned(isCardOwned);
         setChosenCardId(chosenCardId);
+        hasBonusRef.current = hasBonus;
       } catch (error) {
         console.error(error);
       } finally {
@@ -95,6 +101,9 @@ export default function DailyRewardModal({
     }
     return () => {
       setAnimateReveal(false);
+      if (isRevealPressedRef.current && hasBonusRef.current) {
+        onSetHasBonus(true);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -410,6 +419,7 @@ export default function DailyRewardModal({
 
   function handleReveal() {
     setIsRevealPressed(true);
+    isRevealPressedRef.current = true;
     let currentIndex = 0;
     let interval = 1500;
     let isFirstIteration = true;
