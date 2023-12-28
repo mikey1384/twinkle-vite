@@ -8,10 +8,12 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   useEffect(() => {
     init();
     async function init() {
-      const data = await loadDailyBonus();
-      console.log(data);
+      const questions = await loadDailyBonus();
+      console.log(questions);
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Modal wrapped onHide={onHide}>
       <header>Daily Reward</header>
