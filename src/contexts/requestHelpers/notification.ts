@@ -141,11 +141,13 @@ export default function notificationRequestHelpers({
     },
     async loadDailyBonus() {
       try {
-        const { data } = await request.get(
+        const {
+          data: { questions }
+        } = await request.get(
           `${URL}/notification/today/dailyReward/bonus`,
           auth()
         );
-        return Promise.resolve(data);
+        return Promise.resolve(questions);
       } catch (error) {
         return handleError(error);
       }
