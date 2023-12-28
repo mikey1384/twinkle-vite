@@ -138,6 +138,17 @@ export default function notificationRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+    async loadDailyBonus() {
+      try {
+        const { data } = await request.get(
+          `${URL}/notification/today/dailyReward/bonus`,
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }
