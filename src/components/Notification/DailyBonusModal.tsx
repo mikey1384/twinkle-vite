@@ -54,6 +54,19 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
             )}
           </>
         )}
+        <div style={{ fontWeight: 'bold', marginTop: '2rem' }}>
+          Feel free to get help from anyone or anywhere
+        </div>
+        <div>
+          <Button
+            style={{ marginTop: '1.5rem' }}
+            filled
+            color="logoBlue"
+            onClick={() => console.log('clicked')}
+          >
+            Confirm
+          </Button>
+        </div>
       </main>
       <footer>
         <Button transparent onClick={onHide}>
