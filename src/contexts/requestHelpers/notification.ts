@@ -120,7 +120,8 @@ export default function notificationRequestHelpers({
             coinEarned,
             hasBonus,
             xpEarned,
-            isAlreadyChecked
+            isAlreadyChecked,
+            isCardOwned
           }
         } = await request.post(
           `${URL}/notification/today/dailyReward`,
@@ -133,7 +134,8 @@ export default function notificationRequestHelpers({
           coinEarned,
           hasBonus,
           xpEarned,
-          isAlreadyChecked
+          isAlreadyChecked,
+          isCardOwned
         });
       } catch (error) {
         return handleError(error);
