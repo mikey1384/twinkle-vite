@@ -3,6 +3,8 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Question from '~/components/Question';
 import Loading from '~/components/Loading';
+import SanitizedHTML from 'react-sanitized-html';
+import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
 export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
@@ -42,17 +44,30 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
                 question: string;
                 choices: string[];
                 answerIndex: number;
-              }) => (
-                <Question
-                  key={question.id}
-                  isGraded={false}
-                  question={question.question}
-                  choices={question.choices}
-                  selectedChoiceIndex={selectedChoiceIndex}
-                  answerIndex={question.answerIndex}
-                  onSelectChoice={(index) => setSelectedChoiceIndex(index)}
-                />
-              )
+                word: string;
+              }) => {
+                const appliedQuestion = getRenderedText(
+                  question.question,
+                  question.word,
+                  'green'
+                );
+                return (
+                  <Question
+                    key={question.id}
+                    isGraded={false}
+                    question={
+                      <SanitizedHTML
+                        allowedAttributes={{ b: ['style'] }}
+                        html={`"${appliedQuestion}"`}
+                      />
+                    }
+                    choices={question.choices}
+                    selectedChoiceIndex={selectedChoiceIndex}
+                    answerIndex={question.answerIndex}
+                    onSelectChoice={(index) => setSelectedChoiceIndex(index)}
+                  />
+                );
+              }
             )}
           </>
         )}
@@ -92,5 +107,17 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function getRenderedText(text: string, word: string, color: string) {
+    if (word) {
+      const regex = new RegExp(word, 'gi');
+      const textToDisplay = text.replace(regex, (matched) => {
+        return `<b style="color:${Color[color]()}">${matched}</b>`;
+      });
+
+      return textToDisplay;
+    }
+    return prompt || '';
   }
 }

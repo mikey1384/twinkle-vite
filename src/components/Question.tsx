@@ -10,7 +10,7 @@ export default function Question({
   answerIndex,
   style
 }: {
-  question: string;
+  question: React.ReactNode;
   choices: string[];
   isGraded: boolean;
   selectedChoiceIndex?: number;
