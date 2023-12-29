@@ -9,6 +9,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   const loadDailyBonus = useAppContext((v) => v.requestHelpers.loadDailyBonus);
   const [questions, setQuestions] = useState<any>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
   useEffect(() => {
     init();
@@ -61,6 +62,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
           <Button
             style={{ marginTop: '1.5rem' }}
             filled
+            loading={submitting}
             disabled={selectedChoiceIndex === undefined}
             color="logoBlue"
             onClick={handleConfirm}
@@ -79,12 +81,12 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
 
   async function handleConfirm() {
     try {
-      setLoading(true);
+      setSubmitting(true);
       console.log('clicked!!');
     } catch (error) {
       console.error(error);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 }
