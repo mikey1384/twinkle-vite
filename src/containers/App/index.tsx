@@ -249,7 +249,7 @@ export default function App() {
       const {
         achievedDailyGoals,
         dailyHasBonus,
-        dailyBonusAchieved,
+        dailyBonusAttempted,
         dailyRewardIsChecked,
         xpEarned,
         coinsEarned,
@@ -265,7 +265,7 @@ export default function App() {
         newStats: {
           achievedDailyGoals,
           dailyHasBonus,
-          dailyBonusAchieved,
+          dailyBonusAttempted,
           dailyRewardIsChecked,
           xpEarned,
           coinsEarned,
