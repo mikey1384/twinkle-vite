@@ -7,6 +7,7 @@ import { useAppContext } from '~/contexts';
 
 export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   const loadDailyBonus = useAppContext((v) => v.requestHelpers.loadDailyBonus);
+  const postDailyBonus = useAppContext((v) => v.requestHelpers.postDailyBonus);
   const [questions, setQuestions] = useState<any>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -82,7 +83,8 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   async function handleConfirm() {
     try {
       setSubmitting(true);
-      console.log('clicked!!');
+      const data = await postDailyBonus(selectedChoiceIndex);
+      console.log(data);
     } catch (error) {
       console.error(error);
     } finally {

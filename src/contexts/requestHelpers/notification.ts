@@ -153,6 +153,18 @@ export default function notificationRequestHelpers({
       } catch (error) {
         return handleError(error);
       }
+    },
+    async postDailyBonus(selectedIndex: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/notification/today/dailyReward/bonus`,
+          { selectedIndex },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }
