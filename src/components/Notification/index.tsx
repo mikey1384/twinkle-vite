@@ -137,6 +137,8 @@ function Notification({
   ]);
 
   useEffect(() => {
+    setDailyRewardModalShown(false);
+    setDailyBonusModalShown(false);
     userChangedTab.current = false;
     if (activeTab === 'reward') {
       setActiveTab('notification');

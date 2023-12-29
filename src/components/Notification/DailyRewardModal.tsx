@@ -15,7 +15,7 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { Card } from '~/types';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 
 const colors: {
   [key: number]: string;
@@ -39,6 +39,7 @@ export default function DailyRewardModal({
   const unlockDailyReward = useAppContext(
     (v) => v.requestHelpers.unlockDailyReward
   );
+  const { userId } = useKeyContext((v) => v.myState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [showFirstSentence, setShowFirstSentence] = useState(false);
@@ -119,6 +120,18 @@ export default function DailyRewardModal({
   const chosenCardColorDescription = useMemo(() => {
     return chosenCard ? colors[chosenCard?.level] : '';
   }, [chosenCard]);
+
+  const cardOwnStatusText = useMemo(() => {
+    const currentIsCardOwned = chosenCard?.ownerId === userId;
+    const appliedIsCardOwned = !!isCardOwned;
+    return `You ${
+      appliedIsCardOwned
+        ? ''
+        : currentIsCardOwned === appliedIsCardOwned
+        ? `don't `
+        : `didn't `
+    }${!currentIsCardOwned && appliedIsCardOwned ? 'owned' : 'own'} the card`;
+  }, [chosenCard?.ownerId, isCardOwned, userId]);
 
   const burnValue = useMemo(() => {
     if (!chosenCard) {
@@ -326,9 +339,7 @@ export default function DailyRewardModal({
                       width: '100%'
                     }}
                   >
-                    <div className="column">
-                      You {isCardOwned ? '' : `don't `}own the card
-                    </div>
+                    <div className="column">{cardOwnStatusText}</div>
                     <div className="column">
                       <Icon icon="times" /> {isCardOwned ? '1' : '1/10'}
                     </div>
