@@ -61,6 +61,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
           <Button
             style={{ marginTop: '1.5rem' }}
             filled
+            disabled={selectedChoiceIndex === undefined}
             color="logoBlue"
             onClick={() => console.log('clicked')}
           >
