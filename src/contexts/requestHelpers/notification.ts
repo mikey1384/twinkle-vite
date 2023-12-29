@@ -38,7 +38,7 @@ export default function notificationRequestHelpers({
           data: {
             achievedDailyGoals,
             dailyHasBonus,
-            dailyBonusAchieved,
+            dailyBonusAttempted,
             dailyRewardIsChecked,
             xpEarned,
             coinsEarned,
@@ -50,7 +50,7 @@ export default function notificationRequestHelpers({
         return Promise.resolve({
           achievedDailyGoals,
           dailyHasBonus,
-          dailyBonusAchieved,
+          dailyBonusAttempted,
           dailyRewardIsChecked,
           xpEarned,
           coinsEarned,
