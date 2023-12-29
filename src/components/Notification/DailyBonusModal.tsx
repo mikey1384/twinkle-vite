@@ -55,7 +55,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
           </>
         )}
         <div style={{ fontWeight: 'bold', marginTop: '2rem' }}>
-          Feel free to get help from anyone or anywhere
+          Feel free to seek help from anyone or anywhere
         </div>
         <div>
           <Button
@@ -63,7 +63,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
             filled
             disabled={selectedChoiceIndex === undefined}
             color="logoBlue"
-            onClick={() => console.log('clicked')}
+            onClick={handleConfirm}
           >
             Confirm
           </Button>
@@ -76,4 +76,15 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
       </footer>
     </Modal>
   );
+
+  async function handleConfirm() {
+    try {
+      setLoading(true);
+      console.log('clicked!!');
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
 }
