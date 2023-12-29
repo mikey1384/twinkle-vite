@@ -339,7 +339,7 @@ export default function DailyRewardModal({
                         textAlign: 'right'
                       }}
                     >
-                      {burnValue / 10} coins
+                      {isCardOwned ? burnValue : burnValue / 10} coins
                     </div>
                   </div>
                 )}
