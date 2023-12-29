@@ -148,7 +148,7 @@ export default function DailyRewardModal({
   }, [coinEarned]);
 
   const fourthSentenceText = useMemo(() => {
-    const defaultCoinEarned = burnValue / 10;
+    const defaultCoinEarned = isCardOwned ? burnValue : burnValue / 10;
     if (defaultCoinEarned < 100) {
       return 'Minimum reward amount is 100';
     }
@@ -156,7 +156,7 @@ export default function DailyRewardModal({
       return '...rounded to the nearest hundred';
     }
     return '...rounded to the nearest thousand';
-  }, [burnValue]);
+  }, [burnValue, isCardOwned]);
 
   return (
     <Modal
