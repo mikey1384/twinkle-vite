@@ -4,6 +4,7 @@ import UserInfo from './UserInfo';
 import CardInfo from './CardInfo';
 import useAICard from '~/helpers/hooks/useAICard';
 import moment from 'moment';
+import SanitizedHTML from 'react-sanitized-html';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -123,9 +124,9 @@ export default function SummonActivity({
             }
           `}
         >
-          <span
-            style={{ fontFamily: 'Roboto Mono, monospace' }}
-            dangerouslySetInnerHTML={{ __html: `"${promptText}"` }}
+          <SanitizedHTML
+            allowedAttributes={{ '*': ['style'] }}
+            html={`<span style="font-family: 'Roboto Mono', monospace;">${promptText}</span>`}
           />
         </div>
         <div

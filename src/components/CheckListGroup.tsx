@@ -2,6 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 import Icon from '~/components/Icon';
+import SanitizedHTML from 'react-sanitized-html';
 
 export default function CheckListGroup({
   listItems,
@@ -82,7 +83,7 @@ export default function CheckListGroup({
                 alignItems: 'center'
               }}
             >
-              <div dangerouslySetInnerHTML={{ __html: listItem.label }} />
+              <SanitizedHTML html={listItem.label} />
               {listItem.isCorrect && (
                 <Icon style={{ color: Color.green() }} icon="check" />
               )}

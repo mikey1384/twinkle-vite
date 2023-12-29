@@ -7,6 +7,7 @@ import { useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { cardLevelHash } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import SanitizedHTML from 'react-sanitized-html';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CardThumb from '~/components/CardThumb';
 
@@ -145,20 +146,9 @@ export default function CardItem({
             )}
             {!offerObj && <b>#{card.id}</b>}
             {(!offerObj || offerObj.user.id === userId) && (
-              <div
-                style={{
-                  fontSize: '1.2rem',
-                  display: '-webkit-box',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflowWrap: 'break-word',
-                  wordBreak: 'break-word',
-                  overflow: 'hidden',
-                  WebkitBoxOrient: 'vertical',
-                  fontFamily: 'Roboto Mono, monospace',
-                  WebkitLineClamp: 1
-                }}
-                dangerouslySetInnerHTML={{ __html: promptText }}
+              <SanitizedHTML
+                allowedAttributes={{ '*': ['style'] }}
+                html={`<div style="font-size: 1.2rem; display: -webkit-box; align-items: center; justify-content: center; overflow-wrap: break-word; word-break: break-word; overflow: hidden; -webkit-box-orient: vertical; font-family: 'Roboto Mono', monospace; -webkit-line-clamp: 1;">${promptText}</div>`}
               />
             )}
             {!offerObj &&
