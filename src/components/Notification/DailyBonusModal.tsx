@@ -56,9 +56,11 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
             )}
           </>
         )}
-        <div style={{ fontWeight: 'bold', marginTop: '2rem' }}>
-          Feel free to seek help from anyone or anywhere
-        </div>
+        {!loading && (
+          <div style={{ fontWeight: 'bold', marginTop: '2rem' }}>
+            Feel free to ask anyone or look up anywhere for the answer
+          </div>
+        )}
         <div>
           <Button
             style={{ marginTop: '1.5rem' }}
