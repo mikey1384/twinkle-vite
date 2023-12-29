@@ -5,6 +5,7 @@ import Question from '~/components/Question';
 import Loading from '~/components/Loading';
 import SanitizedHTML from 'react-sanitized-html';
 import { Color } from '~/constants/css';
+import { cardLevelHash } from '~/constants/defaultValues';
 import { useAppContext } from '~/contexts';
 
 export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
@@ -42,6 +43,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
               (question: {
                 id: number;
                 question: string;
+                wordLevel: number;
                 choices: string[];
                 answerIndex: number;
                 word: string;
@@ -49,7 +51,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
                 const appliedQuestion = getRenderedText(
                   question.question,
                   question.word,
-                  'green'
+                  cardLevelHash[question.wordLevel]?.color || 'green'
                 );
                 return (
                   <Question
