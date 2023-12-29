@@ -28,7 +28,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
 
   return (
     <Modal wrapped onHide={onHide}>
-      <header>Daily Reward</header>
+      <header>Bonus Chance!</header>
       <main>
         {loading ? (
           <Loading />
