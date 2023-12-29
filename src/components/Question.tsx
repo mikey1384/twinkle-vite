@@ -40,7 +40,7 @@ export default function Question({
   return (
     <div style={style}>
       <div>
-        <p style={{ fontWeight: 'bold' }}>{question}</p>
+        <div>{question}</div>
       </div>
       <CheckListGroup
         inputType="checkbox"

@@ -75,7 +75,7 @@ export default function Questions({
           key={question.id}
           isGraded={solveObj.isGraded}
           style={{ marginTop: index === 0 ? 0 : '3rem' }}
-          question={question.question}
+          question={<b>{question.question}</b>}
           choices={question.choices}
           selectedChoiceIndex={userChoiceObj[question.id]}
           answerIndex={question.answerIndex}

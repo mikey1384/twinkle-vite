@@ -58,7 +58,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
                     question={
                       <SanitizedHTML
                         allowedAttributes={{ b: ['style'] }}
-                        html={`"${appliedQuestion}"`}
+                        html={appliedQuestion as string}
                       />
                     }
                     choices={question.choices}
