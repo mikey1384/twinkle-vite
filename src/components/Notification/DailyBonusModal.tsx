@@ -14,6 +14,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   const [questions, setQuestions] = useState<any>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isGraded, setIsGraded] = useState(false);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
   useEffect(() => {
     init();
@@ -56,7 +57,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
                 return (
                   <Question
                     key={question.id}
-                    isGraded={false}
+                    isGraded={isGraded}
                     question={
                       <SanitizedHTML
                         allowedAttributes={{ b: ['style'] }}
@@ -102,8 +103,15 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   async function handleConfirm() {
     try {
       setSubmitting(true);
-      const data = await postDailyBonus(selectedChoiceIndex);
-      console.log(data);
+      const { isCorrect, rewardAmount } = await postDailyBonus(
+        selectedChoiceIndex
+      );
+      setIsGraded(true);
+      alert(
+        isCorrect
+          ? `Correct! You've earned ${rewardAmount} points`
+          : 'Incorrect! Try again tomorrow'
+      );
     } catch (error) {
       console.error(error);
     } finally {
