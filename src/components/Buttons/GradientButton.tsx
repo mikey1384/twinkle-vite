@@ -6,6 +6,7 @@ import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 
 GradientButton.propTypes = {
   isFlat: PropTypes.bool,
+  isBluish: PropTypes.bool,
   disabled: PropTypes.bool,
   onClick: PropTypes.func.isRequired,
   children: PropTypes.node,
@@ -16,6 +17,7 @@ GradientButton.propTypes = {
 };
 export default function GradientButton({
   isFlat,
+  isBluish,
   disabled,
   onClick,
   children = null,
@@ -25,6 +27,7 @@ export default function GradientButton({
   style
 }: {
   isFlat?: boolean;
+  isBluish?: boolean;
   disabled?: boolean;
   onClick: () => any;
   children?: React.ReactNode;
@@ -54,13 +57,21 @@ export default function GradientButton({
         font-weight: bold;
         font-size: ${fontSize};
         box-shadow: rgb(0 0 0 / 15%) 0 1px 2px;
-        background: linear-gradient(
-          -45deg,
-          ${Color.redOrange()},
-          ${Color.rose()},
-          ${Color.oceanGreen()},
-          ${Color.limeGreen()}
-        );
+        background: ${isBluish
+          ? `linear-gradient(
+              -45deg,
+              ${Color.blue()},
+              ${Color.lightOceanBlue()},
+              ${Color.darkOceanBlue()},
+              ${Color.logoBlue()}
+            )`
+          : `linear-gradient(
+              -45deg,
+              ${Color.redOrange()},
+              ${Color.rose()},
+              ${Color.oceanGreen()},
+              ${Color.limeGreen()}
+            )`};
         background-size: 400% 400%;
         animation: Gradient 5s ease infinite;
         @media (max-width: ${mobileMaxWidth}) {
