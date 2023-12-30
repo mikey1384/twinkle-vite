@@ -147,6 +147,14 @@ export default function DailyRewardModal({
     return addCommasToNumber(coinEarned);
   }, [coinEarned]);
 
+  const displayedBurnValue = useMemo(() => {
+    return addCommasToNumber(burnValue);
+  }, [burnValue]);
+
+  const numCoinsAdjustedToCardOwnership = useMemo(() => {
+    return addCommasToNumber(isCardOwned ? burnValue : burnValue / 10);
+  }, [burnValue, isCardOwned]);
+
   const fourthSentenceText = useMemo(() => {
     const defaultCoinEarned = isCardOwned ? burnValue : burnValue / 10;
     if (defaultCoinEarned < 100) {
@@ -325,7 +333,7 @@ export default function DailyRewardModal({
                         textAlign: 'right'
                       }}
                     >
-                      {burnValue} coins
+                      {displayedBurnValue} coins
                     </div>
                   </div>
                 )}
@@ -351,7 +359,7 @@ export default function DailyRewardModal({
                         textAlign: 'right'
                       }}
                     >
-                      {isCardOwned ? burnValue : burnValue / 10} coins
+                      {numCoinsAdjustedToCardOwnership} coins
                     </div>
                   </div>
                 )}
@@ -375,7 +383,7 @@ export default function DailyRewardModal({
                         textAlign: 'right'
                       }}
                     >
-                      {coinEarned} coins
+                      {displayedCoinEarned} coins
                     </div>
                   </div>
                 )}
