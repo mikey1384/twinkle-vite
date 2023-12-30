@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import Question from '~/components/Question';
 import Loading from '~/components/Loading';
 import SanitizedHTML from 'react-sanitized-html';
+import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { cardLevelHash } from '~/constants/defaultValues';
 import { useAppContext } from '~/contexts';
@@ -16,6 +17,11 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [isGraded, setIsGraded] = useState(false);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
+  const [showFirstSentence, setShowFirstSentence] = useState(false);
+  const [showSecondSentence, setShowSecondSentence] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [rewardAmount, setRewardAmount] = useState<number>(0);
+
   useEffect(() => {
     init();
     async function init() {
@@ -33,7 +39,24 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   }, []);
 
   return (
-    <Modal wrapped onHide={onHide}>
+    <Modal
+      className={css`
+        .fadeIn {
+          animation: fadeInEffect 1s ease-in;
+        }
+
+        @keyframes fadeInEffect {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+      `}
+      wrapped
+      onHide={onHide}
+    >
       <header>Bonus Chance!</header>
       <main>
         {loading ? (
@@ -44,10 +67,10 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
               (question: {
                 id: number;
                 question: string;
+                word: string;
                 wordLevel: number;
                 choices: string[];
                 answerIndex: number;
-                word: string;
               }) => {
                 const appliedQuestion = getRenderedText(
                   question.question,
@@ -91,6 +114,16 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
             Confirm
           </Button>
         </div>
+        {showFirstSentence && (
+          <div className="fadeIn">
+            {isCorrect
+              ? `Correct! You've earned ${rewardAmount} XP`
+              : 'Oops! Wrong answer... Better luck next time'}
+          </div>
+        )}
+        {showSecondSentence && (
+          <div className="fadeIn">Some additional message or feedback</div>
+        )}
       </main>
       <footer>
         <Button transparent onClick={onHide}>
@@ -103,15 +136,13 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   async function handleConfirm() {
     try {
       setSubmitting(true);
-      const { isCorrect, rewardAmount } = await postDailyBonus(
-        selectedChoiceIndex
-      );
+      const response = await postDailyBonus(selectedChoiceIndex);
       setIsGraded(true);
-      alert(
-        isCorrect
-          ? `Correct! You've earned ${rewardAmount} points`
-          : 'Incorrect! Try again tomorrow'
-      );
+      setIsCorrect(response.isCorrect);
+      setRewardAmount(response.rewardAmount);
+
+      setShowFirstSentence(true);
+      setTimeout(() => setShowSecondSentence(true), 1500);
     } catch (error) {
       console.error(error);
     } finally {
@@ -122,12 +153,11 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   function getRenderedText(text: string, word: string, color: string) {
     if (word) {
       const regex = new RegExp(word, 'gi');
-      const textToDisplay = text.replace(regex, (matched) => {
-        return `<b style="color:${Color[color]()}">${matched}</b>`;
-      });
-
-      return textToDisplay;
+      return text.replace(
+        regex,
+        `<b style="color:${Color[color]()}">${word}</b>`
+      );
     }
-    return prompt || '';
+    return text || '';
   }
 }
