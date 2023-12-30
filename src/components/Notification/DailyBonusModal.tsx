@@ -120,12 +120,13 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
         {isGraded && (
           <div
             style={{
-              marginTop: '2rem',
+              marginTop: '2.5rem',
               display: 'flex',
               width: '100%',
               justifyContent: 'center',
               flexDirection: 'column',
-              textAlign: 'center'
+              textAlign: 'center',
+              marginBottom: '1.5rem'
             }}
           >
             {showFirstSentence && (
