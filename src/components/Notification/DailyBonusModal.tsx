@@ -19,6 +19,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
   const [showFirstSentence, setShowFirstSentence] = useState(false);
   const [showSecondSentence, setShowSecondSentence] = useState(false);
+  const [showThirdSentence, setShowThirdSentence] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [rewardAmount, setRewardAmount] = useState<number>(0);
 
@@ -97,32 +98,50 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
             )}
           </>
         )}
-        {!loading && (
+        {!loading && !isGraded && (
           <div style={{ fontWeight: 'bold', marginTop: '2rem' }}>
             Feel free to ask anyone or look up anywhere for the answer
           </div>
         )}
-        <div>
-          <Button
-            style={{ marginTop: '1.5rem' }}
-            filled
-            loading={submitting}
-            disabled={selectedChoiceIndex === undefined}
-            color="logoBlue"
-            onClick={handleConfirm}
-          >
-            Confirm
-          </Button>
-        </div>
-        {showFirstSentence && (
-          <div className="fadeIn">
-            {isCorrect
-              ? `Correct! You've earned ${rewardAmount} XP`
-              : 'Oops! Wrong answer... Better luck next time'}
+        {!isGraded && (
+          <div>
+            <Button
+              style={{ marginTop: '1.5rem' }}
+              filled
+              loading={submitting}
+              disabled={selectedChoiceIndex === undefined}
+              color="logoBlue"
+              onClick={handleConfirm}
+            >
+              Confirm
+            </Button>
           </div>
         )}
-        {showSecondSentence && (
-          <div className="fadeIn">Some additional message or feedback</div>
+        {isGraded && (
+          <div
+            style={{
+              marginTop: '2rem',
+              display: 'flex',
+              width: '100%',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              textAlign: 'center'
+            }}
+          >
+            {showFirstSentence && (
+              <div className="fadeIn">
+                {isCorrect
+                  ? 'Correct!'
+                  : 'Oops! Wrong answer... Better luck next time'}
+              </div>
+            )}
+            {showSecondSentence && (
+              <div className="fadeIn">{`You've earned ${rewardAmount} XP`}</div>
+            )}
+            {showThirdSentence && (
+              <div className="fadeIn">Some additional message or feedback</div>
+            )}
+          </div>
         )}
       </main>
       <footer>
@@ -142,7 +161,10 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
       setRewardAmount(response.rewardAmount);
 
       setShowFirstSentence(true);
-      setTimeout(() => setShowSecondSentence(true), 1500);
+      if (response.isCorrect) {
+        setTimeout(() => setShowSecondSentence(true), 1500);
+        setTimeout(() => setShowThirdSentence(true), 3000);
+      }
     } catch (error) {
       console.error(error);
     } finally {
