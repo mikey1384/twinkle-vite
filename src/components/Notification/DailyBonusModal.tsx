@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Question from '~/components/Question';
@@ -7,28 +7,54 @@ import SanitizedHTML from 'react-sanitized-html';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { cardLevelHash } from '~/constants/defaultValues';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
+  const { userId } = useKeyContext((v) => v.myState);
   const loadDailyBonus = useAppContext((v) => v.requestHelpers.loadDailyBonus);
   const postDailyBonus = useAppContext((v) => v.requestHelpers.postDailyBonus);
+  const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const cardObj = useChatContext((v) => v.state.cardObj);
   const [questions, setQuestions] = useState<any>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isCardOwned, setIsCardOwned] = useState(false);
   const [isGraded, setIsGraded] = useState(false);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
   const [showFirstSentence, setShowFirstSentence] = useState(false);
   const [showSecondSentence, setShowSecondSentence] = useState(false);
   const [showThirdSentence, setShowThirdSentence] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [chosenCardId, setChosenCardId] = useState<number | null>(null);
+  const chosenCard = useMemo(() => {
+    if (!chosenCardId) return null;
+    return cardObj[chosenCardId];
+  }, [cardObj, chosenCardId]);
   const [rewardAmount, setRewardAmount] = useState<number>(0);
+  const cardOwnStatusText = useMemo(() => {
+    const currentIsCardOwned = chosenCard?.ownerId === userId;
+    const appliedIsCardOwned = !!isCardOwned;
+    return `You ${
+      appliedIsCardOwned
+        ? ''
+        : currentIsCardOwned === appliedIsCardOwned
+        ? `don't `
+        : `didn't `
+    }${!currentIsCardOwned && appliedIsCardOwned ? 'owned' : 'own'} the card`;
+  }, [chosenCard?.ownerId, isCardOwned, userId]);
 
   useEffect(() => {
     init();
     async function init() {
       try {
         setLoading(true);
-        const questions = await loadDailyBonus();
+        const { questions, chosenCard, isCardOwned } = await loadDailyBonus();
+        setChosenCardId(chosenCard?.id);
+        onUpdateAICard({
+          cardId: chosenCard.id,
+          newState: chosenCard
+        });
+        setIsCardOwned(isCardOwned);
         setQuestions(questions);
       } catch (error) {
         console.error(error);
@@ -75,8 +101,8 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
               }) => {
                 const appliedQuestion = getRenderedText(
                   question.question,
-                  question.word,
-                  cardLevelHash[question.wordLevel]?.color || 'green'
+                  chosenCard.word,
+                  cardLevelHash[chosenCard.level]?.color || 'green'
                 );
                 return (
                   <Question
@@ -137,10 +163,10 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
               </div>
             )}
             {showSecondSentence && (
-              <div className="fadeIn">{`You've earned ${rewardAmount} XP`}</div>
+              <div className="fadeIn">{cardOwnStatusText}</div>
             )}
             {showThirdSentence && (
-              <div className="fadeIn">Some additional message or feedback</div>
+              <div className="fadeIn">{`You've earned ${rewardAmount} XP`}</div>
             )}
           </div>
         )}
