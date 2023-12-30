@@ -13,7 +13,7 @@ export default function notificationRequestHelpers({
         const { data } = await request.get(
           `${URL}/notification/version?version=${clientVersion}`
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -23,11 +23,11 @@ export default function notificationRequestHelpers({
         const {
           data: { currentChatSubject, loadMoreNotifications, notifications }
         } = await request.get(`${URL}/notification`, auth());
-        return Promise.resolve({
+        return {
           currentChatSubject,
           loadMoreNotifications,
           notifications
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -47,7 +47,7 @@ export default function notificationRequestHelpers({
             standardTimeStamp
           }
         } = await request.get(`${URL}/notification/today`, auth());
-        return Promise.resolve({
+        return {
           achievedDailyGoals,
           dailyHasBonus,
           dailyBonusAttempted,
@@ -57,7 +57,7 @@ export default function notificationRequestHelpers({
           nextMission,
           standardTimeStamp,
           unansweredChessMsgChannelId
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -67,7 +67,7 @@ export default function notificationRequestHelpers({
         const {
           data: { loadMoreNotifications, notifications }
         } = await request.get(`${URL}/notification?lastId=${lastId}`, auth());
-        return Promise.resolve({ loadMoreNotifications, notifications });
+        return { loadMoreNotifications, notifications };
       } catch (error) {
         return handleError(error);
       }
@@ -78,7 +78,7 @@ export default function notificationRequestHelpers({
           `${URL}/notification/more/rewards?lastId=${lastId}`,
           auth()
         );
-        return Promise.resolve(data);
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -101,12 +101,12 @@ export default function notificationRequestHelpers({
             totalRewardedTwinkleCoins
           }
         } = await request.get(`${URL}/notification/rewards`, auth());
-        return Promise.resolve({
+        return {
           rewards,
           loadMoreRewards,
           totalRewardedTwinkles,
           totalRewardedTwinkleCoins
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -128,7 +128,7 @@ export default function notificationRequestHelpers({
           {},
           auth()
         );
-        return Promise.resolve({
+        return {
           cards,
           chosenCardId,
           coinEarned,
@@ -136,7 +136,7 @@ export default function notificationRequestHelpers({
           xpEarned,
           isAlreadyChecked,
           isCardOwned
-        });
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -149,19 +149,21 @@ export default function notificationRequestHelpers({
           `${URL}/notification/today/dailyReward/bonus`,
           auth()
         );
-        return Promise.resolve(questions);
+        return questions;
       } catch (error) {
         return handleError(error);
       }
     },
     async postDailyBonus(selectedIndex: number) {
       try {
-        const { data } = await request.post(
+        const {
+          data: { isCorrect, rewardAmount }
+        } = await request.post(
           `${URL}/notification/today/dailyReward/bonus`,
           { selectedIndex },
           auth()
         );
-        return data;
+        return { isCorrect, rewardAmount };
       } catch (error) {
         return handleError(error);
       }
