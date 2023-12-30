@@ -118,13 +118,13 @@ const item = {
                   }}
                 >
                   <div>
-                    {videoRewardHash[keyNumber].xp * rewardLevel} XP
+                    {(videoRewardHash[keyNumber]?.xp || 0) * rewardLevel} XP
                     {rewardLevel > 2 ? (
                       <span>
                         {`, `}
                         <span style={{ marginLeft: '0.5rem' }}>
                           <Icon icon={['far', 'badge-dollar']} />{' '}
-                          {videoRewardHash[keyNumber].coin}
+                          {videoRewardHash[keyNumber]?.coin}
                         </span>
                       </span>
                     ) : (
@@ -140,13 +140,13 @@ const item = {
                       color: Color.brownOrange()
                     }}
                   >
-                    {videoRewardHash[keyNumber + 1].xp * rewardLevel} XP
+                    {videoRewardHash[keyNumber + 1]?.xp * rewardLevel} XP
                     {rewardLevel > 2 ? (
                       <span>
                         {`, `}
                         <span style={{ marginLeft: '0.5rem' }}>
                           <Icon icon={['far', 'badge-dollar']} />{' '}
-                          {videoRewardHash[keyNumber + 1].coin}
+                          {videoRewardHash[keyNumber + 1]?.coin}
                         </span>
                       </span>
                     ) : (
@@ -179,6 +179,9 @@ export default function RewardBoostItem({
     (v) => v.requestHelpers.upgradeRewardBoost
   );
   const maxLevelItemDescriptionLabel = useMemo(() => {
+    if (!videoRewardHash[rewardBoostLvl]) {
+      return '';
+    }
     if (SELECTED_LANGUAGE === 'kr') {
       return `이제 XP동영상을 시청하실 때 매분 (보상레벨 × ${videoRewardHash[rewardBoostLvl].xp})XP와 트윈클 코인 ${videoRewardHash[rewardBoostLvl].coin}개를 획득하실 수 있습니다`;
     }
