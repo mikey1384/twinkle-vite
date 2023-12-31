@@ -94,9 +94,9 @@ function Notification({
     !!todayStats?.dailyRewardResultViewed
   );
   const [isDailyBonusButtonShown, setIsDailyBonusButtonShown] = useState(
-    !!todayStats.hasBonus &&
-      !todayStats.bonusAttempted &&
-      todayStats.resultViewed
+    !!todayStats.dailyHasBonus &&
+      !todayStats.dailyBonusAttempted &&
+      todayStats.dailyRewardResultViewed
   );
 
   useEffect(() => {
@@ -107,15 +107,14 @@ function Notification({
     if (
       todayStats?.dailyHasBonus &&
       !todayStats?.dailyBonusAttempted &&
-      todayStats?.resultViewed
+      todayStats?.dailyRewardResultViewed
     ) {
       setIsDailyBonusButtonShown(true);
     }
   }, [
     todayStats?.dailyBonusAttempted,
     todayStats?.dailyRewardResultViewed,
-    todayStats?.dailyHasBonus,
-    todayStats?.resultViewed
+    todayStats?.dailyHasBonus
   ]);
 
   useEffect(() => {
