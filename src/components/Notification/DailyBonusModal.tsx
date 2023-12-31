@@ -349,9 +349,11 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   async function handleConfirm() {
     try {
       setSubmitting(true);
-      const { isCorrect, rewardAmount } = await postDailyBonus(
-        selectedChoiceIndex
-      );
+      const { isCorrect, isAlreadyAttempted, rewardAmount } =
+        await postDailyBonus(selectedChoiceIndex);
+      if (isAlreadyAttempted) {
+        return window.location.reload();
+      }
       setIsGraded(true);
       setIsCorrect(isCorrect);
       setRewardAmount(rewardAmount);
@@ -365,8 +367,6 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
       }
     } catch (error) {
       console.error(error);
-    } finally {
-      setSubmitting(false);
     }
   }
 
