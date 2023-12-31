@@ -27,6 +27,9 @@ const colors: {
 
 export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   const { userId } = useKeyContext((v) => v.myState);
+  const {
+    xpNumber: { color: xpNumberColor }
+  } = useKeyContext((v) => v.theme);
   const loadDailyBonus = useAppContext((v) => v.requestHelpers.loadDailyBonus);
   const postDailyBonus = useAppContext((v) => v.requestHelpers.postDailyBonus);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
@@ -313,17 +316,23 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
                 className="fadeIn"
                 style={{ marginTop: '2rem', textAlign: 'center' }}
               >
-                You earned{' '}
-                <span
+                You earned
+                <div
                   style={{
-                    color: Color.brownOrange(),
+                    display: 'inline',
                     fontWeight: 'bold',
-                    marginLeft: '0.2rem'
+                    marginLeft: '0.5rem'
                   }}
                 >
-                  {displayedXPEarned}
-                </span>{' '}
-                XP
+                  <span
+                    style={{
+                      color: Color[xpNumberColor]()
+                    }}
+                  >
+                    {displayedXPEarned}
+                  </span>{' '}
+                  <span style={{ color: Color.gold() }}>XP</span>
+                </div>
               </div>
             )}
           </div>
