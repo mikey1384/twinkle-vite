@@ -6,8 +6,23 @@ import Loading from '~/components/Loading';
 import SanitizedHTML from 'react-sanitized-html';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { cardLevelHash } from '~/constants/defaultValues';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
+import {
+  cardLevelHash,
+  qualityProps,
+  returnCardBurnXP
+} from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+
+const colors: {
+  [key: number]: string;
+} = {
+  1: 'blue',
+  2: 'pink',
+  3: 'orange',
+  4: 'magenta',
+  5: 'gold'
+};
 
 export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   const { userId } = useKeyContext((v) => v.myState);
@@ -24,12 +39,16 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   const [showFirstSentence, setShowFirstSentence] = useState(false);
   const [showSecondSentence, setShowSecondSentence] = useState(false);
   const [showThirdSentence, setShowThirdSentence] = useState(false);
+  const [showFourthSentence, setShowFourthSentence] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [chosenCardId, setChosenCardId] = useState<number | null>(null);
   const chosenCard = useMemo(() => {
     if (!chosenCardId) return null;
     return cardObj[chosenCardId];
   }, [cardObj, chosenCardId]);
+  const chosenCardColorDescription = useMemo(() => {
+    return chosenCard ? colors[chosenCard?.level] : '';
+  }, [chosenCard]);
   const [rewardAmount, setRewardAmount] = useState<number>(0);
   const cardOwnStatusText = useMemo(() => {
     const currentIsCardOwned = chosenCard?.ownerId === userId;
@@ -42,6 +61,20 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
         : `didn't `
     }${!currentIsCardOwned && appliedIsCardOwned ? 'owned' : 'own'} the card`;
   }, [chosenCard?.ownerId, isCardOwned, userId]);
+
+  const burnValue = useMemo(() => {
+    if (!chosenCard) {
+      return 0;
+    }
+    return returnCardBurnXP({
+      cardLevel: chosenCard.level,
+      cardQuality: chosenCard.quality
+    });
+  }, [chosenCard]);
+
+  const displayedBurnValue = useMemo(() => {
+    return addCommasToNumber(burnValue);
+  }, [burnValue]);
 
   useEffect(() => {
     init();
@@ -163,9 +196,51 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
               </div>
             )}
             {showSecondSentence && (
-              <div className="fadeIn">{cardOwnStatusText}</div>
+              <div
+                className="fadeIn"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '2fr 1fr 1fr',
+                  marginTop: '2rem',
+                  width: '100%'
+                }}
+              >
+                <div className="column">
+                  You rolled {chosenCard.quality === 'elite' ? 'an' : 'a'}{' '}
+                  <span style={qualityProps[chosenCard.quality]}>
+                    {chosenCard.quality}
+                  </span>{' '}
+                  <span
+                    style={{
+                      fontWeight: 'bold',
+                      color:
+                        Color[
+                          colors[chosenCard.level] === 'blue'
+                            ? 'logoBlue'
+                            : colors[chosenCard.level]
+                        ]()
+                    }}
+                  >
+                    {chosenCardColorDescription}
+                  </span>{' '}
+                  card!
+                </div>
+                <div className="column">{burnValue} burn value</div>
+                <div
+                  className="column"
+                  style={{
+                    fontWeight: showThirdSentence ? 'normal' : 'bold',
+                    textAlign: 'right'
+                  }}
+                >
+                  {displayedBurnValue} coins
+                </div>
+              </div>
             )}
             {showThirdSentence && (
+              <div className="fadeIn">{cardOwnStatusText}</div>
+            )}
+            {showFourthSentence && (
               <div className="fadeIn">{`You've earned ${rewardAmount} XP`}</div>
             )}
           </div>
@@ -182,15 +257,18 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   async function handleConfirm() {
     try {
       setSubmitting(true);
-      const response = await postDailyBonus(selectedChoiceIndex);
+      const { isCorrect, rewardAmount } = await postDailyBonus(
+        selectedChoiceIndex
+      );
       setIsGraded(true);
-      setIsCorrect(response.isCorrect);
-      setRewardAmount(response.rewardAmount);
+      setIsCorrect(isCorrect);
+      setRewardAmount(rewardAmount);
 
       setShowFirstSentence(true);
-      if (response.isCorrect) {
+      if (isCorrect) {
         setTimeout(() => setShowSecondSentence(true), 1500);
         setTimeout(() => setShowThirdSentence(true), 3000);
+        setTimeout(() => setShowFourthSentence(true), 4500);
       }
     } catch (error) {
       console.error(error);
