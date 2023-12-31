@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import Question from '~/components/Question';
 import Loading from '~/components/Loading';
 import SanitizedHTML from 'react-sanitized-html';
+import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -75,6 +76,28 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   const displayedBurnValue = useMemo(() => {
     return addCommasToNumber(burnValue);
   }, [burnValue]);
+
+  const xpAdjustedToCardOwnership = useMemo(() => {
+    if (!chosenCard) {
+      return 0;
+    }
+    return addCommasToNumber(isCardOwned ? burnValue : burnValue / 10);
+  }, [burnValue, chosenCard, isCardOwned]);
+
+  const fourthSentenceText = useMemo(() => {
+    const defaultCoinEarned = isCardOwned ? burnValue : burnValue / 10;
+    if (defaultCoinEarned < 100) {
+      return 'Minimum reward amount is 100';
+    }
+    if (defaultCoinEarned < 1000) {
+      return '...rounded to the nearest hundred';
+    }
+    return '...rounded to the nearest thousand';
+  }, [burnValue, isCardOwned]);
+
+  const displayedXPEarned = useMemo(() => {
+    return addCommasToNumber(rewardAmount);
+  }, [rewardAmount]);
 
   useEffect(() => {
     init();
@@ -180,16 +203,18 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
           <div
             style={{
               marginTop: '2.5rem',
+              width: '80%',
               display: 'flex',
-              width: '100%',
-              justifyContent: 'center',
               flexDirection: 'column',
-              textAlign: 'center',
+              justifyContent: 'center',
               marginBottom: '1.5rem'
             }}
           >
             {showFirstSentence && (
-              <div className="fadeIn">
+              <div
+                className="fadeIn"
+                style={{ width: '100%', textAlign: 'center' }}
+              >
                 {isCorrect
                   ? 'Correct!'
                   : 'Oops! Wrong answer... Better luck next time'}
@@ -205,7 +230,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
                   width: '100%'
                 }}
               >
-                <div className="column">
+                <div>
                   You rolled {chosenCard.quality === 'elite' ? 'an' : 'a'}{' '}
                   <span style={qualityProps[chosenCard.quality]}>
                     {chosenCard.quality}
@@ -225,23 +250,62 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
                   </span>{' '}
                   card!
                 </div>
-                <div className="column">{burnValue} burn value</div>
+                <div>{burnValue} burn value</div>
                 <div
-                  className="column"
                   style={{
                     fontWeight: showThirdSentence ? 'normal' : 'bold',
                     textAlign: 'right'
                   }}
                 >
-                  {displayedBurnValue} coins
+                  {displayedBurnValue} XP
                 </div>
               </div>
             )}
             {showThirdSentence && (
-              <div className="fadeIn">{cardOwnStatusText}</div>
+              <div
+                className="fadeIn"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '2fr 1fr 1fr',
+                  marginTop: '1.5rem',
+                  width: '100%'
+                }}
+              >
+                <div>{cardOwnStatusText}</div>
+                <div>
+                  <Icon icon="times" /> {isCardOwned ? '1' : '1/10'}
+                </div>
+                <div
+                  style={{
+                    fontWeight: showFourthSentence ? 'normal' : 'bold',
+                    textAlign: 'right'
+                  }}
+                >
+                  {xpAdjustedToCardOwnership} XP
+                </div>
+              </div>
             )}
             {showFourthSentence && (
-              <div className="fadeIn">{`You've earned ${rewardAmount} XP`}</div>
+              <div
+                className="fadeIn"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '2fr 1fr 1fr',
+                  marginTop: '1.5rem',
+                  width: '100%'
+                }}
+              >
+                <div>{fourthSentenceText}</div>
+                <div />
+                <div
+                  style={{
+                    fontWeight: 'bold',
+                    textAlign: 'right'
+                  }}
+                >
+                  {displayedXPEarned} XP
+                </div>
+              </div>
             )}
           </div>
         )}
