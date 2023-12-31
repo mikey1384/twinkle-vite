@@ -252,7 +252,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
                   >
                     {chosenCardColorDescription}
                   </span>{' '}
-                  card!
+                  card
                 </div>
                 <div>{burnValue} burn value</div>
                 <div
