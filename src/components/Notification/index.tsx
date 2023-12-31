@@ -91,23 +91,30 @@ function Notification({
   );
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const [isDailyRewardChecked, setIsDailyRewardChecked] = useState(
-    !!todayStats?.dailyRewardIsChecked
+    !!todayStats?.dailyBonusResultViewed
   );
   const [isDailyBonusButtonShown, setIsDailyBonusButtonShown] = useState(
-    !!todayStats.hasBonus && !todayStats.bonusAttempted
+    !!todayStats.hasBonus &&
+      !todayStats.bonusAttempted &&
+      todayStats.resultViewed
   );
 
   useEffect(() => {
-    if (todayStats?.dailyRewardIsChecked) {
+    if (todayStats?.dailyBonusResultViewed) {
       setIsDailyRewardChecked(true);
     }
-    if (todayStats?.dailyHasBonus && !todayStats?.dailyBonusAttempted) {
+    if (
+      todayStats?.dailyHasBonus &&
+      !todayStats?.dailyBonusAttempted &&
+      todayStats?.resultViewed
+    ) {
       setIsDailyBonusButtonShown(true);
     }
   }, [
     todayStats?.dailyBonusAttempted,
-    todayStats?.dailyRewardIsChecked,
-    todayStats?.dailyHasBonus
+    todayStats?.dailyBonusResultViewed,
+    todayStats?.dailyHasBonus,
+    todayStats?.resultViewed
   ]);
 
   useEffect(() => {

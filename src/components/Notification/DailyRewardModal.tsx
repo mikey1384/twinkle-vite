@@ -39,6 +39,9 @@ export default function DailyRewardModal({
   const unlockDailyReward = useAppContext(
     (v) => v.requestHelpers.unlockDailyReward
   );
+  const updateDailyRewardViewStatus = useAppContext(
+    (v) => v.requestHelpers.updateDailyRewardViewStatus
+  );
   const { userId } = useKeyContext((v) => v.myState);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
@@ -437,13 +440,15 @@ export default function DailyRewardModal({
     onHide();
   }
 
-  function handleReveal() {
+  async function handleReveal() {
     setIsRevealPressed(true);
     isRevealPressedRef.current = true;
     let currentIndex = 0;
     let interval = 1500;
     let isFirstIteration = true;
     let fastIterations = 0;
+
+    await updateDailyRewardViewStatus();
 
     setCurrentCardId(cardIds[currentIndex]);
 
