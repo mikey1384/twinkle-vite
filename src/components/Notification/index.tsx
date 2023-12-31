@@ -201,6 +201,7 @@ function Notification({
               isDailyRewardChecked={isDailyRewardChecked}
               isDailyBonusButtonShown={isDailyBonusButtonShown}
               dailyRewardModalShown={dailyRewardModalShown}
+              dailyBonusModalShown={dailyBonusModalShown}
               onCollectRewardButtonClick={() => setDailyRewardModalShown(true)}
               onDailyBonusButtonClick={() => setDailyBonusModalShown(true)}
             />

@@ -14,6 +14,7 @@ export default function TodayStats({
   isDailyBonusButtonShown,
   loadingNotifications,
   dailyRewardModalShown,
+  dailyBonusModalShown,
   onCollectRewardButtonClick,
   onDailyBonusButtonClick
 }: {
@@ -21,6 +22,7 @@ export default function TodayStats({
   isDailyBonusButtonShown: boolean;
   loadingNotifications: boolean;
   dailyRewardModalShown: boolean;
+  dailyBonusModalShown: boolean;
   onCollectRewardButtonClick: () => void;
   onDailyBonusButtonClick: () => void;
 }) {
@@ -127,6 +129,7 @@ export default function TodayStats({
             </div>
             <DailyGoals
               dailyRewardModalShown={dailyRewardModalShown}
+              dailyBonusModalShown={dailyBonusModalShown}
               loadingNotifications={loadingNotifications}
               achievedGoals={todayStats.achievedDailyGoals}
               onCollectRewardButtonClick={onCollectRewardButtonClick}

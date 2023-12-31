@@ -1,10 +1,17 @@
 import React from 'react';
 import { css } from '@emotion/css';
 
-export default function DailyBonusButton({ onClick }: { onClick: () => void }) {
+export default function DailyBonusButton({
+  onClick,
+  dailyBonusModalShown
+}: {
+  onClick: () => void;
+  dailyBonusModalShown: boolean;
+}) {
   return (
     <button
       onClick={onClick}
+      disabled={dailyBonusModalShown}
       className={css`
         background-image: linear-gradient(
           45deg,
@@ -13,12 +20,15 @@ export default function DailyBonusButton({ onClick }: { onClick: () => void }) {
           #006d75 100%
         );
         background-size: 400% 400%;
-        animation: colorShift 6s ease infinite, pulse 2s infinite;
+        animation: ${dailyBonusModalShown
+          ? 'none'
+          : 'colorShift 6s ease infinite, pulse 2s infinite'};
+        opacity: ${dailyBonusModalShown ? 0.5 : 1};
+        cursor: ${dailyBonusModalShown ? 'default' : 'pointer'};
         color: #fff;
         padding: 12px 24px;
         border: none;
         border-radius: 25px;
-        cursor: pointer;
         font-weight: bold;
         font-size: 1.3rem;
         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
