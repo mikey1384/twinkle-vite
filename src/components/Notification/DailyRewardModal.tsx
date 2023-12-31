@@ -308,7 +308,7 @@ export default function DailyRewardModal({
                       width: '100%'
                     }}
                   >
-                    <div className="column">
+                    <div>
                       You rolled {chosenCard.quality === 'elite' ? 'an' : 'a'}{' '}
                       <span style={qualityProps[chosenCard.quality]}>
                         {chosenCard.quality}
@@ -328,9 +328,8 @@ export default function DailyRewardModal({
                       </span>{' '}
                       card!
                     </div>
-                    <div className="column">{burnValue} burn value</div>
+                    <div>{burnValue} burn value</div>
                     <div
-                      className="column"
                       style={{
                         fontWeight: showThirdSentence ? 'normal' : 'bold',
                         textAlign: 'right'
@@ -351,12 +350,11 @@ export default function DailyRewardModal({
                       width: '100%'
                     }}
                   >
-                    <div className="column">{cardOwnStatusText}</div>
-                    <div className="column">
+                    <div>{cardOwnStatusText}</div>
+                    <div>
                       <Icon icon="times" /> {isCardOwned ? '1' : '1/10'}
                     </div>
                     <div
-                      className="column"
                       style={{
                         fontWeight: showFourthSentence ? 'normal' : 'bold',
                         textAlign: 'right'
@@ -377,10 +375,9 @@ export default function DailyRewardModal({
                       width: '100%'
                     }}
                   >
-                    <div className="column">{fourthSentenceText}</div>
-                    <div className="column" />
+                    <div>{fourthSentenceText}</div>
+                    <div />
                     <div
-                      className="column"
                       style={{
                         fontWeight: 'bold',
                         textAlign: 'right'
