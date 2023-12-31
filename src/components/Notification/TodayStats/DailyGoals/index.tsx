@@ -11,6 +11,7 @@ export default function DailyGoals({
   isDailyBonusButtonShown,
   loadingNotifications,
   dailyRewardModalShown,
+  dailyBonusModalShown,
   achievedGoals,
   onCollectRewardButtonClick,
   onDailyBonusButtonClick
@@ -19,6 +20,7 @@ export default function DailyGoals({
   isDailyBonusButtonShown: boolean;
   loadingNotifications: boolean;
   dailyRewardModalShown: boolean;
+  dailyBonusModalShown: boolean;
   achievedGoals: string[];
   onCollectRewardButtonClick: () => void;
   onDailyBonusButtonClick: () => void;
@@ -64,7 +66,10 @@ export default function DailyGoals({
             {`Great job! You've completed your daily goals!`}
           </p>
           {isDailyBonusButtonShown ? (
-            <DailyBonusButton onClick={onDailyBonusButtonClick} />
+            <DailyBonusButton
+              onClick={onDailyBonusButtonClick}
+              dailyBonusModalShown={dailyBonusModalShown}
+            />
           ) : (
             <CollectRewardsButton
               isChecked={isChecked}
