@@ -50,6 +50,9 @@ function Notification({
   const onLoadNotifications = useNotiContext(
     (v) => v.actions.onLoadNotifications
   );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
   const onClearRewards = useNotiContext((v) => v.actions.onClearRewards);
   const scrollPositions = useViewContext((v) => v.state.scrollPositions);
@@ -100,17 +103,14 @@ function Notification({
   );
 
   useEffect(() => {
-    console.log(todayStats?.dailyRewardResultViewed);
     if (todayStats?.dailyRewardResultViewed) {
       setIsDailyRewardChecked(true);
     }
-    if (
-      todayStats?.dailyHasBonus &&
-      !todayStats?.dailyBonusAttempted &&
-      todayStats?.dailyRewardResultViewed
-    ) {
-      setIsDailyBonusButtonShown(true);
-    }
+    setIsDailyBonusButtonShown(
+      !!todayStats?.dailyHasBonus &&
+        !todayStats?.dailyBonusAttempted &&
+        !!todayStats?.dailyRewardResultViewed
+    );
   }, [
     todayStats?.dailyBonusAttempted,
     todayStats?.dailyRewardResultViewed,
@@ -288,7 +288,10 @@ function Notification({
         />
       )}
       {dailyBonusModalShown && (
-        <DailyBonusModal onHide={() => setDailyBonusModalShown(false)} />
+        <DailyBonusModal
+          onHide={() => setDailyBonusModalShown(false)}
+          onSetDailyBonusAttempted={handleSetDailyBonusAttempted}
+        />
       )}
     </ErrorBoundary>
   );
@@ -328,6 +331,14 @@ function Notification({
       setLoadingNotifications(false);
       loadingNotificationRef.current = false;
     }
+  }
+
+  function handleSetDailyBonusAttempted() {
+    onUpdateTodayStats({
+      newStats: {
+        dailyBonusAttempted: true
+      }
+    });
   }
 
   function handleScroll(event: any) {
