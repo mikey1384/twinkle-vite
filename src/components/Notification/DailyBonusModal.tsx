@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Question from '~/components/Question';
@@ -25,7 +25,13 @@ const colors: {
   5: 'gold'
 };
 
-export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
+export default function DailyBonusModal({
+  onHide,
+  onSetDailyBonusAttempted
+}: {
+  onHide: () => void;
+  onSetDailyBonusAttempted: () => void;
+}) {
   const { userId } = useKeyContext((v) => v.myState);
   const {
     xpNumber: { color: xpNumberColor }
@@ -103,6 +109,8 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
     return addCommasToNumber(rewardAmount);
   }, [rewardAmount]);
 
+  const isGradedRef = useRef(isGraded);
+
   useEffect(() => {
     init();
     async function init() {
@@ -122,6 +130,11 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
         setLoading(false);
       }
     }
+    return () => {
+      if (isGradedRef.current) {
+        onSetDailyBonusAttempted();
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -355,6 +368,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
         return window.location.reload();
       }
       setIsGraded(true);
+      isGradedRef.current = true;
       setIsCorrect(isCorrect);
       setRewardAmount(rewardAmount);
 
