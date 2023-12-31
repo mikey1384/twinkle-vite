@@ -51,7 +51,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
         const { questions, chosenCard, isCardOwned } = await loadDailyBonus();
         setChosenCardId(chosenCard?.id);
         onUpdateAICard({
-          cardId: chosenCard.id,
+          cardId: chosenCard?.id,
           newState: chosenCard
         });
         setIsCardOwned(isCardOwned);
@@ -101,8 +101,8 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
               }) => {
                 const appliedQuestion = getRenderedText(
                   question.question,
-                  chosenCard.word,
-                  cardLevelHash[chosenCard.level]?.color || 'green'
+                  chosenCard?.word,
+                  cardLevelHash[chosenCard?.level]?.color || 'green'
                 );
                 return (
                   <Question
