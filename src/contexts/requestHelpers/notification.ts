@@ -164,13 +164,13 @@ export default function notificationRequestHelpers({
     async postDailyBonus(selectedIndex: number) {
       try {
         const {
-          data: { isCorrect, rewardAmount }
+          data: { isCorrect, isAlreadyAttempted, rewardAmount }
         } = await request.post(
           `${URL}/notification/today/dailyReward/bonus`,
           { selectedIndex },
           auth()
         );
-        return { isCorrect, rewardAmount };
+        return { isCorrect, isAlreadyAttempted, rewardAmount };
       } catch (error) {
         return handleError(error);
       }
