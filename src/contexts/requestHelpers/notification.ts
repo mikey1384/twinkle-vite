@@ -39,7 +39,6 @@ export default function notificationRequestHelpers({
             achievedDailyGoals,
             dailyHasBonus,
             dailyBonusAttempted,
-            dailyRewardIsChecked,
             xpEarned,
             coinsEarned,
             nextMission,
@@ -51,7 +50,6 @@ export default function notificationRequestHelpers({
           achievedDailyGoals,
           dailyHasBonus,
           dailyBonusAttempted,
-          dailyRewardIsChecked,
           xpEarned,
           coinsEarned,
           nextMission,
@@ -137,6 +135,13 @@ export default function notificationRequestHelpers({
           isAlreadyChecked,
           isCardOwned
         };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async updateDailyRewardViewStatus() {
+      try {
+        await request.put(`${URL}/notification/today/dailyReward`, {}, auth());
       } catch (error) {
         return handleError(error);
       }

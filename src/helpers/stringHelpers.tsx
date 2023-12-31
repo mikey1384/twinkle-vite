@@ -8,19 +8,16 @@ const urlRegex =
 const urlRegex2 =
   /((https?:\/\/|ftp:\/\/|www\.)\S+\.[^()\n"' ]+((?:\([^)]*\))|[^.,;:?!"'\n)\]<* ])+)/i;
 
-export function addCommasToNumber(number: number): string {
+export function addCommasToNumber(number: number) {
   if (!number) return '0';
-  const numArray = `${number}`.split('');
-  let result = '';
-  numArray.reverse();
-  for (let i = 0; i < numArray.length; i++) {
-    if (i % 3 === 0 && i !== 0) {
-      result = numArray[i] + ',' + result;
-    } else {
-      result = numArray[i] + result;
-    }
-  }
-  return result;
+
+  const parts = number.toString().split('.');
+  let integerPart = parts[0];
+  const decimalPart = parts.length > 1 ? '.' + parts[1] : '';
+
+  integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  return integerPart + decimalPart;
 }
 
 export function addEmoji(string: string): string {
