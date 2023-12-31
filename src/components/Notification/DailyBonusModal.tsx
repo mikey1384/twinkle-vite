@@ -41,6 +41,7 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
   const [showSecondSentence, setShowSecondSentence] = useState(false);
   const [showThirdSentence, setShowThirdSentence] = useState(false);
   const [showFourthSentence, setShowFourthSentence] = useState(false);
+  const [showFifthSentence, setShowFifthSentence] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [chosenCardId, setChosenCardId] = useState<number | null>(null);
   const chosenCard = useMemo(() => {
@@ -307,6 +308,24 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
                 </div>
               </div>
             )}
+            {showFifthSentence && (
+              <div
+                className="fadeIn"
+                style={{ marginTop: '2rem', textAlign: 'center' }}
+              >
+                You earned{' '}
+                <span
+                  style={{
+                    color: Color.brownOrange(),
+                    fontWeight: 'bold',
+                    marginLeft: '0.2rem'
+                  }}
+                >
+                  {displayedXPEarned}
+                </span>{' '}
+                XP
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -330,9 +349,10 @@ export default function DailyBonusModal({ onHide }: { onHide: () => void }) {
 
       setShowFirstSentence(true);
       if (isCorrect) {
-        setTimeout(() => setShowSecondSentence(true), 1500);
-        setTimeout(() => setShowThirdSentence(true), 3000);
-        setTimeout(() => setShowFourthSentence(true), 4500);
+        setTimeout(() => setShowSecondSentence(true), 2000);
+        setTimeout(() => setShowThirdSentence(true), 4000);
+        setTimeout(() => setShowFourthSentence(true), 6000);
+        setTimeout(() => setShowFifthSentence(true), 8000);
       }
     } catch (error) {
       console.error(error);
