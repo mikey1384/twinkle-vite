@@ -44,7 +44,8 @@ export default function DailyRewardModal({
   );
   const { userId } = useKeyContext((v) => v.myState);
   const {
-    xpNumber: { color: xpNumberColor }
+    xpNumber: { color: xpNumberColor },
+    link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
@@ -448,7 +449,19 @@ export default function DailyRewardModal({
                       </span>{' '}
                       <span style={{ color: Color.gold() }}>XP</span>
                     </div>{' '}
-                    for correctly answering the bonus question
+                    for correctly answering the{' '}
+                    <span
+                      className={css`
+                        font-weight: bold;
+                        cursor: pointer;
+                        color: ${Color[linkColor]()};
+                        &:hover {
+                          text-decoration: underline;
+                        }
+                      `}
+                    >
+                      bonus question
+                    </span>
                   </div>
                 )}
               </div>
