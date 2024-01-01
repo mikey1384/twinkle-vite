@@ -95,11 +95,11 @@ export default function DailyBonusModal({
   }, [burnValue, chosenCard, isCardOwned]);
 
   const fourthSentenceText = useMemo(() => {
-    const defaultCoinEarned = isCardOwned ? burnValue : burnValue / 10;
-    if (defaultCoinEarned < 100) {
+    const defaultXPEarned = isCardOwned ? burnValue : burnValue / 10;
+    if (defaultXPEarned < 100) {
       return 'Minimum reward amount is 100';
     }
-    if (defaultCoinEarned < 1000) {
+    if (defaultXPEarned < 1000) {
       return '...rounded to the nearest hundred';
     }
     return '...rounded to the nearest thousand';
