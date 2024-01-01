@@ -26,11 +26,13 @@ const colors: {
 };
 
 export default function DailyBonusModal({
+  modalOverModal,
   onHide,
   onSetDailyBonusAttempted
 }: {
+  modalOverModal?: boolean;
   onHide: () => void;
-  onSetDailyBonusAttempted: () => void;
+  onSetDailyBonusAttempted?: () => void;
 }) {
   const { userId } = useKeyContext((v) => v.myState);
   const {
@@ -132,7 +134,7 @@ export default function DailyBonusModal({
     }
     return () => {
       if (isGradedRef.current) {
-        onSetDailyBonusAttempted();
+        onSetDailyBonusAttempted?.();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -140,6 +142,7 @@ export default function DailyBonusModal({
 
   return (
     <Modal
+      modalOverModal={modalOverModal}
       closeWhenClickedOutside={false}
       className={css`
         .fadeIn {
