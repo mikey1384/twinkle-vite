@@ -25,6 +25,9 @@ export default function ActionBlock({
         return 'completed an AI Story';
       }
     }
+    if (action === 'collect') {
+      return 'completed daily goals';
+    }
     if (action === 'generate') {
       return 'summoned a card';
     }

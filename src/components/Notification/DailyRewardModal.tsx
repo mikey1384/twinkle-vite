@@ -436,49 +436,29 @@ export default function DailyRewardModal({
                     </span>{' '}
                   </div>
                 )}
-                {showBonusSentence && bonusAchieved ? (
-                  <div
-                    className="fadeIn"
-                    style={{ marginTop: '0.5rem', textAlign: 'center' }}
-                  >
-                    ...and{' '}
+                {showBonusSentence ? (
+                  bonusAchieved ? (
                     <div
-                      style={{
-                        display: 'inline',
-                        fontWeight: 'bold'
-                      }}
+                      className="fadeIn"
+                      style={{ marginTop: '0.5rem', textAlign: 'center' }}
                     >
-                      <span
+                      ...and{' '}
+                      <div
                         style={{
-                          color: Color[xpNumberColor]()
+                          display: 'inline',
+                          fontWeight: 'bold'
                         }}
                       >
-                        {addCommasToNumber(xpEarned)}
-                      </span>{' '}
-                      <span style={{ color: Color.gold() }}>XP</span>
-                    </div>{' '}
-                    for correctly answering the{' '}
-                    <span
-                      className={css`
-                        font-weight: bold;
-                        cursor: pointer;
-                        color: ${Color[linkColor]()};
-                        &:hover {
-                          text-decoration: underline;
-                        }
-                      `}
-                      onClick={() => setDailyBonusModalShown(true)}
-                    >
-                      bonus question
-                    </span>
-                  </div>
-                ) : (
-                  <div
-                    className="fadeIn"
-                    style={{ marginTop: '0.5rem', textAlign: 'center' }}
-                  >
-                    <span>
-                      ...but you got the{' '}
+                        <span
+                          style={{
+                            color: Color[xpNumberColor]()
+                          }}
+                        >
+                          {addCommasToNumber(xpEarned)}
+                        </span>{' '}
+                        <span style={{ color: Color.gold() }}>XP</span>
+                      </div>{' '}
+                      for correctly answering the{' '}
                       <span
                         className={css`
                           font-weight: bold;
@@ -491,11 +471,33 @@ export default function DailyRewardModal({
                         onClick={() => setDailyBonusModalShown(true)}
                       >
                         bonus question
-                      </span>{' '}
-                      wrong
-                    </span>
-                  </div>
-                )}
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      className="fadeIn"
+                      style={{ marginTop: '0.5rem', textAlign: 'center' }}
+                    >
+                      <span>
+                        ...but you got the{' '}
+                        <span
+                          className={css`
+                            font-weight: bold;
+                            cursor: pointer;
+                            color: ${Color[linkColor]()};
+                            &:hover {
+                              text-decoration: underline;
+                            }
+                          `}
+                          onClick={() => setDailyBonusModalShown(true)}
+                        >
+                          bonus question
+                        </span>{' '}
+                        wrong
+                      </span>
+                    </div>
+                  )
+                ) : null}
               </div>
             )}
           </div>
