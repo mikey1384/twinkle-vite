@@ -185,7 +185,6 @@ function MessagesContainer({
   const [loadingMore, setLoadingMore] = useState(false);
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [selectVideoModalShown, setSelectVideoModalShown] = useState(false);
-  const [leaving, setLeaving] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{
     shown: boolean;
     fileName: string;
@@ -209,6 +208,10 @@ function MessagesContainer({
     useState(false);
   const [hideModalShown, setHideModalShown] = useState(false);
   const [addToFavoritesShown, setAddToFavoritesShown] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [selectingNewOwner, setSelectingNewOwner] = useState(false);
+  const leavingRef = useRef(false);
+  const selectingNewOwnerRef = useRef(false);
   const MessagesRef: React.RefObject<any> = useRef(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
   const favoritingRef = useRef(false);
@@ -912,9 +915,10 @@ function MessagesContainer({
   );
 
   const handleLeaveChannel = useCallback(async () => {
-    if (!leaving) {
+    if (!leavingRef.current) {
       try {
-        setLeaving(true);
+        setIsLeaving(true);
+        leavingRef.current = true;
         await leaveChannel(selectedChannelId);
         onLeaveChannel({ channelId: selectedChannelId, userId });
         socket.emit('leave_chat_channel', {
@@ -925,14 +929,16 @@ function MessagesContainer({
         });
         navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
         setLeaveConfirmModalShown(false);
-        setLeaving(false);
       } catch (error) {
-        setLeaving(false);
+        console.error(error);
         throw error;
+      } finally {
+        setIsLeaving(false);
+        leavingRef.current = false;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leaving, profilePicUrl, selectedChannelId, userId, username]);
+  }, [profilePicUrl, selectedChannelId, userId, username]);
 
   const handleLeaveConfirm = useCallback(() => {
     try {
@@ -1255,22 +1261,34 @@ function MessagesContainer({
 
   const handleSelectNewOwner = useCallback(
     async ({ newOwner, andLeave }: { newOwner: string; andLeave: boolean }) => {
-      const notificationMsg = await changeChannelOwner({
-        channelId: selectedChannelId,
-        newOwner
-      });
-      socket.emit('new_channel_owner', {
-        channelId: selectedChannelId,
-        userId,
-        username,
-        profilePicUrl,
-        newOwner,
-        notificationMsg
-      });
-      if (andLeave) {
-        handleLeaveChannel();
+      if (selectingNewOwnerRef.current) return;
+      setSelectingNewOwner(true);
+      selectingNewOwnerRef.current = true;
+      try {
+        const notificationMsg = await changeChannelOwner({
+          channelId: selectedChannelId,
+          newOwner
+        });
+
+        socket.emit('new_channel_owner', {
+          channelId: selectedChannelId,
+          userId,
+          username,
+          profilePicUrl,
+          newOwner,
+          notificationMsg
+        });
+
+        if (andLeave) {
+          await handleLeaveChannel();
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setSelectingNewOwner(false);
+        selectingNewOwnerRef.current = false;
+        setSelectNewOwnerModalShown(false);
       }
-      setSelectNewOwnerModalShown(false);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [handleLeaveChannel, profilePicUrl, selectedChannelId, userId, username]
@@ -1615,7 +1633,7 @@ function MessagesContainer({
           title={leaveChatGroupLabel}
           onHide={() => setLeaveConfirmModalShown(false)}
           onConfirm={handleLeaveConfirm}
-          disabled={leaving}
+          disabled={isLeaving}
         />
       )}
       {selectVideoModalShown && (
@@ -1640,6 +1658,7 @@ function MessagesContainer({
           members={currentChannel.members}
           onSubmit={handleSelectNewOwner}
           isClass={currentChannel.isClass}
+          loading={selectingNewOwner}
           andLeave
         />
       )}

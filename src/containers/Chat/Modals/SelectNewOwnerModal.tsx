@@ -13,6 +13,7 @@ const searchUsersLabel = localize('searchUsers');
 export default function SelectNewOwnerModal({
   andLeave = false,
   isClass,
+  loading,
   members,
   modalOverModal,
   onHide,
@@ -20,6 +21,7 @@ export default function SelectNewOwnerModal({
 }: {
   andLeave?: boolean;
   isClass: boolean;
+  loading?: boolean;
   members: any[];
   modalOverModal?: boolean;
   onHide: () => void;
@@ -80,6 +82,7 @@ export default function SelectNewOwnerModal({
         <Button
           color={doneColor}
           disabled={!selectedUser}
+          loading={loading}
           onClick={() => onSubmit({ newOwner: selectedUser, andLeave })}
         >
           Done
