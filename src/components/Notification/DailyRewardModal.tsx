@@ -62,6 +62,7 @@ export default function DailyRewardModal({
   const [isRevealPressed, setIsRevealPressed] = useState(false);
   const hasBonusRef = useRef(false);
   const isRevealPressedRef = useRef(false);
+  const isAlreadyCheckedRef = useRef(false);
 
   useEffect(() => {
     init();
@@ -77,6 +78,7 @@ export default function DailyRewardModal({
           isCardOwned
         } = await unlockDailyReward();
         if (isAlreadyChecked) {
+          isAlreadyCheckedRef.current = true;
           setCurrentCardId(chosenCardId);
           setAlreadyChecked(true);
           setShowFirstSentence(true);
@@ -105,7 +107,10 @@ export default function DailyRewardModal({
     }
     return () => {
       setAnimateReveal(false);
-      if (isRevealPressedRef.current && hasBonusRef.current) {
+      if (
+        (isRevealPressedRef.current || isAlreadyCheckedRef.current) &&
+        hasBonusRef.current
+      ) {
         onSetHasBonus(true);
       }
     };
