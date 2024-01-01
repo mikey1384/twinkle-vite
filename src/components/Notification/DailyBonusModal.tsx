@@ -334,12 +334,11 @@ export default function DailyBonusModal({
                 className="fadeIn"
                 style={{ marginTop: '2rem', textAlign: 'center' }}
               >
-                You earned
+                You earned{' '}
                 <div
                   style={{
                     display: 'inline',
-                    fontWeight: 'bold',
-                    marginLeft: '0.5rem'
+                    fontWeight: 'bold'
                   }}
                 >
                   <span
