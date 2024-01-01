@@ -231,7 +231,11 @@ export default function DailyBonusModal({
             {showFirstSentence && (
               <div
                 className="fadeIn"
-                style={{ width: '100%', textAlign: 'center' }}
+                style={{
+                  width: '100%',
+                  textAlign: 'center',
+                  fontWeight: isCorrect ? 'bold' : 'normal'
+                }}
               >
                 {isCorrect
                   ? 'Correct!'
