@@ -43,6 +43,9 @@ export default function DailyRewardModal({
     (v) => v.requestHelpers.updateDailyRewardViewStatus
   );
   const { userId } = useKeyContext((v) => v.myState);
+  const {
+    xpNumber: { color: xpNumberColor }
+  } = useKeyContext((v) => v.theme);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [showFirstSentence, setShowFirstSentence] = useState(false);
@@ -50,6 +53,7 @@ export default function DailyRewardModal({
   const [showThirdSentence, setShowThirdSentence] = useState(false);
   const [showFourthSentence, setShowFourthSentence] = useState(false);
   const [showFifthSentence, setShowFifthSentence] = useState(false);
+  const [showBonusSentence, setShowBonusSentence] = useState(false);
   const [animateReveal, setAnimateReveal] = useState(false);
   const [cardModalShown, setCardModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -60,6 +64,7 @@ export default function DailyRewardModal({
   const [currentCardId, setCurrentCardId] = useState(0);
   const [alreadyChecked, setAlreadyChecked] = useState(false);
   const [isRevealPressed, setIsRevealPressed] = useState(false);
+  const [xpEarned, setXPEarned] = useState('');
   const hasBonusRef = useRef(false);
   const isRevealPressedRef = useRef(false);
   const isAlreadyCheckedRef = useRef(false);
@@ -73,6 +78,7 @@ export default function DailyRewardModal({
           cards,
           chosenCardId,
           hasBonus,
+          xpEarned,
           isAlreadyChecked,
           coinEarned,
           isCardOwned
@@ -86,6 +92,10 @@ export default function DailyRewardModal({
           setShowThirdSentence(true);
           setShowFourthSentence(true);
           setShowFifthSentence(true);
+          if (xpEarned) {
+            setShowBonusSentence(true);
+            setXPEarned(addCommasToNumber(xpEarned));
+          }
           onSetIsDailyRewardChecked(true);
         }
         setCardIds(cards.map((card: Card) => card.id));
@@ -415,6 +425,30 @@ export default function DailyRewardModal({
                     >
                       {displayedCoinEarned}
                     </span>{' '}
+                  </div>
+                )}
+                {showBonusSentence && (
+                  <div
+                    className="fadeIn"
+                    style={{ marginTop: '0.5rem', textAlign: 'center' }}
+                  >
+                    ...and{' '}
+                    <div
+                      style={{
+                        display: 'inline',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: Color[xpNumberColor]()
+                        }}
+                      >
+                        {xpEarned}
+                      </span>{' '}
+                      <span style={{ color: Color.gold() }}>XP</span>
+                    </div>{' '}
+                    for correctly answering the bonus question
                   </div>
                 )}
               </div>
