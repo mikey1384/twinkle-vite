@@ -171,6 +171,7 @@ export default function DailyRewardModal({
 
   return (
     <Modal
+      closeWhenClickedOutside={false}
       className={css`
         @keyframes flashEffect {
           0% {

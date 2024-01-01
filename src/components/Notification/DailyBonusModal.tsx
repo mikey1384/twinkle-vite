@@ -140,6 +140,7 @@ export default function DailyBonusModal({
 
   return (
     <Modal
+      closeWhenClickedOutside={false}
       className={css`
         .fadeIn {
           animation: fadeInEffect 1s ease-in;
