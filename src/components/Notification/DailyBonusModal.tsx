@@ -162,7 +162,7 @@ export default function DailyBonusModal({
   return (
     <Modal
       modalOverModal={modalOverModal}
-      closeWhenClickedOutside={false}
+      closeWhenClickedOutside={!!isBonusAttempted}
       className={css`
         .fadeIn {
           animation: fadeInEffect 1s ease-in;
@@ -180,7 +180,13 @@ export default function DailyBonusModal({
       wrapped
       onHide={onHide}
     >
-      <header>Bonus Chance!</header>
+      <header>
+        {isBonusAttempted
+          ? isBonusAchieved
+            ? 'Bonus Earned!'
+            : 'Bonus Failed...'
+          : 'Bonus Chance!'}
+      </header>
       <main>
         {loading ? (
           <Loading />
