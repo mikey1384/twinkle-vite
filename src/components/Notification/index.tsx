@@ -282,7 +282,14 @@ function Notification({
       </div>
       {dailyRewardModalShown && (
         <DailyRewardModal
-          onSetHasBonus={setIsDailyBonusButtonShown}
+          onSetHasBonus={(hasBonus: boolean) => {
+            onUpdateTodayStats({
+              newStats: {
+                dailyHasBonus: hasBonus,
+                dailyRewardResultViewed: true
+              }
+            });
+          }}
           onSetIsDailyRewardChecked={setIsDailyRewardChecked}
           onHide={() => setDailyRewardModalShown(false)}
         />
