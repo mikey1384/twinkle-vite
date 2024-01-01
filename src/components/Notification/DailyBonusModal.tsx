@@ -26,11 +26,17 @@ const colors: {
 };
 
 export default function DailyBonusModal({
+  isBonusAttempted,
+  isBonusAchieved,
   modalOverModal,
+  xpEarned,
   onHide,
   onSetDailyBonusAttempted
 }: {
+  isBonusAttempted?: boolean;
+  isBonusAchieved?: boolean;
   modalOverModal?: boolean;
+  xpEarned?: number;
   onHide: () => void;
   onSetDailyBonusAttempted?: () => void;
 }) {
@@ -126,6 +132,19 @@ export default function DailyBonusModal({
         });
         setIsCardOwned(isCardOwned);
         setQuestions(questions);
+        if (isBonusAttempted) {
+          setIsGraded(true);
+          if (isBonusAchieved) {
+            setShowFirstSentence(true);
+            setShowSecondSentence(true);
+            setShowThirdSentence(true);
+            setShowFourthSentence(true);
+            setShowFifthSentence(true);
+            setSelectedChoiceIndex(questions[0].answerIndex);
+            setRewardAmount(xpEarned || 0);
+          }
+          setIsCorrect(!!isBonusAchieved);
+        }
       } catch (error) {
         console.error(error);
       } finally {

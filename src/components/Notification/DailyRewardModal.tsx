@@ -66,8 +66,10 @@ export default function DailyRewardModal({
   const [currentCardId, setCurrentCardId] = useState(0);
   const [alreadyChecked, setAlreadyChecked] = useState(false);
   const [isRevealPressed, setIsRevealPressed] = useState(false);
-  const [xpEarned, setXPEarned] = useState('');
+  const [xpEarned, setXPEarned] = useState(0);
   const [dailyBonusModalShown, setDailyBonusModalShown] = useState(false);
+  const [bonusAttempted, setBonusAttempted] = useState(false);
+  const [bonusAchieved, setBonusAchieved] = useState(false);
   const hasBonusRef = useRef(false);
   const isRevealPressedRef = useRef(false);
   const isAlreadyCheckedRef = useRef(false);
@@ -81,6 +83,8 @@ export default function DailyRewardModal({
           cards,
           chosenCardId,
           hasBonus,
+          bonusAttempted,
+          bonusAchieved,
           xpEarned,
           isAlreadyChecked,
           coinEarned,
@@ -95,9 +99,11 @@ export default function DailyRewardModal({
           setShowThirdSentence(true);
           setShowFourthSentence(true);
           setShowFifthSentence(true);
-          if (xpEarned) {
+          if (bonusAttempted) {
+            setBonusAttempted(true);
+            setBonusAchieved(bonusAchieved);
             setShowBonusSentence(true);
-            setXPEarned(addCommasToNumber(xpEarned));
+            setXPEarned(xpEarned);
           }
           onSetIsDailyRewardChecked(true);
         }
@@ -430,7 +436,7 @@ export default function DailyRewardModal({
                     </span>{' '}
                   </div>
                 )}
-                {showBonusSentence && (
+                {showBonusSentence && bonusAchieved ? (
                   <div
                     className="fadeIn"
                     style={{ marginTop: '0.5rem', textAlign: 'center' }}
@@ -447,7 +453,7 @@ export default function DailyRewardModal({
                           color: Color[xpNumberColor]()
                         }}
                       >
-                        {xpEarned}
+                        {addCommasToNumber(xpEarned)}
                       </span>{' '}
                       <span style={{ color: Color.gold() }}>XP</span>
                     </div>{' '}
@@ -464,6 +470,29 @@ export default function DailyRewardModal({
                       onClick={() => setDailyBonusModalShown(true)}
                     >
                       bonus question
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    className="fadeIn"
+                    style={{ marginTop: '0.5rem', textAlign: 'center' }}
+                  >
+                    <span>
+                      ...but you got the{' '}
+                      <span
+                        className={css`
+                          font-weight: bold;
+                          cursor: pointer;
+                          color: ${Color[linkColor]()};
+                          &:hover {
+                            text-decoration: underline;
+                          }
+                        `}
+                        onClick={() => setDailyBonusModalShown(true)}
+                      >
+                        bonus question
+                      </span>{' '}
+                      wrong
                     </span>
                   </div>
                 )}
@@ -486,6 +515,9 @@ export default function DailyRewardModal({
       {dailyBonusModalShown && (
         <DailyBonusModal
           modalOverModal
+          isBonusAttempted={bonusAttempted}
+          isBonusAchieved={bonusAchieved}
+          xpEarned={xpEarned}
           onHide={() => setDailyBonusModalShown(false)}
         />
       )}
