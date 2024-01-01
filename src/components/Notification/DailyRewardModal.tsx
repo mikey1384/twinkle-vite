@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
 import AICardModal from '~/components/Modals/AICardModal';
+import DailyBonusModal from './DailyBonusModal';
 import {
   cardLevelHash,
   qualityProps,
@@ -66,6 +67,7 @@ export default function DailyRewardModal({
   const [alreadyChecked, setAlreadyChecked] = useState(false);
   const [isRevealPressed, setIsRevealPressed] = useState(false);
   const [xpEarned, setXPEarned] = useState('');
+  const [dailyBonusModalShown, setDailyBonusModalShown] = useState(false);
   const hasBonusRef = useRef(false);
   const isRevealPressedRef = useRef(false);
   const isAlreadyCheckedRef = useRef(false);
@@ -459,6 +461,7 @@ export default function DailyRewardModal({
                           text-decoration: underline;
                         }
                       `}
+                      onClick={() => setDailyBonusModalShown(true)}
                     >
                       bonus question
                     </span>
@@ -478,6 +481,12 @@ export default function DailyRewardModal({
         <AICardModal
           cardId={chosenCardId}
           onHide={() => setCardModalShown(false)}
+        />
+      )}
+      {dailyBonusModalShown && (
+        <DailyBonusModal
+          modalOverModal
+          onHide={() => setDailyBonusModalShown(false)}
         />
       )}
     </Modal>
