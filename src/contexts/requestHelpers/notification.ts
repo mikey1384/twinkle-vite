@@ -119,6 +119,8 @@ export default function notificationRequestHelpers({
             chosenCardId,
             coinEarned,
             hasBonus,
+            bonusAttempted,
+            bonusAchieved,
             xpEarned,
             isAlreadyChecked,
             isCardOwned
@@ -133,6 +135,8 @@ export default function notificationRequestHelpers({
           chosenCardId,
           coinEarned,
           hasBonus,
+          bonusAttempted,
+          bonusAchieved,
           xpEarned,
           isAlreadyChecked,
           isCardOwned
