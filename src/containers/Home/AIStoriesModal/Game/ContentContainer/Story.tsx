@@ -17,10 +17,7 @@ export default function Story({
   questionsButtonEnabled: boolean;
 }) {
   return (
-    <div
-      className="unselectable"
-      style={{ width: '100%', fontFamily: '"Arial", sans-serif' }}
-    >
+    <div style={{ width: '100%', fontFamily: '"Arial", sans-serif' }}>
       <RichText maxLines={100}>{story}</RichText>
       {explanation && (
         <div style={{ marginTop: '7rem', marginBottom: '1rem' }}>
