@@ -61,7 +61,7 @@ export default function DailyGoals({
               margin-bottom: 1rem;
             `}
           >
-            {`Great job! You've completed your daily goals!`}
+            {`Great job! You've completed the daily goals!`}
           </p>
           {isDailyBonusButtonShown ? (
             <DailyBonusButton
