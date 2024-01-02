@@ -560,9 +560,6 @@ export default function DailyRewardModal({
               justifyContent: 'center'
             }}
           >
-            <Button filled onClick={handleCountdownComplete}>
-              testing
-            </Button>
             <Button transparent onClick={handleHide}>
               Close
             </Button>
