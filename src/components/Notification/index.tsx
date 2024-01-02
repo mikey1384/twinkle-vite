@@ -64,7 +64,6 @@ function Notification({
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [dailyRewardModalShown, setDailyRewardModalShown] = useState(false);
   const [dailyBonusModalShown, setDailyBonusModalShown] = useState(false);
-  const [myAchievementsObj, setMyAchievementsObj] = useState({});
   const userChangedTab = useRef(false);
   const totalRewardedTwinkles = useMemo(
     () => notiObj[userId]?.totalRewardedTwinkles || 0,
@@ -198,8 +197,14 @@ function Notification({
               isDailyBonusButtonShown={isDailyBonusButtonShown}
               dailyRewardModalShown={dailyRewardModalShown}
               dailyBonusModalShown={dailyBonusModalShown}
-              myAchievementsObj={myAchievementsObj}
-              onSetMyAchievementsObj={setMyAchievementsObj}
+              myAchievementsObj={todayStats?.myAchievementsObj || {}}
+              onSetMyAchievementsObj={(myAchievementsObj) => {
+                onUpdateTodayStats({
+                  newStats: {
+                    myAchievementsObj
+                  }
+                });
+              }}
               onCollectRewardButtonClick={() => setDailyRewardModalShown(true)}
               onDailyBonusButtonClick={() => setDailyBonusModalShown(true)}
             />
