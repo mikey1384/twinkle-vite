@@ -183,7 +183,7 @@ export default function WordleModal({
           >
             <div
               style={{
-                width: '100%',
+                flexGrow: 1,
                 display: 'flex',
                 justifyContent: 'center'
               }}
