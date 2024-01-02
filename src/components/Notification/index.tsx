@@ -102,10 +102,12 @@ function Notification({
   useEffect(() => {
     setIsDailyBonusButtonShown(
       !!todayStats?.dailyHasBonus &&
+        !dailyRewardModalShown &&
         !todayStats?.dailyBonusAttempted &&
         !!todayStats?.dailyRewardResultViewed
     );
   }, [
+    dailyRewardModalShown,
     todayStats?.dailyBonusAttempted,
     todayStats?.dailyRewardResultViewed,
     todayStats?.dailyHasBonus
