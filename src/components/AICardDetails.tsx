@@ -88,6 +88,7 @@ export default function AICardDetails({
         <div
           className={css`
             padding: 0 ${removeRightPadding ? 0 : '5rem'} 0 5rem;
+            text-align: center;
           `}
         >
           <div
@@ -107,7 +108,6 @@ export default function AICardDetails({
           {card.engine === 'DALL-E 3' ? (
             <div
               className={css`
-                text-align: center;
                 margin-top: 0.5rem;
                 font-size: 1.2rem;
                 font-family: 'Orbitron', sans-serif;
