@@ -124,7 +124,11 @@ export default function DailyBonusModal({
     async function init() {
       try {
         setLoading(true);
-        const { questions, chosenCard, isCardOwned } = await loadDailyBonus();
+        const { questions, chosenCard, isCardOwned, isUnavailable } =
+          await loadDailyBonus();
+        if (isUnavailable) {
+          return window.location.reload();
+        }
         setChosenCardId(chosenCard?.id);
         onUpdateAICard({
           cardId: chosenCard?.id,
