@@ -12,7 +12,6 @@ import Loading from '~/components/Loading';
 export default function TodayStats({
   isDailyRewardChecked,
   isDailyBonusButtonShown,
-  loadingNotifications,
   dailyRewardModalShown,
   dailyBonusModalShown,
   onCollectRewardButtonClick,
@@ -20,7 +19,6 @@ export default function TodayStats({
 }: {
   isDailyRewardChecked: boolean;
   isDailyBonusButtonShown: boolean;
-  loadingNotifications: boolean;
   dailyRewardModalShown: boolean;
   dailyBonusModalShown: boolean;
   onCollectRewardButtonClick: () => void;
@@ -130,7 +128,6 @@ export default function TodayStats({
             <DailyGoals
               dailyRewardModalShown={dailyRewardModalShown}
               dailyBonusModalShown={dailyBonusModalShown}
-              loadingNotifications={loadingNotifications}
               achievedGoals={todayStats.achievedDailyGoals}
               onCollectRewardButtonClick={onCollectRewardButtonClick}
               onDailyBonusButtonClick={onDailyBonusButtonClick}

@@ -93,9 +93,6 @@ function Notification({
     [userId, notiObj]
   );
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  const [isDailyRewardChecked, setIsDailyRewardChecked] = useState(
-    !!todayStats?.dailyRewardResultViewed
-  );
   const [isDailyBonusButtonShown, setIsDailyBonusButtonShown] = useState(
     !!todayStats.dailyHasBonus &&
       !todayStats.dailyBonusAttempted &&
@@ -103,7 +100,6 @@ function Notification({
   );
 
   useEffect(() => {
-    setIsDailyRewardChecked(todayStats?.dailyRewardResultViewed);
     setIsDailyBonusButtonShown(
       !!todayStats?.dailyHasBonus &&
         !todayStats?.dailyBonusAttempted &&
@@ -193,10 +189,9 @@ function Notification({
             flexDirection: 'column'
           }}
         >
-          {userId && (
+          {userId && todayStats?.loaded && (
             <TodayStats
-              loadingNotifications={loadingNotifications}
-              isDailyRewardChecked={isDailyRewardChecked}
+              isDailyRewardChecked={!!todayStats?.dailyRewardResultViewed}
               isDailyBonusButtonShown={isDailyBonusButtonShown}
               dailyRewardModalShown={dailyRewardModalShown}
               dailyBonusModalShown={dailyBonusModalShown}
@@ -288,7 +283,13 @@ function Notification({
               }
             });
           }}
-          onSetIsDailyRewardChecked={setIsDailyRewardChecked}
+          onSetIsDailyRewardChecked={() => {
+            onUpdateTodayStats({
+              newStats: {
+                dailyRewardResultViewed: true
+              }
+            });
+          }}
           onCountdownComplete={() => {
             setDailyRewardModalShown(false);
             onUpdateTodayStats({
@@ -299,7 +300,6 @@ function Notification({
                 dailyRewardResultViewed: false
               }
             });
-            setIsDailyRewardChecked(false);
           }}
           onHide={() => setDailyRewardModalShown(false)}
         />
