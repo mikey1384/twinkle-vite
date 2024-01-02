@@ -9,7 +9,6 @@ const badgeItems = ['W', 'G', 'A'];
 export default function DailyGoals({
   isChecked,
   isDailyBonusButtonShown,
-  loadingNotifications,
   dailyRewardModalShown,
   dailyBonusModalShown,
   achievedGoals,
@@ -18,7 +17,6 @@ export default function DailyGoals({
 }: {
   isChecked: boolean;
   isDailyBonusButtonShown: boolean;
-  loadingNotifications: boolean;
   dailyRewardModalShown: boolean;
   dailyBonusModalShown: boolean;
   achievedGoals: string[];
@@ -47,7 +45,7 @@ export default function DailyGoals({
           </Badge>
         ))}
       </div>
-      {allGoalsAchieved && !loadingNotifications && (
+      {allGoalsAchieved && (
         <div
           className={css`
             text-align: center;
