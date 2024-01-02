@@ -17,7 +17,12 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { Card } from '~/types';
-import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
+import {
+  useAppContext,
+  useKeyContext,
+  useChatContext,
+  useNotiContext
+} from '~/contexts';
 
 const colors: {
   [key: number]: string;
@@ -51,6 +56,8 @@ export default function DailyRewardModal({
   } = useKeyContext((v) => v.theme);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
+  const { timeDifference } = useNotiContext((v) => v.state.todayStats);
+  const [nextDayTimeStamp, setNextDayTimeStamp] = useState(0);
   const [showFirstSentence, setShowFirstSentence] = useState(false);
   const [showSecondSentence, setShowSecondSentence] = useState(false);
   const [showThirdSentence, setShowThirdSentence] = useState(false);
@@ -86,6 +93,7 @@ export default function DailyRewardModal({
           hasBonus,
           bonusAttempted,
           bonusAchieved,
+          nextDayTimeStamp,
           xpEarned,
           isAlreadyChecked,
           coinEarned,
@@ -115,6 +123,7 @@ export default function DailyRewardModal({
             newState: card
           });
         }
+        setNextDayTimeStamp(nextDayTimeStamp);
         setCoinEarned(coinEarned);
         setIsCardOwned(isCardOwned);
         setChosenCardId(chosenCardId);
@@ -521,22 +530,26 @@ export default function DailyRewardModal({
               flexDirection: 'column'
             }}
           >
-            <p style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
-              Next Daily Reward
-            </p>
-            <Countdown
-              key={11}
-              className={css`
-                font-size: 1.3rem;
-              `}
-              date={1111111}
-              now={() => {
-                const now = Date.now() + 1111111;
-                return now;
-              }}
-              daysInHours={true}
-              onComplete={() => console.log('competed')}
-            />
+            {!loading && (
+              <>
+                <p style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
+                  Next Daily Reward
+                </p>
+                <Countdown
+                  key={nextDayTimeStamp}
+                  className={css`
+                    font-size: 1.3rem;
+                  `}
+                  date={nextDayTimeStamp}
+                  now={() => {
+                    const now = Date.now() + timeDifference;
+                    return now;
+                  }}
+                  daysInHours={true}
+                  onComplete={() => console.log('competed')}
+                />
+              </>
+            )}
           </div>
           <div
             style={{

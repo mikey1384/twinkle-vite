@@ -121,6 +121,7 @@ export default function notificationRequestHelpers({
             hasBonus,
             bonusAttempted,
             bonusAchieved,
+            nextDayTimeStamp,
             xpEarned,
             isAlreadyChecked,
             isCardOwned
@@ -137,6 +138,7 @@ export default function notificationRequestHelpers({
           hasBonus,
           bonusAttempted,
           bonusAchieved,
+          nextDayTimeStamp,
           xpEarned,
           isAlreadyChecked,
           isCardOwned
