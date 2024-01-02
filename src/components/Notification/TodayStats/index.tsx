@@ -14,6 +14,8 @@ export default function TodayStats({
   isDailyBonusButtonShown,
   dailyRewardModalShown,
   dailyBonusModalShown,
+  myAchievementsObj,
+  onSetMyAchievementsObj,
   onCollectRewardButtonClick,
   onDailyBonusButtonClick
 }: {
@@ -21,6 +23,8 @@ export default function TodayStats({
   isDailyBonusButtonShown: boolean;
   dailyRewardModalShown: boolean;
   dailyBonusModalShown: boolean;
+  myAchievementsObj: any;
+  onSetMyAchievementsObj: (myAchievementsObj: any) => void;
   onCollectRewardButtonClick: () => void;
   onDailyBonusButtonClick: () => void;
 }) {
@@ -134,7 +138,10 @@ export default function TodayStats({
               isChecked={isDailyRewardChecked}
               isDailyBonusButtonShown={isDailyBonusButtonShown}
             />
-            <AchievementProgress />
+            <AchievementProgress
+              myAchievementsObj={myAchievementsObj}
+              onSetMyAchievementsObj={onSetMyAchievementsObj}
+            />
           </div>
         ) : (
           <Loading />
