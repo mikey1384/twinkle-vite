@@ -548,7 +548,7 @@ export default function DailyRewardModal({
                     return now;
                   }}
                   daysInHours={true}
-                  onComplete={onCountdownComplete}
+                  onComplete={handleCountdownComplete}
                 />
               </>
             )}
@@ -560,7 +560,7 @@ export default function DailyRewardModal({
               justifyContent: 'center'
             }}
           >
-            <Button filled onClick={onCountdownComplete}>
+            <Button filled onClick={handleCountdownComplete}>
               testing
             </Button>
             <Button transparent onClick={handleHide}>
@@ -586,6 +586,13 @@ export default function DailyRewardModal({
       )}
     </Modal>
   );
+
+  function handleCountdownComplete() {
+    isRevealPressedRef.current = false;
+    isAlreadyCheckedRef.current = false;
+    hasBonusRef.current = false;
+    onCountdownComplete();
+  }
 
   function handleHide() {
     if (cardModalShown) {
