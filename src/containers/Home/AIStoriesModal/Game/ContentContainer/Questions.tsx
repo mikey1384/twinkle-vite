@@ -123,9 +123,24 @@ export default function Questions({
             </div>
           </div>
         ) : (
-          <GradientButton loading={isGrading} onClick={onGrade}>
-            Finish
-          </GradientButton>
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <GradientButton loading={isGrading} onClick={onGrade}>
+              Finish
+            </GradientButton>
+            <div style={{ marginTop: '2rem' }}>
+              <Button filled color="logoBlue" onClick={onReadAgain}>
+                Read Again
+              </Button>
+            </div>
+          </div>
         )}
       </div>
     </div>
