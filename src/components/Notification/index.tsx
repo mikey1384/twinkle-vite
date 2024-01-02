@@ -291,6 +291,9 @@ function Notification({
             });
           }}
           onSetIsDailyRewardChecked={setIsDailyRewardChecked}
+          onCountdownComplete={() => {
+            setDailyRewardModalShown(false);
+          }}
           onHide={() => setDailyRewardModalShown(false)}
         />
       )}

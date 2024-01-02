@@ -37,11 +37,13 @@ const colors: {
 export default function DailyRewardModal({
   onHide,
   onSetHasBonus,
-  onSetIsDailyRewardChecked
+  onSetIsDailyRewardChecked,
+  onCountdownComplete
 }: {
   onHide: () => void;
   onSetHasBonus: (hasBonus: boolean) => void;
   onSetIsDailyRewardChecked: (isChecked: boolean) => void;
+  onCountdownComplete: () => void;
 }) {
   const unlockDailyReward = useAppContext(
     (v) => v.requestHelpers.unlockDailyReward
@@ -530,7 +532,7 @@ export default function DailyRewardModal({
               flexDirection: 'column'
             }}
           >
-            {!loading && (
+            {!loading && showFifthSentence && (
               <>
                 <p style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
                   Next Daily Reward
@@ -546,7 +548,7 @@ export default function DailyRewardModal({
                     return now;
                   }}
                   daysInHours={true}
-                  onComplete={() => console.log('competed')}
+                  onComplete={onCountdownComplete}
                 />
               </>
             )}
@@ -558,6 +560,9 @@ export default function DailyRewardModal({
               justifyContent: 'center'
             }}
           >
+            <Button filled onClick={onCountdownComplete}>
+              testing
+            </Button>
             <Button transparent onClick={handleHide}>
               Close
             </Button>
