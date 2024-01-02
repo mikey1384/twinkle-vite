@@ -40,10 +40,11 @@ export default function DailyBonusModal({
   onHide: () => void;
   onSetDailyBonusAttempted?: () => void;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const { userId, twinkleXP } = useKeyContext((v) => v.myState);
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const loadDailyBonus = useAppContext((v) => v.requestHelpers.loadDailyBonus);
   const postDailyBonus = useAppContext((v) => v.requestHelpers.postDailyBonus);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
@@ -410,6 +411,10 @@ export default function DailyBonusModal({
 
       setShowFirstSentence(true);
       if (isCorrect) {
+        onSetUserState({
+          userId,
+          newState: { twinkleXP: twinkleXP + rewardAmount }
+        });
         setTimeout(() => setShowSecondSentence(true), 2000);
         setTimeout(() => setShowThirdSentence(true), 4000);
         setTimeout(() => setShowFourthSentence(true), 6000);

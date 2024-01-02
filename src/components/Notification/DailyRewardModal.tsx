@@ -51,7 +51,8 @@ export default function DailyRewardModal({
   const updateDailyRewardViewStatus = useAppContext(
     (v) => v.requestHelpers.updateDailyRewardViewStatus
   );
-  const { userId } = useKeyContext((v) => v.myState);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
   const {
     xpNumber: { color: xpNumberColor },
     link: { color: linkColor }
@@ -618,6 +619,10 @@ export default function DailyRewardModal({
         setCurrentCardId(chosenCardId);
         setAnimateReveal(true);
         onSetIsDailyRewardChecked(true);
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: twinkleCoins + coinEarned }
+        });
         setTimeout(() => setShowFirstSentence(true), 1500);
         setTimeout(() => setShowSecondSentence(true), 3500);
         setTimeout(() => setShowThirdSentence(true), 5500);
