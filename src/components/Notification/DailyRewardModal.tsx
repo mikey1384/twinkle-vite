@@ -4,6 +4,7 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
+import Countdown from 'react-countdown';
 import AICardModal from '~/components/Modals/AICardModal';
 import DailyBonusModal from './DailyBonusModal';
 import {
@@ -504,9 +505,51 @@ export default function DailyRewardModal({
         )}
       </main>
       <footer>
-        <Button transparent onClick={handleHide}>
-          Close
-        </Button>
+        <div
+          style={{
+            width: '100%',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr'
+          }}
+        >
+          <div />
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexDirection: 'column'
+            }}
+          >
+            <p style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
+              Next Daily Reward
+            </p>
+            <Countdown
+              key={11}
+              className={css`
+                font-size: 1.3rem;
+              `}
+              date={1111111}
+              now={() => {
+                const now = Date.now() + 1111111;
+                return now;
+              }}
+              daysInHours={true}
+              onComplete={() => console.log('competed')}
+            />
+          </div>
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <Button transparent onClick={handleHide}>
+              Close
+            </Button>
+          </div>
+        </div>
       </footer>
       {cardModalShown && (
         <AICardModal
