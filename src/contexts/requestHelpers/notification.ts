@@ -155,12 +155,12 @@ export default function notificationRequestHelpers({
     async loadDailyBonus() {
       try {
         const {
-          data: { questions, chosenCard, isCardOwned }
+          data: { questions, chosenCard, isCardOwned, isUnavailable }
         } = await request.get(
           `${URL}/notification/today/dailyReward/bonus`,
           auth()
         );
-        return { questions, chosenCard, isCardOwned };
+        return { questions, chosenCard, isCardOwned, isUnavailable };
       } catch (error) {
         return handleError(error);
       }
