@@ -103,9 +103,7 @@ function Notification({
   );
 
   useEffect(() => {
-    if (todayStats?.dailyRewardResultViewed) {
-      setIsDailyRewardChecked(true);
-    }
+    setIsDailyRewardChecked(todayStats?.dailyRewardResultViewed);
     setIsDailyBonusButtonShown(
       !!todayStats?.dailyHasBonus &&
         !todayStats?.dailyBonusAttempted &&
@@ -293,6 +291,15 @@ function Notification({
           onSetIsDailyRewardChecked={setIsDailyRewardChecked}
           onCountdownComplete={() => {
             setDailyRewardModalShown(false);
+            onUpdateTodayStats({
+              newStats: {
+                achievedDailyGoals: [],
+                dailyHasBonus: false,
+                dailyBonusAttempted: false,
+                dailyRewardResultViewed: false
+              }
+            });
+            setIsDailyRewardChecked(false);
           }}
           onHide={() => setDailyRewardModalShown(false)}
         />
