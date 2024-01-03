@@ -38,7 +38,7 @@ export default function Question({
   );
 
   return (
-    <div style={style}>
+    <div className="unselectable" style={style}>
       <div>
         <div>{question}</div>
       </div>
