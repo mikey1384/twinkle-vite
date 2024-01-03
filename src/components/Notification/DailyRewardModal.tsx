@@ -83,7 +83,9 @@ export default function DailyRewardModal({
   const [bonusAchieved, setBonusAchieved] = useState(false);
   const hasBonusRef = useRef(false);
   const isRevealPressedRef = useRef(false);
+  const isCoinReceivedRef = useRef(false);
   const isAlreadyCheckedRef = useRef(false);
+  const newCoinsRef = useRef(0);
 
   useEffect(() => {
     init();
@@ -144,6 +146,12 @@ export default function DailyRewardModal({
         hasBonusRef.current
       ) {
         onSetHasBonus(true);
+      }
+      if (isRevealPressedRef.current && !isCoinReceivedRef.current) {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: newCoinsRef.current }
+        });
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -602,6 +610,7 @@ export default function DailyRewardModal({
   async function handleReveal() {
     setIsRevealPressed(true);
     isRevealPressedRef.current = true;
+    newCoinsRef.current = twinkleCoins + coinEarned;
     let currentIndex = 0;
     let interval = 1500;
     let isFirstIteration = true;
@@ -623,6 +632,7 @@ export default function DailyRewardModal({
           userId,
           newState: { twinkleCoins: twinkleCoins + coinEarned }
         });
+        isCoinReceivedRef.current = true;
         setTimeout(() => setShowFirstSentence(true), 1500);
         setTimeout(() => setShowSecondSentence(true), 3500);
         setTimeout(() => setShowThirdSentence(true), 5500);
