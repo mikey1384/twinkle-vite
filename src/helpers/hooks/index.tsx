@@ -82,9 +82,7 @@ export function useLazyLoad({
       onSetVisible(true);
     } else {
       timerRef.current = setTimeout(() => {
-        if (!currentInView.current) {
-          onSetVisible(false);
-        }
+        onSetVisible(currentInView.current);
       }, delay);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
