@@ -143,7 +143,7 @@ export default function RewardPosts() {
       await markPostAsSkipped({
         earnType: 'karma',
         action: 'reward',
-        contentType: 'comment',
+        contentType: posts[0].contentType,
         contentId: posts[0].id
       });
       setSkipping(false);
