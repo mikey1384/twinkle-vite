@@ -46,6 +46,7 @@ export default function MainContent({
   const {
     byUser,
     content,
+    difficulty,
     description,
     fileName,
     filePath,
@@ -182,6 +183,7 @@ export default function MainContent({
         <ContentDisplay
           contentId={contentId}
           contentType={contentType}
+          difficulty={difficulty}
           isEditing={isEditing}
           content={content}
           displayedContent={displayedContent}

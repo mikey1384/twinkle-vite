@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
@@ -6,6 +6,7 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import RichText from '~/components/Texts/RichText';
 import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
+import { css } from '@emotion/css';
 import { Subject, User } from '~/types';
 
 Content.propTypes = {
@@ -13,6 +14,7 @@ Content.propTypes = {
   contentId: PropTypes.number,
   contentType: PropTypes.string,
   description: PropTypes.string,
+  difficulty: PropTypes.number,
   isNotification: PropTypes.bool,
   navigate: PropTypes.func.isRequired,
   onClickSecretAnswer: PropTypes.func,
@@ -31,6 +33,7 @@ export default function Content({
   contentId,
   contentType,
   description,
+  difficulty,
   isNotification,
   navigate,
   onClickSecretAnswer,
@@ -48,6 +51,7 @@ export default function Content({
   contentId: number;
   contentType: string;
   description: string;
+  difficulty?: number;
   isNotification: boolean;
   navigate: (url: string) => void;
   onClickSecretAnswer?: () => void;
@@ -63,6 +67,29 @@ export default function Content({
   title: string;
   uploader: User;
 }) {
+  const [fadeIn, setFadeIn] = useState(false);
+
+  useEffect(() => {
+    setFadeIn(true);
+  }, []);
+
+  const difficultyColor = useMemo(() => {
+    switch (difficulty) {
+      case 1:
+        return '#D0EBFF'; // Soft blue (for 'logoBlue')
+      case 2:
+        return '#FCE4EC'; // Soft pink (for 'pink')
+      case 3:
+        return '#FAD7A0'; // Soft orange (for 'orange')
+      case 4:
+        return '#F4D7FA'; // Soft magenta (for 'magenta')
+      case 5:
+        return Color.gold(0.7); // Soft gold (for 'gold')
+      default:
+        return '#f0f8ff'; // Default color
+    }
+  }, [difficulty]);
+
   const Description = useMemo(() => {
     return !stringIsEmpty(description)
       ? description.trim()
@@ -112,24 +139,42 @@ export default function Content({
       case 'aiStory':
         return (
           <div
-            style={{
-              width: '100%',
-              marginTop: 0,
-              marginBottom: '0.5rem',
-              backgroundColor: Color.extraLightGray(),
-              padding: '1rem',
-              border: '1px solid #ccc',
-              borderRadius,
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              fontFamily: '"Arial", sans-serif',
-              fontSize: '1.8rem'
-            }}
+            className={css`
+              width: 100%;
+              margin-top: 0;
+              margin-bottom: 0.5rem;
+              background-color: ${difficultyColor};
+              padding: 1rem;
+              border: 1px solid #b0c4de;
+              border-radius: 10px;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+              font-family: 'Poppins', sans-serif;
+              font-size: 1.6rem;
+              transition: box-shadow 0.2s ease;
+              line-height: 1.7;
+
+              &:hover {
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+              }
+
+              opacity: 0;
+              animation: ${fadeIn ? 'fadein 1s ease forwards' : 'none'};
+              @keyframes fadein {
+                from {
+                  opacity: 0;
+                }
+                to {
+                  opacity: 1;
+                }
+              }
+            `}
           >
             <RichText
               contentId={contentId}
               contentType={contentType}
               section="description"
               theme={theme}
+              style={{ color: '#000' }}
             >
               {story}
             </RichText>
@@ -167,6 +212,8 @@ export default function Content({
     contentId,
     theme,
     content,
+    difficultyColor,
+    fadeIn,
     story,
     Description,
     navigate,
