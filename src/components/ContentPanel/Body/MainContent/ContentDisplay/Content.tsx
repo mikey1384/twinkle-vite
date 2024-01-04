@@ -84,7 +84,7 @@ export default function Content({
       case 4:
         return '#F4D7FA'; // Soft magenta (for 'magenta')
       case 5:
-        return Color.gold(0.7); // Soft gold (for 'gold')
+        return Color.gold(0.5); // Soft gold (for 'gold')
       default:
         return '#f0f8ff'; // Default color
     }
