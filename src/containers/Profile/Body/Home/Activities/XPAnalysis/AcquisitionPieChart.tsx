@@ -16,7 +16,8 @@ const colors: Record<string, string> = {
   missions: Color.green(),
   grammar: Color.purple(),
   cards: Color.magenta(),
-  reading: Color.gold()
+  reading: Color.gold(),
+  ['daily bonus']: Color.skyBlue()
 };
 
 AcquisitionPieChart.propTypes = {
