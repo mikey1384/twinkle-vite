@@ -143,7 +143,7 @@ export default function RecommendPosts() {
       await markPostAsSkipped({
         earnType: 'karma',
         action: 'recommendation',
-        contentType: 'comment',
+        contentType: posts[0].contentType,
         contentId: posts[0].id
       });
       setSkipping(false);
