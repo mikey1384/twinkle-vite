@@ -185,7 +185,6 @@ export default function HeadingText({
         </>
       );
     case 'xpChange': {
-      console.log(contentObj);
       return (
         <>
           <UsernameText user={uploader} color={Color[linkColor]()} /> completed
