@@ -349,7 +349,7 @@ export default function BottomInterface({
           }
         `}
       >
-        {contentType !== 'pass' && (
+        {contentType !== 'pass' && contentType !== 'xpChange' && (
           <div className="left">
             {!secretHidden && (
               <LikeButton
