@@ -76,17 +76,17 @@ export default function Content({
   const difficultyColor = useMemo(() => {
     switch (difficulty) {
       case 1:
-        return '#D0EBFF'; // Soft blue (for 'logoBlue')
+        return '#D0EBFF';
       case 2:
-        return '#FCE4EC'; // Soft pink (for 'pink')
+        return '#FCE4EC';
       case 3:
-        return '#FAD7A0'; // Soft orange (for 'orange')
+        return '#FAD7A0';
       case 4:
-        return '#F4D7FA'; // Soft magenta (for 'magenta')
+        return '#F4D7FA';
       case 5:
-        return Color.gold(0.5); // Soft gold (for 'gold')
+        return Color.gold(0.5);
       default:
-        return '#f0f8ff'; // Default color
+        return '#f0f8ff';
     }
   }, [difficulty]);
 
