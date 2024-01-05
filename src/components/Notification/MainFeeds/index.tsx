@@ -59,9 +59,8 @@ export default function MainFeeds({
   const collectRewardedCoins = useAppContext(
     (v) => v.requestHelpers.collectRewardedCoins
   );
-  const { userId, rank, twinkleXP, twinkleCoins } = useKeyContext(
-    (v) => v.myState
-  );
+  const myAllTimeRank = useNotiContext((v) => v.state.myAllTimeRank);
+  const { userId, twinkleXP, twinkleCoins } = useKeyContext((v) => v.myState);
   const {
     alert: { color: alertColor },
     success: { color: successColor }
@@ -237,7 +236,7 @@ export default function MainFeeds({
           </ErrorBoundary>
         )}
       {activeTab === 'reward' && !!userId && (
-        <MyRank myId={userId} rank={rank} twinkleXP={twinkleXP} />
+        <MyRank myId={userId} rank={myAllTimeRank} twinkleXP={twinkleXP} />
       )}
       {userId && activeTab === 'notification' && notifications.length > 0 && (
         <RoundList style={{ marginTop: 0 }}>{NotificationsItems}</RoundList>
