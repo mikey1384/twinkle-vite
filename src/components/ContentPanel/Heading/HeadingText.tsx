@@ -188,7 +188,7 @@ export default function HeadingText({
       return (
         <>
           <UsernameText user={uploader} color={Color[linkColor]()} /> completed
-          the daily goals and correctly answered an{' '}
+          all 3 daily goals and correctly answered an{' '}
           <span
             style={{
               fontWeight: 'bold',
