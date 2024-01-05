@@ -51,7 +51,9 @@ export default function RecommendationInterface({
   const meetsRequirement = useMemo(() => {
     const cleanedContent = (content || '').replace(/[\W_]+/g, '');
     return (
-      cleanedContent.length > expectedContentLength && contentType !== 'pass'
+      cleanedContent.length > expectedContentLength &&
+      contentType !== 'pass' &&
+      contentType !== 'xpChange'
     );
   }, [content, contentType, expectedContentLength]);
   const [rewardDisabled, setRewardDisabled] = useState(!meetsRequirement);
