@@ -2,7 +2,7 @@ import React from 'react';
 import { Color } from '~/constants/css';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
-import { cardLevelHash } from '~/constants/defaultValues';
+import { cardLevelHash, wordLevelHash } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import { useTheme } from '~/helpers/hooks';
 
@@ -188,14 +188,14 @@ export default function HeadingText({
       return (
         <>
           <UsernameText user={uploader} color={Color[linkColor]()} /> completed
-          the daily goals and correctly answered a{' '}
+          the daily goals and correctly answered an{' '}
           <span
             style={{
               fontWeight: 'bold',
               color: Color[cardLevelHash[contentObj?.level]?.color]()
             }}
           >
-            level {contentObj?.level} vocabulary question
+            {wordLevelHash[contentObj?.level]?.label} vocabulary question
           </span>{' '}
         </>
       );
