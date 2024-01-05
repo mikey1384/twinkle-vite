@@ -91,7 +91,8 @@ export default function RecommendationInterface({
       !isRecommendedByUser &&
       isSupermod(level) &&
       contentType !== 'pass' &&
-      contentType !== 'aiStory'
+      contentType !== 'aiStory' &&
+      contentType !== 'xpChange'
     );
   }, [isRecommendedByUser, level, contentType]);
 
