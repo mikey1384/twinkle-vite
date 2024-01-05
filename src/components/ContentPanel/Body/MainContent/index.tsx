@@ -15,10 +15,12 @@ import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useContentState, useTheme } from '~/helpers/hooks';
 import { useKeyContext, useContentContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
+import { Content } from '~/types';
 
 MainContent.propTypes = {
   contentId: PropTypes.number.isRequired,
   contentType: PropTypes.string.isRequired,
+  contentObj: PropTypes.object,
   onClickSecretAnswer: PropTypes.func.isRequired,
   secretHidden: PropTypes.bool.isRequired,
   theme: PropTypes.string,
@@ -27,6 +29,7 @@ MainContent.propTypes = {
 export default function MainContent({
   contentId,
   contentType,
+  contentObj,
   onClickSecretAnswer,
   secretHidden,
   theme,
@@ -34,6 +37,7 @@ export default function MainContent({
 }: {
   contentId: number;
   contentType: string;
+  contentObj: Content;
   onClickSecretAnswer: () => void;
   secretHidden: boolean;
   theme?: string;
@@ -183,6 +187,7 @@ export default function MainContent({
         <ContentDisplay
           contentId={contentId}
           contentType={contentType}
+          contentObj={contentObj}
           difficulty={difficulty}
           isEditing={isEditing}
           content={content}

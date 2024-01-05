@@ -3,11 +3,12 @@ import PropTypes from 'prop-types';
 import ContentEditor from '../../ContentEditor';
 import Content from './Content';
 import { useAppContext, useContentContext } from '~/contexts';
-import { Subject, User } from '~/types';
+import { Subject, User, Content as ContentType } from '~/types';
 
 ContentDisplay.propTypes = {
   contentId: PropTypes.number,
   contentType: PropTypes.string,
+  contentObj: PropTypes.object,
   isEditing: PropTypes.bool,
   content: PropTypes.string,
   displayedContent: PropTypes.string,
@@ -30,6 +31,7 @@ ContentDisplay.propTypes = {
 export default function ContentDisplay({
   contentId,
   contentType,
+  contentObj,
   isEditing,
   content,
   displayedContent,
@@ -53,6 +55,7 @@ export default function ContentDisplay({
   contentId: number;
   difficulty?: number;
   contentType: string;
+  contentObj: ContentType;
   isEditing: boolean;
   content: string;
   displayedContent: string;
@@ -116,6 +119,7 @@ export default function ContentDisplay({
         <Content
           content={content}
           contentId={contentId}
+          contentObj={contentObj}
           contentType={contentType}
           difficulty={difficulty}
           description={description}

@@ -312,6 +312,7 @@ export default function Body({
         <MainContent
           contentId={contentId}
           contentType={contentType}
+          contentObj={contentObj}
           secretHidden={secretHidden}
           theme={theme}
           userId={userId}

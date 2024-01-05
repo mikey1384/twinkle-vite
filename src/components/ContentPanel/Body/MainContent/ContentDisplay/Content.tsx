@@ -1,17 +1,27 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { borderRadius, Color } from '~/constants/css';
-import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
+import {
+  cardLevelHash,
+  CIEL_TWINKLE_ID,
+  ZERO_TWINKLE_ID
+} from '~/constants/defaultValues';
+import {
+  stringIsEmpty,
+  getRenderedTextForVocabQuestions
+} from '~/helpers/stringHelpers';
+import Question from '~/components/Question';
 import RichText from '~/components/Texts/RichText';
 import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
+import SanitizedHTML from 'react-sanitized-html';
 import { css } from '@emotion/css';
-import { Subject, User } from '~/types';
+import { Subject, User, Content } from '~/types';
 
 Content.propTypes = {
   content: PropTypes.string,
   contentId: PropTypes.number,
+  contentObj: PropTypes.object,
   contentType: PropTypes.string,
   description: PropTypes.string,
   difficulty: PropTypes.number,
@@ -32,6 +42,7 @@ export default function Content({
   content,
   contentId,
   contentType,
+  contentObj,
   description,
   difficulty,
   isNotification,
@@ -50,6 +61,7 @@ export default function Content({
   content: string;
   contentId: number;
   contentType: string;
+  contentObj: Content;
   description: string;
   difficulty?: number;
   isNotification: boolean;
@@ -68,6 +80,13 @@ export default function Content({
   uploader: User;
 }) {
   const [fadeIn, setFadeIn] = useState(false);
+  const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
+  const { bonusQuestion, word, level } = useMemo(() => {
+    if (contentType !== 'xpChange') {
+      return { bonusQuestion: null, word: '', level: 0 };
+    }
+    return contentObj;
+  }, [contentObj, contentType]);
 
   useEffect(() => {
     setFadeIn(true);
@@ -194,7 +213,29 @@ export default function Content({
           </div>
         );
       case 'xpChange': {
-        return <div>this is xp change</div>;
+        const appliedQuestion = getRenderedTextForVocabQuestions(
+          bonusQuestion.question,
+          word,
+          cardLevelHash[level]?.color || 'green'
+        );
+        return (
+          <div>
+            <Question
+              key={bonusQuestion.id}
+              isGraded={false}
+              question={
+                <SanitizedHTML
+                  allowedAttributes={{ b: ['style'] }}
+                  html={appliedQuestion as string}
+                />
+              }
+              choices={bonusQuestion.choices}
+              selectedChoiceIndex={selectedChoiceIndex}
+              answerIndex={bonusQuestion.answerIndex}
+              onSelectChoice={(index) => setSelectedChoiceIndex(index)}
+            />
+          </div>
+        );
       }
       default:
         return Description ? (
@@ -220,7 +261,6 @@ export default function Content({
         ) : null;
     }
   }, [
-    borderColor,
     contentType,
     secretHidden,
     isNotification,
@@ -230,12 +270,20 @@ export default function Content({
     theme,
     content,
     difficultyColor,
+    borderColor,
     fadeIn,
     story,
     Description,
     navigate,
     targetObj?.subject?.id,
-    rootId
+    rootId,
+    bonusQuestion?.question,
+    bonusQuestion?.id,
+    bonusQuestion?.choices,
+    bonusQuestion?.answerIndex,
+    word,
+    level,
+    selectedChoiceIndex
   ]);
 
   return (
