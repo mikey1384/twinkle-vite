@@ -185,10 +185,19 @@ export default function HeadingText({
         </>
       );
     case 'xpChange': {
+      console.log(contentObj);
       return (
         <>
           <UsernameText user={uploader} color={Color[linkColor]()} /> completed
-          the daily goals and got the bonus{' '}
+          the daily goals and correctly answered a{' '}
+          <span
+            style={{
+              fontWeight: 'bold',
+              color: Color[cardLevelHash[contentObj?.level]?.color]()
+            }}
+          >
+            level {contentObj?.level} vocabulary question
+          </span>{' '}
         </>
       );
     }
