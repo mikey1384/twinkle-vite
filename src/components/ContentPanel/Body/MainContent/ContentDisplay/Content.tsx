@@ -90,6 +90,19 @@ export default function Content({
     }
   }, [difficulty]);
 
+  const borderColor = useMemo(() => {
+    const colors: {
+      [key: number]: string;
+    } = {
+      1: '#B3D1E0',
+      2: '#F2C1C6',
+      3: '#E6B280',
+      4: '#E1BAE8',
+      5: '#E6C85F'
+    };
+    return colors[difficulty || 1] || '#a4b8c4';
+  }, [difficulty]);
+
   const Description = useMemo(() => {
     return !stringIsEmpty(description)
       ? description.trim()
@@ -145,7 +158,7 @@ export default function Content({
               margin-bottom: 0.5rem;
               background-color: ${difficultyColor};
               padding: 1rem;
-              border: 1px solid #b0c4de;
+              border: 1px solid ${borderColor};
               border-radius: 10px;
               box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
               font-family: 'Poppins', sans-serif;
@@ -204,6 +217,7 @@ export default function Content({
         ) : null;
     }
   }, [
+    borderColor,
     contentType,
     secretHidden,
     isNotification,
