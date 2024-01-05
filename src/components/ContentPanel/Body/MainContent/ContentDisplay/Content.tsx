@@ -7,6 +7,7 @@ import {
   ZERO_TWINKLE_ID
 } from '~/constants/defaultValues';
 import {
+  addCommasToNumber,
   stringIsEmpty,
   getRenderedTextForVocabQuestions
 } from '~/helpers/stringHelpers';
@@ -14,9 +15,12 @@ import Question from '~/components/Question';
 import RichText from '~/components/Texts/RichText';
 import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
+import UsernameText from '~/components/Texts/UsernameText';
 import SanitizedHTML from 'react-sanitized-html';
+import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Subject, User, Content } from '~/types';
+import { useTheme } from '~/helpers/hooks';
 
 Content.propTypes = {
   content: PropTypes.string,
@@ -79,14 +83,33 @@ export default function Content({
   title: string;
   uploader: User;
 }) {
+  const { profileTheme } = useKeyContext((v) => v.myState);
   const [fadeIn, setFadeIn] = useState(false);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
-  const { bonusQuestion, word, level } = useMemo(() => {
+  const {
+    xpNumber: { color: xpNumberColor },
+    link: { color: linkColor }
+  } = useTheme(theme || profileTheme);
+  const { bonusQuestion, word, level, xpEarned, coinEarned } = useMemo(() => {
     if (contentType !== 'xpChange') {
-      return { bonusQuestion: null, word: '', level: 0 };
+      return {
+        bonusQuestion: null,
+        word: '',
+        level: 0,
+        xpEarned: 0,
+        coinEarned: 0
+      };
     }
     return contentObj;
   }, [contentObj, contentType]);
+
+  const displayedXPEarned = useMemo(() => {
+    return addCommasToNumber(xpEarned);
+  }, [xpEarned]);
+
+  const displayedCoinEarned = useMemo(() => {
+    return addCommasToNumber(coinEarned);
+  }, [coinEarned]);
 
   useEffect(() => {
     setFadeIn(true);
@@ -219,10 +242,19 @@ export default function Content({
           cardLevelHash[level]?.color || 'green'
         );
         return (
-          <div>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              width: '100%',
+              padding: '0 2rem',
+              marginBottom: '-3rem'
+            }}
+          >
             <Question
               key={bonusQuestion.id}
-              isGraded={false}
+              isGraded={true}
               question={
                 <SanitizedHTML
                   allowedAttributes={{ b: ['style'] }}
@@ -232,8 +264,27 @@ export default function Content({
               choices={bonusQuestion.choices}
               selectedChoiceIndex={selectedChoiceIndex}
               answerIndex={bonusQuestion.answerIndex}
-              onSelectChoice={(index) => setSelectedChoiceIndex(index)}
+              onSelectChoice={setSelectedChoiceIndex}
             />
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
+              correctly answered this bonus question and earned{' '}
+              <b>
+                <span
+                  style={{
+                    color: Color[xpNumberColor]()
+                  }}
+                >
+                  {displayedXPEarned}
+                </span>{' '}
+                <span style={{ color: Color.gold() }}>XP</span>
+              </b>{' '}
+              on top of{' '}
+              <b style={{ color: Color.brownOrange() }}>
+                {displayedCoinEarned} coins
+              </b>{' '}
+              from completing all daily goals
+            </div>
           </div>
         );
       }
@@ -264,8 +315,7 @@ export default function Content({
     contentType,
     secretHidden,
     isNotification,
-    uploader?.id,
-    uploader?.username,
+    uploader,
     contentId,
     theme,
     content,
@@ -283,7 +333,11 @@ export default function Content({
     bonusQuestion?.answerIndex,
     word,
     level,
-    selectedChoiceIndex
+    selectedChoiceIndex,
+    linkColor,
+    xpNumberColor,
+    displayedXPEarned,
+    displayedCoinEarned
   ]);
 
   return (

@@ -227,7 +227,7 @@ export default function DailyBonusModal({
                     choices={question.choices}
                     selectedChoiceIndex={selectedChoiceIndex}
                     answerIndex={question.answerIndex}
-                    onSelectChoice={(index) => setSelectedChoiceIndex(index)}
+                    onSelectChoice={setSelectedChoiceIndex}
                   />
                 );
               }
