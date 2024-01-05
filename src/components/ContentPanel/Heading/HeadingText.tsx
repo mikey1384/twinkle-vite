@@ -184,6 +184,14 @@ export default function HeadingText({
           />{' '}
         </>
       );
+    case 'xpChange': {
+      return (
+        <>
+          <UsernameText user={uploader} color={Color[linkColor]()} /> completed
+          the daily goals and got the bonus{' '}
+        </>
+      );
+    }
     default:
       return <span>Error</span>;
   }
