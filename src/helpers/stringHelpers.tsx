@@ -1,6 +1,7 @@
 import React from 'react';
 import parse from 'html-react-parser';
 import Link from '~/components/Link';
+import { Color } from '~/constants/css';
 import { charLimit } from '~/constants/defaultValues';
 
 const urlRegex =
@@ -477,6 +478,20 @@ export function getFileInfoFromFileName(fileName: string): {
     }
     return 'other';
   }
+}
+export function getRenderedTextForVocabQuestions(
+  text: string,
+  word: string,
+  color: string
+) {
+  if (word) {
+    const regex = new RegExp(word, 'gi');
+    return text.replace(
+      regex,
+      `<b style="color:${Color[color]()}">${word}</b>`
+    );
+  }
+  return text || '';
 }
 
 export function hashify(string: string): string {

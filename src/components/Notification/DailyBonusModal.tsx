@@ -7,7 +7,10 @@ import SanitizedHTML from 'react-sanitized-html';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import {
+  addCommasToNumber,
+  getRenderedTextForVocabQuestions
+} from '~/helpers/stringHelpers';
 import {
   cardLevelHash,
   qualityProps,
@@ -206,7 +209,7 @@ export default function DailyBonusModal({
                 choices: string[];
                 answerIndex: number;
               }) => {
-                const appliedQuestion = getRenderedText(
+                const appliedQuestion = getRenderedTextForVocabQuestions(
                   question.question,
                   chosenCard?.word,
                   cardLevelHash[chosenCard?.level]?.color || 'green'
@@ -423,16 +426,5 @@ export default function DailyBonusModal({
     } catch (error) {
       console.error(error);
     }
-  }
-
-  function getRenderedText(text: string, word: string, color: string) {
-    if (word) {
-      const regex = new RegExp(word, 'gi');
-      return text.replace(
-        regex,
-        `<b style="color:${Color[color]()}">${word}</b>`
-      );
-    }
-    return text || '';
   }
 }
