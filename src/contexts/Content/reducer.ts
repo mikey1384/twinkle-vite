@@ -1664,18 +1664,20 @@ export default function ContentReducer(
           const prevContentState = newState[contentKey];
           newState[contentKey] = {
             ...prevContentState,
-            comments: prevContentState.comments.map((comment: Comment) => {
-              if (
-                comment.id === action.data.commentId ||
-                comment.id === action.data.replyId
-              ) {
-                return {
-                  ...comment,
-                  replies: (comment.replies || []).concat(action.data)
-                };
+            comments: (prevContentState.comments || []).map(
+              (comment: Comment) => {
+                if (
+                  comment.id === action.data.commentId ||
+                  comment.id === action.data.replyId
+                ) {
+                  return {
+                    ...comment,
+                    replies: (comment.replies || []).concat(action.data)
+                  };
+                }
+                return comment;
               }
-              return comment;
-            })
+            )
           };
         }
       }
