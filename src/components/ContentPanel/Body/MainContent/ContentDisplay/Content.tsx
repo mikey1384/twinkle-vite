@@ -193,6 +193,9 @@ export default function Content({
             </RichText>
           </div>
         );
+      case 'xpChange': {
+        return <div>this is xp change</div>;
+      }
       default:
         return Description ? (
           <div
