@@ -57,11 +57,17 @@ export default function RewardText({
       }
     } else if (rootType === 'aiStory') {
       target = 'AI Story';
+    } else if (rootType === 'xpChange') {
+      target = 'daily bonus achievement';
     } else {
       target = rootType;
     }
-    return `this ${target}`;
-  }, [isTask, rootTargetType, rootType]);
+    return `${
+      rootType === 'pass' || rootType === 'xpChange'
+        ? `${targetObj?.user?.username}'s`
+        : 'this'
+    } ${target}`;
+  }, [isTask, rootTargetType, rootType, targetObj?.user?.username]);
 
   if (rewardType === 'Twinkle') {
     return (
@@ -119,18 +125,26 @@ export default function RewardText({
         color={Color[linkColor]()}
       />{' '}
       <b style={{ color: Color[rewardColor]() }}>also recommended</b>{' '}
-      <ContentLink
-        style={{
-          color: rootType === 'pass' ? missionLinkColor : contentLinkColor
-        }}
-        content={{
-          id: rootId,
-          missionType: rootMissionType
-        }}
-        contentType={rootType === 'pass' ? rootTargetType : rootType}
-        rootType={rootTargetType}
-        label={recommendationTargetLabel}
-      />{' '}
+      {rootType === 'xpChange' ? (
+        <b
+          style={{
+            color: missionLinkColor
+          }}
+        >{`${targetObj?.user?.username}${`'s`} daily bonus achievement`}</b>
+      ) : (
+        <ContentLink
+          style={{
+            color: rootType === 'pass' ? missionLinkColor : contentLinkColor
+          }}
+          content={{
+            id: rootId,
+            missionType: rootMissionType
+          }}
+          contentType={rootType === 'pass' ? rootTargetType : rootType}
+          rootType={rootTargetType}
+          label={recommendationTargetLabel}
+        />
+      )}{' '}
       <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
         You earn {rewardAmount} Twinkle Coin
         {rewardAmount > 1 ? 's' : ''}!

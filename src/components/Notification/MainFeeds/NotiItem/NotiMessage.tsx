@@ -2,6 +2,7 @@ import React from 'react';
 import { stringIsEmpty, truncateText } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { Link } from 'react-router-dom';
+import { User } from '~/types';
 import ContentLink from '~/components/ContentLink';
 
 export default function RenderMessage({
@@ -63,6 +64,7 @@ export default function RenderMessage({
     missionType: string;
     passType: string;
     userId: number;
+    user: User;
   };
   targetSubject: {
     content: string;
@@ -238,6 +240,8 @@ export default function RenderMessage({
           }
         } else if (rewardRootType === 'aiStory') {
           rewardRootLabel = 'AI Story';
+        } else if (rewardRootType === 'xpChange') {
+          rewardRootLabel = 'daily bonus achievement';
         } else {
           rewardRootLabel = rewardRootType;
         }
@@ -245,26 +249,36 @@ export default function RenderMessage({
         return (
           <>
             <b style={{ color: Color[rewardColor]() }}>also recommended</b>{' '}
-            <ContentLink
-              style={{
-                color:
+            {rewardRootType === 'xpChange' ? (
+              <b
+                style={{ color: missionLinkColor }}
+              >{`${targetObj?.user?.username}'s daily bonus achievement`}</b>
+            ) : (
+              <ContentLink
+                style={{
+                  color:
+                    rewardRootType === 'pass'
+                      ? missionLinkColor
+                      : contentLinkColor
+                }}
+                content={{
+                  id: rewardRootId,
+                  title: `${
+                    rewardRootType === 'pass'
+                      ? `${targetObj?.user?.username}'s`
+                      : 'this'
+                  } ${rewardRootLabel}`,
+                  missionType: rewardRootMissionType
+                }}
+                contentType={
                   rewardRootType === 'pass'
-                    ? missionLinkColor
-                    : contentLinkColor
-              }}
-              content={{
-                id: rewardRootId,
-                title: `this ${rewardRootLabel}`,
-                missionType: rewardRootMissionType
-              }}
-              contentType={
-                rewardRootType === 'pass'
-                  ? rewardRootTargetType
-                  : rewardRootType
-              }
-              rootType={rewardRootTargetType}
-              label=""
-            />{' '}
+                    ? rewardRootTargetType
+                    : rewardRootType
+                }
+                rootType={rewardRootTargetType}
+                label=""
+              />
+            )}{' '}
             <p style={{ fontWeight: 'bold', color: Color.brownOrange() }}>
               You earn {actionObj.amount} Twinkle Coin
               {actionObj.amount > 1 ? 's' : ''}!
