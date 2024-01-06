@@ -1623,6 +1623,7 @@ function MessagesContainer({
           }
           onSelectNewOwner={handleSelectNewOwner}
           onScrollToBottom={handleScrollToBottom}
+          selectingNewOwner={selectingNewOwner}
           theme={currentChannel.theme}
           unlockedThemes={currentChannel.unlockedThemes}
           userIsChannelOwner={currentChannel.creatorId === userId}
