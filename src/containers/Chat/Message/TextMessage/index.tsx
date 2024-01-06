@@ -144,7 +144,7 @@ function TextMessage({
         ) : (
           <>
             <div className={MessageStyle.messageWrapper}>
-              {Prefix}
+              <div>{Prefix}</div>
               {isSpoiler ? (
                 <Spoiler content={content} />
               ) : stringIsEmpty(content) ? null : (
@@ -169,7 +169,6 @@ function TextMessage({
             {!!isReloadedSubject && !!numMsgs && numMsgs > 0 && (
               <div className={MessageStyle.relatedConversationsButton}>
                 <Button
-                  filled
                   color="logoBlue"
                   skeuomorphic
                   onClick={() => onShowSubjectMsgsModal({ subjectId, content })}

@@ -27,6 +27,7 @@ export const MessageStyle = {
     }
   `,
   relatedConversationsButton: css`
-    margin-top: 1rem;
+    margin-top: 2rem;
+    margin-bottom: -1rem;
   `
 };
