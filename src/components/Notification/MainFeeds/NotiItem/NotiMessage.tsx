@@ -182,15 +182,25 @@ export default function RenderMessage({
             recommended
           </span>{' '}
           <span>your</span>{' '}
-          <ContentLink
-            contentType={targetObj.contentType}
-            rootType={targetObj.passType}
-            content={{
-              id: contentPath,
-              title: contentPreview
-            }}
-            label=""
-          />
+          {targetObj.contentType === 'xpChange' ? (
+            <b
+              style={{
+                color: missionLinkColor
+              }}
+            >
+              daily bonus achievement
+            </b>
+          ) : (
+            <ContentLink
+              contentType={targetObj.contentType}
+              rootType={targetObj.passType}
+              content={{
+                id: contentPath,
+                title: contentPreview
+              }}
+              label=""
+            />
+          )}
         </>
       );
     }
