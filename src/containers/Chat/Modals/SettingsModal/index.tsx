@@ -29,6 +29,7 @@ export default function SettingsModal({
   onPurchaseSubject,
   onSelectNewOwner,
   onScrollToBottom,
+  selectingNewOwner,
   theme,
   unlockedThemes,
   userIsChannelOwner
@@ -44,6 +45,7 @@ export default function SettingsModal({
   onPurchaseSubject: () => void;
   onSelectNewOwner: (v: any) => void;
   onScrollToBottom: () => void;
+  selectingNewOwner: boolean;
   theme: string;
   unlockedThemes: string[];
   userIsChannelOwner: boolean;
@@ -304,6 +306,7 @@ export default function SettingsModal({
       </footer>
       {selectNewOwnerModalShown && (
         <SelectNewOwnerModal
+          loading={selectingNewOwner}
           modalOverModal
           onHide={() => setSelectNewOwnerModalShown(false)}
           members={members}
