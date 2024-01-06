@@ -44,7 +44,7 @@ export default function FilterModal({
   }, [selectedFilter]);
 
   return (
-    <Modal closeWhenClickedOutside={false} onHide={handleHide}>
+    <Modal wrapped closeWhenClickedOutside={false} onHide={handleHide}>
       <header>Search Cards</header>
       <main>
         {filterComponents.map((component, index) => {
