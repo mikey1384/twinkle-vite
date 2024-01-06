@@ -118,10 +118,6 @@ export default function Main({
     contentType: rootContent?.contentType || '',
     contentId: rootContent?.id || 0
   });
-  const isRepliesOfReply = useMemo(
-    () => parent.contentType === 'comment' && parent.commentId !== parent.id,
-    [parent]
-  );
   const pinnedCommentId = useMemo(() => {
     if (isSubjectPannelComments) {
       return subject?.pinnedCommentId;
@@ -207,8 +203,7 @@ export default function Main({
     async function handleLoadMoreComments() {
       if (!isLoadingMore) {
         setIsLoadingMore(true);
-        const lastCommentLocation =
-          inputAtBottom && !isRepliesOfReply ? 0 : comments.length - 1;
+        const lastCommentLocation = inputAtBottom ? 0 : comments.length - 1;
         const lastCommentId = comments[lastCommentLocation]
           ? comments[lastCommentLocation].id
           : null;
@@ -218,11 +213,11 @@ export default function Main({
             contentType: parent.contentType,
             lastCommentId,
             limit: commentsLoadLimit,
-            isRepliesOfReply
+            isRepliesOfReply: false
           });
           onLoadMoreComments({
             ...data,
-            isRepliesOfReply,
+            isRepliesOfReply: false,
             contentId: parent.contentId,
             contentType: parent.contentType
           });
@@ -241,7 +236,6 @@ export default function Main({
     inputAtBottom,
     isLoading,
     isLoadingMore,
-    isRepliesOfReply,
     loadComments,
     loadMoreButtonColor,
     onLoadMoreComments,
@@ -275,10 +269,7 @@ export default function Main({
                 theme={theme}
               />
             )}
-          {inputAtBottom &&
-            !isRepliesOfReply &&
-            loadMoreShown &&
-            renderLoadMoreButton()}
+          {inputAtBottom && loadMoreShown && renderLoadMoreButton()}
           {!isLoading &&
             (isPreview ? previewComments : comments)?.map((comment) => (
               <Comment
@@ -295,9 +286,7 @@ export default function Main({
                 key={comment.id}
               />
             ))}
-          {(!inputAtBottom || isRepliesOfReply) &&
-            loadMoreShown &&
-            renderLoadMoreButton()}
+          {!inputAtBottom && loadMoreShown && renderLoadMoreButton()}
         </div>
       ) : null}
       {inputAtBottom &&
