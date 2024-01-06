@@ -9,7 +9,6 @@ export default function RewardItem({
   linkColor,
   rewardColor,
   missionColor,
-  reward,
   reward: {
     id,
     isTask,
