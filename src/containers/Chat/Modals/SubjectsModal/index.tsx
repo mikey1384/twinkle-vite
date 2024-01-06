@@ -63,7 +63,7 @@ export default function SubjectsModal({
   }, []);
 
   return (
-    <Modal onHide={onHide}>
+    <Modal wrapped onHide={onHide}>
       <header>View Topics</header>
       <main>
         {!loaded && <Loading />}
