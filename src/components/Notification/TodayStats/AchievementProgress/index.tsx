@@ -27,6 +27,9 @@ export default function AchievementProgress({
     (v) => v.requestHelpers.loadMyAchievements
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onSetIsAchievementsLoaded = useAppContext(
+    (v) => v.user.actions.onSetIsAchievementsLoaded
+  );
   const { userId } = useKeyContext((v) => v.myState);
 
   useEffect(() => {
@@ -41,8 +44,9 @@ export default function AchievementProgress({
       }
       onSetUserState({
         userId,
-        newState: { unlockedAchievementIds, isAchievementsLoaded: true }
+        newState: { unlockedAchievementIds }
       });
+      onSetIsAchievementsLoaded(true);
       onSetMyAchievementsObj(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
