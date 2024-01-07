@@ -121,7 +121,7 @@ export default function NavMenu({
     };
 
     async function handleNewReward({ receiverId }: { receiverId: number }) {
-      if (receiverId === userId) {
+      if (userId && receiverId === userId) {
         handleLoadRewards();
       }
     }
