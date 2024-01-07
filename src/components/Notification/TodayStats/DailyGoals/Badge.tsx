@@ -29,10 +29,12 @@ const gradientMap: {
 
 export default function Badge({
   children,
-  isAchieved
+  isAchieved,
+  isAmped
 }: {
   children: string;
   isAchieved: boolean;
+  isAmped: boolean;
 }) {
   const navigate = useNavigate();
   const onUpdateSelectedChannelId = useChatContext(
@@ -53,13 +55,14 @@ export default function Badge({
   const timerIdRef = useRef<any>(null);
   const [loadingWordle, setLoadingWordle] = useState(false);
 
-  const background = useMemo(
-    () =>
-      isAchieved && !loadingWordle
-        ? gradientMap[children]?.achieved
-        : gradientMap[children]?.notAchieved || 'var(--color-not-achieved)',
-    [children, isAchieved, loadingWordle]
-  );
+  const background = useMemo(() => {
+    if (isAmped) {
+      return gradientMap[children]?.achieved;
+    }
+    return isAchieved && !loadingWordle
+      ? gradientMap[children]?.achieved
+      : gradientMap[children]?.notAchieved || 'var(--color-not-achieved)';
+  }, [children, isAchieved, isAmped, loadingWordle]);
 
   useEffect(() => {
     chatLoadedRef.current = chatLoaded;
@@ -91,11 +94,14 @@ export default function Badge({
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         cursor: ${loadingWordle ? 'default' : 'pointer'};
         transition: background-color 0.3s ease, transform 0.3s ease;
+        transform: ${isAmped ? 'scale(1.1)' : 'scale(1)'};
         background: ${background};
 
         &:hover {
           transform: scale(1.1);
-          background: ${isAchieved ? '' : gradientMap[children]?.notAchieved};
+          ${isAchieved || isAmped
+            ? ''
+            : `background: ${gradientMap[children]?.notAchieved}`};
         }
       `}
     >
