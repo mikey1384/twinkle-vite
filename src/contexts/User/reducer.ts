@@ -172,6 +172,14 @@ export default function UserReducer(
         ...state,
         profilesLoaded: action.loaded
       };
+    case 'SET_IS_ACHIEVEMENTS_LOADED':
+      return {
+        ...state,
+        myState: {
+          ...state.myState,
+          isAchievementsLoaded: action.isAchievementsLoaded
+        }
+      };
     case 'SET_USER_STATE':
       return {
         ...state,

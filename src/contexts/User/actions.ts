@@ -67,6 +67,12 @@ export default function UserActions(dispatch: Dispatch) {
         achievementsObj
       });
     },
+    onSetIsAchievementsLoaded(isAchievementsLoaded: boolean) {
+      return dispatch({
+        type: 'SET_IS_ACHIEVEMENTS_LOADED',
+        isAchievementsLoaded
+      });
+    },
     onSearchUsers(users: any[]) {
       return dispatch({
         type: 'SEARCH_USERS',
