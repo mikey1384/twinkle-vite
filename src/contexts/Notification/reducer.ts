@@ -148,6 +148,17 @@ export default function NotiReducer(
           loaded: true
         }
       };
+    case 'RESET_TODAY_STATS':
+      return {
+        ...state,
+        todayStats: {
+          myAchievementsObj: {},
+          achievedDailyGoals: [],
+          loaded: false,
+          xpEarned: 0,
+          coinsEarned: 0
+        }
+      };
     default:
       return state;
   }
