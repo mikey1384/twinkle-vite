@@ -238,10 +238,11 @@ export default function Stories() {
                 </Banner>
               )}
               {(feeds || []).map(
-                (feed: { [key: string]: any } = {}, index: number) =>
-                  feed.contentId ? (
+                (feed: { [key: string]: any } = {}, index: number) => {
+                  const panelKey = `${category}-${subFilter}-${feed.contentId}-${feed.contentType}-${index}`;
+                  return feed.contentId ? (
                     <ContentPanel
-                      key={`${category}-${subFilter}-${feed.contentId}-${feed.contentType}`}
+                      key={panelKey}
                       style={{
                         marginBottom: '1rem'
                       }}
@@ -252,7 +253,8 @@ export default function Stories() {
                       commentsLoadLimit={5}
                       numPreviewComments={1}
                     />
-                  ) : null
+                  ) : null;
+                }
               )}
               {loadMoreButton ? (
                 <LoadMoreButton
