@@ -250,8 +250,8 @@ export default function AICardModal({
               grid-template-columns: 1fr 1.5fr 1fr;
               grid-row-gap: 2rem;
               @media (max-width: ${mobileMaxWidth}) {
-                grid-template-columns: 1fr 1fr; // Two columns on mobile
-                grid-template-rows: auto auto; // Two rows on mobile
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto;
               }
             `}
           >
@@ -274,7 +274,7 @@ export default function AICardModal({
                 grid-column: span 1;
                 grid-row: span 1;
                 @media (max-width: ${mobileMaxWidth}) {
-                  grid-column: 2; // Second column on mobile
+                  grid-column: 2;
                 }
               `}
             >
