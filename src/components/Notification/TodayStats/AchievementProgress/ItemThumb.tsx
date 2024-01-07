@@ -41,14 +41,14 @@ export default function ItemThumb({
       const { currentValue, targetValue } = progressObj;
       return Math.ceil(100 * (currentValue / targetValue));
     } else {
-      return 0;
+      return null;
     }
   }, [progressObj]);
 
   const thumbRadius = useMemo(() => parseInt(thumbSize) / 2, [thumbSize]);
   const circumference = useMemo(() => 2 * Math.PI * thumbRadius, [thumbRadius]);
   const strokeDashoffset = useMemo(
-    () => -1 * (progress / 100) * circumference,
+    () => -1 * ((progress || 0) / 100) * circumference,
     [progress, circumference]
   );
 
@@ -117,7 +117,11 @@ export default function ItemThumb({
             color: white;
           `}
         >
-          {isUnlocked ? <Icon icon="check" size="lg" /> : <>{progress || 0}%</>}
+          {isUnlocked ? (
+            <Icon icon="check" size="lg" />
+          ) : progress !== null ? (
+            <>{progress || 0}%</>
+          ) : null}
         </div>
         <img
           ref={ThumbLabelContainerRef}

@@ -1,7 +1,14 @@
-import React, { useCallback } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import Badge from './Badge';
 import CollectRewardsButton from './CollectRewardsButton';
 import DailyBonusButton from './DailyBonusButton';
+import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 const badgeItems = ['W', 'G', 'A'];
@@ -27,7 +34,30 @@ export default function DailyGoals({
     (goal: any) => achievedGoals.includes(goal),
     [achievedGoals]
   );
-  const allGoalsAchieved = achievedGoals.length === badgeItems.length;
+  const { isAchievementsLoaded } = useKeyContext((v) => v.myState);
+  const [ampedBadgeIndex, setAmpedBadgeIndex] = useState(0);
+  const intervalRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!isAchievementsLoaded) {
+      intervalRef.current = setInterval(() => {
+        setAmpedBadgeIndex((prevIndex: number) =>
+          prevIndex < badgeItems.length - 1 ? prevIndex + 1 : 0
+        );
+      }, 450);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isAchievementsLoaded]);
+
+  const allGoalsAchieved = useMemo(
+    () => achievedGoals.length === badgeItems.length,
+    [achievedGoals.length]
+  );
 
   return (
     <div>
@@ -39,8 +69,12 @@ export default function DailyGoals({
           align-items: center;
         `}
       >
-        {badgeItems.map((item) => (
-          <Badge key={item} isAchieved={isAchieved(item)}>
+        {badgeItems.map((item, index) => (
+          <Badge
+            key={item}
+            isAmped={!isAchievementsLoaded && index === ampedBadgeIndex}
+            isAchieved={isAchieved(item)}
+          >
             {item}
           </Badge>
         ))}

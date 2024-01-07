@@ -39,7 +39,10 @@ export default function AchievementProgress({
           unlockedAchievementIds.push(data[key].id);
         }
       }
-      onSetUserState({ userId, newState: { unlockedAchievementIds } });
+      onSetUserState({
+        userId,
+        newState: { unlockedAchievementIds, isAchievementsLoaded: true }
+      });
       onSetMyAchievementsObj(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
