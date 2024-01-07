@@ -437,7 +437,7 @@ export default function Main({
       }
     } else {
       if (!stringIsEmpty(currentPathId as string)) {
-        onUpdateChatType('default');
+        onUpdateChatType(null);
       }
       if (currentPathId === 'new') {
         prevPathId.current = currentPathId;
@@ -475,7 +475,7 @@ export default function Main({
       async function attemptHandleChannelEnter() {
         try {
           loadingRef.current = true;
-          onUpdateChatType('default');
+          onUpdateChatType(null);
           const { isAccessible } = await checkChatAccessible(pathId);
           if (!isAccessible) {
             onUpdateSelectedChannelId(GENERAL_CHAT_ID);
@@ -520,6 +520,7 @@ export default function Main({
             return;
           }
           onEnterChannelWithId(data);
+          navigate(`/chat/${data.channel.pathId}`, { replace: true });
         } catch (error) {
           console.error(error);
           attempts++;
