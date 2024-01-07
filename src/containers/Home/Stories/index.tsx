@@ -193,7 +193,7 @@ export default function Stories() {
         />
         <div style={{ width: '100%' }}>
           {loadingPosts ? <Loading text="Loading Posts..." /> : null}
-          {loaded && feeds?.length === 0 && !loadingPosts && (
+          {loaded && feeds?.length === 0 && !loadingPosts ? (
             <div
               style={{
                 width: '100%',
@@ -207,10 +207,10 @@ export default function Stories() {
                 {username ? beTheFirstLabel : hiThereLabel}
               </h1>
             </div>
-          )}
-          {loaded && !loadingPosts && feeds?.length > 0 && (
+          ) : null}
+          {loaded && !loadingPosts && feeds?.length > 0 ? (
             <>
-              {feedsOutdated && (
+              {feedsOutdated ? (
                 <Banner
                   color={alertColor}
                   onClick={() => window.location.reload()}
@@ -220,7 +220,7 @@ export default function Stories() {
                 >
                   Tap to See New Posts!
                 </Banner>
-              )}
+              ) : null}
               {numNewPosts > 0 && !feedsOutdated && (
                 <Banner
                   color={alertColor}
@@ -254,14 +254,14 @@ export default function Stories() {
                     />
                   ) : null
               )}
-              {loadMoreButton && (
+              {loadMoreButton ? (
                 <LoadMoreButton
                   style={{ marginBottom: '1rem' }}
                   onClick={handleLoadMoreFeeds}
                   loading={loadingMore}
                   filled
                 />
-              )}
+              ) : null}
               <div
                 className={css`
                   display: ${loadMoreButton ? 'none' : 'block'};
@@ -273,7 +273,7 @@ export default function Stories() {
                 `}
               />
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </ErrorBoundary>
