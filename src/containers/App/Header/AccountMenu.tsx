@@ -2,7 +2,12 @@ import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 import { socket } from '~/constants/io';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -37,6 +42,7 @@ export default function AccountMenu({
     (v) => v.user.actions.onOpenSigninModal
   );
   const onResetChat = useChatContext((v) => v.actions.onResetChat);
+  const onResetTodayStats = useNotiContext((v) => v.actions.onResetTodayStats);
 
   const menuProps = useMemo(() => {
     const result = [
@@ -132,6 +138,7 @@ export default function AccountMenu({
     socket.disconnect();
     onLogout();
     onResetChat();
+    onResetTodayStats();
     socket.connect();
   }
 }
