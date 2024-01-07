@@ -147,7 +147,7 @@ export function addEmoji(string: string): string {
     ':joy:': '😂',
     ':key:': '🔑',
     ':korea:': '🇰🇷',
-    ':kiss:': '💋',
+    ':kiss:': '😚',
     ':kissing:': '😗',
     ':laugh:': '🤣',
     ':light:': '💡',
