@@ -38,6 +38,11 @@ export default function DailyGoals({
   const [ampedBadgeIndex, setAmpedBadgeIndex] = useState(0);
   const intervalRef = useRef<any>(null);
 
+  const allGoalsAchieved = useMemo(
+    () => achievedGoals.length === badgeItems.length,
+    [achievedGoals.length]
+  );
+
   useEffect(() => {
     if (!isAchievementsLoaded) {
       intervalRef.current = setInterval(() => {
@@ -52,12 +57,7 @@ export default function DailyGoals({
         clearInterval(intervalRef.current);
       }
     };
-  }, [isAchievementsLoaded]);
-
-  const allGoalsAchieved = useMemo(
-    () => achievedGoals.length === badgeItems.length,
-    [achievedGoals.length]
-  );
+  }, [allGoalsAchieved, isAchievementsLoaded]);
 
   return (
     <div>

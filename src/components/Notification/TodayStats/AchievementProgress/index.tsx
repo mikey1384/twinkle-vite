@@ -30,7 +30,7 @@ export default function AchievementProgress({
   const onSetIsAchievementsLoaded = useAppContext(
     (v) => v.user.actions.onSetIsAchievementsLoaded
   );
-  const { userId } = useKeyContext((v) => v.myState);
+  const { userId, isAchievementsLoaded } = useKeyContext((v) => v.myState);
 
   useEffect(() => {
     if (userId) init();
@@ -52,7 +52,7 @@ export default function AchievementProgress({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, myAttempts]);
 
-  return (
+  return isAchievementsLoaded ? (
     <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
       <div style={{ display: 'flex', marginTop: '0.5rem' }}>
         {shownAchievements.map((key) => {
@@ -77,5 +77,5 @@ export default function AchievementProgress({
         })}
       </div>
     </div>
-  );
+  ) : null;
 }
