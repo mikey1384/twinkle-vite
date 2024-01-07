@@ -113,19 +113,15 @@ export default function Badge({
   function handleBadgeClick() {
     switch (children) {
       case 'W':
-        // Example action for 'W' badge
         handleWordleButtonClick();
         break;
       case 'G':
-        // Example action for 'G' badge
         onSetGrammarGameModalShown(true);
         break;
       case 'A':
-        // Example action for 'A' badge
         onSetAIStoriesModalShown(true);
         break;
       default:
-        // Default action or no action
         break;
     }
   }
