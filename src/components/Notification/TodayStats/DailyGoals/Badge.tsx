@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useChatContext, useHomeContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
+import Icon from '~/components/Icon';
 import {
   GENERAL_CHAT_ID,
   GENERAL_CHAT_PATH_ID
@@ -105,7 +106,7 @@ export default function Badge({
         }
       `}
     >
-      {children}
+      {loadingWordle ? <Icon icon="spinner" pulse /> : children}
     </div>
   );
 
