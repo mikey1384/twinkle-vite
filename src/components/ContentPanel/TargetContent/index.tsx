@@ -264,7 +264,7 @@ export default function TargetContent({
 
   return (
     <ErrorBoundary
-      componentPath="ContentPanel/TargetContent/index"
+      componentPath="ContentPanel/TargetContent"
       className={`${className} ${css`
         font-size: 1.6rem;
         white-space: pre-wrap;

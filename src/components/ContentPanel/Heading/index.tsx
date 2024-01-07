@@ -1,7 +1,8 @@
-import React, { memo, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import HeadingText from './HeadingText';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { useNavigate } from 'react-router-dom';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { css } from '@emotion/css';
@@ -13,7 +14,7 @@ Heading.propTypes = {
   theme: PropTypes.string,
   contentObj: PropTypes.object.isRequired
 };
-function Heading({
+export default function Heading({
   action,
   theme,
   contentObj,
@@ -67,52 +68,52 @@ function Heading({
   ]);
 
   return (
-    <header className="heading">
-      <div>
-        <ProfilePic
-          style={{ width: '6rem' }}
-          userId={uploader.id}
-          profilePicUrl={uploader.profilePicUrl || ''}
-        />
-      </div>
-      <div
-        style={{
-          width: '90%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginLeft: '1rem'
-        }}
-      >
+    <ErrorBoundary componentPath="ContentPanel/Heading">
+      <header className="heading">
+        <div>
+          <ProfilePic
+            style={{ width: '6rem' }}
+            userId={uploader.id}
+            profilePicUrl={uploader.profilePicUrl || ''}
+          />
+        </div>
         <div
           style={{
-            width: '100%'
+            width: '90%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginLeft: '1rem'
           }}
         >
-          <span className="title">
-            <HeadingText
-              action={action}
-              contentObj={contentObj}
-              rootObj={rootObj}
-              theme={theme}
-            />
-          </span>
-          <small
-            className={`timestamp ${css`
-              cursor: pointer;
-              &:hover {
-                text-decoration: underline;
-              }
-            `}`}
-            onClick={() => navigate(timeStampLink)}
+          <div
+            style={{
+              width: '100%'
+            }}
           >
-            {timeStamp ? `(${timeSince(timeStamp)})` : ''}
-          </small>
+            <span className="title">
+              <HeadingText
+                action={action}
+                contentObj={contentObj}
+                rootObj={rootObj}
+                theme={theme}
+              />
+            </span>
+            <small
+              className={`timestamp ${css`
+                cursor: pointer;
+                &:hover {
+                  text-decoration: underline;
+                }
+              `}`}
+              onClick={() => navigate(timeStampLink)}
+            >
+              {timeStamp ? `(${timeSince(timeStamp)})` : ''}
+            </small>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </ErrorBoundary>
   );
 }
-
-export default memo(Heading);
