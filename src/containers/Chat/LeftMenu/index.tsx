@@ -84,7 +84,7 @@ export default function LeftMenu({
   const subchannelsShown = useMemo(() => {
     return (
       !!subchannelIds?.length &&
-      chatType === 'default' &&
+      !chatType &&
       !(loadingVocabulary || loadingAICardChat)
     );
   }, [chatType, loadingVocabulary, loadingAICardChat, subchannelIds?.length]);

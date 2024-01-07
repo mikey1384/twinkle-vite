@@ -463,7 +463,7 @@ export default function ChatReducer(
       const startMessageId = uuidv1();
       return {
         ...state,
-        chatType: 'default',
+        chatType: null,
         subject: {},
         homeChannelIds: [channelId].concat(state.homeChannelIds),
         favoriteChannelIds: [channelId].concat(state.favoriteChannelIds),
@@ -738,7 +738,7 @@ export default function ChatReducer(
 
       return {
         ...state,
-        chatType: 'default',
+        chatType: null,
         selectedChatTab: determineSelectedChatTab({
           currentSelectedChatTab: state.selectedChatTab,
           selectedChannel: loadedChannel
@@ -775,7 +775,7 @@ export default function ChatReducer(
     case 'ENTER_EMPTY_CHAT':
       return {
         ...state,
-        chatType: 'default',
+        chatType: null,
         subject: {},
         selectedChannelId: 0,
         channelsObj: {
@@ -1002,9 +1002,8 @@ export default function ChatReducer(
         channelsObj: newChannelsObj,
         chatStatus: action.userId === state.prevUserId ? state.chatStatus : {},
         chatType:
-          state.chatType &&
           action.userId === state.prevUserId &&
-          (!action.data.chatType || state.chatType === action.data.chatType)
+          (!state.chatType || !action.data.chatType)
             ? state.chatType
             : action.data.chatType,
         classChannelIds: action.data.classChannelIds,
@@ -1682,7 +1681,7 @@ export default function ChatReducer(
     case 'OPEN_NEW_TAB':
       return {
         ...state,
-        chatType: 'default',
+        chatType: null,
         subject: {},
         homeChannelIds: [
           0,
@@ -2761,7 +2760,7 @@ export default function ChatReducer(
     case 'UPDATE_SELECTED_CHANNEL_ID': {
       return {
         ...state,
-        chatType: 'default',
+        chatType: null,
         selectedChannelId: action.channelId,
         channelsObj: {
           ...state.channelsObj,
