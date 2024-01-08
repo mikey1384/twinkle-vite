@@ -92,7 +92,7 @@ export default function ConfirmTransactionModal({
   ]);
 
   return (
-    <Modal modalOverModal onHide={onHide}>
+    <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
       <header>{title}</header>
       <main>
         <Details
