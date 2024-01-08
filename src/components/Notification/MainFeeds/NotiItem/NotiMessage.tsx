@@ -243,9 +243,9 @@ export default function RenderMessage({
             rewardRootLabel = 'achievement';
           } else {
             if (isTask) {
-              rewardRootLabel = 'task';
+              rewardRootLabel = 'task accomplishment';
             } else {
-              rewardRootLabel = 'mission';
+              rewardRootLabel = 'mission accomplishment';
             }
           }
         } else if (rewardRootType === 'aiStory') {
