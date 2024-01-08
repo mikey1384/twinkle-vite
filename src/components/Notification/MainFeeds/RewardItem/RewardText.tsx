@@ -50,9 +50,9 @@ export default function RewardText({
         target = 'achievement';
       } else {
         if (isTask) {
-          target = 'task';
+          target = 'task accomplishment';
         } else {
-          target = 'mission';
+          target = 'mission accomplishment';
         }
       }
     } else if (rootType === 'aiStory') {
