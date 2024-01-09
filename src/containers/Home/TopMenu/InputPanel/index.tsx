@@ -16,7 +16,7 @@ export default function InputPanel({
   );
   const [inputValue, setInputValue] = useState('');
   return (
-    <ErrorBoundary componentPath="Home/Stories/InputPanel">
+    <ErrorBoundary componentPath="Home/Stories/TopMenu/InputPanel">
       <div>
         <input
           style={{ width: '100%', marginTop: '1rem' }}
