@@ -36,6 +36,7 @@ export const initialChatState = {
   incomingOffers: [],
   incomingOffersLoadMoreButton: false,
   isGeneratingAICard: false,
+  latestPathId: null,
   lastSubchannelPaths: {},
   listedCardIds: [],
   listedCardsLoadMoreButton: false,

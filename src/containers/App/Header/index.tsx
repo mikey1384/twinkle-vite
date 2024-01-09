@@ -67,6 +67,9 @@ export default function Header({
     (v) => v.requestHelpers.checkIfHomeOutdated
   );
   const checkVersion = useAppContext((v) => v.requestHelpers.checkVersion);
+  const loadChatChannel = useAppContext(
+    (v) => v.requestHelpers.loadChatChannel
+  );
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
   );
@@ -96,6 +99,8 @@ export default function Header({
   const {
     header: { color: headerColor }
   } = useKeyContext((v) => v.theme);
+  const latestPathId = useChatContext((v) => v.state.latestPathId);
+  const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
   const chatType = useChatContext((v) => v.state.chatType);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
@@ -219,6 +224,9 @@ export default function Header({
     (v) => v.actions.onCancelTransaction
   );
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
+  const onUpdateChannelPathIdHash = useChatContext(
+    (v) => v.actions.onUpdateChannelPathIdHash
+  );
   const onUpdateCollectorsRankings = useChatContext(
     (v) => v.actions.onUpdateCollectorsRankings
   );
@@ -290,16 +298,24 @@ export default function Header({
   const onUpdateRecentChessMessage = useChatContext(
     (v) => v.actions.onUpdateRecentChessMessage
   );
+  const onEnterChannelWithId = useChatContext(
+    (v) => v.actions.onEnterChannelWithId
+  );
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
 
   const prevProfilePicUrl = useRef(profilePicUrl);
+  const latestPathIdRef = useRef(latestPathId);
   const peersRef: React.MutableRefObject<any> = useRef({});
   const prevMyStreamRef = useRef(null);
   const prevIncomingShown = useRef(false);
   const membersOnCall: React.MutableRefObject<any> = useRef({});
   const receivedCallSignals = useRef([]);
+
+  useEffect(() => {
+    latestPathIdRef.current = latestPathId;
+  }, [latestPathId]);
 
   useEffect(() => {
     socket.disconnect();
@@ -780,6 +796,27 @@ export default function Header({
           console.log(`Chat loaded in ${chatLoadingTime} seconds`);
 
           onInitChat({ data, userId });
+          if (
+            latestPathIdRef.current &&
+            data.currentPathId !== latestPathIdRef.current
+          ) {
+            const { isAccessible } = await checkChatAccessible(pathId);
+            if (!isAccessible) {
+              onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+              return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
+                replace: true
+              });
+            }
+            const channelId = parseChannelPath(latestPathIdRef.current);
+            if (!channelPathIdHash[pathId]) {
+              onUpdateChannelPathIdHash({ channelId, pathId });
+            }
+            const channelData = await loadChatChannel({
+              channelId,
+              subchannelPath
+            });
+            onEnterChannelWithId(channelData);
+          }
           socket.emit(
             'check_online_users',
             selectedChannelId,
