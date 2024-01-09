@@ -800,7 +800,9 @@ export default function Header({
             latestPathIdRef.current &&
             data.currentPathId !== latestPathIdRef.current
           ) {
-            const { isAccessible } = await checkChatAccessible(pathId);
+            const { isAccessible } = await checkChatAccessible(
+              latestPathIdRef.current
+            );
             if (!isAccessible) {
               onUpdateSelectedChannelId(GENERAL_CHAT_ID);
               return navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
