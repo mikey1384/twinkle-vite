@@ -40,6 +40,9 @@ function Notification({
   trackScrollPosition?: boolean;
 }) {
   const ContainerRef: React.RefObject<any> = useRef(null);
+  const getCurrentNextDayTimeStamp = useAppContext(
+    (v) => v.requestHelpers.getCurrentNextDayTimeStamp
+  );
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
   );
@@ -55,6 +58,7 @@ function Notification({
   );
   const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
   const onClearRewards = useNotiContext((v) => v.actions.onClearRewards);
+  const pageVisible = useViewContext((v) => v.state.pageVisible);
   const scrollPositions = useViewContext((v) => v.state.scrollPositions);
   const onRecordScrollPosition = useViewContext(
     (v) => v.actions.onRecordScrollPosition
@@ -98,6 +102,20 @@ function Notification({
       !todayStats.dailyBonusAttempted &&
       todayStats.dailyRewardResultViewed
   );
+
+  useEffect(() => {
+    init();
+    async function init() {
+      const currentNextDayTimeStamp = await getCurrentNextDayTimeStamp();
+      if (
+        todayStats?.nextDayTimeStamp &&
+        todayStats?.nextDayTimeStamp !== currentNextDayTimeStamp
+      ) {
+        handleCountdownComplete(currentNextDayTimeStamp);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageVisible, todayStats?.nextDayTimeStamp]);
 
   useEffect(() => {
     setIsDailyBonusButtonShown(
@@ -300,17 +318,7 @@ function Notification({
               }
             });
           }}
-          onCountdownComplete={() => {
-            setDailyRewardModalShown(false);
-            onUpdateTodayStats({
-              newStats: {
-                achievedDailyGoals: [],
-                dailyHasBonus: false,
-                dailyBonusAttempted: false,
-                dailyRewardResultViewed: false
-              }
-            });
-          }}
+          onCountdownComplete={handleCountdownComplete}
           onHide={() => setDailyRewardModalShown(false)}
         />
       )}
@@ -322,6 +330,22 @@ function Notification({
       )}
     </ErrorBoundary>
   );
+
+  async function handleCountdownComplete(newNextDayTimeStamp?: number) {
+    setDailyRewardModalShown(false);
+    if (!newNextDayTimeStamp) {
+      newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
+    }
+    onUpdateTodayStats({
+      newStats: {
+        achievedDailyGoals: [],
+        dailyHasBonus: false,
+        dailyBonusAttempted: false,
+        dailyRewardResultViewed: false,
+        nextDayTimeStamp: newNextDayTimeStamp
+      }
+    });
+  }
 
   async function handleFetchNotifications(userId: number) {
     if (notifications.length === 0 && userId) {

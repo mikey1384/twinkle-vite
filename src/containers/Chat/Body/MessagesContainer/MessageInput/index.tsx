@@ -26,7 +26,7 @@ import {
   returnMaxUploadSize,
   GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
+import { useKeyContext, useNotiContext } from '~/contexts';
 import LocalContext from '../../../Context';
 import localize from '~/constants/localize';
 import LeftButtons from './LeftButtons';
@@ -115,6 +115,7 @@ export default function MessageInput({
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor }
   } = useKeyContext((v) => v.theme);
+  const { nextDayTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const {
     actions: {
       onEnterComment,
@@ -387,6 +388,7 @@ export default function MessageInput({
             buttonColor={buttonColor}
             buttonHoverColor={buttonHoverColor}
             hasWordleButton={hasWordleButton}
+            nextDayTimeStamp={nextDayTimeStamp}
             isChessBanned={banned?.chess}
             isRestrictedChannel={isRestrictedChannel}
             isTwoPeopleChannel={isTwoPeopleChannel}

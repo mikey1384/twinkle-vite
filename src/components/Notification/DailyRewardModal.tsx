@@ -59,8 +59,12 @@ export default function DailyRewardModal({
   } = useKeyContext((v) => v.theme);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
-  const { timeDifference } = useNotiContext((v) => v.state.todayStats);
-  const [nextDayTimeStamp, setNextDayTimeStamp] = useState(0);
+  const { timeDifference, nextDayTimeStamp } = useNotiContext(
+    (v) => v.state.todayStats
+  );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const [showFirstSentence, setShowFirstSentence] = useState(false);
   const [showSecondSentence, setShowSecondSentence] = useState(false);
   const [showThirdSentence, setShowThirdSentence] = useState(false);
@@ -98,7 +102,7 @@ export default function DailyRewardModal({
           hasBonus,
           bonusAttempted,
           bonusAchieved,
-          nextDayTimeStamp,
+          nextDayTimeStamp: newNextDayTimeStamp,
           xpEarned,
           isAlreadyChecked,
           coinEarned,
@@ -128,7 +132,11 @@ export default function DailyRewardModal({
             newState: card
           });
         }
-        setNextDayTimeStamp(nextDayTimeStamp);
+        onUpdateTodayStats({
+          newStats: {
+            nextDayTimeStamp: newNextDayTimeStamp
+          }
+        });
         setCoinEarned(coinEarned);
         setIsCardOwned(isCardOwned);
         setChosenCardId(chosenCardId);

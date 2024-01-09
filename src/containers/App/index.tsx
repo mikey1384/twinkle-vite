@@ -255,6 +255,7 @@ export default function App() {
         coinsEarned,
         nextMission,
         standardTimeStamp,
+        nextDayTimeStamp,
         unansweredChessMsgChannelId
       } = await fetchTodayStats();
       let timeDifference = 0;
@@ -269,6 +270,7 @@ export default function App() {
           dailyRewardResultViewed,
           xpEarned,
           coinsEarned,
+          nextDayTimeStamp,
           nextMission,
           standardTimeStamp,
           timeDifference,

@@ -42,6 +42,7 @@ export default function notificationRequestHelpers({
             dailyRewardResultViewed,
             xpEarned,
             coinsEarned,
+            nextDayTimeStamp,
             nextMission,
             unansweredChessMsgChannelId,
             standardTimeStamp
@@ -54,6 +55,7 @@ export default function notificationRequestHelpers({
           dailyRewardResultViewed,
           xpEarned,
           coinsEarned,
+          nextDayTimeStamp,
           nextMission,
           standardTimeStamp,
           unansweredChessMsgChannelId
