@@ -778,7 +778,7 @@ export default function Header({
           onSetReconnecting(true);
           const pathId = Number(currentPathId);
           let currentChannelIsAccessible = true;
-          if (!isNaN(pathId)) {
+          if (!isNaN(pathId) && userId) {
             const { isAccessible } = await checkChatAccessible(pathId);
             currentChannelIsAccessible = isAccessible;
           }
