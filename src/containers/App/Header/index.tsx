@@ -818,6 +818,7 @@ export default function Header({
               subchannelPath
             });
             onEnterChannelWithId(channelData);
+            onUpdateSelectedChannelId(channelId);
           }
           socket.emit(
             'check_online_users',
