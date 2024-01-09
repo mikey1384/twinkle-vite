@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useChatContext, useHomeContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import {
   GENERAL_CHAT_ID,
@@ -28,6 +28,8 @@ const gradientMap: {
   }
 };
 
+const notHomePath = ['links', 'videos', 'subjects', 'ai-cards'];
+
 export default function Badge({
   children,
   isAchieved,
@@ -37,6 +39,7 @@ export default function Badge({
   isAchieved: boolean;
   isAmped: boolean;
 }) {
+  const location = useLocation();
   const navigate = useNavigate();
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
@@ -115,12 +118,28 @@ export default function Badge({
       case 'W':
         handleWordleButtonClick();
         break;
-      case 'G':
+      case 'G': {
+        const wordsInPath = location.pathname.split('/');
+        const isNotHomePage = wordsInPath.some((pathWord) =>
+          notHomePath.includes(pathWord)
+        );
+        if (isNotHomePage) {
+          navigate('/');
+        }
         onSetGrammarGameModalShown(true);
         break;
-      case 'A':
+      }
+      case 'A': {
+        const wordsInPath = location.pathname.split('/');
+        const isNotHomePage = wordsInPath.some((pathWord) =>
+          notHomePath.includes(pathWord)
+        );
+        if (isNotHomePage) {
+          navigate('/');
+        }
         onSetAIStoriesModalShown(true);
         break;
+      }
       default:
         break;
     }
