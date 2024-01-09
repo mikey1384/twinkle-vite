@@ -316,6 +316,7 @@ export default function Main({
   const [creatingChat, setCreatingChat] = useState(false);
   const [createNewChatModalShown, setCreateNewChatModalShown] = useState(false);
   const loadingRef = useRef(false);
+  const userIdRef = useRef(userId);
   const prevPathId: React.MutableRefObject<any> = useRef('');
   const currentPathIdRef = useRef(currentPathId);
   const currentSelectedChannelIdRef = useRef(selectedChannelId);
@@ -412,7 +413,10 @@ export default function Main({
         handleEnterAICardChat();
       }
     } else {
-      onUpdateLatestPathId(Number(currentPathId));
+      const numberedPathId = Number(currentPathId);
+      if (numberedPathId) {
+        onUpdateLatestPathId(Number(currentPathId));
+      }
       if (!stringIsEmpty(currentPathId as string)) {
         onUpdateChatType(null);
       }
@@ -510,6 +514,10 @@ export default function Main({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, prevUserId, navigate, currentPathId, subchannelPath]);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   const handleEnterVocabulary = useCallback(async () => {
     if (chatType === VOCAB_CHAT_TYPE) return;
@@ -1026,7 +1034,9 @@ export default function Main({
     let attempts = 0;
     const maxAttempts = 3;
 
-    attemptHandleChannelEnter();
+    if (userIdRef.current && pathId) {
+      attemptHandleChannelEnter();
+    }
 
     async function attemptHandleChannelEnter() {
       try {
