@@ -48,7 +48,7 @@ export default function TopMenu({
   );
   const [loadingWordle, setLoadingWordle] = useState(false);
   const [loadingChess, setLoadingChess] = useState(false);
-  const { userId, username } = useKeyContext((v) => v.myState);
+  const { username } = useKeyContext((v) => v.myState);
   const isMountedRef = useRef(true);
   useEffect(() => {
     isMountedRef.current = true;
@@ -60,7 +60,7 @@ export default function TopMenu({
     };
   }, []);
 
-  return userId ? (
+  return (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
       <div
         style={{ marginBottom: '1rem', ...style }}
@@ -150,7 +150,7 @@ export default function TopMenu({
         </div>
       </div>
     </ErrorBoundary>
-  ) : null;
+  );
 
   function handleWordleButtonClick() {
     if (!isMountedRef.current) return;

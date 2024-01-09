@@ -46,7 +46,7 @@ export default function Stories() {
   const loadingMoreRef = useRef(false);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
-  const { hideWatched, username } = useKeyContext((v) => v.myState);
+  const { hideWatched, userId, username } = useKeyContext((v) => v.myState);
   const {
     alert: { color: alertColor }
   } = useKeyContext((v) => v.theme);
@@ -177,13 +177,15 @@ export default function Stories() {
         style={{ width: '100%' }}
         ref={ContainerRef}
       >
-        <TopMenu
-          onInputModalButtonClick={(modalType) =>
-            onSetInputModalShown({ shown: true, modalType })
-          }
-          onPlayAIStories={() => onSetAIStoriesModalShown(true)}
-          onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
-        />
+        {userId && (
+          <TopMenu
+            onInputModalButtonClick={(modalType) =>
+              onSetInputModalShown({ shown: true, modalType })
+            }
+            onPlayAIStories={() => onSetAIStoriesModalShown(true)}
+            onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
+          />
+        )}
         <HomeFilter
           category={category}
           changeCategory={handleChangeCategory}
