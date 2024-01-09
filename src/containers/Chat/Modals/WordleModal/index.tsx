@@ -47,8 +47,9 @@ export default function WordleModal({
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
-  const { timeDifference } = useNotiContext((v) => v.state.todayStats);
-  const { nextDayTimeStamp } = useNotiContext((v) => v.state.todayStats);
+  const { nextDayTimeStamp, timeDifference } = useNotiContext(
+    (v) => v.state.todayStats
+  );
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [streaksTab, setStreaksTab] = useState(isStrictMode ? 'double' : 'win');
