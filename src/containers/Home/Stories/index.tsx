@@ -43,6 +43,7 @@ const categoryObj: Record<string, any> = {
 
 export default function Stories() {
   const lastFeedRef = useRef(null);
+  const loadingMoreRef = useRef(false);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
   const { hideWatched, username } = useKeyContext((v) => v.myState);
@@ -325,8 +326,9 @@ export default function Stories() {
   async function handleLoadMoreFeeds() {
     const lastFeedId =
       feeds?.length > 0 ? feeds[feeds?.length - 1].feedId : null;
-    if (lastFeedRef.current === lastFeedId) return;
+    if (lastFeedRef.current === lastFeedId || loadingMoreRef.current) return;
     lastFeedRef.current = lastFeedId;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
       const { data } = await loadFeeds({
@@ -347,8 +349,10 @@ export default function Stories() {
     } catch (error) {
       console.error(error);
       lastFeedRef.current = null;
+    } finally {
+      setLoadingMore(false);
+      loadingMoreRef.current = false;
     }
-    setLoadingMore(false);
   }
 
   async function handleChangeCategory(newCategory: string) {
