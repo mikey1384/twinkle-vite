@@ -1406,6 +1406,12 @@ export default function ChatActions(dispatch: Dispatch) {
         viewerId
       });
     },
+    onUpdateLatestPathId(pathId: number) {
+      return dispatch({
+        type: 'UPDATE_LATEST_PATH_ID',
+        pathId
+      });
+    },
     onUpdateLastSubchannelPath({
       channelId,
       path,

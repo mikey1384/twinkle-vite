@@ -204,6 +204,9 @@ export default function Main({
     (v) => v.actions.onEnterChannelWithId
   );
   const onEnterEmptyChat = useChatContext((v) => v.actions.onEnterEmptyChat);
+  const onUpdateLatestPathId = useChatContext(
+    (v) => v.actions.onUpdateLatestPathId
+  );
   const onHideAttachment = useChatContext((v) => v.actions.onHideAttachment);
   const onHideChat = useChatContext((v) => v.actions.onHideChat);
   const onLeaveChannel = useChatContext((v) => v.actions.onLeaveChannel);
@@ -409,6 +412,7 @@ export default function Main({
         handleEnterAICardChat();
       }
     } else {
+      onUpdateLatestPathId(Number(currentPathId));
       if (!stringIsEmpty(currentPathId as string)) {
         onUpdateChatType(null);
       }

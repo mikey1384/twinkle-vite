@@ -2729,6 +2729,12 @@ export default function ChatReducer(
           }
         }
       };
+    case 'UPDATE_LATEST_PATH_ID': {
+      return {
+        ...state,
+        latestPathId: action.pathId
+      };
+    }
     case 'UPDATE_RECENT_CHESS_MESSAGE':
       return {
         ...state,
