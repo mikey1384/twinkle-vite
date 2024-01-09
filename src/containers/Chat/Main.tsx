@@ -380,33 +380,6 @@ export default function Main({
   }, [selectedChannelId, selectedSubchannelId]);
 
   useEffect(() => {
-    let subchannelPathExistsAndIsInvalid = !!currentChannel?.id;
-    if (
-      !stringIsEmpty(subchannelPath) &&
-      currentChannel?.subchannelObj &&
-      selectedChannelId === parseChannelPath(currentPathId)
-    ) {
-      for (const subchannel of Object.values(currentChannel?.subchannelObj)) {
-        if (subchannel?.path === subchannelPath) {
-          subchannelPathExistsAndIsInvalid = false;
-        }
-      }
-    } else {
-      subchannelPathExistsAndIsInvalid = false;
-    }
-    if (subchannelPathExistsAndIsInvalid) {
-      navigate('/chat', { replace: true });
-    }
-  }, [
-    currentChannel?.id,
-    currentChannel?.subchannelObj,
-    navigate,
-    subchannelPath,
-    selectedChannelId,
-    currentPathId
-  ]);
-
-  useEffect(() => {
     if (currentPathId && !isNaN(Number(currentPathId))) {
       const channelId = parseChannelPath(currentPathId);
       if (currentSelectedChannelIdRef.current !== channelId) {
@@ -501,7 +474,6 @@ export default function Main({
               ) {
                 return;
               }
-              if (!selectedSubchannelId) return;
               const subchannel = await loadSubchannel({
                 channelId,
                 subchannelId: selectedSubchannelId
@@ -520,7 +492,17 @@ export default function Main({
             return;
           }
           onEnterChannelWithId(data);
-          navigate(`/chat/${data.channel.pathId}`, { replace: true });
+          const isEnteringSubchannel =
+            subchannelPath &&
+            Object.keys(data?.channel?.subchannelObj || {}).length > 0;
+          navigate(
+            `/chat/${data?.channel?.pathId}${
+              isEnteringSubchannel ? `/${subchannelPath}` : ''
+            }`,
+            {
+              replace: true
+            }
+          );
         } catch (error) {
           console.error(error);
           attempts++;
