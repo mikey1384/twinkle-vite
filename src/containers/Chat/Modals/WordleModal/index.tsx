@@ -21,7 +21,6 @@ export default function WordleModal({
   channelId,
   channelName,
   attemptState,
-  nextDayTimeStamp,
   guesses = [],
   solution = '',
   wordLevel,
@@ -34,7 +33,6 @@ export default function WordleModal({
   channelId: number;
   channelName?: string;
   guesses: string[];
-  nextDayTimeStamp: number;
   solution: string;
   wordLevel: number;
   wordleStats: any;
@@ -46,7 +44,11 @@ export default function WordleModal({
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
   const { wordleStrictMode: isStrictMode } = useKeyContext((v) => v.myState);
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const { timeDifference } = useNotiContext((v) => v.state.todayStats);
+  const { nextDayTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [streaksTab, setStreaksTab] = useState(isStrictMode ? 'double' : 'win');
@@ -252,8 +254,12 @@ export default function WordleModal({
         },
         wordleSolution,
         wordleWordLevel,
-        nextDayTimeStamp: newNextDayTimeStamp,
         wordleGuesses: []
+      }
+    });
+    onUpdateTodayStats({
+      newStats: {
+        nextDayTimeStamp: newNextDayTimeStamp
       }
     });
   }

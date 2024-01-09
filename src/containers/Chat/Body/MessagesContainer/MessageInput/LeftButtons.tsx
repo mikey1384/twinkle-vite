@@ -10,6 +10,7 @@ export default function LeftButtons({
   isRestrictedChannel,
   isTwoPeopleChannel,
   loading,
+  nextDayTimeStamp,
   onChessButtonClick,
   onTopicButtonClick,
   onWordleButtonClick,
@@ -22,6 +23,7 @@ export default function LeftButtons({
   isRestrictedChannel: boolean;
   isTwoPeopleChannel: number | boolean;
   loading: boolean;
+  nextDayTimeStamp: number;
   onChessButtonClick: () => void;
   onTopicButtonClick: () => void;
   onWordleButtonClick: () => void;
@@ -50,7 +52,7 @@ export default function LeftButtons({
         </Button>
       ) : hasWordleButton ? (
         <Button
-          disabled={loading}
+          loading={loading || !nextDayTimeStamp}
           skeuomorphic
           onClick={onWordleButtonClick}
           color={buttonColor}

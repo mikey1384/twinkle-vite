@@ -30,14 +30,19 @@ export default function StartScreen({
   onHide: () => void;
 }) {
   const navigate = useNavigate();
+
   const [results, setResults] = useState([]);
-  const [nextDayTimeStamp, setNextDayTimeStamp] = useState();
   const [earnedCoins, setEarnedCoins] = useState(false);
   const {
     fail: { color: failColor },
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
-  const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
+  const { standardTimeStamp, nextDayTimeStamp } = useNotiContext(
+    (v) => v.state.todayStats
+  );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const timeDifference = useMemo(
     () =>
       standardTimeStamp
@@ -63,21 +68,23 @@ export default function StartScreen({
             attemptResults,
             attemptNumber,
             earnedCoins,
-            nextDayTimeStamp
+            nextDayTimeStamp: newNextDayTimeStamp
           } = await checkNumGrammarGamesPlayedToday();
           setEarnedCoins(earnedCoins);
           setResults(attemptResults);
-          setNextDayTimeStamp(nextDayTimeStamp);
+          onUpdateTodayStats({
+            newStats: {
+              nextDayTimeStamp: newNextDayTimeStamp
+            }
+          });
           onSetTimesPlayedToday(attemptNumber);
           success = true;
         } catch (error) {
           attempts += 1;
           console.error(`Attempt ${attempts} failed. Retrying in 1 second...`);
 
-          // Wait for 1 second before the next attempt
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
-          // If it's the last attempt, re-throw the error
           if (attempts === 3) throw error;
         } finally {
           if (attempts === 3 || success) {

@@ -164,7 +164,6 @@ function MessagesContainer({
     wordleWordLevel,
     wordleAttemptState,
     wordleStats = {},
-    nextDayTimeStamp,
     subjectObj = {},
     twoPeople
   } = currentChannel;
@@ -1594,7 +1593,6 @@ function MessagesContainer({
           solution={wordleSolution}
           wordLevel={wordleWordLevel}
           wordleStats={wordleStats}
-          nextDayTimeStamp={nextDayTimeStamp}
           onHide={() => onSetWordleModalShown(false)}
           socketConnected={socketConnected}
           theme={displayedThemeColor}
