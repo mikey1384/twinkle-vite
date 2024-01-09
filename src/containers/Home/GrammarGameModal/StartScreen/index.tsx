@@ -37,18 +37,11 @@ export default function StartScreen({
     fail: { color: failColor },
     success: { color: successColor }
   } = useKeyContext((v) => v.theme);
-  const { standardTimeStamp, nextDayTimeStamp } = useNotiContext(
+  const { timeDifference, nextDayTimeStamp } = useNotiContext(
     (v) => v.state.todayStats
   );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
-  );
-  const timeDifference = useMemo(
-    () =>
-      standardTimeStamp
-        ? new Date(standardTimeStamp).getTime() - Date.now()
-        : 0,
-    [standardTimeStamp]
   );
   const { userId } = useKeyContext((v) => v.myState);
   const checkNumGrammarGamesPlayedToday = useAppContext(
