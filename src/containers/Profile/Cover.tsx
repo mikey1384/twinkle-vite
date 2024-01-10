@@ -129,7 +129,7 @@ export default function Cover({
               font-size: 5rem;
               line-height: 1;
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: ${username.length < 13 ? '2.5rem' : '1.8rem'};
+                font-size: ${username?.length < 13 ? '2.5rem' : '1.8rem'};
               }
             `}
           >
