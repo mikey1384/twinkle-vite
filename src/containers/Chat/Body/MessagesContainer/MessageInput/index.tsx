@@ -14,7 +14,7 @@ import TargetMessagePreview from '../TargetMessagePreview';
 import TargetSubjectPreview from '../TargetSubjectPreview';
 import UploadModal from '../../../Modals/UploadModal';
 import AlertModal from '~/components/Modals/AlertModal';
-import { isMobile, isTablet } from '~/helpers';
+import { isMobile } from '~/helpers';
 import {
   stringIsEmpty,
   addEmoji,
@@ -33,8 +33,7 @@ import LeftButtons from './LeftButtons';
 import RightButtons from './RightButtons';
 
 const enterMessageLabel = localize('enterMessage');
-const deviceIsTablet = isTablet();
-const deviceIsMobile = deviceIsTablet || isMobile(navigator);
+const deviceIsMobileOS = isMobile(navigator);
 
 export default function MessageInput({
   currentTransactionId,
@@ -170,7 +169,7 @@ export default function MessageInput({
   }, [innerRef, loading]);
 
   useEffect(() => {
-    if (!deviceIsMobile) {
+    if (!deviceIsMobileOS) {
       innerRef.current.focus();
     }
   }, [selectedChannelId, subchannelId, innerRef]);
@@ -274,7 +273,7 @@ export default function MessageInput({
       if (isExceedingCharLimit) return;
       if (
         enterKeyPressed &&
-        !deviceIsMobile &&
+        !deviceIsMobileOS &&
         !shiftKeyPressed &&
         !messageExceedsCharLimit &&
         !loading
