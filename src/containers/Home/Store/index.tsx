@@ -43,7 +43,16 @@ export default function Store() {
     (v) => v.requestHelpers.loadKarmaPoints
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const { level, title, userType } = useKeyContext((v) => v.myState);
+  const {
+    level,
+    title,
+    userType,
+    canChangeUsername,
+    canGenerateAICard,
+    karmaPoints,
+    userId,
+    isAchievementsLoaded
+  } = useKeyContext((v) => v.myState);
   const unlockUsernameChange = useAppContext(
     (v) => v.requestHelpers.unlockUsernameChange
   );
@@ -55,8 +64,6 @@ export default function Store() {
   const [numApprovedRecommendations, setNumApprovedRecommendations] =
     useState(0);
   const [unlockingUsernameChange, setUnlockingUsernameChange] = useState(false);
-  const { canChangeUsername, canGenerateAICard, karmaPoints, userId } =
-    useKeyContext((v) => v.myState);
   const {
     logoTwin: { color: twinColor },
     logoKle: { color: kleColor }
@@ -145,6 +152,7 @@ export default function Store() {
         numTwinklesRewarded={numTwinklesRewarded}
         title={title}
         userId={userId}
+        isAchievementsLoaded={isAchievementsLoaded}
         userType={userType}
       />
       <ItemPanel
