@@ -101,6 +101,7 @@ export default function Feeds({
       setLoadingFeeds(true);
       const { data, filter: loadedSection } = await loadFeeds({
         username,
+        orderByLabel: 'timeStamp',
         filter: filterTable[section]
       });
       if (loadedSection === selectedSection.current) {
@@ -348,10 +349,11 @@ export default function Feeds({
           username,
           filter: filterTable[section],
           lastFeedId,
+          orderByLabel: 'timeStamp',
           lastTimeStamp:
             feeds.length > 0
               ? feeds[feeds.length - 1][
-                  section === 'watched' ? 'viewTimeStamp' : 'lastInteraction'
+                  section === 'watched' ? 'viewTimeStamp' : 'timeStamp'
                 ]
               : null
         });
@@ -370,7 +372,7 @@ export default function Feeds({
           section: filterTable[section],
           lastFeedId: feeds.length > 0 ? feeds[feeds.length - 1].feedId : null,
           lastTimeStamp:
-            feeds.length > 0 ? feeds[feeds.length - 1].lastInteraction : null
+            feeds.length > 0 ? feeds[feeds.length - 1].timeStamp : null
         });
         onLoadMorePostsByUser({ ...data, section, username });
         setLoadingMore(false);
