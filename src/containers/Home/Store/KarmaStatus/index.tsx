@@ -8,7 +8,6 @@ import KarmaExplanationModal from './KarmaExplanationModal';
 
 export default function KarmaStatus({
   karmaPoints,
-  isAchievementsLoaded,
   level,
   loading,
   numApprovedRecommendations,
@@ -20,7 +19,6 @@ export default function KarmaStatus({
   userType
 }: {
   karmaPoints: number;
-  isAchievementsLoaded: boolean;
   level: number;
   loading: boolean;
   numApprovedRecommendations: number;
@@ -62,7 +60,7 @@ export default function KarmaStatus({
         }
       `}
     >
-      {loading || !isAchievementsLoaded ? (
+      {loading ? (
         <Loading style={{ height: '10rem' }} />
       ) : (
         <div>
