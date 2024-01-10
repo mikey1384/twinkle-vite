@@ -101,7 +101,7 @@ export default function Feeds({
       setLoadingFeeds(true);
       const { data, filter: loadedSection } = await loadFeeds({
         username,
-        orderByLabel: 'timeStamp',
+        orderBy: 'timeStamp',
         filter: filterTable[section]
       });
       if (loadedSection === selectedSection.current) {
@@ -349,7 +349,7 @@ export default function Feeds({
           username,
           filter: filterTable[section],
           lastFeedId,
-          orderByLabel: 'timeStamp',
+          orderBy: 'timeStamp',
           lastTimeStamp:
             feeds.length > 0
               ? feeds[feeds.length - 1][
