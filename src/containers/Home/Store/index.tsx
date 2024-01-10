@@ -50,8 +50,7 @@ export default function Store() {
     canChangeUsername,
     canGenerateAICard,
     karmaPoints,
-    userId,
-    isAchievementsLoaded
+    userId
   } = useKeyContext((v) => v.myState);
   const unlockUsernameChange = useAppContext(
     (v) => v.requestHelpers.unlockUsernameChange
@@ -152,7 +151,6 @@ export default function Store() {
         numTwinklesRewarded={numTwinklesRewarded}
         title={title}
         userId={userId}
-        isAchievementsLoaded={isAchievementsLoaded}
         userType={userType}
       />
       <ItemPanel

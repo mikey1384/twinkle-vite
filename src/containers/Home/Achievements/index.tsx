@@ -19,10 +19,12 @@ export default function Achievements() {
       };
     };
   }>({});
-  const [loadingMyAchievements, setLoadingMyAchievements] = useState(false);
-  const { userId } = useKeyContext((v) => v.myState);
+  const { userId, isAchievementsLoaded } = useKeyContext((v) => v.myState);
   const loadMyAchievements = useAppContext(
     (v) => v.requestHelpers.loadMyAchievements
+  );
+  const onSetIsAchievementsLoaded = useAppContext(
+    (v) => v.user.actions.onSetIsAchievementsLoaded
   );
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const achievementKeys = useMemo(() => {
@@ -36,7 +38,6 @@ export default function Achievements() {
   useEffect(() => {
     if (userId) init();
     async function init() {
-      setLoadingMyAchievements(true);
       const data = await loadMyAchievements();
       const unlockedAchievementIds = [];
       for (const key in data) {
@@ -45,8 +46,8 @@ export default function Achievements() {
         }
       }
       onSetUserState({ userId, newState: { unlockedAchievementIds } });
+      onSetIsAchievementsLoaded(true);
       setMyAchievementsObj(data);
-      setLoadingMyAchievements(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, myAttempts]);
@@ -79,7 +80,6 @@ export default function Achievements() {
           Achievements
         </p>
       </div>
-
       {!userId ? (
         <div
           className={css`
@@ -92,7 +92,7 @@ export default function Achievements() {
         >
           Please log in to view this page
         </div>
-      ) : !achievementKeys.length || loadingMyAchievements ? (
+      ) : !isAchievementsLoaded ? (
         <Loading />
       ) : (
         <>
