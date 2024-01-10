@@ -1068,6 +1068,7 @@ export default function ContentReducer(
         }
       };
     case 'LOAD_SUBJECTS': {
+      if (!action.subjects) return state;
       const subjectStates: { [key: string]: any } = {};
       for (const subject of action.subjects) {
         subjectStates['subject' + subject.id] = subject;
