@@ -44,7 +44,6 @@ export default function MyRank({
   return (
     <div
       style={{
-        opacity: loadingRankings ? 0.5 : 1,
         marginTop: '1rem',
         marginBottom: myId ? '1rem' : 0,
         borderBottom:
@@ -97,7 +96,8 @@ export default function MyRank({
         <div
           style={{
             position: 'relative',
-            display: 'inline-block'
+            display: 'inline-block',
+            opacity: loadingRankings ? 0.5 : 1
           }}
         >
           <span
