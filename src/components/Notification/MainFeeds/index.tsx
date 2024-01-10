@@ -235,7 +235,7 @@ export default function MainFeeds({
             )}
           </ErrorBoundary>
         )}
-      {activeTab === 'reward' && !!userId && (
+      {activeTab === 'reward' && !!userId && typeof twinkleXP === 'number' && (
         <MyRank myId={userId} rank={myAllTimeRank} twinkleXP={twinkleXP} />
       )}
       {userId && activeTab === 'notification' && notifications.length > 0 && (
