@@ -6,6 +6,7 @@ import moment from 'moment';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { useChatContext } from '~/contexts';
 
 export default function TransferMessage({
   myId,
@@ -24,7 +25,7 @@ export default function TransferMessage({
   onSetAICardModalCardId: (cardId: number) => void;
 }) {
   const [usermenuShown, setUsermenuShown] = useState(false);
-
+  const cardObj = useChatContext((v) => v.state.cardObj);
   const transferData = useMemo(() => {
     const isPurchase = !!transferDetails?.askId;
     const isSale = !!transferDetails?.offerId;
@@ -40,6 +41,11 @@ export default function TransferMessage({
       : 0;
     return { isPurchase, isSale, card, displayedTimeStamp, price };
   }, [transferDetails]);
+  const transferredCardIsBurned = useMemo(() => {
+    const cardId = transferDetails?.card?.id;
+    const card = cardObj[cardId];
+    return !!card?.isBurned;
+  }, [cardObj, transferDetails?.card?.id]);
 
   const actionDescription = useMemo(() => {
     const { isPurchase, isSale, card, displayedTimeStamp, price } =
@@ -175,7 +181,13 @@ export default function TransferMessage({
             width: 5rem;
           `}
         >
-          <CardThumb card={transferData.card} />
+          <CardThumb
+            card={{
+              ...transferData.card,
+              isBurned:
+                !!transferData?.card?.isBurned || transferredCardIsBurned
+            }}
+          />
         </div>
         <div
           className={css`
@@ -210,7 +222,13 @@ export default function TransferMessage({
             width: 5rem;
           `}
         >
-          <CardThumb card={transferData.card} />
+          <CardThumb
+            card={{
+              ...transferData.card,
+              isBurned:
+                !!transferData?.card?.isBurned || transferredCardIsBurned
+            }}
+          />
         </div>
       </div>
     </div>
