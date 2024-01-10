@@ -175,7 +175,7 @@ export default function MainFeeds({
             {totalRewardAmount > 0 ? (
               <GradientButton
                 isFlat
-                loading={collectingReward}
+                loading={collectingReward || typeof twinkleXP !== 'number'}
                 style={{ marginBottom: '1rem', width: '100%' }}
                 fontSize="2.2rem"
                 mobileFontSize="1.7rem"
