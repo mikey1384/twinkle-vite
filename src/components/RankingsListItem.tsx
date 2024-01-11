@@ -24,29 +24,30 @@ export default function RankingsListItem({
   const {
     xpNumber: { color: xpNumberColor }
   } = useKeyContext((v) => v.theme);
+  const userRank = useMemo(() => Number(user.rank), [user.rank]);
   const rankColor = useMemo(() => {
-    return user.rank === 1
+    return userRank === 1
       ? Color.gold()
-      : user.rank === 2
+      : userRank === 2
       ? Color.lighterGray()
-      : user.rank === 3
+      : userRank === 3
       ? Color.orange()
       : undefined;
-  }, [user.rank]);
+  }, [userRank]);
 
   const rankFontSize = useMemo(() => {
     if (small) {
-      return user.rank < 100 ? '1.5rem' : '1rem';
+      return userRank < 100 ? '1.5rem' : '1rem';
     }
-    return user.rank < 100 ? '2rem' : '1.5rem';
-  }, [small, user.rank]);
+    return userRank < 100 ? '2rem' : '1.5rem';
+  }, [small, userRank]);
 
   const mobileRankFontSize = useMemo(() => {
     if (small) {
-      return user.rank < 100 ? '1.2rem' : '1rem';
+      return userRank < 100 ? '1.2rem' : '1rem';
     }
-    return user.rank < 100 ? '1.5rem' : '1.2rem';
-  }, [small, user.rank]);
+    return userRank < 100 ? '1.5rem' : '1.2rem';
+  }, [small, userRank]);
 
   const usernameFontSize = useMemo(() => {
     return small ? '1.2rem' : '1.5rem';
@@ -75,7 +76,7 @@ export default function RankingsListItem({
         justifyContent: 'space-between',
         alignItems: 'center',
         background:
-          user.id === myId && user.rank > 3 ? Color.highlightGray() : '#fff',
+          user.id === myId && userRank > 3 ? Color.highlightGray() : '#fff',
         ...style
       }}
     >
@@ -93,13 +94,13 @@ export default function RankingsListItem({
             margin-right: 1rem;
             text-align: center;
             color: ${rankColor ||
-            (user.rank <= 10 ? Color.logoBlue() : Color.darkGray())};
+            (userRank <= 10 ? Color.logoBlue() : Color.darkGray())};
             @media (max-width: ${tabletMaxWidth}) {
               font-size: ${mobileRankFontSize};
             }
           `}
         >
-          {user.rank ? `#${user.rank}` : '--'}
+          {userRank ? `#${userRank}` : '--'}
         </span>
         <div
           style={{
@@ -119,7 +120,7 @@ export default function RankingsListItem({
           <UsernameText
             color={
               rankColor ||
-              (user.rank <= 10 ? Color.logoBlue() : Color.darkGray())
+              (userRank <= 10 ? Color.logoBlue() : Color.darkGray())
             }
             user={{ ...user, username: user.username }}
             onMenuShownChange={onUsermenuShownChange}
