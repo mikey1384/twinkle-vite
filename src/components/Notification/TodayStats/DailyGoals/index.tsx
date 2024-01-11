@@ -49,7 +49,7 @@ export default function DailyGoals({
         setAmpedBadgeIndex((prevIndex: number) =>
           prevIndex < badgeItems.length - 1 ? prevIndex + 1 : 0
         );
-      }, 450);
+      }, 150);
     }
 
     return () => {
