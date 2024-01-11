@@ -100,7 +100,6 @@ export default function TradeButtons({
         </Button>
         <Button
           onClick={onCounterPropose}
-          disabled={isDisabled}
           style={{ marginLeft: '1rem' }}
           color="pink"
           filled
