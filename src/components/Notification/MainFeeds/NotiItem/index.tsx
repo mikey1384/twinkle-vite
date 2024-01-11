@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { Color } from '~/constants/css';
@@ -7,7 +7,7 @@ import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import NotiMessage from './NotiMessage';
 import UsernameText from '~/components/Texts/UsernameText';
 
-export default function NotiItem({
+function NotiItem({
   actionColor,
   infoColor,
   linkColor,
@@ -105,3 +105,5 @@ export default function NotiItem({
     </ErrorBoundary>
   );
 }
+
+export default memo(NotiItem);

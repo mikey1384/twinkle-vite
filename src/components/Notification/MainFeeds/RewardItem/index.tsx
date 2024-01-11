@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { notiFeedListItem } from '../../Styles';
 import RewardText from './RewardText';
 
-export default function RewardItem({
+function RewardItem({
   actionColor,
   infoColor,
   linkColor,
@@ -62,3 +62,5 @@ export default function RewardItem({
     </nav>
   );
 }
+
+export default memo(RewardItem);
