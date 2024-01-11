@@ -1349,9 +1349,9 @@ export default function chatRequestHelpers({
       }
     },
     async updateChatLastRead(channelId: number) {
+      if (channelId < 0) return;
       try {
         await request.post(`${URL}/chat/lastRead`, { channelId }, auth());
-        return Promise.resolve();
       } catch (error) {
         return handleError(error);
       }
