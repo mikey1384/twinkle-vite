@@ -137,7 +137,7 @@ export default function MyRank({
               (rank > 0 && rank <= 10 ? Color.pink() : Color.darkGray())
           }}
         >
-          {rank ? rankLabel : unrankedLabel}
+          {rank && twinkleXP ? rankLabel : unrankedLabel}
         </p>
       </div>
     </div>
