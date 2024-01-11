@@ -31,6 +31,7 @@ export default function NextMission({
       <Link
         className={css`
           display: block;
+          text-align: center;
           &:hover {
             text-decoration: none;
           }
@@ -49,7 +50,6 @@ export default function NextMission({
         </p>
         <p
           style={{
-            textAlign: 'center',
             marginTop: '0.5rem',
             fontSize: '1.6rem',
             fontWeight: 'bold',
@@ -60,9 +60,7 @@ export default function NextMission({
         </p>
         <RewardText
           style={{
-            marginTop: '0.5rem',
-            display: 'flex',
-            justifyContent: 'center'
+            marginTop: '0.5rem'
           }}
           labelClassName={css`
             color: ${Color.darkerGray()};
