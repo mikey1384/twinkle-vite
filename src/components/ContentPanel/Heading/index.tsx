@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import PropTypes from 'prop-types';
 import ProfilePic from '~/components/ProfilePic';
 import HeadingText from './HeadingText';
@@ -14,7 +14,7 @@ Heading.propTypes = {
   theme: PropTypes.string,
   contentObj: PropTypes.object.isRequired
 };
-export default function Heading({
+function Heading({
   action,
   theme,
   contentObj,
@@ -117,3 +117,5 @@ export default function Heading({
     </ErrorBoundary>
   );
 }
+
+export default memo(Heading);
