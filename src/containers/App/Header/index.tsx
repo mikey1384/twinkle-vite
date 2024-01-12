@@ -301,12 +301,14 @@ export default function Header({
   const onEnterChannelWithId = useChatContext(
     (v) => v.actions.onEnterChannelWithId
   );
+  const onUpdateChatType = useChatContext((v) => v.actions.onUpdateChatType);
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
 
   const prevProfilePicUrl = useRef(profilePicUrl);
   const latestPathIdRef = useRef(latestPathId);
+  const latestChatTypeRef = useRef(chatType);
   const peersRef: React.MutableRefObject<any> = useRef({});
   const prevMyStreamRef = useRef(null);
   const prevIncomingShown = useRef(false);
@@ -316,6 +318,10 @@ export default function Header({
   useEffect(() => {
     latestPathIdRef.current = latestPathId;
   }, [latestPathId]);
+
+  useEffect(() => {
+    latestChatTypeRef.current = chatType;
+  }, [chatType]);
 
   useEffect(() => {
     socket.disconnect();
@@ -820,6 +826,7 @@ export default function Header({
             onEnterChannelWithId(channelData);
             onUpdateSelectedChannelId(channelId);
           }
+          onUpdateChatType(latestChatTypeRef.current);
           socket.emit(
             'check_online_users',
             selectedChannelId,
