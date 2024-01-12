@@ -825,9 +825,7 @@ export default function Header({
             });
             onEnterChannelWithId(channelData);
             onUpdateSelectedChannelId(channelId);
-          }
-
-          if (latestChatTypeRef.current) {
+          } else if (latestChatTypeRef.current) {
             onUpdateChatType(latestChatTypeRef.current);
           }
 
