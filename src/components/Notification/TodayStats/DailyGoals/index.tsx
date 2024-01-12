@@ -36,7 +36,9 @@ export default function DailyGoals({
   );
   const { isAchievementsLoaded } = useKeyContext((v) => v.myState);
   const [ampedBadgeIndex, setAmpedBadgeIndex] = useState(0);
+  const [countdownCompleted, setCountdownCompleted] = useState(false);
   const intervalRef = useRef<any>(null);
+  const timerRef = useRef<any>(null);
 
   const allGoalsAchieved = useMemo(
     () => achievedGoals.length === badgeItems.length,
@@ -44,20 +46,30 @@ export default function DailyGoals({
   );
 
   useEffect(() => {
-    if (!isAchievementsLoaded) {
-      intervalRef.current = setInterval(() => {
-        setAmpedBadgeIndex((prevIndex: number) =>
-          prevIndex < badgeItems.length - 1 ? prevIndex + 1 : 0
-        );
-      }, 150);
-    }
+    timerRef.current = setTimeout(() => {
+      setCountdownCompleted(true);
+    }, 3000);
+    intervalRef.current = setInterval(() => {
+      setAmpedBadgeIndex((prevIndex: number) =>
+        prevIndex < badgeItems.length - 1 ? prevIndex + 1 : 0
+      );
+    }, 200);
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
     };
-  }, [allGoalsAchieved, isAchievementsLoaded]);
+  }, []);
+
+  useEffect(() => {
+    if (isAchievementsLoaded && countdownCompleted) {
+      clearInterval(intervalRef.current);
+    }
+  }, [allGoalsAchieved, countdownCompleted, isAchievementsLoaded]);
 
   return (
     <div>
@@ -72,7 +84,10 @@ export default function DailyGoals({
         {badgeItems.map((item, index) => (
           <Badge
             key={item}
-            isAmped={!isAchievementsLoaded && index === ampedBadgeIndex}
+            isAmped={
+              !(isAchievementsLoaded && countdownCompleted) &&
+              index === ampedBadgeIndex
+            }
             isAchieved={isAchieved(item)}
           >
             {item}
