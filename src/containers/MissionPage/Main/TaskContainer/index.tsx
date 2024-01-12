@@ -116,7 +116,7 @@ export default function TaskContainer({ mission }: { mission: any }) {
     if (currentTaskOrderIndex > 0 && myAttempts.loaded) {
       const prevTaskType = taskOrder[currentTaskOrderIndex - 1];
       const prevTaskId = missionTypeIdHash[prevTaskType];
-      if (myAttempts[prevTaskId].status === 'pass') {
+      if (myAttempts[prevTaskId]?.status === 'pass') {
         return true;
       }
     }
