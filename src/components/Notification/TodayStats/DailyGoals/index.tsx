@@ -8,7 +8,7 @@ import React, {
 import Badge from './Badge';
 import CollectRewardsButton from './CollectRewardsButton';
 import DailyBonusButton from './DailyBonusButton';
-import { useKeyContext } from '~/contexts';
+import { useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 const badgeItems = ['W', 'G', 'A'];
@@ -34,9 +34,12 @@ export default function DailyGoals({
     (goal: any) => achievedGoals.includes(goal),
     [achievedGoals]
   );
+  const { countdownCompleted } = useNotiContext((v) => v.state.todayStats);
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const { isAchievementsLoaded } = useKeyContext((v) => v.myState);
   const [ampedBadgeIndex, setAmpedBadgeIndex] = useState(0);
-  const [countdownCompleted, setCountdownCompleted] = useState(false);
   const intervalRef = useRef<any>(null);
   const timerRef = useRef<any>(null);
 
@@ -47,7 +50,11 @@ export default function DailyGoals({
 
   useEffect(() => {
     timerRef.current = setTimeout(() => {
-      setCountdownCompleted(true);
+      onUpdateTodayStats({
+        newStats: {
+          countdownCompleted: true
+        }
+      });
     }, 3000);
     intervalRef.current = setInterval(() => {
       setAmpedBadgeIndex((prevIndex: number) =>
@@ -63,6 +70,7 @@ export default function DailyGoals({
         clearTimeout(timerRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
