@@ -2,18 +2,19 @@ import React, { useContext } from 'react';
 import BottomMenu from './BottomMenu';
 import TopMenu from './TopMenu';
 import LocalContext from '../../Context';
-import { useKeyContext } from '~/contexts';
+import { useKeyContext, useNotiContext } from '~/contexts';
 
 export default function VocabInfo() {
   const {
     state: { allRanks }
   } = useContext(LocalContext);
-  const { rank, twinkleXP, userId } = useKeyContext((v) => v.myState);
+  const myAllTimeRank = useNotiContext((v) => v.state.myAllTimeRank);
+  const { twinkleXP, userId } = useKeyContext((v) => v.myState);
   return (
     <div style={{ height: '100%' }}>
       <TopMenu />
       <BottomMenu
-        rank={rank}
+        rank={myAllTimeRank}
         allRanks={allRanks}
         twinkleXP={twinkleXP}
         userId={userId}
