@@ -69,7 +69,7 @@ export default function DailyGoals({
     if (isAchievementsLoaded && countdownCompleted) {
       clearInterval(intervalRef.current);
     }
-  }, [allGoalsAchieved, countdownCompleted, isAchievementsLoaded]);
+  }, [isAchievementsLoaded, countdownCompleted]);
 
   return (
     <div>
