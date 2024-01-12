@@ -14,7 +14,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { returnCardBurnXP } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import Offers from './Offers';
 import UnlistedMenu from './UnlistedMenu';
@@ -30,6 +30,7 @@ export default function AICardModal({
   modalOverModal?: boolean;
   onHide: () => any;
 }) {
+  const location = useLocation();
   const {
     link: { color: linkColor },
     userLink: { color: userLinkColor }
@@ -204,6 +205,10 @@ export default function AICardModal({
       socket.removeListener('ai_card_sold', handleAICardSold);
     };
   });
+
+  const rootPath = useMemo(() => {
+    return location.pathname.replace(/\/$/, '');
+  }, [location.pathname]);
 
   return (
     <Modal
@@ -439,7 +444,7 @@ export default function AICardModal({
           }}
         >
           <div>
-            {prevCardId && (
+            {prevCardId && rootPath.includes('ai-cards') ? (
               <Link
                 style={{
                   opacity: loading ? 0.5 : 1,
@@ -452,8 +457,8 @@ export default function AICardModal({
                 <Icon style={{ marginRight: '1rem' }} icon="chevron-left" />
                 Prev
               </Link>
-            )}
-            {nextCardId && (
+            ) : null}
+            {nextCardId && rootPath.includes('ai-cards') ? (
               <Link
                 style={{
                   opacity: loading ? 0.5 : 1,
@@ -466,7 +471,7 @@ export default function AICardModal({
                 Next
                 <Icon style={{ marginLeft: '1rem' }} icon="chevron-right" />
               </Link>
-            )}
+            ) : null}
           </div>
         </div>
         <Button transparent onClick={onHide}>
