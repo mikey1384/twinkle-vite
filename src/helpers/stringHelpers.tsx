@@ -299,6 +299,7 @@ export function addEmoji(string: string): string {
     ':umbrella:': '☂️',
     ':unamused:': '😒',
     ':unequal:': '≠',
+    ':unhappy:': '😒',
     ':unicorn:': '🦄',
     ':up:': '👆',
     ':upsidedown:': '🙃',
