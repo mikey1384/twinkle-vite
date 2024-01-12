@@ -117,7 +117,7 @@ export default function AICardModal({
       setOffersLoadMoreShown(loadMoreShown);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cardId]);
 
   useEffect(() => {
     socket.on('ai_card_offer_posted', handleAICardOfferPosted);
