@@ -802,11 +802,17 @@ export default function Header({
           console.log(`Chat loaded in ${chatLoadingTime} seconds`);
 
           onInitChat({ data, userId });
+          if (userId === 5) {
+            window.alert('yo!');
+          }
 
           if (
             latestPathIdRef.current &&
             (data.currentPathId !== latestPathIdRef.current || data.chatType)
           ) {
+            if (userId === 5) {
+              window.alert('here!');
+            }
             const { isAccessible } = await checkChatAccessible(
               latestPathIdRef.current
             );
@@ -826,7 +832,11 @@ export default function Header({
             });
             onEnterChannelWithId(channelData);
             onUpdateSelectedChannelId(channelId);
-          } else if (latestChatTypeRef.current) {
+          }
+          if (latestChatTypeRef.current) {
+            if (userId === 5) {
+              window.alert('here!!');
+            }
             onUpdateChatType(latestChatTypeRef.current);
           }
 
