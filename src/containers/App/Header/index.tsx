@@ -826,7 +826,11 @@ export default function Header({
             onEnterChannelWithId(channelData);
             onUpdateSelectedChannelId(channelId);
           }
-          onUpdateChatType(latestChatTypeRef.current);
+
+          if (latestChatTypeRef.current) {
+            onUpdateChatType(latestChatTypeRef.current);
+          }
+
           socket.emit(
             'check_online_users',
             selectedChannelId,
