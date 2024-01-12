@@ -817,18 +817,17 @@ export default function Header({
               });
             }
             const channelId = parseChannelPath(latestPathIdRef.current);
-            if (!channelPathIdHash[pathId]) {
-              onUpdateChannelPathIdHash({ channelId, pathId });
+            if (channelId > 0) {
+              if (!channelPathIdHash[pathId]) {
+                onUpdateChannelPathIdHash({ channelId, pathId });
+              }
+              const channelData = await loadChatChannel({
+                channelId,
+                subchannelPath
+              });
+              onEnterChannelWithId(channelData);
+              onUpdateSelectedChannelId(channelId);
             }
-            if (userId === 5) {
-              window.alert(channelId);
-            }
-            const channelData = await loadChatChannel({
-              channelId,
-              subchannelPath
-            });
-            onEnterChannelWithId(channelData);
-            onUpdateSelectedChannelId(channelId);
           }
           if (latestChatTypeRef.current) {
             onUpdateChatType(latestChatTypeRef.current);
