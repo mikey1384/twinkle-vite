@@ -802,9 +802,10 @@ export default function Header({
           console.log(`Chat loaded in ${chatLoadingTime} seconds`);
 
           onInitChat({ data, userId });
+
           if (
             latestPathIdRef.current &&
-            data.currentPathId !== latestPathIdRef.current
+            (data.currentPathId !== latestPathIdRef.current || data.chatType)
           ) {
             const { isAccessible } = await checkChatAccessible(
               latestPathIdRef.current
@@ -825,7 +826,8 @@ export default function Header({
             });
             onEnterChannelWithId(channelData);
             onUpdateSelectedChannelId(channelId);
-          } else if (latestChatTypeRef.current) {
+          }
+          if (latestChatTypeRef.current) {
             onUpdateChatType(latestChatTypeRef.current);
           }
 
