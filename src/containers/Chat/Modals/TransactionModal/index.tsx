@@ -9,6 +9,7 @@ import TransactionInitiator from './TransactionInitiator';
 import Loading from '~/components/Loading';
 import TransactionHandler from './TransactionHandler';
 import { useNavigate } from 'react-router-dom';
+import { socket } from '~/constants/io';
 
 export default function TransactionModal({
   currentTransactionId,
@@ -282,7 +283,7 @@ export default function TransactionModal({
     offeredCardIds: number[];
     wantedCardIds: number[];
   }) {
-    const { isNewChannel, pathId } = await postTradeRequest({
+    const { isNewChannel, newChannelId, pathId } = await postTradeRequest({
       type: selectedOption,
       wanted: {
         coins: coinsWanted,
@@ -295,6 +296,7 @@ export default function TransactionModal({
       targetId: partner.id
     });
     if (isNewChannel) {
+      socket.emit('join_chat_group', newChannelId);
       navigate(`/chat/${pathId}`);
     }
     onHide();
