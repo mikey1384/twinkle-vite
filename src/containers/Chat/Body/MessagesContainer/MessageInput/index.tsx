@@ -108,7 +108,7 @@ export default function MessageInput({
     fileUploadLvl,
     zEnergy,
     userId: myId,
-    unlockedAchievementIds
+    level
   } = useKeyContext((v) => v.myState);
   const {
     button: { color: buttonColor },
@@ -333,8 +333,8 @@ export default function MessageInput({
     [selectedChannelId, subchannelId]
   );
   const isZeroChannelAndNotAuthorized = useMemo(
-    () => isZeroChannel && !zEnergy && !unlockedAchievementIds.includes(8),
-    [isZeroChannel, unlockedAchievementIds, zEnergy]
+    () => isZeroChannel && !zEnergy && level < 2,
+    [isZeroChannel, level, zEnergy]
   );
 
   const textIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
@@ -416,8 +416,8 @@ export default function MessageInput({
               ? 'You are banned from chatting with other users on this website...'
               : isRestrictedChannel
               ? `Only the administrator can post messages here...`
-              : isZeroChannel && !zEnergy
-              ? `To chat with Zero, please recharge the battery...`
+              : isZeroChannelAndNotAuthorized
+              ? `You haven't unlocked the ability to chat with Zero yet...`
               : `${enterMessageLabel}...`
           }
           onKeyDown={handleKeyDown}
@@ -471,6 +471,7 @@ export default function MessageInput({
           isRestrictedChannel={isRestrictedChannel}
           isCielChannel={isCielChannel}
           isZeroChannel={isZeroChannel}
+          isAuthorizedToChatWithZero={!isZeroChannelAndNotAuthorized}
           maxSize={maxSize}
           myId={myId}
           onSelectVideoButtonClick={onSelectVideoButtonClick}
