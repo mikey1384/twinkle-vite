@@ -1062,7 +1062,7 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { isNewChannel, pathId }
+          data: { isNewChannel, newChannelId, pathId }
         } = await request.post(
           `${URL}/chat/transaction`,
           { type, wanted, offered, targetId },
@@ -1070,6 +1070,7 @@ export default function chatRequestHelpers({
         );
         return Promise.resolve({
           isNewChannel,
+          newChannelId,
           pathId
         });
       } catch (error) {
