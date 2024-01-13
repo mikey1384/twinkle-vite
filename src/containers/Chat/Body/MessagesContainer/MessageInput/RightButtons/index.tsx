@@ -7,6 +7,7 @@ export default function RightButtons({
   buttonHoverColor,
   currentTransactionId,
   inputText,
+  isAuthorizedToChatWithZero,
   isChatBanned,
   isLoading,
   isRestrictedChannel,
@@ -28,6 +29,7 @@ export default function RightButtons({
   buttonHoverColor: string;
   currentTransactionId: number;
   inputText: string;
+  isAuthorizedToChatWithZero: boolean;
   isChatBanned: boolean;
   isLoading: boolean;
   isRestrictedChannel: boolean;
@@ -45,7 +47,8 @@ export default function RightButtons({
   socketConnected: boolean;
   zEnergy: number;
 }) {
-  return isCielChannel ? null : isZeroChannel ? (
+  return isCielChannel ||
+    (isZeroChannel && isAuthorizedToChatWithZero) ? null : isZeroChannel ? (
     <ZeroButtons
       buttonColor={buttonColor}
       buttonHoverColor={buttonHoverColor}
