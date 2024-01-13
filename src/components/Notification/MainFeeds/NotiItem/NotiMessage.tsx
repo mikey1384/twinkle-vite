@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { stringIsEmpty, truncateText } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { Link } from 'react-router-dom';
 import { User } from '~/types';
 import ContentLink from '~/components/ContentLink';
 
-export default function NotiMessage({
+function NotiMessage({
   actionObj,
   actionColor,
   infoColor,
@@ -499,3 +499,5 @@ export default function NotiMessage({
       return <span>There was an error - report to Mikey!</span>;
   }
 }
+
+export default memo(NotiMessage);
