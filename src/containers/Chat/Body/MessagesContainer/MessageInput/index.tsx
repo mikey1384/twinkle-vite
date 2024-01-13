@@ -417,7 +417,7 @@ export default function MessageInput({
               : isRestrictedChannel
               ? `Only the administrator can post messages here...`
               : isZeroChannelAndNotAuthorized
-              ? `You haven't unlocked the ability to chat with Zero yet...`
+              ? `Your user level needs to be at least 2 to chat with Zero...`
               : `${enterMessageLabel}...`
           }
           onKeyDown={handleKeyDown}
