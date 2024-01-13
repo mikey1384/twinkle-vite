@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { stringIsEmpty, truncateText } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { Link } from 'react-router-dom';
 import { User } from '~/types';
 import ContentLink from '~/components/ContentLink';
 
-export default function RenderMessage({
+export default function NotiMessage({
   actionObj,
   actionColor,
   infoColor,
@@ -72,43 +72,103 @@ export default function RenderMessage({
     userId: number;
   };
 }) {
-  const isReply = targetComment?.userId === myId;
-  const isSubjectResponse = targetSubject?.userId === myId;
-  let displayedContent = '';
-  if (targetObj.contentType === 'pass') {
-    if (targetObj.passType === 'mission') {
-      displayedContent = targetObj.missionTitle;
+  const isReply = useMemo(
+    () => targetComment?.userId === myId,
+    [myId, targetComment?.userId]
+  );
+  const isSubjectResponse = useMemo(
+    () => targetSubject?.userId === myId,
+    [myId, targetSubject?.userId]
+  );
+  const displayedContent = useMemo(() => {
+    let result = '';
+    if (targetObj.contentType === 'pass') {
+      if (targetObj.passType === 'mission') {
+        result = targetObj.missionTitle;
+      }
+      if (targetObj.passType === 'achievement') {
+        result = targetObj.achievementTitle;
+      }
+    } else {
+      result = targetObj.content;
     }
-    if (targetObj.passType === 'achievement') {
-      displayedContent = targetObj.achievementTitle;
-    }
-  } else {
-    displayedContent = targetObj.content;
-  }
-  const contentPreview = `${
-    targetObj.contentType === 'aiStory'
-      ? 'AI Story'
-      : targetObj.contentType === 'url'
-      ? 'link'
-      : targetObj.contentType === 'pass'
-      ? 'achievement'
-      : targetObj.contentType
-  } ${
-    !stringIsEmpty(displayedContent)
-      ? `(${truncateText({
-          text: displayedContent,
-          limit: 100
-        })})`
-      : ''
-  }`;
-  const contentString = isReply
-    ? targetComment.content
-    : isSubjectResponse
-    ? targetSubject.content
-    : targetObj.content;
+    return result;
+  }, [
+    targetObj.achievementTitle,
+    targetObj.content,
+    targetObj.contentType,
+    targetObj.missionTitle,
+    targetObj.passType
+  ]);
+  const contentPreview = useMemo(() => {
+    return `${
+      targetObj.contentType === 'aiStory'
+        ? 'AI Story'
+        : targetObj.contentType === 'url'
+        ? 'link'
+        : targetObj.contentType === 'pass'
+        ? 'achievement'
+        : targetObj.contentType
+    } ${
+      !stringIsEmpty(displayedContent)
+        ? `(${truncateText({
+            text: displayedContent,
+            limit: 100
+          })})`
+        : ''
+    }`;
+  }, [displayedContent, targetObj.contentType]);
+  const contentString = useMemo(() => {
+    return isReply
+      ? targetComment.content
+      : isSubjectResponse
+      ? targetSubject.content
+      : targetObj.content;
+  }, [
+    isReply,
+    isSubjectResponse,
+    targetComment.content,
+    targetObj.content,
+    targetSubject.content
+  ]);
 
-  const contentLinkColor = Color[actionColor]();
-  const missionLinkColor = Color[missionColor]();
+  const contentLinkColor = useMemo(() => Color[actionColor](), [actionColor]);
+  const missionLinkColor = useMemo(() => Color[missionColor](), [missionColor]);
+  const twinkleColor = useMemo(
+    () =>
+      actionObj.amount >= 10
+        ? Color.rose()
+        : actionObj.amount >= 5
+        ? Color.orange()
+        : actionObj.amount >= 3
+        ? Color.pink()
+        : Color[infoColor](),
+    [actionObj.amount, infoColor]
+  );
+  const contentIsEmpty = useMemo(
+    () => stringIsEmpty(actionObj.content),
+    [actionObj.content]
+  );
+  const truncatedActionText = useMemo(
+    () =>
+      truncateText({
+        text: actionObj.content,
+        limit: 100
+      }),
+    [actionObj.content]
+  );
+  const truncatedContentText = useMemo(
+    () =>
+      truncateText({
+        text: contentString,
+        limit: 100
+      }),
+    [contentString]
+  );
+  const truncatedTargetObjectText = useMemo(
+    () => truncateText({ text: targetObj.content, limit: 100 }),
+    [targetObj.content]
+  );
 
   switch (actionObj.contentType) {
     case 'like':
@@ -210,14 +270,7 @@ export default function RenderMessage({
           <>
             <span
               style={{
-                color:
-                  actionObj.amount >= 10
-                    ? Color.rose()
-                    : actionObj.amount >= 5
-                    ? Color.orange()
-                    : actionObj.amount >= 3
-                    ? Color.pink()
-                    : Color[infoColor](),
+                color: twinkleColor,
                 fontWeight: 'bold'
               }}
             >
@@ -359,23 +412,17 @@ export default function RenderMessage({
               (!isReply && targetObj.contentType === 'user') ||
               stringIsEmpty(contentString)
                 ? ''
-                : ` (${truncateText({
-                    text: contentString,
-                    limit: 100
-                  })})`
+                : ` (${truncatedContentText})`
             }`}
           />
-          {!stringIsEmpty(actionObj.content) && (
+          {!contentIsEmpty && (
             <>
               :{' '}
               <ContentLink
                 contentType="comment"
                 content={{
                   id: actionObj.id,
-                  title: `"${truncateText({
-                    text: actionObj.content,
-                    limit: 100
-                  })}"`
+                  title: `"${truncatedActionText}"`
                 }}
                 style={{ color: contentLinkColor }}
                 label=""
@@ -392,10 +439,7 @@ export default function RenderMessage({
             contentType="subject"
             content={{
               id: actionObj.id,
-              title: `subject (${truncateText({
-                text: actionObj.content,
-                limit: 100
-              })})`
+              title: `subject (${truncatedActionText})`
             }}
             style={{ color: contentLinkColor }}
             label=""
@@ -407,7 +451,7 @@ export default function RenderMessage({
               id: targetObj.id,
               title: `${
                 targetObj.contentType === 'url' ? 'link' : targetObj.contentType
-              } (${truncateText({ text: targetObj.content, limit: 100 })})`
+              } (${truncatedTargetObjectText})`
             }}
             label=""
           />
@@ -427,10 +471,7 @@ export default function RenderMessage({
             content={{
               id: targetObj.id,
               missionType: rootMissionType || targetObj.missionType,
-              title: `(${truncateText({
-                text: targetObj.content,
-                limit: 100
-              })})`
+              title: `(${truncatedTargetObjectText})`
             }}
             style={{ color: Color[linkColor]() }}
             label=""
@@ -447,10 +488,7 @@ export default function RenderMessage({
             content={{
               id: targetObj.id,
               missionType: targetObj.missionType,
-              title: `(${truncateText({
-                text: targetObj.content,
-                limit: 100
-              })})`
+              title: `(${truncatedTargetObjectText})`
             }}
             style={{ color: Color[linkColor]() }}
             label=""
