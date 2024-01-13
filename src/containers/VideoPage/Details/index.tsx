@@ -570,28 +570,33 @@ export default function Details({
   }
 
   async function handleEditFinish() {
-    if (banned?.posting) {
-      return;
+    try {
+      if (banned?.posting) {
+        return;
+      }
+      const params = {
+        contentId: videoId,
+        contentType: 'video',
+        editedUrl,
+        videoId,
+        editedTitle: finalizeEmoji(editedTitle),
+        editedDescription: finalizeEmoji(editedDescription)
+      };
+      await onEditFinish(params);
+    } catch (error) {
+      console.error('Error in handleEditFinish:', error);
+    } finally {
+      onSetEditForm({
+        contentId: videoId,
+        contentType: 'video',
+        editForm: undefined
+      });
+      onSetIsEditing({
+        contentId: videoId,
+        contentType: 'video',
+        isEditing: false
+      });
     }
-    const params = {
-      contentId: videoId,
-      contentType: 'video',
-      editedUrl,
-      videoId,
-      editedTitle: finalizeEmoji(editedTitle),
-      editedDescription: finalizeEmoji(editedDescription)
-    };
-    await onEditFinish(params);
-    onSetEditForm({
-      contentId: videoId,
-      contentType: 'video',
-      editForm: undefined
-    });
-    onSetIsEditing({
-      contentId: videoId,
-      contentType: 'video',
-      isEditing: false
-    });
   }
 
   function handleLikeVideo({

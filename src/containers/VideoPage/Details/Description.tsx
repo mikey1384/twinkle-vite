@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Textarea from '~/components/Texts/Textarea';
 import RichText from '~/components/Texts/RichText';
@@ -48,6 +48,7 @@ export default function Description({
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
+  const [isEditing, setIsEditing] = useState(false);
   return (
     <div style={{ width: '100%', fontSize: '1.6rem' }}>
       {onEdit ? (
@@ -85,8 +86,9 @@ export default function Description({
             </Button>
             <Button
               color={doneColor}
+              loading={isEditing}
               disabled={determineEditButtonDoneStatus()}
-              onClick={onEditFinish}
+              onClick={handleEditFinish}
               style={{ fontSize: '1.7rem' }}
             >
               {doneLabel}
@@ -108,4 +110,15 @@ export default function Description({
       )}
     </div>
   );
+
+  async function handleEditFinish() {
+    try {
+      setIsEditing(true);
+      await onEditFinish();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsEditing(false);
+    }
+  }
 }
