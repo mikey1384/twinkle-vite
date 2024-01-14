@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
-import { socket } from '~/constants/io';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useExploreContext, useKeyContext } from '~/contexts';
 import DisplayedContent from './DisplayedContent';
@@ -23,7 +22,6 @@ export default function Explore({ category }: { category: string }) {
   const searchText = useExploreContext((v) => v.state.search.searchText);
   const onSetPrevUserId = useExploreContext((v) => v.actions.onSetPrevUserId);
   const { userId } = useKeyContext((v) => v.myState);
-  const disconnected = useRef(false);
   const ContainerRef: React.RefObject<any> = useRef({});
   const SearchBoxRef: React.RefObject<any> = useRef(null);
 
@@ -31,21 +29,6 @@ export default function Explore({ category }: { category: string }) {
     onSetPrevUserId(userId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
-
-  useEffect(() => {
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
-    function onConnect() {
-      disconnected.current = false;
-    }
-    function onDisconnect() {
-      disconnected.current = true;
-    }
-    return function cleanUp() {
-      socket.removeListener('connect', onConnect);
-      socket.removeListener('disconnect', onDisconnect);
-    };
-  });
 
   return (
     <ErrorBoundary componentPath="Explore/index">

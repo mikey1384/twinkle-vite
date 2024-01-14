@@ -1,9 +1,8 @@
 import React, { useMemo, createElement, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import SimpleEditor from 'react-simple-code-editor';
-import okaidia from 'prism-react-renderer/themes/okaidia';
 import Preview from './Preview';
-import Highlight, { Prism } from 'prism-react-renderer';
+import { Highlight, themes } from 'prism-react-renderer';
 import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
@@ -165,7 +164,7 @@ export default function Editor({
         highlight={(code) =>
           handleHighlightCode({
             code,
-            theme: okaidia
+            theme: themes.okaidia
           })
         }
         padding={8}
@@ -209,7 +208,7 @@ export default function Editor({
 
   function handleHighlightCode({ code, theme }: { code: string; theme: any }) {
     return (
-      <Highlight Prism={Prism} code={code} theme={theme} language="jsx">
+      <Highlight code={code} theme={theme} language="jsx">
         {({ tokens, getLineProps, getTokenProps }) => (
           <>
             {tokens.map((line, i) => {

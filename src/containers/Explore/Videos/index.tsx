@@ -4,6 +4,7 @@ import FeaturedPlaylistsPanel from './FeaturedPlaylistsPanel';
 import PlaylistsPanel from './PlaylistsPanel';
 import ContinueWatchingPanel from './ContinueWatchingPanel';
 import AddPlaylistModal from '~/components/Modals/AddPlaylistModal';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { scrollElementToCenter } from '~/helpers';
 import { useSearch } from '~/helpers/hooks';
@@ -81,53 +82,55 @@ export default function Videos() {
   );
 
   return (
-    <div>
-      <ContinueWatchingPanel />
-      <FeaturedPlaylistsPanel />
-      <PlaylistsPanel
-        key="allplaylists"
-        style={{ marginTop: '2.5rem' }}
-        innerRef={AllPlaylistsPanelRef}
-        buttonGroup={() => (
-          <ButtonGroup
-            style={{
-              marginLeft: 'auto',
-              opacity: canEditPlaylists ? 1 : 0
-            }}
-            buttons={[
-              {
-                label: `+ ${addPlaylistLabel}`,
-                onClick: onOpenAddPlaylistModal,
-                skeuomorphic: true,
-                color: 'darkerGray',
-                disabled: !canEditPlaylists
-              }
-            ]}
+    <ErrorBoundary componentPath="Explore/Videos">
+      <div>
+        <ContinueWatchingPanel />
+        <FeaturedPlaylistsPanel />
+        <PlaylistsPanel
+          key="allplaylists"
+          style={{ marginTop: '2.5rem' }}
+          innerRef={AllPlaylistsPanelRef}
+          buttonGroup={() => (
+            <ButtonGroup
+              style={{
+                marginLeft: 'auto',
+                opacity: canEditPlaylists ? 1 : 0
+              }}
+              buttons={[
+                {
+                  label: `+ ${addPlaylistLabel}`,
+                  onClick: onOpenAddPlaylistModal,
+                  skeuomorphic: true,
+                  color: 'darkerGray',
+                  disabled: !canEditPlaylists
+                }
+              ]}
+            />
+          )}
+          title={allPlaylistsLabel}
+          loadMoreButton={
+            !stringIsEmpty(playlistSearchText)
+              ? loadMoreSearchedPlaylistsButton
+              : loadMorePlaylistsButton
+          }
+          userId={userId}
+          playlists={playlists}
+          loaded={allPlaylistsLoaded}
+          isSearching={searching}
+          onSearch={handleSearch}
+          searchQuery={playlistSearchText}
+        />
+        {addPlaylistModalShown && (
+          <AddPlaylistModal
+            onUploadPlaylist={onUploadPlaylist}
+            onHide={onCloseAddPlaylistModal}
+            focusPlaylistPanelAfterUpload={() =>
+              scrollElementToCenter(AllPlaylistsPanelRef.current, 150)
+            }
           />
         )}
-        title={allPlaylistsLabel}
-        loadMoreButton={
-          !stringIsEmpty(playlistSearchText)
-            ? loadMoreSearchedPlaylistsButton
-            : loadMorePlaylistsButton
-        }
-        userId={userId}
-        playlists={playlists}
-        loaded={allPlaylistsLoaded}
-        isSearching={searching}
-        onSearch={handleSearch}
-        searchQuery={playlistSearchText}
-      />
-      {addPlaylistModalShown && (
-        <AddPlaylistModal
-          onUploadPlaylist={onUploadPlaylist}
-          onHide={onCloseAddPlaylistModal}
-          focusPlaylistPanelAfterUpload={() =>
-            scrollElementToCenter(AllPlaylistsPanelRef.current, 150)
-          }
-        />
-      )}
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 
   async function handleSearchPlaylist(text: string) {
