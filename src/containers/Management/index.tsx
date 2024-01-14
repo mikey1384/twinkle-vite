@@ -85,11 +85,7 @@ export default function Management() {
   ) : (
     <InvalidPage
       title={userId ? 'For authorized moderators only' : 'Please log in'}
-      text={
-        userId
-          ? 'You are not authorized to view this page'
-          : 'This page is only available to logged in users'
-      }
+      text="This page is only available to users with admin privileges"
     />
   );
 }
