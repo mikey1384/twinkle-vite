@@ -26,7 +26,7 @@ export default function Management() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [managementLevel]);
 
-  return !loaded || !userId ? (
+  return !loaded ? (
     <Loading />
   ) : managementLevel > 0 ? (
     <div>
@@ -84,8 +84,12 @@ export default function Management() {
     </div>
   ) : (
     <InvalidPage
-      title="For authorized moderators only"
-      text="You are not authorized to view this page"
+      title={userId ? 'For authorized moderators only' : 'Please log in'}
+      text={
+        userId
+          ? 'You are not authorized to view this page'
+          : 'This page is only available to logged in users'
+      }
     />
   );
 }
