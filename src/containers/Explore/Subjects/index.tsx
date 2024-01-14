@@ -109,8 +109,8 @@ export default function Subjects() {
   }, [loaded, userId, prevUserId]);
 
   return (
-    <div>
-      <ErrorBoundary componentPath="Explore/Subjects">
+    <ErrorBoundary componentPath="Explore/Subjects">
+      <div>
         {((featuredLoaded && featureds.length > 0) || canPinPlaylists) && (
           <Featured
             loaded={featuredLoaded}
@@ -136,7 +136,7 @@ export default function Subjects() {
           loaded={recommendedLoaded}
           onExpand={() => onSetRecommendedSubjectsExpanded(true)}
         />
-      </ErrorBoundary>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

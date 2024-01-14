@@ -71,6 +71,7 @@ export default function MonthlyXPBarChart({ data = [] }: { data: any[] }) {
             <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
             <Bar
               dataKey="XP"
+              activeBar={false}
               shape={<CustomBar totalLength={barData.length} />}
               barSize={30}
             />

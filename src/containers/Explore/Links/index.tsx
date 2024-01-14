@@ -3,6 +3,7 @@ import AddLinkModal from './AddLinkModal';
 import Button from '~/components/Button';
 import SectionPanel from '~/components/SectionPanel';
 import LinkGroup from './LinkGroup';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
@@ -130,52 +131,54 @@ export default function Links() {
   }, [loaded, prevUserId, userId]);
 
   return (
-    <div>
-      <SectionPanel
-        title={madeByUsersLabel}
-        emptyMessage="No User Made Content"
-        isEmpty={byUserLinks.length === 0}
-        loaded={byUserLoaded}
-        onLoadMore={handleLoadMoreByUserLinks}
-        loadMoreButtonShown={loadMoreByUserLinksButtonShown}
-      >
-        <LinkGroup links={byUserLinks} />
-      </SectionPanel>
-      <SectionPanel
-        title={recommendedLabel}
-        style={{ marginTop: '2.5rem' }}
-        emptyMessage="No Recommended Links"
-        isEmpty={recommendeds.length === 0}
-        loaded={recommendedsLoaded}
-        onLoadMore={handleLoadMoreRecommendeds}
-        loadMoreButtonShown={loadMoreRecommendedsButtonShown}
-      >
-        <LinkGroup links={recommendeds} />
-      </SectionPanel>
-      <SectionPanel
-        title={allLinksLabel}
-        style={{ marginTop: '2.5rem' }}
-        button={
-          <Button
-            skeuomorphic
-            color="darkerGray"
-            onClick={() => setAddLinkModalShown(true)}
-          >
-            + {addLinkLabel}
-          </Button>
-        }
-        emptyMessage={noUploadedLinksLabel}
-        isEmpty={links.length === 0}
-        loaded={loaded || loadedRef.current}
-        onLoadMore={handleLoadMoreLinks}
-        loadMoreButtonShown={loadMoreLinksButtonShown}
-      >
-        <LinkGroup links={links} />
-      </SectionPanel>
-      {addLinkModalShown && (
-        <AddLinkModal onHide={() => setAddLinkModalShown(false)} />
-      )}
-    </div>
+    <ErrorBoundary componentPath="Explore/Links">
+      <div>
+        <SectionPanel
+          title={madeByUsersLabel}
+          emptyMessage="No User Made Content"
+          isEmpty={byUserLinks.length === 0}
+          loaded={byUserLoaded}
+          onLoadMore={handleLoadMoreByUserLinks}
+          loadMoreButtonShown={loadMoreByUserLinksButtonShown}
+        >
+          <LinkGroup links={byUserLinks} />
+        </SectionPanel>
+        <SectionPanel
+          title={recommendedLabel}
+          style={{ marginTop: '2.5rem' }}
+          emptyMessage="No Recommended Links"
+          isEmpty={recommendeds.length === 0}
+          loaded={recommendedsLoaded}
+          onLoadMore={handleLoadMoreRecommendeds}
+          loadMoreButtonShown={loadMoreRecommendedsButtonShown}
+        >
+          <LinkGroup links={recommendeds} />
+        </SectionPanel>
+        <SectionPanel
+          title={allLinksLabel}
+          style={{ marginTop: '2.5rem' }}
+          button={
+            <Button
+              skeuomorphic
+              color="darkerGray"
+              onClick={() => setAddLinkModalShown(true)}
+            >
+              + {addLinkLabel}
+            </Button>
+          }
+          emptyMessage={noUploadedLinksLabel}
+          isEmpty={links.length === 0}
+          loaded={loaded || loadedRef.current}
+          onLoadMore={handleLoadMoreLinks}
+          loadMoreButtonShown={loadMoreLinksButtonShown}
+        >
+          <LinkGroup links={links} />
+        </SectionPanel>
+        {addLinkModalShown && (
+          <AddLinkModal onHide={() => setAddLinkModalShown(false)} />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 
   async function handleLoadMoreByUserLinks() {

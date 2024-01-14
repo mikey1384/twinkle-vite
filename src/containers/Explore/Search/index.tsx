@@ -4,6 +4,7 @@ import { css } from '@emotion/css';
 import TopFilter from './TopFilter';
 import Results from './Results';
 import SearchBox from './SearchBox';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { useLocation } from 'react-router-dom';
 import { getSectionFromPathname } from '~/helpers';
 import { useExploreContext } from '~/contexts';
@@ -36,34 +37,36 @@ export default function Search({
   }, [searchText]);
 
   return (
-    <div style={style}>
-      <SearchBox
-        style={{
-          width: '50%',
-          marginTop: '2rem',
-          height: '5rem'
-        }}
-        category={category}
-        className={css`
-          svg,
-          input {
-            font-size: 2.3rem;
-          }
-        `}
-        innerRef={innerRef}
-      />
-      {!stringIsEmpty(searchText) && (
-        <>
-          <TopFilter
-            className={css`
-              width: 100%;
-              margin-top: 2rem;
-            `}
-            selectedFilter={category}
-          />
-          <Results searchText={searchText} filter={category} />
-        </>
-      )}
-    </div>
+    <ErrorBoundary componentPath="Explore/Search">
+      <div style={style}>
+        <SearchBox
+          style={{
+            width: '50%',
+            marginTop: '2rem',
+            height: '5rem'
+          }}
+          category={category}
+          className={css`
+            svg,
+            input {
+              font-size: 2.3rem;
+            }
+          `}
+          innerRef={innerRef}
+        />
+        {!stringIsEmpty(searchText) && (
+          <>
+            <TopFilter
+              className={css`
+                width: 100%;
+                margin-top: 2rem;
+              `}
+              selectedFilter={category}
+            />
+            <Results searchText={searchText} filter={category} />
+          </>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Checkbox from '~/components/Checkbox';
 import Link from '~/components/Link';
 import Icon from '~/components/Icon';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -33,148 +34,150 @@ export default function Categories({
   const [changingDefaultFilter, setChangingDefaultFilter] = useState(false);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        alignItems: 'center',
-        ...style
-      }}
-    >
+    <ErrorBoundary componentPath="Explore/Categories">
       <div
-        className={css`
-          width: 80%;
-          color: ${Color[searchColor]()};
-          > nav {
-            width: 100%;
-            text-align: center;
-            > p {
-              cursor: default;
-              font-weight: bold;
-              text-transform: capitalize;
-              font-size: 3.5rem;
-              text-shadow: ${searchShadowColor
-                ? `0.05rem 0.05rem ${Color[searchShadowColor]()}`
-                : 'none'};
-              > svg {
-                font-size: 3.2rem;
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          alignItems: 'center',
+          ...style
+        }}
+      >
+        <div
+          className={css`
+            width: 80%;
+            color: ${Color[searchColor]()};
+            > nav {
+              width: 100%;
+              text-align: center;
+              > p {
+                cursor: default;
+                font-weight: bold;
+                text-transform: capitalize;
+                font-size: 3.5rem;
+                text-shadow: ${searchShadowColor
+                  ? `0.05rem 0.05rem ${Color[searchShadowColor]()}`
+                  : 'none'};
+                > svg {
+                  font-size: 3.2rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 2.2rem;
+                  }
+                }
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 2.2rem;
+                  font-size: 2.5rem;
                 }
               }
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 2.5rem;
+              > a {
+                line-height: 1.8;
+                font-size: 2.7rem;
+                cursor: pointer;
+                text-transform: capitalize;
+                color: ${Color.gray()};
+                transition: color 0.1s;
+                &:hover {
+                  text-decoration: none;
+                  color: ${Color[searchColor]()};
+                }
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.7rem;
+                }
+              }
+              span {
+                font-size: 1.5rem;
               }
             }
-            > a {
-              line-height: 1.8;
-              font-size: 2.7rem;
-              cursor: pointer;
-              text-transform: capitalize;
-              color: ${Color.gray()};
-              transition: color 0.1s;
-              &:hover {
-                text-decoration: none;
-                color: ${Color[searchColor]()};
-              }
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.7rem;
-              }
-            }
-            span {
-              font-size: 1.5rem;
-            }
-          }
-        `}
-      >
-        {['ai-cards', 'subjects', 'videos', 'links'].map((contentType) => {
-          const displayedContentType =
-            contentType === 'ai-cards' ? 'AI Cards' : contentType;
-          const exploreLabel =
-            SELECTED_LANGUAGE === 'kr' ? (
-              <>{localize(displayedContentType.slice(0, -1))} 탐색</>
-            ) : (
-              <>
-                {deviceIsTablet ? '' : `Explore `}
-                {displayedContentType}
-              </>
-            );
-          const alwaysExploreFirstLabel =
-            SELECTED_LANGUAGE === 'kr'
-              ? `항상 ${localize(
-                  displayedContentType.slice(0, -1)
-                )} 먼저 탐색하기:`
-              : `Always explore ${displayedContentType} first:`;
+          `}
+        >
+          {['ai-cards', 'subjects', 'videos', 'links'].map((contentType) => {
+            const displayedContentType =
+              contentType === 'ai-cards' ? 'AI Cards' : contentType;
+            const exploreLabel =
+              SELECTED_LANGUAGE === 'kr' ? (
+                <>{localize(displayedContentType.slice(0, -1))} 탐색</>
+              ) : (
+                <>
+                  {deviceIsTablet ? '' : `Explore `}
+                  {displayedContentType}
+                </>
+              );
+            const alwaysExploreFirstLabel =
+              SELECTED_LANGUAGE === 'kr'
+                ? `항상 ${localize(
+                    displayedContentType.slice(0, -1)
+                  )} 먼저 탐색하기:`
+                : `Always explore ${displayedContentType} first:`;
 
-          return filter === contentType ? (
-            <nav
-              style={{
-                width: '100%',
-                textAlign: 'center'
-              }}
-              key={contentType}
-            >
-              <p>
-                {returnIcon(contentType)}
-                {exploreLabel}
-              </p>
-              <div
+            return filter === contentType ? (
+              <nav
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                   width: '100%',
-                  opacity: changingDefaultFilter ? 0.5 : 1
+                  textAlign: 'center'
                 }}
+                key={contentType}
               >
+                <p>
+                  {returnIcon(contentType)}
+                  {exploreLabel}
+                </p>
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    width: '100%',
+                    opacity: changingDefaultFilter ? 0.5 : 1
                   }}
                 >
-                  <Checkbox
-                    backgroundColor="#fff"
-                    label={alwaysExploreFirstLabel}
-                    textIsClickable
+                  <div
                     style={{
-                      width: 'auto',
-                      marginBottom: '0.5rem'
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
-                    className={css`
-                      > p {
-                        font-size: 1.7rem;
-                        @media (max-width: ${mobileMaxWidth}) {
-                          font-size: 1.3rem;
+                  >
+                    <Checkbox
+                      backgroundColor="#fff"
+                      label={alwaysExploreFirstLabel}
+                      textIsClickable
+                      style={{
+                        width: 'auto',
+                        marginBottom: '0.5rem'
+                      }}
+                      className={css`
+                        > p {
+                          font-size: 1.7rem;
+                          @media (max-width: ${mobileMaxWidth}) {
+                            font-size: 1.3rem;
+                          }
                         }
-                      }
-                    `}
-                    checked={filter === defaultSearchFilter}
-                    onClick={handleSetDefaultSearchFilter}
-                  />
-                  {changingDefaultFilter && (
-                    <Icon
-                      style={{ marginLeft: '0.5rem' }}
-                      icon="spinner"
-                      pulse
+                      `}
+                      checked={filter === defaultSearchFilter}
+                      onClick={handleSetDefaultSearchFilter}
                     />
-                  )}
+                    {changingDefaultFilter && (
+                      <Icon
+                        style={{ marginLeft: '0.5rem' }}
+                        icon="spinner"
+                        pulse
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
-            </nav>
-          ) : (
-            <nav key={contentType}>
-              <Link to={`/${contentType}`}>
-                {returnIcon(contentType)}
-                {exploreLabel}
-              </Link>
-            </nav>
-          );
-        })}
+              </nav>
+            ) : (
+              <nav key={contentType}>
+                <Link to={`/${contentType}`}>
+                  {returnIcon(contentType)}
+                  {exploreLabel}
+                </Link>
+              </nav>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 
   function returnIcon(contentType: string) {
