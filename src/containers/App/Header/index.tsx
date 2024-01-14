@@ -1580,6 +1580,7 @@ export default function Header({
       } else {
         document.title = `${`Chat | Twinkle`}${newNotiNum > 0 ? ' *' : ''}`;
       }
+      onGetNumberOfUnreadMessages(0);
     } else if (
       !['chat', 'comments', 'subjects', 'ai-cards'].includes(section) &&
       isSubsection &&
@@ -1601,6 +1602,7 @@ export default function Header({
       }
       document.title = `${currentPageTitle}${newNotiNum > 0 ? ' *' : ''}`;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numNewNotis, numNewPosts, numUnreads, pathname, pageTitle, chatType]);
 
   useEffect(() => {
