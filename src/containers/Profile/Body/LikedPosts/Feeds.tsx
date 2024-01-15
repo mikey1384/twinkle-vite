@@ -170,6 +170,7 @@ export default function Feeds({
                           marginBottom: '1rem',
                           zIndex: feeds.length - index
                         }}
+                        feedId={feed.feedId}
                         zIndex={feeds.length - index}
                         contentId={contentId}
                         contentType={contentType}

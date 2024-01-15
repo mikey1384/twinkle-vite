@@ -258,6 +258,7 @@ export default function Feeds({
                           zIndex: feeds.length - index
                         }}
                         zIndex={feeds.length - index}
+                        feedId={feed.feedId}
                         contentId={contentId}
                         contentType={contentType}
                         rootType={rootType}
