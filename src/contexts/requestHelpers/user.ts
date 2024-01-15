@@ -700,7 +700,6 @@ export default function userRequestHelpers({
       email,
       verifiedEmail,
       password,
-      passphrase,
       userType
     }: {
       branchName: string;
@@ -711,7 +710,6 @@ export default function userRequestHelpers({
       email: string;
       verifiedEmail: string;
       password: string;
-      passphrase: string;
       userType: string;
     }) {
       try {
@@ -724,7 +722,6 @@ export default function userRequestHelpers({
           email,
           verifiedEmail,
           password,
-          passphrase,
           userType
         });
         if (data.token) {

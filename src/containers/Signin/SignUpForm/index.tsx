@@ -97,7 +97,6 @@ export default function SignUpForm({
               lastname={lastname}
               username={username}
               password={password}
-              passphrase={passphrase}
               email={email}
               verifiedEmail={verifiedEmail}
               reenteredPassword={reenteredPassword}
