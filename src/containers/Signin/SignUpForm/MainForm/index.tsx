@@ -27,7 +27,6 @@ export default function MainForm({
   lastname,
   username,
   password,
-  passphrase,
   email,
   verifiedEmail,
   reenteredPassword,
@@ -55,7 +54,6 @@ export default function MainForm({
   lastname: string;
   username: string;
   password: string;
-  passphrase: string;
   email: string;
   verifiedEmail: string;
   reenteredPassword: string;
@@ -259,7 +257,6 @@ export default function MainForm({
         email,
         verifiedEmail,
         password,
-        passphrase,
         userType
       });
       onSignup(data);
