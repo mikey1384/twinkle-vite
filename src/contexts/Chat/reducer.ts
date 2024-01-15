@@ -981,9 +981,17 @@ export default function ChatReducer(
         }
       }
       const aiCardsLoaded =
-        action.data.cardFeeds && !!action.data.cardFeeds.length;
+        action.data.cardFeeds &&
+        (action.data.cardFeeds?.length > 1 ||
+          !state.aiCardFeeds
+            .map((feed: { id: number }) => feed.id)
+            .includes(action.data.cardFeeds[0]?.id));
       const vocabActivitiesLoaded =
-        action.data.vocabActivities && !!action.data.vocabActivities?.length;
+        action.data.vocabActivities &&
+        (action.data.vocabActivities?.length > 1 ||
+          !state.vocabActivities
+            .map((activity: { id: number }) => activity.id)
+            .includes(action.data.vocabActivities[0]?.id));
 
       return {
         ...state,
