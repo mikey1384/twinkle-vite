@@ -1094,7 +1094,9 @@ export default function ChatReducer(
         vocabActivitiesLoadMoreButton: vocabActivitiesLoaded
           ? vocabActivitiesLoadMoreButton
           : state.vocabActivitiesLoadMoreButton,
-        wordCollectors: action.data.wordCollectors,
+        wordCollectors: vocabActivitiesLoaded
+          ? action.data.wordCollectors
+          : state.wordCollectors,
         wordsObj: {
           ...state.wordsObj,
           ...action.data.wordsObj
