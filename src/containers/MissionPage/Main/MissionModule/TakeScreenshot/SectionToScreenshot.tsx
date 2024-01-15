@@ -67,7 +67,12 @@ export default function SectionToScreenshot({
         >
           Screenshot this box
         </p>
-        <p style={{ marginTop: '1.5rem' }}>
+        <p
+          style={{
+            marginTop: '1.5rem',
+            fontFamily: 'Arial, Helvetica, Calibri'
+          }}
+        >
           <b>{username}</b> captured this screenshot on {nowString}
         </p>
       </div>
