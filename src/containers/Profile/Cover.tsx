@@ -134,14 +134,14 @@ export default function Cover({
             `}
           >
             <span
-              className={`unselectable ${css`
+              className={css`
                 cursor: ${profile.hasUsernameChanged ? 'pointer' : 'default'};
                 &:hover {
                   text-decoration: ${profile.hasUsernameChanged
                     ? 'underline'
                     : 'none'};
                 }
-              `}`}
+              `}
               onClick={() =>
                 profile.hasUsernameChanged && setUsernameHistoryShown(true)
               }
