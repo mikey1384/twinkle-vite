@@ -249,6 +249,7 @@ export default function Stories() {
                       style={{
                         marginBottom: '1rem'
                       }}
+                      feedId={feed.feedId}
                       zIndex={feeds?.length - index}
                       contentId={feed.contentId}
                       contentType={feed.contentType}

@@ -36,6 +36,7 @@ export default function ContentPanel({
   autoExpand,
   className,
   commentsLoadLimit,
+  feedId,
   contentId,
   contentType,
   rootType,
@@ -48,6 +49,7 @@ export default function ContentPanel({
   autoExpand?: boolean;
   className?: string;
   commentsLoadLimit?: number;
+  feedId?: number;
   contentId: number;
   contentType: string;
   rootType?: string;
@@ -187,8 +189,7 @@ export default function ContentPanel({
         rootType: appliedRootType
       });
       onInitContent({
-        ...data,
-        feedId: contentState.feedId
+        ...(feedId ? { ...data, feedId } : data)
       });
       if (data.rootObj) {
         onInitContent({
