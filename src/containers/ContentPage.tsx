@@ -1,39 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import ContentPanel from '~/components/ContentPanel';
 import InvalidPage from '~/components/InvalidPage';
 import request from 'axios';
 import URL from '~/constants/URL';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
-import { useViewContext } from '~/contexts';
 
 export default function ContentPage() {
-  const navigate = useNavigate();
   const location = useLocation();
   const { contentId: initialContentId } = useParams();
   const contentId = Number(initialContentId);
-  const onSetContentNav = useViewContext((v) => v.actions.onSetContentNav);
   const rawContentType = location.pathname.split('/')[1].slice(0, -1);
   const contentType =
     rawContentType === 'ai-storie' ? 'aiStory' : rawContentType;
-  const { loaded, isDeleted, isDeleteNotification } = useContentState({
+  const { loaded, isDeleted } = useContentState({
     contentType,
     contentId
   });
   const [exists, setExists] = useState(true);
-  const prevDeleted = useRef(false);
-
-  useEffect(() => {
-    if (!prevDeleted.current && (isDeleted || isDeleteNotification)) {
-      onSetContentNav('');
-      navigate('/');
-    }
-    prevDeleted.current = isDeleted || isDeleteNotification;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDeleted, isDeleteNotification, loaded]);
 
   useEffect(() => {
     if (!loaded) {
@@ -82,7 +69,7 @@ export default function ContentPage() {
             }
           `}
         >
-          {exists ? (
+          {exists && !isDeleted ? (
             <ContentPanel
               key={contentType + contentId}
               className={css`
