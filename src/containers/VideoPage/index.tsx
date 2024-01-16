@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import InvalidPage from '~/components/InvalidPage';
 import Comments from '~/components/Comments';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -42,7 +42,7 @@ export default function VideoPage() {
   const [changingPage, setChangingPage] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
-  const [videoUnavailable, setVideoUnavailable] = useState(false);
+  const [isNotFound, setIsNotFound] = useState(false);
   const CommentInputAreaRef = useRef(null);
   const prevDeleted = useRef(false);
   const isMounted = useRef(true);
@@ -123,6 +123,7 @@ export default function VideoPage() {
     rewardLevel,
     likes,
     loaded,
+    notFound,
     pinnedCommentId,
     questions,
     recommendations,
@@ -136,6 +137,10 @@ export default function VideoPage() {
     uploader,
     views
   } = useContentState({ contentType: 'video', contentId: videoId });
+  const isVideoUnavailable = useMemo(
+    () => notFound || isNotFound || isDeleted,
+    [isDeleted, isNotFound, notFound]
+  );
 
   useEffect(() => {
     isMounted.current = true;
@@ -163,7 +168,7 @@ export default function VideoPage() {
 
   useEffect(() => {
     setChangingPage(true);
-    setVideoUnavailable(false);
+    setIsNotFound(false);
     if (!loaded) {
       handleLoadVideoPage();
     }
@@ -181,7 +186,7 @@ export default function VideoPage() {
           `${URL}/video/page?videoId=${videoId}`
         );
         if (data.notFound) {
-          return setVideoUnavailable(true);
+          return setIsNotFound(true);
         }
         if (isMounted.current) {
           onInitContent({
@@ -244,9 +249,9 @@ export default function VideoPage() {
         }
       `}
     >
-      {(!loaded || videoUnavailable) && (
+      {(!loaded || isVideoUnavailable) && (
         <div>
-          {videoUnavailable ? (
+          {isVideoUnavailable ? (
             <InvalidPage text="Video does not exist" />
           ) : (
             <Loading text="Loading Video..." />
@@ -267,7 +272,7 @@ export default function VideoPage() {
           }
         `}
       >
-        {loaded && !videoUnavailable && content && (
+        {loaded && !isVideoUnavailable && (
           <div
             className={css`
               width: CALC(70% - 1rem);
@@ -452,7 +457,7 @@ export default function VideoPage() {
             )}
           </div>
         )}
-        {loaded && (
+        {loaded && !isVideoUnavailable && (
           <NavMenu
             videoId={videoId}
             playlistId={playlistId ? Number(playlistId) : null}
