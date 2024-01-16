@@ -32,12 +32,11 @@ import {
   useExploreContext,
   useKeyContext
 } from '~/contexts';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 export default function LinkPage() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { linkId: initialLinkId } = useParams();
   const linkId = Number(initialLinkId);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
@@ -143,24 +142,13 @@ export default function LinkPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 
-  const onSetContentNav = useViewContext((v) => v.actions.onSetContentNav);
   const [loadingComments, setLoadingComments] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [likesModalShown, setLikesModalShown] = useState(false);
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
-  const prevDeleted = useRef(false);
   const RewardInterfaceRef = useRef(null);
-
-  useEffect(() => {
-    if (!prevDeleted.current && isDeleted) {
-      onSetContentNav('');
-      navigate('/links');
-    }
-    prevDeleted.current = isDeleted;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDeleted]);
 
   useEffect(() => {
     if (!loaded) {
@@ -276,7 +264,7 @@ export default function LinkPage() {
     return <>This was made by {uploader?.username}</>;
   }, [uploader?.username]);
 
-  return loaded ? (
+  return loaded && !isDeleted ? (
     <div
       className={css`
         margin-top: 1rem;
@@ -566,15 +554,16 @@ export default function LinkPage() {
         />
       )}
     </div>
-  ) : notFound ? (
+  ) : notFound || isDeleted ? (
     <InvalidPage />
   ) : (
-    <Loading text="Loading Page..." />
+    <Loading style={{ height: '50vh' }} text="Loading Page..." />
   );
 
   async function handleDeleteLink() {
     await deleteContent({ id: linkId, contentType: 'url' });
     onDeleteContent({ contentId: linkId, contentType: 'url' });
+    setConfirmModalShown(false);
   }
 
   function handleDeleteComment(data: any) {
