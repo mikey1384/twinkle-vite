@@ -52,8 +52,7 @@ export default function Main({
   }: {
     subchannelPath?: string;
   } = useParams();
-  const { search } = useLocation();
-  const { pathname } = useLocation();
+  const { search, pathname } = useLocation();
   const { lastChatPath, userId, profileTheme } = useKeyContext(
     (v) => v.myState
   );
@@ -1015,7 +1014,9 @@ export default function Main({
           <AICardModal
             cardId={aiCardModalCardId}
             onHide={() => {
-              navigate('..');
+              if (search.includes('cardId')) {
+                navigate('..');
+              }
               setAICardModalCardId(null);
             }}
           />
