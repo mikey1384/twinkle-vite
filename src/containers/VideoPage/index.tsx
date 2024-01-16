@@ -12,13 +12,7 @@ import Details from './Details';
 import NavMenu from './NavMenu';
 import URL from '~/constants/URL';
 import Content from './Content';
-import {
-  Routes,
-  Route,
-  useLocation,
-  useNavigate,
-  useParams
-} from 'react-router-dom';
+import { Routes, Route, useLocation, useParams } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
@@ -35,7 +29,6 @@ import localize from '~/constants/localize';
 const commentOnThisVideoLabel = localize('commentOnThisVideo');
 
 export default function VideoPage() {
-  const navigate = useNavigate();
   const { search } = useLocation();
   const { videoId: initialVideoId } = useParams();
   const videoId = Number(initialVideoId);
@@ -44,7 +37,6 @@ export default function VideoPage() {
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [isNotFound, setIsNotFound] = useState(false);
   const CommentInputAreaRef = useRef(null);
-  const prevDeleted = useRef(false);
   const isMounted = useRef(true);
 
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
@@ -110,7 +102,6 @@ export default function VideoPage() {
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
   const onUploadSubject = useContentContext((v) => v.actions.onUploadSubject);
-  const onSetContentNav = useViewContext((v) => v.actions.onSetContentNav);
 
   const {
     byUser,
@@ -156,15 +147,6 @@ export default function VideoPage() {
     return () => onSetPageTitle('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
-
-  useEffect(() => {
-    if (!prevDeleted.current && isDeleted) {
-      onSetContentNav('');
-      navigate('/videos');
-    }
-    prevDeleted.current = isDeleted;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDeleted, loaded]);
 
   useEffect(() => {
     setChangingPage(true);
@@ -250,11 +232,16 @@ export default function VideoPage() {
       `}
     >
       {(!loaded || isVideoUnavailable) && (
-        <div>
+        <div
+          style={{
+            width: '100%',
+            position: 'absolute'
+          }}
+        >
           {isVideoUnavailable ? (
             <InvalidPage text="Video does not exist" />
           ) : (
-            <Loading text="Loading Video..." />
+            <Loading style={{ height: '50vh' }} text="Loading Video..." />
           )}
         </div>
       )}
