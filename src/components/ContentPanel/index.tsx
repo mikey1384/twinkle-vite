@@ -386,7 +386,7 @@ export default function ContentPanel({
                       {rootObj.loaded ? (
                         <Embedly small contentId={contentState.rootId} />
                       ) : (
-                        <Loading />
+                        <Loading theme={theme || profileTheme} />
                       )}
                     </div>
                   )}
@@ -411,7 +411,11 @@ export default function ContentPanel({
                     `}
                     onClick={() => navigate(`/users/${rootObj.username}`)}
                   >
-                    {rootObj.id ? <Profile profile={rootObj} /> : <Loading />}
+                    {rootObj.id ? (
+                      <Profile profile={rootObj} />
+                    ) : (
+                      <Loading theme={theme || profileTheme} />
+                    )}
                   </div>
                 ) : null}
               </div>
