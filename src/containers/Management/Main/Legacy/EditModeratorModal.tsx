@@ -16,6 +16,7 @@ export default function EditModeratorModal({
   onHide: () => void;
   target: any;
 }) {
+  const [submitting, setSubmitting] = useState(false);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -85,6 +86,7 @@ export default function EditModeratorModal({
         </Button>
         <Button
           color={doneColor}
+          loading={submitting}
           disabled={target.userType === selectedAccountType}
           onClick={handleSubmit}
         >
@@ -95,8 +97,17 @@ export default function EditModeratorModal({
   );
 
   async function handleSubmit() {
-    await changeAccountType({ userId: target.id, selectedAccountType });
-    onChangeModeratorAccountType({ userId: target.id, selectedAccountType });
-    onHide();
+    setSubmitting(true);
+    try {
+      await changeAccountType({ userId: target.id, selectedAccountType });
+      onChangeModeratorAccountType({
+        userId: target.id,
+        selectedAccountType
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      onHide();
+    }
   }
 }

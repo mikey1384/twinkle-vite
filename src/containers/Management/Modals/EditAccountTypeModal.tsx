@@ -37,6 +37,7 @@ export default function EditAccountTypeModal({
   const onEditAccountType = useManagementContext(
     (v) => v.actions.onEditAccountType
   );
+  const [submitting, setSubmitting] = useState(false);
   const [accountLabel, setAccountLabel] = useState(accountTypeObj.label);
   const [deleteModalShown, setDeleteModalShown] = useState(false);
   const [authLevel, setAuthLevel] = useState(accountTypeObj.authLevel);
@@ -233,6 +234,7 @@ export default function EditAccountTypeModal({
             </Button>
             <Button
               color={doneColor}
+              loading={submitting}
               disabled={disabled}
               onClick={handleSubmit}
             >
@@ -259,13 +261,19 @@ export default function EditAccountTypeModal({
   }
 
   async function handleSubmit() {
-    const editedAccountType = {
-      label: accountLabel,
-      authLevel,
-      ...perks
-    };
-    await editAccountType({ label: accountTypeObj.label, editedAccountType });
-    onEditAccountType({ label: accountTypeObj.label, editedAccountType });
-    onHide();
+    try {
+      setSubmitting(true);
+      const editedAccountType = {
+        label: accountLabel,
+        authLevel,
+        ...perks
+      };
+      await editAccountType({ label: accountTypeObj.label, editedAccountType });
+      onEditAccountType({ label: accountTypeObj.label, editedAccountType });
+    } catch (error) {
+      console.error('Failed to submit:', error);
+    } finally {
+      onHide();
+    }
   }
 }
