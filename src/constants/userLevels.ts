@@ -76,7 +76,7 @@ export const levels = [
     canPinPlaylists: false,
     canEditPlaylists: true,
     canEditRewardLevel: true,
-    managementLevel: 0
+    managementLevel: 1
   },
   // headteacher level
   {
