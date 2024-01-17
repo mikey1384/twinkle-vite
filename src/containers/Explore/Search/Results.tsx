@@ -138,23 +138,35 @@ export default function Results({
   );
 
   async function handleSearchContent() {
-    const { results, loadMoreButton } = await searchContent({
-      filter:
-        filter === 'links' ? 'url' : filter.substring(0, filter.length - 1),
-      searchText
-    });
-    onLoadSearchResults({ filter, results, loadMoreButton });
-    return setSearching(false);
+    try {
+      setSearching(true);
+      const { results, loadMoreButton } = await searchContent({
+        filter:
+          filter === 'links' ? 'url' : filter.substring(0, filter.length - 1),
+        searchText
+      });
+      onLoadSearchResults({ filter, results, loadMoreButton });
+    } catch (error) {
+      console.error('Error during search:', error);
+    } finally {
+      setSearching(false);
+    }
   }
 
   async function loadMoreSearchResults() {
-    const { results: moreResults, loadMoreButton } = await searchContent({
-      filter:
-        filter === 'links' ? 'url' : filter.substring(0, filter.length - 1),
-      searchText,
-      shownResults: resultObj[filter] || []
-    });
-    onLoadMoreSearchResults({ results: moreResults, filter, loadMoreButton });
-    setLoadingMore(false);
+    try {
+      setLoadingMore(true);
+      const { results: moreResults, loadMoreButton } = await searchContent({
+        filter:
+          filter === 'links' ? 'url' : filter.substring(0, filter.length - 1),
+        searchText,
+        shownResults: resultObj[filter] || []
+      });
+      onLoadMoreSearchResults({ results: moreResults, filter, loadMoreButton });
+    } catch (error) {
+      console.error('Failed to load more search results:', error);
+    } finally {
+      setLoadingMore(false);
+    }
   }
 }
