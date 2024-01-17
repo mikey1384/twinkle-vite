@@ -15,7 +15,7 @@ export default function Results({
   searchText: string;
 }) {
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
-  const results = useExploreContext((v) => v.state.search.results);
+  const resultObj = useExploreContext((v) => v.state.search.resultObj);
   const loadMoreButton = useExploreContext(
     (v) => v.state.search.loadMoreButton
   );
@@ -43,12 +43,12 @@ export default function Results({
 
   useEffect(() => {
     if (!stringIsEmpty(searchText) && searchText.length > 1) {
-      if (firstRun && results.length === 0) {
-        onLoadSearchResults({ filter, results: [], loadMoreButton: false });
+      if (firstRun && resultObj[filter]?.length === 0) {
+        onLoadSearchResults({ filter, results: [], loadMoreButton: true });
       }
       setFirstRun(false);
       if (
-        (firstRun && results.length === 0) ||
+        (firstRun && resultObj[filter].length === 0) ||
         searchText !== prevSearchText.current
       ) {
         clearTimeout(timerRef.current);
@@ -59,16 +59,6 @@ export default function Results({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchText]);
-
-  async function handleSearchContent() {
-    const { results, loadMoreButton } = await searchContent({
-      filter:
-        filter === 'links' ? 'url' : filter.substring(0, filter.length - 1),
-      searchText
-    });
-    onLoadSearchResults({ filter, results, loadMoreButton });
-    return setSearching(false);
-  }
 
   const availableFilters = useMemo(
     () =>
@@ -90,47 +80,51 @@ export default function Results({
       {(searching || filter !== prevFilter.current) && <Loading />}
       {!searching &&
         searchText.length > 1 &&
-        results.map((result: { id: number; contentType: string }) => (
-          <ContentListItem
-            key={result.id}
-            style={{ marginBottom: '1rem' }}
-            contentObj={result}
-          />
-        ))}
-      {!searching && results.length === 0 && filter === prevFilter.current && (
-        <div
-          style={{
-            marginTop: '5rem',
-            fontSize: '2.5rem',
-            fontWeight: 'bold',
-            color: Color.darkerGray(),
-            justifyContent: 'center',
-            display: 'flex',
-            flexDirection: 'column'
-          }}
-        >
-          <div style={{ textAlign: 'center' }}>
-            <p>{`No ${filter} found`}</p>
-            <div
-              style={{ marginTop: '5rem', fontSize: '2rem', lineHeight: 1.7 }}
-            >
-              Search {`"${searchText}"`} for:
-              <div style={{ marginTop: '2rem' }}>
-                {availableFilters.map((availableFilter, index) => (
-                  <p style={{ textTransform: 'capitalize' }} key={index}>
-                    <Link
-                      style={{ cursor: 'pointer' }}
-                      to={`../${availableFilter}`}
-                    >
-                      {availableFilter}
-                    </Link>
-                  </p>
-                ))}
+        (resultObj[filter] || []).map(
+          (result: { id: number; contentType: string }) => (
+            <ContentListItem
+              key={result.id}
+              style={{ marginBottom: '1rem' }}
+              contentObj={result}
+            />
+          )
+        )}
+      {!searching &&
+        resultObj[filter]?.length === 0 &&
+        filter === prevFilter.current && (
+          <div
+            style={{
+              marginTop: '5rem',
+              fontSize: '2.5rem',
+              fontWeight: 'bold',
+              color: Color.darkerGray(),
+              justifyContent: 'center',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <p>{`No ${filter} found`}</p>
+              <div
+                style={{ marginTop: '5rem', fontSize: '2rem', lineHeight: 1.7 }}
+              >
+                Search {`"${searchText}"`} for:
+                <div style={{ marginTop: '2rem' }}>
+                  {availableFilters.map((availableFilter, index) => (
+                    <p style={{ textTransform: 'capitalize' }} key={index}>
+                      <Link
+                        style={{ cursor: 'pointer' }}
+                        to={`../${availableFilter}`}
+                      >
+                        {availableFilter}
+                      </Link>
+                    </p>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       {!searching && loadMoreButton && (
         <div style={{ paddingBottom: '8rem' }}>
           <LoadMoreButton
@@ -143,15 +137,24 @@ export default function Results({
     </div>
   );
 
+  async function handleSearchContent() {
+    const { results, loadMoreButton } = await searchContent({
+      filter:
+        filter === 'links' ? 'url' : filter.substring(0, filter.length - 1),
+      searchText
+    });
+    onLoadSearchResults({ filter, results, loadMoreButton });
+    return setSearching(false);
+  }
+
   async function loadMoreSearchResults() {
-    setLoadingMore(true);
     const { results: moreResults, loadMoreButton } = await searchContent({
       filter:
         filter === 'links' ? 'url' : filter.substring(0, filter.length - 1),
       searchText,
-      shownResults: results
+      shownResults: resultObj[filter] || []
     });
-    onLoadMoreSearchResults({ results: moreResults, loadMoreButton });
+    onLoadMoreSearchResults({ results: moreResults, filter, loadMoreButton });
     setLoadingMore(false);
   }
 }
