@@ -14,7 +14,7 @@ export default function Main({
   onSetQuestionObj,
   onGameFinish,
   questionIds,
-  questionObj
+  questionObj = {}
 }: {
   isOnStreak: boolean;
   onSetQuestionObj: any;
@@ -48,13 +48,13 @@ export default function Main({
 
   const Slides = useMemo(() => {
     if (!questionIds || questionIds?.length === 0) return null;
-    return questionIds?.map((questionId) => (
+    return questionIds.map((questionId) => (
       <QuestionSlide
         key={questionId}
-        question={questionObj[questionId].question}
-        choices={questionObj[questionId].choices}
-        answerIndex={questionObj[questionId].answerIndex}
-        selectedChoiceIndex={questionObj[questionId].selectedChoiceIndex}
+        question={questionObj[questionId]?.question}
+        choices={questionObj[questionId]?.choices}
+        answerIndex={questionObj[questionId]?.answerIndex}
+        selectedChoiceIndex={questionObj[questionId]?.selectedChoiceIndex}
         onCorrectAnswer={handleSelectCorrectAnswer}
         onSetGotWrong={handleSetGotWrong}
         gotWrong={gotWrong}
@@ -131,14 +131,15 @@ export default function Main({
     }
 
     function handleReturnCalculatedScore(elapsedTime: number) {
-      // Calculate the number of letters and words in the task
       let numLetters = 0;
       let numWords = 0;
-      if (questionObj[currentIndex]) {
-        const { choices } = questionObj[currentIndex];
+      const choices = questionObj?.[currentIndex]?.choices;
+      if (Array.isArray(choices)) {
         for (const choice of choices) {
-          numLetters += choice.length;
-          numWords += choice.split(' ').length;
+          if (typeof choice === 'string') {
+            numLetters += choice.length;
+            numWords += choice.split(' ').filter(Boolean).length;
+          }
         }
       }
 
