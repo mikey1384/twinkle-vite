@@ -387,7 +387,7 @@ export default function DeletedPost({
               {secretAnswer}
             </div>
           )}
-          {deleter && managementLevel > 1 && !!onDeletePermanently && (
+          {deleter && !!onDeletePermanently && (
             <div
               style={{
                 marginTop: '1rem',
@@ -433,25 +433,27 @@ export default function DeletedPost({
                   />
                 </div>
               )}
-              <div style={{ display: 'flex' }}>
-                {!isRecovered && (
+              {managementLevel > 1 && (
+                <div style={{ display: 'flex' }}>
+                  {!isRecovered && (
+                    <Button
+                      onClick={() => setConfirmModalShown(true)}
+                      color="red"
+                      skeuomorphic
+                    >
+                      {deletePermanentlyLabel}
+                    </Button>
+                  )}
                   <Button
-                    onClick={() => setConfirmModalShown(true)}
-                    color="red"
+                    onClick={() => handleUndoDelete({ redo: isRecovered })}
+                    color="darkerGray"
+                    style={{ marginLeft: '1rem' }}
                     skeuomorphic
                   >
-                    {deletePermanentlyLabel}
+                    {isRecovered ? deleteLabel : undoLabel}
                   </Button>
-                )}
-                <Button
-                  onClick={() => handleUndoDelete({ redo: isRecovered })}
-                  color="darkerGray"
-                  style={{ marginLeft: '1rem' }}
-                  skeuomorphic
-                >
-                  {isRecovered ? deleteLabel : undoLabel}
-                </Button>
-              </div>
+                </div>
+              )}
             </div>
           )}
         </>
