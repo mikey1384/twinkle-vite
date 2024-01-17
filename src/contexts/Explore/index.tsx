@@ -40,7 +40,11 @@ export const initialExploreState = {
     loaded: false
   },
   search: {
-    results: [],
+    resultObj: {
+      subjects: [],
+      links: [],
+      videos: []
+    },
     loadMoreButton: false,
     searchText: ''
   },

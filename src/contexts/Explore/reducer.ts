@@ -655,7 +655,10 @@ export default function ExploreReducer(
         ...state,
         search: {
           ...state.search,
-          results: action.results,
+          resultObj: {
+            ...state.search.resultObj,
+            [action.filter]: action.results
+          },
           loadMoreButton: action.loadMoreButton
         }
       };
@@ -664,7 +667,12 @@ export default function ExploreReducer(
         ...state,
         search: {
           ...state.search,
-          results: state.search.results.concat(action.results),
+          resultObj: {
+            ...state.search.resultObj,
+            [action.filter]: state.search.resultObj[action.filter].concat(
+              action.results
+            )
+          },
           loadMoreButton: action.loadMoreButton
         }
       };
