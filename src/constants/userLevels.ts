@@ -65,7 +65,7 @@ export const levels = [
     canPinPlaylists: false,
     canEditPlaylists: true,
     canEditRewardLevel: true,
-    managementLevel: 1
+    managementLevel: 0
   },
   {
     ap: 1300,
@@ -76,7 +76,7 @@ export const levels = [
     canPinPlaylists: false,
     canEditPlaylists: true,
     canEditRewardLevel: true,
-    managementLevel: 1
+    managementLevel: 0
   },
   // headteacher level
   {
