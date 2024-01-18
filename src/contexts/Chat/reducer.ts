@@ -1008,7 +1008,7 @@ export default function ChatReducer(
             }
           : state.cardObj,
         channelsObj: newChannelsObj,
-        chatStatus: action.userId === state.prevUserId ? state.chatStatus : {},
+        chatStatus: state.chatStatus,
         chatType:
           action.userId === state.prevUserId &&
           (!state.chatType || !action.data.chatType)
