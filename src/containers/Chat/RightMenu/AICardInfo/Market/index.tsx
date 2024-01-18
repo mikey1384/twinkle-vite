@@ -14,7 +14,8 @@ export default function Market() {
 
   const hasNewOffer = useMemo(() => {
     return (
-      mostRecentOfferTimeStamp > notifications?.recentAICardOfferCheckTimeStamp
+      Number(mostRecentOfferTimeStamp) >
+      Number(notifications?.recentAICardOfferCheckTimeStamp)
     );
   }, [
     mostRecentOfferTimeStamp,
