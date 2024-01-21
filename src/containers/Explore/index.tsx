@@ -12,7 +12,9 @@ import Search from './Search';
 import Categories from './Categories';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
+import { isTablet } from '~/helpers';
 
+const deviceIsTablet = isTablet(navigator);
 const aiCardsLabel = localize('aiCards');
 const subjectsLabel = localize('subjects');
 const videosLabel = localize('videos2');
@@ -122,24 +124,26 @@ export default function Explore({ category }: { category: string }) {
             `}
           />
         </div>
-        <Notification
-          trackScrollPosition
-          className={css`
-            width: 31rem;
-            overflow-y: scroll;
-            -webkit-overflow-scrolling: touch;
-            right: 1rem;
-            top: 4.5rem;
-            bottom: 0;
-            position: absolute;
-            @media (max-width: ${tabletMaxWidth}) {
-              width: 20rem;
-            }
-            @media (max-width: ${mobileMaxWidth}) {
-              display: none;
-            }
-          `}
-        />
+        {!deviceIsTablet && (
+          <Notification
+            trackScrollPosition
+            className={css`
+              width: 31rem;
+              overflow-y: scroll;
+              -webkit-overflow-scrolling: touch;
+              right: 1rem;
+              top: 4.5rem;
+              bottom: 0;
+              position: absolute;
+              @media (max-width: ${tabletMaxWidth}) {
+                width: 20rem;
+              }
+              @media (max-width: ${mobileMaxWidth}) {
+                display: none;
+              }
+            `}
+          />
+        )}
       </div>
     </ErrorBoundary>
   );

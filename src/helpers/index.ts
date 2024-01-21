@@ -126,6 +126,16 @@ export function isPhone(navigator: Navigator) {
   );
 }
 
+export function isTablet(navigator: Navigator) {
+  return (
+    /iPad|Macintosh/i.test(navigator.userAgent) &&
+    'ontouchend' in document &&
+    !/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    )
+  );
+}
+
 export function isMobile(navigator: Navigator) {
   return (
     /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -133,12 +143,6 @@ export function isMobile(navigator: Navigator) {
     ) ||
     (/iPad|Macintosh/i.test(navigator.userAgent) && 'ontouchend' in document)
   );
-}
-
-export function isTablet() {
-  if (!window) return false;
-  const width = window.innerWidth;
-  return width >= 768 && width <= 1024;
 }
 
 export function isSupermod(level = 0) {

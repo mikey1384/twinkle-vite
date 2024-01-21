@@ -4,11 +4,10 @@ import CardThumb from '~/components/CardThumb';
 import ShowMoreCardsButton from '~/components/Buttons/ShowMoreCardsButton';
 import MoreAICardsModal from './MoreAICardsModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { isMobile, isTablet } from '~/helpers';
+import { isMobile } from '~/helpers';
 import { useChatContext } from '~/contexts';
 
 const deviceIsMobile = isMobile(navigator);
-const deviceIsTablet = isTablet();
 
 AICardsPreview.propTypes = {
   isAICardModalShown: PropTypes.bool.isRequired,
@@ -34,10 +33,7 @@ export default function AICardsPreview({
 }) {
   const cardObj = useChatContext((v) => v.state.cardObj);
   const { numMore, cards, displayedCards } = useMemo(() => {
-    const displayedCardIds = cardIds.slice(
-      0,
-      deviceIsMobile || deviceIsTablet ? 3 : 5
-    );
+    const displayedCardIds = cardIds.slice(0, deviceIsMobile ? 3 : 5);
     const numMore = cardIds.length - displayedCardIds.length;
     const cards = cardIds.map((cardId) => cardObj[cardId]);
     const displayedCards = displayedCardIds
