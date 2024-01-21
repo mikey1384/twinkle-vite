@@ -2,7 +2,11 @@ import React from 'react';
 import Loading from '~/components/Loading';
 import Board from './Board';
 import { css } from '@emotion/css';
+import { isTablet } from '~/helpers';
 import { mobileMaxWidth } from '~/constants/css';
+
+const deviceIsTablet = isTablet(navigator);
+const boardWidth = deviceIsTablet ? '25vh' : '50vh';
 
 export default function Game({
   interactable,
@@ -30,8 +34,8 @@ export default function Game({
   return (
     <div
       className={css`
-        width: CALC(50vh + 2rem);
-        height: CALC(50vh + 2.5rem);
+        width: CALC(${boardWidth} + 2rem);
+        height: CALC(${boardWidth} + 2.5rem);
         position: relative;
         @media (max-width: ${mobileMaxWidth}) {
           width: CALC(50vw + 2rem);

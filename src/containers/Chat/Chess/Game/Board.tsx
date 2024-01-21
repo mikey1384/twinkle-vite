@@ -3,8 +3,12 @@ import getPiece from '../helpers/piece';
 import Square from '../Square';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { isTablet } from '~/helpers';
 import { css } from '@emotion/css';
 import CastlingButton from './CastlingButton';
+
+const deviceIsTablet = isTablet(navigator);
+const boardWidth = deviceIsTablet ? '25vh' : '50vh';
 
 export default function Board({
   interactable,
@@ -98,8 +102,8 @@ export default function Board({
           grid-template-areas:
             'num chess'
             '. letter';
-          grid-template-columns: 2rem 50vh;
-          grid-template-rows: 50vh 2.5rem;
+          grid-template-columns: 2rem ${boardWidth};
+          grid-template-rows: ${boardWidth} 2.5rem;
           background: ${spoilerOff ? '#fff' : ''};
           @media (max-width: ${mobileMaxWidth}) {
             grid-template-columns: 2rem 50vw;
