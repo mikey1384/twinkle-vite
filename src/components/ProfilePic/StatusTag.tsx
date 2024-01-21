@@ -1,9 +1,9 @@
 import React from 'react';
 import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { isMobile } from '~/helpers';
+import { isPhone } from '~/helpers';
 
-const deviceIsMobile = isMobile(navigator);
+const deviceIsPhone = isPhone(navigator);
 
 export default function StatusTag({
   isProfilePage,
@@ -20,7 +20,7 @@ export default function StatusTag({
     away: Color.orange()
   };
 
-  return !(deviceIsMobile && isProfilePage) && large ? (
+  return !(deviceIsPhone && isProfilePage) && large ? (
     <div
       className={css`
         top: 74%;
