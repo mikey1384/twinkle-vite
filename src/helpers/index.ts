@@ -118,6 +118,14 @@ export function getSectionFromPathname(pathname: string) {
   };
 }
 
+export function isPhone(navigator: Navigator) {
+  return (
+    /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    ) && !/iPad|Macintosh/i.test(navigator.userAgent)
+  );
+}
+
 export function isMobile(navigator: Navigator) {
   return (
     /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(

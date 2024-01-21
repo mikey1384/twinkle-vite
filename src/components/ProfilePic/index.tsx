@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ChangePicture from './ChangePicture';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { isMobile } from '~/helpers';
+import { isPhone } from '~/helpers';
 import StatusTag from './StatusTag';
 
-const deviceIsMobile = isMobile(navigator);
+const deviceIsPhone = isPhone(navigator);
 
 export default function ProfilePic({
   className,
@@ -87,7 +87,7 @@ export default function ProfilePic({
         }
         onError={() => setHasError(true)}
       />
-      {!deviceIsMobile && (
+      {!deviceIsPhone && (
         <ChangePicture
           shown={
             myId === userId && isProfilePage && changePictureShown
