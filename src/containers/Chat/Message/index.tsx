@@ -228,12 +228,6 @@ function Message({
   const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
   useEffect(() => {
-    if (isLastMsg && deviceIsMobile) {
-      forceRefreshForMobile?.();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLastMsg]);
-  useEffect(() => {
     if (isLastMsg && userIsUploader) {
       onScrollToBottom();
     }
@@ -522,6 +516,13 @@ function Message({
         !placeholderHeightRef.current
     );
   }, [inView]);
+
+  useEffect(() => {
+    if (contentShown && deviceIsMobile) {
+      forceRefreshForMobile?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentShown]);
 
   const dropdownMenuItems = useMemo(() => {
     const result: any[] = [];
