@@ -1387,7 +1387,6 @@ function MessagesContainer({
         )}
         <div
           style={{
-            height: '100%',
             display: 'flex',
             flexDirection: 'column-reverse',
             overflowY: 'scroll'
