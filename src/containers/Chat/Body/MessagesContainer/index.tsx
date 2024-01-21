@@ -1387,6 +1387,7 @@ function MessagesContainer({
         )}
         <div
           style={{
+            height: '100%',
             display: 'flex',
             flexDirection: 'column-reverse',
             overflowY: 'scroll'
@@ -1394,7 +1395,7 @@ function MessagesContainer({
           ref={MessagesRef}
         >
           {loadingAnimationShown ? (
-            <Loading style={{ marginTop: '7rem' }} />
+            <Loading style={{ position: 'absolute', top: '7rem' }} />
           ) : (
             <>
               <div
