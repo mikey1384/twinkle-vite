@@ -1,5 +1,4 @@
 import React, {
-  memo,
   useCallback,
   useContext,
   useEffect,
@@ -61,7 +60,7 @@ const leaveLabel = localize('leave');
 const menuLabel = deviceIsMobile ? '' : localize('menu');
 const settingsLabel = localize('settings');
 
-function MessagesContainer({
+export default function MessagesContainer({
   channelName,
   partner,
   currentChannel,
@@ -1724,5 +1723,3 @@ function MessagesContainer({
     });
   }
 }
-
-export default memo(MessagesContainer);
