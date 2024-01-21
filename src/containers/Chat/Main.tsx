@@ -921,6 +921,7 @@ export default function Main({
                 subchannelPath={subchannelPath}
               />
               <Body
+                key={selectedChannelId}
                 displayedThemeColor={displayedThemeColor}
                 channelName={currentChannelName}
                 partner={partner}
