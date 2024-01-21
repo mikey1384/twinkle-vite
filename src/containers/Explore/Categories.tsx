@@ -10,7 +10,7 @@ import { isTablet } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
-const deviceIsTablet = isTablet();
+const deviceIsTablet = isTablet(navigator);
 
 export default function Categories({
   filter,

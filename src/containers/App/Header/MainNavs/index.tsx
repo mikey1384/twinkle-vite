@@ -32,7 +32,7 @@ MainNavs.propTypes = {
   totalRewardAmount: PropTypes.number
 };
 
-const deviceIsTablet = isTablet();
+const deviceIsTablet = isTablet(navigator);
 const homeLabel = localize('home');
 const exploreLabel = localize('explore');
 const missionsLabel = localize('missions');
