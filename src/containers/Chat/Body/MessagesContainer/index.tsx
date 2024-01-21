@@ -1394,7 +1394,7 @@ function MessagesContainer({
           ref={MessagesRef}
         >
           {loadingAnimationShown ? (
-            <Loading style={{ position: 'absolute', top: '5rem' }} />
+            <Loading style={{ marginTop: '7rem' }} />
           ) : (
             <>
               <div
