@@ -1697,6 +1697,9 @@ function MessagesContainer({
     (MessagesRef.current || {}).scrollTop = currentScrollTop;
     (MessagesRef.current || {}).scrollTop = currentScrollTop - 1000;
     (MessagesRef.current || {}).scrollTop = currentScrollTop;
+    if (userId === 9595) {
+      window.alert(MessagesRef.current.scrollTop);
+    }
   }
 
   function handleReceiveNewMessage() {
