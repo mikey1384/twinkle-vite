@@ -484,9 +484,7 @@ function Message({
   }, [content]);
 
   const [placeholderHeight, setPlaceholderHeight] = useState(0);
-  const [contentShown, setContentShown] = useState(
-    !isAIMessage || isOneOfLastFiveMessages
-  );
+  const [contentShown, setContentShown] = useState(!isAIMessage);
   const [visible, setVisible] = useState(false);
   useLazyLoad({
     PanelRef,
@@ -854,7 +852,7 @@ function Message({
           zIndex
         }}
       >
-        {contentShown ? (
+        {contentShown || isOneOfLastFiveMessages ? (
           <div ref={PanelRef} className={MessageStyle.container}>
             <div className={MessageStyle.profilePic}>
               <ProfilePic
