@@ -1530,6 +1530,7 @@ function MessagesContainer({
         }}
       >
         <MessageInput
+          key={selectedChannelId}
           currentTransactionId={currentTransactionId}
           selectedChannelId={selectedChannelId}
           isZeroChannel={isZeroChannel}
