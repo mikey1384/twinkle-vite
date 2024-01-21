@@ -79,7 +79,7 @@ export default function Explore({ category }: { category: string }) {
             width: CALC(100vw - 51rem - 2rem);
             margin-left: 20rem;
             @media (max-width: ${tabletMaxWidth}) {
-              width: CALC(100vw - 41rem - 2rem);
+              width: CALC(100vw - 21rem);
             }
             @media (max-width: ${mobileMaxWidth}) {
               width: 100%;
