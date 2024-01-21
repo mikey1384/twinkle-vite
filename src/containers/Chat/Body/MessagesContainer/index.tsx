@@ -326,31 +326,20 @@ function MessagesContainer({
     }
   }, [channelOnCall, selectedChannelId]);
 
-  const containerHeight = useMemo(() => {
-    return `CALC(100% - 1rem - 2px - ${
-      socketConnected && textAreaHeight
-        ? `${textAreaHeight}px - 1rem`
-        : '5.5rem'
-    }${
-      socketConnected && appliedIsRespondingToSubject
-        ? ' - 8rem - 2px'
-        : replyTarget
-        ? ' - 12rem - 2px'
-        : chessTarget
-        ? deviceIsMobile
-          ? ' - 317px'
-          : ' - 509px'
-        : ''
-    }
+  const containerHeight = `CALC(100% - 1rem - 2px - ${
+    socketConnected && textAreaHeight ? `${textAreaHeight}px - 1rem` : '5.5rem'
+  }${
+    socketConnected && appliedIsRespondingToSubject
+      ? ' - 8rem - 2px'
+      : replyTarget
+      ? ' - 12rem - 2px'
+      : chessTarget
+      ? deviceIsMobile
+        ? ' - 317px'
+        : ' - 509px'
+      : ''
+  }
     ${selectedChannelIsOnCall ? ` - ${CALL_SCREEN_HEIGHT}` : ''})`;
-  }, [
-    appliedIsRespondingToSubject,
-    chessTarget,
-    replyTarget,
-    selectedChannelIsOnCall,
-    socketConnected,
-    textAreaHeight
-  ]);
 
   const loadingAnimationShown = useMemo(() => {
     if (
