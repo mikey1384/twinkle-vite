@@ -371,22 +371,24 @@ export default function ChannelHeader({
                   }
                 `}
               >
-                <Button
-                  color={buttonColor}
-                  hoverColor={buttonHoverColor}
-                  filled
-                  onClick={() => {
-                    onSetIsRespondingToSubject({
-                      channelId: selectedChannelId,
-                      subchannelId: subchannel?.id,
-                      subjectId,
-                      isResponding: true
-                    });
-                    onInputFocus();
-                  }}
-                >
-                  <Icon flip="both" icon="reply" />
-                </Button>
+                {isTopicShown && (
+                  <Button
+                    color={buttonColor}
+                    hoverColor={buttonHoverColor}
+                    filled
+                    onClick={() => {
+                      onSetIsRespondingToSubject({
+                        channelId: selectedChannelId,
+                        subchannelId: subchannel?.id,
+                        subjectId,
+                        isResponding: true
+                      });
+                      onInputFocus();
+                    }}
+                  >
+                    <Icon flip="both" icon="reply" />
+                  </Button>
+                )}
                 {menuButtonShown && (
                   <DropdownButton
                     skeuomorphic
