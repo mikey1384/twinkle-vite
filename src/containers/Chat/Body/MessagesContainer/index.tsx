@@ -11,11 +11,9 @@ import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import MessageInput from './MessageInput';
-import DropdownButton from '~/components/Buttons/DropdownButton';
 import Loading from '~/components/Loading';
 import Message from '../../Message';
 import ChannelHeader from './ChannelHeader';
-import FullTextReveal from '~/components/Texts/FullTextReveal';
 import SubjectMsgsModal from '../../Modals/SubjectMsgsModal';
 import InviteUsersModal from '../../Modals/InviteUsers';
 import ChessModal from '../../Modals/ChessModal';
@@ -26,7 +24,7 @@ import TransactionModal from '../../Modals/TransactionModal';
 import SettingsModal from '../../Modals/SettingsModal';
 import CallScreen from './CallScreen';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Icon from '~/components/Icon';
+import DefaultChannelTopMenu from './DefaultChannelTopMenu';
 import { v1 as uuidv1 } from 'uuid';
 import {
   GENERAL_CHAT_ID,
@@ -52,14 +50,8 @@ import localize from '~/constants/localize';
 const CALL_SCREEN_HEIGHT = '30%';
 const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);
-const addToFavoritesLabel = localize('addToFavorites');
-const editGroupNameLabel = localize('editGroupName');
-const hideLabel = localize('hide');
-const invitePeopleLabel = localize('invitePeople');
+
 const leaveChatGroupLabel = localize('leaveChatGroup');
-const leaveLabel = localize('leave');
-const menuLabel = deviceIsMobile ? '' : localize('menu');
-const settingsLabel = localize('settings');
 
 function MessagesContainer({
   channelName,
@@ -135,7 +127,6 @@ function MessagesContainer({
       updateUserXP
     },
     state: {
-      allFavoriteChannelIds,
       channelPathIdHash,
       channelOnCall,
       chessModalShown,
@@ -206,7 +197,6 @@ function MessagesContainer({
   const [selectNewOwnerModalShown, setSelectNewOwnerModalShown] =
     useState(false);
   const [hideModalShown, setHideModalShown] = useState(false);
-  const [addToFavoritesShown, setAddToFavoritesShown] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [selectingNewOwner, setSelectingNewOwner] = useState(false);
   const leavingRef = useRef(false);
@@ -300,10 +290,6 @@ function MessagesContainer({
     return result;
   }, [messageIds, messagesObj, subchannel]);
 
-  const favorited = useMemo(() => {
-    return allFavoriteChannelIds[selectedChannelId];
-  }, [allFavoriteChannelIds, selectedChannelId]);
-
   const selectedChannelIsOnCall = useMemo(
     () => selectedChannelId === channelOnCall.id,
     [channelOnCall.id, selectedChannelId]
@@ -373,71 +359,6 @@ function MessagesContainer({
     () => chessCountdownObj[selectedChannelId],
     [chessCountdownObj, selectedChannelId]
   );
-
-  const menuProps = useMemo(() => {
-    if (currentChannel.twoPeople) {
-      return [
-        {
-          label: (
-            <>
-              <Icon icon="minus" />
-              <span style={{ marginLeft: '1rem' }}>{hideLabel}</span>
-            </>
-          ),
-          onClick: () => setHideModalShown(true)
-        }
-      ];
-    }
-    const result = [];
-    if (!currentChannel.isClosed || currentChannel.creatorId === userId) {
-      result.push({
-        label: (
-          <>
-            <Icon icon="users" />
-            <span style={{ marginLeft: '1rem' }}>{invitePeopleLabel}</span>
-          </>
-        ),
-        onClick: () => setInviteUsersModalShown(true)
-      });
-    }
-    result.push(
-      {
-        label:
-          currentChannel.creatorId === userId ? (
-            <>
-              <Icon icon="sliders-h" />
-              <span style={{ marginLeft: '1rem' }}>{settingsLabel}</span>
-            </>
-          ) : (
-            <>
-              <Icon icon="pencil-alt" />
-              <span style={{ marginLeft: '1rem' }}>{editGroupNameLabel}</span>
-            </>
-          ),
-        onClick: () => setSettingsModalShown(true)
-      },
-      {
-        separator: true
-      },
-      {
-        label: (
-          <>
-            <Icon icon="sign-out-alt" />
-            <span style={{ marginLeft: '1rem' }}>{leaveLabel}</span>
-          </>
-        ),
-        onClick: () => setLeaveConfirmModalShown(true)
-      }
-    );
-    return result;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    currentChannel.twoPeople,
-    currentChannel.isClosed,
-    currentChannel.creatorId,
-    userId,
-    selectedChannelId
-  ]);
 
   const channelHeaderShown = useMemo(() => {
     if (loadingAnimationShown) {
@@ -1284,68 +1205,22 @@ function MessagesContainer({
 
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">
-      {!channelHeaderShown &&
-        !loadingAnimationShown &&
-        !banned?.chat &&
-        selectedChannelId !== 0 &&
-        selectedChannelId !== GENERAL_CHAT_ID && (
-          <div
-            style={{
-              display: 'flex',
-              position: 'absolute',
-              alignItems: 'center',
-              zIndex: 50000,
-              top: '1rem',
-              right: '1rem'
-            }}
-          >
-            <DropdownButton
-              skeuomorphic
-              opacity={0.7}
-              listStyle={{
-                width: '15rem'
-              }}
-              icon="bars"
-              text={menuLabel}
-              menuProps={menuProps}
-            />
-            <div
-              style={{
-                marginLeft: '1.5rem'
-              }}
-            >
-              <div
-                style={{ cursor: 'pointer', fontSize: '2rem' }}
-                onClick={handleFavoriteClick}
-                onMouseEnter={() => {
-                  if (!favorited) {
-                    setAddToFavoritesShown(true);
-                  }
-                }}
-                onMouseLeave={() => setAddToFavoritesShown(false)}
-              >
-                <Icon
-                  color={Color.brownOrange()}
-                  icon={favorited ? 'star' : ['far', 'star']}
-                />
-              </div>
-              <FullTextReveal
-                direction="left"
-                className="desktop"
-                show={addToFavoritesShown && !favorited}
-                text={addToFavoritesLabel}
-                style={{
-                  marginTop: '0.5rem',
-                  fontSize: '1.3rem',
-                  width: 'auto',
-                  minWidth: undefined,
-                  maxWidth: undefined,
-                  padding: '1rem'
-                }}
-              />
-            </div>
-          </div>
-        )}
+      <DefaultChannelTopMenu
+        currentChannel={currentChannel}
+        isShown={
+          !channelHeaderShown &&
+          !loadingAnimationShown &&
+          !banned?.chat &&
+          selectedChannelId !== 0 &&
+          selectedChannelId !== GENERAL_CHAT_ID
+        }
+        userId={userId}
+        onSetHideModalShown={setHideModalShown}
+        onSetInviteUsersModalShown={setInviteUsersModalShown}
+        onSetSettingsModalShown={setSettingsModalShown}
+        onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
+        onFavoriteClick={handleFavoriteClick}
+      />
       {selectedChannelIsOnCall && (
         <CallScreen style={{ height: CALL_SCREEN_HEIGHT }} />
       )}
