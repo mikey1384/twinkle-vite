@@ -131,6 +131,18 @@ export default function ChannelHeader({
     return currentChannel.subjectObj?.loaded;
   }, [currentChannel.subjectObj?.loaded]);
 
+  const channelHeaderShown = useMemo(() => {
+    return (
+      (!subchannel || subchannel?.canChangeSubject) &&
+      (selectedChannelId === GENERAL_CHAT_ID ||
+        !!currentChannel.canChangeSubject)
+    );
+  }, [currentChannel.canChangeSubject, selectedChannelId, subchannel]);
+
+  const isTopicShown = useMemo(() => {
+    return channelHeaderShown || selectedChannelId === GENERAL_CHAT_ID;
+  }, [channelHeaderShown, selectedChannelId]);
+
   useEffect(() => {
     if (!loaded) {
       handleInitialLoad();
@@ -275,9 +287,10 @@ export default function ChannelHeader({
   const menuButtonShown = useMemo(() => {
     return (
       (selectedChannelId !== GENERAL_CHAT_ID || level >= MOD_LEVEL) &&
-      menuProps.length > 0
+      menuProps.length > 0 &&
+      !banned?.chat
     );
-  }, [level, selectedChannelId, menuProps.length]);
+  }, [selectedChannelId, level, menuProps.length, banned?.chat]);
 
   return (
     <ErrorBoundary
@@ -308,41 +321,43 @@ export default function ChannelHeader({
         <>
           {!onEdit && (
             <>
-              <section>
-                <div style={{ width: '100%' }}>
-                  <span
-                    className={css`
-                      width: 100%;
-                      cursor: default;
-                      color: ${Color[chatTopicColor]()};
-                      white-space: nowrap;
-                      text-overflow: ellipsis;
-                      overflow: hidden;
-                      line-height: normal;
-                      font-size: 2.2rem;
-                      font-weight: bold;
-                      display: block;
-                      @media (max-width: ${mobileMaxWidth}) {
-                        font-size: 1.6rem;
+              {isTopicShown && (
+                <section>
+                  <div style={{ width: '100%' }}>
+                    <span
+                      className={css`
+                        width: 100%;
+                        cursor: default;
+                        color: ${Color[chatTopicColor]()};
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                        line-height: normal;
+                        font-size: 2.2rem;
+                        font-weight: bold;
+                        display: block;
+                        @media (max-width: ${mobileMaxWidth}) {
+                          font-size: 1.6rem;
+                        }
+                      `}
+                      onClick={() =>
+                        setOnHover(
+                          textIsOverflown(HeaderLabelRef.current)
+                            ? !onHover
+                            : false
+                        )
                       }
-                    `}
-                    onClick={() =>
-                      setOnHover(
-                        textIsOverflown(HeaderLabelRef.current)
-                          ? !onHover
-                          : false
-                      )
-                    }
-                    onMouseOver={handleMouseOver}
-                    onMouseLeave={() => setOnHover(false)}
-                    ref={HeaderLabelRef}
-                  >
-                    {displayedContent}
-                  </span>
-                  <FullTextReveal text={displayedContent} show={onHover} />
-                </div>
-                <div style={{ width: '100%' }}>{subjectDetails}</div>
-              </section>
+                      onMouseOver={handleMouseOver}
+                      onMouseLeave={() => setOnHover(false)}
+                      ref={HeaderLabelRef}
+                    >
+                      {displayedContent}
+                    </span>
+                    <FullTextReveal text={displayedContent} show={onHover} />
+                  </div>
+                  <div style={{ width: '100%' }}>{subjectDetails}</div>
+                </section>
+              )}
               <div
                 className={css`
                   position: absolute;
@@ -372,7 +387,7 @@ export default function ChannelHeader({
                 >
                   <Icon flip="both" icon="reply" />
                 </Button>
-                {menuButtonShown && !banned?.chat && (
+                {menuButtonShown && (
                   <DropdownButton
                     skeuomorphic
                     opacity={0.7}
