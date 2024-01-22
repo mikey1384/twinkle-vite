@@ -24,7 +24,6 @@ import TransactionModal from '../../Modals/TransactionModal';
 import SettingsModal from '../../Modals/SettingsModal';
 import CallScreen from './CallScreen';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import DefaultChannelTopMenu from './DefaultChannelTopMenu';
 import { v1 as uuidv1 } from 'uuid';
 import {
   GENERAL_CHAT_ID,
@@ -359,22 +358,6 @@ function MessagesContainer({
     () => chessCountdownObj[selectedChannelId],
     [chessCountdownObj, selectedChannelId]
   );
-
-  const channelHeaderShown = useMemo(() => {
-    if (loadingAnimationShown) {
-      return false;
-    }
-    return (
-      (!subchannel || subchannel?.canChangeSubject) &&
-      (selectedChannelId === GENERAL_CHAT_ID ||
-        !!currentChannel.canChangeSubject)
-    );
-  }, [
-    currentChannel.canChangeSubject,
-    loadingAnimationShown,
-    selectedChannelId,
-    subchannel
-  ]);
 
   useEffect(() => {
     onSetChessModalShown(false);
@@ -1205,22 +1188,6 @@ function MessagesContainer({
 
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">
-      <DefaultChannelTopMenu
-        currentChannel={currentChannel}
-        isShown={
-          !channelHeaderShown &&
-          !loadingAnimationShown &&
-          !banned?.chat &&
-          selectedChannelId !== 0 &&
-          selectedChannelId !== GENERAL_CHAT_ID
-        }
-        userId={userId}
-        onSetHideModalShown={setHideModalShown}
-        onSetInviteUsersModalShown={setInviteUsersModalShown}
-        onSetSettingsModalShown={setSettingsModalShown}
-        onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
-        onFavoriteClick={handleFavoriteClick}
-      />
       {selectedChannelIsOnCall && (
         <CallScreen style={{ height: CALL_SCREEN_HEIGHT }} />
       )}
@@ -1236,19 +1203,17 @@ function MessagesContainer({
           height: containerHeight
         }}
       >
-        {channelHeaderShown && (
-          <ChannelHeader
-            currentChannel={currentChannel}
-            displayedThemeColor={displayedThemeColor}
-            onInputFocus={() => ChatInputRef.current.focus()}
-            onSetInviteUsersModalShown={setInviteUsersModalShown}
-            onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
-            onSetSettingsModalShown={setSettingsModalShown}
-            selectedChannelId={selectedChannelId}
-            subchannel={subchannel}
-            onFavoriteClick={handleFavoriteClick}
-          />
-        )}
+        <ChannelHeader
+          currentChannel={currentChannel}
+          displayedThemeColor={displayedThemeColor}
+          onInputFocus={() => ChatInputRef.current.focus()}
+          onSetInviteUsersModalShown={setInviteUsersModalShown}
+          onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
+          onSetSettingsModalShown={setSettingsModalShown}
+          selectedChannelId={selectedChannelId}
+          subchannel={subchannel}
+          onFavoriteClick={handleFavoriteClick}
+        />
         <div
           style={{
             height: '100%',
