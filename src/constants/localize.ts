@@ -146,10 +146,6 @@ const languageObj: {
     en: 'Boost rewards from watching XP Videos',
     kr: 'XP 동영상을 볼때 얻는 XP량 증가'
   },
-  broughtBackBy: {
-    en: 'Brought back by',
-    kr: '재개자:'
-  },
   by: {
     en: 'By',
     kr: '게시자:'
@@ -1397,10 +1393,6 @@ const languageObj: {
   start: {
     en: 'Start',
     kr: '시작'
-  },
-  startedBy: {
-    en: 'Started by',
-    kr: '개설자:'
   },
   startNewChat: {
     en: 'Start a New Chat',
