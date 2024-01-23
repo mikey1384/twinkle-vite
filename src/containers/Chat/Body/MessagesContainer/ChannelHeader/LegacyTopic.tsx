@@ -100,56 +100,58 @@ export default function LegacyTopic({
 
   return (
     <section>
-      {isEditingTopic ? (
-        <EditSubjectForm
-          autoFocus
-          userIsOwner={currentChannel.creatorId === userId}
-          channelId={selectedChannelId}
-          displayedThemeColor={displayedThemeColor}
-          maxLength={charLimit.chat.subject}
-          currentSubjectId={subjectObj.id}
-          title={content}
-          onEditSubmit={handleSubjectSubmit}
-          onChange={handleSearchChatSubject}
-          onClickOutSide={() => {
-            onSetIsEditingTopic(false);
-            onClearSubjectSearchResults();
-          }}
-          onReloadChatSubject={handleReloadChatSubject}
-          searchResults={subjectSearchResults}
-        />
-      ) : (
-        <div style={{ width: '100%' }}>
-          <span
-            className={css`
-              width: 100%;
-              cursor: default;
-              color: ${Color[color]()};
-              white-space: nowrap;
-              text-overflow: ellipsis;
-              overflow: hidden;
-              line-height: normal;
-              font-size: 2.2rem;
-              font-weight: bold;
-              display: block;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.6rem;
+      <div style={{ width: '100%' }}>
+        {isEditingTopic ? (
+          <EditSubjectForm
+            autoFocus
+            userIsOwner={currentChannel.creatorId === userId}
+            channelId={selectedChannelId}
+            displayedThemeColor={displayedThemeColor}
+            maxLength={charLimit.chat.subject}
+            currentSubjectId={subjectObj.id}
+            title={content}
+            onEditSubmit={handleSubjectSubmit}
+            onChange={handleSearchChatSubject}
+            onClickOutSide={() => {
+              onSetIsEditingTopic(false);
+              onClearSubjectSearchResults();
+            }}
+            onReloadChatSubject={handleReloadChatSubject}
+            searchResults={subjectSearchResults}
+          />
+        ) : (
+          <div>
+            <span
+              className={css`
+                width: 100%;
+                cursor: default;
+                color: ${Color[color]()};
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                line-height: normal;
+                font-size: 2.2rem;
+                font-weight: bold;
+                display: block;
+                @media (max-width: ${mobileMaxWidth}) {
+                  font-size: 1.6rem;
+                }
+              `}
+              onClick={() =>
+                setOnHover(
+                  textIsOverflown(HeaderLabelRef.current) ? !onHover : false
+                )
               }
-            `}
-            onClick={() =>
-              setOnHover(
-                textIsOverflown(HeaderLabelRef.current) ? !onHover : false
-              )
-            }
-            onMouseOver={handleMouseOver}
-            onMouseLeave={() => setOnHover(false)}
-            ref={HeaderLabelRef}
-          >
-            {displayedContent}
-          </span>
-          <FullTextReveal text={displayedContent} show={onHover} />
-        </div>
-      )}
+              onMouseOver={handleMouseOver}
+              onMouseLeave={() => setOnHover(false)}
+              ref={HeaderLabelRef}
+            >
+              {displayedContent}
+            </span>
+            <FullTextReveal text={displayedContent} show={onHover} />
+          </div>
+        )}
+      </div>
       <div style={{ width: '100%' }}>{subjectDetails}</div>
     </section>
   );

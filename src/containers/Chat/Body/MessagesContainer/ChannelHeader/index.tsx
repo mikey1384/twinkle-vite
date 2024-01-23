@@ -234,105 +234,101 @@ export default function ChannelHeader({
       `}
     >
       {loaded || (subchannel?.loaded && !subchannelLoading) ? (
-        <>
-          {!isEditingTopic && (
-            <>
-              {isTopicShown && (
-                <LegacyTopic
-                  color={chatTopicColor}
-                  displayedThemeColor={displayedThemeColor}
-                  isEditingTopic={isEditingTopic}
-                  currentChannel={currentChannel}
-                  onInputFocus={onInputFocus}
-                  selectedChannelId={selectedChannelId}
-                  subchannelId={subchannel?.id}
-                  subjectObj={subjectObj}
-                  onSetIsEditingTopic={setIsEditingTopic}
-                />
-              )}
-              <div
-                className={css`
-                  position: absolute;
-                  height: 100%;
-                  font-size: 1.3rem;
-                  right: 1rem;
-                  display: flex;
-                  align-items: center;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.2rem;
-                  }
-                `}
-              >
-                {isTopicShown && (
-                  <Button
-                    color={buttonColor}
-                    hoverColor={buttonHoverColor}
-                    filled
-                    onClick={() => {
-                      onSetIsRespondingToSubject({
-                        channelId: selectedChannelId,
-                        subchannelId: subchannel?.id,
-                        subjectId: subjectObj.id,
-                        isResponding: true
-                      });
-                      onInputFocus();
-                    }}
-                  >
-                    <Icon flip="both" icon="reply" />
-                  </Button>
-                )}
-                {menuButtonShown && (
-                  <DropdownButton
-                    skeuomorphic
-                    opacity={0.7}
-                    style={{
-                      marginLeft: '1rem'
-                    }}
-                    listStyle={{
-                      width: '15rem'
-                    }}
-                    icon="bars"
-                    text={menuLabel}
-                    menuProps={menuProps}
-                  />
-                )}
-                <div style={{ marginLeft: '1.5rem' }}>
-                  <div
-                    style={{
-                      cursor: 'pointer',
-                      fontSize: '2rem'
-                    }}
-                    onClick={onFavoriteClick}
-                    onMouseEnter={() => {
-                      if (!favorited) {
-                        setAddToFavoritesShown(true);
-                      }
-                    }}
-                    onMouseLeave={() => setAddToFavoritesShown(false)}
-                  >
-                    <Icon
-                      color={Color.brownOrange()}
-                      icon={favorited ? 'star' : ['far', 'star']}
-                    />
-                  </div>
-                  <FullTextReveal
-                    direction="left"
-                    className="desktop"
-                    show={addToFavoritesShown && !favorited}
-                    text={addToFavoritesLabel}
-                    style={{
-                      marginTop: '0.7rem',
-                      width: 'auto',
-                      minWidth: '',
-                      maxWidth: '',
-                      padding: '1rem'
-                    }}
-                  />
-                </div>
-              </div>
-            </>
+        <div>
+          {isTopicShown && (
+            <LegacyTopic
+              color={chatTopicColor}
+              displayedThemeColor={displayedThemeColor}
+              isEditingTopic={isEditingTopic}
+              currentChannel={currentChannel}
+              onInputFocus={onInputFocus}
+              selectedChannelId={selectedChannelId}
+              subchannelId={subchannel?.id}
+              subjectObj={subjectObj}
+              onSetIsEditingTopic={setIsEditingTopic}
+            />
           )}
-        </>
+          <div
+            className={css`
+              position: absolute;
+              height: 100%;
+              font-size: 1.3rem;
+              right: 1rem;
+              display: flex;
+              align-items: center;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.2rem;
+              }
+            `}
+          >
+            {isTopicShown && (
+              <Button
+                color={buttonColor}
+                hoverColor={buttonHoverColor}
+                filled
+                onClick={() => {
+                  onSetIsRespondingToSubject({
+                    channelId: selectedChannelId,
+                    subchannelId: subchannel?.id,
+                    subjectId: subjectObj.id,
+                    isResponding: true
+                  });
+                  onInputFocus();
+                }}
+              >
+                <Icon flip="both" icon="reply" />
+              </Button>
+            )}
+            {menuButtonShown && (
+              <DropdownButton
+                skeuomorphic
+                opacity={0.7}
+                style={{
+                  marginLeft: '1rem'
+                }}
+                listStyle={{
+                  width: '15rem'
+                }}
+                icon="bars"
+                text={menuLabel}
+                menuProps={menuProps}
+              />
+            )}
+            <div style={{ marginLeft: '1.5rem' }}>
+              <div
+                style={{
+                  cursor: 'pointer',
+                  fontSize: '2rem'
+                }}
+                onClick={onFavoriteClick}
+                onMouseEnter={() => {
+                  if (!favorited) {
+                    setAddToFavoritesShown(true);
+                  }
+                }}
+                onMouseLeave={() => setAddToFavoritesShown(false)}
+              >
+                <Icon
+                  color={Color.brownOrange()}
+                  icon={favorited ? 'star' : ['far', 'star']}
+                />
+              </div>
+              <FullTextReveal
+                direction="left"
+                className="desktop"
+                show={addToFavoritesShown && !favorited}
+                text={addToFavoritesLabel}
+                style={{
+                  marginTop: '0.7rem',
+                  width: 'auto',
+                  minWidth: '',
+                  maxWidth: '',
+                  padding: '1rem'
+                }}
+              />
+            </div>
+          </div>
+        </div>
       ) : (
         <Loading
           style={{
