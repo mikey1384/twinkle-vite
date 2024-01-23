@@ -16,7 +16,6 @@ import LocalContext from '../../../Context';
 import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
-
 const addToFavoritesLabel = localize('addToFavorites');
 const changeTopicLabel = localize('changeTopic');
 const editGroupNameLabel = localize('editGroupName');
