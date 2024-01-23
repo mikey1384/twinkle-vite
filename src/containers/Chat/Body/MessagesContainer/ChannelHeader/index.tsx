@@ -26,7 +26,6 @@ import localize from '~/constants/localize';
 const deviceIsMobile = isMobile(navigator);
 
 const addToFavoritesLabel = localize('addToFavorites');
-const broughtBackByLabel = localize('broughtBackBy');
 const changeTopicLabel = localize('changeTopic');
 const editGroupNameLabel = localize('editGroupName');
 const invitePeopleLabel = localize('invitePeople');
@@ -34,7 +33,6 @@ const leaveLabel = localize('leave');
 const loadingTopicLabel = localize('loadingTopic');
 const menuLabel = deviceIsMobile ? '' : localize('menu');
 const settingsLabel = localize('settings');
-const startedByLabel = localize('startedBy');
 
 export default function ChannelHeader({
   currentChannel,
@@ -198,7 +196,7 @@ export default function ChannelHeader({
     if (uploader.id && timeSincePost) {
       posterString = (
         <span>
-          {startedByLabel} <UsernameText user={uploader} />{' '}
+          posted by <UsernameText user={uploader} />{' '}
           <span className="desktop">{timeSincePost}</span>
         </span>
       );
@@ -206,10 +204,10 @@ export default function ChannelHeader({
     if (isReloaded && timeSinceReload) {
       posterString = (
         <span>
-          {broughtBackByLabel} <UsernameText user={reloader} />{' '}
+          Featured by <UsernameText user={reloader} />{' '}
           <span className="desktop">{timeSinceReload}</span>{' '}
           <span className="desktop">
-            ({startedByLabel} {<UsernameText user={uploader} />})
+            (posted by {<UsernameText user={uploader} />})
           </span>
         </span>
       );
