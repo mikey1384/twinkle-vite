@@ -8,6 +8,7 @@ import localize from '~/constants/localize';
 import CheckListGroup from '~/components/CheckListGroup';
 import QuestionsBuilder from './QuestionsBuilder';
 import ResultModal from './Modals/ResultModal';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useMyLevel } from '~/helpers/hooks';
 import { css } from '@emotion/css';
@@ -77,107 +78,109 @@ export default function Content({
   }, [canEdit, level, uploader?.level]);
 
   return (
-    <div
-      className={css`
-        width: 100%;
-        background: #fff;
-        margin-bottom: 1rem;
-        padding: 1rem;
-        border: 1px solid ${Color.borderGray()};
-        padding-top: 0;
-        @media (max-width: ${mobileMaxWidth}) {
-          border-top: 0;
-          border-left: 0;
-          border-right: 0;
-        }
-      `}
-    >
-      <PageTab
-        watchTabActive={watchTabActive}
-        isContinuing={isContinuing}
-        playlistId={playlistId}
-        questions={questions}
-      />
-      <div style={{ marginTop: '2rem' }}>
-        {!questionsBuilderShown && (
-          <XPVideoPlayer
-            rewardLevel={rewardLevel}
-            byUser={!!byUser}
-            key={videoId}
-            videoId={videoId}
-            videoCode={content}
-            uploader={uploader}
-            minimized={!watchTabActive}
-          />
-        )}
-        {(userIsUploader || userCanEditThis) && !watchTabActive && (
-          <div style={{ marginTop: rewardLevel ? '1rem' : 0 }}>
-            <a
-              style={{
-                cursor: 'pointer',
-                fontSize: '1.5rem'
-              }}
-              onClick={() => setQuestionsBuilderShown(true)}
-            >
-              {addEditQuestionsLabel}
-            </a>
-          </div>
-        )}
-        {!watchTabActive && questions.length > 0 && (
-          <Carousel
-            allowDrag={false}
-            progressBar
-            slidesToShow={1}
-            slidesToScroll={1}
-            slideIndex={currentSlide}
-            afterSlide={setCurrentSlide}
-            onFinish={() => setResultModalShown(true)}
-          >
-            {handleRenderSlides()}
-          </Carousel>
-        )}
-        {!watchTabActive && questions.length === 0 && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              fontSize: '2rem',
-              height: '15rem'
-            }}
-          >
-            <p>{thereAreNoQuestionsLabel}.</p>
-            {(userIsUploader || userCanEditThis) && (
-              <Button
-                style={{ marginTop: '2rem', fontSize: '2rem' }}
-                skeuomorphic
-                color="darkerGray"
+    <ErrorBoundary componentPath="VideoPage/Content">
+      <div
+        className={css`
+          width: 100%;
+          background: #fff;
+          margin-bottom: 1rem;
+          padding: 1rem;
+          border: 1px solid ${Color.borderGray()};
+          padding-top: 0;
+          @media (max-width: ${mobileMaxWidth}) {
+            border-top: 0;
+            border-left: 0;
+            border-right: 0;
+          }
+        `}
+      >
+        <PageTab
+          watchTabActive={watchTabActive}
+          isContinuing={isContinuing}
+          playlistId={playlistId}
+          questions={questions}
+        />
+        <div style={{ marginTop: '2rem' }}>
+          {!questionsBuilderShown && (
+            <XPVideoPlayer
+              rewardLevel={rewardLevel}
+              byUser={!!byUser}
+              key={videoId}
+              videoId={videoId}
+              videoCode={content}
+              uploader={uploader}
+              minimized={!watchTabActive}
+            />
+          )}
+          {(userIsUploader || userCanEditThis) && !watchTabActive && (
+            <div style={{ marginTop: rewardLevel ? '1rem' : 0 }}>
+              <a
+                style={{
+                  cursor: 'pointer',
+                  fontSize: '1.5rem'
+                }}
                 onClick={() => setQuestionsBuilderShown(true)}
               >
-                {addQuestionsLabel}
-              </Button>
-            )}
-          </div>
+                {addEditQuestionsLabel}
+              </a>
+            </div>
+          )}
+          {!watchTabActive && questions.length > 0 && (
+            <Carousel
+              allowDrag={false}
+              progressBar
+              slidesToShow={1}
+              slidesToScroll={1}
+              slideIndex={currentSlide}
+              afterSlide={setCurrentSlide}
+              onFinish={() => setResultModalShown(true)}
+            >
+              {handleRenderSlides()}
+            </Carousel>
+          )}
+          {!watchTabActive && questions.length === 0 && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                fontSize: '2rem',
+                height: '15rem'
+              }}
+            >
+              <p>{thereAreNoQuestionsLabel}.</p>
+              {(userIsUploader || userCanEditThis) && (
+                <Button
+                  style={{ marginTop: '2rem', fontSize: '2rem' }}
+                  skeuomorphic
+                  color="darkerGray"
+                  onClick={() => setQuestionsBuilderShown(true)}
+                >
+                  {addQuestionsLabel}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+        {resultModalShown && (
+          <ResultModal
+            onHide={() => setResultModalShown(false)}
+            numberCorrect={numberCorrect}
+            totalQuestions={questions.length}
+          />
+        )}
+        {questionsBuilderShown && (
+          <QuestionsBuilder
+            questions={questions}
+            title={title}
+            videoCode={content}
+            onSubmit={handleUploadQuestions}
+            onHide={() => setQuestionsBuilderShown(false)}
+          />
         )}
       </div>
-      {resultModalShown && (
-        <ResultModal
-          onHide={() => setResultModalShown(false)}
-          numberCorrect={numberCorrect}
-          totalQuestions={questions.length}
-        />
-      )}
-      {questionsBuilderShown && (
-        <QuestionsBuilder
-          questions={questions}
-          title={title}
-          videoCode={content}
-          onSubmit={handleUploadQuestions}
-          onHide={() => setQuestionsBuilderShown(false)}
-        />
-      )}
-    </div>
+    </ErrorBoundary>
   );
 
   function numberCorrect() {

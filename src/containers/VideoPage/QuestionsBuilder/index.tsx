@@ -5,6 +5,7 @@ import QuestionBlock from './QuestionBlock';
 import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import Button from '~/components/Button';
 import QuestionsListGroup from './QuestionsListGroup';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { isMobile } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import ReactPlayer from 'react-player';
@@ -111,155 +112,157 @@ export default function QuestionsBuilder({
   }, []);
 
   return (
-    <DndProvider backend={Backend}>
-      <Modal closeWhenClickedOutside={false} large onHide={onHide}>
-        <header>{title}</header>
-        <main
-          style={{
-            flexDirection: 'row',
-            justifyContent: reorderModeOn ? 'center' : 'space-between',
-            alignItems: 'center',
-            width: '100%'
-          }}
-        >
-          <section
-            className={Styles.leftSection}
-            ref={LeftMenuRef}
+    <ErrorBoundary componentPath="VideoPage/QuestionsBuilder">
+      <DndProvider backend={Backend}>
+        <Modal closeWhenClickedOutside={false} large onHide={onHide}>
+          <header>{title}</header>
+          <main
             style={{
-              width: reorderModeOn ? '80%' : '',
-              overflow: 'scroll',
-              height: 'CALC(100vh - 21rem)'
+              flexDirection: 'row',
+              justifyContent: reorderModeOn ? 'center' : 'space-between',
+              alignItems: 'center',
+              width: '100%'
             }}
           >
-            {reorderModeOn ? (
-              <QuestionsListGroup
-                questions={questions}
-                questionIds={questionIds}
-                onReorderDone={(questionIds) => {
-                  setQuestionIds(questionIds);
-                  setReorderModeOn(false);
-                }}
-                onReorderCancel={() => setReorderModeOn(false)}
-              />
-            ) : questionIds.length > 0 ? (
-              <div ref={QuestionBlocksRef}>
-                {questionIds.map((questionId, index) => {
-                  const question = questions[questionId];
-                  return (
-                    <QuestionBlock
-                      {...question}
-                      key={index}
-                      questionId={Number(questionId)}
-                      hideErrorMsg={(id) => {
-                        setQuestions({
-                          ...questions,
-                          [id]: {
-                            ...questions[id],
-                            errorMessage: ''
-                          }
-                        });
-                      }}
-                      questionIndex={index}
-                      errorMessage={question.errorMessage}
-                      innerRef={(ref: any) => {
-                        QuestionsRef.current[questionId] = ref;
-                      }}
-                      onSelectChoice={onSelectChoice}
-                      onRearrange={onChoicesRearrange}
-                      onRemove={onRemoveQuestion}
-                      onUndoRemove={onUndoRemove}
-                      onEditStart={(questionId) => {
-                        setQuestions({
-                          ...questions,
-                          [questionId]: {
-                            ...questions[questionId],
-                            onEdit: true
-                          }
-                        });
-                      }}
-                      onEditCancel={(questionId) => {
-                        setQuestions({
-                          ...questions,
-                          [questionId]: {
-                            ...questions[questionId],
-                            errorMessage: '',
-                            onEdit: false
-                          }
-                        });
-                      }}
-                      onEditDone={handleChoiceEditDone}
-                    />
-                  );
-                })}
-              </div>
-            ) : null}
-          </section>
-          {!reorderModeOn && (
-            <section className={Styles.rightSection}>
-              <div className={Styles.videoContainer}>
-                <ReactPlayer
-                  url={`https://www.youtube.com/watch?v=${videoCode}`}
-                  controls
-                  width="100%"
+            <section
+              className={Styles.leftSection}
+              ref={LeftMenuRef}
+              style={{
+                width: reorderModeOn ? '80%' : '',
+                overflow: 'scroll',
+                height: 'CALC(100vh - 21rem)'
+              }}
+            >
+              {reorderModeOn ? (
+                <QuestionsListGroup
+                  questions={questions}
+                  questionIds={questionIds}
+                  onReorderDone={(questionIds) => {
+                    setQuestionIds(questionIds);
+                    setReorderModeOn(false);
+                  }}
+                  onReorderCancel={() => setReorderModeOn(false)}
                 />
-                <div className={Styles.videoInterface}>
-                  <ButtonGroup
-                    buttons={[
-                      {
-                        label: `+ ${addLabel}`,
-                        filled: true,
-                        onClick: onAddQuestion,
-                        color: successColor
-                      },
-                      {
-                        label: reorderLabel,
-                        filled: true,
-                        onClick: () => setReorderModeOn(true),
-                        color: infoColor
-                      },
-                      {
-                        label: resetLabel,
-                        filled: true,
-                        onClick: onReset,
-                        color: 'orange'
-                      }
-                    ]}
-                  />
-                  <div
-                    style={{
-                      marginTop: '1rem',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <Button
-                      color="logoBlue"
-                      filled
-                      onClick={handleSave}
-                      style={{ fontSize: '2rem', marginRight: '1rem' }}
-                    >
-                      <Icon
-                        style={{ marginRight: '0.7rem' }}
-                        icon="cloud-upload-alt"
+              ) : questionIds.length > 0 ? (
+                <div ref={QuestionBlocksRef}>
+                  {questionIds.map((questionId, index) => {
+                    const question = questions[questionId];
+                    return (
+                      <QuestionBlock
+                        {...question}
+                        key={index}
+                        questionId={Number(questionId)}
+                        hideErrorMsg={(id) => {
+                          setQuestions({
+                            ...questions,
+                            [id]: {
+                              ...questions[id],
+                              errorMessage: ''
+                            }
+                          });
+                        }}
+                        questionIndex={index}
+                        errorMessage={question.errorMessage}
+                        innerRef={(ref: any) => {
+                          QuestionsRef.current[questionId] = ref;
+                        }}
+                        onSelectChoice={onSelectChoice}
+                        onRearrange={onChoicesRearrange}
+                        onRemove={onRemoveQuestion}
+                        onUndoRemove={onUndoRemove}
+                        onEditStart={(questionId) => {
+                          setQuestions({
+                            ...questions,
+                            [questionId]: {
+                              ...questions[questionId],
+                              onEdit: true
+                            }
+                          });
+                        }}
+                        onEditCancel={(questionId) => {
+                          setQuestions({
+                            ...questions,
+                            [questionId]: {
+                              ...questions[questionId],
+                              errorMessage: '',
+                              onEdit: false
+                            }
+                          });
+                        }}
+                        onEditDone={handleChoiceEditDone}
                       />
-                      {saveLabel}
-                    </Button>
-                    <Button
-                      color="blue"
-                      filled
-                      onClick={() => handleSave({ isSubmit: true })}
-                      style={{ fontSize: '2rem' }}
+                    );
+                  })}
+                </div>
+              ) : null}
+            </section>
+            {!reorderModeOn && (
+              <section className={Styles.rightSection}>
+                <div className={Styles.videoContainer}>
+                  <ReactPlayer
+                    url={`https://www.youtube.com/watch?v=${videoCode}`}
+                    controls
+                    width="100%"
+                  />
+                  <div className={Styles.videoInterface}>
+                    <ButtonGroup
+                      buttons={[
+                        {
+                          label: `+ ${addLabel}`,
+                          filled: true,
+                          onClick: onAddQuestion,
+                          color: successColor
+                        },
+                        {
+                          label: reorderLabel,
+                          filled: true,
+                          onClick: () => setReorderModeOn(true),
+                          color: infoColor
+                        },
+                        {
+                          label: resetLabel,
+                          filled: true,
+                          onClick: onReset,
+                          color: 'orange'
+                        }
+                      ]}
+                    />
+                    <div
+                      style={{
+                        marginTop: '1rem',
+                        display: 'flex',
+                        justifyContent: 'center'
+                      }}
                     >
-                      {submitLabel}
-                    </Button>
+                      <Button
+                        color="logoBlue"
+                        filled
+                        onClick={handleSave}
+                        style={{ fontSize: '2rem', marginRight: '1rem' }}
+                      >
+                        <Icon
+                          style={{ marginRight: '0.7rem' }}
+                          icon="cloud-upload-alt"
+                        />
+                        {saveLabel}
+                      </Button>
+                      <Button
+                        color="blue"
+                        filled
+                        onClick={() => handleSave({ isSubmit: true })}
+                        style={{ fontSize: '2rem' }}
+                      >
+                        {submitLabel}
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </section>
-          )}
-        </main>
-      </Modal>
-    </DndProvider>
+              </section>
+            )}
+          </main>
+        </Modal>
+      </DndProvider>
+    </ErrorBoundary>
   );
 
   function onAddQuestion() {

@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import FilterBar from '~/components/FilterBar';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import localize from '~/constants/localize';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,43 +28,45 @@ export default function PageTab({
 }) {
   const navigate = useNavigate();
   return (
-    <FilterBar>
-      <nav
-        className={watchTabActive ? 'active' : ''}
-        onClick={() => {
-          if (!watchTabActive) {
-            navigate(
-              `..${
-                playlistId
-                  ? `?playlist=${playlistId}`
-                  : isContinuing
-                  ? '?continue=true'
-                  : ''
-              }`
-            );
-          }
-        }}
-      >
-        {videoLabel}
-      </nav>
-      <nav
-        className={watchTabActive ? '' : 'active'}
-        onClick={() => {
-          if (watchTabActive) {
-            navigate(
-              `./questions${
-                playlistId
-                  ? `?playlist=${playlistId}`
-                  : isContinuing
-                  ? '?continue=true'
-                  : ''
-              }`
-            );
-          }
-        }}
-      >
-        {questionsLabel} {questions.length > 0 && `(${questions.length})`}
-      </nav>
-    </FilterBar>
+    <ErrorBoundary componentPath="VideoPage/PageTab">
+      <FilterBar>
+        <nav
+          className={watchTabActive ? 'active' : ''}
+          onClick={() => {
+            if (!watchTabActive) {
+              navigate(
+                `..${
+                  playlistId
+                    ? `?playlist=${playlistId}`
+                    : isContinuing
+                    ? '?continue=true'
+                    : ''
+                }`
+              );
+            }
+          }}
+        >
+          {videoLabel}
+        </nav>
+        <nav
+          className={watchTabActive ? '' : 'active'}
+          onClick={() => {
+            if (watchTabActive) {
+              navigate(
+                `./questions${
+                  playlistId
+                    ? `?playlist=${playlistId}`
+                    : isContinuing
+                    ? '?continue=true'
+                    : ''
+                }`
+              );
+            }
+          }}
+        >
+          {questionsLabel} {questions.length > 0 && `(${questions.length})`}
+        </nav>
+      </FilterBar>
+    </ErrorBoundary>
   );
 }
