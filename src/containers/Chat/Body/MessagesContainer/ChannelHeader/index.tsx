@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -10,7 +9,6 @@ import { isMobile } from '~/helpers';
 import { GENERAL_CHAT_ID, MOD_LEVEL } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import LocalContext from '../../../Context';
 import localize from '~/constants/localize';
@@ -47,16 +45,11 @@ export default function ChannelHeader({
   subchannel: any;
 }) {
   const {
-    actions: { onLoadChatSubject, onSetIsRespondingToSubject },
+    actions: { onLoadChatSubject },
     requests: { loadChatSubject },
     state: { allFavoriteChannelIds }
   } = useContext(LocalContext);
   const { banned, level, userId } = useKeyContext((v) => v.myState);
-  const {
-    button: { color: buttonColor },
-    buttonHovered: { color: buttonHoverColor },
-    chatTopic: { color: chatTopicColor }
-  } = useTheme(displayedThemeColor);
   const [isEditingTopic, setIsEditingTopic] = useState(false);
   const [addToFavoritesShown, setAddToFavoritesShown] = useState(false);
   const [subchannelLoading, setSubchannelLoading] = useState(false);
@@ -233,10 +226,9 @@ export default function ChannelHeader({
       `}
     >
       {loaded || (subchannel?.loaded && !subchannelLoading) ? (
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           {isTopicShown && (
             <LegacyTopic
-              color={chatTopicColor}
               displayedThemeColor={displayedThemeColor}
               isEditingTopic={isEditingTopic}
               currentChannel={currentChannel}
@@ -260,24 +252,6 @@ export default function ChannelHeader({
               }
             `}
           >
-            {isTopicShown && (
-              <Button
-                color={buttonColor}
-                hoverColor={buttonHoverColor}
-                filled
-                onClick={() => {
-                  onSetIsRespondingToSubject({
-                    channelId: selectedChannelId,
-                    subchannelId: subchannel?.id,
-                    subjectId: subjectObj.id,
-                    isResponding: true
-                  });
-                  onInputFocus();
-                }}
-              >
-                <Icon flip="both" icon="reply" />
-              </Button>
-            )}
             {menuButtonShown && (
               <DropdownButton
                 skeuomorphic
