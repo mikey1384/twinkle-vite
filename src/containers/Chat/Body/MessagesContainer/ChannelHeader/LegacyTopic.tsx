@@ -2,20 +2,21 @@ import React, { useContext, useMemo, useEffect, useRef, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import EditSubjectForm from './EditSubjectForm';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import LocalContext from '../../../Context';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/io';
 import { isMobile, textIsOverflown } from '~/helpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import { useInterval } from '~/helpers/hooks';
+import { useInterval, useTheme } from '~/helpers/hooks';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { charLimit, defaultChatSubject } from '~/constants/defaultValues';
 
 const deviceIsMobile = isMobile(navigator);
 
 export default function LegacyTopic({
-  color,
   displayedThemeColor,
   currentChannel,
   isEditingTopic,
@@ -25,7 +26,6 @@ export default function LegacyTopic({
   subjectObj,
   onSetIsEditingTopic
 }: {
-  color: string;
   currentChannel: any;
   displayedThemeColor: string;
   isEditingTopic: boolean;
@@ -40,6 +40,7 @@ export default function LegacyTopic({
       onClearSubjectSearchResults,
       onReloadChatSubject,
       onSearchChatSubject,
+      onSetIsRespondingToSubject,
       onUploadChatSubject
     },
     requests: { reloadChatSubject, searchChatSubject, uploadChatSubject },
@@ -53,6 +54,11 @@ export default function LegacyTopic({
     uploader = {}
   } = subjectObj;
   const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
+  const {
+    button: { color: buttonColor },
+    buttonHovered: { color: buttonHoverColor },
+    chatTopic: { color: chatTopicColor }
+  } = useTheme(displayedThemeColor);
   const reloadingChatSubject = useRef(false);
   const HeaderLabelRef: React.RefObject<any> = useRef(null);
   const [submitting, setSubmitting] = useState(false);
@@ -125,7 +131,7 @@ export default function LegacyTopic({
               className={css`
                 width: 100%;
                 cursor: default;
-                color: ${Color[color]()};
+                color: ${Color[chatTopicColor]()};
                 white-space: nowrap;
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -153,6 +159,22 @@ export default function LegacyTopic({
         )}
       </div>
       <div style={{ width: '100%' }}>{subjectDetails}</div>
+      <Button
+        color={buttonColor}
+        hoverColor={buttonHoverColor}
+        filled
+        onClick={() => {
+          onSetIsRespondingToSubject({
+            channelId: selectedChannelId,
+            subchannelId,
+            subjectId: subjectObj.id,
+            isResponding: true
+          });
+          onInputFocus();
+        }}
+      >
+        <Icon flip="both" icon="reply" />
+      </Button>
     </section>
   );
 
