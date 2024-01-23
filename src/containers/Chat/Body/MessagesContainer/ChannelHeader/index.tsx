@@ -1,24 +1,16 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
-import UsernameText from '~/components/Texts/UsernameText';
-import EditSubjectForm from './EditSubjectForm';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import DropdownButton from '~/components/Buttons/DropdownButton';
+import LegacyTopic from './LegacyTopic';
 import Icon from '~/components/Icon';
-import { isMobile, textIsOverflown } from '~/helpers';
-import { timeSince } from '~/helpers/timeStampHelpers';
-import { socket } from '~/constants/io';
-import {
-  charLimit,
-  defaultChatSubject,
-  GENERAL_CHAT_ID,
-  MOD_LEVEL
-} from '~/constants/defaultValues';
+import { isMobile } from '~/helpers';
+import { GENERAL_CHAT_ID, MOD_LEVEL } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useInterval, useTheme } from '~/helpers/hooks';
+import { useTheme } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import LocalContext from '../../../Context';
 import localize from '~/constants/localize';
@@ -56,51 +48,22 @@ export default function ChannelHeader({
   subchannel: any;
 }) {
   const {
-    actions: {
-      onClearSubjectSearchResults,
-      onLoadChatSubject,
-      onReloadChatSubject,
-      onSearchChatSubject,
-      onSetIsRespondingToSubject,
-      onUploadChatSubject
-    },
-    requests: {
-      loadChatSubject,
-      reloadChatSubject,
-      searchChatSubject,
-      uploadChatSubject
-    },
-    state: { allFavoriteChannelIds, subjectSearchResults }
+    actions: { onLoadChatSubject, onSetIsRespondingToSubject },
+    requests: { loadChatSubject },
+    state: { allFavoriteChannelIds }
   } = useContext(LocalContext);
-  const { banned, level, profilePicUrl, userId, username } = useKeyContext(
-    (v) => v.myState
-  );
+  const { banned, level, userId } = useKeyContext((v) => v.myState);
   const {
     button: { color: buttonColor },
     buttonHovered: { color: buttonHoverColor },
     chatTopic: { color: chatTopicColor }
   } = useTheme(displayedThemeColor);
-  const [onEdit, setOnEdit] = useState(false);
-  const [onHover, setOnHover] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [isEditingTopic, setIsEditingTopic] = useState(false);
   const [addToFavoritesShown, setAddToFavoritesShown] = useState(false);
   const [subchannelLoading, setSubchannelLoading] = useState(false);
   const favorited = useMemo(() => {
     return allFavoriteChannelIds[selectedChannelId];
   }, [allFavoriteChannelIds, selectedChannelId]);
-  const reloadingChatSubject = useRef(false);
-  const subjectObj = useMemo(() => {
-    if (subchannel) {
-      if (subchannel?.subjectObj) {
-        return subchannel?.subjectObj;
-      }
-      return {};
-    }
-    if (currentChannel.subjectObj) {
-      return currentChannel.subjectObj;
-    }
-    return {};
-  }, [currentChannel, subchannel]);
   const canChangeSubject = useMemo(() => {
     if (subchannel) {
       if (subchannel?.subjectObj) {
@@ -110,20 +73,6 @@ export default function ChannelHeader({
     }
     return currentChannel.canChangeSubject;
   }, [currentChannel.canChangeSubject, subchannel]);
-
-  const {
-    content = '',
-    id: subjectId,
-    timeStamp,
-    reloadTimeStamp,
-    reloader = {},
-    uploader = {}
-  } = subjectObj;
-  const [timeSincePost, setTimeSincePost] = useState(timeSince(timeStamp));
-  const [timeSinceReload, setTimeSinceReload] = useState(
-    timeSince(reloadTimeStamp)
-  );
-  const HeaderLabelRef: React.RefObject<any> = useRef(null);
 
   const loaded = useMemo(() => {
     return currentChannel.subjectObj?.loaded;
@@ -171,49 +120,18 @@ export default function ChannelHeader({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subchannel?.loaded, subchannel?.subjectObj?.loaded]);
 
-  const displayedContent = useMemo(() => {
-    if (!currentChannel.subjectObj && !subchannel?.subjectObj) return '';
-    if (subchannel?.subjectObj?.loaded) {
-      return subchannel?.subjectObj?.content || defaultChatSubject;
+  const subjectObj = useMemo(() => {
+    if (subchannel) {
+      if (subchannel?.subjectObj) {
+        return subchannel?.subjectObj;
+      }
+      return {};
     }
-    if (!loaded) return '';
-    return currentChannel.subjectObj?.content || defaultChatSubject;
-  }, [currentChannel.subjectObj, loaded, subchannel?.subjectObj]);
-
-  useEffect(() => {
-    setTimeSincePost(timeSince(timeStamp));
-    setTimeSinceReload(timeSince(reloadTimeStamp));
-  }, [timeStamp, reloadTimeStamp]);
-
-  useInterval(() => {
-    setTimeSincePost(timeSince(timeStamp));
-    setTimeSinceReload(timeSince(reloadTimeStamp));
-  }, 1000);
-
-  const subjectDetails = useMemo(() => {
-    const isReloaded = reloader && reloader.id;
-    let posterString: any = '';
-    if (uploader.id && timeSincePost) {
-      posterString = (
-        <span>
-          posted by <UsernameText user={uploader} />{' '}
-          <span className="desktop">{timeSincePost}</span>
-        </span>
-      );
+    if (currentChannel.subjectObj) {
+      return currentChannel.subjectObj;
     }
-    if (isReloaded && timeSinceReload) {
-      posterString = (
-        <span>
-          Featured by <UsernameText user={reloader} />{' '}
-          <span className="desktop">{timeSinceReload}</span>{' '}
-          <span className="desktop">
-            (posted by {<UsernameText user={uploader} />})
-          </span>
-        </span>
-      );
-    }
-    return <small>{posterString}</small>;
-  }, [reloader, timeSincePost, timeSinceReload, uploader]);
+    return {};
+  }, [currentChannel, subchannel]);
 
   const menuProps = useMemo(() => {
     const result = [];
@@ -230,7 +148,7 @@ export default function ChannelHeader({
             <span style={{ marginLeft: '1rem' }}>{changeTopicLabel}</span>
           </>
         ),
-        onClick: () => setOnEdit(true)
+        onClick: () => setIsEditingTopic(true)
       });
     }
     if (selectedChannelId !== GENERAL_CHAT_ID) {
@@ -317,44 +235,20 @@ export default function ChannelHeader({
     >
       {loaded || (subchannel?.loaded && !subchannelLoading) ? (
         <>
-          {!onEdit && (
+          {!isEditingTopic && (
             <>
               {isTopicShown && (
-                <section>
-                  <div style={{ width: '100%' }}>
-                    <span
-                      className={css`
-                        width: 100%;
-                        cursor: default;
-                        color: ${Color[chatTopicColor]()};
-                        white-space: nowrap;
-                        text-overflow: ellipsis;
-                        overflow: hidden;
-                        line-height: normal;
-                        font-size: 2.2rem;
-                        font-weight: bold;
-                        display: block;
-                        @media (max-width: ${mobileMaxWidth}) {
-                          font-size: 1.6rem;
-                        }
-                      `}
-                      onClick={() =>
-                        setOnHover(
-                          textIsOverflown(HeaderLabelRef.current)
-                            ? !onHover
-                            : false
-                        )
-                      }
-                      onMouseOver={handleMouseOver}
-                      onMouseLeave={() => setOnHover(false)}
-                      ref={HeaderLabelRef}
-                    >
-                      {displayedContent}
-                    </span>
-                    <FullTextReveal text={displayedContent} show={onHover} />
-                  </div>
-                  <div style={{ width: '100%' }}>{subjectDetails}</div>
-                </section>
+                <LegacyTopic
+                  color={chatTopicColor}
+                  displayedThemeColor={displayedThemeColor}
+                  isEditingTopic={isEditingTopic}
+                  currentChannel={currentChannel}
+                  onInputFocus={onInputFocus}
+                  selectedChannelId={selectedChannelId}
+                  subchannelId={subchannel?.id}
+                  subjectObj={subjectObj}
+                  onSetIsEditingTopic={setIsEditingTopic}
+                />
               )}
               <div
                 className={css`
@@ -378,7 +272,7 @@ export default function ChannelHeader({
                       onSetIsRespondingToSubject({
                         channelId: selectedChannelId,
                         subchannelId: subchannel?.id,
-                        subjectId,
+                        subjectId: subjectObj.id,
                         isResponding: true
                       });
                       onInputFocus();
@@ -438,25 +332,6 @@ export default function ChannelHeader({
               </div>
             </>
           )}
-          {onEdit && (
-            <EditSubjectForm
-              autoFocus
-              userIsOwner={currentChannel.creatorId === userId}
-              channelId={selectedChannelId}
-              displayedThemeColor={displayedThemeColor}
-              maxLength={charLimit.chat.subject}
-              currentSubjectId={subjectId}
-              title={content}
-              onEditSubmit={handleSubjectSubmit}
-              onChange={handleSearchChatSubject}
-              onClickOutSide={() => {
-                setOnEdit(false);
-                onClearSubjectSearchResults();
-              }}
-              onReloadChatSubject={handleReloadChatSubject}
-              searchResults={subjectSearchResults}
-            />
-          )}
         </>
       ) : (
         <Loading
@@ -469,106 +344,4 @@ export default function ChannelHeader({
       )}
     </ErrorBoundary>
   );
-
-  function handleMouseOver() {
-    if (textIsOverflown(HeaderLabelRef.current) && !deviceIsMobile) {
-      setOnHover(true);
-    }
-  }
-
-  async function handleReloadChatSubject(subjectId: number) {
-    if (!reloadingChatSubject.current) {
-      reloadingChatSubject.current = true;
-      const { message, subject } = await reloadChatSubject({
-        channelId: selectedChannelId,
-        subchannelId: subchannel?.id,
-        subjectId
-      });
-      onReloadChatSubject({
-        channelId: selectedChannelId,
-        subchannelId: subchannel?.id,
-        message,
-        subject
-      });
-      socket.emit('new_subject', {
-        subject,
-        message,
-        channelName: currentChannel.channelName,
-        channelId: selectedChannelId,
-        subchannelId: subchannel?.id,
-        pathId: currentChannel.pathId
-      });
-      setOnEdit(false);
-      onClearSubjectSearchResults();
-      if (!deviceIsMobile) {
-        onInputFocus();
-      }
-      reloadingChatSubject.current = false;
-    }
-  }
-
-  async function handleSearchChatSubject(text: string) {
-    const data = await searchChatSubject({
-      text,
-      channelId: selectedChannelId
-    });
-    onSearchChatSubject(data);
-  }
-
-  async function handleSubjectSubmit(text: string) {
-    if (!submitting) {
-      setSubmitting(true);
-      try {
-        const content = `${text[0].toUpperCase()}${text.slice(1)}`;
-        const data = await uploadChatSubject({
-          content: text,
-          channelId: selectedChannelId,
-          subchannelId: subchannel?.id
-        });
-        onUploadChatSubject({
-          ...data,
-          channelId: selectedChannelId,
-          subchannelId: subchannel?.id
-        });
-        const timeStamp = Math.floor(Date.now() / 1000);
-        const subject = {
-          id: data.subjectId,
-          userId,
-          username,
-          reloadedBy: null,
-          reloaderName: null,
-          uploader: { id: userId, username },
-          content,
-          timeStamp
-        };
-        const message = {
-          profilePicUrl,
-          userId,
-          username,
-          content,
-          isSubject: true,
-          channelId: selectedChannelId,
-          timeStamp,
-          isNewMessage: true,
-          subchannelId: subchannel?.id
-        };
-        socket.emit('new_subject', {
-          subject,
-          message,
-          channelName: currentChannel.channelName,
-          channelId: selectedChannelId,
-          subchannelId: subchannel?.id,
-          pathId: currentChannel.pathId
-        });
-        setOnEdit(false);
-        setSubmitting(false);
-        if (!deviceIsMobile) {
-          onInputFocus();
-        }
-      } catch (error) {
-        console.error(error);
-        setSubmitting(false);
-      }
-    }
-  }
 }
