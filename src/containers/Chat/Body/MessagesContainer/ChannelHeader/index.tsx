@@ -3,6 +3,7 @@ import FullTextReveal from '~/components/Texts/FullTextReveal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import LegacyTopic from './LegacyTopic';
+import ChatFilter from './ChatFilter';
 import Icon from '~/components/Icon';
 import { isMobile } from '~/helpers';
 import { GENERAL_CHAT_ID, MOD_LEVEL } from '~/constants/defaultValues';
@@ -224,7 +225,7 @@ export default function ChannelHeader({
         }}
       >
         <div style={{ flexGrow: 1 }}>
-          {isLegacyTopicShown && (
+          {isLegacyTopicShown ? (
             <LegacyTopic
               displayedThemeColor={displayedThemeColor}
               isLoaded={loaded || (subchannel?.loaded && !subchannelLoading)}
@@ -236,6 +237,8 @@ export default function ChannelHeader({
               subjectObj={subjectObj}
               onSetIsEditingTopic={setIsEditingTopic}
             />
+          ) : (
+            <ChatFilter />
           )}
         </div>
         <div
