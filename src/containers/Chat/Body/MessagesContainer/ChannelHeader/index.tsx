@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import Loading from '~/components/Loading';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -19,7 +18,6 @@ const changeTopicLabel = localize('changeTopic');
 const editGroupNameLabel = localize('editGroupName');
 const invitePeopleLabel = localize('invitePeople');
 const leaveLabel = localize('leave');
-const loadingTopicLabel = localize('loadingTopic');
 const menuLabel = deviceIsMobile ? '' : localize('menu');
 const settingsLabel = localize('settings');
 
@@ -225,100 +223,91 @@ export default function ChannelHeader({
         }
       `}
     >
-      {loaded || (subchannel?.loaded && !subchannelLoading) ? (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          height: '100%'
+        }}
+      >
+        <div style={{ flexGrow: 1 }}>
+          {isTopicShown && (
+            <LegacyTopic
+              displayedThemeColor={displayedThemeColor}
+              isLoaded={loaded || (subchannel?.loaded && !subchannelLoading)}
+              isEditingTopic={isEditingTopic}
+              currentChannel={currentChannel}
+              onInputFocus={onInputFocus}
+              selectedChannelId={selectedChannelId}
+              subchannelId={subchannel?.id}
+              subjectObj={subjectObj}
+              onSetIsEditingTopic={setIsEditingTopic}
+            />
+          )}
+        </div>
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            width: '100%',
-            height: '100%'
-          }}
+          className={css`
+            height: 100%;
+            font-size: 1.3rem;
+            right: 1rem;
+            display: flex;
+            align-items: center;
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.2rem;
+            }
+          `}
         >
-          <div style={{ flexGrow: 1 }}>
-            {isTopicShown && (
-              <LegacyTopic
-                displayedThemeColor={displayedThemeColor}
-                isEditingTopic={isEditingTopic}
-                currentChannel={currentChannel}
-                onInputFocus={onInputFocus}
-                selectedChannelId={selectedChannelId}
-                subchannelId={subchannel?.id}
-                subjectObj={subjectObj}
-                onSetIsEditingTopic={setIsEditingTopic}
-              />
-            )}
-          </div>
-          <div
-            className={css`
-              height: 100%;
-              font-size: 1.3rem;
-              right: 1rem;
-              display: flex;
-              align-items: center;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.2rem;
-              }
-            `}
-          >
-            {menuButtonShown && (
-              <DropdownButton
-                skeuomorphic
-                opacity={0.7}
-                style={{
-                  marginLeft: '1rem'
-                }}
-                listStyle={{
-                  width: '15rem'
-                }}
-                icon="bars"
-                text={menuLabel}
-                menuProps={menuProps}
-              />
-            )}
-            <div style={{ marginLeft: '1.5rem' }}>
-              <div
-                style={{
-                  cursor: 'pointer',
-                  fontSize: '2rem'
-                }}
-                onClick={onFavoriteClick}
-                onMouseEnter={() => {
-                  if (!favorited) {
-                    setAddToFavoritesShown(true);
-                  }
-                }}
-                onMouseLeave={() => setAddToFavoritesShown(false)}
-              >
-                <Icon
-                  color={Color.brownOrange()}
-                  icon={favorited ? 'star' : ['far', 'star']}
-                />
-              </div>
-              <FullTextReveal
-                direction="left"
-                className="desktop"
-                show={addToFavoritesShown && !favorited}
-                text={addToFavoritesLabel}
-                style={{
-                  marginTop: '0.7rem',
-                  width: 'auto',
-                  minWidth: '',
-                  maxWidth: '',
-                  padding: '1rem'
-                }}
+          {menuButtonShown && (
+            <DropdownButton
+              skeuomorphic
+              opacity={0.7}
+              style={{
+                marginLeft: '1rem'
+              }}
+              listStyle={{
+                width: '15rem'
+              }}
+              icon="bars"
+              text={menuLabel}
+              menuProps={menuProps}
+            />
+          )}
+          <div style={{ marginLeft: '1.5rem' }}>
+            <div
+              style={{
+                cursor: 'pointer',
+                fontSize: '2rem'
+              }}
+              onClick={onFavoriteClick}
+              onMouseEnter={() => {
+                if (!favorited) {
+                  setAddToFavoritesShown(true);
+                }
+              }}
+              onMouseLeave={() => setAddToFavoritesShown(false)}
+            >
+              <Icon
+                color={Color.brownOrange()}
+                icon={favorited ? 'star' : ['far', 'star']}
               />
             </div>
+            <FullTextReveal
+              direction="left"
+              className="desktop"
+              show={addToFavoritesShown && !favorited}
+              text={addToFavoritesLabel}
+              style={{
+                marginTop: '0.7rem',
+                width: 'auto',
+                minWidth: '',
+                maxWidth: '',
+                padding: '1rem'
+              }}
+            />
           </div>
         </div>
-      ) : (
-        <Loading
-          style={{
-            color: Color[displayedThemeColor]()
-          }}
-          theme={displayedThemeColor}
-          text={`${loadingTopicLabel}...`}
-        />
-      )}
+      </div>
     </ErrorBoundary>
   );
 }

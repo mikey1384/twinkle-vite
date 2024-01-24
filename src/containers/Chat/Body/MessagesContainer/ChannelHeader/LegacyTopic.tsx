@@ -4,6 +4,7 @@ import EditSubjectForm from './EditSubjectForm';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import Loading from '~/components/Loading';
 import LocalContext from '../../../Context';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/io';
@@ -20,6 +21,7 @@ export default function LegacyTopic({
   displayedThemeColor,
   currentChannel,
   isEditingTopic,
+  isLoaded,
   onInputFocus,
   selectedChannelId,
   subchannelId,
@@ -29,6 +31,7 @@ export default function LegacyTopic({
   currentChannel: any;
   displayedThemeColor: string;
   isEditingTopic: boolean;
+  isLoaded: boolean;
   onInputFocus: () => void;
   selectedChannelId: number;
   subchannelId: number;
@@ -122,7 +125,9 @@ export default function LegacyTopic({
           flexDirection: 'column'
         }}
       >
-        {isEditingTopic ? (
+        {!isLoaded ? (
+          <Loading text="Loading Topic" />
+        ) : isEditingTopic ? (
           <EditSubjectForm
             autoFocus
             userIsOwner={currentChannel.creatorId === userId}
