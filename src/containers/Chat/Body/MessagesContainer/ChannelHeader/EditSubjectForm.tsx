@@ -49,7 +49,7 @@ export default function EditSubjectForm({
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
   const [exactMatchExists, setExactMatchExists] = useState(false);
-  const [title, setTitle] = useState(props.title);
+  const [title, setTitle] = useState(props.title || '');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [readyForSubmit, setReadyForSubmit] = useState(false);
   const [subjectsModalShown, setSubjectsModalShown] = useState(false);

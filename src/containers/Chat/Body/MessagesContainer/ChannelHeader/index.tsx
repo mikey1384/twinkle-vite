@@ -234,18 +234,20 @@ export default function ChannelHeader({
             height: '100%'
           }}
         >
-          {isTopicShown && (
-            <LegacyTopic
-              displayedThemeColor={displayedThemeColor}
-              isEditingTopic={isEditingTopic}
-              currentChannel={currentChannel}
-              onInputFocus={onInputFocus}
-              selectedChannelId={selectedChannelId}
-              subchannelId={subchannel?.id}
-              subjectObj={subjectObj}
-              onSetIsEditingTopic={setIsEditingTopic}
-            />
-          )}
+          <div style={{ flexGrow: 1 }}>
+            {isTopicShown && (
+              <LegacyTopic
+                displayedThemeColor={displayedThemeColor}
+                isEditingTopic={isEditingTopic}
+                currentChannel={currentChannel}
+                onInputFocus={onInputFocus}
+                selectedChannelId={selectedChannelId}
+                subchannelId={subchannel?.id}
+                subjectObj={subjectObj}
+                onSetIsEditingTopic={setIsEditingTopic}
+              />
+            )}
+          </div>
           <div
             className={css`
               height: 100%;
