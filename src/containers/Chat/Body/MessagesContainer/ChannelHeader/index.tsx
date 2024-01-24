@@ -226,7 +226,14 @@ export default function ChannelHeader({
       `}
     >
       {loaded || (subchannel?.loaded && !subchannelLoading) ? (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            width: '100%',
+            height: '100%'
+          }}
+        >
           {isTopicShown && (
             <LegacyTopic
               displayedThemeColor={displayedThemeColor}
@@ -241,7 +248,6 @@ export default function ChannelHeader({
           )}
           <div
             className={css`
-              position: absolute;
               height: 100%;
               font-size: 1.3rem;
               right: 1rem;
