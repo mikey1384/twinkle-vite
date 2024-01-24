@@ -1224,7 +1224,7 @@ function MessagesContainer({
           ref={MessagesRef}
         >
           {loadingAnimationShown ? (
-            <Loading style={{ position: 'absolute', top: '7rem' }} />
+            <Loading style={{ position: 'absolute', top: '20%' }} />
           ) : (
             <>
               <div
