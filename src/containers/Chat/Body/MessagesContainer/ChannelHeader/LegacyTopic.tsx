@@ -114,7 +114,14 @@ export default function LegacyTopic({
         alignItems: 'center'
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexGrow: 1,
+          marginRight: '1rem',
+          flexDirection: 'column'
+        }}
+      >
         {isEditingTopic ? (
           <EditSubjectForm
             autoFocus
