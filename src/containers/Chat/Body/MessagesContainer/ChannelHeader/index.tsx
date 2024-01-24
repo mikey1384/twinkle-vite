@@ -68,17 +68,9 @@ export default function ChannelHeader({
     return currentChannel.subjectObj?.loaded;
   }, [currentChannel.subjectObj?.loaded]);
 
-  const channelHeaderShown = useMemo(() => {
-    return (
-      (!subchannel || subchannel?.canChangeSubject) &&
-      (selectedChannelId === GENERAL_CHAT_ID ||
-        !!currentChannel.canChangeSubject)
-    );
-  }, [currentChannel.canChangeSubject, selectedChannelId, subchannel]);
-
-  const isTopicShown = useMemo(() => {
-    return channelHeaderShown || selectedChannelId === GENERAL_CHAT_ID;
-  }, [channelHeaderShown, selectedChannelId]);
+  const isLegacyTopicShown = useMemo(() => {
+    return selectedChannelId === GENERAL_CHAT_ID;
+  }, [selectedChannelId]);
 
   useEffect(() => {
     if (!loaded) {
@@ -232,7 +224,7 @@ export default function ChannelHeader({
         }}
       >
         <div style={{ flexGrow: 1 }}>
-          {isTopicShown && (
+          {isLegacyTopicShown && (
             <LegacyTopic
               displayedThemeColor={displayedThemeColor}
               isLoaded={loaded || (subchannel?.loaded && !subchannelLoading)}
