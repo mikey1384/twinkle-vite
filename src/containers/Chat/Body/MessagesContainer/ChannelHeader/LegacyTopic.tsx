@@ -105,8 +105,16 @@ export default function LegacyTopic({
   }, 1000);
 
   return (
-    <section>
-      <div style={{ width: '100%' }}>
+    <section
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
         {isEditingTopic ? (
           <EditSubjectForm
             autoFocus
@@ -157,24 +165,26 @@ export default function LegacyTopic({
             <FullTextReveal text={displayedContent} show={onHover} />
           </div>
         )}
+        <div style={{ width: '100%' }}>{subjectDetails}</div>
       </div>
-      <div style={{ width: '100%' }}>{subjectDetails}</div>
-      <Button
-        color={buttonColor}
-        hoverColor={buttonHoverColor}
-        filled
-        onClick={() => {
-          onSetIsRespondingToSubject({
-            channelId: selectedChannelId,
-            subchannelId,
-            subjectId: subjectObj.id,
-            isResponding: true
-          });
-          onInputFocus();
-        }}
-      >
-        <Icon flip="both" icon="reply" />
-      </Button>
+      <div>
+        <Button
+          color={buttonColor}
+          hoverColor={buttonHoverColor}
+          filled
+          onClick={() => {
+            onSetIsRespondingToSubject({
+              channelId: selectedChannelId,
+              subchannelId,
+              subjectId: subjectObj.id,
+              isResponding: true
+            });
+            onInputFocus();
+          }}
+        >
+          <Icon flip="both" icon="reply" />
+        </Button>
+      </div>
     </section>
   );
 
