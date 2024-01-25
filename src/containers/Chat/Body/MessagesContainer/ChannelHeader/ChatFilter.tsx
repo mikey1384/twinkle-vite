@@ -2,6 +2,7 @@ import React from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { css } from '@emotion/css';
 
 export default function ChatFilter({
   canChangeTopic,
@@ -20,16 +21,26 @@ export default function ChatFilter({
 
   return (
     <ErrorBoundary componentPath="Chat/Body/MessageContainer/ChannelHeader/ChatFilter">
-      <Button
-        disabled={!canChangeTopic}
-        skeuomorphic
-        onClick={() => console.log('clicked')}
+      <div
+        className={css`
+          width: 100%;
+          display: flex;
+          justify-content: flex-end;
+        `}
       >
-        <Icon icon="chevron-down" />
-        <span style={{ marginLeft: '0.7rem' }}>
-          {canChangeTopic ? content || 'Topic' : 'Topic feature not purchased'}
-        </span>
-      </Button>
+        <Button
+          disabled={!canChangeTopic}
+          skeuomorphic
+          onClick={() => console.log('clicked')}
+        >
+          <Icon icon="chevron-down" />
+          <span style={{ marginLeft: '0.7rem' }}>
+            {canChangeTopic
+              ? content || 'Topic'
+              : 'Topic feature not purchased'}
+          </span>
+        </Button>
+      </div>
     </ErrorBoundary>
   );
 }
