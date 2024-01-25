@@ -1203,17 +1203,19 @@ function MessagesContainer({
           height: containerHeight
         }}
       >
-        <ChannelHeader
-          currentChannel={currentChannel}
-          displayedThemeColor={displayedThemeColor}
-          onInputFocus={() => ChatInputRef.current.focus()}
-          onSetInviteUsersModalShown={setInviteUsersModalShown}
-          onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
-          onSetSettingsModalShown={setSettingsModalShown}
-          selectedChannelId={selectedChannelId}
-          subchannel={subchannel}
-          onFavoriteClick={handleFavoriteClick}
-        />
+        {!subchannel?.isRestricted && (
+          <ChannelHeader
+            currentChannel={currentChannel}
+            displayedThemeColor={displayedThemeColor}
+            onInputFocus={() => ChatInputRef.current.focus()}
+            onSetInviteUsersModalShown={setInviteUsersModalShown}
+            onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
+            onSetSettingsModalShown={setSettingsModalShown}
+            selectedChannelId={selectedChannelId}
+            subchannel={subchannel}
+            onFavoriteClick={handleFavoriteClick}
+          />
+        )}
         <div
           style={{
             height: '100%',

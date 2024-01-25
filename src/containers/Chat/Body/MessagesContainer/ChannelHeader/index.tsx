@@ -61,7 +61,7 @@ export default function ChannelHeader({
     }
     if (subchannel) {
       if (subchannel?.topicObj) {
-        return subchannel?.topicObj?.canChangeSubject;
+        return subchannel?.canChangeSubject;
       }
       return false;
     }
