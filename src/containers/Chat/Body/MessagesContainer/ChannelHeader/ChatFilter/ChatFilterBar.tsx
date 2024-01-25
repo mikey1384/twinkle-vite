@@ -35,11 +35,7 @@ export default function ChatFilterBar({
 
   const tabLabelStyle = css`
     margin: 0 10px;
-    font-size: 1.5rem;
     font-weight: bold;
-    @media (max-width: ${mobileMaxWidth}) {
-      font-size: 1.2rem;
-    }
   `;
 
   const handleTabClick = (tabName: string) => {
@@ -52,7 +48,11 @@ export default function ChatFilterBar({
         display: flex;
         height: 4rem;
         align-items: center;
+        font-size: 1.5rem;
         gap: 1.5rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          font-size: 1.2rem;
+        }
       `}
     >
       <div
@@ -70,7 +70,8 @@ export default function ChatFilterBar({
             : ''};
           ${selectedTab === 'All' ? `color: ${themeStyles.text};` : ''};
           @media (max-width: ${mobileMaxWidth}) {
-            border-radius: 5px;
+            padding: 0;
+            border-radius: 4px;
           }
         `}
         onClick={() => handleTabClick('All')}
@@ -86,6 +87,9 @@ export default function ChatFilterBar({
           background: #fff;
           cursor: pointer;
           box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
+          @media (max-width: ${mobileMaxWidth}) {
+            border-radius: 4px;
+          }
         `}
       >
         <div
