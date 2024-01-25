@@ -10,41 +10,55 @@ export default function ChatFilterBar({
   topic: string;
 }) {
   return (
-    <div className={filterBarStyle}>
-      <div className={tabStyle}>
+    <div
+      className={css`
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        gap: 10px;
+      `}
+    >
+      <div className={neumorphicButtonStyle} role="button">
         <div className={tabLabelStyle}>All</div>
       </div>
-      <div className={tabStyle}>
-        <Icon icon="arrow-back" />
-        <div className={tabLabelStyle}>{topic}</div>
-        <Icon icon="arrow-forward" />
-      </div>
-      {canChangeTopic && (
-        <div className={optionsStyle}>
-          <Icon icon="arrow-down" />
+      <div className={neumorphicButtonStyle} role="button">
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+          `}
+        >
+          <Icon icon="arrow-left" className={navButtonStyle} />
+          <Icon
+            icon="arrow-right"
+            className={`${navButtonStyle} ${css`
+              margin-left: 0.5rem;
+            `}`}
+          />
         </div>
-      )}
+        <div className={tabLabelStyle}>{topic}</div>
+        {canChangeTopic && (
+          <Icon icon="caret-down" className={navButtonStyle} />
+        )}
+      </div>
     </div>
   );
 }
 
-// Emotion CSS
-const filterBarStyle = css`
+const neumorphicButtonStyle = css`
   display: flex;
   align-items: center;
   background: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 10px;
   border-radius: 8px;
+  padding: 10px 15px;
+  cursor: pointer;
+  box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
 `;
 
-const tabStyle = css`
-  display: flex;
-  align-items: center;
-  margin-right: 20px;
-  cursor: pointer;
+const navButtonStyle = css`
   &:hover {
-    color: #007bff;
+    color: #007bff; // Blue text on hover
   }
 `;
 
@@ -52,11 +66,7 @@ const tabLabelStyle = css`
   margin: 0 10px;
   font-size: 16px;
   font-weight: bold;
-`;
-
-const optionsStyle = css`
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+  &:hover {
+    color: #007bff; // Blue text on hover
+  }
 `;
