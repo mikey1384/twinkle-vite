@@ -41,7 +41,7 @@ export default function Story({
           }
         `}
       >
-        <RichText style={{ lineHeight: 2 }} maxLines={100}>
+        <RichText style={{ lineHeight: 2 }} maxLines={1000}>
           {story}
         </RichText>
       </div>
@@ -81,7 +81,7 @@ export default function Story({
               }
             `}
             style={{ lineHeight: 1.5 }}
-            maxLines={100}
+            maxLines={1000}
           >
             {explanation}
           </RichText>
