@@ -44,128 +44,139 @@ export default function Questions({
   }, [loadingProgress, questionsLoaded]);
 
   return (
-    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-      {questionsLoadError ? (
-        <div
-          className={css`
-            margin-top: 5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+    <div
+      className={css`
+        display: flex;
+        width: 100%;
+        justify-content: center;
+      `}
+    >
+      <div
+        className={css`
+          width: 50%;
+          @media (max-width: ${tabletMaxWidth}) {
+            width: 70%;
+          }
+          @media (max-width: ${mobileMaxWidth}) {
             width: 100%;
-          `}
-        >
-          <div>There was an error while loading the questions.</div>
-          <GradientButton
-            style={{ marginTop: '3rem' }}
-            onClick={() => {
-              setLoadingProgress(0);
-              onRetryLoadingQuestions();
-            }}
-          >
-            Retry
-          </GradientButton>
-        </div>
-      ) : !questionsLoaded ? (
-        <div>
-          <Loading text="Generating Questions..." />
-          <ProgressBar progress={loadingProgress} />
-        </div>
-      ) : (
-        <div
-          className={css`
-            margin-top: 5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 50%;
-            @media (max-width: ${tabletMaxWidth}) {
-              width: 70%;
-            }
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 100%;
-            }
-          `}
-        >
-          {questions.map((question, index) => (
-            <Question
-              key={question.id}
-              isGraded={solveObj.isGraded}
-              style={{ marginTop: index === 0 ? 0 : '3rem' }}
-              question={<b>{question.question}</b>}
-              choices={question.choices}
-              selectedChoiceIndex={userChoiceObj[question.id]}
-              answerIndex={question.answerIndex}
-              onSelectChoice={(index) =>
-                onSetUserChoiceObj((obj: any) => ({
-                  ...obj,
-                  [question.id]: index
-                }))
-              }
-            />
-          ))}
+          }
+        `}
+      >
+        {questionsLoadError ? (
           <div
-            style={{
-              marginTop: '10rem',
-              width: '100%',
-              justifyContent: 'center',
-              display: 'flex'
-            }}
+            className={css`
+              margin-top: 5rem;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              width: 100%;
+            `}
           >
-            {solveObj.isGraded ? (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-              >
+            <div>There was an error while loading the questions.</div>
+            <GradientButton
+              style={{ marginTop: '3rem' }}
+              onClick={() => {
+                setLoadingProgress(0);
+                onRetryLoadingQuestions();
+              }}
+            >
+              Retry
+            </GradientButton>
+          </div>
+        ) : !questionsLoaded ? (
+          <div>
+            <Loading text="Generating Questions..." />
+            <ProgressBar progress={loadingProgress} />
+          </div>
+        ) : (
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              width: 100%;
+            `}
+          >
+            {questions.map((question, index) => (
+              <Question
+                key={question.id}
+                isGraded={solveObj.isGraded}
+                style={{ marginTop: index === 0 ? 0 : '7rem' }}
+                question={<b>{question.question}</b>}
+                choices={question.choices}
+                selectedChoiceIndex={userChoiceObj[question.id]}
+                answerIndex={question.answerIndex}
+                onSelectChoice={(index) =>
+                  onSetUserChoiceObj((obj: any) => ({
+                    ...obj,
+                    [question.id]: index
+                  }))
+                }
+              />
+            ))}
+            <div
+              style={{
+                marginTop: '10rem',
+                width: '100%',
+                justifyContent: 'center',
+                display: 'flex'
+              }}
+            >
+              {solveObj.isGraded ? (
                 <div
                   style={{
-                    color:
-                      solveObj.numCorrect === questions.length
-                        ? Color.green()
-                        : '',
-                    fontWeight:
-                      solveObj.numCorrect === questions.length ? 'bold' : ''
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center'
                   }}
                 >
-                  {solveObj.numCorrect} / {questions.length} correct
-                  {solveObj.numCorrect === questions.length ? '!' : ''}
+                  <div
+                    style={{
+                      color:
+                        solveObj.numCorrect === questions.length
+                          ? Color.green()
+                          : '',
+                      fontWeight:
+                        solveObj.numCorrect === questions.length ? 'bold' : ''
+                    }}
+                  >
+                    {solveObj.numCorrect} / {questions.length} correct
+                    {solveObj.numCorrect === questions.length ? '!' : ''}
+                  </div>
+                  <div style={{ marginTop: '2rem' }}>
+                    <Button filled color="logoBlue" onClick={onReadAgain}>
+                      Read Again
+                    </Button>
+                  </div>
                 </div>
-                <div style={{ marginTop: '2rem' }}>
-                  <Button filled color="logoBlue" onClick={onReadAgain}>
-                    Read Again
-                  </Button>
+              ) : (
+                <div
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                >
+                  <GradientButton loading={isGrading} onClick={onGrade}>
+                    Finish
+                  </GradientButton>
+                  <div style={{ marginTop: '2rem' }}>
+                    <Button filled color="logoBlue" onClick={onReadAgain}>
+                      Read Again
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-              >
-                <GradientButton loading={isGrading} onClick={onGrade}>
-                  Finish
-                </GradientButton>
-                <div style={{ marginTop: '2rem' }}>
-                  <Button filled color="logoBlue" onClick={onReadAgain}>
-                    Read Again
-                  </Button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
