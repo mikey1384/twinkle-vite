@@ -3,7 +3,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function ChatFilter({
@@ -32,12 +32,21 @@ export default function ChatFilter({
       >
         <FilterBar
           bordered
-          style={{
-            height: '4.5rem',
-            fontSize: '1.6rem',
-            margin: 0,
-            backgroundColor: Color.white(0.7)
-          }}
+          className={css`
+            height: 4.5rem !important;
+            font-size: 1.6rem !important;
+            margin: 0 !important;
+            background-color: ${Color.white(0.7)} !important;
+            &:hover {
+              background: ${Color.white()} !important;
+            }
+            @media (max-width: ${mobileMaxWidth}) {
+              font-size: 1.3rem !important;
+              &:hover {
+                background: ${Color.white(0.7)} !important;
+              }
+            }
+          `}
         >
           <nav className="active" onClick={() => console.log('clicked')}>
             All
