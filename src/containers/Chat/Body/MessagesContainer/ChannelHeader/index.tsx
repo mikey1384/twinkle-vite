@@ -241,7 +241,11 @@ export default function ChannelHeader({
               onSetIsEditingTopic={setIsEditingTopic}
             />
           ) : (
-            <ChatFilter canChangeTopic={canChangeTopic} topicObj={topicObj} />
+            <ChatFilter
+              themeColor={displayedThemeColor}
+              canChangeTopic={canChangeTopic}
+              topicObj={topicObj}
+            />
           )}
         </div>
         <div

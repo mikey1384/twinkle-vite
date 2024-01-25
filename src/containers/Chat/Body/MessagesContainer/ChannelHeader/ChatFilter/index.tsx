@@ -6,9 +6,11 @@ import { css } from '@emotion/css';
 
 export default function ChatFilter({
   canChangeTopic,
+  themeColor,
   topicObj
 }: {
   canChangeTopic: boolean;
+  themeColor: string;
   topicObj: {
     content: string;
     timeStamp: number;
@@ -28,7 +30,11 @@ export default function ChatFilter({
           justify-content: flex-end;
         `}
       >
-        <ChatFilterBar canChangeTopic={canChangeTopic} topic={content} />
+        <ChatFilterBar
+          themeColor={themeColor}
+          canChangeTopic={canChangeTopic}
+          topic={content}
+        />
       </div>
     </ErrorBoundary>
   );
