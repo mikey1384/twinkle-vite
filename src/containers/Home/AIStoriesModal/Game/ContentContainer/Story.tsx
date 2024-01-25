@@ -30,7 +30,7 @@ export default function Story({
     >
       <div
         className={css`
-          user-select: none;
+          user-select: ${isGraded ? 'text' : 'none'};
           width: 50%;
           font-family: 'Poppins', sans-serif;
           @media (max-width: ${tabletMaxWidth}) {
