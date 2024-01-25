@@ -55,7 +55,10 @@ export default function ChannelHeader({
   const favorited = useMemo(() => {
     return allFavoriteChannelIds[selectedChannelId];
   }, [allFavoriteChannelIds, selectedChannelId]);
-  const canChangeSubject = useMemo(() => {
+  const canChangeTopic = useMemo(() => {
+    if (currentChannel.twoPeople) {
+      return true;
+    }
     if (subchannel) {
       if (subchannel?.subjectObj) {
         return subchannel?.subjectObj?.canChangeSubject;
@@ -63,7 +66,7 @@ export default function ChannelHeader({
       return false;
     }
     return currentChannel.canChangeSubject;
-  }, [currentChannel.canChangeSubject, subchannel]);
+  }, [currentChannel.canChangeSubject, currentChannel.twoPeople, subchannel]);
 
   const loaded = useMemo(() => {
     return currentChannel.subjectObj?.loaded;
@@ -119,10 +122,10 @@ export default function ChannelHeader({
   const menuProps = useMemo(() => {
     const result = [];
     if (
-      ((selectedChannelId === GENERAL_CHAT_ID || canChangeSubject === 'mod') &&
+      ((selectedChannelId === GENERAL_CHAT_ID || canChangeTopic === 'mod') &&
         level >= MOD_LEVEL) ||
-      canChangeSubject === 'all' ||
-      (canChangeSubject === 'owner' && currentChannel.creatorId === userId)
+      canChangeTopic === 'all' ||
+      (canChangeTopic === 'owner' && currentChannel.creatorId === userId)
     ) {
       result.push({
         label: (
@@ -238,7 +241,10 @@ export default function ChannelHeader({
               onSetIsEditingTopic={setIsEditingTopic}
             />
           ) : (
-            <ChatFilter subjectObj={subjectObj} />
+            <ChatFilter
+              canChangeTopic={canChangeTopic}
+              subjectObj={subjectObj}
+            />
           )}
         </div>
         <div
