@@ -199,7 +199,7 @@ export default function ChannelHeader({
       componentPath="MessagesContainer/ChannelHeader/index"
       className={css`
         z-index: 50000;
-        position: relative;
+        position: ${isLegacyTopicShown ? 'relative' : 'absolute'};
         width: 100%;
         height: 100%;
         padding: 1rem;
