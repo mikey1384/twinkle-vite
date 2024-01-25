@@ -136,33 +136,35 @@ export default function ChatFilterBar({
             <Icon icon="arrow-right" />
           </div>
         </div>
-        <div
-          onClick={() => handleTabClick('Topic')}
-          className={css`
-            cursor: pointer;
-            background: #fff;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            ${selectedTab === 'Topic'
-              ? `background-color: ${themeStyles.bg};`
-              : ''}
-            ${selectedTab === 'Topic' ? `color: ${themeStyles.text};` : ''}
+        {topic && (
+          <div
+            onClick={() => handleTabClick('Topic')}
+            className={css`
+              cursor: pointer;
+              background: #fff;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              ${selectedTab === 'Topic'
+                ? `background-color: ${themeStyles.bg};`
+                : ''}
+              ${selectedTab === 'Topic' ? `color: ${themeStyles.text};` : ''}
             &:hover {
-              color: ${themeStyles.text};
-              background-color: ${themeStyles.bg};
-            }
-          `}
-        >
-          <span
-            className={`unselectable ${css`
-              padding: 1rem;
-              font-weight: bold;
-            `}`}
+                color: ${themeStyles.text};
+                background-color: ${themeStyles.bg};
+              }
+            `}
           >
-            {topic || 'Topics'}
-          </span>
-        </div>
+            <span
+              className={`unselectable ${css`
+                padding: 1rem;
+                font-weight: bold;
+              `}`}
+            >
+              {topic}
+            </span>
+          </div>
+        )}
         {canChangeTopic && (
           <div
             className={css`
@@ -178,6 +180,18 @@ export default function ChatFilterBar({
             `}
           >
             <Icon icon="caret-down" />
+            {!topic ? (
+              <span
+                className={css`
+                  font-weight: bold;
+                  margin-left: 1rem;
+                `}
+              >
+                Topics
+              </span>
+            ) : (
+              ''
+            )}
           </div>
         )}
       </div>
