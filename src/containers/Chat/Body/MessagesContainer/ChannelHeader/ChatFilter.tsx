@@ -30,6 +30,8 @@ export default function ChatFilter({
       >
         <Button
           disabled={!canChangeTopic}
+          opacity={0.7}
+          color="darkerGray"
           skeuomorphic
           onClick={() => console.log('clicked')}
         >
