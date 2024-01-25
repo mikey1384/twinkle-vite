@@ -6,7 +6,7 @@ import Questions from './Questions';
 import SuccessModal from './SuccessModal';
 import GradientButton from '~/components/Buttons/GradientButton';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 const rewardTable = {
@@ -96,14 +96,27 @@ export default function ContentContainer({
   return (
     <div
       className={css`
-        width: 50%;
-        @media (max-width: ${mobileMaxWidth}) {
-          width: 100%;
-        }
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
       `}
     >
       {loading ? (
-        <div style={{ marginTop: '20vh', padding: '0 2rem' }}>
+        <div
+          className={css`
+            width: 50%;
+            margin-top: 20vh;
+            padding: 0 2rem;
+            @media (max-width: ${tabletMaxWidth}) {
+              width: 70%;
+            }
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 100%;
+            }
+          `}
+        >
           <Loading text="Generating a Story..." />
           <ProgressBar progress={loadingProgress} />
         </div>
