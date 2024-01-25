@@ -2,6 +2,8 @@ import React from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import FilterBar from '~/components/FilterBar';
+import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function ChatFilter({
@@ -28,20 +30,51 @@ export default function ChatFilter({
           justify-content: flex-end;
         `}
       >
-        <Button
-          disabled={!canChangeTopic}
-          opacity={0.7}
-          color="darkerGray"
-          skeuomorphic
-          onClick={() => console.log('clicked')}
+        <FilterBar
+          bordered
+          style={{
+            height: '4.5rem',
+            fontSize: '1.6rem',
+            margin: 0,
+            backgroundColor: Color.white(0.7)
+          }}
         >
-          <Icon icon="chevron-down" />
-          <span style={{ marginLeft: '0.7rem' }}>
-            {canChangeTopic
-              ? content || 'Topic'
-              : 'Topic feature not purchased'}
-          </span>
-        </Button>
+          <nav className="active" onClick={() => console.log('clicked')}>
+            All
+          </nav>
+          <nav className="" onClick={() => console.log('topic')}>
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+                position: 'relative'
+              }}
+            >
+              <div>
+                {canChangeTopic
+                  ? content || 'Topic'
+                  : 'Topic feature not purchased'}
+              </div>
+              <Button
+                style={{
+                  position: 'absolute',
+                  right: '1rem',
+                  width: 'auto',
+                  height: 'CALC(100% - 1rem)'
+                }}
+                disabled={!canChangeTopic}
+                color="darkerGray"
+                skeuomorphic
+                onClick={() => console.log('clicked')}
+              >
+                <Icon icon="chevron-down" />
+              </Button>
+            </div>
+          </nav>
+        </FilterBar>
       </div>
     </ErrorBoundary>
   );
