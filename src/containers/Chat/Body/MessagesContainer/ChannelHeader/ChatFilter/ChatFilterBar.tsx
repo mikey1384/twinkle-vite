@@ -58,7 +58,7 @@ const neumorphicButtonStyle = css`
 
 const navButtonStyle = css`
   &:hover {
-    color: #007bff; // Blue text on hover
+    color: #007bff;
   }
 `;
 
@@ -67,6 +67,6 @@ const tabLabelStyle = css`
   font-size: 16px;
   font-weight: bold;
   &:hover {
-    color: #007bff; // Blue text on hover
+    color: #007bff;
   }
 `;
