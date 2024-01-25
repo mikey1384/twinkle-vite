@@ -121,12 +121,7 @@ export default function ChannelHeader({
 
   const menuProps = useMemo(() => {
     const result = [];
-    if (
-      ((selectedChannelId === GENERAL_CHAT_ID || canChangeTopic === 'mod') &&
-        level >= MOD_LEVEL) ||
-      canChangeTopic === 'all' ||
-      (canChangeTopic === 'owner' && currentChannel.creatorId === userId)
-    ) {
+    if (selectedChannelId === GENERAL_CHAT_ID && level >= MOD_LEVEL) {
       result.push({
         label: (
           <>
