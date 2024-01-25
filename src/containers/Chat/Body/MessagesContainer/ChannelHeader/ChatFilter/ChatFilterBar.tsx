@@ -33,11 +33,6 @@ export default function ChatFilterBar({
   const [selectedTab, setSelectedTab] = useState('All');
   const themeStyles = getThemeStyles(themeColor);
 
-  const tabLabelStyle = css`
-    margin: 0 10px;
-    font-weight: bold;
-  `;
-
   const handleTabClick = (tabName: string) => {
     setSelectedTab(tabName);
   };
@@ -69,6 +64,10 @@ export default function ChatFilterBar({
             ? `background-color: ${themeStyles.bg};`
             : ''};
           ${selectedTab === 'All' ? `color: ${themeStyles.text};` : ''};
+          &:hover {
+            color: ${themeStyles.text};
+            background-color: ${themeStyles.bg};
+          }
           @media (max-width: ${mobileMaxWidth}) {
             padding: 0;
             border-radius: 4px;
@@ -76,7 +75,14 @@ export default function ChatFilterBar({
         `}
         onClick={() => handleTabClick('All')}
       >
-        <span className={tabLabelStyle}>All</span>
+        <span
+          className={css`
+            padding: 1rem;
+            font-weight: bold;
+          `}
+        >
+          All
+        </span>
       </div>
       <div
         className={css`
@@ -85,7 +91,6 @@ export default function ChatFilterBar({
           display: flex;
           align-items: center;
           background: #fff;
-          cursor: pointer;
           box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
           @media (max-width: ${mobileMaxWidth}) {
             border-radius: 4px;
@@ -96,30 +101,45 @@ export default function ChatFilterBar({
           className={css`
             display: flex;
             align-items: center;
-            padding: 0 1.2rem;
+            height: 100%;
           `}
         >
-          <Icon
-            icon="arrow-left"
+          <div
             className={css`
+              padding-left: 1.2rem;
+              cursor: pointer;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100%;
               &:hover {
                 color: #007bff;
               }
             `}
-          />
-          <Icon
-            icon="arrow-right"
+          >
+            <Icon icon="arrow-left" />
+          </div>
+          <div
             className={css`
+              padding-right: 1.2rem;
+              cursor: pointer;
+              height: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
               margin-left: 0.5rem;
               &:hover {
                 color: #007bff;
               }
             `}
-          />
+          >
+            <Icon icon="arrow-right" />
+          </div>
         </div>
         <div
           onClick={() => handleTabClick('Topic')}
           className={css`
+            cursor: pointer;
             background: #fff;
             height: 100%;
             display: flex;
@@ -128,13 +148,25 @@ export default function ChatFilterBar({
               ? `background-color: ${themeStyles.bg};`
               : ''}
             ${selectedTab === 'Topic' ? `color: ${themeStyles.text};` : ''}
+            &:hover {
+              color: ${themeStyles.text};
+              background-color: ${themeStyles.bg};
+            }
           `}
         >
-          <span className={tabLabelStyle}>{topic || 'Topics'}</span>
+          <span
+            className={`unselectable ${css`
+              padding: 1rem;
+              font-weight: bold;
+            `}`}
+          >
+            {topic || 'Topics'}
+          </span>
         </div>
         {canChangeTopic && (
           <div
             className={css`
+              cursor: pointer;
               display: flex;
               justify-content: center;
               align-items: center;
