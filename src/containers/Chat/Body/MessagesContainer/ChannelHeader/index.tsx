@@ -238,7 +238,7 @@ export default function ChannelHeader({
               onSetIsEditingTopic={setIsEditingTopic}
             />
           ) : (
-            <ChatFilter />
+            <ChatFilter subjectObj={subjectObj} />
           )}
         </div>
         <div
