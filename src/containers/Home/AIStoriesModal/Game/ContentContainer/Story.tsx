@@ -2,6 +2,8 @@ import React from 'react';
 import RichText from '~/components/Texts/RichText';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Button from '~/components/Button';
+import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
+import { css } from '@emotion/css';
 
 export default function Story({
   story,
@@ -17,14 +19,74 @@ export default function Story({
   questionsButtonEnabled: boolean;
 }) {
   return (
-    <div style={{ width: '100%', fontFamily: '"Arial", sans-serif' }}>
-      <RichText maxLines={100}>{story}</RichText>
+    <div
+      className={css`
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      `}
+    >
+      <div
+        className={css`
+          user-select: none;
+          width: 50%;
+          font-family: 'Poppins', sans-serif;
+          @media (max-width: ${tabletMaxWidth}) {
+            width: 70%;
+          }
+          @media (max-width: ${mobileMaxWidth}) {
+            width: 100%;
+          }
+        `}
+      >
+        <RichText style={{ lineHeight: 2 }} maxLines={100}>
+          {story}
+        </RichText>
+      </div>
       {explanation && (
-        <div style={{ marginTop: '7rem', marginBottom: '1rem' }}>
-          ===============================
+        <div
+          className={css`
+            margin-top: 10rem;
+            width: 50%;
+            @media (max-width: ${tabletMaxWidth}) {
+              width: 70%;
+            }
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 100%;
+            }
+          `}
+        >
+          <p
+            className={css`
+              font-size: 2rem;
+              font-weight: bold;
+              margin-bottom: 3rem;
+              @media (max-width: ${tabletMaxWidth}) {
+                font-size: 1.8rem;
+              }
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.7rem;
+              }
+            `}
+          >
+            Vocabulary
+          </p>
+          <RichText
+            className={css`
+              font-size: 1.7rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.5rem;
+              }
+            `}
+            style={{ lineHeight: 1.5 }}
+            maxLines={100}
+          >
+            {explanation}
+          </RichText>
         </div>
       )}
-      <RichText maxLines={100}>{explanation}</RichText>
       {story && (
         <div
           style={{
