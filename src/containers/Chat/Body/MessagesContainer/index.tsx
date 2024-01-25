@@ -154,7 +154,7 @@ function MessagesContainer({
     wordleWordLevel,
     wordleAttemptState,
     wordleStats = {},
-    subjectObj = {},
+    topicObj = {},
     twoPeople
   } = currentChannel;
   const {
@@ -218,12 +218,12 @@ function MessagesContainer({
     return null;
   }, [subchannelPath, subchannelIds, subchannelObj]);
 
-  const appliedSubjectObj = useMemo(() => {
+  const appliedTopicObj = useMemo(() => {
     if (subchannelId) {
-      return subchannel?.subjectObj || {};
+      return subchannel?.topicObj || {};
     }
-    return subjectObj;
-  }, [subchannel?.subjectObj, subchannelId, subjectObj]);
+    return topicObj;
+  }, [subchannel?.topicObj, subchannelId, topicObj]);
 
   const appliedIsRespondingToSubject = useMemo(() => {
     if (subchannelId) {
@@ -294,7 +294,7 @@ function MessagesContainer({
     [channelOnCall.id, selectedChannelId]
   );
 
-  const subjectId = useMemo(() => appliedSubjectObj?.id, [appliedSubjectObj]);
+  const subjectId = useMemo(() => appliedTopicObj?.id, [appliedTopicObj]);
 
   const selectedChannelIdAndPathIdNotSynced = useMemo(() => {
     const pathId = Number(currentPathId);
@@ -1395,7 +1395,7 @@ function MessagesContainer({
           replyTarget={replyTarget}
           subchannelId={subchannel?.id}
           subjectId={subjectId}
-          subjectObj={appliedSubjectObj}
+          topicObj={appliedTopicObj}
         />
       </div>
       {chessModalShown && partner && (

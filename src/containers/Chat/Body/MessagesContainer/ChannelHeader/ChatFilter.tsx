@@ -6,10 +6,10 @@ import { css } from '@emotion/css';
 
 export default function ChatFilter({
   canChangeTopic,
-  subjectObj
+  topicObj
 }: {
   canChangeTopic: boolean;
-  subjectObj: {
+  topicObj: {
     content: string;
     timeStamp: number;
     reloadTimeStamp: number;
@@ -17,7 +17,7 @@ export default function ChatFilter({
     uploader: any;
   };
 }) {
-  const { content } = subjectObj;
+  const { content } = topicObj;
 
   return (
     <ErrorBoundary componentPath="Chat/Body/MessageContainer/ChannelHeader/ChatFilter">
