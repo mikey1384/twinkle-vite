@@ -94,7 +94,7 @@ export default function Questions({
             className={css`
               display: flex;
               flex-direction: column;
-              align-items: center;
+              align-items: flex-start;
               justify-content: center;
               width: 100%;
             `}
