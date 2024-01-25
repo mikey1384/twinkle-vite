@@ -397,7 +397,7 @@ export default function ChatReducer(
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[action.subchannelId],
-              subjectObj: action.subject
+              topicObj: action.subject
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -412,7 +412,7 @@ export default function ChatReducer(
               }
             : {
                 ...prevChannelObj,
-                subjectObj: action.subject
+                topicObj: action.subject
               }
         }
       };
@@ -607,15 +607,15 @@ export default function ChatReducer(
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[action.subchannelId],
-              subjectObj:
+              topicObj:
                 action.isSubject && action.subjectChanged
                   ? {
                       ...prevChannelObj?.subchannelObj?.[action.subchannelId]
-                        ?.subjectObj,
+                        ?.topicObj,
                       content: action.editedMessage
                     }
                   : prevChannelObj?.subchannelObj?.[action.subchannelId]
-                      ?.subjectObj,
+                      ?.topicObj,
               messagesObj: {
                 ...prevChannelObj?.subchannelObj?.[action.subchannelId]
                   ?.messagesObj,
@@ -641,13 +641,13 @@ export default function ChatReducer(
                     }
                   : {
                       ...prevChannelObj,
-                      subjectObj:
+                      topicObj:
                         action.isSubject && action.subjectChanged
                           ? {
-                              ...prevChannelObj.subjectObj,
+                              ...prevChannelObj.topicObj,
                               content: action.editedMessage
                             }
-                          : prevChannelObj.subjectObj,
+                          : prevChannelObj.topicObj,
                       messagesObj: {
                         ...prevChannelObj?.messagesObj,
                         [action.messageId]: {
@@ -1434,7 +1434,7 @@ export default function ChatReducer(
             ...prevChannelObj?.subchannelObj,
             [action.data.subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[action.data.subchannelId],
-              subjectObj: {
+              topicObj: {
                 ...action.data,
                 loaded: true
               }
@@ -1452,7 +1452,7 @@ export default function ChatReducer(
               }
             : {
                 ...prevChannelObj,
-                subjectObj: {
+                topicObj: {
                   ...action.data,
                   loaded: true
                 }
@@ -1602,7 +1602,7 @@ export default function ChatReducer(
                   ...action.subject
                 }
               },
-              subjectObj: action.subject
+              topicObj: action.subject
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -1634,7 +1634,7 @@ export default function ChatReducer(
                     ...action.subject
                   }
                 },
-                subjectObj: action.subject
+                topicObj: action.subject
               }
         }
       };
@@ -2050,7 +2050,7 @@ export default function ChatReducer(
                   ?.messagesObj,
                 [action.message.id]: action.message
               },
-              subjectObj: action.subject
+              topicObj: action.subject
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -2078,7 +2078,7 @@ export default function ChatReducer(
                   ...prevChannelObj.messagesObj,
                   [action.message.id]: action.message
                 },
-                subjectObj: action.subject
+                topicObj: action.subject
               }
         }
       };
@@ -2504,10 +2504,9 @@ export default function ChatReducer(
               ...(action.isRespondingToSubject
                 ? {
                     targetSubject: {
-                      ...prevChannelObj?.subjectObj,
+                      ...prevChannelObj?.topicObj,
                       content:
-                        prevChannelObj?.subjectObj?.content ||
-                        defaultChatSubject
+                        prevChannelObj?.topicObj?.content || defaultChatSubject
                     }
                   }
                 : {})
@@ -2536,10 +2535,10 @@ export default function ChatReducer(
                         targetSubject: {
                           ...prevChannelObj?.subchannelObj?.[
                             action.subchannelId
-                          ]?.subjectObj,
+                          ]?.topicObj,
                           content:
                             prevChannelObj?.subchannelObj?.[action.subchannelId]
-                              ?.subjectObj?.content || defaultChatSubject
+                              ?.topicObj?.content || defaultChatSubject
                         }
                       }
                     : {})

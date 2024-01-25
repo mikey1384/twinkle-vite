@@ -60,8 +60,8 @@ export default function ChannelHeader({
       return true;
     }
     if (subchannel) {
-      if (subchannel?.subjectObj) {
-        return subchannel?.subjectObj?.canChangeSubject;
+      if (subchannel?.topicObj) {
+        return subchannel?.topicObj?.canChangeSubject;
       }
       return false;
     }
@@ -69,8 +69,8 @@ export default function ChannelHeader({
   }, [currentChannel.canChangeSubject, currentChannel.twoPeople, subchannel]);
 
   const loaded = useMemo(() => {
-    return currentChannel.subjectObj?.loaded;
-  }, [currentChannel.subjectObj?.loaded]);
+    return currentChannel.topicObj?.loaded;
+  }, [currentChannel.topicObj?.loaded]);
 
   const isLegacyTopicShown = useMemo(() => {
     return selectedChannelId === GENERAL_CHAT_ID;
@@ -91,7 +91,7 @@ export default function ChannelHeader({
   }, [loaded]);
 
   useEffect(() => {
-    if (subchannel?.loaded && !subchannel?.subjectObj?.loaded) {
+    if (subchannel?.loaded && !subchannel?.topicObj?.loaded) {
       setSubchannelLoading(true);
       handleInitialLoad();
     }
@@ -104,17 +104,17 @@ export default function ChannelHeader({
       setSubchannelLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subchannel?.loaded, subchannel?.subjectObj?.loaded]);
+  }, [subchannel?.loaded, subchannel?.topicObj?.loaded]);
 
-  const subjectObj = useMemo(() => {
+  const topicObj = useMemo(() => {
     if (subchannel) {
-      if (subchannel?.subjectObj) {
-        return subchannel?.subjectObj;
+      if (subchannel?.topicObj) {
+        return subchannel?.topicObj;
       }
       return {};
     }
-    if (currentChannel.subjectObj) {
-      return currentChannel.subjectObj;
+    if (currentChannel.topicObj) {
+      return currentChannel.topicObj;
     }
     return {};
   }, [currentChannel, subchannel]);
@@ -237,14 +237,11 @@ export default function ChannelHeader({
               onInputFocus={onInputFocus}
               selectedChannelId={selectedChannelId}
               subchannelId={subchannel?.id}
-              subjectObj={subjectObj}
+              topicObj={topicObj}
               onSetIsEditingTopic={setIsEditingTopic}
             />
           ) : (
-            <ChatFilter
-              canChangeTopic={canChangeTopic}
-              subjectObj={subjectObj}
-            />
+            <ChatFilter canChangeTopic={canChangeTopic} topicObj={topicObj} />
           )}
         </div>
         <div

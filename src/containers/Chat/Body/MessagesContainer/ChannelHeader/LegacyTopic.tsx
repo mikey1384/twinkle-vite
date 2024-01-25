@@ -25,7 +25,7 @@ export default function LegacyTopic({
   onInputFocus,
   selectedChannelId,
   subchannelId,
-  subjectObj,
+  topicObj,
   onSetIsEditingTopic
 }: {
   currentChannel: any;
@@ -35,7 +35,7 @@ export default function LegacyTopic({
   onInputFocus: () => void;
   selectedChannelId: number;
   subchannelId: number;
-  subjectObj: any;
+  topicObj: any;
   onSetIsEditingTopic: (isEditing: boolean) => void;
 }) {
   const {
@@ -55,7 +55,7 @@ export default function LegacyTopic({
     reloadTimeStamp,
     reloader = {},
     uploader = {}
-  } = subjectObj;
+  } = topicObj;
   const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
   const {
     button: { color: buttonColor },
@@ -134,7 +134,7 @@ export default function LegacyTopic({
             channelId={selectedChannelId}
             displayedThemeColor={displayedThemeColor}
             maxLength={charLimit.chat.subject}
-            currentSubjectId={subjectObj.id}
+            currentSubjectId={topicObj.id}
             title={content}
             onEditSubmit={handleSubjectSubmit}
             onChange={handleSearchChatSubject}
@@ -188,7 +188,7 @@ export default function LegacyTopic({
             onSetIsRespondingToSubject({
               channelId: selectedChannelId,
               subchannelId,
-              subjectId: subjectObj.id,
+              subjectId: topicObj.id,
               isResponding: true
             });
             onInputFocus();
