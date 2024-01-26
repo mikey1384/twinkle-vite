@@ -18,7 +18,7 @@ export default function PartOfSpeechBlock({
   posObject: any;
   style?: React.CSSProperties;
 }) {
-  return defIds.length > 0 ? (
+  return (defIds || []).length > 0 ? (
     <div style={style}>
       <p
         style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}

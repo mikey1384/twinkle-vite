@@ -31,7 +31,7 @@ export default function EditTab({
   word: string;
 }) {
   const editWord = useAppContext((v) => v.requestHelpers.editWord);
-  const { canDelete } = useKeyContext((v) => v.myState);
+  const { canDelete, level } = useKeyContext((v) => v.myState);
   const {
     done: { color: doneColor }
   } = useKeyContext((v) => v.theme);
@@ -87,7 +87,7 @@ export default function EditTab({
         >
           {`${capitalize(selectedTab)} Definitions of "${word}"`}
         </p>
-        {canDelete && (
+        {canDelete && level > 3 && (
           <FilterBar style={{ marginTop: '0.5rem', marginBottom: '2rem' }}>
             <nav
               className={selectedTab === 'reorder' ? 'active' : ''}
