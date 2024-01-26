@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { useChatContext } from '~/contexts';
 import Icon from '~/components/Icon';
 
 const getThemeStyles = (theme: string) => {
@@ -23,19 +24,19 @@ const getThemeStyles = (theme: string) => {
 
 export default function ChatFilterBar({
   canChangeTopic,
+  channelId,
+  selectedTab = 'all',
   themeColor = 'logoBlue',
   topic
 }: {
   canChangeTopic: boolean;
+  channelId: number;
+  selectedTab: string;
   themeColor: string;
   topic: string;
 }) {
-  const [selectedTab, setSelectedTab] = useState('all');
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const themeStyles = getThemeStyles(themeColor);
-
-  const handleTabClick = (tabName: string) => {
-    setSelectedTab(tabName);
-  };
 
   return (
     <div
@@ -197,4 +198,11 @@ export default function ChatFilterBar({
       </div>
     </div>
   );
+
+  function handleTabClick(tabName: string) {
+    onSetChannelState({
+      channelId,
+      newState: { selectedTab: tabName }
+    });
+  }
 }
