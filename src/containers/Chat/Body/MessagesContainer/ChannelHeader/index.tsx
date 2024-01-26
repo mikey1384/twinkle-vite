@@ -237,8 +237,10 @@ export default function ChannelHeader({
             />
           ) : (
             <ChatFilter
+              channelId={selectedChannelId}
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}
+              selectedTab={currentChannel?.selectedTab}
               topicObj={topicObj}
             />
           )}
