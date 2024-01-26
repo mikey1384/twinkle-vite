@@ -30,7 +30,7 @@ export default function ChatFilterBar({
   themeColor: string;
   topic: string;
 }) {
-  const [selectedTab, setSelectedTab] = useState('All');
+  const [selectedTab, setSelectedTab] = useState('all');
   const themeStyles = getThemeStyles(themeColor);
 
   const handleTabClick = (tabName: string) => {
@@ -60,10 +60,10 @@ export default function ChatFilterBar({
           background: #fff;
           cursor: pointer;
           box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
-          ${selectedTab === 'All'
+          ${selectedTab === 'all'
             ? `background-color: ${themeStyles.bg};`
             : ''};
-          ${selectedTab === 'All' ? `color: ${themeStyles.text};` : ''};
+          ${selectedTab === 'all' ? `color: ${themeStyles.text};` : ''};
           &:hover {
             color: ${themeStyles.text};
             background-color: ${themeStyles.bg};
@@ -73,7 +73,7 @@ export default function ChatFilterBar({
             border-radius: 4px;
           }
         `}
-        onClick={() => handleTabClick('All')}
+        onClick={() => handleTabClick('all')}
       >
         <span
           className={css`
@@ -138,17 +138,17 @@ export default function ChatFilterBar({
         </div>
         {topic && (
           <div
-            onClick={() => handleTabClick('Topic')}
+            onClick={() => handleTabClick('topic')}
             className={css`
               cursor: pointer;
               background: #fff;
               height: 100%;
               display: flex;
               align-items: center;
-              ${selectedTab === 'Topic'
+              ${selectedTab === 'topic'
                 ? `background-color: ${themeStyles.bg};`
                 : ''}
-              ${selectedTab === 'Topic' ? `color: ${themeStyles.text};` : ''}
+              ${selectedTab === 'topic' ? `color: ${themeStyles.text};` : ''}
             &:hover {
                 color: ${themeStyles.text};
                 background-color: ${themeStyles.bg};
