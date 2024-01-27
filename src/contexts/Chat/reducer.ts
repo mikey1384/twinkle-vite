@@ -2098,7 +2098,7 @@ export default function ChatReducer(
     case 'RESET_CHAT':
       return {
         ...initialChatState,
-        chatStatus: state.chatState,
+        chatStatus: state.chatStatus,
         cardObj: state.cardObj
       };
     case 'SEARCH':
