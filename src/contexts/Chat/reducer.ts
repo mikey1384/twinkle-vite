@@ -996,6 +996,7 @@ export default function ChatReducer(
       return {
         ...state,
         ...initialChatState,
+        chatStatus: state.chatStatus,
         aiCardFeeds: aiCardsLoaded ? action.data.cardFeeds : state.aiCardFeeds,
         aiCardLoadMoreButton: aiCardsLoaded
           ? action.data.aiCardLoadMoreButton
