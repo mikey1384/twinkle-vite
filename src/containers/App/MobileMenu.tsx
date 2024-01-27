@@ -143,6 +143,6 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
 
   function handleLogout() {
     onLogout();
-    onResetChat();
+    onResetChat(userId);
   }
 }

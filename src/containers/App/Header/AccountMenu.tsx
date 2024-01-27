@@ -137,7 +137,7 @@ export default function AccountMenu({
     socket.emit('leave_my_notification_channel', userId);
     socket.disconnect();
     onLogout();
-    onResetChat();
+    onResetChat(userId);
     onResetTodayStats();
     socket.connect();
   }
