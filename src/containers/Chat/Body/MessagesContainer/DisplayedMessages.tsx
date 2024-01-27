@@ -46,8 +46,7 @@ export default function DisplayedMessages({
   onSetTransactionModalShown,
   onScrollToBottom,
   partner,
-  subchannel,
-  subchannelId
+  subchannel
 }: {
   loading: boolean;
   chessTarget: any;
@@ -83,7 +82,6 @@ export default function DisplayedMessages({
     username: string;
   };
   subchannel: Record<string, any>;
-  subchannelId?: number;
 }) {
   const navigate = useNavigate();
   const {
@@ -278,7 +276,7 @@ export default function DisplayedMessages({
         rewardAmount: amount,
         rewardReason: reasonId,
         target: message,
-        subchannelId
+        subchannelId: subchannel?.id
       });
       await updateUserXP({
         amount,
@@ -292,7 +290,7 @@ export default function DisplayedMessages({
       return Promise.resolve();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onMessageSubmit, handleUpdateRankings, subchannelId]
+    [onMessageSubmit, handleUpdateRankings, subchannel?.id]
   );
   const handleSetChessTarget = useCallback(
     ({
