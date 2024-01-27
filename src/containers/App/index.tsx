@@ -290,7 +290,7 @@ export default function App() {
     }
     if (!auth()?.headers?.authorization && !signinModalShown) {
       onLogout();
-      onResetChat();
+      onResetChat(userId);
       onSetSessionLoaded();
     } else if (
       auth()?.headers?.authorization !== authRef.current?.headers?.authorization

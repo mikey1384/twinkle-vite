@@ -2095,12 +2095,19 @@ export default function ChatReducer(
           }
         }
       };
-    case 'RESET_CHAT':
+    case 'RESET_CHAT': {
+      const newChatStatus: Record<string, any> = {};
+      for (const key in state.chatStatus) {
+        if (Number(key) !== Number(action.userId)) {
+          newChatStatus[key] = state.chatStatus[key];
+        }
+      }
       return {
         ...initialChatState,
-        chatStatus: state.chatStatus,
+        chatStatus: newChatStatus,
         cardObj: state.cardObj
       };
+    }
     case 'SEARCH':
       return {
         ...state,

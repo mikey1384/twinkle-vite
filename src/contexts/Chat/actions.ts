@@ -922,9 +922,10 @@ export default function ChatActions(dispatch: Dispatch) {
         word
       });
     },
-    onResetChat() {
+    onResetChat(userId: number) {
       return dispatch({
-        type: 'RESET_CHAT'
+        type: 'RESET_CHAT',
+        userId
       });
     },
     onSaveMessage({
