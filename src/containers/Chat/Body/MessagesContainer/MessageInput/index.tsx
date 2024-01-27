@@ -61,7 +61,7 @@ export default function MessageInput({
   socketConnected,
   subchannelId,
   subjectId,
-  topicObj
+  legacyTopicObj
 }: {
   currentTransactionId: number;
   selectedChannelId: number;
@@ -88,7 +88,7 @@ export default function MessageInput({
   socketConnected: boolean;
   subchannelId: number;
   subjectId: number;
-  topicObj: any;
+  legacyTopicObj: any;
 }) {
   const isAIChannel = useMemo(
     () => isZeroChannel || isCielChannel,
@@ -348,7 +348,7 @@ export default function MessageInput({
     >
       {isRespondingToSubject ? (
         <TargetSubjectPreview
-          topicObj={topicObj}
+          legacyTopicObj={legacyTopicObj}
           onClose={() =>
             onSetIsRespondingToSubject({
               channelId: selectedChannelId,
@@ -402,7 +402,7 @@ export default function MessageInput({
               innerRef.current.focus();
             }}
             onWordleButtonClick={onWordleButtonClick}
-            topicId={topicObj?.id}
+            topicId={legacyTopicObj?.id}
           />
         )}
         <Textarea

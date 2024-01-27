@@ -397,7 +397,7 @@ export default function ChatReducer(
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[action.subchannelId],
-              topicObj: action.subject
+              legacyTopicObj: action.subject
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -412,7 +412,7 @@ export default function ChatReducer(
               }
             : {
                 ...prevChannelObj,
-                topicObj: action.subject
+                legacyTopicObj: action.subject
               }
         }
       };
@@ -607,15 +607,15 @@ export default function ChatReducer(
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[action.subchannelId],
-              topicObj:
+              legacyTopicObj:
                 action.isSubject && action.subjectChanged
                   ? {
                       ...prevChannelObj?.subchannelObj?.[action.subchannelId]
-                        ?.topicObj,
+                        ?.legacyTopicObj,
                       content: action.editedMessage
                     }
                   : prevChannelObj?.subchannelObj?.[action.subchannelId]
-                      ?.topicObj,
+                      ?.legacyTopicObj,
               messagesObj: {
                 ...prevChannelObj?.subchannelObj?.[action.subchannelId]
                   ?.messagesObj,
@@ -641,13 +641,13 @@ export default function ChatReducer(
                     }
                   : {
                       ...prevChannelObj,
-                      topicObj:
+                      legacyTopicObj:
                         action.isSubject && action.subjectChanged
                           ? {
-                              ...prevChannelObj.topicObj,
+                              ...prevChannelObj.legacyTopicObj,
                               content: action.editedMessage
                             }
-                          : prevChannelObj.topicObj,
+                          : prevChannelObj.legacyTopicObj,
                       messagesObj: {
                         ...prevChannelObj?.messagesObj,
                         [action.messageId]: {
@@ -1435,7 +1435,7 @@ export default function ChatReducer(
             ...prevChannelObj?.subchannelObj,
             [action.data.subchannelId]: {
               ...prevChannelObj?.subchannelObj?.[action.data.subchannelId],
-              topicObj: {
+              legacyTopicObj: {
                 ...action.data,
                 loaded: true
               }
@@ -1453,7 +1453,7 @@ export default function ChatReducer(
               }
             : {
                 ...prevChannelObj,
-                topicObj: {
+                legacyTopicObj: {
                   ...action.data,
                   loaded: true
                 }
@@ -1603,7 +1603,7 @@ export default function ChatReducer(
                   ...action.subject
                 }
               },
-              topicObj: action.subject
+              legacyTopicObj: action.subject
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -1635,7 +1635,7 @@ export default function ChatReducer(
                     ...action.subject
                   }
                 },
-                topicObj: action.subject
+                legacyTopicObj: action.subject
               }
         }
       };
@@ -2051,7 +2051,7 @@ export default function ChatReducer(
                   ?.messagesObj,
                 [action.message.id]: action.message
               },
-              topicObj: action.subject
+              legacyTopicObj: action.subject
             }
           }
         : prevChannelObj?.subchannelObj;
@@ -2079,7 +2079,7 @@ export default function ChatReducer(
                   ...prevChannelObj.messagesObj,
                   [action.message.id]: action.message
                 },
-                topicObj: action.subject
+                legacyTopicObj: action.subject
               }
         }
       };
@@ -2516,9 +2516,10 @@ export default function ChatReducer(
               ...(action.isRespondingToSubject
                 ? {
                     targetSubject: {
-                      ...prevChannelObj?.topicObj,
+                      ...prevChannelObj?.legacyTopicObj,
                       content:
-                        prevChannelObj?.topicObj?.content || defaultChatSubject
+                        prevChannelObj?.legacyTopicObj?.content ||
+                        defaultChatSubject
                     }
                   }
                 : {})
@@ -2547,10 +2548,10 @@ export default function ChatReducer(
                         targetSubject: {
                           ...prevChannelObj?.subchannelObj?.[
                             action.subchannelId
-                          ]?.topicObj,
+                          ]?.legacyTopicObj,
                           content:
                             prevChannelObj?.subchannelObj?.[action.subchannelId]
-                              ?.topicObj?.content || defaultChatSubject
+                              ?.legacyTopicObj?.content || defaultChatSubject
                         }
                       }
                     : {})

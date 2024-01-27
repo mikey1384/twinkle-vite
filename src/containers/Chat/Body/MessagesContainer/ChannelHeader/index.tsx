@@ -60,7 +60,7 @@ export default function ChannelHeader({
       return true;
     }
     if (subchannel) {
-      if (subchannel?.topicObj) {
+      if (subchannel?.legacyTopicObj) {
         return subchannel?.canChangeSubject;
       }
       return false;
@@ -69,8 +69,8 @@ export default function ChannelHeader({
   }, [currentChannel.canChangeSubject, currentChannel.twoPeople, subchannel]);
 
   const loaded = useMemo(() => {
-    return currentChannel.topicObj?.loaded;
-  }, [currentChannel.topicObj?.loaded]);
+    return currentChannel.legacyTopicObj?.loaded;
+  }, [currentChannel.legacyTopicObj?.loaded]);
 
   const isLegacyTopicShown = useMemo(() => {
     return selectedChannelId === GENERAL_CHAT_ID;
@@ -91,7 +91,7 @@ export default function ChannelHeader({
   }, [loaded]);
 
   useEffect(() => {
-    if (subchannel?.loaded && !subchannel?.topicObj?.loaded) {
+    if (subchannel?.loaded && !subchannel?.legacyTopicObj?.loaded) {
       setSubchannelLoading(true);
       handleInitialLoad();
     }
@@ -104,17 +104,17 @@ export default function ChannelHeader({
       setSubchannelLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subchannel?.loaded, subchannel?.topicObj?.loaded]);
+  }, [subchannel?.loaded, subchannel?.legacyTopicObj?.loaded]);
 
-  const topicObj = useMemo(() => {
+  const legacyTopicObj = useMemo(() => {
     if (subchannel) {
-      if (subchannel?.topicObj) {
-        return subchannel?.topicObj;
+      if (subchannel?.legacyTopicObj) {
+        return subchannel?.legacyTopicObj;
       }
       return {};
     }
-    if (currentChannel.topicObj) {
-      return currentChannel.topicObj;
+    if (currentChannel.legacyTopicObj) {
+      return currentChannel.legacyTopicObj;
     }
     return {};
   }, [currentChannel, subchannel]);
@@ -232,7 +232,7 @@ export default function ChannelHeader({
               onInputFocus={onInputFocus}
               selectedChannelId={selectedChannelId}
               subchannelId={subchannel?.id}
-              topicObj={topicObj}
+              legacyTopicObj={legacyTopicObj}
               onSetIsEditingTopic={setIsEditingTopic}
             />
           ) : (
@@ -241,7 +241,7 @@ export default function ChannelHeader({
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}
               selectedTab={currentChannel?.selectedTab}
-              topicObj={topicObj}
+              legacyTopicObj={legacyTopicObj}
             />
           )}
         </div>

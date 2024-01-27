@@ -8,13 +8,13 @@ export default function ChatFilter({
   channelId,
   themeColor,
   selectedTab,
-  topicObj
+  legacyTopicObj
 }: {
   canChangeTopic: boolean;
   channelId: number;
   themeColor: string;
   selectedTab: string;
-  topicObj: {
+  legacyTopicObj: {
     content: string;
     timeStamp: number;
     reloadTimeStamp: number;
@@ -22,7 +22,7 @@ export default function ChatFilter({
     uploader: any;
   };
 }) {
-  const { content } = topicObj;
+  const { content } = legacyTopicObj;
 
   return (
     <ErrorBoundary componentPath="Chat/Body/MessageContainer/ChannelHeader/ChatFilter">

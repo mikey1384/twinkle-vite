@@ -4,10 +4,10 @@ import { defaultChatSubject } from '~/constants/defaultValues';
 import { Color, borderRadius } from '~/constants/css';
 
 export default function TargetSubjectPreview({
-  topicObj,
+  legacyTopicObj,
   onClose
 }: {
-  topicObj: any;
+  legacyTopicObj: any;
   onClose: any;
 }) {
   return (
@@ -45,7 +45,7 @@ export default function TargetSubjectPreview({
       >
         <div>
           <div style={{ marginTop: '0.5rem', paddingBottom: '1rem' }}>
-            {topicObj?.content || defaultChatSubject}
+            {legacyTopicObj?.content || defaultChatSubject}
           </div>
         </div>
       </div>
