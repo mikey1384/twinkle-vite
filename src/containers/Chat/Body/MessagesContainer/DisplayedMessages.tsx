@@ -30,10 +30,20 @@ export default function DisplayedMessages({
   chessCountdownObj,
   currentChannel,
   displayedThemeColor,
+  isAICardModalShown,
   isRestrictedChannel,
   ChatInputRef,
   MessagesRef,
+  onAcceptRewind,
+  onCancelRewindRequest,
+  onChessModalShown,
+  onChessSpoilerClick,
+  onDeclineRewind,
   onMessageSubmit,
+  onSetAICardModalCardId,
+  onSetDeleteModal,
+  onSetSubjectMsgsModalShown,
+  onSetTransactionModalShown,
   onScrollToBottom,
   partner,
   subchannel,
@@ -44,10 +54,29 @@ export default function DisplayedMessages({
   chessCountdownObj: Record<string, any>;
   currentChannel: any;
   displayedThemeColor: string;
+  isAICardModalShown: boolean;
   isRestrictedChannel: boolean;
   ChatInputRef: React.RefObject<any>;
   MessagesRef: React.RefObject<any>;
+  onAcceptRewind: (chessState: any) => void;
+  onCancelRewindRequest: () => void;
+  onChessModalShown: () => void;
+  onChessSpoilerClick: (senderId: number) => void;
+  onDeclineRewind: () => void;
   onMessageSubmit: (message: any) => void;
+  onSetAICardModalCardId: (cardId: number) => void;
+  onSetDeleteModal: (obj: {
+    shown: boolean;
+    fileName: string;
+    filePath: string;
+    messageId: number;
+  }) => void;
+  onSetSubjectMsgsModalShown: (obj: {
+    shown: boolean;
+    subjectId: number;
+    content: string;
+  }) => void;
+  onSetTransactionModalShown: (shown: boolean) => void;
   onScrollToBottom: () => void;
   partner?: {
     id: number;
@@ -379,11 +408,11 @@ export default function DisplayedMessages({
                 loading={loading}
                 message={message}
                 onAcceptGroupInvitation={handleAcceptGroupInvitation}
-                onChessBoardClick={handleChessModalShown}
-                onChessSpoilerClick={handleChessSpoilerClick}
-                onCancelRewindRequest={handleCancelRewindRequest}
-                onAcceptRewind={handleAcceptRewind}
-                onDeclineRewind={handleDeclineRewind}
+                onChessBoardClick={onChessModalShown}
+                onChessSpoilerClick={onChessSpoilerClick}
+                onCancelRewindRequest={onCancelRewindRequest}
+                onAcceptRewind={onAcceptRewind}
+                onDeclineRewind={onDeclineRewind}
                 onDelete={handleShowDeleteModal}
                 onReceiveNewMessage={handleReceiveNewMessage}
                 onReplyClick={() => ChatInputRef.current.focus()}
@@ -391,10 +420,14 @@ export default function DisplayedMessages({
                 onRewardMessageSubmit={handleRewardMessageSubmit}
                 onSetAICardModalCardId={onSetAICardModalCardId}
                 onSetChessTarget={handleSetChessTarget}
-                onSetTransactionModalShown={setTransactionModalShown}
+                onSetTransactionModalShown={onSetTransactionModalShown}
                 onScrollToBottom={onScrollToBottom}
                 onShowSubjectMsgsModal={({ subjectId, content }) =>
-                  setSubjectMsgsModal({ shown: true, subjectId, content })
+                  onSetSubjectMsgsModalShown({
+                    shown: true,
+                    subjectId,
+                    content
+                  })
                 }
               />
             ))}
@@ -449,7 +482,7 @@ export default function DisplayedMessages({
     filePath: string;
     messageId: number;
   }) {
-    setDeleteModal({
+    onSetDeleteModal({
       shown: true,
       fileName,
       filePath,

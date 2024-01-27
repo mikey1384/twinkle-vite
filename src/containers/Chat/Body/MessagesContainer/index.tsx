@@ -64,7 +64,7 @@ function MessagesContainer({
   currentPathId: string | number;
   displayedThemeColor: string;
   isAICardModalShown: boolean;
-  onSetAICardModalCardId: (arg: any) => void;
+  onSetAICardModalCardId: (cardId: number) => void;
   subchannelId?: number;
   subchannelPath?: string;
 }) {
@@ -747,7 +747,7 @@ function MessagesContainer({
   }, [profilePicUrl, selectedChannelId, userId, username]);
 
   const handleAcceptRewind = useCallback(
-    async (chessState: boolean) => {
+    async (chessState: any) => {
       onSetChessGameState({
         channelId: selectedChannelId,
         newState: { rewindRequestId: null }
@@ -959,10 +959,20 @@ function MessagesContainer({
           chessCountdownObj={chessCountdownObj}
           currentChannel={currentChannel}
           displayedThemeColor={displayedThemeColor}
+          isAICardModalShown={isAICardModalShown}
           isRestrictedChannel={!!isRestrictedChannel}
           ChatInputRef={ChatInputRef}
           MessagesRef={MessagesRef}
+          onAcceptRewind={handleAcceptRewind}
+          onCancelRewindRequest={handleCancelRewindRequest}
+          onChessModalShown={handleChessModalShown}
+          onChessSpoilerClick={handleChessSpoilerClick}
+          onDeclineRewind={handleDeclineRewind}
           onMessageSubmit={handleMessageSubmit}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+          onSetDeleteModal={setDeleteModal}
+          onSetSubjectMsgsModalShown={setSubjectMsgsModal}
+          onSetTransactionModalShown={setTransactionModalShown}
           onScrollToBottom={handleScrollToBottom}
           partner={partner}
           subchannel={subchannel}
