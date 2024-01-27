@@ -978,7 +978,6 @@ function MessagesContainer({
             onScrollToBottom={handleScrollToBottom}
             partner={partner}
             subchannel={subchannel}
-            subchannelId={subchannelId}
           />
         ) : (
           <div>topic</div>
