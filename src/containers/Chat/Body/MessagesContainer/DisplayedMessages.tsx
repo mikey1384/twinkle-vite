@@ -123,6 +123,15 @@ export default function DisplayedMessages({
     [chessCountdownObj, selectedChannelId]
   );
 
+  const topicObj = useMemo(() => {
+    if (currentChannel.topicObj) {
+      return currentChannel.topicObj;
+    }
+    return {};
+  }, [currentChannel.topicObj]);
+
+  console.log(topicObj);
+
   const messages = useMemo(() => {
     let displayedMessageIds = [];
     if (subchannel?.messageIds) {
