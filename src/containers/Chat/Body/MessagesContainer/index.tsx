@@ -137,7 +137,8 @@ function MessagesContainer({
     wordleWordLevel,
     wordleAttemptState,
     wordleStats = {},
-    topicObj = {}
+    topicObj = {},
+    selectedTab = 'all'
   } = currentChannel;
   const textForThisChannel = useMemo(
     () => inputState['chat' + selectedChannelId]?.text || '',
@@ -953,31 +954,35 @@ function MessagesContainer({
             onFavoriteClick={handleFavoriteClick}
           />
         )}
-        <DisplayedMessages
-          loading={loadingAnimationShown}
-          chessTarget={chessTarget}
-          chessCountdownObj={chessCountdownObj}
-          currentChannel={currentChannel}
-          displayedThemeColor={displayedThemeColor}
-          isAICardModalShown={isAICardModalShown}
-          isRestrictedChannel={!!isRestrictedChannel}
-          ChatInputRef={ChatInputRef}
-          MessagesRef={MessagesRef}
-          onAcceptRewind={handleAcceptRewind}
-          onCancelRewindRequest={handleCancelRewindRequest}
-          onChessModalShown={handleChessModalShown}
-          onChessSpoilerClick={handleChessSpoilerClick}
-          onDeclineRewind={handleDeclineRewind}
-          onMessageSubmit={handleMessageSubmit}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          onSetDeleteModal={setDeleteModal}
-          onSetSubjectMsgsModalShown={setSubjectMsgsModal}
-          onSetTransactionModalShown={setTransactionModalShown}
-          onScrollToBottom={handleScrollToBottom}
-          partner={partner}
-          subchannel={subchannel}
-          subchannelId={subchannelId}
-        />
+        {selectedTab === 'all' ? (
+          <DisplayedMessages
+            loading={loadingAnimationShown}
+            chessTarget={chessTarget}
+            chessCountdownObj={chessCountdownObj}
+            currentChannel={currentChannel}
+            displayedThemeColor={displayedThemeColor}
+            isAICardModalShown={isAICardModalShown}
+            isRestrictedChannel={!!isRestrictedChannel}
+            ChatInputRef={ChatInputRef}
+            MessagesRef={MessagesRef}
+            onAcceptRewind={handleAcceptRewind}
+            onCancelRewindRequest={handleCancelRewindRequest}
+            onChessModalShown={handleChessModalShown}
+            onChessSpoilerClick={handleChessSpoilerClick}
+            onDeclineRewind={handleDeclineRewind}
+            onMessageSubmit={handleMessageSubmit}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            onSetDeleteModal={setDeleteModal}
+            onSetSubjectMsgsModalShown={setSubjectMsgsModal}
+            onSetTransactionModalShown={setTransactionModalShown}
+            onScrollToBottom={handleScrollToBottom}
+            partner={partner}
+            subchannel={subchannel}
+            subchannelId={subchannelId}
+          />
+        ) : (
+          <div>topic</div>
+        )}
       </div>
       {hideModalShown && (
         <ConfirmModal
