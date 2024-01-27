@@ -1,12 +1,130 @@
-import React, { useCallback } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import Message from '../../Message';
+import LocalContext from '../../Context';
+import { v1 as uuidv1 } from 'uuid';
+import { useNavigate } from 'react-router-dom';
+import { useKeyContext } from '~/contexts';
+import { useTheme } from '~/helpers/hooks';
+import { isMobile, parseChannelPath } from '~/helpers';
+import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { rewardReasons } from '~/constants/defaultValues';
+import { socket } from '~/constants/io';
 
-export default function DisplayedMessages() {
+const unseenButtonThreshold = -1;
+const deviceIsMobile = isMobile(navigator);
+
+export default function DisplayedMessages({
+  loading,
+  chessTarget,
+  chessCountdownObj,
+  currentChannel,
+  displayedThemeColor,
+  isRestrictedChannel,
+  ChatInputRef,
+  MessagesRef,
+  onMessageSubmit,
+  onScrollToBottom,
+  partner,
+  subchannel,
+  subchannelId
+}: {
+  loading: boolean;
+  chessTarget: any;
+  chessCountdownObj: Record<string, any>;
+  currentChannel: any;
+  displayedThemeColor: string;
+  isRestrictedChannel: boolean;
+  ChatInputRef: React.RefObject<any>;
+  MessagesRef: React.RefObject<any>;
+  onMessageSubmit: (message: any) => void;
+  onScrollToBottom: () => void;
+  partner?: {
+    id: number;
+    username: string;
+  };
+  subchannel: Record<string, any>;
+  subchannelId?: number;
+}) {
+  const navigate = useNavigate();
+  const {
+    actions: {
+      onGetRanks,
+      onLoadMoreMessages,
+      onSetChessTarget,
+      onSubmitMessage,
+      onUpdateChannelPathIdHash
+    },
+    requests: {
+      acceptInvitation,
+      loadMoreChatMessages,
+      loadRankings,
+      updateUserXP
+    },
+    state: { channelPathIdHash, selectedChannelId }
+  } = useContext(LocalContext);
+  const { banned, profilePicUrl, userId, profileTheme, username } =
+    useKeyContext((v) => v.myState);
+  const {
+    messageIds = [],
+    messagesObj = {},
+    messagesLoadMoreButton = false,
+    twoPeople
+  } = currentChannel;
+  const {
+    loadMoreButton: { color: loadMoreButtonColor }
+  } = useTheme(twoPeople ? profileTheme : displayedThemeColor || profileTheme);
+  const [newUnseenMessage, setNewUnseenMessage] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const scrolledToBottomRef = useRef(true);
+  const loadMoreButtonLock = useRef(false);
+  const timerRef: React.RefObject<any> = useRef(null);
+  const prevScrollPosition = useRef(null);
+  const chessCountdownNumber = useMemo(
+    () => chessCountdownObj[selectedChannelId],
+    [chessCountdownObj, selectedChannelId]
+  );
+  const isChatRestricted = useMemo(
+    () => !!isRestrictedChannel,
+    [isRestrictedChannel]
+  );
+  const loadMoreButtonShown = useMemo(() => {
+    if (subchannel) {
+      return subchannel?.loadMoreButtonShown;
+    }
+    return messagesLoadMoreButton;
+  }, [messagesLoadMoreButton, subchannel]);
+
+  const messages = useMemo(() => {
+    const displayedMessageIds = subchannel
+      ? subchannel?.messageIds
+      : messageIds;
+    const displayedMessagesObj = subchannel
+      ? subchannel?.messagesObj
+      : messagesObj;
+    const result = [];
+    const dupe: { [key: string]: any } = {};
+    for (const messageId of displayedMessageIds) {
+      if (!dupe[messageId]) {
+        const message = displayedMessagesObj[messageId];
+        if (message) {
+          result.push(message);
+          dupe[messageId] = true;
+        }
+      }
+    }
+    return result;
+  }, [messageIds, messagesObj, subchannel]);
   const handleAcceptGroupInvitation = useCallback(
     async (invitationChannelPath: string) => {
       const invitationChannelId =
@@ -88,37 +206,6 @@ export default function DisplayedMessages() {
     userId
   ]);
 
-  const handleRewardMessageSubmit = useCallback(
-    async ({
-      amount,
-      reasonId,
-      message
-    }: {
-      amount: number;
-      reasonId: string;
-      message: any;
-    }) => {
-      handleMessageSubmit({
-        content: rewardReasons[reasonId].message,
-        rewardAmount: amount,
-        rewardReason: reasonId,
-        target: message,
-        subchannelId
-      });
-      await updateUserXP({
-        amount,
-        action: 'reward',
-        target: 'chat',
-        targetId: message.id,
-        type: 'increase',
-        userId: message.userId
-      });
-      handleUpdateRankings();
-      return Promise.resolve();
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [handleMessageSubmit, handleUpdateRankings, subchannelId]
-  );
   const handleUpdateRankings = useCallback(async () => {
     const {
       all,
@@ -142,6 +229,37 @@ export default function DisplayedMessages() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const handleRewardMessageSubmit = useCallback(
+    async ({
+      amount,
+      reasonId,
+      message
+    }: {
+      amount: number;
+      reasonId: string;
+      message: any;
+    }) => {
+      onMessageSubmit({
+        content: rewardReasons[reasonId].message,
+        rewardAmount: amount,
+        rewardReason: reasonId,
+        target: message,
+        subchannelId
+      });
+      await updateUserXP({
+        amount,
+        action: 'reward',
+        target: 'chat',
+        targetId: message.id,
+        type: 'increase',
+        userId: message.userId
+      });
+      handleUpdateRankings();
+      return Promise.resolve();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onMessageSubmit, handleUpdateRankings, subchannelId]
+  );
   const handleSetChessTarget = useCallback(
     ({
       channelId,
@@ -177,6 +295,32 @@ export default function DisplayedMessages() {
     [chessTarget, selectedChannelId]
   );
 
+  useEffect(() => {
+    const MessagesContainer = MessagesRef.current;
+    addEvent(MessagesContainer, 'scroll', handleScroll);
+
+    return function cleanUp() {
+      removeEvent(MessagesContainer, 'scroll', handleScroll);
+    };
+
+    function handleScroll() {
+      clearTimeout(timerRef.current);
+      scrolledToBottomRef.current =
+        (MessagesRef.current || {}).scrollTop >= unseenButtonThreshold;
+      const scrollThreshold =
+        (MessagesRef.current || {}).scrollHeight -
+        (MessagesRef.current || {}).offsetHeight;
+      const scrollTop = (MessagesRef.current || {}).scrollTop;
+      const distanceFromTop = scrollThreshold + scrollTop;
+      if (distanceFromTop < 3) {
+        handleLoadMore();
+      }
+      if (scrollTop >= unseenButtonThreshold) {
+        setNewUnseenMessage(false);
+      }
+    }
+  });
+
   return (
     <ErrorBoundary componentPath="Chat/Body/MessagesContainer/DisplayedMessages">
       <div
@@ -188,7 +332,7 @@ export default function DisplayedMessages() {
         }}
         ref={MessagesRef}
       >
-        {loadingAnimationShown ? (
+        {loading ? (
           <Loading style={{ position: 'absolute', top: '20%' }} />
         ) : (
           <>
@@ -209,7 +353,7 @@ export default function DisplayedMessages() {
                   style={{ opacity: 0.9 }}
                   onClick={() => {
                     setNewUnseenMessage(false);
-                    handleScrollToBottom();
+                    onScrollToBottom();
                   }}
                 >
                   New Message
@@ -232,7 +376,7 @@ export default function DisplayedMessages() {
                 isNotification={!!message.isNotification}
                 isBanned={!!banned?.chat}
                 isRestricted={isChatRestricted}
-                loading={loadingAnimationShown}
+                loading={loading}
                 message={message}
                 onAcceptGroupInvitation={handleAcceptGroupInvitation}
                 onChessBoardClick={handleChessModalShown}
@@ -248,13 +392,13 @@ export default function DisplayedMessages() {
                 onSetAICardModalCardId={onSetAICardModalCardId}
                 onSetChessTarget={handleSetChessTarget}
                 onSetTransactionModalShown={setTransactionModalShown}
-                onScrollToBottom={handleScrollToBottom}
+                onScrollToBottom={onScrollToBottom}
                 onShowSubjectMsgsModal={({ subjectId, content }) =>
                   setSubjectMsgsModal({ shown: true, subjectId, content })
                 }
               />
             ))}
-            {!loadingAnimationShown &&
+            {!loading &&
               (loadMoreButtonShown ? (
                 <div>
                   <div style={{ width: '100%', height: '1rem' }} />
@@ -293,7 +437,7 @@ export default function DisplayedMessages() {
     if (MessagesRef.current && !scrolledToBottomRef.current) {
       setNewUnseenMessage(true);
     } else {
-      handleScrollToBottom();
+      onScrollToBottom();
     }
   }
   function handleShowDeleteModal({

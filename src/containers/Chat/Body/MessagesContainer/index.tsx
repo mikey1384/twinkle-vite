@@ -30,12 +30,10 @@ import {
   CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID
 } from '~/constants/defaultValues';
-import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/io';
 import { isMobile, parseChannelPath } from '~/helpers';
-import { useTheme } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -43,9 +41,7 @@ import LocalContext from '../../Context';
 import localize from '~/constants/localize';
 
 const CALL_SCREEN_HEIGHT = '30%';
-const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);
-
 const leaveChatGroupLabel = localize('leaveChatGroup');
 
 function MessagesContainer({
@@ -89,10 +85,8 @@ function MessagesContainer({
       onEditChannelSettings,
       onEnterComment,
       onEnterChannelWithId,
-      onGetRanks,
       onHideChat,
       onLeaveChannel,
-      onLoadMoreMessages,
       onReceiveMessageOnDifferentChannel,
       onCreateNewDMChannel,
       onSetMessageState,
@@ -107,22 +101,17 @@ function MessagesContainer({
       onUpdateChannelPathIdHash
     },
     requests: {
-      acceptInvitation,
       changeChannelOwner,
       deleteChatMessage,
       editChannelSettings,
       hideChat,
       leaveChannel,
       loadChatChannel,
-      loadMoreChatMessages,
-      loadRankings,
       putFavoriteChannel,
       sendInvitationMessage,
-      startNewDMChannel,
-      updateUserXP
+      startNewDMChannel
     },
     state: {
-      channelPathIdHash,
       channelOnCall,
       chessModalShown,
       creatingNewDMChannel,
@@ -134,15 +123,13 @@ function MessagesContainer({
     },
     inputState
   } = useContext(LocalContext);
-  const { banned, profilePicUrl, userId, profileTheme, isAdmin, username } =
-    useKeyContext((v) => v.myState);
+  const { banned, profilePicUrl, userId, isAdmin, username } = useKeyContext(
+    (v) => v.myState
+  );
   const {
     currentTransactionId,
     isReloadRequired = false,
     isRespondingToSubject = false,
-    messageIds = [],
-    messagesObj = {},
-    messagesLoadMoreButton = false,
     subchannelIds = [],
     subchannelObj,
     wordleGuesses = [],
@@ -150,14 +137,8 @@ function MessagesContainer({
     wordleWordLevel,
     wordleAttemptState,
     wordleStats = {},
-    topicObj = {},
-    twoPeople
+    topicObj = {}
   } = currentChannel;
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useTheme(twoPeople ? profileTheme : displayedThemeColor || profileTheme);
-  const scrolledToBottomRef = useRef(true);
-  const loadMoreButtonLock = useRef(false);
   const textForThisChannel = useMemo(
     () => inputState['chat' + selectedChannelId]?.text || '',
     [selectedChannelId, inputState]
@@ -167,8 +148,6 @@ function MessagesContainer({
   >({});
   const [textAreaHeight, setTextAreaHeight] = useState(0);
   const [inviteUsersModalShown, setInviteUsersModalShown] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [selectVideoModalShown, setSelectVideoModalShown] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{
     shown: boolean;
@@ -199,8 +178,6 @@ function MessagesContainer({
   const MessagesRef: React.RefObject<any> = useRef(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
   const favoritingRef = useRef(false);
-  const timerRef: React.RefObject<any> = useRef(null);
-  const prevScrollPosition = useRef(null);
 
   const subchannel = useMemo(() => {
     if (!subchannelPath) {
@@ -253,37 +230,6 @@ function MessagesContainer({
     () => subchannel?.isRestricted && !isAdmin,
     [isAdmin, subchannel?.isRestricted]
   );
-  const isChatRestricted = useMemo(
-    () => !!isRestrictedChannel,
-    [isRestrictedChannel]
-  );
-  const loadMoreButtonShown = useMemo(() => {
-    if (subchannel) {
-      return subchannel?.loadMoreButtonShown;
-    }
-    return messagesLoadMoreButton;
-  }, [messagesLoadMoreButton, subchannel]);
-
-  const messages = useMemo(() => {
-    const displayedMessageIds = subchannel
-      ? subchannel?.messageIds
-      : messageIds;
-    const displayedMessagesObj = subchannel
-      ? subchannel?.messagesObj
-      : messagesObj;
-    const result = [];
-    const dupe: { [key: string]: any } = {};
-    for (const messageId of displayedMessageIds) {
-      if (!dupe[messageId]) {
-        const message = displayedMessagesObj[messageId];
-        if (message) {
-          result.push(message);
-          dupe[messageId] = true;
-        }
-      }
-    }
-    return result;
-  }, [messageIds, messagesObj, subchannel]);
 
   const selectedChannelIsOnCall = useMemo(
     () => selectedChannelId === channelOnCall.id,
@@ -349,11 +295,6 @@ function MessagesContainer({
     currentChannel?.loaded,
     subchannel?.loaded
   ]);
-
-  const chessCountdownNumber = useMemo(
-    () => chessCountdownObj[selectedChannelId],
-    [chessCountdownObj, selectedChannelId]
-  );
 
   useEffect(() => {
     onSetChessModalShown(false);
@@ -435,32 +376,6 @@ function MessagesContainer({
       );
       socket.removeListener('new_message_received', handleReceiveMessage);
     };
-  });
-
-  useEffect(() => {
-    const MessagesContainer = MessagesRef.current;
-    addEvent(MessagesContainer, 'scroll', handleScroll);
-
-    return function cleanUp() {
-      removeEvent(MessagesContainer, 'scroll', handleScroll);
-    };
-
-    function handleScroll() {
-      clearTimeout(timerRef.current);
-      scrolledToBottomRef.current =
-        (MessagesRef.current || {}).scrollTop >= unseenButtonThreshold;
-      const scrollThreshold =
-        (MessagesRef.current || {}).scrollHeight -
-        (MessagesRef.current || {}).offsetHeight;
-      const scrollTop = (MessagesRef.current || {}).scrollTop;
-      const distanceFromTop = scrollThreshold + scrollTop;
-      if (distanceFromTop < 3) {
-        handleLoadMore();
-      }
-      if (scrollTop >= unseenButtonThreshold) {
-        setNewUnseenMessage(false);
-      }
-    }
   });
 
   useEffect(() => {
@@ -1038,7 +953,21 @@ function MessagesContainer({
             onFavoriteClick={handleFavoriteClick}
           />
         )}
-        <DisplayedMessages />
+        <DisplayedMessages
+          loading={loadingAnimationShown}
+          chessTarget={chessTarget}
+          chessCountdownObj={chessCountdownObj}
+          currentChannel={currentChannel}
+          displayedThemeColor={displayedThemeColor}
+          isRestrictedChannel={!!isRestrictedChannel}
+          ChatInputRef={ChatInputRef}
+          MessagesRef={MessagesRef}
+          onMessageSubmit={handleMessageSubmit}
+          onScrollToBottom={handleScrollToBottom}
+          partner={partner}
+          subchannel={subchannel}
+          subchannelId={subchannelId}
+        />
       </div>
       {hideModalShown && (
         <ConfirmModal
