@@ -113,6 +113,7 @@ export default function DisplayedMessages({
   const {
     loadMoreButton: { color: loadMoreButtonColor }
   } = useTheme(twoPeople ? profileTheme : displayedThemeColor || profileTheme);
+
   const [newUnseenMessage, setNewUnseenMessage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const scrolledToBottomRef = useRef(true);
@@ -123,12 +124,6 @@ export default function DisplayedMessages({
     () => chessCountdownObj[selectedChannelId],
     [chessCountdownObj, selectedChannelId]
   );
-  const loadMoreButtonShown = useMemo(() => {
-    if (subchannel) {
-      return subchannel?.loadMoreButtonShown;
-    }
-    return messagesLoadMoreButton;
-  }, [messagesLoadMoreButton, subchannel]);
 
   const messages = useMemo(() => {
     const displayedMessageIds = subchannel
@@ -150,6 +145,13 @@ export default function DisplayedMessages({
     }
     return result;
   }, [messageIds, messagesObj, subchannel]);
+
+  const loadMoreButtonShown = useMemo(() => {
+    if (subchannel) {
+      return subchannel?.loadMoreButtonShown;
+    }
+    return messagesLoadMoreButton;
+  }, [messagesLoadMoreButton, subchannel]);
 
   const handleAcceptGroupInvitation = useCallback(
     async (invitationChannelPath: string) => {
