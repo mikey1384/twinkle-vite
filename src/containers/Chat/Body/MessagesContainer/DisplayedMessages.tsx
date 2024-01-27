@@ -126,14 +126,20 @@ export default function DisplayedMessages({
   );
 
   const messages = useMemo(() => {
-    const displayedMessageIds = subchannel
-      ? subchannel?.messageIds
-      : messageIds;
-    const displayedMessagesObj = subchannel
-      ? subchannel?.messagesObj
-      : messagesObj;
+    let displayedMessageIds = [];
+    if (subchannel?.messageIds) {
+      displayedMessageIds = subchannel.messageIds;
+    } else {
+      displayedMessageIds = messageIds;
+    }
+    let displayedMessagesObj: Record<string, any> = {};
+    if (subchannel?.messagesObj) {
+      displayedMessagesObj = subchannel.messagesObj;
+    } else {
+      displayedMessagesObj = messagesObj;
+    }
     const result = [];
-    const dupe: { [key: string]: any } = {};
+    const dupe: Record<string, any> = {};
     for (const messageId of displayedMessageIds) {
       if (!dupe[messageId]) {
         const message = displayedMessagesObj[messageId];
