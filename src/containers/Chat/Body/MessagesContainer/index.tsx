@@ -137,7 +137,7 @@ function MessagesContainer({
     wordleWordLevel,
     wordleAttemptState,
     wordleStats = {},
-    topicObj = {},
+    legacyTopicObj = {},
     selectedTab = 'all'
   } = currentChannel;
   const textForThisChannel = useMemo(
@@ -192,12 +192,12 @@ function MessagesContainer({
     return null;
   }, [subchannelPath, subchannelIds, subchannelObj]);
 
-  const appliedTopicObj = useMemo(() => {
+  const appliedLegacyTopicObj = useMemo(() => {
     if (subchannelId) {
-      return subchannel?.topicObj || {};
+      return subchannel?.legacyTopicObj || {};
     }
-    return topicObj;
-  }, [subchannel?.topicObj, subchannelId, topicObj]);
+    return legacyTopicObj;
+  }, [subchannel?.legacyTopicObj, subchannelId, legacyTopicObj]);
 
   const appliedIsRespondingToSubject = useMemo(() => {
     if (subchannelId) {
@@ -237,7 +237,10 @@ function MessagesContainer({
     [channelOnCall.id, selectedChannelId]
   );
 
-  const subjectId = useMemo(() => appliedTopicObj?.id, [appliedTopicObj]);
+  const subjectId = useMemo(
+    () => appliedLegacyTopicObj?.id,
+    [appliedLegacyTopicObj]
+  );
 
   const selectedChannelIdAndPathIdNotSynced = useMemo(() => {
     const pathId = Number(currentPathId);
@@ -1062,7 +1065,7 @@ function MessagesContainer({
           replyTarget={replyTarget}
           subchannelId={subchannel?.id}
           subjectId={subjectId}
-          topicObj={appliedTopicObj}
+          legacyTopicObj={appliedLegacyTopicObj}
         />
       </div>
       {chessModalShown && partner && (

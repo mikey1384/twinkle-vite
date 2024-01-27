@@ -25,7 +25,7 @@ export default function LegacyTopic({
   onInputFocus,
   selectedChannelId,
   subchannelId,
-  topicObj,
+  legacyTopicObj,
   onSetIsEditingTopic
 }: {
   currentChannel: any;
@@ -35,7 +35,7 @@ export default function LegacyTopic({
   onInputFocus: () => void;
   selectedChannelId: number;
   subchannelId: number;
-  topicObj: any;
+  legacyTopicObj: any;
   onSetIsEditingTopic: (isEditing: boolean) => void;
 }) {
   const {
@@ -55,7 +55,7 @@ export default function LegacyTopic({
     reloadTimeStamp,
     reloader = {},
     uploader = {}
-  } = topicObj;
+  } = legacyTopicObj;
   const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
   const {
     button: { color: buttonColor },
@@ -126,7 +126,9 @@ export default function LegacyTopic({
         }}
       >
         {!isLoaded ? (
-          <Loading text="Loading Topic" />
+          <div>
+            <Loading text="Loading Topic" />
+          </div>
         ) : isEditingTopic ? (
           <EditSubjectForm
             autoFocus
@@ -134,7 +136,7 @@ export default function LegacyTopic({
             channelId={selectedChannelId}
             displayedThemeColor={displayedThemeColor}
             maxLength={charLimit.chat.subject}
-            currentSubjectId={topicObj.id}
+            currentSubjectId={legacyTopicObj.id}
             title={content}
             onEditSubmit={handleSubjectSubmit}
             onChange={handleSearchChatSubject}
@@ -175,9 +177,9 @@ export default function LegacyTopic({
               {displayedContent}
             </span>
             <FullTextReveal text={displayedContent} show={onHover} />
+            <div style={{ width: '100%' }}>{subjectDetails}</div>
           </div>
         )}
-        <div style={{ width: '100%' }}>{subjectDetails}</div>
       </div>
       <div>
         <Button
@@ -188,7 +190,7 @@ export default function LegacyTopic({
             onSetIsRespondingToSubject({
               channelId: selectedChannelId,
               subchannelId,
-              subjectId: topicObj.id,
+              subjectId: legacyTopicObj.id,
               isResponding: true
             });
             onInputFocus();
