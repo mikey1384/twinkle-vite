@@ -2104,7 +2104,7 @@ export default function ChatReducer(
       }
       return {
         ...initialChatState,
-        chatStatus: state.chatStatus,
+        chatStatus: newChatStatus,
         cardObj: state.cardObj
       };
     }
