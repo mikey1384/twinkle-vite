@@ -123,10 +123,6 @@ export default function DisplayedMessages({
     () => chessCountdownObj[selectedChannelId],
     [chessCountdownObj, selectedChannelId]
   );
-  const isChatRestricted = useMemo(
-    () => !!isRestrictedChannel,
-    [isRestrictedChannel]
-  );
   const loadMoreButtonShown = useMemo(() => {
     if (subchannel) {
       return subchannel?.loadMoreButtonShown;
@@ -154,6 +150,7 @@ export default function DisplayedMessages({
     }
     return result;
   }, [messageIds, messagesObj, subchannel]);
+
   const handleAcceptGroupInvitation = useCallback(
     async (invitationChannelPath: string) => {
       const invitationChannelId =
@@ -404,7 +401,7 @@ export default function DisplayedMessages({
                 isLastMsg={index === 0}
                 isNotification={!!message.isNotification}
                 isBanned={!!banned?.chat}
-                isRestricted={isChatRestricted}
+                isRestricted={isRestrictedChannel}
                 loading={loading}
                 message={message}
                 onAcceptGroupInvitation={handleAcceptGroupInvitation}
