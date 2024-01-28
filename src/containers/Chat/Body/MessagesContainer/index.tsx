@@ -251,12 +251,6 @@ function MessagesContainer({
     );
   }, [currentPathId, selectedChannelId]);
 
-  useEffect(() => {
-    if (selectedChannelId === channelOnCall.id) {
-      handleScrollToBottom();
-    }
-  }, [channelOnCall, selectedChannelId]);
-
   const containerHeight = `CALC(100% - 1rem - 2px - ${
     socketConnected && textAreaHeight ? `${textAreaHeight}px - 1rem` : '5.5rem'
   }${
@@ -324,6 +318,18 @@ function MessagesContainer({
     subchannel?.loaded,
     currentChannel?.loaded
   ]);
+
+  useEffect(() => {
+    if (selectedTab === 'topic') {
+      console.log('on topic');
+    }
+  }, [selectedTab]);
+
+  useEffect(() => {
+    if (selectedChannelId === channelOnCall.id) {
+      handleScrollToBottom();
+    }
+  }, [channelOnCall, selectedChannelId]);
 
   useEffect(() => {
     onSetChessModalShown(false);
