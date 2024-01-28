@@ -280,11 +280,17 @@ function MessagesContainer({
   }, [currentChannel.topicObj]);
 
   const currentlySelectedTopic = useMemo(() => {
-    if (topicObj[currentChannel.topicId]) {
-      return topicObj[currentChannel.topicId];
+    const appliedTopicId =
+      currentChannel.selectedTopicId || currentChannel.featuredTopicId;
+    if (topicObj[appliedTopicId]) {
+      return topicObj[appliedTopicId];
     }
     return null;
-  }, [currentChannel.topicId, topicObj]);
+  }, [
+    currentChannel.featuredTopicId,
+    currentChannel.selectedTopicId,
+    topicObj
+  ]);
 
   const loadingAnimationShown = useMemo(() => {
     if (
