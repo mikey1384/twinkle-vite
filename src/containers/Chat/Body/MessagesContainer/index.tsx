@@ -272,6 +272,20 @@ function MessagesContainer({
   }
     ${selectedChannelIsOnCall ? ` - ${CALL_SCREEN_HEIGHT}` : ''})`;
 
+  const topicObj = useMemo(() => {
+    if (currentChannel.topicObj) {
+      return currentChannel.topicObj;
+    }
+    return {};
+  }, [currentChannel.topicObj]);
+
+  const currentlySelectedTopic = useMemo(() => {
+    if (topicObj[currentChannel.topicId]) {
+      return topicObj[currentChannel.topicId];
+    }
+    return null;
+  }, [currentChannel.topicId, topicObj]);
+
   const loadingAnimationShown = useMemo(() => {
     if (
       creatingNewDMChannel ||
@@ -289,15 +303,20 @@ function MessagesContainer({
     if (subchannelPath) {
       return !subchannel?.loaded;
     }
-    return !currentChannel?.loaded;
+    if (selectedTab === 'all') {
+      return !currentChannel?.loaded;
+    }
+    return !currentlySelectedTopic?.loaded;
   }, [
     creatingNewDMChannel,
     reconnecting,
     selectedChannelIdAndPathIdNotSynced,
-    subchannelPath,
     currentPathId,
-    currentChannel?.loaded,
-    subchannel?.loaded
+    subchannelPath,
+    selectedTab,
+    currentlySelectedTopic?.loaded,
+    subchannel?.loaded,
+    currentChannel?.loaded
   ]);
 
   useEffect(() => {

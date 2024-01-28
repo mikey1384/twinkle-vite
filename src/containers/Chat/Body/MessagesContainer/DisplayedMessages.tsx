@@ -46,7 +46,6 @@ export default function DisplayedMessages({
   onSetTransactionModalShown,
   onScrollToBottom,
   partner,
-  selectedTab = 'all',
   subchannel
 }: {
   loading: boolean;
@@ -124,15 +123,6 @@ export default function DisplayedMessages({
     () => chessCountdownObj[selectedChannelId],
     [chessCountdownObj, selectedChannelId]
   );
-
-  const topicObj = useMemo(() => {
-    if (currentChannel.topicObj) {
-      return currentChannel.topicObj;
-    }
-    return {};
-  }, [currentChannel.topicObj]);
-
-  console.log(topicObj, selectedTab);
 
   const messages = useMemo(() => {
     let displayedMessageIds = [];
