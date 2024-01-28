@@ -241,7 +241,8 @@ export default function ChannelHeader({
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}
               selectedTab={currentChannel?.selectedTab}
-              legacyTopicObj={legacyTopicObj}
+              topicObj={currentChannel?.topicObj}
+              featuredTopicId={currentChannel?.featuredTopicId}
             />
           )}
         </div>

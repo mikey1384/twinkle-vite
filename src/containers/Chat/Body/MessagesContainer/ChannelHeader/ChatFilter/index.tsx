@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ChatFilterBar from './ChatFilterBar';
 import { css } from '@emotion/css';
@@ -8,21 +8,22 @@ export default function ChatFilter({
   channelId,
   themeColor,
   selectedTab,
-  legacyTopicObj
+  topicObj,
+  featuredTopicId
 }: {
   canChangeTopic: boolean;
   channelId: number;
   themeColor: string;
   selectedTab: string;
-  legacyTopicObj: {
-    content: string;
-    timeStamp: number;
-    reloadTimeStamp: number;
-    reloader: any;
-    uploader: any;
-  };
+  featuredTopicId: number;
+  topicObj: Record<string, any>;
 }) {
-  const { content } = legacyTopicObj;
+  const featuredTopic = useMemo(() => {
+    if (topicObj?.[featuredTopicId]) {
+      return topicObj[featuredTopicId]?.content || '';
+    }
+    return '';
+  }, [featuredTopicId, topicObj]);
 
   return (
     <ErrorBoundary componentPath="Chat/Body/MessageContainer/ChannelHeader/ChatFilter">
@@ -38,7 +39,7 @@ export default function ChatFilter({
           channelId={channelId}
           canChangeTopic={canChangeTopic}
           selectedTab={selectedTab}
-          topic={content}
+          topic={featuredTopic}
         />
       </div>
     </ErrorBoundary>
