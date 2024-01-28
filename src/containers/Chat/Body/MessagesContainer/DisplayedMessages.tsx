@@ -46,6 +46,7 @@ export default function DisplayedMessages({
   onSetTransactionModalShown,
   onScrollToBottom,
   partner,
+  selectedTab = 'all',
   subchannel
 }: {
   loading: boolean;
@@ -81,6 +82,7 @@ export default function DisplayedMessages({
     id: number;
     username: string;
   };
+  selectedTab: string;
   subchannel: Record<string, any>;
 }) {
   const navigate = useNavigate();
@@ -130,7 +132,7 @@ export default function DisplayedMessages({
     return {};
   }, [currentChannel.topicObj]);
 
-  console.log(topicObj);
+  console.log(topicObj, selectedTab);
 
   const messages = useMemo(() => {
     let displayedMessageIds = [];
