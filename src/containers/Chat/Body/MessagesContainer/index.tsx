@@ -957,34 +957,31 @@ function MessagesContainer({
             onFavoriteClick={handleFavoriteClick}
           />
         )}
-        {selectedTab === 'all' ? (
-          <DisplayedMessages
-            loading={loadingAnimationShown}
-            chessTarget={chessTarget}
-            chessCountdownObj={chessCountdownObj}
-            currentChannel={currentChannel}
-            displayedThemeColor={displayedThemeColor}
-            isAICardModalShown={isAICardModalShown}
-            isRestrictedChannel={!!isRestrictedChannel}
-            ChatInputRef={ChatInputRef}
-            MessagesRef={MessagesRef}
-            onAcceptRewind={handleAcceptRewind}
-            onCancelRewindRequest={handleCancelRewindRequest}
-            onChessModalShown={handleChessModalShown}
-            onChessSpoilerClick={handleChessSpoilerClick}
-            onDeclineRewind={handleDeclineRewind}
-            onMessageSubmit={handleMessageSubmit}
-            onSetAICardModalCardId={onSetAICardModalCardId}
-            onSetDeleteModal={setDeleteModal}
-            onSetSubjectMsgsModalShown={setSubjectMsgsModal}
-            onSetTransactionModalShown={setTransactionModalShown}
-            onScrollToBottom={handleScrollToBottom}
-            partner={partner}
-            subchannel={subchannel}
-          />
-        ) : (
-          <div>topic</div>
-        )}
+        <DisplayedMessages
+          loading={loadingAnimationShown}
+          chessTarget={chessTarget}
+          chessCountdownObj={chessCountdownObj}
+          currentChannel={currentChannel}
+          displayedThemeColor={displayedThemeColor}
+          isAICardModalShown={isAICardModalShown}
+          isRestrictedChannel={!!isRestrictedChannel}
+          ChatInputRef={ChatInputRef}
+          MessagesRef={MessagesRef}
+          onAcceptRewind={handleAcceptRewind}
+          onCancelRewindRequest={handleCancelRewindRequest}
+          onChessModalShown={handleChessModalShown}
+          onChessSpoilerClick={handleChessSpoilerClick}
+          onDeclineRewind={handleDeclineRewind}
+          onMessageSubmit={handleMessageSubmit}
+          onSetAICardModalCardId={onSetAICardModalCardId}
+          onSetDeleteModal={setDeleteModal}
+          onSetSubjectMsgsModalShown={setSubjectMsgsModal}
+          onSetTransactionModalShown={setTransactionModalShown}
+          onScrollToBottom={handleScrollToBottom}
+          partner={partner}
+          selectedTab={selectedTab}
+          subchannel={subchannel}
+        />
       </div>
       {hideModalShown && (
         <ConfirmModal
