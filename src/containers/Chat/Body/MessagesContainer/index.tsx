@@ -36,7 +36,7 @@ import { socket } from '~/constants/io';
 import { isMobile, parseChannelPath } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
 
@@ -80,6 +80,9 @@ function MessagesContainer({
   );
   const loadTopicMessages = useAppContext(
     (v) => v.requestHelpers.loadTopicMessages
+  );
+  const onLoadTopicMessages = useChatContext(
+    (v) => v.actions.onLoadTopicMessages
   );
   const navigate = useNavigate();
   const {
@@ -334,7 +337,12 @@ function MessagesContainer({
         channelId: selectedChannelId,
         topicId: appliedTopicId
       });
-      console.log(messages, loadMoreShown);
+      onLoadTopicMessages({
+        channelId: selectedChannelId,
+        messages,
+        loadMoreShown,
+        topicId: appliedTopicId
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

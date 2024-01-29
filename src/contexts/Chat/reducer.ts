@@ -1500,6 +1500,34 @@ export default function ChatReducer(
         aiCardLoadMoreButton: action.loadMoreShown
       };
     }
+    case 'LOAD_TOPIC_MESSAGES': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          messagesObj: {
+            ...state.channelsObj.messagesObj,
+            ...(objectify(action.messages) as Record<number, object>)
+          },
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            topicObj: {
+              ...state.channelsObj[action.channelId]?.topicObj,
+              [action.topicId]: {
+                ...state.channelsObj[action.channelId]?.topicObj?.[
+                  action.topicId
+                ],
+                messageIds: action.messages.map(
+                  (message: { id: number }) => message.id
+                ),
+                loadMoreButtonShown: action.loadMoreShown,
+                loaded: true
+              }
+            }
+          }
+        }
+      };
+    }
     case 'POST_AI_CARD_FEED': {
       return {
         ...state,
