@@ -429,7 +429,7 @@ export default function DisplayedMessages({
                 forceRefreshForMobile={handleForceRefreshForMobile}
                 isAICardModalShown={isAICardModalShown}
                 index={index}
-                isOneOfLastFiveMessages={index <= 4}
+                isOneOfLastTenMessages={index <= 10}
                 isLastMsg={index === 0}
                 isNotification={!!message.isNotification}
                 isBanned={!!banned?.chat}

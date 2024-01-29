@@ -66,7 +66,7 @@ function Message({
   index,
   isAICardModalShown,
   isLastMsg,
-  isOneOfLastFiveMessages,
+  isOneOfLastTenMessages,
   isNotification,
   isRestricted,
   isBanned,
@@ -141,7 +141,7 @@ function Message({
   index: number;
   isBanned: boolean;
   isLastMsg: boolean;
-  isOneOfLastFiveMessages: boolean;
+  isOneOfLastTenMessages: boolean;
   isNotification: boolean;
   isRestricted: boolean;
   loading: boolean;
@@ -484,7 +484,7 @@ function Message({
   }, [content]);
 
   const [placeholderHeight, setPlaceholderHeight] = useState(0);
-  const [contentShown, setContentShown] = useState(!isAIMessage);
+  const [contentShown, setContentShown] = useState(isOneOfLastTenMessages);
   const [visible, setVisible] = useState(false);
   useLazyLoad({
     PanelRef,
@@ -859,7 +859,7 @@ function Message({
           zIndex
         }}
       >
-        {contentShown || isOneOfLastFiveMessages ? (
+        {contentShown || isOneOfLastTenMessages ? (
           <div ref={PanelRef} className={MessageStyle.container}>
             <div className={MessageStyle.profilePic}>
               <ProfilePic
