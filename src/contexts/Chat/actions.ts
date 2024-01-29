@@ -405,6 +405,25 @@ export default function ChatActions(dispatch: Dispatch) {
         price
       });
     },
+    onLoadTopicMessages({
+      channelId,
+      topicId,
+      messages,
+      loadMoreShown
+    }: {
+      channelId: number;
+      topicId: number;
+      messages: object[];
+      loadMoreShown: boolean;
+    }) {
+      return dispatch({
+        type: 'LOAD_TOPIC_MESSAGES',
+        channelId,
+        topicId,
+        messages,
+        loadMoreShown
+      });
+    },
     onLoadMoreChannelMembers({
       channelId,
       members,
