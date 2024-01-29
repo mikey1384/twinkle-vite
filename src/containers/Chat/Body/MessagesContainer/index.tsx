@@ -320,10 +320,17 @@ function MessagesContainer({
   ]);
 
   useEffect(() => {
-    if (selectedTab === 'topic') {
-      console.log('on topic');
+    if (selectedTab === 'topic' && !currentlySelectedTopic?.loaded) {
+      const appliedTopicId =
+        currentChannel.selectedTopicId || currentChannel.featuredTopicId;
+      console.log(appliedTopicId);
     }
-  }, [selectedTab]);
+  }, [
+    currentChannel.featuredTopicId,
+    currentChannel.selectedTopicId,
+    currentlySelectedTopic,
+    selectedTab
+  ]);
 
   useEffect(() => {
     if (selectedChannelId === channelOnCall.id) {
