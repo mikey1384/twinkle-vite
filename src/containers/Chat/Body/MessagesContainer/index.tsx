@@ -78,6 +78,9 @@ function MessagesContainer({
   const rewindChessMove = useAppContext(
     (v) => v.requestHelpers.rewindChessMove
   );
+  const loadTopicMessages = useAppContext(
+    (v) => v.requestHelpers.loadTopicMessages
+  );
   const navigate = useNavigate();
   const {
     actions: {
@@ -321,14 +324,24 @@ function MessagesContainer({
 
   useEffect(() => {
     if (selectedTab === 'topic' && !currentlySelectedTopic?.loaded) {
+      handleLoadTopicMessages();
+    }
+
+    async function handleLoadTopicMessages() {
       const appliedTopicId =
         currentChannel.selectedTopicId || currentChannel.featuredTopicId;
-      console.log(appliedTopicId);
+      const { messages, loadMoreShown } = await loadTopicMessages({
+        channelId: selectedChannelId,
+        topicId: appliedTopicId
+      });
+      console.log(messages, loadMoreShown);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     currentChannel.featuredTopicId,
     currentChannel.selectedTopicId,
     currentlySelectedTopic,
+    selectedChannelId,
     selectedTab
   ]);
 
