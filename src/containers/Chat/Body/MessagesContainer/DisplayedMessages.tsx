@@ -46,6 +46,7 @@ export default function DisplayedMessages({
   onSetTransactionModalShown,
   onScrollToBottom,
   partner,
+  selectedTab,
   subchannel
 }: {
   loading: boolean;
@@ -124,9 +125,16 @@ export default function DisplayedMessages({
     [chessCountdownObj, selectedChannelId]
   );
 
+  const appliedTopicId = useMemo(() => {
+    return currentChannel.selectedTopicId || currentChannel.featuredTopicId;
+  }, [currentChannel.featuredTopicId, currentChannel.selectedTopicId]);
+
   const messages = useMemo(() => {
     let displayedMessageIds = [];
-    if (subchannel?.messageIds) {
+    if (selectedTab === 'topic') {
+      displayedMessageIds =
+        currentChannel.topicObj?.[appliedTopicId]?.messageIds || [];
+    } else if (subchannel?.messageIds) {
       displayedMessageIds = subchannel.messageIds;
     } else {
       displayedMessageIds = messageIds;
@@ -149,7 +157,15 @@ export default function DisplayedMessages({
       }
     }
     return result;
-  }, [messageIds, messagesObj, subchannel]);
+  }, [
+    appliedTopicId,
+    currentChannel.topicObj,
+    messageIds,
+    messagesObj,
+    selectedTab,
+    subchannel?.messageIds,
+    subchannel?.messagesObj
+  ]);
 
   const loadMoreButtonShown = useMemo(() => {
     if (subchannel) {
