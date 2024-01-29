@@ -47,6 +47,7 @@ export default function MessageInput({
   isTwoPeopleChannel,
   isCielChannel,
   isZeroChannel,
+  topicId,
   loading,
   onChessButtonClick,
   onWordleButtonClick,
@@ -58,6 +59,7 @@ export default function MessageInput({
   chessTarget,
   replyTarget,
   recipientId,
+  selectedTab,
   socketConnected,
   subchannelId,
   subjectId,
@@ -85,9 +87,11 @@ export default function MessageInput({
   chessTarget: any;
   replyTarget: any;
   recipientId: number;
+  selectedTab: string;
   socketConnected: boolean;
   subchannelId: number;
   subjectId: number;
+  topicId: number;
   legacyTopicObj: any;
 }) {
   const isAIChannel = useMemo(
@@ -200,6 +204,7 @@ export default function MessageInput({
   }, []);
 
   const handleSendMsg = useCallback(async () => {
+    console.log(topicId, selectedTab);
     if (isExceedingCharLimit) return;
     if (!socketConnected || inputCoolingDown.current || inputSubmitDisabled) {
       if (inputCoolingDown.current) {

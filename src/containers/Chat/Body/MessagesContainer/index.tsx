@@ -279,18 +279,17 @@ function MessagesContainer({
     return {};
   }, [currentChannel.topicObj]);
 
+  const appliedTopicId = useMemo(
+    () => currentChannel.selectedTopicId || currentChannel.featuredTopicId,
+    [currentChannel.selectedTopicId, currentChannel.featuredTopicId]
+  );
+
   const currentlySelectedTopic = useMemo(() => {
-    const appliedTopicId =
-      currentChannel.selectedTopicId || currentChannel.featuredTopicId;
     if (topicObj[appliedTopicId]) {
       return topicObj[appliedTopicId];
     }
     return null;
-  }, [
-    currentChannel.featuredTopicId,
-    currentChannel.selectedTopicId,
-    topicObj
-  ]);
+  }, [appliedTopicId, topicObj]);
 
   const loadingAnimationShown = useMemo(() => {
     if (
@@ -1086,6 +1085,7 @@ function MessagesContainer({
       >
         <MessageInput
           key={selectedChannelId}
+          topicId={appliedTopicId}
           currentTransactionId={currentTransactionId}
           selectedChannelId={selectedChannelId}
           isZeroChannel={isZeroChannel}
@@ -1119,6 +1119,7 @@ function MessagesContainer({
           recipientId={recipientId}
           chessTarget={chessTarget}
           replyTarget={replyTarget}
+          selectedTab={selectedTab}
           subchannelId={subchannel?.id}
           subjectId={subjectId}
           legacyTopicObj={appliedLegacyTopicObj}
