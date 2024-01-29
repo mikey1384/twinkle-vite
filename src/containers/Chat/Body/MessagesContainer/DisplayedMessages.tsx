@@ -168,11 +168,20 @@ export default function DisplayedMessages({
   ]);
 
   const loadMoreButtonShown = useMemo(() => {
+    if (selectedTab === 'topic') {
+      return currentChannel.topicObj?.[appliedTopicId]?.loadMoreButtonShown;
+    }
     if (subchannel) {
       return subchannel?.loadMoreButtonShown;
     }
     return messagesLoadMoreButton;
-  }, [messagesLoadMoreButton, subchannel]);
+  }, [
+    appliedTopicId,
+    currentChannel.topicObj,
+    messagesLoadMoreButton,
+    selectedTab,
+    subchannel
+  ]);
 
   const handleAcceptGroupInvitation = useCallback(
     async (invitationChannelPath: string) => {
