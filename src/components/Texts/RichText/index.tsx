@@ -173,6 +173,9 @@ export default function RichText({
           overflow-wrap: break-word;
           word-break: break-word;
           line-height: 1.7;
+          .katex-html {
+            display: none !important;
+          }
           a {
             color: ${appliedLinkColor};
           }
