@@ -41,7 +41,7 @@ export default function Story({
           }
         `}
       >
-        <RichText style={{ lineHeight: 2 }} maxLines={1000}>
+        <RichText isAIMessage style={{ lineHeight: 2 }} maxLines={1000}>
           {story}
         </RichText>
       </div>
@@ -74,6 +74,7 @@ export default function Story({
             Vocabulary
           </p>
           <RichText
+            isAIMessage
             className={css`
               font-size: 1.7rem;
               @media (max-width: ${mobileMaxWidth}) {
