@@ -388,8 +388,8 @@ export default function TargetContent({
                       <RichText
                         theme={theme}
                         isAIMessage={
-                          userId === Number(ZERO_TWINKLE_ID) ||
-                          userId === Number(CIEL_TWINKLE_ID)
+                          comment.uploader.id === Number(ZERO_TWINKLE_ID) ||
+                          comment.uploader.id === Number(CIEL_TWINKLE_ID)
                         }
                         contentId={contentId}
                         contentType={contentType}
