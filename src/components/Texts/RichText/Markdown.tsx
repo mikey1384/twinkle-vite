@@ -67,7 +67,7 @@ function Markdown({
           .process(
             isAIMessage
               ? preprocessedText
-                  .replace(/\\\[(.*?)\\\]/g, (_, p1) => `$${p1}$`)
+                  .replace(/\\\[([\s\S]*?)\\\]/g, (_, p1) => `$${p1}$`)
                   .replace(
                     /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g,
                     (_, p1, p2) => `$${p1 || p2}$`
