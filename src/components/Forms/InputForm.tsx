@@ -280,8 +280,12 @@ function InputForm({
   }, [cleansedContentLength, expectedContentLength]);
 
   const effortBarShown = useMemo(
-    () => parent.contentType === 'subject' && isComment && !!text.length,
-    [isComment, parent.contentType, text.length]
+    () =>
+      parent.contentType === 'subject' &&
+      isComment &&
+      !!text.length &&
+      !!expectedContentLength,
+    [expectedContentLength, isComment, parent.contentType, text.length]
   );
 
   const effortProgress = useMemo(
