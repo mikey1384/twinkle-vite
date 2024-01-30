@@ -3,8 +3,10 @@ import { unified } from 'unified';
 import { Link } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
+import remarkMath from 'remark-math';
 import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
+import rehypeKatex from 'rehype-katex';
 import parse from 'html-react-parser';
 import parseStyle from 'style-to-object';
 import EmbeddedComponent from './EmbeddedComponent';
@@ -58,9 +60,20 @@ function Markdown({
         const markupString = await unified()
           .use(remarkParse)
           .use(remarkGfm)
+          .use(remarkMath)
           .use(remarkRehype)
+          .use(rehypeKatex)
           .use(rehypeStringify)
-          .process(preprocessedText);
+          .process(
+            isAIMessage
+              ? preprocessedText
+                  .replace(/\\\[(.*?)\\\]/g, (_, p1) => `$${p1}$`)
+                  .replace(
+                    /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g,
+                    (_, p1, p2) => `$${p1 || p2}$`
+                  )
+              : preprocessedText
+          );
         const result = convertStringToJSX({
           string:
             removeNbsp(
