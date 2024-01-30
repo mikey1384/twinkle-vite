@@ -6,7 +6,6 @@ import React, {
   useRef,
   useEffect
 } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '../Icon';
@@ -45,25 +44,12 @@ const viewSecretMessageWithoutRespondingLabel = localize(
   'viewSecretMessageWithoutResponding'
 );
 
-InputForm.propTypes = {
-  autoFocus: PropTypes.bool,
-  className: PropTypes.string,
-  disableReason: PropTypes.string,
-  formGroupStyle: PropTypes.object,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  onSubmit: PropTypes.func.isRequired,
-  parent: PropTypes.object.isRequired,
-  placeholder: PropTypes.string,
-  rows: PropTypes.number,
-  onViewSecretAnswer: PropTypes.func,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  targetCommentId: PropTypes.number
-};
 function InputForm({
+  isComment,
   autoFocus,
   className = '',
   disableReason,
+  effortBarColor,
   expectedContentLength = 0,
   formGroupStyle = {},
   innerRef,
@@ -76,9 +62,11 @@ function InputForm({
   theme,
   targetCommentId
 }: {
+  isComment?: boolean;
   autoFocus?: boolean;
   className?: string;
   disableReason?: string;
+  effortBarColor?: string;
   expectedContentLength?: number;
   formGroupStyle?: any;
   innerRef?: any;
@@ -148,7 +136,7 @@ function InputForm({
   }, [prevText]);
   const cleansedContentLength = useMemo(() => {
     if (!expectedContentLength) return 0;
-    return (text || '').replace(/[\W_]+/g, '')?.length;
+    return (text || '').replace(/[\W_]+/g, '')?.length || 0;
   }, [expectedContentLength, text]);
   const textIsEmpty = useMemo(() => stringIsEmpty(text), [text]);
   const commentExceedsCharLimit = useMemo(
@@ -282,6 +270,33 @@ function InputForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onViewSecretAnswer]);
 
+  const effortBarDisplayLabel = useMemo(() => {
+    if (cleansedContentLength < expectedContentLength) {
+      return `${Math.floor(
+        100 * (cleansedContentLength / expectedContentLength)
+      )}%`;
+    }
+    return <Icon icon="check" />;
+  }, [cleansedContentLength, expectedContentLength]);
+
+  const effortBarShown = useMemo(
+    () => parent.contentType === 'subject' && isComment && !!text.length,
+    [isComment, parent.contentType, text.length]
+  );
+
+  const effortProgress = useMemo(
+    () => Math.min(100 * (cleansedContentLength / expectedContentLength), 100),
+    [cleansedContentLength, expectedContentLength]
+  );
+
+  const appliedEffortBarColor = useMemo(
+    () =>
+      cleansedContentLength > expectedContentLength
+        ? Color.green()
+        : effortBarColor,
+    [cleansedContentLength, effortBarColor, expectedContentLength]
+  );
+
   return (
     <div
       style={{
@@ -293,19 +308,6 @@ function InputForm({
       className={className}
     >
       <div style={{ width: '100%' }}>
-        <ProgressBar
-          text={`${Math.floor(
-            100 * (cleansedContentLength / expectedContentLength)
-          )}%`}
-          theme={theme}
-          color={
-            cleansedContentLength > expectedContentLength ? Color.green() : ''
-          }
-          progress={Math.min(
-            100 * (cleansedContentLength / expectedContentLength),
-            100
-          )}
-        />
         <div
           style={{
             position: 'relative',
@@ -329,6 +331,13 @@ function InputForm({
             onDrop={handleDrop}
             onKeyUp={handleKeyUp}
           />
+          {effortBarShown && (
+            <ProgressBar
+              text={effortBarDisplayLabel}
+              color={appliedEffortBarColor}
+              progress={effortProgress}
+            />
+          )}
           {commentExceedsCharLimit && (
             <small style={{ color: 'red', fontSize: '1.3rem' }}>
               {commentExceedsCharLimit.message}
@@ -365,7 +374,10 @@ function InputForm({
             `}
           >
             <Button
-              style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}
+              style={{
+                marginTop: effortBarShown ? '1rem' : '0.5rem',
+                marginBottom: '0.5rem'
+              }}
               filled
               color="green"
               disabled={submitDisabled}
