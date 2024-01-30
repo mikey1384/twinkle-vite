@@ -13,6 +13,7 @@ import Icon from '../Icon';
 import Attachment from '~/components/Attachment';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
+import ProgressBar from '~/components/ProgressBar';
 import AlertModal from '~/components/Modals/AlertModal';
 import { Buffer } from 'buffer';
 import { Color } from '~/constants/css';
@@ -63,6 +64,7 @@ function InputForm({
   autoFocus,
   className = '',
   disableReason,
+  expectedContentLength = 0,
   formGroupStyle = {},
   innerRef,
   onSubmit,
@@ -77,6 +79,7 @@ function InputForm({
   autoFocus?: boolean;
   className?: string;
   disableReason?: string;
+  expectedContentLength?: number;
   formGroupStyle?: any;
   innerRef?: any;
   onSubmit: (text: string, attachment?: any) => void;
@@ -117,8 +120,15 @@ function InputForm({
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
   );
-  const contentType = targetCommentId ? 'comment' : parent.contentType;
-  const contentId = targetCommentId || parent.contentId;
+
+  const contentType = useMemo(
+    () => (targetCommentId ? 'comment' : parent.contentType),
+    [parent, targetCommentId]
+  );
+  const contentId = useMemo(
+    () => targetCommentId || parent.contentId,
+    [parent.contentId, targetCommentId]
+  );
   const attachment = useMemo(
     () => state[contentType + contentId]?.attachment,
     [contentId, contentType, state]
@@ -136,6 +146,10 @@ function InputForm({
   useEffect(() => {
     handleSetText(prevText);
   }, [prevText]);
+  const cleansedContentLength = useMemo(() => {
+    if (!expectedContentLength) return 0;
+    return (text || '').replace(/[\W_]+/g, '')?.length;
+  }, [expectedContentLength, text]);
   const textIsEmpty = useMemo(() => stringIsEmpty(text), [text]);
   const commentExceedsCharLimit = useMemo(
     () =>
@@ -279,6 +293,19 @@ function InputForm({
       className={className}
     >
       <div style={{ width: '100%' }}>
+        <ProgressBar
+          text={`${Math.floor(
+            100 * (cleansedContentLength / expectedContentLength)
+          )}%`}
+          theme={theme}
+          color={
+            cleansedContentLength > expectedContentLength ? Color.green() : ''
+          }
+          progress={Math.min(
+            100 * (cleansedContentLength / expectedContentLength),
+            100
+          )}
+        />
         <div
           style={{
             position: 'relative',
