@@ -132,7 +132,6 @@ function RewardStatus({
           <Comment
             contentType={contentType}
             contentId={contentId}
-            maxRewardables={Math.ceil(maxRewards / 2)}
             noMarginForEditButton={noMarginForEditButton}
             key={reward.id}
             reward={reward}
