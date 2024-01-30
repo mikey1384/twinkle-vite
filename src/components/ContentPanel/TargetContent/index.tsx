@@ -37,7 +37,11 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import {
+  SELECTED_LANGUAGE,
+  CIEL_TWINKLE_ID,
+  ZERO_TWINKLE_ID
+} from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
 import localize from '~/constants/localize';
 import { Comment as CommentType, Subject } from '~/types';
@@ -383,6 +387,10 @@ export default function TargetContent({
                     ) : (
                       <RichText
                         theme={theme}
+                        isAIMessage={
+                          userId === Number(ZERO_TWINKLE_ID) ||
+                          userId === Number(CIEL_TWINKLE_ID)
+                        }
                         contentId={contentId}
                         contentType={contentType}
                         section="target"
