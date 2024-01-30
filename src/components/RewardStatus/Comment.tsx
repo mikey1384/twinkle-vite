@@ -125,9 +125,9 @@ function Comment({
           style={{
             fontWeight: 'bold',
             color:
-              reward.rewardAmount >= maxRewardables || reward.rewardAmount >= 10
+              reward.rewardAmount >= 3
                 ? Color.gold()
-                : reward.rewardAmount >= 5
+                : reward.rewardAmount === 2
                 ? Color.pink()
                 : Color.logoBlue()
           }}
