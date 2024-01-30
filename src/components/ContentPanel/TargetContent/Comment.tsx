@@ -16,7 +16,6 @@ import { Color } from '~/constants/css';
 import { useContentState } from '~/helpers/hooks';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useAppContext, useContentContext } from '~/contexts';
-import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { Comment as CommentType } from '~/types';
 
 Comment.propTypes = {
@@ -149,10 +148,6 @@ function Comment({
           ) : (
             <div style={{ paddingLeft: '0px' }}>
               <RichText
-                isAIMessage={
-                  userId === Number(ZERO_TWINKLE_ID) ||
-                  userId === Number(CIEL_TWINKLE_ID)
-                }
                 theme={theme}
                 style={{
                   margin: '0.5rem 0 1rem 0'
