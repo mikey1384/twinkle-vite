@@ -57,23 +57,28 @@ function Markdown({
     async function processMarkdown() {
       try {
         const preprocessedText = preprocessText(children);
-        const markupString = await unified()
-          .use(remarkParse)
-          .use(remarkGfm)
-          .use(remarkMath)
-          .use(remarkRehype)
-          .use(rehypeKatex)
-          .use(rehypeStringify)
-          .process(
-            isAIMessage
-              ? preprocessedText
+        const markupString = isAIMessage
+          ? await unified()
+              .use(remarkParse)
+              .use(remarkGfm)
+              .use(remarkMath)
+              .use(remarkRehype)
+              .use(rehypeKatex)
+              .use(rehypeStringify)
+              .process(
+                preprocessedText
                   .replace(/\\\[([\s\S]*?)\\\]/g, (_, p1) => `$${p1}$`)
                   .replace(
                     /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g,
                     (_, p1, p2) => `$${p1 || p2}$`
                   )
-              : preprocessedText
-          );
+              )
+          : await unified()
+              .use(remarkParse)
+              .use(remarkGfm)
+              .use(remarkRehype)
+              .use(rehypeStringify)
+              .process(preprocessedText);
         const result = convertStringToJSX({
           string:
             removeNbsp(
