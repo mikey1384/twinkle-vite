@@ -4,9 +4,13 @@ import InputForm from '~/components/Forms/InputForm';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import LocalContext from '../../Context';
 import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
-import { useContentState } from '~/helpers/hooks';
+import { useContentState, useTheme } from '~/helpers/hooks';
 import { v1 as uuidv1 } from 'uuid';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { Color } from '~/constants/css';
+import {
+  expectedResponseLength,
+  SELECTED_LANGUAGE
+} from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import RewardLevelExpectation from './RewardLevelExpectation';
 
@@ -60,6 +64,17 @@ export default function CommentInputArea({
   targetCommentId?: number | null;
   theme?: string;
 }) {
+  const { profileTheme } = useKeyContext((v) => v.myState);
+  const themeObj = useTheme(theme || profileTheme);
+  const expectedContentLength = useMemo(() => {
+    if (subjectRewardLevel) {
+      return expectedResponseLength(subjectRewardLevel);
+    }
+    return 0;
+  }, [subjectRewardLevel]);
+  const effortBarColor = useMemo(() => {
+    return Color[themeObj[`level${subjectRewardLevel || 1}`]?.color]();
+  }, [subjectRewardLevel, themeObj]);
   const [uploading, setUploading] = useState(false);
   const { userId } = useKeyContext((v) => v.myState);
   const placeholderLabel = useMemo(() => {
@@ -125,7 +140,10 @@ export default function CommentInputArea({
       ) : (
         <div style={{ position: 'relative', width: '100%' }}>
           <InputForm
+            isComment
             disableReason={disableReason}
+            expectedContentLength={expectedContentLength}
+            effortBarColor={effortBarColor}
             innerRef={innerRef}
             autoFocus={autoFocus}
             onSubmit={handleSubmit}

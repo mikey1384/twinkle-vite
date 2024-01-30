@@ -6,13 +6,13 @@ import React, {
   useRef,
   useEffect
 } from 'react';
-import PropTypes from 'prop-types';
 import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '../Icon';
 import Attachment from '~/components/Attachment';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
+import ProgressBar from '~/components/ProgressBar';
 import AlertModal from '~/components/Modals/AlertModal';
 import { Buffer } from 'buffer';
 import { Color } from '~/constants/css';
@@ -44,25 +44,13 @@ const viewSecretMessageWithoutRespondingLabel = localize(
   'viewSecretMessageWithoutResponding'
 );
 
-InputForm.propTypes = {
-  autoFocus: PropTypes.bool,
-  className: PropTypes.string,
-  disableReason: PropTypes.string,
-  formGroupStyle: PropTypes.object,
-  innerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-  onSubmit: PropTypes.func.isRequired,
-  parent: PropTypes.object.isRequired,
-  placeholder: PropTypes.string,
-  rows: PropTypes.number,
-  onViewSecretAnswer: PropTypes.func,
-  style: PropTypes.object,
-  theme: PropTypes.string,
-  targetCommentId: PropTypes.number
-};
 function InputForm({
+  isComment,
   autoFocus,
   className = '',
   disableReason,
+  effortBarColor,
+  expectedContentLength = 0,
   formGroupStyle = {},
   innerRef,
   onSubmit,
@@ -74,9 +62,12 @@ function InputForm({
   theme,
   targetCommentId
 }: {
+  isComment?: boolean;
   autoFocus?: boolean;
   className?: string;
   disableReason?: string;
+  effortBarColor?: string;
+  expectedContentLength?: number;
   formGroupStyle?: any;
   innerRef?: any;
   onSubmit: (text: string, attachment?: any) => void;
@@ -117,8 +108,15 @@ function InputForm({
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
   );
-  const contentType = targetCommentId ? 'comment' : parent.contentType;
-  const contentId = targetCommentId || parent.contentId;
+
+  const contentType = useMemo(
+    () => (targetCommentId ? 'comment' : parent.contentType),
+    [parent, targetCommentId]
+  );
+  const contentId = useMemo(
+    () => targetCommentId || parent.contentId,
+    [parent.contentId, targetCommentId]
+  );
   const attachment = useMemo(
     () => state[contentType + contentId]?.attachment,
     [contentId, contentType, state]
@@ -136,6 +134,10 @@ function InputForm({
   useEffect(() => {
     handleSetText(prevText);
   }, [prevText]);
+  const cleansedContentLength = useMemo(() => {
+    if (!expectedContentLength) return 0;
+    return (text || '').replace(/[\W_]+/g, '')?.length || 0;
+  }, [expectedContentLength, text]);
   const textIsEmpty = useMemo(() => stringIsEmpty(text), [text]);
   const commentExceedsCharLimit = useMemo(
     () =>
@@ -268,6 +270,33 @@ function InputForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onViewSecretAnswer]);
 
+  const effortBarDisplayLabel = useMemo(() => {
+    if (cleansedContentLength < expectedContentLength) {
+      return `${Math.floor(
+        100 * (cleansedContentLength / expectedContentLength)
+      )}%`;
+    }
+    return <Icon icon="check" />;
+  }, [cleansedContentLength, expectedContentLength]);
+
+  const effortBarShown = useMemo(
+    () => parent.contentType === 'subject' && isComment && !!text.length,
+    [isComment, parent.contentType, text.length]
+  );
+
+  const effortProgress = useMemo(
+    () => Math.min(100 * (cleansedContentLength / expectedContentLength), 100),
+    [cleansedContentLength, expectedContentLength]
+  );
+
+  const appliedEffortBarColor = useMemo(
+    () =>
+      cleansedContentLength > expectedContentLength
+        ? Color.green()
+        : effortBarColor,
+    [cleansedContentLength, effortBarColor, expectedContentLength]
+  );
+
   return (
     <div
       style={{
@@ -302,6 +331,13 @@ function InputForm({
             onDrop={handleDrop}
             onKeyUp={handleKeyUp}
           />
+          {effortBarShown && (
+            <ProgressBar
+              text={effortBarDisplayLabel}
+              color={appliedEffortBarColor}
+              progress={effortProgress}
+            />
+          )}
           {commentExceedsCharLimit && (
             <small style={{ color: 'red', fontSize: '1.3rem' }}>
               {commentExceedsCharLimit.message}
@@ -338,7 +374,10 @@ function InputForm({
             `}
           >
             <Button
-              style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}
+              style={{
+                marginTop: effortBarShown ? '1rem' : '0.5rem',
+                marginBottom: '0.5rem'
+              }}
               filled
               color="green"
               disabled={submitDisabled}
