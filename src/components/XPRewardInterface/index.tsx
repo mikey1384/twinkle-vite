@@ -72,7 +72,7 @@ export default function XPRewardInterface({
     );
 
   const maxRewardAmountForOnePerson = useMemo(
-    () => Math.min(Math.ceil(returnMaxRewards({ rewardLevel }) / 2), 10),
+    () => Math.min(Math.ceil(returnMaxRewards({ rewardLevel }) / 2), 3),
     [rewardLevel]
   );
 
