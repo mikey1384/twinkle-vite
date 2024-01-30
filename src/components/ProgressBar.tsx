@@ -21,7 +21,7 @@ export default function ProgressBar({
   progress: number;
   style?: React.CSSProperties;
   theme?: string;
-  text?: string;
+  text?: React.ReactNode;
   startLabel?: string | null;
   endLabel?: string | null;
 }) {

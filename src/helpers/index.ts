@@ -79,7 +79,7 @@ export function determineXpButtonDisabled({
     }
     return prev;
   }, 0);
-  const maxRewardables = Math.min(Math.ceil(maxRewards / 2), 10);
+  const maxRewardables = Math.min(Math.ceil(maxRewards / 2), 3);
   if (numPrevRewards >= maxRewardables) {
     return `${maxRewardables}/${maxRewardables} Rewarded`;
   }

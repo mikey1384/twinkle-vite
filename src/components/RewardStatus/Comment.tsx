@@ -14,7 +14,6 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isSupermod } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
 const editLabel = localize('edit');
@@ -24,14 +23,12 @@ const revokeRewardLabel = localize('revokeReward');
 function Comment({
   contentType,
   contentId,
-  maxRewardables,
   noMarginForEditButton,
   onEditDone = () => null,
   reward
 }: {
   contentType: string;
   contentId: number;
-  maxRewardables: number;
   noMarginForEditButton?: boolean;
   onEditDone?: (arg: any) => void;
   reward: any;
@@ -97,27 +94,6 @@ function Comment({
   }, [canEdit, onSetIsEditing, reward.id, userIsUploader]);
 
   const rewardStatusLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          님이{' '}
-          <span
-            style={{
-              fontWeight: 'bold',
-              color:
-                reward.rewardAmount >= maxRewardables ||
-                reward.rewardAmount >= 10
-                  ? Color.gold()
-                  : reward.rewardAmount >= 5
-                  ? Color.pink()
-                  : Color.logoBlue()
-            }}
-          >
-            트윈클 {reward.rewardAmount}개를 보상했습니다
-          </span>
-        </>
-      );
-    }
     return (
       <>
         {' '}
@@ -125,9 +101,9 @@ function Comment({
           style={{
             fontWeight: 'bold',
             color:
-              reward.rewardAmount >= maxRewardables || reward.rewardAmount >= 10
+              reward.rewardAmount >= 3
                 ? Color.gold()
-                : reward.rewardAmount >= 5
+                : reward.rewardAmount === 2
                 ? Color.pink()
                 : Color.logoBlue()
           }}
@@ -138,7 +114,7 @@ function Comment({
         </span>
       </>
     );
-  }, [maxRewardables, reward.rewardAmount]);
+  }, [reward.rewardAmount]);
 
   return (
     <ErrorBoundary componentPath="RewardStatus/Comment">
