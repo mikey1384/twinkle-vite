@@ -186,12 +186,6 @@ function Notification({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  const rewardTabShown = useMemo(() => {
-    return (
-      (!loadingNotifications || activeTab === 'reward') && rewards.length > 0
-    );
-  }, [activeTab, loadingNotifications, rewards.length]);
-
   return (
     <ErrorBoundary componentPath="Notification/index">
       <div
@@ -258,20 +252,18 @@ function Notification({
                 >
                   {rankingsLabel}
                 </nav>
-                {rewardTabShown && (
-                  <nav
-                    className={`${activeTab === 'reward' ? 'active' : ''} ${
-                      totalRewardedTwinkles + totalRewardedTwinkleCoins > 0 &&
-                      'alert'
-                    }`}
-                    onClick={() => {
-                      userChangedTab.current = true;
-                      setActiveTab('reward');
-                    }}
-                  >
-                    Rewards
-                  </nav>
-                )}
+                <nav
+                  className={`${activeTab === 'reward' ? 'active' : ''} ${
+                    totalRewardedTwinkles + totalRewardedTwinkleCoins > 0 &&
+                    'alert'
+                  }`}
+                  onClick={() => {
+                    userChangedTab.current = true;
+                    setActiveTab('reward');
+                  }}
+                >
+                  Rewards
+                </nav>
               </FilterBar>
             )}
             <div style={{ position: 'relative' }}>
