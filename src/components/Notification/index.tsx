@@ -248,18 +248,20 @@ function Notification({
                 >
                   {rankingsLabel}
                 </nav>
-                <nav
-                  className={`${activeTab === 'reward' ? 'active' : ''} ${
-                    totalRewardedTwinkles + totalRewardedTwinkleCoins > 0 &&
-                    'alert'
-                  }`}
-                  onClick={() => {
-                    userChangedTab.current = true;
-                    setActiveTab('reward');
-                  }}
-                >
-                  Rewards
-                </nav>
+                {rewards.length > 0 && (
+                  <nav
+                    className={`${activeTab === 'reward' ? 'active' : ''} ${
+                      totalRewardedTwinkles + totalRewardedTwinkleCoins > 0 &&
+                      'alert'
+                    }`}
+                    onClick={() => {
+                      userChangedTab.current = true;
+                      setActiveTab('reward');
+                    }}
+                  >
+                    Rewards
+                  </nav>
+                )}
               </FilterBar>
             )}
             <div style={{ position: 'relative' }}>
