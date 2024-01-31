@@ -57,7 +57,6 @@ function Notification({
     (v) => v.actions.onUpdateTodayStats
   );
   const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
-  const onClearRewards = useNotiContext((v) => v.actions.onClearRewards);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
   const scrollPositions = useViewContext((v) => v.state.scrollPositions);
   const onRecordScrollPosition = useViewContext(
@@ -143,9 +142,6 @@ function Notification({
           ? 'notification'
           : 'rankings';
       setActiveTab(tab);
-      if (totalRewardedTwinkles + totalRewardedTwinkleCoins === 0 && userId) {
-        onClearRewards(userId);
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
