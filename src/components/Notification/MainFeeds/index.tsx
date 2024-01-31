@@ -197,7 +197,7 @@ export default function MainFeeds({
                   )}
                 </div>
               </GradientButton>
-            ) : (
+            ) : totalTwinkles > 0 || totalCoins > 0 ? (
               <Banner color={successColor} style={{ marginBottom: '1rem' }}>
                 {totalTwinkles > 0 ? (
                   <div style={{ fontSize: '1.7rem' }}>
@@ -232,7 +232,7 @@ export default function MainFeeds({
                   </div>
                 ) : null}
               </Banner>
-            )}
+            ) : null}
           </ErrorBoundary>
         )}
       {activeTab === 'reward' && !!userId && typeof twinkleXP === 'number' && (

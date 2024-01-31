@@ -14,12 +14,6 @@ export default function NotiActions(dispatch: Dispatch) {
         data
       });
     },
-    onClearRewards(userId: number) {
-      return dispatch({
-        type: 'CLEAR_REWARDS',
-        userId
-      });
-    },
     onCollectRewards(userId: number) {
       return dispatch({
         type: 'COLLECT_REWARDS',
