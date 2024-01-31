@@ -33,8 +33,7 @@ export default function NotiReducer(
           [action.userId]: {
             ...state.notiObj[action.userId],
             totalRewardedTwinkles: 0,
-            totalRewardedTwinkleCoins: 0,
-            loadMoreRewards: false
+            totalRewardedTwinkleCoins: 0
           }
         }
       };
