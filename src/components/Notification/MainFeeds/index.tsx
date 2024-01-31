@@ -112,6 +112,13 @@ export default function MainFeeds({
     [totalRewardedTwinkleCoins, totalRewardedTwinkles]
   );
 
+  useEffect(() => {
+    if (activeTab !== 'reward' && totalRewardAmount === 0) {
+      setTotalTwinkles(0);
+      setTotalCoins(0);
+    }
+  }, [activeTab, totalRewardAmount]);
+
   const NotificationsItems = useMemo(() => {
     return notifications.map((notification) => (
       <NotiItem
