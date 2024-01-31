@@ -112,6 +112,13 @@ export default function MainFeeds({
     [totalRewardedTwinkleCoins, totalRewardedTwinkles]
   );
 
+  useEffect(() => {
+    if (activeTab !== 'reward' && totalRewardAmount === 0) {
+      setTotalTwinkles(0);
+      setTotalCoins(0);
+    }
+  }, [activeTab, totalRewardAmount]);
+
   const NotificationsItems = useMemo(() => {
     return notifications.map((notification) => (
       <NotiItem
@@ -197,7 +204,7 @@ export default function MainFeeds({
                   )}
                 </div>
               </GradientButton>
-            ) : (
+            ) : totalTwinkles > 0 || totalCoins > 0 ? (
               <Banner color={successColor} style={{ marginBottom: '1rem' }}>
                 {totalTwinkles > 0 ? (
                   <div style={{ fontSize: '1.7rem' }}>
@@ -232,7 +239,7 @@ export default function MainFeeds({
                   </div>
                 ) : null}
               </Banner>
-            )}
+            ) : null}
           </ErrorBoundary>
         )}
       {activeTab === 'reward' && !!userId && typeof twinkleXP === 'number' && (

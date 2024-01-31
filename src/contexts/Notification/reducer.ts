@@ -25,17 +25,6 @@ export default function NotiReducer(
         versionMatch: action.data.match,
         updateDetail: action.data.updateDetail
       };
-    case 'CLEAR_REWARDS':
-      return {
-        ...state,
-        notiObj: {
-          ...state.notiObj,
-          [action.userId]: {
-            ...state.notiObj[action.userId],
-            rewards: []
-          }
-        }
-      };
     case 'COLLECT_REWARDS':
       return {
         ...state,
@@ -44,8 +33,7 @@ export default function NotiReducer(
           [action.userId]: {
             ...state.notiObj[action.userId],
             totalRewardedTwinkles: 0,
-            totalRewardedTwinkleCoins: 0,
-            loadMoreRewards: false
+            totalRewardedTwinkleCoins: 0
           }
         }
       };

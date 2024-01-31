@@ -57,7 +57,6 @@ function Notification({
     (v) => v.actions.onUpdateTodayStats
   );
   const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
-  const onClearRewards = useNotiContext((v) => v.actions.onClearRewards);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
   const scrollPositions = useViewContext((v) => v.state.scrollPositions);
   const onRecordScrollPosition = useViewContext(
@@ -143,9 +142,6 @@ function Notification({
           ? 'notification'
           : 'rankings';
       setActiveTab(tab);
-      if (totalRewardedTwinkles + totalRewardedTwinkleCoins === 0 && userId) {
-        onClearRewards(userId);
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -185,12 +181,6 @@ function Notification({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
-
-  const rewardTabShown = useMemo(() => {
-    return (
-      (!loadingNotifications || activeTab === 'reward') && rewards.length > 0
-    );
-  }, [activeTab, loadingNotifications, rewards.length]);
 
   return (
     <ErrorBoundary componentPath="Notification/index">
@@ -258,7 +248,7 @@ function Notification({
                 >
                   {rankingsLabel}
                 </nav>
-                {rewardTabShown && (
+                {rewards.length > 0 && (
                   <nav
                     className={`${activeTab === 'reward' ? 'active' : ''} ${
                       totalRewardedTwinkles + totalRewardedTwinkleCoins > 0 &&
