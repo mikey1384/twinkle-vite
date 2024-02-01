@@ -112,6 +112,8 @@ function Message({
     wordleResult,
     isResign
   },
+  nextMessageHasTopic,
+  prevMessageHasTopic,
   onAcceptGroupInvitation,
   onChessBoardClick,
   onCancelRewindRequest,
@@ -138,6 +140,8 @@ function Message({
   forceRefreshForMobile: () => void;
   isAICardModalShown: boolean;
   message: any;
+  nextMessageHasTopic: boolean;
+  prevMessageHasTopic: boolean;
   onDelete: (v: any) => void;
   index: number;
   isBanned: boolean;
@@ -780,6 +784,8 @@ function Message({
       <TopicMessagePreview
         channelId={channelId}
         topicObj={targetSubject}
+        nextMessageHasTopic={nextMessageHasTopic}
+        prevMessageHasTopic={prevMessageHasTopic}
         username={appliedUsername}
       />
     );

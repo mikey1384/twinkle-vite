@@ -421,6 +421,14 @@ export default function DisplayedMessages({
             {messages.map((message, index) => (
               <Message
                 key={message.id || message.tempMessageId}
+                nextMessageHasTopic={
+                  index !== 0 ? messages[index - 1]?.subjectId : false
+                }
+                prevMessageHasTopic={
+                  index !== messages.length - 1
+                    ? messages[index + 1]?.subjectId
+                    : false
+                }
                 channelId={selectedChannelId}
                 chessCountdownNumber={chessCountdownNumber}
                 partner={partner}
