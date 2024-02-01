@@ -243,11 +243,6 @@ function MessagesContainer({
     [channelOnCall.id, selectedChannelId]
   );
 
-  const subjectId = useMemo(
-    () => appliedLegacyTopicObj?.id,
-    [appliedLegacyTopicObj]
-  );
-
   const selectedChannelIdAndPathIdNotSynced = useMemo(() => {
     const pathId = Number(currentPathId);
     return (
@@ -279,9 +274,17 @@ function MessagesContainer({
     return {};
   }, [currentChannel.topicObj]);
 
+  const subjectId = useMemo(
+    () => appliedLegacyTopicObj?.id,
+    [appliedLegacyTopicObj]
+  );
+
   const appliedTopicId = useMemo(
-    () => currentChannel.selectedTopicId || currentChannel.featuredTopicId,
-    [currentChannel.selectedTopicId, currentChannel.featuredTopicId]
+    () =>
+      currentChannel.selectedTopicId ||
+      subjectId ||
+      currentChannel.featuredTopicId,
+    [currentChannel.selectedTopicId, currentChannel.featuredTopicId, subjectId]
   );
 
   const currentlySelectedTopic = useMemo(() => {
@@ -860,12 +863,16 @@ function MessagesContainer({
       rewardAmount,
       rewardReason,
       target,
+      topicId,
+      selectedTab,
       subchannelId
     }: {
       content: string;
       rewardAmount?: number;
       rewardReason?: string;
       target: string;
+      topicId?: number;
+      selectedTab: string;
       subchannelId?: number;
     }) => {
       setTextAreaHeight(0);
@@ -911,13 +918,15 @@ function MessagesContainer({
           return Promise.reject(error);
         }
       }
+      const isTopicMessage =
+        selectedTab === 'topic' || appliedIsRespondingToSubject;
       const message = {
         userId,
         username,
         profilePicUrl,
         content,
         channelId: selectedChannelId,
-        subjectId: appliedIsRespondingToSubject ? subjectId : null
+        subjectId: isTopicMessage ? topicId || appliedTopicId : null
       };
       const messageId = uuidv1();
       onSubmitMessage({
@@ -927,6 +936,7 @@ function MessagesContainer({
         replyTarget: target,
         rewardReason,
         rewardAmount,
+        selectedTab,
         subchannelId
       });
       onSetReplyTarget({
@@ -1101,10 +1111,12 @@ function MessagesContainer({
           isTwoPeopleChannel={currentChannel.twoPeople}
           onChessButtonClick={handleChessModalShown}
           onWordleButtonClick={handleWordleModalShown}
-          onMessageSubmit={({ message, subchannelId }) =>
+          onMessageSubmit={({ message, subchannelId, selectedTab, topicId }) =>
             handleMessageSubmit({
               content: message,
               subchannelId,
+              selectedTab,
+              topicId,
               target: replyTarget
             })
           }

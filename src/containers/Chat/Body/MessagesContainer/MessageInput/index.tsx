@@ -204,7 +204,6 @@ export default function MessageInput({
   }, []);
 
   const handleSendMsg = useCallback(async () => {
-    console.log(topicId, selectedTab);
     if (isExceedingCharLimit) return;
     if (!socketConnected || inputCoolingDown.current || inputSubmitDisabled) {
       if (inputCoolingDown.current) {
@@ -233,7 +232,9 @@ export default function MessageInput({
       }
       await onMessageSubmit({
         message: finalizeEmoji(inputText),
-        subchannelId
+        subchannelId,
+        selectedTab,
+        topicId
       });
       handleSetText('');
       onEnterComment({
