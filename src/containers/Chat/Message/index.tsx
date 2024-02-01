@@ -654,6 +654,16 @@ function Message({
     return !!chessState?.isDiscussion;
   }, [chessState?.isDiscussion]);
 
+  const isTopicPreview = useMemo(() => {
+    if (currentChannel?.selectedTab === 'topic') {
+      return false;
+    }
+    if (currentChannel?.id === GENERAL_CHAT_ID) {
+      return false;
+    }
+    return !!targetSubject;
+  }, [currentChannel?.id, currentChannel?.selectedTab, targetSubject]);
+
   const handleChessSpoilerClick = useCallback(async () => {
     if (spoilerClickedRef.current) return;
     spoilerClickedRef.current = true;
@@ -763,6 +773,10 @@ function Message({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [channelId, messageId, myId]
   );
+
+  if (isTopicPreview) {
+    return <div>this is topic preview</div>;
+  }
 
   if (transferDetails) {
     return (
