@@ -1505,12 +1505,12 @@ export default function ChatReducer(
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          messagesObj: {
-            ...state.channelsObj.messagesObj,
-            ...(objectify(action.messages) as Record<number, object>)
-          },
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
+            messagesObj: {
+              ...(state.channelsObj[action.channelId]?.messagesObj || {}),
+              ...(objectify(action.messages) as Record<number, object>)
+            },
             topicObj: {
               ...state.channelsObj[action.channelId]?.topicObj,
               [action.topicId]: {
