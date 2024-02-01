@@ -2602,6 +2602,15 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.message.channelId]: {
             ...prevChannelObj,
+            topicObj: {
+              ...prevChannelObj.topicObj,
+              [action.topicId]: {
+                ...prevChannelObj.topicObj?.[action.topicId],
+                messageIds: [action.messageId].concat(
+                  prevChannelObj.topicObj?.[action.topicId]?.messageIds || []
+                )
+              }
+            },
             isRespondingToSubject: false,
             gameState,
             messageIds,

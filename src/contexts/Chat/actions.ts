@@ -1296,7 +1296,9 @@ export default function ChatActions(dispatch: Dispatch) {
       replyTarget,
       rewardReason,
       rewardAmount,
-      subchannelId
+      selectedTab,
+      subchannelId,
+      topicId
     }: {
       isRespondingToSubject: boolean;
       message: object;
@@ -1304,6 +1306,8 @@ export default function ChatActions(dispatch: Dispatch) {
       replyTarget: object;
       rewardReason: string;
       rewardAmount: number;
+      selectedTab: string;
+      topicId?: number;
       subchannelId: number;
     }) {
       return dispatch({
@@ -1316,7 +1320,9 @@ export default function ChatActions(dispatch: Dispatch) {
           rewardAmount,
           timeStamp: Math.floor(Date.now() / 1000)
         },
+        selectedTab,
         subchannelId,
+        topicId,
         replyTarget
       });
     },
