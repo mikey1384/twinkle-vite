@@ -30,6 +30,7 @@ import localize from '~/constants/localize';
 import moment from 'moment';
 import FileAttachment from './FileAttachment';
 import TargetChessPosition from './TargetChessPosition';
+import TopicMessagePreview from './TopicMessagePreview';
 import TransferMessage from './TransferMessage';
 import TransactionDetails from '../TransactionDetails';
 import ApprovalRequest from './ApprovalRequest';
@@ -654,7 +655,7 @@ function Message({
     return !!chessState?.isDiscussion;
   }, [chessState?.isDiscussion]);
 
-  const isTopicPreview = useMemo(() => {
+  const isTopicMessagePreview = useMemo(() => {
     if (currentChannel?.selectedTab === 'topic') {
       return false;
     }
@@ -774,8 +775,8 @@ function Message({
     [channelId, messageId, myId]
   );
 
-  if (isTopicPreview) {
-    return <div>this is topic preview</div>;
+  if (isTopicMessagePreview) {
+    return <TopicMessagePreview />;
   }
 
   if (transferDetails) {
