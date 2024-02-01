@@ -418,56 +418,58 @@ export default function DisplayedMessages({
                 </Button>
               )}
             </div>
-            {messages.map((message, index) => (
-              <Message
-                key={message.id || message.tempMessageId}
-                nextMessageHasTopic={
-                  index !== 0 ? messages[index - 1]?.subjectId : false
-                }
-                prevMessageHasTopic={
-                  index !== messages.length - 1
-                    ? messages[index + 1]?.subjectId
-                    : false
-                }
-                channelId={selectedChannelId}
-                chessCountdownNumber={chessCountdownNumber}
-                partner={partner}
-                currentChannel={currentChannel}
-                displayedThemeColor={displayedThemeColor}
-                forceRefreshForMobile={handleForceRefreshForMobile}
-                isAICardModalShown={isAICardModalShown}
-                index={index}
-                isOneOfLastTenMessages={index <= 10}
-                isLastMsg={index === 0}
-                isNotification={!!message.isNotification}
-                isBanned={!!banned?.chat}
-                isRestricted={isRestrictedChannel}
-                loading={loading}
-                message={message}
-                onAcceptGroupInvitation={handleAcceptGroupInvitation}
-                onChessBoardClick={onChessModalShown}
-                onChessSpoilerClick={onChessSpoilerClick}
-                onCancelRewindRequest={onCancelRewindRequest}
-                onAcceptRewind={onAcceptRewind}
-                onDeclineRewind={onDeclineRewind}
-                onDelete={handleShowDeleteModal}
-                onReceiveNewMessage={handleReceiveNewMessage}
-                onReplyClick={() => ChatInputRef.current.focus()}
-                onRequestRewind={handleRequestChessRewind}
-                onRewardMessageSubmit={handleRewardMessageSubmit}
-                onSetAICardModalCardId={onSetAICardModalCardId}
-                onSetChessTarget={handleSetChessTarget}
-                onSetTransactionModalShown={onSetTransactionModalShown}
-                onScrollToBottom={onScrollToBottom}
-                onShowSubjectMsgsModal={({ subjectId, content }) =>
-                  onSetSubjectMsgsModalShown({
-                    shown: true,
-                    subjectId,
-                    content
-                  })
-                }
-              />
-            ))}
+            {messages.map((message, index) => {
+              return (
+                <Message
+                  key={message.id || message.tempMessageId}
+                  nextMessageHasTopic={
+                    index !== 0 ? messages[index - 1]?.subjectId : false
+                  }
+                  prevMessageHasTopic={
+                    index !== messages.length - 1
+                      ? messages[index + 1]?.subjectId
+                      : false
+                  }
+                  channelId={selectedChannelId}
+                  chessCountdownNumber={chessCountdownNumber}
+                  partner={partner}
+                  currentChannel={currentChannel}
+                  displayedThemeColor={displayedThemeColor}
+                  forceRefreshForMobile={handleForceRefreshForMobile}
+                  isAICardModalShown={isAICardModalShown}
+                  index={index}
+                  isOneOfLastTenMessages={index <= 10}
+                  isLastMsg={index === 0}
+                  isNotification={!!message.isNotification}
+                  isBanned={!!banned?.chat}
+                  isRestricted={isRestrictedChannel}
+                  loading={loading}
+                  message={message}
+                  onAcceptGroupInvitation={handleAcceptGroupInvitation}
+                  onChessBoardClick={onChessModalShown}
+                  onChessSpoilerClick={onChessSpoilerClick}
+                  onCancelRewindRequest={onCancelRewindRequest}
+                  onAcceptRewind={onAcceptRewind}
+                  onDeclineRewind={onDeclineRewind}
+                  onDelete={handleShowDeleteModal}
+                  onReceiveNewMessage={handleReceiveNewMessage}
+                  onReplyClick={() => ChatInputRef.current.focus()}
+                  onRequestRewind={handleRequestChessRewind}
+                  onRewardMessageSubmit={handleRewardMessageSubmit}
+                  onSetAICardModalCardId={onSetAICardModalCardId}
+                  onSetChessTarget={handleSetChessTarget}
+                  onSetTransactionModalShown={onSetTransactionModalShown}
+                  onScrollToBottom={onScrollToBottom}
+                  onShowSubjectMsgsModal={({ subjectId, content }) =>
+                    onSetSubjectMsgsModalShown({
+                      shown: true,
+                      subjectId,
+                      content
+                    })
+                  }
+                />
+              );
+            })}
             {!loading &&
               (loadMoreButtonShown ? (
                 <div>

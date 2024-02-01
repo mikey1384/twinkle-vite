@@ -229,6 +229,7 @@ function Message({
   const [ComponentRef, inView] = useInView({
     threshold: 0
   });
+
   const PanelRef = useRef(null);
   const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
@@ -490,7 +491,7 @@ function Message({
 
   const [placeholderHeight, setPlaceholderHeight] = useState(0);
   const [contentShown, setContentShown] = useState(isOneOfLastTenMessages);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(isOneOfLastTenMessages);
   useLazyLoad({
     PanelRef,
     inView,
