@@ -27,13 +27,15 @@ export default function ChatFilterBar({
   channelId,
   selectedTab = 'all',
   themeColor = 'logoBlue',
-  topic
+  topic,
+  topicId
 }: {
   canChangeTopic: boolean;
   channelId: number;
   selectedTab: string;
   themeColor: string;
   topic: string;
+  topicId: number;
 }) {
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const themeStyles = getThemeStyles(themeColor);
@@ -202,7 +204,7 @@ export default function ChatFilterBar({
   function handleTabClick(tabName: string) {
     onSetChannelState({
       channelId,
-      newState: { selectedTab: tabName }
+      newState: { selectedTab: tabName, selectedTopicId: topicId }
     });
   }
 }
