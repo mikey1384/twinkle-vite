@@ -937,6 +937,7 @@ function MessagesContainer({
         rewardReason,
         rewardAmount,
         selectedTab,
+        topicId,
         subchannelId
       });
       onSetReplyTarget({
