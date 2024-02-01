@@ -242,7 +242,10 @@ export default function ChannelHeader({
               canChangeTopic={canChangeTopic}
               selectedTab={currentChannel?.selectedTab}
               topicObj={currentChannel?.topicObj}
-              featuredTopicId={currentChannel?.featuredTopicId}
+              topicId={
+                currentChannel?.selectedTopicId ||
+                currentChannel?.featuredTopicId
+              }
             />
           )}
         </div>

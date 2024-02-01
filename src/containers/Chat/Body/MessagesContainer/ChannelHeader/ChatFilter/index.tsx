@@ -9,21 +9,21 @@ export default function ChatFilter({
   themeColor,
   selectedTab,
   topicObj,
-  featuredTopicId
+  topicId
 }: {
   canChangeTopic: boolean;
   channelId: number;
   themeColor: string;
   selectedTab: string;
-  featuredTopicId: number;
+  topicId: number;
   topicObj: Record<string, any>;
 }) {
-  const featuredTopic = useMemo(() => {
-    if (topicObj?.[featuredTopicId]) {
-      return topicObj[featuredTopicId]?.content || '';
+  const currentTopic = useMemo(() => {
+    if (topicObj?.[topicId]) {
+      return topicObj[topicId]?.content || '';
     }
     return '';
-  }, [featuredTopicId, topicObj]);
+  }, [topicId, topicObj]);
 
   return (
     <ErrorBoundary componentPath="Chat/Body/MessageContainer/ChannelHeader/ChatFilter">
@@ -39,7 +39,8 @@ export default function ChatFilter({
           channelId={channelId}
           canChangeTopic={canChangeTopic}
           selectedTab={selectedTab}
-          topic={featuredTopic}
+          topic={currentTopic}
+          topicId={topicId}
         />
       </div>
     </ErrorBoundary>

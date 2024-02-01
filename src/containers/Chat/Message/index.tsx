@@ -776,7 +776,13 @@ function Message({
   );
 
   if (isTopicMessagePreview) {
-    return <TopicMessagePreview />;
+    return (
+      <TopicMessagePreview
+        channelId={channelId}
+        topicObj={targetSubject}
+        username={appliedUsername}
+      />
+    );
   }
 
   if (transferDetails) {
