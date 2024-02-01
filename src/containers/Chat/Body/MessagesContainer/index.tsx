@@ -937,7 +937,7 @@ function MessagesContainer({
         rewardReason,
         rewardAmount,
         selectedTab,
-        topicId,
+        topicId: isTopicMessage ? topicId : null,
         subchannelId
       });
       onSetReplyTarget({
