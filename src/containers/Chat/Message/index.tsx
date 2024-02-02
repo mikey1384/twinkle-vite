@@ -300,13 +300,8 @@ function Message({
       ) || [],
     [channelId, filePath, filesBeingUploaded, subchannelId]
   );
-  const {
-    username,
-    profilePicUrl,
-    targetMessage,
-    targetSubject,
-    isCallNotification
-  } = message;
+  const { username, profilePicUrl, targetMessage, targetSubject, isCallMsg } =
+    message;
   let appliedUsername = username;
   let appliedProfilePicUrl = profilePicUrl;
   const [messageRewardModalShown, setMessageRewardModalShown] = useState(false);
@@ -338,7 +333,7 @@ function Message({
       !message.id &&
       !message.fileToUpload &&
       !message.isSubject &&
-      (!(message.isNotification && !message.chessState) || isCallNotification)
+      (!(message.isNotification && !message.chessState) || isCallMsg)
     ) {
       handleSaveMessage(message);
     }
@@ -644,12 +639,14 @@ function Message({
       !!messageId &&
       !isApprovalRequest &&
       !isNotification &&
+      !isCallMsg &&
       !isChessMsg &&
       !isEditing &&
       !fileToUpload,
     [
       fileToUpload,
       isApprovalRequest,
+      isCallMsg,
       isChessMsg,
       isEditing,
       isNotification,
@@ -795,6 +792,7 @@ function Message({
     return (
       <TopicStartNotification
         channelId={channelId}
+        theme={displayedThemeColor}
         topicObj={{ id: subjectId, title: message.content }}
         username={username}
       />
@@ -805,6 +803,7 @@ function Message({
     return (
       <TopicMessagePreview
         channelId={channelId}
+        theme={displayedThemeColor}
         topicObj={targetSubject}
         nextMessageHasTopic={nextMessageHasTopic}
         prevMessageHasTopic={prevMessageHasTopic}
@@ -1065,6 +1064,7 @@ function Message({
                         forceRefreshForMobile={forceRefreshForMobile}
                         messageId={messageId}
                         numMsgs={numMsgs}
+                        isCallMsg={isCallMsg}
                         isNotification={isNotification}
                         isSubject={!!isSubject}
                         isReloadedSubject={!!isReloadedSubject}

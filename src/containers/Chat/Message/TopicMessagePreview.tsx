@@ -1,30 +1,34 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { useChatContext } from '~/contexts';
+import { getThemeStyles } from './StyleHelpers';
 
 export default function TopicMessagePreview({
   channelId,
   nextMessageHasTopic,
   prevMessageHasTopic,
+  theme,
   topicObj,
   username
 }: {
   channelId: number;
   nextMessageHasTopic: boolean;
   prevMessageHasTopic: boolean;
+  theme: string;
   topicObj: { id: number; content: string };
   username: string;
 }) {
+  const themeStyles = getThemeStyles(theme);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
 
   return (
     <div
       className={css`
         font-family: 'Roboto', sans-serif;
-        color: #333;
-        background-color: #f9f9f9;
-        border-top: 1px solid #d0e0f0;
-        border-bottom: 1px solid #d0e0f0;
+        color: ${themeStyles.text};
+        background-color: ${themeStyles.bg};
+        border-top: 1px solid ${themeStyles.border};
+        border-bottom: 1px solid ${themeStyles.border};
         cursor: pointer;
         text-align: center;
         padding: 1rem;
@@ -33,8 +37,8 @@ export default function TopicMessagePreview({
         transition: all 0.3s ease;
 
         &:hover {
-          background-color: #e9f2f9;
-          border-color: #b0c4de;
+          background-color: ${themeStyles.hoverBg};
+          border-color: ${themeStyles.hoverBorder};
         }
       `}
       onClick={handleClick}
