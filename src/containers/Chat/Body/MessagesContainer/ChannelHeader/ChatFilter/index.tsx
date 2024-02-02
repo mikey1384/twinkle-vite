@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 export default function ChatFilter({
   canChangeTopic,
   channelId,
+  onScrollToBottom,
   themeColor,
   selectedTab,
   topicObj,
@@ -13,6 +14,7 @@ export default function ChatFilter({
 }: {
   canChangeTopic: boolean;
   channelId: number;
+  onScrollToBottom: () => void;
   themeColor: string;
   selectedTab: string;
   topicId: number;
@@ -38,6 +40,7 @@ export default function ChatFilter({
           themeColor={themeColor}
           channelId={channelId}
           canChangeTopic={canChangeTopic}
+          onScrollToBottom={onScrollToBottom}
           selectedTab={selectedTab}
           topic={currentTopic}
           topicId={topicId}

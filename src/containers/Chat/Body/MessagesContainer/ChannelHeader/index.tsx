@@ -27,6 +27,7 @@ export default function ChannelHeader({
   displayedThemeColor,
   onFavoriteClick,
   onInputFocus,
+  onScrollToBottom,
   onSetInviteUsersModalShown,
   onSetLeaveConfirmModalShown,
   onSetSettingsModalShown,
@@ -37,6 +38,7 @@ export default function ChannelHeader({
   displayedThemeColor: string;
   onFavoriteClick: (arg0: any) => void;
   onInputFocus: () => void;
+  onScrollToBottom: () => void;
   onSetInviteUsersModalShown: (arg0: boolean) => void;
   onSetLeaveConfirmModalShown: (arg0: boolean) => void;
   onSetSettingsModalShown: (arg0: boolean) => void;
@@ -241,6 +243,7 @@ export default function ChannelHeader({
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}
               selectedTab={currentChannel?.selectedTab}
+              onScrollToBottom={onScrollToBottom}
               topicObj={currentChannel?.topicObj}
               topicId={
                 currentChannel?.selectedTopicId ||
