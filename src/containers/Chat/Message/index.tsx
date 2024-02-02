@@ -660,6 +660,16 @@ function Message({
     return !!chessState?.isDiscussion;
   }, [chessState?.isDiscussion]);
 
+  const isTopicPostNotification = useMemo(() => {
+    if (
+      currentChannel?.id === GENERAL_CHAT_ID ||
+      currentChannel?.selectedTab === 'topic'
+    ) {
+      return false;
+    }
+    return !!message.isSubject;
+  }, [currentChannel?.id, currentChannel?.selectedTab, message.isSubject]);
+
   const isTopicMessagePreview = useMemo(() => {
     if (currentChannel?.selectedTab === 'topic') {
       return false;
@@ -779,6 +789,10 @@ function Message({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [channelId, messageId, myId]
   );
+
+  if (isTopicPostNotification) {
+    return <div>this is start of a topic</div>;
+  }
 
   if (isTopicMessagePreview) {
     return (
