@@ -1018,6 +1018,7 @@ function MessagesContainer({
             currentChannel={currentChannel}
             displayedThemeColor={displayedThemeColor}
             onInputFocus={() => ChatInputRef.current.focus()}
+            onScrollToBottom={handleScrollToBottom}
             onSetInviteUsersModalShown={setInviteUsersModalShown}
             onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
             onSetSettingsModalShown={setSettingsModalShown}

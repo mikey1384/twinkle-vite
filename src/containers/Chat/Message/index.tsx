@@ -1008,7 +1008,10 @@ function Message({
                         onRequestRewind={onRequestRewind}
                       />
                     )}
-                    {targetSubject && <TargetSubject subject={targetSubject} />}
+                    {targetSubject &&
+                      currentChannel?.selectedTab !== 'topic' && (
+                        <TargetSubject subject={targetSubject} />
+                      )}
                     {targetMessage && (
                       <TargetMessage
                         displayedThemeColor={displayedThemeColor}
