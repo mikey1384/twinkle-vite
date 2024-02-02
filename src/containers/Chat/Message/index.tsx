@@ -31,6 +31,7 @@ import moment from 'moment';
 import FileAttachment from './FileAttachment';
 import TargetChessPosition from './TargetChessPosition';
 import TopicMessagePreview from './TopicMessagePreview';
+import TopicStartNotification from './TopicStartNotification';
 import TransferMessage from './TransferMessage';
 import TransactionDetails from '../TransactionDetails';
 import ApprovalRequest from './ApprovalRequest';
@@ -791,7 +792,13 @@ function Message({
   );
 
   if (isTopicPostNotification) {
-    return <div>this is start of a topic</div>;
+    return (
+      <TopicStartNotification
+        channelId={channelId}
+        topicObj={{ id: subjectId, title: message.content }}
+        username={username}
+      />
+    );
   }
 
   if (isTopicMessagePreview) {

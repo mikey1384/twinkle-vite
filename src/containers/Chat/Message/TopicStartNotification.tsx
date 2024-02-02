@@ -19,7 +19,8 @@ export default function TopicStartNotification({
         font-family: 'Roboto', sans-serif;
         color: #333;
         background-color: #f9f9f9;
-        border: 1px solid #d0e0f0;
+        border-top: 1px solid #d0e0f0;
+        border-bottom: 1px solid #d0e0f0;
         cursor: pointer;
         text-align: center;
         padding: 1rem;
@@ -39,7 +40,14 @@ export default function TopicStartNotification({
           font-weight: bold;
         `}
       >
-        {username} started a new topic: {topicObj.title}
+        <div>{username} started a new topic</div>
+        <div
+          className={css`
+            color: #1a73e8;
+          `}
+        >
+          {topicObj.title}
+        </div>
       </div>
     </div>
   );
