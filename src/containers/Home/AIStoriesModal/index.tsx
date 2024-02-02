@@ -103,8 +103,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       setQuestionsButtonEnabled(true);
     }
 
-    function handleAIStoryError() {
-      console.error('stream error');
+    function handleAIStoryError(error: any) {
+      console.error(`stream error: ${error}`);
     }
 
     function handleAIStoryExplanationError() {
