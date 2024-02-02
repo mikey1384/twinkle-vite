@@ -104,7 +104,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     }
 
     function handleAIStoryError() {
-      setStoryLoadError(true);
+      console.error('stream error');
     }
 
     function handleAIStoryExplanationError() {
