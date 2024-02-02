@@ -27,6 +27,7 @@ function TextMessage({
   content,
   displayedThemeColor,
   extractedUrl,
+  isCallMsg,
   isNotification,
   isReloadedSubject,
   isSubject,
@@ -50,6 +51,7 @@ function TextMessage({
   content: string;
   displayedThemeColor: string;
   extractedUrl: string;
+  isCallMsg: boolean;
   isNotification: boolean;
   isReloadedSubject: boolean;
   isSubject: boolean;
@@ -159,7 +161,8 @@ function TextMessage({
                   style={{
                     marginTop: isSubject ? '0.5rem' : 0,
                     marginBottom: isSubject ? '0.5rem' : 0,
-                    color: isNotification ? Color.gray() : undefined
+                    color:
+                      isNotification || isCallMsg ? Color.gray() : undefined
                   }}
                 >
                   {(content || '').trimEnd()}

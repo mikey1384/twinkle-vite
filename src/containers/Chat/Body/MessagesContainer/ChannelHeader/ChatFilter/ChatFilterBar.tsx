@@ -1,26 +1,8 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, getThemeStyles, mobileMaxWidth } from '~/constants/css';
 import { useChatContext } from '~/contexts';
 import Icon from '~/components/Icon';
-
-const getThemeStyles = (theme: string) => {
-  const themeColors: Record<string, any> = {
-    logoBlue: { bg: Color.logoBlue(), text: '#fff' },
-    green: { bg: Color.green(), text: '#fff' },
-    orange: { bg: Color.orange(), text: '#fff' },
-    rose: { bg: Color.rose(), text: '#fff' },
-    pink: { bg: Color.pink(), text: '#fff' },
-    purple: { bg: Color.purple(), text: '#fff' },
-    black: { bg: Color.black(), text: '#fff' },
-    red: { bg: Color.red(), text: '#fff' },
-    darkBlue: { bg: Color.darkBlue(), text: '#fff' },
-    vantaBlack: { bg: Color.vantaBlack(), text: '#fff' },
-    gold: { bg: Color.gold(), text: '#fff' }
-  };
-
-  return themeColors[theme] || { bg: Color.gray(), text: '#000' };
-};
 
 export default function ChatFilterBar({
   canChangeTopic,

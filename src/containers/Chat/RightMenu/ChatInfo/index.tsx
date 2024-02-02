@@ -130,8 +130,7 @@ export default function ChatInfo({
           profilePicUrl,
           userId: myId,
           username,
-          isNotification: true,
-          isCallNotification: true
+          isCallMsg: true
         }
       });
       onSetCall({
@@ -160,7 +159,7 @@ export default function ChatInfo({
               userId: myId,
               username,
               isNotification: true,
-              isCallNotification: true
+              isCallMsg: true
             }
           });
           onSetCall({
