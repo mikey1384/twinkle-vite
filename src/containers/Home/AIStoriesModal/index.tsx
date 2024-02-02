@@ -104,7 +104,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     }
 
     function handleAIStoryError(error: any) {
-      console.error(`stream error: ${error}`);
+      console.error(`Error while streaming AI Story: ${error}`);
     }
 
     function handleAIStoryExplanationError() {
