@@ -423,11 +423,19 @@ export default function DisplayedMessages({
                 <Message
                   key={message.id || message.tempMessageId}
                   nextMessageHasTopic={
-                    index !== 0 ? messages[index - 1]?.subjectId : false
+                    index !== 0
+                      ? !!(
+                          messages[index - 1]?.subjectId ||
+                          messages[index - 1]?.isSubject
+                        )
+                      : false
                   }
                   prevMessageHasTopic={
                     index !== messages.length - 1
-                      ? messages[index + 1]?.subjectId
+                      ? !!(
+                          messages[index + 1]?.subjectId ||
+                          messages[index + 1]?.isSubject
+                        )
                       : false
                   }
                   channelId={selectedChannelId}
