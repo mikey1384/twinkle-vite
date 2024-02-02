@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { useTheme } from '~/helpers/hooks';
 import { useChatContext } from '~/contexts';
 import { getThemeStyles } from './StyleHelpers';
 
@@ -15,6 +16,9 @@ export default function TopicStartNotification({
   theme: string;
   username: string;
 }) {
+  const {
+    topicStart: { color: topicStartTextColor, shadow: topicStartShadowColor }
+  } = useTheme(theme);
   const themeStyles = getThemeStyles(theme);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
 
@@ -48,7 +52,10 @@ export default function TopicStartNotification({
         <div>{username} started a new topic</div>
         <div
           className={css`
-            color: ${Color[theme]()};
+            color: ${Color[topicStartTextColor]()};
+            text-shadow: ${topicStartShadowColor
+              ? `0.05rem 0.05rem 0.05rem ${Color[topicStartShadowColor]()}`
+              : 'none'};
           `}
         >
           {topicObj.title}

@@ -417,6 +417,13 @@ export function Theme(color = 'logoBlue'): {
     },
     success: { color: 'green' },
     switch: { color },
+    topicStart: {
+      color,
+      shadow:
+        {
+          gold: 'darkBrownOrange'
+        }[color] || ''
+    },
     tableHeader: { color },
     userLink: {
       color:
