@@ -335,7 +335,7 @@ function MessagesContainer({
     async function handleLoadTopicMessages() {
       const appliedTopicId =
         currentChannel.selectedTopicId || currentChannel.featuredTopicId;
-      const { messages, loadMoreShown } = await loadTopicMessages({
+      const { messages, loadMoreShown, topicObj } = await loadTopicMessages({
         channelId: selectedChannelId,
         topicId: appliedTopicId
       });
@@ -343,6 +343,7 @@ function MessagesContainer({
         channelId: selectedChannelId,
         messages,
         loadMoreShown,
+        topicObj,
         topicId: appliedTopicId
       });
     }
