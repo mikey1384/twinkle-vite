@@ -1517,6 +1517,7 @@ export default function ChatReducer(
                 ...state.channelsObj[action.channelId]?.topicObj?.[
                   action.topicId
                 ],
+                ...action.topicObj,
                 messageIds: action.messages.map(
                   (message: { id: number }) => message.id
                 ),

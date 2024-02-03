@@ -409,11 +409,13 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId,
       topicId,
       messages,
+      topicObj,
       loadMoreShown
     }: {
       channelId: number;
       topicId: number;
       messages: object[];
+      topicObj: object;
       loadMoreShown: boolean;
     }) {
       return dispatch({
@@ -421,6 +423,7 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId,
         topicId,
         messages,
+        topicObj,
         loadMoreShown
       });
     },

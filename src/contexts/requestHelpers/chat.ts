@@ -718,14 +718,14 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { messages, loadMoreShown }
+          data: { topicObj, messages, loadMoreShown }
         } = await request.get(
           `${URL}/chat/topic/messages?channelId=${channelId}&topicId=${topicId}${
             lastMessageId ? `&lastMessageId=${lastMessageId}` : ''
           }`,
           auth()
         );
-        return Promise.resolve({ messages, loadMoreShown });
+        return { topicObj, messages, loadMoreShown };
       } catch (error) {
         return handleError(error);
       }
