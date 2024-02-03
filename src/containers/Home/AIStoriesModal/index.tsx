@@ -8,6 +8,7 @@ import { socket } from '~/constants/io';
 
 export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const MainRef: React.RefObject<any> = useRef(null);
+  const finishedStoryIdRef = useRef(0);
   const [solveObj, setSolveObj] = useState({
     numCorrect: 0,
     isGraded: false
@@ -80,11 +81,14 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     }
 
     function handleAIStoryFinished(storyId: number) {
-      handleLoadQuestions();
-      socket.emit('generate_ai_story_explanations', {
-        storyId: Number(storyId),
-        story
-      });
+      if (finishedStoryIdRef.current !== storyId) {
+        finishedStoryIdRef.current = storyId;
+        handleLoadQuestions();
+        socket.emit('generate_ai_story_explanations', {
+          storyId: Number(storyId),
+          story
+        });
+      }
     }
 
     function handleAIStoryExplanationUpdated({
@@ -103,8 +107,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       setQuestionsButtonEnabled(true);
     }
 
-    function handleAIStoryError() {
-      setStoryLoadError(true);
+    function handleAIStoryError(error: any) {
+      console.error(`Error while streaming AI Story: ${error}`);
     }
 
     function handleAIStoryExplanationError() {
