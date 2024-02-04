@@ -956,6 +956,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId,
       subchannelId,
       timeStamp,
+      topicId,
       tempMessageId
     }: {
       index: number;
@@ -963,6 +964,7 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId: number;
       subchannelId: number;
       timeStamp: number;
+      topicId: number;
       tempMessageId: string;
     }) {
       return dispatch({
@@ -971,6 +973,7 @@ export default function ChatActions(dispatch: Dispatch) {
         messageIndex: index,
         messageId,
         subchannelId,
+        topicId,
         timeStamp,
         tempMessageId
       });
