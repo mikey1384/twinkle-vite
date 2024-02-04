@@ -1546,6 +1546,36 @@ export default function ChatReducer(
         }
       };
     }
+    case 'LOAD_MORE_TOPIC_MESSAGES': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            messagesObj: {
+              ...(state.channelsObj[action.channelId]?.messagesObj || {}),
+              ...(objectify(action.messages) as Record<number, object>)
+            },
+            topicObj: {
+              ...state.channelsObj[action.channelId]?.topicObj,
+              [action.topicId]: {
+                ...state.channelsObj[action.channelId]?.topicObj?.[
+                  action.topicId
+                ],
+                ...action.topicObj,
+                messageIds: state.channelsObj[action.channelId]?.topicObj?.[
+                  action.topicId
+                ]?.messageIds.concat(
+                  action.messages.map((message: { id: number }) => message.id)
+                ),
+                loadMoreButtonShown: action.loadMoreShown
+              }
+            }
+          }
+        }
+      };
+    }
     case 'POST_AI_CARD_FEED': {
       return {
         ...state,
