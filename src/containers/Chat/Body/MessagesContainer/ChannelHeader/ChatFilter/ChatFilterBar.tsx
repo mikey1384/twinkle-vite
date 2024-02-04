@@ -7,7 +7,6 @@ import Icon from '~/components/Icon';
 export default function ChatFilterBar({
   canChangeTopic,
   channelId,
-  onScrollToBottom,
   selectedTab = 'all',
   themeColor = 'logoBlue',
   topic,
@@ -15,7 +14,6 @@ export default function ChatFilterBar({
 }: {
   canChangeTopic: boolean;
   channelId: number;
-  onScrollToBottom: () => void;
   selectedTab: string;
   themeColor: string;
   topic: string;
@@ -190,6 +188,5 @@ export default function ChatFilterBar({
       channelId,
       newState: { selectedTab: tabName, selectedTopicId: topicId }
     });
-    onScrollToBottom();
   }
 }
