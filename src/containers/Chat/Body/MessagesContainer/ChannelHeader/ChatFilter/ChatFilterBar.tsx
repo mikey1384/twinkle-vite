@@ -7,6 +7,7 @@ import Icon from '~/components/Icon';
 export default function ChatFilterBar({
   canChangeTopic,
   channelId,
+  onShowTopicSelectorModal,
   selectedTab = 'all',
   themeColor = 'logoBlue',
   topic,
@@ -14,6 +15,7 @@ export default function ChatFilterBar({
 }: {
   canChangeTopic: boolean;
   channelId: number;
+  onShowTopicSelectorModal: () => void;
   selectedTab: string;
   themeColor: string;
   topic: string;
@@ -163,6 +165,7 @@ export default function ChatFilterBar({
                 color: #007bff;
               }
             `}
+            onClick={onShowTopicSelectorModal}
           >
             <Icon icon="caret-down" />
             {!topic ? (

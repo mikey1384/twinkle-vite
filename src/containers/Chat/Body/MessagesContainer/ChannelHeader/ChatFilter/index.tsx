@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ChatFilterBar from './ChatFilterBar';
+import TopicSelectorModal from './TopicSelectorModal';
 import { css } from '@emotion/css';
 
 export default function ChatFilter({
@@ -18,6 +19,7 @@ export default function ChatFilter({
   topicId: number;
   topicObj: Record<string, any>;
 }) {
+  const [topicSelectorModalShown, setTopicSelectorModalShown] = useState(false);
   const currentTopic = useMemo(() => {
     if (topicObj?.[topicId]) {
       return topicObj[topicId]?.content || '';
@@ -38,11 +40,15 @@ export default function ChatFilter({
           themeColor={themeColor}
           channelId={channelId}
           canChangeTopic={canChangeTopic}
+          onShowTopicSelectorModal={() => setTopicSelectorModalShown(true)}
           selectedTab={selectedTab}
           topic={currentTopic}
           topicId={topicId}
         />
       </div>
+      {topicSelectorModalShown && (
+        <TopicSelectorModal onHide={() => setTopicSelectorModalShown(false)} />
+      )}
     </ErrorBoundary>
   );
 }
