@@ -241,7 +241,6 @@ export default function ChannelHeader({
               themeColor={displayedThemeColor}
               canChangeTopic={canChangeTopic}
               selectedTab={currentChannel?.selectedTab}
-              creatorId={currentChannel?.creatorId}
               topicObj={currentChannel?.topicObj}
               topicId={
                 currentChannel?.selectedTopicId ||

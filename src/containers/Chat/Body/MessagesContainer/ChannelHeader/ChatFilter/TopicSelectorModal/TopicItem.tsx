@@ -4,7 +4,6 @@ import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import moment from 'moment';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import { isSupermod } from '~/helpers';
 import { useMyLevel } from '~/helpers/hooks';
 
 const marginHeight = 1;
@@ -13,25 +12,21 @@ const subjectTitleHeight = 24;
 export default function SubjectItem({
   currentSubjectId,
   displayedThemeColor,
-  onDeleteSubject,
   onSelectSubject,
   id,
   content,
   userId,
   username,
-  timeStamp,
-  userIsOwner
+  timeStamp
 }: {
   currentSubjectId: number;
   displayedThemeColor: string;
-  onDeleteSubject: () => void;
   onSelectSubject: () => void;
   id: number;
   content: string;
   userId: number;
   username: string;
   timeStamp: number;
-  userIsOwner?: boolean;
 }) {
   const [marginBottom, setMarginBottom] = useState(`${marginHeight}rem`);
   const [selectButtonDisabled, setSelectButtonDisabled] = useState(false);
@@ -51,17 +46,6 @@ export default function SubjectItem({
 
   const buttons = useMemo(() => {
     const result = [];
-    if (
-      (currentSubjectId !== id && isSupermod(level) && canDelete) ||
-      userIsOwner
-    ) {
-      result.push({
-        color: 'rose',
-        opacity: 0.5,
-        onClick: onDeleteSubject,
-        label: 'Remove'
-      });
-    }
     if (currentSubjectId !== id) {
       result.push({
         color: 'green',
