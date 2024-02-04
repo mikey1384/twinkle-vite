@@ -30,6 +30,7 @@ export default function Signin({ onHide }: { onHide: () => void }) {
     <ErrorBoundary componentPath="Signin/index">
       <Modal
         onHide={onHide}
+        closeWhenClickedOutside={!username}
         modalStyle={{
           marginTop: currentPage !== 'signUp' ? 'CALC(50vh - 25rem)' : 0
         }}
