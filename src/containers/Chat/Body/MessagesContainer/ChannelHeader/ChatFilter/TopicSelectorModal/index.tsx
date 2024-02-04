@@ -5,6 +5,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import TopicItem from './TopicItem';
 import TopicInput from './TopicInput';
 import Loading from '~/components/Loading';
+import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
@@ -60,6 +61,16 @@ export default function TopicSelectorModal({
     <Modal wrapped onHide={onHide}>
       <header>Topics</header>
       <main>
+        <div style={{ width: '100%' }}>
+          <h3
+            className={css`
+              margin-bottom: 1rem;
+              color: ${Color[displayedThemeColor]()};
+            `}
+          >
+            Search / Start a Topic
+          </h3>
+        </div>
         <TopicInput
           displayedThemeColor={displayedThemeColor}
           onSelectTopic={(topic) => console.log(topic)}
@@ -67,7 +78,7 @@ export default function TopicSelectorModal({
         />
         {!loaded && <Loading />}
         {mySubjects.subjects.length > 0 && (
-          <div style={{ width: '100%' }}>
+          <div style={{ width: '100%', marginTop: '3rem' }}>
             <h3
               style={{
                 color: Color[displayedThemeColor](),
@@ -98,7 +109,7 @@ export default function TopicSelectorModal({
               <LoadMoreButton
                 filled
                 loading={mySubjects.loading}
-                onClick={() => handleLoadMoreSubjects(true)}
+                onClick={() => handleLoadMoreTopics(true)}
               />
             )}
           </div>
@@ -107,7 +118,7 @@ export default function TopicSelectorModal({
           <div
             style={{
               margin: '1rem 0',
-              marginTop: mySubjects.subjects.length > 0 ? '3rem' : '1rem',
+              marginTop: '3rem',
               width: '100%'
             }}
           >
@@ -145,7 +156,7 @@ export default function TopicSelectorModal({
           <LoadMoreButton
             filled
             loading={allSubjects.loading}
-            onClick={() => handleLoadMoreSubjects(false)}
+            onClick={() => handleLoadMoreTopics(false)}
           />
         )}
       </main>
@@ -157,7 +168,7 @@ export default function TopicSelectorModal({
     </Modal>
   );
 
-  async function handleLoadMoreSubjects(mineOnly: boolean) {
+  async function handleLoadMoreTopics(mineOnly: boolean) {
     if (mineOnly) {
       setMySubjects({ ...mySubjects, loading: true });
     } else {

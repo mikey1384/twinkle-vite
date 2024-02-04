@@ -59,7 +59,7 @@ export default function TopicInput({
 
   return (
     <ErrorBoundary componentPath="MessagesContainer/ChannelHeader/EditSubjectForm">
-      <div ref={EditSubjectFormRef} style={{ width: '100%', zIndex: 1 }}>
+      <div ref={EditSubjectFormRef} style={{ width: '100%' }}>
         <div
           style={{
             width: '100%',
@@ -108,12 +108,6 @@ export default function TopicInput({
           <small style={{ color: topicLabel.length > maxLength ? 'red' : '' }}>
             {topicLabel.length}/{maxLength} Characters
           </small>
-          {topicLabel.length <= maxLength && (
-            <small>
-              {' '}
-              (Press <b>Enter</b> to Apply)
-            </small>
-          )}
         </div>
       </div>
     </ErrorBoundary>
