@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ChatFilterBar from './ChatFilterBar';
 import TopicSelectorModal from './TopicSelectorModal';
-import { useKeyContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function ChatFilter({
@@ -22,6 +22,7 @@ export default function ChatFilter({
   topicId: number;
   topicObj: Record<string, any>;
 }) {
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const { userId } = useKeyContext((v) => v.myState);
   const [topicSelectorModalShown, setTopicSelectorModalShown] = useState(false);
   const currentTopic = useMemo(() => {
@@ -55,11 +56,19 @@ export default function ChatFilter({
           channelId={channelId}
           currentTopicId={topicId}
           displayedThemeColor={themeColor}
-          onSelectTopic={(id: number) => console.log(id)}
+          onSelectTopic={handleSelectTopic}
           onHide={() => setTopicSelectorModalShown(false)}
           userIsOwner={creatorId === userId}
         />
       )}
     </ErrorBoundary>
   );
+
+  function handleSelectTopic(topicId: number) {
+    onSetChannelState({
+      channelId,
+      newState: { selectedTopicId: topicId }
+    });
+    setTopicSelectorModalShown(false);
+  }
 }
