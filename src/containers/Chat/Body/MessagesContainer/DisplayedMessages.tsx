@@ -222,23 +222,27 @@ export default function DisplayedMessages({
         loadMoreButtonLock.current = true;
         prevScrollPosition.current = (MessagesRef.current || {}).scrollTop;
         try {
-          const {
-            messageIds,
-            messagesObj,
-            loadedChannelId,
-            loadedSubchannelId
-          } = await loadMoreChatMessages({
-            userId,
-            messageId,
-            channelId: selectedChannelId,
-            subchannelId: subchannel?.id
-          });
-          onLoadMoreMessages({
-            messageIds,
-            messagesObj,
-            loadedChannelId,
-            loadedSubchannelId
-          });
+          if (selectedTab === 'topic' && appliedTopicId) {
+            console.log('here');
+          } else {
+            const {
+              messageIds,
+              messagesObj,
+              loadedChannelId,
+              loadedSubchannelId
+            } = await loadMoreChatMessages({
+              userId,
+              messageId,
+              channelId: selectedChannelId,
+              subchannelId: subchannel?.id
+            });
+            onLoadMoreMessages({
+              messageIds,
+              messagesObj,
+              loadedChannelId,
+              loadedSubchannelId
+            });
+          }
           loadMoreButtonLock.current = false;
         } catch (error) {
           console.error(error);
