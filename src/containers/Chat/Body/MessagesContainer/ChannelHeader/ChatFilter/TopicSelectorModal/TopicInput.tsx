@@ -11,20 +11,18 @@ import SearchDropdown from '~/components/SearchDropdown';
 import Input from '~/components/Texts/Input';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
-import { edit } from '~/constants/placeholders';
 import { css } from '@emotion/css';
 
 export default function TopicInput({
   displayedThemeColor,
   maxLength = 100,
-  searchResults,
+  searchResults = [],
   onSelectTopic,
   onSubmit
 }: {
-  channelId: number;
   displayedThemeColor: string;
   maxLength?: number;
-  searchResults: any[];
+  searchResults?: any[];
   onSelectTopic: (v: number) => void;
   onSubmit: (input: string) => void;
 }) {
@@ -80,12 +78,11 @@ export default function TopicInput({
             <form
               style={{
                 width: '100%',
-                position: 'relative',
-                marginTop: '1.5rem'
+                position: 'relative'
               }}
             >
               <Input
-                placeholder={edit.subject}
+                placeholder="Enter Topic..."
                 value={topicLabel}
                 onChange={onInputChange}
                 onKeyUp={onKeyUp}
