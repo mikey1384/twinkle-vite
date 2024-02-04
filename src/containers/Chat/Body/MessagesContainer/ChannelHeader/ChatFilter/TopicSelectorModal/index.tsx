@@ -4,7 +4,6 @@ import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import TopicItem from './TopicItem';
 import Loading from '~/components/Loading';
-import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 
@@ -13,26 +12,20 @@ export default function TopicSelectorModal({
   currentTopicId,
   displayedThemeColor,
   onHide,
-  onSelectTopic,
-  userIsOwner
+  onSelectTopic
 }: {
   channelId: number;
   currentTopicId: number;
   displayedThemeColor: string;
   onHide: () => void;
   onSelectTopic: (v: number) => void;
-  userIsOwner: boolean;
 }) {
-  const deleteChatSubject = useAppContext(
-    (v) => v.requestHelpers.deleteChatSubject
-  );
   const loadChatSubjects = useAppContext(
     (v) => v.requestHelpers.loadChatSubjects
   );
   const loadMoreChatSubjects = useAppContext(
     (v) => v.requestHelpers.loadMoreChatSubjects
   );
-  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [mySubjects, setMySubjects] = useState({
     subjects: [],
@@ -90,7 +83,6 @@ export default function TopicSelectorModal({
                   key={subject.id}
                   currentSubjectId={currentTopicId}
                   displayedThemeColor={displayedThemeColor}
-                  onDeleteSubject={() => setDeleteTarget(subject.id)}
                   onSelectSubject={() => onSelectTopic(subject.id)}
                   {...subject}
                 />
@@ -138,9 +130,7 @@ export default function TopicSelectorModal({
               key={subject.id}
               currentSubjectId={currentTopicId}
               displayedThemeColor={displayedThemeColor}
-              onDeleteSubject={() => setDeleteTarget(subject.id)}
               onSelectSubject={() => onSelectTopic(subject.id)}
-              userIsOwner={userIsOwner}
               {...subject}
             />
           )
@@ -158,33 +148,8 @@ export default function TopicSelectorModal({
           Close
         </Button>
       </footer>
-      {deleteTarget && (
-        <ConfirmModal
-          modalOverModal
-          onHide={() => setDeleteTarget(null)}
-          onConfirm={() => handleDeleteSubject(deleteTarget)}
-          title="Remove Subject"
-        />
-      )}
     </Modal>
   );
-
-  async function handleDeleteSubject(subjectId: number) {
-    await deleteChatSubject(subjectId);
-    setMySubjects({
-      ...mySubjects,
-      subjects: mySubjects.subjects.filter(
-        (subject: { id: number }) => subject.id !== subjectId
-      )
-    });
-    setAllSubjects({
-      ...allSubjects,
-      subjects: allSubjects.subjects.filter(
-        (subject: { id: number }) => subject.id !== subjectId
-      )
-    });
-    setDeleteTarget(0);
-  }
 
   async function handleLoadMoreSubjects(mineOnly: boolean) {
     if (mineOnly) {

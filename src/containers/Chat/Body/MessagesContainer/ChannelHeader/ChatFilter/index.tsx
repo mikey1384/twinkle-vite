@@ -2,13 +2,12 @@ import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ChatFilterBar from './ChatFilterBar';
 import TopicSelectorModal from './TopicSelectorModal';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
 
 export default function ChatFilter({
   canChangeTopic,
   channelId,
-  creatorId,
   themeColor,
   selectedTab,
   topicObj,
@@ -16,14 +15,12 @@ export default function ChatFilter({
 }: {
   canChangeTopic: boolean;
   channelId: number;
-  creatorId: number;
   themeColor: string;
   selectedTab: string;
   topicId: number;
   topicObj: Record<string, any>;
 }) {
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
-  const { userId } = useKeyContext((v) => v.myState);
   const [topicSelectorModalShown, setTopicSelectorModalShown] = useState(false);
   const currentTopic = useMemo(() => {
     if (topicObj?.[topicId]) {
@@ -58,7 +55,6 @@ export default function ChatFilter({
           displayedThemeColor={themeColor}
           onSelectTopic={handleSelectTopic}
           onHide={() => setTopicSelectorModalShown(false)}
-          userIsOwner={creatorId === userId}
         />
       )}
     </ErrorBoundary>
