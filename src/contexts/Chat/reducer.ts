@@ -1891,6 +1891,7 @@ export default function ChatReducer(
             }
           }
         : prevChannelObj?.subchannelObj;
+
       return {
         ...state,
         numUnreads,
