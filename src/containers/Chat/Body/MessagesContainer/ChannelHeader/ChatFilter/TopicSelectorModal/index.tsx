@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import TopicItem from './TopicItem';
+import TopicInput from './TopicInput';
 import Loading from '~/components/Loading';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
@@ -59,6 +60,11 @@ export default function TopicSelectorModal({
     <Modal wrapped onHide={onHide}>
       <header>Topics</header>
       <main>
+        <TopicInput
+          displayedThemeColor={displayedThemeColor}
+          onSelectTopic={(topic) => console.log(topic)}
+          onSubmit={() => console.log('submit')}
+        />
         {!loaded && <Loading />}
         {mySubjects.subjects.length > 0 && (
           <div style={{ width: '100%' }}>
