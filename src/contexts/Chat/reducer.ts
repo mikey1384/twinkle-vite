@@ -89,6 +89,20 @@ export default function ChatReducer(
             ? {
                 [action.channelId]: {
                   ...prevChannelObj,
+                  topicObj: {
+                    ...prevChannelObj.topicObj,
+                    [action.topicId]: {
+                      ...prevChannelObj.topicObj[action.topicId],
+                      messageIds: (
+                        prevChannelObj.topicObj[action.topicId]?.messageIds ||
+                        []
+                      ).map((messageId: number) =>
+                        messageId === action.tempMessageId
+                          ? action.messageId
+                          : messageId
+                      )
+                    }
+                  },
                   messageIds,
                   messagesObj,
                   ...(subchannelObj ? { subchannelObj } : {})

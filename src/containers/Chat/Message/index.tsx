@@ -398,6 +398,7 @@ function Message({
         index,
         channelId,
         timeStamp,
+        topicId: subjectId,
         tempMessageId
       });
       const messageToSendOverSocket = {
