@@ -357,6 +357,9 @@ function MessagesContainer({
   ]);
 
   useEffect(() => {
+    if (!deviceIsMobile) {
+      ChatInputRef.current.focus();
+    }
     handleScrollToBottom();
   }, [selectedTab]);
 
