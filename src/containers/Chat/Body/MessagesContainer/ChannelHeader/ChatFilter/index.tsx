@@ -63,7 +63,7 @@ export default function ChatFilter({
   function handleSelectTopic(topicId: number) {
     onSetChannelState({
       channelId,
-      newState: { selectedTopicId: topicId }
+      newState: { selectedTab: 'topic', selectedTopicId: topicId }
     });
     setTopicSelectorModalShown(false);
   }
