@@ -405,6 +405,7 @@ function Message({
         ...message,
         uploaderLevel: level,
         isNewMessage: true,
+        targetSubject: subjectId ? currentChannel?.topicObj[subjectId] : null,
         id: messageId
       };
       delete messageToSendOverSocket.tempMessageId;
