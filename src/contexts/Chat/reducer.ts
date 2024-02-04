@@ -1899,6 +1899,16 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.message.channelId]: {
             ...prevChannelObj,
+            topicObj: {
+              ...prevChannelObj.topicObj,
+              [action.message.subjectId]: {
+                ...prevChannelObj.topicObj?.[action.message.subjectId],
+                messageIds: [messageId].concat(
+                  prevChannelObj.topicObj?.[action.message.subjectId]
+                    ?.messageIds
+                )
+              }
+            },
             allMemberIds: action.newMembers
               ? [
                   ...(prevChannelObj?.allMemberIds || []),
