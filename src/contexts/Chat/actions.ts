@@ -427,6 +427,28 @@ export default function ChatActions(dispatch: Dispatch) {
         loadMoreShown
       });
     },
+    onLoadMoreTopicMessages({
+      channelId,
+      topicId,
+      messages,
+      topicObj,
+      loadMoreShown
+    }: {
+      channelId: number;
+      topicId: number;
+      messages: object[];
+      topicObj: object;
+      loadMoreShown: boolean;
+    }) {
+      return dispatch({
+        type: 'LOAD_MORE_TOPIC_MESSAGES',
+        channelId,
+        topicId,
+        messages,
+        topicObj,
+        loadMoreShown
+      });
+    },
     onLoadMoreChannelMembers({
       channelId,
       members,

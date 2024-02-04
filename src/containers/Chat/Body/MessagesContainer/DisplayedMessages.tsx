@@ -14,7 +14,7 @@ import Message from '../../Message';
 import LocalContext from '../../Context';
 import { v1 as uuidv1 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useTheme } from '~/helpers/hooks';
 import { isMobile, parseChannelPath } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
@@ -104,6 +104,12 @@ export default function DisplayedMessages({
   } = useContext(LocalContext);
   const { banned, profilePicUrl, userId, profileTheme, username } =
     useKeyContext((v) => v.myState);
+  const loadTopicMessages = useAppContext(
+    (v) => v.requestHelpers.loadTopicMessages
+  );
+  const onLoadMoreTopicMessages = useChatContext(
+    (v) => v.actions.onLoadMoreTopicMessages
+  );
   const {
     messageIds = [],
     messagesObj = {},
@@ -223,7 +229,19 @@ export default function DisplayedMessages({
         prevScrollPosition.current = (MessagesRef.current || {}).scrollTop;
         try {
           if (selectedTab === 'topic' && appliedTopicId) {
-            console.log('here');
+            const { messages, loadMoreShown, topicObj } =
+              await loadTopicMessages({
+                channelId: selectedChannelId,
+                topicId: appliedTopicId,
+                lastMessageId: messageId
+              });
+            onLoadMoreTopicMessages({
+              channelId: selectedChannelId,
+              messages,
+              loadMoreShown,
+              topicObj,
+              topicId: appliedTopicId
+            });
           } else {
             const {
               messageIds,
