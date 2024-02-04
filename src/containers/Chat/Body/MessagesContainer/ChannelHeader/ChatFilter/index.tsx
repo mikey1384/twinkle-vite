@@ -33,7 +33,6 @@ export default function ChatFilter({
     <ErrorBoundary componentPath="Chat/Body/MessageContainer/ChannelHeader/ChatFilter">
       <div
         className={css`
-          width: 100%;
           display: flex;
           justify-content: flex-end;
         `}

@@ -114,14 +114,14 @@ export default function LegacyTopic({
         height: '100%',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        padding: '0 1rem'
       }}
     >
       <div
         style={{
           display: 'flex',
           flexGrow: 1,
-          marginRight: '1rem',
           flexDirection: 'column'
         }}
       >
