@@ -195,13 +195,14 @@ export default function ChannelHeader({
       className={css`
         z-index: 50000;
         position: ${isLegacyTopicShown ? 'relative' : 'absolute'};
-        width: 100%;
+        width: ${isLegacyTopicShown ? '100%' : 'auto'};
         height: 100%;
         padding: 1rem;
         height: 7rem;
         align-items: center;
         display: flex;
         align-items: center;
+        right: 1rem;
         > section {
           position: relative;
           display: flex;
@@ -218,7 +219,7 @@ export default function ChannelHeader({
         style={{
           display: 'flex',
           alignItems: 'center',
-          width: '100%',
+          width: isLegacyTopicShown ? '100%' : 'auto',
           height: '100%'
         }}
       >
