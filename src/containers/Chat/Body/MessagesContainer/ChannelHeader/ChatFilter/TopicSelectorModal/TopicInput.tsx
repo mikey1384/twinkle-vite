@@ -2,15 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   addEmoji,
   finalizeEmoji,
-  stringIsEmpty,
-  trimWhiteSpaces
+  stringIsEmpty
 } from '~/helpers/stringHelpers';
-import { useOutsideClick } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useKeyContext } from '~/contexts';
 import SearchDropdown from '~/components/SearchDropdown';
-import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
@@ -18,54 +15,38 @@ import { edit } from '~/constants/placeholders';
 import { css } from '@emotion/css';
 
 export default function TopicInput({
-  autoFocus,
-  currentSubjectId,
   displayedThemeColor,
-  onReloadChatSubject,
   maxLength = 100,
   searchResults,
-  onChange,
-  onClickOutSide,
-  ...props
+  onSelectTopic,
+  onSubmit
 }: {
-  autoFocus?: boolean;
   channelId: number;
-  currentSubjectId: number;
   displayedThemeColor: string;
   maxLength?: number;
-  onChange: (input: string) => void;
-  onClickOutSide: () => void;
-  onEditSubmit: (input: string) => void;
-  onReloadChatSubject: (subjectId: number) => void;
   searchResults: any[];
-  title: string;
-  theme?: string;
-  userIsOwner: boolean;
+  onSelectTopic: (v: number) => void;
+  onSubmit: (input: string) => void;
 }) {
   const {
     link: { color: linkColor }
   } = useKeyContext((v) => v.theme);
   const [exactMatchExists, setExactMatchExists] = useState(false);
-  const [title, setTitle] = useState(props.title || '');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [readyForSubmit, setReadyForSubmit] = useState(false);
-  const [subjectsModalShown, setSubjectsModalShown] = useState(false);
+  const [topicLabel, setTopicLabel] = useState('');
   const EditSubjectFormRef = useRef(null);
   const timerRef: React.MutableRefObject<any> = useRef(null);
-  useOutsideClick(EditSubjectFormRef, () => {
-    if (!subjectsModalShown) onClickOutSide();
-  });
 
   useEffect(() => {
     clearTimeout(timerRef.current);
     setReadyForSubmit(false);
-    if (!stringIsEmpty(title)) {
-      timerRef.current = setTimeout(() => handleChangeInput(title), 300);
+    if (!stringIsEmpty(topicLabel)) {
+      timerRef.current = setTimeout(() => handleChangeInput(topicLabel), 300);
     } else {
       setReadyForSubmit(true);
     }
     async function handleChangeInput(input: string) {
-      await onChange(input);
       const content = input ? `${input[0].toUpperCase()}${input.slice(1)}` : '';
       for (let i = 0; i < searchResults.length; i++) {
         if (content === searchResults[i].content) {
@@ -76,7 +57,7 @@ export default function TopicInput({
       setReadyForSubmit(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title]);
+  }, [topicLabel]);
 
   return (
     <ErrorBoundary componentPath="MessagesContainer/ChannelHeader/EditSubjectForm">
@@ -104,9 +85,8 @@ export default function TopicInput({
               }}
             >
               <Input
-                autoFocus={autoFocus}
                 placeholder={edit.subject}
-                value={title}
+                value={topicLabel}
                 onChange={onInputChange}
                 onKeyUp={onKeyUp}
                 onKeyDown={onKeyDown}
@@ -126,29 +106,12 @@ export default function TopicInput({
               )}
             </form>
           </div>
-          <div
-            style={{
-              marginTop: '1.7rem',
-              marginLeft: '1rem',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <Button
-              style={{ fontSize: '1.3rem' }}
-              filled
-              color={displayedThemeColor}
-              onClick={() => setSubjectsModalShown(true)}
-            >
-              View Topics
-            </Button>
-          </div>
         </div>
         <div style={{ background: '#fff' }}>
-          <small style={{ color: title.length > maxLength ? 'red' : '' }}>
-            {title.length}/{maxLength} Characters
+          <small style={{ color: topicLabel.length > maxLength ? 'red' : '' }}>
+            {topicLabel.length}/{maxLength} Characters
           </small>
-          {title.length <= maxLength && (
+          {topicLabel.length <= maxLength && (
             <small>
               {' '}
               (Press <b>Enter</b> to Apply)
@@ -175,20 +138,22 @@ export default function TopicInput({
 
   function onKeyUp(event: any) {
     if (event.keyCode === 13) {
-      handleEditSubmit();
+      handleSubmit();
     } else {
-      setTitle(addEmoji(event.target.value));
+      setTopicLabel(addEmoji(event.target.value));
     }
   }
 
   function onInputChange(text: string) {
-    setTitle(text);
+    setTopicLabel(text);
     setHighlightedIndex(-1);
     setExactMatchExists(false);
   }
 
   function onUpdate() {
-    const text = title ? `${title[0].toUpperCase()}${title.slice(1)}` : '';
+    const text = topicLabel
+      ? `${topicLabel[0].toUpperCase()}${topicLabel.slice(1)}`
+      : '';
     for (let i = 0; i < searchResults.length; i++) {
       if (text === searchResults[i].content) {
         setExactMatchExists(true);
@@ -198,30 +163,18 @@ export default function TopicInput({
     setHighlightedIndex(-1);
   }
 
-  function handleEditSubmit() {
+  function handleSubmit() {
     if (!readyForSubmit) return;
-    if (highlightedIndex > -1) {
-      const { id: subjectId } = searchResults[highlightedIndex];
-      if (subjectId === currentSubjectId) return onClickOutSide();
-      return onReloadChatSubject(subjectId);
-    }
-    if (stringIsEmpty(title)) return;
-    if (title && title.length > maxLength) return;
-    if (
-      title &&
-      trimWhiteSpaces(`${title[0].toUpperCase()}${title.slice(1)}`) !==
-        props.title
-    ) {
-      props.onEditSubmit(finalizeEmoji(title));
-    } else {
-      onClickOutSide();
+    if (stringIsEmpty(topicLabel)) return;
+    if (topicLabel && topicLabel.length > maxLength) return;
+    if (topicLabel) {
+      onSubmit(finalizeEmoji(topicLabel));
     }
   }
 
   function onItemClick(item: any) {
-    const { id: subjectId } = item;
-    if (subjectId === currentSubjectId) return onClickOutSide();
-    onReloadChatSubject(subjectId);
+    const { id: topicId } = item;
+    onSelectTopic(topicId);
   }
 
   function renderItemLabel(item: any) {
