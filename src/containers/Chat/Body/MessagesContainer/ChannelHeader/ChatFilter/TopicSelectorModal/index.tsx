@@ -57,7 +57,7 @@ export default function TopicSelectorModal({
 
   return (
     <Modal wrapped onHide={onHide}>
-      <header>View Topics</header>
+      <header>Topics</header>
       <main>
         {!loaded && <Loading />}
         {mySubjects.subjects.length > 0 && (
