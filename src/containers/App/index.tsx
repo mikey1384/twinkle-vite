@@ -725,7 +725,7 @@ export default function App() {
             profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
           },
           theme,
-          helpers: { checkUserChange }
+          helpers: { checkUserChange, setMobileMenuShown }
         }}
       >
         {mobileMenuShown && (

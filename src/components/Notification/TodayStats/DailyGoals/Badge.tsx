@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { useChatContext, useHomeContext } from '~/contexts';
+import { useChatContext, useHomeContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '~/components/Icon';
@@ -41,6 +41,7 @@ export default function Badge({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const setMobileMenuShown = useKeyContext((v) => v.helpers.setMobileMenuShown);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
@@ -127,6 +128,7 @@ export default function Badge({
           navigate('/');
         }
         onSetGrammarGameModalShown(true);
+        setMobileMenuShown(false);
         break;
       }
       case 'A': {
