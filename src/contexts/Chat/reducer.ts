@@ -52,6 +52,9 @@ export default function ChatReducer(
         ...prevChannelObj?.messagesObj,
         [action.messageId]: {
           ...prevChannelObj?.messagesObj?.[action.tempMessageId],
+          ...(action.topicId
+            ? { targetSubject: prevChannelObj.topicObj[action.topicId] }
+            : {}),
           id: action.messageId,
           timeStamp: action.timeStamp
         }
