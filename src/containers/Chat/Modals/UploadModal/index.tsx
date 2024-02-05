@@ -31,7 +31,8 @@ function UploadModal({
   onUpload,
   replyTarget,
   recipientId,
-  subjectId,
+  selectedTab,
+  topicId,
   subchannelId
 }: {
   initialCaption?: string;
@@ -42,7 +43,8 @@ function UploadModal({
   onUpload: () => any;
   recipientId?: number;
   replyTarget?: any;
-  subjectId?: number;
+  selectedTab?: string;
+  topicId?: number;
   subchannelId?: number;
 }) {
   const { profilePicUrl, userId, username } = useKeyContext((v) => v.myState);
@@ -118,6 +120,8 @@ function UploadModal({
       const filePath = uuidv1();
       const messageId = uuidv1();
       const fileName = generateFileName(selectedFile.name);
+      const isTopicMessage =
+        (selectedTab === 'topic' || isRespondingToSubject) && topicId;
       onFileUpload({
         channelId,
         content: finalizeEmoji(caption),
@@ -129,7 +133,7 @@ function UploadModal({
         messageId,
         subchannelId,
         targetMessageId: replyTarget?.id,
-        subjectId: isRespondingToSubject ? subjectId : null,
+        topicId: isTopicMessage ? topicId : null,
         thumbnail: videoThumbnail
       });
       onSubmitMessage({
@@ -144,6 +148,7 @@ function UploadModal({
           userId,
           username
         },
+        topicId: isTopicMessage ? topicId : null,
         isRespondingToSubject,
         replyTarget,
         subchannelId
@@ -160,7 +165,7 @@ function UploadModal({
     recipientId,
     replyTarget,
     selectedFile,
-    subjectId,
+    topicId,
     userId,
     username,
     videoThumbnail

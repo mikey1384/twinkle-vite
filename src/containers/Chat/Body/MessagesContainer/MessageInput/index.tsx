@@ -62,7 +62,6 @@ export default function MessageInput({
   selectedTab,
   socketConnected,
   subchannelId,
-  subjectId,
   legacyTopicObj
 }: {
   currentTransactionId: number;
@@ -90,7 +89,6 @@ export default function MessageInput({
   selectedTab: string;
   socketConnected: boolean;
   subchannelId: number;
-  subjectId: number;
   topicId: number;
   legacyTopicObj: any;
 }) {
@@ -504,7 +502,7 @@ export default function MessageInput({
           initialCaption={inputText}
           isRespondingToSubject={isRespondingToSubject}
           recipientId={recipientId}
-          subjectId={subjectId}
+          topicId={topicId}
           channelId={selectedChannelId}
           fileObj={fileObj}
           onUpload={() => {
@@ -513,6 +511,7 @@ export default function MessageInput({
             setUploadModalShown(false);
           }}
           replyTarget={replyTarget}
+          selectedTab={selectedTab}
           subchannelId={subchannelId}
           onHide={() => setUploadModalShown(false)}
         />
