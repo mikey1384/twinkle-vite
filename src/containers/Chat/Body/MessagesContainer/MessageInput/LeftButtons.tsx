@@ -9,6 +9,7 @@ export default function LeftButtons({
   isChessBanned,
   isRestrictedChannel,
   isTwoPeopleChannel,
+  legacyTopicButtonShown,
   loading,
   nextDayTimeStamp,
   onChessButtonClick,
@@ -22,6 +23,7 @@ export default function LeftButtons({
   isChessBanned: boolean;
   isRestrictedChannel: boolean;
   isTwoPeopleChannel: number | boolean;
+  legacyTopicButtonShown: boolean;
   loading: boolean;
   nextDayTimeStamp: number;
   onChessButtonClick: () => void;
@@ -61,7 +63,7 @@ export default function LeftButtons({
           W<span className="desktop">ordle</span>
         </Button>
       ) : null}
-      {topicId && (
+      {topicId && legacyTopicButtonShown && (
         <Button
           disabled={loading}
           style={{
