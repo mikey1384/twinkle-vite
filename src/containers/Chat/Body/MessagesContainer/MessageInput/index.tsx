@@ -386,7 +386,7 @@ export default function MessageInput({
         />
       ) : null}
       <div style={{ display: 'flex' }}>
-        {!isAIChannel && (
+        {!isAIChannel && selectedTab === 'all' && (
           <LeftButtons
             buttonColor={buttonColor}
             buttonHoverColor={buttonHoverColor}
@@ -395,6 +395,7 @@ export default function MessageInput({
             isChessBanned={banned?.chess}
             isRestrictedChannel={isRestrictedChannel}
             isTwoPeopleChannel={isTwoPeopleChannel}
+            legacyTopicButtonShown={selectedChannelId === GENERAL_CHAT_ID}
             loading={loading}
             onChessButtonClick={onChessButtonClick}
             onTopicButtonClick={() => {
