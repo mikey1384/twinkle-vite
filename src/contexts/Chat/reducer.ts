@@ -1834,6 +1834,22 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...prevChannelObj,
+            topicObj: action.topicId
+              ? {
+                  ...prevChannelObj.topicObj,
+                  [action.topicId]: {
+                    ...prevChannelObj.topicObj?.[action.topicId],
+                    messageIds: (
+                      prevChannelObj.topicObj?.[action.topicId]?.messageIds ||
+                      []
+                    ).map((messageId: number) =>
+                      messageId === action.tempMessageId
+                        ? action.messageId
+                        : messageId
+                    )
+                  }
+                }
+              : prevChannelObj.topicObj,
             messageIds: prevChannelObj?.messageIds?.map((messageId: number) =>
               messageId === action.tempMessageId ? action.messageId : messageId
             ),

@@ -799,7 +799,8 @@ export default function ChatActions(dispatch: Dispatch) {
       tempMessageId,
       messageId,
       path,
-      result
+      result,
+      topicId
     }: {
       channelId: number;
       subchannelId: number;
@@ -807,6 +808,7 @@ export default function ChatActions(dispatch: Dispatch) {
       messageId: number;
       path: string;
       result: object;
+      topicId: number;
     }) {
       return dispatch({
         type: 'POST_UPLOAD_COMPLETE',
@@ -815,7 +817,8 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId,
         messageId,
         path,
-        result
+        result,
+        topicId
       });
     },
     onReceiveMessage({
