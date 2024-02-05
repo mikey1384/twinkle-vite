@@ -1104,7 +1104,6 @@ function MessagesContainer({
       >
         <MessageInput
           key={selectedChannelId}
-          topicId={appliedTopicId}
           currentTransactionId={currentTransactionId}
           selectedChannelId={selectedChannelId}
           isZeroChannel={isZeroChannel}
@@ -1142,7 +1141,7 @@ function MessagesContainer({
           replyTarget={replyTarget}
           selectedTab={selectedTab}
           subchannelId={subchannel?.id}
-          subjectId={subjectId}
+          topicId={appliedTopicId}
           legacyTopicObj={appliedLegacyTopicObj}
         />
       </div>
